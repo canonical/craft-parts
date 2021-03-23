@@ -1,0 +1,13 @@
+black==20.8b1
+codespell
+coverage
+flake8
+isort
+mypy
+pydocstyle
+pylint
+pytest
+pytest-mock
+sphinx
+sphinx-autodoc-typehints
+sphinx-rtd-theme

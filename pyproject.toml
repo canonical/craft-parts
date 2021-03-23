@@ -1,0 +1,28 @@
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+
+[tool.pylint.messages_control]
+disable = "bad-continuation,bad-whitespace,too-many-ancestors,too-few-public-methods"
+
+[tool.pylint.similarities]
+min-similarity-lines=13
+
+[tool.pylint.format]
+max-line-length = "88"
+max-attributes = 15
+max-args= 6
+max-locals = 16
+good-names = "f,a,e,lf,id,do_GET"
+
+[tool.pylint.MASTER]
+extension-pkg-whitelist = [
+    "apt_pkg"
+]
+
+[tool.black]
+exclude = '/((\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist|parts|stage|prime)/|setup.py)'
