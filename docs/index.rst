@@ -19,6 +19,11 @@ Application development
 Public APIs
 -----------
 
+.. toctree::
+
+   parts_steps
+
+   exceptions
 
 Examples
 --------
