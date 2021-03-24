@@ -1,106 +1,64 @@
-.DEFAULT_GOAL := help
-
-define BROWSER_PYSCRIPT
-import os, webbrowser, sys
-
-from urllib.request import pathname2url
-
-webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
-endef
-export BROWSER_PYSCRIPT
-
-define PRINT_HELP_PYSCRIPT
-import re, sys
-
-for line in sys.stdin:
-	match = re.match(r'^([a-zA-Z_-]+):.*?## (.*)$$', line)
-	if match:
-		target, help = match.groups()
-		print("%-20s %s" % (target, help))
-endef
-export PRINT_HELP_PYSCRIPT
-
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+.PHONY: help
+help: ## Show this help.
+	@printf "%-30s %s\n" "Target" "Description"
+	@printf "%-30s %s\n" "------" "-----------"
+	@fgrep " ## " $(MAKEFILE_LIST) | fgrep -v grep | awk -F ': .*## ' '{$$1 = sprintf("%-30s", $$1)} 1'
 
 .PHONY: autoformat
-autoformat:
+autoformat: ## Run automatic code formatters.
 	isort .
 	autoflake --remove-all-unused-imports --ignore-init-module-imports -ri .
 	black .
 
 .PHONY: clean
-clean: clean-build clean-docs clean-pyc clean-test
-
-.PHONY: clean-build
-clean-build:
+clean: ## Clean artifacts from building, testing, etc.
 	rm -rf build/
 	rm -rf dist/
 	rm -rf .eggs/
 	find . -name '*.egg-info' -exec rm -rf {} +
 	find . -name '*.egg' -exec rm -f {} +
-
-.PHONY: clean-docs
-clean-docs:
 	rm -rf docs/_build/
 	rm -f docs/craft_parts.*
 	rm -f docs/modules.rst
-
-.PHONY: clean-pyc
-clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -rf {} +
-
-.PHONY: clean-tests
-clean-test:
 	rm -rf .tox/
 	rm -f .coverage
 	rm -rf htmlcov/
 	rm -rf .pytest_cache
 
 .PHONY: coverage
-coverage:
+coverage: ## Run pytest with coverage report.
 	coverage run --source craft_parts -m pytest
 	coverage report -m
 	coverage html
 
 .PHONY: docs
-docs:
+docs: ## Generate documentation.
 	rm -f docs/craft_parts.rst
 	rm -f docs/modules.rst
 	sphinx-apidoc -o docs/ craft_parts --no-toc --ext-githubpages
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
-.PHONY: docs-browse
-docs-browse: docs
-	$(BROWSER) docs/_build/html/index.html
-
 .PHONY: dist
-dist: clean
+dist: clean ## Build python package.
 	python setup.py sdist
 	python setup.py bdist_wheel
 	ls -l dist
 
-.PHONY: help
-help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
-
 .PHONY: install
-install: clean
+install: clean ## Install python package.
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-flake8 test-isort test-mypy test-pyright test-pylint
+lint: test-black test-codespell test-flake8 test-isort test-mypy test-pydocstyle test-pyright test-pylint ## Run all linting tests
 
 .PHONY: release
-release: dist
+release: dist ## Release with twine.
 	twine upload dist/*
-
-.PHONY: servedocs
-servedocs: docs
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 .PHONY: test-black
 test-black:
@@ -115,7 +73,7 @@ test-flake8:
 	flake8 .
 
 .PHONY: test-integrations
-test-integrations:
+test-integrations: ## Run integration tests.
 	pytest tests/integration
 
 .PHONY: test-isort
@@ -124,7 +82,11 @@ test-isort:
 
 .PHONY: test-mypy
 test-mypy:
-	mypy .
+	mypy craft_parts tests
+
+.PHONY: test-pydocstyle
+test-pydocstyle:
+	pydocstyle craft_parts
 
 .PHONY: test-pylint
 test-pylint:
@@ -136,8 +98,8 @@ test-pyright:
 	pyright .
 
 .PHONY: test-units
-test-units:
+test-units: ## Run unit tests.
 	pytest tests/unit
 
 .PHONY: tests
-tests: lint test-integrations test-units
+tests: lint test-units test-integrations ## Run all tests.
