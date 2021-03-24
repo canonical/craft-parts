@@ -99,7 +99,7 @@ test-pyright:
 
 .PHONY: test-units
 test-units: ## Run unit tests.
-	# pytest tests/unit
+	pytest tests/unit
 
 .PHONY: tests
-tests: lint ## Run all tests.
+tests: lint test-units ## Run all tests.
