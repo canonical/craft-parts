@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2015-2021 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,9 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Craft a project from several parts."""
+import os
 
-__version__ = "0.0.1"  # noqa: F401
+import pytest
 
-from .parts import Part  # noqa: F401
-from .steps import Step  # noqa: F401
+
+@pytest.fixture
+def new_dir(tmpdir):
+    """Change to a new temporary directory."""
+
+    cwd = os.getcwd()
+    os.chdir(tmpdir)
+
+    yield tmpdir
+
+    os.chdir(cwd)

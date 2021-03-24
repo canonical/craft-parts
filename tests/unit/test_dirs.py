@@ -14,9 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Craft a project from several parts."""
+from craft_parts.dirs import ProjectDirs
 
-__version__ = "0.0.1"  # noqa: F401
 
-from .parts import Part  # noqa: F401
-from .steps import Step  # noqa: F401
+def test_dirs(new_dir):
+    dirs = ProjectDirs()
+    assert dirs.work_dir == new_dir
+    assert dirs.parts_dir == new_dir / "parts"
+    assert dirs.stage_dir == new_dir / "stage"
+    assert dirs.prime_dir == new_dir / "prime"
+
+
+def test_dirs_work_dir(new_dir):
+    dirs = ProjectDirs(work_dir="foobar")
+    assert dirs.work_dir == new_dir / "foobar"
+    assert dirs.parts_dir == new_dir / "foobar/parts"
+    assert dirs.stage_dir == new_dir / "foobar/stage"
+    assert dirs.prime_dir == new_dir / "foobar/prime"
