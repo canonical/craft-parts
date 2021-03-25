@@ -30,7 +30,6 @@ class TestPartBasics:
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.properties == {"bar": "baz"}
-        assert p.parts_dir == new_dir / "parts"
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_build_dir == new_dir / "parts/foo/build"
         assert p.part_install_dir == new_dir / "parts/foo/install"
@@ -42,7 +41,6 @@ class TestPartBasics:
 
     def test_part_work_dir(self, new_dir):
         p = Part("foo", {}, project_dirs=ProjectDirs(work_dir="foobar"))
-        assert p.parts_dir == new_dir / "foobar/parts"
         assert p.part_src_dir == new_dir / "foobar/parts/foo/src"
         assert p.part_build_dir == new_dir / "foobar/parts/foo/build"
         assert p.part_install_dir == new_dir / "foobar/parts/foo/install"

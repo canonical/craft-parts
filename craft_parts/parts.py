@@ -67,11 +67,6 @@ class Part:
         return self._data.copy()
 
     @property
-    def parts_dir(self) -> Path:
-        """Return the directory containing work files for each part."""
-        return self._dirs.parts_dir
-
-    @property
     def part_src_dir(self) -> Path:
         """Return the subdirectory containing the part source code."""
         return self._part_dir / "src"
