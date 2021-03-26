@@ -231,12 +231,8 @@ class TestPartOrdering:
         p2 = Part("bar", {"after": ["baz"]})
         p3 = Part("baz", {"after": ["bar"]})
 
-        with pytest.raises(errors.PartDependencyCycle) as raised:
+        with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
-        assert (
-            str(raised.value) == "A circular dependency chain was detected. "
-            "Please review the parts definition to remove dependency cycles."
-        )
 
 
 class TestPartHelpers:
@@ -256,7 +252,4 @@ class TestPartHelpers:
 
         with pytest.raises(errors.InvalidPartName) as raised:
             parts.part_dependencies("invalid", part_list=[p1, p2, p3, p4])
-        assert (
-            str(raised.value) == "A part named 'invalid' is not defined "
-            "in the parts list."
-        )
+        assert raised.value.part_name == "invalid"

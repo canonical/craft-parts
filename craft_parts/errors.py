@@ -14,45 +14,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The exceptions that can be raised when using craft_parts."""
+"""Craft parts errors."""
 
-from abc import ABC
-
-
-class CraftPartsError(Exception, ABC):
-    """Base class for Craft Parts exceptions."""
-
-    fmt = "Daughter classes should redefine this"
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__()
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __str__(self):
-        return self.fmt.format([], **self.__dict__)
+import dataclasses
+from typing import Optional
 
 
-class CraftPartsReportableError(CraftPartsError):
-    """Base class for reportable Craft Parts exceptions."""
+@dataclasses.dataclass(repr=True)
+class PartsError(Exception):
+    """Unexpected error.
+
+    :param brief: Brief description of error.
+    :param details: Detailed information.
+    :param resolution: Recommendation, if any.
+    """
+
+    brief: str
+    details: Optional[str] = None
+    resolution: Optional[str] = None
+
+    def __str__(self) -> str:
+        components = [self.brief]
+
+        if self.details:
+            components.append(self.details)
+
+        if self.resolution:
+            components.append(self.resolution)
+
+        return "\n".join(components)
 
 
-class PartDependencyCycle(CraftPartsError):
-    """Dependency cycles have been detected in the parts definition."""
+class PartDependencyCycle(PartsError):
+    """A dependency cycle has been detected in the parts definition."""
 
-    fmt = (
-        "A circular dependency chain was detected. Please review the parts "
-        "definition to remove dependency cycles."
-    )
+    def __init__(self) -> None:
+        brief = "A circular dependency chain was detected."
+        resolution = "Review the parts definition to remove dependency cycles."
+
+        super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidPartName(CraftPartsError):
+class InvalidPartName(PartsError):
     """An operation was requested on a part that's in the parts specification.
 
     :param part_name: the invalid part name.
     """
 
-    fmt = "A part named {part_name!r} is not defined in the parts list."
-
     def __init__(self, part_name: str):
-        super().__init__(part_name=part_name)
+        self.part_name = part_name
+        brief = f"A part named {part_name!r} is not defined in the parts list."
+        resolution = "Review the parts definition and make sure it's correct."
+
+        super().__init__(brief=brief, resolution=resolution)
