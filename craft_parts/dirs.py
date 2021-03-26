@@ -21,7 +21,7 @@ from typing import Union
 
 
 class ProjectDirs:
-    """The project main work directories.
+    """The project's main work directories.
 
     :param work_dir: the parent directory containing the parts, prime and stage
         subdirectories. If not specified, the current directory will be used.
