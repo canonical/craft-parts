@@ -14,12 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Craft a project from several parts."""
+"""Utilities and helpers."""
 
-__version__ = "0.0.1"  # noqa: F401
 
-from .actions import Action, ActionType  # noqa: F401
-from .infos import ProjectInfo  # noqa: F401
-from .manager import LifecycleManager  # noqa: F401
-from .parts import Part  # noqa: F401
-from .steps import Step  # noqa: F401
+def package_name() -> str:
+    """Return the topmost package name."""
+    return __name__.split(".")[0]

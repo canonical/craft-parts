@@ -177,12 +177,39 @@ class Part:
         return self._data.get(scr[step])
 
 
+def part_list_by_name(names: Optional[List[str]], part_list: List[Part]) -> List[Part]:
+    """Return a list of parts from part_list that are named in names.
+
+    :param names: The list of part names. If the list is empty or not
+        defined, return all parts from part_list.
+    :param part_list: The list of all known parts.
+
+    :returns: The list of parts corresponding to the given names.
+
+    :raises InvalidPartName: if a part name is not defined.
+    """
+    if names:
+        # check if all part names are valid
+        valid_names = [p.name for p in part_list]
+        for name in names:
+            if name not in valid_names:
+                raise errors.InvalidPartName(name)
+
+        selected_parts = [p for p in part_list if p.name in names]
+    else:
+        selected_parts = part_list
+
+    return selected_parts
+
+
 def sort_parts(part_list: List[Part]) -> List[Part]:
     """Perform an inneficient but easy to follow sorting of parts.
 
     :param part_list: The list of parts to sort.
 
     :returns: The sorted list of parts.
+
+    :raises PartDependencyCycle: if there are circular dependencies.
     """
     sorted_parts = []  # type: List[Part]
 
@@ -219,6 +246,8 @@ def part_dependencies(
     :param name: The name of the dependent part.
 
     :returns: The set of parts the given part depends on.
+
+    :raises InvalidPartName: if a part name is not defined.
     """
     part = next((p for p in part_list if p.name == name), None)
     if not part:

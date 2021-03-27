@@ -238,6 +238,25 @@ class TestPartOrdering:
 class TestPartHelpers:
     """Test part-related helper functions."""
 
+    def test_part_list_by_name(self):
+        p1 = Part("foo", {})
+        p2 = Part("bar", {})
+        p3 = Part("baz", {})
+
+        x = parts.part_list_by_name(["bar", "baz"], [p1, p2, p3])
+        assert x == [p2, p3]
+
+        # If the list is empty or not defined, return all parts
+        x = parts.part_list_by_name([], [p1, p2, p3])
+        assert x == [p1, p2, p3]
+
+        x = parts.part_list_by_name(None, [p1, p2, p3])
+        assert x == [p1, p2, p3]
+
+        with pytest.raises(errors.InvalidPartName) as raised:
+            parts.part_list_by_name(["bar", "invalid"], [p1, p2, p3])
+        assert raised.value.part_name == "invalid"
+
     def test_part_dependencies(self):
         p1 = Part("foo", {"after": ["bar", "baz"]})
         p2 = Part("bar", {"after": ["qux"]})

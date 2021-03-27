@@ -58,12 +58,26 @@ class PartDependencyCycle(PartsError):
 class InvalidPartName(PartsError):
     """An operation was requested on a part that's in the parts specification.
 
-    :param part_name: the invalid part name.
+    :param part_name: The invalid part name.
     """
 
     def __init__(self, part_name: str):
         self.part_name = part_name
         brief = f"A part named {part_name!r} is not defined in the parts list."
         resolution = "Review the parts definition and make sure it's correct."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class InvalidArchitecture(PartsError):
+    """The machine architecture is not supported.
+
+    :param arch_name: the unsupported architecture name.
+    """
+
+    def __init__(self, arch_name: str):
+        self.arch_name = arch_name
+        brief = f"Architecture {arch_name!r} is not supported."
+        resolution = "Make sure the architecture name is correct."
 
         super().__init__(brief=brief, resolution=resolution)

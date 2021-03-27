@@ -14,12 +14,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Craft a project from several parts."""
+import textwrap
 
-__version__ = "0.0.1"  # noqa: F401
+import yaml
 
-from .actions import Action, ActionType  # noqa: F401
-from .infos import ProjectInfo  # noqa: F401
-from .manager import LifecycleManager  # noqa: F401
-from .parts import Part  # noqa: F401
-from .steps import Step  # noqa: F401
+import craft_parts
+from craft_parts import Step
+
+parts_yaml = textwrap.dedent(
+    """\
+    parts:
+      bar:
+        after: [foo]
+        plugin: nil
+
+      foo:
+        plugin: nil
+        source: a.tar.gz
+
+      foobar:
+        plugin: nil"""
+)
+
+
+def test_actions_simple(new_dir, mocker):
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    actions = lf.plan(Step.PULL)
+    assert actions == []
