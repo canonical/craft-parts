@@ -22,6 +22,7 @@ from typing import List, Optional, Sequence
 from craft_parts.actions import Action
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part, part_list_by_name, sort_parts
+from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
@@ -34,8 +35,11 @@ class Sequencer:
     :param project_info: Information about this project.
     """
 
-    def __init__(self, *, part_list: List[Part], project_info: ProjectInfo):
+    def __init__(
+        self, *, part_list: List[Part], validator: Validator, project_info: ProjectInfo
+    ):
         self._part_list = sort_parts(part_list)
+        self._validator = validator
         self._project_info = project_info
         self._actions: List[Action] = []
 

@@ -16,6 +16,7 @@
 
 """The parts lifecycle manager."""
 
+from pathlib import Path
 from typing import Any, Dict, List, Sequence
 
 from craft_parts import sequencer
@@ -23,7 +24,10 @@ from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
+from craft_parts.schemas import Validator
 from craft_parts.steps import Step
+
+_SCHEMA_DIR = Path(__file__).parent / "data" / "schema"
 
 
 class LifecycleManager:
@@ -64,7 +68,8 @@ class LifecycleManager:
     ):
         # TODO: validate base_dir
 
-        # TODO: validate parts schema
+        self._validator = Validator(_SCHEMA_DIR / "parts.json")
+        self._validator.validate(all_parts)
 
         # TODO: validate or slugify application name
 
@@ -87,6 +92,7 @@ class LifecycleManager:
         self._target_arch = project_info.target_arch
         self._sequencer = sequencer.Sequencer(
             part_list=self._part_list,
+            validator=self._validator,
             project_info=project_info,
         )
         self._project_info = project_info

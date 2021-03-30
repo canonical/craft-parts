@@ -17,7 +17,12 @@
 """Craft parts errors."""
 
 import dataclasses
-from typing import Optional
+from pathlib import Path
+from typing import List, Optional, Union
+
+import jsonschema  # type: ignore
+
+from craft_parts.utils import schema_helpers
 
 
 @dataclasses.dataclass(repr=True)
@@ -81,3 +86,56 @@ class InvalidArchitecture(PartsError):
         resolution = "Make sure the architecture name is correct."
 
         super().__init__(brief=brief, resolution=resolution)
+
+
+class SchemaNotFound(PartsError):
+    """Failed to find the schema definition file.
+
+    :param path: The path to the schema file.
+    """
+
+    def __init__(self, path: Union[str, Path]) -> None:
+        self.path = str(path)
+        brief = f"Unable to find the schema definition file {self.path!r}."
+        resolution = "Make sure craft-parts is correctly installed."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class SchemaValidationError(PartsError):
+    """The parts data failed schema validation.
+
+    :param message: the error message from the schema validator.
+    """
+
+    def __init__(self, message: str):
+        brief = "Schema validation error."
+        details = message
+        resolution = "Review the YAML file and make sure it conforms to the schema."
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
+
+    @classmethod
+    def from_validation_error(cls, error: jsonschema.ValidationError):
+        """Reformat a jsonschema.ValidationError to make it a bit more understandable."""
+        messages: List[str] = []
+
+        preamble = schema_helpers.determine_preamble(error)
+        cause = schema_helpers.determine_cause(error)
+        supplement = schema_helpers.determine_supplemental_info(error)
+
+        if preamble:
+            messages.append(preamble)
+
+        # If we have a preamble we are not at the root
+        if supplement and preamble:
+            messages.append(error.message)
+            messages.append(f"({supplement})")
+        elif supplement:
+            messages.append(supplement)
+        elif cause:
+            messages.append(cause)
+        else:
+            messages.append(error.message)
+
+        return cls(" ".join(messages))

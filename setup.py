@@ -57,7 +57,7 @@ setup(
     include_package_data=True,
     keywords="craft_parts",
     name="craft-parts",
-    package_data={"craft_parts": ["py.typed", "data/schema"]},
+    package_data={"craft_parts": ["py.typed", "data/schema/parts.json"]},
     packages=find_packages(include=["craft_parts", "craft_parts.*"]),
     setup_requires=setup_requirements,
     test_suite="tests",
