@@ -39,7 +39,6 @@ class LifecycleManager:
     :param application_name: A unique identifier for the application using Craft
         Parts. This string will be used as segregated directory path when creating
         persistent data that shouldn't be shared with other applications.
-    :param build_packages: A list of additional build packages to install.
     :param work_dir: The toplevel directory for work directories. The current
         directory will be used if none is specified.
     :param arch: The architecture to build for. Defaults to the host system
@@ -57,7 +56,6 @@ class LifecycleManager:
         all_parts: Dict[str, Any],
         *,
         application_name: str,
-        build_packages: List[str] = None,
         work_dir: str = ".",
         arch: str = "",
         parallel_build_count: int = 1,
@@ -87,7 +85,6 @@ class LifecycleManager:
         ]
         self._application_name = application_name
         self._target_arch = project_info.target_arch
-        self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(
             part_list=self._part_list,
             project_info=project_info,
