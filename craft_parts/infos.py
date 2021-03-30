@@ -18,7 +18,7 @@
 
 import logging
 import platform
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from craft_parts import errors, utils
 from craft_parts.dirs import ProjectDirs
@@ -84,12 +84,12 @@ class ProjectInfo:
     @property
     def arch_triplet(self) -> str:
         """Return the machine-vendor-os platform triplet definition."""
-        return self.__machine_info["triplet"]
+        return self._machine["triplet"]
 
     @property
     def is_cross_compiling(self) -> bool:
         """Whether the target and host architectures are different."""
-        return self.__target_machine != self.__platform_arch
+        return self._arch != self._host_arch
 
     @property
     def plugin_version(self) -> str:
@@ -104,7 +104,7 @@ class ProjectInfo:
     @property
     def target_arch(self) -> str:
         """Return the architecture used for debs, snaps and charms."""
-        return self.__machine_info["deb"]
+        return self._machine["deb"]
 
     @property
     def dirs(self) -> ProjectDirs:
@@ -120,26 +120,32 @@ class ProjectInfo:
             "target_arch": self.target_arch,
         }
 
-    def _set_machine(self, target_arch):
-        self.__platform_arch = _get_platform_architecture()
-        if not target_arch:
-            target_arch = self.__platform_arch
-            logger.debug("Setting target machine to %s", target_arch)
+    def _set_machine(self, arch: Optional[str]):
+        """Initialize machine information based on the architecture.
 
-        machine = _ARCH_TRANSLATIONS.get(target_arch, None)
+        :param arch: The architecture to use. If empty, assume the
+            host system architecture.
+        """
+        self._host_arch = _get_host_architecture()
+        if not arch:
+            arch = self._host_arch
+            logger.debug("Setting target machine to %s", arch)
+
+        machine = _ARCH_TRANSLATIONS.get(arch)
         if not machine:
-            raise errors.InvalidArchitecture(target_arch)
+            raise errors.InvalidArchitecture(arch)
 
-        self.__target_machine = target_arch
-        self.__machine_info = machine
+        self._arch = arch
+        self._machine = machine
 
 
-def _get_platform_architecture() -> str:
+def _get_host_architecture() -> str:
+    """Obtain the host system architecture."""
     # TODO: handle Windows architectures
     return platform.machine()
 
 
-_ARCH_TRANSLATIONS = {
+_ARCH_TRANSLATIONS: Dict[str, Dict[str, Any]] = {
     "aarch64": {
         "kernel": "arm64",
         "deb": "arm64",
