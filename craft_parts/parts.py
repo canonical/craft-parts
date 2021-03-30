@@ -192,7 +192,7 @@ def part_list_by_name(
     """
     if names:
         # check if all part names are valid
-        valid_names = [p.name for p in part_list]
+        valid_names = {p.name for p in part_list}
         for name in names:
             if name not in valid_names:
                 raise errors.InvalidPartName(name)
