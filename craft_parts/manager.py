@@ -16,7 +16,7 @@
 
 """The parts lifecycle manager."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence
 
 from craft_parts import sequencer
 from craft_parts.actions import Action
@@ -96,7 +96,7 @@ class LifecycleManager:
         """Obtain information about this project."""
         return self._project_info
 
-    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
+    def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.

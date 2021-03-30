@@ -17,7 +17,7 @@
 """Determine the sequence of lifecycle actions to be executed."""
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from craft_parts.actions import Action
 from craft_parts.infos import ProjectInfo
@@ -39,7 +39,7 @@ class Sequencer:
         self._project_info = project_info
         self._actions: List[Action] = []
 
-    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
+    def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Determine the list of steps to execute for each part.
 
         :param target_step: The final step to execute for the given part names.
@@ -54,7 +54,7 @@ class Sequencer:
     def _add_all_actions(
         self,
         target_step: Step,
-        part_names: List[str] = None,
+        part_names: Sequence[str] = None,
         reason: Optional[str] = None,
     ) -> None:
         selected_parts = part_list_by_name(part_names, self._part_list)
@@ -76,7 +76,7 @@ class Sequencer:
         current_step: Step,
         target_step: Step,
         part: Part,
-        part_names: Optional[List[str]],
+        part_names: Optional[Sequence[str]],
         reason: Optional[str] = None,
     ) -> None:
         # TODO: implement this stub

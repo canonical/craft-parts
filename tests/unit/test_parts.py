@@ -246,6 +246,9 @@ class TestPartHelpers:
         x = parts.part_list_by_name(["bar", "baz"], [p1, p2, p3])
         assert x == [p2, p3]
 
+        x = parts.part_list_by_name(("bar", "baz"), [p1, p2, p3])
+        assert x == [p2, p3]
+
         # If the list is empty or not defined, return all parts
         x = parts.part_list_by_name([], [p1, p2, p3])
         assert x == [p1, p2, p3]

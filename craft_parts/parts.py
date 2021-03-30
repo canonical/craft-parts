@@ -18,7 +18,7 @@
 
 import copy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Sequence, Set
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -177,7 +177,9 @@ class Part:
         return self._data.get(scr[step])
 
 
-def part_list_by_name(names: Optional[List[str]], part_list: List[Part]) -> List[Part]:
+def part_list_by_name(
+    names: Optional[Sequence[str]], part_list: List[Part]
+) -> List[Part]:
     """Return a list of parts from part_list that are named in names.
 
     :param names: The list of part names. If the list is empty or not
