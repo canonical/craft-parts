@@ -72,7 +72,7 @@ class InvalidPartName(PartsError):
 class InvalidArchitecture(PartsError):
     """The machine architecture is not supported.
 
-    :param arch_name: the unsupported architecture name.
+    :param arch_name: The unsupported architecture name.
     """
 
     def __init__(self, arch_name: str):

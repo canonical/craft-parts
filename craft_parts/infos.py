@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class ProjectInfo:
     """Project-level information containing project-specific fields.
 
-    :param application_name: An unique identifier for the application using
+    :param application_name: A unique identifier for the application using
         Craft Parts.
     :param arch: The architecture to build for. Defaults to the host system
         architecture.
@@ -38,7 +38,8 @@ class ProjectInfo:
     :param plugin_version: The plugin API version. Currently only ``v2`` is
         supported.
     :param project_dirs: The project work directories.
-    :param custom_args: Any additional arguments defined by the application.
+    :param custom_args: Any additional arguments defined by the application
+        when creating a :class:`LifecycleManager`.
     """
 
     def __init__(
@@ -102,7 +103,7 @@ class ProjectInfo:
 
     @property
     def target_arch(self) -> str:
-        """Return the architecture used for deb packages."""
+        """Return the architecture used for debs, snaps and charms."""
         return self.__machine_info["deb"]
 
     @property

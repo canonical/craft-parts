@@ -24,14 +24,17 @@ from craft_parts.steps import Step
 
 @enum.unique
 class ActionType(enum.IntEnum):
-    """The type of the action to be executed.
+    """The type of action to be executed.
 
-    Action execution can be modified according to its type. An
-    action of type ``RUN`` executes the expected commands for step
-    processing, whereas an action of type ``RERUN`` clears the
-    existing data and state before procceeding. An action of
-    type ``UPDATE`` tries to continue processing the step. An
-    action of type ``SKIP`` is not executed at all.
+    Action execution can be modified according to its type:
+
+    ``RUN``: execute the expected commands for step processing.
+
+    ``RERUN``: clear the existing data and state before procceeding.
+
+    ``UPDATE``: try to continue processing the step.
+
+    ``SKIP``: don't execute this action.
     """
 
     RUN = 0
@@ -52,8 +55,7 @@ class Action:
     :param part_name: The name of the part this action will be
         performed on.
     :param step: The :class:`Step` this action will execute.
-    :param action_type: Whether this action should run, re-run, update,
-        or skip this step.
+    :param action_type: Action to run for this step.
     :param reason: A textual description of why this action should be
         executed.
     """
