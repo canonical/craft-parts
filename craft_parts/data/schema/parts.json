@@ -1,232 +1,9 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "definitions": {
-        "grammar-string": {
-            "oneOf": [
-                {
-                    "type": "string",
-                    "usage": "<string>"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "minitems": 1,
-                        "uniqueItems": true,
-                        "oneOf": [
-                            {
-                                "type": "object",
-                                "usage": "on <selector>[,<selector>...]:",
-                                "additionalProperties": false,
-                                "patternProperties": {
-                                    "^on\\s+.+$": {
-                                        "$ref": "#/definitions/grammar-string"
-                                    }
-                                }
-                            },
-                            {
-                                "type": "object",
-                                "usage": "to <selector>[,<selector>...]:",
-                                "additionalProperties": false,
-                                "patternProperties": {
-                                    "^to\\s+.+$": {
-                                        "$ref": "#/definitions/grammar-string"
-                                    }
-                                }
-                            },
-                            {
-                                "type": "object",
-                                "usage": "try:",
-                                "additionalProperties": false,
-                                "patternProperties": {
-                                    "^try$": {
-                                        "$ref": "#/definitions/grammar-string"
-                                    }
-                                }
-                            },
-                            {
-                                "type": "object",
-                                "usage": "else:",
-                                "additionalProperties": false,
-                                "patternProperties": {
-                                    "^else$": {
-                                        "$ref": "#/definitions/grammar-string"
-                                    }
-                                }
-                            },
-                            {
-                                "type": "string",
-                                "pattern": "else fail"
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        "grammar-array": {
-            "type": "array",
-            "minitems": 1,
-            "uniqueItems": true,
-            "items": {
-                "oneOf": [
-                    {
-                        "type": "string",
-                        "usage": "<string>"
-                    },
-                    {
-                        "type": "object",
-                        "usage": "on <selector>[,<selector>...]:",
-                        "additionalProperties": false,
-                        "patternProperties": {
-                            "^on\\s+.+$": {
-                                "$ref": "#/definitions/grammar-array"
-                            }
-                        }
-                    },
-                    {
-                        "type": "object",
-                        "usage": "to <selector>[,<selector>...]:",
-                        "additionalProperties": false,
-                        "patternProperties": {
-                            "^to\\s+.+$": {
-                                "$ref": "#/definitions/grammar-array"
-                            }
-                        }
-                    },
-                    {
-                        "type": "object",
-                        "usage": "try:",
-                        "additionalProperties": false,
-                        "patternProperties": {
-                            "^try$": {
-                                "$ref": "#/definitions/grammar-array"
-                            }
-                        }
-                    },
-                    {
-                        "type": "object",
-                        "usage": "else:",
-                        "additionalProperties": false,
-                        "patternProperties": {
-                            "^else$": {
-                                "$ref": "#/definitions/grammar-array"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        "apt-deb": {
-            "type": "object",
-            "description": "deb repositories",
-            "additionalProperties": false,
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "apt"
-                    ]
-                },
-                "architectures": {
-                    "type": "array",
-                    "minItems": 1,
-                    "uniqueItems": true,
-                    "items": {
-                        "type": "string",
-                        "description": "Architectures to enable, or restrict to, for this repository.  Defaults to host architecture."
-                    }
-                },
-                "formats": {
-                    "type": "array",
-                    "description": "deb types to enable.  Defaults to [deb, deb-src].",
-                    "minItems": 1,
-                    "uniqueItems": true,
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "deb",
-                            "deb-src"
-                        ]
-                    }
-                },
-                "components": {
-                    "type": "array",
-                    "minItems": 0,
-                    "uniqueItems": true,
-                    "items": {
-                        "type": "string",
-                        "description": "Deb repository components to enable, e.g. 'main, multiverse, unstable'"
-                    }
-                },
-                "key-id": {
-                    "type": "string",
-                    "description": "GPG key identifier / fingerprint. May be used to identify key file in <project>/snap/keys/<key-id>.asc",
-                    "pattern": "^[a-zA-Z0-9-_]*$"
-                },
-                "key-server": {
-                    "type": "string",
-                    "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
-                },
-                "suites": {
-                    "type": "array",
-                    "minItems": 1,
-                    "uniqueItems": true,
-                    "items": {
-                        "type": "string",
-                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security')."
-                    }
-                },
-                "url": {
-                    "type": "string",
-                    "description": "Deb repository URL, e.g. 'http://archive.canonical.com/ubuntu'."
-                }
-            },
-            "required": [
-                "type",
-                "components",
-                "key-id",
-                "suites",
-                "url"
-            ],
-            "validation-failure": "{!r} is not properly configured deb repository"
-        },
-        "apt-ppa": {
-            "type": "object",
-            "description": "PPA repository",
-            "additionalProperties": false,
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "apt"
-                    ]
-                },
-                "ppa": {
-                    "type": "string",
-                    "description": "ppa path: e.g. 'canonical-kernel-team/unstable'"
-                }
-            },
-            "required": [
-                "type",
-                "ppa"
-            ],
-            "validation-failure": "{!r} is not properly configured PPA repository"
-        },
-        "system-username-scope": {
-            "type": "string",
-            "description": "short-form user configuration (<username>: <scope>)",
-            "enum": [
-                "shared"
-            ],
-            "validation-failure": "{!r} is not a valid user scope. Valid scopes include: 'shared'"
-        }
-    },
     "title": "part schema",
     "type": "object",
+    "definitions": {},
     "properties": {
-        "build-packages": {
-            "$ref": "#/definitions/grammar-array",
-            "description": "top level build packages."
-        },
         "parts": {
             "type": "object",
             "minProperties": 1,
@@ -245,7 +22,7 @@
                             "description": "plugin name"
                         },
                         "source": {
-                            "$ref": "#/definitions/grammar-string"
+                            "type": "string"
                         },
                         "source-checksum": {
                             "type": "string",
@@ -304,22 +81,22 @@
                         },
                         "stage-snaps": {
                             "$comment": "For some reason 'default' doesn't work if in the ref",
-                            "$ref": "#/definitions/grammar-array",
+                            "type": "array",
                             "default": []
                         },
                         "stage-packages": {
                             "$comment": "For some reason 'default' doesn't work if in the ref",
-                            "$ref": "#/definitions/grammar-array",
+                            "type": "array",
                             "default": []
                         },
                         "build-snaps": {
                             "$comment": "For some reason 'default' doesn't work if in the ref",
-                            "$ref": "#/definitions/grammar-array",
+                            "type": "array",
                             "default": []
                         },
                         "build-packages": {
                             "$comment": "For some reason 'default' doesn't work if in the ref",
-                            "$ref": "#/definitions/grammar-array",
+                            "type": "array",
                             "default": []
                         },
                         "build-environment": {
