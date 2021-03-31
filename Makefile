@@ -66,15 +66,15 @@ test-black:
 
 .PHONY: test-codespell
 test-codespell:
-	codespell .
+	codespell craft_parts tests
 
 .PHONY: test-flake8
 test-flake8:
-	flake8 .
+	flake8 craft_parts tests
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
-	# pytest tests/integration
+	pytest tests/integration
 
 .PHONY: test-isort
 test-isort:
@@ -95,11 +95,11 @@ test-pylint:
 
 .PHONY: test-pyright
 test-pyright:
-	pyright .
+	pyright craft_parts tests
 
 .PHONY: test-units
 test-units: ## Run unit tests.
 	pytest tests/unit
 
 .PHONY: tests
-tests: lint test-units ## Run all tests.
+tests: lint test-units test-integrations ## Run all tests.

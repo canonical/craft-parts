@@ -23,6 +23,12 @@ Public APIs
 
    parts_steps
 
+   actions
+
+   infos
+
+   lifecycle
+
    exceptions
 
 Examples
@@ -35,6 +41,9 @@ Craft-parts development
 Internal APIs
 -------------
 
+.. toctree::
+
+   sequencer
 
 .. toctree::
    :caption: Reference:
