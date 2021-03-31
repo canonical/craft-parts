@@ -45,8 +45,6 @@ class LifecycleManager:
         architecture.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
-    :param plugin_version: The plugin API version. Currently only ``v2`` is
-        supported.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -59,7 +57,6 @@ class LifecycleManager:
         work_dir: str = ".",
         arch: str = "",
         parallel_build_count: int = 1,
-        plugin_version: str = "v2",
         **custom_args,  # custom passthrough args
     ):
         # TODO: validate base_dir
@@ -69,6 +66,7 @@ class LifecycleManager:
         # TODO: validate or slugify application name
 
         project_dirs = ProjectDirs(work_dir=work_dir)
+        plugin_version = "v2"
 
         project_info = ProjectInfo(
             application_name=application_name,

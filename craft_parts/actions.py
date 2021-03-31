@@ -17,6 +17,7 @@
 """Definitions of lifecycle actions and action types."""
 
 import enum
+from dataclasses import dataclass
 from typing import Optional
 
 from craft_parts.steps import Step
@@ -46,6 +47,7 @@ class ActionType(enum.IntEnum):
         return f"{self.__class__.__name__}.{self.name}"
 
 
+@dataclass(frozen=True)
 class Action:
     """The action to be executed for a given part.
 
@@ -60,47 +62,7 @@ class Action:
         executed.
     """
 
-    def __init__(
-        self,
-        part_name: str,
-        step: Step,
-        *,
-        action_type: ActionType = ActionType.RUN,
-        reason: Optional[str] = None,
-    ):
-        self._part_name = part_name
-        self._step = step
-        self._type = action_type
-        self._reason = reason
-
-    def __eq__(self, other):
-        return (
-            self._part_name == other._part_name
-            and self._step == other._step
-            and self._type == other._type
-            and self._reason == other._reason
-        )
-
-    def __repr__(self):
-        reason = f", {self._reason!r}" if self._reason else ""
-        return f"Action({self.part_name!r}, {self.step!r}, {self.type!r}{reason})"
-
-    @property
-    def part_name(self) -> str:
-        """Return the name of part this action will be performed on."""
-        return self._part_name
-
-    @property
-    def step(self) -> Step:
-        """Return the step this action will execute."""
-        return self._step
-
-    @property
-    def type(self) -> ActionType:
-        """Return the type of this action."""
-        return self._type
-
-    @property
-    def reason(self) -> Optional[str]:
-        """Return the reason why this action is being executed."""
-        return self._reason
+    part_name: str
+    step: Step
+    action_type: ActionType = ActionType.RUN
+    reason: Optional[str] = None
