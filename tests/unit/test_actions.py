@@ -27,12 +27,16 @@ def test_action_type():
 
 def test_action_representation():
     action = Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="is tired")
-    assert f"{action!r}" == "Action('foo', Step.PULL, ActionType.SKIP, 'is tired')"
+    assert (
+        f"{action!r}"
+        == "Action(part_name='foo', step=Step.PULL, action_type=ActionType.SKIP, "
+        "reason='is tired')"
+    )
 
 
 def test_action_default_parameters():
     action = Action("foo", Step.PULL)
-    assert action.type == ActionType.RUN
+    assert action.action_type == ActionType.RUN
     assert action.reason is None
 
 
@@ -40,7 +44,7 @@ def test_action_properties():
     action = Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="is tired")
     assert action.part_name == "foo"
     assert action.step == Step.PULL
-    assert action.type == ActionType.SKIP
+    assert action.action_type == ActionType.SKIP
     assert action.reason == "is tired"
 
 
