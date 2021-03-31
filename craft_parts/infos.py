@@ -18,10 +18,12 @@
 
 import logging
 import platform
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from craft_parts import errors, utils
 from craft_parts.dirs import ProjectDirs
+from craft_parts.parts import Part
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +139,69 @@ class ProjectInfo:
 
         self._arch = arch
         self._machine = machine
+
+
+class PartInfo:
+    """Part-level information containing project and part fields.
+
+    :param project_info: The project information.
+    :param part: The part we want to obtain information from.
+    """
+
+    def __init__(
+        self,
+        project_info: ProjectInfo,
+        part: Part,
+    ):
+        self._project_info = project_info
+        self._part_name = part.name
+        self._part_src_dir = part.part_src_dir
+        self._part_src_subdir = part.part_src_subdir
+        self._part_build_dir = part.part_build_dir
+        self._part_build_subdir = part.part_build_subdir
+        self._part_install_dir = part.part_install_dir
+        self._part_state_dir = part.part_state_dir
+
+    def __getattr__(self, name):
+        if hasattr(self._project_info, name):
+            return getattr(self._project_info, name)
+
+        raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
+
+    @property
+    def part_name(self) -> str:
+        """Return the name of the part we're providing information about."""
+        return self._part_name
+
+    @property
+    def part_src_dir(self) -> Path:
+        """Return the subdirectory containing the part's source code."""
+        return self._part_src_dir
+
+    @property
+    def part_src_subdir(self) -> Path:
+        """Return the subdirectory in source containing the source subtree (if any)."""
+        return self._part_src_subdir
+
+    @property
+    def part_build_dir(self) -> Path:
+        """Return the subdirectory containing the part's build tree."""
+        return self._part_build_dir
+
+    @property
+    def part_build_subdir(self) -> Path:
+        """Return the subdirectory in build containing the source subtree (if any)."""
+        return self._part_build_subdir
+
+    @property
+    def part_install_dir(self) -> Path:
+        """Return the subdirectory to install the part's build artifacts."""
+        return self._part_install_dir
+
+    @property
+    def part_state_dir(self) -> Path:
+        """Return the subdirectory containing this part's lifecycle state."""
+        return self._part_state_dir
 
 
 def _get_host_architecture() -> str:
