@@ -21,10 +21,13 @@ import textwrap
 import pytest
 import yaml
 
-from craft_parts import errors, manager
+from craft_parts import errors
+from craft_parts.lifecycle_manager import LifecycleManager
 
 
 class TestLifecycleManager:
+    """Verify lifecycle manager initialization."""
+
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir):
         # pylint: disable=attribute-defined-outside-init
@@ -41,13 +44,13 @@ class TestLifecycleManager:
 
     def test_invalid_arch(self):
         with pytest.raises(errors.InvalidArchitecture) as raised:
-            manager.LifecycleManager(
+            LifecycleManager(
                 self._data, application_name="test_manager", arch="invalid"
             )
         assert raised.value.arch_name == "invalid"
 
     def test_project_info(self):
-        lf = manager.LifecycleManager(
+        lf = LifecycleManager(
             self._data,
             application_name="test_manager",
             work_dir="work_dir",
