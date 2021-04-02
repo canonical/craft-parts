@@ -16,13 +16,126 @@
 
 """Definitions and helpers to handle parts."""
 
-import copy
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.steps import Step
+
+
+@dataclass(frozen=True)
+class PartSpec:
+    """The part specification data."""
+
+    plugin: str
+    source: Optional[str]
+    source_checksum: str
+    source_branch: str
+    source_commit: str
+    source_depth: int
+    source_subdir: str
+    source_tag: str
+    source_type: str
+    disable_parallel: bool
+    after: List[str]
+    stage_snaps: List[str]
+    stage_packages: List[str]
+    build_snaps: List[str]
+    build_packages: List[str]
+    build_environment: List[Dict[str, str]]
+    build_attributes: List[str]
+    organize_fileset: Dict[str, str]
+    stage_fileset: List[str]
+    prime_fileset: List[str]
+    override_pull: Optional[str]
+    override_build: Optional[str]
+    override_stage: Optional[str]
+    override_prime: Optional[str]
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "PartSpec":
+        """Create and populate a new ``PartSpec`` object from dictionary data.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+        """
+        # TODO: validate data
+
+        return cls(
+            plugin=data.pop("plugin", None),
+            source=data.pop("source", None),
+            source_checksum=data.pop("source-checksum", ""),
+            source_branch=data.pop("source-branch", ""),
+            source_commit=data.pop("source-commit", ""),
+            source_depth=data.pop("source-depth", ""),
+            source_subdir=data.pop("source-subdir", ""),
+            source_tag=data.pop("source-tag", ""),
+            source_type=data.pop("source-type", ""),
+            disable_parallel=data.pop("disable-parallel", False),
+            after=data.pop("after", []),
+            stage_snaps=data.pop("stage-snaps", []),
+            stage_packages=data.pop("stage-packages", []),
+            build_snaps=data.pop("build-snaps", []),
+            build_packages=data.pop("build-packages", []),
+            build_environment=data.pop("build-environment", []),
+            build_attributes=data.pop("build-attributes", []),
+            organize_fileset=data.pop("organize", {}),
+            stage_fileset=data.pop("stage", ["*"]),
+            prime_fileset=data.pop("prime", ["*"]),
+            override_pull=data.pop("override-pull", None),
+            override_build=data.pop("override-build", None),
+            override_stage=data.pop("override-stage", None),
+            override_prime=data.pop("override-prime", None),
+        )
+
+    def marshal(self) -> Dict[str, Any]:
+        """Create a dictionary containing the part specification data.
+
+        :return: The newly created dictionary.
+        """
+        return {
+            "plugin": self.plugin,
+            "source": self.source,
+            "source-checksum": self.source_checksum,
+            "source-branch": self.source_branch,
+            "source-commit": self.source_commit,
+            "source-depth": self.source_depth,
+            "source-subdir": self.source_subdir,
+            "source-tag": self.source_tag,
+            "source-type": self.source_type,
+            "disable-parallel": self.disable_parallel,
+            "after": self.after,
+            "stage-snaps": self.stage_snaps,
+            "stage-packages": self.stage_packages,
+            "build-snaps": self.build_snaps,
+            "build-packages": self.build_packages,
+            "build-environment": self.build_environment,
+            "build-attributes": self.build_attributes,
+            "organize": self.organize_fileset,
+            "stage": self.stage_fileset,
+            "prime": self.prime_fileset,
+            "override-pull": self.override_pull,
+            "override-build": self.override_build,
+            "override-stage": self.override_stage,
+            "override-prime": self.override_prime,
+        }
+
+    def get_scriptlet(self, step: Step) -> Optional[str]:
+        """Return the scriptlet contents, if any, for the given step.
+
+        :param step: the step corresponding to the scriptlet to be retrieved.
+
+        :return: The scriptlet for the given step, if any.
+        """
+        return {
+            Step.PULL: self.override_pull,
+            Step.BUILD: self.override_build,
+            Step.STAGE: self.override_stage,
+            Step.PRIME: self.override_prime,
+        }[step]
 
 
 class Part:
@@ -48,23 +161,22 @@ class Part:
         if not project_dirs:
             project_dirs = ProjectDirs()
 
-        self._name = name
-        self._data = data
+        plugin_name: str = data.get("plugin", "")
+
+        self.name = name
+        self.plugin = plugin_name
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
+        self._part_dir = project_dirs.parts_dir / name
+        self.spec = PartSpec.unmarshal(data)
 
     def __repr__(self):
         return f"Part({self.name!r})"
 
     @property
-    def name(self) -> str:
-        """Return the part name."""
-        return self._name
-
-    @property
-    def properties(self) -> Dict[str, Any]:
-        """Return the part properties."""
-        return self._data.copy()
+    def parts_dir(self) -> Path:
+        """Return the directory containing work files for each part."""
+        return self._dirs.parts_dir
 
     @property
     def part_src_dir(self) -> Path:
@@ -72,9 +184,19 @@ class Part:
         return self._part_dir / "src"
 
     @property
+    def part_src_subdir(self) -> Path:
+        """Return the subdirectory in source containing the source subtree (if any)."""
+        return self.part_src_dir / self.spec.source_subdir
+
+    @property
     def part_build_dir(self) -> Path:
         """Return the subdirectory containing the part build tree."""
         return self._part_dir / "build"
+
+    @property
+    def part_build_subdir(self) -> Path:
+        """Return the subdirectory in build containing the source subtree (if any)."""
+        return self.part_build_dir / self.spec.source_subdir
 
     @property
     def part_install_dir(self) -> Path:
@@ -107,74 +229,9 @@ class Part:
         return self._dirs.prime_dir
 
     @property
-    def source(self) -> Optional[str]:
-        """Return the part source property, if any."""
-        source = self._data.get("source")
-        if source:
-            return str(source)
-
-        return None
-
-    @property
     def dependencies(self) -> List[str]:
         """Return the list of parts this part depends on."""
-        return self._data.get("after", []).copy()
-
-    @property
-    def plugin(self) -> Optional[str]:
-        """Return the name of the part plugin."""
-        return self._data.get("plugin")
-
-    @property
-    def build_environment(self) -> List[Dict[str, str]]:
-        """Return the part's build environment."""
-        data: List[Dict[str, str]] = self._data.get("build-environment", [])
-        return copy.deepcopy(data)
-
-    @property
-    def stage_packages(self) -> Optional[List[str]]:
-        """Return the list of stage packages for this part."""
-        packages = self._data.get("stage-packages")
-        if packages:
-            return packages.copy()
-        return None
-
-    @property
-    def stage_snaps(self) -> Optional[List[str]]:
-        """Return the list of stage snaps for this part."""
-        snaps = self._data.get("stage-snaps")
-        if snaps:
-            return snaps.copy()
-        return None
-
-    @property
-    def build_packages(self) -> Optional[List[str]]:
-        """Return the list of build packages for this part."""
-        packages = self._data.get("build-packages")
-        if packages:
-            return packages.copy()
-        return None
-
-    @property
-    def build_snaps(self) -> Optional[List[str]]:
-        """Return the list of build snaps for this part."""
-        snaps = self._data.get("build-snaps")
-        if snaps:
-            return snaps.copy()
-        return None
-
-    def get_scriptlet(self, step: Step) -> Optional[str]:
-        """Return the scriptlet contents, if any, for the given step.
-
-        :param step: the step corresponding to the scriptlet to be retrieved.
-        """
-        scr = {
-            Step.PULL: "override-pull",
-            Step.BUILD: "override-build",
-            Step.STAGE: "override-stage",
-            Step.PRIME: "override-prime",
-        }
-        return self._data.get(scr[step])
+        return self.spec.after
 
 
 def part_list_by_name(
