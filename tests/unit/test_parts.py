@@ -14,24 +14,73 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 import pytest
 
 from craft_parts import errors, parts
 from craft_parts.dirs import ProjectDirs
-from craft_parts.parts import Part
+from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
 
 
-class TestPartBasics:
+class TestPartSpecs:
+    """Test part specification creation."""
+
+    def test_marshal_unmarshal(self):
+        data = {
+            "plugin": "nil",
+            "source": "http://example.com/hello-2.3.tar.gz",
+            "source-checksum": "md5/d9210476aac5f367b14e513bdefdee08",
+            "source-branch": "release",
+            "source-commit": "2514f9533ec9b45d07883e10a561b248497a8e3c",
+            "source-depth": 3,
+            "source-subdir": "src",
+            "source-tag": "v2.3",
+            "source-type": "tar",
+            "disable-parallel": True,
+            "after": ["bar"],
+            "stage-snaps": ["stage-snap1", "stage-snap2"],
+            "stage-packages": ["stage-pkg1", "stage-pkg2"],
+            "build-snaps": ["build-snap1", "build-snap2"],
+            "build-packages": ["build-pkg1", "build-pkg2"],
+            "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
+            "build-attributes": ["attr1", "attr2"],
+            "organize": {"src1": "dest1", "src2": "dest2"},
+            "stage": ["-usr/docs"],
+            "prime": ["*"],
+            "override-pull": "override-pull",
+            "override-build": "override-build",
+            "override-stage": "override-stage",
+            "override-prime": "override-prime",
+        }
+
+        data_copy = deepcopy(data)
+
+        spec = PartSpec.unmarshal(data)
+        assert data == data_copy
+
+        new_data = spec.marshal()
+        assert new_data == data_copy
+
+    def test_unmarshal_not_dict(self):
+        with pytest.raises(TypeError) as raised:
+            PartSpec.unmarshal(False)  # type: ignore
+        assert str(raised.value) == "part data is not a dictionary"
+
+
+class TestPartData:
     """Test basic part creation and representation."""
 
-    def test_part(self, new_dir):
-        p = Part("foo", {"bar": "baz"})
+    def test_part_dirs(self, new_dir):
+        p = Part("foo", {"plugin": "nil"})
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
-        assert p.properties == {"bar": "baz"}
+        assert p.parts_dir == new_dir / "parts"
         assert p.part_src_dir == new_dir / "parts/foo/src"
+        assert p.part_src_subdir == new_dir / "parts/foo/src"
         assert p.part_build_dir == new_dir / "parts/foo/build"
+        assert p.part_build_subdir == new_dir / "parts/foo/build"
         assert p.part_install_dir == new_dir / "parts/foo/install"
         assert p.part_state_dir == new_dir / "parts/foo/state"
         assert p.part_packages_dir == new_dir / "parts/foo/stage_packages"
@@ -41,8 +90,11 @@ class TestPartBasics:
 
     def test_part_work_dir(self, new_dir):
         p = Part("foo", {}, project_dirs=ProjectDirs(work_dir="foobar"))
+        assert p.parts_dir == new_dir / "foobar/parts"
         assert p.part_src_dir == new_dir / "foobar/parts/foo/src"
+        assert p.part_src_subdir == new_dir / "foobar/parts/foo/src"
         assert p.part_build_dir == new_dir / "foobar/parts/foo/build"
+        assert p.part_build_subdir == new_dir / "foobar/parts/foo/build"
         assert p.part_install_dir == new_dir / "foobar/parts/foo/install"
         assert p.part_state_dir == new_dir / "foobar/parts/foo/state"
         assert p.part_packages_dir == new_dir / "foobar/parts/foo/stage_packages"
@@ -50,120 +102,95 @@ class TestPartBasics:
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
+    def test_part_src_build_subdir(self, new_dir):
+        p = Part("foo", {"source-subdir": "foobar"})
+        assert p.part_src_dir == new_dir / "parts/foo/src"
+        assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
+        assert p.part_build_dir == new_dir / "parts/foo/build"
+        assert p.part_build_subdir == new_dir / "parts/foo/build/foobar"
+
     def test_part_source(self):
         p = Part("foo", {})
-        assert p.source is None
+        assert p.spec.source is None
 
         p = Part("foo", {"source": "foobar"})
-        assert p.source == "foobar"
+        assert p.spec.source == "foobar"
 
-    def test_part_properties(self):
-        p = Part("foo", {"foo": "bar"})
-        x = p.properties
-        assert x == {"foo": "bar"}
+    def test_part_stage_files(self):
+        p = Part("foo", {"stage": ["a", "b", "c"]})
+        assert p.spec.stage_files == ["a", "b", "c"]
 
-        # should be immutable
-        x["foo"] = "something else"
-        assert p.properties == {"foo": "bar"}
+    def test_part_prime_files(self):
+        p = Part("foo", {"prime": ["a", "b", "c"]})
+        assert p.spec.prime_files == ["a", "b", "c"]
+
+    def test_part_organize_files(self):
+        p = Part("foo", {"organize": {"a": "b", "c": "d"}})
+        assert p.spec.organize_files == {"a": "b", "c": "d"}
 
     def test_part_dependencies(self):
         p = Part("foo", {"after": ["bar"]})
-        x = p.dependencies
-        assert x == ["bar"]
-
-        # should be immutable
-        x.append("extra")
         assert p.dependencies == ["bar"]
 
     def test_part_plugin(self):
         p = Part("foo", {"plugin": "nil"})
-        assert p.plugin == "nil"
+        assert p.spec.plugin == "nil"
 
     def test_part_plugin_missing(self):
         p = Part("foo", {})
-        assert p.plugin is None
+        assert p.spec.plugin is None
 
     def test_part_build_environment(self):
         p = Part("foo", {"build-environment": [{"BAR": "bar"}]})
-        x = p.build_environment
-        assert x == [{"BAR": "bar"}]
-
-        # should be immutable
-        x[0]["BAR"] = "something else"
-        x.append({"FOOBAR": "foobar"})
-        assert p.build_environment == [{"BAR": "bar"}]
+        assert p.spec.build_environment == [{"BAR": "bar"}]
 
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
         [
-            ({}, None),
-            ({"stage-packages": []}, None),
+            ({}, []),
+            ({"stage-packages": []}, []),
             ({"stage-packages": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
     def test_part_stage_packages(self, tc_spec, tc_result):
         p = Part("foo", tc_spec)
-        x = p.stage_packages
-        assert x == tc_result
-
-        # should be immutable
-        if x is not None:
-            x.append("foobar")
-            assert p.stage_packages == tc_result
+        assert p.spec.stage_packages == tc_result
 
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
         [
-            ({}, None),
-            ({"stage-snaps": []}, None),
+            ({}, []),
+            ({"stage-snaps": []}, []),
             ({"stage-snaps": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
     def test_part_stage_snaps(self, tc_spec, tc_result):
         p = Part("foo", tc_spec)
-        x = p.stage_snaps
-        assert x == tc_result
-
-        # should be immutable
-        if x is not None:
-            x.append("foobar")
-            assert p.stage_snaps == tc_result
+        assert p.spec.stage_snaps == tc_result
 
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
         [
-            ({}, None),
-            ({"build-packages": []}, None),
+            ({}, []),
+            ({"build-packages": []}, []),
             ({"build-packages": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
     def test_part_build_packages(self, tc_spec, tc_result):
         p = Part("foo", tc_spec)
-        x = p.build_packages
-        assert x == tc_result
-
-        # should be immutable
-        if x is not None:
-            x.append("foobar")
-            assert p.build_packages == tc_result
+        assert p.spec.build_packages == tc_result
 
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
         [
-            ({}, None),
-            ({"build-snaps": []}, None),
+            ({}, []),
+            ({"build-snaps": []}, []),
             ({"build-snaps": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
     def test_part_build_snaps(self, tc_spec, tc_result):
         p = Part("foo", tc_spec)
-        x = p.build_snaps
-        assert x == tc_result
-
-        # should be immutable
-        if x is not None:
-            x.append("foobar")
-            assert p.build_snaps == tc_result
+        assert p.spec.build_snaps == tc_result
 
     @pytest.mark.parametrize(
         "tc_step,tc_content",
@@ -184,7 +211,7 @@ class TestPartBasics:
                 "override-prime": "prime",
             },
         )
-        assert p.get_scriptlet(tc_step) == tc_content
+        assert p.spec.get_scriptlet(tc_step) == tc_content
 
     @pytest.mark.parametrize(
         "step",
@@ -192,7 +219,7 @@ class TestPartBasics:
     )
     def test_part_get_scriptlet_none(self, step):
         p = Part("foo", {})
-        assert p.get_scriptlet(step) is None
+        assert p.spec.get_scriptlet(step) is None
 
 
 class TestPartOrdering:
@@ -233,6 +260,36 @@ class TestPartOrdering:
 
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
+
+
+class TestPartUnmarshal:
+    """Verify data unmarshaling on part creation."""
+
+    def test_part_valid_property(self):
+        data = {"plugin": "nil"}
+        Part("foo", data)
+        assert data == {"plugin": "nil"}
+
+    def test_part_unexpected_property(self):
+        data = {"a": 2, "b": 3}
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", data)
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == (
+            "'a': extra fields not permitted\n'b': extra fields not permitted"
+        )
+
+    def test_part_spec_not_dict(self):
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", False)  # type: ignore
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "part data is not a dictionary"
+
+    def test_part_unmarshal_type_error(self):
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", {"plugin": []})
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "'plugin': str type expected"
 
 
 class TestPartHelpers:
