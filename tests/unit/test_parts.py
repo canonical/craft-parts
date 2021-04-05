@@ -57,34 +57,23 @@ class TestPartSpecs:
 
         data_copy = deepcopy(data)
 
-        # unmarshaling consumes unmarshaled data
         spec = PartSpec.unmarshal(data)
-        assert data == {}
+        assert data == data_copy
 
         new_data = spec.marshal()
-        assert data_copy == new_data
+        assert new_data == data_copy
 
     def test_unmarshal_not_dict(self):
         with pytest.raises(ValueError) as raised:
             PartSpec.unmarshal(False)  # type: ignore
         assert str(raised.value) == "part data is not a dictionary"
 
-    def test_unmarshal_unknown_data(self):
-        data = {
-            "plugin": "nil",
-            "unknown": True,
-        }
-
-        # unknown data is not consumed
-        PartSpec.unmarshal(data)
-        assert data == {"unknown": True}
-
 
 class TestPartData:
     """Test basic part creation and representation."""
 
     def test_part_dirs(self, new_dir):
-        p = Part("foo", {"bar": "baz"})
+        p = Part("foo", {"plugin": "nil"})
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.parts_dir == new_dir / "parts"
@@ -273,8 +262,31 @@ class TestPartOrdering:
             parts.sort_parts([p1, p2, p3])
 
 
-class TestPartErrors:
-    """Verify exceptions raised on part creation."""
+class TestPartUnmarshal:
+    """Verify data unmarshaling on part creation."""
+
+    def test_part_valid_property(self):
+        data = {"plugin": "nil"}
+        Part("foo", data)
+        assert data == {"plugin": "nil"}
+
+    def test_part_unexpected_property(self):
+        data = {"invalid": True}
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", data)
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == (
+            "additional properties not allowed ('invalid' is unexpected)"
+        )
+
+    def test_part_unexpected_properties(self):
+        data = {"a": 2, "b": 3}
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", data)
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == (
+            "additional properties not allowed ('a' and 'b' are unexpected)"
+        )
 
     def test_part_spec_not_dict(self):
         with pytest.raises(errors.PartSpecificationError) as raised:

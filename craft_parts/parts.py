@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional, Sequence, Set
 from craft_parts import errors, unmarshal
 from craft_parts.dirs import ProjectDirs
 from craft_parts.steps import Step
+from craft_parts.utils import formatting_utils
 
 
 @dataclass(frozen=True)
@@ -70,34 +71,47 @@ class PartSpec:
         if not isinstance(data, dict):
             raise ValueError("part data is not a dictionary")
 
-        udata = unmarshal.DataUnmarshaler(data)
+        data_copy = data.copy()
 
-        return cls(
-            plugin=udata.pop_optional_string("plugin"),
-            source=udata.pop_optional_string("source"),
-            source_checksum=udata.pop_string("source-checksum"),
-            source_branch=udata.pop_string("source-branch"),
-            source_commit=udata.pop_string("source-commit"),
-            source_depth=udata.pop_integer("source-depth"),
-            source_subdir=udata.pop_string("source-subdir"),
-            source_tag=udata.pop_string("source-tag"),
-            source_type=udata.pop_string("source-type"),
-            disable_parallel=udata.pop_boolean("disable-parallel"),
-            after=udata.pop_list_str("after", []),
-            stage_snaps=udata.pop_list_str("stage-snaps", []),
-            stage_packages=udata.pop_list_str("stage-packages", []),
-            build_snaps=udata.pop_list_str("build-snaps", []),
-            build_packages=udata.pop_list_str("build-packages", []),
-            build_environment=udata.pop_list_dict("build-environment", []),
-            build_attributes=udata.pop_list_str("build-attributes", []),
-            organize_fileset=udata.pop_dict("organize", {}),
-            stage_fileset=udata.pop_list_str("stage", ["*"]),
-            prime_fileset=udata.pop_list_str("prime", ["*"]),
-            override_pull=udata.pop_optional_string("override-pull"),
-            override_build=udata.pop_optional_string("override-build"),
-            override_stage=udata.pop_optional_string("override-stage"),
-            override_prime=udata.pop_optional_string("override-prime"),
+        udata = unmarshal.DataUnmarshaler(data_copy, consume=True)
+
+        spec = cls(
+            plugin=udata.get_optional_string("plugin"),
+            source=udata.get_optional_string("source"),
+            source_checksum=udata.get_string("source-checksum"),
+            source_branch=udata.get_string("source-branch"),
+            source_commit=udata.get_string("source-commit"),
+            source_depth=udata.get_integer("source-depth"),
+            source_subdir=udata.get_string("source-subdir"),
+            source_tag=udata.get_string("source-tag"),
+            source_type=udata.get_string("source-type"),
+            disable_parallel=udata.get_boolean("disable-parallel"),
+            after=udata.get_list_str("after", []),
+            stage_snaps=udata.get_list_str("stage-snaps", []),
+            stage_packages=udata.get_list_str("stage-packages", []),
+            build_snaps=udata.get_list_str("build-snaps", []),
+            build_packages=udata.get_list_str("build-packages", []),
+            build_environment=udata.get_list_dict("build-environment", []),
+            build_attributes=udata.get_list_str("build-attributes", []),
+            organize_fileset=udata.get_dict("organize", {}),
+            stage_fileset=udata.get_list_str("stage", ["*"]),
+            prime_fileset=udata.get_list_str("prime", ["*"]),
+            override_pull=udata.get_optional_string("override-pull"),
+            override_build=udata.get_optional_string("override-build"),
+            override_stage=udata.get_optional_string("override-stage"),
+            override_prime=udata.get_optional_string("override-prime"),
         )
+
+        remainder = udata.keys()
+        if any(remainder):
+            raise ValueError(
+                "additional properties not allowed ({} {} unexpected)".format(
+                    formatting_utils.humanize_list(remainder, "and"),
+                    formatting_utils.pluralize(remainder, "is", "are"),
+                )
+            )
+
+        return spec
 
     def marshal(self) -> Dict[str, Any]:
         """Create a dictionary containing the part specification data.
