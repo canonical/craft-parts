@@ -35,7 +35,9 @@ class DataUnmarshaler:
             raise ValueError(f"{key!r} must be a string")
         return value
 
-    def pop_optional_string(self, key: str, default: str = None) -> Optional[str]:
+    def pop_optional_string(
+        self, key: str, default: Optional[str] = None
+    ) -> Optional[str]:
         """Pop an item and validates it as a string."""
         value = self._data.pop(key, default)
         if value is not None and not isinstance(value, str):
@@ -56,7 +58,7 @@ class DataUnmarshaler:
             raise ValueError(f"{key!r} must be a boolean")
         return value
 
-    def pop_list_str(self, key: str, default: List[str] = None) -> List[str]:
+    def pop_list_str(self, key: str, default: Optional[List[str]] = None) -> List[str]:
         """Pop an item and validates it as a list of strings."""
         if not default:
             default = []
@@ -70,7 +72,7 @@ class DataUnmarshaler:
         return value
 
     def pop_list_dict(
-        self, key: str, default: List[Dict[str, str]] = None
+        self, key: str, default: Optional[List[Dict[str, str]]] = None
     ) -> List[Dict[str, str]]:
         """Pop an item and validates it as a list of dicts."""
         if not default:
@@ -83,7 +85,9 @@ class DataUnmarshaler:
                 raise ValueError(f"{key!r} must be a list of dictionaries")
         return value
 
-    def pop_dict(self, key: str, default: Dict[str, Any] = None) -> Dict[str, Any]:
+    def pop_dict(
+        self, key: str, default: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Pop an item and validates it as a dict."""
         if not default:
             default = {}
