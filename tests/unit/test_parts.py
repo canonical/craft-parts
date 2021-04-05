@@ -64,6 +64,11 @@ class TestPartSpecs:
         new_data = spec.marshal()
         assert data_copy == new_data
 
+    def test_unmarshal_not_dict(self):
+        with pytest.raises(ValueError) as raised:
+            PartSpec.unmarshal(False)  # type: ignore
+        assert str(raised.value) == "part data is not a dictionary"
+
     def test_unmarshal_unknown_data(self):
         data = {
             "plugin": "nil",
@@ -75,7 +80,7 @@ class TestPartSpecs:
         assert data == {"unknown": True}
 
 
-class TestPartBasics:
+class TestPartData:
     """Test basic part creation and representation."""
 
     def test_part_dirs(self, new_dir):
@@ -266,6 +271,22 @@ class TestPartOrdering:
 
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
+
+
+class TestPartErrors:
+    """Verify exceptions raised on part creation."""
+
+    def test_part_spec_not_dict(self):
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", False)  # type: ignore
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "part data is not a dictionary"
+
+    def test_part_unmarshal_type_error(self):
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", {"plugin": False})
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "'plugin' must be a string"
 
 
 class TestPartHelpers:

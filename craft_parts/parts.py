@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set
 
-from craft_parts import errors
+from craft_parts import errors, unmarshal
 from craft_parts.dirs import ProjectDirs
 from craft_parts.steps import Step
 
@@ -29,7 +29,7 @@ from craft_parts.steps import Step
 class PartSpec:
     """The part specification data."""
 
-    plugin: str
+    plugin: Optional[str]
     source: Optional[str]
     source_checksum: str
     source_branch: str
@@ -58,43 +58,52 @@ class PartSpec:
     def unmarshal(cls, data: Dict[str, Any]) -> "PartSpec":
         """Create and populate a new ``PartSpec`` object from dictionary data.
 
-        :param data: The dictionary data to unmarshal.
+        The unmarshal method validates and consumes entries in the input
+        dictionary, populating the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal and consume.
 
         :return: The newly created object.
+
+        :raise ValueError: If data validation fails.
         """
-        # TODO: validate data
+        if not isinstance(data, dict):
+            raise ValueError("part data is not a dictionary")
+
+        udata = unmarshal.DataUnmarshaler(data)
 
         return cls(
-            plugin=data.pop("plugin", None),
-            source=data.pop("source", None),
-            source_checksum=data.pop("source-checksum", ""),
-            source_branch=data.pop("source-branch", ""),
-            source_commit=data.pop("source-commit", ""),
-            source_depth=data.pop("source-depth", ""),
-            source_subdir=data.pop("source-subdir", ""),
-            source_tag=data.pop("source-tag", ""),
-            source_type=data.pop("source-type", ""),
-            disable_parallel=data.pop("disable-parallel", False),
-            after=data.pop("after", []),
-            stage_snaps=data.pop("stage-snaps", []),
-            stage_packages=data.pop("stage-packages", []),
-            build_snaps=data.pop("build-snaps", []),
-            build_packages=data.pop("build-packages", []),
-            build_environment=data.pop("build-environment", []),
-            build_attributes=data.pop("build-attributes", []),
-            organize_fileset=data.pop("organize", {}),
-            stage_fileset=data.pop("stage", ["*"]),
-            prime_fileset=data.pop("prime", ["*"]),
-            override_pull=data.pop("override-pull", None),
-            override_build=data.pop("override-build", None),
-            override_stage=data.pop("override-stage", None),
-            override_prime=data.pop("override-prime", None),
+            plugin=udata.pop_optional_string("plugin"),
+            source=udata.pop_optional_string("source"),
+            source_checksum=udata.pop_string("source-checksum"),
+            source_branch=udata.pop_string("source-branch"),
+            source_commit=udata.pop_string("source-commit"),
+            source_depth=udata.pop_integer("source-depth"),
+            source_subdir=udata.pop_string("source-subdir"),
+            source_tag=udata.pop_string("source-tag"),
+            source_type=udata.pop_string("source-type"),
+            disable_parallel=udata.pop_boolean("disable-parallel"),
+            after=udata.pop_list_str("after", []),
+            stage_snaps=udata.pop_list_str("stage-snaps", []),
+            stage_packages=udata.pop_list_str("stage-packages", []),
+            build_snaps=udata.pop_list_str("build-snaps", []),
+            build_packages=udata.pop_list_str("build-packages", []),
+            build_environment=udata.pop_list_dict("build-environment", []),
+            build_attributes=udata.pop_list_str("build-attributes", []),
+            organize_fileset=udata.pop_dict("organize", {}),
+            stage_fileset=udata.pop_list_str("stage", ["*"]),
+            prime_fileset=udata.pop_list_str("prime", ["*"]),
+            override_pull=udata.pop_optional_string("override-pull"),
+            override_build=udata.pop_optional_string("override-build"),
+            override_stage=udata.pop_optional_string("override-stage"),
+            override_prime=udata.pop_optional_string("override-prime"),
         )
 
     def marshal(self) -> Dict[str, Any]:
         """Create a dictionary containing the part specification data.
 
         :return: The newly created dictionary.
+
         """
         return {
             "plugin": self.plugin,
@@ -149,6 +158,8 @@ class Part:
     :param name: The part name.
     :param data: A dictionary containing the part properties.
     :param project_dirs: The project work directories.
+
+    :raise PartSpecificationError: If part validation fails.
     """
 
     def __init__(
@@ -158,6 +169,9 @@ class Part:
         *,
         project_dirs: ProjectDirs = None,
     ):
+        if not isinstance(data, dict):
+            raise errors.PartSpecificationError(name, "part data is not a dictionary")
+
         if not project_dirs:
             project_dirs = ProjectDirs()
 
@@ -168,7 +182,11 @@ class Part:
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
         self._part_dir = project_dirs.parts_dir / name
-        self.spec = PartSpec.unmarshal(data)
+
+        try:
+            self.spec = PartSpec.unmarshal(data)
+        except ValueError as err:
+            raise errors.PartSpecificationError(name, str(err))
 
     def __repr__(self):
         return f"Part({self.name!r})"
