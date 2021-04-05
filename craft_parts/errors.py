@@ -89,7 +89,7 @@ class PartSpecificationError(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, part_name: str, message: str):
+    def __init__(self, *, part_name: str, message: str):
         self.part_name = part_name
         self.message = message
         brief = f"Part {part_name!r} definition error: {message}."

@@ -65,7 +65,7 @@ def test_invalid_architecture():
 
 
 def test_part_specification_error():
-    err = errors.PartSpecificationError("foo", "something is wrong")
+    err = errors.PartSpecificationError(part_name="foo", message="something is wrong")
     assert err.part_name == "foo"
     assert err.message == "something is wrong"
     assert err.brief == "Part 'foo' definition error: something is wrong."

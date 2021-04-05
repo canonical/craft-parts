@@ -170,7 +170,9 @@ class Part:
         project_dirs: ProjectDirs = None,
     ):
         if not isinstance(data, dict):
-            raise errors.PartSpecificationError(name, "part data is not a dictionary")
+            raise errors.PartSpecificationError(
+                part_name=name, message="part data is not a dictionary"
+            )
 
         if not project_dirs:
             project_dirs = ProjectDirs()
@@ -186,7 +188,7 @@ class Part:
         try:
             self.spec = PartSpec.unmarshal(data)
         except ValueError as err:
-            raise errors.PartSpecificationError(name, str(err))
+            raise errors.PartSpecificationError(part_name=name, message=str(err))
 
     def __repr__(self):
         return f"Part({self.name!r})"
