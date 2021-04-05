@@ -81,3 +81,18 @@ class InvalidArchitecture(PartsError):
         resolution = "Make sure the architecture name is correct."
 
         super().__init__(brief=brief, resolution=resolution)
+
+
+class PartSpecificationError(PartsError):
+    """Parts were not correctly specified.
+
+    :param message: The error message.
+    """
+
+    def __init__(self, part_name: str, message: str):
+        self.part_name = part_name
+        self.message = message
+        brief = f"Part {part_name!r} definition error: {message}."
+        resolution = f"Review part {part_name!r} and make sure it's correct."
+
+        super().__init__(brief=brief, resolution=resolution)

@@ -62,3 +62,12 @@ def test_invalid_architecture():
     assert err.brief == "Architecture 'm68k' is not supported."
     assert err.details is None
     assert err.resolution == "Make sure the architecture name is correct."
+
+
+def test_part_specification_error():
+    err = errors.PartSpecificationError("foo", "something is wrong")
+    assert err.part_name == "foo"
+    assert err.message == "something is wrong"
+    assert err.brief == "Part 'foo' definition error: something is wrong."
+    assert err.details is None
+    assert err.resolution == "Review part 'foo' and make sure it's correct."
