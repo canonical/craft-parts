@@ -29,30 +29,30 @@ from craft_parts.steps import Step
 class PartSpec(BaseModel):
     """The part specification data."""
 
-    plugin: Optional[str]
-    source: Optional[str]
-    source_checksum: Optional[str] = ""
-    source_branch: Optional[str] = ""
-    source_commit: Optional[str] = ""
-    source_depth: Optional[int] = 0
-    source_subdir: Optional[str] = ""
-    source_tag: Optional[str] = ""
-    source_type: Optional[str] = ""
-    disable_parallel: Optional[bool] = False
-    after: Optional[List[str]] = []
-    stage_snaps: Optional[List[str]] = []
-    stage_packages: Optional[List[str]] = []
-    build_snaps: Optional[List[str]] = []
-    build_packages: Optional[List[str]] = []
-    build_environment: Optional[List[Dict[str, str]]] = []
-    build_attributes: Optional[List[str]] = []
-    organize_files: Optional[Dict[str, str]] = Field({}, alias="organize")
-    stage_files: Optional[List[str]] = Field(["*"], alias="stage")
-    prime_files: Optional[List[str]] = Field(["*"], alias="prime")
-    override_pull: Optional[str]
-    override_build: Optional[str]
-    override_stage: Optional[str]
-    override_prime: Optional[str]
+    plugin: Optional[str] = None
+    source: Optional[str] = None
+    source_checksum: str = ""
+    source_branch: str = ""
+    source_commit: str = ""
+    source_depth: int = 0
+    source_subdir: str = ""
+    source_tag: str = ""
+    source_type: str = ""
+    disable_parallel: bool = False
+    after: List[str] = []
+    stage_snaps: List[str] = []
+    stage_packages: List[str] = []
+    build_snaps: List[str] = []
+    build_packages: List[str] = []
+    build_environment: List[Dict[str, str]] = []
+    build_attributes: List[str] = []
+    organize_files: Dict[str, str] = Field({}, alias="organize")
+    stage_files: List[str] = Field(["*"], alias="stage")
+    prime_files: List[str] = Field(["*"], alias="prime")
+    override_pull: Optional[str] = None
+    override_build: Optional[str] = None
+    override_stage: Optional[str] = None
+    override_prime: Optional[str] = None
 
     class Config:
         """Pydantic model configuration."""
@@ -136,6 +136,8 @@ class Part:
             project_dirs = ProjectDirs()
 
         plugin_name: str = data.get("plugin", "")
+
+        # TODO: handle fallback to part name if plugin not specified
 
         self.name = name
         self.plugin = plugin_name
