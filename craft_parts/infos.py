@@ -115,9 +115,9 @@ class ProjectInfo:
     def project_options(self) -> Dict[str, Any]:
         """Obtain a project-wide options dictionary."""
         return {
-            "application_name": self.application_name,
-            "arch_triplet": self.arch_triplet,
-            "target_arch": self.target_arch,
+            "application-name": self.application_name,
+            "arch-triplet": self.arch_triplet,
+            "target-arch": self.target_arch,
         }
 
     def _set_machine(self, arch: Optional[str]):
