@@ -16,7 +16,6 @@
 
 """The step state preserves step execution context information."""
 
-import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Set
@@ -99,7 +98,7 @@ class StepState(YamlModel, ABC):
 
     def write(self, filepath: Path) -> None:
         """Write this state to disk."""
-        os.makedirs(filepath.parent, exist_ok=True)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         yaml_data = self.yaml(by_alias=True)
         filepath.write_text(yaml_data)
 
