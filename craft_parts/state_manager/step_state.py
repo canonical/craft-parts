@@ -25,7 +25,7 @@ from pydantic_yaml import YamlModel  # type: ignore
 
 
 class StepState(YamlModel, ABC):
-    """The context used to run a step for a part.
+    """Contextual information collected when a step is executed.
 
     The step state contains environmental and project-specific configuration
     data collected at step run time. Those properties are used to decide whether
