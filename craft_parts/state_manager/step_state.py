@@ -101,8 +101,7 @@ class StepState(YamlModel, ABC):
         """Write this state to disk."""
         os.makedirs(filepath.parent, exist_ok=True)
         yaml_data = self.yaml(by_alias=True)
-        with open(filepath, "w") as f:
-            f.write(yaml_data)
+        filepath.write_text(yaml_data)
 
 
 def _get_differing_keys(dict1, dict2) -> Set[str]:
