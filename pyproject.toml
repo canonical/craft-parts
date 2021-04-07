@@ -7,7 +7,7 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.pylint.messages_control]
-disable = "bad-continuation,bad-whitespace,too-many-ancestors,too-few-public-methods"
+disable = "bad-continuation,bad-whitespace,too-many-ancestors,too-few-public-methods,fixme"
 
 [tool.pylint.similarities]
 min-similarity-lines=13
@@ -20,8 +20,10 @@ max-locals = 16
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = [
-    "apt_pkg"
+    "apt_pkg",
+    "pydantic"
 ]
+load-plugins = "pylint_fixme_info"
 
 [tool.black]
 exclude = '/((\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist|parts|stage|prime)/|setup.py)'
