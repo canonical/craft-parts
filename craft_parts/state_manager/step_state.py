@@ -104,7 +104,13 @@ class StepState(YamlModel, ABC):
         filepath.write_text(yaml_data)
 
 
-def _get_differing_keys(dict1, dict2) -> Set[str]:
+def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str]:
+    """Return the keys of dictionary entries with different values.
+
+    Given two dictionaries, return a set containing the keys for entries
+    that don't have the same value in both dictionaries. Entries with value
+    of None are equivalent to a non-existing entry.
+    """
     differing_keys = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)

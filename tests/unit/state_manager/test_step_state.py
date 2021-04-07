@@ -17,12 +17,13 @@
 from pathlib import Path
 from typing import Any, Dict
 
+import pytest
 import yaml
 
-from craft_parts.state_manager.step_state import StepState
+from craft_parts.state_manager import step_state
 
 
-class SomeStepState(StepState):
+class SomeStepState(step_state.StepState):
     """A concrete step state implementing abstract methods."""
 
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
@@ -132,3 +133,26 @@ class TestStateChanges:
 
         # relevant project options changed
         assert state.diff_project_options_of_interest({"number": 50}) == {"number"}
+
+
+class TestHelpers:
+    """Tests for helper functions."""
+
+    @pytest.mark.parametrize(
+        "d1,d2,result",
+        [
+            [{}, {}, set()],
+            [{"a": 1}, {}, {"a"}],
+            [{}, {"b": 2}, {"b"}],
+            [{"a": 1}, {"b": 2}, {"a", "b"}],
+            [{"a": None}, {}, set()],
+            [{}, {"b": None}, set()],
+            [{"a": None}, {"b": None}, set()],
+            [{"a": 1}, {"a": 1}, set()],
+            [{"a": None}, {"a": 1}, {"a"}],
+            [{"a": 1}, {"a": 1, "b": 2}, {"b"}],
+            [{"a": 1, "b": 2}, {"a": 1}, {"b"}],
+        ],
+    )
+    def test_get_differing_keys(self, d1, d2, result):
+        assert step_state._get_differing_keys(d1, d2) == result
