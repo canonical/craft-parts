@@ -40,7 +40,7 @@ class TestStepState:
     def test_marshal_empty(self):
         state = SomeStepState()
         assert state.marshal() == {
-            "properties": {},
+            "part-properties": {},
             "project-options": {},
             "files": set(),
             "directories": set(),
@@ -58,7 +58,7 @@ class TestStepState:
             directories={"b"},
         )
         assert state.marshal() == {
-            "properties": {"name": "foo"},
+            "part-properties": {"name": "foo"},
             "project-options": {"number": 42},
             "files": {"a"},
             "directories": {"b"},
@@ -67,7 +67,7 @@ class TestStepState:
     def test_ignore_additional_data(self):
         state = SomeStepState(extra="something")
         assert state.marshal() == {
-            "properties": {},
+            "part-properties": {},
             "project-options": {},
             "files": set(),
             "directories": set(),

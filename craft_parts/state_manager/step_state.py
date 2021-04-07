@@ -21,7 +21,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Set
 
-from pydantic import Field
 from pydantic_yaml import YamlModel  # type: ignore
 
 
@@ -33,7 +32,7 @@ class StepState(YamlModel, ABC):
     the step should run again on a new lifecycle execution.
     """
 
-    part_properties: Dict[str, Any] = Field({}, alias="properties")
+    part_properties: Dict[str, Any] = {}
     project_options: Dict[str, Any] = {}
     files: Set[str] = set()
     directories: Set[str] = set()
