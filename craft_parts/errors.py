@@ -17,7 +17,7 @@
 """Craft parts errors."""
 
 import dataclasses
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclasses.dataclass(repr=True)
@@ -81,3 +81,37 @@ class InvalidArchitecture(PartsError):
         resolution = "Make sure the architecture name is correct."
 
         super().__init__(brief=brief, resolution=resolution)
+
+
+class PartSpecificationError(PartsError):
+    """A part was not correctly specified.
+
+    :param part_name: The part name.
+    :param message: The error message.
+    """
+
+    def __init__(self, *, part_name: str, message: str):
+        self.part_name = part_name
+        self.message = message
+        brief = f"Part {part_name!r} validation failed."
+        details = message
+        resolution = f"Review part {part_name!r} and make sure it's correct."
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
+
+    @classmethod
+    def from_validation_error(cls, *, part_name: str, error_list: List[Dict[str, Any]]):
+        """Create a PartSpecificationError from a pydantic error list."""
+        formatted_errors: List[str] = []
+
+        for error in error_list:
+            loc = error.get("loc")
+            msg = error.get("msg")
+
+            if not (loc and msg) or not isinstance(loc, tuple):
+                continue
+
+            fields = ",".join([repr(entry) for entry in loc])
+            formatted_errors.append(f"{fields}: {msg}")
+
+        return cls(part_name=part_name, message="\n".join(formatted_errors))

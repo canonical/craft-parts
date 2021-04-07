@@ -16,13 +16,93 @@
 
 """Definitions and helpers to handle parts."""
 
-import copy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set
+
+from pydantic import BaseModel, Field, ValidationError
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.steps import Step
+
+
+class PartSpec(BaseModel):
+    """The part specification data."""
+
+    plugin: Optional[str] = None
+    source: Optional[str] = None
+    source_checksum: str = ""
+    source_branch: str = ""
+    source_commit: str = ""
+    source_depth: int = 0
+    source_subdir: str = ""
+    source_tag: str = ""
+    source_type: str = ""
+    disable_parallel: bool = False
+    after: List[str] = []
+    stage_snaps: List[str] = []
+    stage_packages: List[str] = []
+    build_snaps: List[str] = []
+    build_packages: List[str] = []
+    build_environment: List[Dict[str, str]] = []
+    build_attributes: List[str] = []
+    organize_files: Dict[str, str] = Field({}, alias="organize")
+    stage_files: List[str] = Field(["*"], alias="stage")
+    prime_files: List[str] = Field(["*"], alias="prime")
+    override_pull: Optional[str] = None
+    override_build: Optional[str] = None
+    override_stage: Optional[str] = None
+    override_prime: Optional[str] = None
+
+    class Config:
+        """Pydantic model configuration."""
+
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "PartSpec":
+        """Create and populate a new ``PartSpec`` object from dictionary data.
+
+        The unmarshal method validates entries in the input dictionary, populating
+        the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("part data is not a dictionary")
+
+        spec = PartSpec(**data)
+
+        return spec
+
+    def marshal(self) -> Dict[str, Any]:
+        """Create a dictionary containing the part specification data.
+
+        :return: The newly created dictionary.
+
+        """
+        return self.dict(by_alias=True)
+
+    def get_scriptlet(self, step: Step) -> Optional[str]:
+        """Return the scriptlet contents, if any, for the given step.
+
+        :param step: the step corresponding to the scriptlet to be retrieved.
+
+        :return: The scriptlet for the given step, if any.
+        """
+        return {
+            Step.PULL: self.override_pull,
+            Step.BUILD: self.override_build,
+            Step.STAGE: self.override_stage,
+            Step.PRIME: self.override_prime,
+        }[step]
 
 
 class Part:
@@ -36,6 +116,8 @@ class Part:
     :param name: The part name.
     :param data: A dictionary containing the part properties.
     :param project_dirs: The project work directories.
+
+    :raise PartSpecificationError: If part validation fails.
     """
 
     def __init__(
@@ -45,26 +127,38 @@ class Part:
         *,
         project_dirs: ProjectDirs = None,
     ):
+        if not isinstance(data, dict):
+            raise errors.PartSpecificationError(
+                part_name=name, message="part data is not a dictionary"
+            )
+
         if not project_dirs:
             project_dirs = ProjectDirs()
 
-        self._name = name
-        self._data = data
+        plugin_name: str = data.get("plugin", "")
+
+        # TODO: handle fallback to part name if plugin not specified
+
+        self.name = name
+        self.plugin = plugin_name
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
+        self._part_dir = project_dirs.parts_dir / name
+
+        try:
+            self.spec = PartSpec.unmarshal(data)
+        except ValidationError as err:
+            raise errors.PartSpecificationError.from_validation_error(
+                part_name=name, error_list=err.errors()
+            )
 
     def __repr__(self):
         return f"Part({self.name!r})"
 
     @property
-    def name(self) -> str:
-        """Return the part name."""
-        return self._name
-
-    @property
-    def properties(self) -> Dict[str, Any]:
-        """Return the part properties."""
-        return self._data.copy()
+    def parts_dir(self) -> Path:
+        """Return the directory containing work files for each part."""
+        return self._dirs.parts_dir
 
     @property
     def part_src_dir(self) -> Path:
@@ -72,9 +166,23 @@ class Part:
         return self._part_dir / "src"
 
     @property
+    def part_src_subdir(self) -> Path:
+        """Return the subdirectory in source containing the source subtree (if any)."""
+        if self.spec.source_subdir:
+            return self.part_src_dir / self.spec.source_subdir
+        return self.part_src_dir
+
+    @property
     def part_build_dir(self) -> Path:
         """Return the subdirectory containing the part build tree."""
         return self._part_dir / "build"
+
+    @property
+    def part_build_subdir(self) -> Path:
+        """Return the subdirectory in build containing the source subtree (if any)."""
+        if self.spec.source_subdir:
+            return self.part_build_dir / self.spec.source_subdir
+        return self.part_build_dir
 
     @property
     def part_install_dir(self) -> Path:
@@ -107,74 +215,11 @@ class Part:
         return self._dirs.prime_dir
 
     @property
-    def source(self) -> Optional[str]:
-        """Return the part source property, if any."""
-        source = self._data.get("source")
-        if source:
-            return str(source)
-
-        return None
-
-    @property
     def dependencies(self) -> List[str]:
         """Return the list of parts this part depends on."""
-        return self._data.get("after", []).copy()
-
-    @property
-    def plugin(self) -> Optional[str]:
-        """Return the name of the part plugin."""
-        return self._data.get("plugin")
-
-    @property
-    def build_environment(self) -> List[Dict[str, str]]:
-        """Return the part's build environment."""
-        data: List[Dict[str, str]] = self._data.get("build-environment", [])
-        return copy.deepcopy(data)
-
-    @property
-    def stage_packages(self) -> Optional[List[str]]:
-        """Return the list of stage packages for this part."""
-        packages = self._data.get("stage-packages")
-        if packages:
-            return packages.copy()
-        return None
-
-    @property
-    def stage_snaps(self) -> Optional[List[str]]:
-        """Return the list of stage snaps for this part."""
-        snaps = self._data.get("stage-snaps")
-        if snaps:
-            return snaps.copy()
-        return None
-
-    @property
-    def build_packages(self) -> Optional[List[str]]:
-        """Return the list of build packages for this part."""
-        packages = self._data.get("build-packages")
-        if packages:
-            return packages.copy()
-        return None
-
-    @property
-    def build_snaps(self) -> Optional[List[str]]:
-        """Return the list of build snaps for this part."""
-        snaps = self._data.get("build-snaps")
-        if snaps:
-            return snaps.copy()
-        return None
-
-    def get_scriptlet(self, step: Step) -> Optional[str]:
-        """Return the scriptlet contents, if any, for the given step.
-
-        :param step: the step corresponding to the scriptlet to be retrieved.
-        """
-        scr = {
-            Step.PULL: "override-pull",
-            Step.BUILD: "override-build",
-            Step.STAGE: "override-stage",
-            Step.PRIME: "override-prime",
-        }
-        return self._data.get(scr[step])
+        if not self.spec.after:
+            return []
+        return self.spec.after
 
 
 def part_list_by_name(

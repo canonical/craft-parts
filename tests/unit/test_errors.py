@@ -62,3 +62,41 @@ def test_invalid_architecture():
     assert err.brief == "Architecture 'm68k' is not supported."
     assert err.details is None
     assert err.resolution == "Make sure the architecture name is correct."
+
+
+def test_part_specification_error():
+    err = errors.PartSpecificationError(part_name="foo", message="something is wrong")
+    assert err.part_name == "foo"
+    assert err.brief == "Part 'foo' validation failed."
+    assert err.details == "something is wrong"
+    assert err.resolution == "Review part 'foo' and make sure it's correct."
+
+
+def test_part_specification_error_from_validation_error():
+    error_list = [
+        {"loc": ("field-1",), "msg": "something is wrong"},
+        {"loc": ("field-2",), "msg": "something is wrong"},
+    ]
+    err = errors.PartSpecificationError.from_validation_error(
+        part_name="foo", error_list=error_list
+    )
+    assert err.part_name == "foo"
+    assert err.brief == "Part 'foo' validation failed."
+    assert err.details == "'field-1': something is wrong\n'field-2': something is wrong"
+    assert err.resolution == "Review part 'foo' and make sure it's correct."
+
+
+def test_part_specification_error_from_bad_validation_error():
+    error_list = [
+        {"loc": "field-1", "msg": "something is wrong"},
+        {"loc": "field-1"},
+        {"msg": "something is wrong"},
+        {},
+    ]
+    err = errors.PartSpecificationError.from_validation_error(
+        part_name="foo", error_list=error_list
+    )
+    assert err.part_name == "foo"
+    assert err.brief == "Part 'foo' validation failed."
+    assert err.details == ""
+    assert err.resolution == "Review part 'foo' and make sure it's correct."
