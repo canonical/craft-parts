@@ -1,1 +1,2 @@
 pydantic==1.8.1
+pydantic-yaml==0.2.3
