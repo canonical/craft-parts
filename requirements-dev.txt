@@ -6,6 +6,7 @@ isort
 mypy
 pydocstyle
 pylint
+pylint-fixme-info
 pytest
 pytest-mock
 sphinx

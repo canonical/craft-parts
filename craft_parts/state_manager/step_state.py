@@ -18,7 +18,7 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict, Hashable, Set
 
 from pydantic_yaml import YamlModel  # type: ignore
 
@@ -103,13 +103,18 @@ class StepState(YamlModel, ABC):
         filepath.write_text(yaml_data)
 
 
-def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str]:
+def _get_differing_keys(
+    dict1: Dict[str, Hashable], dict2: Dict[str, Hashable]
+) -> Set[str]:
     """Return the keys of dictionary entries with different values.
 
     Given two dictionaries, return a set containing the keys for entries
     that don't have the same value in both dictionaries. Entries with value
     of None are equivalent to a non-existing entry.
     """
+    # TODO: refactor implementation
+    #       can we use something similar to what @cjp256 suggested in
+    #       https://github.com/canonical/craft-parts/pull/10/?
     differing_keys = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
