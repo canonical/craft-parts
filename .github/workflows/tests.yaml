@@ -18,6 +18,7 @@ jobs:
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
       - name: Install python package and dependencies
         run: |
+          sudo apt update
           sudo apt install -y python3-pip python3-venv libapt-pkg-dev
           python3 -m venv ${HOME}/.venv
           source ${HOME}/.venv/bin/activate
