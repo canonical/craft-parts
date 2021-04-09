@@ -47,8 +47,8 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
         return None
 
     logger.debug("load state file: %s", filename)
-    with open(filename) as f:
-        state_data = yaml.safe_load(f)
+    with open(filename) as yaml_file:
+        state_data = yaml.safe_load(yaml_file)
 
     if step == Step.PULL:
         state_class = PullState
