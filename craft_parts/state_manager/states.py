@@ -51,15 +51,15 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
         state_data = yaml.safe_load(f)
 
     if step == Step.PULL:
-        state = PullState.unmarshal(state_data)
+        state_class = PullState
     elif step == Step.BUILD:
-        state = BuildState.unmarshal(state_data)
+        state_class = BuildState
     elif step == Step.STAGE:
-        state = StageState.unmarshal(state_data)
+        state_class = StageState
     else:
-        state = PrimeState.unmarshal(state_data)
+        state_class = PrimeState
 
-    return state
+    return state_class.unmarshal(state_data)
 
 
 def state_file_path(part: Part, step: Step) -> Path:
