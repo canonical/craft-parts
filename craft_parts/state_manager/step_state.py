@@ -104,7 +104,7 @@ class StepState(YamlModel, ABC):
 
 
 def _get_differing_keys(
-    dict1: Dict[str, Hashable], dict2: Dict[str, Hashable]
+    dict1: Dict[str, Any], dict2: Dict[str, Any]
 ) -> Set[str]:
     """Return the keys of dictionary entries with different values.
 
@@ -112,9 +112,6 @@ def _get_differing_keys(
     that don't have the same value in both dictionaries. Entries with value
     of None are equivalent to a non-existing entry.
     """
-    # TODO: refactor implementation
-    #       can we use something similar to what @cjp256 suggested in
-    #       https://github.com/canonical/craft-parts/pull/10/?
     differing_keys = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
