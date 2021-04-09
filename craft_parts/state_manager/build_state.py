@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-buildnil; tab-width:4 -*-
 #
 # Copyright 2016-2021 Canonical Ltd.
 #
@@ -14,21 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""State definitions for the pull step."""
+"""State definitions for the build step."""
 
 from typing import Any, Dict
 
 from .step_state import StepState
 
 
-class PullState(StepState):
-    """Context information for the pull step."""
+class BuildState(StepState):
+    """Context information for the build step."""
 
     assets: Dict[str, Any] = {}
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "PullState":
-        """Create and populate a new ``PullState`` object from dictionary data.
+    def unmarshal(cls, data: Dict[str, Any]) -> "BuildState":
+        """Create and populate a new ``BuildState`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
         the corresponding fields in the state object.
@@ -52,16 +52,12 @@ class PullState(StepState):
         :return: A dictionary containing properties of interest.
         """
         relevant_properties = [
-            "plugin",
-            "source",
-            "source-commit",
-            "source-depth",
-            "source-tag",
-            "source-type",
-            "source-branch",
-            "source-subdir",
-            "override-pull",
-            "stage-packages",
+            "after",
+            "build-attributes",
+            "build-packages",
+            "disable-parallel",
+            "organize",
+            "override-build",
         ]
 
         properties: Dict[str, Any] = {}
