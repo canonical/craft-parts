@@ -75,4 +75,4 @@ class BuildState(StepState):
 
         :return: A dictionary containing project options of interest.
         """
-        return {"target-arch": project_options.get("target-arch")}
+        return {}

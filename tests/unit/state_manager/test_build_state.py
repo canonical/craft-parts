@@ -104,12 +104,4 @@ class TestBuildStateChanges:
 
     def test_project_option_changes(self, project_options):
         state = BuildState(project_options=project_options)
-        assert (
-            state.diff_project_options_of_interest(
-                {"target-arch": "amd64", "application-name": "other"}
-            )
-            == set()
-        )
-        assert state.diff_project_options_of_interest(
-            {"target-arch": "m68k", "application-name": "test"}
-        ) == {"target-arch"}
+        assert state.diff_project_options_of_interest({}) == set()
