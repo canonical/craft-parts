@@ -30,9 +30,9 @@ class SomeStepState(step_state.StepState):
         return {"name": part_properties.get("name")}
 
     def project_options_of_interest(
-        self, part_properties: Dict[str, Any]
+        self, project_options: Dict[str, Any]
     ) -> Dict[str, Any]:
-        return {"number": part_properties.get("number")}
+        return {"number": project_options.get("number")}
 
 
 class TestStepState:
@@ -75,10 +75,11 @@ class TestStepState:
         }
 
 
+@pytest.mark.usefixtures("new_dir")
 class TestStepStatePersist:
     """Verify writing StepState to file."""
 
-    def test_write(self, new_dir):
+    def test_write(self):
         state = SomeStepState(
             part_properties={
                 "name": "foo",
