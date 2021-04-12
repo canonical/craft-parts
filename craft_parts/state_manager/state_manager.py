@@ -127,7 +127,7 @@ class _EphemeralStates:
             new_stw = self.wrap_state(stw.state, step_updated=step_updated)
             self.set(part_name=part_name, step=step, state=new_stw)
 
-    def step_updated(self, *, part_name: str, step: Step) -> bool:
+    def is_step_updated(self, *, part_name: str, step: Step) -> bool:
         """Verify whether the part and step was updated.
 
         The ``step_updated`` status is set when an outdated step is scheduled to

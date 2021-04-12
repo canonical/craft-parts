@@ -147,7 +147,7 @@ class TestEphemeralStates:
         # insert and rewrap the existing state
         eph.set(part_name="foo", step=Step.PULL, state=stw)
         eph.rewrap(part_name="foo", step=Step.PULL)
-        assert eph.step_updated(part_name="foo", step=Step.PULL) is False
+        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is False
 
         rewrapped_stw = eph.get(part_name="foo", step=Step.PULL)
         assert rewrapped_stw.serial == 3
@@ -160,15 +160,15 @@ class TestEphemeralStates:
         assert stw.serial == 1
 
         # checking update status of a non-existing state shouldn't fail
-        assert eph.step_updated(part_name="foo", step=Step.PULL) is False
+        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is False
 
         # insert a new state
         eph.set(part_name="foo", step=Step.PULL, state=stw)
-        assert eph.step_updated(part_name="foo", step=Step.PULL) is False
+        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is False
 
         # set the step updated flag
         eph.rewrap(part_name="foo", step=Step.PULL, step_updated=True)
-        assert eph.step_updated(part_name="foo", step=Step.PULL) is True
+        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is True
 
         rewrapped_stw = eph.get(part_name="foo", step=Step.PULL)
         assert rewrapped_stw.serial == 2
