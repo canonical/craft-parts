@@ -53,7 +53,9 @@ class _EphemeralStates:
         self._state: Dict[Tuple[str, Step], _StateWrapper] = {}
         self._serial_gen = itertools.count(1)
 
-    def wrap_state(self, state: StepState, step_updated: bool = False) -> _StateWrapper:
+    def wrap_state(
+        self, state: StepState, *, step_updated: bool = False
+    ) -> _StateWrapper:
         """Add metadata to step state.
 
         :param state: The part state to store.
