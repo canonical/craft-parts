@@ -46,7 +46,7 @@ class _StateWrapper:
         return self.serial > other.serial
 
 
-class _EphemeralStates:
+class _StateDB:
     """A dictionary-backed simple database manager for wrapped states."""
 
     def __init__(self):

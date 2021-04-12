@@ -67,108 +67,108 @@ class TestStateWrapper:
             stw.step_updated = True  # type: ignore
 
 
-class TestEphemeralStates:
-    """Check _EphemeralStates initialization and methods."""
+class TestStateDB:
+    """Check _StateDB initialization and methods."""
 
     def test_wrap_state(self):
         state = states.PullState()
 
-        eph = state_manager._EphemeralStates()
-        stw = eph.wrap_state(state)
+        sdb = state_manager._StateDB()
+        stw = sdb.wrap_state(state)
         assert stw.state == state
         assert stw.serial == 1
         assert stw.step_updated is False
 
-        other = eph.wrap_state(state, step_updated=True)
+        other = sdb.wrap_state(state, step_updated=True)
         assert other.serial == 2
         assert other.step_updated is True
 
     def test_state_access(self):
         state = states.PullState()
-        eph = state_manager._EphemeralStates()
-        stw = eph.wrap_state(state)
+        sdb = state_manager._StateDB()
+        stw = sdb.wrap_state(state)
 
         # test & retrieve non-existing state
-        assert eph.test(part_name="foo", step=Step.PULL) is False
-        assert eph.get(part_name="foo", step=Step.PULL) is None
+        assert sdb.test(part_name="foo", step=Step.PULL) is False
+        assert sdb.get(part_name="foo", step=Step.PULL) is None
 
         # delete non-existing state shouldn't fail
-        eph.remove(part_name="foo", step=Step.PULL)
+        sdb.remove(part_name="foo", step=Step.PULL)
 
         # insert state
-        eph.set(part_name="foo", step=Step.PULL, state=stw)
-        assert eph.test(part_name="foo", step=Step.PULL) is True
-        assert eph.get(part_name="foo", step=Step.PULL) == stw
+        sdb.set(part_name="foo", step=Step.PULL, state=stw)
+        assert sdb.test(part_name="foo", step=Step.PULL) is True
+        assert sdb.get(part_name="foo", step=Step.PULL) == stw
 
         # delete state
-        eph.remove(part_name="foo", step=Step.PULL)
-        assert eph.test(part_name="foo", step=Step.PULL) is False
-        assert eph.get(part_name="foo", step=Step.PULL) is None
+        sdb.remove(part_name="foo", step=Step.PULL)
+        assert sdb.test(part_name="foo", step=Step.PULL) is False
+        assert sdb.get(part_name="foo", step=Step.PULL) is None
 
     def test_reinsert_state(self):
         state = states.PullState()
-        eph = state_manager._EphemeralStates()
-        stw = eph.wrap_state(state)
+        sdb = state_manager._StateDB()
+        stw = sdb.wrap_state(state)
 
         # insert a state
-        eph.set(part_name="foo", step=Step.PULL, state=stw)
-        assert eph.test(part_name="foo", step=Step.PULL) is True
-        assert eph.get(part_name="foo", step=Step.PULL) == stw
+        sdb.set(part_name="foo", step=Step.PULL, state=stw)
+        assert sdb.test(part_name="foo", step=Step.PULL) is True
+        assert sdb.get(part_name="foo", step=Step.PULL) == stw
 
         # insert a new state
-        new_stw = eph.wrap_state(state)
+        new_stw = sdb.wrap_state(state)
         assert stw != new_stw
 
-        eph.set(part_name="foo", step=Step.PULL, state=new_stw)
-        assert eph.test(part_name="foo", step=Step.PULL) is True
-        assert eph.get(part_name="foo", step=Step.PULL) == new_stw
+        sdb.set(part_name="foo", step=Step.PULL, state=new_stw)
+        assert sdb.test(part_name="foo", step=Step.PULL) is True
+        assert sdb.get(part_name="foo", step=Step.PULL) == new_stw
 
         # insert None is equivalent to delete
-        eph.set(part_name="foo", step=Step.PULL, state=None)
-        assert eph.test(part_name="foo", step=Step.PULL) is False
-        assert eph.get(part_name="foo", step=Step.PULL) is None
+        sdb.set(part_name="foo", step=Step.PULL, state=None)
+        assert sdb.test(part_name="foo", step=Step.PULL) is False
+        assert sdb.get(part_name="foo", step=Step.PULL) is None
 
     def test_rewrap_state(self):
         state = states.PullState()
-        eph = state_manager._EphemeralStates()
-        stw = eph.wrap_state(state)
+        sdb = state_manager._StateDB()
+        stw = sdb.wrap_state(state)
 
         assert stw.serial == 1
 
         # rewrap a non-existing state shouldn't fail
-        assert eph.test(part_name="foo", step=Step.PULL) is False
-        eph.rewrap(part_name="foo", step=Step.PULL)
-        assert eph.test(part_name="foo", step=Step.PULL) is False
+        assert sdb.test(part_name="foo", step=Step.PULL) is False
+        sdb.rewrap(part_name="foo", step=Step.PULL)
+        assert sdb.test(part_name="foo", step=Step.PULL) is False
 
         # a new state is created
-        new_stw = eph.wrap_state(state)
+        new_stw = sdb.wrap_state(state)
         assert new_stw.serial == 2
 
         # insert and rewrap the existing state
-        eph.set(part_name="foo", step=Step.PULL, state=stw)
-        eph.rewrap(part_name="foo", step=Step.PULL)
-        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is False
+        sdb.set(part_name="foo", step=Step.PULL, state=stw)
+        sdb.rewrap(part_name="foo", step=Step.PULL)
+        assert sdb.is_step_updated(part_name="foo", step=Step.PULL) is False
 
-        rewrapped_stw = eph.get(part_name="foo", step=Step.PULL)
+        rewrapped_stw = sdb.get(part_name="foo", step=Step.PULL)
         assert rewrapped_stw.serial == 3
 
     def test_set_step_updated(self):
         state = states.PullState()
-        eph = state_manager._EphemeralStates()
-        stw = eph.wrap_state(state)
+        sdb = state_manager._StateDB()
+        stw = sdb.wrap_state(state)
 
         assert stw.serial == 1
 
         # checking update status of a non-existing state shouldn't fail
-        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is False
+        assert sdb.is_step_updated(part_name="foo", step=Step.PULL) is False
 
         # insert a new state
-        eph.set(part_name="foo", step=Step.PULL, state=stw)
-        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is False
+        sdb.set(part_name="foo", step=Step.PULL, state=stw)
+        assert sdb.is_step_updated(part_name="foo", step=Step.PULL) is False
 
         # set the step updated flag
-        eph.rewrap(part_name="foo", step=Step.PULL, step_updated=True)
-        assert eph.is_step_updated(part_name="foo", step=Step.PULL) is True
+        sdb.rewrap(part_name="foo", step=Step.PULL, step_updated=True)
+        assert sdb.is_step_updated(part_name="foo", step=Step.PULL) is True
 
-        rewrapped_stw = eph.get(part_name="foo", step=Step.PULL)
+        rewrapped_stw = sdb.get(part_name="foo", step=Step.PULL)
         assert rewrapped_stw.serial == 2
