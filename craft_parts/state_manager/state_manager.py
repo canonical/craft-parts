@@ -86,7 +86,7 @@ class _StateDB:
         self._state[(part_name, step)] = state
 
     def get(self, *, part_name: str, step: Step) -> Optional[_StateWrapper]:
-        """Retrieve the state for a given part and step.
+        """Retrieve the wrapped state for a given part and step.
 
         :param part_name: The name of the part corresponding to the state
             to be retrieved.
@@ -122,6 +122,7 @@ class _StateDB:
         :param part_name: The name of the part corresponding to the state
             to be rewrapped.
         :param step: The step corresponding to the state to be rewrapped.
+        :param step_updated: Whether this step should be marked as updated.
         """
         stw = self.get(part_name=part_name, step=step)
         if stw:
