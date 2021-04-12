@@ -18,7 +18,7 @@
 
 import itertools
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from craft_parts.steps import Step
 
@@ -50,7 +50,7 @@ class _EphemeralStates:
     """A dictionary-backed simple database manager for wrapped states."""
 
     def __init__(self):
-        self._state: Dict[str, Dict[Step, _StateWrapper]] = {}
+        self._state: Dict[Tuple[str, Step], _StateWrapper] = {}
         self._serial_gen = itertools.count(1)
 
     def wrap_state(self, state: StepState, step_updated: bool = False) -> _StateWrapper:
@@ -81,10 +81,7 @@ class _EphemeralStates:
             self.remove(part_name=part_name, step=step)
             return
 
-        if part_name not in self._state:
-            self._state[part_name] = dict()
-
-        self._state[part_name][step] = state
+        self._state[(part_name, step)] = state
 
     def get(self, *, part_name: str, step: Step) -> Optional[_StateWrapper]:
         """Retrieve the state for a given part and step.
@@ -95,9 +92,7 @@ class _EphemeralStates:
 
         :return: The wrapped state assigned to the part name and step.
         """
-        if self.test(part_name=part_name, step=step):
-            return self._state[part_name][step]
-        return None
+        return self._state.get((part_name, step))
 
     def test(self, *, part_name: str, step: Step) -> bool:
         """Verify if there is a state defined for a given part and step.
@@ -108,9 +103,7 @@ class _EphemeralStates:
 
         :return: Whether a state is defined for the part name and step.
         """
-        if part_name not in self._state:
-            return False
-        return step in self._state[part_name]
+        return self._state.get((part_name, step)) is not None
 
     def remove(self, *, part_name: str, step: Step) -> None:
         """Remove the state for a given part and step.
@@ -119,8 +112,7 @@ class _EphemeralStates:
             to be removed.
         :param step: The step corresponding to the state to be removed.
         """
-        if part_name in self._state:
-            self._state[part_name].pop(step, None)
+        self._state.pop((part_name, step), None)
 
     def rewrap(self, *, part_name: str, step: Step, step_updated: bool = False) -> None:
         """Rewrap an existing state, updating its metadata.
@@ -147,6 +139,7 @@ class _EphemeralStates:
 
         :return: Whether the step was updated.
         """
-        if self.test(part_name=part_name, step=step):
-            return self._state[part_name][step].step_updated
+        stw = self.get(part_name=part_name, step=step)
+        if stw:
+            return stw.step_updated
         return False
