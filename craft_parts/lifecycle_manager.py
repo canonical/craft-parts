@@ -66,12 +66,10 @@ class LifecycleManager:
         # TODO: validate or slugify application name
 
         project_dirs = ProjectDirs(work_dir=work_dir)
-        plugin_version = "v2"
 
         project_info = ProjectInfo(
             application_name=application_name,
             arch=arch,
-            plugin_version=plugin_version,
             parallel_build_count=parallel_build_count,
             project_dirs=project_dirs,
             **custom_args,
