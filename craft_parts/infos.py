@@ -163,6 +163,8 @@ class PartInfo:
         self._part_state_dir = part.part_state_dir
 
     def __getattr__(self, name):
+        # Use composition and attribute cascading to avoid setting attributes cumulatively
+        # in the init method.
         if hasattr(self._project_info, name):
             return getattr(self._project_info, name)
 
