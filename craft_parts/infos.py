@@ -35,8 +35,6 @@ class ProjectInfo:
         architecture.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
-    :param plugin_version: The plugin API version. Currently only ``v2`` is
-        supported.
     :param project_dirs: The project work directories.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
@@ -48,7 +46,6 @@ class ProjectInfo:
         application_name: str = utils.package_name(),
         arch: str = "",
         parallel_build_count: int = 1,
-        plugin_version: str = "v2",
         project_dirs: ProjectDirs = None,
         **custom_args,  # custom passthrough args
     ):
@@ -57,7 +54,6 @@ class ProjectInfo:
 
         self._application_name = application_name
         self._set_machine(arch)
-        self._plugin_version = plugin_version
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs
         self._custom_args = custom_args
@@ -90,11 +86,6 @@ class ProjectInfo:
     def is_cross_compiling(self) -> bool:
         """Whether the target and host architectures are different."""
         return self._arch != self._host_arch
-
-    @property
-    def plugin_version(self) -> str:
-        """Return the plugin API version used in this project."""
-        return self._plugin_version
 
     @property
     def parallel_build_count(self) -> int:

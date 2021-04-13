@@ -63,7 +63,6 @@ class TestLifecycleManager:
         assert info.application_name == "test_manager"
         assert info.target_arch == "arm64"
         assert info.arch_triplet == "aarch64-linux-gnu"
-        assert info.plugin_version == "v2"
         assert info.parallel_build_count == 16
         assert info.dirs.parts_dir == self._dir / "work_dir" / "parts"
         assert info.dirs.stage_dir == self._dir / "work_dir" / "stage"

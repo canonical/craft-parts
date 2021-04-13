@@ -50,7 +50,6 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     assert x.application_name == "test"
     assert x.arch_triplet == tc_triplet
     assert x.is_cross_compiling == tc_cross
-    assert x.plugin_version == "v2"
     assert x.parallel_build_count == 16
     assert x.target_arch == tc_target_arch
     assert x.project_options == {
