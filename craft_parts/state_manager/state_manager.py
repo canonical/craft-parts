@@ -18,11 +18,13 @@
 
 import itertools
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
+from craft_parts.infos import ProjectInfo
+from craft_parts.parts import Part
 from craft_parts.steps import Step
 
-from .states import StepState
+from .states import StepState, load_state, state_file_path
 
 
 @dataclass(frozen=True)
@@ -146,3 +148,71 @@ class _StateDB:
         if stw:
             return stw.step_updated
         return False
+
+
+class StateManager:
+    """Keep track of lifecycle execution state.
+
+    The State Manager tells whether a step should run based on current state
+    information. The state database is initialized from state on disk, and
+    after that it's maintained only in memory.
+
+    :param project_info: The project information.
+    :param part_list: A list of this project's parts.
+    """
+
+    def __init__(self, *, project_info: ProjectInfo, part_list: List[Part]):
+        self._state_db = _StateDB()
+        self._project_info = project_info
+        self._part_list = part_list
+
+        part_step_list = _sort_steps_by_state_timestamp(part_list)
+
+        for part, step, _ in part_step_list:
+            state = load_state(part, step)
+            if state:
+                self.set_state(part, step, state=state)
+
+    def set_state(self, part: Part, step: Step, *, state: StepState) -> None:
+        """Set the state of the given part and step.
+
+        :param part: The part corresponding to the state to be set.
+        :param step: The step corresponding to the state to be set.
+        """
+        stw = self._state_db.wrap_state(state)
+        self._state_db.set(part_name=part.name, step=step, state=stw)
+
+    def has_step_run(self, part: Part, step: Step) -> bool:
+        """Determine if a given step of a given part has already run.
+
+        :param part: The part the step to be verified belongs to.
+        :param step: The step to verify.
+
+        :return: Whether the step has already run.
+        """
+        return self._state_db.test(part_name=part.name, step=step)
+
+
+def _sort_steps_by_state_timestamp(
+    part_list: List[Part],
+) -> List[Tuple[Part, Step, int]]:
+    """Sort steps based on state file timestamp.
+
+    Return a sorted list of parts and steps according to the timestamp
+    of the state file for the part and step. If there's no corresponding
+    state file, the step is ignored.
+
+    :param part_list: The list of all parts whose steps should be sorted.
+
+    :return: The sorted list of tuples containing part, step, and state
+        file modification time.
+    """
+    state_files: List[Tuple[Part, Step, int]] = []
+    for part in part_list:
+        for step in list(Step):
+            path = state_file_path(part, step)
+            if path.is_file():
+                mtime = path.stat().st_mtime_ns
+                state_files.append((part, step, mtime))
+
+    return sorted(state_files, key=lambda item: item[2])

@@ -15,10 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import dataclasses
+import time
+from pathlib import Path
 
 import pytest
 
-from craft_parts.state_manager import state_manager, states
+from craft_parts.infos import ProjectInfo
+from craft_parts.parts import Part
+from craft_parts.state_manager import StateManager, state_manager, states
 from craft_parts.steps import Step
 
 
@@ -172,3 +176,79 @@ class TestStateDB:
 
         rewrapped_stw = sdb.get(part_name="foo", step=Step.PULL)
         assert rewrapped_stw.serial == 2
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestStateManager:
+    """Verify if the State Manager is correctly tracking state changes."""
+
+    def test_has_step_run(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+        p2 = Part("p2", {})
+        p3 = Part("p3", {})
+
+        s3 = states.StageState()
+        s3.write(Path("parts/p3/state/stage"))
+
+        # only p3:stage has a state file when the stage manager is created
+        sm = StateManager(project_info=info, part_list=[p1, p2, p3])
+
+        for part in [p1, p2, p3]:
+            for step in list(Step):
+                ran = sm.has_step_run(part, step)
+                assert ran == (part == p3 and step == Step.STAGE)
+
+    def test_set_state(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+        p2 = Part("p2", {})
+        p3 = Part("p3", {})
+
+        # no state files when the stage manager is created
+        sm = StateManager(project_info=info, part_list=[p1, p2, p3])
+
+        for part in [p1, p2, p3]:
+            for step in list(Step):
+                ran = sm.has_step_run(part, step)
+                assert ran is False
+
+        # a state is assigned to p2:build (no state file)
+        s2 = states.BuildState()
+        sm.set_state(p2, Step.BUILD, state=s2)
+
+        for part in [p1, p2, p3]:
+            for step in list(Step):
+                ran = sm.has_step_run(part, step)
+                assert ran == (part == p2 and step == Step.BUILD)
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestHelpers:
+    """Verify State Manager helper functions."""
+
+    def test_state_sort(self):
+        p1 = Part("foo", {})
+        p2 = Part("bar", {})
+
+        s1 = states.PullState()
+        s2 = states.BuildState()
+        s3 = states.PullState()
+        s4 = states.PrimeState()
+
+        # create state files
+        s4.write(Path("parts/bar/state/prime"))
+        time.sleep(0.1)
+        s3.write(Path("parts/bar/state/pull"))
+        time.sleep(0.1)
+        s1.write(Path("parts/foo/state/pull"))
+        time.sleep(0.1)
+        s2.write(Path("parts/foo/state/build"))
+
+        slist = state_manager._sort_steps_by_state_timestamp([p1, p2])
+        assert [x[0:2] for x in slist] == [
+            (p2, Step.PRIME),
+            (p2, Step.PULL),
+            (p1, Step.PULL),
+            (p1, Step.BUILD),
+        ]
