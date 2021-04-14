@@ -21,7 +21,7 @@ from craft_parts.steps import Step
 
 
 @pytest.mark.parametrize(
-    "step,source_updated,result",
+    "step,source_modified,result",
     [
         (None, False, ""),
         (Step.BUILD, False, "'BUILD' step changed"),
@@ -29,8 +29,8 @@ from craft_parts.steps import Step
         (Step.STAGE, True, "'STAGE' step and source changed"),
     ],
 )
-def test_outdated_report(step, source_updated, result):
+def test_outdated_report(step, source_modified, result):
     report = reports.OutdatedReport(
-        previous_step_modified=step, source_updated=source_updated
+        previous_step_modified=step, source_modified=source_modified
     )
     assert report.reason() == result

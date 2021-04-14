@@ -280,7 +280,7 @@ class TestOutdatedReport:
         sm = StateManager(project_info=info, part_list=[p1])
 
         for step in list(Step):
-            assert sm.outdated_report(p1, step) is None
+            assert sm.check_if_outdated(p1, step) is None
 
     def test_outdated(self):
         info = ProjectInfo()
@@ -298,8 +298,9 @@ class TestOutdatedReport:
         sm = StateManager(project_info=info, part_list=[p1])
 
         for step in list(Step):
-            report = sm.outdated_report(p1, step)
+            report = sm.check_if_outdated(p1, step)
             if step == Step.BUILD:
+                assert report is not None
                 assert report.reason() == "'PULL' step changed"
             else:
                 assert report is None
@@ -308,7 +309,7 @@ class TestOutdatedReport:
         sm._state_db.rewrap(part_name="p1", step=Step.BUILD, step_updated=True)
 
         for step in list(Step):
-            assert sm.outdated_report(p1, step) is None
+            assert sm.check_if_outdated(p1, step) is None
 
 
 @pytest.mark.usefixtures("new_dir")

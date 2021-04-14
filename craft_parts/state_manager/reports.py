@@ -31,28 +31,27 @@ class OutdatedReport:
     """
 
     def __init__(
-        self, *, previous_step_modified: Step = None, source_updated: bool = False
+        self, *, previous_step_modified: Step = None, source_modified: bool = False
     ) -> None:
         """Create a new OutdatedReport.
 
         :param previous_step_modified: Step earlier in the lifecycle that has changed.
-        :param source_updated: Whether or not the source changed on disk.
+        :param source_modified: Whether the source changed on disk.
         """
         self.previous_step_modified = previous_step_modified
-        self.source_updated = source_updated
+        self.source_modified = source_modified
 
     def reason(self) -> str:
         """Get summarized report.
 
-        :return: Short summary of why the step is dirty.
-        :rtype: str
+        :return: Short summary of why the step is outdated.
         """
         reasons = []
 
         if self.previous_step_modified:
             reasons.append("{!r} step".format(self.previous_step_modified.name))
 
-        if self.source_updated:
+        if self.source_modified:
             reasons.append("source")
 
         if not reasons:

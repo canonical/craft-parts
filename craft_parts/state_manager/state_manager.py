@@ -210,7 +210,7 @@ class StateManager:
         """
         if (
             not self.has_step_run(part, step)
-            or self.outdated_report(part, step) is not None
+            or self.check_if_outdated(part, step) is not None
             # TODO: test dirty report
         ):
             return True
@@ -221,8 +221,8 @@ class StateManager:
 
         return False
 
-    def outdated_report(self, part: Part, step: Step) -> Optional[OutdatedReport]:
-        """Return an OutdatedReport class describing why the step is outdated.
+    def check_if_outdated(self, part: Part, step: Step) -> Optional[OutdatedReport]:
+        """Verify whether a step is outdated.
 
         A step is considered to be outdated if an earlier step in the lifecycle
         has been run more recently, or if the source code changed on disk.
@@ -230,8 +230,9 @@ class StateManager:
         the previous step. This is in contrast to a "dirty" step, which must
         be cleaned and run again.
 
-        :param steps.Step step: The step to be checked.
-        :returns: OutdatedReport if the step is outdated, None otherwise.
+        :param step: The step to be checked.
+
+        :return: An OutdatedReport if the step is outdated, None otherwise.
         """
         if self._state_db.is_step_updated(part_name=part.name, step=step):
             return None
