@@ -26,6 +26,8 @@ class PluginProperties:
     classes and populated from a dictionary containing part properties.
     """
 
+    # pylint: disable=unused-argument
+
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "PluginProperties":
         """Populate class attributes from the part specification.

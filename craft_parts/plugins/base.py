@@ -17,7 +17,7 @@
 """Plugin base class and definitions."""
 
 import abc
-from typing import Dict, List, Optional, Set, Type
+from typing import Dict, List, Set, Type
 
 from craft_parts.infos import PartInfo
 
@@ -29,20 +29,15 @@ class Plugin(abc.ABC):
 
     :cvar properties_class: The plugin properties class.
 
-    :param part_info: the part information for the applicable part.
-    :param options: an object representing part defined properties.
+    :param part_info: The part information for the applicable part.
+    :param properties: Part-defined properties.
     """
 
     properties_class: Type[PluginProperties]
 
-    def __init__(
-        self, *, options: Optional[PluginProperties], part_info: PartInfo
-    ) -> None:
-        if not options:
-            options = PluginProperties()
-
+    def __init__(self, *, properties: PluginProperties, part_info: PartInfo) -> None:
         self._name = part_info.part_name
-        self._options = options
+        self._options = properties
         self._part_info = part_info
 
     @abc.abstractmethod
