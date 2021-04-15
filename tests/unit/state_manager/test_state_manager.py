@@ -253,7 +253,7 @@ class TestStateManager:
         s1.write(Path("parts/p1/state/build"))
 
         # but p1 pull ran more recently
-        time.sleep(0.1)
+        time.sleep(0.02)
         s1 = states.StageState()
         s1.write(Path("parts/p1/state/pull"))
 
@@ -291,7 +291,7 @@ class TestOutdatedReport:
         s1.write(Path("parts/p1/state/build"))
 
         # but p1 pull ran more recently
-        time.sleep(0.1)
+        time.sleep(0.02)
         s1 = states.StageState()
         s1.write(Path("parts/p1/state/pull"))
 
@@ -326,12 +326,14 @@ class TestHelpers:
         s4 = states.PrimeState()
 
         # create state files
+        # use 20ms interval to avoid creating files with the same timestamp on
+        # systems with low ticks resolution
         s4.write(Path("parts/bar/state/prime"))
-        time.sleep(0.1)
+        time.sleep(0.02)
         s3.write(Path("parts/bar/state/pull"))
-        time.sleep(0.1)
+        time.sleep(0.02)
         s1.write(Path("parts/foo/state/pull"))
-        time.sleep(0.1)
+        time.sleep(0.02)
         s2.write(Path("parts/foo/state/build"))
 
         slist = state_manager._sort_steps_by_state_timestamp([p1, p2])
