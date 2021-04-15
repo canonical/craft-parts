@@ -16,13 +16,19 @@
 
 """Provide a report on why a step is outdated."""
 
-from collections import namedtuple
+from dataclasses import dataclass
 from typing import List
 
 from craft_parts.steps import Step
 from craft_parts.utils import formatting_utils
 
-Dependency = namedtuple("Dependency", ["part_name", "step"])
+
+@dataclass(frozen=True)
+class Dependency:
+    """The part and step that are a prerequisite to another step."""
+
+    part_name: str
+    step: Step
 
 
 class OutdatedReport:
