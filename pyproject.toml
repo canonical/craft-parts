@@ -24,7 +24,6 @@ extension-pkg-whitelist = [
     "pydantic"
 ]
 load-plugins = "pylint_fixme_info"
-max-branches = 20
 
 [tool.black]
 exclude = '/((\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist|parts|stage|prime)/|setup.py)'

@@ -99,6 +99,7 @@ class DirtyReport:
         self.dirty_project_options = dirty_project_options
         self.changed_dependencies = changed_dependencies
 
+    # pylint: disable=too-many-branches
     def reason(self) -> str:
         """Get summarized report.
 
@@ -139,3 +140,5 @@ class DirtyReport:
             return ""
 
         return "{} changed".format(formatting_utils.humanize_list(reasons, "and", "{}"))
+
+    # pylint: enable=too-many-branches
