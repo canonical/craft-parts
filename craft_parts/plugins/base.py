@@ -29,7 +29,7 @@ class Plugin(abc.ABC):
 
     :cvar properties_class: The plugin properties class.
 
-    :param part_name: the name of the part this plugin is instantiated to.
+    :param part_info: the part information for the applicable part.
     :param options: an object representing part defined properties.
     """
 
@@ -58,7 +58,7 @@ class Plugin(abc.ABC):
         """Return a dictionary with the environment to use in the build step."""
 
     @property
-    def out_of_source_build(self):
+    def out_of_source_build(self) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return False
 
