@@ -15,10 +15,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from pathlib import Path
 
 import pytest
 
 from craft_parts.utils import os_utils
+
+
+class TestTimedWriter:
+    """Check if minimum interval ensured between writes."""
+
+    @pytest.mark.usefixtures("new_dir")
+    def test_timed_write(self, mocker):
+        mock_time = mocker.patch("time.time")
+        mock_sleep = mocker.patch("time.sleep")
+
+        # a long time has passed since the last write
+        mock_time.return_value = os_utils.TimedWriter._last_write_time + 1
+        os_utils.TimedWriter.write_text(Path("foo"), "content")
+        mock_sleep.assert_not_called()
+
+        # no time passed since the last write
+        os_utils.TimedWriter.write_text(Path("bar"), "content")
+        mock_sleep.assert_called_with(pytest.approx(0.02, 0.00001))
+
+        # some time passed since the last write
+        mock_time.return_value = os_utils.TimedWriter._last_write_time + 0.005
+        os_utils.TimedWriter.write_text(Path("baz"), "content")
+        mock_sleep.assert_called_with(pytest.approx(0.015, 0.00001))
 
 
 class TestTerminal:

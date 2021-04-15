@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import dataclasses
-import time
 from pathlib import Path
 
 import pytest
@@ -302,7 +301,6 @@ class TestStateManager:
         s1.write(Path("parts/p1/state/build"))
 
         # but p1 pull ran more recently
-        time.sleep(0.02)
         s1 = states.PullState(part_properties=part_properties)
         s1.write(Path("parts/p1/state/pull"))
 
@@ -325,7 +323,6 @@ class TestStateManager:
         # p1 pull and build already ran
         s1 = states.PullState(part_properties=part_properties)
         s1.write(Path("parts/p1/state/pull"))
-        time.sleep(0.02)
         s2 = states.BuildState(part_properties=part_properties)
         s2.write(Path("parts/p1/state/build"))
 
@@ -366,7 +363,6 @@ class TestStepOutdated:
         s1.write(Path("parts/p1/state/build"))
 
         # but p1 pull ran more recently
-        time.sleep(0.02)
         s1 = states.StageState()
         s1.write(Path("parts/p1/state/pull"))
 
@@ -408,7 +404,6 @@ class TestStepDirty:
         # p1 pull and build already ran
         s1 = states.PullState(part_properties=part_properties)
         s1.write(Path("parts/p1/state/pull"))
-        time.sleep(0.02)
         s2 = states.BuildState(part_properties=part_properties)
         s2.write(Path("parts/p1/state/build"))
 
@@ -441,18 +436,14 @@ class TestStepDirty:
         # p2 pull/build/stage already ran
         s2 = states.PullState(part_properties=p2_properties)
         s2.write(Path("parts/p2/state/pull"))
-        time.sleep(0.02)
         s2 = states.BuildState(part_properties=p2_properties)
         s2.write(Path("parts/p2/state/build"))
-        time.sleep(0.02)
         s2 = states.StageState(part_properties=p2_properties)
         s2.write(Path("parts/p2/state/stage"))
 
         # p1 pull/build already ran
-        time.sleep(0.02)
         s1 = states.PullState(part_properties=p1_properties)
         s1.write(Path("parts/p1/state/pull"))
-        time.sleep(0.02)
         s1 = states.BuildState(part_properties=p1_properties)
         s1.write(Path("parts/p1/state/build"))
 
@@ -492,10 +483,8 @@ class TestStepDirty:
         p2 = Part("p2", {})
 
         # p1 pull/build already ran
-        time.sleep(0.02)
         s1 = states.PullState(part_properties=p1_properties)
         s1.write(Path("parts/p1/state/pull"))
-        time.sleep(0.02)
         s1 = states.BuildState(part_properties=p1_properties)
         s1.write(Path("parts/p1/state/build"))
 
@@ -528,11 +517,8 @@ class TestHelpers:
         # use 20ms interval to avoid creating files with the same timestamp on
         # systems with low ticks resolution
         s4.write(Path("parts/bar/state/prime"))
-        time.sleep(0.02)
         s3.write(Path("parts/bar/state/pull"))
-        time.sleep(0.02)
         s1.write(Path("parts/foo/state/pull"))
-        time.sleep(0.02)
         s2.write(Path("parts/foo/state/build"))
 
         slist = state_manager._sort_steps_by_state_timestamp([p1, p2])
