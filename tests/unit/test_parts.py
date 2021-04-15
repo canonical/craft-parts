@@ -102,7 +102,7 @@ class TestPartData:
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
-    def test_part_src_build_subdir(self, new_dir):
+    def test_part_subdirs(self, new_dir):
         p = Part("foo", {"source-subdir": "foobar"})
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
