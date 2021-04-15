@@ -24,6 +24,7 @@ from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
+from .reports import OutdatedReport
 from .states import StepState, load_state, state_file_path
 
 
@@ -191,6 +192,66 @@ class StateManager:
         :return: Whether the step has already run.
         """
         return self._state_db.test(part_name=part.name, step=step)
+
+    def should_step_run(self, part: Part, step: Step) -> bool:
+        """Determine if a given step of a given part should run.
+
+        A given step should run if:
+            1. it hasn't already run
+            2. it's dirty
+            3. it's outdated
+            4. either (1), (2), or (3) apply to any earlier steps in the
+               part's lifecycle.
+
+        :param part: The part the step to be verified belongs to.
+        :param step: The step to verify.
+
+        :return: Whether the step should run.
+        """
+        if (
+            not self.has_step_run(part, step)
+            or self.check_if_outdated(part, step) is not None
+            # TODO: test dirty report
+        ):
+            return True
+
+        previous_steps = step.previous_steps()
+        if previous_steps:
+            return self.should_step_run(part, previous_steps[-1])
+
+        return False
+
+    def check_if_outdated(self, part: Part, step: Step) -> Optional[OutdatedReport]:
+        """Verify whether a step is outdated.
+
+        A step is considered to be outdated if an earlier step in the lifecycle
+        has been run more recently, or if the source code changed on disk.
+        This means the step needs to be updated by taking modified files from
+        the previous step. This is in contrast to a "dirty" step, which must
+        be cleaned and run again.
+
+        :param step: The step to be checked.
+
+        :return: An OutdatedReport if the step is outdated, None otherwise.
+        """
+        if self._state_db.is_step_updated(part_name=part.name, step=step):
+            return None
+
+        stw = self._state_db.get(part_name=part.name, step=step)
+        if not stw:
+            return None
+
+        # TODO: verify if the source is outdated according to the source handler
+
+        for previous_step in reversed(step.previous_steps()):
+            # Has a previous step run since this one ran? Then this
+            # step needs to be updated.
+            previous_stw = self._state_db.get(part_name=part.name, step=previous_step)
+
+            if previous_stw and previous_stw.is_newer_than(stw):
+                return OutdatedReport(previous_step_modified=previous_step)
+
+        return None
 
 
 def _sort_steps_by_state_timestamp(

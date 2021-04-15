@@ -222,6 +222,95 @@ class TestStateManager:
                 ran = sm.has_step_run(part, step)
                 assert ran == (part == p2 and step == Step.BUILD)
 
+    def test_should_step_run_trivial(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        for step in list(Step):
+            assert sm.should_step_run(p1, step) is True
+
+    def test_should_step_run_step_already_ran(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        # p1 pull already ran
+        s1 = states.StageState()
+        s1.write(Path("parts/p1/state/pull"))
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        for step in list(Step):
+            assert sm.should_step_run(p1, step) == (step != Step.PULL)
+
+    def test_should_step_run_outdated(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        # p1 build already ran
+        s1 = states.BuildState()
+        s1.write(Path("parts/p1/state/build"))
+
+        # but p1 pull ran more recently
+        time.sleep(0.02)
+        s1 = states.StageState()
+        s1.write(Path("parts/p1/state/pull"))
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        for step in list(Step):
+            assert sm.should_step_run(p1, step) == (step >= Step.BUILD)
+
+        # and we updated it!
+        sm._state_db.rewrap(part_name="p1", step=Step.BUILD, step_updated=True)
+
+        for step in list(Step):
+            assert sm.should_step_run(p1, step) == (step >= Step.STAGE)
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestOutdatedReport:
+    """Verify outdated step checks."""
+
+    def test_not_outdated(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        for step in list(Step):
+            assert sm.check_if_outdated(p1, step) is None
+
+    def test_outdated(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        # p1 build already ran
+        s1 = states.BuildState()
+        s1.write(Path("parts/p1/state/build"))
+
+        # but p1 pull ran more recently
+        time.sleep(0.02)
+        s1 = states.StageState()
+        s1.write(Path("parts/p1/state/pull"))
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        for step in list(Step):
+            report = sm.check_if_outdated(p1, step)
+            if step == Step.BUILD:
+                assert report is not None
+                assert report.reason() == "'PULL' step changed"
+            else:
+                assert report is None
+
+        # and we updated it!
+        sm._state_db.rewrap(part_name="p1", step=Step.BUILD, step_updated=True)
+
+        for step in list(Step):
+            assert sm.check_if_outdated(p1, step) is None
+
 
 @pytest.mark.usefixtures("new_dir")
 class TestHelpers:
@@ -237,12 +326,14 @@ class TestHelpers:
         s4 = states.PrimeState()
 
         # create state files
+        # use 20ms interval to avoid creating files with the same timestamp on
+        # systems with low ticks resolution
         s4.write(Path("parts/bar/state/prime"))
-        time.sleep(0.1)
+        time.sleep(0.02)
         s3.write(Path("parts/bar/state/pull"))
-        time.sleep(0.1)
+        time.sleep(0.02)
         s1.write(Path("parts/foo/state/pull"))
-        time.sleep(0.1)
+        time.sleep(0.02)
         s2.write(Path("parts/foo/state/build"))
 
         slist = state_manager._sort_steps_by_state_timestamp([p1, p2])
