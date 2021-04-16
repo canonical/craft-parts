@@ -349,6 +349,10 @@ class StateManager:
 
         return None
 
+    def mark_step_updated(self, part: Part, step: Step):
+        """Mark the given part and step as updated."""
+        self._state_db.rewrap(part_name=part.name, step=step, step_updated=True)
+
 
 def _sort_steps_by_state_timestamp(
     part_list: List[Part],

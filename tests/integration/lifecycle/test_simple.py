@@ -19,7 +19,7 @@ import textwrap
 import yaml
 
 import craft_parts
-from craft_parts import Step
+from craft_parts import Action, ActionType, Step
 
 parts_yaml = textwrap.dedent(
     """\
@@ -40,6 +40,25 @@ parts_yaml = textwrap.dedent(
 def test_actions_simple(new_dir, mocker):
     parts = yaml.safe_load(parts_yaml)
 
+    # first run
+    # command: pull
     lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
     actions = lf.plan(Step.PULL)
-    assert actions == []
+    assert actions == [
+        Action("foo", Step.PULL),
+        Action("bar", Step.PULL),
+        Action("foobar", Step.PULL),
+    ]
+
+    # foobar part depends on nothing
+    # command: prime foobar
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    actions = lf.plan(Step.PRIME, ["foobar"])
+    assert actions == [
+        # FIXME: this will be skipped after the executor writes state to disk
+        # Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foobar", Step.PULL, action_type=ActionType.RUN, reason=None),
+        Action("foobar", Step.BUILD),
+        Action("foobar", Step.STAGE),
+        Action("foobar", Step.PRIME),
+    ]
