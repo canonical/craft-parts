@@ -222,6 +222,53 @@ class TestStateManager:
                 ran = sm.has_step_run(part, step)
                 assert ran == (part == p2 and step == Step.BUILD)
 
+    def test_update_state_timestamp(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        sm.set_state(p1, Step.PULL, state=states.PullState())
+        sm.set_state(p1, Step.BUILD, state=states.BuildState())
+
+        # state 1 is older than state 2
+        stw1 = sm._state_db.get(part_name="p1", step=Step.PULL)
+        stw2 = sm._state_db.get(part_name="p1", step=Step.BUILD)
+        assert stw1 is not None
+        assert stw2 is not None
+        assert stw2.is_newer_than(stw1)
+
+        # update the timestamp of state 1
+        sm.update_state_timestamp(p1, Step.PULL)
+
+        # now state 1 is newer than state 2
+        stw1 = sm._state_db.get(part_name="p1", step=Step.PULL)
+        assert stw1 is not None
+        assert stw1.is_newer_than(stw2)
+
+    def test_clean_part(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        # add states for all steps
+        sm.set_state(p1, Step.PULL, state=states.PullState())
+        sm.set_state(p1, Step.BUILD, state=states.BuildState())
+        sm.set_state(p1, Step.STAGE, state=states.StageState())
+        sm.set_state(p1, Step.PRIME, state=states.PrimeState())
+
+        # make sure steps were added to the database
+        for step in list(Step):
+            assert sm._state_db.get(part_name="p1", step=step) is not None
+
+        # now clean the first step
+        sm.clean_part(p1, Step.PULL)
+
+        # all steps are now gone
+        for step in list(Step):
+            assert sm._state_db.get(part_name="p1", step=step) is None
+
     def test_should_step_run_trivial(self):
         info = ProjectInfo()
         p1 = Part("p1", {})

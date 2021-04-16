@@ -183,6 +183,23 @@ class StateManager:
         stw = self._state_db.wrap_state(state)
         self._state_db.set(part_name=part.name, step=step, state=stw)
 
+    def update_state_timestamp(self, part: Part, step: Step) -> None:
+        """Mark the step as recently modified.
+
+        :param part: The part corresponding to the state to update.
+        :param step: The step corresponding to the state to update.
+        """
+        self._state_db.rewrap(part_name=part.name, step=step)
+
+    def clean_part(self, part: Part, step: Step) -> None:
+        """Remove the state for this and later steps in the given part.
+
+        :param part: The part corresponding to the state to remove.
+        :param step: The step corresponding to the state to remove.
+        """
+        for next_step in [step] + step.next_steps():
+            self._state_db.remove(part_name=part.name, step=next_step)
+
     def has_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part has already run.
 
