@@ -25,9 +25,15 @@ def calculate_hash(filename: str, *, algorithm: str) -> str:
 
     :param filename: The path to the file to digest.
     :param algorithm: The algorithm to use, as defined by ``hashlib``.
+
+    :return: The file hash.
+
+    :raise ValueError: If the algorithm is unsupported.
     """
-    # This will raise an AttributeError if algorithm is unsupported
-    hasher = getattr(hashlib, algorithm)()
+    if algorithm not in hashlib.algorithms_available:
+        raise ValueError(f"unsupported algorithm {algorithm!r}")
+
+    hasher = hashlib.new(algorithm)
 
     for block in _file_reader_iter(filename):
         hasher.update(block)

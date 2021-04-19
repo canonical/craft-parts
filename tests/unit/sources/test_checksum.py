@@ -61,9 +61,9 @@ def test_verify_checksum_happy(tc_checksum, tc_checkfile):
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_invalid_algorithm():
     Path("checkfile").write_text("content")
-    with pytest.raises(AttributeError) as raised:
+    with pytest.raises(ValueError) as raised:
         checksum.verify_checksum("invalid/digest", "checkfile")
-    assert str(raised.value) == "module 'hashlib' has no attribute 'invalid'"
+    assert str(raised.value) == "unsupported algorithm 'invalid'"
 
 
 @pytest.mark.usefixtures("new_dir")
