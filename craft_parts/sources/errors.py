@@ -32,3 +32,34 @@ class ChecksumMismatch(SourceError):
         brief = f"Expected digest {expected}, obtained {obtained}."
 
         super().__init__(brief=brief)
+
+
+class SourceUpdateUnsupported(SourceError):
+    """The source handler doesn't support updating."""
+
+    def __init__(self, name: str):
+        self.name = name
+        brief = f"Failed to update source: {name!r} sources don't support updating."
+
+        super().__init__(brief=brief)
+
+
+class NetworkRequestError(SourceError):
+    """A network request operation failed."""
+
+    def __init__(self, message: str):
+        self.message = message
+        brief = f"Network request error: {message}."
+        resolution = "Check the network and try again."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class SourceNotFound(SourceError):
+    """Failed to retrieve a source."""
+
+    def __init__(self, source: str):
+        self.source = source
+        brief = f"Failed to pull source: {source!r} not found."
+        resolution = "Make sure the source path is correct and accessible."
+        super().__init__(brief=brief, resolution=resolution)
