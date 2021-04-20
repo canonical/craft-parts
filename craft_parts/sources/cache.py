@@ -16,7 +16,6 @@
 
 """Cache base and file cache."""
 
-import abc
 import logging
 import os
 import shutil
@@ -27,16 +26,7 @@ from xdg import BaseDirectory  # type: ignore
 logger = logging.getLogger(__name__)
 
 
-class Cache(abc.ABC):
-    """Generic cache base class."""
-
-    def __init__(self, name: str):
-        self.cache_root = os.path.join(
-            BaseDirectory.xdg_cache_home, name, "craft-parts"
-        )
-
-
-class FileCache(Cache):
+class FileCache:
     """Cache files based on the supplied key."""
 
     def __init__(self, name: str, *, namespace: str = "files") -> None:
@@ -44,7 +34,9 @@ class FileCache(Cache):
 
         :param str namespace: The namespace for the cache (default is "files").
         """
-        super().__init__(name)
+        self.cache_root = os.path.join(
+            BaseDirectory.xdg_cache_home, name, "craft-parts"
+        )
         self.file_cache = os.path.join(self.cache_root, namespace)
 
     def cache(self, *, filename: str, key: str) -> Optional[str]:
