@@ -9,6 +9,7 @@ pylint
 pylint-fixme-info
 pytest
 pytest-mock
+requests-mock
 sphinx
 sphinx-autodoc-typehints
 sphinx-rtd-theme
