@@ -281,9 +281,10 @@ class TestStateManager:
     def test_should_step_run_step_already_ran(self):
         info = ProjectInfo()
         p1 = Part("p1", {})
+        part_properties = p1.spec.marshal()
 
         # p1 pull already ran
-        s1 = states.StageState()
+        s1 = states.StageState(part_properties=part_properties)
         s1.write(Path("parts/p1/state/pull"))
 
         sm = StateManager(project_info=info, part_list=[p1])
@@ -294,14 +295,15 @@ class TestStateManager:
     def test_should_step_run_outdated(self):
         info = ProjectInfo()
         p1 = Part("p1", {})
+        part_properties = p1.spec.marshal()
 
         # p1 build already ran
-        s1 = states.BuildState()
+        s1 = states.BuildState(part_properties=part_properties)
         s1.write(Path("parts/p1/state/build"))
 
         # but p1 pull ran more recently
         time.sleep(0.02)
-        s1 = states.StageState()
+        s1 = states.PullState(part_properties=part_properties)
         s1.write(Path("parts/p1/state/pull"))
 
         sm = StateManager(project_info=info, part_list=[p1])
@@ -315,9 +317,35 @@ class TestStateManager:
         for step in list(Step):
             assert sm.should_step_run(p1, step) == (step >= Step.STAGE)
 
+    def test_should_step_run_dirty(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+        part_properties = p1.spec.marshal()
+
+        # p1 pull and build already ran
+        s1 = states.PullState(part_properties=part_properties)
+        s1.write(Path("parts/p1/state/pull"))
+        time.sleep(0.02)
+        s2 = states.BuildState(part_properties=part_properties)
+        s2.write(Path("parts/p1/state/build"))
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        # we're clean, steps STAGE and PRIME should run
+        for step in list(Step):
+            assert sm.should_step_run(p1, step) == (step > Step.BUILD)
+
+        # make the build step dirty
+        stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
+        stw.state.part_properties["build-packages"] = ["new_pkg"]
+
+        # now build should run again
+        for step in list(Step):
+            assert sm.should_step_run(p1, step) == (step >= Step.BUILD)
+
 
 @pytest.mark.usefixtures("new_dir")
-class TestOutdatedReport:
+class TestStepOutdated:
     """Verify outdated step checks."""
 
     def test_not_outdated(self):
@@ -357,6 +385,130 @@ class TestOutdatedReport:
 
         for step in list(Step):
             assert sm.check_if_outdated(p1, step) is None
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestStepDirty:
+    """Verify dirty step checks."""
+
+    def test_not_dirty(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        for step in list(Step):
+            assert sm.check_if_dirty(p1, step) is None
+
+    def test_dirty_property(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {})
+        part_properties = p1.spec.marshal()
+
+        # p1 pull and build already ran
+        s1 = states.PullState(part_properties=part_properties)
+        s1.write(Path("parts/p1/state/pull"))
+        time.sleep(0.02)
+        s2 = states.BuildState(part_properties=part_properties)
+        s2.write(Path("parts/p1/state/build"))
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        # check if dirty, all steps are clean
+        for step in list(Step):
+            assert sm.check_if_dirty(p1, step) is None
+
+        # make the build step dirty
+        stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
+        stw.state.part_properties["build-packages"] = ["new_pkg"]
+
+        # now check again if dirty
+        for step in list(Step):
+            report = sm.check_if_dirty(p1, step)
+            if step == Step.BUILD:
+                assert report is not None
+                assert report.reason() == "'build-packages' property changed"
+            else:
+                assert report is None
+
+    def test_dirty_dependency(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {"after": ["p2"]})
+        p1_properties = p1.spec.marshal()
+        p2 = Part("p2", {})
+        p2_properties = p2.spec.marshal()
+
+        # p2 pull/build/stage already ran
+        s2 = states.PullState(part_properties=p2_properties)
+        s2.write(Path("parts/p2/state/pull"))
+        time.sleep(0.02)
+        s2 = states.BuildState(part_properties=p2_properties)
+        s2.write(Path("parts/p2/state/build"))
+        time.sleep(0.02)
+        s2 = states.StageState(part_properties=p2_properties)
+        s2.write(Path("parts/p2/state/stage"))
+
+        # p1 pull/build already ran
+        time.sleep(0.02)
+        s1 = states.PullState(part_properties=p1_properties)
+        s1.write(Path("parts/p1/state/pull"))
+        time.sleep(0.02)
+        s1 = states.BuildState(part_properties=p1_properties)
+        s1.write(Path("parts/p1/state/build"))
+
+        sm = StateManager(project_info=info, part_list=[p1, p2])
+
+        # check if dirty, all steps are clean
+        for part in [p1, p2]:
+            for step in list(Step):
+                assert sm.check_if_dirty(part, step) is None
+
+        # make p2 stage step dirty
+        stw = sm._state_db.get(part_name="p2", step=Step.STAGE)
+        stw.state.part_properties["stage"] = ["new_entry"]
+
+        # now check if p1:build is dirty
+        for step in list(Step):
+            report = sm.check_if_dirty(p1, step)
+            if step == Step.BUILD:
+                assert report is not None
+                assert report.reason() == "'p2' changed"
+            else:
+                assert report is None
+
+        # and if p2:stage is also dirty
+        for step in list(Step):
+            report = sm.check_if_dirty(p2, step)
+            if step == Step.STAGE:
+                assert report is not None
+                assert report.reason() == "'stage' property changed"
+            else:
+                assert report is None
+
+    def test_dirty_dependency_didnt_run(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {"after": ["p2"]})
+        p1_properties = p1.spec.marshal()
+        p2 = Part("p2", {})
+
+        # p1 pull/build already ran
+        time.sleep(0.02)
+        s1 = states.PullState(part_properties=p1_properties)
+        s1.write(Path("parts/p1/state/pull"))
+        time.sleep(0.02)
+        s1 = states.BuildState(part_properties=p1_properties)
+        s1.write(Path("parts/p1/state/build"))
+
+        sm = StateManager(project_info=info, part_list=[p1, p2])
+
+        # check if dirty
+        for step in list(Step):
+            report = sm.check_if_dirty(p1, step)
+            if step == Step.BUILD:
+                assert report is not None
+                assert report.reason() == "'p2' changed"
+            else:
+                assert report is None
 
 
 @pytest.mark.usefixtures("new_dir")

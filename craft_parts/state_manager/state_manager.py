@@ -17,15 +17,19 @@
 """Part crafter step state management."""
 
 import itertools
+import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
+from craft_parts import parts, steps
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
-from .reports import OutdatedReport
+from .reports import Dependency, DirtyReport, OutdatedReport
 from .states import StepState, load_state, state_file_path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -228,7 +232,7 @@ class StateManager:
         if (
             not self.has_step_run(part, step)
             or self.check_if_outdated(part, step) is not None
-            # TODO: test dirty report
+            or self.check_if_dirty(part, step) is not None
         ):
             return True
 
@@ -247,10 +251,13 @@ class StateManager:
         the previous step. This is in contrast to a "dirty" step, which must
         be cleaned and run again.
 
+        :param part: The part the step to be checked belongs to.
         :param step: The step to be checked.
 
-        :return: An OutdatedReport if the step is outdated, None otherwise.
+        :return: An class:`OutdatedReport` if the step is outdated, None otherwise.
         """
+        logger.debug("check if %s:%s is outdated", part, step)
+
         if self._state_db.is_step_updated(part_name=part.name, step=step):
             return None
 
@@ -267,6 +274,78 @@ class StateManager:
 
             if previous_stw and previous_stw.is_newer_than(stw):
                 return OutdatedReport(previous_step_modified=previous_step)
+
+        return None
+
+    def check_if_dirty(self, part: Part, step: Step) -> Optional[DirtyReport]:
+        """Verify whether a step is dirty.
+
+        A step is considered to be dirty if relevant properties or project
+        options have changed since the step was executed. This means the step
+        needs to be cleaned and run again. This is in contrast to an "outdated"
+        step, which typically doesn't need to be cleaned, just updated with
+        files from an earlier step in the lifecycle.
+
+        :param part: The part the step to be checked belongs to.
+        :param step: The step to be checked.
+
+        :return: A class:`DirtyReport` if the step is outdated, None otherwise.
+        """
+        logger.debug("check if %s:%s is dirty", part, step)
+
+        # Retrieve the stored state for this step (assuming it has already run)
+        stw = self._state_db.get(part_name=part.name, step=step)
+        if not stw:
+            # step didn't run yet
+            return None
+
+        state = stw.state
+
+        # state contains the old state for this part and step, and we're
+        # comparing it to those same properties and options in the current
+        # state. If they've changed, then this step is dirty and needs to
+        # run again.
+        part_properties = part.spec.marshal()
+        properties = state.diff_properties_of_interest(part_properties)
+        options = state.diff_project_options_of_interest(
+            self._project_info.project_options
+        )
+
+        if properties or options:
+            return DirtyReport(
+                dirty_properties=list(properties),
+                dirty_project_options=list(options),
+            )
+
+        prerequisite_step = steps.dependency_prerequisite_step(step)
+        if not prerequisite_step:
+            return None
+
+        # The part is clean, check its dependencies
+
+        dependencies = parts.part_dependencies(
+            part.name, part_list=self._part_list, recursive=True
+        )
+
+        changed_dependencies: List[Dependency] = []
+        for dependency in dependencies:
+            prerequisite_stw = self._state_db.get(
+                part_name=dependency.name, step=prerequisite_step
+            )
+            if prerequisite_stw:
+                dependency_changed = prerequisite_stw.is_newer_than(stw)
+            else:
+                dependency_changed = True
+
+            if dependency_changed or self.should_step_run(
+                dependency, prerequisite_step
+            ):
+                changed_dependencies.append(
+                    Dependency(part_name=dependency.name, step=prerequisite_step)
+                )
+
+        if changed_dependencies:
+            return DirtyReport(changed_dependencies=changed_dependencies)
 
         return None
 
