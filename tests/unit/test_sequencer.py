@@ -140,7 +140,7 @@ def test_sequencer_rerun_step(mocker, step, state_class):
         (Step.PRIME, states.PrimeState),
     ],
 )
-def test_sequencer_update_step(mocker, step, state_class):
+def test_sequencer_update_step(step, state_class):
     info = ProjectInfo(arch="aarch64", application_name="test")
     p1 = Part("p1", {})
     s1 = state_class()

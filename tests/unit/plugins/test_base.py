@@ -26,6 +26,7 @@ from craft_parts.plugins import Plugin, PluginProperties
 
 @dataclass
 class FooPluginProperties(PluginProperties):
+    """Test plugin properties."""
 
     name: str
 
@@ -35,6 +36,7 @@ class FooPluginProperties(PluginProperties):
 
 
 class FooPlugin(Plugin):
+    """An empty plugin."""
 
     properties_class = FooPluginProperties.unmarshal({})
 
@@ -70,13 +72,14 @@ def test_plugin():
 
 def test_abstract_methods():
     class FaultyPlugin(Plugin):
-        pass
+        """A plugin that doesn't implement abstract methods."""
 
     part = Part("p1", {})
     project_info = ProjectInfo()
     part_info = PartInfo(project_info=project_info, part=part)
 
     with pytest.raises(TypeError) as raised:
+        # pylint: disable=abstract-class-instantiated
         FaultyPlugin(properties=None, part_info=part_info)  # type: ignore
     assert str(raised.value) == (
         "Can't instantiate abstract class FaultyPlugin with abstract methods "
