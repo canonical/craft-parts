@@ -17,6 +17,8 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Set, cast
 
+import pytest
+
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginProperties
@@ -64,3 +66,19 @@ def test_plugin():
     assert plugin.get_build_environment() == {"ENV": "value"}
     assert plugin.out_of_source_build is False
     assert plugin.get_build_commands() == ["hello", "world"]
+
+
+def test_abstract_methods():
+    class FaultyPlugin(Plugin):
+        pass
+
+    part = Part("p1", {})
+    project_info = ProjectInfo()
+    part_info = PartInfo(project_info=project_info, part=part)
+
+    with pytest.raises(TypeError) as raised:
+        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore
+    assert str(raised.value) == (
+        "Can't instantiate abstract class FaultyPlugin with abstract methods "
+        "get_build_commands, get_build_environment, get_build_packages, get_build_snaps"
+    )
