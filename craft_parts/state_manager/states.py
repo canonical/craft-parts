@@ -41,6 +41,8 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
     :param step: The step corresponding to the state to load.
 
     :return: The step state.
+
+    :raise RuntimeError: If step is invalid.
     """
     filename = state_file_path(part, step)
     if not filename.is_file():
@@ -56,8 +58,10 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
         state_class = BuildState
     elif step == Step.STAGE:
         state_class = StageState
-    else:
+    elif step == Step.PRIME:
         state_class = PrimeState
+    else:
+        raise RuntimeError(f"invalid step {step!r}")
 
     return state_class.unmarshal(state_data)
 

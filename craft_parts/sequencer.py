@@ -140,13 +140,16 @@ class Sequencer:
                 directories=set(),
             )
 
-        else:
+        elif step == Step.PRIME:
             state = states.PrimeState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
                 files=set(),
                 directories=set(),
             )
+
+        else:
+            raise RuntimeError(f"invalid step {step!r}")
 
         self._sm.set_state(part, step, state=state)
 

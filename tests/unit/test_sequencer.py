@@ -80,6 +80,16 @@ def test_sequencer_run_step(step, state_class):
     }
 
 
+def test_sequencer_run_step_invalid():
+    info = ProjectInfo(arch="aarch64", application_name="test")
+    p1 = Part("p1", {"stage": ["pkg"]})
+
+    seq = Sequencer(part_list=[p1], project_info=info)
+    with pytest.raises(RuntimeError) as raised:
+        seq._run_step(p1, 999)  # type: ignore
+    assert str(raised.value) == "invalid step 999"
+
+
 @pytest.mark.parametrize(
     "step,state_class",
     [
