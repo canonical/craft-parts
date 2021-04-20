@@ -1,4 +1,6 @@
 PyYAML==5.4.1
+progressbar==2.5
 pydantic==1.8.1
 pydantic-yaml==0.2.3
 pyxdg==0.27
+requests==2.25.1
