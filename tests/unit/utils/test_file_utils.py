@@ -22,7 +22,7 @@ from craft_parts.utils import file_utils
 
 
 @pytest.fixture(autouse=True)
-def setup_module_fixture(new_dir):
+def setup_module_fixture(new_dir):  # pylint: disable=unused-argument
     pass
 
 
@@ -41,4 +41,4 @@ def test_calculate_hash(algo, digest):
 def test_file_reader_iter():
     Path("test_file").write_text("content")
     gen = file_utils._file_reader_iter("test_file", block_size=4)
-    assert [x for x in gen] == [b"cont", b"ent"]
+    assert list(gen) == [b"cont", b"ent"]
