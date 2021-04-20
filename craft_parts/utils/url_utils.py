@@ -72,16 +72,6 @@ def download_request(
     progress_bar.finish()
 
 
-def download_ftp(uri, destination, message=None):
-    """Download from the given URI.
-
-    :param uri: the URI to download from.
-    :param destination: the file to download to."
-    :param message: the progress bar message."
-    """
-    _UrllibDownloader(uri, destination, message).download()
-
-
 def _init_progress_bar(
     total_length: int, destination: str, message=None
 ) -> progressbar.ProgressBar:
@@ -110,34 +100,3 @@ def _init_progress_bar(
         maxval = progressbar.UnknownLength
 
     return progressbar.ProgressBar(widgets=widgets, maxval=maxval)
-
-
-# XXX: maybe refactor to use ftplib
-class _UrllibDownloader:
-    """Download an URI with nice progress bars."""
-
-    def __init__(self, uri, destination, message=None):
-        self.uri = uri
-        self.destination = destination
-        self.message = message
-        self.progress_bar = None
-
-    def download(self):
-        """Download from this URL."""
-        urllib.request.urlretrieve(self.uri, self.destination, self._progress_callback)
-
-        if self.progress_bar:
-            self.progress_bar.finish()
-
-    # TODO:stdmsg: use a standard ui progress bar instead
-    def _progress_callback(self, block_num, block_size, total_length):
-        if not self.progress_bar:
-            self.progress_bar = _init_progress_bar(
-                total_length, self.destination, self.message
-            )
-            self.progress_bar.start()
-
-        total_read = block_num * block_size
-        self.progress_bar.update(
-            min(total_read, total_length) if total_length > 0 else total_read
-        )
