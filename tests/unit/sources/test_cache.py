@@ -16,6 +16,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from craft_parts.sources.cache import FileCache
 from craft_parts.utils import file_utils
 
@@ -51,7 +53,8 @@ def test_file_cache(new_dir):
     assert test_hash == cached_hash
 
 
-def test_file_cache_clean(new_dir):
+@pytest.mark.usefixtures("new_dir")
+def test_file_cache_clean():
     digest = "algo/12345678"
     x = FileCache(name="test")
 
@@ -68,7 +71,8 @@ def test_file_cache_clean(new_dir):
     assert not cached_path.is_file()
 
 
-def test_file_cache_nonfile(new_dir):
+@pytest.mark.usefixtures("new_dir")
+def test_file_cache_nonfile():
     digest = "algo/12345678"
     x = FileCache(name="test")
 
@@ -79,7 +83,8 @@ def test_file_cache_nonfile(new_dir):
     assert result is None
 
 
-def test_file_cache_non_existent(new_dir):
+@pytest.mark.usefixtures("new_dir")
+def test_file_cache_non_existent():
     digest = "algo/12345678"
     x = FileCache(name="test")
 

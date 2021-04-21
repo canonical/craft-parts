@@ -24,3 +24,27 @@ def test_checksum_mismatch():
     assert err.brief == "Expected digest 1234, obtained 5678."
     assert err.details is None
     assert err.resolution is None
+
+
+def test_source_update_unsupported():
+    err = errors.SourceUpdateUnsupported("Xyz")
+    assert err.name == "Xyz"
+    assert err.brief == "Failed to update source: 'Xyz' sources don't support updating."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_network_request_error():
+    err = errors.NetworkRequestError("it failed")
+    assert err.message == "it failed"
+    assert err.brief == "Network request error: it failed."
+    assert err.details is None
+    assert err.resolution == "Check the network and try again."
+
+
+def test_source_not_found():
+    err = errors.SourceNotFound("some_source")
+    assert err.source == "some_source"
+    assert err.brief == "Failed to pull source: 'some_source' not found."
+    assert err.details is None
+    assert err.resolution == "Make sure the source path is correct and accessible."
