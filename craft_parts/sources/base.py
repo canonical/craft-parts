@@ -46,7 +46,7 @@ class SourceHandler(abc.ABC):
     def __init__(
         self,
         source: Union[str, Path],
-        source_dir: Union[str, Path],
+        part_src_dir: Union[str, Path],
         *,
         application_name: str = None,
         source_tag: str = None,
@@ -64,7 +64,7 @@ class SourceHandler(abc.ABC):
             dirs = ProjectDirs()
 
         self.source = str(source)
-        self.source_dir = str(source_dir)
+        self.part_src_dir = str(part_src_dir)
         self.source_tag = source_tag
         self.source_commit = source_commit
         self.source_branch = source_branch
@@ -114,7 +114,7 @@ class FileSourceHandler(SourceHandler):
     def __init__(
         self,
         source: Union[str, Path],
-        source_dir: Union[str, Path],
+        part_src_dir: Union[str, Path],
         *,
         application_name: Optional[str],
         source_tag: str = None,
@@ -127,7 +127,7 @@ class FileSourceHandler(SourceHandler):
     ):
         super().__init__(
             source,
-            source_dir,
+            part_src_dir,
             application_name=application_name,
             source_tag=source_tag,
             source_commit=source_commit,
@@ -158,7 +158,7 @@ class FileSourceHandler(SourceHandler):
             source_file = self.download()
         else:
             basename = os.path.basename(self.source)
-            source_file = os.path.join(self.source_dir, basename)
+            source_file = os.path.join(self.part_src_dir, basename)
             # We make this copy as the provisioning logic can delete
             # this file and we don't want that.
             try:
@@ -172,7 +172,7 @@ class FileSourceHandler(SourceHandler):
 
         # We finally provision, but we don't clean the target so override-pull
         # can actually have meaning when using these sources.
-        self.provision(self.source_dir, src=source_file, clean_target=False)
+        self.provision(self.part_src_dir, src=source_file, clean_target=False)
 
     def download(self, filepath: str = None) -> str:
         """Download the URL from a remote location.
@@ -180,7 +180,7 @@ class FileSourceHandler(SourceHandler):
         :param filepath: the destination file to download to.
         """
         if filepath is None:
-            self._file = os.path.join(self.source_dir, os.path.basename(self.source))
+            self._file = os.path.join(self.part_src_dir, os.path.basename(self.source))
         else:
             self._file = filepath
 

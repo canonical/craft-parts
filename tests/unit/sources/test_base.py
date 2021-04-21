@@ -37,7 +37,7 @@ class TestSourceHandler:
     def setup_method(self):
         self.source = FooSourceHandler(
             source="source",
-            source_dir="source/dir",
+            part_src_dir="parts/foo/src",
         )
 
     def test_source(self):
@@ -64,7 +64,7 @@ class TestSourceHandler:
 
         with pytest.raises(TypeError) as raised:
             # pylint: disable=abstract-class-instantiated
-            FaultySource(source=None, source_dir=None)  # type: ignore
+            FaultySource(source=None, part_src_dir=None)  # type: ignore
         assert str(raised.value) == (
             "Can't instantiate abstract class FaultySource with abstract methods pull"
         )
@@ -89,7 +89,7 @@ class TestFileSourceHandler:
     def setup_method(self):
         self.source = BarFileSource(
             source="source",
-            source_dir="source/dir",
+            part_src_dir="parts/foo/src",
             application_name="app",
         )
 
@@ -105,16 +105,16 @@ class TestFileSourceHandler:
         self.source.source = "src/my_file"
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
-        Path("source/dir").mkdir(parents=True)
+        Path("parts/foo/src").mkdir(parents=True)
 
         self.source.pull()
 
-        assert self.source.provision_dst == "source/dir"
+        assert self.source.provision_dst == "parts/foo/src"
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "source/dir/my_file"
+        assert self.source.provision_src == "parts/foo/src/my_file"
 
-        dest = Path(new_dir, "source", "dir", "my_file")
+        dest = Path(new_dir, "parts", "foo", "src", "my_file")
         assert dest.is_file()
 
     def test_pull_file_error(self):
@@ -129,16 +129,16 @@ class TestFileSourceHandler:
         self.source.source_checksum = "md5/9a0364b9e99bb480dd25e1f0284c8555"
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
-        Path("source/dir").mkdir(parents=True)
+        Path("parts/foo/src").mkdir(parents=True)
 
         self.source.pull()
 
-        assert self.source.provision_dst == "source/dir"
+        assert self.source.provision_dst == "parts/foo/src"
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "source/dir/my_file"
+        assert self.source.provision_src == "parts/foo/src/my_file"
 
-        dest = Path(new_dir, "source", "dir", "my_file")
+        dest = Path(new_dir, "parts", "foo", "src", "my_file")
         assert dest.is_file()
 
     @pytest.mark.usefixtures("new_dir")
@@ -147,7 +147,7 @@ class TestFileSourceHandler:
         self.source.source_checksum = "md5/12345"
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
-        Path("source/dir").mkdir(parents=True)
+        Path("parts/foo/src").mkdir(parents=True)
 
         with pytest.raises(errors.ChecksumMismatch) as raised:
             self.source.pull()
@@ -157,32 +157,32 @@ class TestFileSourceHandler:
     def test_pull_url(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
         requests_mock.get(self.source.source, text="content")
-        Path("source/dir").mkdir(parents=True)
+        Path("parts/foo/src").mkdir(parents=True)
 
         self.source.pull()
 
-        assert self.source.provision_dst == "source/dir"
+        assert self.source.provision_dst == "parts/foo/src"
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "source/dir/some_file"
+        assert self.source.provision_src == "parts/foo/src/some_file"
 
-        downloaded = Path(new_dir, "source", "dir", "some_file")
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()
 
     def test_pull_url_checksum(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
         self.source.source_checksum = "md5/9a0364b9e99bb480dd25e1f0284c8555"
         requests_mock.get(self.source.source, text="content")
-        Path("source/dir").mkdir(parents=True)
+        Path("parts/foo/src").mkdir(parents=True)
 
         self.source.pull()
 
-        assert self.source.provision_dst == "source/dir"
+        assert self.source.provision_dst == "parts/foo/src"
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "source/dir/some_file"
+        assert self.source.provision_src == "parts/foo/src/some_file"
 
-        downloaded = Path(new_dir, "source", "dir", "some_file")
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()
 
         file_cache = cache.FileCache("app")
@@ -193,7 +193,7 @@ class TestFileSourceHandler:
     def test_pull_url_checksum_cached(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
         self.source.source_checksum = "md5/9a0364b9e99bb480dd25e1f0284c8555"
-        Path("source/dir").mkdir(parents=True)
+        Path("parts/foo/src").mkdir(parents=True)
         requests_mock.get(self.source.source, text="other_content")
 
         # pre-cache this file
@@ -203,12 +203,12 @@ class TestFileSourceHandler:
 
         self.source.pull()
 
-        assert self.source.provision_dst == "source/dir"
+        assert self.source.provision_dst == "parts/foo/src"
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "source/dir/some_file"
+        assert self.source.provision_src == "parts/foo/src/some_file"
 
-        downloaded = Path(new_dir, "source", "dir", "some_file")
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()
         assert downloaded.read_bytes() == b"content"
 
@@ -219,7 +219,7 @@ class TestFileSourceHandler:
         with pytest.raises(TypeError) as raised:
             # pylint: disable=abstract-class-instantiated
             FaultyFileSource(
-                source=None, source_dir=None, application_name=""  # type: ignore
+                source=None, part_src_dir=None, application_name=""  # type: ignore
             )
         assert str(raised.value) == (
             "Can't instantiate abstract class FaultyFileSource with abstract "
