@@ -40,7 +40,6 @@ class DumpPluginProperties(PluginProperties):
 
         :raise ValueError: If a required property is not found.
         """
-        # "source" is a required property
         if "source" not in data:
             raise ValueError("'source' is required by the dump plugin")
         return cls()
