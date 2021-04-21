@@ -17,7 +17,9 @@
 """Plugin base class and definitions."""
 
 import abc
-from typing import Dict, List, Set, Type
+from typing import Any, Dict, List, Set, Type
+
+from pydantic import BaseModel
 
 from craft_parts.infos import PartInfo
 
@@ -60,3 +62,40 @@ class Plugin(abc.ABC):
     @abc.abstractmethod
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
+
+
+class PluginModel(BaseModel):
+    """Model for plugins using pydantic validation.
+
+    Plugins with configuration properties can use pydantic validation to unmarshal
+    data from part specs. In this case, extract plugin-specific properties using
+    the :func:`extract_plugin_properties` helper.
+    """
+
+    class Config:
+        """Pydantic model configuration."""
+
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
+
+def extract_plugin_properties(
+    data: Dict[str, Any], *, plugin_name: str
+) -> Dict[str, Any]:
+    """Obtain plugin-specifc entries from part properties.
+
+    :param data: A dictionary containing all part properties.
+    :plugin_name: The name of the plugin.
+
+    :return: A dictionary with plugin properties.
+    """
+    plugin_data: Dict[str, Any] = {}
+    prefix = f"{plugin_name}-"
+
+    for key, value in data.items():
+        if key.startswith(prefix):
+            plugin_data[key] = value
+
+    return plugin_data
