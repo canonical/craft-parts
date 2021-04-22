@@ -29,7 +29,7 @@ class MakePluginProperties(PluginProperties, PluginModel):
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
-        """Populate dump properties from the part specification.
+        """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
 
