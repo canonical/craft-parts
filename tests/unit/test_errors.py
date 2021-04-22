@@ -100,3 +100,23 @@ def test_part_specification_error_from_bad_validation_error():
     assert err.brief == "Part 'foo' validation failed."
     assert err.details == ""
     assert err.resolution == "Review part 'foo' and make sure it's correct."
+
+
+def test_xattribute_read_error():
+    err = errors.XAttributeError(key="name", path="path")
+    assert err.key == "name"
+    assert err.path == "path"
+    assert err.is_write is False
+    assert err.brief == "Unable to read extended attribute."
+    assert err.details == "Failed to read attribute 'name' on 'path'."
+    assert err.resolution == "Make sure your filesystem supports extended attributes."
+
+
+def test_xattribute_write_error():
+    err = errors.XAttributeError(key="name", path="path", is_write=True)
+    assert err.key == "name"
+    assert err.path == "path"
+    assert err.is_write is True
+    assert err.brief == "Unable to write extended attribute."
+    assert err.details == "Failed to write attribute 'name' on 'path'."
+    assert err.resolution == "Make sure your filesystem supports extended attributes."
