@@ -82,7 +82,7 @@ class TestLinkOrCopyTree:
         )
 
     def test_ignore(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda x, y: "3")
+        file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda x, y: ["3"])
         assert not os.path.isfile(os.path.join("qux", "3"))
         assert os.path.isfile(os.path.join("qux", "baz", "4"))
 
@@ -149,7 +149,7 @@ class TestCopy:
 
     def setup_method(self):
         open("1", "w").close()
-    
+
     def test_copy(self):
         file_utils.copy("1", "3")
         assert os.path.isfile("3")
