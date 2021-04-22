@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The make plugin implementation."""
+"""The autotools plugin implementation."""
 
 from typing import Any, Dict, List, Set, cast
 
@@ -22,14 +22,14 @@ from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
 
-class MakePluginProperties(PluginProperties, PluginModel):
-    """The part properties used by the make plugin."""
+class AutotoolsPluginProperties(PluginProperties, PluginModel):
+    """The part properties used by the autotools plugin."""
 
-    make_parameters: List[str] = []
+    autotools_configure_parameters: List[str] = []
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
-        """Populate make properties from the part specification.
+        """Populate autotools properties from the part specification.
 
         :param data: A dictionary containing part properties.
 
@@ -37,31 +37,33 @@ class MakePluginProperties(PluginProperties, PluginModel):
 
         :raise pydantic.ValidationError: If validation fails.
         """
-        plugin_data = extract_plugin_properties(data, plugin_name="make")
+        plugin_data = extract_plugin_properties(data, plugin_name="autotools")
         return cls(**plugin_data)
 
 
-class MakePlugin(Plugin):
-    """A plugin useful for building make-based parts.
+class AutotoolsPlugin(Plugin):
+    """The autotools plugin is used for autotools-based parts.
 
-    Make-based projects are projects that have a Makefile that drives the
-    build.
+    Autotools-based projects are the ones that have the usual
+    `./configure && make && make install` instruction set.
 
-    This plugin always runs 'make' followed by 'make install', except when
-    the 'artifacts' keyword is used.
+    This plugin will check for the existence of a 'configure' file, if one
+    cannot be found, it will first try to run 'autogen.sh' or 'bootstrap'
+    to generate one.
 
     This plugin uses the common plugin keywords as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    In addition, this plugin uses the following plugin-specific keywords:
 
-        - make-parameters
+        - autotools-configure-parameters
           (list of strings)
-          Pass the given parameters to the make command.
+          configure flags to pass to the build such as those shown by running
+          './configure --help'
     """
 
-    properties_class = MakePluginProperties
+    properties_class = AutotoolsPluginProperties
 
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
@@ -69,29 +71,26 @@ class MakePlugin(Plugin):
 
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
-        return {"gcc", "make"}
+        return {"autoconf", "automake", "autopoint", "gcc", "libtool"}
 
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return dict()
 
-    def _get_make_command(self, target: str = "") -> str:
-        cmd = ["make", f'-j"{self._part_info.parallel_build_count}"']
-
-        if target:
-            cmd.append(target)
-
-        options = cast(MakePluginProperties, self._options)
-        cmd.extend(options.make_parameters)
-
+    def _get_configure_command(self) -> str:
+        options = cast(AutotoolsPluginProperties, self._options)
+        cmd = ["./configure"] + options.autotools_configure_parameters
         return " ".join(cmd)
+
+    # pylint: disable=line-too-long
 
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         return [
-            self._get_make_command(),
-            '{} DESTDIR="{}"'.format(
-                self._get_make_command(target="install"),
-                self._part_info.part_install_dir,
-            ),
+            "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
+            "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
+            "[ ! -f ./configure ] && autoreconf --install",
+            self._get_configure_command(),
+            "make -j{}".format(self._part_info.parallel_build_count),
+            'make install DESTDIR="{}"'.format(self._part_info.part_install_dir),
         ]
