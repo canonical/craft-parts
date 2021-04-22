@@ -102,6 +102,22 @@ def test_part_specification_error_from_bad_validation_error():
     assert err.resolution == "Review part 'foo' and make sure it's correct."
 
 
+def test_copy_tree_error():
+    err = errors.CopyTreeError("something bad happened")
+    assert err.message == "something bad happened"
+    assert err.brief == "Failed to copy or link file tree: something bad happened."
+    assert err.details is None
+    assert err.resolution == "Make sure paths and permissions are correct."
+
+
+def test_copy_file_not_found():
+    err = errors.CopyFileNotFound("filename")
+    assert err.name == "filename"
+    assert err.brief == "Failed to copy 'filename': no such file or directory."
+    assert err.details is None
+    assert err.resolution is None
+
+
 def test_xattribute_read_error():
     err = errors.XAttributeError(key="name", path="path")
     assert err.key == "name"
