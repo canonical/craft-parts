@@ -115,3 +115,30 @@ class PartSpecificationError(PartsError):
             formatted_errors.append(f"{fields}: {msg}")
 
         return cls(part_name=part_name, message="\n".join(formatted_errors))
+
+
+class CopyTreeError(PartsError):
+    """Failed to copy or link a file tree.
+
+    :param message: The error message.
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        brief = f"Failed to copy or link file tree: {message}."
+        resolution = "Make sure paths and permissions are correct."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class CopyFileNotFound(PartsError):
+    """An attempt was made to copy a file that doesn't exist.
+
+    :param name: The file name.
+    """
+
+    def __init__(self, name: str):
+        self.name = name
+        brief = f"Failed to copy {name!r}: no such file or directory."
+
+        super().__init__(brief=brief)
