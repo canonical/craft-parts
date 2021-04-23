@@ -16,5 +16,12 @@
 
 """Craft Parts plugins subsystem."""
 
-from .base import Plugin  # noqa: F401
-from .properties import PluginProperties  # noqa: F401
+from .plugins import (  # noqa: F401
+    Plugin,
+    PluginProperties,
+    get_plugin,
+    get_plugin_class,
+    register,
+    strip_plugin_properties,
+    unregister_all,
+)
