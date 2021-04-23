@@ -142,3 +142,36 @@ class CopyFileNotFound(PartsError):
         brief = f"Failed to copy {name!r}: no such file or directory."
 
         super().__init__(brief=brief)
+
+
+class XAttributeError(PartsError):
+    """Failed to read or write an extended attribute.
+
+    :param action: The action being performed.
+    :param key: The extended attribute key.
+    :param path: The file path.
+    """
+
+    def __init__(self, key: str, path: str, is_write: bool = False):
+        self.key = key
+        self.path = path
+        self.is_write = is_write
+        action = "write" if is_write else "read"
+        brief = f"Unable to {action} extended attribute."
+        details = f"Failed to {action} attribute {key!r} on {path!r}."
+        resolution = "Make sure your filesystem supports extended attributes."
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
+
+
+class XAttributeTooLong(PartsError):
+    """Failed to write an extended attribute because key and/or value is too long."""
+
+    def __init__(self, key: str, value: str, path: str):
+        self.key = key
+        self.value = value
+        self.path = path
+        brief = "Failed to write attribute: key and/or value is too long."
+        details = f"key={key!r}, value={value!r}"
+
+        super().__init__(brief=brief, details=details)
