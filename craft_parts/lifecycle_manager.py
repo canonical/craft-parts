@@ -116,14 +116,15 @@ def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> P
 
     plugin_name = spec.get("plugin", "")
 
-    fallback_plugin_name = not plugin_name
-    if fallback_plugin_name:
+    # If the plugin was not specified, use the part name as the plugin name.
+    part_name_as_plugin_name = not plugin_name
+    if part_name_as_plugin_name:
         plugin_name = name
 
     try:
         plugin_class = plugins.get_plugin_class(plugin_name)
     except ValueError as err:
-        if fallback_plugin_name:
+        if part_name_as_plugin_name:
             # If plugin was not specified, avoid raising an exception telling
             # that part name is an invalid plugin.
             raise errors.UndefinedPlugin(part_name=name) from err
