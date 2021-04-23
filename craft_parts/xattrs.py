@@ -22,6 +22,7 @@ from typing import Optional
 
 from craft_parts import errors
 
+# TODO: this might be a separations of concern leak, improve this handling.
 _STAGE_PACKAGE_KEY = "origin_stage_package"
 
 
