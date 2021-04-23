@@ -99,7 +99,7 @@ def strip_plugin_properties(data: Dict[str, Any], *, plugin_name: str) -> None:
     """Remove plugin-specific entries from part properties.
 
     :param data: A dictionary containing all part properties.
-    :plugin_name: The name of the plugin.
+    :param plugin_name: The name of the plugin.
     """
     prefix = f"{plugin_name}-"
     for key in list(data):
