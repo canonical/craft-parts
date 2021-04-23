@@ -54,6 +54,12 @@ class Sequencer:
         self._add_all_actions(target_step, part_names)
         return self._actions
 
+    def reload_state(self) -> None:
+        """Reload state from persistent storage."""
+        self._sm = StateManager(
+            project_info=self._project_info, part_list=self._part_list
+        )
+
     def _add_all_actions(
         self,
         target_step: Step,
@@ -82,8 +88,54 @@ class Sequencer:
         part_names: Optional[Sequence[str]],
         reason: Optional[str] = None,
     ) -> None:
-        # TODO: implement this stub
-        pass
+        """Verify if this step should be executed."""
+        # check if step already ran, if not then run it
+        if not self._sm.has_step_run(part, current_step):
+            self._run_step(part, current_step, reason=reason)
+            return
+
+        # If the step has already run:
+        #
+        # 1. If the step is the exact step that was requested, and the part was
+        #    explicitly listed, run it again.
+
+        if part_names and current_step == target_step and part.name in part_names:
+            if not reason:
+                reason = "requested step"
+            self._rerun_step(part, current_step, reason=reason)
+            return
+
+        # 2. If the step is dirty, run it again. A step is considered dirty if
+        #    properties used by the step have changed, project options have changed,
+        #    or dependencies have been re-staged.
+
+        dirty_report = self._sm.check_if_dirty(part, current_step)
+        if dirty_report:
+            logger.debug("%s:%s is dirty", part.name, current_step)
+
+            self._rerun_step(part, current_step, reason=dirty_report.reason())
+            return
+
+        # 3. If the step is outdated, run it again (without cleaning if possible).
+        #    A step is considered outdated if an earlier step in the lifecycle
+        #    has been re-executed.
+
+        outdated_report = self._sm.check_if_outdated(part, current_step)
+        if outdated_report:
+            logger.debug("%s:%s is outdated", part.name, current_step)
+
+            if current_step in (Step.PULL, Step.BUILD):
+                self._update_step(part, current_step, reason=outdated_report.reason())
+            else:
+                self._rerun_step(part, current_step, reason=outdated_report.reason())
+
+            self._sm.mark_step_updated(part, current_step)
+            return
+
+        # 4. Otherwise just skip it
+        self._add_action(
+            part, current_step, action_type=ActionType.SKIP, reason="already ran"
+        )
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
         prerequisite_step = steps.dependency_prerequisite_step(step)
@@ -91,7 +143,6 @@ class Sequencer:
             return
 
         all_deps = parts.part_dependencies(part.name, part_list=self._part_list)
-
         deps = {p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)}
         for dep in deps:
             self._add_all_actions(
