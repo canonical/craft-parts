@@ -25,6 +25,8 @@ from craft_parts.utils import file_utils
 
 from .base import SourceHandler
 
+# TODO: change file operations to use pathlib
+
 
 class LocalSource(SourceHandler):
     """The local source handler."""
@@ -34,14 +36,14 @@ class LocalSource(SourceHandler):
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function
 
-        patterns = [
+        ignore_patterns = [
             self._dirs.parts_dir.name,
             self._dirs.stage_dir.name,
             self._dirs.prime_dir.name,
             "*.snap",  # FIXME: this should be specified by the application
         ]
         self._ignore = functools.partial(
-            _ignore, self.source_abspath, os.getcwd(), patterns
+            _ignore, self.source_abspath, os.getcwd(), ignore_patterns
         )
         self._updated_files = set()
         self._updated_directories = set()
