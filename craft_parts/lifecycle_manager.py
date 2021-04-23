@@ -18,7 +18,9 @@
 
 from typing import Any, Dict, List, Sequence
 
-from craft_parts import sequencer
+from pydantic import ValidationError
+
+from craft_parts import errors, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
@@ -59,10 +61,6 @@ class LifecycleManager:
         parallel_build_count: int = 1,
         **custom_args,  # custom passthrough args
     ):
-        # TODO: validate base_dir
-
-        # TODO: validate parts schema
-
         # TODO: validate or slugify application name
 
         project_dirs = ProjectDirs(work_dir=work_dir)
@@ -76,9 +74,12 @@ class LifecycleManager:
         )
 
         parts_data = all_parts.get("parts", {})
-        self._part_list = [
-            Part(name, p, project_dirs=project_dirs) for name, p in parts_data.items()
-        ]
+
+        part_list = []
+        for name, spec in parts_data.items():
+            part_list.append(_build_part(name, spec, project_dirs))
+
+        self._part_list = part_list
         self._application_name = application_name
         self._target_arch = project_info.target_arch
         self._sequencer = sequencer.Sequencer(
@@ -103,7 +104,44 @@ class LifecycleManager:
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
         """
-        # TODO: verify if base packages changed
-
         actions = self._sequencer.plan(target_step, part_names)
         return actions
+
+
+def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> Part:
+    if not isinstance(spec, dict):
+        raise errors.PartSpecificationError(
+            part_name=name, message="part definition is malformed"
+        )
+
+    plugin_name = spec.get("plugin", "")
+
+    fallback_plugin_name = not plugin_name
+    if fallback_plugin_name:
+        plugin_name = name
+
+    try:
+        plugin_class = plugins.get_plugin_class(plugin_name)
+    except ValueError as err:
+        if fallback_plugin_name:
+            # If plugin was not specified, avoid raising an exception telling
+            # that part name is an invalid plugin.
+            raise errors.UndefinedPlugin(part_name=name) from err
+        raise errors.InvalidPlugin(plugin_name, part_name=name) from err
+
+    # validate and unmarshal plugin properties
+    try:
+        properties = plugin_class.properties_class.unmarshal(spec)
+    except ValidationError as err:
+        raise errors.PartSpecificationError.from_validation_error(
+            part_name=name, error_list=err.errors()
+        ) from err
+    except ValueError as err:
+        raise errors.PartSpecificationError(part_name=name, message=str(err)) from err
+
+    plugins.strip_plugin_properties(spec, plugin_name=plugin_name)
+
+    # initialize part and unmarshal part specs
+    part = Part(name, spec, project_dirs=project_dirs, plugin_properties=properties)
+
+    return part

@@ -136,3 +136,20 @@ def test_xattribute_write_error():
     assert err.brief == "Unable to write extended attribute."
     assert err.details == "Failed to write attribute 'name' on 'path'."
     assert err.resolution == "Make sure your filesystem supports extended attributes."
+
+
+def test_undefined_plugin():
+    err = errors.UndefinedPlugin(part_name="foo")
+    assert err.part_name == "foo"
+    assert err.brief == "Plugin not defined for part 'foo'."
+    assert err.details is None
+    assert err.resolution == "Review part 'foo' and make sure it's correct."
+
+
+def test_invalid_plugin():
+    err = errors.InvalidPlugin("name", part_name="foo")
+    assert err.plugin_name == "name"
+    assert err.part_name == "foo"
+    assert err.brief == "Plugin 'name' in part 'foo' is not registered."
+    assert err.details is None
+    assert err.resolution == "Review part 'foo' and make sure it's correct."

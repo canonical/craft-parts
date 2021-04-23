@@ -23,6 +23,7 @@ import yaml
 
 from craft_parts import errors
 from craft_parts.lifecycle_manager import LifecycleManager
+from craft_parts.plugins import nil_plugin
 
 
 class TestLifecycleManager:
@@ -69,3 +70,94 @@ class TestLifecycleManager:
         assert info.dirs.prime_dir == self._dir / "work_dir" / "prime"
         assert info.custom_args == ["custom"]
         assert info.custom == "foo"
+
+    def test_part_initialization(self, mocker):
+        mock_seq = mocker.patch("craft_parts.sequencer.Sequencer")
+
+        lf = LifecycleManager(
+            self._data,
+            application_name="test_manager",
+        )
+
+        assert len(lf._part_list) == 1
+
+        part = lf._part_list[0]
+        assert part.name == "foo"
+        assert part.plugin == "nil"
+        assert isinstance(part.plugin_properties, nil_plugin.NilPluginProperties)
+
+        mock_seq.assert_called_once_with(
+            part_list=lf._part_list,
+            project_info=lf.project_info,
+        )
+
+
+class TestPluginProperties:
+    """Verify if plugin properties are correctly handled."""
+
+    def test_plugin_properties(self, mocker):
+        mocker.patch("craft_parts.sequencer.Sequencer")
+
+        lf = LifecycleManager(
+            {
+                "parts": {
+                    "bar": {
+                        "plugin": "make",
+                        "make-parameters": ["-DTEST_PARAMETER"],
+                    }
+                }
+            },
+            application_name="test_manager",
+        )
+
+        assert len(lf._part_list) == 1
+        part = lf._part_list[0]
+        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+
+    def test_fallback_plugin_name(self, mocker):
+        mocker.patch("craft_parts.sequencer.Sequencer")
+
+        lf = LifecycleManager(
+            {
+                "parts": {
+                    "make": {
+                        "make-parameters": ["-DTEST_PARAMETER"],
+                    }
+                }
+            },
+            application_name="test_manager",
+        )
+
+        assert len(lf._part_list) == 1
+        part = lf._part_list[0]
+        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+
+    def test_invalid_plugin_name(self):
+        with pytest.raises(errors.InvalidPlugin) as raised:
+            LifecycleManager(
+                {
+                    "parts": {
+                        "bar": {
+                            "plugin": "invalid",
+                            "make-parameters": ["-DTEST_PARAMETER"],
+                        }
+                    }
+                },
+                application_name="test_manager",
+            )
+        assert raised.value.part_name == "bar"
+        assert raised.value.plugin_name == "invalid"
+
+    def test_undefined_plugin_name(self):
+        with pytest.raises(errors.UndefinedPlugin) as raised:
+            LifecycleManager(
+                {
+                    "parts": {
+                        "bar": {
+                            "make-parameters": ["-DTEST_PARAMETER"],
+                        }
+                    }
+                },
+                application_name="test_manager",
+            )
+        assert raised.value.part_name == "bar"
