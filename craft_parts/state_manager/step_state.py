@@ -22,6 +22,8 @@ from typing import Any, Dict, Set
 
 from pydantic_yaml import YamlModel  # type: ignore
 
+from craft_parts.utils import os_utils
+
 
 class StepState(YamlModel, ABC):
     """Contextual information collected when a step is executed.
@@ -100,7 +102,7 @@ class StepState(YamlModel, ABC):
         """Write this state to disk."""
         filepath.parent.mkdir(parents=True, exist_ok=True)
         yaml_data = self.yaml(by_alias=True)
-        filepath.write_text(yaml_data)
+        os_utils.TimedWriter.write_text(filepath, yaml_data)
 
 
 def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str]:
