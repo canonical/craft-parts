@@ -109,6 +109,13 @@ class LifecycleManager:
 
 
 def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> Part:
+    """Create and populate a :class:`Part` object based on part specification data.
+
+    :param spec: A dictionary containing the part specification.
+    :param project_dirs: The project's work directories.
+
+    :return: A :class:`Part` object corresponding to the given part specification.
+    """
     if not isinstance(spec, dict):
         raise errors.PartSpecificationError(
             part_name=name, message="part definition is malformed"
