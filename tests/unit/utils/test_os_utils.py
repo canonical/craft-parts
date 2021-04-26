@@ -26,7 +26,7 @@ class TestTimedWriter:
     """Check if minimum interval ensured between writes."""
 
     @pytest.mark.usefixtures("new_dir")
-    def test_timed_write(self, mocker):
+    def test_timed_write_no_wait(self, mocker):
         mock_time = mocker.patch("time.time")
         mock_sleep = mocker.patch("time.sleep")
 
@@ -35,9 +35,20 @@ class TestTimedWriter:
         os_utils.TimedWriter.write_text(Path("foo"), "content")
         mock_sleep.assert_not_called()
 
+    @pytest.mark.usefixtures("new_dir")
+    def test_timed_write_full_wait(self, mocker):
+        mock_time = mocker.patch("time.time")
+        mock_sleep = mocker.patch("time.sleep")
+
         # no time passed since the last write
+        mock_time.return_value = os_utils.TimedWriter._last_write_time
         os_utils.TimedWriter.write_text(Path("bar"), "content")
         mock_sleep.assert_called_with(pytest.approx(0.02, 0.00001))
+
+    @pytest.mark.usefixtures("new_dir")
+    def test_timed_write_partial_wait(self, mocker):
+        mock_time = mocker.patch("time.time")
+        mock_sleep = mocker.patch("time.sleep")
 
         # some time passed since the last write
         mock_time.return_value = os_utils.TimedWriter._last_write_time + 0.005
