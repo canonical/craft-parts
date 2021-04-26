@@ -17,13 +17,14 @@
 """Plugin base class and definitions."""
 
 import abc
-from typing import Any, Dict, List, Set, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Set, Type
 
 from pydantic import BaseModel
 
-from craft_parts.infos import PartInfo
-
 from .properties import PluginProperties
+
+if TYPE_CHECKING:
+    from craft_parts.infos import PartInfo
 
 
 class Plugin(abc.ABC):
@@ -37,7 +38,7 @@ class Plugin(abc.ABC):
 
     properties_class: Type[PluginProperties]
 
-    def __init__(self, *, properties: PluginProperties, part_info: PartInfo) -> None:
+    def __init__(self, *, properties: PluginProperties, part_info: "PartInfo") -> None:
         self._name = part_info.part_name
         self._options = properties
         self._part_info = part_info

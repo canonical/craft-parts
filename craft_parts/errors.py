@@ -175,3 +175,32 @@ class XAttributeTooLong(PartsError):
         details = f"key={key!r}, value={value!r}"
 
         super().__init__(brief=brief, details=details)
+
+
+class UndefinedPlugin(PartsError):
+    """The part didn't define a plugin and the part name is not a valid plugin name.
+
+    :param part_name: The name of the part with no plugin definition."
+    """
+
+    def __init__(self, *, part_name: str):
+        self.part_name = part_name
+        brief = f"Plugin not defined for part {part_name!r}."
+        resolution = f"Review part {part_name!r} and make sure it's correct."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class InvalidPlugin(PartsError):
+    """A request was made to use a plugin that's not registered.
+
+    :param plugin_name: The invalid plugin name."
+    """
+
+    def __init__(self, plugin_name: str, *, part_name: str):
+        self.plugin_name = plugin_name
+        self.part_name = part_name
+        brief = f"Plugin {plugin_name!r} in part {part_name!r} is not registered."
+        resolution = f"Review part {part_name!r} and make sure it's correct."
+
+        super().__init__(brief=brief, resolution=resolution)

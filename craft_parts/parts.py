@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
+from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 
 
@@ -126,6 +127,7 @@ class Part:
         data: Dict[str, Any],
         *,
         project_dirs: ProjectDirs = None,
+        plugin_properties: "Optional[PluginProperties]" = None,
     ):
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(
@@ -135,12 +137,14 @@ class Part:
         if not project_dirs:
             project_dirs = ProjectDirs()
 
-        plugin_name: str = data.get("plugin", "")
+        if not plugin_properties:
+            plugin_properties = PluginProperties()
 
-        # TODO: handle fallback to part name if plugin not specified
+        plugin_name: str = data.get("plugin", "")
 
         self.name = name
         self.plugin = plugin_name
+        self.plugin_properties = plugin_properties
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
         self._part_dir = project_dirs.parts_dir / name
