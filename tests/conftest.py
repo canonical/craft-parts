@@ -24,6 +24,7 @@ import pytest
 import xdg  # type: ignore
 
 from . import fake_servers
+from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
 
 
@@ -110,3 +111,9 @@ def fake_snapd():
 
     server.stop_fake_server(thread)
     socket_path_patcher.stop()
+
+
+@pytest.fixture
+def fake_snap_command(mocker):
+    """Mock the snap command."""
+    return FakeSnapCommand(mocker)
