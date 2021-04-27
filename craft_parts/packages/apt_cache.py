@@ -278,7 +278,7 @@ class AptCache(ContextDecorator):
 
             _verify_marked_install(package)
 
-    def unmark_packages(self, *, unmark_names: Set[str]) -> None:
+    def unmark_packages(self, unmark_names: Set[str]) -> None:
         """Unmark packages and dependencies that are no longer required.
 
         :param unmark_names: The names of the packages to unmark.
