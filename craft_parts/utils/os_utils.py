@@ -16,10 +16,13 @@
 
 """Utilities related to the operating system."""
 
+import contextlib
 import os
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
+
+from craft_parts import errors
 
 _WRITE_TIME_INTERVAL = 0.02
 
@@ -43,7 +46,7 @@ class TimedWriter:
         filepath: Path,
         text: str,
         encoding: Optional[str] = None,
-        errors: Optional[str] = None,
+        errors: Optional[str] = None,  # pylint: disable=redefined-outer-name
     ) -> None:
         """Write text to the specified file.
 
@@ -72,3 +75,75 @@ def is_dumb_terminal() -> bool:
     is_stdout_tty = os.isatty(1)
     is_term_dumb = os.environ.get("TERM", "") == "dumb"
     return not is_stdout_tty or is_term_dumb
+
+
+_ID_TO_UBUNTU_CODENAME = {
+    "17.10": "artful",
+    "17.04": "zesty",
+    "16.04": "xenial",
+    "14.04": "trusty",
+}
+
+
+class OsRelease:
+    """A class to intelligently determine the OS on which we're running."""
+
+    def __init__(self, *, os_release_file: str = "/etc/os-release") -> None:
+        """Create a new OsRelease instance.
+
+        :param os_release_file: Path to os-release file to be parsed.
+        """
+        self._os_release: Dict[str, str] = {}
+        with contextlib.suppress(FileNotFoundError):
+            with open(os_release_file) as file:
+                for line in file:
+                    entry = line.rstrip().split("=")
+                    if len(entry) == 2:
+                        self._os_release[entry[0]] = entry[1].strip('"')
+
+    def id(self) -> str:
+        """Return the OS ID.
+
+        :raises OsReleaseIdError: If no ID can be determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["ID"]
+
+        raise errors.OsReleaseIdError()
+
+    def name(self) -> str:
+        """Return the OS name.
+
+        :raises OsReleaseNameError: If no name can be determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["NAME"]
+
+        raise errors.OsReleaseNameError()
+
+    def version_id(self) -> str:
+        """Return the OS version ID.
+
+        :raises OsReleaseVersionIdError: If no version ID can be determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["VERSION_ID"]
+
+        raise errors.OsReleaseVersionIdError()
+
+    def version_codename(self) -> str:
+        """Return the OS version codename.
+
+        This first tries to use the VERSION_CODENAME. If that's missing, it
+        tries to use the VERSION_ID to figure out the codename on its own.
+
+        :raises OsReleaseCodenameError: If no version codename can be
+            determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["VERSION_CODENAME"]
+
+        with contextlib.suppress(KeyError):
+            return _ID_TO_UBUNTU_CODENAME[self._os_release["VERSION_ID"]]
+
+        raise errors.OsReleaseCodenameError()
