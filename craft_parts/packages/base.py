@@ -58,8 +58,8 @@ class BaseRepository(abc.ABC):
     def refresh_build_packages_list(cls) -> None:
         """Refresh the list of packages available in the repository.
 
-        If refreshing is not possible :class:`CacheUpdateFailed` should be
-        raised.
+        If refreshing is not possible :class:`PackageListRefreshError`
+        should be raised.
         """
 
     @classmethod
@@ -112,7 +112,7 @@ class BaseRepository(abc.ABC):
             using Craft Parts.
         :param target_arch: The architecture of the packages to fetch.
 
-        :raise CacheUpdateFailed: If the update process is not successful.
+        :raise PackageListRefreshError: If the update process is not successful.
         """
 
     @classmethod
