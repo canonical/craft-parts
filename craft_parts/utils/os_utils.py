@@ -85,6 +85,9 @@ _ID_TO_UBUNTU_CODENAME = {
 }
 
 
+# TODO: consolidate os-release strategy with craft-providers/charmcraft
+
+
 class OsRelease:
     """A class to intelligently determine the OS on which we're running."""
 
