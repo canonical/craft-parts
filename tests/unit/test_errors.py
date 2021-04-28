@@ -153,3 +153,31 @@ def test_invalid_plugin():
     assert err.brief == "Plugin 'name' in part 'foo' is not registered."
     assert err.details is None
     assert err.resolution == "Review part 'foo' and make sure it's correct."
+
+
+def test_os_release_id_error():
+    err = errors.OsReleaseIdError()
+    assert err.brief == "Unable to determine the host operating system ID."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_os_release_name_error():
+    err = errors.OsReleaseNameError()
+    assert err.brief == "Unable to determine the host operating system name."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_os_release_version_id_error():
+    err = errors.OsReleaseVersionIdError()
+    assert err.brief == "Unable to determine the host operating system version ID."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_os_release_codename_error():
+    err = errors.OsReleaseCodenameError()
+    assert err.brief == "Unable to determine the host operating system codename."
+    assert err.details is None
+    assert err.resolution is None
