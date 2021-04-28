@@ -62,9 +62,13 @@ class BaseRepository(abc.ABC):
         should be raised.
         """
 
+    # XXX: list-only functionality can be a method called by install_build_packages
+
     @classmethod
     @abc.abstractmethod
-    def install_build_packages(cls, package_names: List[str]) -> List[str]:
+    def install_build_packages(
+        cls, package_names: List[str], list_only: bool = False
+    ) -> List[str]:
         """Install packages on the host system.
 
         This method needs to be implemented by using the appropriate mechanism
@@ -175,7 +179,9 @@ class DummyRepository(BaseRepository):
         """Refresh the build packages cache."""
 
     @classmethod
-    def install_build_packages(cls, package_names: List[str]) -> List[str]:
+    def install_build_packages(
+        cls, package_names: List[str], list_only: bool = False
+    ) -> List[str]:
         """Install packages on the host system."""
         return []
 

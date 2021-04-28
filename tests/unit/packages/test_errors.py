@@ -50,6 +50,38 @@ def test_package_broken():
     assert err.resolution is None
 
 
+def test_file_provider_not_found():
+    err = errors.FileProviderNotFound(file_path="/some/path")
+    assert err.file_path == "/some/path"
+    assert err.brief == "/some/path is not provided by any package."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_build_package_not_found():
+    err = errors.BuildPackageNotFound("foobar")
+    assert err.package == "foobar"
+    assert err.brief == "Cannot find package listed in 'build-packages': foobar"
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_build_packages_not_installed():
+    err = errors.BuildPackagesNotInstalled(packages=["foo", "bar"])
+    assert err.packages == ["foo", "bar"]
+    assert err.brief == "Cannot install all requested build packages: foo, bar"
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_unpack_error():
+    err = errors.UnpackError("foobar")
+    assert err.package == "foobar"
+    assert err.brief == "Error unpacking 'foobar'"
+    assert err.details is None
+    assert err.resolution is None
+
+
 def test_snap_unavailable():
     err = errors.SnapUnavailable(snap_name="word-salad", snap_channel="stable")
     assert err.snap_name == "word-salad"

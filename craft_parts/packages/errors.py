@@ -66,6 +66,46 @@ class PackageBroken(PackagesError):
         super().__init__(brief=brief)
 
 
+class FileProviderNotFound(PackagesError):
+    """A file is not provided by any package."""
+
+    def __init__(self, *, file_path: str):
+        self.file_path = file_path
+        brief = f"{file_path} is not provided by any package."
+
+        super().__init__(brief=brief)
+
+
+class BuildPackageNotFound(PackagesError):
+    """A package listed in 'build-packages' was not found."""
+
+    def __init__(self, package):
+        self.package = package
+        brief = f"Cannot find package listed in 'build-packages': {package}"
+
+        super().__init__(brief=brief)
+
+
+class BuildPackagesNotInstalled(PackagesError):
+    """Could not install all requested build packages."""
+
+    def __init__(self, *, packages: Sequence[str]) -> None:
+        self.packages = packages
+        brief = f"Cannot install all requested build packages: {', '.join(packages)}"
+
+        super().__init__(brief=brief)
+
+
+class UnpackError(PackagesError):
+    """Error unpacking stage package."""
+
+    def __init__(self, package: str):
+        self.package = package
+        brief = f"Error unpacking {package!r}"
+
+        super().__init__(brief=brief)
+
+
 class SnapUnavailable(PackagesError):
     """Failed to install or refresh a snap."""
 
