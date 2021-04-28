@@ -54,6 +54,9 @@ def temp_xdg(tmpdir, mocker):
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
 
 
+# XXX: check windows compatibility, explore if fixture setup can skip itself
+
+
 @pytest.fixture(scope="class")
 def fake_snapd():
     """Provide a fake snapd server."""
