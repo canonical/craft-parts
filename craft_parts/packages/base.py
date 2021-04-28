@@ -62,6 +62,8 @@ class BaseRepository(abc.ABC):
         should be raised.
         """
 
+    # XXX: list-only functionality can be a separate method called by install_build_packages
+
     @classmethod
     @abc.abstractmethod
     def install_build_packages(
