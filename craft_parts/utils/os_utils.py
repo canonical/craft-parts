@@ -17,12 +17,15 @@
 """Utilities related to the operating system."""
 
 import contextlib
+import logging
 import os
 import time
 from pathlib import Path
 from typing import Dict, Optional
 
 from craft_parts import errors
+
+logger = logging.getLogger(__name__)
 
 _WRITE_TIME_INTERVAL = 0.02
 
@@ -75,6 +78,27 @@ def is_dumb_terminal() -> bool:
     is_stdout_tty = os.isatty(1)
     is_term_dumb = os.environ.get("TERM", "") == "dumb"
     return not is_stdout_tty or is_term_dumb
+
+
+def is_snap(*, application_name: Optional[str] = None) -> bool:
+    """Verify whether we're running as a snap.
+
+    :application_name: The snap application name. If provided, check
+        if it matches the snap name.
+    """
+    snap_name = os.environ.get("SNAP_NAME", "")
+    if application_name:
+        res = snap_name == application_name
+    else:
+        res = snap_name is not None
+
+    logger.debug(
+        "craft_parts is is snap: %s, SNAP_NAME set to %s",
+        res,
+        snap_name,
+    )
+
+    return res
 
 
 _ID_TO_UBUNTU_CODENAME = {

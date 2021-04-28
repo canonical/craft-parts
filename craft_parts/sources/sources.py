@@ -75,10 +75,12 @@ from typing import Dict, Type
 
 from .base import SourceHandler
 from .local_source import LocalSource
+from .tar_source import TarSource
 
 SourceHandlerType = Type[SourceHandler]
 
 
 _source_handler: Dict[str, SourceHandlerType] = {
     "local": LocalSource,
+    "tar": TarSource,
 }
