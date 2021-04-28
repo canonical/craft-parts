@@ -16,12 +16,15 @@
 
 import http.server
 import os
+import tempfile
 import threading
+from unittest import mock
 
 import pytest
 import xdg  # type: ignore
 
 from . import fake_servers
+from .fake_snapd import FakeSnapd
 
 
 def pytest_configure(config):
@@ -79,3 +82,31 @@ def http_server(request):
     server.shutdown()
     server.server_close()
     server_thread.join()
+
+
+# XXX: check windows compatibility, explore if fixture setup can skip itself
+
+
+@pytest.fixture(scope="class")
+def fake_snapd():
+    """Provide a fake snapd server."""
+
+    server = FakeSnapd()
+
+    snapd_fake_socket_path = str(tempfile.mkstemp()[1])
+    os.unlink(snapd_fake_socket_path)
+
+    socket_path_patcher = mock.patch(
+        "craft_parts.packages.snaps.get_snapd_socket_path_template"
+    )
+    mock_socket_path = socket_path_patcher.start()
+    mock_socket_path.return_value = "http+unix://{}/v2/{{}}".format(
+        snapd_fake_socket_path.replace("/", "%2F")
+    )
+
+    thread = server.start_fake_server(snapd_fake_socket_path)
+
+    yield server
+
+    server.stop_fake_server(thread)
+    socket_path_patcher.stop()
