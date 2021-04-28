@@ -204,3 +204,39 @@ class InvalidPlugin(PartsError):
         resolution = f"Review part {part_name!r} and make sure it's correct."
 
         super().__init__(brief=brief, resolution=resolution)
+
+
+class OsReleaseIdError(PartsError):
+    """Failed to determine the host operating system identification string."""
+
+    def __init__(self):
+        brief = "Unable to determine the host operating system ID."
+
+        super().__init__(brief=brief)
+
+
+class OsReleaseNameError(PartsError):
+    """Failed to determine the host operating system name."""
+
+    def __init__(self):
+        brief = "Unable to determine the host operating system name."
+
+        super().__init__(brief=brief)
+
+
+class OsReleaseVersionIdError(PartsError):
+    """Failed to determine the host operating system version."""
+
+    def __init__(self):
+        brief = "Unable to determine the host operating system version ID."
+
+        super().__init__(brief=brief)
+
+
+class OsReleaseCodenameError(PartsError):
+    """Failed to determine the host operating system version codename."""
+
+    def __init__(self):
+        brief = "Unable to determine the host operating system codename."
+
+        super().__init__(brief=brief)

@@ -25,6 +25,47 @@ class PackagesError(PartsError):
     """Base class for package handler errors."""
 
 
+class PackageNotFound(PackagesError):
+    """Requested package doesn't exist in the remote repository."""
+
+    def __init__(self, package_name: str):
+        self.package_name = package_name
+        brief = f"Package not found: {package_name}."
+
+        super().__init__(brief=brief)
+
+
+class PackageFetchError(PackagesError):
+    """Failed to fetch package from remote repository."""
+
+    def __init__(self, message: str):
+        self.message = message
+        brief = f"Failed to fetch package: {message}."
+
+        super().__init__(brief=brief)
+
+
+class PackageListRefreshError(PackagesError):
+    """Failed to refresh the list of available packages."""
+
+    def __init__(self, message: str):
+        self.message = message
+        brief = f"Failed to refresh package list: {message}."
+
+        super().__init__(brief=brief)
+
+
+class PackageBroken(PackagesError):
+    """Package has unmet dependencies."""
+
+    def __init__(self, package_name: str, *, deps: Sequence[str]):
+        self.package_name = package_name
+        self.deps = deps
+        brief = f"Package {package_name!r} has unmet dependencies: {', '.join(deps)}."
+
+        super().__init__(brief=brief)
+
+
 class SnapUnavailable(PackagesError):
     """Failed to install or refresh a snap."""
 
