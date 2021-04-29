@@ -23,6 +23,7 @@ from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.state_manager import StateManager, state_manager, states
 from craft_parts.steps import Step
+from craft_parts.utils import os_utils
 
 
 class TestStateWrapper:
@@ -378,6 +379,33 @@ class TestStepOutdated:
 
         # and we updated it!
         sm._state_db.rewrap(part_name="p1", step=Step.BUILD, step_updated=True)
+
+        for step in list(Step):
+            assert sm.check_if_outdated(p1, step) is None
+
+    def test_source_outdated(self):
+        info = ProjectInfo()
+        p1 = Part("p1", {"source": "subdir"})  # source is local
+
+        # p1 pull ran
+        s1 = states.StageState()
+        s1.write(Path("parts/p1/state/pull"))
+
+        Path("subdir").mkdir()
+        os_utils.TimedWriter.write_text(Path("subdir/foo"), "content")
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        for step in list(Step):
+            report = sm.check_if_outdated(p1, step)
+            if step == Step.PULL:
+                assert report is not None
+                assert report.reason() == "source changed"
+            else:
+                assert report is None
+
+        # and we updated it!
+        sm._state_db.rewrap(part_name="p1", step=Step.PULL, step_updated=True)
 
         for step in list(Step):
             assert sm.check_if_outdated(p1, step) is None

@@ -15,3 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Source handler definitions and helpers."""
+
+from . import errors  # noqa: F401
+from .local_source import LocalSource  # noqa: F401
+from .sources import SourceHandler  # noqa: F401
+from .sources import get_source_handler  # noqa: F401
+from .sources import get_source_type_from_uri  # noqa: F401

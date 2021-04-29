@@ -16,11 +16,55 @@
 
 """Source handler error definitions."""
 
+from typing import List
+
 from craft_parts import errors
+from craft_parts.utils import formatting_utils
 
 
 class SourceError(errors.PartsError):
     """Base class for source handler errors."""
+
+
+class InvalidSourceType(SourceError):
+    """Failed to determine a source type."""
+
+    def __init__(self, source: str):
+        self.source = source
+        brief = f"Failed to pull source: unable to determine source type of {source!r}."
+
+        super().__init__(brief=brief)
+
+
+class InvalidSourceOption(SourceError):
+    """A source option is not allowed for the given source type."""
+
+    def __init__(self, *, source_type: str, option: str):
+        self.source_type = source_type
+        self.option = option
+        brief = (
+            f"Failed to pull source: {option!r} cannot be used "
+            f"with a {source_type} source."
+        )
+        resolution = "Make sure sources are correctly specified."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class IncompatibleSourceOptions(SourceError):
+    """Source specified options that can't be used at the same time."""
+
+    def __init__(self, source_type: str, options: List[str]):
+        self.source_type = source_type
+        self.options = options
+        humanized_options = formatting_utils.humanize_list(options, "and")
+        brief = (
+            f"Failed to pull source: cannot specify both {humanized_options} "
+            f"for a {source_type} source."
+        )
+        resolution = "Make sure sources are correctly specified."
+
+        super().__init__(brief=brief, resolution=resolution)
 
 
 class ChecksumMismatch(SourceError):
@@ -62,20 +106,5 @@ class SourceNotFound(SourceError):
         self.source = source
         brief = f"Failed to pull source: {source!r} not found."
         resolution = "Make sure the source path is correct and accessible."
-
-        super().__init__(brief=brief, resolution=resolution)
-
-
-class InvalidSourceOption(SourceError):
-    """A source option is not allowed for the given source type."""
-
-    def __init__(self, *, source_type: str, option: str):
-        self.source_type = source_type
-        self.option = option
-        brief = (
-            f"Failed to pull source: {option!r} cannot be used "
-            f"with a {source_type} source."
-        )
-        resolution = "Make sure sources are correctly specified."
 
         super().__init__(brief=brief, resolution=resolution)
