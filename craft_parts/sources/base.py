@@ -17,6 +17,7 @@
 """Base classes for source type handling."""
 
 import abc
+import logging
 import os
 import shutil
 import subprocess
@@ -26,11 +27,13 @@ from typing import List, Optional, Union
 import requests
 
 from craft_parts.dirs import ProjectDirs
-from craft_parts.utils import url_utils
+from craft_parts.utils import os_utils, url_utils
 
 from . import errors
 from .cache import FileCache
 from .checksum import verify_checksum
+
+logger = logging.getLogger(__name__)
 
 
 class SourceHandler(abc.ABC):
@@ -105,6 +108,13 @@ class SourceHandler(abc.ABC):
         :raise errors.SourceUpdateUnsupported: If the source can't update its files.
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
+
+    @classmethod
+    def _run(cls, command: List[str], **kwargs):
+        try:
+            os_utils.process_run(command, logger.debug, **kwargs)
+        except subprocess.CalledProcessError as err:
+            raise errors.PullError(command=command, exit_code=err.returncode)
 
     @classmethod
     def _run_output(cls, command: List[str]) -> str:
