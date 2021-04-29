@@ -97,17 +97,14 @@ _source_handler: Dict[str, SourceHandlerType] = {
 def get_source_handler(
     application_name: str,
     part: "Part",
-    dirs: ProjectDirs,
+    project_dirs: ProjectDirs,
 ) -> Optional[SourceHandler]:
     """Return the appropriate handler for the given source.
 
     :param application_name: The name of the application using Craft Parts.
     :param part: The part to get a source handler for.
-    :param dirs: The project's work directories.
+    :param project_dirs: The project's work directories.
     """
-    if not dirs:
-        dirs = ProjectDirs()
-
     source_handler = None
     if part.spec.source:
         handler_class = _get_source_handler_class(
@@ -123,7 +120,7 @@ def get_source_handler(
             source_tag=part.spec.source_tag,
             source_depth=part.spec.source_depth,
             source_commit=part.spec.source_commit,
-            dirs=dirs,
+            project_dirs=project_dirs,
         )
 
     return source_handler

@@ -44,7 +44,7 @@ class TarSource(FileSourceHandler):
         source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
-        dirs: Optional[ProjectDirs] = None,
+        project_dirs: Optional[ProjectDirs] = None,
     ):
         super().__init__(
             source,
@@ -55,7 +55,7 @@ class TarSource(FileSourceHandler):
             source_branch=source_branch,
             source_depth=source_depth,
             source_checksum=source_checksum,
-            dirs=dirs,
+            project_dirs=project_dirs,
         )
         if source_tag:
             raise errors.InvalidSourceOption(source_type="tar", option="source-tag")

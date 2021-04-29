@@ -91,6 +91,8 @@ def test_sources_with_branch_errors(
     p1 = Part("p1", part_data)
 
     with pytest.raises(errors.InvalidSourceOption) as err:
-        sources.get_source_handler(application_name="test", part=p1, dirs=ProjectDirs())
+        sources.get_source_handler(
+            application_name="test", part=p1, project_dirs=ProjectDirs()
+        )
     assert err.value.source_type == source_type
     assert err.value.option == error

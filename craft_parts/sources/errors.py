@@ -52,7 +52,7 @@ class InvalidSourceOption(SourceError):
 
 
 class IncompatibleSourceOptions(SourceError):
-    """Source specified options that can't be used at the same time."""
+    """Source specified options that cannot be used at the same time."""
 
     def __init__(self, source_type: str, options: List[str]):
         self.source_type = source_type
