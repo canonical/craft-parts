@@ -80,6 +80,7 @@ from craft_parts.dirs import ProjectDirs
 
 from . import errors
 from .base import SourceHandler
+from .git_source import GitSource
 from .local_source import LocalSource
 from .snap_source import SnapSource
 from .tar_source import TarSource
@@ -93,6 +94,7 @@ SourceHandlerType = Type[SourceHandler]
 _source_handler: Dict[str, SourceHandlerType] = {
     "local": LocalSource,
     "tar": TarSource,
+    "git": GitSource,
     "snap": SnapSource,
 }
 

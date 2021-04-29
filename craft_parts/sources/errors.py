@@ -161,5 +161,16 @@ class PullError(SourceError):
         brief = (
             f"Failed to pull source: command {command!r} exited with code {exit_code}."
         )
+        resolution = "Make sure sources are correctly specified."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class VCSError(SourceError):
+    """A version control system command failed."""
+
+    def __init__(self, message: str):
+        self.message = message
+        brief = message
 
         super().__init__(brief=brief)

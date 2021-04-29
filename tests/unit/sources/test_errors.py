@@ -101,4 +101,12 @@ def test_pull_error():
         err.brief == "Failed to pull source: command ['ls', '-l'] exited with code 66."
     )
     assert err.details is None
+    assert err.resolution == "Make sure sources are correctly specified."
+
+
+def test_vcs_error():
+    err = errors.VCSError("cvs: everything failed")
+    assert err.message == "cvs: everything failed"
+    assert err.brief == "cvs: everything failed"
+    assert err.details is None
     assert err.resolution is None
