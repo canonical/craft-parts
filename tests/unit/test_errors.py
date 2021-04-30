@@ -205,3 +205,21 @@ def test_fileset_conflict():
     assert err.resolution == (
         "Make sure that the files included in 'prime' are also included in 'stage'."
     )
+
+
+def test_part_files_conflict():
+    err = errors.PartFilesConflict(
+        part_name="foo", other_part_name="bar", conflicting_files=["file1", "file2"]
+    )
+    assert err.part_name == "foo"
+    assert err.other_part_name == "bar"
+    assert err.conflicting_files == ["file1", "file2"]
+    assert err.brief == (
+        "Failed to stage: parts list the same file with different contents."
+    )
+    assert err.details == (
+        "Parts 'foo' and 'bar' list the following files, but with different contents:\n"
+        "    file1\n"
+        "    file2"
+    )
+    assert err.resolution is None
