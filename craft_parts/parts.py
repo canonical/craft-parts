@@ -209,6 +209,11 @@ class Part:
         return self._part_dir / "stage_snaps"
 
     @property
+    def part_run_dir(self) -> Path:
+        """Return the subdirectory containing the part plugin scripts."""
+        return self._part_dir / "run"
+
+    @property
     def stage_dir(self) -> Path:
         """Return the staging area containing the installed files from all parts."""
         return self._dirs.stage_dir

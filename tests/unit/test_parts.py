@@ -85,6 +85,7 @@ class TestPartData:
         assert p.part_state_dir == new_dir / "parts/foo/state"
         assert p.part_packages_dir == new_dir / "parts/foo/stage_packages"
         assert p.part_snaps_dir == new_dir / "parts/foo/stage_snaps"
+        assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
@@ -99,6 +100,7 @@ class TestPartData:
         assert p.part_state_dir == new_dir / "foobar/parts/foo/state"
         assert p.part_packages_dir == new_dir / "foobar/parts/foo/stage_packages"
         assert p.part_snaps_dir == new_dir / "foobar/parts/foo/stage_snaps"
+        assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 

@@ -30,6 +30,46 @@ from craft_parts import errors
 logger = logging.getLogger(__name__)
 
 
+class NonBlockingRWFifo:
+    """A non-blocking FIFO for reading and writing."""
+
+    def __init__(self, path: str) -> None:
+        os.mkfifo(path)
+        self._path = path
+
+        # Using RDWR for every FIFO just so we can open them reliably whenever
+        # (i.e. write-only FIFOs can't be opened successfully until the reader
+        # is in place)
+        self._fd = os.open(self._path, os.O_RDWR | os.O_NONBLOCK)
+
+    @property
+    def path(self) -> str:
+        """Return the path to the FIFO file."""
+        return self._path
+
+    def read(self) -> str:
+        """Read from the FIFO."""
+        total_read = ""
+        with contextlib.suppress(BlockingIOError):
+            value = os.read(self._fd, 1024)
+            while value:
+                total_read += value.decode(sys.getfilesystemencoding())
+                value = os.read(self._fd, 1024)
+        return total_read
+
+    def write(self, data: str) -> int:
+        """Write to the FIFO.
+
+        :param data: The data to write.
+        """
+        return os.write(self._fd, data.encode(sys.getfilesystemencoding()))
+
+    def close(self) -> None:
+        """Close the FIFO."""
+        if self._fd is not None:
+            os.close(self._fd)
+
+
 def link_or_copy(source: str, destination: str, follow_symlinks: bool = False) -> None:
     """Hard-link source and destination files. Copy if it fails to link.
 
