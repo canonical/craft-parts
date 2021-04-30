@@ -17,7 +17,7 @@
 """Craft parts errors."""
 
 import dataclasses
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 
 @dataclasses.dataclass(repr=True)
@@ -240,3 +240,32 @@ class OsReleaseCodenameError(PartsError):
         brief = "Unable to determine the host operating system codename."
 
         super().__init__(brief=brief)
+
+
+class FilesetError(PartsError):
+    """An invalid fileset operation was performed."""
+
+    def __init__(self, *, name: str, message: str):
+        self.name = name
+        self.message = message
+        brief = f"{name!r} fileset error: {message}."
+        resolution = "Review the parts definition and make sure it's correct."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class FilesetConflict(PartsError):
+    """Inconsistent stage to prime filtering."""
+
+    def __init__(self, conflicting_files: Set[str]):
+        self.conflicting_files = conflicting_files
+        brief = "Failed to filter files: inconsistent 'stage' and 'prime' filesets."
+        details = (
+            f"The following files have been excluded in the 'stage' fileset, "
+            f"but included by the 'prime' fileset: {conflicting_files!r}."
+        )
+        resolution = (
+            "Make sure that the files included in 'prime' are also included in 'stage'."
+        )
+
+        super().__init__(brief=brief, details=details, resolution=resolution)

@@ -181,3 +181,27 @@ def test_os_release_codename_error():
     assert err.brief == "Unable to determine the host operating system codename."
     assert err.details is None
     assert err.resolution is None
+
+
+def test_fileset_error():
+    err = errors.FilesetError(name="stage", message="something is wrong")
+    assert err.name == "stage"
+    assert err.message == "something is wrong"
+    assert err.brief == "'stage' fileset error: something is wrong."
+    assert err.details is None
+    assert err.resolution == "Review the parts definition and make sure it's correct."
+
+
+def test_fileset_conflict():
+    err = errors.FilesetConflict({"foobar"})
+    assert err.conflicting_files == {"foobar"}
+    assert err.brief == (
+        "Failed to filter files: inconsistent 'stage' and 'prime' filesets."
+    )
+    assert err.details == (
+        "The following files have been excluded in the 'stage' fileset, "
+        "but included by the 'prime' fileset: {'foobar'}."
+    )
+    assert err.resolution == (
+        "Make sure that the files included in 'prime' are also included in 'stage'."
+    )
