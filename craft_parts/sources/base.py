@@ -55,13 +55,13 @@ class SourceHandler(abc.ABC):
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
         command: Optional[str] = None,
-        dirs: Optional[ProjectDirs] = None,
+        project_dirs: Optional[ProjectDirs] = None,
     ):
         if not application_name:
             application_name = utils.package_name()
 
-        if not dirs:
-            dirs = ProjectDirs()
+        if not project_dirs:
+            project_dirs = ProjectDirs()
 
         self.source = str(source)
         self.part_src_dir = str(part_src_dir)
@@ -75,7 +75,7 @@ class SourceHandler(abc.ABC):
         self.command = command
 
         self._application_name = application_name
-        self._dirs = dirs
+        self._dirs = project_dirs
         self._checked = False
 
     # pylint: enable=too-many-arguments
@@ -123,7 +123,7 @@ class FileSourceHandler(SourceHandler):
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
         command: Optional[str] = None,
-        dirs: Optional[ProjectDirs] = None,
+        project_dirs: Optional[ProjectDirs] = None,
     ):
         super().__init__(
             source,
@@ -135,7 +135,7 @@ class FileSourceHandler(SourceHandler):
             source_depth=source_depth,
             source_checksum=source_checksum,
             command=command,
-            dirs=dirs,
+            project_dirs=project_dirs,
         )
         self._file = ""
 

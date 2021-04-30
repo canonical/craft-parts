@@ -17,6 +17,41 @@
 from craft_parts.sources import errors
 
 
+def test_invalid_source_type():
+    err = errors.InvalidSourceType("t-death.adf")
+    assert err.source == "t-death.adf"
+    assert err.brief == (
+        "Failed to pull source: unable to determine source type of 't-death.adf'."
+    )
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_invalid_source_option():
+    err = errors.InvalidSourceOption(source_type="lzx", option="source-depth")
+    assert err.source_type == "lzx"
+    assert err.option == "source-depth"
+    assert err.brief == (
+        "Failed to pull source: 'source-depth' cannot be used with a lzx source."
+    )
+    assert err.details is None
+    assert err.resolution == "Make sure sources are correctly specified."
+
+
+def test_incompatible_source_options():
+    err = errors.IncompatibleSourceOptions(
+        source_type="dms", options=["source-tag", "source-branch"]
+    )
+    assert err.source_type == "dms"
+    assert err.options == ["source-tag", "source-branch"]
+    assert err.brief == (
+        "Failed to pull source: cannot specify both 'source-branch' and 'source-tag' "
+        "for a dms source."
+    )
+    assert err.details is None
+    assert err.resolution == "Make sure sources are correctly specified."
+
+
 def test_checksum_mismatch():
     err = errors.ChecksumMismatch(expected="1234", obtained="5678")
     assert err.expected == "1234"
@@ -48,14 +83,3 @@ def test_source_not_found():
     assert err.brief == "Failed to pull source: 'some_source' not found."
     assert err.details is None
     assert err.resolution == "Make sure the source path is correct and accessible."
-
-
-def test_invalid_source_option():
-    err = errors.InvalidSourceOption(source_type="lzx", option="source-depth")
-    assert err.source_type == "lzx"
-    assert err.option == "source-depth"
-    assert err.brief == (
-        "Failed to pull source: 'source-depth' cannot be used with a lzx source."
-    )
-    assert err.details is None
-    assert err.resolution == "Make sure sources are correctly specified."

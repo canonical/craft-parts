@@ -16,14 +16,17 @@
 
 """Part crafter step state management."""
 
+import contextlib
 import itertools
 import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from craft_parts import parts, steps
+from craft_parts import parts, sources, steps
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
+from craft_parts.sources import SourceHandler
+from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
 from .reports import Dependency, DirtyReport, OutdatedReport
@@ -170,6 +173,7 @@ class StateManager:
         self._state_db = _StateDB()
         self._project_info = project_info
         self._part_list = part_list
+        self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
 
         part_step_list = _sort_steps_by_state_timestamp(part_list)
 
@@ -265,7 +269,26 @@ class StateManager:
         if not stw:
             return None
 
-        # TODO: verify if the source is outdated according to the source handler
+        if step == Step.PULL:
+            if part.name in self._source_handler_cache:
+                source_handler = self._source_handler_cache[part.name]
+            else:
+                source_handler = sources.get_source_handler(
+                    application_name=self._project_info.application_name,
+                    part=part,
+                    project_dirs=self._project_info.dirs,
+                )
+                self._source_handler_cache[part.name] = source_handler
+
+            state_file = states.state_file_path(part, step)
+
+            if source_handler:
+                # Not all sources support checking for updates
+                with contextlib.suppress(sources.errors.SourceUpdateUnsupported):
+                    if source_handler.check_if_outdated(str(state_file)):
+                        return OutdatedReport(source_modified=True)
+
+            return None
 
         for previous_step in reversed(step.previous_steps()):
             # Has a previous step run since this one ran? Then this

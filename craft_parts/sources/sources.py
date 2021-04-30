@@ -71,11 +71,19 @@ have their own built-in packaging systems (think CPAN, PyPI, NPM). In those
 cases you want to refer to the documentation for the specific plugin.
 """
 
-from typing import Dict, Type
+import os
+import re
+from typing import TYPE_CHECKING, Dict, Optional, Type
 
+from craft_parts.dirs import ProjectDirs
+
+from . import errors
 from .base import SourceHandler
 from .local_source import LocalSource
 from .tar_source import TarSource
+
+if TYPE_CHECKING:
+    from craft_parts.parts import Part
 
 SourceHandlerType = Type[SourceHandler]
 
@@ -84,3 +92,89 @@ _source_handler: Dict[str, SourceHandlerType] = {
     "local": LocalSource,
     "tar": TarSource,
 }
+
+
+def get_source_handler(
+    application_name: str,
+    part: "Part",
+    project_dirs: ProjectDirs,
+) -> Optional[SourceHandler]:
+    """Return the appropriate handler for the given source.
+
+    :param application_name: The name of the application using Craft Parts.
+    :param part: The part to get a source handler for.
+    :param project_dirs: The project's work directories.
+    """
+    source_handler = None
+    if part.spec.source:
+        handler_class = _get_source_handler_class(
+            part.spec.source,
+            source_type=part.spec.source_type,
+        )
+        source_handler = handler_class(
+            application_name=application_name,
+            source=part.spec.source,
+            part_src_dir=part.part_src_dir,
+            source_checksum=part.spec.source_checksum,
+            source_branch=part.spec.source_branch,
+            source_tag=part.spec.source_tag,
+            source_depth=part.spec.source_depth,
+            source_commit=part.spec.source_commit,
+            project_dirs=project_dirs,
+        )
+
+    return source_handler
+
+
+def _get_source_handler_class(source, *, source_type: str = "") -> SourceHandlerType:
+    """Return the appropriate handler class for the given source.
+
+    :param source: The source specification.
+    :param source_type: The source type to use. If not specified, the
+        type will be inferred from the source specification.
+    """
+    if not source_type:
+        source_type = get_source_type_from_uri(source)
+
+    if source_type not in _source_handler:
+        raise errors.InvalidSourceType(source)
+
+    return _source_handler.get(source_type, LocalSource)
+
+
+_tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
+
+
+def get_source_type_from_uri(
+    source: str, ignore_errors: bool = False
+) -> str:  # noqa: C901
+    """Return the source type based on the given source URI.
+
+    :param source: The source specification.
+    :param ignore_errors: Don't raise InvalidSourceType if the source
+        type could not be determined.
+
+    :raise InvalidSourceType: If the source type is unknown.
+    """
+    for extension in ["zip", "deb", "rpm", "7z", "snap"]:
+        if source.endswith(".{}".format(extension)):
+            return extension
+    source_type = ""
+    if source.startswith("bzr:") or source.startswith("lp:"):
+        source_type = "bzr"
+    elif (
+        source.startswith("git:")
+        or source.startswith("git@")
+        or source.endswith(".git")
+    ):
+        source_type = "git"
+    elif source.startswith("svn:"):
+        source_type = "subversion"
+    elif _tar_type_regex.match(source):
+        source_type = "tar"
+    elif os.path.isdir(source):
+        source_type = "local"
+    elif not ignore_errors:
+        raise errors.InvalidSourceType(source)
+
+    return source_type
