@@ -17,14 +17,12 @@
 """Definitions and helpers to handle filesets."""
 
 import os
-from dataclasses import dataclass
 from glob import iglob
 from typing import List, Set, Tuple
 
 from craft_parts import errors
 
 
-@dataclass
 class Fileset:
     """Helper class to process string lists."""
 
