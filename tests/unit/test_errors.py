@@ -205,3 +205,12 @@ def test_fileset_conflict():
     assert err.resolution == (
         "Make sure that the files included in 'prime' are also included in 'stage'."
     )
+
+
+def test_file_organize_error():
+    err = errors.FileOrganizeError(part_name="foo", message="not ready reading drive A")
+    assert err.part_name == "foo"
+    assert err.message == "not ready reading drive A"
+    assert err.brief == "Failed to organize part 'foo': not ready reading drive A."
+    assert err.details is None
+    assert err.resolution is None
