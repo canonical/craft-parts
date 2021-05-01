@@ -21,7 +21,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 from craft_parts import errors
 
@@ -68,6 +68,87 @@ class TimedWriter:
         filepath.write_text(text, encoding=encoding, errors=errors)
 
         cls._last_write_time = time.time()
+
+
+def get_bin_paths(*, root: Union[str, Path], existing_only=True) -> List[str]:
+    """List common system executable paths.
+
+    :param root: A path to prepend to each entry in the list.
+    :param existing_only: Only list paths that are present in the system.
+
+    :return: The list of executable paths.
+    """
+    paths = (os.path.join("usr", "sbin"), os.path.join("usr", "bin"), "sbin", "bin")
+    rooted_paths = (os.path.join(root, p) for p in paths)
+
+    if existing_only:
+        return [p for p in rooted_paths if os.path.exists(p)]
+
+    return list(rooted_paths)
+
+
+def get_include_paths(*, root: Union[str, Path], arch_triplet: str) -> List[str]:
+    """List common include paths.
+
+    :param root: A path to prepend to each entry in the list.
+    :arch_triplet: The machine-vendor-os platform triplet definition.
+
+    :return: The list of include paths.
+    """
+    paths = [
+        os.path.join(root, "include"),
+        os.path.join(root, "usr", "include"),
+        os.path.join(root, "include", arch_triplet),
+        os.path.join(root, "usr", "include", arch_triplet),
+    ]
+
+    return [p for p in paths if os.path.exists(p)]
+
+
+def get_library_paths(
+    *, root: Union[str, Path], arch_triplet: str, existing_only=True
+) -> List[str]:
+    """List common library paths.
+
+    :param root: A path to prepend to each entry in the list.
+    :arch_triplet: The machine-vendor-os platform triplet definition.
+    :param existing_only: Only list paths that are present in the system.
+
+    :return: The list of library paths.
+    """
+    paths = [
+        os.path.join(root, "lib"),
+        os.path.join(root, "usr", "lib"),
+        os.path.join(root, "lib", arch_triplet),
+        os.path.join(root, "usr", "lib", arch_triplet),
+    ]
+
+    if existing_only:
+        paths = [p for p in paths if os.path.exists(p)]
+
+    return paths
+
+
+def get_pkg_config_paths(*, root: Union[str, Path], arch_triplet: str) -> List[str]:
+    """List common pkg-config paths.
+
+    :param root: A path to prepend to each entry in the list.
+    :arch_triplet: The machine-vendor-os platform triplet definition.
+
+    :return: The list of pkg-config paths.
+    """
+    paths = [
+        os.path.join(root, "lib", "pkgconfig"),
+        os.path.join(root, "lib", arch_triplet, "pkgconfig"),
+        os.path.join(root, "usr", "lib", "pkgconfig"),
+        os.path.join(root, "usr", "lib", arch_triplet, "pkgconfig"),
+        os.path.join(root, "usr", "share", "pkgconfig"),
+        os.path.join(root, "usr", "local", "lib", "pkgconfig"),
+        os.path.join(root, "usr", "local", "lib", arch_triplet, "pkgconfig"),
+        os.path.join(root, "usr", "local", "share", "pkgconfig"),
+    ]
+
+    return [p for p in paths if os.path.exists(p)]
 
 
 def is_dumb_terminal() -> bool:

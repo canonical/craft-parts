@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional
 from craft_parts import errors, utils
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
+from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +196,24 @@ class PartInfo:
     def part_state_dir(self) -> Path:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
+
+
+class StepInfo:
+    """Step-level information containing project, part, and step fields."""
+
+    def __init__(
+        self,
+        part_info: PartInfo,
+        step: Step,
+    ):
+        self._part_info = part_info
+        self.step = step
+
+    def __getattr__(self, name):
+        if hasattr(self._part_info, name):
+            return getattr(self._part_info, name)
+
+        raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
 
 def _get_host_architecture() -> str:
