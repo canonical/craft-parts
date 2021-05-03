@@ -111,17 +111,12 @@ def _file_collides(file_this: str, file_other: str) -> bool:
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     # pkgconfig files need special handling.
-    pc_file_1 = open(file_this)
-    pc_file_2 = open(file_other)
-
-    try:
+    with open(file_this) as pc_file_1, open(file_other) as pc_file_2:
         for lines in zip(pc_file_1, pc_file_2):
             for line in zip(lines[0].split("\n"), lines[1].split("\n")):
                 if line[0].startswith("prefix="):
                     continue
                 if line[0] != line[1]:
                     return True
-    finally:
-        pc_file_1.close()
-        pc_file_2.close()
+
     return False
