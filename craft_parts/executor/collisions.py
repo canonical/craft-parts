@@ -110,13 +110,12 @@ def _file_collides(file_this: str, file_other: str) -> bool:
     if not file_this.endswith(".pc"):
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
-    # pkgconfig files need special handling.
+    # pkgconfig files need special handling, only prefix line may be different.
     with open(file_this) as pc_file_1, open(file_other) as pc_file_2:
-        for lines in zip(pc_file_1, pc_file_2):
-            for line in zip(lines[0].split("\n"), lines[1].split("\n")):
-                if line[0].startswith("prefix="):
-                    continue
-                if line[0] != line[1]:
-                    return True
+        for line_pc_1, line_pc_2 in zip(pc_file_1, pc_file_2):
+            if line_pc_1.startswith("prefix=") and line_pc_2.startswith("prefix="):
+                continue
+            if line_pc_1 != line_pc_2:
+                return True
 
     return False

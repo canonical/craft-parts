@@ -23,6 +23,15 @@ from craft_parts.parts import Part
 
 
 @pytest.fixture
+def part0(tmpdir) -> Part:
+    part = Part("part0", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
+    p = part.part_install_dir
+    p.mkdir(parents=True)
+    (p / "file.pc").write_text("prefix={}\nName: File".format(part.part_install_dir))
+    return part
+
+
+@pytest.fixture
 def part1(tmpdir) -> Part:
     part = Part("part1", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
@@ -101,7 +110,12 @@ class TestCollisions:
         """No exception is expected as there are no collisions."""
         check_for_stage_collisions([part1, part2])
 
+    def test_no_collisions_between_two_parts_pc_files(self, part0, part1):
+        """Pkg-config files have different prefixes (this is ok)."""
+        check_for_stage_collisions([part0, part1])
+
     def test_collisions_between_two_parts(self, part1, part2, part3):
+        """Files have different contents."""
         with pytest.raises(errors.PartFilesConflict) as raised:
             check_for_stage_collisions([part1, part2, part3])
 
@@ -110,6 +124,7 @@ class TestCollisions:
         assert sorted(raised.value.conflicting_files) == ["1", "a/2"]
 
     def test_collisions_checks_symlinks(self, part5, part6):
+        """Symlinks point to different targets."""
         with pytest.raises(errors.PartFilesConflict) as raised:
             check_for_stage_collisions([part5, part6])
 
@@ -118,6 +133,7 @@ class TestCollisions:
         assert raised.value.conflicting_files == ["a"]
 
     def test_collisions_not_both_symlinks(self, part1, part5):
+        """Same name for directory and symlink."""
         with pytest.raises(errors.PartFilesConflict) as raised:
             check_for_stage_collisions([part1, part5])
 
@@ -126,6 +142,7 @@ class TestCollisions:
         assert raised.value.conflicting_files == ["a"]
 
     def test_collisions_between_two_parts_pc_files(self, part1, part4):
+        """Pkg-config files have different entries that are not prefix."""
         with pytest.raises(errors.PartFilesConflict) as raised:
             check_for_stage_collisions([part1, part4])
 
