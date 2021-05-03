@@ -74,9 +74,8 @@ class TestTarSource:
         os.makedirs(os.path.join("src", "test_prefix"))
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")
         open(file_to_tar, "w").close()
-        tar = tarfile.open(os.path.join("src", "test.tar"), "w")
-        tar.add(file_to_tar)
-        tar.close()
+        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+            tar.add(file_to_tar)
 
         tar_source = sources.TarSource(os.path.join("src", "test.tar"), "dst")
         os.mkdir("dst")
@@ -103,10 +102,9 @@ class TestTarSource:
             )
             return tarinfo
 
-        tar = tarfile.open(os.path.join("src", "test.tar"), "w")
-        tar.add(file_to_tar)
-        tar.add(file_to_link, filter=check_for_symlink)
-        tar.close()
+        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+            tar.add(file_to_tar)
+            tar.add(file_to_link, filter=check_for_symlink)
 
         tar_source = sources.TarSource(os.path.join("src", "test.tar"), "dst")
         os.mkdir("dst")
@@ -133,10 +131,9 @@ class TestTarSource:
             assert file_to_tar == tarinfo.linkname
             return tarinfo
 
-        tar = tarfile.open(os.path.join("src", "test.tar"), "w")
-        tar.add(file_to_tar)
-        tar.add(file_to_link, filter=check_for_hardlink)
-        tar.close()
+        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+            tar.add(file_to_tar)
+            tar.add(file_to_link, filter=check_for_hardlink)
 
         tar_source = sources.TarSource(os.path.join("src", "test.tar"), "dst")
         os.mkdir("dst")
