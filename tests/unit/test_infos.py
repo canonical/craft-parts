@@ -18,8 +18,9 @@ import pytest
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
-from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
+from craft_parts.steps import Step
 
 _MOCK_NATIVE_ARCH = "aarch64"
 
@@ -132,3 +133,39 @@ def test_part_info_invalid_custom_args():
     with pytest.raises(AttributeError) as raised:
         print(x.custom1)
     assert str(raised.value) == "'PartInfo' has no attribute 'custom1'"
+
+
+def test_step_info(new_dir):
+    info = ProjectInfo(custom1="foobar", custom2=[1, 2])
+    part = Part("foo", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.BUILD)
+
+    assert x.application_name == "craft_parts"
+    assert x.parallel_build_count == 1
+
+    assert x.part_name == "foo"
+    assert x.part_src_dir == new_dir / "parts/foo/src"
+    assert x.part_src_subdir == new_dir / "parts/foo/src"
+    assert x.part_build_dir == new_dir / "parts/foo/build"
+    assert x.part_build_subdir == new_dir / "parts/foo/build"
+    assert x.part_install_dir == new_dir / "parts/foo/install"
+    assert x.stage_dir == new_dir / "stage"
+    assert x.prime_dir == new_dir / "prime"
+
+    assert x.step == Step.BUILD
+
+    assert x.custom_args == ["custom1", "custom2"]
+    assert x.custom1 == "foobar"
+    assert x.custom2 == [1, 2]
+
+
+def test_step_info_invalid_custom_args():
+    info = ProjectInfo()
+    part = Part("foo", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    with pytest.raises(AttributeError) as raised:
+        print(x.custom1)
+    assert str(raised.value) == "'StepInfo' has no attribute 'custom1'"

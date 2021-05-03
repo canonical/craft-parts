@@ -58,6 +58,127 @@ class TestTimedWriter:
         mock_sleep.assert_called_with(pytest.approx(0.015, 0.00001))
 
 
+#    paths = (os.path.join("usr", "sbin"), os.path.join("usr", "bin"), "sbin", "bin")
+
+
+class TestGetPaths:
+    """Verify functions that get lists of system paths."""
+
+    def test_get_bin_paths_null(self, new_dir):
+        x = os_utils.get_bin_paths(root=new_dir)
+        assert x == []
+
+    def test_get_bin_paths_exist(self, new_dir):
+        for directory in ["usr/sbin", "usr/bin", "sbin", "bin", "other"]:
+            Path(directory).mkdir(parents=True)
+
+        x = os_utils.get_bin_paths(root=new_dir)
+
+        assert x == [
+            f"{new_dir}/usr/sbin",
+            f"{new_dir}/usr/bin",
+            f"{new_dir}/sbin",
+            f"{new_dir}/bin",
+        ]
+
+    def test_get_bin_paths_not_exist(self):
+        x = os_utils.get_bin_paths(root="/invalid", existing_only=False)
+        assert x == [
+            "/invalid/usr/sbin",
+            "/invalid/usr/bin",
+            "/invalid/sbin",
+            "/invalid/bin",
+        ]
+
+    def test_get_include_paths_null(self):
+        x = os_utils.get_include_paths(root="/invalid", arch_triplet="my-arch-triplet")
+        assert x == []
+
+    def test_get_include_paths(self, new_dir):
+        for directory in [
+            "include",
+            "usr/include",
+            "include/my-arch-triplet",
+            "usr/include/my-arch-triplet",
+            "something/else",
+        ]:
+            Path(directory).mkdir(parents=True)
+
+        x = os_utils.get_include_paths(root=new_dir, arch_triplet="my-arch-triplet")
+        assert x == [
+            f"{new_dir}/include",
+            f"{new_dir}/usr/include",
+            f"{new_dir}/include/my-arch-triplet",
+            f"{new_dir}/usr/include/my-arch-triplet",
+        ]
+
+    def test_get_library_paths_null(self):
+        x = os_utils.get_library_paths(root="/invalid", arch_triplet="my-arch-triplet")
+        assert x == []
+
+    def test_get_library_paths_exist(self, new_dir):
+        for directory in [
+            "lib",
+            "usr/lib",
+            "lib/my-arch-triplet",
+            "usr/lib/my-arch-triplet",
+            "other",
+        ]:
+            Path(directory).mkdir(parents=True)
+
+        x = os_utils.get_library_paths(root=new_dir, arch_triplet="my-arch-triplet")
+
+        assert x == [
+            f"{new_dir}/lib",
+            f"{new_dir}/usr/lib",
+            f"{new_dir}/lib/my-arch-triplet",
+            f"{new_dir}/usr/lib/my-arch-triplet",
+        ]
+
+    def test_get_library_paths_not_exist(self):
+        x = os_utils.get_library_paths(
+            root="/invalid", arch_triplet="my-arch-triplet", existing_only=False
+        )
+        assert x == [
+            "/invalid/lib",
+            "/invalid/usr/lib",
+            "/invalid/lib/my-arch-triplet",
+            "/invalid/usr/lib/my-arch-triplet",
+        ]
+
+    def test_get_pkg_config_paths_null(self):
+        x = os_utils.get_pkg_config_paths(
+            root="/invalid", arch_triplet="my-arch-triplet"
+        )
+        assert x == []
+
+    def test_get_pkg_config_paths(self, new_dir):
+        for directory in [
+            "lib/pkgconfig",
+            "lib/my-arch-triplet/pkgconfig",
+            "usr/lib/pkgconfig",
+            "usr/lib/my-arch-triplet/pkgconfig",
+            "usr/share/pkgconfig",
+            "usr/local/lib/pkgconfig",
+            "usr/local/lib/my-arch-triplet/pkgconfig",
+            "usr/local/share/pkgconfig",
+            "something/else",
+        ]:
+            Path(directory).mkdir(parents=True)
+
+        x = os_utils.get_pkg_config_paths(root=new_dir, arch_triplet="my-arch-triplet")
+        assert x == [
+            f"{new_dir}/lib/pkgconfig",
+            f"{new_dir}/lib/my-arch-triplet/pkgconfig",
+            f"{new_dir}/usr/lib/pkgconfig",
+            f"{new_dir}/usr/lib/my-arch-triplet/pkgconfig",
+            f"{new_dir}/usr/share/pkgconfig",
+            f"{new_dir}/usr/local/lib/pkgconfig",
+            f"{new_dir}/usr/local/lib/my-arch-triplet/pkgconfig",
+            f"{new_dir}/usr/local/share/pkgconfig",
+        ]
+
+
 class TestTerminal:
     """Tests for terminal-related utilities."""
 
