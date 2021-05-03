@@ -207,6 +207,15 @@ def test_fileset_conflict():
     )
 
 
+def test_file_organize_error():
+    err = errors.FileOrganizeError(part_name="foo", message="not ready reading drive A")
+    assert err.part_name == "foo"
+    assert err.message == "not ready reading drive A"
+    assert err.brief == "Failed to organize part 'foo': not ready reading drive A."
+    assert err.details is None
+    assert err.resolution is None
+
+
 def test_part_files_conflict():
     err = errors.PartFilesConflict(
         part_name="foo", other_part_name="bar", conflicting_files=["file1", "file2"]

@@ -13,4 +13,5 @@ pytest-mock
 requests-mock
 sphinx
 sphinx-autodoc-typehints
+sphinx-pydantic
 sphinx-rtd-theme

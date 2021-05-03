@@ -271,6 +271,21 @@ class FilesetConflict(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
 
+class FileOrganizeError(PartsError):
+    """Failed to organize a file layout.
+
+    :param part_name: The name of the part being processed.
+    :param message: The error message.
+    """
+
+    def __init__(self, *, part_name, message):
+        self.part_name = part_name
+        self.message = message
+        brief = f"Failed to organize part {part_name!r}: {message}."
+
+        super().__init__(brief=brief)
+
+
 class PartFilesConflict(PartsError):
     """Different parts list the same files with different contents."""
 
