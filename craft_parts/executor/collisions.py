@@ -38,7 +38,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         if not stage_files:
             continue
 
-        # Gather our own files up
+        # Gather our own files up.
         stage_fileset = Fileset(stage_files, name="stage")
         srcdir = str(part.part_install_dir)
         part_files, part_directories = filesets.migratable_filesets(
@@ -46,9 +46,9 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         )
         part_contents = part_files | part_directories
 
-        # Scan previous parts for collisions
+        # Scan previous parts for collisions.
         for other_part_name in all_parts_files:
-            # our files that are also in a different part
+            # Our files that are also in a different part.
             common = part_contents & all_parts_files[other_part_name]["files"]
 
             conflict_files = []
@@ -68,7 +68,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
                     conflicting_files=conflict_files,
                 )
 
-        # And add our files to the list
+        # And add our files to the list.
         all_parts_files[part.name] = {
             "files": part_contents,
             "installdir": part.part_install_dir,
@@ -85,24 +85,24 @@ def paths_collide(path1: str, path2: str) -> bool:
     path1_is_link = os.path.islink(path1)
     path2_is_link = os.path.islink(path2)
 
-    # Paths collide if they're both symlinks, but pointing to different places
+    # Paths collide if they're both symlinks, but pointing to different places.
     if path1_is_link and path2_is_link:
         return os.readlink(path1) != os.readlink(path2)
 
-    # Paths collide if one is a symlink, but not the other
+    # Paths collide if one is a symlink, but not the other.
     if path1_is_link or path2_is_link:
         return True
 
-    # Paths collide if one is a directory, but not the other
+    # Paths collide if one is a directory, but not the other.
     if path1_is_dir != path2_is_dir:
         return True
 
     # Paths collide if neither path is a directory, and the files have
-    # different contents
+    # different contents.
     if not (path1_is_dir and path2_is_dir) and _file_collides(path1, path2):
         return True
 
-    # Otherwise, paths do not conflict
+    # Otherwise, paths do not conflict.
     return False
 
 
@@ -110,7 +110,7 @@ def _file_collides(file_this: str, file_other: str) -> bool:
     if not file_this.endswith(".pc"):
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
-    # pkgconfig files need special handling
+    # pkgconfig files need special handling.
     pc_file_1 = open(file_this)
     pc_file_2 = open(file_other)
 
