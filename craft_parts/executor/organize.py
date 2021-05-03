@@ -40,7 +40,9 @@ def organize_files(
 
     :param fileset: A fileset containing the `organize` file mapping.
     :param base_dir: Where the installed files are located.
-    :param overwrite: Whether existing files should be overwritten.
+    :param overwrite: Whether existing files should be overwritten. This is
+        only used in build updates, when a part may organize over files
+        it previously organized.
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
         src = os.path.join(base_dir, key)
