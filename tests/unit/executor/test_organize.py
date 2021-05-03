@@ -204,14 +204,14 @@ def _organize_and_assert(
         expected = expected_overwrite
 
     if isinstance(expected, type) and issubclass(expected, Exception):
-        with pytest.raises(expected) as error:  # type: ignore
+        with pytest.raises(expected) as raised:  # type: ignore
             organize_files(
                 part_name="part-name",
                 mapping=organize_map,
                 base_dir=base_dir,
                 overwrite=overwrite,
             )
-        assert re.match(expected_message, str(error)) is not None
+        assert re.match(expected_message, str(raised.value)) is not None
 
     else:
         organize_files(
