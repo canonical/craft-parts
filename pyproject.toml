@@ -23,7 +23,7 @@ extension-pkg-whitelist = [
     "apt_pkg",
     "pydantic"
 ]
-load-plugins = "pylint_fixme_info"
+load-plugins = "pylint_fixme_info,pylint_pytest"
 good-names = "id"
 
 [tool.black]

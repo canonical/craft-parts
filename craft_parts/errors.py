@@ -284,3 +284,24 @@ class FileOrganizeError(PartsError):
         brief = f"Failed to organize part {part_name!r}: {message}."
 
         super().__init__(brief=brief)
+
+
+class PartFilesConflict(PartsError):
+    """Different parts list the same files with different contents."""
+
+    def __init__(
+        self, *, part_name: str, other_part_name: str, conflicting_files: List[str]
+    ):
+        self.part_name = part_name
+        self.other_part_name = other_part_name
+        self.conflicting_files = conflicting_files
+        indented_conflicting_files = ("    {}".format(i) for i in conflicting_files)
+        file_paths = "\n".join(sorted(indented_conflicting_files))
+        brief = "Failed to stage: parts list the same file with different contents."
+        details = (
+            f"Parts {part_name!r} and {other_part_name!r} list the following "
+            f"files, but with different contents:\n"
+            f"{file_paths}"
+        )
+
+        super().__init__(brief=brief, details=details)
