@@ -232,3 +232,56 @@ def test_part_files_conflict():
         "    file2"
     )
     assert err.resolution is None
+
+
+def test_stage_files_conflict():
+    err = errors.StageFilesConflict(
+        part_name="foo", conflicting_files=["file1", "file2"]
+    )
+    assert err.part_name == "foo"
+    assert err.conflicting_files == ["file1", "file2"]
+    assert err.brief == (
+        "Failed to stage: part files conflict with files already being staged."
+    )
+    assert err.details == (
+        "The following files in part 'foo' are already being staged with different "
+        "content:\n"
+        "    file1\n"
+        "    file2"
+    )
+    assert err.resolution is None
+
+
+def test_plugin_build_error():
+    err = errors.PluginBuildError(part_name="foo")
+    assert err.part_name == "foo"
+    assert err.brief == "Failed to run the build script for part 'foo'."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_invalid_control_api_call():
+    err = errors.InvalidControlAPICall(
+        part_name="foo", scriptlet_name="override-build", message="everything is broken"
+    )
+    assert err.part_name == "foo"
+    assert err.scriptlet_name == "override-build"
+    assert err.message == "everything is broken"
+    assert err.brief == (
+        "'override-build' in part 'foo' executed an invalid control API call: "
+        "everything is broken."
+    )
+    assert err.details is None
+    assert err.resolution == "Review the scriptlet and make sure it's correct."
+
+
+def test_scriptlet_run_error():
+    err = errors.ScriptletRunError(
+        part_name="foo", scriptlet_name="override-build", exit_code=42
+    )
+    assert err.part_name == "foo"
+    assert err.scriptlet_name == "override-build"
+    assert err.exit_code == 42
+    assert err.brief == "'override-build' in part 'foo' failed with code 42."
+    assert err.details is None
+    assert err.resolution == "Review the scriptlet and make sure it's correct."

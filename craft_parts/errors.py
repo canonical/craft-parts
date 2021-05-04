@@ -305,3 +305,78 @@ class PartFilesConflict(PartsError):
         )
 
         super().__init__(brief=brief, details=details)
+
+
+class StageFilesConflict(PartsError):
+    """Files from a part conflict with files already being staged.
+
+    :param part_name: The name of the part being processed.
+    :param conflicting_files: The list of confictling files.
+    """
+
+    def __init__(self, *, part_name: str, conflicting_files: List[str]):
+        self.part_name = part_name
+        self.conflicting_files = conflicting_files
+        indented_conflicting_files = ("    {}".format(i) for i in conflicting_files)
+        file_paths = "\n".join(sorted(indented_conflicting_files))
+        brief = "Failed to stage: part files conflict with files already being staged."
+        details = (
+            f"The following files in part {part_name!r} are already being staged "
+            f"with different content:\n"
+            f"{file_paths}"
+        )
+
+        super().__init__(brief=brief, details=details)
+
+
+class PluginBuildError(PartsError):
+    """Plugin build script failed at runtime.
+
+    :param part_name: The name of the part being processed.
+    """
+
+    def __init__(self, *, part_name: str):
+        self.part_name = part_name
+        brief = f"Failed to run the build script for part {part_name!r}."
+
+        super().__init__(brief=brief)
+
+
+class InvalidControlAPICall(PartsError):
+    """A control API call was made with invalid parameters.
+
+    :param part_name: The name of the part being processed.
+    :param scriptlet_name: The name of the scriptlet that originated the call.
+    :param message: The error message.
+    """
+
+    def __init__(self, *, part_name: str, scriptlet_name: str, message: str):
+        self.part_name = part_name
+        self.scriptlet_name = scriptlet_name
+        self.message = message
+        brief = (
+            f"{scriptlet_name!r} in part {part_name!r} executed an invalid control "
+            f"API call: {message}."
+        )
+        resolution = "Review the scriptlet and make sure it's correct."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class ScriptletRunError(PartsError):
+    """A scriptlet execution failed.
+
+    :param part_name: The name of the part being processed.
+    :param scriptlet_name: The name of the scriptlet that failed to execute.
+    :param exit_code: The execution error code.
+    """
+
+    def __init__(self, *, part_name: str, scriptlet_name: str, exit_code: int):
+        self.part_name = part_name
+        self.scriptlet_name = scriptlet_name
+        self.exit_code = exit_code
+        brief = (
+            f"{scriptlet_name!r} in part {part_name!r} failed with code {exit_code}."
+        )
+        resolution = "Review the scriptlet and make sure it's correct."
+        super().__init__(brief=brief, resolution=resolution)
