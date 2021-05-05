@@ -158,3 +158,6 @@ class TestCopy:
         with pytest.raises(errors.CopyFileNotFound) as raised:
             file_utils.copy("2", "3")
         assert raised.value.name == "2"
+
+
+# TODO: test NonBlockingRWFifo
