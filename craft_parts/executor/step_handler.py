@@ -342,6 +342,7 @@ def _fix_pkg_config(
     :param pkg_config_file: The pkg-config file to process.
     :param prefix_trim: The initial path to remove from the configuration prefix.
     """
+    # FIXME: see https://bugs.launchpad.net/snapcraft/+bug/1916281
     pattern_trim = None
     if prefix_trim:
         pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
