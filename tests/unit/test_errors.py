@@ -285,3 +285,11 @@ def test_scriptlet_run_error():
     assert err.brief == "'override-build' in part 'foo' failed with code 42."
     assert err.details is None
     assert err.resolution == "Review the scriptlet and make sure it's correct."
+
+
+def test_callback_registration_error():
+    err = errors.CallbackRegistrationError("General failure reading drive A")
+    assert err.message == "General failure reading drive A"
+    assert err.brief == "Callback registration error: General failure reading drive A."
+    assert err.details is None
+    assert err.resolution is None

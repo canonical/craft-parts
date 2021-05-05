@@ -379,4 +379,18 @@ class ScriptletRunError(PartsError):
             f"{scriptlet_name!r} in part {part_name!r} failed with code {exit_code}."
         )
         resolution = "Review the scriptlet and make sure it's correct."
+
         super().__init__(brief=brief, resolution=resolution)
+
+
+class CallbackRegistrationError(PartsError):
+    """Error in callback function registration.
+
+    :param message: the error message.
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        brief = f"Callback registration error: {message}."
+
+        super().__init__(brief=brief)
