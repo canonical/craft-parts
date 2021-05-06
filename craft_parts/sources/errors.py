@@ -16,6 +16,7 @@
 
 """Source handler error definitions."""
 
+import shlex
 from typing import List
 
 from craft_parts import errors
@@ -108,3 +109,26 @@ class SourceNotFound(SourceError):
         resolution = "Make sure the source path is correct and accessible."
 
         super().__init__(brief=brief, resolution=resolution)
+
+
+class InvalidSnapPackage(SourceError):
+    """A snap package is invalid."""
+
+    def __init__(self, snap_file: str):
+        self.snap_file = snap_file
+        brief = f"Snap {snap_file!r} does not contain valid data."
+        resolution = "Ensure the source lists a proper snap file."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class PullError(SourceError):
+    """Failed pulling source."""
+
+    def __init__(self, *, command: List[str], exit_code: int):
+        self.command = command
+        self.exit_code = exit_code
+        cmd = " ".join(shlex.quote(i) for i in command)
+        brief = f"Failed to pull source: command {cmd!r} exited with code {exit_code}."
+
+        super().__init__(brief=brief)
