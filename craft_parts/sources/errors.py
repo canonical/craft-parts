@@ -16,7 +16,6 @@
 
 """Source handler error definitions."""
 
-import shlex
 from typing import List
 
 from craft_parts import errors
@@ -128,7 +127,8 @@ class PullError(SourceError):
     def __init__(self, *, command: List[str], exit_code: int):
         self.command = command
         self.exit_code = exit_code
-        cmd = " ".join(shlex.quote(i) for i in command)
-        brief = f"Failed to pull source: command {cmd!r} exited with code {exit_code}."
+        brief = (
+            f"Failed to pull source: command {command!r} exited with code {exit_code}."
+        )
 
         super().__init__(brief=brief)

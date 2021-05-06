@@ -97,6 +97,8 @@ def test_pull_error():
     err = errors.PullError(command=["ls", "-l"], exit_code=66)
     assert err.command == ["ls", "-l"]
     assert err.exit_code == 66
-    assert err.brief == "Failed to pull source: command 'ls -l' exited with code 66."
+    assert (
+        err.brief == "Failed to pull source: command ['ls', '-l'] exited with code 66."
+    )
     assert err.details is None
     assert err.resolution is None
