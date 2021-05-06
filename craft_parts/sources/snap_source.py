@@ -41,7 +41,7 @@ class SnapSource(FileSourceHandler):
     def __init__(
         self,
         source,
-        source_dir,
+        part_src_dir,
         *,
         application_name: str = None,
         source_tag: str = None,
@@ -53,7 +53,7 @@ class SnapSource(FileSourceHandler):
     ) -> None:
         super().__init__(
             source,
-            source_dir,
+            part_src_dir,
             application_name=application_name,
             source_tag=source_tag,
             source_commit=source_commit,
@@ -72,6 +72,9 @@ class SnapSource(FileSourceHandler):
 
         if source_branch:
             raise errors.InvalidSourceOption(source_type="snap", option="source-branch")
+
+        if source_depth:
+            raise errors.InvalidSourceOption(source_type="snap", option="source-depth")
 
     def provision(
         self,

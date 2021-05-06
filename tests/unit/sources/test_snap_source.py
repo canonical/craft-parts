@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from craft_parts.sources import snap_source, sources
+from craft_parts.sources import errors, snap_source, sources
 
 _LOCAL_DIR = Path(__file__).parent
 
@@ -38,6 +38,15 @@ class TestSnapSource:
         self._dest_dir = new_dir / "dest_dir"
         self._dest_dir.mkdir()
         # pylint: enable=attribute-defined-outside-init
+
+    @pytest.mark.parametrize(
+        "param", ["source_tag", "source_branch", "source_commit", "source_depth"]
+    )
+    def test_invalid_parameter(self, param):
+        with pytest.raises(errors.InvalidSourceOption) as raised:
+            kwargs = {param: "foo"}
+            sources.SnapSource(source="test.snap", part_src_dir=".", **kwargs)
+        assert raised.value.option == param.replace("_", "-")
 
     def test_pull_snap_file_must_extract(self):
         source = sources.SnapSource(self._test_file, self._dest_dir)
