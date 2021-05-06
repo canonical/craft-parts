@@ -127,6 +127,13 @@ class SnapSource(FileSourceHandler):
 
 
 def _get_snap_name(snap: str, snap_dir: str) -> str:
+    """Obtain the snap name from the snap details file.
+
+    :param snap: The snap package file.
+    :param snap_dir: The location of the unsquashed snap contents.
+
+    :return: The snap name.
+    """
     try:
         with open(os.path.join(snap_dir, "meta", "snap.yaml")) as snap_yaml:
             return yaml.safe_load(snap_yaml)["name"]
