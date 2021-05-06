@@ -16,6 +16,7 @@
 
 """Handle the execution of built-in or user specified step commands."""
 
+import dataclasses
 import fileinput
 import json
 import os
@@ -25,7 +26,6 @@ import sys
 import tempfile
 import textwrap
 import time
-from collections import namedtuple
 from pathlib import Path
 from typing import List, Optional, Set, Union
 
@@ -41,7 +41,13 @@ from craft_parts.utils import file_utils
 from . import environment, filesets
 from .filesets import Fileset
 
-FilesAndDirs = namedtuple("FilesAndDirs", ["files", "dirs"])
+
+@dataclasses.dataclass(frozen=True)
+class StepContents:
+    """Files and directories to be added to the step's state."""
+
+    files: Set[str] = dataclasses.field(default_factory=set)
+    dirs: Set[str] = dataclasses.field(default_factory=set)
 
 
 class StepHandler:
@@ -72,9 +78,10 @@ class StepHandler:
             part=part, plugin=plugin, step_info=step_info
         )
 
-    def run_builtin(self) -> FilesAndDirs:
+    def run_builtin(self) -> StepContents:
         """Run the built-in commands for the current step."""
         step = self._step_info.step
+
         if step == Step.PULL:
             handler = self._builtin_pull
         elif step == Step.BUILD:
@@ -90,12 +97,12 @@ class StepHandler:
 
         return handler()
 
-    def _builtin_pull(self) -> FilesAndDirs:
+    def _builtin_pull(self) -> StepContents:
         if self._source_handler:
             self._source_handler.pull()
-        return FilesAndDirs(set(), set())
+        return StepContents()
 
-    def _builtin_build(self) -> FilesAndDirs:
+    def _builtin_build(self) -> StepContents:
 
         # Plugin commands.
         plugin_build_commands = self._plugin.get_build_commands()
@@ -118,9 +125,9 @@ class StepHandler:
         except subprocess.CalledProcessError as process_error:
             raise errors.PluginBuildError(part_name=self._part.name) from process_error
 
-        return FilesAndDirs(set(), set())
+        return StepContents()
 
-    def _builtin_stage(self) -> FilesAndDirs:
+    def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(stage_fileset, srcdir)
@@ -143,9 +150,9 @@ class StepHandler:
             destdir=str(self._part.stage_dir),
             fixup_func=pkgconfig_fixup,
         )
-        return FilesAndDirs(files, dirs)
+        return StepContents(files, dirs)
 
-    def _builtin_prime(self) -> FilesAndDirs:
+    def _builtin_prime(self) -> StepContents:
         prime_fileset = Fileset(self._part.spec.prime_files, name="prime")
 
         # If we're priming and we don't have an explicit set of files to prime
@@ -164,7 +171,7 @@ class StepHandler:
         )
         # TODO: handle elf dependencies
 
-        return FilesAndDirs(files, dirs)
+        return StepContents(files, dirs)
 
     def run_scriptlet(
         self, scriptlet: str, *, scriptlet_name: str, work_dir: Path

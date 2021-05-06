@@ -45,6 +45,8 @@ class LifecycleManager:
         directory will be used if none is specified.
     :param arch: The architecture to build for. Defaults to the host system
         architecture.
+    :param base: The system base the project being processed will run on. Defaults
+        to the system where Craft Parts is being executed.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param custom_args: Any additional arguments that will be passed directly
@@ -58,6 +60,7 @@ class LifecycleManager:
         application_name: str,
         work_dir: str = ".",
         arch: str = "",
+        base: str = "",
         parallel_build_count: int = 1,
         **custom_args,  # custom passthrough args
     ):
@@ -68,6 +71,7 @@ class LifecycleManager:
         project_info = ProjectInfo(
             application_name=application_name,
             arch=arch,
+            base=base,
             parallel_build_count=parallel_build_count,
             project_dirs=project_dirs,
             **custom_args,
