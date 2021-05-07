@@ -24,6 +24,11 @@ from craft_parts import errors
 from craft_parts.utils import os_utils
 
 
+@pytest.fixture
+def fake_check_output(mocker):
+    return mocker.patch("subprocess.check_output")
+
+
 class TestTimedWriter:
     """Check if minimum interval ensured between writes."""
 
@@ -58,7 +63,32 @@ class TestTimedWriter:
         mock_sleep.assert_called_with(pytest.approx(0.015, 0.00001))
 
 
-#    paths = (os.path.join("usr", "sbin"), os.path.join("usr", "bin"), "sbin", "bin")
+class TestSystemInfo:
+    """Verify retrieval of system information."""
+
+    def test_get_system_info(self, fake_check_output):
+        fake_check_output.return_value = (
+            b"Linux 5.4.0-70-generic #78-Ubuntu SMP Fri Mar 19 13:29:52 "
+            b"UTC 2021 x86_64 x86_64 x86_64 GNU/Linux\n"
+        )
+
+        res = os_utils.get_system_info()
+        assert res == (
+            "Linux 5.4.0-70-generic #78-Ubuntu SMP Fri Mar 19 13:29:52 "
+            "UTC 2021 x86_64 x86_64 x86_64 GNU/Linux"
+        )
+        fake_check_output.assert_called_once_with(
+            [
+                "uname",
+                "--kernel-name",
+                "--kernel-release",
+                "--kernel-version",
+                "--machine",
+                "--processor",
+                "--hardware-platform",
+                "--operating-system",
+            ]
+        )
 
 
 class TestGetPaths:

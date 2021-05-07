@@ -19,6 +19,7 @@
 import contextlib
 import logging
 import os
+import subprocess
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -180,6 +181,39 @@ def is_snap(*, application_name: Optional[str] = None) -> bool:
     )
 
     return res
+
+
+def get_system_info() -> str:
+    """Obtain running system information."""
+    # Use subprocess directly here. common.run_output will use binaries out
+    # of the snap, and we want to use the one on the host.
+    try:
+        output = subprocess.check_output(
+            [
+                "uname",
+                "--kernel-name",
+                "--kernel-release",
+                "--kernel-version",
+                "--machine",
+                "--processor",
+                "--hardware-platform",
+                "--operating-system",
+            ]
+        )
+    except subprocess.CalledProcessError as err:
+        logger.warning(
+            "'uname' exited with code %d: unable to record machine manifest",
+            err.returncode,
+        )
+        return ""
+
+    try:
+        uname = output.decode().strip()
+    except UnicodeEncodeError:
+        logger.warning("Could not decode output for 'uname' correctly")
+        uname = output.decode("latin-1", "surrogateescape").strip()
+
+    return uname
 
 
 _ID_TO_UBUNTU_CODENAME = {
