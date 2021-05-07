@@ -80,6 +80,7 @@ from craft_parts.dirs import ProjectDirs
 from . import errors
 from .base import SourceHandler
 from .local_source import LocalSource
+from .snap_source import SnapSource
 from .tar_source import TarSource
 
 if TYPE_CHECKING:
@@ -91,6 +92,7 @@ SourceHandlerType = Type[SourceHandler]
 _source_handler: Dict[str, SourceHandlerType] = {
     "local": LocalSource,
     "tar": TarSource,
+    "snap": SnapSource,
 }
 
 

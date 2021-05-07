@@ -83,3 +83,22 @@ def test_source_not_found():
     assert err.brief == "Failed to pull source: 'some_source' not found."
     assert err.details is None
     assert err.resolution == "Make sure the source path is correct and accessible."
+
+
+def test_invalid_snap_package():
+    err = errors.InvalidSnapPackage("figlet.snap")
+    assert err.snap_file == "figlet.snap"
+    assert err.brief == "Snap 'figlet.snap' does not contain valid data."
+    assert err.details is None
+    assert err.resolution == "Ensure the source lists a proper snap file."
+
+
+def test_pull_error():
+    err = errors.PullError(command=["ls", "-l"], exit_code=66)
+    assert err.command == ["ls", "-l"]
+    assert err.exit_code == 66
+    assert (
+        err.brief == "Failed to pull source: command ['ls', '-l'] exited with code 66."
+    )
+    assert err.details is None
+    assert err.resolution is None
