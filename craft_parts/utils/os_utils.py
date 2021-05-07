@@ -20,7 +20,6 @@ import contextlib
 import logging
 import os
 import subprocess
-import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -209,7 +208,7 @@ def get_system_info() -> str:
         return ""
 
     try:
-        uname = output.decode(sys.getfilesystemencoding()).strip()
+        uname = output.decode().strip()
     except UnicodeEncodeError:
         logger.warning("Could not decode output for 'uname' correctly")
         uname = output.decode("latin-1", "surrogateescape").strip()
