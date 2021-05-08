@@ -293,3 +293,20 @@ def test_callback_registration_error():
     assert err.brief == "Callback registration error: General failure reading drive A."
     assert err.details is None
     assert err.resolution is None
+
+
+def test_stage_package_not_found():
+    err = errors.StagePackageNotFound(part_name="foo", package_name="figlet")
+    assert err.part_name == "foo"
+    assert err.package_name == "figlet"
+    assert err.brief == "Stage package not found in part 'foo': figlet."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_invalid_action():
+    err = errors.InvalidAction("cannot update step 'stage'")
+    assert err.message == "cannot update step 'stage'"
+    assert err.brief == "Action is invalid: cannot update step 'stage'."
+    assert err.details is None
+    assert err.resolution is None
