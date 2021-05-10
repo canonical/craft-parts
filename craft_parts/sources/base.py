@@ -19,6 +19,7 @@
 import abc
 import os
 import shutil
+import subprocess
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -105,6 +106,13 @@ class SourceHandler(abc.ABC):
         :raise errors.SourceUpdateUnsupported: If the source can't update its files.
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
+
+    @classmethod
+    def _run_output(cls, command: List[str]) -> str:
+        try:
+            return subprocess.check_output(command, text=True).strip()
+        except subprocess.CalledProcessError as err:
+            raise errors.PullError(command=command, exit_code=err.returncode)
 
 
 class FileSourceHandler(SourceHandler):
