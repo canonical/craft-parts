@@ -394,3 +394,31 @@ class CallbackRegistrationError(PartsError):
         brief = f"Callback registration error: {message}."
 
         super().__init__(brief=brief)
+
+
+class StagePackageNotFound(PartsError):
+    """Failed to install a stage package.
+
+    :param part_name: The name of the part being processed.
+    :param message: the error message.
+    """
+
+    def __init__(self, *, part_name: str, package_name: str):
+        self.part_name = part_name
+        self.package_name = package_name
+        brief = f"Stage package not found in part {part_name!r}: {package_name}."
+
+        super().__init__(brief=brief)
+
+
+class InvalidAction(PartsError):
+    """An attempt was made to execute an action with invalid parameters.
+
+    :param message: The error message.
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        brief = f"Action is invalid: {message}."
+
+        super().__init__(brief=brief)
