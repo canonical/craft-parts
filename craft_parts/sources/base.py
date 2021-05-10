@@ -20,7 +20,6 @@ import abc
 import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -111,8 +110,7 @@ class SourceHandler(abc.ABC):
     @classmethod
     def _run_output(cls, command: List[str]) -> str:
         try:
-            output = subprocess.check_output(command)
-            return output.decode(sys.getfilesystemencoding()).strip()
+            return subprocess.check_output(command, text=True).strip()
         except subprocess.CalledProcessError as err:
             raise errors.PullError(command=command, exit_code=err.returncode)
 
