@@ -27,6 +27,7 @@ from craft_parts.plugins.plugins import (
     DumpPlugin,
     MakePlugin,
     NilPlugin,
+    PythonPlugin,
 )
 
 
@@ -44,6 +45,7 @@ class TestGetPlugin:
             ("dump", DumpPlugin),
             ("make", MakePlugin),
             ("nil", NilPlugin),
+            ("python", PythonPlugin),
         ],
     )
     def test_get_plugin(self, name, plugin_class):
