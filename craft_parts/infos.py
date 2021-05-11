@@ -199,7 +199,11 @@ class PartInfo:
 
 
 class StepInfo:
-    """Step-level information containing project, part, and step fields."""
+    """Step-level information containing project, part, and step fields.
+
+    :param part_info: The part information.
+    :param step: The step we want to obtain information from.
+    """
 
     def __init__(
         self,

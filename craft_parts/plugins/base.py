@@ -24,7 +24,8 @@ from pydantic import BaseModel
 from .properties import PluginProperties
 
 if TYPE_CHECKING:
-    from craft_parts.infos import PartInfo
+    # import module to avoid circular imports in sphinx doc generation
+    from craft_parts import infos
 
 
 class Plugin(abc.ABC):
@@ -38,7 +39,9 @@ class Plugin(abc.ABC):
 
     properties_class: Type[PluginProperties]
 
-    def __init__(self, *, properties: PluginProperties, part_info: "PartInfo") -> None:
+    def __init__(
+        self, *, properties: PluginProperties, part_info: "infos.PartInfo"
+    ) -> None:
         self._name = part_info.part_name
         self._options = properties
         self._part_info = part_info

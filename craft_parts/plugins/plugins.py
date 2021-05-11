@@ -27,8 +27,8 @@ from .nil_plugin import NilPlugin
 from .properties import PluginProperties
 
 if TYPE_CHECKING:
-    from craft_parts.infos import PartInfo
-    from craft_parts.parts import Part
+    # import module to avoid circular imports in sphinx doc generation
+    from craft_parts import infos, parts
 
 
 PluginType = Type[Plugin]
@@ -47,8 +47,8 @@ _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
 def get_plugin(
     *,
-    part: "Part",
-    part_info: "PartInfo",
+    part: "parts.Part",
+    part_info: "infos.PartInfo",
     properties: PluginProperties,
 ) -> Plugin:
     """Obtain a plugin instance for the specified part.

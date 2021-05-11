@@ -150,6 +150,7 @@ class XAttributeError(PartsError):
     :param action: The action being performed.
     :param key: The extended attribute key.
     :param path: The file path.
+    :param is_write: Whether this is an attribute write operation.
     """
 
     def __init__(self, key: str, path: str, is_write: bool = False):
@@ -165,7 +166,12 @@ class XAttributeError(PartsError):
 
 
 class XAttributeTooLong(PartsError):
-    """Failed to write an extended attribute because key and/or value is too long."""
+    """Failed to write an extended attribute because key and/or value is too long.
+
+    :param key: The extended attribute key.
+    :param value: The extended attribute value.
+    :param path: The file path.
+    """
 
     def __init__(self, key: str, value: str, path: str):
         self.key = key
@@ -180,7 +186,7 @@ class XAttributeTooLong(PartsError):
 class UndefinedPlugin(PartsError):
     """The part didn't define a plugin and the part name is not a valid plugin name.
 
-    :param part_name: The name of the part with no plugin definition."
+    :param part_name: The name of the part with no plugin definition.
     """
 
     def __init__(self, *, part_name: str):
@@ -195,6 +201,7 @@ class InvalidPlugin(PartsError):
     """A request was made to use a plugin that's not registered.
 
     :param plugin_name: The invalid plugin name."
+    :param part_name: The name of the part defining the invalid plugin.
     """
 
     def __init__(self, plugin_name: str, *, part_name: str):
@@ -243,7 +250,11 @@ class OsReleaseCodenameError(PartsError):
 
 
 class FilesetError(PartsError):
-    """An invalid fileset operation was performed."""
+    """An invalid fileset operation was performed.
+
+    :param name: The name of the fileset.
+    :param message: The error message.
+    """
 
     def __init__(self, *, name: str, message: str):
         self.name = name
@@ -255,7 +266,10 @@ class FilesetError(PartsError):
 
 
 class FilesetConflict(PartsError):
-    """Inconsistent stage to prime filtering."""
+    """Inconsistent stage to prime filtering.
+
+    :param conflicting_files: A set containing the conflicting file names.
+    """
 
     def __init__(self, conflicting_files: Set[str]):
         self.conflicting_files = conflicting_files
