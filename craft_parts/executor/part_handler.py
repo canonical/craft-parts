@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class PartHandler:
-    """Handle steps for a part using the appropriate plugins.
+    """Handle lifecycle steps for a part.
 
     :param part: The part being processed.
     :param part_info: Information about the part being processed.
