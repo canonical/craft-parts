@@ -230,9 +230,6 @@ class PartHandler:
         :return: If step is Stage or Prime, return a tuple of sets containing
             the step's file and directory artifacts.
         """
-        if not step_info.step:
-            raise RuntimeError("request to run an undefined step")
-
         step_handler = StepHandler(
             self._part,
             step_info=step_info,
