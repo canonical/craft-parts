@@ -48,6 +48,7 @@ class ProjectInfo:
         *,
         application_name: str = utils.package_name(),
         arch: str = "",
+        base: str = "",
         parallel_build_count: int = 1,
         project_dirs: ProjectDirs = None,
         **custom_args,  # custom passthrough args
@@ -57,6 +58,7 @@ class ProjectInfo:
 
         self._application_name = application_name
         self._set_machine(arch)
+        self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs
         self._custom_args = custom_args
@@ -99,6 +101,11 @@ class ProjectInfo:
     def target_arch(self) -> str:
         """Return the architecture used for debs, snaps and charms."""
         return self._machine["deb"]
+
+    @property
+    def base(self) -> str:
+        """Return the project build base."""
+        return self._base
 
     @property
     def dirs(self) -> ProjectDirs:

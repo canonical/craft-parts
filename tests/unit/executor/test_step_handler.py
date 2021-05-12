@@ -25,7 +25,7 @@ from craft_parts import plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor import filesets, step_handler
 from craft_parts.executor.filesets import Fileset
-from craft_parts.executor.step_handler import FilesAndDirs, StepHandler
+from craft_parts.executor.step_handler import StepContents, StepHandler
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -84,7 +84,7 @@ class TestStepHandlerBuiltins:
         result = sh.run_builtin()
 
         mock_source_pull.assert_called_once_with()
-        assert result == (set(), set())
+        assert result == StepContents()
 
     def test_run_builtin_build(self, new_dir, mocker):
         mock_run = mocker.patch("subprocess.run")
@@ -98,7 +98,7 @@ class TestStepHandlerBuiltins:
             check=True,
             cwd=Path(new_dir / "parts/p1/build"),
         )
-        assert result == (set(), set())
+        assert result == StepContents()
 
     def test_run_builtin_stage(self, mocker):
         Path("parts/p1/install").mkdir(parents=True)
@@ -109,7 +109,7 @@ class TestStepHandlerBuiltins:
         sh = _step_handler_for_step(Step.STAGE)
         result = sh.run_builtin()
 
-        assert result == FilesAndDirs(files={"subdir/bar", "foo"}, dirs={"subdir"})
+        assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
     def test_run_builtin_prime(self, mocker):
         Path("parts/p1/install").mkdir(parents=True)
@@ -122,7 +122,7 @@ class TestStepHandlerBuiltins:
         sh = _step_handler_for_step(Step.PRIME)
         result = sh.run_builtin()
 
-        assert result == FilesAndDirs(files={"subdir/bar", "foo"}, dirs={"subdir"})
+        assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
     def test_run_builtin_invalid(self):
         sh = _step_handler_for_step(999)  # type: ignore
