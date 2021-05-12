@@ -66,6 +66,16 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
     return state_class.unmarshal(state_data)
 
 
+def remove(part: Part, step: Step) -> None:
+    """Remove the persistent state file for the given part and step.
+
+    :param part: The part whose state is to be removed.
+    :param step: The step whose state is to be removed.
+    """
+    state_file = part.part_state_dir / step.name.lower()
+    state_file.unlink(missing_ok=True)
+
+
 def state_file_path(part: Part, step: Step) -> Path:
     """Return the path to the state file for the give part and step."""
     return part.part_state_dir / step.name.lower()

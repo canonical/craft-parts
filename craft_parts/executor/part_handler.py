@@ -22,7 +22,7 @@ import os.path
 import shutil
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from craft_parts import callbacks, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
@@ -33,7 +33,7 @@ from craft_parts.plugins import Plugin
 from craft_parts.state_manager import states
 from craft_parts.state_manager.states import StepState
 from craft_parts.steps import Step
-from craft_parts.utils import os_utils
+from craft_parts.utils import file_utils, os_utils
 
 from .organize import organize_files
 from .step_handler import StepContents, StepHandler
@@ -84,12 +84,11 @@ class PartHandler:
         step_info = StepInfo(self._part_info, action.step)
 
         if action.action_type == ActionType.UPDATE:
-            # TODO: add update action handler
+            self._update_action(action, step_info=step_info)
             return
 
         if action.action_type == ActionType.RERUN:
-            # TODO: clean step
-            pass
+            self.clean_step(step=action.step)
 
         handler: Callable[[StepInfo], StepState]
 
@@ -245,6 +244,131 @@ class PartHandler:
 
         return step_handler.run_builtin()
 
+    def _update_action(self, action: Action, *, step_info: StepInfo) -> None:
+        handler: Callable[[StepInfo], None]
+
+        if action.step == Step.PULL:
+            handler = self._update_pull
+        elif action.step == Step.BUILD:
+            handler = self._update_build
+        else:
+            step_name = action.step.name.lower()
+            raise errors.InvalidAction(
+                f"cannot update step {step_name!r} of {self._part.name!r}."
+            )
+
+        callbacks.run_pre_step(step_info)
+        handler(step_info)
+        state_file = states.state_file_path(self._part, action.step)
+        state_file.touch()
+        callbacks.run_post_step(step_info)
+
+    def _update_pull(self, step_info: StepInfo) -> None:
+        self._make_dirs()
+
+        # if there's an override-pull scriptlet, execute it instead
+        if self._part.spec.override_pull:
+            self._run_step(
+                step_info=step_info,
+                scriptlet_name="override-pull",
+                work_dir=self._part.part_src_dir,
+            )
+            return
+
+        # consistency check
+        if not self._source_handler:
+            raise RuntimeError(
+                f"Update requested on part {self._part.name!r} without "
+                f"a source handler."
+            )
+
+        # the update action is sequenced only if an update is required and the
+        # source knows how to update
+        state_file = states.state_file_path(self._part, step_info.step)
+        self._source_handler.check_if_outdated(str(state_file))
+        self._source_handler.update()
+
+    def _update_build(self, step_info: StepInfo) -> None:
+        self._make_dirs()
+        self._unpack_stage_packages()
+        self._unpack_stage_snaps()
+
+        if not self._plugin.out_of_source_build:
+            # Use the local source to update. It's important to use
+            # file_utils.copy instead of link_or_copy, as the build process
+            # may modify these files
+            source = sources.LocalSource(
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                copy_function=file_utils.copy,
+            )
+            state_file = states.state_file_path(self._part, step_info.step)
+            source.check_if_outdated(str(state_file))  # required by source.update()
+            source.update()
+
+        _remove(self._part.part_install_dir)
+
+        self._run_step(
+            step_info=step_info,
+            scriptlet_name="override-build",
+            work_dir=self._part.part_build_dir,
+        )
+
+        self._organize(overwrite=True)
+
+    def clean_step(self, step: Step) -> None:
+        """Remove the work files and the state of the given step.
+
+        :param step: The step to clean.
+        """
+        logger.debug("clean %s:%s", self._part.name, step)
+
+        handler: Callable[[], None]
+
+        if step == Step.PULL:
+            handler = self._clean_pull
+        elif step == Step.BUILD:
+            handler = self._clean_build
+        elif step == Step.STAGE:
+            handler = self._clean_stage
+        elif step == Step.PRIME:
+            handler = self._clean_prime
+        else:
+            raise RuntimeError(
+                f"Attempt to clean invalid step {step!r} in part {self._part!r}."
+            )
+
+        handler()
+        states.remove(self._part, step)
+
+    def _clean_pull(self) -> None:
+        # remove dirs where stage packages and snaps are fetched
+        _remove(self._part.part_packages_dir)
+        _remove(self._part.part_snaps_dir)
+
+        # remove the source tree
+        _remove(self._part.part_src_dir)
+
+    def _clean_build(self) -> None:
+        _remove(self._part.part_build_dir)
+        _remove(self._part.part_install_dir)
+
+    def _clean_stage(self) -> None:
+        part_states = _load_part_states(Step.STAGE, self._part_list)
+        _clean_shared_area(
+            part_name=self._part.name,
+            shared_dir=self._part.stage_dir,
+            part_states=part_states,
+        )
+
+    def _clean_prime(self) -> None:
+        part_states = _load_part_states(Step.PRIME, self._part_list)
+        _clean_shared_area(
+            part_name=self._part.name,
+            shared_dir=self._part.prime_dir,
+            part_states=part_states,
+        )
+
     def _make_dirs(self):
         dirs = [
             self._part.part_src_dir,
@@ -332,6 +456,71 @@ def _remove(filename: Path) -> None:
         shutil.rmtree(filename)
 
 
+def _clean_shared_area(
+    *, part_name: str, shared_dir: Path, part_states: Dict[str, StepState]
+) -> None:
+    """Clean files added by a part to a shared directory.
+
+    :param part_name: The name of the part that added the files.
+    :param shared_dir: The shared directory to remove files from.
+    :param part_states: A dictionary containing the each part's state for the
+        step being processed.
+    """
+    # no state defined for this part, we won't remove files
+    if part_name not in part_states:
+        return
+
+    state = part_states[part_name]
+    files = state.files
+    directories = state.directories
+
+    # We want to make sure we don't remove a file or directory that's
+    # being used by another part. So we'll examine the state for all parts
+    # in the project and leave any files or directories found to be in
+    # common.
+    for other_name, other_state in part_states.items():
+        if other_state and (other_name != part_name):
+            files -= other_state.files
+            directories -= other_state.directories
+
+    # Finally, clean the files and directories that are specific to this
+    # part.
+    _clean_migrated_files(files, directories, shared_dir)
+
+
+def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> None:
+    """Remove files and directories migrated from part install to a common directory.
+
+    :param files: A set of files to remove.
+    :param dirs: A set of directories to remove.
+    :param directory: The path to remove files and directories from.
+    """
+    for each_file in files:
+        try:
+            os.remove(os.path.join(directory, each_file))
+        except FileNotFoundError:
+            logger.warning(
+                "Attempted to remove file %r, but it didn't exist. Skipping...",
+                each_file,
+            )
+
+    # Directories may not be ordered so that subdirectories come before
+    # parents, and we want to be able to remove directories if possible, so
+    # we'll sort them in reverse here to get subdirectories before parents.
+
+    for each_dir in sorted(dirs, reverse=True):
+        migrated_directory = os.path.join(directory, each_dir)
+        try:
+            if not os.listdir(migrated_directory):
+                os.rmdir(migrated_directory)
+        except FileNotFoundError:
+            logger.warning(
+                "Attempted to remove directory '%s', but it didn't exist. "
+                "Skipping...",
+                each_dir,
+            )
+
+
 def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
     """Obtain the list of build packages from part, source, and plugin."""
     all_packages: List[str] = []
@@ -382,3 +571,19 @@ def _get_machine_manifest() -> Dict[str, Any]:
         "installed-packages": sorted(packages.Repository.get_installed_packages()),
         "installed-snaps": sorted(packages.snaps.get_installed_snaps()),
     }
+
+
+def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]:
+    """Return a dictionary of the state of the given step for all given parts.
+
+    :param step: The step whose states should be loaded.
+    :part_list: The list of parts whose states should be loaded.
+
+    :return: A dictionary mapping part names to its state for the given step.
+    """
+    part_states: Dict[str, StepState] = {}
+    for part in part_list:
+        state = states.load_state(part, step)
+        if state:
+            part_states[part.name] = state
+    return part_states

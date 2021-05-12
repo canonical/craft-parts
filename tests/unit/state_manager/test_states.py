@@ -100,3 +100,16 @@ class TestStates:
 
         assert isinstance(state, states.PrimeState)
         assert state.marshal() == state_data
+
+    @pytest.mark.parametrize("step", list(Step))
+    def test_remove_state(self, step):
+        p1 = Part("p1", {})
+        state_file = Path("parts/p1/state", step.name.lower())
+
+        Path("parts/p1/state").mkdir(parents=True)
+        state_file.touch()
+         
+        assert state_file.exists()
+
+        states.remove(p1, step)
+        assert state_file.exists() is False
