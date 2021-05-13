@@ -76,6 +76,25 @@ class PartHandler:
         self._build_packages = _get_build_packages(part=self._part, plugin=self._plugin)
         self._build_snaps = _get_build_snaps(part=self._part, plugin=self._plugin)
 
+    @property
+    def build_packages(self) -> List[str]:
+        """Return the list of build packages defined for this part.
+
+        The list of build packages include packages defined directly in
+        the parts specification, packages required by the source handler,
+        and packages required by the plugin.
+        """
+        return self._build_packages
+
+    @property
+    def build_snaps(self) -> List[str]:
+        """Return the list of build snaps defined for this part.
+
+        The list of build snaps include snaps defined directly in the parts
+        specification and snaps required by the plugin.
+        """
+        return self._build_snaps
+
     def run_action(self, action: Action) -> None:
         """Execute the given action for this part using a plugin.
 
