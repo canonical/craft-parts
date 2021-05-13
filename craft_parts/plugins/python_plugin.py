@@ -82,14 +82,9 @@ class PythonPlugin(Plugin):
         - ``PARTS_PYTHON_VENV_ARGS``
           Additional arguments for venv.
 
-    By default this plugin uses python from the base, if a part using
-    this plugin uses a build-base other than that of the base, or a
-    different interpreter is desired, it must be bundled in the snap
-    (including venv) and must be in PATH.
-
-    It is required to bundle python when creating a snap that uses
-    classic confinement, this can be accomplished on Ubuntu by
-    adding stage-packages (i.e.; python3-venv).
+    By default this plugin uses python from the base. If a different
+    interpreter is desired, it must be bundled (including venv) and must
+    be in PATH.
 
     Use of python3-<python-package> in stage-packages will force the
     inclusion of the python interpreter.
