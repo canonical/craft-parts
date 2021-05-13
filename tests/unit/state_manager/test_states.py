@@ -108,7 +108,7 @@ class TestStates:
 
         Path("parts/p1/state").mkdir(parents=True)
         state_file.touch()
-         
+
         assert state_file.exists()
 
         states.remove(p1, step)
