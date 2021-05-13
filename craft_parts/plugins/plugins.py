@@ -25,6 +25,7 @@ from .dump_plugin import DumpPlugin
 from .make_plugin import MakePlugin
 from .nil_plugin import NilPlugin
 from .properties import PluginProperties
+from .python_plugin import PythonPlugin
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -40,6 +41,7 @@ _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "dump": DumpPlugin,
     "make": MakePlugin,
     "nil": NilPlugin,
+    "python": PythonPlugin,
 }
 
 _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
