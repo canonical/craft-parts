@@ -33,7 +33,13 @@ class PluginEnvironmentValidator:
     deb package, a snap, built from sources or even built by a different
     part. Plugin environment validators allow a plugin to ensure its
     execution environment is correct before building a part.
+
+    :param part_name: The part whose build environment is being validated.
+    :param env: A string containing the build step environment setup.
     """
+
+    COMMAND_NOT_FOUND = 127
+    """The shell error code for command not found."""
 
     def __init__(self, *, part_name: str, env: str):
         self._part_name = part_name

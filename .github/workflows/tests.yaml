@@ -74,6 +74,9 @@ jobs:
         run: |
           pip install .[dev]
           pip install -e .
+      - name: Install additional test dependencies
+        run: |
+          sudo apt install -y golang
       - name: Run unit tests
         run: |
           make test-units

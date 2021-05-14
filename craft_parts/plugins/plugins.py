@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, Type
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
 from .dump_plugin import DumpPlugin
+from .go_plugin import GoPlugin
 from .make_plugin import MakePlugin
 from .nil_plugin import NilPlugin
 from .properties import PluginProperties
@@ -39,6 +40,7 @@ PluginType = Type[Plugin]
 _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "autotools": AutotoolsPlugin,
     "dump": DumpPlugin,
+    "go": GoPlugin,
     "make": MakePlugin,
     "nil": NilPlugin,
     "python": PythonPlugin,
