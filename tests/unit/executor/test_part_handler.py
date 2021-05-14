@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from pathlib import Path
 from unittest.mock import ANY
@@ -188,6 +189,21 @@ class TestPartUpdateHandler:
 
         assert Path("parts/foo/src/foo.txt").read_text() == "change"
         assert Path("parts/foo/src/bar.txt").exists()
+
+    def test_update_pull_no_source(self, caplog):
+        caplog.set_level(logging.WARNING)
+        p1 = Part("p1", {"plugin": "nil"})
+        part_info = PartInfo(ProjectInfo(), part=p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1])
+
+        assert handler._source_handler is None
+
+        # this shouldn't fail
+        handler.run_action(Action("p1", Step.PULL, ActionType.UPDATE))
+
+        assert caplog.text.endswith(
+            "Update requested on part 'p1' without a source handler.\n"
+        )
 
     def test_update_pull_with_scriptlet(self, capfd):
         p1 = Part("p1", {"plugin": "nil", "override-pull": "echo hello"})

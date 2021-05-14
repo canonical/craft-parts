@@ -275,12 +275,14 @@ class PartHandler:
             )
             return
 
-        # consistency check
+        # the sequencer won't generate update actions for parts without
+        # source, but they can be created manually
         if not self._source_handler:
-            raise RuntimeError(
-                f"Update requested on part {self._part.name!r} without "
-                f"a source handler."
+            logger.warning(
+                "Update requested on part %r without a source handler.",
+                self._part.name,
             )
+            return
 
         # the update action is sequenced only if an update is required and the
         # source knows how to update
