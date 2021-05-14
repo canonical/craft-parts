@@ -201,8 +201,8 @@ class TestPartUpdateHandler:
         # this shouldn't fail
         handler.run_action(Action("p1", Step.PULL, ActionType.UPDATE))
 
-        assert caplog.text.endswith(
-            "Update requested on part 'p1' without a source handler.\n"
+        assert caplog.records[0].message == (
+            "Update requested on part 'p1' without a source handler."
         )
 
     def test_update_pull_with_scriptlet(self, capfd):
