@@ -22,9 +22,10 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from craft_parts import callbacks, overlays, packages, parts
+from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
-from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.executor.environment import generate_step_environment
+from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
@@ -84,6 +85,8 @@ class Executor:
         """
         self._install_build_packages()
         self._install_build_snaps()
+
+        self._verify_plugin_environment()
 
         # update the overlay environment package list to allow installation of
         # overlay packages.
@@ -216,6 +219,24 @@ class Executor:
             )
         else:
             packages.snaps.install_snaps(build_snaps)
+
+    def _verify_plugin_environment(self) -> None:
+        for part in self._part_list:
+            logger.debug("verify plugin environment for part %r", part.name)
+
+            part_info = PartInfo(self._project_info, part)
+            plugin_class = plugins.get_plugin_class(part.plugin)
+            plugin = plugin_class(
+                properties=part.plugin_properties,
+                part_info=part_info,
+            )
+            env = generate_step_environment(
+                part=part,
+                plugin=plugin,
+                step_info=StepInfo(part_info, Step.BUILD),
+            )
+            validator = plugin_class.validator_class(part_name=part.name, env=env)
+            validator.validate_environment(part_dependencies=part.dependencies)
 
 
 class ExecutionContext:

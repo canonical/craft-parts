@@ -36,6 +36,7 @@ from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 
 from . import filesets, migration
+from .environment import generate_step_environment
 from .organize import organize_files
 from .step_handler import StepContents, StepHandler
 
@@ -340,12 +341,25 @@ class PartHandler:
         :return: If step is Stage or Prime, return a tuple of sets containing
             the step's file and directory artifacts.
         """
+        step_env = generate_step_environment(
+            part=self._part, plugin=self._plugin, step_info=step_info
+        )
+
+        # Validate build environment
+        if step_info.step == Step.BUILD:
+            validator = self._plugin.validator_class(
+                part_name=step_info.part_name, env=step_env
+            )
+            validator.validate_environment()
+
         step_handler = StepHandler(
             self._part,
             step_info=step_info,
             plugin=self._plugin,
             source_handler=self._source_handler,
+            env=step_env,
         )
+
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
         if scriptlet:
             step_handler.run_scriptlet(

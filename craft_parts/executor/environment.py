@@ -29,7 +29,7 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
-def generate_part_environment(
+def generate_step_environment(
     *, part: Part, plugin: Plugin, step_info: StepInfo
 ) -> str:
     """Generate an environment to use during step execution.
@@ -154,15 +154,15 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
     return {
         f"{prefix}_ARCH_TRIPLET": step_info.arch_triplet,
         f"{prefix}_TARGET_ARCH": step_info.target_arch,
-        f"{prefix}_PARALLEL_BUILD_COUNT": step_info.parallel_build_count,
+        f"{prefix}_PARALLEL_BUILD_COUNT": str(step_info.parallel_build_count),
         f"{prefix}_PART_NAME": step_info.part_name,
-        f"{prefix}_PART_SRC": step_info.part_src_dir,
-        f"{prefix}_PART_BUILD": step_info.part_build_dir,
-        f"{prefix}_PART_BUILD_WORK": step_info.part_build_subdir,
-        f"{prefix}_PART_INSTALL": step_info.part_install_dir,
-        f"{prefix}_OVERLAY": step_info.overlay_mount_dir,
-        f"{prefix}_STAGE": step_info.stage_dir,
-        f"{prefix}_PRIME": step_info.prime_dir,
+        f"{prefix}_PART_SRC": str(step_info.part_src_dir),
+        f"{prefix}_PART_BUILD": str(step_info.part_build_dir),
+        f"{prefix}_PART_BUILD_WORK": str(step_info.part_build_subdir),
+        f"{prefix}_PART_INSTALL": str(step_info.part_install_dir),
+        f"{prefix}_OVERLAY": str(step_info.overlay_mount_dir),
+        f"{prefix}_STAGE": str(step_info.stage_dir),
+        f"{prefix}_PRIME": str(step_info.prime_dir),
     }
 
 

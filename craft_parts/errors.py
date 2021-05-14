@@ -395,6 +395,20 @@ class StageFilesConflict(PartsError):
         super().__init__(brief=brief, details=details)
 
 
+class PluginEnvironmentValidationError(PartsError):
+    """Plugin build script failed at runtime.
+
+    :param part_name: The name of the part being processed.
+    """
+
+    def __init__(self, *, part_name: str, reason: str):
+        self.part_name = part_name
+        self.reason = reason
+        brief = f"Environment validation failed for part {part_name!r}: {reason}."
+
+        super().__init__(brief=brief)
+
+
 class PluginBuildError(PartsError):
     """Plugin build script failed at runtime.
 

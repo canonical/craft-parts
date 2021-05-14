@@ -37,7 +37,7 @@ class FooPluginProperties(PluginProperties):
 
 
 class FooPlugin(Plugin):
-    """An empty plugin."""
+    """A test plugin."""
 
     properties_class = FooPluginProperties
 
@@ -62,6 +62,9 @@ def test_plugin(new_dir):
 
     props = FooPluginProperties.unmarshal({"foo-name": "world"})
     plugin = FooPlugin(properties=props, part_info=part_info)
+
+    validator = FooPlugin.validator_class(part_name=part.name, env="")
+    validator.validate_environment()
 
     assert plugin.get_build_snaps() == {"build_snap"}
     assert plugin.get_build_packages() == {"build_package"}

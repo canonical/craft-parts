@@ -268,6 +268,19 @@ def test_stage_files_conflict():
     assert err.resolution is None
 
 
+def test_plugin_environment_validation_error():
+    err = errors.PluginEnvironmentValidationError(
+        part_name="foo", reason="compiler not found"
+    )
+    assert err.part_name == "foo"
+    assert err.reason == "compiler not found"
+    assert err.brief == (
+        "Environment validation failed for part 'foo': compiler not found."
+    )
+    assert err.details is None
+    assert err.resolution is None
+
+
 def test_plugin_build_error():
     err = errors.PluginBuildError(part_name="foo")
     assert err.part_name == "foo"

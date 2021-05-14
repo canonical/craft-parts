@@ -21,6 +21,7 @@ import pytest
 
 from craft_parts import plugins, sources
 from craft_parts.dirs import ProjectDirs
+from craft_parts.executor.environment import generate_step_environment
 from craft_parts.executor.step_handler import StepContents, StepHandler
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
@@ -58,12 +59,14 @@ def _step_handler_for_step(step: Step, cache_dir: Path) -> StepHandler:
         part=p1,
         project_dirs=dirs,
     )
+    step_env = generate_step_environment(part=p1, plugin=plugin, step_info=step_info)
 
     return StepHandler(
         part=p1,
         step_info=step_info,
         plugin=plugin,
         source_handler=source_handler,
+        env=step_env,
     )
 
 

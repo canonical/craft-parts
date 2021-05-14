@@ -37,7 +37,7 @@ from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 
-from . import environment, filesets
+from . import filesets
 from .filesets import Fileset
 from .migration import migrate_files
 
@@ -71,14 +71,13 @@ class StepHandler:
         step_info: StepInfo,
         plugin: Plugin,
         source_handler: Optional[SourceHandler],
+        env: str,
     ):
         self._part = part
         self._step_info = step_info
         self._plugin = plugin
         self._source_handler = source_handler
-        self._env = environment.generate_part_environment(
-            part=part, plugin=plugin, step_info=step_info
-        )
+        self._env = env
 
     def run_builtin(self) -> StepContents:
         """Run the built-in commands for the current step."""

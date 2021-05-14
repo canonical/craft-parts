@@ -26,9 +26,11 @@ from .plugins import (  # noqa: F401
     register,
     unregister_all,
 )
+from .validator import PluginEnvironmentValidator
 
 __all__ = [
     "Plugin",
+    "PluginEnvironmentValidator",
     "PluginProperties",
     "extract_part_properties",
     "get_plugin",
