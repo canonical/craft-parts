@@ -31,6 +31,9 @@ class PythonPluginProperties(PluginProperties, PluginModel):
     python_constraints: List[str] = []
     python_packages: List[str] = ["pip", "setuptools", "wheel"]
 
+    # part properties required by the plugin
+    source: str
+
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
         """Populate make properties from the part specification.
@@ -41,7 +44,9 @@ class PythonPluginProperties(PluginProperties, PluginModel):
 
         :raise pydantic.ValidationError: If validation fails.
         """
-        plugin_data = extract_plugin_properties(data, plugin_name="python")
+        plugin_data = extract_plugin_properties(
+            data, plugin_name="python", required=["source"]
+        )
         return cls(**plugin_data)
 
 
