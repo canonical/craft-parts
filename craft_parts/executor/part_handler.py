@@ -517,7 +517,7 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
     """
     for each_file in files:
         try:
-            os.remove(os.path.join(directory, each_file))
+            Path(directory, each_file).unlink()
         except FileNotFoundError:
             logger.warning(
                 "Attempted to remove file %r, but it didn't exist. Skipping...",
