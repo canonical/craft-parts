@@ -499,7 +499,7 @@ def _clean_shared_area(
     # in the project and leave any files or directories found to be in
     # common.
     for other_name, other_state in part_states.items():
-        if other_state and (other_name != part_name):
+        if other_state and other_name != part_name:
             files -= other_state.files
             directories -= other_state.directories
 
