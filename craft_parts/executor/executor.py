@@ -177,16 +177,14 @@ class ExecutionContext:
         *,
         executor: Executor,
     ):
-        self._prologue = executor.prologue
-        self._epilogue = executor.epilogue
-        self._execute = executor.execute
+        self._executor = executor
 
     def __enter__(self) -> "ExecutionContext":
-        self._prologue()
+        self._executor.prologue()
         return self
 
     def __exit__(self, *exc):
-        self._epilogue()
+        self._executor.epilogue()
 
     def execute(self, actions: Union[Action, List[Action]]) -> None:
         """Execute the specified action or list of actions.
@@ -196,4 +194,4 @@ class ExecutionContext:
 
         :raises InvalidActionException: If the action parameters are invalid.
         """
-        self._execute(actions)
+        self._executor.execute(actions)
