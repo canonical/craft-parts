@@ -49,7 +49,7 @@ class Executor:
         self._extra_build_snaps = extra_build_snaps
         self._handler: Dict[str, PartHandler] = {}
 
-    def prologue(self):
+    def prologue(self) -> None:
         """Prepare the execution environment.
 
         This method is called before executing lifecycle actions.
@@ -59,7 +59,7 @@ class Executor:
 
         callbacks.run_prologue(self._project_info, part_list=self._part_list)
 
-    def epilogue(self):
+    def epilogue(self) -> None:
         """Finish and clean the execution environment.
 
         This method is called after executing lifecycle actions.
@@ -100,7 +100,7 @@ class Executor:
             for step in selected_steps:
                 handler.clean_step(step=step)
 
-    def _run_action(self, action: Action):
+    def _run_action(self, action: Action) -> None:
         """Execute the given action for a part using the provided step information.
 
         :param action: The lifecycle action to run.
@@ -121,7 +121,7 @@ class Executor:
         handler = self._handler[part.name]
         handler.run_action(action)
 
-    def _create_part_handler(self, part: Part):
+    def _create_part_handler(self, part: Part) -> None:
         """Instantiate a part handler for a new part."""
         if part.name not in self._handler:
             self._handler[part.name] = PartHandler(
@@ -130,7 +130,7 @@ class Executor:
                 part_list=self._part_list,
             )
 
-    def _install_build_packages(self):
+    def _install_build_packages(self) -> None:
         for part in self._part_list:
             self._create_part_handler(part)
 
@@ -143,7 +143,7 @@ class Executor:
 
         packages.Repository.install_build_packages(sorted(build_packages))
 
-    def _install_build_snaps(self):
+    def _install_build_snaps(self) -> None:
         build_snaps = set()
         for _, handler in self._handler.items():
             build_snaps.update(handler.build_snaps)
