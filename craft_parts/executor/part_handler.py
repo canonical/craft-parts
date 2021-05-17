@@ -264,6 +264,13 @@ class PartHandler:
         callbacks.run_post_step(step_info)
 
     def _update_pull(self, step_info: StepInfo) -> None:
+        """Handle update action for the pull step.
+
+        This handler is called if the pull step is outdated. In this case,
+        invoke the source update method.
+
+        :param step_info: The step information.
+        """
         self._make_dirs()
 
         # if there's an override-pull scriptlet, execute it instead
@@ -291,6 +298,13 @@ class PartHandler:
         self._source_handler.update()
 
     def _update_build(self, step_info: StepInfo) -> None:
+        """Handle update action for the build step.
+
+        This handler is called if the build step is outdated. In this case,
+        rebuild without cleaning the current build tree contents.
+
+        :param step_info: The step information.
+        """
         self._make_dirs()
         self._unpack_stage_packages()
         self._unpack_stage_snaps()
@@ -344,6 +358,7 @@ class PartHandler:
         states.remove(self._part, step)
 
     def _clean_pull(self) -> None:
+        """Remove the current part's pull step files and state."""
         # remove dirs where stage packages and snaps are fetched
         _remove(self._part.part_packages_dir)
         _remove(self._part.part_snaps_dir)
@@ -352,10 +367,12 @@ class PartHandler:
         _remove(self._part.part_src_dir)
 
     def _clean_build(self) -> None:
+        """Remove the current part's build step files and state."""
         _remove(self._part.part_build_dir)
         _remove(self._part.part_install_dir)
 
     def _clean_stage(self) -> None:
+        """Remove the current part's stage step files and state."""
         part_states = _load_part_states(Step.STAGE, self._part_list)
         _clean_shared_area(
             part_name=self._part.name,
@@ -364,6 +381,7 @@ class PartHandler:
         )
 
     def _clean_prime(self) -> None:
+        """Remove the current part's prime step files and state."""
         part_states = _load_part_states(Step.PRIME, self._part_list)
         _clean_shared_area(
             part_name=self._part.name,
