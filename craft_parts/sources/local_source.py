@@ -107,7 +107,11 @@ class LocalSource(SourceHandler):
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
     def update(self):
-        """Update pulled source."""
+        """Update pulled source.
+
+        Call method :meth:`check_if_outdated` before updating to populate the
+        lists of files and directories to copy.
+        """
         # First, copy the directories
         for directory in self._updated_directories:
             file_utils.link_or_copy_tree(

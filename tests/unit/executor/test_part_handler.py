@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from pathlib import Path
 from unittest.mock import ANY
@@ -21,12 +22,15 @@ from unittest.mock import ANY
 import pytest
 
 from craft_parts import errors, packages
+from craft_parts.actions import Action, ActionType
+from craft_parts.executor import part_handler
 from craft_parts.executor.part_handler import PartHandler
 from craft_parts.executor.step_handler import StepContents
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
+from craft_parts.utils import os_utils
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -147,6 +151,155 @@ class TestPartHandling:
         out, err = capfd.readouterr()
         assert out == "hello\n"
         assert err == ""
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestPartUpdateHandler:
+    """Verify step update processing."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, mocker, new_dir):
+        # pylint: disable=attribute-defined-outside-init
+        self._part = Part(
+            "foo",
+            {
+                "plugin": "dump",
+                "source": "subdir",
+            },
+        )
+        Path("subdir").mkdir()
+        Path("subdir/foo.txt").write_text("content")
+
+        self._part_info = PartInfo(ProjectInfo(), self._part)
+        self._handler = PartHandler(
+            self._part,
+            part_info=self._part_info,
+            part_list=[self._part],
+        )
+        # pylint: enable=attribute-defined-outside-init
+
+    def test_update_pull(self):
+        self._handler.run_action(Action("foo", Step.PULL))
+
+        source_file = Path("subdir/foo.txt")
+        os_utils.TimedWriter.write_text(source_file, "change")
+        Path("parts/foo/src/bar.txt").touch()
+
+        self._handler.run_action(Action("foo", Step.PULL, ActionType.UPDATE))
+
+        assert Path("parts/foo/src/foo.txt").read_text() == "change"
+        assert Path("parts/foo/src/bar.txt").exists()
+
+    def test_update_pull_no_source(self, caplog):
+        caplog.set_level(logging.WARNING)
+        p1 = Part("p1", {"plugin": "nil"})
+        part_info = PartInfo(ProjectInfo(), part=p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1])
+
+        assert handler._source_handler is None
+
+        # this shouldn't fail
+        handler.run_action(Action("p1", Step.PULL, ActionType.UPDATE))
+
+        assert caplog.records[0].message == (
+            "Update requested on part 'p1' without a source handler."
+        )
+
+    def test_update_pull_with_scriptlet(self, capfd):
+        p1 = Part("p1", {"plugin": "nil", "override-pull": "echo hello"})
+        part_info = PartInfo(ProjectInfo(), p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1])
+
+        handler.run_action(Action("foo", Step.PULL, ActionType.UPDATE))
+
+        out, err = capfd.readouterr()
+        assert out == "hello\n"
+        assert err == ""
+
+    def test_update_build(self):
+        self._handler._make_dirs()
+        self._handler.run_action(Action("foo", Step.PULL))
+        self._handler.run_action(Action("foo", Step.BUILD))
+
+        source_file = Path("subdir/foo.txt")
+        os_utils.TimedWriter.write_text(source_file, "change")
+
+        self._handler.run_action(Action("foo", Step.BUILD, ActionType.UPDATE))
+
+        assert Path("parts/foo/install/foo.txt").read_text() == "change"
+
+    @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
+    def test_update_invalid(self, step):
+        with pytest.raises(errors.InvalidAction):
+            self._handler.run_action(Action("foo", step, ActionType.UPDATE))
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestPartCleanHandler:
+    """Verify step update processing."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, mocker, new_dir):
+        # pylint: disable=attribute-defined-outside-init
+        self._part = Part("foo", {"plugin": "dump", "source": "subdir"})
+        Path("subdir/bar").mkdir(parents=True)
+        Path("subdir/foo.txt").write_text("content")
+
+        self._part_info = PartInfo(ProjectInfo(), self._part)
+        self._handler = PartHandler(
+            self._part,
+            part_info=self._part_info,
+            part_list=[self._part],
+        )
+        # pylint: enable=attribute-defined-outside-init
+
+    @pytest.mark.parametrize(
+        "step,test_dir,state_file",
+        [
+            (Step.PULL, "parts/foo/src", "pull"),
+            (Step.BUILD, "parts/foo/install", "build"),
+            (Step.STAGE, "stage", "stage"),
+            (Step.PRIME, "prime", "prime"),
+        ],
+    )
+    def test_clean_step(self, step, test_dir, state_file):
+        self._handler._make_dirs()
+        for each_step in step.previous_steps() + [step]:
+            self._handler.run_action(Action("foo", each_step))
+
+        assert Path(test_dir, "foo.txt").is_file()
+        assert Path(test_dir, "bar").is_dir()
+        assert Path(f"parts/foo/state/{state_file}").is_file()
+
+        self._handler.clean_step(step)
+
+        assert Path(test_dir, "foo.txt").is_file() is False
+        assert Path(test_dir, "bar").is_dir() is False
+        assert Path(f"parts/foo/state/{state_file}").is_file() is False
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestRerunStep:
+    """Verify rerun actions."""
+
+    @pytest.mark.parametrize("step", list(Step))
+    def test_rerun_action(self, mocker, step):
+        p1 = Part("p1", {"plugin": "nil"})
+        part_info = PartInfo(ProjectInfo(), p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1])
+
+        mock_clean = mocker.patch(
+            "craft_parts.executor.part_handler.PartHandler.clean_step"
+        )
+        mock_callback = mocker.patch("craft_parts.callbacks.run_pre_step")
+        mock = mocker.MagicMock()
+        mock.attach_mock(mock_clean, "clean_step")
+        mock.attach_mock(mock_callback, "run_pre_step")
+
+        handler.run_action(Action("p1", step, ActionType.RERUN))
+        mock.assert_has_calls(
+            [mocker.call.clean_step(step=step), mocker.call.run_pre_step(mocker.ANY)]
+        )
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -275,3 +428,113 @@ class TestPackages:
         part_info = PartInfo(ProjectInfo(), p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
         assert handler._build_snaps == ["word-salad"]
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestHelpers:
+    """Verify helper functions."""
+
+    def test_remove_file(self):
+        test_file = Path("foo.txt")
+        test_file.write_text("content")
+        assert test_file.exists()
+
+        part_handler._remove(test_file)
+        assert test_file.is_file() is False
+
+    def test_remove_symlink(self):
+        test_link = Path("foo")
+        test_link.symlink_to("target")
+        assert test_link.is_symlink()
+
+        part_handler._remove(test_link)
+        assert test_link.exists() is False
+
+    def test_remove_dir(self):
+        test_dir = Path("bar")
+        test_dir.mkdir()
+        assert test_dir.is_dir()
+
+        part_handler._remove(test_dir)
+        assert test_dir.exists() is False
+
+    def test_remove_non_existent(self):
+        # this should not raise and exception
+        part_handler._remove(Path("not_here"))
+
+    def test_clean_shared_area(self):
+        p1 = Part("p1", {"plugin": "dump", "source": "subdir1"})
+        Path("subdir1").mkdir()
+        Path("subdir1/foo.txt").write_text("content")
+
+        p2 = Part("p2", {"plugin": "dump", "source": "subdir2"})
+        Path("subdir2").mkdir()
+        Path("subdir2/foo.txt").write_text("content")
+        Path("subdir2/bar.txt").write_text("other content")
+
+        info = ProjectInfo()
+
+        handler1 = PartHandler(
+            p1, part_info=PartInfo(info, part=p1), part_list=[p1, p2]
+        )
+        handler2 = PartHandler(
+            p2, part_info=PartInfo(info, part=p2), part_list=[p1, p2]
+        )
+
+        for step in [Step.PULL, Step.BUILD, Step.STAGE]:
+            handler1.run_action(Action("p1", step))
+            handler2.run_action(Action("p2", step))
+
+        part_states = part_handler._load_part_states(Step.STAGE, part_list=[p1, p2])
+
+        assert Path("stage/foo.txt").is_file()
+        assert Path("stage/bar.txt").is_file()
+
+        part_handler._clean_shared_area(
+            part_name="p1", shared_dir=p1.stage_dir, part_states=part_states
+        )
+
+        assert Path("stage/foo.txt").is_file()  # remains, it's shared with p2
+        assert Path("stage/bar.txt").is_file()
+
+        part_handler._clean_shared_area(
+            part_name="p2", shared_dir=p2.stage_dir, part_states=part_states
+        )
+
+        assert Path("stage/foo.txt").exists() is False
+        assert Path("stage/bar.txt").exists() is False
+
+    def test_clean_migrated_files(self):
+        Path("subdir").mkdir()
+        Path("subdir/foo.txt").touch()
+        Path("subdir/bar").mkdir()
+
+        p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
+        part_info = PartInfo(ProjectInfo(), part=p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1])
+
+        handler.run_action(Action("p1", Step.PULL))
+        handler.run_action(Action("p1", Step.BUILD))
+        handler.run_action(Action("p1", Step.STAGE))
+
+        assert Path("stage/foo.txt").is_file()
+        assert Path("stage/bar").is_dir()
+
+        part_handler._clean_migrated_files({"foo.txt"}, {"bar"}, Path("stage"))
+
+        assert Path("stage/foo.txt").exists() is False
+        assert Path("stage/bar").exists() is False
+
+    def test_clean_migrated_files_missing(self):
+        Path("subdir").mkdir()
+
+        p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
+        part_info = PartInfo(ProjectInfo(), part=p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1])
+
+        handler.run_action(Action("p1", Step.PULL))
+        handler.run_action(Action("p1", Step.BUILD))
+        handler.run_action(Action("p1", Step.STAGE))
+
+        # this shouldn't raise an exception
+        part_handler._clean_migrated_files({"foo.txt"}, {"bar"}, Path("stage"))
