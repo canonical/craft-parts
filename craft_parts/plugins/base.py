@@ -17,7 +17,7 @@
 """Plugin base class and definitions."""
 
 import abc
-from typing import TYPE_CHECKING, Any, Dict, List, Set, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
 
 from pydantic import BaseModel
 
@@ -86,7 +86,7 @@ class PluginModel(BaseModel):
 
 
 def extract_plugin_properties(
-    data: Dict[str, Any], *, plugin_name: str
+    data: Dict[str, Any], *, plugin_name: str, required: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """Obtain plugin-specifc entries from part properties.
 
@@ -95,11 +95,14 @@ def extract_plugin_properties(
 
     :return: A dictionary with plugin properties.
     """
+    if required is None:
+        required = []
+
     plugin_data: Dict[str, Any] = {}
     prefix = f"{plugin_name}-"
 
     for key, value in data.items():
-        if key.startswith(prefix):
+        if key.startswith(prefix) or key in required:
             plugin_data[key] = value
 
     return plugin_data

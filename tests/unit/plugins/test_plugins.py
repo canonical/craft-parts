@@ -39,16 +39,16 @@ class TestGetPlugin:
     """
 
     @pytest.mark.parametrize(
-        "name,plugin_class",
+        "name,plugin_class,data",
         [
-            ("autotools", AutotoolsPlugin),
-            ("dump", DumpPlugin),
-            ("make", MakePlugin),
-            ("nil", NilPlugin),
-            ("python", PythonPlugin),
+            ("autotools", AutotoolsPlugin, {"source": "."}),
+            ("dump", DumpPlugin, {"source": "."}),
+            ("make", MakePlugin, {"source": "."}),
+            ("nil", NilPlugin, {}),
+            ("python", PythonPlugin, {"source": "."}),
         ],
     )
-    def test_get_plugin(self, name, plugin_class):
+    def test_get_plugin(self, name, plugin_class, data):
         part = Part("foo", {"plugin": name})
         project_info = ProjectInfo()
         part_info = PartInfo(project_info=project_info, part=part)
@@ -57,7 +57,9 @@ class TestGetPlugin:
         assert pclass == plugin_class
 
         plugin = plugins.get_plugin(
-            part=part, part_info=part_info, properties=pclass.properties_class()
+            part=part,
+            part_info=part_info,
+            properties=pclass.properties_class.unmarshal(data),
         )
 
         assert isinstance(plugin, plugin_class)

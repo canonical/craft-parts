@@ -31,7 +31,7 @@ class TestPluginAutotools:
     """Autotools plugin tests."""
 
     def setup_method(self):
-        properties = AutotoolsPlugin.properties_class.unmarshal({})
+        properties = AutotoolsPlugin.properties_class.unmarshal({"source": "."})
         part = Part("foo", {})
 
         project_info = ProjectInfo()
@@ -67,7 +67,10 @@ class TestPluginAutotools:
 
     def test_get_build_commands_with_configure_parameters(self):
         properties = AutotoolsPlugin.properties_class.unmarshal(
-            {"autotools-configure-parameters": ["--with-foo=true", "--prefix=/foo"]},
+            {
+                "source": ".",
+                "autotools-configure-parameters": ["--with-foo=true", "--prefix=/foo"],
+            },
         )
 
         project_info = ProjectInfo()
@@ -88,10 +91,20 @@ class TestPluginAutotools:
             'make install DESTDIR="/tmp"',
         ]
 
-    def test_invalid_parameters(self):
+    def test_invalid_properties(self):
         with pytest.raises(ValidationError) as raised:
-            AutotoolsPlugin.properties_class.unmarshal({"autotools-invalid": True})
+            AutotoolsPlugin.properties_class.unmarshal(
+                {"source": ".", "autotools-invalid": True}
+            )
         err = raised.value.errors()
         assert len(err) == 1
         assert err[0]["loc"] == ("autotools-invalid",)
         assert err[0]["type"] == "value_error.extra"
+
+    def test_missing_properties(self):
+        with pytest.raises(ValidationError) as raised:
+            AutotoolsPlugin.properties_class.unmarshal({})
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("source",)
+        assert err[0]["type"] == "value_error.missing"

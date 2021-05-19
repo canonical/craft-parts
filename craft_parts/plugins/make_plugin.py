@@ -27,6 +27,9 @@ class MakePluginProperties(PluginProperties, PluginModel):
 
     make_parameters: List[str] = []
 
+    # part properties required by the plugin
+    source: str
+
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
         """Populate make properties from the part specification.
@@ -37,7 +40,9 @@ class MakePluginProperties(PluginProperties, PluginModel):
 
         :raise pydantic.ValidationError: If validation fails.
         """
-        plugin_data = extract_plugin_properties(data, plugin_name="make")
+        plugin_data = extract_plugin_properties(
+            data, plugin_name="make", required=["source"]
+        )
         return cls(**plugin_data)
 
 

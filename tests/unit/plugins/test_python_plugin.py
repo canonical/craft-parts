@@ -27,7 +27,7 @@ from craft_parts.plugins.python_plugin import PythonPlugin
 
 @pytest.fixture
 def plugin(new_dir):
-    properties = PythonPlugin.properties_class.unmarshal({})
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
     part_info = PartInfo(project_info=ProjectInfo(), part=Part("p1", {}))
 
     return PythonPlugin(properties=properties, part_info=part_info)
@@ -103,6 +103,7 @@ def test_get_build_commands_with_all_properties(new_dir):
     part_info = PartInfo(project_info=ProjectInfo(), part=Part("p1", {}))
     properties = PythonPlugin.properties_class.unmarshal(
         {
+            "source": ".",
             "python-constraints": ["constraints.txt"],
             "python-requirements": ["requirements.txt"],
             "python-packages": ["pip", "some-pkg; sys_platform != 'win32'"],
@@ -124,10 +125,19 @@ def test_get_build_commands_with_all_properties(new_dir):
     )
 
 
-def test_invalid_parameters():
+def test_invalid_properties():
     with pytest.raises(ValidationError) as raised:
-        PythonPlugin.properties_class.unmarshal({"python-invalid": True})
+        PythonPlugin.properties_class.unmarshal({"source": ".", "python-invalid": True})
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("python-invalid",)
     assert err[0]["type"] == "value_error.extra"
+
+
+def test_missing_properties():
+    with pytest.raises(ValidationError) as raised:
+        PythonPlugin.properties_class.unmarshal({})
+    err = raised.value.errors()
+    assert len(err) == 1
+    assert err[0]["loc"] == ("source",)
+    assert err[0]["type"] == "value_error.missing"

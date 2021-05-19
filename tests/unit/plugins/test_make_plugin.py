@@ -30,7 +30,7 @@ class TestPluginMake:
     """Make plugin tests."""
 
     def setup_method(self):
-        properties = MakePlugin.properties_class.unmarshal({})
+        properties = MakePlugin.properties_class.unmarshal({"source": "."})
         part = Part("foo", {})
 
         project_info = ProjectInfo()
@@ -59,7 +59,7 @@ class TestPluginMake:
 
     def test_get_build_commands_with_parameters(self):
         props = MakePlugin.properties_class.unmarshal(
-            {"make-parameters": ["FLAVOR=gtk3"]}
+            {"source": ".", "make-parameters": ["FLAVOR=gtk3"]}
         )
         part = Part("foo", {})
 
@@ -76,10 +76,18 @@ class TestPluginMake:
             'make -j"8" install FLAVOR=gtk3 DESTDIR="/tmp"',
         ]
 
-    def test_invalid_parameters(self):
+    def test_invalid_properties(self):
         with pytest.raises(ValidationError) as raised:
-            MakePlugin.properties_class.unmarshal({"make-invalid": True})
+            MakePlugin.properties_class.unmarshal({"source": ".", "make-invalid": True})
         err = raised.value.errors()
         assert len(err) == 1
         assert err[0]["loc"] == ("make-invalid",)
         assert err[0]["type"] == "value_error.extra"
+
+    def test_missing_properties(self):
+        with pytest.raises(ValidationError) as raised:
+            MakePlugin.properties_class.unmarshal({})
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("source",)
+        assert err[0]["type"] == "value_error.missing"

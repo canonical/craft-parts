@@ -102,6 +102,7 @@ class TestPluginProperties:
             {
                 "parts": {
                     "bar": {
+                        "source": ".",
                         "plugin": "make",
                         "make-parameters": ["-DTEST_PARAMETER"],
                     }
@@ -121,6 +122,7 @@ class TestPluginProperties:
             {
                 "parts": {
                     "make": {
+                        "source": ".",
                         "make-parameters": ["-DTEST_PARAMETER"],
                     }
                 }
