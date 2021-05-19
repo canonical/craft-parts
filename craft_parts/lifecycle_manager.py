@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Sequence
 
 from pydantic import ValidationError
 
-from craft_parts import errors, plugins, sequencer
+from craft_parts import errors, executor, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
@@ -62,6 +62,7 @@ class LifecycleManager:
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
+        extra_build_packages: List[str] = None,
         **custom_args,  # custom passthrough args
     ):
         # TODO: validate or slugify application name
@@ -90,6 +91,11 @@ class LifecycleManager:
             part_list=self._part_list,
             project_info=project_info,
         )
+        self._executor = executor.Executor(
+            part_list=self._part_list,
+            project_info=project_info,
+            extra_build_packages=extra_build_packages,
+        )
         self._project_info = project_info
 
     @property
@@ -110,6 +116,14 @@ class LifecycleManager:
         """
         actions = self._sequencer.plan(target_step, part_names)
         return actions
+
+    def reload_state(self) -> None:
+        """Reload the ephemeral state from disk."""
+        self._sequencer.reload_state()
+
+    def action_executor(self) -> executor.ExecutionContext:
+        """Return a context manager for action execution."""
+        return executor.ExecutionContext(executor=self._executor)
 
 
 def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> Part:

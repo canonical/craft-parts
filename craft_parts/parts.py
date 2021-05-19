@@ -231,6 +231,21 @@ class Part:
         return self.spec.after
 
 
+def part_by_name(name: str, part_list: List[Part]) -> Part:
+    """Obtain the part with the given name from the part list.
+
+    :param name: The name of the part to return.
+    :param part_list: The list of all known parts.
+
+    :returns: The part with the given name.
+    """
+    for part in part_list:
+        if part.name == name:
+            return part
+
+    raise errors.InvalidPartName(name)
+
+
 def part_list_by_name(
     names: Optional[Sequence[str]], part_list: List[Part]
 ) -> List[Part]:

@@ -73,8 +73,8 @@ class PartHandler:
             project_dirs=part_info.dirs,
         )
 
-        self._build_packages = _get_build_packages(part=self._part, plugin=self._plugin)
-        self._build_snaps = _get_build_snaps(part=self._part, plugin=self._plugin)
+        self.build_packages = _get_build_packages(part=self._part, plugin=self._plugin)
+        self.build_snaps = _get_build_snaps(part=self._part, plugin=self._plugin)
 
     def run_action(self, action: Action) -> None:
         """Execute the given action for this part using a plugin.
@@ -171,8 +171,8 @@ class PartHandler:
         self._organize(overwrite=update)
 
         assets = {
-            "build-packages": self._build_packages,
-            "build-snaps": self._build_snaps,
+            "build-packages": self.build_packages,
+            "build-snaps": self.build_snaps,
         }
         assets.update(_get_machine_manifest())
 
@@ -542,7 +542,17 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
 
 
 def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
-    """Obtain the list of build packages from part, source, and plugin."""
+    """Obtain the consolidated list of required build packages.
+
+    The list of build packages include packages defined directly in
+    the parts specification, packages required by the source handler,
+    and packages required by the plugin.
+
+    :param part: The part being processed.
+    :param plugin: The plugin used in this part.
+
+    :return: The list of build packages.
+    """
     all_packages: List[str] = []
 
     build_packages = part.spec.build_packages
@@ -568,7 +578,16 @@ def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
 
 
 def _get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
-    """Obtain the list of build snaps from part and plugin."""
+    """Obtain the consolidated list of required build snaps.
+
+    The list of build snaps include snaps defined directly in the parts
+    specification and snaps required by the plugin.
+
+    :param part: The part being processed.
+    :param plugin: The plugin used in this part.
+
+    :return: The list of build snaps.
+    """
     all_snaps: List[str] = []
 
     build_snaps = part.spec.build_snaps

@@ -421,13 +421,13 @@ class TestPackages:
         )
         part_info = PartInfo(ProjectInfo(), p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
-        assert sorted(handler._build_packages) == ["gcc", "make", "pkg1", "tar"]
+        assert sorted(handler.build_packages) == ["gcc", "make", "pkg1", "tar"]
 
     def test_get_build_snaps(self):
         p1 = Part("p1", {"plugin": "nil", "build-snaps": ["word-salad"]})
         part_info = PartInfo(ProjectInfo(), p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
-        assert handler._build_snaps == ["word-salad"]
+        assert handler.build_snaps == ["word-salad"]
 
 
 @pytest.mark.usefixtures("new_dir")

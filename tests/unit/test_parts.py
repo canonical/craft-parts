@@ -297,6 +297,18 @@ class TestPartUnmarshal:
 class TestPartHelpers:
     """Test part-related helper functions."""
 
+    def test_part_by_name(self):
+        p1 = Part("foo", {})
+        p2 = Part("bar", {})
+        p3 = Part("baz", {})
+
+        x = parts.part_by_name("bar", [p1, p2, p3])
+        assert x == p2
+
+        with pytest.raises(errors.InvalidPartName) as raised:
+            parts.part_by_name("invalid", [p1, p2, p3])
+        assert raised.value.part_name == "invalid"
+
     def test_part_list_by_name(self):
         p1 = Part("foo", {})
         p2 = Part("bar", {})

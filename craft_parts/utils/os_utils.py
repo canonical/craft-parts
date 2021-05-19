@@ -183,6 +183,19 @@ def is_snap(*, application_name: Optional[str] = None) -> bool:
     return res
 
 
+def is_inside_container() -> bool:
+    """Determine if the application is in a container.
+
+    :return: Whether the process is running inside a container.
+    """
+    for path in ["/.dockerenv", "/run/.containerenv"]:
+        if os.path.exists(path):
+            logger.debug("application running in a docker or podman (OCI) container")
+            return True
+
+    return False
+
+
 def get_system_info() -> str:
     """Obtain running system information."""
     # Use subprocess directly here. common.run_output will use binaries out
