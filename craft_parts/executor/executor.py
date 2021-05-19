@@ -137,7 +137,7 @@ class Executor:
             self._create_part_handler(part)
 
         build_packages = set()
-        for _, handler in self._handler.items():
+        for handler in self._handler.values():
             build_packages.update(handler.build_packages)
 
         if self._extra_build_packages:
@@ -147,7 +147,7 @@ class Executor:
 
     def _install_build_snaps(self) -> None:
         build_snaps = set()
-        for _, handler in self._handler.items():
+        for handler in self._handler.values():
             build_snaps.update(handler.build_snaps)
 
         if self._extra_build_snaps:
