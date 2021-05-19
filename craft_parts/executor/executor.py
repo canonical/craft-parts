@@ -94,8 +94,7 @@ class Executor:
         selected_steps.reverse()
 
         for part in selected_parts:
-            self._create_part_handler(part)
-            handler = self._handler[part.name]
+            handler = self._create_part_handler(part)
 
             for step in selected_steps:
                 handler.clean_step(step=step)
@@ -116,19 +115,22 @@ class Executor:
         if action.step == Step.STAGE:
             check_for_stage_collisions(self._part_list)
 
-        self._create_part_handler(part)
-
-        handler = self._handler[part.name]
+        handler = self._create_part_handler(part)
         handler.run_action(action)
 
-    def _create_part_handler(self, part: Part) -> None:
+    def _create_part_handler(self, part: Part) -> PartHandler:
         """Instantiate a part handler for a new part."""
-        if part.name not in self._handler:
-            self._handler[part.name] = PartHandler(
-                part,
-                part_info=PartInfo(self._project_info, part),
-                part_list=self._part_list,
-            )
+        if part.name in self._handler:
+            return self._handler[part.name]
+
+        handler = PartHandler(
+            part,
+            part_info=PartInfo(self._project_info, part),
+            part_list=self._part_list,
+        )
+        self._handler[part.name] = handler
+
+        return handler
 
     def _install_build_packages(self) -> None:
         for part in self._part_list:
