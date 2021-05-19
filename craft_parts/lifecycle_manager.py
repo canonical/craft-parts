@@ -16,11 +16,11 @@
 
 """The parts lifecycle manager."""
 
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from pydantic import ValidationError
 
-from craft_parts import errors, executor, plugins, sequencer
+from craft_parts import errors, executor, packages, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
@@ -102,6 +102,40 @@ class LifecycleManager:
     def project_info(self) -> ProjectInfo:
         """Obtain information about this project."""
         return self._project_info
+
+    def clean(
+        self, step: Optional[Step] = None, *, part_names: List[str] = None
+    ) -> None:
+        """Clean the specified step and parts.
+
+        Cleaning a step removes its state and all artifacts generated in that
+        step and subsequent steps for the specified parts.
+
+        :para step: The step to clean.
+        :param part_names: The list of part names to clean. If not specified,
+            all parts will be cleaned and work directories will be removed.
+        """
+        if not step:
+            step = Step.PULL
+
+        self._executor.clean(initial_step=step, part_names=part_names)
+
+    def refresh_packages_list(self, *, system=False) -> None:
+        """Update the available packages list.
+
+        The list of available packages should be updated before planning the
+        sequence of actions to take. To ensure consistency between the scenarios,
+        it shouldn't be updated between planning and execution.
+
+        :param system: Also refresh the list of available build packages to
+            install on the host system.
+        """
+        packages.Repository.refresh_stage_packages_list(
+            application_name=self._application_name, target_arch=self._target_arch
+        )
+
+        if system:
+            packages.Repository.refresh_build_packages_list()
 
     def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.

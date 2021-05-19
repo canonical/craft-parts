@@ -17,6 +17,7 @@
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 
 import craft_parts
@@ -148,3 +149,208 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     ]
     with lf.action_executor() as ctx:
         ctx.execute(actions)
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestCleaning:
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir):
+        # pylint: disable=attribute-defined-outside-init
+        parts_yaml = textwrap.dedent(
+            """
+            parts:
+              foo:
+                plugin: dump
+                source: foo
+              bar:
+                plugin: dump
+                source: bar
+            """
+        )
+        Path("foo").mkdir()
+        Path("foo/foo.txt").touch()
+        Path("bar").mkdir()
+        Path("bar/bar.txt").touch()
+
+        parts = yaml.safe_load(parts_yaml)
+
+        self._lifecycle = craft_parts.LifecycleManager(
+            parts, application_name="test_clean"
+        )
+
+        # pylint: enable=attribute-defined-outside-init
+
+    @pytest.mark.parametrize(
+        "step,test_dir,state_file",
+        [
+            (Step.PULL, "parts/foo/src", "pull"),
+            (Step.BUILD, "parts/foo/install", "build"),
+            (Step.STAGE, "stage", "stage"),
+            (Step.PRIME, "prime", "prime"),
+        ],
+    )
+    def test_clean_step(self, step, test_dir, state_file):
+        actions = self._lifecycle.plan(step)
+
+        with self._lifecycle.action_executor() as ctx:
+            ctx.execute(actions)
+
+        assert Path(test_dir, "foo.txt").is_file()
+        assert Path("parts/foo/state", state_file).is_file()
+
+        self._lifecycle.clean(step, part_names=["foo"])
+
+        assert Path(test_dir, "foo.txt").is_file() is False
+        assert Path("parts/foo/state", state_file).is_file() is False
+
+    def test_clean_default(self):
+        actions = self._lifecycle.plan(Step.PRIME)
+
+        with self._lifecycle.action_executor() as ctx:
+            ctx.execute(actions)
+
+        assert Path("parts/foo/src/foo.txt").is_file()
+        assert Path("parts/foo/install/foo.txt").is_file()
+        assert Path("stage/foo.txt").is_file()
+        assert Path("prime/foo.txt").is_file()
+
+        state_dir = Path("parts/foo/state")
+
+        assert sorted(state_dir.rglob("*")) == [
+            state_dir / "build",
+            state_dir / "prime",
+            state_dir / "pull",
+            state_dir / "stage",
+        ]
+
+        self._lifecycle.clean()
+
+        assert Path("parts").exists() is False
+        assert Path("stage").exists() is False
+        assert Path("prime").exists() is False
+
+        assert list(state_dir.rglob("*")) == []
+
+    def test_clean_part(self):
+        actions = self._lifecycle.plan(Step.PRIME)
+
+        with self._lifecycle.action_executor() as ctx:
+            ctx.execute(actions)
+
+        foo_state_dir = Path("parts/foo/state")
+        bar_state_dir = Path("parts/bar/state")
+
+        self._lifecycle.clean(part_names=["foo"])
+
+        assert Path("parts/foo/src/foo.txt").is_file() is False
+        assert Path("parts/foo/install/foo.txt").is_file() is False
+        assert Path("stage/foo.txt").is_file() is False
+        assert Path("prime/foo.txt").is_file() is False
+        assert list(foo_state_dir.rglob("*")) == []
+
+        assert Path("parts/bar/src/bar.txt").is_file()
+        assert Path("parts/bar/install/bar.txt").is_file()
+        assert Path("stage/bar.txt").is_file()
+        assert Path("prime/bar.txt").is_file()
+        assert sorted(bar_state_dir.rglob("*")) == [
+            bar_state_dir / "build",
+            bar_state_dir / "prime",
+            bar_state_dir / "pull",
+            bar_state_dir / "stage",
+        ]
+
+    @pytest.mark.parametrize("step", list(Step))
+    def test_clean_all_parts(self, step):
+        # always run all steps
+        actions = self._lifecycle.plan(Step.PRIME)
+
+        with self._lifecycle.action_executor() as ctx:
+            ctx.execute(actions)
+
+        foo_state_dir = Path("parts/foo/state")
+        bar_state_dir = Path("parts/bar/state")
+
+        step_is_build_or_later = step >= Step.BUILD
+        step_is_stage_or_later = step >= Step.STAGE
+        step_is_prime = step == Step.PRIME
+
+        self._lifecycle.clean(step)
+
+        assert Path("parts").exists() == step_is_build_or_later
+        assert Path("parts/foo/src/foo.txt").exists() == step_is_build_or_later
+        assert Path("parts/bar/src/bar.txt").exists() == step_is_build_or_later
+        assert Path("parts/foo/install/foo.txt").exists() == step_is_stage_or_later
+        assert Path("parts/bar/install/bar.txt").exists() == step_is_stage_or_later
+        assert Path("stage/foo.txt").exists() == step_is_prime
+        assert Path("stage/bar.txt").exists() == step_is_prime
+        assert Path("prime").is_file() is False
+
+        all_states = []
+        if step_is_build_or_later:
+            all_states.append(foo_state_dir / "pull")
+            all_states.append(bar_state_dir / "pull")
+        if step_is_stage_or_later:
+            all_states.append(foo_state_dir / "build")
+            all_states.append(bar_state_dir / "build")
+        if step_is_prime:
+            all_states.append(foo_state_dir / "stage")
+            all_states.append(bar_state_dir / "stage")
+
+        assert sorted(Path("parts").rglob("*/state/*")) == sorted(all_states)
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestUpdating:
+    def test_refresh_stage_packages_list(self, mocker):
+        refresh_stage = mocker.patch(
+            "craft_parts.packages.Repository.refresh_stage_packages_list"
+        )
+        refresh_build = mocker.patch(
+            "craft_parts.packages.Repository.refresh_build_packages_list"
+        )
+
+        parts_yaml = textwrap.dedent(
+            """
+            parts:
+              foo:
+                plugin: nil
+            """
+        )
+        parts = yaml.safe_load(parts_yaml)
+
+        lf = craft_parts.LifecycleManager(
+            parts, application_name="test_update", arch="aarch64"
+        )
+        lf.refresh_packages_list()
+
+        refresh_stage.assert_called_once_with(
+            application_name="test_update", target_arch="arm64"
+        )
+        refresh_build.assert_not_called()
+
+    def test_refresh_system_packages_list(self, mocker):
+        refresh_stage = mocker.patch(
+            "craft_parts.packages.Repository.refresh_stage_packages_list"
+        )
+        refresh_build = mocker.patch(
+            "craft_parts.packages.Repository.refresh_build_packages_list"
+        )
+
+        parts_yaml = textwrap.dedent(
+            """
+            parts:
+              foo:
+                plugin: nil
+            """
+        )
+        parts = yaml.safe_load(parts_yaml)
+
+        lf = craft_parts.LifecycleManager(
+            parts, application_name="test_update", arch="aarch64"
+        )
+        lf.refresh_packages_list(system=True)
+
+        refresh_stage.assert_called_once_with(
+            application_name="test_update", target_arch="arm64"
+        )
+        refresh_build.assert_called_once_with()
