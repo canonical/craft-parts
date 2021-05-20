@@ -16,7 +16,9 @@
 
 """Definitions and helpers for the action executor."""
 
+import contextlib
 import logging
+import shutil
 from typing import Dict, List, Union
 
 from craft_parts import callbacks, packages, parts
@@ -86,7 +88,8 @@ class Executor:
         :param initial_step: The step to clean. More steps may be cleaned
             as a consequence of cleaning the initial step.
         :param part_names: A list with names of the parts to clean. If not
-            specified, all parts will be cleaned.
+            specified, all parts will be cleaned and work directories
+            will be removed.
         """
         selected_parts = parts.part_list_by_name(part_names, self._part_list)
 
@@ -98,6 +101,15 @@ class Executor:
 
             for step in selected_steps:
                 handler.clean_step(step=step)
+
+        if not part_names:
+            # also remove toplevel directories if part names are not specified
+            with contextlib.suppress(FileNotFoundError):
+                shutil.rmtree(self._project_info.prime_dir)
+                if initial_step <= Step.STAGE:
+                    shutil.rmtree(self._project_info.stage_dir)
+                if initial_step <= Step.PULL:
+                    shutil.rmtree(self._project_info.parts_dir)
 
     def _run_action(self, action: Action) -> None:
         """Execute the given action for a part using the provided step information.
