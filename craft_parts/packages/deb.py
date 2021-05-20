@@ -34,6 +34,7 @@ from craft_parts.utils import file_utils, os_utils
 from . import errors
 from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
 from .deb_package import DebPackage
+from .normalize import normalize
 
 if sys.platform == "linux":
     # Ensure importing works on non-Linux.
@@ -500,8 +501,7 @@ class Ubuntu(BaseRepository):
                 mark_origin_stage_package(extract_dir, marked_name)
                 # Stage files to install_dir.
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
-        # XXX: normalization of stage packages done by the application
-        # cls.normalize(str(install_path))
+        normalize(str(install_path), repository=cls)
 
     @classmethod
     def is_package_installed(cls, package_name) -> bool:
