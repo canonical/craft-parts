@@ -75,6 +75,12 @@ class LifecycleManager:
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):
             raise errors.InvalidApplicationName(application_name)
 
+        if not isinstance(all_parts, dict):
+            raise TypeError("parts definition must be a dictionary")
+
+        if "parts" not in all_parts:
+            raise ValueError("parts definition is missing")
+
         project_dirs = ProjectDirs(work_dir=work_dir)
 
         project_info = ProjectInfo(

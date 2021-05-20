@@ -448,6 +448,7 @@ class Ubuntu(BaseRepository):
             stage_packages_path.mkdir(exist_ok=True)
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
+        deb_cache_dir.mkdir(parents=True, exist_ok=True)
 
         installed: Set[str] = set()
 
@@ -478,6 +479,7 @@ class Ubuntu(BaseRepository):
     def refresh_stage_packages_list(cls, *, cache_dir: Path, target_arch: str):
         """Refresh the list of packages available in the repository."""
         stage_cache_dir, _ = get_cache_dirs(cache_dir)
+        stage_cache_dir.mkdir(parents=True, exist_ok=True)
 
         with AptCache(
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
