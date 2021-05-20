@@ -16,7 +16,7 @@
 
 """The parts lifecycle manager."""
 
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Sequence
 
 from pydantic import ValidationError
 
@@ -103,21 +103,17 @@ class LifecycleManager:
         """Obtain information about this project."""
         return self._project_info
 
-    def clean(
-        self, step: Optional[Step] = None, *, part_names: List[str] = None
-    ) -> None:
+    def clean(self, step: Step = Step.PULL, *, part_names: List[str] = None) -> None:
         """Clean the specified step and parts.
 
         Cleaning a step removes its state and all artifacts generated in that
         step and subsequent steps for the specified parts.
 
-        :para step: The step to clean.
+        :para step: The step to clean. If not specified, all steps will be
+            cleaned.
         :param part_names: The list of part names to clean. If not specified,
             all parts will be cleaned and work directories will be removed.
         """
-        if not step:
-            step = Step.PULL
-
         self._executor.clean(initial_step=step, part_names=part_names)
 
     def refresh_packages_list(self, *, system=False) -> None:
