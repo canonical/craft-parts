@@ -33,7 +33,7 @@ def test_stage_snap(new_dir, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: [test-snap]
+            stage-snaps: [basic]
         """
     )
 
@@ -49,14 +49,14 @@ def test_stage_snap(new_dir, fake_snap_command):
         Action("foo", Step.BUILD),
     ]
 
-    fake_snap_command.fake_download = str(_LOCAL_DIR / "data" / "test-snap.snap")
+    fake_snap_command.fake_download = str(_LOCAL_DIR / "data" / "basic.snap")
 
     with lf.action_executor() as ctx:
         ctx.execute(actions[0])
 
     snaps = list(Path("parts/foo/stage_snaps").glob("*.snap"))
     assert len(snaps) == 1
-    assert snaps[0].name == "test-snap.snap"
+    assert snaps[0].name == "basic.snap"
 
     ctx.execute(actions[1])
 
@@ -70,7 +70,7 @@ def test_stage_snap_error(new_dir, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: [test-snap]
+            stage-snaps: [basic]
         """
     )
 
@@ -91,5 +91,5 @@ def test_stage_snap_error(new_dir, fake_snap_command):
     with pytest.raises(SnapDownloadError) as raised, lf.action_executor() as ctx:
         ctx.execute(actions[0])
 
-    assert raised.value.snap_name == "test-snap"
+    assert raised.value.snap_name == "basic"
     assert raised.value.snap_channel == "latest/stable"
