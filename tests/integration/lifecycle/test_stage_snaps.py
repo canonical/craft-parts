@@ -23,6 +23,7 @@ import yaml
 import craft_parts
 from craft_parts import Action, Step
 from craft_parts.packages.errors import SnapDownloadError
+from craft_parts.sources.errors import PullError
 
 _LOCAL_DIR = Path(__file__).parent
 
@@ -64,7 +65,7 @@ def test_stage_snap(new_dir, fake_snap_command):
     assert (foo_install_dir / "meta.basic" / "snap.yaml").is_file()
 
 
-def test_stage_snap_error(new_dir, fake_snap_command):
+def test_stage_snap_download_error(new_dir, fake_snap_command):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -93,3 +94,40 @@ def test_stage_snap_error(new_dir, fake_snap_command):
 
     assert raised.value.snap_name == "basic"
     assert raised.value.snap_channel == "latest/stable"
+
+
+def test_stage_snap_unpack_error(new_dir, fake_snap_command):
+    _parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            stage-snaps: [bad-snap]
+        """
+    )
+
+    parts = yaml.safe_load(_parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_snap", work_dir=new_dir
+    )
+
+    actions = lf.plan(Step.BUILD)
+    assert actions == [
+        Action("foo", Step.PULL),
+        Action("foo", Step.BUILD),
+    ]
+
+    Path("bad-snap.snap").write_text("not a snap")
+    fake_snap_command.fake_download = str("bad-snap.snap")
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions[0])
+
+    snaps = list(Path("parts/foo/stage_snaps").glob("*.snap"))
+    assert len(snaps) == 1
+    assert snaps[0].name == "bad-snap.snap"
+
+    with pytest.raises(PullError) as raised:
+        ctx.execute(actions[1])
+    assert raised.value.exit_code == 1
