@@ -20,15 +20,27 @@ from craft_parts.packages import errors
 def test_package_not_found():
     err = errors.PackageNotFound("foobar")
     assert err.package_name == "foobar"
-    assert err.brief == ("Package not found: foobar.")
+    assert err.brief == "Package not found: foobar."
     assert err.details is None
     assert err.resolution is None
+
+
+def test_packages_not_found():
+    err = errors.PackagesNotFound(["foo", "bar"])
+    assert err.packages == ["foo", "bar"]
+    assert err.brief == (
+        "Failed to find installation candidate for packages: 'bar' and 'foo'."
+    )
+    assert err.details is None
+    assert err.resolution == (
+        "Make sure the repository configuration and package names are correct."
+    )
 
 
 def test_package_fetch_error():
     err = errors.PackageFetchError("something bad happened")
     assert err.message == "something bad happened"
-    assert err.brief == ("Failed to fetch package: something bad happened.")
+    assert err.brief == "Failed to fetch package: something bad happened."
     assert err.details is None
     assert err.resolution is None
 
@@ -36,7 +48,7 @@ def test_package_fetch_error():
 def test_package_list_refresh_error():
     err = errors.PackageListRefreshError("something bad happened")
     assert err.message == "something bad happened"
-    assert err.brief == ("Failed to refresh package list: something bad happened.")
+    assert err.brief == "Failed to refresh package list: something bad happened."
     assert err.details is None
     assert err.resolution is None
 
@@ -45,7 +57,7 @@ def test_package_broken():
     err = errors.PackageBroken("foobar", deps=["foo", "bar"])
     assert err.package_name == "foobar"
     assert err.deps == ["foo", "bar"]
-    assert err.brief == ("Package 'foobar' has unmet dependencies: foo, bar.")
+    assert err.brief == "Package 'foobar' has unmet dependencies: foo, bar."
     assert err.details is None
     assert err.resolution is None
 
