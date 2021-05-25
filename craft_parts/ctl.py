@@ -39,6 +39,11 @@ def main():
 def client(cmd: str, args: List[str]):
     """Execute a command in the running step processor.
 
+    The control protocol client allows a user scriptlet to execute
+    the default handler for a step in the running application context,
+    or set the value of a custom variable previously passed as an
+    argument to :class:`craft_parts.LifecycleManager`.
+
     :param cmd: The function to execute in the step processor.
     :param args: Optional arguments.
 
