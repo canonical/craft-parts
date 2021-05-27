@@ -17,9 +17,12 @@
 """Helpers to invoke step execution handlers from the command line."""
 
 import json
+import logging
 import os
 import sys
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -32,7 +35,7 @@ def main():
     try:
         client(cmd, param)
     except RuntimeError as err:
-        print(f"Error: {err}.", file=sys.stderr)
+        logger.warning("ctl error: %s", err)
         sys.exit(1)
 
 
