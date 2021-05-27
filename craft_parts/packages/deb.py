@@ -490,7 +490,12 @@ class Ubuntu(BaseRepository):
         cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
     ) -> None:
         """Unpack stage packages to install_path."""
-        for pkg_path in stage_packages_path.glob("*.deb"):
+        stage_packages = stage_packages_path.glob("*.deb")
+
+        if not stage_packages:
+            return
+
+        for pkg_path in stage_packages:
             with tempfile.TemporaryDirectory(
                 suffix="deb-extract", dir=install_path.parent
             ) as extract_dir:
@@ -501,6 +506,7 @@ class Ubuntu(BaseRepository):
                 mark_origin_stage_package(extract_dir, marked_name)
                 # Stage files to install_dir.
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
+
         normalize(str(install_path), repository=cls)
 
     @classmethod

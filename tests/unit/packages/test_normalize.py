@@ -244,6 +244,13 @@ class TestFixPkgConfig:
 
         assert pc_file.read_text(encoding=None) == expected_pc_file_content
 
+    def test_fix_pkg_config_is_dir(self, tmpdir):
+        pc_file = tmpdir / "granite.pc"
+        pc_file.mkdir()
+
+        # this shouldn't crash
+        normalize(tmpdir, repository=DummyRepository)
+
 
 @pytest.mark.parametrize(
     "src,dst",
