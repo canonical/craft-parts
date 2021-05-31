@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from pathlib import Path
 
 import pytest
@@ -69,8 +70,13 @@ class TestSourceHandler:
             FaultySource(  # type: ignore
                 source=Path(), part_src_dir=Path(), cache_dir=Path()
             )
-        assert str(raised.value) == (
-            "Can't instantiate abstract class FaultySource with abstract methods pull"
+        assert (
+            re.match(
+                "^Can't instantiate abstract class FaultySource with "
+                "abstract methods? pull$",
+                str(raised.value),
+            )
+            is not None
         )
 
 
@@ -226,7 +232,11 @@ class TestFileSourceHandler:
             FaultyFileSource(
                 source=None, part_src_dir=None, cache_dir=Path()  # type: ignore
             )
-        assert str(raised.value) == (
-            "Can't instantiate abstract class FaultyFileSource with abstract "
-            "methods provision"
+        assert (
+            re.match(
+                "^Can't instantiate abstract class FaultyFileSource with "
+                "abstract methods? provision",
+                str(raised.value),
+            )
+            is not None
         )
