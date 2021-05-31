@@ -138,7 +138,10 @@ class TestExecutionContext:
     """Verify execution context methods."""
 
     def setup_method(self):
-        callbacks.clear()
+        callbacks.unregister_all()
+
+    def teardown_class(self):
+        callbacks.unregister_all()
 
     def test_prologue(self, capfd):
         def cbf(info, part_list):

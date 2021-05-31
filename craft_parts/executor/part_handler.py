@@ -254,7 +254,7 @@ class PartHandler:
         else:
             step_name = action.step.name.lower()
             raise errors.InvalidAction(
-                f"cannot update step {step_name!r} of {self._part.name!r}."
+                f"cannot update step {step_name!r} of {self._part.name!r}"
             )
 
         callbacks.run_pre_step(step_info)

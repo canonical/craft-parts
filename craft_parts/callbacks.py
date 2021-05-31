@@ -79,7 +79,7 @@ def register_post_step(func: StepCallback, *, step_list: List[Step] = None) -> N
     _POST_STEP_HOOKS.append(CallbackHook(func, step_list))
 
 
-def clear() -> None:
+def unregister_all() -> None:
     """Clear all existing registered callback functions."""
     global _PROLOGUE_HOOKS, _EPILOGUE_HOOKS  # pylint: disable=global-statement
     global _PRE_STEP_HOOKS, _POST_STEP_HOOKS  # pylint: disable=global-statement
