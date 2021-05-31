@@ -56,7 +56,11 @@ class AppPlugin(plugins.Plugin):
         return ["echo hello ${PARTS_TEST_VAR}"]
 
 
-def teardown_function():
+def setup_function():
+    plugins.unregister_all()
+
+
+def teardown_module():
     plugins.unregister_all()
 
 
