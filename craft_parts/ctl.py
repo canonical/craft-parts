@@ -68,7 +68,6 @@ def client(cmd: str, args: List[str]):
 
     with open(call_fifo, "w") as fifo:
         fifo.write(json.dumps(data))
-        fifo.flush()
 
     with open(feedback_fifo, "r") as fifo:
         feedback = fifo.readline().strip()
