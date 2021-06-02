@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 def main():
     """Run the ctl client cli."""
     if len(sys.argv) < 2:
-        print(f"usage: {sys.argv[0]} <command>")
+        print(f"usage: {sys.argv[0]} <command> [arguments]")
         sys.exit(1)
 
     cmd, param = sys.argv[1], sys.argv[2:]
