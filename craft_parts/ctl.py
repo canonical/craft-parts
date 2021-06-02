@@ -35,7 +35,7 @@ def main():
     try:
         client(cmd, param)
     except RuntimeError as err:
-        logger.warning("ctl error: %s", err)
+        logger.error("ctl error: %s", err)
         sys.exit(1)
 
 
