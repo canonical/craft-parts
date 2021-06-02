@@ -18,7 +18,6 @@
 
 import contextlib
 import fileinput
-import glob
 import itertools
 import logging
 import os
@@ -26,7 +25,7 @@ import re
 import shutil
 import stat
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Pattern, Union
+from typing import TYPE_CHECKING, Optional, Pattern
 
 if TYPE_CHECKING:
     from .base import RepositoryType
@@ -35,7 +34,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def normalize(unpack_dir: str, *, repository: "RepositoryType") -> None:
+def normalize(unpack_dir: Path, *, repository: "RepositoryType") -> None:
     """Normalize unpacked artifacts.
 
     Repository-specific packages are generally created to live in a specific
@@ -51,19 +50,20 @@ def normalize(unpack_dir: str, *, repository: "RepositoryType") -> None:
     _fix_shebangs(unpack_dir)
 
 
-def _remove_useless_files(unpack_dir: str) -> None:
+def _remove_useless_files(unpack_dir: Path) -> None:
     """Remove files that aren't useful or will clash with other parts.
 
     :param unpack_dir: Directory containing unpacked files to normalize.
     """
-    sitecustomize_files = glob.glob(
-        os.path.join(unpack_dir, "usr", "lib", "python*", "sitecustomize.py")
+    sitecustomize_files = Path(unpack_dir, "usr", "lib").glob(
+        "python*/sitecustomize.py"
     )
+
     for sitecustomize_file in sitecustomize_files:
-        os.remove(sitecustomize_file)
+        sitecustomize_file.unlink()
 
 
-def _fix_artifacts(unpack_dir: str, repository: "RepositoryType") -> None:
+def _fix_artifacts(unpack_dir: Path, repository: "RepositoryType") -> None:
     """Perform various modifications to unpacked artifacts.
 
     Sometimes distro packages will contain absolute symlinks (e.g. if the
@@ -79,26 +79,22 @@ def _fix_artifacts(unpack_dir: str, repository: "RepositoryType") -> None:
         # Symlinks to directories will be in dirs, while symlinks to
         # non-directories will be in files.
         for entry in itertools.chain(files, dirs):
-            path = os.path.join(root, entry)
-            if os.path.islink(path) and os.path.isabs(os.readlink(path)):
-                _fix_symlink(path, unpack_dir, root, repository)
-            elif os.path.exists(path):
+            path = Path(root, entry)
+            if path.is_symlink() and Path(os.readlink(path)).is_absolute():
+                _fix_symlink(path, unpack_dir, Path(root), repository)
+            elif path.exists():
                 _fix_filemode(path)
 
-            if (
-                path.endswith(".pc")
-                and os.path.isfile(path)
-                and not os.path.islink(path)
-            ):
+            if path.name.endswith(".pc") and path.is_file() and not path.is_symlink():
                 fix_pkg_config(unpack_dir, path)
 
 
-def _fix_xml_tools(unpack_dir: str) -> None:
+def _fix_xml_tools(unpack_dir: Path) -> None:
     """Adjust the path in XML tools.
 
     :param unpack_dir: Directory containing unpacked files to normalize.
     """
-    xml2_config_path = os.path.join(unpack_dir, "usr", "bin", "xml2-config")
+    xml2_config_path = unpack_dir / "usr" / "bin" / "xml2-config"
     with contextlib.suppress(FileNotFoundError):
         _search_and_replace_contents(
             xml2_config_path,
@@ -106,7 +102,7 @@ def _fix_xml_tools(unpack_dir: str) -> None:
             "prefix={}/usr".format(unpack_dir),
         )
 
-    xslt_config_path = os.path.join(unpack_dir, "usr", "bin", "xslt-config")
+    xslt_config_path = unpack_dir / "usr" / "bin" / "xslt-config"
     with contextlib.suppress(FileNotFoundError):
         _search_and_replace_contents(
             xslt_config_path,
@@ -116,30 +112,30 @@ def _fix_xml_tools(unpack_dir: str) -> None:
 
 
 def _fix_symlink(
-    path: str, unpack_dir: str, root: str, repository: "RepositoryType"
+    path: Path, unpack_dir: Path, root: Path, repository: "RepositoryType"
 ) -> None:
     host_target = os.readlink(path)
     if host_target in repository.get_package_libraries("libc6"):
         logger.debug("Not fixing symlink %s: it's pointing to libc", host_target)
         return
 
-    target = os.path.join(unpack_dir, os.readlink(path)[1:])
-    if not os.path.exists(target) and not _try_copy_local(path, target):
+    target = unpack_dir / os.readlink(path)[1:]
+    if not target.exists() and not _try_copy_local(path, target):
         return
-    os.remove(path)
-    os.symlink(os.path.relpath(target, root), path)
+    path.unlink()
+    path.symlink_to(target.relative_to(root))
 
 
-def _fix_shebangs(unpack_dir: str) -> None:
+def _fix_shebangs(unpack_dir: Path) -> None:
     """Change hard-coded shebangs in unpacked files to use env."""
     _rewrite_python_shebangs(unpack_dir)
 
 
-def _try_copy_local(path: str, target: str) -> bool:
-    real_path = os.path.realpath(path)
-    if os.path.exists(real_path):
+def _try_copy_local(path: Path, target: Path) -> bool:
+    real_path = path.resolve()
+    if real_path.exists():
         logger.warning("Copying needed target link from the system: %s", real_path)
-        os.makedirs(os.path.dirname(target), exist_ok=True)
+        target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(os.readlink(path), target)
         return True
 
@@ -148,9 +144,9 @@ def _try_copy_local(path: str, target: str) -> bool:
 
 
 def fix_pkg_config(
-    root: Union[str, Path],
-    pkg_config_file: Union[str, Path],
-    prefix_trim: Optional[Union[str, Path]] = None,
+    root: Path,
+    pkg_config_file: Path,
+    prefix_trim: Optional[Path] = None,
 ) -> None:
     """Rewrite the prefix entry in a pkg-config file.
 
@@ -161,7 +157,9 @@ def fix_pkg_config(
     # FIXME: see https://bugs.launchpad.net/snapcraft/+bug/1916281
     pattern_trim = None
     if prefix_trim:
-        pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
+        pattern_trim = re.compile(
+            "^prefix={}(?P<prefix>.*)".format(prefix_trim.as_posix())
+        )
     pattern = re.compile("^prefix=(?P<prefix>.*)")
 
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
@@ -178,14 +176,14 @@ def fix_pkg_config(
                 print(line, end="")
 
 
-def _fix_filemode(path: str) -> None:
-    mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
+def _fix_filemode(path: Path) -> None:
+    mode = stat.S_IMODE(path.lstat().st_mode)
     if mode & 0o4000 or mode & 0o2000:
         logger.warning("Removing suid/guid from %s", path)
-        os.chmod(path, mode & 0o1777)
+        path.chmod(mode & 0o1777)
 
 
-def _rewrite_python_shebangs(root_dir):
+def _rewrite_python_shebangs(root_dir: Path):
     """Recursively change #!/usr/bin/pythonX shebangs to #!/usr/bin/env pythonX.
 
     :param str root_dir: Directory that will be crawled for shebangs.
@@ -218,7 +216,7 @@ def _rewrite_python_shebangs(root_dir):
 
 
 def _replace_in_file(
-    directory: str, file_pattern: Pattern, search_pattern: Pattern, replacement: str
+    directory: Path, file_pattern: Pattern, search_pattern: Pattern, replacement: str
 ) -> None:
     """Search and replaces patterns that match a file pattern.
 
@@ -230,15 +228,15 @@ def _replace_in_file(
     for root, _, files in os.walk(directory):
         for file_name in files:
             if file_pattern.match(file_name):
-                file_path = os.path.join(root, file_name)
+                file_path = Path(root, file_name)
                 # Don't bother trying to rewrite a symlink. It's either invalid
                 # or the linked file will be rewritten on its own.
-                if not os.path.islink(file_path):
+                if not file_path.is_symlink():
                     _search_and_replace_contents(file_path, search_pattern, replacement)
 
 
 def _search_and_replace_contents(
-    file_path: str, search_pattern: Pattern, replacement: str
+    file_path: Path, search_pattern: Pattern, replacement: str
 ) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 

@@ -17,6 +17,7 @@
 import os
 import stat
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -92,7 +93,7 @@ class TestFixXmlTools:
             with open(path, "w") as f:
                 f.write(test_file["content"])
 
-        normalize("root", repository=DummyRepository)
+        normalize(Path("root"), repository=DummyRepository)
 
         for test_file in tc:
             with open(test_file["path"], "r") as f:
@@ -160,7 +161,7 @@ class TestFixShebang:
             with open(data["file_path"], "w") as fd:
                 fd.write(data["content"])
 
-        normalize("root", repository=DummyRepository)
+        normalize(Path("root"), repository=DummyRepository)
 
         for _, data in self.scenarios:
             with open(data["file_path"], "r") as fd:
@@ -187,14 +188,14 @@ class TestRemoveUselessFiles:
                 os.path.join("usr", "lib", "python", "sitecustomize.py"),
             ]
         ]
-        normalize("root", repository=DummyRepository)
+        normalize(Path("root"), repository=DummyRepository)
 
         for p in paths:
             assert os.path.exists(p) is False
 
     def test_no_remove(self):
         path = self.create(os.path.join("opt", "python3.5", "sitecustomize.py"))
-        normalize("root", repository=DummyRepository)
+        normalize(Path("root"), repository=DummyRepository)
 
         assert os.path.exists(path)
 

@@ -505,7 +505,7 @@ class Ubuntu(BaseRepository):
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
 
         if pkg_path:
-            normalize(str(install_path), repository=cls)
+            normalize(install_path, repository=cls)
 
     @classmethod
     def is_package_installed(cls, package_name) -> bool:
