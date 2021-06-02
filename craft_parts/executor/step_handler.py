@@ -285,8 +285,8 @@ class StepHandler:
                         f"invalid number of arguments to function {function_name!r}"
                     ),
                 )
-            name = function_args[0]
-            value = function_args[1]
+            name, value = function_args
+
             try:
                 self._step_info.set_custom_argument(name, value)
             except ValueError as err:
