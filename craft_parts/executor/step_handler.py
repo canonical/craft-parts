@@ -223,9 +223,9 @@ class StepHandler:
                     function_call = call_fifo.read()
                     if function_call:
                         # Handle the function and let caller know that function
-                        # call has been handled (must contain at least a
-                        # newline, anything beyond is considered an error by
-                        # snapcraftctl)
+                        # call has been handled (the feedback message must contain
+                        # at least a newline, anything beyond is considered an error
+                        # by the client).
                         self._handle_control_api(scriptlet_name, function_call.strip())
                         feedback_fifo.write("\n")
 
