@@ -17,6 +17,7 @@
 """Handle the execution of built-in or user specified step commands."""
 
 import dataclasses
+import functools
 import json
 import os
 import subprocess
