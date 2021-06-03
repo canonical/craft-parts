@@ -89,6 +89,21 @@ def test_project_info_invalid_custom_args():
     assert str(raised.value) == "'ProjectInfo' has no attribute 'custom1'"
 
 
+def test_project_info_set_custom_args():
+    info = ProjectInfo(custom="foo")
+
+    info.set_custom_argument("custom", "bar")
+    assert info.custom == "bar"
+
+
+def test_project_info_set_invalid_custom_args():
+    info = ProjectInfo()
+
+    with pytest.raises(ValueError) as raised:
+        info.set_custom_argument("custom", "bar")
+    assert str(raised.value) == "'custom' not in project custom arguments"
+
+
 def test_project_info_default():
     x = ProjectInfo()
 
@@ -135,6 +150,25 @@ def test_part_info_invalid_custom_args():
     assert str(raised.value) == "'PartInfo' has no attribute 'custom1'"
 
 
+def test_part_info_set_custom_args():
+    info = ProjectInfo(custom="foo")
+    part = Part("p1", {})
+    x = PartInfo(project_info=info, part=part)
+
+    x.set_custom_argument("custom", "bar")
+    assert x.custom == "bar"
+
+
+def test_part_info_set_invalid_custom_args():
+    info = ProjectInfo()
+    part = Part("p1", {})
+    x = PartInfo(project_info=info, part=part)
+
+    with pytest.raises(ValueError) as raised:
+        x.set_custom_argument("custom", "bar")
+    assert str(raised.value) == "'custom' not in project custom arguments"
+
+
 def test_step_info(new_dir):
     info = ProjectInfo(custom1="foobar", custom2=[1, 2])
     part = Part("foo", {})
@@ -169,3 +203,24 @@ def test_step_info_invalid_custom_args():
     with pytest.raises(AttributeError) as raised:
         print(x.custom1)
     assert str(raised.value) == "'StepInfo' has no attribute 'custom1'"
+
+
+def test_step_info_set_custom_args():
+    info = ProjectInfo(custom="foo")
+    part = Part("p1", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    x.set_custom_argument("custom", "bar")
+    assert x.custom == "bar"
+
+
+def test_step_info_set_invalid_custom_args():
+    info = ProjectInfo()
+    part = Part("p1", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    with pytest.raises(ValueError) as raised:
+        x.set_custom_argument("custom", "bar")
+    assert str(raised.value) == "'custom' not in project custom arguments"
