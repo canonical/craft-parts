@@ -121,6 +121,19 @@ class ProjectInfo:
             "target_arch": self.target_arch,
         }
 
+    def set_custom_argument(self, name: str, value: str) -> None:
+        """Set the value of a custom argument.
+
+        :param name: The custom argument name.
+        :param value: The new custom argument value.
+
+        :raise ValueError: If there is no custom argument with the given name.
+        """
+        if name not in self._custom_args:
+            raise ValueError(f"{name!r} not in project custom arguments")
+
+        self._custom_args[name] = value
+
     def _set_machine(self, arch: Optional[str]):
         """Initialize machine information based on the architecture.
 
@@ -204,6 +217,16 @@ class PartInfo:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
 
+    def set_custom_argument(self, name: str, value: str) -> None:
+        """Set the value of a custom argument.
+
+        :param name: The custom argument name.
+        :param value: The new custom argument value.
+
+        :raise ValueError: If there is no custom argument with the given name.
+        """
+        self._project_info.set_custom_argument(name, value)
+
 
 class StepInfo:
     """Step-level information containing project, part, and step fields.
@@ -225,6 +248,16 @@ class StepInfo:
             return getattr(self._part_info, name)
 
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
+
+    def set_custom_argument(self, name: str, value: str) -> None:
+        """Set the value of a custom argument.
+
+        :param name: The custom argument name.
+        :param value: The new custom argument value.
+
+        :raise ValueError: If there is no custom argument with the given name.
+        """
+        self._part_info.set_custom_argument(name, value)
 
 
 def _get_host_architecture() -> str:

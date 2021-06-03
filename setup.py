@@ -48,7 +48,7 @@ setup(
     description="Craft parts tooling",
     entry_points={
         "console_scripts": [
-            "craft_parts=craft_parts.main:main",
+            "partsctl=craft_parts.ctl:main",
         ],
     },
     install_requires=requirements,

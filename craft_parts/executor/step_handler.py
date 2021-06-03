@@ -187,15 +187,11 @@ class StepHandler:
                 os.path.join(tempdir, "call_feedback")
             )
 
-            # the ctl client only works consistently if it's using the exact same
-            # interpreter as that used by the server, thus the definition of
-            # PARTS_INTERPRETER.
             script = textwrap.dedent(
                 """\
                 set -e
                 export PARTS_CALL_FIFO={call_fifo}
                 export PARTS_FEEDBACK_FIFO={feedback_fifo}
-                export PARTS_INTERPRETER={interpreter}
 
                 {env}
 
@@ -224,9 +220,9 @@ class StepHandler:
                     function_call = call_fifo.read()
                     if function_call:
                         # Handle the function and let caller know that function
-                        # call has been handled (must contain at least a
-                        # newline, anything beyond is considered an error by
-                        # snapcraftctl)
+                        # call has been handled (the feedback message must contain
+                        # at least a newline, anything beyond is considered an error
+                        # by the client).
                         self._handle_control_api(scriptlet_name, function_call.strip())
                         feedback_fifo.write("\n")
 
@@ -248,7 +244,7 @@ class StepHandler:
                     exit_code=status,
                 )
 
-    def _handle_control_api(self, scriptlet_name, function_call) -> None:
+    def _handle_control_api(self, scriptlet_name: str, function_call: str) -> None:
         """Parse the message from the client and invoke the appropriate action."""
         try:
             function_json = json.loads(function_call)
@@ -265,7 +261,43 @@ class StepHandler:
                 )
 
         function_name = function_json["function"]
+        function_args = function_json["args"]
 
+        invalid_control_api_call = functools.partial(
+            errors.InvalidControlAPICall,
+            part_name=self._part.name,
+            scriptlet_name=scriptlet_name,
+        )
+
+        if function_name in ["pull", "build", "stage", "prime"]:
+            if len(function_args) > 0:
+                raise invalid_control_api_call(
+                    message=f"invalid arguments to function {function_name!r}",
+                )
+            self._handle_step_function(function_name)
+        elif function_name == "set":
+            if len(function_args) != 2:
+                raise invalid_control_api_call(
+                    message=(
+                        f"invalid number of arguments to function {function_name!r}"
+                    ),
+                )
+            name, value = function_args
+
+            try:
+                self._step_info.set_custom_argument(name, value)
+            except ValueError as err:
+                raise errors.InvalidControlAPICall(
+                    part_name=self._part.name,
+                    scriptlet_name=scriptlet_name,
+                    message=str(err),
+                )
+        else:
+            raise invalid_control_api_call(
+                message=f"invalid function {function_name!r}",
+            )
+
+    def _handle_step_function(self, function_name: str) -> None:
         if function_name == "pull":
             self._builtin_pull()
         elif function_name == "build":
@@ -274,12 +306,6 @@ class StepHandler:
             self._builtin_stage()
         elif function_name == "prime":
             self._builtin_prime()
-        else:
-            raise errors.InvalidControlAPICall(
-                part_name=self._part.name,
-                scriptlet_name=scriptlet_name,
-                message=f"invalid function {function_name!r}",
-            )
 
 
 def _migrate_files(
