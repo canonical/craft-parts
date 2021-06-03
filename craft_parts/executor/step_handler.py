@@ -17,20 +17,18 @@
 """Handle the execution of built-in or user specified step commands."""
 
 import dataclasses
-import fileinput
 import functools
 import json
 import os
-import re
 import subprocess
 import sys
 import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import List, Optional, Set
 
-from craft_parts import errors
+from craft_parts import errors, packages
 from craft_parts.executor import collisions
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
@@ -138,7 +136,7 @@ class StepHandler:
                 return
             if not file_path.endswith(".pc"):
                 return
-            _fix_pkg_config(
+            packages.fix_pkg_config(
                 root=self._part.stage_dir,
                 pkg_config_file=file_path,
                 prefix_trim=self._part.part_install_dir,
@@ -363,34 +361,3 @@ def _check_conflicts(
         raise errors.StageFilesConflict(
             part_name=part_name, conflicting_files=conflict_files
         )
-
-
-def _fix_pkg_config(
-    root: Union[str, Path],
-    pkg_config_file: Union[str, Path],
-    prefix_trim: Optional[Union[str, Path]] = None,
-) -> None:
-    """Rewrite the prefix entry in a pkg-config file.
-
-    :param root: The root to add to the configuration prefix.
-    :param pkg_config_file: The pkg-config file to process.
-    :param prefix_trim: The initial path to remove from the configuration prefix.
-    """
-    # FIXME: see https://bugs.launchpad.net/snapcraft/+bug/1916281
-    pattern_trim = None
-    if prefix_trim:
-        pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
-    pattern = re.compile("^prefix=(?P<prefix>.*)")
-
-    with fileinput.input(pkg_config_file, inplace=True) as input_file:
-        match_trim = None
-        for line in input_file:
-            match = pattern.search(str(line))
-            if prefix_trim is not None and pattern_trim is not None:
-                match_trim = pattern_trim.search(str(line))
-            if prefix_trim is not None and match_trim is not None:
-                print("prefix={}{}".format(root, match_trim.group("prefix")))
-            elif match:
-                print("prefix={}{}".format(root, match.group("prefix")))
-            else:
-                print(line, end="")
