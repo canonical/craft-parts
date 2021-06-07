@@ -52,7 +52,10 @@ class TestCallbackRegistration:
     """Test different scenarios of callback function registration."""
 
     def setup_method(self):
-        callbacks.clear()
+        callbacks.unregister_all()
+
+    def teardown_class(self):
+        callbacks.unregister_all()
 
     def test_register_pre_step(self):
         callbacks.register_pre_step(_callback_1)
@@ -114,12 +117,12 @@ class TestCallbackRegistration:
         callbacks.register_prologue(_callback_3)
         callbacks.register_epilogue(_callback_3)
 
-    def test_clear(self):
+    def test_unregister_all(self):
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
         callbacks.register_prologue(_callback_3)
         callbacks.register_epilogue(_callback_3)
-        callbacks.clear()
+        callbacks.unregister_all()
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
         callbacks.register_prologue(_callback_3)
@@ -151,7 +154,10 @@ class TestCallbackExecution:
         )
         self._part_info = PartInfo(project_info=self._project_info, part=part)
         self._step_info = StepInfo(part_info=self._part_info, step=Step.BUILD)
-        callbacks.clear()
+        callbacks.unregister_all()
+
+    def teardown_class(self):
+        callbacks.unregister_all()
 
     def test_run_pre_step(self, capfd):
         callbacks.register_pre_step(_callback_1)
