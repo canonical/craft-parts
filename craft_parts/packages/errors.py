@@ -19,6 +19,7 @@
 from typing import Sequence
 
 from craft_parts.errors import PartsError
+from craft_parts.utils import formatting_utils
 
 
 class PackagesError(PartsError):
@@ -33,6 +34,20 @@ class PackageNotFound(PackagesError):
         brief = f"Package not found: {package_name}."
 
         super().__init__(brief=brief)
+
+
+class PackagesNotFound(PackagesError):
+    """Requested package doesn't exist in the remote repository."""
+
+    def __init__(self, packages: Sequence[str]):
+        self.packages = packages
+        missing_pkgs = formatting_utils.humanize_list(packages, "and")
+        brief = f"Failed to find installation candidate for packages: {missing_pkgs}."
+        resolution = (
+            "Make sure the repository configuration and package names are correct."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
 
 
 class PackageFetchError(PackagesError):

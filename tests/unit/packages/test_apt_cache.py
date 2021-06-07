@@ -16,12 +16,16 @@
 
 import os
 from pathlib import Path
-from unittest import mock
+from typing import cast
 from unittest.mock import call
 
+import apt.package
+import pytest
+
+from craft_parts.packages import apt_cache, errors
 from craft_parts.packages.apt_cache import AptCache
 
-# pylint: disable=too-few-public-methods
+# xpylint: disable=too-few-public-methods
 
 
 class TestAptStageCache:
@@ -82,6 +86,57 @@ class TestAptStageCache:
 
             assert sorted(names) == ["libpci3", "pciutils"]
 
+    def test_packages_without_candidate(self, tmpdir, mocker):
+        class MockPackage:
+            def __init__(self):
+                self.name = "mock"
+                self.marked_install = True
+                self.candidate = None
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+        bad_pkg = cast(apt.package.Package, MockPackage())
+        mocker.patch("apt.cache.Cache.get_changes", return_value=[bad_pkg])
+
+        with AptCache(stage_cache=stage_cache) as apt_cache:
+            with pytest.raises(errors.PackagesNotFound) as raised:
+                apt_cache.get_packages_marked_for_installation()
+
+        assert raised.value.packages == ["mock"]
+
+    def test_marked_install_without_candidate(self, tmpdir, mocker):
+        class MockPackage:
+            def __init__(self):
+                self.name = "mock"
+                self.installed = False
+                self.marked_install = False
+                self.candidate = None
+
+        bad_pkg = cast(apt.package.Package, MockPackage())
+
+        with pytest.raises(errors.PackageNotFound) as raised:
+            apt_cache._verify_marked_install(bad_pkg)
+
+        assert raised.value.package_name == "mock"
+
+    def test_unmark_packages_without_candidate(self, tmpdir, mocker):
+        class MockPackage:
+            def __init__(self):
+                self.name = "mock"
+                self.marked_install = True
+                self.candidate = None
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+        bad_pkg = cast(apt.package.Package, MockPackage())
+        mocker.patch("apt.cache.Cache.get_changes", return_value=[bad_pkg])
+
+        with AptCache(stage_cache=stage_cache) as apt_cache:
+            with pytest.raises(errors.PackageNotFound) as raised:
+                apt_cache.unmark_packages({"mock"})
+
+        assert raised.value.package_name == "mock"
+
 
 class TestMockedApt:
     """Tests using mocked apt utility."""
@@ -104,7 +159,7 @@ class TestMockedApt:
             call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
             call.progress.text.AcquireProgress(),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
-            call.cache.Cache().update(fetch_progress=mock.ANY, sources_list=None),
+            call.cache.Cache().update(fetch_progress=mocker.ANY, sources_list=None),
             call.cache.Cache().close(),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
             call.cache.Cache().close(),
@@ -121,9 +176,8 @@ class TestMockedApt:
 
         mocker.patch("craft_parts.utils.os_utils.is_snap", return_value=True)
 
-        with mock.patch.dict(os.environ, {"SNAP": str(snap)}), AptCache(
-            stage_cache=stage_cache
-        ) as apt_cache:
+        mocker.patch.dict(os.environ, {"SNAP": str(snap)})
+        with AptCache(stage_cache=stage_cache) as apt_cache:
             apt_cache.update()
 
         assert fake_apt.mock_calls == [
@@ -151,7 +205,7 @@ class TestMockedApt:
             call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
             call.progress.text.AcquireProgress(),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
-            call.cache.Cache().update(fetch_progress=mock.ANY, sources_list=None),
+            call.cache.Cache().update(fetch_progress=mocker.ANY, sources_list=None),
             call.cache.Cache().close(),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
             call.cache.Cache().close(),

@@ -213,6 +213,9 @@ class AptCache(ContextDecorator):
             except apt.package.FetchError as err:
                 raise errors.PackageFetchError(str(err))
 
+            if package.candidate is None:
+                raise errors.PackageNotFound(package.name)
+
             downloaded.append((package.name, package.candidate.version, Path(dl_path)))
         return downloaded
 
@@ -233,10 +236,17 @@ class AptCache(ContextDecorator):
 
         :return: A list of (<package-name>, <package-version>) tuples.
         """
+        changed_pkgs = self.cache.get_changes()
+        marked_install_pkgs = [p for p in changed_pkgs if p.marked_install]
+        missing_installation_candidate = [
+            p.name for p in marked_install_pkgs if p.candidate is None
+        ]
+
+        if missing_installation_candidate:
+            raise errors.PackagesNotFound(missing_installation_candidate)
+
         return [
-            (package.name, package.candidate.version)
-            for package in self.cache.get_changes()
-            if package.marked_install and package.candidate is not None
+            (p.name, p.candidate.version) for p in marked_install_pkgs  # type: ignore
         ]
 
     def mark_packages(self, package_names: Set[str]) -> None:
@@ -286,11 +296,11 @@ class AptCache(ContextDecorator):
         skipped_essential = set()
         skipped_filtered = set()
 
-        for package in self.cache:
-            if (
-                package.candidate is not None
-                and package.candidate.priority == "essential"
-            ):
+        for package in self.cache.get_changes():
+            if package.candidate is None:
+                raise errors.PackageNotFound(package.name)
+
+            if package.candidate.priority == "essential":
                 # Filter 'essential' packages.
                 skipped_essential.add(package.name)
                 package.mark_keep()
@@ -334,8 +344,8 @@ def _verify_marked_install(package: apt.package.Package):
     if package.installed or package.marked_install:
         return
 
-    if not package.candidate:
-        return
+    if package.candidate is None:
+        raise errors.PackageNotFound(package.name)
 
     broken_deps: List[str] = list()
     for package_dependencies in package.candidate.dependencies:
