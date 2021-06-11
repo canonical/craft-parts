@@ -74,7 +74,7 @@ def directories(new_dir):  # pylint: disable=unused-argument
 
 def test_generate_part_environment_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
-    info = ProjectInfo(arch="aarch64")
+    info = ProjectInfo(arch="aarch64", application_name="xyz")
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=Step.BUILD)
     props = plugins.PluginProperties()
@@ -90,6 +90,16 @@ def test_generate_part_environment_build(new_dir):
         set -e
         # Environment
         ## Part Environment
+        export XYZ_ARCH_TRIPLET="aarch64-linux-gnu"
+        export XYZ_TARGET_ARCH="arm64"
+        export XYZ_PARALLEL_BUILD_COUNT="1"
+        export XYZ_PART_NAME="p1"
+        export XYZ_PART_SRC="{0}/parts/p1/src"
+        export XYZ_PART_BUILD="{0}/parts/p1/build"
+        export XYZ_PART_BUILD_WORK="{0}/parts/p1/build"
+        export XYZ_PART_INSTALL="{0}/parts/p1/install"
+        export XYZ_STAGE="{0}/stage"
+        export XYZ_PRIME="{0}/prime"
         export PATH="{0}/parts/p1/install/usr/sbin:{0}/parts/p1/install/usr/bin:{0}/parts/p1/install/sbin:{0}/parts/p1/install/bin:$PATH"
         export CPPFLAGS="-isystem {0}/parts/p1/install/usr/include"
         export CFLAGS="-isystem {0}/parts/p1/install/usr/include"
@@ -108,7 +118,7 @@ def test_generate_part_environment_build(new_dir):
 
 def test_generate_part_environment_no_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
-    info = ProjectInfo(arch="aarch64")
+    info = ProjectInfo(arch="aarch64", application_name="xyz")
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=Step.STAGE)
     props = plugins.PluginProperties()
@@ -124,6 +134,16 @@ def test_generate_part_environment_no_build(new_dir):
         set -e
         # Environment
         ## Part Environment
+        export XYZ_ARCH_TRIPLET="aarch64-linux-gnu"
+        export XYZ_TARGET_ARCH="arm64"
+        export XYZ_PARALLEL_BUILD_COUNT="1"
+        export XYZ_PART_NAME="p1"
+        export XYZ_PART_SRC="{0}/parts/p1/src"
+        export XYZ_PART_BUILD="{0}/parts/p1/build"
+        export XYZ_PART_BUILD_WORK="{0}/parts/p1/build"
+        export XYZ_PART_INSTALL="{0}/parts/p1/install"
+        export XYZ_STAGE="{0}/stage"
+        export XYZ_PRIME="{0}/prime"
         export PATH="{0}/parts/p1/install/usr/sbin:{0}/parts/p1/install/usr/bin:{0}/parts/p1/install/sbin:{0}/parts/p1/install/bin:$PATH"
         export CPPFLAGS="-isystem {0}/parts/p1/install/usr/include"
         export CFLAGS="-isystem {0}/parts/p1/install/usr/include"
@@ -141,7 +161,7 @@ def test_generate_part_environment_no_build(new_dir):
 
 def test_generate_part_environment_no_user_env(new_dir):
     p1 = Part("p1", {})
-    info = ProjectInfo(arch="aarch64")
+    info = ProjectInfo(arch="aarch64", application_name="xyz")
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=Step.BUILD)
     props = plugins.PluginProperties()
@@ -157,6 +177,16 @@ def test_generate_part_environment_no_user_env(new_dir):
         set -e
         # Environment
         ## Part Environment
+        export XYZ_ARCH_TRIPLET="aarch64-linux-gnu"
+        export XYZ_TARGET_ARCH="arm64"
+        export XYZ_PARALLEL_BUILD_COUNT="1"
+        export XYZ_PART_NAME="p1"
+        export XYZ_PART_SRC="{0}/parts/p1/src"
+        export XYZ_PART_BUILD="{0}/parts/p1/build"
+        export XYZ_PART_BUILD_WORK="{0}/parts/p1/build"
+        export XYZ_PART_INSTALL="{0}/parts/p1/install"
+        export XYZ_STAGE="{0}/stage"
+        export XYZ_PRIME="{0}/prime"
         export PATH="{0}/parts/p1/install/usr/sbin:{0}/parts/p1/install/usr/bin:{0}/parts/p1/install/sbin:{0}/parts/p1/install/bin:$PATH"
         export CPPFLAGS="-isystem {0}/parts/p1/install/usr/include"
         export CFLAGS="-isystem {0}/parts/p1/install/usr/include"
