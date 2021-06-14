@@ -150,7 +150,11 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
 
     :return: A dictionary containing environment variables and values.
     """
+    # The application name contains only alphanumeric characters or underscore.
     prefix = step_info.application_name.upper()
+    if prefix[0].isdigit():
+        prefix = "_" + prefix
+
     return {
         f"{prefix}_ARCH_TRIPLET": step_info.arch_triplet,
         f"{prefix}_TARGET_ARCH": step_info.target_arch,

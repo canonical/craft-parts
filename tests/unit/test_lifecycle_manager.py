@@ -50,6 +50,27 @@ class TestLifecycleManager:
             )
         assert raised.value.arch_name == "invalid"
 
+    @pytest.mark.parametrize(
+        "name,result",
+        [
+            ("snapcraft", "snapcraft"),
+            ("snapcraft", "snapcraft"),
+            ("snapcraft-4.8.1", "snapcraft_4_8_1"),
+            ("snapcraft (1)-4.8.1", "snapcraft_1_4_8_1"),
+            ("snapcraft (1)_4.8.1", "snapcraft_1__4_8_1"),
+            ("--xyz!@#$%*()=+-_/?<>;: []{123}", "_xyz___123_"),
+        ],
+    )
+    def test_application_name(self, name, result):
+        lf = LifecycleManager(self._data, application_name=name)
+        info = lf.project_info
+        assert info.application_name == result
+
+    def test_application_name_empty(self):
+        with pytest.raises(ValueError) as raised:
+            LifecycleManager(self._data, application_name="")
+        assert str(raised.value) == "application name cannot be empty"
+
     def test_project_info(self):
         lf = LifecycleManager(
             self._data,
