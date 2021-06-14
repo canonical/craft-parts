@@ -191,6 +191,22 @@ class TestPackages:
             )
         assert raised.value.message == "foo"
 
+    def test_unpack_stage_packages_dont_normalize(self, tmpdir, mocker):
+        packages_path = Path(tmpdir, "pkg")
+        install_path = Path(tmpdir, "install")
+
+        mock_normalize = mocker.patch("craft_parts.packages.normalize.normalize")
+
+        # no packages in packages_path, no need to normalize
+        packages_path.mkdir()
+        install_path.mkdir()
+
+        deb.Ubuntu.unpack_stage_packages(
+            stage_packages_path=packages_path, install_path=install_path
+        )
+
+        mock_normalize.assert_not_called()
+
 
 class TestBuildPackages:
     def test_install_build_packages(self, fake_apt_cache, fake_run):
