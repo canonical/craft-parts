@@ -48,6 +48,17 @@ def test_part_dependency_cycle():
     assert err.resolution == "Review the parts definition to remove dependency cycles."
 
 
+def test_invalid_application_name():
+    err = errors.InvalidApplicationName("foo")
+    assert err.name == "foo"
+    assert err.brief == "Application name 'foo' is invalid."
+    assert err.details is None
+    assert err.resolution == (
+        "Valid application names contain letters, underscores or numbers, "
+        "and must start with a letter."
+    )
+
+
 def test_invalid_part_name():
     err = errors.InvalidPartName("foo")
     assert err.part_name == "foo"

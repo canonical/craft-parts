@@ -141,19 +141,15 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
 
 
 def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
-    """Set environment variables from step information.
+    """Add project and part information variables to the environment.
 
-    Variable names are prefixed by the application name and follows the
-    list of environment variables set by Snapcraft.
+    Variable names are prefixed by the application name in uppercase.
 
     :param step_info: Information about the current step.
 
     :return: A dictionary containing environment variables and values.
     """
-    # The application name contains only alphanumeric characters or underscore.
     prefix = step_info.application_name.upper()
-    if prefix[0].isdigit():
-        prefix = "_" + prefix
 
     return {
         f"{prefix}_ARCH_TRIPLET": step_info.arch_triplet,
