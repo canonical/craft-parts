@@ -88,7 +88,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
 
     :return: A dictionary containing the built-in environment.
     """
-    part_environment: Dict[str, str] = {}
+    part_environment: Dict[str, str] = _get_step_environment(step_info)
     paths = [part.part_install_dir, part.stage_dir]
 
     bin_paths = list()
@@ -138,6 +138,31 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
         )
 
     return part_environment
+
+
+def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
+    """Add project and part information variables to the environment.
+
+    Variable names are prefixed by the application name in uppercase.
+
+    :param step_info: Information about the current step.
+
+    :return: A dictionary containing environment variables and values.
+    """
+    prefix = step_info.application_name.upper()
+
+    return {
+        f"{prefix}_ARCH_TRIPLET": step_info.arch_triplet,
+        f"{prefix}_TARGET_ARCH": step_info.target_arch,
+        f"{prefix}_PARALLEL_BUILD_COUNT": step_info.parallel_build_count,
+        f"{prefix}_PART_NAME": step_info.part_name,
+        f"{prefix}_PART_SRC": step_info.part_src_dir,
+        f"{prefix}_PART_BUILD": step_info.part_build_dir,
+        f"{prefix}_PART_BUILD_WORK": step_info.part_build_subdir,
+        f"{prefix}_PART_INSTALL": step_info.part_install_dir,
+        f"{prefix}_STAGE": step_info.stage_dir,
+        f"{prefix}_PRIME": step_info.prime_dir,
+    }
 
 
 def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:

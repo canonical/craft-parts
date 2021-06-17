@@ -55,6 +55,23 @@ class PartDependencyCycle(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
+class InvalidApplicationName(PartsError):
+    """The application name contains invalid characters.
+
+    :param name: The invalid application name.
+    """
+
+    def __init__(self, name: str):
+        self.name = name
+        brief = f"Application name {name!r} is invalid."
+        resolution = (
+            "Valid application names contain letters, underscores or numbers, "
+            "and must start with a letter."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class InvalidPartName(PartsError):
     """An operation was requested on a part that's in the parts specification.
 

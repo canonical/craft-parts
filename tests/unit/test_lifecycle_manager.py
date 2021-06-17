@@ -50,6 +50,18 @@ class TestLifecycleManager:
             )
         assert raised.value.arch_name == "invalid"
 
+    @pytest.mark.parametrize("name", ["myapp", "Myapp_2", "MYAPP", "x"])
+    def test_application_name(self, name):
+        lf = LifecycleManager(self._data, application_name=name)
+        info = lf.project_info
+        assert info.application_name == name
+
+    @pytest.mark.parametrize("name", ["", "1", "_", "_myapp", "myapp-2", "myapp_2.1"])
+    def test_application_name_invalid(self, name):
+        with pytest.raises(errors.InvalidApplicationName) as raised:
+            LifecycleManager(self._data, application_name=name)
+        assert raised.value.name == name
+
     def test_project_info(self):
         lf = LifecycleManager(
             self._data,
