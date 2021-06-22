@@ -76,8 +76,9 @@ class FakeSnapd:
         return server_thread
 
     def stop_fake_server(self, thread):
-        self.server.shutdown()
-        self.server.socket.close()
+        if self.server:
+            self.server.shutdown()
+            self.server.socket.close()
         thread.join()
 
 
