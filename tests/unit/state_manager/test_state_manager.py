@@ -154,6 +154,7 @@ class TestStateDB:
         assert sdb.is_step_updated(part_name="foo", step=Step.PULL) is False
 
         rewrapped_stw = sdb.get(part_name="foo", step=Step.PULL)
+        assert rewrapped_stw is not None
         assert rewrapped_stw.serial == 3
 
     def test_set_step_updated(self):
@@ -175,6 +176,7 @@ class TestStateDB:
         assert sdb.is_step_updated(part_name="foo", step=Step.PULL) is True
 
         rewrapped_stw = sdb.get(part_name="foo", step=Step.PULL)
+        assert rewrapped_stw is not None
         assert rewrapped_stw.serial == 2
 
 
@@ -335,6 +337,8 @@ class TestStateManager:
 
         # make the build step dirty
         stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
+        assert stw is not None
+
         stw.state.part_properties["build-packages"] = ["new_pkg"]
 
         # now build should run again
@@ -443,6 +447,8 @@ class TestStepDirty:
 
         # make the build step dirty
         stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
+        assert stw is not None
+
         stw.state.part_properties["build-packages"] = ["new_pkg"]
 
         # now check again if dirty
@@ -484,6 +490,8 @@ class TestStepDirty:
 
         # make p2 stage step dirty
         stw = sm._state_db.get(part_name="p2", step=Step.STAGE)
+        assert stw is not None
+
         stw.state.part_properties["stage"] = ["new_entry"]
 
         # now check if p1:build is dirty
