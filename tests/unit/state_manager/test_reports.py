@@ -46,7 +46,7 @@ def test_outdated_report(step, source_modified, result):
         (None, ["c"], None, "'c' option changed"),
         (None, ["c", "d"], None, "options changed"),
         (["a"], ["c"], None, "options and properties changed"),
-        (None, None, [Dependency("e", Step.STAGE)], "'e' changed"),
+        (None, None, [Dependency("e", Step.STAGE)], "part 'e' stage changed"),
         (
             None,
             None,
