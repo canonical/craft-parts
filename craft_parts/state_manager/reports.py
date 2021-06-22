@@ -134,7 +134,9 @@ class DirtyReport:
             if reasons_count > 1 or len(self.changed_dependencies) > 1:
                 reasons.append("dependencies")
             else:
-                reasons.append(f"{self.changed_dependencies[0].part_name!r}")
+                part_name = self.changed_dependencies[0].part_name
+                step_name = self.changed_dependencies[0].step.name.lower()
+                reasons.append(f"{step_name} for part {part_name!r}")
 
         if not reasons:
             return ""

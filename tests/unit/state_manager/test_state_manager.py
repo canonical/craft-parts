@@ -499,7 +499,7 @@ class TestStepDirty:
             report = sm.check_if_dirty(p1, step)
             if step == Step.BUILD:
                 assert report is not None
-                assert report.reason() == "'p2' changed"
+                assert report.reason() == "stage for part 'p2' changed"
             else:
                 assert report is None
 
@@ -531,7 +531,7 @@ class TestStepDirty:
             report = sm.check_if_dirty(p1, step)
             if step == Step.BUILD:
                 assert report is not None
-                assert report.reason() == "'p2' changed"
+                assert report.reason() == "stage for part 'p2' changed"
             else:
                 assert report is None
 
