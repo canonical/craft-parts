@@ -79,9 +79,9 @@ class SnapPackage:
             self.channel = "latest/stable"
 
         # This store information from a local request
-        self._local_snap_info = None
+        self._local_snap_info: Optional[Dict[str, Any]] = None
         # And this stores information from a remote request
-        self._store_snap_info = None
+        self._store_snap_info: Optional[Dict[str, Any]] = None
 
         self._is_installed: Optional[bool] = None
         self._is_in_store: Optional[bool] = None
@@ -103,7 +103,7 @@ class SnapPackage:
                 self._is_in_store = False
         return self._is_in_store
 
-    def get_local_snap_info(self):
+    def get_local_snap_info(self) -> Optional[Dict[str, Any]]:
         """Return a local payload for the snap.
 
         Validity of the results are determined by checking self.installed.
@@ -111,9 +111,10 @@ class SnapPackage:
         if self._is_installed is None:
             with contextlib.suppress(exceptions.HTTPError):
                 self._local_snap_info = _get_local_snap_info(self.name)
+
         return self._local_snap_info
 
-    def get_store_snap_info(self):
+    def get_store_snap_info(self) -> Optional[Dict[str, Any]]:
         """Return a store payload for the snap."""
         if self._is_in_store is None:
             # Some environments timeout often, like the armv7 testing
@@ -142,7 +143,7 @@ class SnapPackage:
 
     def _get_store_channels(self) -> Dict[str, Any]:
         snap_store_info = self.get_store_snap_info()
-        if not self.in_store:
+        if not snap_store_info or not self.in_store:
             return dict()
 
         return snap_store_info["channels"]
@@ -152,16 +153,20 @@ class SnapPackage:
         current_channel = ""
         if self.installed:
             local_snap_info = self.get_local_snap_info()
-            current_channel = local_snap_info["channel"]
-            if any(current_channel.startswith(risk) for risk in _CHANNEL_RISKS):
-                current_channel = "latest/{}".format(current_channel)
+            if local_snap_info:
+                current_channel = local_snap_info["channel"]
+                if any(current_channel.startswith(risk) for risk in _CHANNEL_RISKS):
+                    current_channel = "latest/{}".format(current_channel)
         return current_channel
 
     def has_assertions(self) -> bool:
         """Verify whether this snap has assertions."""
         # A revision starting with x has been installed with
         # --dangerous.
-        return not self.get_local_snap_info()["revision"].startswith("x")
+        local_snap_info = self.get_local_snap_info()
+        if not local_snap_info:
+            return False
+        return not local_snap_info["revision"].startswith("x")
 
     def is_classic(self) -> bool:
         """Verify whether this snap is a classic snap."""
@@ -181,8 +186,10 @@ class SnapPackage:
 
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
-        if self.installed and self.get_local_snap_info()["channel"] == self.channel:
-            return True
+        local_snap_info = self.get_local_snap_info()
+        if local_snap_info:
+            if self.installed and local_snap_info["channel"] == self.channel:
+                return True
         if not self.in_store:
             return False
         store_channels = self._get_store_channels()
@@ -278,24 +285,28 @@ def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
 
-        # Allow bases to be installed from non stable channels.
-        snap_pkg_channel = snap_pkg.get_store_snap_info()["channel"]
-        snap_pkg_type = snap_pkg.get_store_snap_info()["type"]
-        if snap_pkg_channel != "stable" and snap_pkg_type == "base":
-            snap_pkg = SnapPackage(
-                "{snap_name}/latest/{channel}".format(
-                    snap_name=snap_pkg.name, channel=snap_pkg_channel
+        store_snap_info = snap_pkg.get_store_snap_info()
+        if store_snap_info:
+            # Allow bases to be installed from non stable channels.
+            snap_pkg_channel = store_snap_info["channel"]
+            snap_pkg_type = store_snap_info["type"]
+            if snap_pkg_channel != "stable" and snap_pkg_type == "base":
+                snap_pkg = SnapPackage(
+                    "{snap_name}/latest/{channel}".format(
+                        snap_name=snap_pkg.name, channel=snap_pkg_channel
+                    )
                 )
+
+            if not snap_pkg.installed:
+                snap_pkg.install()
+            elif snap_pkg.get_current_channel() != snap_pkg.channel:
+                snap_pkg.refresh()
+
+        local_snap_info = snap_pkg.get_local_snap_info()
+        if local_snap_info:
+            snaps_installed.append(
+                "{}={}".format(snap_pkg.name, local_snap_info["revision"])
             )
-
-        if not snap_pkg.installed:
-            snap_pkg.install()
-        elif snap_pkg.get_current_channel() != snap_pkg.channel:
-            snap_pkg.refresh()
-
-        snaps_installed.append(
-            "{}={}".format(snap_pkg.name, snap_pkg.get_local_snap_info()["revision"])
-        )
     return snaps_installed
 
 
@@ -356,7 +367,7 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int):
     return snap_file.iter_content(chunk_size)
 
 
-def _get_local_snap_info(snap_name: str):
+def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
     slug = "snaps/{}".format(parse.quote(snap_name, safe=""))
     url = get_snapd_socket_path_template().format(slug)
     try:

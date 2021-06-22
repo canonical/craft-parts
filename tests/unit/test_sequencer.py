@@ -62,6 +62,8 @@ def test_sequencer_run_step(step, state_class):
     seq._run_step(p1, step)
 
     stw = seq._sm._state_db.get(part_name="p1", step=step)
+    assert stw is not None
+
     state = stw.state
     assert isinstance(state, state_class)
 
@@ -112,6 +114,8 @@ def test_sequencer_rerun_step(mocker, step, state_class):
     mock_clean_part.assert_called_once_with(p1, step)
 
     stw = seq._sm._state_db.get(part_name="p1", step=step)
+    assert stw is not None
+
     state = stw.state
     assert isinstance(state, state_class)
 
