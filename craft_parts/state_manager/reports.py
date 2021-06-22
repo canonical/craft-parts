@@ -136,7 +136,7 @@ class DirtyReport:
             else:
                 part_name = self.changed_dependencies[0].part_name
                 step_name = self.changed_dependencies[0].step.name.lower()
-                reasons.append(f"part {part_name!r} {step_name}")
+                reasons.append(f"{step_name} for part {part_name!r}")
 
         if not reasons:
             return ""
