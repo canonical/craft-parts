@@ -25,9 +25,8 @@ import re
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from typing import Dict, List, Set, Tuple
-
-from xdg import BaseDirectory  # type: ignore
 
 from craft_parts.utils import file_utils, os_utils
 
@@ -427,7 +426,7 @@ class Ubuntu(BaseRepository):
     def fetch_stage_packages(
         cls,
         *,
-        application_name: str,
+        cache_dir: Path,
         package_names: List[str],
         stage_packages_path: pathlib.Path,
         base: str,
@@ -448,7 +447,7 @@ class Ubuntu(BaseRepository):
         if not list_only:
             stage_packages_path.mkdir(exist_ok=True)
 
-        stage_cache_dir, deb_cache_dir = get_cache_dirs(application_name)
+        stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
 
         installed: Set[str] = set()
 
@@ -476,9 +475,9 @@ class Ubuntu(BaseRepository):
         return sorted(installed)
 
     @classmethod
-    def refresh_stage_packages_list(cls, *, application_name: str, target_arch: str):
+    def refresh_stage_packages_list(cls, *, cache_dir: Path, target_arch: str):
         """Refresh the list of packages available in the repository."""
-        stage_cache_dir, _ = get_cache_dirs(application_name)
+        stage_cache_dir, _ = get_cache_dirs(cache_dir)
 
         with AptCache(
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
@@ -542,14 +541,9 @@ class Ubuntu(BaseRepository):
             raise errors.UnpackError(str(deb_path)) from err
 
 
-def get_cache_dirs(name: str):
+def get_cache_dirs(cache_dir: Path):
     """Return the paths to the stage and deb cache directories."""
-    stage_cache_dir = pathlib.Path(
-        BaseDirectory.save_cache_path(name, "craft-parts", "stage-packages")
-    )
-
-    deb_cache_dir = pathlib.Path(
-        BaseDirectory.save_cache_path(name, "craft-parts", "download")
-    )
+    stage_cache_dir = cache_dir / "stage-packages"
+    deb_cache_dir = cache_dir / "download"
 
     return (stage_cache_dir, deb_cache_dir)

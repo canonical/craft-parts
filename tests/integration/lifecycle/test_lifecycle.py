@@ -299,9 +299,8 @@ class TestCleaning:
         assert sorted(Path("parts").rglob("*/state/*")) == sorted(all_states)
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestUpdating:
-    def test_refresh_stage_packages_list(self, mocker):
+    def test_refresh_stage_packages_list(self, new_dir, mocker):
         refresh_stage = mocker.patch(
             "craft_parts.packages.Repository.refresh_stage_packages_list"
         )
@@ -319,16 +318,14 @@ class TestUpdating:
         parts = yaml.safe_load(parts_yaml)
 
         lf = craft_parts.LifecycleManager(
-            parts, application_name="test_update", arch="aarch64"
+            parts, application_name="test_update", arch="aarch64", cache_dir=new_dir
         )
         lf.refresh_packages_list()
 
-        refresh_stage.assert_called_once_with(
-            application_name="test_update", target_arch="arm64"
-        )
+        refresh_stage.assert_called_once_with(cache_dir=new_dir, target_arch="arm64")
         refresh_build.assert_not_called()
 
-    def test_refresh_system_packages_list(self, mocker):
+    def test_refresh_system_packages_list(self, new_dir, mocker):
         refresh_stage = mocker.patch(
             "craft_parts.packages.Repository.refresh_stage_packages_list"
         )
@@ -351,6 +348,6 @@ class TestUpdating:
         lf.refresh_packages_list(system=True)
 
         refresh_stage.assert_called_once_with(
-            application_name="test_update", target_arch="arm64"
+            cache_dir=new_dir / ".cache/test_update/craft_parts", target_arch="arm64"
         )
         refresh_build.assert_called_once_with()

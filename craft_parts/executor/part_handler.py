@@ -68,7 +68,7 @@ class PartHandler:
 
         self._part_properties = part.spec.marshal()
         self._source_handler = sources.get_source_handler(
-            application_name=part_info.application_name,
+            cache_dir=part_info.cache_dir,
             part=part,
             project_dirs=part_info.dirs,
         )
@@ -317,6 +317,7 @@ class PartHandler:
                 self._part.part_src_dir,
                 self._part.part_build_dir,
                 copy_function=file_utils.copy,
+                cache_dir=step_info.cache_dir,
             )
             state_file = states.state_file_path(self._part, step_info.step)
             source.check_if_outdated(str(state_file))  # required by source.update()
@@ -418,7 +419,7 @@ class PartHandler:
 
         try:
             fetched_packages = packages.Repository.fetch_stage_packages(
-                application_name=step_info.application_name,
+                cache_dir=step_info.cache_dir,
                 package_names=stage_packages,
                 target_arch=step_info.target_arch,
                 base=step_info.base,
@@ -460,7 +461,10 @@ class PartHandler:
 
         snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
         snap_sources = (
-            sources.SnapSource(source=s, part_src_dir=snaps_dir) for s in snap_files
+            sources.SnapSource(
+                source=s, part_src_dir=snaps_dir, cache_dir=self._part_info.cache_dir
+            )
+            for s in snap_files
         )
 
         for snap_source in snap_sources:

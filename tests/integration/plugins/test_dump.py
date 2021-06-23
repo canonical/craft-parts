@@ -58,13 +58,14 @@ def test_dump_ignore_dirs():
         parts:
           foo:
             plugin: dump
-            source: .
+            source: src
         """
     )
 
     parts = yaml.safe_load(_parts_yaml)
-    Path("foobar.txt").touch()
-    Path("subdir").mkdir()
+    Path("src").mkdir()
+    Path("src/foobar.txt").touch()
+    Path("src/subdir").mkdir()
     lf = craft_parts.LifecycleManager(parts, application_name="test_dump")
 
     with lf.action_executor() as ctx:
@@ -77,7 +78,6 @@ def test_dump_ignore_dirs():
     assert Path("parts").is_dir()
     assert Path("stage").is_dir()
     assert Path("prime").is_dir()
-    assert Path("subdir").is_dir()
     assert sorted(install_dir.rglob("*")) == [
         install_dir / "foobar.txt",
         install_dir / "subdir",

@@ -19,6 +19,7 @@
 import os
 import shutil
 import tempfile
+from pathlib import Path
 from typing import Optional
 
 import yaml
@@ -43,7 +44,7 @@ class SnapSource(FileSourceHandler):
         source,
         part_src_dir,
         *,
-        application_name: str = None,
+        cache_dir: Path,
         source_tag: str = None,
         source_commit: str = None,
         source_branch: str = None,
@@ -54,7 +55,7 @@ class SnapSource(FileSourceHandler):
         super().__init__(
             source,
             part_src_dir,
-            application_name=application_name,
+            cache_dir=cache_dir,
             source_tag=source_tag,
             source_commit=source_commit,
             source_branch=source_branch,

@@ -134,6 +134,7 @@ class TestPackages:
         install.assert_not_called()
 
 
+@pytest.mark.usefixtures("new_dir")
 class TestExecutionContext:
     """Verify execution context methods."""
 

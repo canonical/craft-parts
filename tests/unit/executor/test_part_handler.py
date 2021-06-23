@@ -378,12 +378,12 @@ class TestPackages:
         mocker.patch("craft_parts.executor.part_handler.PartHandler._run_step")
 
         p1 = Part("foo", {"plugin": "nil", "stage-packages": ["pkg1"]})
-        part_info = PartInfo(ProjectInfo(), p1)
+        part_info = PartInfo(ProjectInfo(cache_dir=new_dir), p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         state = handler._run_pull(StepInfo(part_info, Step.PULL))
         getpkg.assert_called_once_with(
-            application_name="craft_parts",
+            cache_dir=new_dir,
             base=ANY,
             package_names=["pkg1"],
             stage_packages_path=Path(new_dir / "parts/foo/stage_packages"),

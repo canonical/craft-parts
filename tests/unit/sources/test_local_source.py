@@ -24,17 +24,16 @@ from craft_parts.sources import sources
 from craft_parts.sources.local_source import LocalSource
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestLocal:
     """Various tests for the local source handler."""
 
-    def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
+    def test_pull_with_existing_empty_source_dir_creates_hardlinks(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         os.mkdir("destination")
 
-        local = LocalSource("src", "destination")
+        local = LocalSource("src", "destination", cache_dir=new_dir)
         local.pull()
 
         # Verify that the directories are not symlinks, but the file is a
@@ -43,14 +42,14 @@ class TestLocal:
         assert os.path.islink(os.path.join("destination", "dir")) is False
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_with_existing_source_tree_creates_hardlinks(self):
+    def test_pull_with_existing_source_tree_creates_hardlinks(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         os.mkdir("destination")
         open(os.path.join("destination", "existing-file"), "w").close()
 
-        local = LocalSource("src", "destination")
+        local = LocalSource("src", "destination", cache_dir=new_dir)
         local.pull()
 
         # Verify that the directories are not symlinks, but the file is a
@@ -60,36 +59,36 @@ class TestLocal:
         assert os.path.isfile(os.path.join("destination", "existing-file"))
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_with_existing_source_link_error(self):
+    def test_pull_with_existing_source_link_error(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         # Note that this is a symlink now instead of a directory
         os.symlink("dummy", "destination")
 
-        local = LocalSource("src", "destination")
+        local = LocalSource("src", "destination", cache_dir=new_dir)
 
         with pytest.raises(errors.CopyTreeError):
             local.pull()
 
-    def test_pull_with_existing_source_file_error(self):
+    def test_pull_with_existing_source_file_error(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         # Note that this is a file now instead of a directory
         open("destination", "w").close()
 
-        local = LocalSource("src", "destination")
+        local = LocalSource("src", "destination", cache_dir=new_dir)
         with pytest.raises(errors.CopyTreeError):
             local.pull()
 
-    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self):
+    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         os.mkdir("destination")
 
-        local = LocalSource("src", "destination")
+        local = LocalSource("src", "destination", cache_dir=new_dir)
         local.pull()
         local.pull()
 
@@ -99,7 +98,7 @@ class TestLocal:
         assert os.path.islink(os.path.join("destination", "dir")) is False
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_ignores_own_work_data(self):
+    def test_pull_ignores_own_work_data(self, new_dir):
         # Make the snapcraft-specific directories
         os.makedirs(os.path.join("src", "parts"))
         os.makedirs(os.path.join("src", "stage"))
@@ -121,7 +120,7 @@ class TestLocal:
 
         os.mkdir("destination")
 
-        local = LocalSource("src", "destination")
+        local = LocalSource("src", "destination", cache_dir=new_dir)
         local.pull()
 
         # Verify that the snapcraft-specific stuff got filtered out
@@ -140,14 +139,14 @@ class TestLocal:
         assert os.path.islink(os.path.join("destination", "dir")) is False
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_keeps_symlinks(self):
+    def test_pull_keeps_symlinks(self, new_dir):
         # Create a source containing a directory, a file and symlinks to both.
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
         os.symlink("dir", os.path.join("src", "dir_symlink"))
         os.symlink("file", os.path.join("src", "dir", "file_symlink"))
 
-        local = LocalSource("src", "destination")
+        local = LocalSource("src", "destination", cache_dir=new_dir)
         local.pull()
 
         # Verify that both the file and the directory symlinks were kept.
@@ -162,11 +161,10 @@ class TestLocal:
         assert sources._source_handler["local"] is LocalSource
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestLocalUpdate:
     """Verify that the local source can detect changes and update."""
 
-    def test_file_modified(self):
+    def test_file_modified(self, new_dir):
         source = "source"
         destination = "destination"
         os.mkdir(source)
@@ -182,7 +180,7 @@ class TestLocalUpdate:
         modify_time = os.stat("reference").st_mtime
         os.utime("reference", (access_time, modify_time + 1))
 
-        local = LocalSource(source, destination)
+        local = LocalSource(source, destination, cache_dir=new_dir)
         local.pull()
 
         # Update check on non-existent files should return False
@@ -211,7 +209,7 @@ class TestLocalUpdate:
         with open(os.path.join(destination, "file")) as f:
             assert f.read() == "2"
 
-    def test_file_added(self):
+    def test_file_added(self, new_dir):
         source = "source"
         destination = "destination"
         os.mkdir(source)
@@ -227,7 +225,7 @@ class TestLocalUpdate:
         modify_time = os.stat("reference").st_mtime
         os.utime("reference", (access_time, modify_time + 1))
 
-        local = LocalSource(source, destination)
+        local = LocalSource(source, destination, cache_dir=new_dir)
         local.pull()
 
         # Expect no updates to be available
@@ -250,7 +248,7 @@ class TestLocalUpdate:
         local.update()
         assert os.path.isfile(os.path.join(destination, "file2"))
 
-    def test_directory_modified(self):
+    def test_directory_modified(self, new_dir):
         source = "source"
         source_dir = os.path.join(source, "dir")
         destination = "destination"
@@ -267,7 +265,7 @@ class TestLocalUpdate:
         modify_time = os.stat("reference").st_mtime
         os.utime("reference", (access_time, modify_time + 1))
 
-        local = LocalSource(source, destination)
+        local = LocalSource(source, destination, cache_dir=new_dir)
         local.pull()
 
         # Expect no updates to be available

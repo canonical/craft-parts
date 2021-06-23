@@ -94,7 +94,7 @@ def pull_state(new_dir):
 class TestSequencerPlan:
     """Verify action planning sanity."""
 
-    def test_plan_default_parts(self):
+    def test_plan_default_parts(self, new_dir):
         p1 = Part("foo", {"plugin": "nil"})
         p2 = Part("bar", {"plugin": "nil"})
 

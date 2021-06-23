@@ -17,11 +17,9 @@
 """Cache base and file cache."""
 
 import logging
-import os
 import shutil
+from pathlib import Path
 from typing import Optional
-
-from xdg import BaseDirectory  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +27,14 @@ logger = logging.getLogger(__name__)
 class FileCache:
     """Cache files based on the supplied key."""
 
-    def __init__(self, name: str, *, namespace: str = "files") -> None:
+    def __init__(self, cache_dir: Path, *, namespace: str = "files") -> None:
         """Create a FileCache under namespace.
 
         :param str namespace: The namespace for the cache (default is "files").
         """
-        self.cache_root = os.path.join(
-            BaseDirectory.xdg_cache_home, name, "craft-parts"
-        )
-        self.file_cache = os.path.join(self.cache_root, namespace)
+        self.file_cache = Path(cache_dir, namespace)
 
-    def cache(self, *, filename: str, key: str) -> Optional[str]:
+    def cache(self, *, filename: str, key: str) -> Optional[Path]:
         """Cache a file revision with hash in XDG cache, unless it already exists.
 
         :param filename: The path to the file to cache.
@@ -47,26 +42,26 @@ class FileCache:
 
         :return: The path to the cached file, or None if the file was not cached.
         """
-        cached_file_path = os.path.join(self.file_cache, key)
-        os.makedirs(os.path.dirname(cached_file_path), exist_ok=True)
+        cached_file_path = self.file_cache / key
+        cached_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            if not os.path.isfile(cached_file_path):
+            if not cached_file_path.is_file():
                 shutil.copyfile(filename, cached_file_path)
         except OSError:
             logger.warning("Unable to cache file %s.", cached_file_path)
             return None
         return cached_file_path
 
-    def get(self, *, key: str) -> Optional[str]:
+    def get(self, *, key: str) -> Optional[Path]:
         """Get the filepath which matches the hash calculated with algorithm.
 
         :param key: The key used to cache the file.
 
         :return: The path to cached file, or None if the file is not cached.
         """
-        cached_file_path = os.path.join(self.file_cache, key)
-        if os.path.exists(cached_file_path):
+        cached_file_path = self.file_cache / key
+        if cached_file_path.is_file():
             logger.debug("Cache hit for key %s", key)
             return cached_file_path
 

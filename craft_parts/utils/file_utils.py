@@ -23,6 +23,7 @@ import logging
 import os
 import shutil
 import sys
+from pathlib import Path
 from typing import Callable, Generator, List, Set
 
 from craft_parts import errors
@@ -250,7 +251,7 @@ def create_similar_directory(source: str, destination: str) -> None:
     shutil.copystat(source, destination, follow_symlinks=False)
 
 
-def calculate_hash(filename: str, *, algorithm: str) -> str:
+def calculate_hash(filename: Path, *, algorithm: str) -> str:
     """Calculate the hash of the given file.
 
     :param filename: The path to the file to digest.
@@ -271,14 +272,14 @@ def calculate_hash(filename: str, *, algorithm: str) -> str:
 
 
 def _file_reader_iter(
-    path: str, block_size: int = 2 ** 20
+    path: Path, block_size: int = 2 ** 20
 ) -> Generator[bytes, None, None]:
     """Read a file in blocks.
 
     :param path: The path to the file to read.
     :param block_size: The size of the block to read, default is 1MiB.
     """
-    with open(path, "rb") as file:
+    with path.open("rb") as file:
         block = file.read(block_size)
         while len(block) > 0:
             yield block

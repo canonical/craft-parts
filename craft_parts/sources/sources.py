@@ -73,6 +73,7 @@ cases you want to refer to the documentation for the specific plugin.
 
 import os
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Optional, Type
 
 from craft_parts.dirs import ProjectDirs
@@ -97,7 +98,7 @@ _source_handler: Dict[str, SourceHandlerType] = {
 
 
 def get_source_handler(
-    application_name: str,
+    cache_dir: Path,
     part: "Part",
     project_dirs: ProjectDirs,
 ) -> Optional[SourceHandler]:
@@ -114,7 +115,7 @@ def get_source_handler(
             source_type=part.spec.source_type,
         )
         source_handler = handler_class(
-            application_name=application_name,
+            cache_dir=cache_dir,
             source=part.spec.source,
             part_src_dir=part.part_src_dir,
             source_checksum=part.spec.source_checksum,
