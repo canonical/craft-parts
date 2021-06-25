@@ -34,10 +34,12 @@ class FooSourceHandler(SourceHandler):
 class TestSourceHandler:
     """Verify SourceHandler methods and attributes."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir):
         self.source = FooSourceHandler(
             source="source",
             part_src_dir="parts/foo/src",
+            cache_dir=new_dir,
         )
 
     def test_source(self):
@@ -64,7 +66,9 @@ class TestSourceHandler:
 
         with pytest.raises(TypeError) as raised:
             # pylint: disable=abstract-class-instantiated
-            FaultySource(source=None, part_src_dir=None)  # type: ignore
+            FaultySource(  # type: ignore
+                source=Path(), part_src_dir=Path(), cache_dir=Path()
+            )
         assert str(raised.value) == (
             "Can't instantiate abstract class FaultySource with abstract methods pull"
         )
@@ -86,11 +90,12 @@ class BarFileSource(FileSourceHandler):
 class TestFileSourceHandler:
     """Verify FileSourceHandler methods and attributes."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir):
         self.source = BarFileSource(
             source="source",
             part_src_dir="parts/foo/src",
-            application_name="app",
+            cache_dir=new_dir,
         )
 
     def test_file_source(self):
@@ -185,7 +190,7 @@ class TestFileSourceHandler:
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()
 
-        file_cache = cache.FileCache("app")
+        file_cache = cache.FileCache(new_dir)
         cached = file_cache.get(key=self.source.source_checksum)
         assert cached is not None
         assert Path(cached).read_bytes() == b"content"
@@ -198,7 +203,7 @@ class TestFileSourceHandler:
 
         # pre-cache this file
         Path("my_file").write_text("content")
-        file_cache = cache.FileCache("app")
+        file_cache = cache.FileCache(new_dir)
         file_cache.cache(filename="my_file", key=self.source.source_checksum)
 
         self.source.pull()
@@ -219,7 +224,7 @@ class TestFileSourceHandler:
         with pytest.raises(TypeError) as raised:
             # pylint: disable=abstract-class-instantiated
             FaultyFileSource(
-                source=None, part_src_dir=None, application_name=""  # type: ignore
+                source=None, part_src_dir=None, cache_dir=Path()  # type: ignore
             )
         assert str(raised.value) == (
             "Can't instantiate abstract class FaultyFileSource with abstract "

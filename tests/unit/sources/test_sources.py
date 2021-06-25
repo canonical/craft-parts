@@ -72,7 +72,7 @@ def test_type_from_uri(source, result):
     ],
 )
 def test_sources_with_branch_errors(
-    source_type, source_branch, source_tag, source_commit, error
+    new_dir, source_type, source_branch, source_tag, source_commit, error
 ):
     part_data = {
         "source": "https://source.com",
@@ -92,7 +92,7 @@ def test_sources_with_branch_errors(
 
     with pytest.raises(errors.InvalidSourceOption) as err:
         sources.get_source_handler(
-            application_name="test", part=p1, project_dirs=ProjectDirs()
+            part=p1, project_dirs=ProjectDirs(), cache_dir=new_dir
         )
     assert err.value.source_type == source_type
     assert err.value.option == error

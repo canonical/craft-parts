@@ -36,13 +36,15 @@ def setup_module_fixture(new_dir):  # pylint: disable=unused-argument
     ],
 )
 def test_calculate_hash(algo, digest):
-    Path("test_file").write_text("content")
-    assert file_utils.calculate_hash("test_file", algorithm=algo) == digest
+    test_file = Path("test_file")
+    test_file.write_text("content")
+    assert file_utils.calculate_hash(test_file, algorithm=algo) == digest
 
 
 def test_file_reader_iter():
-    Path("test_file").write_text("content")
-    gen = file_utils._file_reader_iter("test_file", block_size=4)
+    test_file = Path("test_file")
+    test_file.write_text("content")
+    gen = file_utils._file_reader_iter(test_file, block_size=4)
     assert list(gen) == [b"cont", b"ent"]
 
 

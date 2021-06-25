@@ -23,12 +23,13 @@ import requests
 from craft_parts.sources import sources
 
 
-@pytest.mark.usefixtures("new_dir")
 @pytest.mark.http_request_handler("FakeFileHTTPRequestHandler")
 class TestTarSource:
     """Tests for the tar source handler."""
 
-    def test_pull_tarball_must_download_to_sourcedir(self, mocker, http_server):
+    def test_pull_tarball_must_download_to_sourcedir(
+        self, new_dir, mocker, http_server
+    ):
         mock_prov = mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
 
         plugin_name = "test_plugin"
@@ -39,7 +40,7 @@ class TestTarSource:
             *http_server.server_address, file_name=tar_file_name
         )
 
-        tar_source = sources.TarSource(source, dest_dir)
+        tar_source = sources.TarSource(source, dest_dir, cache_dir=new_dir)
 
         tar_source.pull()
 
@@ -48,7 +49,7 @@ class TestTarSource:
         with open(os.path.join(dest_dir, tar_file_name), "r") as tar_file:
             assert tar_file.read() == "Test fake file"
 
-    def test_pull_twice_downloads_once(self, mocker, http_server):
+    def test_pull_twice_downloads_once(self, new_dir, mocker, http_server):
         """If a source checksum is defined, the cache should be tried first."""
 
         mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
@@ -61,7 +62,9 @@ class TestTarSource:
             "50ad76d1c2f50c4935d11d50211945ca0ecb980c04c98099"
             "085b0c3"
         )
-        tar_source = sources.TarSource(source, ".", source_checksum=expected_checksum)
+        tar_source = sources.TarSource(
+            source, ".", cache_dir=new_dir, source_checksum=expected_checksum
+        )
 
         tar_source.pull()
 
@@ -69,7 +72,7 @@ class TestTarSource:
         tar_source.pull()
         assert download_spy.call_count == 0
 
-    def test_strip_common_prefix(self):
+    def test_strip_common_prefix(self, new_dir):
         # Create tar file for testing
         os.makedirs(os.path.join("src", "test_prefix"))
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")
@@ -77,14 +80,16 @@ class TestTarSource:
         with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
             tar.add(file_to_tar)
 
-        tar_source = sources.TarSource(os.path.join("src", "test.tar"), "dst")
+        tar_source = sources.TarSource(
+            os.path.join("src", "test.tar"), "dst", cache_dir=new_dir
+        )
         os.mkdir("dst")
         tar_source.pull()
 
         # The 'test_prefix' part of the path should have been removed
         assert os.path.exists(os.path.join("dst", "test.txt"))
 
-    def test_strip_common_prefix_symlink(self):
+    def test_strip_common_prefix_symlink(self, new_dir):
         # Create tar file for testing
         os.makedirs(os.path.join("src", "test_prefix"))
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")
@@ -106,7 +111,9 @@ class TestTarSource:
             tar.add(file_to_tar)
             tar.add(file_to_link, filter=check_for_symlink)
 
-        tar_source = sources.TarSource(os.path.join("src", "test.tar"), "dst")
+        tar_source = sources.TarSource(
+            os.path.join("src", "test.tar"), "dst", cache_dir=new_dir
+        )
         os.mkdir("dst")
         tar_source.pull()
 
@@ -114,7 +121,7 @@ class TestTarSource:
         assert os.path.exists(os.path.join("dst", "test.txt"))
         assert os.path.exists(os.path.join("dst", "link.txt"))
 
-    def test_strip_common_prefix_hardlink(self):
+    def test_strip_common_prefix_hardlink(self, new_dir):
         # Create tar file for testing
         os.makedirs(os.path.join("src", "test_prefix"))
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")
@@ -135,7 +142,9 @@ class TestTarSource:
             tar.add(file_to_tar)
             tar.add(file_to_link, filter=check_for_hardlink)
 
-        tar_source = sources.TarSource(os.path.join("src", "test.tar"), "dst")
+        tar_source = sources.TarSource(
+            os.path.join("src", "test.tar"), "dst", cache_dir=new_dir
+        )
         os.mkdir("dst")
         tar_source.pull()
 

@@ -107,9 +107,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def refresh_stage_packages_list(
-        cls, *, application_name: str, target_arch: str
-    ) -> None:
+    def refresh_stage_packages_list(cls, *, cache_dir: Path, target_arch: str) -> None:
         """Update the list of packages available in the repository.
 
         :param application_name: A unique identifier for the application
@@ -124,7 +122,7 @@ class BaseRepository(abc.ABC):
     def fetch_stage_packages(
         cls,
         *,
-        application_name: str,
+        cache_dir: Path,
         package_names: List[str],
         stage_packages_path: Path,
         base: str,
@@ -196,9 +194,7 @@ class DummyRepository(BaseRepository):
         return []
 
     @classmethod
-    def refresh_stage_packages_list(
-        cls, *, application_name: str, target_arch: str
-    ) -> None:
+    def refresh_stage_packages_list(cls, *, cache_dir: Path, target_arch: str) -> None:
         """Update the list of packages available in the repository."""
 
     @classmethod

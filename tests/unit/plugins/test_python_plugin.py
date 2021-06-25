@@ -28,7 +28,8 @@ from craft_parts.plugins.python_plugin import PythonPlugin
 @pytest.fixture
 def plugin(new_dir):
     properties = PythonPlugin.properties_class.unmarshal({"source": "."})
-    part_info = PartInfo(project_info=ProjectInfo(), part=Part("p1", {}))
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
     return PythonPlugin(properties=properties, part_info=part_info)
 
@@ -100,7 +101,8 @@ def test_get_build_commands(plugin, new_dir):
 
 
 def test_get_build_commands_with_all_properties(new_dir):
-    part_info = PartInfo(project_info=ProjectInfo(), part=Part("p1", {}))
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
     properties = PythonPlugin.properties_class.unmarshal(
         {
             "source": ".",

@@ -16,15 +16,13 @@
 
 from pathlib import Path
 
-import pytest
-
 from craft_parts.sources.cache import FileCache
 from craft_parts.utils import file_utils
 
 
 def test_file_cache(new_dir):
     digest = "algo/12345678"
-    x = FileCache(name="test")
+    x = FileCache(new_dir)
 
     # make sure file is not cached
     assert x.get(key=digest) is None
@@ -40,23 +38,20 @@ def test_file_cache(new_dir):
     assert result == cached_file
 
     cached_path = Path(result)
-    assert cached_path == Path(
-        new_dir, ".cache", "test", "craft-parts", "files", digest
-    )
+    assert cached_path == Path(new_dir, "files", digest)
 
     # cache entry shouldn't be a hard link
     assert cached_path.stat().st_ino != test_file.stat().st_ino
 
     # but they must have the same contents
-    test_hash = file_utils.calculate_hash("test_file", algorithm="sha1")
+    test_hash = file_utils.calculate_hash(Path("test_file"), algorithm="sha1")
     cached_hash = file_utils.calculate_hash(result, algorithm="sha1")
     assert test_hash == cached_hash
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_file_cache_clean():
+def test_file_cache_clean(new_dir):
     digest = "algo/12345678"
-    x = FileCache(name="test")
+    x = FileCache(new_dir)
 
     test_file = Path("test_file")
     test_file.write_text("content")
@@ -71,10 +66,9 @@ def test_file_cache_clean():
     assert not cached_path.is_file()
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_file_cache_nonfile():
+def test_file_cache_nonfile(new_dir):
     digest = "algo/12345678"
-    x = FileCache(name="test")
+    x = FileCache(new_dir)
 
     test_dir = Path("test_dir")
     test_dir.mkdir()
@@ -83,10 +77,9 @@ def test_file_cache_nonfile():
     assert result is None
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_file_cache_non_existent():
+def test_file_cache_non_existent(new_dir):
     digest = "algo/12345678"
-    x = FileCache(name="test")
+    x = FileCache(new_dir)
 
     result = x.cache(filename="test_file", key=digest)
     assert result is None

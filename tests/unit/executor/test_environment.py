@@ -47,7 +47,8 @@ class FooPlugin(plugins.Plugin):
 
 @pytest.fixture(autouse=True)
 def directories(new_dir):  # pylint: disable=unused-argument
-    part_info = PartInfo(project_info=ProjectInfo(), part=Part("p1", {}))
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
     for directory in [
         "bin",
@@ -74,7 +75,7 @@ def directories(new_dir):  # pylint: disable=unused-argument
 
 def test_generate_part_environment_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
-    info = ProjectInfo(arch="aarch64", application_name="xyz")
+    info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=Step.BUILD)
     props = plugins.PluginProperties()
@@ -118,7 +119,7 @@ def test_generate_part_environment_build(new_dir):
 
 def test_generate_part_environment_no_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
-    info = ProjectInfo(arch="aarch64", application_name="xyz")
+    info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=Step.STAGE)
     props = plugins.PluginProperties()
@@ -161,7 +162,7 @@ def test_generate_part_environment_no_build(new_dir):
 
 def test_generate_part_environment_no_user_env(new_dir):
     p1 = Part("p1", {})
-    info = ProjectInfo(arch="aarch64", application_name="xyz")
+    info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=Step.BUILD)
     props = plugins.PluginProperties()

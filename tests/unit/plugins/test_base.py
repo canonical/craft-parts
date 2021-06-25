@@ -55,9 +55,9 @@ class FooPlugin(Plugin):
         return ["hello", options.name]
 
 
-def test_plugin():
+def test_plugin(new_dir):
     part = Part("p1", {})
-    project_info = ProjectInfo()
+    project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=project_info, part=part)
 
     props = FooPluginProperties.unmarshal({"foo-name": "world"})
@@ -71,12 +71,12 @@ def test_plugin():
     assert plugin.get_build_commands() == ["hello", "world"]
 
 
-def test_abstract_methods():
+def test_abstract_methods(new_dir):
     class FaultyPlugin(Plugin):
         """A plugin that doesn't implement abstract methods."""
 
     part = Part("p1", {})
-    project_info = ProjectInfo()
+    project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=project_info, part=part)
 
     with pytest.raises(TypeError) as raised:

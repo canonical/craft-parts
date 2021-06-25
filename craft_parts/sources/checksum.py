@@ -16,6 +16,7 @@
 
 """Helpers to compute and verify file checksums."""
 
+from pathlib import Path
 from typing import Tuple
 
 from craft_parts.utils import file_utils
@@ -40,7 +41,7 @@ def split_checksum(source_checksum: str) -> Tuple:
     return (algorithm, digest)
 
 
-def verify_checksum(source_checksum: str, checkfile: str) -> Tuple:
+def verify_checksum(source_checksum: str, checkfile: Path) -> Tuple:
     """Verify that checkfile corresponds to the given source checksum.
 
     :param source_checksum: Source checksum in algorithm/hash format.

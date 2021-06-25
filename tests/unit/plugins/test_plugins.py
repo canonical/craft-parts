@@ -48,9 +48,9 @@ class TestGetPlugin:
             ("python", PythonPlugin, {"source": "."}),
         ],
     )
-    def test_get_plugin(self, name, plugin_class, data):
+    def test_get_plugin(self, new_dir, name, plugin_class, data):
         part = Part("foo", {"plugin": name})
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
         pclass = plugins.get_plugin_class(name)
@@ -64,9 +64,9 @@ class TestGetPlugin:
 
         assert isinstance(plugin, plugin_class)
 
-    def test_get_plugin_fallback(self):
+    def test_get_plugin_fallback(self, new_dir):
         part = Part("nil", {})
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
         plugin = plugins.get_plugin(
@@ -77,9 +77,9 @@ class TestGetPlugin:
 
         assert isinstance(plugin, nil_plugin.NilPlugin)
 
-    def test_get_plugin_unregistered(self):
+    def test_get_plugin_unregistered(self, new_dir):
         part = Part("foo", {"plugin": "invalid"})
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
         with pytest.raises(ValueError) as raised:
@@ -90,9 +90,9 @@ class TestGetPlugin:
             )
         assert str(raised.value) == "plugin not registered: 'invalid'"
 
-    def test_get_plugin_unspecified(self):
+    def test_get_plugin_unspecified(self, new_dir):
         part = Part("foo", {})
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
         with pytest.raises(ValueError) as raised:

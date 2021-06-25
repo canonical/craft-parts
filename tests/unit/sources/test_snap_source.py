@@ -42,22 +42,24 @@ class TestSnapSource:
     @pytest.mark.parametrize(
         "param", ["source_tag", "source_branch", "source_commit", "source_depth"]
     )
-    def test_invalid_parameter(self, param):
+    def test_invalid_parameter(self, new_dir, param):
         with pytest.raises(errors.InvalidSourceOption) as raised:
             kwargs = {param: "foo"}
-            sources.SnapSource(source="test.snap", part_src_dir=".", **kwargs)
+            sources.SnapSource(
+                source="test.snap", part_src_dir=".", cache_dir=new_dir, **kwargs
+            )
         assert raised.value.option == param.replace("_", "-")
 
-    def test_pull_snap_file_must_extract(self):
-        source = sources.SnapSource(self._test_file, self._dest_dir)
+    def test_pull_snap_file_must_extract(self, new_dir):
+        source = sources.SnapSource(self._test_file, self._dest_dir, cache_dir=new_dir)
         source.pull()
 
         assert Path(self._dest_dir / "meta.basic").is_dir()
         assert Path(self._dest_dir / "meta.basic/snap.yaml").is_file()
 
-    def test_pull_snap_must_not_clean_targets(self, mocker):
+    def test_pull_snap_must_not_clean_targets(self, new_dir, mocker):
         mock_provision = mocker.patch.object(sources.SnapSource, "provision")
-        source = sources.SnapSource(self._test_file, self._dest_dir)
+        source = sources.SnapSource(self._test_file, self._dest_dir, cache_dir=new_dir)
         source.pull()
 
         mock_provision.assert_called_once_with(
@@ -72,11 +74,11 @@ class TestSnapSource:
         else:
             assert "snap" not in sources._source_handler
 
-    def test_pull_failure_bad_unsquash(self, mocker):
+    def test_pull_failure_bad_unsquash(self, new_dir, mocker):
         mocker.patch(
             "subprocess.check_output", side_effect=subprocess.CalledProcessError(1, [])
         )
-        source = sources.SnapSource(self._test_file, self._dest_dir)
+        source = sources.SnapSource(self._test_file, self._dest_dir, cache_dir=new_dir)
 
         with pytest.raises(sources.errors.PullError) as raised:
             source.pull()

@@ -91,7 +91,7 @@ class TestPackages:
             {"filtered-pkg-1", "filtered-pkg-2"},
         )
 
-        stage_cache_path, debs_path = deb.get_cache_dirs("test")
+        stage_cache_path, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
@@ -99,7 +99,7 @@ class TestPackages:
         ]
 
         fetched_packages = deb.Ubuntu.fetch_stage_packages(
-            application_name="test",
+            cache_dir=tmpdir,
             package_names=["fake-package"],
             stage_packages_path=Path(tmpdir),
             base="core",
@@ -121,7 +121,7 @@ class TestPackages:
         assert fetched_packages == ["fake-package=1.0"]
 
     def test_fetch_virtual_stage_package(self, tmpdir, fake_apt_cache):
-        _, debs_path = deb.get_cache_dirs("test")
+        _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
@@ -129,7 +129,7 @@ class TestPackages:
         ]
 
         fetched_packages = deb.Ubuntu.fetch_stage_packages(
-            application_name="test",
+            cache_dir=tmpdir,
             package_names=["virtual-fake-package"],
             stage_packages_path=Path(tmpdir),
             base="core",
@@ -139,7 +139,7 @@ class TestPackages:
         assert fetched_packages == ["fake-package=1.0"]
 
     def test_fetch_stage_package_with_deps(self, tmpdir, fake_apt_cache):
-        _, debs_path = deb.get_cache_dirs("test")
+        _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
         fake_package_dep = debs_path / "fake-package-dep_1.0_all.deb"
@@ -150,7 +150,7 @@ class TestPackages:
         ]
 
         fetched_packages = deb.Ubuntu.fetch_stage_packages(
-            application_name="test",
+            cache_dir=tmpdir,
             package_names=["fake-package"],
             stage_packages_path=Path(tmpdir),
             base="core",
@@ -167,7 +167,7 @@ class TestPackages:
         )
 
         fetched_packages = deb.Ubuntu.fetch_stage_packages(
-            application_name="test",
+            cache_dir=tmpdir,
             package_names=[],
             stage_packages_path=Path(tmpdir),
             base="core",
@@ -183,7 +183,7 @@ class TestPackages:
 
         with pytest.raises(errors.PackageFetchError) as raised:
             deb.Ubuntu.fetch_stage_packages(
-                application_name="test",
+                cache_dir=tmpdir,
                 package_names=["fake-package"],
                 stage_packages_path=Path(tmpdir),
                 base="core",

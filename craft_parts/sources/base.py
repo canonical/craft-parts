@@ -25,7 +25,6 @@ from typing import List, Optional, Union
 
 import requests
 
-from craft_parts import utils
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import url_utils
 
@@ -49,7 +48,7 @@ class SourceHandler(abc.ABC):
         source: Union[str, Path],
         part_src_dir: Union[str, Path],
         *,
-        application_name: Optional[str] = None,
+        cache_dir: Path,
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,
@@ -58,24 +57,19 @@ class SourceHandler(abc.ABC):
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
     ):
-        if not application_name:
-            application_name = utils.package_name()
-
         if not project_dirs:
             project_dirs = ProjectDirs()
 
         self.source = str(source)
         self.part_src_dir = str(part_src_dir)
+        self._cache_dir = cache_dir
         self.source_tag = source_tag
         self.source_commit = source_commit
         self.source_branch = source_branch
         self.source_depth = source_depth
         self.source_checksum = source_checksum
         self.source_details = None
-
         self.command = command
-
-        self._application_name = application_name
         self._dirs = project_dirs
         self._checked = False
 
@@ -124,7 +118,7 @@ class FileSourceHandler(SourceHandler):
         source: Union[str, Path],
         part_src_dir: Union[str, Path],
         *,
-        application_name: Optional[str],
+        cache_dir: Path,
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,
@@ -136,7 +130,7 @@ class FileSourceHandler(SourceHandler):
         super().__init__(
             source,
             part_src_dir,
-            application_name=application_name,
+            cache_dir=cache_dir,
             source_tag=source_tag,
             source_commit=source_commit,
             source_branch=source_branch,
@@ -145,7 +139,7 @@ class FileSourceHandler(SourceHandler):
             command=command,
             project_dirs=project_dirs,
         )
-        self._file = ""
+        self._file = Path()
 
     # pylint: enable=too-many-arguments
 
@@ -166,7 +160,7 @@ class FileSourceHandler(SourceHandler):
             source_file = self.download()
         else:
             basename = os.path.basename(self.source)
-            source_file = os.path.join(self.part_src_dir, basename)
+            source_file = Path(self.part_src_dir, basename)
             # We make this copy as the provisioning logic can delete
             # this file and we don't want that.
             try:
@@ -180,20 +174,20 @@ class FileSourceHandler(SourceHandler):
 
         # We finally provision, but we don't clean the target so override-pull
         # can actually have meaning when using these sources.
-        self.provision(self.part_src_dir, src=source_file, clean_target=False)
+        self.provision(self.part_src_dir, src=str(source_file), clean_target=False)
 
-    def download(self, filepath: str = None) -> str:
+    def download(self, filepath: Optional[Path] = None) -> Path:
         """Download the URL from a remote location.
 
         :param filepath: the destination file to download to.
         """
         if filepath is None:
-            self._file = os.path.join(self.part_src_dir, os.path.basename(self.source))
+            self._file = Path(self.part_src_dir, os.path.basename(self.source))
         else:
             self._file = filepath
 
         # check if we already have the source file cached
-        file_cache = FileCache(self._application_name)
+        file_cache = FileCache(self._cache_dir)
         if self.source_checksum:
             cache_file = file_cache.get(key=self.source_checksum)
             if cache_file:
@@ -216,10 +210,10 @@ class FileSourceHandler(SourceHandler):
                 "response={err.response!r}"
             )
 
-        url_utils.download_request(request, self._file)
+        url_utils.download_request(request, str(self._file))
 
         # if source_checksum is defined cache the file for future reuse
         if self.source_checksum:
             verify_checksum(self.source_checksum, self._file)
-            file_cache.cache(filename=self._file, key=self.source_checksum)
+            file_cache.cache(filename=str(self._file), key=self.source_checksum)
         return self._file

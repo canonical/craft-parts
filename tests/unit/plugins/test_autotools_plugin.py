@@ -30,11 +30,12 @@ from craft_parts.plugins.autotools_plugin import AutotoolsPlugin
 class TestPluginAutotools:
     """Autotools plugin tests."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir):
         properties = AutotoolsPlugin.properties_class.unmarshal({"source": "."})
         part = Part("foo", {})
 
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         project_info._parallel_build_count = 42
 
         part_info = PartInfo(project_info=project_info, part=part)
@@ -65,7 +66,7 @@ class TestPluginAutotools:
             'make install DESTDIR="install/dir"',
         ]
 
-    def test_get_build_commands_with_configure_parameters(self):
+    def test_get_build_commands_with_configure_parameters(self, new_dir):
         properties = AutotoolsPlugin.properties_class.unmarshal(
             {
                 "source": ".",
@@ -73,7 +74,7 @@ class TestPluginAutotools:
             },
         )
 
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         project_info._parallel_build_count = 8
 
         part = Part("bar", {})

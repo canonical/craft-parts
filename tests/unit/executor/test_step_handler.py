@@ -49,16 +49,16 @@ class FooPlugin(plugins.Plugin):
         return ["hello"]
 
 
-def _step_handler_for_step(step: Step) -> StepHandler:
+def _step_handler_for_step(step: Step, cache_dir: Path) -> StepHandler:
     p1 = Part("p1", {"source": "."})
     dirs = ProjectDirs()
-    info = ProjectInfo(project_dirs=dirs)
+    info = ProjectInfo(project_dirs=dirs, application_name="test", cache_dir=cache_dir)
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
     source_handler = sources.get_source_handler(
-        application_name="test",
+        cache_dir=cache_dir,
         part=p1,
         project_dirs=dirs,
     )
@@ -71,16 +71,15 @@ def _step_handler_for_step(step: Step) -> StepHandler:
     )
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestStepHandlerBuiltins:
     """Verify the built-in handlers."""
 
-    def test_run_builtin_pull(self, mocker):
+    def test_run_builtin_pull(self, new_dir, mocker):
         mock_source_pull = mocker.patch(
             "craft_parts.sources.local_source.LocalSource.pull"
         )
 
-        sh = _step_handler_for_step(Step.PULL)
+        sh = _step_handler_for_step(Step.PULL, cache_dir=new_dir)
         result = sh.run_builtin()
 
         mock_source_pull.assert_called_once_with()
@@ -90,7 +89,7 @@ class TestStepHandlerBuiltins:
         mock_run = mocker.patch("subprocess.run")
 
         Path("parts/p1/run").mkdir(parents=True)
-        sh = _step_handler_for_step(Step.BUILD)
+        sh = _step_handler_for_step(Step.BUILD, cache_dir=new_dir)
         result = sh.run_builtin()
 
         mock_run.assert_called_once_with(
@@ -100,18 +99,18 @@ class TestStepHandlerBuiltins:
         )
         assert result == StepContents()
 
-    def test_run_builtin_stage(self, mocker):
+    def test_run_builtin_stage(self, new_dir, mocker):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
         Path("parts/p1/install/subdir/bar").write_text("content")
         Path("stage").mkdir()
-        sh = _step_handler_for_step(Step.STAGE)
+        sh = _step_handler_for_step(Step.STAGE, cache_dir=new_dir)
         result = sh.run_builtin()
 
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
-    def test_run_builtin_prime(self, mocker):
+    def test_run_builtin_prime(self, new_dir, mocker):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
@@ -119,13 +118,13 @@ class TestStepHandlerBuiltins:
         Path("stage/subdir").mkdir(parents=True)
         Path("stage/foo").write_text("content")
         Path("stage/subdir/bar").write_text("content")
-        sh = _step_handler_for_step(Step.PRIME)
+        sh = _step_handler_for_step(Step.PRIME, cache_dir=new_dir)
         result = sh.run_builtin()
 
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
-    def test_run_builtin_invalid(self):
-        sh = _step_handler_for_step(999)  # type: ignore
+    def test_run_builtin_invalid(self, new_dir):
+        sh = _step_handler_for_step(999, cache_dir=new_dir)  # type: ignore
         with pytest.raises(RuntimeError) as raised:
             sh.run_builtin()
         assert str(raised.value) == (
@@ -133,12 +132,11 @@ class TestStepHandlerBuiltins:
         )
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestStepHandlerRunScriptlet:
     """Verify the scriptlet runner."""
 
     def test_run_scriptlet(self, new_dir, capfd):
-        sh = _step_handler_for_step(Step.PULL)
+        sh = _step_handler_for_step(Step.PULL, cache_dir=new_dir)
         sh.run_scriptlet("echo hello world", scriptlet_name="name", work_dir=new_dir)
         captured = capfd.readouterr()
         assert captured.out == "hello world\n"

@@ -49,7 +49,8 @@ class TestPartHandling:
                 "build-packages": ["pkg3"],
             },
         )
-        self._part_info = PartInfo(ProjectInfo(), self._part)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._part_info = PartInfo(info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,
@@ -139,9 +140,10 @@ class TestPartHandling:
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_scriptlet(self, capfd, step, scriptlet):
+    def test_run_step_scriptlet(self, new_dir, capfd, step, scriptlet):
         p1 = Part("p1", {"plugin": "nil", scriptlet: "echo hello"})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=step)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
@@ -170,7 +172,8 @@ class TestPartUpdateHandler:
         Path("subdir").mkdir()
         Path("subdir/foo.txt").write_text("content")
 
-        self._part_info = PartInfo(ProjectInfo(), self._part)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._part_info = PartInfo(info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,
@@ -190,10 +193,11 @@ class TestPartUpdateHandler:
         assert Path("parts/foo/src/foo.txt").read_text() == "change"
         assert Path("parts/foo/src/bar.txt").exists()
 
-    def test_update_pull_no_source(self, caplog):
+    def test_update_pull_no_source(self, new_dir, caplog):
         caplog.set_level(logging.WARNING)
         p1 = Part("p1", {"plugin": "nil"})
-        part_info = PartInfo(ProjectInfo(), part=p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, part=p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         assert handler._source_handler is None
@@ -205,9 +209,10 @@ class TestPartUpdateHandler:
             "Update requested on part 'p1' without a source handler."
         )
 
-    def test_update_pull_with_scriptlet(self, capfd):
+    def test_update_pull_with_scriptlet(self, new_dir, capfd):
         p1 = Part("p1", {"plugin": "nil", "override-pull": "echo hello"})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         handler.run_action(Action("foo", Step.PULL, ActionType.UPDATE))
@@ -245,7 +250,8 @@ class TestPartCleanHandler:
         Path("subdir/bar").mkdir(parents=True)
         Path("subdir/foo.txt").write_text("content")
 
-        self._part_info = PartInfo(ProjectInfo(), self._part)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._part_info = PartInfo(info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,
@@ -283,9 +289,10 @@ class TestRerunStep:
     """Verify rerun actions."""
 
     @pytest.mark.parametrize("step", list(Step))
-    def test_rerun_action(self, mocker, step):
+    def test_rerun_action(self, mocker, new_dir, step):
         p1 = Part("p1", {"plugin": "nil"})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         mock_clean = mocker.patch(
@@ -306,37 +313,40 @@ class TestRerunStep:
 class TestPackages:
     """Verify package handling."""
 
-    def test_fetch_stage_packages(self, mocker):
+    def test_fetch_stage_packages(self, mocker, new_dir):
         mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
             return_value=["pkg1", "pkg2"],
         )
 
         p1 = Part("p1", {"plugin": "nil", "stage-packages": ["pkg1"]})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         result = handler._fetch_stage_packages(step_info=step_info)
         assert result == ["pkg1", "pkg2"]
 
-    def test_fetch_stage_packages_none(self, mocker):
+    def test_fetch_stage_packages_none(self, mocker, new_dir):
         p1 = Part("p1", {"plugin": "nil"})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         result = handler._fetch_stage_packages(step_info=step_info)
         assert result is None
 
-    def test_fetch_stage_packages_error(self, mocker):
+    def test_fetch_stage_packages_error(self, mocker, new_dir):
         mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
             side_effect=packages.errors.PackageNotFound("pkg1"),
         )
 
         p1 = Part("p1", {"plugin": "nil", "stage-packages": ["pkg1"]})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
@@ -351,7 +361,8 @@ class TestPackages:
         )
 
         p1 = Part("p1", {"plugin": "nil", "stage-snaps": ["word-salad"]})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         result = handler._fetch_stage_snaps()
@@ -361,9 +372,10 @@ class TestPackages:
             directory=os.path.join(new_dir, "parts/p1/stage_snaps"),
         )
 
-    def test_fetch_stage_snaps_none(self, mocker):
+    def test_fetch_stage_snaps_none(self, mocker, new_dir):
         p1 = Part("p1", {"plugin": "nil"})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         result = handler._fetch_stage_snaps()
@@ -378,12 +390,13 @@ class TestPackages:
         mocker.patch("craft_parts.executor.part_handler.PartHandler._run_step")
 
         p1 = Part("foo", {"plugin": "nil", "stage-packages": ["pkg1"]})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         state = handler._run_pull(StepInfo(part_info, Step.PULL))
         getpkg.assert_called_once_with(
-            application_name="craft_parts",
+            cache_dir=new_dir,
             base=ANY,
             package_names=["pkg1"],
             stage_packages_path=Path(new_dir / "parts/foo/stage_packages"),
@@ -401,7 +414,8 @@ class TestPackages:
         )
 
         p1 = Part("p1", {"plugin": "nil", "stage-snaps": ["snap1"]})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         Path("parts/p1/stage_snaps").mkdir(parents=True)
@@ -415,17 +429,19 @@ class TestPackages:
             keep=True,
         )
 
-    def test_get_build_packages(self):
+    def test_get_build_packages(self, new_dir):
         p1 = Part(
             "p1", {"plugin": "make", "source": "a.tgz", "build-packages": ["pkg1"]}
         )
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
         assert sorted(handler.build_packages) == ["gcc", "make", "pkg1", "tar"]
 
-    def test_get_build_snaps(self):
+    def test_get_build_snaps(self, new_dir):
         p1 = Part("p1", {"plugin": "nil", "build-snaps": ["word-salad"]})
-        part_info = PartInfo(ProjectInfo(), p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
         assert handler.build_snaps == ["word-salad"]
 
@@ -462,7 +478,7 @@ class TestHelpers:
         # this should not raise and exception
         part_handler._remove(Path("not_here"))
 
-    def test_clean_shared_area(self):
+    def test_clean_shared_area(self, new_dir):
         p1 = Part("p1", {"plugin": "dump", "source": "subdir1"})
         Path("subdir1").mkdir()
         Path("subdir1/foo.txt").write_text("content")
@@ -472,7 +488,7 @@ class TestHelpers:
         Path("subdir2/foo.txt").write_text("content")
         Path("subdir2/bar.txt").write_text("other content")
 
-        info = ProjectInfo()
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
 
         handler1 = PartHandler(
             p1, part_info=PartInfo(info, part=p1), part_list=[p1, p2]
@@ -504,13 +520,14 @@ class TestHelpers:
         assert Path("stage/foo.txt").exists() is False
         assert Path("stage/bar.txt").exists() is False
 
-    def test_clean_migrated_files(self):
+    def test_clean_migrated_files(self, new_dir):
         Path("subdir").mkdir()
         Path("subdir/foo.txt").touch()
         Path("subdir/bar").mkdir()
 
         p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
-        part_info = PartInfo(ProjectInfo(), part=p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, part=p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         handler.run_action(Action("p1", Step.PULL))
@@ -525,11 +542,12 @@ class TestHelpers:
         assert Path("stage/foo.txt").exists() is False
         assert Path("stage/bar").exists() is False
 
-    def test_clean_migrated_files_missing(self):
+    def test_clean_migrated_files_missing(self, new_dir):
         Path("subdir").mkdir()
 
         p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
-        part_info = PartInfo(ProjectInfo(), part=p1)
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, part=p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1])
 
         handler.run_action(Action("p1", Step.PULL))

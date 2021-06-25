@@ -26,8 +26,8 @@ from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
 
-def test_sequencer_add_actions():
-    info = ProjectInfo()
+def test_sequencer_add_actions(new_dir):
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
 
     seq = Sequencer(part_list=[p1], project_info=info)
@@ -54,8 +54,8 @@ def test_sequencer_add_actions():
         (Step.PRIME, states.PrimeState),
     ],
 )
-def test_sequencer_run_step(step, state_class):
-    info = ProjectInfo(arch="aarch64", application_name="test")
+def test_sequencer_run_step(step, state_class, new_dir):
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"stage": ["pkg"]})
 
     seq = Sequencer(part_list=[p1], project_info=info)
@@ -82,8 +82,8 @@ def test_sequencer_run_step(step, state_class):
     }
 
 
-def test_sequencer_run_step_invalid():
-    info = ProjectInfo(arch="aarch64", application_name="test")
+def test_sequencer_run_step_invalid(new_dir):
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"stage": ["pkg"]})
 
     seq = Sequencer(part_list=[p1], project_info=info)
@@ -101,8 +101,8 @@ def test_sequencer_run_step_invalid():
         (Step.PRIME, states.PrimeState),
     ],
 )
-def test_sequencer_rerun_step(mocker, step, state_class):
-    info = ProjectInfo(arch="aarch64", application_name="test")
+def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"stage": ["pkg"]})
 
     seq = Sequencer(part_list=[p1], project_info=info)
@@ -144,8 +144,8 @@ def test_sequencer_rerun_step(mocker, step, state_class):
         (Step.PRIME, states.PrimeState),
     ],
 )
-def test_sequencer_update_step(step, state_class):
-    info = ProjectInfo(arch="aarch64", application_name="test")
+def test_sequencer_update_step(step, state_class, new_dir):
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
     s1 = state_class()
     s1.write(Path("parts/p1/state") / step.name.lower())
@@ -169,8 +169,8 @@ def test_sequencer_update_step(step, state_class):
     assert new_stw.is_newer_than(stw)
 
 
-def test_sequencer_process_dependencies(mocker):
-    info = ProjectInfo(arch="aarch64", application_name="test")
+def test_sequencer_process_dependencies(mocker, new_dir):
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"after": ["p2"]})
     p2 = Part("p2", {})
 

@@ -21,7 +21,7 @@ import platform
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from craft_parts import errors, utils
+from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -34,6 +34,9 @@ class ProjectInfo:
 
     :param application_name: A unique identifier for the application using
         Craft Parts.
+    :param cache_dir: The path to store cached packages and files. If not
+        specified, a directory under the application name entry in the XDG
+        base directory will be used.
     :param arch: The architecture to build for. Defaults to the host system
         architecture.
     :param parallel_build_count: The maximum number of concurrent jobs to be
@@ -46,7 +49,8 @@ class ProjectInfo:
     def __init__(
         self,
         *,
-        application_name: str = utils.package_name(),
+        application_name: str,
+        cache_dir: Path,
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
@@ -57,6 +61,7 @@ class ProjectInfo:
             project_dirs = ProjectDirs()
 
         self._application_name = application_name
+        self._cache_dir = Path(cache_dir).absolute()
         self._set_machine(arch)
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count
@@ -81,6 +86,11 @@ class ProjectInfo:
     def application_name(self) -> str:
         """Return the name of the application using craft-parts."""
         return self._application_name
+
+    @property
+    def cache_dir(self) -> Path:
+        """Return the directory used to store cached files."""
+        return self._cache_dir
 
     @property
     def arch_triplet(self) -> str:

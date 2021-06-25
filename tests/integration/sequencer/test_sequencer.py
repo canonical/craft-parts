@@ -100,7 +100,7 @@ class TestSequencerPlan:
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         actions = seq.plan(Step.PRIME)
@@ -121,7 +121,7 @@ class TestSequencerPlan:
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         # pylint: disable=line-too-long
@@ -148,7 +148,7 @@ class TestSequencerPlan:
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         actions = seq.plan(Step.PRIME, part_names=["bar"])
@@ -165,7 +165,7 @@ class TestSequencerPlan:
 
         seq = sequencer.Sequencer(
             part_list=[p1],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         actions = seq.plan(Step.PULL, part_names=["foo"])
@@ -182,7 +182,7 @@ class TestSequencerPlan:
 
         seq = sequencer.Sequencer(
             part_list=[p1],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         actions = seq.plan(Step.PULL)
@@ -207,7 +207,7 @@ class TestSequencerPlan:
 
         seq = sequencer.Sequencer(
             part_list=[p1],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         actions = seq.plan(Step.BUILD)
@@ -238,7 +238,7 @@ class TestSequencerStates:
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         actions = seq.plan(Step.BUILD)
@@ -255,7 +255,7 @@ class TestSequencerStates:
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(),
+            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
         Path("parts/foo/state/pull").unlink()

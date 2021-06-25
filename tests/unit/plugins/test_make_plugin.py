@@ -29,11 +29,12 @@ from craft_parts.plugins.make_plugin import MakePlugin
 class TestPluginMake:
     """Make plugin tests."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir):
         properties = MakePlugin.properties_class.unmarshal({"source": "."})
         part = Part("foo", {})
 
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         project_info._parallel_build_count = 42
 
         part_info = PartInfo(project_info=project_info, part=part)
@@ -57,13 +58,13 @@ class TestPluginMake:
             'make -j"42" install DESTDIR="install/dir"',
         ]
 
-    def test_get_build_commands_with_parameters(self):
+    def test_get_build_commands_with_parameters(self, new_dir):
         props = MakePlugin.properties_class.unmarshal(
             {"source": ".", "make-parameters": ["FLAVOR=gtk3"]}
         )
         part = Part("foo", {})
 
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         project_info._parallel_build_count = 8
 
         part_info = PartInfo(project_info=project_info, part=part)

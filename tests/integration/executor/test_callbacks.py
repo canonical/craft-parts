@@ -73,7 +73,7 @@ def test_step_callback(tmpdir, capfd, step):
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_step_callback", work_dir=tmpdir
+        parts, application_name="test_step_callback", cache_dir=tmpdir, work_dir=tmpdir
     )
 
     with lf.action_executor() as ctx:
@@ -95,7 +95,10 @@ def test_prologue_callback(tmpdir, capfd):
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_prologue_callback", work_dir=tmpdir
+        parts,
+        application_name="test_prologue_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
     )
 
     with lf.action_executor() as ctx:
@@ -127,7 +130,11 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="callback",
     )
 
     with lf.action_executor() as ctx:
@@ -148,7 +155,11 @@ def test_callback_post(tmpdir, capfd, step, action_type):
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="callback",
     )
 
     with lf.action_executor() as ctx:
@@ -182,7 +193,11 @@ def test_update_callback_pre(tmpdir, capfd, step):
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="callback",
     )
 
     with lf.action_executor() as ctx:
@@ -199,7 +214,11 @@ def test_update_callback_post(tmpdir, capfd, step):
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="callback",
     )
 
     with lf.action_executor() as ctx:
@@ -216,7 +235,11 @@ def test_invalid_update_callback_pre(tmpdir, step):
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="callback",
     )
 
     with lf.action_executor() as ctx, pytest.raises(errors.InvalidAction) as raised:
@@ -232,7 +255,11 @@ def test_invalid_update_callback_post(tmpdir, step):
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="callback",
     )
 
     with lf.action_executor() as ctx, pytest.raises(errors.InvalidAction) as raised:
@@ -271,7 +298,11 @@ def test_callback_prologue(tmpdir, capfd):
 
     parts = yaml.safe_load(_exec_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="prologue"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="prologue",
     )
 
     with lf.action_executor() as ctx:
@@ -287,7 +318,11 @@ def test_callback_epilogue(tmpdir, capfd):
 
     parts = yaml.safe_load(_exec_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="epilogue"
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        message="epilogue",
     )
 
     with lf.action_executor() as ctx:

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 import pytest
 
 from craft_parts import errors
@@ -43,6 +45,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
 
     x = ProjectInfo(
         application_name="test",
+        cache_dir=Path(),
         arch=tc_arch,
         parallel_build_count=16,
         custom1="foobar",
@@ -50,6 +53,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     )
 
     assert x.application_name == "test"
+    assert x.cache_dir == new_dir
     assert x.arch_triplet == tc_triplet
     assert x.is_cross_compiling == tc_cross
     assert x.parallel_build_count == 16
@@ -66,7 +70,11 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
 
 
 def test_project_info_work_dir(new_dir):
-    info = ProjectInfo(project_dirs=ProjectDirs(work_dir="work_dir"))
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_dirs=ProjectDirs(work_dir="work_dir"),
+    )
 
     assert info.parts_dir == new_dir / "work_dir/parts"
     assert info.stage_dir == new_dir / "work_dir/stage"
@@ -74,7 +82,9 @@ def test_project_info_work_dir(new_dir):
 
 
 def test_project_info_custom_args():
-    info = ProjectInfo(custom1="foobar", custom2=[1, 2])
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), custom1="foobar", custom2=[1, 2]
+    )
 
     assert info.custom_args == ["custom1", "custom2"]
     assert info.custom1 == "foobar"
@@ -82,7 +92,7 @@ def test_project_info_custom_args():
 
 
 def test_project_info_invalid_custom_args():
-    info = ProjectInfo()
+    info = ProjectInfo(application_name="test", cache_dir=Path())
 
     with pytest.raises(AttributeError) as raised:
         print(info.custom1)
@@ -90,14 +100,14 @@ def test_project_info_invalid_custom_args():
 
 
 def test_project_info_set_custom_args():
-    info = ProjectInfo(custom="foo")
+    info = ProjectInfo(application_name="test", cache_dir=Path(), custom="foo")
 
     info.set_custom_argument("custom", "bar")
     assert info.custom == "bar"
 
 
 def test_project_info_set_invalid_custom_args():
-    info = ProjectInfo()
+    info = ProjectInfo(application_name="test", cache_dir=Path())
 
     with pytest.raises(ValueError) as raised:
         info.set_custom_argument("custom", "bar")
@@ -105,24 +115,25 @@ def test_project_info_set_invalid_custom_args():
 
 
 def test_project_info_default():
-    x = ProjectInfo()
-
-    assert x.application_name == "craft_parts"
-    assert x.parallel_build_count == 1
+    info = ProjectInfo(application_name="test", cache_dir=Path())
+    assert info.parallel_build_count == 1
 
 
 def test_invalid_arch():
     with pytest.raises(errors.InvalidArchitecture) as raised:
-        ProjectInfo(arch="invalid")
+        ProjectInfo(application_name="test", cache_dir=Path(), arch="invalid")
     assert raised.value.arch_name == "invalid"
 
 
 def test_part_info(new_dir):
-    info = ProjectInfo(custom1="foobar", custom2=[1, 2])
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), custom1="foobar", custom2=[1, 2]
+    )
     part = Part("foo", {})
     x = PartInfo(project_info=info, part=part)
 
-    assert x.application_name == "craft_parts"
+    assert x.application_name == "test"
+    assert x.cache_dir == new_dir
     assert x.parallel_build_count == 1
 
     assert x.part_name == "foo"
@@ -141,7 +152,7 @@ def test_part_info(new_dir):
 
 
 def test_part_info_invalid_custom_args():
-    info = ProjectInfo()
+    info = ProjectInfo(application_name="test", cache_dir=Path())
     part = Part("foo", {})
     x = PartInfo(project_info=info, part=part)
 
@@ -151,7 +162,7 @@ def test_part_info_invalid_custom_args():
 
 
 def test_part_info_set_custom_args():
-    info = ProjectInfo(custom="foo")
+    info = ProjectInfo(application_name="test", cache_dir=Path(), custom="foo")
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
@@ -160,7 +171,7 @@ def test_part_info_set_custom_args():
 
 
 def test_part_info_set_invalid_custom_args():
-    info = ProjectInfo()
+    info = ProjectInfo(application_name="test", cache_dir=Path())
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
@@ -170,12 +181,15 @@ def test_part_info_set_invalid_custom_args():
 
 
 def test_step_info(new_dir):
-    info = ProjectInfo(custom1="foobar", custom2=[1, 2])
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), custom1="foobar", custom2=[1, 2]
+    )
     part = Part("foo", {})
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.BUILD)
 
-    assert x.application_name == "craft_parts"
+    assert x.application_name == "test"
+    assert x.cache_dir == new_dir
     assert x.parallel_build_count == 1
 
     assert x.part_name == "foo"
@@ -195,7 +209,7 @@ def test_step_info(new_dir):
 
 
 def test_step_info_invalid_custom_args():
-    info = ProjectInfo()
+    info = ProjectInfo(application_name="test", cache_dir=Path())
     part = Part("foo", {})
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
@@ -206,7 +220,7 @@ def test_step_info_invalid_custom_args():
 
 
 def test_step_info_set_custom_args():
-    info = ProjectInfo(custom="foo")
+    info = ProjectInfo(application_name="test", cache_dir=Path(), custom="foo")
     part = Part("p1", {})
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
@@ -216,7 +230,7 @@ def test_step_info_set_custom_args():
 
 
 def test_step_info_set_invalid_custom_args():
-    info = ProjectInfo()
+    info = ProjectInfo(application_name="test", cache_dir=Path())
     part = Part("p1", {})
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)

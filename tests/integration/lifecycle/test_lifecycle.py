@@ -51,7 +51,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 
     # first run
     # command: pull
-    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
     actions = lf.plan(Step.PULL)
     assert actions == [
         Action("foo", Step.PULL),
@@ -63,7 +65,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 
     # foobar part depends on nothing
     # command: prime foobar
-    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
     actions = lf.plan(Step.PRIME, ["foobar"])
     assert actions == [
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -76,7 +80,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 
     # Then running build for bar that depends on foo
     # command: build bar
-    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -89,7 +95,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         ctx.execute(actions)
 
     # Building bar again rebuilds it (explicit request)
-    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -104,7 +112,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     new_yaml = parts_yaml.replace("source: a.tar.gz", "source: .")
     parts = yaml.safe_load(new_yaml)
 
-    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         # fmt: off
@@ -119,7 +129,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         ctx.execute(actions)
 
     # A request to build all parts skips everything
-    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
     actions = lf.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -132,7 +144,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 
     # Touching a source file triggers an update
     Path("a.tar.gz").touch()
-    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
     actions = lf.plan(Step.BUILD)
     assert actions == [
         # fmt: off
@@ -175,7 +189,7 @@ class TestCleaning:
         parts = yaml.safe_load(parts_yaml)
 
         self._lifecycle = craft_parts.LifecycleManager(
-            parts, application_name="test_clean"
+            parts, application_name="test_clean", cache_dir=new_dir
         )
 
         # pylint: enable=attribute-defined-outside-init
@@ -299,9 +313,8 @@ class TestCleaning:
         assert sorted(Path("parts").rglob("*/state/*")) == sorted(all_states)
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestUpdating:
-    def test_refresh_stage_packages_list(self, mocker):
+    def test_refresh_stage_packages_list(self, new_dir, mocker):
         refresh_stage = mocker.patch(
             "craft_parts.packages.Repository.refresh_stage_packages_list"
         )
@@ -319,16 +332,14 @@ class TestUpdating:
         parts = yaml.safe_load(parts_yaml)
 
         lf = craft_parts.LifecycleManager(
-            parts, application_name="test_update", arch="aarch64"
+            parts, application_name="test_update", arch="aarch64", cache_dir=new_dir
         )
         lf.refresh_packages_list()
 
-        refresh_stage.assert_called_once_with(
-            application_name="test_update", target_arch="arm64"
-        )
+        refresh_stage.assert_called_once_with(cache_dir=new_dir, target_arch="arm64")
         refresh_build.assert_not_called()
 
-    def test_refresh_system_packages_list(self, mocker):
+    def test_refresh_system_packages_list(self, new_dir, mocker):
         refresh_stage = mocker.patch(
             "craft_parts.packages.Repository.refresh_stage_packages_list"
         )
@@ -346,11 +357,9 @@ class TestUpdating:
         parts = yaml.safe_load(parts_yaml)
 
         lf = craft_parts.LifecycleManager(
-            parts, application_name="test_update", arch="aarch64"
+            parts, application_name="test_update", cache_dir=new_dir, arch="aarch64"
         )
         lf.refresh_packages_list(system=True)
 
-        refresh_stage.assert_called_once_with(
-            application_name="test_update", target_arch="arm64"
-        )
+        refresh_stage.assert_called_once_with(cache_dir=new_dir, target_arch="arm64")
         refresh_build.assert_called_once_with()
