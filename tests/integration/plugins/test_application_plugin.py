@@ -64,8 +64,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_application_plugin_happy(capfd, mocker):
+def test_application_plugin_happy(capfd, new_dir, mocker):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -84,7 +83,9 @@ def test_application_plugin_happy(capfd, mocker):
 
     parts = yaml.safe_load(_parts_yaml)
 
-    lf = craft_parts.LifecycleManager(parts, application_name="test_application_plugin")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_application_plugin", cache_dir=new_dir
+    )
 
     # plugins act on the build step
     actions = lf.plan(Step.BUILD)
@@ -109,8 +110,7 @@ def test_application_plugin_happy(capfd, mocker):
     mock_install_build_snaps.assert_called_once_with({"build_snap"})
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_application_plugin_missing_stuff():
+def test_application_plugin_missing_stuff(new_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -126,14 +126,15 @@ def test_application_plugin_missing_stuff():
     parts = yaml.safe_load(_parts_yaml)
 
     with pytest.raises(errors.PartSpecificationError) as raised:
-        craft_parts.LifecycleManager(parts, application_name="test_application_plugin")
+        craft_parts.LifecycleManager(
+            parts, application_name="test_application_plugin", cache_dir=new_dir
+        )
 
     assert raised.value.part_name == "foo"
     assert raised.value.message == "'app-stuff': field required"
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_application_plugin_type_error():
+def test_application_plugin_type_error(new_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -150,14 +151,15 @@ def test_application_plugin_type_error():
     parts = yaml.safe_load(_parts_yaml)
 
     with pytest.raises(errors.PartSpecificationError) as raised:
-        craft_parts.LifecycleManager(parts, application_name="test_application_plugin")
+        craft_parts.LifecycleManager(
+            parts, application_name="test_application_plugin", cache_dir=new_dir
+        )
 
     assert raised.value.part_name == "foo"
     assert raised.value.message == "'app-stuff': value is not a valid list"
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_application_plugin_extra_property():
+def test_application_plugin_extra_property(new_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -175,14 +177,15 @@ def test_application_plugin_extra_property():
     parts = yaml.safe_load(_parts_yaml)
 
     with pytest.raises(errors.PartSpecificationError) as raised:
-        craft_parts.LifecycleManager(parts, application_name="test_application_plugin")
+        craft_parts.LifecycleManager(
+            parts, application_name="test_application_plugin", cache_dir=new_dir
+        )
 
     assert raised.value.part_name == "foo"
     assert raised.value.message == "'app-other': extra fields not permitted"
 
 
-@pytest.mark.usefixtures("new_dir")
-def test_application_plugin_not_registered():
+def test_application_plugin_not_registered(new_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -196,7 +199,9 @@ def test_application_plugin_not_registered():
     parts = yaml.safe_load(_parts_yaml)
 
     with pytest.raises(errors.InvalidPlugin) as raised:
-        craft_parts.LifecycleManager(parts, application_name="test_application_plugin")
+        craft_parts.LifecycleManager(
+            parts, application_name="test_application_plugin", cache_dir=new_dir
+        )
 
     assert raised.value.plugin_name == "app"
     assert raised.value.part_name == "foo"

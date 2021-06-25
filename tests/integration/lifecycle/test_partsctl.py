@@ -68,7 +68,9 @@ def test_ctl_client_steps(new_dir, capfd, mocker):
     Path("foo").mkdir()
     Path("foo/foo.txt").touch()
 
-    lf = craft_parts.LifecycleManager(parts, application_name="test_ctl")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_ctl", cache_dir=new_dir
+    )
     actions = lf.plan(Step.PRIME)
     assert actions == [
         Action("foo", Step.PULL),
@@ -119,7 +121,9 @@ def test_ctl_client_step_argments(new_dir, step):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = craft_parts.LifecycleManager(parts, application_name="test_ctl")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_ctl", cache_dir=new_dir
+    )
     with pytest.raises(errors.InvalidControlAPICall) as raised:
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", step))
@@ -141,7 +145,9 @@ def test_ctl_client_set(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = craft_parts.LifecycleManager(parts, application_name="test_set", myvar="")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_set", cache_dir=new_dir, myvar=""
+    )
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
     assert lf.project_info.myvar == "myvalue"
@@ -159,7 +165,9 @@ def test_ctl_client_set_var_error(new_dir, capfd, mocker):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = craft_parts.LifecycleManager(parts, application_name="test_set")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_set", cache_dir=new_dir
+    )
     with pytest.raises(errors.InvalidControlAPICall) as raised:
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
@@ -181,7 +189,9 @@ def test_ctl_client_set_argument_error(new_dir, capfd, mocker):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = craft_parts.LifecycleManager(parts, application_name="test_set")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_set", cache_dir=new_dir
+    )
     with pytest.raises(errors.InvalidControlAPICall) as raised:
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))

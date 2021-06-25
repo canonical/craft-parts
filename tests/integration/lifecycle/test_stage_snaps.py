@@ -41,7 +41,7 @@ def test_stage_snap(new_dir, fake_snap_command):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_snap", work_dir=new_dir
+        parts, application_name="test_snap", cache_dir=new_dir, work_dir=new_dir
     )
 
     actions = lf.plan(Step.BUILD)
@@ -78,7 +78,7 @@ def test_stage_snap_download_error(new_dir, fake_snap_command):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_snap", work_dir=new_dir
+        parts, application_name="test_snap", cache_dir=new_dir, work_dir=new_dir
     )
 
     actions = lf.plan(Step.BUILD)
@@ -109,7 +109,7 @@ def test_stage_snap_unpack_error(new_dir, fake_snap_command):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_snap", work_dir=new_dir
+        parts, application_name="test_snap", cache_dir=new_dir, work_dir=new_dir
     )
 
     actions = lf.plan(Step.BUILD)

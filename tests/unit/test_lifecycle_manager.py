@@ -30,9 +30,8 @@ class TestLifecycleManager:
     """Verify lifecycle manager initialization."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self):
         # pylint: disable=attribute-defined-outside-init
-        self._dir = new_dir
         yaml_data = textwrap.dedent(
             """
             parts:
@@ -43,29 +42,33 @@ class TestLifecycleManager:
         self._data = yaml.safe_load(yaml_data)
         # pylint: enable=attribute-defined-outside-init
 
-    def test_invalid_arch(self):
+    def test_invalid_arch(self, new_dir):
         with pytest.raises(errors.InvalidArchitecture) as raised:
             LifecycleManager(
-                self._data, application_name="test_manager", arch="invalid"
+                self._data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                arch="invalid",
             )
         assert raised.value.arch_name == "invalid"
 
     @pytest.mark.parametrize("name", ["myapp", "Myapp_2", "MYAPP", "x"])
-    def test_application_name(self, name):
-        lf = LifecycleManager(self._data, application_name=name)
+    def test_application_name(self, new_dir, name):
+        lf = LifecycleManager(self._data, application_name=name, cache_dir=new_dir)
         info = lf.project_info
         assert info.application_name == name
 
     @pytest.mark.parametrize("name", ["", "1", "_", "_myapp", "myapp-2", "myapp_2.1"])
-    def test_application_name_invalid(self, name):
+    def test_application_name_invalid(self, new_dir, name):
         with pytest.raises(errors.InvalidApplicationName) as raised:
-            LifecycleManager(self._data, application_name=name)
+            LifecycleManager(self._data, application_name=name, cache_dir=new_dir)
         assert raised.value.name == name
 
-    def test_project_info(self):
+    def test_project_info(self, new_dir):
         lf = LifecycleManager(
             self._data,
             application_name="test_manager",
+            cache_dir=new_dir,
             work_dir="work_dir",
             arch="aarch64",
             parallel_build_count=16,
@@ -77,18 +80,19 @@ class TestLifecycleManager:
         assert info.target_arch == "arm64"
         assert info.arch_triplet == "aarch64-linux-gnu"
         assert info.parallel_build_count == 16
-        assert info.dirs.parts_dir == self._dir / "work_dir" / "parts"
-        assert info.dirs.stage_dir == self._dir / "work_dir" / "stage"
-        assert info.dirs.prime_dir == self._dir / "work_dir" / "prime"
+        assert info.dirs.parts_dir == new_dir / "work_dir" / "parts"
+        assert info.dirs.stage_dir == new_dir / "work_dir" / "stage"
+        assert info.dirs.prime_dir == new_dir / "work_dir" / "prime"
         assert info.custom_args == ["custom"]
         assert info.custom == "foo"
 
-    def test_part_initialization(self, mocker):
+    def test_part_initialization(self, new_dir, mocker):
         mock_seq = mocker.patch("craft_parts.sequencer.Sequencer")
 
         lf = LifecycleManager(
             self._data,
             application_name="test_manager",
+            cache_dir=new_dir,
         )
 
         assert len(lf._part_list) == 1
@@ -107,7 +111,7 @@ class TestLifecycleManager:
 class TestPluginProperties:
     """Verify if plugin properties are correctly handled."""
 
-    def test_plugin_properties(self, mocker):
+    def test_plugin_properties(self, new_dir, mocker):
         mocker.patch("craft_parts.sequencer.Sequencer")
 
         lf = LifecycleManager(
@@ -121,13 +125,14 @@ class TestPluginProperties:
                 }
             },
             application_name="test_manager",
+            cache_dir=new_dir,
         )
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
         assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
 
-    def test_fallback_plugin_name(self, mocker):
+    def test_fallback_plugin_name(self, new_dir, mocker):
         mocker.patch("craft_parts.sequencer.Sequencer")
 
         lf = LifecycleManager(
@@ -140,13 +145,14 @@ class TestPluginProperties:
                 }
             },
             application_name="test_manager",
+            cache_dir=new_dir,
         )
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
         assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
 
-    def test_invalid_plugin_name(self):
+    def test_invalid_plugin_name(self, new_dir):
         with pytest.raises(errors.InvalidPlugin) as raised:
             LifecycleManager(
                 {
@@ -158,11 +164,12 @@ class TestPluginProperties:
                     }
                 },
                 application_name="test_manager",
+                cache_dir=new_dir,
             )
         assert raised.value.part_name == "bar"
         assert raised.value.plugin_name == "invalid"
 
-    def test_undefined_plugin_name(self):
+    def test_undefined_plugin_name(self, new_dir):
         with pytest.raises(errors.UndefinedPlugin) as raised:
             LifecycleManager(
                 {
@@ -173,5 +180,6 @@ class TestPluginProperties:
                     }
                 },
                 application_name="test_manager",
+                cache_dir=new_dir,
             )
         assert raised.value.part_name == "bar"
