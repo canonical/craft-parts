@@ -180,12 +180,11 @@ class TestStateDB:
         assert rewrapped_stw.serial == 2
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestStateManager:
     """Verify if the State Manager is correctly tracking state changes."""
 
-    def test_has_step_run(self):
-        info = ProjectInfo()
+    def test_has_step_run(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
         p2 = Part("p2", {})
         p3 = Part("p3", {})
@@ -201,8 +200,8 @@ class TestStateManager:
                 ran = sm.has_step_run(part, step)
                 assert ran == (part == p3 and step == Step.STAGE)
 
-    def test_set_state(self):
-        info = ProjectInfo()
+    def test_set_state(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
         p2 = Part("p2", {})
         p3 = Part("p3", {})
@@ -224,8 +223,8 @@ class TestStateManager:
                 ran = sm.has_step_run(part, step)
                 assert ran == (part == p2 and step == Step.BUILD)
 
-    def test_update_state_timestamp(self):
-        info = ProjectInfo()
+    def test_update_state_timestamp(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 
         sm = StateManager(project_info=info, part_list=[p1])
@@ -248,8 +247,8 @@ class TestStateManager:
         assert stw1 is not None
         assert stw1.is_newer_than(stw2)
 
-    def test_clean_part(self):
-        info = ProjectInfo()
+    def test_clean_part(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 
         sm = StateManager(project_info=info, part_list=[p1])
@@ -271,8 +270,8 @@ class TestStateManager:
         for step in list(Step):
             assert sm._state_db.get(part_name="p1", step=step) is None
 
-    def test_should_step_run_trivial(self):
-        info = ProjectInfo()
+    def test_should_step_run_trivial(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 
         sm = StateManager(project_info=info, part_list=[p1])
@@ -280,8 +279,8 @@ class TestStateManager:
         for step in list(Step):
             assert sm.should_step_run(p1, step) is True
 
-    def test_should_step_run_step_already_ran(self):
-        info = ProjectInfo()
+    def test_should_step_run_step_already_ran(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
         part_properties = p1.spec.marshal()
 
@@ -294,8 +293,8 @@ class TestStateManager:
         for step in list(Step):
             assert sm.should_step_run(p1, step) == (step != Step.PULL)
 
-    def test_should_step_run_outdated(self):
-        info = ProjectInfo()
+    def test_should_step_run_outdated(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
         part_properties = p1.spec.marshal()
 
@@ -318,8 +317,8 @@ class TestStateManager:
         for step in list(Step):
             assert sm.should_step_run(p1, step) == (step >= Step.STAGE)
 
-    def test_should_step_run_dirty(self):
-        info = ProjectInfo()
+    def test_should_step_run_dirty(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
         part_properties = p1.spec.marshal()
 
@@ -346,12 +345,11 @@ class TestStateManager:
             assert sm.should_step_run(p1, step) == (step >= Step.BUILD)
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestStepOutdated:
     """Verify outdated step checks."""
 
-    def test_not_outdated(self):
-        info = ProjectInfo()
+    def test_not_outdated(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 
         sm = StateManager(project_info=info, part_list=[p1])
@@ -359,8 +357,8 @@ class TestStepOutdated:
         for step in list(Step):
             assert sm.check_if_outdated(p1, step) is None
 
-    def test_outdated(self):
-        info = ProjectInfo()
+    def test_outdated(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 
         # p1 build already ran
@@ -387,8 +385,8 @@ class TestStepOutdated:
         for step in list(Step):
             assert sm.check_if_outdated(p1, step) is None
 
-    def test_source_outdated(self):
-        info = ProjectInfo()
+    def test_source_outdated(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {"source": "subdir"})  # source is local
 
         # p1 pull ran
@@ -415,12 +413,11 @@ class TestStepOutdated:
             assert sm.check_if_outdated(p1, step) is None
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestStepDirty:
     """Verify dirty step checks."""
 
-    def test_not_dirty(self):
-        info = ProjectInfo()
+    def test_not_dirty(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 
         sm = StateManager(project_info=info, part_list=[p1])
@@ -428,8 +425,8 @@ class TestStepDirty:
         for step in list(Step):
             assert sm.check_if_dirty(p1, step) is None
 
-    def test_dirty_property(self):
-        info = ProjectInfo()
+    def test_dirty_property(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
         part_properties = p1.spec.marshal()
 
@@ -460,8 +457,8 @@ class TestStepDirty:
             else:
                 assert report is None
 
-    def test_dirty_dependency(self):
-        info = ProjectInfo()
+    def test_dirty_dependency(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {"after": ["p2"]})
         p1_properties = p1.spec.marshal()
         p2 = Part("p2", {})
@@ -512,8 +509,8 @@ class TestStepDirty:
             else:
                 assert report is None
 
-    def test_dirty_dependency_didnt_run(self):
-        info = ProjectInfo()
+    def test_dirty_dependency_didnt_run(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {"after": ["p2"]})
         p1_properties = p1.spec.marshal()
         p2 = Part("p2", {})

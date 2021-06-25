@@ -19,11 +19,9 @@
 import logging
 import platform
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from xdg import BaseDirectory  # type: ignore
-
-from craft_parts import errors, utils
+from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -51,26 +49,19 @@ class ProjectInfo:
     def __init__(
         self,
         *,
-        application_name: str = utils.package_name(),
-        cache_dir: Union[Path, str] = "",
+        application_name: str,
+        cache_dir: Path,
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
         project_dirs: ProjectDirs = None,
         **custom_args,  # custom passthrough args
     ):
-        if cache_dir:
-            cache_path = Path(cache_dir)
-        else:
-            cache_path = BaseDirectory.save_cache_path(
-                application_name, utils.package_name()
-            )
-
         if not project_dirs:
             project_dirs = ProjectDirs()
 
         self._application_name = application_name
-        self._cache_dir = cache_path
+        self._cache_dir = Path(cache_dir).absolute()
         self._set_machine(arch)
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count

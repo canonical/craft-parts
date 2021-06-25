@@ -79,7 +79,7 @@ class LifecycleManager:
 
         project_info = ProjectInfo(
             application_name=application_name,
-            cache_dir=cache_dir,
+            cache_dir=Path(cache_dir),
             arch=arch,
             base=base,
             parallel_build_count=parallel_build_count,

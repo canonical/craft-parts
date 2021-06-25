@@ -52,7 +52,7 @@ class FooPlugin(plugins.Plugin):
 def _step_handler_for_step(step: Step, cache_dir: Path) -> StepHandler:
     p1 = Part("p1", {"source": "."})
     dirs = ProjectDirs()
-    info = ProjectInfo(project_dirs=dirs, cache_dir=cache_dir)
+    info = ProjectInfo(project_dirs=dirs, application_name="test", cache_dir=cache_dir)
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()

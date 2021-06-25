@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from typing import List
 
 import pytest
@@ -147,6 +148,7 @@ class TestCallbackExecution:
         part = Part("foo", {})
         self._project_info = ProjectInfo(
             application_name="test",
+            cache_dir=Path(),
             target_arch="x86_64",
             parallel_build_count=4,
             local_plugins_dir=None,

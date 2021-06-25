@@ -30,7 +30,7 @@ from craft_parts.steps import Step
 class TestExecutor:
     """Verify executor class methods."""
 
-    def test_clean(self):
+    def test_clean(self, new_dir):
         p1 = Part("p1", {"plugin": "nil"})
         file1 = Path("parts/p1/src/foo.txt")
         file1.parent.mkdir(parents=True)
@@ -44,13 +44,14 @@ class TestExecutor:
         assert file1.exists()
         assert file2.exists()
 
-        e = Executor(project_info=ProjectInfo(), part_list=[p1, p2])
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        e = Executor(project_info=info, part_list=[p1, p2])
         e.clean(Step.PULL)
 
         assert file1.exists() is False
         assert file2.exists() is False
 
-    def test_clean_part(self):
+    def test_clean_part(self, new_dir):
         p1 = Part("p1", {"plugin": "nil"})
         file1 = Path("parts/p1/src/foo.txt")
         file1.parent.mkdir(parents=True)
@@ -64,7 +65,8 @@ class TestExecutor:
         assert file1.exists()
         assert file2.exists()
 
-        e = Executor(project_info=ProjectInfo(), part_list=[p1, p2])
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        e = Executor(project_info=info, part_list=[p1, p2])
         e.clean(Step.PULL, part_names=["p1"])
 
         assert file1.exists() is False
@@ -76,29 +78,31 @@ class TestExecutor:
         assert file2.exists() is False
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestPackages:
     """Verify package installation during the execution phase."""
 
-    def test_install_build_packages(self, mocker):
+    def test_install_build_packages(self, mocker, new_dir):
         install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
 
         p1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
         p2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
 
-        e = Executor(project_info=ProjectInfo(), part_list=[p1, p2])
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
 
         install.assert_called_once_with(["pkg1", "pkg2"])
 
-    def test_install_extra_build_packages(self, mocker):
+    def test_install_extra_build_packages(self, mocker, new_dir):
         install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
 
         p1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
         p2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
 
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+
         e = Executor(
-            project_info=ProjectInfo(),
+            project_info=info,
             part_list=[p1, p2],
             extra_build_packages=["pkg3"],
         )
@@ -106,19 +110,21 @@ class TestPackages:
 
         install.assert_called_once_with(["pkg1", "pkg2", "pkg3"])
 
-    def test_install_build_snaps(self, mocker):
+    def test_install_build_snaps(self, mocker, new_dir):
         mocker.patch("craft_parts.packages.snaps.SnapPackage.get_store_snap_info")
         install = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
         p1 = Part("foo", {"plugin": "nil", "build-snaps": ["snap1"]})
         p2 = Part("bar", {"plugin": "nil", "build-snaps": ["snap2"]})
 
-        e = Executor(project_info=ProjectInfo(), part_list=[p1, p2])
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+
+        e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
 
         install.assert_called_once_with({"snap1", "snap2"})
 
-    def test_install_build_snaps_in_container(self, mocker):
+    def test_install_build_snaps_in_container(self, mocker, new_dir):
         mocker.patch(
             "craft_parts.utils.os_utils.is_inside_container", return_value=True
         )
@@ -126,7 +132,8 @@ class TestPackages:
 
         p1 = Part("foo", {"plugin": "nil", "build-snaps": ["snap1"]})
         p2 = Part("bar", {"plugin": "nil", "build-snaps": ["snap2"]})
-        info = ProjectInfo()
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
 
         e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
@@ -134,7 +141,6 @@ class TestPackages:
         install.assert_not_called()
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestExecutionContext:
     """Verify execution context methods."""
 
@@ -144,30 +150,32 @@ class TestExecutionContext:
     def teardown_class(self):
         callbacks.unregister_all()
 
-    def test_prologue(self, capfd):
+    def test_prologue(self, capfd, new_dir):
         def cbf(info, part_list):
             print(f"prologue {info.custom} for {part_list[0].name}")
 
         callbacks.register_prologue(cbf)
         p1 = Part("p1", {"plugin": "nil", "override-build": "echo build"})
-        e = Executor(project_info=ProjectInfo(custom="test"), part_list=[p1])
+        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        e = Executor(project_info=info, part_list=[p1])
 
         with ExecutionContext(executor=e) as ctx:
             ctx.execute(Action("p1", Step.BUILD))
 
         captured = capfd.readouterr()
-        assert captured.out == "prologue test for p1\nbuild\n"
+        assert captured.out == "prologue custom for p1\nbuild\n"
 
-    def test_epilogue(self, capfd):
+    def test_epilogue(self, capfd, new_dir):
         def cbf(info, part_list):
             print(f"epilogue {info.custom} for {part_list[0].name}")
 
         callbacks.register_epilogue(cbf)
         p1 = Part("p1", {"plugin": "nil", "override-build": "echo build"})
-        e = Executor(project_info=ProjectInfo(custom="test"), part_list=[p1])
+        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        e = Executor(project_info=info, part_list=[p1])
 
         with ExecutionContext(executor=e) as ctx:
             ctx.execute(Action("p1", Step.BUILD))
 
         captured = capfd.readouterr()
-        assert captured.out == "build\nepilogue test for p1\n"
+        assert captured.out == "build\nepilogue custom for p1\n"

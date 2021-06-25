@@ -28,10 +28,11 @@ from craft_parts.plugins.dump_plugin import DumpPlugin
 class TestPluginDump:
     """Check dump plugin methods and properties."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir):
         properties = DumpPlugin.properties_class.unmarshal({"source": "something"})
 
-        project_info = ProjectInfo()
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
 
         part = Part("foo", {})
         part_info = PartInfo(project_info=project_info, part=part)
