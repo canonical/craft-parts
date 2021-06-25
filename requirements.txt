@@ -3,5 +3,6 @@ http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.1.3ubuntu1.
 progressbar==2.5
 pydantic==1.8.1
 pydantic-yaml==0.2.3
+pyxdg==0.27
 requests==2.25.1
 requests-unixsocket==0.2.0
