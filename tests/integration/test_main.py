@@ -150,10 +150,10 @@ def test_main_version(mocker, capfd):
     assert out == f"craft-parts {craft_parts.__version__}\n"
 
 
-def test_main_plan_only(mocker, capfd):
+def test_main_dry_run(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -214,7 +214,7 @@ def test_main_invalid_application_name(mocker):
     Path("work_dir").mkdir()
 
     mocker.patch.object(
-        sys, "argv", ["cmd", "--plan-only", "--application-name", "znap-craft", "clean"]
+        sys, "argv", ["cmd", "--dry-run", "--application-name", "znap-craft", "clean"]
     )
     with pytest.raises(SystemExit) as raised:
         main.main()
@@ -227,7 +227,7 @@ def test_main_cache_dir(new_dir, mocker):
     mock_update = mocker.patch("craft_parts.packages.apt_cache.AptCache.update")
 
     mocker.patch.object(
-        sys, "argv", ["cmd", "--plan-only", "--cache-dir", "cache_dir", "--refresh"]
+        sys, "argv", ["cmd", "--dry-run", "--cache-dir", "cache_dir", "--refresh"]
     )
     with pytest.raises(SystemExit) as raised:
         main.main()
@@ -263,7 +263,7 @@ def test_main_alternative_work_dir(mocker, capfd):
 def test_main_alternative_parts_file(mocker, capfd, opt):
     Path("other.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", opt, "other.yaml"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", opt, "other.yaml"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -276,7 +276,7 @@ def test_main_alternative_parts_file(mocker, capfd, opt):
 def test_main_alternative_parts_invalid_file(mocker, capfd):
     Path("other.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "-f", "missing.yaml"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "-f", "missing.yaml"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 1
@@ -291,7 +291,7 @@ def test_main_refresh(new_dir, mocker, capfd):
 
     mock_update = mocker.patch("craft_parts.packages.apt_cache.AptCache.update")
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "--refresh"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "--refresh"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -336,10 +336,10 @@ def test_main_step(mocker, capfd, step, result):
         ("prime", plan_result[3]),
     ],
 )
-def test_main_step_plan_only(mocker, capfd, step, result):
+def test_main_step_dry_run(mocker, capfd, step, result):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", step])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -350,7 +350,7 @@ def test_main_step_plan_only(mocker, capfd, step, result):
     assert Path("parts").is_dir() is False
 
 
-def test_main_step_plan_only_skip(mocker, capfd):
+def test_main_step_dry_run_skip(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
     # run it once to build state
@@ -361,7 +361,7 @@ def test_main_step_plan_only_skip(mocker, capfd):
     assert err == ""
 
     # run it again on the existing state
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "prime"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "prime"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -371,7 +371,7 @@ def test_main_step_plan_only_skip(mocker, capfd):
     assert out == "No actions to execute.\n"
 
 
-def test_main_step_plan_only_show_skip(mocker, capfd):
+def test_main_step_dry_run_show_skip(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
     # run it once to build state
@@ -382,7 +382,7 @@ def test_main_step_plan_only_show_skip(mocker, capfd):
     assert err == ""
 
     # run it again on the existing state
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "--show-skip", "prime"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "--show-skip", "prime"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -406,10 +406,10 @@ def test_main_step_specify_part(mocker, capfd):
     )
 
 
-def test_main_step_specify_part_plan_only(mocker, capfd):
+def test_main_step_specify_part_dry_run(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "prime", "foo"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "prime", "foo"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -444,7 +444,7 @@ def test_main_step_specify_part_plan_only(mocker, capfd):
 def test_main_step_specify_multiple_parts(mocker, capfd, step, result):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step, "foo", "bar"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", step, "foo", "bar"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -488,10 +488,10 @@ def test_main_step_invalid_multiple_parts(mocker, capfd):
     assert Path("parts").is_dir() is False
 
 
-def test_main_step_invalid_part_plan_only(mocker, capfd):
+def test_main_step_invalid_part_dry_run(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "pull", "invalid"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "pull", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 3
@@ -505,10 +505,10 @@ def test_main_step_invalid_part_plan_only(mocker, capfd):
     assert Path("parts").is_dir() is False
 
 
-def test_main_step_invalid_multiple_parts_plan_only(mocker, capfd):
+def test_main_step_invalid_multiple_parts_dry_run(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "pull", "foo", "invalid"])
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "pull", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 3
@@ -589,17 +589,20 @@ def test_main_clean_workdir(mocker, capfd):
     assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
 
 
-def test_main_clean_plan_only(mocker, capfd):
+def test_main_clean_dry_run(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "clean"])
+    Path("parts").mkdir()
+    Path("stage").mkdir()
+    Path("prime").mkdir()
+
+    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "clean"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 4
+    assert raised.value.code is None
 
-    out, err = capfd.readouterr()
-    assert err == "Error: Clean operations cannot be planned.\n"
-    assert out == ""
+    # work dirs are not removed
+    assert set(os.listdir(".")).issuperset({"parts", "prime", "stage"})
 
 
 def test_main_clean_part(mocker, capfd):

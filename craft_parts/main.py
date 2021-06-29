@@ -19,7 +19,7 @@
 This is the main entry point for the craft_parts package, invoked
 when running `python -mcraft_parts`. It provides basic functionality
 to process a parts specification and display the planned sequence
-of actions (using `--plan-only`) or execute them,
+of actions (using `--dry-run`) or execute them.
 """
 
 import argparse
@@ -105,7 +105,7 @@ def _do_step(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> 
 
     actions = lcm.plan(target_step, part_names)
 
-    if options.plan_only:
+    if options.dry_run:
         printed = False
         for action in actions:
             if options.show_skipped or action.action_type != ActionType.SKIP:
@@ -123,8 +123,8 @@ def _do_step(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> 
 
 
 def _do_clean(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:
-    if options.plan_only:
-        raise ValueError("Clean operations cannot be planned.")
+    if options.dry_run:
+        return
 
     if not options.parts:
         print("Clean all parts.")
@@ -205,7 +205,7 @@ def _parse_arguments() -> argparse.Namespace:
         help="Update the stage packages list before procceeding.",
     )
     parser.add_argument(
-        "--plan-only",
+        "--dry-run",
         action="store_true",
         help="Show planned actions to be executed and exit.",
     )
