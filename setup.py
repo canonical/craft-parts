@@ -52,7 +52,7 @@ setup(
         ],
     },
     install_requires=requirements,
-    license="GNU General Public License v3",
+    license="GNU Lesser General Public License v3",
     long_description=readme,
     include_package_data=True,
     keywords="craft_parts",
