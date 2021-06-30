@@ -16,6 +16,7 @@
 
 """Helpers and definitions for lifecycle states."""
 
+import contextlib
 import logging
 from pathlib import Path
 from typing import Optional
@@ -73,7 +74,8 @@ def remove(part: Part, step: Step) -> None:
     :param step: The step whose state is to be removed.
     """
     state_file = part.part_state_dir / step.name.lower()
-    state_file.unlink(missing_ok=True)
+    with contextlib.suppress(FileNotFoundError):  # no missing_ok in python 3.7
+        state_file.unlink()
 
 
 def state_file_path(part: Part, step: Step) -> Path:
