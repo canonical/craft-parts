@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 from pathlib import Path
 
 import pytest
@@ -65,19 +64,15 @@ class TestSourceHandler:
         class FaultySource(SourceHandler):
             """A source handler that doesn't implement abstract methods."""
 
-        with pytest.raises(TypeError) as raised:
+        expected = (
+            "^Can't instantiate abstract class FaultySource with "
+            "abstract methods? pull$"
+        )
+        with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultySource(  # type: ignore
                 source=Path(), part_src_dir=Path(), cache_dir=Path()
             )
-        assert (
-            re.match(
-                "^Can't instantiate abstract class FaultySource with "
-                "abstract methods? pull$",
-                str(raised.value),
-            )
-            is not None
-        )
 
 
 class BarFileSource(FileSourceHandler):
@@ -227,16 +222,12 @@ class TestFileSourceHandler:
         class FaultyFileSource(FileSourceHandler):
             """A file source handler that doesn't implement abstract methods."""
 
-        with pytest.raises(TypeError) as raised:
+        expected = (
+            "^Can't instantiate abstract class FaultyFileSource with "
+            "abstract methods? provision$"
+        )
+        with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultyFileSource(
                 source=None, part_src_dir=None, cache_dir=Path()  # type: ignore
             )
-        assert (
-            re.match(
-                "^Can't instantiate abstract class FaultyFileSource with "
-                "abstract methods? provision",
-                str(raised.value),
-            )
-            is not None
-        )
