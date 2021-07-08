@@ -51,7 +51,6 @@ pylint-pytest==1.1.2
 pyparsing==2.4.7
 pytest==6.2.4
 pytest-mock==3.6.1
-python-apt==2.0.0+ubuntu0.20.4.5
 pytz==2021.1
 pyxdg==0.27
 PyYAML==5.4.1

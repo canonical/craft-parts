@@ -4,7 +4,6 @@ idna==2.10
 progressbar==2.5
 pydantic==1.8.2
 pydantic-yaml==0.4.2
-python-apt==2.0.0+ubuntu0.20.4.5
 pyxdg==0.27
 PyYAML==5.4.1
 requests==2.25.1

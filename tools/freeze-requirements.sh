@@ -15,9 +15,9 @@ cp -r usr/lib/python3/dist-packages/* "$site_pkgs"
 popd
 
 pip install -e .
-pip freeze --exclude-editable > requirements.txt
+pip freeze --exclude-editable | grep -v ^python-apt== > requirements.txt
 
 pip install -e .[dev]
-pip freeze --exclude-editable > requirements-dev.txt
+pip freeze --exclude-editable | grep -v ^python-apt== > requirements-dev.txt
 
 rm -rf "$venv_dir"
