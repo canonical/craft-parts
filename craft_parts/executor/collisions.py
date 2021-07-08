@@ -47,16 +47,14 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         part_contents = part_files | part_directories
 
         # Scan previous parts for collisions.
-        for other_part_name in all_parts_files:
+        for other_part_name, other_part_files in all_parts_files.items():
             # Our files that are also in a different part.
-            common = part_contents & all_parts_files[other_part_name]["files"]
+            common = part_contents & other_part_files["files"]
 
             conflict_files = []
             for file in common:
                 this = os.path.join(part.part_install_dir, file)
-                other = os.path.join(
-                    all_parts_files[other_part_name]["installdir"], file
-                )
+                other = os.path.join(other_part_files["installdir"], file)
 
                 if paths_collide(this, other):
                     conflict_files.append(file)

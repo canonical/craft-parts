@@ -17,7 +17,7 @@
 import logging
 import os
 from pathlib import Path
-from unittest.mock import ANY
+from typing import cast
 
 import pytest
 
@@ -397,13 +397,16 @@ class TestPackages:
         state = handler._run_pull(StepInfo(part_info, Step.PULL))
         getpkg.assert_called_once_with(
             cache_dir=new_dir,
-            base=ANY,
+            base=mocker.ANY,
             package_names=["pkg1"],
             stage_packages_path=Path(new_dir / "parts/foo/stage_packages"),
-            target_arch=ANY,
+            target_arch=mocker.ANY,
         )
 
-        assert state.assets["stage-packages"] == ["pkg1", "pkg2"]
+        assert cast(states.PullState, state).assets["stage-packages"] == [
+            "pkg1",
+            "pkg2",
+        ]
 
         handler._run_build(StepInfo(part_info, Step.BUILD))
         unpack.assert_called_once()

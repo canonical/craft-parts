@@ -19,4 +19,4 @@
 
 def package_name() -> str:
     """Return the topmost package name."""
-    return __name__.split(".")[0]
+    return __name__.split(".", maxsplit=1)[0]

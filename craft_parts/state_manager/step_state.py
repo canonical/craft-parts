@@ -91,6 +91,11 @@ class StepState(YamlModel, ABC):
             self.project_options_of_interest(other_project_options),
         )
 
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]):
+        """Create and populate a new state object from dictionary data."""
+        raise RuntimeError("this must be implemented by the step-specific class.")
+
     def marshal(self) -> Dict[str, Any]:
         """Create a dictionary containing the part state data.
 
