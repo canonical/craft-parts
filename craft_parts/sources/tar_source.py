@@ -79,11 +79,12 @@ class TarSource(FileSourceHandler):
             tarball = os.path.join(self.part_src_dir, os.path.basename(self.source))
 
         if clean_target:
-            tmp_tarball = tempfile.NamedTemporaryFile().name
-            shutil.move(tarball, tmp_tarball)
-            shutil.rmtree(dst)
-            os.makedirs(dst)
-            shutil.move(tmp_tarball, tarball)
+            with tempfile.NamedTemporaryFile() as tmp_file:
+                tmp_tarball = tmp_file.name
+                shutil.move(tarball, tmp_tarball)
+                shutil.rmtree(dst)
+                os.makedirs(dst)
+                shutil.move(tmp_tarball, tarball)
 
         _extract(tarball, dst)
 

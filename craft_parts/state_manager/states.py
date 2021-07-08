@@ -19,7 +19,7 @@
 import contextlib
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Type
 
 import yaml
 
@@ -52,6 +52,8 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
     logger.debug("load state file: %s", filename)
     with open(filename) as yaml_file:
         state_data = yaml.safe_load(yaml_file)
+
+    state_class: Type[StepState]
 
     if step == Step.PULL:
         state_class = PullState
