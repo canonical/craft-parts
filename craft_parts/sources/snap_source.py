@@ -100,11 +100,12 @@ class SnapSource(FileSourceHandler):
         snap_file = os.path.realpath(snap_file)
 
         if clean_target:
-            tmp_snap = tempfile.NamedTemporaryFile().name
-            shutil.move(snap_file, tmp_snap)
-            shutil.rmtree(dst)
-            os.makedirs(dst)
-            shutil.move(tmp_snap, snap_file)
+            with tempfile.NamedTemporaryFile() as tmp_file:
+                tmp_snap = tmp_file.name
+                shutil.move(snap_file, tmp_snap)
+                shutil.rmtree(dst)
+                os.makedirs(dst)
+                shutil.move(tmp_snap, snap_file)
 
         snap_dir, snap = os.path.split(snap_file)
 
