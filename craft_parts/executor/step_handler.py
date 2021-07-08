@@ -19,6 +19,7 @@
 import dataclasses
 import functools
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -26,7 +27,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Union
 
 from craft_parts import errors, packages
 from craft_parts.executor import collisions
@@ -39,6 +40,8 @@ from craft_parts.utils import file_utils
 
 from . import environment, filesets
 from .filesets import Fileset
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -118,9 +121,7 @@ class StepHandler:
         build_script_path.chmod(0o755)
 
         try:
-            subprocess.run(
-                [build_script_path], check=True, cwd=self._part.part_build_subdir
-            )
+            process_run([build_script_path], cwd=self._part.part_build_subdir)
         except subprocess.CalledProcessError as process_error:
             raise errors.PluginBuildError(part_name=self._part.name) from process_error
 
@@ -361,3 +362,22 @@ def _check_conflicts(
         raise errors.StageFilesConflict(
             part_name=part_name, conflicting_files=conflict_files
         )
+
+
+def process_run(command: List[Union[Path, str]], **kwargs) -> None:
+    """Run a command, logging stdout and stderr."""
+    with subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+        **kwargs,
+    ) as proc:
+        if not proc.stdout:
+            return
+        for line in iter(proc.stdout.readline, ""):
+            print(line.strip())
+        ret = proc.wait()
+
+    if ret:
+        raise subprocess.CalledProcessError(ret, command)

@@ -20,6 +20,7 @@ import logging
 import os
 import os.path
 import shutil
+import sys
 from glob import iglob
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
@@ -39,6 +40,24 @@ from .organize import organize_files
 from .step_handler import StepContents, StepHandler
 
 logger = logging.getLogger(__name__)
+
+
+class OutputLogger:
+    """Redirect stdout to logger."""
+
+    def __init__(self):
+        self._save_stdout = sys.stdout
+
+    def __enter__(self):
+        sys.stdout = self
+
+    def __exit__(self, *exc):
+        sys.stdout = self._save_stdout
+
+    def write(self, msg: str):  # pylint: disable=no-self-use
+        """Write lines to logger."""
+        for line in msg.rstrip().splitlines():
+            logger.debug(line.rstrip())
 
 
 class PartHandler:
@@ -236,13 +255,14 @@ class PartHandler:
             source_handler=self._source_handler,
         )
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
-        if scriptlet:
-            step_handler.run_scriptlet(
-                scriptlet, scriptlet_name=scriptlet_name, work_dir=work_dir
-            )
-            return StepContents()
+        with OutputLogger():
+            if scriptlet:
+                step_handler.run_scriptlet(
+                    scriptlet, scriptlet_name=scriptlet_name, work_dir=work_dir
+                )
+                return StepContents()
 
-        return step_handler.run_builtin()
+            return step_handler.run_builtin()
 
     def _update_action(self, action: Action, *, step_info: StepInfo) -> None:
         handler: Callable[[StepInfo], None]
