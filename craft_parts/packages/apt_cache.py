@@ -30,7 +30,7 @@ import apt
 import apt.cache
 import apt.package
 import apt.progress
-import apt.progress.text
+import apt.progress.base
 
 from craft_parts.utils import os_utils
 
@@ -41,6 +41,36 @@ logger = logging.getLogger(__name__)
 
 
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
+
+
+class LogProgress(apt.progress.base.AcquireProgress):
+    """Internal Base class for text progress classes."""
+
+    def __init__(self):
+        self._id = 1
+
+    def fail(self, item: apt.apt_pkg.AcquireItemDesc) -> None:
+        """Handle failed item."""
+        apt.progress.base.AcquireProgress.fail(self, item)
+        if item.owner.status == item.owner.STAT_DONE:
+            logger.debug("Ign %s", item.description)
+        else:
+            logger.error("Err %s", item.description)
+            logger.error("  %s", item.owner.error_text)
+
+    def fetch(self, item: apt.apt_pkg.AcquireItemDesc) -> None:
+        """Handle item's data is fetch."""
+        apt.progress.base.AcquireProgress.fetch(self, item)
+        # It's complete already (e.g. Hit)
+        if item.owner.complete:
+            return
+        item.owner.id = self._id
+        self._id += 1
+        line = "Get: {} {}".format(item.owner.id, item.description)
+        if item.owner.filesize:
+            line += " [{}B]".format(apt.apt_pkg.size_to_str(item.owner.filesize))
+
+        logger.debug(line)
 
 
 class AptCache(ContextDecorator):
@@ -102,11 +132,7 @@ class AptCache(ContextDecorator):
         # on the system.
         apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
 
-        self.progress = apt.progress.text.AcquireProgress()
-        if os_utils.is_dumb_terminal():
-            # Make output more suitable for logging.
-            self.progress.pulse = lambda owner: True
-            self.progress._width = 0  # pylint: disable=protected-access
+        self.progress = LogProgress()
 
     def _populate_stage_cache_dir(self) -> None:
         """Create/refresh cache configuration.
@@ -209,14 +235,14 @@ class AptCache(ContextDecorator):
                 continue
 
             try:
-                dl_path = package.candidate.fetch_binary(str(download_path))
+                dl_path = self.fetch_binary(package.candidate, download_path)
             except apt.package.FetchError as err:
                 raise errors.PackageFetchError(str(err))
 
             if package.candidate is None:
                 raise errors.PackageNotFound(package.name)
 
-            downloaded.append((package.name, package.candidate.version, Path(dl_path)))
+            downloaded.append((package.name, package.candidate.version, dl_path))
         return downloaded
 
     def get_installed_packages(self) -> Dict[str, str]:
@@ -338,6 +364,46 @@ class AptCache(ContextDecorator):
             raise errors.PackageListRefreshError(str(err))
 
     # pylint: enable=attribute-defined-outside-init
+
+    def fetch_binary(self, package_candidate, destination: Path) -> Path:
+        """Fetch a binary package."""
+        # pylint: disable=line-too-long
+        # This is a workaround for the overly verbose python-apt we use.
+        # There is an unreleased patch which once released could replace this code
+        # https://salsa.debian.org/apt-team/python-apt/commit/d122f9142df614dbb5f7644112280140dc155ecc
+        # What follows is almost a tit for tat implementation of upstream's
+        # fetch_binary logic.
+        # pylint: enable=line-too-long
+
+        # pylint: disable=protected-access
+        base = os.path.basename(package_candidate._records.filename)
+        destfile = destination / base
+        if apt.package._file_is_same(
+            str(destfile), package_candidate.size, package_candidate._records.md5_hash
+        ):
+            logging.debug("Ignoring already existing file: %s", destfile)
+            return os.path.abspath(destfile)
+        acq = apt.apt_pkg.Acquire(self.progress)
+        acqfile = apt.apt_pkg.AcquireFile(
+            acq,
+            package_candidate.uri,
+            package_candidate._records.md5_hash,
+            package_candidate.size,
+            base,
+            destfile=str(destfile),
+        )
+        acq.run()
+
+        if acqfile.status != acqfile.STAT_DONE:
+            raise apt.package.FetchError(
+                "The item {!r} could not be fetched: {}".format(
+                    acqfile.destfile, acqfile.error_text
+                )
+            )
+
+        # pylint: enable=protected-access
+
+        return destfile.absolute()
 
 
 def _verify_marked_install(package: apt.package.Package):

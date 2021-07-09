@@ -272,7 +272,7 @@ def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
         snap_pkg = SnapPackage(snap)
 
         # TODO: use dependency injected echoer
-        logger.info("Downloading snap %s", snap_pkg.name)
+        logger.debug("Downloading snap %s", snap_pkg.name)
         snap_pkg.download(directory=directory)
 
 
