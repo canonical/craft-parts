@@ -364,6 +364,7 @@ def _check_conflicts(
         )
 
 
+# XXX: this is a temporary solution, replace with user messaging when available
 def process_run(command: List[Union[Path, str]], **kwargs) -> None:
     """Run a command, logging stdout and stderr."""
     with subprocess.Popen(

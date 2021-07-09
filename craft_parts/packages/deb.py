@@ -28,7 +28,7 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-from craft_parts.utils import file_utils, os_utils
+from craft_parts.utils import file_utils
 
 from . import errors
 from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
@@ -312,7 +312,7 @@ class Ubuntu(BaseRepository):
         try:
             cmd = ["sudo", "--preserve-env", "apt-get", "update"]
             logger.debug("Executing: %s", cmd)
-            subprocess.check_call(cmd)
+            process_run(cmd)
         except subprocess.CalledProcessError as call_error:
             raise errors.PackageListRefreshError(
                 "failed to run apt update"
@@ -387,7 +387,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
-        logger.info("Installing build dependencies: %s", " ".join(package_names))
+        logger.debug("Installing build dependencies: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
             {
@@ -403,22 +403,19 @@ class Ubuntu(BaseRepository):
             "apt-get",
             "--no-install-recommends",
             "-y",
+            "-oDpkg::Use-Pty=0",
             "--allow-downgrades",
+            "install",
         ]
-        if not os_utils.is_dumb_terminal():
-            apt_command.extend(["-o", "Dpkg::Progress-Fancy=1"])
-        apt_command.append("install")
 
         try:
-            subprocess.check_call(apt_command + package_names, env=env)
+            process_run(apt_command + package_names, env=env)
         except subprocess.CalledProcessError as err:
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
         versionless_names = [get_pkg_name_parts(p)[0] for p in package_names]
         try:
-            subprocess.check_call(
-                ["sudo", "apt-mark", "auto"] + versionless_names, env=env
-            )
+            process_run(["sudo", "apt-mark", "auto"] + versionless_names, env=env)
         except subprocess.CalledProcessError as err:
             logger.warning("Impossible to mark packages as auto-installed: %s", err)
 
@@ -538,7 +535,7 @@ class Ubuntu(BaseRepository):
     def _extract_deb(cls, deb_path: pathlib.Path, extract_dir: str) -> None:
         """Extract deb and return `<package-name>=<version>`."""
         try:
-            subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
+            process_run(["dpkg-deb", "--extract", str(deb_path), extract_dir])
         except subprocess.CalledProcessError as err:
             raise errors.UnpackError(str(deb_path)) from err
 
@@ -549,3 +546,23 @@ def get_cache_dirs(cache_dir: Path):
     deb_cache_dir = cache_dir / "download"
 
     return (stage_cache_dir, deb_cache_dir)
+
+
+# XXX: this is a temporary solution, replace with user messaging when available
+def process_run(command: List[str], **kwargs) -> None:
+    """Run a command, logging stdout and stderr."""
+    with subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+        **kwargs,
+    ) as proc:
+        if not proc.stdout:
+            return
+        for line in iter(proc.stdout.readline, ""):
+            logger.debug(line.strip())
+        ret = proc.wait()
+
+    if ret:
+        raise subprocess.CalledProcessError(ret, command)
