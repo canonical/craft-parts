@@ -56,6 +56,11 @@ class AppPlugin(plugins.Plugin):
         return ["echo hello ${PARTS_TEST_VAR}"]
 
 
+@pytest.fixture(autouse=True)
+def output_logger(mocker):
+    return mocker.patch("craft_parts.executor.part_handler.OutputLogger.write")
+
+
 def setup_function():
     plugins.unregister_all()
 
@@ -64,7 +69,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_application_plugin_happy(capfd, new_dir, mocker):
+def test_application_plugin_happy(output_logger, new_dir, mocker):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -103,8 +108,14 @@ def test_application_plugin_happy(capfd, new_dir, mocker):
     with lf.action_executor() as exe:
         exe.execute(actions[1])
 
-    out, _ = capfd.readouterr()
-    assert out == "hello application plugin\n"
+    output_logger.assert_has_calls(
+        [
+            mocker.call("+ echo hello application plugin"),
+            mocker.call("\n"),
+            mocker.call("hello application plugin"),
+            mocker.call("\n"),
+        ]
+    )
 
     mock_install_build_packages.assert_called_once_with(["build_package"])
     mock_install_build_snaps.assert_called_once_with({"build_snap"})

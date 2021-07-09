@@ -56,7 +56,10 @@ def download_request(
         if os.path.exists(destination):
             total_length += total_read
 
-    logger.debug("Downloading %r", destination)
+    if message:
+        logger.debug(message)
+    else:
+        logger.debug("Downloading %r", destination)
 
     # FIXME: re-impement progress bar support when messages to user support is ready
     # progress_bar = _init_progress_bar(total_length, destination, message)
