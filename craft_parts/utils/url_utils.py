@@ -16,14 +16,14 @@
 
 """URL parsing and downloading helpers."""
 
+import logging
 import os
 import urllib.parse
 import urllib.request
 
-# TODO:stdmsg: refactor to use the standard message library once available
-import progressbar  # type: ignore
-
 from craft_parts.utils import os_utils
+
+logger = logging.getLogger(__name__)
 
 
 def get_url_scheme(url: str) -> str:
@@ -56,8 +56,11 @@ def download_request(
         if os.path.exists(destination):
             total_length += total_read
 
-    progress_bar = _init_progress_bar(total_length, destination, message)
-    progress_bar.start()
+    logger.debug("Downloading %r", destination)
+
+    # FIXME: re-impement progress bar support when messages to user support is ready
+    # progress_bar = _init_progress_bar(total_length, destination, message)
+    # progress_bar.start()
 
     if os.path.exists(destination):
         mode = "ab"
@@ -68,35 +71,5 @@ def download_request(
             destination_file.write(buf)
             if not os_utils.is_dumb_terminal():
                 total_read += len(buf)
-                progress_bar.update(total_read)
-    progress_bar.finish()
-
-
-def _init_progress_bar(
-    total_length: int, destination: str, message=None
-) -> progressbar.ProgressBar:
-    if not message:
-        message = "Downloading {!r}".format(os.path.basename(destination))
-
-    valid_length = total_length and total_length > 0
-    dumb_terminal = os_utils.is_dumb_terminal()
-
-    if valid_length and dumb_terminal:
-        widgets = [message, " ", progressbar.Percentage()]
-        maxval = total_length
-    elif valid_length and not dumb_terminal:
-        widgets = [
-            message,
-            progressbar.Bar(marker="=", left="[", right="]"),
-            " ",
-            progressbar.Percentage(),
-        ]
-        maxval = total_length
-    elif not valid_length and dumb_terminal:
-        widgets = [message]
-        maxval = progressbar.UnknownLength
-    else:
-        widgets = [message, progressbar.AnimatedMarker()]
-        maxval = progressbar.UnknownLength
-
-    return progressbar.ProgressBar(widgets=widgets, maxval=maxval)
+                # progress_bar.update(total_read)
+    # progress_bar.finish()
