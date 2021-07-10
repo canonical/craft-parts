@@ -55,8 +55,8 @@ class LogProgress(apt.progress.base.AcquireProgress):
         if item.owner.status == item.owner.STAT_DONE:
             logger.debug("Ign %s", item.description)
         else:
-            logger.error("Err %s", item.description)
-            logger.error("  %s", item.owner.error_text)
+            logger.debug("Err %s", item.description)
+            logger.debug("  %s", item.owner.error_text)
 
     def fetch(self, item: apt.apt_pkg.AcquireItemDesc) -> None:
         """Handle item's data is fetch."""
