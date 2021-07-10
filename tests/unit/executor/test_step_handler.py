@@ -93,7 +93,7 @@ class TestStepHandlerBuiltins:
         result = sh.run_builtin()
 
         mock_run.assert_called_once_with(
-            [Path(new_dir / "parts/p1/run/build.sh")],
+            [str(new_dir / "parts/p1/run/build.sh")],
             cwd=Path(new_dir / "parts/p1/build"),
         )
         assert result == StepContents()

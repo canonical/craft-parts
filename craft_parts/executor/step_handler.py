@@ -27,7 +27,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import List, Optional, Set
 
 from craft_parts import errors, packages
 from craft_parts.executor import collisions
@@ -36,7 +36,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils
+from craft_parts.utils import file_utils, os_utils
 
 from . import environment, filesets
 from .filesets import Fileset
@@ -121,7 +121,7 @@ class StepHandler:
         build_script_path.chmod(0o755)
 
         try:
-            process_run([build_script_path], cwd=self._part.part_build_subdir)
+            process_run([str(build_script_path)], cwd=self._part.part_build_subdir)
         except subprocess.CalledProcessError as process_error:
             raise errors.PluginBuildError(part_name=self._part.name) from process_error
 
@@ -364,21 +364,6 @@ def _check_conflicts(
         )
 
 
-# XXX: this is a temporary solution, replace with user messaging when available
-def process_run(command: List[Union[Path, str]], **kwargs) -> None:
-    """Run a command, logging stdout and stderr."""
-    with subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-        **kwargs,
-    ) as proc:
-        if not proc.stdout:
-            return
-        for line in iter(proc.stdout.readline, ""):
-            print(line.strip())
-        ret = proc.wait()
-
-    if ret:
-        raise subprocess.CalledProcessError(ret, command)
+def process_run(command: List[str], **kwargs) -> None:
+    """Run a command and log its output."""
+    os_utils.process_run(command, logger.debug, **kwargs)

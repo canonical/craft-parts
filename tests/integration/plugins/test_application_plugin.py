@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import textwrap
 from typing import Any, Dict, List, Set
 
@@ -56,11 +57,6 @@ class AppPlugin(plugins.Plugin):
         return ["echo hello ${PARTS_TEST_VAR}"]
 
 
-@pytest.fixture(autouse=True)
-def output_logger(mocker):
-    return mocker.patch("craft_parts.executor.part_handler.OutputLogger.write")
-
-
 def setup_function():
     plugins.unregister_all()
 
@@ -69,7 +65,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_application_plugin_happy(output_logger, new_dir, mocker):
+def test_application_plugin_happy(caplog, new_dir, mocker):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -105,17 +101,10 @@ def test_application_plugin_happy(output_logger, new_dir, mocker):
 
     mock_install_build_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
-    with lf.action_executor() as exe:
+    with lf.action_executor() as exe, caplog.at_level(logging.DEBUG):
         exe.execute(actions[1])
 
-    output_logger.assert_has_calls(
-        [
-            mocker.call("+ echo hello application plugin"),
-            mocker.call("\n"),
-            mocker.call("hello application plugin"),
-            mocker.call("\n"),
-        ]
-    )
+    assert "hello application plugin" in caplog.text
 
     mock_install_build_packages.assert_called_once_with(["build_package"])
     mock_install_build_snaps.assert_called_once_with({"build_snap"})

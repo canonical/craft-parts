@@ -28,7 +28,7 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-from craft_parts.utils import file_utils
+from craft_parts.utils import file_utils, os_utils
 
 from . import errors
 from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
@@ -548,21 +548,6 @@ def get_cache_dirs(cache_dir: Path):
     return (stage_cache_dir, deb_cache_dir)
 
 
-# XXX: this is a temporary solution, replace with user messaging when available
 def process_run(command: List[str], **kwargs) -> None:
-    """Run a command, logging stdout and stderr."""
-    with subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-        **kwargs,
-    ) as proc:
-        if not proc.stdout:
-            return
-        for line in iter(proc.stdout.readline, ""):
-            logger.debug(line.strip())
-        ret = proc.wait()
-
-    if ret:
-        raise subprocess.CalledProcessError(ret, command)
+    """Run a command and log its output."""
+    os_utils.process_run(command, logger.debug, **kwargs)
