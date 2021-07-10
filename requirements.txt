@@ -1,8 +1,13 @@
-PyYAML==5.4.1
-http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.1.3ubuntu1.tar.xz; sys_platform == 'linux'
+certifi==2021.5.30
+chardet==4.0.0
+idna==2.10
 progressbar==2.5
-pydantic==1.8.1
-pydantic-yaml==0.2.3
+pydantic==1.8.2
+pydantic-yaml==0.4.2
 pyxdg==0.27
+PyYAML==5.4.1
 requests==2.25.1
 requests-unixsocket==0.2.0
+semver==2.13.0
+typing-extensions==3.10.0.0
+urllib3==1.26.6

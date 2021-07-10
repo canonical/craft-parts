@@ -22,21 +22,73 @@ from setuptools import find_packages, setup  # type: ignore
 with open("README.md") as readme_file:
     readme = readme_file.read()
 
-requirements = [
-    "pyyaml",
+install_requires = [
+    "PyYAML",
+    "progressbar",
+    "pydantic",
+    "pydantic-yaml",
+    "pyxdg",
+    "requests",
+    "requests-unixsocket",
 ]
 
-setup_requirements = [
-    "pytest-runner",
+try:
+    os_release = open("/etc/os-release").read()
+    ubuntu = "ID=ubuntu" in os_release
+except FileNotFoundError:
+    ubuntu = False
+
+if ubuntu:
+    install_requires += [
+        "python-apt",
+    ]
+
+dev_requires = [
+    "autoflake",
+    "twine",
 ]
 
-test_requirements = [
-    "pytest>=3",
+doc_requires = [
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-pydantic",
+    "sphinx-rtd-theme",
 ]
+
+test_requires = [
+    "black",
+    "codespell",
+    "coverage",
+    "flake8",
+    "isort",
+    "mypy",
+    "pydocstyle",
+    "pylint",
+    "pylint-fixme-info",
+    "pylint-pytest",
+    "pytest",
+    "pytest-mock",
+    "requests-mock",
+    "tox",
+    "types-PyYAML",
+    "types-requests",
+]
+
+extras_requires = {
+    "dev": dev_requires + doc_requires + test_requires,
+    "doc": doc_requires,
+    "test": test_requires,
+}
 
 setup(
-    author="Canonical Ltd",
-    author_email="Canonical Ltd",
+    name="craft-parts",
+    version="0.0.1",
+    description="Craft parts tooling",
+    long_description=readme,
+    author="Canonical Ltd.",
+    author_email="snapcraft@lists.snapcraft.io",
+    url="https://github.com/canonical/craft_parts",
+    license="GNU General Public License v3",
     python_requires=">=3.7",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
@@ -47,24 +99,15 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
-    description="Craft parts tooling",
     entry_points={
         "console_scripts": [
             "partsctl=craft_parts.ctl:main",
         ],
     },
-    install_requires=requirements,
-    license="GNU Lesser General Public License v3",
-    long_description=readme,
-    include_package_data=True,
-    keywords="craft_parts",
-    name="craft-parts",
-    package_data={"craft_parts": ["py.typed", "data/schema"]},
+    install_requires=install_requires,
+    extras_require=extras_requires,
     packages=find_packages(include=["craft_parts", "craft_parts.*"]),
-    setup_requires=setup_requirements,
-    test_suite="tests",
-    tests_require=test_requirements,
-    url="https://github.com/canonical/craft_parts",
-    version="0.0.1",
+    package_data={"craft_parts": ["py.typed"]},
+    include_package_data=True,
     zip_safe=False,
 )
