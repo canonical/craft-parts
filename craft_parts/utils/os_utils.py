@@ -316,7 +316,7 @@ def process_run(command: List[str], log_func: Callable[[str], None], **kwargs) -
         if not proc.stdout:
             return
         for line in iter(proc.stdout.readline, ""):
-            log_func(line.strip())
+            log_func(":: " + line.strip())
         ret = proc.wait()
 
     if ret:
