@@ -65,7 +65,7 @@ class LifecycleManager:
         *,
         application_name: str,
         cache_dir: Union[Path, str],
-        work_dir: str = ".",
+        work_dir: Union[Path, str] = ".",
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,

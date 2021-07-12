@@ -19,6 +19,7 @@
 import dataclasses
 import functools
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -35,10 +36,12 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils
+from craft_parts.utils import file_utils, os_utils
 
 from . import environment, filesets
 from .filesets import Fileset
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -118,9 +121,7 @@ class StepHandler:
         build_script_path.chmod(0o755)
 
         try:
-            subprocess.run(
-                [build_script_path], check=True, cwd=self._part.part_build_subdir
-            )
+            process_run([str(build_script_path)], cwd=self._part.part_build_subdir)
         except subprocess.CalledProcessError as process_error:
             raise errors.PluginBuildError(part_name=self._part.name) from process_error
 
@@ -361,3 +362,10 @@ def _check_conflicts(
         raise errors.StageFilesConflict(
             part_name=part_name, conflicting_files=conflict_files
         )
+
+
+# XXX: this will be removed when user messages support is implemented.
+def process_run(command: List[str], **kwargs) -> None:
+    """Run a command and log its output."""
+    # Pass logger so messages can be logged as originating from this package.
+    os_utils.process_run(command, logger.debug, **kwargs)

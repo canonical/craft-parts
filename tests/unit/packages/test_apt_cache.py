@@ -157,7 +157,6 @@ class TestMockedApt:
                 "Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"
             ),
             call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
-            call.progress.text.AcquireProgress(),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
             call.cache.Cache().update(fetch_progress=mocker.ANY, sources_list=None),
             call.cache.Cache().close(),
@@ -203,7 +202,6 @@ class TestMockedApt:
                 "Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"
             ),
             call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
-            call.progress.text.AcquireProgress(),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
             call.cache.Cache().update(fetch_progress=mocker.ANY, sources_list=None),
             call.cache.Cache().close(),

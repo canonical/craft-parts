@@ -51,7 +51,7 @@ def fake_apt_cache(mocker):
 
 @pytest.fixture
 def fake_run(mocker):
-    return mocker.patch("subprocess.check_call")
+    return mocker.patch("craft_parts.packages.deb.process_run")
 
 
 @pytest.fixture
@@ -239,6 +239,7 @@ class TestBuildPackages:
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
+                        "-oDpkg::Use-Pty=0",
                         "--allow-downgrades",
                         "install",
                         "dependency-package=1.0",
@@ -321,6 +322,7 @@ class TestBuildPackages:
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
+                        "-oDpkg::Use-Pty=0",
                         "--allow-downgrades",
                         "install",
                         "package-installed=3.0",
@@ -362,6 +364,7 @@ class TestBuildPackages:
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
+                        "-oDpkg::Use-Pty=0",
                         "--allow-downgrades",
                         "install",
                         "package=1.0",
@@ -403,9 +406,8 @@ class TestBuildPackages:
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
+                        "-oDpkg::Use-Pty=0",
                         "--allow-downgrades",
-                        "-o",
-                        "Dpkg::Progress-Fancy=1",
                         "install",
                         "package=1.0",
                     ],

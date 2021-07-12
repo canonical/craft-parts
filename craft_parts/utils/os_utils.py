@@ -22,7 +22,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from craft_parts import errors
 
@@ -302,3 +302,22 @@ class OsRelease:
             return _ID_TO_UBUNTU_CODENAME[self._os_release["VERSION_ID"]]
 
         raise errors.OsReleaseCodenameError()
+
+
+def process_run(command: List[str], log_func: Callable[[str], None], **kwargs) -> None:
+    """Run a command and handle its output."""
+    with subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+        **kwargs,
+    ) as proc:
+        if not proc.stdout:
+            return
+        for line in iter(proc.stdout.readline, ""):
+            log_func(":: " + line.strip())
+        ret = proc.wait()
+
+    if ret:
+        raise subprocess.CalledProcessError(ret, command)
