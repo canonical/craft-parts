@@ -229,6 +229,9 @@ def validate_part(data: Dict[str, Any], part_name: str) -> None:
     """
     logger.debug("validate part %r", part_name)
 
+    if not isinstance(data, dict):
+        raise TypeError(f"part {part_name!r} must be a dictionary")
+
     spec = data.copy()
     plugin_name = spec.get("plugin", "")
 
