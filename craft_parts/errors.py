@@ -128,10 +128,36 @@ class PartSpecificationError(PartsError):
             if not (loc and msg) or not isinstance(loc, tuple):
                 continue
 
-            fields = ",".join([repr(entry) for entry in loc])
-            formatted_errors.append(f"{fields}: {msg}")
+            field = cls._format_loc(loc)
+            if msg == "field required":
+                formatted_errors.append(f"- field {field!r} is required")
+            elif msg == "extra fields not permitted":
+                formatted_errors.append(f"- extra field {field!r} not permitted")
+            else:
+                formatted_errors.append(f"- {msg} in field {field!r}")
 
         return cls(part_name=part_name, message="\n".join(formatted_errors))
+
+    @classmethod
+    def _format_loc(cls, loc):
+        """Format location."""
+        loc_parts = []
+        for loc_part in loc:
+            if isinstance(loc_part, str):
+                loc_parts.append(loc_part)
+            elif isinstance(loc_part, int):
+                # Integer indicates an index. Go back and fix up previous part.
+                previous_part = loc_parts.pop()
+                previous_part += f"[{loc_part}]"
+                loc_parts.append(previous_part)
+            else:
+                raise RuntimeError(f"unhandled loc: {loc_part}")
+
+        loc = ".".join(loc_parts)
+
+        # Filter out internal __root__ detail.
+        loc = loc.replace(".__root__", "")
+        return loc
 
 
 class CopyTreeError(PartsError):
