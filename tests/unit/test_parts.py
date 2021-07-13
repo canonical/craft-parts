@@ -300,7 +300,7 @@ class TestPartUnmarshal:
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
             f"{fileset!r},1: '/baz' must be a relative path (cannot start with '/')\n"
-            f"{fileset!r},2: '' must be a relative path (cannot be empty)"
+            f"{fileset!r},2: path cannot be empty"
         )
 
 

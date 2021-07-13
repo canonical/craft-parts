@@ -67,7 +67,7 @@ class PartSpec(BaseModel):
     @validator("stage_files", "prime_files", each_item=True)
     def validate_relative_path_list(cls, item):
         """Check if the list does not contain empty of absolute paths."""
-        assert item != "", f"{item!r} must be a relative path (cannot be empty)"
+        assert item != "", "path cannot be empty"
         assert (
             item[0] != "/"
         ), f"{item!r} must be a relative path (cannot start with '/')"
