@@ -22,7 +22,7 @@ import pytest
 import yaml
 
 from craft_parts import errors
-from craft_parts.lifecycle_manager import LifecycleManager
+from craft_parts.lifecycle_manager import LifecycleManager, validate_part
 from craft_parts.plugins import nil_plugin
 
 
@@ -183,3 +183,72 @@ class TestPluginProperties:
                 cache_dir=new_dir,
             )
         assert raised.value.part_name == "bar"
+
+
+class TestPartValidation:
+    """Part data validation scenarios."""
+
+    def test_part_validation_happy(self):
+        data = {
+            "plugin": "make",
+            "make-parameters": ["stuff"],
+            "source": ".",
+        }
+        validate_part(data, "foo")
+
+    def test_part_validation_implicit_plugin(self):
+        data = {
+            "source": ".",
+        }
+        validate_part(data, "make")
+
+    def test_part_validation_no_plugin(self):
+        data = {
+            "source": ".",
+        }
+        with pytest.raises(errors.UndefinedPlugin) as raised:
+            validate_part(data, "foo")
+        assert raised.value.part_name == "foo"
+
+    def test_part_validation_bad_property(self):
+        data = {
+            "plugin": "make",
+            "source": ".",
+            "color": "purple",
+        }
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            validate_part(data, "foo")
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "'color': extra fields not permitted"
+
+    def test_part_validation_bad_type(self):
+        data = {
+            "plugin": "make",
+            "source": ["."],
+        }
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            validate_part(data, "foo")
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "'source': str type expected"
+
+    def test_part_validation_bad_plugin_property(self):
+        data = {
+            "plugin": "make",
+            "make-timeout": "never",
+            "source": ".",
+        }
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            validate_part(data, "foo")
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "'make-timeout': extra fields not permitted"
+
+    def test_part_validation_bad_plugin_type(self):
+        data = {
+            "plugin": "make",
+            "make-parameters": ".",
+            "source": ".",
+        }
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            validate_part(data, "foo")
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == "'make-parameters': value is not a valid list"

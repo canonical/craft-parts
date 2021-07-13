@@ -16,6 +16,7 @@
 
 """The parts lifecycle manager."""
 
+import logging
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Sequence, Union
@@ -26,8 +27,10 @@ from craft_parts import errors, executor, packages, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
-from craft_parts.parts import Part
+from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
+
+logger = logging.getLogger(__name__)
 
 
 class LifecycleManager:
@@ -216,3 +219,43 @@ def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> P
     part = Part(name, spec, project_dirs=project_dirs, plugin_properties=properties)
 
     return part
+
+
+def validate_part(data: Dict[str, Any], part_name: str) -> None:
+    """Validate the given part data against common and plugin models.
+
+    :param data: The part data to validate.
+    :part_name: The name of the part to validate.
+    """
+    logger.debug("validate part %r", part_name)
+
+    spec = data.copy()
+    plugin_name = spec.get("plugin", "")
+
+    part_name_as_plugin_name = not plugin_name
+    if part_name_as_plugin_name:
+        plugin_name = part_name
+        spec["plugin"] = plugin_name
+
+    try:
+        plugin_class = plugins.get_plugin_class(plugin_name)
+    except ValueError as err:
+        if part_name_as_plugin_name:
+            raise errors.UndefinedPlugin(part_name=part_name) from err
+        raise errors.InvalidPlugin(plugin_name, part_name=part_name) from err
+
+    try:
+        # validate plugin properties
+        plugin_class.properties_class.unmarshal(spec)
+
+        # validate common part properties
+        plugins.strip_plugin_properties(spec, plugin_name=plugin_name)
+        PartSpec(**spec)
+    except ValidationError as err:
+        raise errors.PartSpecificationError.from_validation_error(
+            part_name=part_name, error_list=err.errors()
+        ) from err
+    except ValueError as err:
+        raise errors.PartSpecificationError(
+            part_name=part_name, message=str(err)
+        ) from err
