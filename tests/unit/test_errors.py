@@ -85,15 +85,20 @@ def test_part_specification_error():
 
 def test_part_specification_error_from_validation_error():
     error_list = [
-        {"loc": ("field-1",), "msg": "something is wrong"},
-        {"loc": ("field-2",), "msg": "something is wrong"},
+        {"loc": ("field-1", 0), "msg": "something is wrong"},
+        {"loc": ("field-2",), "msg": "field required"},
+        {"loc": ("field-3",), "msg": "extra fields not permitted"},
     ]
     err = errors.PartSpecificationError.from_validation_error(
         part_name="foo", error_list=error_list
     )
     assert err.part_name == "foo"
     assert err.brief == "Part 'foo' validation failed."
-    assert err.details == "'field-1': something is wrong\n'field-2': something is wrong"
+    assert err.details == (
+        "- something is wrong in field 'field-1[0]'\n"
+        "- field 'field-2' is required\n"
+        "- extra field 'field-3' not permitted"
+    )
     assert err.resolution == "Review part 'foo' and make sure it's correct."
 
 
