@@ -19,7 +19,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, validator
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -62,6 +62,18 @@ class PartSpec(BaseModel):
         extra = "forbid"
         allow_mutation = False
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
+    # pylint: disable=no-self-argument,no-self-use
+    @validator("stage_files", "prime_files", each_item=True)
+    def validate_relative_path_list(cls, item):
+        """Check if the list does not contain empty of absolute paths."""
+        assert item != "", "path cannot be empty"
+        assert (
+            item[0] != "/"
+        ), f"{item!r} must be a relative path (cannot start with '/')"
+        return item
+
+    # pylint: enable=no-self-argument,no-self-use
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "PartSpec":

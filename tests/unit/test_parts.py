@@ -293,6 +293,16 @@ class TestPartUnmarshal:
         assert raised.value.part_name == "foo"
         assert raised.value.message == "'plugin': str type expected"
 
+    @pytest.mark.parametrize("fileset", ["stage", "prime"])
+    def test_relative_path_validation(self, fileset):
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            Part("foo", {fileset: ["bar", "/baz", ""]})
+        assert raised.value.part_name == "foo"
+        assert raised.value.message == (
+            f"{fileset!r},1: '/baz' must be a relative path (cannot start with '/')\n"
+            f"{fileset!r},2: path cannot be empty"
+        )
+
 
 class TestPartHelpers:
     """Test part-related helper functions."""
