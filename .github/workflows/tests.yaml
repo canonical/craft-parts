@@ -7,7 +7,11 @@ on:
       - main
 jobs:
   tests:
-    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -23,7 +27,17 @@ jobs:
           python3 -m venv ${HOME}/.venv
           source ${HOME}/.venv/bin/activate
           pip install -U pip wheel setuptools
-          pip install -U -r requirements.txt -r requirements-dev.txt -r requirements-focal.txt
+          case "${{ matrix.os }}" in
+            ubuntu-18.04)
+              # pip 20.2 breaks python3-apt, so pin the version before building
+              pip install pip==20.1
+              pip install -U -r requirements-bionic.txt
+              ;;
+            ubuntu-20.04)
+              pip install -U -r requirements-focal.txt
+              ;;
+          esac
+          pip install -U -r requirements.txt -r requirements-dev.txt
           pip install -e .
       - name: Run black
         run: |
