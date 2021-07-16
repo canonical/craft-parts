@@ -16,14 +16,19 @@
 
 """The local source handler and helpers."""
 
+import contextlib
 import functools
 import glob
+import logging
 import os
+from pathlib import Path
 from typing import List, Optional
 
 from craft_parts.utils import file_utils
 
 from .base import SourceHandler
+
+logger = logging.getLogger(__name__)
 
 # TODO: change file operations to use pathlib
 
@@ -36,14 +41,19 @@ class LocalSource(SourceHandler):
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function
 
-        ignore_patterns = [
-            self._dirs.parts_dir.name,
-            self._dirs.stage_dir.name,
-            self._dirs.prime_dir.name,
-            "*.snap",  # FIXME: this should be specified by the application
-        ]
+        if self._dirs.work_dir.resolve() == Path.cwd():
+            self._ignore_patterns.append(self._dirs.parts_dir.name)
+            self._ignore_patterns.append(self._dirs.stage_dir.name)
+            self._ignore_patterns.append(self._dirs.prime_dir.name)
+        else:
+            with contextlib.suppress(ValueError):
+                rel_work_dir = self._dirs.work_dir.relative_to(Path.cwd())
+                self._ignore_patterns.append(rel_work_dir.parts[0])
+
+        logger.debug("ignore patterns: %r", self._ignore_patterns)
+
         self._ignore = functools.partial(
-            _ignore, self.source_abspath, os.getcwd(), ignore_patterns
+            _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns
         )
         self._updated_files = set()
         self._updated_directories = set()
@@ -67,6 +77,11 @@ class LocalSource(SourceHandler):
 
         :return: Whether the sources are outdated.
         """
+        if not ignore_files:
+            ignore_files = []
+
+        ignore_files.extend(self._ignore_patterns)
+
         try:
             target_mtime = os.lstat(target).st_mtime
         except FileNotFoundError:

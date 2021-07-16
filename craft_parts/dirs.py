@@ -28,7 +28,7 @@ class ProjectDirs:
     """
 
     def __init__(self, *, work_dir: Union[Path, str] = "."):
-        self._work_dir = Path(work_dir).absolute()
+        self._work_dir = Path(work_dir).expanduser().resolve()
 
     @property
     def work_dir(self) -> Path:

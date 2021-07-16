@@ -44,12 +44,14 @@ class Executor:
         project_info: ProjectInfo,
         extra_build_packages: List[str] = None,
         extra_build_snaps: List[str] = None,
+        ignore_patterns: List[str] = None,
     ):
         self._part_list = part_list
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
         self._handler: Dict[str, PartHandler] = {}
+        self._ignore_patterns = ignore_patterns
 
     def prologue(self) -> None:
         """Prepare the execution environment.
@@ -139,6 +141,7 @@ class Executor:
             part,
             part_info=PartInfo(self._project_info, part),
             part_list=self._part_list,
+            ignore_patterns=self._ignore_patterns,
         )
         self._handler[part.name] = handler
 

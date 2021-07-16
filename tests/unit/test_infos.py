@@ -119,6 +119,11 @@ def test_project_info_default():
     assert info.parallel_build_count == 1
 
 
+def test_project_info_cache_dir_resolving():
+    info = ProjectInfo(application_name="test", cache_dir=Path("~/x/../y/."))
+    assert info.cache_dir == Path.home() / "y"
+
+
 def test_invalid_arch():
     with pytest.raises(errors.InvalidArchitecture) as raised:
         ProjectInfo(application_name="test", cache_dir=Path(), arch="invalid")
