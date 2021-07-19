@@ -101,36 +101,33 @@ class TestLocal:
 
     def test_pull_ignores_own_work_data(self, new_dir):
         # Make the snapcraft-specific directories
-        os.makedirs(os.path.join("src", "parts"))
-        os.makedirs(os.path.join("src", "stage"))
-        os.makedirs(os.path.join("src", "prime"))
-        os.makedirs(os.path.join("src", "other"))
+        os.makedirs("parts/foo/src")
+        os.makedirs("stage")
+        os.makedirs("prime")
+        os.makedirs("other")
 
         # Create an application-specific file
-        open(os.path.join("src", "foo.znap"), "w").close()
+        open("foo.znap", "w").close()
 
         # Now make some real files
-        os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
-
-        os.mkdir("destination")
+        os.makedirs("dir")
+        open(os.path.join("dir", "file"), "w").close()
 
         local = LocalSource(
-            "src", "destination", cache_dir=new_dir, ignore_patterns=["*.znap"]
+            ".", "parts/foo/src", cache_dir=new_dir, ignore_patterns=["*.znap"]
         )
         local.pull()
 
         # Verify that the work directories got filtered out
-        assert os.path.isdir(os.path.join("destination", "parts")) is False
-        assert os.path.isdir(os.path.join("destination", "stage")) is False
-        assert os.path.isdir(os.path.join("destination", "prime")) is False
-        assert os.path.isdir(os.path.join("destination", "other"))
-        assert os.path.isfile(os.path.join("destination", "foo.znap")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "parts")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "stage")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "prime")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "other"))
+        assert os.path.isfile(os.path.join("parts", "foo", "src", "foo.znap")) is False
 
         # Verify that the real stuff made it in.
-        assert os.path.islink("destination") is False
-        assert os.path.islink(os.path.join("destination", "dir")) is False
-        assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "dir"))
+        assert os.stat(os.path.join("parts", "foo", "src", "dir", "file")).st_nlink > 1
 
     def test_pull_ignores_own_work_data_work_dir(self, new_dir):
         # Make the snapcraft-specific directories
@@ -139,10 +136,11 @@ class TestLocal:
         os.makedirs(os.path.join("src", "stage"))
         os.makedirs(os.path.join("src", "prime"))
         os.makedirs(os.path.join("src", "other"))
+        open(os.path.join("src", "foo.znap"), "w").close()
 
         os.mkdir("destination")
 
-        dirs = ProjectDirs(work_dir="work_dir")
+        dirs = ProjectDirs(work_dir="src/work_dir")
         local = LocalSource(
             "src",
             "destination",
@@ -154,9 +152,72 @@ class TestLocal:
 
         # Verify that the work directories got filtered out
         assert os.path.isdir(os.path.join("destination", "work_dir")) is False
+        assert os.path.isdir(os.path.join("destination", "foo.znap")) is False
         assert os.path.isdir(os.path.join("destination", "other"))
 
         # These are now allowed since we have set work_dir
+        assert os.path.isdir(os.path.join("destination", "parts"))
+        assert os.path.isdir(os.path.join("destination", "stage"))
+        assert os.path.isdir(os.path.join("destination", "prime"))
+
+    def test_pull_ignores_own_work_data_deep_work_dir(self, new_dir):
+        # Make the snapcraft-specific directories
+        os.makedirs(os.path.join("src", "some/deep/work_dir"))
+        os.makedirs(os.path.join("src", "parts"))
+        os.makedirs(os.path.join("src", "stage"))
+        os.makedirs(os.path.join("src", "prime"))
+        os.makedirs(os.path.join("src", "other"))
+        os.makedirs(os.path.join("src", "work_dir"))
+        open(os.path.join("src", "foo.znap"), "w").close()
+
+        os.mkdir("destination")
+
+        dirs = ProjectDirs(work_dir="src/some/deep/work_dir")
+        local = LocalSource(
+            "src",
+            "destination",
+            cache_dir=new_dir,
+            project_dirs=dirs,
+            ignore_patterns=["*.znap"],
+        )
+        local.pull()
+
+        # Verify that the work directories got filtered out
+        assert os.path.isdir(os.path.join("destination", "some/deep/work_dir")) is False
+        assert os.path.isdir(os.path.join("destination", "foo.znap")) is False
+        assert os.path.isdir(os.path.join("destination", "other"))
+
+        # These are now allowed since we have set work_dir
+        assert os.path.isdir(os.path.join("destination", "parts"))
+        assert os.path.isdir(os.path.join("destination", "stage"))
+        assert os.path.isdir(os.path.join("destination", "prime"))
+
+        # This has the same name but it's not the real work dir
+        assert os.path.isdir(os.path.join("destination", "work_dir"))
+
+    def test_pull_work_dir_outside(self, new_dir):
+        # Make the snapcraft-specific directories
+        os.makedirs(os.path.join("src", "work_dir"))
+        os.makedirs(os.path.join("src", "parts"))
+        os.makedirs(os.path.join("src", "stage"))
+        os.makedirs(os.path.join("src", "prime"))
+        os.makedirs(os.path.join("src", "other"))
+
+        os.mkdir("destination")
+
+        dirs = ProjectDirs(work_dir="/work_dir")
+        local = LocalSource(
+            "src",
+            "destination",
+            cache_dir=new_dir,
+            project_dirs=dirs,
+            ignore_patterns=["*.znap"],
+        )
+        local.pull()
+
+        # These are all allowed since work_dir is located outside
+        assert os.path.isdir(os.path.join("destination", "work_dir"))
+        assert os.path.isdir(os.path.join("destination", "other"))
         assert os.path.isdir(os.path.join("destination", "parts"))
         assert os.path.isdir(os.path.join("destination", "stage"))
         assert os.path.isdir(os.path.join("destination", "prime"))
