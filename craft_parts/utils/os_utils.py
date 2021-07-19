@@ -172,13 +172,9 @@ def is_snap(*, application_name: Optional[str] = None) -> bool:
     if application_name:
         res = snap_name == application_name
     else:
-        res = snap_name is not None
+        res = snap_name != ""
 
-    logger.debug(
-        "craft_parts is is snap: %s, SNAP_NAME set to %s",
-        res,
-        snap_name,
-    )
+    logger.debug("is_snap: %s, SNAP_NAME set to %s", res, snap_name)
 
     return res
 

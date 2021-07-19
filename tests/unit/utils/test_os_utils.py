@@ -350,3 +350,37 @@ class TestOsRelease:
 
         with pytest.raises(errors.OsReleaseCodenameError):
             release.version_codename()
+
+
+class TestEnvironment:
+    """Running on snap or container must be detected."""
+
+    def test_is_snap(self, mocker):
+        mocker.patch.dict(os.environ, {"SNAP_NAME": "mysnap"})
+        assert os_utils.is_snap()
+
+    def test_is_snap_no_snap_name(self, mocker):
+        assert os_utils.is_snap() is False
+
+    def test_is_snap_application_name(self, mocker):
+        mocker.patch.dict(os.environ, {"SNAP_NAME": "othersnap"})
+        assert os_utils.is_snap(application_name="othersnap")
+
+    def test_is_snap_application_name_bad_snap_name(self, mocker):
+        mocker.patch.dict(os.environ, {"SNAP_NAME": "mysnap"})
+        assert os_utils.is_snap(application_name="othersnap") is False
+
+    def test_is_snap_application_name_no_snap_name(self, mocker):
+        assert os_utils.is_snap(application_name="othersnap") is False
+
+    def test_is_inside_container_has_dockerenv(self, mocker):
+        mocker.patch("os.path.exists", new=lambda x: "/.dockerenv" in x)
+        assert os_utils.is_inside_container()
+
+    def test_is_inside_container_has_containerenv(self, mocker):
+        mocker.patch("os.path.exists", new=lambda x: "/run/.containerenv" in x)
+        assert os_utils.is_inside_container()
+
+    def test_is_inside_container_no_files(self, mocker):
+        mocker.patch("os.path.exists", new=lambda x: False)
+        assert os_utils.is_inside_container() is False
