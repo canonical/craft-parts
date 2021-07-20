@@ -412,6 +412,23 @@ class TestStepOutdated:
         for step in list(Step):
             assert sm.check_if_outdated(p1, step) is None
 
+    def test_source_outdated_ignored(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        p1 = Part("p1", {"source": "subdir"})  # source is local
+
+        # p1 pull ran
+        s1 = states.StageState()
+        s1.write(Path("parts/p1/state/pull"))
+
+        Path("subdir").mkdir()
+        os_utils.TimedWriter.write_text(Path("subdir/foo"), "content")
+
+        sm = StateManager(project_info=info, part_list=[p1], ignore_outdated=["foo*"])
+
+        for step in list(Step):
+            report = sm.check_if_outdated(p1, step)
+            assert report is None
+
 
 class TestStepDirty:
     """Verify dirty step checks."""

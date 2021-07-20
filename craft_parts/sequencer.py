@@ -34,12 +34,24 @@ class Sequencer:
 
     :param part_list: The list of parts to process.
     :param project_info: Information about this project.
+    :param ignore_outdated: A list of file patterns to ignore when testing for
+        outdated files.
     """
 
-    def __init__(self, *, part_list: List[Part], project_info: ProjectInfo):
+    def __init__(
+        self,
+        *,
+        part_list: List[Part],
+        project_info: ProjectInfo,
+        ignore_outdated: Optional[List[str]] = None,
+    ):
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
-        self._sm = StateManager(project_info=project_info, part_list=part_list)
+        self._sm = StateManager(
+            project_info=project_info,
+            part_list=part_list,
+            ignore_outdated=ignore_outdated,
+        )
         self._actions: List[Action] = []
 
     def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:

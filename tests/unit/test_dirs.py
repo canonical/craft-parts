@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 from craft_parts.dirs import ProjectDirs
 
 
@@ -31,3 +33,8 @@ def test_dirs_work_dir(new_dir):
     assert dirs.parts_dir == new_dir / "foobar/parts"
     assert dirs.stage_dir == new_dir / "foobar/stage"
     assert dirs.prime_dir == new_dir / "foobar/prime"
+
+
+def test_dirs_work_dir_resolving():
+    dirs = ProjectDirs(work_dir="~/x/../y/.")
+    assert dirs.work_dir == Path.home() / "y"

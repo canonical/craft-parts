@@ -18,7 +18,7 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 from pydantic import ValidationError
 
@@ -55,6 +55,8 @@ class LifecycleManager:
         to the system where Craft Parts is being executed.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
+    :param ignore_local_sources: A list of local source patterns to ignore.
+    :param extra_build_packages: A list of additional build packages to install.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -69,7 +71,8 @@ class LifecycleManager:
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
-        extra_build_packages: List[str] = None,
+        ignore_local_sources: Optional[List[str]] = None,
+        extra_build_packages: Optional[List[str]] = None,
         **custom_args,  # custom passthrough args
     ):
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):
@@ -105,10 +108,12 @@ class LifecycleManager:
         self._sequencer = sequencer.Sequencer(
             part_list=self._part_list,
             project_info=project_info,
+            ignore_outdated=ignore_local_sources,
         )
         self._executor = executor.Executor(
             part_list=self._part_list,
             project_info=project_info,
+            ignore_patterns=ignore_local_sources,
             extra_build_packages=extra_build_packages,
         )
         self._project_info = project_info

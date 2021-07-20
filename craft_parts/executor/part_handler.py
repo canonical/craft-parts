@@ -55,6 +55,7 @@ class PartHandler:
         *,
         part_info: PartInfo,
         part_list: List[Part],
+        ignore_patterns: Optional[List[str]] = None,
     ):
         self._part = part
         self._part_info = part_info
@@ -71,6 +72,7 @@ class PartHandler:
             cache_dir=part_info.cache_dir,
             part=part,
             project_dirs=part_info.dirs,
+            ignore_patterns=ignore_patterns,
         )
 
         self.build_packages = _get_build_packages(part=self._part, plugin=self._plugin)

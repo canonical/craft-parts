@@ -167,12 +167,21 @@ class StateManager:
 
     :param project_info: The project information.
     :param part_list: A list of this project's parts.
+    :param ignore_outdated: A list of file patterns to ignore when testing for
+        outdated files.
     """
 
-    def __init__(self, *, project_info: ProjectInfo, part_list: List[Part]):
+    def __init__(
+        self,
+        *,
+        project_info: ProjectInfo,
+        part_list: List[Part],
+        ignore_outdated: Optional[List[str]] = None
+    ):
         self._state_db = _StateDB()
         self._project_info = project_info
         self._part_list = part_list
+        self._ignore_outdated = ignore_outdated
         self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
 
         part_step_list = _sort_steps_by_state_timestamp(part_list)
@@ -277,6 +286,7 @@ class StateManager:
                     cache_dir=self._project_info.cache_dir,
                     part=part,
                     project_dirs=self._project_info.dirs,
+                    ignore_patterns=self._ignore_outdated,
                 )
                 self._source_handler_cache[part.name] = source_handler
 

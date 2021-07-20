@@ -20,6 +20,7 @@ import shutil
 import pytest
 
 from craft_parts import errors
+from craft_parts.dirs import ProjectDirs
 from craft_parts.sources import sources
 from craft_parts.sources.local_source import LocalSource
 
@@ -100,44 +101,126 @@ class TestLocal:
 
     def test_pull_ignores_own_work_data(self, new_dir):
         # Make the snapcraft-specific directories
+        os.makedirs("parts/foo/src")
+        os.makedirs("stage")
+        os.makedirs("prime")
+        os.makedirs("other")
+
+        # Create an application-specific file
+        open("foo.znap", "w").close()
+
+        # Now make some real files
+        os.makedirs("dir")
+        open(os.path.join("dir", "file"), "w").close()
+
+        local = LocalSource(
+            ".", "parts/foo/src", cache_dir=new_dir, ignore_patterns=["*.znap"]
+        )
+        local.pull()
+
+        # Verify that the work directories got filtered out
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "parts")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "stage")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "prime")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "other"))
+        assert os.path.isfile(os.path.join("parts", "foo", "src", "foo.znap")) is False
+
+        # Verify that the real stuff made it in.
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "dir"))
+        assert os.stat(os.path.join("parts", "foo", "src", "dir", "file")).st_nlink > 1
+
+    def test_pull_ignores_own_work_data_work_dir(self, new_dir):
+        # Make the snapcraft-specific directories
+        os.makedirs(os.path.join("src", "work_dir"))
         os.makedirs(os.path.join("src", "parts"))
         os.makedirs(os.path.join("src", "stage"))
         os.makedirs(os.path.join("src", "prime"))
-        os.makedirs(os.path.join("src", ".snapcraft"))
-        os.makedirs(os.path.join("src", "snap"))
-
-        # Make the snapcraft.yaml (and hidden one) and a built snap
-        open(os.path.join("src", "snapcraft.yaml"), "w").close()
-        open(os.path.join("src", ".snapcraft.yaml"), "w").close()
-        open(os.path.join("src", "foo.snap"), "w").close()
-
-        # Make the global state cache
-        open(os.path.join("src", ".snapcraft", "state"), "w").close()
-
-        # Now make some real files
-        os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        os.makedirs(os.path.join("src", "other"))
+        open(os.path.join("src", "foo.znap"), "w").close()
 
         os.mkdir("destination")
 
-        local = LocalSource("src", "destination", cache_dir=new_dir)
+        dirs = ProjectDirs(work_dir="src/work_dir")
+        local = LocalSource(
+            "src",
+            "destination",
+            cache_dir=new_dir,
+            project_dirs=dirs,
+            ignore_patterns=["*.znap"],
+        )
         local.pull()
 
-        # Verify that the snapcraft-specific stuff got filtered out
-        assert os.path.isdir(os.path.join("destination", "parts")) is False
-        assert os.path.isdir(os.path.join("destination", "stage")) is False
-        assert os.path.isdir(os.path.join("destination", "prime")) is False
+        # Verify that the work directories got filtered out
+        assert os.path.isdir(os.path.join("destination", "work_dir")) is False
+        assert os.path.isdir(os.path.join("destination", "foo.znap")) is False
+        assert os.path.isdir(os.path.join("destination", "other"))
 
-        assert os.path.isdir(os.path.join("destination", "snap"))
-        assert os.path.isfile(os.path.join("destination", ".snapcraft.yaml"))
-        assert os.path.isfile(os.path.join("destination", "snapcraft.yaml"))
+        # These are now allowed since we have set work_dir
+        assert os.path.isdir(os.path.join("destination", "parts"))
+        assert os.path.isdir(os.path.join("destination", "stage"))
+        assert os.path.isdir(os.path.join("destination", "prime"))
 
-        assert os.path.isfile(os.path.join("destination", "foo.snap")) is False
+    def test_pull_ignores_own_work_data_deep_work_dir(self, new_dir):
+        # Make the snapcraft-specific directories
+        os.makedirs(os.path.join("src", "some/deep/work_dir"))
+        os.makedirs(os.path.join("src", "parts"))
+        os.makedirs(os.path.join("src", "stage"))
+        os.makedirs(os.path.join("src", "prime"))
+        os.makedirs(os.path.join("src", "other"))
+        os.makedirs(os.path.join("src", "work_dir"))
+        open(os.path.join("src", "foo.znap"), "w").close()
 
-        # Verify that the real stuff made it in.
-        assert os.path.islink("destination") is False
-        assert os.path.islink(os.path.join("destination", "dir")) is False
-        assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
+        os.mkdir("destination")
+
+        dirs = ProjectDirs(work_dir="src/some/deep/work_dir")
+        local = LocalSource(
+            "src",
+            "destination",
+            cache_dir=new_dir,
+            project_dirs=dirs,
+            ignore_patterns=["*.znap"],
+        )
+        local.pull()
+
+        # Verify that the work directories got filtered out
+        assert os.path.isdir(os.path.join("destination", "some/deep/work_dir")) is False
+        assert os.path.isdir(os.path.join("destination", "foo.znap")) is False
+        assert os.path.isdir(os.path.join("destination", "other"))
+
+        # These are now allowed since we have set work_dir
+        assert os.path.isdir(os.path.join("destination", "parts"))
+        assert os.path.isdir(os.path.join("destination", "stage"))
+        assert os.path.isdir(os.path.join("destination", "prime"))
+
+        # This has the same name but it's not the real work dir
+        assert os.path.isdir(os.path.join("destination", "work_dir"))
+
+    def test_pull_work_dir_outside(self, new_dir):
+        # Make the snapcraft-specific directories
+        os.makedirs(os.path.join("src", "work_dir"))
+        os.makedirs(os.path.join("src", "parts"))
+        os.makedirs(os.path.join("src", "stage"))
+        os.makedirs(os.path.join("src", "prime"))
+        os.makedirs(os.path.join("src", "other"))
+
+        os.mkdir("destination")
+
+        dirs = ProjectDirs(work_dir="/work_dir")
+        local = LocalSource(
+            "src",
+            "destination",
+            cache_dir=new_dir,
+            project_dirs=dirs,
+            ignore_patterns=["*.znap"],
+        )
+        local.pull()
+
+        # These are all allowed since work_dir is located outside
+        assert os.path.isdir(os.path.join("destination", "work_dir"))
+        assert os.path.isdir(os.path.join("destination", "other"))
+        assert os.path.isdir(os.path.join("destination", "parts"))
+        assert os.path.isdir(os.path.join("destination", "stage"))
+        assert os.path.isdir(os.path.join("destination", "prime"))
 
     def test_pull_keeps_symlinks(self, new_dir):
         # Create a source containing a directory, a file and symlinks to both.
@@ -164,23 +247,32 @@ class TestLocal:
 class TestLocalUpdate:
     """Verify that the local source can detect changes and update."""
 
-    def test_file_modified(self, new_dir):
+    @pytest.mark.parametrize(
+        "name,ignored",
+        [
+            ("file", False),
+            ("file.ignore", True),
+        ],
+    )
+    def test_file_modified(self, new_dir, name, ignored):
         source = "source"
         destination = "destination"
         os.mkdir(source)
         os.mkdir(destination)
 
-        with open(os.path.join(source, "file"), "w") as f:
+        with open(os.path.join(source, name), "w") as f:
             f.write("1")
 
         # Now make a reference file with a timestamp later than the file was
         # created. We'll ensure this by setting it ourselves
-        shutil.copy2(os.path.join(source, "file"), "reference")
+        shutil.copy2(os.path.join(source, name), "reference")
         access_time = os.stat("reference").st_atime
         modify_time = os.stat("reference").st_mtime
         os.utime("reference", (access_time, modify_time + 1))
 
-        local = LocalSource(source, destination, cache_dir=new_dir)
+        local = LocalSource(
+            source, destination, cache_dir=new_dir, ignore_patterns=["*.ignore"]
+        )
         local.pull()
 
         # Update check on non-existent files should return False
@@ -189,25 +281,31 @@ class TestLocalUpdate:
         # Expect no updates to be available
         assert local.check_if_outdated("reference") is False
 
-        with open(os.path.join(destination, "file")) as f:
-            assert f.read() == "1"
+        if ignored:
+            assert os.path.exists(os.path.join(destination, name)) is False
+        else:
+            with open(os.path.join(destination, name)) as f:
+                assert f.read() == "1"
 
         # Now update the file in source, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
-        with open(os.path.join(source, "file"), "w") as f:
+        with open(os.path.join(source, name), "w") as f:
             f.write("2")
 
         access_time = os.stat("reference").st_atime
         modify_time = os.stat("reference").st_mtime
-        os.utime(os.path.join(source, "file"), (access_time, modify_time + 1))
+        os.utime(os.path.join(source, name), (access_time, modify_time + 1))
 
         # Expect update to be available
-        assert local.check_if_outdated("reference")
+        assert local.check_if_outdated("reference") is not ignored
 
         local.update()
 
-        with open(os.path.join(destination, "file")) as f:
-            assert f.read() == "2"
+        if ignored:
+            assert os.path.exists(os.path.join(destination, name)) is False
+        else:
+            with open(os.path.join(destination, name)) as f:
+                assert f.read() == "2"
 
     def test_file_added(self, new_dir):
         source = "source"

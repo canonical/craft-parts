@@ -74,7 +74,7 @@ cases you want to refer to the documentation for the specific plugin.
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional, Type
+from typing import TYPE_CHECKING, Dict, List, Optional, Type
 
 from craft_parts.dirs import ProjectDirs
 
@@ -101,6 +101,7 @@ def get_source_handler(
     cache_dir: Path,
     part: "Part",
     project_dirs: ProjectDirs,
+    ignore_patterns: Optional[List[str]] = None,
 ) -> Optional[SourceHandler]:
     """Return the appropriate handler for the given source.
 
@@ -124,6 +125,7 @@ def get_source_handler(
             source_depth=part.spec.source_depth,
             source_commit=part.spec.source_commit,
             project_dirs=project_dirs,
+            ignore_patterns=ignore_patterns,
         )
 
     return source_handler

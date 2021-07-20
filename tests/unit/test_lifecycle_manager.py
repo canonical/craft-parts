@@ -93,6 +93,7 @@ class TestLifecycleManager:
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
+            ignore_local_sources=["foo.*"],
         )
 
         assert len(lf._part_list) == 1
@@ -105,6 +106,7 @@ class TestLifecycleManager:
         mock_seq.assert_called_once_with(
             part_list=lf._part_list,
             project_info=lf.project_info,
+            ignore_outdated=["foo.*"],
         )
 
 
