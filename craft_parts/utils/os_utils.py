@@ -20,6 +20,7 @@ import contextlib
 import logging
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union
@@ -201,8 +202,8 @@ def get_system_info() -> str:
     # Use subprocess directly here. common.run_output will use binaries out
     # of the snap, and we want to use the one on the host.
     try:
-        output = subprocess.check_output(
-            [
+        if sys.platform == "linux":
+            uname_cmd = [
                 "uname",
                 "--kernel-name",
                 "--kernel-release",
@@ -212,7 +213,10 @@ def get_system_info() -> str:
                 "--hardware-platform",
                 "--operating-system",
             ]
-        )
+        else:
+            uname_cmd = ["uname", "-s", "-r", "-v", "-m", "-p"]
+
+        output = subprocess.check_output(uname_cmd)
     except subprocess.CalledProcessError as err:
         logger.warning(
             "'uname' exited with code %d: unable to record machine manifest",
