@@ -23,9 +23,34 @@ import apt.package
 import pytest
 
 from craft_parts.packages import apt_cache, errors
-from craft_parts.packages.apt_cache import AptCache
+from craft_parts.packages.apt_cache import (
+    AptCache,
+    AptStagePackageOptions,
+    configure_apt_stage_package_options,
+)
 
 # xpylint: disable=too-few-public-methods
+
+
+@pytest.fixture
+def snap(mocker, tmp_path):
+    snap = tmp_path / "snap"
+    usr_bin = snap / "usr" / "bin"
+    usr_bin.mkdir(exist_ok=True, parents=True)
+    (usr_bin / "apt-key").touch()
+    (usr_bin / "gpgv").touch()
+
+    usr_lib_apt = snap / "usr" / "lib" / "apt"
+    (usr_lib_apt / "methods").mkdir(exist_ok=True, parents=True)
+    (usr_lib_apt / "solvers").mkdir(exist_ok=True, parents=True)
+
+    mocker.patch.dict(os.environ, {"SNAP": str(snap)})
+    yield snap
+
+
+@pytest.fixture
+def mock_apt(mocker):
+    yield mocker.patch("craft_parts.packages.apt_cache.apt")
 
 
 class TestAptStageCache:
@@ -164,18 +189,12 @@ class TestMockedApt:
             call.cache.Cache().close(),
         ]
 
-    def test_stage_cache_in_snap(self, tmpdir, mocker):
+    def test_stage_cache_in_snap(self, tmpdir, mocker, snap):
         fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
 
         stage_cache = Path(tmpdir, "cache")
         stage_cache.mkdir(exist_ok=True, parents=True)
 
-        snap = Path(tmpdir, "snap")
-        snap.mkdir(exist_ok=True, parents=True)
-
-        mocker.patch("craft_parts.utils.os_utils.is_snap", return_value=True)
-
-        mocker.patch.dict(os.environ, {"SNAP": str(snap)})
         with AptCache(stage_cache=stage_cache) as apt_cache:
             apt_cache.update()
 
@@ -192,10 +211,12 @@ class TestMockedApt:
                 str(Path(snap, "usr/lib/apt/solvers")) + os.sep,
             ),
             call.apt_pkg.config.set(
-                "Dir::Bin::apt-key", str(Path(snap, "usr/bin/apt-key"))
+                "Dir::Bin::apt-key",
+                str(Path(snap, "usr/bin/apt-key")),
             ),
             call.apt_pkg.config.set(
-                "Apt::Key::gpgvcommand", str(Path(snap, "usr/bin/gpgv"))
+                "Apt::Key::gpgvcommand",
+                str(Path(snap, "usr/bin/gpgv")),
             ),
             call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
             call.apt_pkg.config.set(
@@ -240,3 +261,51 @@ class TestAptReadonlyHostCache:
         with AptCache() as apt_cache:
             assert isinstance(apt_cache.get_installed_version("apt"), str)
             assert apt_cache.get_installed_version("fake-news-bears") is None
+
+
+def test_configure_apt_stage_package_options_defaults(mock_apt, snap, tmp_path):
+    configure_apt_stage_package_options(AptStagePackageOptions())
+
+    assert mock_apt.mock_calls == [
+        call.apt_pkg.config.set("Apt::Install-Recommends", "False"),
+        call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
+        call.apt_pkg.config.set("Dir", str(Path(snap, "usr/lib/apt"))),
+        call.apt_pkg.config.set(
+            "Dir::Bin::methods",
+            str(Path(snap, "usr/lib/apt/methods")) + os.sep,
+        ),
+        call.apt_pkg.config.set(
+            "Dir::Bin::solvers::",
+            str(Path(snap, "usr/lib/apt/solvers")) + os.sep,
+        ),
+        call.apt_pkg.config.set(
+            "Dir::Bin::apt-key",
+            str(Path(snap, "usr/bin/apt-key")),
+        ),
+        call.apt_pkg.config.set(
+            "Apt::Key::gpgvcommand",
+            str(Path(snap, "usr/bin/gpgv")),
+        ),
+        call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
+        call.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
+        call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
+    ]
+
+
+def test_configure_apt_stage_package_options_nones(mock_apt, snap, tmp_path):
+    configure_apt_stage_package_options(
+        AptStagePackageOptions(
+            install_recommends=None,
+            allow_insecure_repositories=None,
+            apt_dir=None,
+            methods_dir=None,
+            solvers_dir=None,
+            apt_key_path=None,
+            gpgv_path=None,
+            etc_apt_trusted_gpg=None,
+            etc_apt_trusted_gpg_d_dir=None,
+            clear_post_invoke_success=None,
+        )
+    )
+
+    assert mock_apt.mock_calls == []

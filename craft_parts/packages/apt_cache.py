@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import os
 import re
@@ -32,8 +33,6 @@ import apt.package
 import apt.progress
 import apt.progress.base
 
-from craft_parts.utils import os_utils
-
 from . import errors
 from .base import get_pkg_name_parts
 
@@ -41,6 +40,137 @@ logger = logging.getLogger(__name__)
 
 
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
+
+
+def _get_snap_dir() -> Optional[Path]:
+    snap = os.getenv("SNAP")
+    if not snap:
+        return None
+
+    snap_dir = Path(snap)
+    return snap_dir if snap_dir.is_dir() else None
+
+
+def _default_apt_dir() -> Optional[Path]:
+    snap_dir = _get_snap_dir()
+    if snap_dir is None:
+        return None
+
+    apt_dir = snap_dir / "usr" / "lib" / "apt"
+    return apt_dir if apt_dir.is_dir() else None
+
+
+def _default_methods_dir() -> Optional[Path]:
+    apt_dir = _default_apt_dir()
+    if apt_dir is None:
+        return None
+
+    methods_dir = apt_dir / "methods"
+    return methods_dir if methods_dir.is_dir() else None
+
+
+def _default_solvers_dir() -> Optional[Path]:
+    apt_dir = _default_apt_dir()
+    if apt_dir is None:
+        return None
+
+    methods_dir = apt_dir / "solvers"
+    return methods_dir if methods_dir.is_dir() else None
+
+
+def _default_apt_key_path() -> Optional[Path]:
+    snap_dir = _get_snap_dir()
+    if snap_dir is None:
+        return None
+
+    apt_key_path = snap_dir / "usr" / "bin" / "apt-key"
+    return apt_key_path if apt_key_path.is_file() else None
+
+
+def _default_gpgv_path() -> Optional[Path]:
+    snap_dir = _get_snap_dir()
+    if snap_dir is None:
+        return None
+
+    gpgv_path = snap_dir / "usr" / "bin" / "gpgv"
+    return gpgv_path if gpgv_path.is_file() else None
+
+
+@dataclasses.dataclass(repr=True)
+class AptStagePackageOptions:
+    """Configuration for stage-packages behavior with apt."""
+
+    install_recommends: Optional[str] = "False"
+    allow_insecure_repositories: Optional[str] = "False"
+    apt_dir: Optional[Path] = dataclasses.field(default_factory=_default_apt_dir)
+    methods_dir: Optional[Path] = dataclasses.field(
+        default_factory=_default_methods_dir
+    )
+    solvers_dir: Optional[Path] = dataclasses.field(
+        default_factory=_default_solvers_dir
+    )
+    apt_key_path: Optional[Path] = dataclasses.field(
+        default_factory=_default_apt_key_path
+    )
+    gpgv_path: Optional[Path] = dataclasses.field(default_factory=_default_gpgv_path)
+    etc_apt_trusted_gpg: Optional[Path] = Path("/etc/apt/trusted.gpg")
+    etc_apt_trusted_gpg_d_dir: Optional[Path] = Path("/etc/apt/trusted.gpg.d")
+    clear_post_invoke_success: Optional[bool] = True
+
+
+def configure_apt_stage_package_options(
+    config: AptStagePackageOptions,
+) -> None:
+    """Set stage-package configuration for apt.
+
+    :param config: Configuration object.
+    """
+    # Do not install recommends.
+    if config.install_recommends is not None:
+        apt.apt_pkg.config.set("Apt::Install-Recommends", config.install_recommends)
+
+    # Ensure repos are provided by trusted third-parties.
+    if config.allow_insecure_repositories is not None:
+        apt.apt_pkg.config.set(
+            "Acquire::AllowInsecureRepositories", config.allow_insecure_repositories
+        )
+
+    # Methods and solvers dir for when in the SNAP.
+    if config.apt_dir is not None:
+        apt.apt_pkg.config.set("Dir", config.apt_dir.as_posix())
+
+    # yes apt is broken like that we need to append os.path.sep
+    if config.methods_dir is not None:
+        apt.apt_pkg.config.set(
+            "Dir::Bin::methods", config.methods_dir.as_posix() + os.path.sep
+        )
+
+    if config.solvers_dir is not None:
+        apt.apt_pkg.config.set(
+            "Dir::Bin::solvers::", config.solvers_dir.as_posix() + os.path.sep
+        )
+
+    if config.apt_key_path is not None:
+        apt.apt_pkg.config.set("Dir::Bin::apt-key", config.apt_key_path.as_posix())
+
+    if config.gpgv_path is not None:
+        apt.apt_pkg.config.set("Apt::Key::gpgvcommand", config.gpgv_path.as_posix())
+
+    if config.etc_apt_trusted_gpg is not None:
+        apt.apt_pkg.config.set(
+            "Dir::Etc::Trusted", config.etc_apt_trusted_gpg.as_posix()
+        )
+
+    if config.etc_apt_trusted_gpg_d_dir is not None:
+        apt.apt_pkg.config.set(
+            "Dir::Etc::TrustedParts",
+            config.etc_apt_trusted_gpg_d_dir.as_posix() + os.path.sep,
+        )
+
+    if config.clear_post_invoke_success:
+        # Clear up apt's Post-Invoke-Success as we are not running
+        # on the system.
+        apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
 
 
 class LogProgress(apt.progress.base.AcquireProgress):
@@ -81,15 +211,24 @@ class AptCache(ContextDecorator):
         *,
         stage_cache: Optional[Path] = None,
         stage_cache_arch: Optional[str] = None,
+        stage_package_options: Optional[AptStagePackageOptions] = None,
     ) -> None:
         self.stage_cache = stage_cache
+        self.stage_package_options = AptStagePackageOptions()
         self.stage_cache_arch = stage_cache_arch
-        self.progress = None
+        self.progress: Optional[LogProgress] = None
+
+        if stage_package_options is None:
+            self.stage_package_options = AptStagePackageOptions()
+        else:
+            self.stage_package_options = stage_package_options
 
     # pylint: disable=attribute-defined-outside-init
     def __enter__(self) -> AptCache:
         if self.stage_cache is not None:
-            self._configure_apt()
+            configure_apt_stage_package_options(self.stage_package_options)
+
+            self.progress = LogProgress()
             self._populate_stage_cache_dir()
             self.cache = apt.cache.Cache(rootdir=str(self.stage_cache), memonly=True)
         else:
@@ -102,37 +241,6 @@ class AptCache(ContextDecorator):
 
     def __exit__(self, *exc) -> None:
         self.cache.close()
-
-    def _configure_apt(self):
-        # Do not install recommends.
-        apt.apt_pkg.config.set("Apt::Install-Recommends", "False")
-
-        # Ensure repos are provided by trusted third-parties.
-        apt.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
-
-        # Methods and solvers dir for when in the SNAP.
-        snap_dir = os.getenv("SNAP")
-        if os_utils.is_snap() and snap_dir and os.path.exists(snap_dir):
-            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
-            apt.apt_pkg.config.set("Dir", apt_dir)
-            # yes apt is broken like that we need to append os.path.sep
-            methods_dir = os.path.join(apt_dir, "methods")
-            apt.apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
-            solvers_dir = os.path.join(apt_dir, "solvers")
-            apt.apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
-            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
-            apt.apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
-            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
-            apt.apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
-
-        apt.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
-        apt.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
-
-        # Clear up apt's Post-Invoke-Success as we are not running
-        # on the system.
-        apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
-
-        self.progress = LogProgress()
 
     def _populate_stage_cache_dir(self) -> None:
         """Create/refresh cache configuration.
