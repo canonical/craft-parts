@@ -280,6 +280,11 @@ class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
     @classmethod
+    def configure(cls, application_name: str) -> None:
+        """Set up apt options and directories."""
+        AptCache.configure_apt(application_name)
+
+    @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
         """Return a list of libraries in package_name."""
         return _run_dpkg_query_list_files(package_name)

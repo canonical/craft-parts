@@ -42,6 +42,7 @@ class TestAptStageCache:
         stage_cache = Path(tmpdir, "cache")
         stage_cache.mkdir(exist_ok=True, parents=True)
 
+        AptCache.configure_apt("test_stage_packages")
         with AptCache(stage_cache=stage_cache) as apt_cache:
             apt_cache.update()
 
@@ -141,6 +142,43 @@ class TestAptStageCache:
 class TestMockedApt:
     """Tests using mocked apt utility."""
 
+    def test_configure(self, mocker):
+        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
+
+        AptCache().configure_apt("test_configure")
+        # fmt: off
+        assert fake_apt.mock_calls == [
+            call.apt_pkg.config.set("Apt::Install-Recommends", "False"),
+            call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
+            call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
+            call.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
+            call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
+        ]
+        # fmt: on
+
+    def test_configure_in_snap(self, mocker, tmpdir):
+        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
+
+        snap_dir = str(tmpdir)
+        mocker.patch.dict(
+            os.environ, {"SNAP_NAME": "test_configure_in_snap", "SNAP": snap_dir}
+        )
+        AptCache().configure_apt("test_configure_in_snap")
+        # fmt: off
+        assert fake_apt.mock_calls == [
+            call.apt_pkg.config.set("Apt::Install-Recommends", "False"),
+            call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
+            call.apt_pkg.config.set("Dir", snap_dir + "/usr/lib/apt"),
+            call.apt_pkg.config.set("Dir::Bin::methods", snap_dir + "/usr/lib/apt/methods/"),
+            call.apt_pkg.config.set("Dir::Bin::solvers::", snap_dir + "/usr/lib/apt/solvers/"),
+            call.apt_pkg.config.set("Dir::Bin::apt-key", snap_dir + "/usr/bin/apt-key"),
+            call.apt_pkg.config.set("Apt::Key::gpgvcommand", snap_dir + "/usr/bin/gpgv"),
+            call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
+            call.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
+            call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
+        ]
+        # fmt: on
+
     def test_stage_cache(self, tmpdir, mocker):
         stage_cache = Path(tmpdir, "cache")
         stage_cache.mkdir(exist_ok=True, parents=True)
@@ -150,58 +188,6 @@ class TestMockedApt:
             apt_cache.update()
 
         assert fake_apt.mock_calls == [
-            call.apt_pkg.config.set("Apt::Install-Recommends", "False"),
-            call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
-            call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
-            call.apt_pkg.config.set(
-                "Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"
-            ),
-            call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
-            call.cache.Cache(rootdir=str(stage_cache), memonly=True),
-            call.cache.Cache().update(fetch_progress=mocker.ANY, sources_list=None),
-            call.cache.Cache().close(),
-            call.cache.Cache(rootdir=str(stage_cache), memonly=True),
-            call.cache.Cache().close(),
-        ]
-
-    def test_stage_cache_in_snap(self, tmpdir, mocker):
-        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
-
-        stage_cache = Path(tmpdir, "cache")
-        stage_cache.mkdir(exist_ok=True, parents=True)
-
-        snap = Path(tmpdir, "snap")
-        snap.mkdir(exist_ok=True, parents=True)
-
-        mocker.patch("craft_parts.utils.os_utils.is_snap", return_value=True)
-
-        mocker.patch.dict(os.environ, {"SNAP": str(snap)})
-        with AptCache(stage_cache=stage_cache) as apt_cache:
-            apt_cache.update()
-
-        assert fake_apt.mock_calls == [
-            call.apt_pkg.config.set("Apt::Install-Recommends", "False"),
-            call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
-            call.apt_pkg.config.set("Dir", str(Path(snap, "usr/lib/apt"))),
-            call.apt_pkg.config.set(
-                "Dir::Bin::methods",
-                str(Path(snap, "usr/lib/apt/methods")) + os.sep,
-            ),
-            call.apt_pkg.config.set(
-                "Dir::Bin::solvers::",
-                str(Path(snap, "usr/lib/apt/solvers")) + os.sep,
-            ),
-            call.apt_pkg.config.set(
-                "Dir::Bin::apt-key", str(Path(snap, "usr/bin/apt-key"))
-            ),
-            call.apt_pkg.config.set(
-                "Apt::Key::gpgvcommand", str(Path(snap, "usr/bin/gpgv"))
-            ),
-            call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
-            call.apt_pkg.config.set(
-                "Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"
-            ),
-            call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
             call.cache.Cache().update(fetch_progress=mocker.ANY, sources_list=None),
             call.cache.Cache().close(),

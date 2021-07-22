@@ -355,23 +355,22 @@ class TestOsRelease:
 class TestEnvironment:
     """Running on snap or container must be detected."""
 
-    def test_is_snap(self, mocker):
-        mocker.patch.dict(os.environ, {"SNAP_NAME": "mysnap"})
-        assert os_utils.is_snap()
+    @pytest.mark.parametrize(
+        "snap_var,app_name,result",
+        [
+            (None, "myapp", False),
+            ("", "myapp", False),
+            ("other", "myapp", False),
+            ("myapp", "myapp", True),
+        ],
+    )
+    def test_is_snap(self, mocker, snap_var, app_name, result):
+        if snap_var is not None:
+            mocker.patch.dict(os.environ, {"SNAP_NAME": snap_var}, clear=True)
+        else:
+            mocker.patch.dict(os.environ, {}, clear=True)
 
-    def test_is_snap_no_snap_name(self, mocker):
-        assert os_utils.is_snap() is False
-
-    def test_is_snap_application_name(self, mocker):
-        mocker.patch.dict(os.environ, {"SNAP_NAME": "othersnap"})
-        assert os_utils.is_snap(application_name="othersnap")
-
-    def test_is_snap_application_name_bad_snap_name(self, mocker):
-        mocker.patch.dict(os.environ, {"SNAP_NAME": "mysnap"})
-        assert os_utils.is_snap(application_name="othersnap") is False
-
-    def test_is_snap_application_name_no_snap_name(self, mocker):
-        assert os_utils.is_snap(application_name="othersnap") is False
+        assert os_utils.is_snap(app_name) == result
 
     def test_is_inside_container_has_dockerenv(self, mocker):
         mocker.patch("os.path.exists", new=lambda x: "/.dockerenv" in x)

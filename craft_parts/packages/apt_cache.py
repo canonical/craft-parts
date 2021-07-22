@@ -84,12 +84,12 @@ class AptCache(ContextDecorator):
     ) -> None:
         self.stage_cache = stage_cache
         self.stage_cache_arch = stage_cache_arch
-        self.progress = None
+        self.progress: Optional[LogProgress] = None
 
     # pylint: disable=attribute-defined-outside-init
     def __enter__(self) -> AptCache:
         if self.stage_cache is not None:
-            self._configure_apt()
+            self.progress = LogProgress()
             self._populate_stage_cache_dir()
             self.cache = apt.cache.Cache(rootdir=str(self.stage_cache), memonly=True)
         else:
@@ -103,7 +103,9 @@ class AptCache(ContextDecorator):
     def __exit__(self, *exc) -> None:
         self.cache.close()
 
-    def _configure_apt(self):
+    @classmethod
+    def configure_apt(cls, application_name: str) -> None:
+        """Set up apt options and directories."""
         # Do not install recommends.
         apt.apt_pkg.config.set("Apt::Install-Recommends", "False")
 
@@ -112,7 +114,7 @@ class AptCache(ContextDecorator):
 
         # Methods and solvers dir for when in the SNAP.
         snap_dir = os.getenv("SNAP")
-        if os_utils.is_snap() and snap_dir and os.path.exists(snap_dir):
+        if os_utils.is_snap(application_name) and snap_dir and os.path.exists(snap_dir):
             apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
             apt.apt_pkg.config.set("Dir", apt_dir)
             # yes apt is broken like that we need to append os.path.sep
@@ -131,8 +133,6 @@ class AptCache(ContextDecorator):
         # Clear up apt's Post-Invoke-Success as we are not running
         # on the system.
         apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
-
-        self.progress = LogProgress()
 
     def _populate_stage_cache_dir(self) -> None:
         """Create/refresh cache configuration.
