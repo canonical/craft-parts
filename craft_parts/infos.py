@@ -61,7 +61,7 @@ class ProjectInfo:
             project_dirs = ProjectDirs()
 
         self._application_name = application_name
-        self._cache_dir = Path(cache_dir).absolute()
+        self._cache_dir = Path(cache_dir).expanduser().resolve()
         self._set_machine(arch)
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count

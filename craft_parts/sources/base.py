@@ -56,9 +56,13 @@ class SourceHandler(abc.ABC):
         source_checksum: Optional[str] = None,
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
+        ignore_patterns: Optional[List[str]] = None,
     ):
         if not project_dirs:
             project_dirs = ProjectDirs()
+
+        if not ignore_patterns:
+            ignore_patterns = []
 
         self.source = str(source)
         self.part_src_dir = str(part_src_dir)
@@ -72,6 +76,7 @@ class SourceHandler(abc.ABC):
         self.command = command
         self._dirs = project_dirs
         self._checked = False
+        self._ignore_patterns = ignore_patterns
 
     # pylint: enable=too-many-arguments
 
@@ -126,6 +131,7 @@ class FileSourceHandler(SourceHandler):
         source_checksum: Optional[str] = None,
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
+        ignore_patterns: Optional[List[str]] = None,
     ):
         super().__init__(
             source,
@@ -138,6 +144,7 @@ class FileSourceHandler(SourceHandler):
             source_checksum=source_checksum,
             command=command,
             project_dirs=project_dirs,
+            ignore_patterns=ignore_patterns,
         )
         self._file = Path()
 

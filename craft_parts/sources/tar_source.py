@@ -22,7 +22,7 @@ import shutil
 import tarfile
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from craft_parts.dirs import ProjectDirs
 
@@ -46,6 +46,7 @@ class TarSource(FileSourceHandler):
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
+        ignore_patterns: Optional[List[str]] = None,
     ):
         super().__init__(
             source,
@@ -57,6 +58,7 @@ class TarSource(FileSourceHandler):
             source_depth=source_depth,
             source_checksum=source_checksum,
             project_dirs=project_dirs,
+            ignore_patterns=ignore_patterns,
         )
         if source_tag:
             raise errors.InvalidSourceOption(source_type="tar", option="source-tag")
