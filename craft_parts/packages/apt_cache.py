@@ -104,7 +104,7 @@ class AptCache(ContextDecorator):
         self.cache.close()
 
     @classmethod
-    def configure_apt(cls, application_name: str) -> None:
+    def configure_apt(cls, application_package_name: str) -> None:
         """Set up apt options and directories."""
         # Do not install recommends.
         apt.apt_pkg.config.set("Apt::Install-Recommends", "False")
@@ -114,7 +114,11 @@ class AptCache(ContextDecorator):
 
         # Methods and solvers dir for when in the SNAP.
         snap_dir = os.getenv("SNAP")
-        if os_utils.is_snap(application_name) and snap_dir and os.path.exists(snap_dir):
+        if (
+            os_utils.is_snap(application_package_name)
+            and snap_dir
+            and os.path.exists(snap_dir)
+        ):
             apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
             apt.apt_pkg.config.set("Dir", apt_dir)
             # yes apt is broken like that we need to append os.path.sep

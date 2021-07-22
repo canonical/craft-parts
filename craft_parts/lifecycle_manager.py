@@ -18,7 +18,7 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 from pydantic import ValidationError
 
@@ -55,6 +55,8 @@ class LifecycleManager:
         to the system where Craft Parts is being executed.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
+    :param package_name: The name of the application package, if required by the
+        package manager used by the platform. Defaults to the application name.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -70,6 +72,7 @@ class LifecycleManager:
         base: str = "",
         parallel_build_count: int = 1,
         extra_build_packages: List[str] = None,
+        application_package_name: Optional[str] = None,
         **custom_args,  # custom passthrough args
     ):
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):
@@ -78,10 +81,13 @@ class LifecycleManager:
         if not isinstance(all_parts, dict):
             raise TypeError("parts definition must be a dictionary")
 
+        if not application_package_name:
+            application_package_name = application_name
+
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
-        packages.Repository.configure(application_name)
+        packages.Repository.configure(application_package_name)
 
         project_dirs = ProjectDirs(work_dir=work_dir)
 

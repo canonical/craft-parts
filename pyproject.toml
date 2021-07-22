@@ -16,7 +16,7 @@ min-similarity-lines=13
 max-line-length = "88"
 max-attributes = 15
 max-args= 6
-max-locals = 16
+max-locals = 18
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = [

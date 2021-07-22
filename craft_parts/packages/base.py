@@ -33,7 +33,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def configure(cls, application_name: str) -> None:
+    def configure(cls, application_package_name: str) -> None:
         """Set up the repository."""
 
     @classmethod
@@ -168,7 +168,7 @@ class DummyRepository(BaseRepository):
     """A dummy repository."""
 
     @classmethod
-    def configure(cls, application_name: str) -> None:
+    def configure(cls, application_package_name: str) -> None:
         """Set up the repository."""
 
     @classmethod
