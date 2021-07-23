@@ -163,23 +163,16 @@ def is_dumb_terminal() -> bool:
     return not is_stdout_tty or is_term_dumb
 
 
-def is_snap(*, application_name: Optional[str] = None) -> bool:
+def is_snap(application_name: str) -> bool:
     """Verify whether we're running as a snap.
 
     :application_name: The snap application name. If provided, check
         if it matches the snap name.
     """
-    snap_name = os.environ.get("SNAP_NAME", "")
-    if application_name:
-        res = snap_name == application_name
-    else:
-        res = snap_name is not None
+    snap_name = os.environ.get("SNAP_NAME")
+    res = snap_name == application_name
 
-    logger.debug(
-        "craft_parts is is snap: %s, SNAP_NAME set to %s",
-        res,
-        snap_name,
-    )
+    logger.debug("is_snap: %s, SNAP_NAME set to %s", res, snap_name)
 
     return res
 

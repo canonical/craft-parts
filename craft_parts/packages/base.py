@@ -33,6 +33,11 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
+    def configure(cls, application_package_name: str) -> None:
+        """Set up the repository."""
+
+    @classmethod
+    @abc.abstractmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
         """Return a list of libraries in package_name.
 
@@ -161,6 +166,10 @@ RepositoryType = Type[BaseRepository]
 
 class DummyRepository(BaseRepository):
     """A dummy repository."""
+
+    @classmethod
+    def configure(cls, application_package_name: str) -> None:
+        """Set up the repository."""
 
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:

@@ -23,6 +23,7 @@ class TestBaseRepository:
 
     def test_abstract_methods(self):
         assert BaseRepository.__abstractmethods__ == {  # type: ignore
+            "configure",
             "get_installed_packages",
             "get_package_libraries",
             "is_package_installed",

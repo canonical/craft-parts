@@ -55,6 +55,8 @@ class LifecycleManager:
         to the system where Craft Parts is being executed.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
+    :param application_package_name: The name of the application package, if required
+        by the package manager used by the platform. Defaults to the application name.
     :param ignore_local_sources: A list of local source patterns to ignore.
     :param extra_build_packages: A list of additional build packages to install.
     :param custom_args: Any additional arguments that will be passed directly
@@ -71,6 +73,7 @@ class LifecycleManager:
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
+        application_package_name: Optional[str] = None,
         ignore_local_sources: Optional[List[str]] = None,
         extra_build_packages: Optional[List[str]] = None,
         **custom_args,  # custom passthrough args
@@ -81,8 +84,13 @@ class LifecycleManager:
         if not isinstance(all_parts, dict):
             raise TypeError("parts definition must be a dictionary")
 
+        if not application_package_name:
+            application_package_name = application_name
+
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
+
+        packages.Repository.configure(application_package_name)
 
         project_dirs = ProjectDirs(work_dir=work_dir)
 
