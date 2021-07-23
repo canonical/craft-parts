@@ -231,11 +231,9 @@ class TestBuildPackages:
         ]
         fake_run.assert_has_calls(
             [
-                call(["sudo", "--preserve-env", "apt-get", "update"]),
+                call(["apt-get", "update"]),
                 call(
                     [
-                        "sudo",
-                        "--preserve-env",
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
@@ -255,7 +253,6 @@ class TestBuildPackages:
                 ),
                 call(
                     [
-                        "sudo",
                         "apt-mark",
                         "auto",
                         "dependency-package",
@@ -314,11 +311,9 @@ class TestBuildPackages:
         assert build_packages == ["package-installed=3.0"]
         fake_run.assert_has_calls(
             [
-                call(["sudo", "--preserve-env", "apt-get", "update"]),
+                call(["apt-get", "update"]),
                 call(
                     [
-                        "sudo",
-                        "--preserve-env",
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
@@ -334,7 +329,7 @@ class TestBuildPackages:
                     },
                 ),
                 call(
-                    ["sudo", "apt-mark", "auto", "package-installed"],
+                    ["apt-mark", "auto", "package-installed"],
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
@@ -356,11 +351,9 @@ class TestBuildPackages:
         assert build_packages == ["package=1.0"]
         fake_run.assert_has_calls(
             [
-                call(["sudo", "--preserve-env", "apt-get", "update"]),
+                call(["apt-get", "update"]),
                 call(
                     [
-                        "sudo",
-                        "--preserve-env",
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
@@ -376,7 +369,7 @@ class TestBuildPackages:
                     },
                 ),
                 call(
-                    ["sudo", "apt-mark", "auto", "package"],
+                    ["apt-mark", "auto", "package"],
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
@@ -398,11 +391,9 @@ class TestBuildPackages:
 
         fake_run.assert_has_calls(
             [
-                call(["sudo", "--preserve-env", "apt-get", "update"]),
+                call(["apt-get", "update"]),
                 call(
                     [
-                        "sudo",
-                        "--preserve-env",
                         "apt-get",
                         "--no-install-recommends",
                         "-y",
@@ -418,7 +409,7 @@ class TestBuildPackages:
                     },
                 ),
                 call(
-                    ["sudo", "apt-mark", "auto", "package"],
+                    ["apt-mark", "auto", "package"],
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
@@ -450,21 +441,17 @@ class TestBuildPackages:
     def test_refresh_build_packages_list(self, fake_run):
         deb.Ubuntu.refresh_build_packages_list()
 
-        fake_run.assert_called_once_with(
-            ["sudo", "--preserve-env", "apt-get", "update"]
-        )
+        fake_run.assert_called_once_with(["apt-get", "update"])
 
     def test_refresh_build_packages_list_fails(self, fake_run):
         fake_run.side_effect = CalledProcessError(
-            returncode=1, cmd=["sudo", "--preserve-env", "apt-get", "update"]
+            returncode=1, cmd=["apt-get", "update"]
         )
 
         with pytest.raises(errors.PackageListRefreshError):
             deb.Ubuntu.refresh_build_packages_list()
 
-        fake_run.assert_has_calls(
-            [call(["sudo", "--preserve-env", "apt-get", "update"])]
-        )
+        fake_run.assert_has_calls([call(["apt-get", "update"])])
 
 
 @pytest.fixture

@@ -211,10 +211,7 @@ class SnapPackage:
 
     def install(self):
         """Installs the snap onto the system."""
-        snap_install_cmd = []
-        if _snap_command_requires_sudo():
-            snap_install_cmd = ["sudo"]
-        snap_install_cmd.extend(["snap", "install", self.name])
+        snap_install_cmd = ["snap", "install", self.name]
         if self._original_channel:
             snap_install_cmd.extend(["--channel", self._original_channel])
         try:
@@ -236,12 +233,7 @@ class SnapPackage:
 
     def refresh(self):
         """Refresh a snap onto a channel on the system."""
-        snap_refresh_cmd = []
-        if _snap_command_requires_sudo():
-            snap_refresh_cmd = ["sudo"]
-        snap_refresh_cmd.extend(
-            ["snap", "refresh", self.name, "--channel", self.channel]
-        )
+        snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
         try:
             if self.is_classic():
                 # TODO make this a user explicit choice
@@ -308,21 +300,6 @@ def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
                 "{}={}".format(snap_pkg.name, local_snap_info["revision"])
             )
     return snaps_installed
-
-
-def _snap_command_requires_sudo():
-    # snap whoami returns - if the user is not logged in.
-    output = check_output(["snap", "whoami"])
-    whoami = output.decode(sys.getfilesystemencoding())
-    requires_root = False
-    try:
-        requires_root = whoami.split(":")[1].strip() == "-"
-    # A safeguard if the output changes
-    except IndexError:
-        requires_root = True
-    if requires_root:
-        logger.warning("snapd is not logged in, snap install commands will use sudo")
-    return requires_root
 
 
 def get_assertion(assertion_params: Sequence[str]) -> bytes:
