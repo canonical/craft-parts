@@ -141,7 +141,7 @@ class TestPluginRegistry:
 class TestHelpers:
     """Verify plugin helper functions."""
 
-    def test_strip_plugin_properties(self):
+    def test_extract_part_properties(self):
         data = {
             "foo": True,
             "test": "yes",
@@ -151,7 +151,7 @@ class TestHelpers:
         }
         old_data = data.copy()
 
-        new_data = plugins.strip_plugin_properties(data, plugin_name="test")
+        new_data = plugins.extract_part_properties(data, plugin_name="test")
         assert new_data == {
             "foo": True,
             "test": "yes",

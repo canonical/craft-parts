@@ -20,9 +20,9 @@ from .base import PluginModel, extract_plugin_properties  # noqa: F401
 from .plugins import (  # noqa: F401
     Plugin,
     PluginProperties,
+    extract_part_properties,
     get_plugin,
     get_plugin_class,
     register,
-    strip_plugin_properties,
     unregister_all,
 )

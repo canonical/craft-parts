@@ -97,13 +97,15 @@ def unregister_all() -> None:
     _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
 
-def strip_plugin_properties(
+def extract_part_properties(
     data: Dict[str, Any], *, plugin_name: str
 ) -> Dict[str, Any]:
-    """Remove plugin-specific entries from part properties.
+    """Get common part properties without plugin-specific entries.
 
     :param data: A dictionary containing all part properties.
     :param plugin_name: The name of the plugin.
+
+    :return: A dictionary containing only common part properties.
     """
     prefix = f"{plugin_name}-"
     return {k: v for k, v in data.items() if not k.startswith(prefix)}
