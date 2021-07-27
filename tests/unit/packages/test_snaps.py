@@ -255,9 +255,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
         snap_pkg.install()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "install",
                 "fake-snap",
@@ -275,9 +273,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.install()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "install",
                 "fake-snap",
@@ -292,9 +288,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
         snap_pkg.install()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "install",
                 "fake-snap",
@@ -307,9 +301,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable/branch")
         snap_pkg.install()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "install",
                 "fake-snap",
@@ -327,7 +319,6 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.install()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             ["snap", "install", "fake-snap", "--channel", "strict/stable"],
         ]
 
@@ -345,9 +336,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.refresh()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "refresh",
                 "fake-snap",
@@ -360,9 +349,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable/branch")
         snap_pkg.refresh()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "refresh",
                 "fake-snap",
@@ -449,9 +436,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
         snap_pkg.refresh()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "refresh",
                 "fake-snap",
@@ -467,9 +452,7 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
         snap_pkg.refresh()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             [
-                "sudo",
                 "snap",
                 "refresh",
                 "fake-snap",
@@ -487,7 +470,6 @@ class TestSnapPackageLifecycle:
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.refresh()
         assert fake_snap_command.calls == [
-            ["snap", "whoami"],
             ["snap", "refresh", "fake-snap", "--channel", "strict/stable"],
         ]
 

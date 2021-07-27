@@ -315,7 +315,7 @@ class Ubuntu(BaseRepository):
     def refresh_build_packages_list(cls) -> None:
         """Refresh the list of packages available in the repository."""
         try:
-            cmd = ["sudo", "--preserve-env", "apt-get", "update"]
+            cmd = ["apt-get", "update"]
             logger.debug("Executing: %s", cmd)
             process_run(cmd)
         except subprocess.CalledProcessError as call_error:
@@ -403,8 +403,6 @@ class Ubuntu(BaseRepository):
         )
 
         apt_command = [
-            "sudo",
-            "--preserve-env",
             "apt-get",
             "--no-install-recommends",
             "-y",
@@ -420,7 +418,7 @@ class Ubuntu(BaseRepository):
 
         versionless_names = [get_pkg_name_parts(p)[0] for p in package_names]
         try:
-            process_run(["sudo", "apt-mark", "auto"] + versionless_names, env=env)
+            process_run(["apt-mark", "auto"] + versionless_names, env=env)
         except subprocess.CalledProcessError as err:
             logger.warning("Impossible to mark packages as auto-installed: %s", err)
 
