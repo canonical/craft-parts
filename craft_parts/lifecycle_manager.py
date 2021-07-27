@@ -223,9 +223,11 @@ def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> P
     except ValueError as err:
         raise errors.PartSpecificationError(part_name=name, message=str(err)) from err
 
-    plugins.strip_plugin_properties(spec, plugin_name=plugin_name)
+    part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
 
     # initialize part and unmarshal part specs
-    part = Part(name, spec, project_dirs=project_dirs, plugin_properties=properties)
+    part = Part(
+        name, part_spec, project_dirs=project_dirs, plugin_properties=properties
+    )
 
     return part
