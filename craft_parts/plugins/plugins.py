@@ -97,13 +97,13 @@ def unregister_all() -> None:
     _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
 
-def strip_plugin_properties(data: Dict[str, Any], *, plugin_name: str) -> None:
+def strip_plugin_properties(
+    data: Dict[str, Any], *, plugin_name: str
+) -> Dict[str, Any]:
     """Remove plugin-specific entries from part properties.
 
     :param data: A dictionary containing all part properties.
     :param plugin_name: The name of the plugin.
     """
     prefix = f"{plugin_name}-"
-    for key in list(data):
-        if key.startswith(prefix):
-            del data[key]
+    return {k: v for k, v in data.items() if not k.startswith(prefix)}

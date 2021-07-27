@@ -83,6 +83,7 @@ def test_application_plugin_happy(caplog, new_dir, mocker):
     plugins.register({"app": AppPlugin})
 
     parts = yaml.safe_load(_parts_yaml)
+    old_parts = parts.copy()
 
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_application_plugin", cache_dir=new_dir
@@ -108,6 +109,9 @@ def test_application_plugin_happy(caplog, new_dir, mocker):
 
     mock_install_build_packages.assert_called_once_with(["build_package"])
     mock_install_build_snaps.assert_called_once_with({"build_snap"})
+
+    # make sure parts data was not changed
+    assert parts == old_parts
 
 
 def test_application_plugin_missing_stuff(new_dir):

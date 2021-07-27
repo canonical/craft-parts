@@ -149,10 +149,14 @@ class TestHelpers:
             "test-two": 2,
             "not-test-three": 3,
         }
+        old_data = data.copy()
 
-        plugins.strip_plugin_properties(data, plugin_name="test")
-        assert data == {
+        new_data = plugins.strip_plugin_properties(data, plugin_name="test")
+        assert new_data == {
             "foo": True,
             "test": "yes",
             "not-test-three": 3,
         }
+
+        # make sure we don't destroy original data
+        assert data == old_data
