@@ -135,7 +135,7 @@ def test_application_plugin_missing_stuff(new_dir):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "'app-stuff': field required"
+    assert raised.value.message == "- field 'app-stuff' is required"
 
 
 def test_application_plugin_type_error(new_dir):
@@ -160,7 +160,7 @@ def test_application_plugin_type_error(new_dir):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "'app-stuff': value is not a valid list"
+    assert raised.value.message == "- value is not a valid list in field 'app-stuff'"
 
 
 def test_application_plugin_extra_property(new_dir):
@@ -186,7 +186,7 @@ def test_application_plugin_extra_property(new_dir):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "'app-other': extra fields not permitted"
+    assert raised.value.message == "- extra field 'app-other' not permitted"
 
 
 def test_application_plugin_not_registered(new_dir):

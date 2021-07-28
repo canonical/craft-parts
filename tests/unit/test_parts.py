@@ -278,7 +278,7 @@ class TestPartUnmarshal:
             Part("foo", data)
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
-            "'a': extra fields not permitted\n'b': extra fields not permitted"
+            "- extra field 'a' not permitted\n- extra field 'b' not permitted"
         )
 
     def test_part_spec_not_dict(self):
@@ -291,7 +291,7 @@ class TestPartUnmarshal:
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []})
         assert raised.value.part_name == "foo"
-        assert raised.value.message == "'plugin': str type expected"
+        assert raised.value.message == "- str type expected in field 'plugin'"
 
     @pytest.mark.parametrize("fileset", ["stage", "prime"])
     def test_relative_path_validation(self, fileset):
@@ -299,8 +299,9 @@ class TestPartUnmarshal:
             Part("foo", {fileset: ["bar", "/baz", ""]})
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
-            f"{fileset!r},1: '/baz' must be a relative path (cannot start with '/')\n"
-            f"{fileset!r},2: path cannot be empty"
+            "- '/baz' must be a relative path (cannot start with '/') "
+            f"in field '{fileset}[1]'\n"
+            f"- path cannot be empty in field '{fileset}[2]'"
         )
 
 
