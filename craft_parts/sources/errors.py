@@ -27,7 +27,10 @@ class SourceError(errors.PartsError):
 
 
 class InvalidSourceType(SourceError):
-    """Failed to determine a source type."""
+    """Failed to determine a source type.
+
+    :param source: The source defined for the part.
+    """
 
     def __init__(self, source: str):
         self.source = source
@@ -37,7 +40,11 @@ class InvalidSourceType(SourceError):
 
 
 class InvalidSourceOption(SourceError):
-    """A source option is not allowed for the given source type."""
+    """A source option is not allowed for the given source type.
+
+    :param source_type: The part's source type.
+    :param option: The invalid source option.
+    """
 
     def __init__(self, *, source_type: str, option: str):
         self.source_type = source_type
@@ -52,7 +59,11 @@ class InvalidSourceOption(SourceError):
 
 
 class IncompatibleSourceOptions(SourceError):
-    """Source specified options that cannot be used at the same time."""
+    """Source specified options that cannot be used at the same time.
+
+    :param source_type: The part's source type.
+    :param options: The list of incompatible source options.
+    """
 
     def __init__(self, source_type: str, options: List[str]):
         self.source_type = source_type
@@ -68,7 +79,11 @@ class IncompatibleSourceOptions(SourceError):
 
 
 class ChecksumMismatch(SourceError):
-    """A checksum doesn't match the expected value."""
+    """A checksum doesn't match the expected value.
+
+    :param expected: The expected checksum.
+    :param obtained: The actual checksum.
+    """
 
     def __init__(self, *, expected: str, obtained: str):
         self.expected = expected
@@ -79,7 +94,10 @@ class ChecksumMismatch(SourceError):
 
 
 class SourceUpdateUnsupported(SourceError):
-    """The source handler doesn't support updating."""
+    """The source handler doesn't support updating.
+
+    :param name: The source type.
+    """
 
     def __init__(self, name: str):
         self.name = name
@@ -89,7 +107,10 @@ class SourceUpdateUnsupported(SourceError):
 
 
 class NetworkRequestError(SourceError):
-    """A network request operation failed."""
+    """A network request operation failed.
+
+    :param message: The error message.
+    """
 
     def __init__(self, message: str):
         self.message = message
@@ -100,7 +121,10 @@ class NetworkRequestError(SourceError):
 
 
 class SourceNotFound(SourceError):
-    """Failed to retrieve a source."""
+    """Failed to retrieve a source.
+
+    :param source: The source defined for the part.
+    """
 
     def __init__(self, source: str):
         self.source = source
@@ -111,7 +135,10 @@ class SourceNotFound(SourceError):
 
 
 class InvalidSnapPackage(SourceError):
-    """A snap package is invalid."""
+    """A snap package is invalid.
+
+    :param snap_file: The snap file name.
+    """
 
     def __init__(self, snap_file: str):
         self.snap_file = snap_file
@@ -122,7 +149,11 @@ class InvalidSnapPackage(SourceError):
 
 
 class PullError(SourceError):
-    """Failed pulling source."""
+    """Failed pulling source.
+
+    :param command: The command used to pull the source.
+    :param exit_code: The command exit code.
+    """
 
     def __init__(self, *, command: List[str], exit_code: int):
         self.command = command

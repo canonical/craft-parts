@@ -103,7 +103,7 @@ class InvalidArchitecture(PartsError):
 class PartSpecificationError(PartsError):
     """A part was not correctly specified.
 
-    :param part_name: The part name.
+    :param part_name: The name of the part being processed.
     :param message: The error message.
     """
 
@@ -118,7 +118,11 @@ class PartSpecificationError(PartsError):
 
     @classmethod
     def from_validation_error(cls, *, part_name: str, error_list: List[Dict[str, Any]]):
-        """Create a PartSpecificationError from a pydantic error list."""
+        """Create a PartSpecificationError from a pydantic error list.
+
+        :param part_name: The name of the part being processed.
+        :param error_list: A list of dictionaries containing pydantic error definitions.
+        """
         formatted_errors: List[str] = []
 
         for error in error_list:
@@ -344,7 +348,12 @@ class FileOrganizeError(PartsError):
 
 
 class PartFilesConflict(PartsError):
-    """Different parts list the same files with different contents."""
+    """Different parts list the same files with different contents.
+
+    :param part_name: The name of the part being processed.
+    :param other_part_name: The name of the conflicting part.
+    :param conflicting_files: The list of conflicting files.
+    """
 
     def __init__(
         self, *, part_name: str, other_part_name: str, conflicting_files: List[str]
@@ -457,7 +466,7 @@ class StagePackageNotFound(PartsError):
     """Failed to install a stage package.
 
     :param part_name: The name of the part being processed.
-    :param message: the error message.
+    :param package_name: The name of the package.
     """
 
     def __init__(self, *, part_name: str, package_name: str):
