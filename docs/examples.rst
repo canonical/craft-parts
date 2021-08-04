@@ -5,9 +5,10 @@ Adding parts processing to an application
 A simple example
 ================
 
-To add parts processing to an application, one needs to instantiate the
-:class:`LifecycleManager <craft_parts.LifecycleManager>` class, plan actions
-for a given target step, and execute them::
+To add parts processing to an application, instantiate the
+:class:`LifecycleManager <craft_parts.LifecycleManager>` class passing the
+parts dictionary. Plan actions for the ``PRIME`` target step, and execute
+them::
 
   import yaml
   from craft_parts import LifecycleManager, Step
