@@ -35,7 +35,20 @@ logger = logging.getLogger(__name__)
 
 
 class Executor:
-    """Execute lifecycle actions."""
+    """Execute lifecycle actions.
+
+    The executor takes the part definition and a list of actions to run for
+    a part and step. Action execution is stateless: no information is kept from
+    the execution of previous parts. On-disk state information written after
+    running each action is read by the sequencer before planning a new set of
+    actions.
+
+    :param part_list: The list of parts to process.
+    :param project_info: Information about this project.
+    :param extra_build_packages: Additional packages to install on the host system.
+    :param extra_build_snaps: Additional snaps to install on the host system.
+    :param ignore_patterns: File patterns to ignore when pulling local sources.
+    """
 
     def __init__(
         self,

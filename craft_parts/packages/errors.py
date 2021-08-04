@@ -27,7 +27,10 @@ class PackagesError(PartsError):
 
 
 class PackageNotFound(PackagesError):
-    """Requested package doesn't exist in the remote repository."""
+    """Requested package doesn't exist in the remote repository.
+
+    :param package_name: The name of the missing package.
+    """
 
     def __init__(self, package_name: str):
         self.package_name = package_name
@@ -37,7 +40,10 @@ class PackageNotFound(PackagesError):
 
 
 class PackagesNotFound(PackagesError):
-    """Requested package doesn't exist in the remote repository."""
+    """Requested package doesn't exist in the remote repository.
+
+    :param package_name: The names of the missing packages.
+    """
 
     def __init__(self, packages: Sequence[str]):
         self.packages = packages
@@ -51,7 +57,10 @@ class PackagesNotFound(PackagesError):
 
 
 class PackageFetchError(PackagesError):
-    """Failed to fetch package from remote repository."""
+    """Failed to fetch package from remote repository.
+
+    :param message: The error message.
+    """
 
     def __init__(self, message: str):
         self.message = message
@@ -61,7 +70,10 @@ class PackageFetchError(PackagesError):
 
 
 class PackageListRefreshError(PackagesError):
-    """Failed to refresh the list of available packages."""
+    """Failed to refresh the list of available packages.
+
+    :param message: The error message.
+    """
 
     def __init__(self, message: str):
         self.message = message
@@ -71,7 +83,11 @@ class PackageListRefreshError(PackagesError):
 
 
 class PackageBroken(PackagesError):
-    """Package has unmet dependencies."""
+    """Package has unmet dependencies.
+
+    :param package_name: The name of the package with unmet dependencies.
+    :param deps: The list of unmet dependencies.
+    """
 
     def __init__(self, package_name: str, *, deps: Sequence[str]):
         self.package_name = package_name
@@ -82,7 +98,10 @@ class PackageBroken(PackagesError):
 
 
 class FileProviderNotFound(PackagesError):
-    """A file is not provided by any package."""
+    """A file is not provided by any package.
+
+    :param file_path: The file path.
+    """
 
     def __init__(self, *, file_path: str):
         self.file_path = file_path
@@ -92,7 +111,10 @@ class FileProviderNotFound(PackagesError):
 
 
 class BuildPackageNotFound(PackagesError):
-    """A package listed in 'build-packages' was not found."""
+    """A package listed in 'build-packages' was not found.
+
+    :param package: The name of the missing package.
+    """
 
     def __init__(self, package):
         self.package = package
@@ -102,7 +124,10 @@ class BuildPackageNotFound(PackagesError):
 
 
 class BuildPackagesNotInstalled(PackagesError):
-    """Could not install all requested build packages."""
+    """Could not install all requested build packages.
+
+    :param packages: The packages to install.
+    """
 
     def __init__(self, *, packages: Sequence[str]) -> None:
         self.packages = packages
@@ -112,7 +137,10 @@ class BuildPackagesNotInstalled(PackagesError):
 
 
 class UnpackError(PackagesError):
-    """Error unpacking stage package."""
+    """Error unpacking stage package.
+
+    :param package: The package that failed to unpack.
+    """
 
     def __init__(self, package: str):
         self.package = package
@@ -122,7 +150,11 @@ class UnpackError(PackagesError):
 
 
 class SnapUnavailable(PackagesError):
-    """Failed to install or refresh a snap."""
+    """Failed to install or refresh a snap.
+
+    :param snap_name: The snap name.
+    :param snap_channel: The snap channel.
+    """
 
     def __init__(self, *, snap_name: str, snap_channel: str):
         self.snap_name = snap_name
@@ -141,7 +173,11 @@ class SnapUnavailable(PackagesError):
 
 
 class SnapInstallError(PackagesError):
-    """Failed to install a snap."""
+    """Failed to install a snap.
+
+    :param snap_name: The snap name.
+    :param snap_channel: The snap channel.
+    """
 
     def __init__(self, *, snap_name, snap_channel):
         self.snap_name = snap_name
@@ -152,7 +188,11 @@ class SnapInstallError(PackagesError):
 
 
 class SnapDownloadError(PackagesError):
-    """Failed to download a snap."""
+    """Failed to download a snap.
+
+    :param snap_name: The snap name.
+    :param snap_channel: The snap channel.
+    """
 
     def __init__(self, *, snap_name, snap_channel):
         self.snap_name = snap_name
@@ -163,7 +203,11 @@ class SnapDownloadError(PackagesError):
 
 
 class SnapRefreshError(PackagesError):
-    """Failed to refresh a snap."""
+    """Failed to refresh a snap.
+
+    :param snap_name: The snap name.
+    :param snap_channel: The snap channel.
+    """
 
     def __init__(self, *, snap_name, snap_channel):
         self.snap_name = snap_name
@@ -174,7 +218,10 @@ class SnapRefreshError(PackagesError):
 
 
 class SnapGetAssertionError(PackagesError):
-    """Failed to retrieve snap assertion."""
+    """Failed to retrieve snap assertion.
+
+    :param assertion_params: The snap assertion parameters.
+    """
 
     def __init__(self, *, assertion_params: Sequence[str]) -> None:
         self.assertion_params = assertion_params
@@ -185,7 +232,11 @@ class SnapGetAssertionError(PackagesError):
 
 
 class SnapdConnectionError(PackagesError):
-    """Failed to connect to snapd."""
+    """Failed to connect to snapd.
+
+    :param snap_name: The snap name.
+    :param url: The failed connection URL.
+    """
 
     def __init__(self, *, snap_name: str, url: str) -> None:
         self.snap_name = snap_name

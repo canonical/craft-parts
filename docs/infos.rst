@@ -2,12 +2,13 @@
 Project information
 *******************
 
-Project parameters are provided to callback functions through
-:class:`StepInfo`. It consolidates properties from classes
-:class:`ProjectDirs`, :class:`ProjectInfo` and
-:class:`PartInfo`, including custom application-specific
-parameters passed as keyword arguments when instantiating
-to :class:`LifecycleManager`.
+Project parameters are provided to callback functions by passing an
+instance of the :class:`StepInfo <craft_parts.StepInfo>` class. It
+consolidates properties from classes :class:`PartInfo <craft_parts.PartInfo>`,
+:class:`ProjectInfo <craft_parts.ProjectInfo>` and
+:class:`ProjectDirs <craft_parts.ProjectDirs>`, including custom
+application-specific parameters passed as keyword arguments when
+instantiating :class:`LifecycleManager <craft_parts.LifecycleManager>`.
 
 .. autoclass:: craft_parts.ProjectDirs
    :members:

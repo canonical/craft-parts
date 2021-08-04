@@ -13,13 +13,20 @@ deployment. The components used in its project specification are called
 also depend on each other in order to assemble the subtree containing the
 final artifacts.
 
-Application development
-=======================
+.. toctree::
+   :caption: Getting started
+   :maxdepth: 2
 
-Public APIs
------------
+   examples
+
+   cli_tool
+
 
 .. toctree::
+   :caption: Public API
+   :maxdepth: 1
+
+   lifecycle_manager
 
    parts_steps
 
@@ -27,32 +34,22 @@ Public APIs
 
    infos
 
-   lifecycle
-
    exceptions
 
-Examples
---------
-
-
-Craft-parts development
-=======================
-
-Internal APIs
--------------
 
 .. toctree::
+   :caption: Internals
+   :maxdepth: 1
 
-   sequencer
+   lifecycle
 
-.. toctree::
-   :caption: Reference:
+   implementation
 
-   craft_parts
+   reference
+
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`

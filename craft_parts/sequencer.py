@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 class Sequencer:
     """Obtain a list of actions from the parts specification.
 
+    The sequencer takes the parts definition and the current state of a project
+    to plan all the actions needed to reach a given target step. State is read
+    from persistent storage and updated entirely in memory. Sequencer operations
+    never change disk contents.
+
     :param part_list: The list of parts to process.
     :param project_info: Information about this project.
     :param ignore_outdated: A list of file patterns to ignore when testing for
