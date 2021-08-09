@@ -90,7 +90,8 @@ class PartHandler:
             return
 
         if action.action_type == ActionType.RERUN:
-            self.clean_step(step=action.step)
+            for step in [action.step] + action.step.next_steps():
+                self.clean_step(step=step)
 
         handler: Callable[[StepInfo], StepState]
 

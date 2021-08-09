@@ -305,9 +305,9 @@ class TestRerunStep:
         mock.attach_mock(mock_callback, "run_pre_step")
 
         handler.run_action(Action("p1", step, ActionType.RERUN))
-        mock.assert_has_calls(
-            [mocker.call.clean_step(step=step), mocker.call.run_pre_step(mocker.ANY)]
-        )
+        calls = [mocker.call.clean_step(step=x) for x in [step] + step.next_steps()]
+        calls.append(mocker.call.run_pre_step(mocker.ANY))
+        mock.assert_has_calls(calls)
 
 
 @pytest.mark.usefixtures("new_dir")
