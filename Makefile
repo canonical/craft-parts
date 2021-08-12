@@ -1,3 +1,5 @@
+SOURCES=$(wildcard *.py) craft_parts tests
+
 .PHONY: help
 help: ## Show this help.
 	@printf "%-30s %s\n" "Target" "Description"
@@ -6,9 +8,9 @@ help: ## Show this help.
 
 .PHONY: autoformat
 autoformat: ## Run automatic code formatters.
-	isort .
-	autoflake --remove-all-unused-imports --ignore-init-module-imports -ri .
-	black .
+	isort $(SOURCES)
+	autoflake --remove-all-unused-imports --ignore-init-module-imports -ri $(SOURCES)
+	black $(SOURCES)
 
 .PHONY: clean
 clean: ## Clean artifacts from building, testing, etc.
@@ -62,15 +64,15 @@ release: dist ## Release with twine.
 
 .PHONY: test-black
 test-black:
-	black --check --diff .
+	black --check --diff $(SOURCES)
 
 .PHONY: test-codespell
 test-codespell:
-	codespell craft_parts tests
+	codespell $(SOURCES)
 
 .PHONY: test-flake8
 test-flake8:
-	flake8 craft_parts tests
+	flake8 $(SOURCES)
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
@@ -78,11 +80,11 @@ test-integrations: ## Run integration tests.
 
 .PHONY: test-isort
 test-isort:
-	isort --check craft_parts tests
+	isort --check $(SOURCES)
 
 .PHONY: test-mypy
 test-mypy:
-	mypy craft_parts tests
+	mypy $(SOURCES)
 
 .PHONY: test-pydocstyle
 test-pydocstyle:
@@ -90,12 +92,12 @@ test-pydocstyle:
 
 .PHONY: test-pylint
 test-pylint:
-	pylint craft_parts
+	pylint craft_parts *.py
 	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,consider-using-with
 
 .PHONY: test-pyright
 test-pyright:
-	pyright craft_parts tests
+	pyright $(SOURCES)
 
 .PHONY: test-units
 test-units: ## Run unit tests.
