@@ -232,6 +232,8 @@ def mount(device: str, mountpoint: str, *args) -> None:
     :param device: The device to mount.
     :param mountpoint: Where the device will be mounted.
     :param *args: Additional arguments to ``mount(8)``.
+
+    :raises subprocess.CalledProcessError: on error.
     """
     subprocess.check_call(["/bin/mount", *args, device, mountpoint])
 
@@ -240,6 +242,8 @@ def umount(mountpoint: str) -> None:
     """Unmount a filesystem.
 
     :param mountpoint: The mount point or device to unmount.
+
+    :raises subprocess.CalledProcessError: on error.
     """
     subprocess.check_call(["/bin/umount", mountpoint])
 
