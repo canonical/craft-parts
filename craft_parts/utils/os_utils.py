@@ -226,6 +226,24 @@ def get_system_info() -> str:
     return uname
 
 
+def mount(device: str, mountpoint: str, *args) -> None:
+    """Mount a filesystem.
+
+    :param device: The device to mount.
+    :param mountpoint: Where the device will be mounted.
+    :param *args: Additional arguments to ``mount(8)``.
+    """
+    subprocess.check_call(["/bin/mount", *args, device, mountpoint])
+
+
+def umount(mountpoint: str) -> None:
+    """Unmount a filesystem.
+
+    :param mountpoint: The mount point or device to unmount.
+    """
+    subprocess.check_call(["/bin/umount", mountpoint])
+
+
 _ID_TO_UBUNTU_CODENAME = {
     "17.10": "artful",
     "17.04": "zesty",
