@@ -18,6 +18,17 @@
 
 from setuptools import find_packages, setup  # type: ignore
 
+
+def is_ubuntu() -> bool:
+    """Verify if running on Ubuntu."""
+    try:
+        with open("/etc/os-release") as release_file:
+            os_release = release_file.read()
+        return "ID=ubuntu" in os_release
+    except FileNotFoundError:
+        return False
+
+
 with open("README.md") as readme_file:
     readme = readme_file.read()
 
@@ -31,13 +42,8 @@ install_requires = [
     "requests-unixsocket",
 ]
 
-try:
-    os_release = open("/etc/os-release").read()
-    ubuntu = "ID=ubuntu" in os_release
-except FileNotFoundError:
-    ubuntu = False
 
-if ubuntu:
+if is_ubuntu():
     install_requires += [
         "python-apt",
     ]
