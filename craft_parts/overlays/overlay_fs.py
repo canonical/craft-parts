@@ -44,7 +44,12 @@ class OverlayFS:
         self._mountpoint: Optional[Path] = None
 
     def mount(self, mountpoint: Path) -> None:
-        """Mount an overlayfs."""
+        """Mount an overlayfs.
+
+        :param mountpoint: The filesystem mount point.
+
+        :raises OverlayMountError: on mount error.
+        """
         logger.debug("mount overlayfs on %s", self._mountpoint)
         lower_dir = ":".join([str(p) for p in self._lower_dir])
 
@@ -63,7 +68,10 @@ class OverlayFS:
         self._mountpoint = mountpoint
 
     def unmount(self) -> None:
-        """Umount an overlayfs."""
+        """Umount an overlayfs.
+
+        :raises OverlayUnmountError: on unmount error.
+        """
         if not self._mountpoint:
             return
 
@@ -84,7 +92,7 @@ def is_whiteout_file(path: Path) -> bool:
 
     :param path: The path of the file to verify.
 
-    :return: Whether the given path is an overlayfs whiteout.
+    :returns: Whether the given path is an overlayfs whiteout.
     """
     if not path.is_char_device() or path.is_symlink():
         return False
@@ -102,7 +110,7 @@ def is_opaque_dir(path: Path) -> bool:
 
     :param path: The path of the file to verify.
 
-    :return: Whether the given path is an overlayfs opaque directory.
+    :returns: Whether the given path is an overlayfs opaque directory.
     """
     if not path.is_dir() or path.is_symlink():
         return False
