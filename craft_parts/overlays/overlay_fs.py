@@ -20,7 +20,7 @@ import logging
 import os
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from craft_parts.utils import os_utils
 
@@ -32,13 +32,8 @@ logger = logging.getLogger(__name__)
 class OverlayFS:
     """Linux overlayfs operations."""
 
-    def __init__(
-        self, *, lower_dir: Union[Path, List[Path]], upper_dir: Path, work_dir: Path
-    ):
-        if not isinstance(lower_dir, list):
-            lower_dir = [lower_dir]
-
-        self._lower_dir = lower_dir
+    def __init__(self, *, lower_dirs: List[Path], upper_dir: Path, work_dir: Path):
+        self._lower_dirs = lower_dirs
         self._upper_dir = upper_dir
         self._work_dir = work_dir
         self._mountpoint: Optional[Path] = None
@@ -51,7 +46,7 @@ class OverlayFS:
         :raises OverlayMountError: on mount error.
         """
         logger.debug("mount overlayfs on %s", self._mountpoint)
-        lower_dir = ":".join([str(p) for p in self._lower_dir])
+        lower_dir = ":".join([str(p) for p in self._lower_dirs])
 
         try:
             os_utils.mount(

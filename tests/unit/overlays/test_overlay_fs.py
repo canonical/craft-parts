@@ -17,7 +17,7 @@
 import os
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import List, Union
+from typing import List
 
 import pytest
 
@@ -28,9 +28,9 @@ class TestOverlayFS:
     """Mount and unmount an overlayfs."""
 
     @staticmethod
-    def _make_overlay_fs(lower: Union[Path, List[Path]]) -> overlay_fs.OverlayFS:
+    def _make_overlay_fs(lower: List[Path]) -> overlay_fs.OverlayFS:
         return overlay_fs.OverlayFS(
-            lower_dir=lower,
+            lower_dirs=lower,
             upper_dir=Path("/upper"),
             work_dir=Path("/work"),
         )
@@ -38,7 +38,7 @@ class TestOverlayFS:
     def test_mount_single_lower(self, mocker):
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
 
-        ovfs = self._make_overlay_fs(Path("/lower"))
+        ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
         mock_mount.assert_called_once_with(
             "overlay",
@@ -65,7 +65,7 @@ class TestOverlayFS:
             side_effect=CalledProcessError(cmd=["some", "command"], returncode=42),
         )
 
-        ovfs = self._make_overlay_fs(Path("/lower"))
+        ovfs = self._make_overlay_fs([Path("/lower")])
         with pytest.raises(errors.OverlayMountError) as err:
             ovfs.mount(Path("/mountpoint"))
         assert err.value.mountpoint == "/mountpoint"
@@ -78,7 +78,7 @@ class TestOverlayFS:
         mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        ovfs = self._make_overlay_fs(Path("/lower"))
+        ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
         ovfs.unmount()
         mock_umount.assert_called_once_with("/mountpoint")
@@ -86,7 +86,7 @@ class TestOverlayFS:
     def test_unmount_not_mounted(self, mocker):
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        ovfs = self._make_overlay_fs(Path("/lower"))
+        ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.unmount()
         mock_umount.assert_not_called()
 
@@ -94,7 +94,7 @@ class TestOverlayFS:
         mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        ovfs = self._make_overlay_fs(Path("/lower"))
+        ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
         ovfs.unmount()
         ovfs.unmount()
@@ -108,7 +108,7 @@ class TestOverlayFS:
             side_effect=CalledProcessError(cmd=["some", "command"], returncode=42),
         )
 
-        ovfs = self._make_overlay_fs(Path("/lower"))
+        ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
 
         with pytest.raises(errors.OverlayMountError) as err:
