@@ -79,6 +79,9 @@ class OverlayFS:
 def is_whiteout_file(path: Path) -> bool:
     """Verify if the given path corresponds to a whiteout file.
 
+    Overlayfs whiteout files are represented as character devices
+    with major and minor numbers set to 0.
+
     :param path: The path of the file to verify.
 
     :return: Whether the given path is an overlayfs whiteout.
@@ -93,6 +96,9 @@ def is_whiteout_file(path: Path) -> bool:
 
 def is_opaque_dir(path: Path) -> bool:
     """Verify if the given path corresponds to an opaque directory.
+
+    Overlayfs opaque directories are represented by directories with the
+    extended attribute `trusted.overlay.opaque` set to `y`.
 
     :param path: The path of the file to verify.
 
