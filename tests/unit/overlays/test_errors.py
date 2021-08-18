@@ -32,6 +32,6 @@ def test_overlay_unmount_error():
     err = errors.OverlayUnmountError("/mountpoint", "something wrong happened")
     assert err.mountpoint == "/mountpoint"
     assert err.message == "something wrong happened"
-    assert err.brief == ("Failed to unmount /mountpoint: something wrong happened")
+    assert err.brief == "Failed to unmount /mountpoint: something wrong happened"
     assert err.details is None
     assert err.resolution is None
