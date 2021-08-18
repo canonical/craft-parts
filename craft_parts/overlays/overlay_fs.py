@@ -58,7 +58,7 @@ class OverlayFS:
                 ),
             )
         except CalledProcessError as err:
-            raise errors.OverlayMountError(str(mountpoint), message=str(err))
+            raise errors.OverlayMountError(str(mountpoint), message=str(err)) from err
 
         self._mountpoint = mountpoint
 
@@ -74,7 +74,9 @@ class OverlayFS:
         try:
             os_utils.umount(str(self._mountpoint))
         except CalledProcessError as err:
-            raise errors.OverlayUnmountError(str(self._mountpoint), message=str(err))
+            raise errors.OverlayUnmountError(
+                str(self._mountpoint), message=str(err)
+            ) from err
 
         self._mountpoint = None
 
