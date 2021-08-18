@@ -74,7 +74,7 @@ class OverlayFS:
         try:
             os_utils.umount(str(self._mountpoint))
         except CalledProcessError as err:
-            raise errors.OverlayMountError(str(self._mountpoint), message=str(err))
+            raise errors.OverlayUnmountError(str(self._mountpoint), message=str(err))
 
         self._mountpoint = None
 

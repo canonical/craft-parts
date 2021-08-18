@@ -111,7 +111,7 @@ class TestOverlayFS:
         ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
 
-        with pytest.raises(errors.OverlayMountError) as err:
+        with pytest.raises(errors.OverlayUnmountError) as err:
             ovfs.unmount()
         assert err.value.mountpoint == "/mountpoint"
         assert (
