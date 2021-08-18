@@ -383,3 +383,19 @@ class TestEnvironment:
     def test_is_inside_container_no_files(self, mocker):
         mocker.patch("os.path.exists", new=lambda x: False)
         assert os_utils.is_inside_container() is False
+
+
+class TestMount:
+    """Check mount and unmount calls."""
+
+    def test_mount(self, mocker):
+        mock_call = mocker.patch("subprocess.check_call")
+        os_utils.mount("/dev/node", "/mountpoint", "some", "args")
+        mock_call.assert_called_once_with(
+            ["/bin/mount", "some", "args", "/dev/node", "/mountpoint"]
+        )
+
+    def test_umount(self, mocker):
+        mock_call = mocker.patch("subprocess.check_call")
+        os_utils.umount("/mountpoint")
+        mock_call.assert_called_once_with(["/bin/umount", "/mountpoint"])
