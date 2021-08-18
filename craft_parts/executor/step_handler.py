@@ -30,7 +30,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from craft_parts import errors, packages
-from craft_parts.executor import collisions
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
@@ -40,6 +39,7 @@ from craft_parts.utils import file_utils, os_utils
 
 from . import environment, filesets
 from .filesets import Fileset
+from .migration import migrate_files
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ class StepHandler:
                 prefix_trim=self._part.part_install_dir,
             )
 
-        _migrate_files(
+        migrate_files(
             files=files,
             dirs=dirs,
             srcdir=str(self._part.part_install_dir),
@@ -163,7 +163,7 @@ class StepHandler:
 
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(prime_fileset, srcdir)
-        _migrate_files(
+        migrate_files(
             files=files,
             dirs=dirs,
             srcdir=str(self._part.stage_dir),
@@ -308,60 +308,6 @@ class StepHandler:
             self._builtin_stage()
         elif function_name == "prime":
             self._builtin_prime()
-
-
-def _migrate_files(
-    *,
-    files: Set[str],
-    dirs: Set[str],
-    srcdir: str,
-    destdir: str,
-    missing_ok: bool = False,
-    follow_symlinks: bool = False,
-    fixup_func=lambda *args: None,
-):
-    for dirname in sorted(dirs):
-        src = os.path.join(srcdir, dirname)
-        dst = os.path.join(destdir, dirname)
-
-        file_utils.create_similar_directory(src, dst)
-
-    for filename in sorted(files):
-        src = os.path.join(srcdir, filename)
-        dst = os.path.join(destdir, filename)
-
-        if missing_ok and not os.path.exists(src):
-            continue
-
-        # If the file is already here and it's a symlink, leave it alone.
-        if os.path.islink(dst):
-            continue
-
-        # Otherwise, remove and re-link it.
-        if os.path.exists(dst):
-            os.remove(dst)
-
-        file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
-
-        fixup_func(dst)
-
-
-def _check_conflicts(
-    part_name: str, srcdir: str, destdir: str, files: List[str]
-) -> None:
-    conflict_files: List[str] = []
-
-    for filename in files:
-        src = os.path.join(srcdir, filename)
-        dst = os.path.join(destdir, filename)
-
-        if collisions.paths_collide(src, dst):
-            conflict_files.append(filename)
-
-    if conflict_files:
-        raise errors.StageFilesConflict(
-            part_name=part_name, conflicting_files=conflict_files
-        )
 
 
 # XXX: this will be removed when user messages support is implemented.

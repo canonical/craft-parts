@@ -22,7 +22,7 @@ import os.path
 import shutil
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 
 from craft_parts import callbacks, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
@@ -35,6 +35,7 @@ from craft_parts.state_manager.states import StepState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 
+from .migration import clean_shared_area
 from .organize import organize_files
 from .step_handler import StepContents, StepHandler
 
@@ -378,7 +379,7 @@ class PartHandler:
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
         part_states = _load_part_states(Step.STAGE, self._part_list)
-        _clean_shared_area(
+        clean_shared_area(
             part_name=self._part.name,
             shared_dir=self._part.stage_dir,
             part_states=part_states,
@@ -387,7 +388,7 @@ class PartHandler:
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
         part_states = _load_part_states(Step.PRIME, self._part_list)
-        _clean_shared_area(
+        clean_shared_area(
             part_name=self._part.name,
             shared_dir=self._part.prime_dir,
             part_states=part_states,
@@ -481,71 +482,6 @@ def _remove(filename: Path) -> None:
     elif filename.is_dir():
         logger.debug("remove directory %s", filename)
         shutil.rmtree(filename)
-
-
-def _clean_shared_area(
-    *, part_name: str, shared_dir: Path, part_states: Dict[str, StepState]
-) -> None:
-    """Clean files added by a part to a shared directory.
-
-    :param part_name: The name of the part that added the files.
-    :param shared_dir: The shared directory to remove files from.
-    :param part_states: A dictionary containing the each part's state for the
-        step being processed.
-    """
-    # no state defined for this part, we won't remove files
-    if part_name not in part_states:
-        return
-
-    state = part_states[part_name]
-    files = state.files
-    directories = state.directories
-
-    # We want to make sure we don't remove a file or directory that's
-    # being used by another part. So we'll examine the state for all parts
-    # in the project and leave any files or directories found to be in
-    # common.
-    for other_name, other_state in part_states.items():
-        if other_state and other_name != part_name:
-            files -= other_state.files
-            directories -= other_state.directories
-
-    # Finally, clean the files and directories that are specific to this
-    # part.
-    _clean_migrated_files(files, directories, shared_dir)
-
-
-def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> None:
-    """Remove files and directories migrated from part install to a common directory.
-
-    :param files: A set of files to remove.
-    :param dirs: A set of directories to remove.
-    :param directory: The path to remove files and directories from.
-    """
-    for each_file in files:
-        try:
-            Path(directory, each_file).unlink()
-        except FileNotFoundError:
-            logger.warning(
-                "Attempted to remove file %r, but it didn't exist. Skipping...",
-                each_file,
-            )
-
-    # Directories may not be ordered so that subdirectories come before
-    # parents, and we want to be able to remove directories if possible, so
-    # we'll sort them in reverse here to get subdirectories before parents.
-
-    for each_dir in sorted(dirs, reverse=True):
-        migrated_directory = os.path.join(directory, each_dir)
-        try:
-            if not os.listdir(migrated_directory):
-                os.rmdir(migrated_directory)
-        except FileNotFoundError:
-            logger.warning(
-                "Attempted to remove directory '%s', but it didn't exist. "
-                "Skipping...",
-                each_dir,
-            )
 
 
 def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
