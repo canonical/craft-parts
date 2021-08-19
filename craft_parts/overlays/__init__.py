@@ -19,6 +19,8 @@
 from .layers import LayerHash  # noqa: F401
 from .overlay_fs import is_opaque_dir  # noqa: F401
 from .overlay_fs import is_whiteout_file  # noqa: F401
+from .overlays import is_oci_opaque_dir  # noqa: F401
+from .overlays import is_oci_whiteout_file  # noqa: F401
 from .overlays import oci_opaque_dir  # noqa: F401
 from .overlays import oci_whiteout  # noqa: F401
 from .overlays import visible_in_layer  # noqa: F401

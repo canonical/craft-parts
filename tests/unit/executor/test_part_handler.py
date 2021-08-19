@@ -263,6 +263,190 @@ class TestPartUpdateHandler:
 
 
 @pytest.mark.usefixtures("new_dir")
+class TestOverlayMigration:
+    """Overlay migration to stage and prime test cases"""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir):
+        # pylint: disable=attribute-defined-outside-init
+        p1 = Part("p1", {"plugin": "nil", "overlay-script": "ls"})
+        p2 = Part("p2", {"plugin": "nil", "overlay-script": "ls"})
+        p3 = Part("p3", {"plugin": "nil"})
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._p1_handler = PartHandler(
+            p1, part_info=PartInfo(info, p1), part_list=[p1, p2, p3]
+        )
+        self._p2_handler = PartHandler(
+            p2, part_info=PartInfo(info, p2), part_list=[p1, p2, p3]
+        )
+        self._p3_handler = PartHandler(
+            p3, part_info=PartInfo(info, p3), part_list=[p1, p2, p3]
+        )
+
+        self._p1_handler._make_dirs()
+        self._p2_handler._make_dirs()
+        self._p3_handler._make_dirs()
+
+        # populate layers
+        Path(p1.part_layer_dir, "dir1").mkdir()
+        Path(p1.part_layer_dir, "dir1/foo").touch()
+        Path(p1.part_layer_dir, "bar").touch()
+
+        Path(p2.part_layer_dir, "dir1").mkdir()
+        Path(p2.part_layer_dir, "dir1/baz").touch()
+        # pylint: enable=attribute-defined-outside-init
+
+    @pytest.mark.parametrize(
+        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_migrate_overlay(self, step, step_dir):
+        _run_step_migration(self._p1_handler, step)
+        assert Path(f"{step_dir}/dir1/foo").exists()
+        assert Path(f"{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/dir1/baz").exists()
+        assert Path(f"overlay/{step_dir}_overlay").exists()
+
+    @pytest.mark.parametrize(
+        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_migrate_overlay_whiteout_translation(
+        self, mocker, new_dir, step, step_dir
+    ):
+        wh = Path("parts/p2/layer/dir1/foo")
+        wh.touch()
+        mocker.patch(
+            "craft_parts.overlays.is_whiteout_file", new=lambda x: x == new_dir / wh
+        )
+
+        _run_step_migration(self._p1_handler, step)
+        assert Path(f"{step_dir}/dir1/foo").exists() is False
+        assert Path(f"{step_dir}/dir1/.wh.foo").exists()
+        assert Path(f"{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/dir1/baz").exists()
+
+    @pytest.mark.parametrize(
+        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_migrate_overlay_opaque_dir_translation(
+        self, mocker, new_dir, step, step_dir
+    ):
+        opaque = Path("parts/p2/layer/dir1")
+        mocker.patch(
+            "craft_parts.overlays.is_opaque_dir", new=lambda x: x == new_dir / opaque
+        )
+
+        _run_step_migration(self._p1_handler, step)
+        assert Path(f"{step_dir}/dir1/.wh..wh..opq").exists()
+        assert Path(f"{step_dir}/dir1/foo").exists() is False
+        assert Path(f"{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/dir1/baz").exists()
+
+    @pytest.mark.parametrize(
+        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_clean_migrated_overlay(self, mocker, new_dir, step, step_dir):
+        wh = Path("parts/p2/layer/dir1/foo")
+        wh.touch()
+        mocker.patch(
+            "craft_parts.overlays.is_whiteout_file", new=lambda x: x == new_dir / wh
+        )
+
+        opaque = Path("parts/p2/layer/dir2")
+        opaque.mkdir()
+        mocker.patch(
+            "craft_parts.overlays.is_opaque_dir", new=lambda x: x == new_dir / opaque
+        )
+
+        _run_step_migration(self._p1_handler, step)
+        assert Path(f"{step_dir}/dir1/foo").exists() is False
+        assert Path(f"{step_dir}/dir1/.wh.foo").exists()
+        assert Path(f"{step_dir}/dir2/.wh..wh..opq").exists()
+        assert Path(f"{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/dir1/baz").exists()
+        assert Path(f"overlay/{step_dir}_overlay").exists()
+
+        self._p1_handler.clean_step(step)
+        assert Path(f"{step_dir}/dir1/.wh.foo").exists() is False
+        assert Path(f"{step_dir}/dir2").exists() is False
+        assert Path(f"{step_dir}/bar").exists() is False
+        assert Path(f"{step_dir}/dir1/baz").exists() is False
+        assert Path(f"overlay/{step_dir}_overlay").exists() is False
+
+    @pytest.mark.parametrize(
+        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_clean_stage_overlay_multiple_parts(self, step, step_dir):
+        _run_step_migration(self._p1_handler, step)
+        assert Path(f"{step_dir}/dir1/foo").exists()
+        assert Path(f"{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/dir1/baz").exists()
+        assert Path(f"overlay/{step_dir}_overlay").exists()
+
+        _run_step_migration(self._p2_handler, step)
+
+        self._p1_handler.clean_step(step)
+        assert Path(f"{step_dir}/dir1/foo").exists()
+        assert Path(f"{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/dir1/baz").exists()
+        assert Path(f"overlay/{step_dir}_overlay").exists()
+
+        self._p2_handler.clean_step(step)
+        assert Path(f"{step_dir}/dir1/foo").exists() is False
+        assert Path(f"{step_dir}/bar").exists() is False
+        assert Path(f"{step_dir}/dir1/baz").exists() is False
+        assert Path(f"overlay/{step_dir}_overlay").exists() is False
+
+    @pytest.mark.parametrize(
+        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_clean_overlay_shared_file(self, step, step_dir):
+        Path("parts/p1/layer/file1").write_text("content")
+        Path("parts/p3/install/file1").write_text("content")
+
+        _run_step_migration(self._p2_handler, step)
+        _run_step_migration(self._p3_handler, step)
+        assert Path(f"{step_dir}/file1").exists()
+        assert Path(f"{step_dir}/bar").exists()
+
+        # clean overlay data
+        self._p1_handler.clean_step(step)
+        assert Path(f"{step_dir}/bar").exists() is False
+        assert Path(f"{step_dir}/file1").exists()  # file1 remains (also belongs to p3)
+
+        # clean part data
+        self._p3_handler.clean_step(step)
+        assert Path(f"{step_dir}/file1").exists() is False
+
+    @pytest.mark.parametrize(
+        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_clean_part_shared_file(self, step, step_dir):
+        Path("parts/p1/layer/file1").write_text("content")
+        Path("parts/p3/install/file1").write_text("content")
+
+        _run_step_migration(self._p2_handler, step)
+        _run_step_migration(self._p3_handler, step)
+        assert Path(f"{step_dir}/file1").exists()
+        assert Path(f"{step_dir}/bar").exists()
+
+        # clean part data
+        self._p3_handler.clean_step(step)
+        assert Path(f"{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/file1").exists()  # file1 remains (also belongs to p1)
+
+        # clean overlay data
+        self._p1_handler.clean_step(step)
+        assert Path(f"{step_dir}/file1").exists() is False
+
+
+def _run_step_migration(handler: PartHandler, step: Step) -> None:
+    if step > Step.STAGE:
+        handler.run_action(Action("", Step.STAGE))
+    handler.run_action(Action("", step))
+
+
+@pytest.mark.usefixtures("new_dir")
 class TestPartCleanHandler:
     """Verify step update processing."""
 
@@ -503,3 +687,21 @@ class TestHelpers:
     def test_remove_non_existent(self):
         # this should not raise and exception
         part_handler._remove(Path("not_here"))
+
+    @pytest.mark.parametrize("step", list(Step))
+    def test_parts_with_overlay_in_step(self, step):
+        p1 = Part("p1", {"plugin": "nil"})
+        p2 = Part("p2", {"plugin": "nil", "overlay-script": "ls"})
+        p3 = Part("p3", {"plugin": "nil", "overlay-packages": ["pkg1"]})
+        p4 = Part("p4", {"plugin": "nil", "overlay": ["/etc"]})
+
+        res = part_handler._parts_with_overlay_in_step(step, part_list=[p1, p2, p3, p4])
+        assert res == []
+
+        for part in [p1, p2, p3, p4]:
+            state_path = states.get_step_state_path(part, step)
+            state_path.parent.mkdir(parents=True)
+            state_path.touch()
+
+        res = part_handler._parts_with_overlay_in_step(step, part_list=[p1, p2, p3, p4])
+        assert res == [p2, p3, p4]
