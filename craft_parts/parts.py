@@ -41,6 +41,7 @@ class PartSpec(BaseModel):
     source_type: str = ""
     disable_parallel: bool = False
     after: List[str] = []
+    overlay_packages: List[str] = []
     stage_snaps: List[str] = []
     stage_packages: List[str] = []
     build_snaps: List[str] = []
@@ -48,9 +49,11 @@ class PartSpec(BaseModel):
     build_environment: List[Dict[str, str]] = []
     build_attributes: List[str] = []
     organize_files: Dict[str, str] = Field({}, alias="organize")
+    overlay_files: List[str] = Field(["*"], alias="overlay")
     stage_files: List[str] = Field(["*"], alias="stage")
     prime_files: List[str] = Field(["*"], alias="prime")
     override_pull: Optional[str] = None
+    overlay_script: Optional[str] = None
     override_build: Optional[str] = None
     override_stage: Optional[str] = None
     override_prime: Optional[str] = None
@@ -226,6 +229,31 @@ class Part:
         return self._part_dir / "run"
 
     @property
+    def part_layer_dir(self) -> Path:
+        """Return the subdirectory containing the part overlay files."""
+        return self._part_dir / "layer"
+
+    @property
+    def overlay_dir(self) -> Path:
+        """Return the overlay directory."""
+        return self._dirs.overlay_dir
+
+    @property
+    def overlay_mount_dir(self) -> Path:
+        """Return the overlay directory."""
+        return self._dirs.overlay_dir / "overlay"
+
+    @property
+    def overlay_packages_dir(self) -> Path:
+        """Return the overlay package cache directory."""
+        return self._dirs.overlay_dir / "packages"
+
+    @property
+    def overlay_work_dir(self) -> Path:
+        """Return the overlay work directory."""
+        return self._dirs.overlay_dir / "work"
+
+    @property
     def stage_dir(self) -> Path:
         """Return the staging area containing the installed files from all parts."""
         return self._dirs.stage_dir
@@ -241,6 +269,15 @@ class Part:
         if not self.spec.after:
             return []
         return self.spec.after
+
+    @property
+    def has_overlay(self) -> bool:
+        """Return whether this part declares overlay content."""
+        return (
+            self.spec.overlay_packages != []
+            or self.spec.overlay_script is not None
+            or self.spec.overlay_files != ["*"]
+        )
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -322,20 +359,14 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
 
 
 def part_dependencies(
-    name: str, *, part_list: List[Part], recursive: bool = False
+    part: Part, *, part_list: List[Part], recursive: bool = False
 ) -> Set[Part]:
     """Return a set of all the parts upon which the named part depends.
 
-    :param name: The name of the dependent part.
+    :param part: The dependent part.
 
     :returns: The set of parts the given part depends on.
-
-    :raises InvalidPartName: if a part name is not defined.
     """
-    part = next((p for p in part_list if p.name == name), None)
-    if not part:
-        raise errors.InvalidPartName(name)
-
     dependency_names = set(part.dependencies)
     dependencies = {p for p in part_list if p.name in dependency_names}
 
@@ -343,8 +374,47 @@ def part_dependencies(
         # No need to worry about infinite recursion due to circular
         # dependencies since the YAML validation won't allow it.
         for dependency_name in dependency_names:
+            dep = part_by_name(dependency_name, part_list=part_list)
             dependencies |= part_dependencies(
-                dependency_name, part_list=part_list, recursive=recursive
+                dep, part_list=part_list, recursive=recursive
             )
 
     return dependencies
+
+
+def has_overlay_visibility(
+    part: Part, *, part_list: List[Part], viewers: Optional[Set[Part]] = None
+) -> bool:
+    """Check if a part can see the overlay filesystem.
+
+    A part that declares overlay parameters and all parts depending on it
+    are granted permission to see overlay filesystem.
+
+    :param part: The part whose overlay visibility will be checked.
+    :param viewers: Parts that are known to have overlay visibility.
+    :param part_list: A list of all parts in the project.
+
+    :return: Whether the part has overlay visibility.
+    """
+    if (viewers and part in viewers) or part.has_overlay:
+        return True
+
+    if not part.spec.after:
+        return False
+
+    deps = part_dependencies(part, part_list=part_list)
+    for dep in deps:
+        if has_overlay_visibility(dep, viewers=viewers, part_list=part_list):
+            return True
+
+    return False
+
+
+def parts_with_overlay(*, part_list: List[Part]) -> List[Part]:
+    """Obtain a list of parts that declare overlay parameters.
+
+    :param part_list: A list of all parts in the project.
+
+    :return: A list of parts with overlay parameters.
+    """
+    return [p for p in part_list if p.has_overlay]

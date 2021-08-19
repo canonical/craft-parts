@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from copy import deepcopy
+from functools import partial
 
 import pytest
 
@@ -40,6 +41,7 @@ class TestPartSpecs:
             "source-type": "tar",
             "disable-parallel": True,
             "after": ["bar"],
+            "overlay-packages": ["overlay-pkg1", "overlay-pkg2"],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
             "stage-packages": ["stage-pkg1", "stage-pkg2"],
             "build-snaps": ["build-snap1", "build-snap2"],
@@ -47,9 +49,11 @@ class TestPartSpecs:
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
+            "overlay": ["etc/issue"],
             "stage": ["-usr/docs"],
             "prime": ["*"],
             "override-pull": "override-pull",
+            "overlay-script": "overlay-script",
             "override-build": "override-build",
             "override-stage": "override-stage",
             "override-prime": "override-prime",
@@ -86,6 +90,11 @@ class TestPartData:
         assert p.part_packages_dir == new_dir / "parts/foo/stage_packages"
         assert p.part_snaps_dir == new_dir / "parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "parts/foo/run"
+        assert p.part_layer_dir == new_dir / "parts/foo/layer"
+        assert p.overlay_dir == new_dir / "overlay"
+        assert p.overlay_mount_dir == new_dir / "overlay/overlay"
+        assert p.overlay_packages_dir == new_dir / "overlay/packages"
+        assert p.overlay_work_dir == new_dir / "overlay/work"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
@@ -101,6 +110,11 @@ class TestPartData:
         assert p.part_packages_dir == new_dir / "foobar/parts/foo/stage_packages"
         assert p.part_snaps_dir == new_dir / "foobar/parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
+        assert p.part_layer_dir == new_dir / "foobar/parts/foo/layer"
+        assert p.overlay_dir == new_dir / "foobar/overlay"
+        assert p.overlay_mount_dir == new_dir / "foobar/overlay/overlay"
+        assert p.overlay_packages_dir == new_dir / "foobar/overlay/packages"
+        assert p.overlay_work_dir == new_dir / "foobar/overlay/work"
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
@@ -222,6 +236,26 @@ class TestPartData:
     def test_part_get_scriptlet_none(self, step):
         p = Part("foo", {})
         assert p.spec.get_scriptlet(step) is None
+
+    @pytest.mark.parametrize(
+        "packages,script,files,result",
+        [
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
+        ],
+    )
+    def test_part_has_overlay(self, packages, script, files, result):
+        p = Part(
+            "foo",
+            {
+                "overlay-packages": packages,
+                "overlay-script": script,
+                "overlay": files,
+            },
+        )
+        assert p.has_overlay == result
 
 
 class TestPartOrdering:
@@ -348,12 +382,37 @@ class TestPartHelpers:
         p3 = Part("baz", {})
         p4 = Part("qux", {})
 
-        x = parts.part_dependencies("foo", part_list=[p1, p2, p3, p4])
+        x = parts.part_dependencies(p1, part_list=[p1, p2, p3, p4])
         assert x == {p2, p3}
 
-        x = parts.part_dependencies("foo", part_list=[p1, p2, p3, p4], recursive=True)
+        x = parts.part_dependencies(p1, part_list=[p1, p2, p3, p4], recursive=True)
         assert x == {p2, p3, p4}
 
-        with pytest.raises(errors.InvalidPartName) as raised:
-            parts.part_dependencies("invalid", part_list=[p1, p2, p3, p4])
-        assert raised.value.part_name == "invalid"
+    def test_has_overlay_visibility(self):
+        p1 = Part("foo", {"after": ["bar", "baz"]})
+        p2 = Part("bar", {"after": ["qux"]})
+        p3 = Part("baz", {})
+        p4 = Part("qux", {"overlay-script": "echo"})
+        p5 = Part("foobar", {"after": ["baz"]})
+
+        part_list = [p1, p2, p3, p4, p5]
+
+        has_overlay_visibility = partial(
+            parts.has_overlay_visibility, viewers=set(), part_list=part_list
+        )
+
+        assert has_overlay_visibility(p1) is True
+        assert has_overlay_visibility(p2) is True
+        assert has_overlay_visibility(p3) is False
+        assert has_overlay_visibility(p4) is True
+        assert has_overlay_visibility(p5) is False
+
+    def test_parts_with_overlay(self):
+        p1 = Part("foo", {})
+        p2 = Part("bar", {"overlay-packages": ["pkg1"]})
+        p3 = Part("baz", {"overlay-script": "echo"})
+        p4 = Part("qux", {"overlay": ["*"]})
+        p5 = Part("quux", {"overlay": ["-etc/passwd"]})
+
+        p = parts.parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
+        assert p == [p2, p3, p5]

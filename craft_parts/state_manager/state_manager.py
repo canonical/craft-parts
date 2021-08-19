@@ -357,7 +357,7 @@ class StateManager:
         # The part is clean, check its dependencies
 
         dependencies = parts.part_dependencies(
-            part.name, part_list=self._part_list, recursive=True
+            part, part_list=self._part_list, recursive=True
         )
 
         changed_dependencies: List[Dependency] = []
