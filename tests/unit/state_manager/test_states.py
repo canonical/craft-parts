@@ -125,7 +125,7 @@ class TestMigrationStates:
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
         }
-        state_file = states.overlay_migration_state_path(Path("overlay"), step)
+        state_file = states.get_overlay_migration_state_path(Path("overlay"), step)
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(yaml.dump(state_data))
 

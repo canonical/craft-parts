@@ -45,7 +45,7 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
 
     :raise RuntimeError: If step is invalid.
     """
-    filename = step_state_path(part, step)
+    filename = get_step_state_path(part, step)
     if not filename.is_file():
         return None
 
@@ -77,7 +77,7 @@ def load_overlay_migration_state(
     :param state_dir: The path to the directory containing migration state files.
     :param step: The step corresponding to the migration state to load.
     """
-    filename = overlay_migration_state_path(state_dir, step)
+    filename = get_overlay_migration_state_path(state_dir, step)
     if not filename.is_file():
         return None
 
@@ -99,12 +99,12 @@ def remove(part: Part, step: Step) -> None:
         state_file.unlink()
 
 
-def step_state_path(part: Part, step: Step) -> Path:
+def get_step_state_path(part: Part, step: Step) -> Path:
     """Return the path to the state file for the given part and step."""
     return part.part_state_dir / step.name.lower()
 
 
-def overlay_migration_state_path(state_dir: Path, step: Step) -> Path:
+def get_overlay_migration_state_path(state_dir: Path, step: Step) -> Path:
     """Return the path to the overlay migration state file for the given step."""
     if step == Step.STAGE:
         return state_dir / "stage_overlay"

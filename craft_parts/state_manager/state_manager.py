@@ -29,7 +29,7 @@ from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
 
 from .reports import Dependency, DirtyReport, OutdatedReport
-from .states import StepState, load_step_state, step_state_path
+from .states import StepState, get_step_state_path, load_step_state
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +289,7 @@ class StateManager:
                 )
                 self._source_handler_cache[part.name] = source_handler
 
-            state_file = step_state_path(part, step)
+            state_file = get_step_state_path(part, step)
 
             if source_handler:
                 # Not all sources support checking for updates
@@ -403,7 +403,7 @@ def _sort_steps_by_state_timestamp(
     state_files: List[Tuple[Part, Step, int]] = []
     for part in part_list:
         for step in list(Step):
-            path = step_state_path(part, step)
+            path = get_step_state_path(part, step)
             if path.is_file():
                 mtime = path.stat().st_mtime_ns
                 state_files.append((part, step, mtime))
