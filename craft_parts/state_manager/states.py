@@ -30,12 +30,12 @@ from .build_state import BuildState
 from .prime_state import PrimeState
 from .pull_state import PullState
 from .stage_state import StageState
-from .step_state import StepState
+from .step_state import MigrationState, StepState
 
 logger = logging.getLogger(__name__)
 
 
-def load_state(part: Part, step: Step) -> Optional[StepState]:
+def load_step_state(part: Part, step: Step) -> Optional[StepState]:
     """Retrieve the persistent state for the given part and step.
 
     :param part: The part corresponding to the state to load.
@@ -45,7 +45,7 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
 
     :raise RuntimeError: If step is invalid.
     """
-    filename = state_file_path(part, step)
+    filename = step_state_path(part, step)
     if not filename.is_file():
         return None
 
@@ -69,6 +69,25 @@ def load_state(part: Part, step: Step) -> Optional[StepState]:
     return state_class.unmarshal(state_data)
 
 
+def load_overlay_migration_state(
+    state_dir: Path, step: Step
+) -> Optional[MigrationState]:
+    """Retrieve the overlay migration state for the given step.
+
+    :param state_dir: The path to the directory containing migration state files.
+    :param step: The step corresponding to the migration state to load.
+    """
+    filename = overlay_migration_state_path(state_dir, step)
+    if not filename.is_file():
+        return None
+
+    logger.debug("load overlay migration state file: %s", filename)
+    with open(filename) as yaml_file:
+        state_data = yaml.safe_load(yaml_file)
+
+    return MigrationState.unmarshal(state_data)
+
+
 def remove(part: Part, step: Step) -> None:
     """Remove the persistent state file for the given part and step.
 
@@ -80,6 +99,17 @@ def remove(part: Part, step: Step) -> None:
         state_file.unlink()
 
 
-def state_file_path(part: Part, step: Step) -> Path:
-    """Return the path to the state file for the give part and step."""
+def step_state_path(part: Part, step: Step) -> Path:
+    """Return the path to the state file for the given part and step."""
     return part.part_state_dir / step.name.lower()
+
+
+def overlay_migration_state_path(state_dir: Path, step: Step) -> Path:
+    """Return the path to the overlay migration state file for the given step."""
+    if step == Step.STAGE:
+        return state_dir / "stage_overlay"
+
+    if step == Step.PRIME:
+        return state_dir / "prime_overlay"
+
+    raise RuntimeError(f"no overlay migration state in step {step!r}")

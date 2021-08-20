@@ -108,7 +108,7 @@ class PartHandler:
 
         callbacks.run_pre_step(step_info)
         state = handler(step_info)
-        state_file = states.state_file_path(self._part, action.step)
+        state_file = states.step_state_path(self._part, action.step)
         state.write(state_file)
         callbacks.run_post_step(step_info)
 
@@ -262,7 +262,7 @@ class PartHandler:
 
         callbacks.run_pre_step(step_info)
         handler(step_info)
-        state_file = states.state_file_path(self._part, action.step)
+        state_file = states.step_state_path(self._part, action.step)
         state_file.touch()
         callbacks.run_post_step(step_info)
 
@@ -296,7 +296,7 @@ class PartHandler:
 
         # the update action is sequenced only if an update is required and the
         # source knows how to update
-        state_file = states.state_file_path(self._part, step_info.step)
+        state_file = states.step_state_path(self._part, step_info.step)
         self._source_handler.check_if_outdated(str(state_file))
         self._source_handler.update()
 
@@ -322,7 +322,7 @@ class PartHandler:
                 copy_function=file_utils.copy,
                 cache_dir=step_info.cache_dir,
             )
-            state_file = states.state_file_path(self._part, step_info.step)
+            state_file = states.step_state_path(self._part, step_info.step)
             source.check_if_outdated(str(state_file))  # required by source.update()
             source.update()
 
@@ -629,7 +629,7 @@ def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]
     """
     part_states: Dict[str, StepState] = {}
     for part in part_list:
-        state = states.load_state(part, step)
+        state = states.load_step_state(part, step)
         if state:
             part_states[part.name] = state
     return part_states

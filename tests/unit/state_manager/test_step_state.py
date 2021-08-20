@@ -23,6 +23,35 @@ import yaml
 from craft_parts.state_manager import step_state
 
 
+class TestMigrationState:
+    """Verify MigrationState handling."""
+
+    def test_marshal_empty(self):
+        state = step_state.MigrationState()
+        assert state.marshal() == {
+            "files": set(),
+            "directories": set(),
+        }
+
+    def test_marshal_data(self):
+        state = step_state.MigrationState(
+            files={"a", "b", "c"},
+            directories={"d", "e", "f"},
+        )
+        assert state.marshal() == {
+            "files": {"a", "b", "c"},
+            "directories": {"d", "e", "f"},
+        }
+
+    def test_unmarshal(self):
+        data = {
+            "files": {"a", "b", "c"},
+            "directories": {"d", "e", "f"},
+        }
+        state = step_state.MigrationState.unmarshal(data)
+        assert state.marshal() == data
+
+
 class SomeStepState(step_state.StepState):
     """A concrete step state implementing abstract methods."""
 
