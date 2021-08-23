@@ -25,12 +25,12 @@ from craft_parts.steps import Step
 
 
 @pytest.mark.usefixtures("new_dir")
-class TestStates:
-    """Verify states definitions and helpers."""
+class TestStepStates:
+    """Verify step state definitions and helpers."""
 
     @pytest.mark.parametrize("step", list(Step))
     def test_load_missing_state(self, step):
-        state = states.load_state(Part("missing", {}), step)
+        state = states.load_step_state(Part("missing", {}), step)
         assert state is None
 
     def test_load_pull_state(self):
@@ -45,7 +45,7 @@ class TestStates:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(yaml.dump(state_data))
 
-        state = states.load_state(Part("foo", {}), Step.PULL)
+        state = states.load_step_state(Part("foo", {}), Step.PULL)
 
         assert isinstance(state, states.PullState)
         assert state.marshal() == state_data
@@ -62,7 +62,7 @@ class TestStates:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(yaml.dump(state_data))
 
-        state = states.load_state(Part("foo", {}), Step.BUILD)
+        state = states.load_step_state(Part("foo", {}), Step.BUILD)
 
         assert isinstance(state, states.BuildState)
         assert state.marshal() == state_data
@@ -78,7 +78,7 @@ class TestStates:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(yaml.dump(state_data))
 
-        state = states.load_state(Part("foo", {}), Step.STAGE)
+        state = states.load_step_state(Part("foo", {}), Step.STAGE)
 
         assert isinstance(state, states.StageState)
         assert state.marshal() == state_data
@@ -96,7 +96,7 @@ class TestStates:
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(yaml.dump(state_data))
 
-        state = states.load_state(Part("foo", {}), Step.PRIME)
+        state = states.load_step_state(Part("foo", {}), Step.PRIME)
 
         assert isinstance(state, states.PrimeState)
         assert state.marshal() == state_data
@@ -113,3 +113,33 @@ class TestStates:
 
         states.remove(p1, step)
         assert state_file.exists() is False
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestMigrationStates:
+    """Verify migration state helpers."""
+
+    @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
+    def test_load_overlay_migration_state(self, step):
+        state_data = {
+            "files": {"a", "b", "c"},
+            "directories": {"d", "e", "f"},
+        }
+        state_file = states.get_overlay_migration_state_path(Path("overlay"), step)
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(yaml.dump(state_data))
+
+        state = states.load_overlay_migration_state(Path("overlay"), step)
+        assert state is not None
+        assert state.marshal() == state_data
+
+    @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
+    def test_load_migration_state_missing(self, step):
+        state = states.load_overlay_migration_state(Path(), step)
+        assert state is None
+
+    @pytest.mark.parametrize("step", set(Step) - {Step.STAGE, Step.PRIME})
+    def test_load_migration_state_invalid_step(self, step):
+        with pytest.raises(RuntimeError) as err:
+            states.load_overlay_migration_state(Path(), step)
+        assert str(err.value) == f"no overlay migration state in step {step!r}"

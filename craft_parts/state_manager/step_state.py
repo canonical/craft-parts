@@ -25,7 +25,45 @@ from pydantic_yaml import YamlModel  # type: ignore
 from craft_parts.utils import os_utils
 
 
-class StepState(YamlModel, ABC):
+class MigrationState(YamlModel):
+    """State information collected when migrating steps.
+
+    The migration state contains the paths to the files and directories
+    that have been migrated. This information is used to remove migrated
+    files from shared areas on step cleanup.
+    """
+
+    files: Set[str] = set()
+    directories: Set[str] = set()
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "MigrationState":
+        """Create and populate a new state object from dictionary data.
+
+        :param data: A dictionary containing the data to unmarshal.
+
+        :returns: The state object containing the migration data.
+        """
+        return cls(**data)
+
+    def marshal(self) -> Dict[str, Any]:
+        """Create a dictionary containing the part state data.
+
+        :return: The newly created dictionary.
+        """
+        return self.dict(by_alias=True)
+
+    def write(self, filepath: Path) -> None:
+        """Write state data to disk.
+
+        :param filepath: The path to the file to write.
+        """
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        yaml_data = self.yaml(by_alias=True)
+        os_utils.TimedWriter.write_text(filepath, yaml_data)
+
+
+class StepState(MigrationState, ABC):
     """Contextual information collected when a step is executed.
 
     The step state contains environmental and project-specific configuration
@@ -35,8 +73,6 @@ class StepState(YamlModel, ABC):
 
     part_properties: Dict[str, Any] = {}
     project_options: Dict[str, Any] = {}
-    files: Set[str] = set()
-    directories: Set[str] = set()
 
     class Config:
         """Pydantic model configuration."""
@@ -95,19 +131,6 @@ class StepState(YamlModel, ABC):
     def unmarshal(cls, data: Dict[str, Any]):
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
-
-    def marshal(self) -> Dict[str, Any]:
-        """Create a dictionary containing the part state data.
-
-        :return: The newly created dictionary.
-        """
-        return self.dict(by_alias=True)
-
-    def write(self, filepath: Path) -> None:
-        """Write this state to disk."""
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-        yaml_data = self.yaml(by_alias=True)
-        os_utils.TimedWriter.write_text(filepath, yaml_data)
 
 
 def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str]:
