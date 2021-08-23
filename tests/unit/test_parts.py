@@ -92,9 +92,6 @@ class TestPartData:
         assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.part_layer_dir == new_dir / "parts/foo/layer"
         assert p.overlay_dir == new_dir / "overlay"
-        assert p.overlay_mount_dir == new_dir / "overlay/overlay"
-        assert p.overlay_packages_dir == new_dir / "overlay/packages"
-        assert p.overlay_work_dir == new_dir / "overlay/work"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
@@ -112,9 +109,6 @@ class TestPartData:
         assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
         assert p.part_layer_dir == new_dir / "foobar/parts/foo/layer"
         assert p.overlay_dir == new_dir / "foobar/overlay"
-        assert p.overlay_mount_dir == new_dir / "foobar/overlay/overlay"
-        assert p.overlay_packages_dir == new_dir / "foobar/overlay/packages"
-        assert p.overlay_work_dir == new_dir / "foobar/overlay/work"
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 

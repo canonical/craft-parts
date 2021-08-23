@@ -41,6 +41,21 @@ class ProjectDirs:
         return self._work_dir / "overlay"
 
     @property
+    def overlay_mount_dir(self) -> Path:
+        """Return the overlay directory."""
+        return self.overlay_dir / "overlay"
+
+    @property
+    def overlay_packages_dir(self) -> Path:
+        """Return the overlay package cache directory."""
+        return self.overlay_dir / "packages"
+
+    @property
+    def overlay_work_dir(self) -> Path:
+        """Return the overlay work directory."""
+        return self.overlay_dir / "work"
+
+    @property
     def parts_dir(self) -> Path:
         """Return the directory containing work subdirectories for each part."""
         return self._work_dir / "parts"
