@@ -28,44 +28,11 @@ class ProjectDirs:
     """
 
     def __init__(self, *, work_dir: Union[Path, str] = "."):
-        self._work_dir = Path(work_dir).expanduser().resolve()
-
-    @property
-    def work_dir(self) -> Path:
-        """Return the root of the work directories used for project processing."""
-        return self._work_dir
-
-    @property
-    def overlay_dir(self) -> Path:
-        """Return the directory containing work subdirectories for overlays."""
-        return self._work_dir / "overlay"
-
-    @property
-    def overlay_mount_dir(self) -> Path:
-        """Return the overlay directory."""
-        return self.overlay_dir / "overlay"
-
-    @property
-    def overlay_packages_dir(self) -> Path:
-        """Return the overlay package cache directory."""
-        return self.overlay_dir / "packages"
-
-    @property
-    def overlay_work_dir(self) -> Path:
-        """Return the overlay work directory."""
-        return self.overlay_dir / "work"
-
-    @property
-    def parts_dir(self) -> Path:
-        """Return the directory containing work subdirectories for each part."""
-        return self._work_dir / "parts"
-
-    @property
-    def stage_dir(self) -> Path:
-        """Return the staging area containing installed files from all parts."""
-        return self._work_dir / "stage"
-
-    @property
-    def prime_dir(self) -> Path:
-        """Return the primed tree containing the final artifacts to deploy."""
-        return self._work_dir / "prime"
+        self.work_dir = Path(work_dir).expanduser().resolve()
+        self.parts_dir = self.work_dir / "parts"
+        self.overlay_dir = self.work_dir / "overlay"
+        self.overlay_mount_dir = self.overlay_dir / "overlay"
+        self.overlay_packages_dir = self.overlay_dir / "packages"
+        self.overlay_work_dir = self.overlay_dir / "work"
+        self.stage_dir = self.work_dir / "stage"
+        self.prime_dir = self.work_dir / "prime"
