@@ -25,6 +25,15 @@ class ProjectDirs:
 
     :param work_dir: The parent directory containing the parts, prime and stage
         subdirectories. If not specified, the current directory will be used.
+
+    :ivar work_dir: The root of the work directories used for project processing.
+    :ivar parts_dir: The directory containing work subdirectories for each part.
+    :ivar overlay_dir: The directory containing work subdirectories for overlays.
+    :ivar overlay_mount_dir: The mountpoint for the overlay filesystem.
+    :ivar overlay_packages_dir: The cache directory for overlay packages.
+    :ivar overlay_work_dir: The work directory for the overlay filesystem.
+    :ivar stage_dir: The staging area containing installed files from all parts.
+    :ivar prime_dir: The primed tree containing the final artifacts to deploy.
     """
 
     def __init__(self, *, work_dir: Union[Path, str] = "."):
