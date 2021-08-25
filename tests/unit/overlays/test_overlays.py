@@ -108,6 +108,14 @@ class TestVisibility:
         assert files == {"a", "dir1/b", "dir1/c"}
         assert dirs == {"dir1"}
 
+    def test_visible_in_layer_merge_dir_contents(self, new_dir):
+        Path("destdir/dir1").mkdir()
+        Path("destdir/dir1/d").touch()
+
+        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        assert files == {"a", "dir1/b", "dir1/c"}
+        assert dirs == set()
+
     def test_visible_in_layer_whited_out_file(self, new_dir):
         Path("destdir/dir1").mkdir()
         Path("destdir/dir1/.wh.b").touch()
