@@ -28,46 +28,46 @@ from typing import Set, Tuple
 logger = logging.getLogger(__name__)
 
 
-def visible_in_layer(srcdir: Path, destdir: Path) -> Tuple[Set[str], Set[str]]:
+def visible_in_layer(lower_dir: Path, upper_dir: Path) -> Tuple[Set[str], Set[str]]:
     """Determine the files and directories that are visible in a layer.
 
-    Given a source and destination directories, list the files and directories that
-    would be visible in an overlay stack if the destination directory is the upper
-    layer and the source directory is the lower layer.
+    Given a pair of directories containing lower and upper layer contents, list the
+    files and subdirectories that would be visible if they're layered. The upper
+    directory may contain OCI whiteout files and opaque dirs.
 
-    :param srcdir: The source directory.
-    :param destdir: The destination directory.
+    :param lower_dir: The lower directory.
+    :param upper_dir: The upper directory.
 
     :returns: A tuple containing the sets of files and directories that are visible.
     """
     visible_files: Set[str] = set()
     visible_dirs: Set[str] = set()
 
-    logger.debug("check layer visibility in %s", srcdir)
-    for (root, directories, files) in os.walk(srcdir, topdown=True):
+    logger.debug("check layer visibility in %s", lower_dir)
+    for (root, directories, files) in os.walk(lower_dir, topdown=True):
         for file_name in files:
             path = Path(root, file_name)
-            relpath = path.relative_to(srcdir)
-            if not _is_path_visible(destdir, relpath):
+            relpath = path.relative_to(lower_dir)
+            if not _is_path_visible(upper_dir, relpath):
                 continue
 
-            destpath = destdir / relpath
-            if not destpath.exists() and not oci_whiteout(destpath).exists():
+            upper_path = upper_dir / relpath
+            if not upper_path.exists() and not oci_whiteout(upper_path).exists():
                 visible_files.add(str(relpath))
 
         for directory in directories:
             path = Path(root, directory)
-            relpath = path.relative_to(srcdir)
-            if not _is_path_visible(destdir, relpath):
+            relpath = path.relative_to(lower_dir)
+            if not _is_path_visible(upper_dir, relpath):
                 continue
 
-            destpath = destdir / relpath
-            if not destpath.exists():
+            upper_path = upper_dir / relpath
+            if not upper_path.exists():
                 if path.is_symlink():
                     visible_files.add(str(relpath))
                 else:
                     visible_dirs.add(str(relpath))
-            elif is_oci_opaque_dir(destpath):
+            elif is_oci_opaque_dir(upper_path):
                 logger.debug("is opaque dir: %s", relpath)
                 # Don't descend into this directory, overridden by opaque
                 directories.remove(directory)
