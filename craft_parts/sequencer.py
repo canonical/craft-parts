@@ -159,7 +159,7 @@ class Sequencer:
         if not prerequisite_step:
             return
 
-        all_deps = parts.part_dependencies(part.name, part_list=self._part_list)
+        all_deps = parts.part_dependencies(part, part_list=self._part_list)
         deps = {p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)}
         for dep in deps:
             self._add_all_actions(
