@@ -75,8 +75,8 @@ def visible_in_layer(srcdir: Path, destdir: Path) -> Tuple[Set[str], Set[str]]:
 def _is_path_visible(root: Path, relpath: Path) -> bool:
     """Verify if any element of the given path is not whited out.
 
-    :var root: The root directory, not included in the verification.
-    :var relpath: The relative path to verify.
+    :param root: The root directory, not included in the verification.
+    :param relpath: The relative path to verify.
 
     :returns: Whether the final element of the path is visible.
     """
