@@ -29,7 +29,7 @@ class TestHelpers:
         dir1.mkdir()
         Path("dir1/.wh..wh..opq").touch()
 
-        assert overlays.is_oci_opaque_dir(dir1)
+        assert overlays.is_oci_opaque_dir(dir1) is True
 
     def test_is_oci_opaque_dir_nomarker(self, new_dir):
         dir1 = Path("dir1")
@@ -45,7 +45,7 @@ class TestHelpers:
         dir2 = Path("dir2")
         dir2.symlink_to(dir1)
 
-        assert overlays.is_oci_opaque_dir(dir1)
+        assert overlays.is_oci_opaque_dir(dir1) is True
         assert overlays.is_oci_opaque_dir(dir2) is False
 
     @pytest.mark.parametrize(
@@ -65,7 +65,7 @@ class TestHelpers:
         deepfile = Path("dir1/dir2/dir3/dir4/foo")
         deepfile.parent.mkdir(parents=True)
         deepfile.touch()
-        assert overlays._is_path_visible(new_dir, deepfile)
+        assert overlays._is_path_visible(new_dir, deepfile) is True
 
     def test_is_path_visible_first_whited_out(self, new_dir):
         deepfile = Path("dir1/dir2/dir3/dir4/foo")
