@@ -14,7 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Overlay handling helpers."""
+"""Overlay handling helpers.
+
+Relevant OCI documentation available at:
+https://github.com/opencontainers/image-spec/blob/main/layer.md
+"""
 
 import logging
 import os
