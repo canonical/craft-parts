@@ -72,7 +72,7 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> Tuple[Set[str], Set[st
                 # Don't descend into this directory, overridden by opaque
                 directories.remove(directory)
 
-    logger.debug("files=%r, dirs=%r", visible_files, visible_dirs)
+    logger.debug("layer visibility files=%r, dirs=%r", visible_files, visible_dirs)
     return visible_files, visible_dirs
 
 
