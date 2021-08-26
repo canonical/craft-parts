@@ -67,9 +67,7 @@ class TestLayerHash:
         assert h2.hex() != result
 
     def test_previous_hash(self):
-        p1 = Part(
-            "p1", {"overlay-packages": [], "overlay": [], "overlay-script": None}
-        )
+        p1 = Part("p1", {"overlay-packages": [], "overlay": [], "overlay-script": None})
         h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash())
         assert h1.hex() == "80324ed2458e5d51e851972d092a0996dc038e8b"
 
