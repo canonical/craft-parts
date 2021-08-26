@@ -27,15 +27,14 @@ logger = logging.getLogger(__name__)
 class LayerHash:
     """The layer validation hash for a part."""
 
-    # disable pylint warning on variable 'bytes' used before assignment
-    def __init__(self, layer_hash: bytes = b""):  # pylint: disable=E0601
-        self._hash_bytes = layer_hash
+    def __init__(self, layer_hash: bytes = b""):
+        self.hash_bytes = layer_hash
 
     def __repr__(self):
         return self.hex()
 
     def __eq__(self, other):
-        return self._hash_bytes == other._hash_bytes
+        return self.hash_bytes == other.hash_bytes
 
     @classmethod
     def for_part(cls, part: Part, *, previous_layer_hash: "LayerHash") -> "LayerHash":
@@ -49,7 +48,7 @@ class LayerHash:
             to the given part.
         """
         hasher = hashlib.sha1()
-        hasher.update(previous_layer_hash.bytes())
+        hasher.update(previous_layer_hash.hash_bytes)
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
         digest = hasher.digest()
@@ -92,10 +91,6 @@ class LayerHash:
         hash_file = part.part_state_dir / "layer_hash"
         hash_file.write_text(self.hex())
 
-    def bytes(self) -> bytes:
-        """Return the current hash value as bytes."""
-        return self._hash_bytes
-
     def hex(self) -> str:
         """Return the current hash value as a hexadecimal string."""
-        return self._hash_bytes.hex()
+        return self.hash_bytes.hex()

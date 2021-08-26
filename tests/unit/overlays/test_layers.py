@@ -38,11 +38,11 @@ class TestLayerHash:
         assert h1 == h2
         assert h1 != h3
 
-    def test_hex_bytes(self):
+    def test_hex_hash_bytes(self):
         value = bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
         h = LayerHash(value)
+        assert h.hash_bytes == value
         assert h.hex() == "0a141e28323c46505a64"
-        assert h.bytes() == value
 
     @pytest.mark.parametrize(
         "pkgs,files,script,result",
