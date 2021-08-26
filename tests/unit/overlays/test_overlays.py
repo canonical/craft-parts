@@ -96,86 +96,86 @@ class TestVisibility:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir):
-        Path("srcdir").mkdir()
-        Path("srcdir/a").touch()
-        Path("srcdir/dir1").mkdir()
-        Path("srcdir/dir1/b").touch()
-        Path("srcdir/dir1/c").touch()
-        Path("destdir").mkdir()
+        Path("lower_dir").mkdir()
+        Path("lower_dir/a").touch()
+        Path("lower_dir/dir1").mkdir()
+        Path("lower_dir/dir1/b").touch()
+        Path("lower_dir/dir1/c").touch()
+        Path("upper_dir").mkdir()
 
     def test_visible_in_layer(self, new_dir):
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/b", "dir1/c"}
         assert dirs == {"dir1"}
 
     def test_visible_in_layer_merge_dir_contents(self, new_dir):
-        Path("destdir/dir1").mkdir()
-        Path("destdir/dir1/d").touch()
+        Path("upper_dir/dir1").mkdir()
+        Path("upper_dir/dir1/d").touch()
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/b", "dir1/c"}
         assert dirs == set()
 
     def test_visible_in_layer_whited_out_file(self, new_dir):
-        Path("destdir/dir1").mkdir()
-        Path("destdir/dir1/.wh.b").touch()
+        Path("upper_dir/dir1").mkdir()
+        Path("upper_dir/dir1/.wh.b").touch()
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/c"}
         assert dirs == set()
 
     def test_visible_in_layer_opaque_dir(self, new_dir):
-        Path("destdir/dir1").mkdir()
-        Path("destdir/dir1/.wh..wh..opq").touch()
+        Path("upper_dir/dir1").mkdir()
+        Path("upper_dir/dir1/.wh..wh..opq").touch()
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a"}
         assert dirs == set()
 
     def test_visible_in_layer_whiteout_in_opaque_dir(self, new_dir):
-        Path("destdir/dir1").mkdir()
-        Path("destdir/dir1/.wh..wh..opq").touch()
-        Path("destdir/dir1/.wh.b").touch()
+        Path("upper_dir/dir1").mkdir()
+        Path("upper_dir/dir1/.wh..wh..opq").touch()
+        Path("upper_dir/dir1/.wh.b").touch()
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a"}
         assert dirs == set()
 
     def test_visible_in_layer_symlink(self, new_dir):
-        Path("srcdir/dir2").symlink_to("dir1")
+        Path("lower_dir/dir2").symlink_to("dir1")
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/b", "dir1/c", "dir2"}
         assert dirs == {"dir1"}
 
     def test_visible_in_layer_deep_file(self, new_dir):
-        deepfile = Path("srcdir/dir2/dir3/dir4/d")
+        deepfile = Path("lower_dir/dir2/dir3/dir4/d")
         deepfile.parent.mkdir(parents=True)
         deepfile.touch()
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/b", "dir1/c", "dir2/dir3/dir4/d"}
         assert dirs == {"dir1", "dir2", "dir2/dir3", "dir2/dir3/dir4"}
 
     def test_visible_in_layer_deep_file_whiteout_dir(self, new_dir):
-        deepfile = Path("srcdir/dir2/dir3/dir4/d")
+        deepfile = Path("lower_dir/dir2/dir3/dir4/d")
         deepfile.parent.mkdir(parents=True)
         deepfile.touch()
 
-        Path("destdir/.wh.dir2").touch()
+        Path("upper_dir/.wh.dir2").touch()
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/b", "dir1/c"}
         assert dirs == {"dir1"}
 
     def test_visible_in_layer_deep_file_opaque_dir(self, new_dir):
-        deepfile = Path("srcdir/dir2/dir3/dir4/d")
+        deepfile = Path("lower_dir/dir2/dir3/dir4/d")
         deepfile.parent.mkdir(parents=True)
         deepfile.touch()
 
-        Path("destdir/dir2/dir3").mkdir(parents=True)
-        Path("destdir/dir2/dir3/.wh..wh..opq").touch()
+        Path("upper_dir/dir2/dir3").mkdir(parents=True)
+        Path("upper_dir/dir2/dir3/.wh..wh..opq").touch()
 
-        files, dirs = overlays.visible_in_layer(Path("srcdir"), Path("destdir"))
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/b", "dir1/c"}
         assert dirs == {"dir1"}
