@@ -60,7 +60,7 @@ class TestLayerHash:
         p1 = Part(
             "p1", {"overlay-packages": pkgs, "overlay": files, "overlay-script": script}
         )
-        h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash())
+        h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash(b""))
         assert h1.hex() == result
 
         h2 = LayerHash.for_part(p1, previous_layer_hash=h1)
@@ -68,7 +68,7 @@ class TestLayerHash:
 
     def test_previous_hash(self):
         p1 = Part("p1", {"overlay-packages": [], "overlay": [], "overlay-script": None})
-        h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash())
+        h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash(b""))
         assert h1.hex() == "80324ed2458e5d51e851972d092a0996dc038e8b"
 
         h2 = LayerHash.for_part(p1, previous_layer_hash=h1)
@@ -81,12 +81,13 @@ class TestLayerHash:
 
         p1 = Part("p1", {})
         h = LayerHash.load(part=p1)
+        assert h is not None
         assert h.hex() == "736f6d652076616c7565"
 
     def test_load_missing_file(self, new_dir):
         p1 = Part("p1", {})
         h = LayerHash.load(p1)
-        assert h.hex() == ""
+        assert h is None
 
     def test_save(self, new_dir):
         Path("parts/p1/state").mkdir(parents=True)

@@ -18,6 +18,7 @@
 
 import hashlib
 import logging
+from typing import Optional
 
 from craft_parts.parts import Part
 
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 class LayerHash:
     """The layer validation hash for a part."""
 
-    def __init__(self, layer_hash: bytes = b""):
+    def __init__(self, layer_hash: bytes):
         self.hash_bytes = layer_hash
 
     def __repr__(self):
@@ -66,17 +67,17 @@ class LayerHash:
         return cls(hasher.digest())
 
     @classmethod
-    def load(cls, part: Part) -> "LayerHash":
+    def load(cls, part: Part) -> Optional["LayerHash"]:
         """Read the part layer validation hash from persistent state.
 
         :param part: The part whose layer hash will be loaded.
 
-        :return: A layer hash object containing the loaded validaton hash.
-            An empty hash value will be used if the file doesn't exist.
+        :return: A layer hash object containing the loaded validaton hash,
+            or None if the file doesn't exist.
         """
         hash_file = part.part_state_dir / "layer_hash"
         if not hash_file.exists():
-            return cls()
+            return None
 
         with open(hash_file) as file:
             hex_string = file.readline()
