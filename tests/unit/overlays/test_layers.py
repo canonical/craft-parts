@@ -66,6 +66,16 @@ class TestLayerHash:
         h2 = LayerHash.for_part(p1, previous_layer_hash=h1)
         assert h2.hex() != result
 
+    def test_previous_hash(self):
+        p1 = Part(
+            "p1", {"overlay-packages": [], "overlay": [], "overlay-script": None}
+        )
+        h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash())
+        assert h1.hex() == "80324ed2458e5d51e851972d092a0996dc038e8b"
+
+        h2 = LayerHash.for_part(p1, previous_layer_hash=h1)
+        assert h2.hex() == "bb6d57381ec9fb85207c85b865ef6d709930f291"
+
     def test_load(self, new_dir):
         hash_file = Path("parts/p1/state/layer_hash")
         hash_file.parent.mkdir(parents=True)
