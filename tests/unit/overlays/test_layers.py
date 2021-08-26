@@ -60,8 +60,11 @@ class TestLayerHash:
         p1 = Part(
             "p1", {"overlay-packages": pkgs, "overlay": files, "overlay-script": script}
         )
-        h = LayerHash.for_part(p1, previous_layer_hash=LayerHash())
-        assert h.hex() == result
+        h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash())
+        assert h1.hex() == result
+
+        h2 = LayerHash.for_part(p1, previous_layer_hash=h1)
+        assert h2.hex() != result
 
     def test_load(self, new_dir):
         hash_file = Path("parts/p1/state/layer_hash")

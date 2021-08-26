@@ -49,6 +49,7 @@ class LayerHash:
             to the given part.
         """
         hasher = hashlib.sha1()
+        hasher.update(previous_layer_hash.bytes())
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
         digest = hasher.digest()
@@ -63,9 +64,6 @@ class LayerHash:
         hasher.update(digest)
         if part.spec.overlay_script:
             hasher.update(part.spec.overlay_script.encode())
-
-        hasher.update(previous_layer_hash.bytes())
-
         return cls(hasher.digest())
 
     @classmethod
