@@ -31,7 +31,7 @@ class TestHelpers:
 
         assert overlays.is_oci_opaque_dir(dir1) is True
 
-    def test_is_oci_opaque_dir_nomarker(self, new_dir):
+    def test_is_not_oci_opaque_dir(self, new_dir):
         dir1 = Path("dir1")
         dir1.mkdir()
 
