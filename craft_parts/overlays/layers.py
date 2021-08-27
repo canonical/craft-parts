@@ -38,7 +38,9 @@ class LayerHash:
         return self.hash_bytes == other.hash_bytes
 
     @classmethod
-    def for_part(cls, part: Part, *, previous_layer_hash: "LayerHash") -> "LayerHash":
+    def for_part(
+        cls, part: Part, *, previous_layer_hash: Optional["LayerHash"]
+    ) -> "LayerHash":
         """Obtain the validation hash for a part.
 
         :param part: The part being processed.
@@ -49,7 +51,8 @@ class LayerHash:
             to the given part.
         """
         hasher = hashlib.sha1()
-        hasher.update(previous_layer_hash.hash_bytes)
+        if previous_layer_hash:
+            hasher.update(previous_layer_hash.hash_bytes)
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
         digest = hasher.digest()

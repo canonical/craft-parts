@@ -101,6 +101,7 @@ class TestPartHandling:
                 "installed-packages": ["hello=2.10"],
                 "installed-snaps": ["snapcraft=6466"],
             },
+            overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
     def test_run_stage(self, mocker):
@@ -115,6 +116,7 @@ class TestPartHandling:
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
+            overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
     def test_run_prime(self, mocker):
@@ -153,6 +155,26 @@ class TestPartHandling:
         out, err = capfd.readouterr()
         assert out == "hello\n"
         assert err == ""
+
+    def test_compute_layer_hash(self, new_dir):
+        p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["pkg1"]})
+        p2 = Part("p1", {"plugin": "nil", "overlay-script": "ls"})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1, p2])
+
+        layer_hash = handler._compute_layer_hash()
+        assert layer_hash.hex() == "80ab51c6c76eb2b6fc01adc3143ebaf2b982ae56"
+
+    def test_compute_layer_hash_for_all_parts(self, new_dir):
+        p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["pkg1"]})
+        p2 = Part("p1", {"plugin": "nil", "overlay-script": "ls"})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
+        handler = PartHandler(p1, part_info=part_info, part_list=[p1, p2])
+
+        layer_hash = handler._compute_layer_hash(for_all_parts=True)
+        assert layer_hash.hex() == "f4ae5a2ed1b4fd8a7e03f9264ab0f98ed6fd991b"
 
 
 @pytest.mark.usefixtures("new_dir")

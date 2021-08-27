@@ -32,6 +32,7 @@ class TestStageState:
             "project-options": {},
             "files": set(),
             "directories": set(),
+            "overlay-hash": None,
         }
 
     def test_marshal_unmarshal(self):
@@ -40,6 +41,7 @@ class TestStageState:
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
             "directories": {"b"},
+            "overlay-hash": "6f7665726c61792d68617368",
         }
 
         state = StageState.unmarshal(state_data)

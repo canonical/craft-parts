@@ -27,6 +27,7 @@ from typing import Any, Callable, Dict, List, Optional
 from craft_parts import callbacks, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
+from craft_parts.overlays import LayerHash
 from craft_parts.packages import errors as packages_errors
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
@@ -57,10 +58,12 @@ class PartHandler:
         part_info: PartInfo,
         part_list: List[Part],
         ignore_patterns: Optional[List[str]] = None,
+        base_layer_hash: Optional[LayerHash] = None,
     ):
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
+        self._base_layer_hash = base_layer_hash
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -180,10 +183,13 @@ class PartHandler:
         }
         assets.update(_get_machine_manifest())
 
+        overlay_hash = self._compute_layer_hash(for_all_parts=True)
+
         state = states.BuildState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             assets=assets,
+            overlay_hash=overlay_hash.hex(),
         )
         return state
 
@@ -196,11 +202,14 @@ class PartHandler:
             work_dir=self._part.stage_dir,
         )
 
+        overlay_hash = self._compute_layer_hash(for_all_parts=True)
+
         state = states.StageState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
+            overlay_hash=overlay_hash.hex(),
         )
         return state
 
@@ -247,6 +256,19 @@ class PartHandler:
             return StepContents()
 
         return step_handler.run_builtin()
+
+    def _compute_layer_hash(self, *, for_all_parts: bool = False) -> LayerHash:
+        part_hash = self._base_layer_hash
+
+        for part in self._part_list:
+            part_hash = LayerHash.for_part(part, previous_layer_hash=part_hash)
+            if not for_all_parts and part.name == self._part.name:
+                break
+
+        if not part_hash:
+            raise RuntimeError("could not compute layer hash")
+
+        return part_hash
 
     def _update_action(self, action: Action, *, step_info: StepInfo) -> None:
         handler: Callable[[StepInfo], None]
