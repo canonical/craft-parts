@@ -63,7 +63,6 @@ def test_plugin(new_dir):
     props = FooPluginProperties.unmarshal({"foo-name": "world"})
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    assert plugin.properties_class == FooPluginProperties
     assert plugin.get_build_snaps() == {"build_snap"}
     assert plugin.get_build_packages() == {"build_package"}
     assert plugin.get_build_environment() == {"ENV": "value"}
