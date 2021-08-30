@@ -23,6 +23,10 @@ def test_dirs(new_dir):
     dirs = ProjectDirs()
     assert dirs.work_dir == new_dir
     assert dirs.parts_dir == new_dir / "parts"
+    assert dirs.overlay_dir == new_dir / "overlay"
+    assert dirs.overlay_mount_dir == new_dir / "overlay/overlay"
+    assert dirs.overlay_packages_dir == new_dir / "overlay/packages"
+    assert dirs.overlay_work_dir == new_dir / "overlay/work"
     assert dirs.stage_dir == new_dir / "stage"
     assert dirs.prime_dir == new_dir / "prime"
 
@@ -31,6 +35,10 @@ def test_dirs_work_dir(new_dir):
     dirs = ProjectDirs(work_dir="foobar")
     assert dirs.work_dir == new_dir / "foobar"
     assert dirs.parts_dir == new_dir / "foobar/parts"
+    assert dirs.overlay_dir == new_dir / "foobar/overlay"
+    assert dirs.overlay_mount_dir == new_dir / "foobar/overlay/overlay"
+    assert dirs.overlay_packages_dir == new_dir / "foobar/overlay/packages"
+    assert dirs.overlay_work_dir == new_dir / "foobar/overlay/work"
     assert dirs.stage_dir == new_dir / "foobar/stage"
     assert dirs.prime_dir == new_dir / "foobar/prime"
 

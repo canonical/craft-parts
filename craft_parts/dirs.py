@@ -25,27 +25,23 @@ class ProjectDirs:
 
     :param work_dir: The parent directory containing the parts, prime and stage
         subdirectories. If not specified, the current directory will be used.
+
+    :ivar work_dir: The root of the work directories used for project processing.
+    :ivar parts_dir: The directory containing work subdirectories for each part.
+    :ivar overlay_dir: The directory containing work subdirectories for overlays.
+    :ivar overlay_mount_dir: The mountpoint for the overlay filesystem.
+    :ivar overlay_packages_dir: The cache directory for overlay packages.
+    :ivar overlay_work_dir: The work directory for the overlay filesystem.
+    :ivar stage_dir: The staging area containing installed files from all parts.
+    :ivar prime_dir: The primed tree containing the final artifacts to deploy.
     """
 
     def __init__(self, *, work_dir: Union[Path, str] = "."):
-        self._work_dir = Path(work_dir).expanduser().resolve()
-
-    @property
-    def work_dir(self) -> Path:
-        """Return the root of the work directories used for project processing."""
-        return self._work_dir
-
-    @property
-    def parts_dir(self) -> Path:
-        """Return the directory containing work subdirectories for each part."""
-        return self._work_dir / "parts"
-
-    @property
-    def stage_dir(self) -> Path:
-        """Return the staging area containing installed files from all parts."""
-        return self._work_dir / "stage"
-
-    @property
-    def prime_dir(self) -> Path:
-        """Return the primed tree containing the final artifacts to deploy."""
-        return self._work_dir / "prime"
+        self.work_dir = Path(work_dir).expanduser().resolve()
+        self.parts_dir = self.work_dir / "parts"
+        self.overlay_dir = self.work_dir / "overlay"
+        self.overlay_mount_dir = self.overlay_dir / "overlay"
+        self.overlay_packages_dir = self.overlay_dir / "packages"
+        self.overlay_work_dir = self.overlay_dir / "work"
+        self.stage_dir = self.work_dir / "stage"
+        self.prime_dir = self.work_dir / "prime"
