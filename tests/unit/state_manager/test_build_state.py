@@ -16,6 +16,7 @@
 
 from pathlib import Path
 
+import pydantic
 import pytest
 import yaml
 
@@ -48,6 +49,15 @@ class TestBuildState:
 
         state = BuildState.unmarshal(state_data)
         assert state.marshal() == state_data
+
+    def test_hash_validation(self):
+        with pytest.raises(pydantic.ValidationError) as raised:
+            BuildState.unmarshal({"overlay-hash": "invalid"})
+
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("overlay-hash",)
+        assert err[0]["type"] == "value_error"
 
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError) as raised:
