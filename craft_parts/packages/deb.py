@@ -481,10 +481,8 @@ class Ubuntu(BaseRepository):
         stage_cache_dir, _ = get_cache_dirs(cache_dir)
         stage_cache_dir.mkdir(parents=True, exist_ok=True)
 
-        with AptCache(
-            stage_cache=stage_cache_dir, stage_cache_arch=target_arch
-        ) as apt_cache:
-            apt_cache.update()
+        with AptCache(stage_cache=stage_cache_dir, stage_cache_arch=target_arch) as _:
+            pass
 
     @classmethod
     def unpack_stage_packages(

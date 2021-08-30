@@ -44,8 +44,6 @@ class TestAptStageCache:
 
         AptCache.configure_apt("test_stage_packages")
         with AptCache(stage_cache=stage_cache) as apt_cache:
-            apt_cache.update()
-
             package_names = {"pciutils"}
             filtered_names = {
                 "base-files",
@@ -152,6 +150,7 @@ class TestMockedApt:
             call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
             call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
             call.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
+            call.apt_pkg.config.set("Dir::State", "/var/lib/apt"),
             call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
         ]
         # fmt: on
@@ -175,6 +174,7 @@ class TestMockedApt:
             call.apt_pkg.config.set("Apt::Key::gpgvcommand", snap_dir + "/usr/bin/gpgv"),
             call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
             call.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
+            call.apt_pkg.config.set("Dir::State", "/var/lib/apt"),
             call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
         ]
         # fmt: on
@@ -184,13 +184,10 @@ class TestMockedApt:
         stage_cache.mkdir(exist_ok=True, parents=True)
         fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
 
-        with AptCache(stage_cache=stage_cache) as apt_cache:
-            apt_cache.update()
+        with AptCache(stage_cache=stage_cache) as _:
+            pass
 
         assert fake_apt.mock_calls == [
-            call.cache.Cache(rootdir=str(stage_cache), memonly=True),
-            call.cache.Cache().update(fetch_progress=mocker.ANY, sources_list=None),
-            call.cache.Cache().close(),
             call.cache.Cache(rootdir=str(stage_cache), memonly=True),
             call.cache.Cache().close(),
         ]
