@@ -31,9 +31,11 @@ logger = logging.getLogger(__name__)
 def visible_in_layer(lower_dir: Path, upper_dir: Path) -> Tuple[Set[str], Set[str]]:
     """Determine the files and directories that are visible in a layer.
 
-    Given a pair of directories containing lower and upper layer contents, list the
-    files and subdirectories that would be visible if they're layered. The upper
-    directory may contain OCI whiteout files and opaque dirs.
+    Given a pair of directories containing lower and upper layer entries, list the
+    files and subdirectories in the lower layer that would be directly visible when
+    the layers are stacked (i.e. the visibility is not "blocked" by an entry with
+    the same name that exists in the upper directory). The upper directory may contain
+    OCI whiteout files and opaque dirs.
 
     :param lower_dir: The lower directory.
     :param upper_dir: The upper directory.
