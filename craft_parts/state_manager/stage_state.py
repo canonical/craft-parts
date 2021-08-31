@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import validator
 
-from .step_state import StepState
+from .step_state import StepState, validate_hex_string
 
 
 class StageState(StepState):
@@ -28,12 +28,9 @@ class StageState(StepState):
 
     overlay_hash: Optional[str] = None
 
-    @validator("overlay_hash")
-    @classmethod
-    def _validate_hex_string(cls, value):
-        if value:
-            bytes.fromhex(value)
-        return value
+    _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
+        validate_hex_string
+    )
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "StageState":
