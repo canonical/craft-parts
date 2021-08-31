@@ -244,6 +244,28 @@ class TestLocal:
     def test_has_source_handler_entry(self):
         assert sources._source_handler["local"] is LocalSource
 
+    def test_ignore_patterns_workdir(self, new_dir):
+        ignore_patterns = ["hello"]
+        project_dirs = ProjectDirs(work_dir=Path("src/work"))
+
+        s1 = LocalSource(
+            "src",
+            "destination",
+            project_dirs=project_dirs,
+            cache_dir=new_dir,
+            ignore_patterns=ignore_patterns,
+        )
+        assert s1._ignore_patterns == ["hello", "work"]
+
+        s2 = LocalSource(
+            "src",
+            "destination",
+            project_dirs=project_dirs,
+            cache_dir=new_dir,
+            ignore_patterns=ignore_patterns,
+        )
+        assert s2._ignore_patterns == ["hello", "work"]
+
 
 class TestLocalUpdate:
     """Verify that the local source can detect changes and update."""
