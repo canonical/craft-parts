@@ -29,13 +29,13 @@ class LayerHash:
     """The layer validation hash for a part."""
 
     def __init__(self, layer_hash: bytes):
-        self.hash_bytes = layer_hash
+        self.digest = layer_hash
 
     def __repr__(self):
         return self.hex()
 
     def __eq__(self, other):
-        return self.hash_bytes == other.hash_bytes
+        return self.digest == other.digest
 
     @classmethod
     def for_part(
@@ -52,7 +52,7 @@ class LayerHash:
         """
         hasher = hashlib.sha1()
         if previous_layer_hash:
-            hasher.update(previous_layer_hash.hash_bytes)
+            hasher.update(previous_layer_hash.digest)
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
         digest = hasher.digest()
@@ -97,4 +97,4 @@ class LayerHash:
 
     def hex(self) -> str:
         """Return the current hash value as a hexadecimal string."""
-        return self.hash_bytes.hex()
+        return self.digest.hex()
