@@ -266,6 +266,19 @@ class PartHandler:
         return step_handler.run_builtin()
 
     def _compute_layer_hash(self, *, for_all_parts: bool = False) -> LayerHash:
+        """Obtain the layer verification hash.
+
+        The layer verification hash is computed as a digest of layer parameters
+        from the first layer up to layer being processed. The integrity of the
+        complete overlay stack is verified against the hash of its last (topmost)
+        layer.
+
+        :param for_all_parts: Compute the layer for all parts instead of stopping
+            at the current layer. This is used to obtain the verification hash
+            for the complete overlay stack.
+
+        :returns: The layer verification hash.
+        """
         part_hash = self._base_layer_hash
 
         for part in self._part_list:
