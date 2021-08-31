@@ -163,7 +163,7 @@ class TestPartHandling:
         part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1, p2])
 
-        layer_hash = handler._compute_layer_hash()
+        layer_hash = handler._compute_layer_hash(all_parts=False)
         assert layer_hash.hex() == "80ab51c6c76eb2b6fc01adc3143ebaf2b982ae56"
 
     def test_compute_layer_hash_for_all_parts(self, new_dir):
@@ -173,7 +173,7 @@ class TestPartHandling:
         part_info = PartInfo(info, p1)
         handler = PartHandler(p1, part_info=part_info, part_list=[p1, p2])
 
-        layer_hash = handler._compute_layer_hash(for_all_parts=True)
+        layer_hash = handler._compute_layer_hash(all_parts=True)
         assert layer_hash.hex() == "f4ae5a2ed1b4fd8a7e03f9264ab0f98ed6fd991b"
 
 

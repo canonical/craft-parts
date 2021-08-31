@@ -187,7 +187,7 @@ class PartHandler:
         # so we compute it for all parts. The overlay hash is added to the build state
         # to ensure proper build step invalidation of parts that can see the overlay
         # filesystem if overlay contents change.
-        overlay_hash = self._compute_layer_hash(for_all_parts=True)
+        overlay_hash = self._compute_layer_hash(all_parts=True)
 
         state = states.BuildState(
             part_properties=self._part_properties,
@@ -210,7 +210,7 @@ class PartHandler:
         # so we compute it for all parts. The overlay hash is added to the stage state
         # to ensure proper stage step invalidation of parts that declare overlay
         # parameters if overlay contents change.
-        overlay_hash = self._compute_layer_hash(for_all_parts=True)
+        overlay_hash = self._compute_layer_hash(all_parts=True)
 
         state = states.StageState(
             part_properties=self._part_properties,
@@ -265,7 +265,7 @@ class PartHandler:
 
         return step_handler.run_builtin()
 
-    def _compute_layer_hash(self, *, for_all_parts: bool = False) -> LayerHash:
+    def _compute_layer_hash(self, *, all_parts: bool) -> LayerHash:
         """Obtain the layer verification hash.
 
         The layer verification hash is computed as a digest of layer parameters
@@ -273,7 +273,7 @@ class PartHandler:
         complete overlay stack is verified against the hash of its last (topmost)
         layer.
 
-        :param for_all_parts: Compute the layer for all parts instead of stopping
+        :param all_parts: Compute the layer for all parts instead of stopping
             at the current layer. This is used to obtain the verification hash
             for the complete overlay stack.
 
@@ -283,7 +283,7 @@ class PartHandler:
 
         for part in self._part_list:
             part_hash = LayerHash.for_part(part, previous_layer_hash=part_hash)
-            if not for_all_parts and part.name == self._part.name:
+            if not all_parts and part.name == self._part.name:
                 break
 
         if not part_hash:
