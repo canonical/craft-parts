@@ -41,7 +41,7 @@ class TestLayerHash:
     def test_hex_hash_bytes(self):
         value = bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
         h = LayerHash(value)
-        assert h.hash_bytes == value
+        assert h.digest == value
         assert h.hex() == "0a141e28323c46505a64"
 
     @pytest.mark.parametrize(

@@ -16,13 +16,21 @@
 
 """State definitions for the stage step."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from .step_state import StepState
+from pydantic import validator
+
+from .step_state import StepState, validate_hex_string
 
 
 class StageState(StepState):
     """Context information for the stage step."""
+
+    overlay_hash: Optional[str] = None
+
+    _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
+        validate_hex_string
+    )
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "StageState":
