@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Sequence
 from craft_parts import parts, steps
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import ProjectInfo
+from craft_parts.overlays import LayerHash, LayerStateManager
 from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.state_manager import StateManager, states
 from craft_parts.steps import Step
@@ -49,6 +50,7 @@ class Sequencer:
         part_list: List[Part],
         project_info: ProjectInfo,
         ignore_outdated: Optional[List[str]] = None,
+        base_layer_hash: Optional[LayerHash] = None,
     ):
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -57,6 +59,7 @@ class Sequencer:
             part_list=part_list,
             ignore_outdated=ignore_outdated,
         )
+        self._layer_state = LayerStateManager(self._part_list, base_layer_hash)
         self._actions: List[Action] = []
 
     def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
@@ -190,30 +193,26 @@ class Sequencer:
             state = states.PullState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
-                assets={},  # TODO: obtain pull assets
             )
 
         elif step == Step.BUILD:
             state = states.BuildState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
-                assets={},  # TODO: obtain build assets
+                overlay_hash=self._layer_state.get_overlay_hash().hex(),
             )
 
         elif step == Step.STAGE:
             state = states.StageState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
-                files=set(),
-                directories=set(),
+                overlay_hash=self._layer_state.get_overlay_hash().hex(),
             )
 
         elif step == Step.PRIME:
             state = states.PrimeState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
-                files=set(),
-                directories=set(),
             )
 
         else:
