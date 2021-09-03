@@ -39,7 +39,7 @@ class FooPluginProperties(PluginProperties):
 class FooPlugin(Plugin):
     """An empty plugin."""
 
-    properties_class = FooPluginProperties.unmarshal({})
+    properties_class = FooPluginProperties
 
     def get_build_snaps(self) -> Set[str]:
         return {"build_snap"}
@@ -63,7 +63,6 @@ def test_plugin(new_dir):
     props = FooPluginProperties.unmarshal({"foo-name": "world"})
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    assert isinstance(plugin.properties_class, PluginProperties)
     assert plugin.get_build_snaps() == {"build_snap"}
     assert plugin.get_build_packages() == {"build_package"}
     assert plugin.get_build_environment() == {"ENV": "value"}

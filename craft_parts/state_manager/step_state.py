@@ -152,3 +152,10 @@ def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str
             differing_keys.add(key)
 
     return differing_keys
+
+
+def validate_hex_string(value: str) -> str:
+    """Ensure that a pydantic model field is hexadecimal string."""
+    if value:
+        bytes.fromhex(value)
+    return value

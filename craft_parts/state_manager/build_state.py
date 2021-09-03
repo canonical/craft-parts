@@ -16,15 +16,22 @@
 
 """State definitions for the build step."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from .step_state import StepState
+from pydantic import validator
+
+from .step_state import StepState, validate_hex_string
 
 
 class BuildState(StepState):
     """Context information for the build step."""
 
     assets: Dict[str, Any] = {}
+    overlay_hash: Optional[str] = None
+
+    _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
+        validate_hex_string
+    )
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "BuildState":

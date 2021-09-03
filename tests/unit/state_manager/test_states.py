@@ -57,6 +57,7 @@ class TestStepStates:
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
             "directories": {"b"},
+            "overlay-hash": "6f7665726c61792d68617368",
         }
         state_file = Path("parts/foo/state/build")
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -73,6 +74,7 @@ class TestStepStates:
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
             "directories": {"b"},
+            "overlay-hash": "6f7665726c61792d68617368",
         }
         state_file = Path("parts/foo/state/stage")
         state_file.parent.mkdir(parents=True, exist_ok=True)

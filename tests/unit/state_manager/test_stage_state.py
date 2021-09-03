@@ -16,6 +16,7 @@
 
 from pathlib import Path
 
+import pydantic
 import pytest
 import yaml
 
@@ -32,6 +33,7 @@ class TestStageState:
             "project-options": {},
             "files": set(),
             "directories": set(),
+            "overlay-hash": None,
         }
 
     def test_marshal_unmarshal(self):
@@ -40,10 +42,20 @@ class TestStageState:
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
             "directories": {"b"},
+            "overlay-hash": "6f7665726c61792d68617368",
         }
 
         state = StageState.unmarshal(state_data)
         assert state.marshal() == state_data
+
+    def test_hash_validation(self):
+        with pytest.raises(pydantic.ValidationError) as raised:
+            StageState.unmarshal({"overlay-hash": "invalid"})
+
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("overlay-hash",)
+        assert err[0]["type"] == "value_error"
 
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError) as raised:

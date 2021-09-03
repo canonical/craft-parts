@@ -76,7 +76,7 @@ class SourceHandler(abc.ABC):
         self.command = command
         self._dirs = project_dirs
         self._checked = False
-        self._ignore_patterns = ignore_patterns
+        self._ignore_patterns = ignore_patterns.copy()
 
     # pylint: enable=too-many-arguments
 
