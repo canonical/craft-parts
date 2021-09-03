@@ -177,11 +177,7 @@ def test_main_application_name(new_dir, mocker, capfd):
     )
     Path("parts.yaml").write_text(my_parts_yaml)
 
-    mock_update = mocker.patch("craft_parts.packages.apt_cache.AptCache.update")
-
-    mocker.patch.object(
-        sys, "argv", ["cmd", "--application-name", "znapcraft", "--refresh", "pull"]
-    )
+    mocker.patch.object(sys, "argv", ["cmd", "--application-name", "znapcraft", "pull"])
     main.main()
 
     # check environment variables
@@ -203,11 +199,6 @@ def test_main_application_name(new_dir, mocker, capfd):
         """
     )
 
-    # check cache location
-    assert Path(".cache/craft-parts/stage-packages").is_dir()
-
-    mock_update.assert_called_with()
-
 
 def test_main_invalid_application_name(mocker):
     Path("parts.yaml").write_text(parts_yaml)
@@ -219,24 +210,6 @@ def test_main_invalid_application_name(mocker):
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 3
-
-
-def test_main_cache_dir(new_dir, mocker):
-    Path("parts.yaml").write_text(parts_yaml)
-
-    mock_update = mocker.patch("craft_parts.packages.apt_cache.AptCache.update")
-
-    mocker.patch.object(
-        sys, "argv", ["cmd", "--dry-run", "--cache-dir", "cache_dir", "--refresh"]
-    )
-    with pytest.raises(SystemExit) as raised:
-        main.main()
-    assert raised.value.code is None
-
-    # check cache location
-    assert Path("cache_dir/stage-packages").is_dir()
-
-    mock_update.assert_called_with()
 
 
 def test_main_alternative_work_dir(mocker, capfd):
@@ -284,26 +257,6 @@ def test_main_alternative_parts_invalid_file(mocker, capfd):
     out, err = capfd.readouterr()
     assert err == "Error: missing.yaml: No such file or directory.\n"
     assert out == ""
-
-
-def test_main_refresh(new_dir, mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
-
-    mock_update = mocker.patch("craft_parts.packages.apt_cache.AptCache.update")
-
-    mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "--refresh"])
-    with pytest.raises(SystemExit) as raised:
-        main.main()
-    assert raised.value.code is None
-
-    out, err = capfd.readouterr()
-    assert err == ""
-    assert out == plan_result[3]
-
-    # check cache location
-    assert Path(".cache/craft-parts/stage-packages").is_dir()
-
-    mock_update.assert_called_with()
 
 
 @pytest.mark.parametrize(
