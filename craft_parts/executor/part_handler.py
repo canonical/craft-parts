@@ -534,22 +534,20 @@ class PartHandler:
             overlay_migration_state=overlay_migration_state,
         )
 
-        # remove overlay data if this is the last primed part with overlay
-        if not self._part.has_overlay:
-            return
-
-        if len(_parts_with_overlay_in_step(step, part_list=self._part_list)) != 1:
-            return
-
-        migration.clean_shared_overlay(
-            shared_dir=shared_dir,
-            part_states=part_states,
-            overlay_migration_state=overlay_migration_state,
-        )
-        overlay_migration_state_path = states.get_overlay_migration_state_path(
-            self._part.overlay_dir, step
-        )
-        overlay_migration_state_path.unlink()
+        # remove overlay data if this is the last part with overlay
+        if (
+            self._part.has_overlay
+            and len(_parts_with_overlay_in_step(step, part_list=self._part_list)) == 1
+        ):
+            migration.clean_shared_overlay(
+                shared_dir=shared_dir,
+                part_states=part_states,
+                overlay_migration_state=overlay_migration_state,
+            )
+            overlay_migration_state_path = states.get_overlay_migration_state_path(
+                self._part.overlay_dir, step
+            )
+            overlay_migration_state_path.unlink()
 
     def _make_dirs(self):
         dirs = [
