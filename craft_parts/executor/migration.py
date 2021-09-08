@@ -102,7 +102,7 @@ def migrate_files(
         if dst.exists():
             dst.unlink()
 
-        # If source is an whiteout file (overlayfs or OCI), create an OCI whiteout file
+        # If source is a whiteout file (overlayfs or OCI), create an OCI whiteout file
         # in destination and add it to the list of migrated files so it can be removed
         # when cleaning.
         if oci_translation and _is_whiteout_file(src):
