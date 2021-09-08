@@ -107,16 +107,18 @@ class TestLayerStateManager:
         base_layer_hash = LayerHash(b"base hash value")
 
         Path("parts/p1/state").mkdir(parents=True)
-        lh = LayerHash(bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"))
-        lh.save(p1)
+        layer_hash = LayerHash(
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+        )
+        layer_hash.save(p1)
 
         lsm = LayerStateManager([p1, p2], base_layer_hash)
-        p1_lh = lsm.get_layer_hash(p1)
-        assert p1_lh is not None
-        assert p1_lh.hex() == "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"
+        p1_layer_hash = lsm.get_layer_hash(p1)
+        assert p1_layer_hash is not None
+        assert p1_layer_hash.hex() == "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"
 
-        p2_lh = lsm.get_layer_hash(p2)
-        assert p2_lh is None
+        p2_layer_hash = lsm.get_layer_hash(p2)
+        assert p2_layer_hash is None
 
     def test_set_layer_hash(self):
         p1 = Part("p1", {})
@@ -125,12 +127,14 @@ class TestLayerStateManager:
         lsm = LayerStateManager([p1], base_layer_hash)
         assert lsm.get_layer_hash(p1) is None
 
-        lh = LayerHash(bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"))
-        lsm.set_layer_hash(p1, lh)
+        layer_hash = LayerHash(
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+        )
+        lsm.set_layer_hash(p1, layer_hash)
 
-        p1_lh = lsm.get_layer_hash(p1)
-        assert p1_lh is not None
-        assert p1_lh.hex() == "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"
+        p1_layer_hash = lsm.get_layer_hash(p1)
+        assert p1_layer_hash is not None
+        assert p1_layer_hash.hex() == "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"
 
     @pytest.mark.parametrize(
         "params,digest",
@@ -169,37 +173,45 @@ class TestLayerStateManager:
         p2 = Part("p2", {})
         base_layer_hash = LayerHash(b"base hash value")
 
-        lh = LayerHash(bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"))
+        layer_hash = LayerHash(
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+        )
 
         lsm = LayerStateManager([p1, p2], base_layer_hash)
-        lsm.set_layer_hash(p1, lh)
+        lsm.set_layer_hash(p1, layer_hash)
 
-        p2_lh = lsm.compute_layer_hash(p2)
-        assert p2_lh.hex() == "c6e659c5a430c093a120bb17868ade39e91e00b8"
+        p2_layer_hash = lsm.compute_layer_hash(p2)
+        assert p2_layer_hash.hex() == "c6e659c5a430c093a120bb17868ade39e91e00b8"
 
     def test_compute_layer_hash_multiple_parts_new_base(self):
         p1 = Part("p1", {})
         p2 = Part("p2", {})
         base_layer_hash = LayerHash(b"other base hash value")
 
-        lh = LayerHash(bytes.fromhex("a15e326327c3456bc5547a69fe2996bcf8088cba"))
+        layer_hash = LayerHash(
+            bytes.fromhex("a15e326327c3456bc5547a69fe2996bcf8088cba")
+        )
 
         lsm = LayerStateManager([p1, p2], base_layer_hash)
-        lsm.set_layer_hash(p1, lh)
+        lsm.set_layer_hash(p1, layer_hash)
 
-        p2_lh = lsm.compute_layer_hash(p2)
-        assert p2_lh.hex() == "c522dd71ef33a7eee9b8122ff8f4482152a99a12"
+        p2_layer_hash = lsm.compute_layer_hash(p2)
+        assert p2_layer_hash.hex() == "c522dd71ef33a7eee9b8122ff8f4482152a99a12"
 
     def test_get_overlay_hash(self):
         p1 = Part("p1", {})
         p2 = Part("p2", {})
         base_layer_hash = LayerHash(b"base hash value")
 
-        p1_lh = LayerHash(bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"))
-        p2_lh = LayerHash(bytes.fromhex("c6e659c5a430c093a120bb17868ade39e91e00b8"))
+        p1_layer_hash = LayerHash(
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+        )
+        p2_layer_hash = LayerHash(
+            bytes.fromhex("c6e659c5a430c093a120bb17868ade39e91e00b8")
+        )
 
         lsm = LayerStateManager([p1, p2], base_layer_hash)
-        lsm.set_layer_hash(p1, p1_lh)
-        lsm.set_layer_hash(p2, p2_lh)
+        lsm.set_layer_hash(p1, p1_layer_hash)
+        lsm.set_layer_hash(p2, p2_layer_hash)
 
-        assert lsm.get_overlay_hash() == p2_lh.digest
+        assert lsm.get_overlay_hash() == p2_layer_hash.digest
