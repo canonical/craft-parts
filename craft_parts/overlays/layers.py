@@ -114,7 +114,7 @@ class LayerStateManager:
         self._part_list = part_list
         self._base_layer_hash = base_layer_hash
 
-        self._layer_hash: Dict[str, Optional[LayerHash]] = dict()
+        self._layer_hash: Dict[str, Optional[LayerHash]] = {}
         for part in part_list:
             self.set_layer_hash(part, LayerHash.load(part))
 
