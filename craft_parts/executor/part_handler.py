@@ -29,7 +29,7 @@ from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.packages import errors as packages_errors
-from craft_parts.parts import Part, parts_with_overlay
+from craft_parts.parts import Part, get_parts_with_overlay
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import MigrationState, StepState, states
 from craft_parts.steps import Step
@@ -399,18 +399,16 @@ class PartHandler:
             )
             return
 
-        if self._part not in parts_with_overlay(part_list=self._part_list):
+        parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
+        if self._part not in parts_with_overlay:
             return
 
         logger.debug("staging overlay files")
         migrated_files: Set[str] = set()
         migrated_dirs: Set[str] = set()
 
-        # process layers from top to bottom
-        for part in reversed(self._part_list):
-            if not part.has_overlay:
-                continue
-
+        # process layers from top to bottom (reversed)
+        for part in reversed(parts_with_overlay):
             logger.debug("migrate part %r layer to stage", part.name)
             visible_files, visible_dirs = overlays.visible_in_layer(
                 part.part_layer_dir, part.stage_dir
@@ -444,18 +442,16 @@ class PartHandler:
             )
             return
 
-        if self._part not in parts_with_overlay(part_list=self._part_list):
+        parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
+        if self._part not in parts_with_overlay:
             return
 
         logger.debug("priming overlay files")
         migrated_files: Set[str] = set()
         migrated_dirs: Set[str] = set()
 
-        # process layers from top to bottom
-        for part in reversed(self._part_list):
-            if not part.has_overlay:
-                continue
-
+        # process layers from top to bottom (reversed)
+        for part in reversed(parts_with_overlay):
             logger.debug("migrate part %r layer to prime", part.name)
             visible_files, visible_dirs = overlays.visible_in_layer(
                 part.part_layer_dir, part.prime_dir
@@ -750,5 +746,5 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Pa
 
     :returns: The list of parts with overlay in step.
     """
-    oparts = parts_with_overlay(part_list=part_list)
+    oparts = get_parts_with_overlay(part_list=part_list)
     return [p for p in oparts if states.get_step_state_path(p, step).exists()]

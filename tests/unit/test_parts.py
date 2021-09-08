@@ -401,12 +401,12 @@ class TestPartHelpers:
         assert has_overlay_visibility(p4) is True
         assert has_overlay_visibility(p5) is False
 
-    def test_parts_with_overlay(self):
+    def test_get_parts_with_overlay(self):
         p1 = Part("foo", {})
         p2 = Part("bar", {"overlay-packages": ["pkg1"]})
         p3 = Part("baz", {"overlay-script": "echo"})
         p4 = Part("qux", {"overlay": ["*"]})
         p5 = Part("quux", {"overlay": ["-etc/passwd"]})
 
-        p = parts.parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
+        p = parts.get_parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
         assert p == [p2, p3, p5]
