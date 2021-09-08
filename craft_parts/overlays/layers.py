@@ -107,6 +107,7 @@ class LayerStateManager:
     """An in-memory layer state management helper for action planning.
 
     :param part_list: The list of parts in the project.
+    :param base_layer_hash: The verification hash of the overlay base layer.
     """
 
     def __init__(self, part_list: List[Part], base_layer_hash: Optional[LayerHash]):
