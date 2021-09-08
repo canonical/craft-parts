@@ -394,7 +394,9 @@ class PartHandler:
             self._part.overlay_dir, Step.STAGE
         )
         if stage_overlay_state_path.exists():
-            logger.debug("stage overlay migration state exists")
+            logger.debug(
+                "stage overlay migration state exists, not migrating overlay data"
+            )
             return
 
         if self._part not in parts_with_overlay(part_list=self._part_list):
@@ -437,7 +439,9 @@ class PartHandler:
             self._part.overlay_dir, Step.PRIME
         )
         if prime_overlay_state_path.exists():
-            logger.debug("prime overlay migration state exists")
+            logger.debug(
+                "prime overlay migration state exists, not migrating overlay data"
+            )
             return
 
         if self._part not in parts_with_overlay(part_list=self._part_list):
