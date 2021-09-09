@@ -112,18 +112,6 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def refresh_stage_packages_list(cls, *, cache_dir: Path, target_arch: str) -> None:
-        """Update the list of packages available in the repository.
-
-        :param application_name: A unique identifier for the application
-            using Craft Parts.
-        :param target_arch: The architecture of the packages to fetch.
-
-        :raise PackageListRefreshError: If the update process is not successful.
-        """
-
-    @classmethod
-    @abc.abstractmethod
     def fetch_stage_packages(
         cls,
         *,
@@ -201,10 +189,6 @@ class DummyRepository(BaseRepository):
     def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions."""
         return []
-
-    @classmethod
-    def refresh_stage_packages_list(cls, *, cache_dir: Path, target_arch: str) -> None:
-        """Update the list of packages available in the repository."""
 
     @classmethod
     def fetch_stage_packages(

@@ -314,35 +314,7 @@ class TestCleaning:
 
 
 class TestUpdating:
-    def test_refresh_stage_packages_list(self, new_dir, mocker):
-        refresh_stage = mocker.patch(
-            "craft_parts.packages.Repository.refresh_stage_packages_list"
-        )
-        refresh_build = mocker.patch(
-            "craft_parts.packages.Repository.refresh_build_packages_list"
-        )
-
-        parts_yaml = textwrap.dedent(
-            """
-            parts:
-              foo:
-                plugin: nil
-            """
-        )
-        parts = yaml.safe_load(parts_yaml)
-
-        lf = craft_parts.LifecycleManager(
-            parts, application_name="test_update", arch="aarch64", cache_dir=new_dir
-        )
-        lf.refresh_packages_list()
-
-        refresh_stage.assert_called_once_with(cache_dir=new_dir, target_arch="arm64")
-        refresh_build.assert_not_called()
-
     def test_refresh_system_packages_list(self, new_dir, mocker):
-        refresh_stage = mocker.patch(
-            "craft_parts.packages.Repository.refresh_stage_packages_list"
-        )
         refresh_build = mocker.patch(
             "craft_parts.packages.Repository.refresh_build_packages_list"
         )
@@ -359,7 +331,6 @@ class TestUpdating:
         lf = craft_parts.LifecycleManager(
             parts, application_name="test_update", cache_dir=new_dir, arch="aarch64"
         )
-        lf.refresh_packages_list(system=True)
+        lf.refresh_packages_list()
 
-        refresh_stage.assert_called_once_with(cache_dir=new_dir, target_arch="arm64")
         refresh_build.assert_called_once_with()
