@@ -393,6 +393,9 @@ class PartHandler:
         stage_overlay_state_path = states.get_overlay_migration_state_path(
             self._part.overlay_dir, Step.STAGE
         )
+
+        # Overlay data is migrated to stage only when the first part declaring overlay
+        # parameters is migrated.
         if stage_overlay_state_path.exists():
             logger.debug(
                 "stage overlay migration state exists, not migrating overlay data"
@@ -436,6 +439,9 @@ class PartHandler:
         prime_overlay_state_path = states.get_overlay_migration_state_path(
             self._part.overlay_dir, Step.PRIME
         )
+
+        # Overlay data is migrated to prime only when the first part declaring overlay
+        # parameters is migrated.
         if prime_overlay_state_path.exists():
             logger.debug(
                 "prime overlay migration state exists, not migrating overlay data"
