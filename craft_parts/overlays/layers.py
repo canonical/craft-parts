@@ -18,7 +18,7 @@
 
 import hashlib
 import logging
-from typing import Optional
+from typing import Dict, List, Optional
 
 from craft_parts.parts import Part
 
@@ -35,6 +35,9 @@ class LayerHash:
         return self.hex()
 
     def __eq__(self, other):
+        if not isinstance(other, LayerHash):
+            return False
+
         return self.digest == other.digest
 
     @classmethod
@@ -98,3 +101,52 @@ class LayerHash:
     def hex(self) -> str:
         """Return the current hash value as a hexadecimal string."""
         return self.digest.hex()
+
+
+class LayerStateManager:
+    """An in-memory layer state management helper for action planning.
+
+    :param part_list: The list of parts in the project.
+    :param base_layer_hash: The verification hash of the overlay base layer.
+    """
+
+    def __init__(self, part_list: List[Part], base_layer_hash: Optional[LayerHash]):
+        self._part_list = part_list
+        self._base_layer_hash = base_layer_hash
+
+        self._layer_hash: Dict[str, Optional[LayerHash]] = {}
+        for part in part_list:
+            self.set_layer_hash(part, LayerHash.load(part))
+
+    def get_layer_hash(self, part: Part) -> Optional[LayerHash]:
+        """Obtain the layer hash for the given part."""
+        return self._layer_hash.get(part.name)
+
+    def set_layer_hash(self, part: Part, layer_hash: Optional[LayerHash]) -> None:
+        """Store the value of the layer hash for the given part."""
+        self._layer_hash[part.name] = layer_hash
+
+    def compute_layer_hash(self, part: Part) -> LayerHash:
+        """Calculate the layer validation hash for the given part.
+
+        :param part: The part being processed.
+
+        :return: The validation hash of the layer corresponding to the
+            given part.
+        """
+        index = self._part_list.index(part)
+
+        if index > 0:
+            previous_layer_hash = self.get_layer_hash(self._part_list[index - 1])
+        else:
+            previous_layer_hash = self._base_layer_hash
+
+        return LayerHash.for_part(part, previous_layer_hash=previous_layer_hash)
+
+    def get_overlay_hash(self) -> bytes:
+        """Obtain the overlay validation hash."""
+        last_part = self._part_list[-1]
+        overlay_hash = self.get_layer_hash(last_part)
+        if not overlay_hash:
+            return b""
+        return overlay_hash.digest
