@@ -67,11 +67,19 @@ class BaseRepository(abc.ABC):
         should be raised.
         """
 
+    @classmethod
+    @abc.abstractmethod
+    def download_packages(cls, package_names: List[str]) -> None:
+        """Download the specified packages to the local package cache.
+
+        :param package_names: A list with the names of the packages to download.
+        """
+
     # XXX: list-only functionality can be a method called by install_build_packages
 
     @classmethod
     @abc.abstractmethod
-    def install_build_packages(
+    def install_packages(
         cls, package_names: List[str], list_only: bool = False
     ) -> List[str]:
         """Install packages on the host system.
@@ -174,7 +182,11 @@ class DummyRepository(BaseRepository):
         """Refresh the build packages cache."""
 
     @classmethod
-    def install_build_packages(
+    def download_packages(cls, package_names: List[str]) -> None:
+        """Download the specified packages to the local package cache."""
+
+    @classmethod
+    def install_packages(
         cls, package_names: List[str], list_only: bool = False
     ) -> List[str]:
         """Install packages on the host system."""

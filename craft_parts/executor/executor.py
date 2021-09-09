@@ -171,7 +171,7 @@ class Executor:
         if self._extra_build_packages:
             build_packages.update(self._extra_build_packages)
 
-        packages.Repository.install_build_packages(sorted(build_packages))
+        packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
         build_snaps = set()

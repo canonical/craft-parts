@@ -360,6 +360,34 @@ class Ubuntu(BaseRepository):
             return apt_cache.get_packages_marked_for_installation()
 
     @classmethod
+    def download_packages(cls, package_names: List[str]) -> None:
+        """Download the specified packages to the local package cache area."""
+        logger.info("Downloading packages: %s", " ".join(package_names))
+        env = os.environ.copy()
+        env.update(
+            {
+                "DEBIAN_FRONTEND": "noninteractive",
+                "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                "DEBIAN_PRIORITY": "critical",
+            }
+        )
+
+        apt_command = [
+            "apt-get",
+            "--no-install-recommends",
+            "-y",
+            "-oDpkg::Use-Pty=0",
+            "--allow-downgrades",
+            "--download-only",
+            "install",
+        ]
+
+        try:
+            process_run(apt_command + package_names, env=env)
+        except subprocess.CalledProcessError as err:
+            raise errors.PackagesDownloadError(packages=package_names) from err
+
+    @classmethod
     def install_build_packages(
         cls, package_names: List[str], list_only: bool = False
     ) -> List[str]:
