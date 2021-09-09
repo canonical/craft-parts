@@ -476,17 +476,6 @@ class Ubuntu(BaseRepository):
         return sorted(installed)
 
     @classmethod
-    def refresh_stage_packages_list(cls, *, cache_dir: Path, target_arch: str):
-        """Refresh the list of packages available in the repository."""
-        stage_cache_dir, _ = get_cache_dirs(cache_dir)
-        stage_cache_dir.mkdir(parents=True, exist_ok=True)
-
-        with AptCache(
-            stage_cache=stage_cache_dir, stage_cache_arch=target_arch
-        ) as apt_cache:
-            apt_cache.update()
-
-    @classmethod
     def unpack_stage_packages(
         cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
     ) -> None:
