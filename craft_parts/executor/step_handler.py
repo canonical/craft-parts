@@ -143,11 +143,11 @@ class StepHandler:
                 prefix_trim=self._part.part_install_dir,
             )
 
-        migrate_files(
+        files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=str(self._part.part_install_dir),
-            destdir=str(self._part.stage_dir),
+            srcdir=self._part.part_install_dir,
+            destdir=self._part.stage_dir,
             fixup_func=pkgconfig_fixup,
         )
         return StepContents(files, dirs)
@@ -163,11 +163,11 @@ class StepHandler:
 
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(prime_fileset, srcdir)
-        migrate_files(
+        files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=str(self._part.stage_dir),
-            destdir=str(self._part.prime_dir),
+            srcdir=self._part.stage_dir,
+            destdir=self._part.prime_dir,
         )
         # TODO: handle elf dependencies
 

@@ -22,21 +22,20 @@ import os.path
 import shutil
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 
-from craft_parts import callbacks, errors, packages, plugins, sources
+from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.packages import errors as packages_errors
-from craft_parts.parts import Part
+from craft_parts.parts import Part, get_parts_with_overlay
 from craft_parts.plugins import Plugin
-from craft_parts.state_manager import states
-from craft_parts.state_manager.states import StepState
+from craft_parts.state_manager import MigrationState, StepState, states
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 
-from .migration import clean_shared_area
+from . import migration
 from .organize import organize_files
 from .step_handler import StepContents, StepHandler
 
@@ -206,6 +205,8 @@ class PartHandler:
             work_dir=self._part.stage_dir,
         )
 
+        self._migrate_overlay_files_to_stage()
+
         # Overlay integrity is checked based by the hash of its last (topmost) layer,
         # so we compute it for all parts. The overlay hash is added to the stage state
         # to ensure proper stage step invalidation of parts that declare overlay
@@ -229,6 +230,8 @@ class PartHandler:
             scriptlet_name="override-prime",
             work_dir=self._part.prime_dir,
         )
+
+        self._migrate_overlay_files_to_prime()
 
         state = states.PrimeState(
             part_properties=self._part_properties,
@@ -380,6 +383,98 @@ class PartHandler:
 
         self._organize(overwrite=True)
 
+    def _migrate_overlay_files_to_stage(self) -> None:
+        """Stage overlay files create state.
+
+        Files and directories are migrated from overlay to stage based on a
+        list of visible overlay entries, converting overlayfs whiteout files
+        and opaque dirs to OCI.
+        """
+        stage_overlay_state_path = states.get_overlay_migration_state_path(
+            self._part.overlay_dir, Step.STAGE
+        )
+
+        # Overlay data is migrated to stage only when the first part declaring overlay
+        # parameters is migrated.
+        if stage_overlay_state_path.exists():
+            logger.debug(
+                "stage overlay migration state exists, not migrating overlay data"
+            )
+            return
+
+        parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
+        if self._part not in parts_with_overlay:
+            return
+
+        logger.debug("staging overlay files")
+        migrated_files: Set[str] = set()
+        migrated_dirs: Set[str] = set()
+
+        # process layers from top to bottom (reversed)
+        for part in reversed(parts_with_overlay):
+            logger.debug("migrate part %r layer to stage", part.name)
+            visible_files, visible_dirs = overlays.visible_in_layer(
+                part.part_layer_dir, part.stage_dir
+            )
+            layer_files, layer_dirs = migration.migrate_files(
+                files=visible_files,
+                dirs=visible_dirs,
+                srcdir=part.part_layer_dir,
+                destdir=part.stage_dir,
+                oci_translation=True,
+            )
+            migrated_files |= layer_files
+            migrated_dirs |= layer_dirs
+
+        state = MigrationState(files=migrated_files, directories=migrated_dirs)
+        state.write(stage_overlay_state_path)
+
+    def _migrate_overlay_files_to_prime(self) -> None:
+        """Prime overlay files and create state.
+
+        Files and directories are migrated from stage to prime based on a list
+        of visible overlay entries, including OCI-compatible whiteout files and
+        opaque directories.
+        """
+        prime_overlay_state_path = states.get_overlay_migration_state_path(
+            self._part.overlay_dir, Step.PRIME
+        )
+
+        # Overlay data is migrated to prime only when the first part declaring overlay
+        # parameters is migrated.
+        if prime_overlay_state_path.exists():
+            logger.debug(
+                "prime overlay migration state exists, not migrating overlay data"
+            )
+            return
+
+        parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
+        if self._part not in parts_with_overlay:
+            return
+
+        logger.debug("priming overlay files")
+        migrated_files: Set[str] = set()
+        migrated_dirs: Set[str] = set()
+
+        # process layers from top to bottom (reversed)
+        for part in reversed(parts_with_overlay):
+            logger.debug("migrate part %r layer to prime", part.name)
+            visible_files, visible_dirs = overlays.visible_in_layer(
+                part.part_layer_dir, part.prime_dir
+            )
+            layer_files, layer_dirs = migration.migrate_files(
+                files=visible_files,
+                dirs=visible_dirs,
+                srcdir=part.stage_dir,
+                destdir=part.prime_dir,
+                oci_translation=True,
+            )
+            migrated_files |= layer_files
+            migrated_dirs |= layer_dirs
+
+        state = MigrationState(files=migrated_files, directories=migrated_dirs)
+        state.write(prime_overlay_state_path)
+
     def clean_step(self, step: Step) -> None:
         """Remove the work files and the state of the given step.
 
@@ -421,27 +516,51 @@ class PartHandler:
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
-        part_states = _load_part_states(Step.STAGE, self._part_list)
-        clean_shared_area(
-            part_name=self._part.name,
-            shared_dir=self._part.stage_dir,
-            part_states=part_states,
-        )
+        self._clean_shared(Step.STAGE, shared_dir=self._part.stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
-        part_states = _load_part_states(Step.PRIME, self._part_list)
-        clean_shared_area(
-            part_name=self._part.name,
-            shared_dir=self._part.prime_dir,
-            part_states=part_states,
+        self._clean_shared(Step.PRIME, shared_dir=self._part.prime_dir)
+
+    def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
+        """Remove the current part's shared files from the given directory.
+
+        :param step: The step corresponding to the shared directory.
+        :param shared_dir: The shared directory to clean.
+        """
+        part_states = _load_part_states(step, self._part_list)
+        overlay_migration_state = states.load_overlay_migration_state(
+            self._part.overlay_dir, step
         )
+
+        migration.clean_shared_area(
+            part_name=self._part.name,
+            shared_dir=shared_dir,
+            part_states=part_states,
+            overlay_migration_state=overlay_migration_state,
+        )
+
+        # remove overlay data if this is the last part with overlay
+        if (
+            self._part.has_overlay
+            and len(_parts_with_overlay_in_step(step, part_list=self._part_list)) == 1
+        ):
+            migration.clean_shared_overlay(
+                shared_dir=shared_dir,
+                part_states=part_states,
+                overlay_migration_state=overlay_migration_state,
+            )
+            overlay_migration_state_path = states.get_overlay_migration_state_path(
+                self._part.overlay_dir, step
+            )
+            overlay_migration_state_path.unlink()
 
     def _make_dirs(self):
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
             self._part.part_install_dir,
+            self._part.part_layer_dir,
             self._part.part_state_dir,
             self._part.part_run_dir,
             self._part.stage_dir,
@@ -516,6 +635,15 @@ class PartHandler:
 
         for snap_source in snap_sources:
             snap_source.provision(str(install_dir), clean_target=False, keep=True)
+
+    def _overlay_state_file(self, step: Step) -> Path:
+        if step == Step.STAGE:
+            return Path(self._part.overlay_dir / "stage_overlay")
+
+        if step == Step.PRIME:
+            return Path(self._part.overlay_dir / "prime_overlay")
+
+        raise RuntimeError(f"no overlay migration state in step {step!r}")
 
 
 def _remove(filename: Path) -> None:
@@ -612,3 +740,15 @@ def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]
         if state:
             part_states[part.name] = state
     return part_states
+
+
+def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Part]:
+    """Obtain a list of parts with overlay that reached the given step.
+
+    :param step: The step to test for parts with overlay.
+    :param part_list: A list containing all parts.
+
+    :returns: The list of parts with overlay in step.
+    """
+    oparts = get_parts_with_overlay(part_list=part_list)
+    return [p for p in oparts if states.get_step_state_path(p, step).exists()]

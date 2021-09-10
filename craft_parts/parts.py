@@ -395,7 +395,7 @@ def has_overlay_visibility(
     return False
 
 
-def parts_with_overlay(*, part_list: List[Part]) -> List[Part]:
+def get_parts_with_overlay(*, part_list: List[Part]) -> List[Part]:
     """Obtain a list of parts that declare overlay parameters.
 
     :param part_list: A list of all parts in the project.

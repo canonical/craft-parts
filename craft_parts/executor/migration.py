@@ -19,9 +19,10 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Set
+from typing import Dict, Optional, Set, Tuple
 
-from craft_parts.state_manager.states import StepState
+from craft_parts import overlays
+from craft_parts.state_manager.states import MigrationState, StepState
 from craft_parts.utils import file_utils
 
 logger = logging.getLogger(__name__)
@@ -31,12 +32,13 @@ def migrate_files(
     *,
     files: Set[str],
     dirs: Set[str],
-    srcdir: str,
-    destdir: str,
+    srcdir: Path,
+    destdir: Path,
     missing_ok: bool = False,
     follow_symlinks: bool = False,
+    oci_translation: bool = False,
     fixup_func=lambda *args: None,
-) -> None:
+) -> Tuple[Set[str], Set[str]]:
     """Copy or link files from a directory to another.
 
     Files and directories are migrated from one step to the next during
@@ -49,43 +51,95 @@ def migrate_files(
     :param destdir: The directory to migrate entries to.
     :param missing_ok: Ignore entries that don't exist.
     :param follow_symlinks: Migrate symlink targets.
+    :param oci_translation: Convert to OCI whiteout files and opaque dirs.
     :param fixup_func: A function to run on each migrated file.
-    """
-    for dirname in sorted(dirs):
-        src = os.path.join(srcdir, dirname)
-        dst = os.path.join(destdir, dirname)
 
-        file_utils.create_similar_directory(src, dst)
+    :returns: A tuple containing sets of migrated files and directories.
+    """
+    migrated_files: Set[str] = set()
+    migrated_dirs: Set[str] = set()
+
+    for dirname in sorted(dirs):
+        src = srcdir / dirname
+        dst = destdir / dirname
+
+        # If migrating a whited out directory from stage (OCI) using layer (overlayfs)
+        # as reference, use the OCI whiteout file names.
+        if not src.exists() and overlays.oci_whiteout(src).exists():
+            src = overlays.oci_whiteout(src)
+            dst = overlays.oci_whiteout(dst)
+
+        file_utils.create_similar_directory(str(src), str(dst))
+        migrated_dirs.add(dirname)
+
+        # If source is an opaque dir (overlayfs or OCI), create an OCI opaque
+        # directory marker file in destination and add it to the list of migrated
+        # files so it can be removed when cleaning.
+        if oci_translation and _is_opaque_dir(src):
+            oci_opaque_marker = overlays.oci_opaque_dir(Path(dirname))
+            oci_dst = Path(destdir, oci_opaque_marker)
+            oci_dst.touch()
+            migrated_files.add(str(oci_opaque_marker))
 
     for filename in sorted(files):
-        src = os.path.join(srcdir, filename)
-        dst = os.path.join(destdir, filename)
+        src = srcdir / filename
+        dst = destdir / filename
 
-        if missing_ok and not os.path.exists(src):
-            continue
+        if not src.exists():
+            # If migrating a whited out file from stage (OCI) using layer (overlayfs)
+            # as reference, use the OCI whiteout file names.
+            if overlays.oci_whiteout(src).exists():
+                src = overlays.oci_whiteout(src)
+                dst = overlays.oci_whiteout(dst)
+            elif missing_ok:
+                continue
 
         # If the file is already here and it's a symlink, leave it alone.
-        if os.path.islink(dst):
+        if dst.is_symlink():
             continue
 
         # Otherwise, remove and re-link it.
-        if os.path.exists(dst):
-            os.remove(dst)
+        if dst.exists():
+            dst.unlink()
 
-        file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+        # If source is a whiteout file (overlayfs or OCI), create an OCI whiteout file
+        # in destination and add it to the list of migrated files so it can be removed
+        # when cleaning.
+        if oci_translation and _is_whiteout_file(src):
+            oci_whiteout = overlays.oci_whiteout(Path(filename))
+            oci_dst = Path(destdir, oci_whiteout)
+            oci_dst.touch()
+            migrated_files.add(str(oci_whiteout))
+        else:
+            file_utils.link_or_copy(str(src), str(dst), follow_symlinks=follow_symlinks)
+            fixup_func(str(dst))
+            migrated_files.add(str(filename))
 
-        fixup_func(dst)
+    return migrated_files, migrated_dirs
+
+
+def _is_whiteout_file(path: Path) -> bool:
+    return overlays.is_whiteout_file(path) or overlays.is_oci_whiteout_file(path)
+
+
+def _is_opaque_dir(path: Path) -> bool:
+    return overlays.is_opaque_dir(path) or overlays.is_oci_opaque_dir(path)
 
 
 def clean_shared_area(
-    *, part_name: str, shared_dir: Path, part_states: Dict[str, StepState]
+    *,
+    part_name: str,
+    shared_dir: Path,
+    part_states: Dict[str, StepState],
+    overlay_migration_state: Optional[MigrationState],
 ) -> None:
     """Clean files added by a part to a shared directory.
 
     :param part_name: The name of the part that added the files.
     :param shared_dir: The shared directory to remove files from.
-    :param part_states: A dictionary containing the each part's state for the
-        step being processed.
+    :param part_states: A dictionary mapping each part to the part's state for
+        the step corresponding to the area being cleaned.
+    :param overlay_migration_state: The state of the overlay migration to step.
     """
     # no state defined for this part, we won't remove files
     if part_name not in part_states:
@@ -104,8 +158,42 @@ def clean_shared_area(
             files -= other_state.files
             directories -= other_state.directories
 
+    # If overlay has been migrated, also take overlay files into account
+    if overlay_migration_state:
+        files -= overlay_migration_state.files
+        directories -= overlay_migration_state.directories
+
     # Finally, clean the files and directories that are specific to this
     # part.
+    _clean_migrated_files(files, directories, shared_dir)
+
+
+def clean_shared_overlay(
+    *,
+    shared_dir: Path,
+    part_states: Dict[str, StepState],
+    overlay_migration_state: Optional[MigrationState],
+) -> None:
+    """Remove migrated overlay files from a shared directory.
+
+    :param state_file: The migration state file.
+    :param shared_dir: The shared directory to remove files from.
+    :param part_states: A dictionary mapping each part to the part's state for
+        the step corresponding to the area being cleaned.
+    """
+    # no overlay staging state defined, we won't remove files
+    if not overlay_migration_state:
+        return
+
+    files = overlay_migration_state.files
+    directories = overlay_migration_state.directories
+
+    # Don't remove entries that also belong to a part.
+    for other_state in part_states.values():
+        if other_state:
+            files -= other_state.files
+            directories -= other_state.directories
+
     _clean_migrated_files(files, directories, shared_dir)
 
 

@@ -33,264 +33,306 @@ class TestFileMigration:
     """Verify different migration scenarios."""
 
     def test_migrate_files_already_exists(self):
-        os.makedirs("install")
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
+
+        install_dir.mkdir()
+        stage_dir.mkdir()
 
         # Place the already-staged file
-        with open("stage/foo", "w") as f:
-            f.write("staged")
+        Path(stage_dir, "foo").write_text("staged")
 
         # Place the to-be-staged file with the same name
-        with open("install/foo", "w") as f:
-            f.write("installed")
+        Path(install_dir, "foo").write_text("installed")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        migrated_files, migrated_dirs = migration.migrate_files(
+            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
 
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
+
         # Verify that the staged file is the one that was staged last
-        with open("stage/foo", "r") as f:
-            assert (
-                f.read() == "installed"
-            ), "Expected staging to allow overwriting of already-staged files"
+        assert (
+            Path(stage_dir, "foo").read_text() == "installed"
+        ), "Expected staging to allow overwriting of already-staged files"
 
     def test_migrate_files_supports_no_follow_symlinks(self):
-        os.makedirs("install")
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        with open(os.path.join("install", "foo"), "w") as f:
-            f.write("installed")
+        install_dir.mkdir()
+        stage_dir.mkdir()
 
-        os.symlink("foo", os.path.join("install", "bar"))
+        Path(install_dir, "foo").write_text("installed")
+        Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
+        migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
             dirs=dirs,
-            srcdir="install",
-            destdir="stage",
+            srcdir=install_dir,
+            destdir=stage_dir,
             follow_symlinks=False,
         )
 
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
+
         # Verify that the symlink was preserved
-        assert os.path.islink(
-            os.path.join("stage", "bar")
-        ), "Expected migrated 'bar' to still be a symlink."
+        assert Path(
+            stage_dir, "bar"
+        ).is_symlink(), "Expected migrated 'bar' to still be a symlink."
 
         assert (
-            os.readlink(os.path.join("stage", "bar")) == "foo"
+            os.readlink(os.path.join(stage_dir, "bar")) == "foo"
         ), "Expected migrated 'bar' to point to 'foo'"
 
     def test_migrate_files_preserves_symlink_file(self):
-        os.makedirs("install")
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        with open(os.path.join("install", "foo"), "w") as f:
-            f.write("installed")
+        install_dir.mkdir()
+        stage_dir.mkdir()
 
-        os.symlink("foo", os.path.join("install", "bar"))
+        Path(install_dir, "foo").write_text("installed")
+        Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        migrated_files, migrated_dirs = migration.migrate_files(
+            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
+
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert os.path.islink(
-            os.path.join("stage", "bar")
-        ), "Expected migrated 'sym-a' to be a symlink."
+        assert Path(
+            stage_dir, "bar"
+        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
     def test_migrate_files_no_follow_symlinks(self):
-        os.makedirs("install/usr/bin")
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        with open(os.path.join("install", "usr", "bin", "foo"), "w") as f:
-            f.write("installed")
+        Path(install_dir, "usr/bin").mkdir(parents=True)
+        stage_dir.mkdir()
 
-        os.symlink("usr/bin", os.path.join("install", "bin"))
+        Path(install_dir, "usr/bin/foo").write_text("installed")
+        Path("install/bin").symlink_to("usr/bin")
 
         files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
-        migration.migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        migrated_files, migrated_dirs = migration.migrate_files(
+            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
+
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
         assert files == {"bin"}
         assert dirs == set()
-
-        assert os.path.islink(
-            os.path.join("stage", "bin")
-        ), "Expected migrated 'bin' to be a symlink."
+        assert Path(stage_dir, "bin").is_symlink()
 
     def test_migrate_files_preserves_symlink_nested_file(self):
-        os.makedirs(os.path.join("install", "a"))
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        with open(os.path.join("install", "a", "foo"), "w") as f:
-            f.write("installed")
+        Path(install_dir, "a").mkdir(parents=True)
+        stage_dir.mkdir()
 
-        os.symlink(os.path.join("a", "foo"), os.path.join("install", "bar"))
-        os.symlink(os.path.join("foo"), os.path.join("install", "a", "bar"))
+        Path(install_dir, "a/foo").write_text("installed")
+        Path(install_dir, "a/bar").symlink_to("foo")
+        Path(install_dir, "bar").symlink_to("a/foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        migrated_files, migrated_dirs = migration.migrate_files(
+            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
 
-        # Verify that the symlinks were preserved
-        assert os.path.islink(
-            os.path.join("stage", "bar")
-        ), "Expected migrated 'sym-a' to be a symlink."
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
 
-        assert os.path.islink(
-            os.path.join("stage", "a", "bar")
-        ), "Expected migrated 'a/bar' to be a symlink."
+        # Verify that the symlinks were preserved
+        assert Path(
+            stage_dir, "bar"
+        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(
+            stage_dir, "a/bar"
+        ).is_symlink(), "Expected migrated 'a/bar' to be a symlink."
 
     def test_migrate_files_preserves_symlink_empty_dir(self):
-        os.makedirs(os.path.join("install", "foo"))
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        os.symlink("foo", os.path.join("install", "bar"))
+        Path(install_dir, "foo").mkdir(parents=True)
+        stage_dir.mkdir()
+
+        Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        migrated_files, migrated_dirs = migration.migrate_files(
+            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
 
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
+
         # Verify that the symlinks were preserved
-        assert os.path.islink(
-            os.path.join("stage", "bar")
-        ), "Expected migrated 'bar' to be a symlink."
+        assert Path(
+            stage_dir, "bar"
+        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
     def test_migrate_files_preserves_symlink_nonempty_dir(self):
-        os.makedirs(os.path.join("install", "foo"))
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        os.symlink("foo", os.path.join("install", "bar"))
+        Path(install_dir, "foo").mkdir(parents=True)
+        stage_dir.mkdir()
 
-        with open(os.path.join("install", "foo", "xfile"), "w") as f:
-            f.write("installed")
+        Path(install_dir, "bar").symlink_to("foo")
+
+        Path(install_dir, "foo/xfile").write_text("installed")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        migrated_files, migrated_dirs = migration.migrate_files(
+            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
 
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
+
         # Verify that the symlinks were preserved
-        assert os.path.islink(
-            os.path.join("stage", "bar")
-        ), "Expected migrated 'bar' to be a symlink."
+        assert Path(
+            stage_dir, "bar"
+        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
     def test_migrate_files_preserves_symlink_nested_dir(self):
-        os.makedirs(os.path.join("install", "a", "b"))
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        os.symlink(os.path.join("a", "b"), os.path.join("install", "bar"))
-        os.symlink(os.path.join("b"), os.path.join("install", "a", "bar"))
+        Path(install_dir, "a/b").mkdir(parents=True)
+        stage_dir.mkdir()
 
-        with open(os.path.join("install", "a", "b", "xfile"), "w") as f:
-            f.write("installed")
+        Path(install_dir, "bar").symlink_to("a/b")
+        Path(install_dir, "a/bar").symlink_to("b")
+
+        Path(install_dir, "a/b/xfile").write_text("installed")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        migrated_files, migrated_dirs = migration.migrate_files(
+            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
 
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
+
         # Verify that the symlinks were preserved
-        assert os.path.islink(
-            os.path.join("stage", "bar")
-        ), "Expected migrated 'bar' to be a symlink."
+        assert Path(
+            stage_dir, "bar"
+        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
         assert os.path.islink(
             os.path.join("stage", "a", "bar")
         ), "Expected migrated 'a/bar' to be a symlink."
 
     def test_migrate_files_supports_follow_symlinks(self):
-        os.makedirs("install")
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        with open(os.path.join("install", "foo"), "w") as f:
-            f.write("installed")
+        install_dir.mkdir()
+        stage_dir.mkdir()
 
-        os.symlink("foo", os.path.join("install", "bar"))
+        Path(install_dir, "foo").write_text("installed")
+        Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        migration.migrate_files(
+        migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
             dirs=dirs,
-            srcdir="install",
-            destdir="stage",
+            srcdir=install_dir,
+            destdir=stage_dir,
             follow_symlinks=True,
         )
 
+        # Ensure all files were migrated
+        assert migrated_files == files
+        assert migrated_dirs == dirs
+
         # Verify that the symlink was preserved
         assert (
-            os.path.islink(os.path.join("stage", "bar")) is False
+            Path(stage_dir, "bar").is_symlink() is False
         ), "Expected migrated 'bar' to no longer be a symlink."
-
-        with open(os.path.join("stage", "bar"), "r") as f:
-            assert (
-                f.read() == "installed"
-            ), "Expected migrated 'bar' to be a copy of 'foo'"
+        assert (
+            Path(stage_dir, "bar").read_text() == "installed"
+        ), "Expected migrated 'bar' to be a copy of 'foo'"
 
     def test_migrate_files_preserves_file_mode(self):
-        os.makedirs("install")
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        filepath = os.path.join("install", "foo")
+        install_dir.mkdir()
+        stage_dir.mkdir()
 
-        with open(filepath, "w") as f:
-            f.write("installed")
+        filepath = Path(install_dir, "foo")
+        filepath.write_text("installed")
 
-        mode = os.stat(filepath).st_mode
+        mode = filepath.stat().st_mode
 
         new_mode = 0o777
-        os.chmod(filepath, new_mode)
+        filepath.chmod(new_mode)
         assert mode != new_mode
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migration.migrate_files(
             files=files,
             dirs=dirs,
-            srcdir="install",
-            destdir="stage",
+            srcdir=install_dir,
+            destdir=stage_dir,
             follow_symlinks=True,
         )
 
-        assert new_mode == stat.S_IMODE(os.stat(os.path.join("stage", "foo")).st_mode)
+        assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
 
     # TODO: add test_migrate_files_preserves_file_mode_chown_permissions
 
     def test_migrate_files_preserves_directory_mode(self):
-        os.makedirs("install/foo")
-        os.makedirs("stage")
+        install_dir = Path("install")
+        stage_dir = Path("stage")
 
-        filepath = os.path.join("install", "foo", "bar")
+        Path(install_dir, "foo").mkdir(parents=True)
+        stage_dir.mkdir()
 
-        with open(filepath, "w") as f:
-            f.write("installed")
+        filepath = Path(install_dir, "foo", "bar")
+        filepath.write_text("installed")
 
-        mode = os.stat(filepath).st_mode
+        mode = filepath.stat().st_mode
 
         new_mode = 0o777
         assert mode != new_mode
-        os.chmod(os.path.dirname(filepath), new_mode)
-        os.chmod(filepath, new_mode)
+        filepath.parent.chmod(new_mode)
+        filepath.chmod(new_mode)
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migration.migrate_files(
             files=files,
             dirs=dirs,
-            srcdir="install",
-            destdir="stage",
+            srcdir=install_dir,
+            destdir=stage_dir,
             follow_symlinks=True,
         )
 
-        assert new_mode == stat.S_IMODE(os.stat(os.path.join("stage", "foo")).st_mode)
-        assert new_mode == stat.S_IMODE(
-            os.stat(os.path.join("stage", "foo", "bar")).st_mode
-        )
+        assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
+        assert new_mode == stat.S_IMODE(Path(stage_dir, "foo/bar").stat().st_mode)
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -306,6 +348,7 @@ class TestHelpers:
         Path("subdir2").mkdir()
         Path("subdir2/foo.txt").write_text("content")
         Path("subdir2/bar.txt").write_text("other content")
+        Path("subdir2/baz.txt").write_text("yet another content")
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
 
@@ -325,15 +368,23 @@ class TestHelpers:
         assert Path("stage/foo.txt").is_file()
         assert Path("stage/bar.txt").is_file()
 
+        # TODO: also test files shared with overlay
+
         migration.clean_shared_area(
-            part_name="p1", shared_dir=p1.stage_dir, part_states=part_states
+            part_name="p1",
+            shared_dir=p1.stage_dir,
+            part_states=part_states,
+            overlay_migration_state=None,
         )
 
         assert Path("stage/foo.txt").is_file()  # remains, it's shared with p2
         assert Path("stage/bar.txt").is_file()
 
         migration.clean_shared_area(
-            part_name="p2", shared_dir=p2.stage_dir, part_states=part_states
+            part_name="p2",
+            shared_dir=p2.stage_dir,
+            part_states=part_states,
+            overlay_migration_state=None,
         )
 
         assert Path("stage/foo.txt").exists() is False
