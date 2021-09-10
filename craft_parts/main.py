@@ -43,7 +43,7 @@ def main():
         print(f"craft-parts {craft_parts.__version__}")
         sys.exit()
 
-    if options.debug:
+    if options.trace:
         log_level = logging.DEBUG
     else:
         log_level = logging.INFO
@@ -239,7 +239,7 @@ def _parse_arguments() -> argparse.Namespace:
         help="Set an alternate cache directory location.",
     )
     parser.add_argument(
-        "--debug",
+        "--trace",
         action="store_true",
         help="Enable debug messages.",
     )
