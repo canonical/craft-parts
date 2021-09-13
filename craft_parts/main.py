@@ -58,8 +58,8 @@ def main():
             msg = f"{err.filename}: {msg}"
         print(f"Error: {msg}.", file=sys.stderr)
         sys.exit(1)
-    except craft_parts.errors.PartSpecificationError:
-        print("Error: invalid parts specification.", file=sys.stderr)
+    except craft_parts.errors.PartSpecificationError as err:
+        print(f"Error: invalid parts specification: {err}", file=sys.stderr)
         sys.exit(2)
     except craft_parts.errors.PartsError as err:
         print(f"Error: {err}", file=sys.stderr)
