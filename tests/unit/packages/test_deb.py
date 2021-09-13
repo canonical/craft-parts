@@ -207,6 +207,34 @@ class TestPackages:
 
         mock_normalize.assert_not_called()
 
+    def test_download_packages(self, fake_apt_cache, fake_run):
+        deb.Ubuntu.refresh_build_packages_list()
+        deb.Ubuntu.download_packages(["package", "versioned-package=2.0"])
+
+        fake_run.assert_has_calls(
+            [
+                call(["apt-get", "update"]),
+                call(
+                    [
+                        "apt-get",
+                        "--no-install-recommends",
+                        "-y",
+                        "-oDpkg::Use-Pty=0",
+                        "--allow-downgrades",
+                        "--download-only",
+                        "install",
+                        "package",
+                        "versioned-package=2.0",
+                    ],
+                    env={
+                        "DEBIAN_FRONTEND": "noninteractive",
+                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                        "DEBIAN_PRIORITY": "critical",
+                    },
+                ),
+            ]
+        )
+
 
 class TestBuildPackages:
     def test_install_build_packages(self, fake_apt_cache, fake_run):

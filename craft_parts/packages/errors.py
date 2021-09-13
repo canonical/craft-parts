@@ -136,6 +136,22 @@ class BuildPackagesNotInstalled(PackagesError):
         super().__init__(brief=brief)
 
 
+class PackagesDownloadError(PackagesError):
+    """Failed to download packages from remote repository.
+
+    :param packages: The packages to download.
+    """
+
+    def __init__(self, *, packages: Sequence[str]) -> None:
+        self.packages = packages
+        brief = f"Failed to download all requested packages: {', '.join(packages)}"
+        resolution = (
+            "Make sure the network configuration and package names are correct."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class UnpackError(PackagesError):
     """Error unpacking stage package.
 

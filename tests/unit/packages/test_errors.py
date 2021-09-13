@@ -86,6 +86,16 @@ def test_build_packages_not_installed():
     assert err.resolution is None
 
 
+def test_packages_download_error():
+    err = errors.PackagesDownloadError(packages=["foo", "bar"])
+    assert err.packages == ["foo", "bar"]
+    assert err.brief == "Failed to download all requested packages: foo, bar"
+    assert err.details is None
+    assert err.resolution == (
+        "Make sure the network configuration and package names are correct."
+    )
+
+
 def test_unpack_error():
     err = errors.UnpackError("foobar")
     assert err.package == "foobar"

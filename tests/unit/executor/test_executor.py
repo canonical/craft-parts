@@ -81,8 +81,8 @@ class TestExecutor:
 class TestPackages:
     """Verify package installation during the execution phase."""
 
-    def test_install_build_packages(self, mocker, new_dir):
-        install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
+    def test_install_packages(self, mocker, new_dir):
+        install = mocker.patch("craft_parts.packages.Repository.install_packages")
 
         p1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
         p2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
@@ -94,7 +94,7 @@ class TestPackages:
         install.assert_called_once_with(["pkg1", "pkg2"])
 
     def test_install_extra_build_packages(self, mocker, new_dir):
-        install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
+        install = mocker.patch("craft_parts.packages.Repository.install_packages")
 
         p1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
         p2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
