@@ -86,7 +86,11 @@ class TestLayerMounting:
         )
 
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
-        overlay_manager.mount_layer(self.p1)
+
+        with pytest.raises(RuntimeError) as raised:
+            overlay_manager.mount_layer(self.p1)
+
+        assert str(raised.value) == "request to mount overlay without a base layer"
         mock_mount.assert_not_called()
 
     def test_mount_pkg_cache(self, new_dir, mocker):
@@ -109,7 +113,13 @@ class TestLayerMounting:
         )
 
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
-        overlay_manager.mount_pkg_cache()
+
+        with pytest.raises(RuntimeError) as raised:
+            overlay_manager.mount_pkg_cache()
+
+        assert str(raised.value) == (
+            "request to mount the overlay package cache without a base layer"
+        )
         mock_mount.assert_not_called()
 
     def test_unmount(self, mocker):

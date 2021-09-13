@@ -58,7 +58,8 @@ class OverlayManager:
         :param pkg cache: Whether the package cache layer is enabled.
         """
         if not self._base_layer_dir:
-            return
+            raise RuntimeError("request to mount overlay without a base layer")
+
         lowers = [self._base_layer_dir]
 
         if pkg_cache:
@@ -82,7 +83,9 @@ class OverlayManager:
     def mount_pkg_cache(self) -> None:
         """Mount the overlay step package cache layer."""
         if not self._base_layer_dir:
-            return
+            raise RuntimeError(
+                "request to mount the overlay package cache without a base layer"
+            )
 
         self._overlay_fs = OverlayFS(
             lower_dirs=[self._base_layer_dir],
@@ -94,9 +97,6 @@ class OverlayManager:
 
     def unmount(self) -> None:
         """Unmount the overlay step layer stack."""
-        if not self._base_layer_dir:
-            return
-
         if not self._overlay_fs:
             logger.warning("overlay filesystem not mounted")
             return
