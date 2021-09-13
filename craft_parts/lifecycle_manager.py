@@ -144,7 +144,7 @@ class LifecycleManager:
         """
         self._executor.clean(initial_step=step, part_names=part_names)
 
-    def refresh_packages_list(self) -> None:
+    def refresh_packages_list(self) -> None:  # pylint: disable=no-self-use
         """Update the available packages list.
 
         The list of available packages should be updated before planning the
