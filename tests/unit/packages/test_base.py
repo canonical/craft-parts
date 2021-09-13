@@ -31,7 +31,7 @@ class TestBaseRepository:
             "download_packages",
             "install_packages",
             "fetch_stage_packages",
-            "refresh_build_packages_list",
+            "refresh_packages_list",
             "unpack_stage_packages",
         }
 

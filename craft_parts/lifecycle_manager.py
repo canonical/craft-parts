@@ -151,7 +151,7 @@ class LifecycleManager:
         sequence of actions to take. To ensure consistency between the scenarios,
         it shouldn't be updated between planning and execution.
         """
-        packages.Repository.refresh_build_packages_list()
+        packages.Repository.refresh_packages_list()
 
     def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.

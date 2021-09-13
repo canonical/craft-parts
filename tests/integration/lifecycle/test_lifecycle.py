@@ -315,8 +315,8 @@ class TestCleaning:
 
 class TestUpdating:
     def test_refresh_system_packages_list(self, new_dir, mocker):
-        refresh_build = mocker.patch(
-            "craft_parts.packages.Repository.refresh_build_packages_list"
+        mock_refresh_packages_list = mocker.patch(
+            "craft_parts.packages.Repository.refresh_packages_list"
         )
 
         parts_yaml = textwrap.dedent(
@@ -333,4 +333,4 @@ class TestUpdating:
         )
         lf.refresh_packages_list()
 
-        refresh_build.assert_called_once_with()
+        mock_refresh_packages_list.assert_called_once_with()
