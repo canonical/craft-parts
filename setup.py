@@ -34,7 +34,6 @@ with open("README.md") as readme_file:
 
 install_requires = [
     "PyYAML",
-    "progressbar",
     "pydantic",
     "pydantic-yaml",
     "pyxdg",
