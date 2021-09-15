@@ -31,6 +31,7 @@ import apt.cache
 import apt.package
 import apt.progress
 import apt.progress.base
+import apt_pkg
 
 from craft_parts.utils import os_utils
 
@@ -49,7 +50,7 @@ class LogProgress(apt.progress.base.AcquireProgress):
     def __init__(self):
         self._id = 1
 
-    def fail(self, item: apt.apt_pkg.AcquireItemDesc) -> None:
+    def fail(self, item: apt_pkg.AcquireItemDesc) -> None:
         """Handle failed item."""
         apt.progress.base.AcquireProgress.fail(self, item)
         if item.owner.status == item.owner.STAT_DONE:
@@ -58,7 +59,7 @@ class LogProgress(apt.progress.base.AcquireProgress):
             logger.debug("Err %s", item.description)
             logger.debug("  %s", item.owner.error_text)
 
-    def fetch(self, item: apt.apt_pkg.AcquireItemDesc) -> None:
+    def fetch(self, item: apt_pkg.AcquireItemDesc) -> None:
         """Handle item's data is fetch."""
         apt.progress.base.AcquireProgress.fetch(self, item)
         # It's complete already (e.g. Hit)
@@ -68,7 +69,7 @@ class LogProgress(apt.progress.base.AcquireProgress):
         self._id += 1
         line = "Get: {} {}".format(item.owner.id, item.description)
         if item.owner.filesize:
-            line += " [{}B]".format(apt.apt_pkg.size_to_str(item.owner.filesize))
+            line += " [{}B]".format(apt_pkg.size_to_str(item.owner.filesize))
 
         logger.debug(line)
 
@@ -107,10 +108,10 @@ class AptCache(ContextDecorator):
     def configure_apt(cls, application_package_name: str) -> None:
         """Set up apt options and directories."""
         # Do not install recommends.
-        apt.apt_pkg.config.set("Apt::Install-Recommends", "False")
+        apt_pkg.config.set("Apt::Install-Recommends", "False")
 
         # Ensure repos are provided by trusted third-parties.
-        apt.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
+        apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
 
         # Methods and solvers dir for when in the SNAP.
         snap_dir = os.getenv("SNAP")
@@ -120,24 +121,24 @@ class AptCache(ContextDecorator):
             and os.path.exists(snap_dir)
         ):
             apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
-            apt.apt_pkg.config.set("Dir", apt_dir)
+            apt_pkg.config.set("Dir", apt_dir)
             # yes apt is broken like that we need to append os.path.sep
             methods_dir = os.path.join(apt_dir, "methods")
-            apt.apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
+            apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
             solvers_dir = os.path.join(apt_dir, "solvers")
-            apt.apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
+            apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
             apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
-            apt.apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
+            apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
             gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
-            apt.apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
+            apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
 
-        apt.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
-        apt.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
-        apt.apt_pkg.config.set("Dir::State", "/var/lib/apt")
+        apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
+        apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
+        apt_pkg.config.set("Dir::State", "/var/lib/apt")
 
         # Clear up apt's Post-Invoke-Success as we are not running
         # on the system.
-        apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
+        apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
 
     def _populate_stage_cache_dir(self) -> None:
         """Create/refresh cache configuration.
