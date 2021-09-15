@@ -57,6 +57,7 @@ class SourceHandler(abc.ABC):
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
+        part_build_dir: Optional[Path] = None,
     ):
         if not project_dirs:
             project_dirs = ProjectDirs()
@@ -66,6 +67,7 @@ class SourceHandler(abc.ABC):
 
         self.source = str(source)
         self.part_src_dir = str(part_src_dir)
+        self.part_build_dir = part_build_dir
         self._cache_dir = cache_dir
         self.source_tag = source_tag
         self.source_commit = source_commit
@@ -106,6 +108,13 @@ class SourceHandler(abc.ABC):
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
+    def source_cleanup(self):
+        """Remove pulled entries not present in the actual part source.
+
+        :raise errors.SourceUpdateUnsupported: If the source can't update its files.
+        """
+        raise errors.SourceUpdateUnsupported(self.__class__.__name__)
+
     @classmethod
     def _run_output(cls, command: List[str]) -> str:
         try:
@@ -132,6 +141,7 @@ class FileSourceHandler(SourceHandler):
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
+        part_build_dir: Optional[Path] = None,
     ):
         super().__init__(
             source,
@@ -145,6 +155,7 @@ class FileSourceHandler(SourceHandler):
             command=command,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
+            part_build_dir=part_build_dir,
         )
         self._file = Path()
 

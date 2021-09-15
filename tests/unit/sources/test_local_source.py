@@ -441,6 +441,9 @@ class TestLocalUpdate:
         assert local.check_if_outdated("reference")
 
         local.update()
+        assert destination_file.is_file()
+
+        local.source_cleanup()
         assert destination_file.is_file() is False
 
     def test_directory_removed(self, new_dir):
@@ -479,4 +482,7 @@ class TestLocalUpdate:
         assert local.check_if_outdated("reference")
 
         local.update()
+        assert destination_directory.is_dir()
+
+        local.source_cleanup()
         assert destination_directory.is_dir() is False

@@ -51,6 +51,7 @@ class SnapSource(FileSourceHandler):
         source_depth: Optional[int] = None,
         source_checksum: str = None,
         project_dirs: ProjectDirs = None,
+        part_build_dir: Optional[Path] = None
     ) -> None:
         super().__init__(
             source,
@@ -62,6 +63,7 @@ class SnapSource(FileSourceHandler):
             source_depth=source_depth,
             source_checksum=source_checksum,
             project_dirs=project_dirs,
+            part_build_dir=part_build_dir,
             command="unsquashfs",
         )
 

@@ -119,6 +119,7 @@ def get_source_handler(
             cache_dir=cache_dir,
             source=part.spec.source,
             part_src_dir=part.part_src_dir,
+            part_build_dir=part.part_build_dir,
             source_checksum=part.spec.source_checksum,
             source_branch=part.spec.source_branch,
             source_tag=part.spec.source_tag,

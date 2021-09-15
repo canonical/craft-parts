@@ -346,6 +346,7 @@ class PartHandler:
         state_file = states.get_step_state_path(self._part, step_info.step)
         self._source_handler.check_if_outdated(str(state_file))
         self._source_handler.update()
+        self._source_handler.source_cleanup()
 
     def _update_build(self, step_info: StepInfo) -> None:
         """Handle update action for the build step.

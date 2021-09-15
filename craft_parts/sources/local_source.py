@@ -157,13 +157,24 @@ class LocalSource(SourceHandler):
                 os.path.join(self.part_src_dir, file_path),
             )
 
-        # And remove deleted entries
+    def source_cleanup(self):
+        """Remove pulled entries not present in the actual part source."""
         for entry in self._deleted_entries:
             path = Path(self.part_src_dir, entry)
-            if path.is_dir():
-                shutil.rmtree(str(path))
-            else:
-                path.unlink()
+            _delete_entry(path)
+
+            if self.part_build_dir:
+                path = self.part_build_dir / entry
+                _delete_entry(path)
+
+
+def _delete_entry(path: Path) -> None:
+    if path.is_dir():
+        logger.debug("delete dir: %s", path)
+        shutil.rmtree(str(path))
+    else:
+        logger.debug("delete file: %s", path)
+        path.unlink()
 
 
 def _check_deleted_sources(srcdir: Path, destdir: Path) -> List[Path]:
@@ -185,7 +196,6 @@ def _check_deleted_sources(srcdir: Path, destdir: Path) -> List[Path]:
             relpath = path.relative_to(destdir)
             srcpath = srcdir / relpath
             if not srcpath.exists():
-                logger.debug("deleted file: %s", relpath)
                 deleted_entries.append(relpath)
 
         for directory in directories:
@@ -193,7 +203,6 @@ def _check_deleted_sources(srcdir: Path, destdir: Path) -> List[Path]:
             relpath = path.relative_to(destdir)
             srcpath = srcdir / relpath
             if not srcpath.exists():
-                logger.debug("deleted dir: %s", relpath)
                 # Don't descend into this directory-- we'll just delete it
                 # entirely.
                 directories.remove(directory)

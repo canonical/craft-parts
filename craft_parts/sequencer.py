@@ -138,7 +138,7 @@ class Sequencer:
 
         # 3. If the step is outdated, run it again (without cleaning if possible).
         #    A step is considered outdated if an earlier step in the lifecycle
-        #    has been re-executed.
+        #    has been re-executed, or if the source code changed on disk.
 
         outdated_report = self._sm.check_if_outdated(part, current_step)
         if outdated_report:
