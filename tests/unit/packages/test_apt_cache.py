@@ -141,22 +141,22 @@ class TestMockedApt:
     """Tests using mocked apt utility."""
 
     def test_configure(self, mocker):
-        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
+        fake_apt_pkg = mocker.patch("craft_parts.packages.apt_cache.apt_pkg")
 
         AptCache().configure_apt("test_configure")
         # fmt: off
-        assert fake_apt.mock_calls == [
-            call.apt_pkg.config.set("Apt::Install-Recommends", "False"),
-            call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
-            call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
-            call.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
-            call.apt_pkg.config.set("Dir::State", "/var/lib/apt"),
-            call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
+        assert fake_apt_pkg.mock_calls == [
+            call.config.set("Apt::Install-Recommends", "False"),
+            call.config.set("Acquire::AllowInsecureRepositories", "False"),
+            call.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
+            call.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
+            call.config.set("Dir::State", "/var/lib/apt"),
+            call.config.clear("APT::Update::Post-Invoke-Success"),
         ]
         # fmt: on
 
     def test_configure_in_snap(self, mocker, tmpdir):
-        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
+        fake_apt_pkg = mocker.patch("craft_parts.packages.apt_cache.apt_pkg")
 
         snap_dir = str(tmpdir)
         mocker.patch.dict(
@@ -164,18 +164,18 @@ class TestMockedApt:
         )
         AptCache().configure_apt("test_configure_in_snap")
         # fmt: off
-        assert fake_apt.mock_calls == [
-            call.apt_pkg.config.set("Apt::Install-Recommends", "False"),
-            call.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False"),
-            call.apt_pkg.config.set("Dir", snap_dir + "/usr/lib/apt"),
-            call.apt_pkg.config.set("Dir::Bin::methods", snap_dir + "/usr/lib/apt/methods/"),
-            call.apt_pkg.config.set("Dir::Bin::solvers::", snap_dir + "/usr/lib/apt/solvers/"),
-            call.apt_pkg.config.set("Dir::Bin::apt-key", snap_dir + "/usr/bin/apt-key"),
-            call.apt_pkg.config.set("Apt::Key::gpgvcommand", snap_dir + "/usr/bin/gpgv"),
-            call.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
-            call.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
-            call.apt_pkg.config.set("Dir::State", "/var/lib/apt"),
-            call.apt_pkg.config.clear("APT::Update::Post-Invoke-Success"),
+        assert fake_apt_pkg.mock_calls == [
+            call.config.set("Apt::Install-Recommends", "False"),
+            call.config.set("Acquire::AllowInsecureRepositories", "False"),
+            call.config.set("Dir", snap_dir + "/usr/lib/apt"),
+            call.config.set("Dir::Bin::methods", snap_dir + "/usr/lib/apt/methods/"),
+            call.config.set("Dir::Bin::solvers::", snap_dir + "/usr/lib/apt/solvers/"),
+            call.config.set("Dir::Bin::apt-key", snap_dir + "/usr/bin/apt-key"),
+            call.config.set("Apt::Key::gpgvcommand", snap_dir + "/usr/bin/gpgv"),
+            call.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg"),
+            call.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/"),
+            call.config.set("Dir::State", "/var/lib/apt"),
+            call.config.clear("APT::Update::Post-Invoke-Success"),
         ]
         # fmt: on
 
