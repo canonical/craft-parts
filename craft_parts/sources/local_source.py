@@ -21,7 +21,6 @@ import functools
 import glob
 import logging
 import os
-import shutil
 from pathlib import Path
 from typing import List, Optional
 
@@ -61,7 +60,6 @@ class LocalSource(SourceHandler):
         )
         self._updated_files = set()
         self._updated_directories = set()
-        self._deleted_entries = []
 
     def pull(self):
         """Retrieve the local source files."""
@@ -124,16 +122,7 @@ class LocalSource(SourceHandler):
                     else:
                         self._updated_directories.add(relpath)
 
-        # XXX: remove pathlib.Path conversions when implementing CRAFT-43
-        self._deleted_entries = _check_deleted_sources(
-            srcdir=Path(self.source_abspath), destdir=Path(self.part_src_dir)
-        )
-
-        return (
-            len(self._updated_files) > 0
-            or len(self._updated_directories) > 0
-            or len(self._deleted_entries) > 0
-        )
+        return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
     def update(self):
         """Update pulled source.
@@ -156,50 +145,6 @@ class LocalSource(SourceHandler):
                 os.path.join(self.source, file_path),
                 os.path.join(self.part_src_dir, file_path),
             )
-
-        # And remove deleted entries
-        for entry in self._deleted_entries:
-            path = Path(self.part_src_dir, entry)
-            if path.is_dir():
-                shutil.rmtree(str(path))
-            else:
-                path.unlink()
-
-
-def _check_deleted_sources(srcdir: Path, destdir: Path) -> List[Path]:
-    """Look for files or directories removed from source.
-
-    Scan entries in the destination directory and check if the equivalent file
-    in the source directory exists. If not, remove it from destination.
-
-    :param srcdir: The source directory.
-    :param destdir: The destination directory.
-
-    :returns: The list of deleted entries.
-    """
-    deleted_entries: List[Path] = []
-
-    for (root, directories, files) in os.walk(destdir, topdown=True):
-        for file_name in files:
-            path = Path(root, file_name)
-            relpath = path.relative_to(destdir)
-            srcpath = srcdir / relpath
-            if not srcpath.exists():
-                logger.debug("deleted file: %s", relpath)
-                deleted_entries.append(relpath)
-
-        for directory in directories:
-            path = Path(root, directory)
-            relpath = path.relative_to(destdir)
-            srcpath = srcdir / relpath
-            if not srcpath.exists():
-                logger.debug("deleted dir: %s", relpath)
-                # Don't descend into this directory-- we'll just delete it
-                # entirely.
-                directories.remove(directory)
-                deleted_entries.append(relpath)
-
-    return deleted_entries
 
 
 def _ignore(

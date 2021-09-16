@@ -186,7 +186,6 @@ class TestPartUpdateHandler:
 
         source_file = Path("subdir/foo.txt")
         os_utils.TimedWriter.write_text(source_file, "change")
-        Path("subdir/bar.txt").touch()
         Path("parts/foo/src/bar.txt").touch()
 
         self._handler.run_action(Action("foo", Step.PULL, ActionType.UPDATE))
