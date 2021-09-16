@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.0.2 (2021-09-16)
+------------------
+
+- Fix local source updates causing removal of build artifacts and new
+  files created in ``override-pull``
+
 1.0.1 (2021-09-13)
 ------------------
 

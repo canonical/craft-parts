@@ -48,7 +48,7 @@ final artifacts.
    reference
 
 .. toctree::
-   :caption: Project information
+   :caption: About the project
 
    changelog
 
