@@ -96,19 +96,19 @@ def test_application_plugin_happy(caplog, new_dir, mocker):
         Action("foo", Step.BUILD, action_type=ActionType.RUN),
     ]
 
-    mock_install_build_packages = mocker.patch(
-        "craft_parts.packages.Repository.install_build_packages"
+    mock_install_packages = mocker.patch(
+        "craft_parts.packages.Repository.install_packages"
     )
 
-    mock_install_build_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
+    mock_install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
     with lf.action_executor() as exe, caplog.at_level(logging.DEBUG):
         exe.execute(actions[1])
 
     assert "hello application plugin" in caplog.text
 
-    mock_install_build_packages.assert_called_once_with(["build_package"])
-    mock_install_build_snaps.assert_called_once_with({"build_snap"})
+    mock_install_packages.assert_called_once_with(["build_package"])
+    mock_install_snaps.assert_called_once_with({"build_snap"})
 
     # make sure parts data was not changed
     assert parts == old_parts

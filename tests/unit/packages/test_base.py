@@ -28,7 +28,8 @@ class TestBaseRepository:
             "get_package_libraries",
             "is_package_installed",
             "get_packages_for_source_type",
-            "install_build_packages",
+            "download_packages",
+            "install_packages",
             "fetch_stage_packages",
             "refresh_build_packages_list",
             "unpack_stage_packages",
@@ -44,7 +45,7 @@ class TestDummyRepository:
     def test_methods(self):
         assert DummyRepository.get_package_libraries("foo") == set()
         assert DummyRepository.get_packages_for_source_type("bar") == set()
-        assert DummyRepository.install_build_packages([]) == []
+        assert DummyRepository.install_packages([]) == []
         assert DummyRepository.is_package_installed("baz") is False
         assert DummyRepository.get_installed_packages() == []
         assert DummyRepository.fetch_stage_packages() == []
