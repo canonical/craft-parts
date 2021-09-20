@@ -47,7 +47,6 @@ class OverlayManager:
         self._project_info = project_info
         self._part_list = part_list
         self._layer_dirs = [p.part_layer_dir for p in part_list]
-        self._overlay_mount_dir = project_info.overlay_mount_dir
         self._overlay_fs: Optional[OverlayFS] = None
         self._base_layer_dir = base_layer_dir
 
