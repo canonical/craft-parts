@@ -139,7 +139,10 @@ class TestLayerMounting:
     def test_unmount_not_mounted(self, mocker):
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        self.om.unmount()
+        with pytest.raises(RuntimeError) as raised:
+            self.om.unmount()
+
+        assert str(raised.value) == "filesystem is not mounted"
         mock_umount.assert_not_called()
 
     def test_mkdirs(self, new_dir):

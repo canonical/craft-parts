@@ -97,8 +97,7 @@ class OverlayManager:
     def unmount(self) -> None:
         """Unmount the overlay step layer stack."""
         if not self._overlay_fs:
-            logger.warning("overlay filesystem not mounted")
-            return
+            raise RuntimeError("filesystem is not mounted")
 
         self._overlay_fs.unmount()
         self._overlay_fs = None
