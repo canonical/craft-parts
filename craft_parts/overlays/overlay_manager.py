@@ -153,7 +153,7 @@ class OverlayManager:
             shutil.rmtree("/var/cache", ignore_errors=True)
 
     def fix_resolv_conf(self) -> None:
-        """Work around problems with pychroot when resolv.conf a symlink."""
+        """Work around problems with pychroot when resolv.conf is a symlink."""
         resolv = self._project_info.overlay_mount_dir / "etc" / "resolv.conf"
         if resolv.is_symlink():
             resolv.unlink()
