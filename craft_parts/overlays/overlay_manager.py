@@ -123,6 +123,9 @@ class OverlayManager:
         if not self._overlay_fs:
             raise RuntimeError("overlay filesystem not mounted")
 
+        # XXX: pychroot is hacky and requires special handling to prevent
+        #      process leaks. We should replace it with a different subsystem
+        #      to handle chroot in a cleaner way.
         mount_dir = self._project_info.overlay_mount_dir
         with contextlib.suppress(SystemExit), pychroot.Chroot(mount_dir):
             packages.Repository.refresh_packages_list()
