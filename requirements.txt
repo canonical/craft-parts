@@ -1,5 +1,5 @@
 certifi==2021.5.30
-charset-normalizer==2.0.3
+charset-normalizer==2.0.6
 idna==3.2
 pychroot==0.10.3
 pydantic==1.8.2
@@ -9,5 +9,6 @@ PyYAML==5.4.1
 requests==2.26.0
 requests-unixsocket==0.2.0
 semver==2.13.0
-typing-extensions==3.10.0.0
+snakeoil==0.8.9
+typing-extensions==3.10.0.2
 urllib3==1.26.6
