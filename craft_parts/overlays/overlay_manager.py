@@ -156,7 +156,13 @@ class OverlayManager:
             shutil.rmtree("/var/cache", ignore_errors=True)
 
     def fix_resolv_conf(self) -> None:
-        """Work around problems with pychroot when resolv.conf is a symlink."""
+        """Work around problems with pychroot when resolv.conf is a symlink.
+
+        Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
+        ``/run/systemd/resolve/stub-resolv.conf``. Pychroot needs resolv.conf
+        to be a regular file, otherwise it fails to install its resolver
+        configuration and name resolution will fail inside the chroot.
+        """
         resolv = self._project_info.overlay_mount_dir / "etc" / "resolv.conf"
         if resolv.is_symlink():
             resolv.unlink()
