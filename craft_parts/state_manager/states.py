@@ -27,6 +27,7 @@ from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 from .build_state import BuildState
+from .overlay_state import OverlayState  # noqa: F401, pylint: disable=W0611
 from .prime_state import PrimeState
 from .pull_state import PullState
 from .stage_state import StageState
