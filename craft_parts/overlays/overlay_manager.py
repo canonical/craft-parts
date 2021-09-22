@@ -160,8 +160,12 @@ class OverlayManager:
 
         Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
         ``/run/systemd/resolve/stub-resolv.conf``. Pychroot needs resolv.conf
-        to be a regular file, otherwise it fails to install its resolver
-        configuration and name resolution will fail inside the chroot.
+        to be a regular file to bind-mount its resolver configuration on,
+        otherwise name resolution will fail inside the chroot.
+
+        Replacing the symlink with an empty file is done on the package cache
+        layer. The file will be present during overlay step execution, but
+        not on the part layer content migrated to stage.
         """
         resolv = self._project_info.overlay_mount_dir / "etc" / "resolv.conf"
         if resolv.is_symlink():
