@@ -312,7 +312,7 @@ class Ubuntu(BaseRepository):
         return packages
 
     @classmethod
-    def refresh_build_packages_list(cls) -> None:
+    def refresh_packages_list(cls) -> None:
         """Refresh the list of packages available in the repository."""
         try:
             cmd = ["apt-get", "update"]
@@ -404,8 +404,6 @@ class Ubuntu(BaseRepository):
         # install anything.
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
-            # refresh the build package list before planning for consistency
-            # cls.refresh_build_packages()
 
         marked_packages = cls._get_packages_marked_for_installation(package_names)
         packages = [f"{name}={version}" for name, version in sorted(marked_packages)]

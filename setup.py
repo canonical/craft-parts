@@ -34,7 +34,7 @@ with open("README.md") as readme_file:
 
 install_requires = [
     "PyYAML",
-    "progressbar",
+    "pychroot==0.10.3",  # 0.10.4 drops Python 3.7 support
     "pydantic",
     "pydantic-yaml",
     "pyxdg",

@@ -60,7 +60,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def refresh_build_packages_list(cls) -> None:
+    def refresh_packages_list(cls) -> None:
         """Refresh the list of packages available in the repository.
 
         If refreshing is not possible :class:`PackageListRefreshError`
@@ -178,7 +178,7 @@ class DummyRepository(BaseRepository):
         return set()
 
     @classmethod
-    def refresh_build_packages_list(cls) -> None:
+    def refresh_packages_list(cls) -> None:
         """Refresh the build packages cache."""
 
     @classmethod
