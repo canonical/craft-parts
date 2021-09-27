@@ -755,16 +755,6 @@ class PartHandler:
         for snap_source in snap_sources:
             snap_source.provision(str(install_dir), clean_target=False, keep=True)
 
-    def _overlay_state_file(self, step: Step) -> Path:
-        """Return the path to the overlay migration state file for the given step."""
-        if step == Step.STAGE:
-            return Path(self._part.overlay_dir / "stage_overlay")
-
-        if step == Step.PRIME:
-            return Path(self._part.overlay_dir / "prime_overlay")
-
-        raise RuntimeError(f"no overlay migration state in step {step!r}")
-
 
 def _remove(filename: Path) -> None:
     """Remove the given directory entry.
