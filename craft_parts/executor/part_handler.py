@@ -727,7 +727,7 @@ class PartHandler:
 def _remove(filename: Path) -> None:
     if filename.is_symlink() or filename.is_file():
         logger.debug("remove file %s", filename)
-        os.unlink(filename)
+        filename.unlink()
     elif filename.is_dir():
         logger.debug("remove directory %s", filename)
         shutil.rmtree(filename)
@@ -756,10 +756,7 @@ def _apply_file_filter(
                 # Don't descend into this directory-- we'll just delete it
                 # entirely.
                 directories.remove(directory)
-                if path.is_dir():
-                    shutil.rmtree(str(path))
-                else:
-                    path.unlink()
+                shutil.rmtree(str(path))
 
 
 def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
