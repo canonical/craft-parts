@@ -102,6 +102,8 @@ class PartHandler:
 
         if action.step == Step.PULL:
             handler = self._run_pull
+        elif action.step == Step.OVERLAY:
+            handler = self._run_overlay
         elif action.step == Step.BUILD:
             handler = self._run_build
         elif action.step == Step.STAGE:
@@ -576,6 +578,8 @@ class PartHandler:
 
         if step == Step.PULL:
             handler = self._clean_pull
+        elif step == Step.OVERLAY:
+            handler = self._clean_overlay
         elif step == Step.BUILD:
             handler = self._clean_build
         elif step == Step.STAGE:

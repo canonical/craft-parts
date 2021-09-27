@@ -91,8 +91,7 @@ class TestPartHandling:
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
         mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
 
-        # TODO: replace with Step.OVERLAY after we implement it
-        state = self._handler._run_overlay(StepInfo(self._part_info, Step.PULL))
+        state = self._handler._run_overlay(StepInfo(self._part_info, Step.OVERLAY))
         assert state == states.OverlayState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -212,6 +211,7 @@ class TestPartHandling:
         "step,scriptlet",
         [
             (Step.PULL, "override-pull"),
+            (Step.OVERLAY, "overlay-script"),
             (Step.BUILD, "override-build"),
             (Step.STAGE, "override-stage"),
             (Step.PRIME, "override-prime"),
@@ -350,6 +350,7 @@ class TestPartUpdateHandler:
     def test_update_build(self):
         self._handler._make_dirs()
         self._handler.run_action(Action("foo", Step.PULL))
+        self._handler.run_action(Action("foo", Step.OVERLAY))
         self._handler.run_action(Action("foo", Step.BUILD))
 
         source_file = Path("subdir/foo.txt")
