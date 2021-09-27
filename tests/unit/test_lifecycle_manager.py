@@ -107,6 +107,7 @@ class TestLifecycleManager:
             part_list=lf._part_list,
             project_info=lf.project_info,
             ignore_outdated=["foo.*"],
+            base_layer_hash=None,
         )
 
 
