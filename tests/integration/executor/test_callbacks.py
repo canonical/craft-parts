@@ -41,6 +41,12 @@ def teardown_module():
     callbacks.unregister_all()
 
 
+@pytest.fixture(autouse=True)
+def mock_mount_unmount(mocker):
+    mocker.patch("craft_parts.utils.os_utils.mount")
+    mocker.patch("craft_parts.utils.os_utils.umount")
+
+
 def _step_callback(info: StepInfo) -> bool:
     print(f"step = {info.step!r}")
     print(f"part_src_dir = {info.part_src_dir}")
@@ -59,10 +65,11 @@ _parts_yaml = textwrap.dedent(
     parts:
       foo:
         plugin: nil
-        override-pull: echo "override Step.PULL"
-        override-build: echo "override Step.BUILD"
-        override-stage: echo "override Step.STAGE"
-        override-prime: echo "override Step.PRIME"
+        override-pull: echo "step Step.PULL"
+        overlay-script: echo "step Step.OVERLAY"
+        override-build: echo "step Step.BUILD"
+        override-stage: echo "step Step.STAGE"
+        override-prime: echo "step Step.PRIME"
     """
 )
 
@@ -73,7 +80,12 @@ def test_step_callback(tmpdir, capfd, step):
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_step_callback", cache_dir=tmpdir, work_dir=tmpdir
+        parts,
+        application_name="test_step_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
     )
 
     with lf.action_executor() as ctx:
@@ -86,7 +98,7 @@ def test_step_callback(tmpdir, capfd, step):
         f"part_src_dir = {tmpdir}/parts/foo/src\n"
         f"part_build_dir = {tmpdir}/parts/foo/build\n"
         f"part_install_dir = {tmpdir}/parts/foo/install\n"
-        f"override {step!r}\n"
+        f"step {step!r}\n"
     )
 
 
@@ -99,6 +111,8 @@ def test_prologue_callback(tmpdir, capfd):
         application_name="test_prologue_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
     )
 
     with lf.action_executor() as ctx:
@@ -107,9 +121,7 @@ def test_prologue_callback(tmpdir, capfd):
     out, err = capfd.readouterr()
     assert not err
     assert out == (
-        "application_name = test_prologue_callback\n"
-        "parts = foo\n"
-        "override Step.PULL\n"
+        "application_name = test_prologue_callback\n" "parts = foo\n" "step Step.PULL\n"
     )
 
 
@@ -134,6 +146,8 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="callback",
     )
 
@@ -145,7 +159,7 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
     if action_type == ActionType.SKIP:
         assert not out
     else:
-        assert out == f"callback\noverride {step!r}\n"
+        assert out == f"callback\nstep {step!r}\n"
 
 
 @pytest.mark.parametrize("step", list(Step))
@@ -159,6 +173,8 @@ def test_callback_post(tmpdir, capfd, step, action_type):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="callback",
     )
 
@@ -170,7 +186,7 @@ def test_callback_post(tmpdir, capfd, step, action_type):
     if action_type == ActionType.SKIP:
         assert not out
     else:
-        assert out == f"override {step!r}\ncallback\n"
+        assert out == f"step {step!r}\ncallback\n"
 
 
 _update_yaml = textwrap.dedent(
@@ -179,10 +195,11 @@ _update_yaml = textwrap.dedent(
       foo:
         plugin: nil
         source: .
-        override-pull: echo "override Step.PULL"
-        override-build: echo "override Step.BUILD"
-        override-stage: echo "override Step.STAGE"
-        override-prime: echo "override Step.PRIME"
+        override-pull: echo "step Step.PULL"
+        overlay-script: echo "step Step.OVERLAY"
+        override-build: echo "step Step.BUILD"
+        override-stage: echo "step Step.STAGE"
+        override-prime: echo "step Step.PRIME"
     """
 )
 
@@ -197,6 +214,8 @@ def test_update_callback_pre(tmpdir, capfd, step):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="callback",
     )
 
@@ -205,7 +224,7 @@ def test_update_callback_pre(tmpdir, capfd, step):
 
     out, err = capfd.readouterr()
     assert not err
-    assert out == f"callback\noverride {step!r}\n"
+    assert out == f"callback\nstep {step!r}\n"
 
 
 @pytest.mark.parametrize("step", [Step.PULL, Step.BUILD])
@@ -218,6 +237,8 @@ def test_update_callback_post(tmpdir, capfd, step):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="callback",
     )
 
@@ -226,7 +247,7 @@ def test_update_callback_post(tmpdir, capfd, step):
 
     out, err = capfd.readouterr()
     assert not err
-    assert out == f"override {step!r}\ncallback\n"
+    assert out == f"step {step!r}\ncallback\n"
 
 
 @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
@@ -239,6 +260,8 @@ def test_invalid_update_callback_pre(tmpdir, step):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="callback",
     )
 
@@ -259,6 +282,8 @@ def test_invalid_update_callback_post(tmpdir, step):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="callback",
     )
 
@@ -280,12 +305,14 @@ _exec_yaml = textwrap.dedent(
       foo:
         plugin: nil
         override-pull: echo "foo Step.PULL"
+        overlay-script: echo "foo Step.OVERLAY"
         override-build: echo "foo Step.BUILD"
         override-stage: echo "foo Step.STAGE"
         override-prime: echo "foo Step.PRIME"
       bar:
         plugin: nil
         override-pull: echo "bar Step.PULL"
+        overlay-script: echo "bar Step.OVERLAY"
         override-build: echo "bar Step.BUILD"
         override-stage: echo "bar Step.STAGE"
         override-prime: echo "bar Step.PRIME"
@@ -302,6 +329,8 @@ def test_callback_prologue(tmpdir, capfd):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="prologue",
     )
 
@@ -322,6 +351,8 @@ def test_callback_epilogue(tmpdir, capfd):
         application_name="test_callback",
         cache_dir=tmpdir,
         work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
         message="epilogue",
     )
 

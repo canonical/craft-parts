@@ -41,6 +41,9 @@ def setup_fixture(new_dir, mocker):
         },
     )
 
+    mocker.patch("craft_parts.utils.os_utils.mount")
+    mocker.patch("craft_parts.utils.os_utils.umount")
+
 
 def test_ctl_client_steps(new_dir, capfd, mocker):
     parts_yaml = textwrap.dedent(
@@ -52,6 +55,8 @@ def test_ctl_client_steps(new_dir, capfd, mocker):
             override-pull: |
               echo "pull step"
               partsctl pull
+            overlay-script: |
+              echo "overlay step"
             override-build: |
               echo "build step"
               partsctl build
@@ -69,11 +74,16 @@ def test_ctl_client_steps(new_dir, capfd, mocker):
     Path("foo/foo.txt").touch()
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_ctl", cache_dir=new_dir
+        parts,
+        application_name="test_ctl",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
     )
     actions = lf.plan(Step.PRIME)
     assert actions == [
         Action("foo", Step.PULL),
+        Action("foo", Step.OVERLAY),
         Action("foo", Step.BUILD),
         Action("foo", Step.STAGE),
         Action("foo", Step.PRIME),
@@ -89,24 +99,34 @@ def test_ctl_client_steps(new_dir, capfd, mocker):
 
         ctx.execute(actions[1])
         captured = capfd.readouterr()
-        assert captured.out == "build step\n"
-        assert Path("parts/foo/install/foo.txt").exists()
-        assert Path("stage/foo.txt").exists() is False
-        assert Path("prime/foo.txt").exists() is False
+        Path("parts/foo/layer/ovl.txt").touch()
+        assert captured.out == "overlay step\n"
 
         ctx.execute(actions[2])
         captured = capfd.readouterr()
-        assert captured.out == "stage step\n"
-        assert Path("stage/foo.txt").exists()
+        assert captured.out == "build step\n"
+        assert Path("parts/foo/install/foo.txt").exists()
+        assert Path("stage/foo.txt").exists() is False
+        assert Path("stage/ovl.txt").exists() is False
         assert Path("prime/foo.txt").exists() is False
+        assert Path("prime/ovl.txt").exists() is False
 
         ctx.execute(actions[3])
         captured = capfd.readouterr()
+        assert captured.out == "stage step\n"
+        assert Path("stage/foo.txt").exists()
+        assert Path("stage/ovl.txt").exists()
+        assert Path("prime/foo.txt").exists() is False
+        assert Path("prime/ovl.txt").exists() is False
+
+        ctx.execute(actions[4])
+        captured = capfd.readouterr()
         assert captured.out == "prime step\n"
         assert Path("prime/foo.txt").exists()
+        assert Path("prime/ovl.txt").exists()
 
 
-@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
 def test_ctl_client_step_argments(new_dir, step):
     parts_yaml = textwrap.dedent(
         """\
@@ -122,7 +142,11 @@ def test_ctl_client_step_argments(new_dir, step):
     parts = yaml.safe_load(parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_ctl", cache_dir=new_dir
+        parts,
+        application_name="test_ctl",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
     )
     with pytest.raises(errors.InvalidControlAPICall) as raised:
         with lf.action_executor() as ctx:

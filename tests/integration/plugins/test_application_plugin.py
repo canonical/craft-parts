@@ -93,6 +93,7 @@ def test_application_plugin_happy(caplog, new_dir, mocker):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL, action_type=ActionType.RUN),
+        Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
         Action("foo", Step.BUILD, action_type=ActionType.RUN),
     ]
 
@@ -103,7 +104,7 @@ def test_application_plugin_happy(caplog, new_dir, mocker):
     mock_install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
     with lf.action_executor() as exe, caplog.at_level(logging.DEBUG):
-        exe.execute(actions[1])
+        exe.execute(actions[2])
 
     assert "hello application plugin" in caplog.text
 
