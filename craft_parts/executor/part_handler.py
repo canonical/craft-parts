@@ -118,6 +118,12 @@ class PartHandler:
         callbacks.run_post_step(step_info)
 
     def _run_pull(self, step_info: StepInfo) -> StepState:
+        """Execute the pull step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The pull step state.
+        """
         _remove(self._part.part_src_dir)
         self._make_dirs()
 
@@ -144,6 +150,12 @@ class PartHandler:
         return state
 
     def _run_overlay(self, step_info: StepInfo) -> StepState:
+        """Execute the overlay step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The overlay step state.
+        """
         self._make_dirs()
 
         if self._part.has_overlay:
@@ -183,6 +195,12 @@ class PartHandler:
         )
 
     def _run_build(self, step_info: StepInfo, *, update=False) -> StepState:
+        """Execute the build step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The build step state.
+        """
         self._make_dirs()
         _remove(self._part.part_build_dir)
         self._unpack_stage_packages()
@@ -247,6 +265,12 @@ class PartHandler:
         return state
 
     def _run_stage(self, step_info: StepInfo) -> StepState:
+        """Execute the stage step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The stage step state.
+        """
         self._make_dirs()
 
         contents = self._run_step(
@@ -273,6 +297,12 @@ class PartHandler:
         return state
 
     def _run_prime(self, step_info: StepInfo) -> StepState:
+        """Execute the prime step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The prime step state.
+        """
         self._make_dirs()
 
         contents = self._run_step(
@@ -644,6 +674,10 @@ class PartHandler:
         )
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:
+        """Download stage packages to the part's package directory.
+
+        :raises StagePackageNotFound: If a package is not available for download.
+        """
         stage_packages = self._part.spec.stage_packages
         if not stage_packages:
             return None
@@ -664,6 +698,7 @@ class PartHandler:
         return fetched_packages
 
     def _fetch_stage_snaps(self):
+        """Download snap packages to the part's snap directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
             return None
@@ -675,6 +710,10 @@ class PartHandler:
         return stage_snaps
 
     def _fetch_overlay_packages(self) -> None:
+        """Download overlay packages to the local package cache.
+
+        :raises OverlayPackageNotFound: If a package is not available for download.
+        """
         overlay_packages = self._part.spec.overlay_packages
         if not overlay_packages:
             return
@@ -688,12 +727,14 @@ class PartHandler:
             )
 
     def _unpack_stage_packages(self):
+        """Extract stage packages contents to the part's install directory."""
         packages.Repository.unpack_stage_packages(
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
         )
 
     def _unpack_stage_snaps(self):
+        """Extract stage snap contents to the part's install directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
             return
@@ -715,6 +756,7 @@ class PartHandler:
             snap_source.provision(str(install_dir), clean_target=False, keep=True)
 
     def _overlay_state_file(self, step: Step) -> Path:
+        """Return the path to the overlay migration state file for the given step."""
         if step == Step.STAGE:
             return Path(self._part.overlay_dir / "stage_overlay")
 
@@ -725,6 +767,10 @@ class PartHandler:
 
 
 def _remove(filename: Path) -> None:
+    """Remove the given directory entry.
+
+    :param filename: The path to the file or directory to remove.
+    """
     if filename.is_symlink() or filename.is_file():
         logger.debug("remove file %s", filename)
         filename.unlink()
@@ -736,6 +782,14 @@ def _remove(filename: Path) -> None:
 def _apply_file_filter(
     *, filter_files: Set[str], filter_dirs: Set[str], destdir: Path
 ) -> None:
+    """Remove files and directories from the filesystem.
+
+    Files and directories that are not part of the given file and directory
+    sets will be removed from the filesystem.
+
+    :param filter_files: The set of files to keep.
+    :param filter_dirs: The set of directories to keep.
+    """
     for (root, directories, files) in os.walk(destdir, topdown=True):
         for file_name in files:
             path = Path(root, file_name)
