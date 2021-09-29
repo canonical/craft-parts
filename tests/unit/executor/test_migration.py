@@ -24,6 +24,7 @@ from craft_parts.actions import Action
 from craft_parts.executor import filesets, migration, part_handler
 from craft_parts.executor.filesets import Fileset
 from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -351,12 +352,21 @@ class TestHelpers:
         Path("subdir2/baz.txt").write_text("yet another content")
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1, p2], base_layer_dir=None
+        )
 
         handler1 = part_handler.PartHandler(
-            p1, part_info=PartInfo(info, part=p1), part_list=[p1, p2]
+            p1,
+            part_info=PartInfo(info, part=p1),
+            part_list=[p1, p2],
+            overlay_manager=ovmgr,
         )
         handler2 = part_handler.PartHandler(
-            p2, part_info=PartInfo(info, part=p2), part_list=[p1, p2]
+            p2,
+            part_info=PartInfo(info, part=p2),
+            part_list=[p1, p2],
+            overlay_manager=ovmgr,
         )
 
         for step in [Step.PULL, Step.BUILD, Step.STAGE]:
@@ -398,7 +408,10 @@ class TestHelpers:
         p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, part=p1)
-        handler = part_handler.PartHandler(p1, part_info=part_info, part_list=[p1])
+        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        handler = part_handler.PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
 
         handler.run_action(Action("p1", Step.PULL))
         handler.run_action(Action("p1", Step.BUILD))
@@ -418,7 +431,10 @@ class TestHelpers:
         p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, part=p1)
-        handler = part_handler.PartHandler(p1, part_info=part_info, part_list=[p1])
+        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        handler = part_handler.PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
 
         handler.run_action(Action("p1", Step.PULL))
         handler.run_action(Action("p1", Step.BUILD))

@@ -320,6 +320,15 @@ def test_stage_package_not_found():
     assert err.resolution is None
 
 
+def test_overlay_package_not_found():
+    err = errors.OverlayPackageNotFound(part_name="foo", package_name="figlet")
+    assert err.part_name == "foo"
+    assert err.package_name == "figlet"
+    assert err.brief == "Overlay package not found in part 'foo': figlet."
+    assert err.details is None
+    assert err.resolution is None
+
+
 def test_invalid_action():
     err = errors.InvalidAction("cannot update step 'stage'")
     assert err.message == "cannot update step 'stage'"

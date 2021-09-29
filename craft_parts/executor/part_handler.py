@@ -27,15 +27,15 @@ from typing import Any, Callable, Dict, List, Optional, Set
 from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
-from craft_parts.overlays import LayerHash
+from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
-from craft_parts.parts import Part, get_parts_with_overlay
+from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import MigrationState, StepState, states
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 
-from . import migration
+from . import filesets, migration
 from .organize import organize_files
 from .step_handler import StepContents, StepHandler
 
@@ -56,12 +56,14 @@ class PartHandler:
         *,
         part_info: PartInfo,
         part_list: List[Part],
+        overlay_manager: OverlayManager,
         ignore_patterns: Optional[List[str]] = None,
         base_layer_hash: Optional[LayerHash] = None,
     ):
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
+        self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
 
         self._plugin = plugins.get_plugin(
@@ -107,7 +109,7 @@ class PartHandler:
         elif action.step == Step.PRIME:
             handler = self._run_prime
         else:
-            raise RuntimeError("cannot run action for invalid step {action.step!r}")
+            raise RuntimeError(f"cannot run action for invalid step {action.step!r}")
 
         callbacks.run_pre_step(step_info)
         state = handler(step_info)
@@ -116,11 +118,18 @@ class PartHandler:
         callbacks.run_post_step(step_info)
 
     def _run_pull(self, step_info: StepInfo) -> StepState:
+        """Execute the pull step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The pull step state.
+        """
         _remove(self._part.part_src_dir)
         self._make_dirs()
 
         fetched_packages = self._fetch_stage_packages(step_info=step_info)
         fetched_snaps = self._fetch_stage_snaps()
+        self._fetch_overlay_packages()
 
         self._run_step(
             step_info=step_info,
@@ -140,7 +149,58 @@ class PartHandler:
 
         return state
 
+    def _run_overlay(self, step_info: StepInfo) -> StepState:
+        """Execute the overlay step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The overlay step state.
+        """
+        self._make_dirs()
+
+        if self._part.has_overlay:
+            overlay_packages = self._part.spec.overlay_packages
+            if overlay_packages:
+                # must be in a separate context manager to avoid pychroot process leak
+                with overlays.LayerMount(
+                    self._overlay_manager, top_part=self._part
+                ) as ctx:
+                    ctx.install_packages(overlay_packages)
+
+            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                contents = self._run_step(
+                    step_info=step_info,
+                    scriptlet_name="overlay-script",
+                    work_dir=self._part.part_layer_dir,
+                )
+
+            # apply overlay filter
+            overlay_fileset = filesets.Fileset(
+                self._part.spec.overlay_files, name="overlay"
+            )
+            destdir = self._part.part_layer_dir
+            files, dirs = filesets.migratable_filesets(overlay_fileset, str(destdir))
+            _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
+        else:
+            contents = StepContents()
+
+        layer_hash = self._compute_layer_hash(all_parts=False)
+        layer_hash.save(self._part)
+
+        return states.OverlayState(
+            part_properties=self._part_properties,
+            project_options=step_info.project_options,
+            files=contents.files,
+            directories=contents.dirs,
+        )
+
     def _run_build(self, step_info: StepInfo, *, update=False) -> StepState:
+        """Execute the build step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The build step state.
+        """
         self._make_dirs()
         _remove(self._part.part_build_dir)
         self._unpack_stage_packages()
@@ -152,11 +212,19 @@ class PartHandler:
         )
 
         # Perform the build step
-        self._run_step(
-            step_info=step_info,
-            scriptlet_name="override-build",
-            work_dir=self._part.part_build_dir,
-        )
+        if has_overlay_visibility(self._part, part_list=self._part_list):
+            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                self._run_step(
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                )
+        else:
+            self._run_step(
+                step_info=step_info,
+                scriptlet_name="override-build",
+                work_dir=self._part.part_build_dir,
+            )
 
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:
@@ -197,6 +265,12 @@ class PartHandler:
         return state
 
     def _run_stage(self, step_info: StepInfo) -> StepState:
+        """Execute the stage step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The stage step state.
+        """
         self._make_dirs()
 
         contents = self._run_step(
@@ -223,6 +297,12 @@ class PartHandler:
         return state
 
     def _run_prime(self, step_info: StepInfo) -> StepState:
+        """Execute the prime step for this part.
+
+        :param step_info: Information about the step to execute.
+
+        :return: The prime step state.
+        """
         self._make_dirs()
 
         contents = self._run_step(
@@ -346,6 +426,16 @@ class PartHandler:
         state_file = states.get_step_state_path(self._part, step_info.step)
         self._source_handler.check_if_outdated(str(state_file))
         self._source_handler.update()
+
+    def _update_overlay(self, step_info: StepInfo) -> None:
+        """Handle update action for the overlay step.
+
+        The overlay update handler is empty (out of date overlay must not rerun,
+        otherwise its state will be cleaned and build will run again instead of
+        just updating).
+
+        :param step_info: The step information.
+        """
 
     def _update_build(self, step_info: StepInfo) -> None:
         """Handle update action for the build step.
@@ -509,6 +599,11 @@ class PartHandler:
         # remove the source tree
         _remove(self._part.part_src_dir)
 
+    def _clean_overlay(self) -> None:
+        """Remove the current part' s layer data and verification hash."""
+        _remove(self._part.part_layer_dir)
+        _remove(self._part.part_state_dir / "layer_hash")
+
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
         _remove(self._part.part_build_dir)
@@ -579,6 +674,10 @@ class PartHandler:
         )
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:
+        """Download stage packages to the part's package directory.
+
+        :raises StagePackageNotFound: If a package is not available for download.
+        """
         stage_packages = self._part.spec.stage_packages
         if not stage_packages:
             return None
@@ -599,6 +698,7 @@ class PartHandler:
         return fetched_packages
 
     def _fetch_stage_snaps(self):
+        """Download snap packages to the part's snap directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
             return None
@@ -609,13 +709,32 @@ class PartHandler:
 
         return stage_snaps
 
+    def _fetch_overlay_packages(self) -> None:
+        """Download overlay packages to the local package cache.
+
+        :raises OverlayPackageNotFound: If a package is not available for download.
+        """
+        overlay_packages = self._part.spec.overlay_packages
+        if not overlay_packages:
+            return
+
+        try:
+            with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+                ctx.download_packages(overlay_packages)
+        except packages_errors.PackageNotFound as err:
+            raise errors.OverlayPackageNotFound(
+                part_name=self._part.name, package_name=err.package_name
+            )
+
     def _unpack_stage_packages(self):
+        """Extract stage packages contents to the part's install directory."""
         packages.Repository.unpack_stage_packages(
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
         )
 
     def _unpack_stage_snaps(self):
+        """Extract stage snap contents to the part's install directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
             return
@@ -636,23 +755,52 @@ class PartHandler:
         for snap_source in snap_sources:
             snap_source.provision(str(install_dir), clean_target=False, keep=True)
 
-    def _overlay_state_file(self, step: Step) -> Path:
-        if step == Step.STAGE:
-            return Path(self._part.overlay_dir / "stage_overlay")
-
-        if step == Step.PRIME:
-            return Path(self._part.overlay_dir / "prime_overlay")
-
-        raise RuntimeError(f"no overlay migration state in step {step!r}")
-
 
 def _remove(filename: Path) -> None:
+    """Remove the given directory entry.
+
+    :param filename: The path to the file or directory to remove.
+    """
     if filename.is_symlink() or filename.is_file():
         logger.debug("remove file %s", filename)
-        os.unlink(filename)
+        filename.unlink()
     elif filename.is_dir():
         logger.debug("remove directory %s", filename)
         shutil.rmtree(filename)
+
+
+def _apply_file_filter(
+    *, filter_files: Set[str], filter_dirs: Set[str], destdir: Path
+) -> None:
+    """Remove files and directories from the filesystem.
+
+    Files and directories that are not part of the given file and directory
+    sets will be removed from the filesystem.
+
+    :param filter_files: The set of files to keep.
+    :param filter_dirs: The set of directories to keep.
+    """
+    for (root, directories, files) in os.walk(destdir, topdown=True):
+        for file_name in files:
+            path = Path(root, file_name)
+            relpath = path.relative_to(destdir)
+            if str(relpath) not in filter_files and not overlays.is_whiteout_file(path):
+                logger.debug("delete file: %s", relpath)
+                path.unlink()
+
+        for directory in directories:
+            path = Path(root, directory)
+            relpath = path.relative_to(destdir)
+            if path.is_symlink():
+                if str(relpath) not in filter_files:
+                    logger.debug("delete symlink: %s", relpath)
+                    path.unlink()
+            elif str(relpath) not in filter_dirs:
+                logger.debug("delete dir: %s", relpath)
+                # Don't descend into this directory-- we'll just delete it
+                # entirely.
+                directories.remove(directory)
+                shutil.rmtree(str(path))
 
 
 def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:

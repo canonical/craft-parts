@@ -19,11 +19,13 @@
 import contextlib
 import logging
 import shutil
-from typing import Dict, List, Union
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 from craft_parts import callbacks, packages, parts
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -58,13 +60,22 @@ class Executor:
         extra_build_packages: List[str] = None,
         extra_build_snaps: List[str] = None,
         ignore_patterns: List[str] = None,
+        base_layer_dir: Optional[Path] = None,
+        base_layer_hash: Optional[LayerHash] = None,
     ):
         self._part_list = part_list
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
+        self._base_layer_hash = base_layer_hash
         self._handler: Dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
+
+        self._overlay_manager = OverlayManager(
+            project_info=self._project_info,
+            part_list=self._part_list,
+            base_layer_dir=base_layer_dir,
+        )
 
     def prologue(self) -> None:
         """Prepare the execution environment.
@@ -154,7 +165,9 @@ class Executor:
             part,
             part_info=PartInfo(self._project_info, part),
             part_list=self._part_list,
+            overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
+            base_layer_hash=self._base_layer_hash,
         )
         self._handler[part.name] = handler
 

@@ -477,6 +477,21 @@ class StagePackageNotFound(PartsError):
         super().__init__(brief=brief)
 
 
+class OverlayPackageNotFound(PartsError):
+    """Failed to install an overlay package.
+
+    :param part_name: The name of the part being processed.
+    :param message: the error message.
+    """
+
+    def __init__(self, *, part_name: str, package_name: str):
+        self.part_name = part_name
+        self.package_name = package_name
+        brief = f"Overlay package not found in part {part_name!r}: {package_name}."
+
+        super().__init__(brief=brief)
+
+
 class InvalidAction(PartsError):
     """An attempt was made to execute an action with invalid parameters.
 

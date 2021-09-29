@@ -37,6 +37,7 @@ _pull_state_foo = textwrap.dedent(
       source-tag: ''
       source-commit: ''
       stage-packages: []
+      overlay-packages: []
     project_options:
       target_arch: amd64
     assets:
@@ -72,6 +73,7 @@ _pull_state_bar = textwrap.dedent(
       source-tag: ''
       source-commit: ''
       stage-packages: []
+      overlay-packages: []
     project_options:
       target_arch: amd64
     assets:
