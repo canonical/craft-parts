@@ -124,9 +124,9 @@ class LifecycleManager:
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
             if not base_layer_dir:
-                raise ValueError("using overlays and base_layer_dir not specified")
+                raise ValueError("base_layer_dir must be specified if using overlays")
             if not base_layer_hash:
-                raise ValueError("using overlays and base_layer hash not specified")
+                raise ValueError("base_layer_hash must be specified if using overlays")
         else:
             base_layer_dir = None
 
