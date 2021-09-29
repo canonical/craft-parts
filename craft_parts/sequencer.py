@@ -307,7 +307,7 @@ class Sequencer:
         :param skip_last: Don't verify the consistency of the last (topmost) layer.
             This is used during the overlay stack creation.
 
-        :return: This part's identification value.
+        :return: This topmost layer's verification hash.
 
         :raise ValueError: If part is not in the project's parts list.
         """
@@ -317,18 +317,18 @@ class Sequencer:
         for part in self._part_list:
             layer_hash = self._layer_state.compute_layer_hash(part)
 
-            if skip_last and part.name == top_part.name:
-                return layer_hash
+            # run the overlay step if the layer hash doesn't match the existing
+            # state (unless we're in the top part and skipping the consistency check)
+            if not (skip_last and part.name == top_part.name):
+                state_layer_hash = self._layer_state.get_layer_hash(part)
 
-            state_layer_hash = self._layer_state.get_layer_hash(part)
-
-            if layer_hash != state_layer_hash:
-                self._add_all_actions(
-                    target_step=Step.OVERLAY,
-                    part_names=[part.name],
-                    reason=reason,
-                )
-                self._layer_state.set_layer_hash(part, layer_hash)
+                if layer_hash != state_layer_hash:
+                    self._add_all_actions(
+                        target_step=Step.OVERLAY,
+                        part_names=[part.name],
+                        reason=reason,
+                    )
+                    self._layer_state.set_layer_hash(part, layer_hash)
 
             if part.name == top_part.name:
                 return layer_hash
