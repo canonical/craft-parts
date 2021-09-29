@@ -81,6 +81,10 @@ def _process_parts(options: argparse.Namespace) -> None:
         cache_dir = BaseDirectory.save_cache_path("craft-parts")
 
     if options.overlay_base:
+        # The base layer hash algorithm is not specified and could be anything
+        # that remains constant for a given base. The CLI tool just uses the path
+        # to the base for simplicity, but applications can (and probably should)
+        # use a real digest.
         base_layer_hash = options.overlay_base.encode()
     else:
         base_layer_hash = b""
