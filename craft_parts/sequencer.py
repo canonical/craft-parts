@@ -308,12 +308,7 @@ class Sequencer:
             This is used during the overlay stack creation.
 
         :return: This topmost layer's verification hash.
-
-        :raise ValueError: If part is not in the project's parts list.
         """
-        if top_part.name not in [p.name for p in self._part_list]:
-            raise ValueError(f"part {top_part!r} not in parts list")
-
         for part in self._part_list:
             layer_hash = self._layer_state.compute_layer_hash(part)
 
