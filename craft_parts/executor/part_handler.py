@@ -94,6 +94,10 @@ class PartHandler:
             self._update_action(action, step_info=step_info)
             return
 
+        if action.action_type == ActionType.REAPPLY:
+            self._reapply_action(action, step_info=step_info)
+            return
+
         if action.action_type == ActionType.RERUN:
             for step in [action.step] + action.step.next_steps():
                 self.clean_step(step=step)
@@ -377,10 +381,13 @@ class PartHandler:
         return part_hash
 
     def _update_action(self, action: Action, *, step_info: StepInfo) -> None:
+        """Call the appropriate update handler for the given step."""
         handler: Callable[[StepInfo], None]
 
         if action.step == Step.PULL:
             handler = self._update_pull
+        elif action.step == Step.OVERLAY:
+            handler = self._update_overlay
         elif action.step == Step.BUILD:
             handler = self._update_build
         else:
@@ -474,6 +481,21 @@ class PartHandler:
         )
 
         self._organize(overwrite=True)
+
+    def _reapply_action(self, action: Action, *, step_info: StepInfo) -> None:
+        """Call the appropriate reapply handler for the given step."""
+        if action.step == Step.OVERLAY:
+            self._reapply_overlay(step_info)
+        else:
+            step_name = action.step.name.lower()
+            raise errors.InvalidAction(
+                f"cannot reapply step {step_name!r} of {self._part.name!r}"
+            )
+
+    def _reapply_overlay(self, step_info) -> None:
+        """Clean and repopulate the current part's layer, keeping its state."""
+        shutil.rmtree(self._part.part_layer_dir)
+        self._run_overlay(step_info)
 
     def _migrate_overlay_files_to_stage(self) -> None:
         """Stage overlay files create state.
