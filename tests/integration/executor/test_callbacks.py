@@ -343,7 +343,7 @@ def test_callback_prologue(tmpdir, capfd):
 
     out, err = capfd.readouterr()
     assert not err
-    assert out == "foo: prologue\nbar: prologue\nfoo Step.PULL\n"
+    assert out == "bar: prologue\nfoo: prologue\nfoo Step.PULL\n"
 
 
 def test_callback_epilogue(tmpdir, capfd):
@@ -365,4 +365,4 @@ def test_callback_epilogue(tmpdir, capfd):
 
     out, err = capfd.readouterr()
     assert not err
-    assert out == "foo Step.PULL\nfoo: epilogue\nbar: epilogue\n"
+    assert out == "foo Step.PULL\nbar: epilogue\nfoo: epilogue\n"
