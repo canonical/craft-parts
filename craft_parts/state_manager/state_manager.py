@@ -413,9 +413,7 @@ class StateManager:
             # step didn't run yet
             return b""
 
-        state = stw.state
-
-        overlay_hash = state.overlay_hash  # type: ignore
+        overlay_hash = stw.state.overlay_hash  # type: ignore
         if not overlay_hash:
             return b""
 
