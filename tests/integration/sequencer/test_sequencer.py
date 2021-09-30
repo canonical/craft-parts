@@ -232,8 +232,7 @@ class TestSequencerPlan:
                 part_name="foo",
                 step=Step.BUILD,
                 action_type=ActionType.UPDATE,
-                # XXX: this should be PULL after outdated check for overlay is in place
-                reason="'OVERLAY' step changed",
+                reason="'PULL' step changed",
             ),
         ]
 

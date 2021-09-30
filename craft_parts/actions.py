@@ -36,12 +36,15 @@ class ActionType(enum.IntEnum):
     ``UPDATE``: try to continue processing the step.
 
     ``SKIP``: don't execute this action.
+
+    ``REAPPLY``: run the step commands without updating its state.
     """
 
     RUN = 0
     RERUN = 1
     SKIP = 2
     UPDATE = 3
+    REAPPLY = 4
 
     def __repr__(self):
         return f"{self.__class__.__name__}.{self.name}"
