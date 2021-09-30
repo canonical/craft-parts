@@ -136,7 +136,9 @@ def _my_step_callback(info: StepInfo) -> bool:
 
 
 @pytest.mark.parametrize("step", list(Step))
-@pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
+@pytest.mark.parametrize(
+    "action_type", list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY})
+)
 def test_callback_pre(tmpdir, capfd, step, action_type):
     callbacks.register_pre_step(_my_step_callback, step_list=[step])
 
@@ -163,7 +165,9 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
 
 
 @pytest.mark.parametrize("step", list(Step))
-@pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
+@pytest.mark.parametrize(
+    "action_type", list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY})
+)
 def test_callback_post(tmpdir, capfd, step, action_type):
     callbacks.register_post_step(_my_step_callback, step_list=[step])
 
