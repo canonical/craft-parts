@@ -17,7 +17,7 @@
 """Determine the sequence of lifecycle actions to be executed."""
 
 import logging
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Set
 
 from craft_parts import parts, steps
 from craft_parts.actions import Action, ActionType
@@ -62,6 +62,13 @@ class Sequencer:
         self._layer_state = LayerStateManager(self._part_list, base_layer_hash)
         self._actions: List[Action] = []
 
+        self._overlay_viewers: Set[Part] = set()
+        for part in part_list:
+            if parts.has_overlay_visibility(
+                part, viewers=self._overlay_viewers, part_list=part_list
+            ):
+                self._overlay_viewers.add(part)
+
     def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Determine the list of steps to execute for each part.
 
@@ -87,6 +94,8 @@ class Sequencer:
         reason: Optional[str] = None,
     ) -> None:
         selected_parts = part_list_by_name(part_names, self._part_list)
+        if not selected_parts:
+            return
 
         for current_step in target_step.previous_steps() + [target_step]:
             for part in selected_parts:
@@ -132,9 +141,10 @@ class Sequencer:
         dirty_report = self._sm.check_if_dirty(part, current_step)
         if dirty_report:
             logger.debug("%s:%s is dirty", part.name, current_step)
-
             self._rerun_step(part, current_step, reason=dirty_report.reason())
             return
+
+        # TODO: 2.5 If the step depends on overlay, check if it must be reapplied.
 
         # 3. If the step is outdated, run it again (without cleaning if possible).
         #    A step is considered outdated if an earlier step in the lifecycle
@@ -144,7 +154,7 @@ class Sequencer:
         if outdated_report:
             logger.debug("%s:%s is outdated", part.name, current_step)
 
-            if current_step in (Step.PULL, Step.BUILD):
+            if current_step in (Step.PULL, Step.OVERLAY, Step.BUILD):
                 self._update_step(part, current_step, reason=outdated_report.reason())
             else:
                 self._rerun_step(part, current_step, reason=outdated_report.reason())
@@ -181,6 +191,29 @@ class Sequencer:
     ) -> None:
         self._process_dependencies(part, step)
 
+        if step == Step.OVERLAY:
+            # Make sure all previous layers are in place before we add a new
+            # layer to the overlay stack,
+            layer_hash = self._ensure_overlay_consistency(
+                part,
+                reason=f"required to overlay {part.name!r}",
+                skip_last=True,
+            )
+            self._layer_state.set_layer_hash(part, layer_hash)
+
+        elif (step == Step.BUILD and part in self._overlay_viewers) or (
+            step == Step.STAGE and part.has_overlay
+        ):
+            # The overlay step for all parts should run before we build a part
+            # with overlay visibility or before we stage a part that declares
+            # overlay parameters.
+            last_part = self._part_list[-1]
+            verb = _step_verb[step]
+            self._ensure_overlay_consistency(
+                last_part,
+                reason=f"required to {verb} {part.name!r}",
+            )
+
         if rerun:
             self._add_action(part, step, action_type=ActionType.RERUN, reason=reason)
         else:
@@ -189,8 +222,16 @@ class Sequencer:
         state: states.StepState
         part_properties = part.spec.marshal()
 
+        # create step state
+
         if step == Step.PULL:
             state = states.PullState(
+                part_properties=part_properties,
+                project_options=self._project_info.project_options,
+            )
+
+        elif step == Step.OVERLAY:
+            state = states.OverlayState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
             )
@@ -225,8 +266,10 @@ class Sequencer:
     ) -> None:
         logger.debug("rerun step %s:%s", part.name, step)
 
-        # clean the step and later steps for this part, then run it again
-        self._sm.clean_part(part, step)
+        if step != Step.OVERLAY:
+            # clean the step and later steps for this part
+            self._sm.clean_part(part, step)
+
         self._run_step(part, step, reason=reason, rerun=True)
 
     def _update_step(self, part: Part, step: Step, *, reason: Optional[str] = None):
@@ -247,9 +290,51 @@ class Sequencer:
             Action(part.name, step, action_type=action_type, reason=reason)
         )
 
+    def _ensure_overlay_consistency(
+        self, top_part: Part, reason: Optional[str] = None, skip_last: bool = False
+    ) -> LayerHash:
+        """Make sure overlay step layers are consistent.
+
+        The overlay step layers are stacked according to the part order. Each part
+        is given an identificaton value based on its overlay parameters and the value
+        of the previous layer in the stack, which is used to make sure the overlay
+        parameters for all previous layers remain the same. If any previous part
+        has not run, or had its parameters changed, it must run again to ensure
+        overlay consistency.
+
+        :param top_part: The part currently the top of the layer stack and whose
+            consistency is to be verified.
+        :param skip_last: Don't verify the consistency of the last (topmost) layer.
+            This is used during the overlay stack creation.
+
+        :return: This topmost layer's verification hash.
+        """
+        for part in self._part_list:
+            layer_hash = self._layer_state.compute_layer_hash(part)
+
+            # run the overlay step if the layer hash doesn't match the existing
+            # state (unless we're in the top part and skipping the consistency check)
+            if not (skip_last and part.name == top_part.name):
+                state_layer_hash = self._layer_state.get_layer_hash(part)
+
+                if layer_hash != state_layer_hash:
+                    self._add_all_actions(
+                        target_step=Step.OVERLAY,
+                        part_names=[part.name],
+                        reason=reason,
+                    )
+                    self._layer_state.set_layer_hash(part, layer_hash)
+
+            if part.name == top_part.name:
+                return layer_hash
+
+        # execution should never reach this line
+        raise RuntimeError(f"part {top_part!r} not in parts list")
+
 
 _step_verb: Dict[Step, str] = {
     Step.PULL: "pull",
+    Step.OVERLAY: "overlay",
     Step.BUILD: "build",
     Step.STAGE: "stage",
     Step.PRIME: "prime",

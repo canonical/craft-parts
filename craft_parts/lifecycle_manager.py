@@ -26,6 +26,7 @@ from craft_parts import errors, executor, packages, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
+from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -59,6 +60,10 @@ class LifecycleManager:
         by the package manager used by the platform. Defaults to the application name.
     :param ignore_local_sources: A list of local source patterns to ignore.
     :param extra_build_packages: A list of additional build packages to install.
+    :param base_layer_dir: The path to the overlay base layer, if using overlays.
+    :param base_layer_hash: The validation hash of the overlay base image, if using
+        overlays. The validation hash should be constant for a given image, and should
+        change if a different base image is used.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -76,8 +81,12 @@ class LifecycleManager:
         application_package_name: Optional[str] = None,
         ignore_local_sources: Optional[List[str]] = None,
         extra_build_packages: Optional[List[str]] = None,
+        base_layer_dir: Optional[Path] = None,
+        base_layer_hash: Optional[bytes] = None,
         **custom_args,  # custom passthrough args
     ):
+        # pylint: disable=too-many-locals
+
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):
             raise errors.InvalidApplicationName(application_name)
 
@@ -110,6 +119,22 @@ class LifecycleManager:
         for name, spec in parts_data.items():
             part_list.append(_build_part(name, spec, project_dirs))
 
+        self._has_overlay = any(p.has_overlay for p in part_list)
+
+        # a base layer is mandatory if overlays are in use
+        if self._has_overlay:
+            if not base_layer_dir:
+                raise ValueError("base_layer_dir must be specified if using overlays")
+            if not base_layer_hash:
+                raise ValueError("base_layer_hash must be specified if using overlays")
+        else:
+            base_layer_dir = None
+
+        if base_layer_hash:
+            layer_hash: Optional[LayerHash] = LayerHash(base_layer_hash)
+        else:
+            layer_hash = None
+
         self._part_list = part_list
         self._application_name = application_name
         self._target_arch = project_info.target_arch
@@ -117,14 +142,18 @@ class LifecycleManager:
             part_list=self._part_list,
             project_info=project_info,
             ignore_outdated=ignore_local_sources,
+            base_layer_hash=layer_hash,
         )
         self._executor = executor.Executor(
             part_list=self._part_list,
             project_info=project_info,
             ignore_patterns=ignore_local_sources,
             extra_build_packages=extra_build_packages,
+            base_layer_dir=base_layer_dir,
+            base_layer_hash=layer_hash,
         )
         self._project_info = project_info
+        # pylint: enable=too-many-locals
 
     @property
     def project_info(self) -> ProjectInfo:

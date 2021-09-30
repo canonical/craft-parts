@@ -109,6 +109,8 @@ class TestSequencerPlan:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
             Action("foo", Step.PULL, action_type=ActionType.RUN),
+            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
+            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
             Action("bar", Step.STAGE, action_type=ActionType.RUN),
@@ -132,8 +134,11 @@ class TestSequencerPlan:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
             Action("foo", Step.PULL, action_type=ActionType.RUN),
+            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
+            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+            Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
             Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action("bar", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'foo'"),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
@@ -156,6 +161,7 @@ class TestSequencerPlan:
         actions = seq.plan(Step.PRIME, part_names=["bar"])
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
+            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("bar", Step.STAGE, action_type=ActionType.RUN),
             Action("bar", Step.PRIME, action_type=ActionType.RUN),
@@ -221,11 +227,13 @@ class TestSequencerPlan:
                 action_type=ActionType.SKIP,
                 reason="already ran",
             ),
+            Action(part_name="foo", step=Step.OVERLAY),
             Action(
                 part_name="foo",
                 step=Step.BUILD,
                 action_type=ActionType.UPDATE,
-                reason="'PULL' step changed",
+                # XXX: this should be PULL after outdated check for overlay is in place
+                reason="'OVERLAY' step changed",
             ),
         ]
 
@@ -247,6 +255,8 @@ class TestSequencerStates:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
+            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]
@@ -267,6 +277,8 @@ class TestSequencerStates:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
+            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]
@@ -277,6 +289,8 @@ class TestSequencerStates:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
             Action("foo", Step.PULL, action_type=ActionType.RUN),
+            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
+            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]

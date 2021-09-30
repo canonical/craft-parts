@@ -22,6 +22,7 @@ from craft_parts.steps import Step
 
 def test_step():
     assert f"{Step.PULL!r}" == "Step.PULL"
+    assert f"{Step.OVERLAY!r}" == "Step.OVERLAY"
     assert f"{Step.BUILD!r}" == "Step.BUILD"
     assert f"{Step.STAGE!r}" == "Step.STAGE"
     assert f"{Step.PRIME!r}" == "Step.PRIME"
@@ -29,16 +30,23 @@ def test_step():
 
 def test_ordering():
     slist = list(Step)
-    assert sorted(slist) == [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME]
+    assert sorted(slist) == [
+        Step.PULL,
+        Step.OVERLAY,
+        Step.BUILD,
+        Step.STAGE,
+        Step.PRIME,
+    ]
 
 
 @pytest.mark.parametrize(
     "tc_step,tc_result",
     [
         (Step.PULL, []),
-        (Step.BUILD, [Step.PULL]),
-        (Step.STAGE, [Step.PULL, Step.BUILD]),
-        (Step.PRIME, [Step.PULL, Step.BUILD, Step.STAGE]),
+        (Step.OVERLAY, [Step.PULL]),
+        (Step.BUILD, [Step.PULL, Step.OVERLAY]),
+        (Step.STAGE, [Step.PULL, Step.OVERLAY, Step.BUILD]),
+        (Step.PRIME, [Step.PULL, Step.OVERLAY, Step.BUILD, Step.STAGE]),
     ],
 )
 def test_previous_steps(tc_step, tc_result):
@@ -48,7 +56,8 @@ def test_previous_steps(tc_step, tc_result):
 @pytest.mark.parametrize(
     "tc_step,tc_result",
     [
-        (Step.PULL, [Step.BUILD, Step.STAGE, Step.PRIME]),
+        (Step.PULL, [Step.OVERLAY, Step.BUILD, Step.STAGE, Step.PRIME]),
+        (Step.OVERLAY, [Step.BUILD, Step.STAGE, Step.PRIME]),
         (Step.BUILD, [Step.STAGE, Step.PRIME]),
         (Step.STAGE, [Step.PRIME]),
         (Step.PRIME, []),
@@ -62,6 +71,7 @@ def test_next_steps(tc_step, tc_result):
     "tc_step,tc_result",
     [
         (Step.PULL, None),
+        (Step.OVERLAY, None),
         (Step.BUILD, Step.STAGE),
         (Step.STAGE, Step.STAGE),
         (Step.PRIME, Step.PRIME),

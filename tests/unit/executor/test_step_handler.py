@@ -81,6 +81,11 @@ class TestStepHandlerBuiltins:
         mock_source_pull.assert_called_once_with()
         assert result == StepContents()
 
+    def test_run_builtin_overlay(self, new_dir, mocker):
+        sh = _step_handler_for_step(Step.OVERLAY, cache_dir=new_dir)
+        result = sh.run_builtin()
+        assert result == StepContents()
+
     def test_run_builtin_build(self, new_dir, mocker):
         mock_run = mocker.patch("craft_parts.executor.step_handler.process_run")
 

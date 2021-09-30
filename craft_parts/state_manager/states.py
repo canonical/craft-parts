@@ -58,6 +58,8 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
 
     if step == Step.PULL:
         state_class = PullState
+    elif step == Step.OVERLAY:
+        state_class = OverlayState
     elif step == Step.BUILD:
         state_class = BuildState
     elif step == Step.STAGE:

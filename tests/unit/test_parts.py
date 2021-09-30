@@ -206,6 +206,7 @@ class TestPartData:
         "tc_step,tc_content",
         [
             (Step.PULL, "pull"),
+            (Step.OVERLAY, "overlay"),
             (Step.BUILD, "build"),
             (Step.STAGE, "stage"),
             (Step.PRIME, "prime"),
@@ -219,14 +220,12 @@ class TestPartData:
                 "override-build": "build",
                 "override-stage": "stage",
                 "override-prime": "prime",
+                "overlay-script": "overlay",
             },
         )
         assert p.spec.get_scriptlet(tc_step) == tc_content
 
-    @pytest.mark.parametrize(
-        "step",
-        [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME],
-    )
+    @pytest.mark.parametrize("step", list(Step))
     def test_part_get_scriptlet_none(self, step):
         p = Part("foo", {})
         assert p.spec.get_scriptlet(step) is None

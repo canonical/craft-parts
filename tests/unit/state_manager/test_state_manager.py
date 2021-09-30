@@ -255,6 +255,7 @@ class TestStateManager:
 
         # add states for all steps
         sm.set_state(p1, Step.PULL, state=states.PullState())
+        sm.set_state(p1, Step.OVERLAY, state=states.OverlayState())
         sm.set_state(p1, Step.BUILD, state=states.BuildState())
         sm.set_state(p1, Step.STAGE, state=states.StageState())
         sm.set_state(p1, Step.PRIME, state=states.PrimeState())
@@ -298,9 +299,9 @@ class TestStateManager:
         p1 = Part("p1", {})
         part_properties = p1.spec.marshal()
 
-        # p1 build already ran
-        s1 = states.BuildState(part_properties=part_properties)
-        s1.write(Path("parts/p1/state/build"))
+        # p1 overlay already ran
+        s1 = states.OverlayState(part_properties=part_properties)
+        s1.write(Path("parts/p1/state/overlay"))
 
         # but p1 pull ran more recently
         s1 = states.PullState(part_properties=part_properties)
@@ -309,24 +310,26 @@ class TestStateManager:
         sm = StateManager(project_info=info, part_list=[p1])
 
         for step in list(Step):
-            assert sm.should_step_run(p1, step) == (step >= Step.BUILD)
+            assert sm.should_step_run(p1, step) == (step > Step.PULL)
 
         # and we updated it!
-        sm._state_db.rewrap(part_name="p1", step=Step.BUILD, step_updated=True)
+        sm._state_db.rewrap(part_name="p1", step=Step.OVERLAY, step_updated=True)
 
         for step in list(Step):
-            assert sm.should_step_run(p1, step) == (step >= Step.STAGE)
+            assert sm.should_step_run(p1, step) == (step >= Step.BUILD)
 
     def test_should_step_run_dirty(self, new_dir):
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
         part_properties = p1.spec.marshal()
 
-        # p1 pull and build already ran
+        # p1 pull, overlay and build already ran
         s1 = states.PullState(part_properties=part_properties)
         s1.write(Path("parts/p1/state/pull"))
-        s2 = states.BuildState(part_properties=part_properties)
-        s2.write(Path("parts/p1/state/build"))
+        s2 = states.OverlayState(part_properties=part_properties)
+        s2.write(Path("parts/p1/state/overlay"))
+        s3 = states.BuildState(part_properties=part_properties)
+        s3.write(Path("parts/p1/state/build"))
 
         sm = StateManager(project_info=info, part_list=[p1])
 
@@ -481,17 +484,21 @@ class TestStepDirty:
         p2 = Part("p2", {})
         p2_properties = p2.spec.marshal()
 
-        # p2 pull/build/stage already ran
+        # p2 pull/overlay/build/stage already ran
         s2 = states.PullState(part_properties=p2_properties)
         s2.write(Path("parts/p2/state/pull"))
+        s2 = states.OverlayState(part_properties=p2_properties)
+        s2.write(Path("parts/p2/state/overlay"))
         s2 = states.BuildState(part_properties=p2_properties)
         s2.write(Path("parts/p2/state/build"))
         s2 = states.StageState(part_properties=p2_properties)
         s2.write(Path("parts/p2/state/stage"))
 
-        # p1 pull/build already ran
+        # p1 pull/overlay/build already ran
         s1 = states.PullState(part_properties=p1_properties)
         s1.write(Path("parts/p1/state/pull"))
+        s1 = states.OverlayState(part_properties=p1_properties)
+        s1.write(Path("parts/p1/state/overlay"))
         s1 = states.BuildState(part_properties=p1_properties)
         s1.write(Path("parts/p1/state/build"))
 
