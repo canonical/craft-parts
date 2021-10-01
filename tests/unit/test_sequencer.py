@@ -284,3 +284,147 @@ def test_sequencer_ensure_overlay_consistency_rerun(mocker, new_dir):
         reason="test",
     )
     assert value.hex() == "8d9f437db97f7276a2d68fc44683b6761035f73c"
+
+
+def test_overlay_dependencies_not_dirty(mocker, new_dir):
+    mock_reapply = mocker.patch("craft_parts.sequencer.Sequencer._reapply_layer")
+
+    # create p1 layer hash state
+    Path("parts/p1/state").mkdir(parents=True)
+    Path("parts/p1/state/layer_hash").write_text(
+        "6554e32fa718d54160d0511b36f81458e4cb2357"
+    )
+
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {})
+    p2 = Part("p2", {})
+    seq = Sequencer(part_list=[p1, p2], project_info=info)
+
+    is_dirty = seq._check_overlay_dependencies(p1, Step.OVERLAY)
+
+    assert is_dirty is False
+    mock_reapply.assert_not_called()
+
+
+def test_overlay_dependencies_layer_not_dirty(mocker, new_dir):
+    mock_reapply = mocker.patch("craft_parts.sequencer.Sequencer._reapply_layer")
+
+    # create p1 layer hash state
+    Path("parts/p1/state").mkdir(parents=True)
+    Path("parts/p1/state/layer_hash").write_text(
+        "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b"
+    )
+
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"overlay-script": "ls"})
+    seq = Sequencer(part_list=[p1], project_info=info)
+
+    is_dirty = seq._check_overlay_dependencies(p1, Step.OVERLAY)
+
+    assert is_dirty is False
+    mock_reapply.assert_not_called()
+
+
+def test_overlay_dependencies_layer_reapply(mocker, new_dir):
+    mock_reapply = mocker.patch("craft_parts.sequencer.Sequencer._reapply_layer")
+
+    # create p1 layer hash state
+    Path("parts/p1/state").mkdir(parents=True)
+    Path("parts/p1/state/layer_hash").write_text("00000000")
+
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"overlay-script": "ls"})
+    seq = Sequencer(part_list=[p1], project_info=info)
+
+    is_dirty = seq._check_overlay_dependencies(p1, Step.OVERLAY)
+
+    assert is_dirty is True
+    mock_reapply.assert_called_with(
+        p1,
+        LayerHash(bytes.fromhex("9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b")),
+        reason="previous layer changed",
+    )
+
+
+def test_overlay_dependencies_build_not_dirty(mocker, new_dir):
+    mock_rerun = mocker.patch("craft_parts.sequencer.Sequencer._rerun_step")
+
+    # create p1 layer hash state
+    Path("parts/p1/state").mkdir(parents=True)
+    Path("parts/p1/state/layer_hash").write_text("00000000")
+
+    # create build state
+    state = states.BuildState(overlay_hash="00000000")
+    state.write(Path("parts/p1/state/build"))
+
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"overlay-script": "ls"})
+    seq = Sequencer(part_list=[p1], project_info=info)
+
+    is_dirty = seq._check_overlay_dependencies(p1, Step.BUILD)
+
+    assert is_dirty is False
+    mock_rerun.assert_not_called()
+
+
+def test_overlay_dependencies_build_rerun_step(mocker, new_dir):
+    mock_rerun = mocker.patch("craft_parts.sequencer.Sequencer._rerun_step")
+
+    # create p1 layer hash state
+    Path("parts/p1/state").mkdir(parents=True)
+    Path("parts/p1/state/layer_hash").write_text("00000000")
+
+    # create build state
+    state = states.BuildState(overlay_hash="11111111")
+    state.write(Path("parts/p1/state/build"))
+
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"overlay-script": "ls"})
+    seq = Sequencer(part_list=[p1], project_info=info)
+
+    is_dirty = seq._check_overlay_dependencies(p1, Step.BUILD)
+
+    assert is_dirty is True
+    mock_rerun.assert_called_with(p1, Step.BUILD, reason="overlay changed")
+
+
+def test_overlay_dependencies_stage_not_dirty(mocker, new_dir):
+    mock_rerun = mocker.patch("craft_parts.sequencer.Sequencer._rerun_step")
+
+    # create p1 layer hash state
+    Path("parts/p1/state").mkdir(parents=True)
+    Path("parts/p1/state/layer_hash").write_text("00000000")
+
+    # create build state
+    state = states.StageState(overlay_hash="00000000")
+    state.write(Path("parts/p1/state/stage"))
+
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"overlay-script": "ls"})
+    seq = Sequencer(part_list=[p1], project_info=info)
+
+    is_dirty = seq._check_overlay_dependencies(p1, Step.STAGE)
+
+    assert is_dirty is False
+    mock_rerun.assert_not_called()
+
+
+def test_overlay_dependencies_stage_rerun_step(mocker, new_dir):
+    mock_rerun = mocker.patch("craft_parts.sequencer.Sequencer._rerun_step")
+
+    # create p1 layer hash state
+    Path("parts/p1/state").mkdir(parents=True)
+    Path("parts/p1/state/layer_hash").write_text("00000000")
+
+    # create build state
+    state = states.StageState(overlay_hash="11111111")
+    state.write(Path("parts/p1/state/stage"))
+
+    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"overlay-script": "ls"})
+    seq = Sequencer(part_list=[p1], project_info=info)
+
+    is_dirty = seq._check_overlay_dependencies(p1, Step.STAGE)
+
+    assert is_dirty is True
+    mock_rerun.assert_called_with(p1, Step.STAGE, reason="overlay changed")

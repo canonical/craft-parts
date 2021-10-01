@@ -144,11 +144,13 @@ class Sequencer:
             self._rerun_step(part, current_step, reason=dirty_report.reason())
             return
 
-        # 2.5 If the step depends on overlay, check if it must be reapplied.
-        if self._check_if_dirty_on_overlay(part, current_step):
+        # 3. If the step depends on overlay, check if layers are dirty and reapply
+        #    layers (if step is overlay) or re-execute the step (if step is build
+        #    or stage).
+        if self._check_overlay_dependencies(part, current_step):
             return
 
-        # 3. If the step is outdated, run it again (without cleaning if possible).
+        # 4. If the step is outdated, run it again (without cleaning if possible).
         #    A step is considered outdated if an earlier step in the lifecycle
         #    has been re-executed.
 
@@ -164,7 +166,7 @@ class Sequencer:
             self._sm.mark_step_updated(part, current_step)
             return
 
-        # 4. Otherwise just skip it
+        # 5. Otherwise just skip it
         self._add_action(
             part, current_step, action_type=ActionType.SKIP, reason="already ran"
         )
@@ -345,7 +347,7 @@ class Sequencer:
         # execution should never reach this line
         raise RuntimeError(f"part {top_part!r} not in parts list")
 
-    def _check_if_dirty_on_overlay(self, part: Part, step: Step) -> bool:
+    def _check_overlay_dependencies(self, part: Part, step: Step) -> bool:
         """Verify whether the step is dirty because the overlay changed."""
         if step == Step.OVERLAY:
             # Layers depend on the integrity of its validation hash
