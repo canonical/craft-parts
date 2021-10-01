@@ -190,6 +190,7 @@ def test_main_application_name(new_dir, mocker, capfd):
         """\
         Execute: Pull foo
         ZNAPCRAFT_ARCH_TRIPLET
+        ZNAPCRAFT_OVERLAY
         ZNAPCRAFT_PARALLEL_BUILD_COUNT
         ZNAPCRAFT_PART_BUILD
         ZNAPCRAFT_PART_BUILD_WORK
