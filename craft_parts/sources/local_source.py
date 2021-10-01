@@ -122,6 +122,9 @@ class LocalSource(SourceHandler):
                     else:
                         self._updated_directories.add(relpath)
 
+        logger.debug("updated files: %r", self._updated_files)
+        logger.debug("updated directories: %r", self._updated_directories)
+
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
     def update(self):
