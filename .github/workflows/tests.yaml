@@ -103,3 +103,63 @@ jobs:
         run: |
           source ${HOME}/.venv/bin/activate
           make test-integrations
+      - name: Run overlay smoke test
+        run: |
+          source ${HOME}/.venv/bin/activate
+          wget -q https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.squashfs
+          mkdir base
+          sudo mount -t squashfs focal-server-cloudimg-amd64.squashfs base/
+          cat <<-EOF > parts.yaml
+          parts:
+            foo:
+              plugin: nil
+              overlay-packages: [hello]
+              overlay-script: |
+                chroot "\$CRAFT_PARTS_OVERLAY" /bin/bash -c "hello > hello.txt"
+                echo 1234 > "\$CRAFT_PARTS_OVERLAY/etc/issue"
+              overlay:
+                - "*.txt"
+                - etc
+                - usr/bin
+            bar:
+              plugin: nil
+              after: [foo]
+              overlay-packages: [bison]
+              overlay-script: |
+                chroot "\$CRAFT_PARTS_OVERLAY" /bin/bash -c "rm -Rf /etc/shells /etc/ssh && mkdir /etc/ssh"
+                echo 5678 > "\$CRAFT_PARTS_OVERLAY/etc/issue"
+              overlay:
+                - -usr/share
+              override-build: |
+                rev "\$CRAFT_PARTS_OVERLAY/hello.txt" > "\$CRAFT_PARTS_PART_INSTALL/olleh.txt"
+          EOF
+          cat <<-EOF > run.sh
+            source ${HOME}/.venv/bin/activate
+            echo "--- overlay foo"
+            python -mcraft_parts --work-dir=work --trace --overlay-base=base --refresh overlay foo
+            echo "--- next actions plan"
+            python -mcraft_parts --work-dir=work --overlay-base=base --dry-run --show-skipped
+            echo "--- next actions execution"
+            python -mcraft_parts --work-dir=work --trace --overlay-base=base
+          EOF
+          echo "--- parts.yaml:"
+          cat parts.yaml
+          sudo bash run.sh
+          echo "* Check if hello executables installed"
+          test -x work/prime/usr/bin/hello && echo "hello"
+          test -x work/prime/usr/bin/bison && echo "bison"
+          test -x work/prime/usr/bin/m4 && echo "m4"
+          echo "* Check if /usr/bin/yacc is a symbolic link"
+          test -L work/prime/usr/bin/yacc && ls -l work/prime/usr/bin/yacc
+          echo "* Check if docs excluded"
+          test ! -d work/usr/share/doc/hello && echo "hello"
+          test ! -d work/usr/share/doc/bison && echo "bison"
+          echo "* Check created files"
+          grep "!dlrow ,olleH" work/prime/olleh.txt
+          grep "Hello, world!" work/prime/hello.txt
+          grep 5678 work/prime/etc/issue
+          echo "* Check whiteout files"
+          test -f work/prime/etc/.wh.shells && echo "/etc/shells"
+          test -f work/prime/etc/ssh/.wh..wh.opq && echo "/etc/ssh"
+          echo "--- prime files:"
+          find work/prime
