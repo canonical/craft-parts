@@ -16,20 +16,17 @@
 
 """Overlay mount operations and package installation helpers."""
 
-import contextlib
 import logging
 import os
-import shutil
 import sys
 from pathlib import Path
 from typing import List, Optional
-
-import pychroot  # type: ignore
 
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 
+from . import chroot
 from .overlay_fs import OverlayFS
 
 logger = logging.getLogger(__name__)
@@ -123,12 +120,8 @@ class OverlayManager:
         if not self._overlay_fs:
             raise RuntimeError("overlay filesystem not mounted")
 
-        # XXX: pychroot is hacky and requires special handling to prevent
-        #      process leaks. We should replace it with a different subsystem
-        #      to handle chroot in a cleaner way.
         mount_dir = self._project_info.overlay_mount_dir
-        with contextlib.suppress(SystemExit), pychroot.Chroot(mount_dir):
-            packages.Repository.refresh_packages_list()
+        chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
     def download_packages(self, package_names: List[str]) -> None:
         """Download packages and populate the overlay package cache.
@@ -139,8 +132,7 @@ class OverlayManager:
             raise RuntimeError("overlay filesystem not mounted")
 
         mount_dir = self._project_info.overlay_mount_dir
-        with contextlib.suppress(SystemExit), pychroot.Chroot(mount_dir):
-            packages.Repository.download_packages(package_names)
+        chroot.chroot(mount_dir, packages.Repository.download_packages, package_names)
 
     def install_packages(self, package_names: List[str]) -> None:
         """Install packages on the overlay area using chroot.
@@ -151,26 +143,7 @@ class OverlayManager:
             raise RuntimeError("overlay filesystem not mounted")
 
         mount_dir = self._project_info.overlay_mount_dir
-        with contextlib.suppress(SystemExit), pychroot.Chroot(mount_dir):
-            packages.Repository.install_packages(package_names)
-            shutil.rmtree("/var/cache", ignore_errors=True)
-
-    def fix_resolv_conf(self) -> None:
-        """Work around problems with pychroot when resolv.conf is a symlink.
-
-        Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
-        ``/run/systemd/resolve/stub-resolv.conf``. Pychroot needs resolv.conf
-        to be a regular file to bind-mount its resolver configuration on,
-        otherwise name resolution will fail inside the chroot.
-
-        Replacing the symlink with an empty file is done on the package cache
-        layer. The file will be present during overlay step execution, but
-        not on the part layer content migrated to stage.
-        """
-        resolv = self._project_info.overlay_mount_dir / "etc" / "resolv.conf"
-        if resolv.is_symlink():
-            resolv.unlink()
-            resolv.touch()
+        chroot.chroot(mount_dir, packages.Repository.install_packages, package_names)
 
 
 class LayerMount:
@@ -198,7 +171,6 @@ class LayerMount:
             self._top_part,
             pkg_cache=self._pkg_cache,
         )
-        self._overlay_manager.fix_resolv_conf()
         return self
 
     def __exit__(self, *exc):
@@ -229,7 +201,6 @@ class PackageCacheMount:
 
     def __enter__(self):
         self._overlay_manager.mount_pkg_cache()
-        self._overlay_manager.fix_resolv_conf()
         return self
 
     def __exit__(self, *exc):

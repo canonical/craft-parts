@@ -235,6 +235,7 @@ def mount(device: str, mountpoint: str, *args) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
+    logger.debug("mount device=%r, mountpoint=%r, args=%r", device, mountpoint, args)
     subprocess.check_call(["/bin/mount", *args, device, mountpoint])
 
 
@@ -245,6 +246,7 @@ def umount(mountpoint: str) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
+    logger.debug("umount mountpoint=%r", mountpoint)
     subprocess.check_call(["/bin/umount", mountpoint])
 
 
