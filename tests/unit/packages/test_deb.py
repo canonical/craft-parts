@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import subprocess
 import textwrap
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -247,7 +248,7 @@ class TestBuildPackages:
 
         deb.Ubuntu.refresh_packages_list()
 
-        build_packages = deb.Ubuntu.install_build_packages(
+        build_packages = deb.Ubuntu.install_packages(
             ["package-installed", "package", "versioned-package=2.0"]
         )
 
@@ -278,6 +279,7 @@ class TestBuildPackages:
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
                         "DEBIAN_PRIORITY": "critical",
                     },
+                    stdin=subprocess.DEVNULL,
                 ),
                 call(
                     [
@@ -297,12 +299,12 @@ class TestBuildPackages:
             ]
         )
 
-    def test_install_build_packages_empty_list(self, fake_apt_cache, fake_run):
+    def test_install_packages_empty_list(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = (
             []
         )
 
-        build_packages = deb.Ubuntu.install_build_packages([])
+        build_packages = deb.Ubuntu.install_packages([])
 
         assert build_packages == []
         fake_run.assert_has_calls([])
@@ -312,7 +314,7 @@ class TestBuildPackages:
             ("package-installed", "1.0")
         ]
 
-        build_packages = deb.Ubuntu.install_build_packages(["package-installed"])
+        build_packages = deb.Ubuntu.install_packages(["package-installed"])
 
         assert build_packages == ["package-installed=1.0"]
         fake_run.assert_has_calls([])
@@ -322,7 +324,7 @@ class TestBuildPackages:
             ("package-installed", "1.0")
         ]
 
-        build_packages = deb.Ubuntu.install_build_packages(["package-installed=1.0"])
+        build_packages = deb.Ubuntu.install_packages(["package-installed=1.0"])
 
         assert build_packages == ["package-installed=1.0"]
         fake_run.assert_has_calls([])
@@ -334,7 +336,7 @@ class TestBuildPackages:
 
         deb.Ubuntu.refresh_packages_list()
 
-        build_packages = deb.Ubuntu.install_build_packages(["package-installed=3.0"])
+        build_packages = deb.Ubuntu.install_packages(["package-installed=3.0"])
 
         assert build_packages == ["package-installed=3.0"]
         fake_run.assert_has_calls(
@@ -355,6 +357,7 @@ class TestBuildPackages:
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
                         "DEBIAN_PRIORITY": "critical",
                     },
+                    stdin=subprocess.DEVNULL,
                 ),
                 call(
                     ["apt-mark", "auto", "package-installed"],
@@ -374,7 +377,7 @@ class TestBuildPackages:
 
         deb.Ubuntu.refresh_packages_list()
 
-        build_packages = deb.Ubuntu.install_build_packages(["virtual-package"])
+        build_packages = deb.Ubuntu.install_packages(["virtual-package"])
 
         assert build_packages == ["package=1.0"]
         fake_run.assert_has_calls(
@@ -395,6 +398,7 @@ class TestBuildPackages:
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
                         "DEBIAN_PRIORITY": "critical",
                     },
+                    stdin=subprocess.DEVNULL,
                 ),
                 call(
                     ["apt-mark", "auto", "package"],
@@ -415,7 +419,7 @@ class TestBuildPackages:
 
         deb.Ubuntu.refresh_packages_list()
 
-        deb.Ubuntu.install_build_packages(["package"])
+        deb.Ubuntu.install_packages(["package"])
 
         fake_run.assert_has_calls(
             [
@@ -435,6 +439,7 @@ class TestBuildPackages:
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
                         "DEBIAN_PRIORITY": "critical",
                     },
+                    stdin=subprocess.DEVNULL,
                 ),
                 call(
                     ["apt-mark", "auto", "package"],
@@ -453,7 +458,7 @@ class TestBuildPackages:
         )
 
         with pytest.raises(errors.BuildPackageNotFound):
-            deb.Ubuntu.install_build_packages(["package-invalid"])
+            deb.Ubuntu.install_packages(["package-invalid"])
 
     def test_broken_package_apt_install(self, fake_apt_cache, fake_run, mocker):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
@@ -463,7 +468,7 @@ class TestBuildPackages:
         fake_run.side_effect = CalledProcessError(100, "apt-get")
 
         with pytest.raises(errors.BuildPackagesNotInstalled) as raised:
-            deb.Ubuntu.install_build_packages(["package=1.0"])
+            deb.Ubuntu.install_packages(["package=1.0"])
         assert raised.value.packages == ["package=1.0"]
 
     def test_refresh_packages_list(self, fake_run):

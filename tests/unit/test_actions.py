@@ -23,6 +23,7 @@ def test_action_type():
     assert f"{ActionType.RERUN!r}" == "ActionType.RERUN"
     assert f"{ActionType.UPDATE!r}" == "ActionType.UPDATE"
     assert f"{ActionType.SKIP!r}" == "ActionType.SKIP"
+    assert f"{ActionType.REAPPLY!r}" == "ActionType.REAPPLY"
 
 
 def test_action_representation():

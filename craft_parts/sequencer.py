@@ -144,9 +144,13 @@ class Sequencer:
             self._rerun_step(part, current_step, reason=dirty_report.reason())
             return
 
-        # TODO: 2.5 If the step depends on overlay, check if it must be reapplied.
+        # 3. If the step depends on overlay, check if layers are dirty and reapply
+        #    layers (if step is overlay) or re-execute the step (if step is build
+        #    or stage).
+        if self._check_overlay_dependencies(part, current_step):
+            return
 
-        # 3. If the step is outdated, run it again (without cleaning if possible).
+        # 4. If the step is outdated, run it again (without cleaning if possible).
         #    A step is considered outdated if an earlier step in the lifecycle
         #    has been re-executed.
 
@@ -162,7 +166,7 @@ class Sequencer:
             self._sm.mark_step_updated(part, current_step)
             return
 
-        # 4. Otherwise just skip it
+        # 5. Otherwise just skip it
         self._add_action(
             part, current_step, action_type=ActionType.SKIP, reason="already ran"
         )
@@ -264,6 +268,7 @@ class Sequencer:
     def _rerun_step(
         self, part: Part, step: Step, *, reason: Optional[str] = None
     ) -> None:
+        """Clean existing state and reexecute the step."""
         logger.debug("rerun step %s:%s", part.name, step)
 
         if step != Step.OVERLAY:
@@ -273,9 +278,20 @@ class Sequencer:
         self._run_step(part, step, reason=reason, rerun=True)
 
     def _update_step(self, part: Part, step: Step, *, reason: Optional[str] = None):
+        """Set the step state as reexecuted by updating its timestamp."""
         logger.debug("update step %s:%s", part.name, step)
         self._add_action(part, step, action_type=ActionType.UPDATE, reason=reason)
         self._sm.update_state_timestamp(part, step)
+
+    def _reapply_layer(
+        self, part: Part, layer_hash: LayerHash, *, reason: Optional[str] = None
+    ):
+        """Update the layer hash without changing the step state."""
+        logger.debug("reapply layer %s: hash=%s", part.name, layer_hash)
+        self._layer_state.set_layer_hash(part, layer_hash)
+        self._add_action(
+            part, Step.OVERLAY, action_type=ActionType.REAPPLY, reason=reason
+        )
 
     def _add_action(
         self,
@@ -330,6 +346,44 @@ class Sequencer:
 
         # execution should never reach this line
         raise RuntimeError(f"part {top_part!r} not in parts list")
+
+    def _check_overlay_dependencies(self, part: Part, step: Step) -> bool:
+        """Verify whether the step is dirty because the overlay changed."""
+        if step == Step.OVERLAY:
+            # Layers depend on the integrity of its validation hash
+            current_layer_hash = self._layer_state.compute_layer_hash(part)
+            state_layer_hash = self._layer_state.get_layer_hash(part)
+            if current_layer_hash != state_layer_hash:
+                logger.debug("%s:%s changed layer hash", part.name, step)
+                self._reapply_layer(
+                    part, current_layer_hash, reason="previous layer changed"
+                )
+                return True
+
+        elif step == Step.BUILD:
+            # If a part has overlay visibility, rebuild it if overlay changed
+            current_overlay_hash = self._layer_state.get_overlay_hash()
+            state_overlay_hash = self._sm.get_step_state_overlay_hash(part, step)
+
+            if (
+                part in self._overlay_viewers
+                and current_overlay_hash != state_overlay_hash
+            ):
+                logger.debug("%s:%s can see overlay and it changed", part.name, step)
+                self._rerun_step(part, step, reason="overlay changed")
+                return True
+
+        elif step == Step.STAGE:
+            # If a part declares overlay parameters, restage it if overlay changed
+            current_overlay_hash = self._layer_state.get_overlay_hash()
+            state_overlay_hash = self._sm.get_step_state_overlay_hash(part, step)
+
+            if part.has_overlay and current_overlay_hash != state_overlay_hash:
+                logger.debug("%s:%s has overlay and it changed", part.name, step)
+                self._rerun_step(part, step, reason="overlay changed")
+                return True
+
+        return False
 
 
 _step_verb: Dict[Step, str] = {

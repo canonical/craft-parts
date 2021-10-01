@@ -80,7 +80,7 @@ class BaseRepository(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def install_packages(
-        cls, package_names: List[str], list_only: bool = False
+        cls, package_names: List[str], *, list_only: bool = False
     ) -> List[str]:
         """Install packages on the host system.
 
@@ -187,7 +187,10 @@ class DummyRepository(BaseRepository):
 
     @classmethod
     def install_packages(
-        cls, package_names: List[str], list_only: bool = False
+        cls,
+        package_names: List[str],
+        *,
+        list_only: bool = False,  # pylint: disable=unused-argument
     ) -> List[str]:
         """Install packages on the host system."""
         return []

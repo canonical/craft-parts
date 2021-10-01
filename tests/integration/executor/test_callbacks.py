@@ -136,7 +136,9 @@ def _my_step_callback(info: StepInfo) -> bool:
 
 
 @pytest.mark.parametrize("step", list(Step))
-@pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
+@pytest.mark.parametrize(
+    "action_type", list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY})
+)
 def test_callback_pre(tmpdir, capfd, step, action_type):
     callbacks.register_pre_step(_my_step_callback, step_list=[step])
 
@@ -163,7 +165,9 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
 
 
 @pytest.mark.parametrize("step", list(Step))
-@pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
+@pytest.mark.parametrize(
+    "action_type", list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY})
+)
 def test_callback_post(tmpdir, capfd, step, action_type):
     callbacks.register_post_step(_my_step_callback, step_list=[step])
 
@@ -339,7 +343,7 @@ def test_callback_prologue(tmpdir, capfd):
 
     out, err = capfd.readouterr()
     assert not err
-    assert out == "foo: prologue\nbar: prologue\nfoo Step.PULL\n"
+    assert out == "bar: prologue\nfoo: prologue\nfoo Step.PULL\n"
 
 
 def test_callback_epilogue(tmpdir, capfd):
@@ -361,4 +365,4 @@ def test_callback_epilogue(tmpdir, capfd):
 
     out, err = capfd.readouterr()
     assert not err
-    assert out == "foo Step.PULL\nfoo: epilogue\nbar: epilogue\n"
+    assert out == "foo Step.PULL\nbar: epilogue\nfoo: epilogue\n"

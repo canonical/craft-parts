@@ -26,7 +26,7 @@ from craft_parts import callbacks, packages, parts
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.overlays import LayerHash, OverlayManager
-from craft_parts.parts import Part
+from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
@@ -63,7 +63,7 @@ class Executor:
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[LayerHash] = None,
     ):
-        self._part_list = part_list
+        self._part_list = sort_parts(part_list)
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps

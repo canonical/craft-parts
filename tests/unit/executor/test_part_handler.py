@@ -367,6 +367,46 @@ class TestPartUpdateHandler:
 
 
 @pytest.mark.usefixtures("new_dir")
+class TestPartReapplyHandler:
+    """Verify step reapplication processing."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, mocker, new_dir):
+        # pylint: disable=attribute-defined-outside-init
+        self._part = Part("foo", {"plugin": "nil", "overlay-script": "touch bar.txt"})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[self._part], base_layer_dir=new_dir
+        )
+        self._part_info = PartInfo(info, self._part)
+        self._handler = PartHandler(
+            self._part,
+            part_info=self._part_info,
+            part_list=[self._part],
+            overlay_manager=ovmgr,
+        )
+
+        mocker.patch("craft_parts.utils.os_utils.mount")
+        mocker.patch("craft_parts.utils.os_utils.umount")
+        # pylint: enable=attribute-defined-outside-init
+
+    def test_reapply_overlay(self):
+        self._handler.run_action(Action("foo.txt", Step.PULL))
+
+        Path("parts/foo/layer/foo").touch()
+
+        self._handler.run_action(Action("foo", Step.OVERLAY, ActionType.REAPPLY))
+
+        assert Path("parts/foo/layer/foo.txt").exists() is False
+        assert Path("parts/foo/layer/bar.txt").exists()
+
+    @pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
+    def test_reapply_invalid(self, step):
+        with pytest.raises(errors.InvalidAction):
+            self._handler.run_action(Action("foo", step, ActionType.REAPPLY))
+
+
+@pytest.mark.usefixtures("new_dir")
 class TestOverlayMigration:
     """Overlay migration to stage and prime test cases"""
 

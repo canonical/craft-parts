@@ -297,15 +297,22 @@ class StateManager:
                     if source_handler.check_if_outdated(str(state_file)):
                         return OutdatedReport(source_modified=True)
 
-            return None
+        elif step == Step.BUILD:
+            pull_stw = self._state_db.get(part_name=part.name, step=Step.PULL)
 
-        for previous_step in reversed(step.previous_steps()):
-            # Has a previous step run since this one ran? Then this
-            # step needs to be updated.
-            previous_stw = self._state_db.get(part_name=part.name, step=previous_step)
+            if pull_stw and pull_stw.is_newer_than(stw):
+                return OutdatedReport(previous_step_modified=Step.PULL)
 
-            if previous_stw and previous_stw.is_newer_than(stw):
-                return OutdatedReport(previous_step_modified=previous_step)
+        else:
+            for previous_step in reversed(step.previous_steps()):
+                # Has a previous step run since this one ran? Then this
+                # step needs to be updated.
+                previous_stw = self._state_db.get(
+                    part_name=part.name, step=previous_step
+                )
+
+                if previous_stw and previous_stw.is_newer_than(stw):
+                    return OutdatedReport(previous_step_modified=previous_step)
 
         return None
 
@@ -381,9 +388,36 @@ class StateManager:
 
         return None
 
-    def mark_step_updated(self, part: Part, step: Step):
-        """Mark the given part and step as updated."""
+    def mark_step_updated(self, part: Part, step: Step) -> None:
+        """Mark the given part and step as updated.
+
+        :param part: The part being processed.
+        :param part: The step being processed.
+        """
         self._state_db.rewrap(part_name=part.name, step=step, step_updated=True)
+
+    def get_step_state_overlay_hash(self, part: Part, step: Step) -> bytes:
+        """Get the overlay hash from the step state.
+
+        :param part: The part being processed.
+        :param part: The step being processed.
+
+        :returns: The hash value for the layer corresponding to the part
+            being processed.
+        """
+        if step not in [Step.BUILD, Step.STAGE]:
+            raise ValueError("only BUILD and STAGE states have overlay hash")
+
+        stw = self._state_db.get(part_name=part.name, step=step)
+        if not stw:
+            # step didn't run yet
+            return b""
+
+        overlay_hash = stw.state.overlay_hash  # type: ignore
+        if not overlay_hash:
+            return b""
+
+        return bytes.fromhex(overlay_hash)
 
 
 def _sort_steps_by_state_timestamp(

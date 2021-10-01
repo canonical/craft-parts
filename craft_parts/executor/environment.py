@@ -160,6 +160,7 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
         f"{prefix}_PART_BUILD": step_info.part_build_dir,
         f"{prefix}_PART_BUILD_WORK": step_info.part_build_subdir,
         f"{prefix}_PART_INSTALL": step_info.part_install_dir,
+        f"{prefix}_OVERLAY": step_info.overlay_mount_dir,
         f"{prefix}_STAGE": step_info.stage_dir,
         f"{prefix}_PRIME": step_info.prime_dir,
     }

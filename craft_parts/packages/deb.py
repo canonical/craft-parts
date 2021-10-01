@@ -388,8 +388,8 @@ class Ubuntu(BaseRepository):
             raise errors.PackagesDownloadError(packages=package_names) from err
 
     @classmethod
-    def install_build_packages(
-        cls, package_names: List[str], list_only: bool = False
+    def install_packages(
+        cls, package_names: List[str], *, list_only: bool = False
     ) -> List[str]:
         """Install packages on the host system."""
         if not package_names:
@@ -418,7 +418,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
-        logger.debug("Installing build dependencies: %s", " ".join(package_names))
+        logger.debug("Installing packages: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
             {
@@ -437,8 +437,11 @@ class Ubuntu(BaseRepository):
             "install",
         ]
 
+        # Set stdin to /dev/null to prevent SIGTTIN/SIGTTOU problems, see
+        # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=555632
+
         try:
-            process_run(apt_command + package_names, env=env)
+            process_run(apt_command + package_names, env=env, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as err:
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 

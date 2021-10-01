@@ -159,9 +159,6 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         # fmt: on
     ]
 
-    # XXX: skip these tests until outdated check for overlay is in place
-    return
-
     # Touching a source file triggers an update
     Path("a.tar.gz").touch()
     lf = craft_parts.LifecycleManager(
