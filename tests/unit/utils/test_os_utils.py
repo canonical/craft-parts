@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import itertools
 import os
+import subprocess
 import textwrap
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 
@@ -399,3 +402,45 @@ class TestMount:
         mock_call = mocker.patch("subprocess.check_call")
         os_utils.umount("/mountpoint")
         mock_call.assert_called_once_with(["/bin/umount", "/mountpoint"])
+
+    def test_umount_retry(self, mocker):
+        gen = itertools.count()
+
+        def side_effect(*args):  # pylint: disable=unused-argument
+            if next(gen) < 1:
+                raise subprocess.CalledProcessError(cmd="cmd", returncode=42)
+
+        mock_call = mocker.patch("subprocess.check_call", side_effect=side_effect)
+        mock_sleep = mocker.patch("time.sleep")
+
+        os_utils.umount("/mountpoint")
+        assert mock_call.mock_calls == [
+            call(["/bin/umount", "/mountpoint"]),
+            call(["/bin/umount", "/mountpoint"]),
+        ]
+        assert mock_sleep.mock_calls == [call(1)]
+
+    def test_umount_retry_fail(self, mocker):
+        mock_call = mocker.patch(
+            "subprocess.check_call",
+            side_effect=subprocess.CalledProcessError(cmd="cmd", returncode=42),
+        )
+        mock_sleep = mocker.patch("time.sleep")
+        with pytest.raises(subprocess.CalledProcessError) as raised:
+            os_utils.umount("/mountpoint")
+        assert str(raised.value) == "Command 'cmd' returned non-zero exit status 42."
+        assert mock_call.mock_calls == [
+            call(["/bin/umount", "/mountpoint"]),
+            call(["/bin/umount", "/mountpoint"]),
+            call(["/bin/umount", "/mountpoint"]),
+            call(["/bin/umount", "/mountpoint"]),
+            call(["/bin/umount", "/mountpoint"]),
+            call(["/bin/umount", "/mountpoint"]),
+        ]
+        assert mock_sleep.mock_calls == [
+            call(1),
+            call(1),
+            call(1),
+            call(1),
+            call(1),
+        ]
