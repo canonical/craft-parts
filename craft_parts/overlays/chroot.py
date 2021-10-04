@@ -31,7 +31,15 @@ logger = logging.getLogger(__name__)
 
 
 def chroot(path: Path, target: Callable, *args, **kwargs) -> Any:
-    """Execute a callable in a chroot environment."""
+    """Execute a callable in a chroot environment.
+
+    :param path: The new filesystem root.
+    :param target: The callable to run in the chroot environment.
+    :param args: Arguments for target.
+    :param kwargs: Keyword arguments for target.
+
+    :returns: The target function return value.
+    """
     logger.debug("[pid=%d] parent process", os.getpid())
     parent_conn, child_conn = multiprocessing.Pipe()
     child = multiprocessing.Process(
@@ -58,6 +66,7 @@ def _runner(
     args: Tuple,
     kwargs: Dict,
 ) -> None:
+    """Chroot to the execution directory and call the target function."""
     logger.debug("[pid=%d] child process: target=%r", os.getpid(), target)
     try:
         logger.debug("[pid=%d] chroot to %r", os.getpid(), path)
@@ -73,12 +82,14 @@ def _runner(
 
 
 def _setup_chroot(path: Path) -> None:
+    """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
         _setup_chroot_linux(path)
 
 
 def _cleanup_chroot(path: Path) -> None:
+    """Clean the chroot environment after executing the target function."""
     logger.debug("cleanup chroot: %r", path)
     if sys.platform == "linux":
         _cleanup_chroot_linux(path)
@@ -91,7 +102,7 @@ _linux_mounts: List[_Mount] = [
     _Mount("proc", "proc", "/proc", None),
     _Mount("sysfs", "sysfs", "/sys", None),
     _Mount(None, "/dev", "/dev", "--bind"),
-    # _Mount("tmpfs", "tmpfs", "/dev/shm", None),
+    _Mount("tmpfs", "tmpfs", "/dev/shm", None),
 ]
 
 
@@ -111,16 +122,27 @@ def _setup_chroot_linux(path: Path) -> None:
         #
         # There's no need to restore the file to its original conditions because
         # this operation happens on a temporary filesystem layer.
-        if mountpoint.is_symlink():
-            mountpoint.unlink()
-            mountpoint.touch()
+        if entry.src == "/etc/resolv.conf":
+            if mountpoint.is_symlink():
+                mountpoint.unlink()
+                mountpoint.touch()
+            elif not mountpoint.exists() and Path(path, "etc").is_dir():
+                mountpoint.touch()
 
-        logger.debug("[pid=%d] mount %r on chroot", os.getpid(), str(mountpoint))
-        os_utils.mount(entry.src, str(mountpoint), *args)
+        # Only mount if mountpoint exists.
+        if mountpoint.exists():
+            logger.debug("[pid=%d] mount %r on chroot", os.getpid(), str(mountpoint))
+            os_utils.mount(entry.src, str(mountpoint), *args)
+        else:
+            logger.debug(
+                "[pid=%d] mountpoint %r does not exist", os.getpid(), str(mountpoint)
+            )
 
 
 def _cleanup_chroot_linux(path: Path) -> None:
     for entry in reversed(_linux_mounts):
         mountpoint = path / entry.mountpoint.lstrip("/")
-        logger.debug("[pid=%d] umount: %r", os.getpid(), str(mountpoint))
-        os_utils.umount(str(mountpoint))
+
+        if mountpoint.exists():
+            logger.debug("[pid=%d] umount: %r", os.getpid(), str(mountpoint))
+            os_utils.umount(str(mountpoint))

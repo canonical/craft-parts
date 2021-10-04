@@ -61,6 +61,9 @@ class TestChroot:
         mocker.patch("os.chroot")
 
         Path("dir1").mkdir()
+        for subdir in ["etc", "proc", "sys", "dev", "dev/shm"]:
+            Path(new_root, subdir).mkdir()
+
         chroot.chroot(new_root, target_func, "content")
 
         assert Path("dir1/foo.txt").read_text() == "content"
@@ -75,11 +78,93 @@ class TestChroot:
             call("proc", f"{new_root}/proc", "-tproc"),
             call("sysfs", f"{new_root}/sys", "-tsysfs"),
             call("/dev", f"{new_root}/dev", "--bind"),
+            call("tmpfs", f"{new_root}/dev/shm", "-ttmpfs"),
         ]
         assert mock_umount.mock_calls == [
+            call(f"{new_root}/dev/shm"),
             call(f"{new_root}/dev"),
             call(f"{new_root}/sys"),
             call(f"{new_root}/proc"),
+            call(f"{new_root}/etc/resolv.conf"),
+        ]
+
+    def test_chroot_no_mountpoints(self, mocker, new_dir):
+        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
+
+        spy_process = mocker.spy(multiprocessing, "Process")
+        new_root = Path(new_dir, "dir1")
+
+        # this runs in the child process
+        mocker.patch("os.chroot")
+
+        Path("dir1").mkdir()
+        chroot.chroot(new_root, target_func, "content")
+
+        assert Path("dir1/foo.txt").read_text() == "content"
+        assert spy_process.mock_calls == [
+            call(
+                target=chroot._runner,
+                args=(new_root, ANY, target_func, ("content",), {}),
+            )
+        ]
+        assert mock_mount.mock_calls == []
+        assert mock_umount.mock_calls == []
+
+    def test_chroot_symlinked_resolv_conf(self, mocker, new_dir):
+        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
+
+        spy_process = mocker.spy(multiprocessing, "Process")
+        new_root = Path(new_dir, "dir1")
+
+        # this runs in the child process
+        mocker.patch("os.chroot")
+
+        Path("dir1").mkdir()
+        Path("dir1/etc").mkdir()
+        Path("dir1/etc/resolv.con").symlink_to("whatever")
+        chroot.chroot(new_root, target_func, "content")
+
+        assert Path("dir1/foo.txt").read_text() == "content"
+        assert spy_process.mock_calls == [
+            call(
+                target=chroot._runner,
+                args=(new_root, ANY, target_func, ("content",), {}),
+            )
+        ]
+        assert mock_mount.mock_calls == [
+            call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
+        ]
+        assert mock_umount.mock_calls == [
+            call(f"{new_root}/etc/resolv.conf"),
+        ]
+
+    def test_chroot_no_resolv_conf(self, mocker, new_dir):
+        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
+
+        spy_process = mocker.spy(multiprocessing, "Process")
+        new_root = Path(new_dir, "dir1")
+
+        # this runs in the child process
+        mocker.patch("os.chroot")
+
+        Path("dir1").mkdir()
+        Path("dir1/etc").mkdir()
+        chroot.chroot(new_root, target_func, "content")
+
+        assert Path("dir1/foo.txt").read_text() == "content"
+        assert spy_process.mock_calls == [
+            call(
+                target=chroot._runner,
+                args=(new_root, ANY, target_func, ("content",), {}),
+            )
+        ]
+        assert mock_mount.mock_calls == [
+            call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
+        ]
+        assert mock_umount.mock_calls == [
             call(f"{new_root}/etc/resolv.conf"),
         ]
 
