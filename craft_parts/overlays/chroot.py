@@ -109,6 +109,7 @@ _linux_mounts: List[_Mount] = [
 
 def _setup_chroot_linux(path: Path) -> None:
     """Linux-specific chroot environment preparation."""
+    pid = os.getpid()
     for entry in _linux_mounts:
         args = []
         if entry.option:
@@ -133,19 +134,18 @@ def _setup_chroot_linux(path: Path) -> None:
 
         # Only mount if mountpoint exists.
         if mountpoint.exists():
-            logger.debug("[pid=%d] mount %r on chroot", os.getpid(), str(mountpoint))
+            logger.debug("[pid=%d] mount %r on chroot", pid, str(mountpoint))
             os_utils.mount(entry.src, str(mountpoint), *args)
         else:
-            logger.debug(
-                "[pid=%d] mountpoint %r does not exist", os.getpid(), str(mountpoint)
-            )
+            logger.debug("[pid=%d] mountpoint %r does not exist", pid, str(mountpoint))
 
 
 def _cleanup_chroot_linux(path: Path) -> None:
     """Linux-specific chroot environment cleanup."""
+    pid = os.getpid()
     for entry in reversed(_linux_mounts):
         mountpoint = path / entry.mountpoint.lstrip("/")
 
         if mountpoint.exists():
-            logger.debug("[pid=%d] umount: %r", os.getpid(), str(mountpoint))
+            logger.debug("[pid=%d] umount: %r", pid, str(mountpoint))
             os_utils.umount(str(mountpoint))
