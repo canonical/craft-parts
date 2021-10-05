@@ -172,10 +172,7 @@ class TestChroot:
         mock_chdir = mocker.patch("os.chdir")
         mock_chroot = mocker.patch("os.chroot")
 
-        with pytest.raises(SystemExit):
-            chroot._runner(
-                Path("/some/path"), fake_conn, target_func, ("func arg",), {}
-            )
+        chroot._runner(Path("/some/path"), fake_conn, target_func, ("func arg",), {})
 
         assert Path("foo.txt").read_text() == "func arg"
         assert mock_chdir.mock_calls == [call(Path("/some/path"))]

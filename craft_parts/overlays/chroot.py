@@ -78,7 +78,6 @@ def _runner(
         return
 
     conn.send((res, None))
-    sys.exit()
 
 
 def _setup_chroot(path: Path) -> None:
