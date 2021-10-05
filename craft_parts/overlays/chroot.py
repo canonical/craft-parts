@@ -109,6 +109,19 @@ _linux_mounts: List[_Mount] = [
 
 def _setup_chroot_linux(path: Path) -> None:
     """Linux-specific chroot environment preparation."""
+    # Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
+    # ``/run/systemd/resolve/stub-resolv.conf``. We want resolv.conf to be
+    # a regular file to bind-mount the host resolver configuration on.
+    #
+    # There's no need to restore the file to its original condition because
+    # this operation happens on a temporary filesystem layer.
+    resolv_conf = path / "etc/resolv.conf"
+    if resolv_conf.is_symlink():
+        resolv_conf.unlink()
+        resolv_conf.touch()
+    elif not resolv_conf.exists() and resolv_conf.parent.is_dir():
+        resolv_conf.touch()
+
     pid = os.getpid()
     for entry in _linux_mounts:
         args = []
@@ -118,19 +131,6 @@ def _setup_chroot_linux(path: Path) -> None:
             args.append(f"-t{entry.fstype}")
 
         mountpoint = path / entry.mountpoint.lstrip("/")
-
-        # Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
-        # ``/run/systemd/resolve/stub-resolv.conf``. We want resolv.conf to be
-        # a regular file to bind-mount the host resolver configuration on.
-        #
-        # There's no need to restore the file to its original conditions because
-        # this operation happens on a temporary filesystem layer.
-        if entry.src == "/etc/resolv.conf":
-            if mountpoint.is_symlink():
-                mountpoint.unlink()
-                mountpoint.touch()
-            elif not mountpoint.exists() and Path(path, "etc").is_dir():
-                mountpoint.touch()
 
         # Only mount if mountpoint exists.
         if mountpoint.exists():
