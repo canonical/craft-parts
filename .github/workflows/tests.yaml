@@ -130,6 +130,7 @@ jobs:
                 echo 5678 > "\$CRAFT_PARTS_OVERLAY/etc/issue"
               overlay:
                 - -usr/share
+                - -var/cache
               override-build: |
                 rev "\$CRAFT_PARTS_OVERLAY/hello.txt" > "\$CRAFT_PARTS_PART_INSTALL/olleh.txt"
           EOF
