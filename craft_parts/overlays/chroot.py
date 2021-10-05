@@ -96,6 +96,8 @@ def _cleanup_chroot(path: Path) -> None:
 
 _Mount = namedtuple("_Mount", ["fstype", "src", "mountpoint", "option"])
 
+# Essential filesystems to mount in order to have basic utilities and
+# name resolution working inside the chroot environment.
 _linux_mounts: List[_Mount] = [
     _Mount(None, "/etc/resolv.conf", "/etc/resolv.conf", "--bind"),
     _Mount("proc", "proc", "/proc", None),
@@ -106,6 +108,7 @@ _linux_mounts: List[_Mount] = [
 
 
 def _setup_chroot_linux(path: Path) -> None:
+    """Linux-specific chroot environment preparation."""
     for entry in _linux_mounts:
         args = []
         if entry.option:
@@ -139,6 +142,7 @@ def _setup_chroot_linux(path: Path) -> None:
 
 
 def _cleanup_chroot_linux(path: Path) -> None:
+    """Linux-specific chroot environment cleanup."""
     for entry in reversed(_linux_mounts):
         mountpoint = path / entry.mountpoint.lstrip("/")
 
