@@ -165,19 +165,15 @@ class PartHandler:
         self._make_dirs()
 
         if self._part.has_overlay:
+            # install overlay packages
             overlay_packages = self._part.spec.overlay_packages
             if overlay_packages:
-                # must be in a separate context manager to avoid pychroot process leak
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
                     ctx.install_packages(overlay_packages)
 
-            # remove temporary files and package cache from layer
-            shutil.rmtree(self._part.part_layer_dir / "var/cache", ignore_errors=True)
-            shutil.rmtree(self._part.part_layer_dir / "var/tmp", ignore_errors=True)
-            shutil.rmtree(self._part.part_layer_dir / "tmp", ignore_errors=True)
-
+            # execute overlay script
             with overlays.LayerMount(self._overlay_manager, top_part=self._part):
                 contents = self._run_step(
                     step_info=step_info,
