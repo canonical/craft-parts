@@ -87,8 +87,8 @@ def test_generate_part_environment_build(new_dir):
 
     assert env == textwrap.dedent(
         """\
-        #!/bin/sh
-        set -e
+        #!/bin/bash
+        set -euo pipefail
         # Environment
         ## Part Environment
         export XYZ_ARCH_TRIPLET="aarch64-linux-gnu"
@@ -131,8 +131,8 @@ def test_generate_part_environment_no_build(new_dir):
 
     assert env == textwrap.dedent(
         """\
-        #!/bin/sh
-        set -e
+        #!/bin/bash
+        set -euo pipefail
         # Environment
         ## Part Environment
         export XYZ_ARCH_TRIPLET="aarch64-linux-gnu"
@@ -174,8 +174,8 @@ def test_generate_part_environment_no_user_env(new_dir):
 
     assert env == textwrap.dedent(
         """\
-        #!/bin/sh
-        set -e
+        #!/bin/bash
+        set -euo pipefail
         # Environment
         ## Part Environment
         export XYZ_ARCH_TRIPLET="aarch64-linux-gnu"

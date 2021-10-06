@@ -58,8 +58,8 @@ def generate_part_environment(
 
     # Create the script.
     with io.StringIO() as run_environment:
-        print("#!/bin/sh", file=run_environment)
-        print("set -e", file=run_environment)
+        print("#!/bin/bash", file=run_environment)
+        print("set -euo pipefail", file=run_environment)
 
         print("# Environment", file=run_environment)
 

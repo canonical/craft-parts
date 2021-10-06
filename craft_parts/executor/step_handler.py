@@ -213,7 +213,7 @@ class StepHandler:
                 script_file.flush()
                 script_file.seek(0)
                 process = subprocess.Popen(  # pylint: disable=consider-using-with
-                    ["/bin/sh"], stdin=script_file, cwd=work_dir
+                    ["/bin/bash"], stdin=script_file, cwd=work_dir
                 )
 
             status = None
