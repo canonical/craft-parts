@@ -38,7 +38,6 @@ pkginfo==1.7.1
 platformdirs==2.3.0
 pluggy==1.0.0
 py==1.10.0
-pychroot==0.10.3
 pycodestyle==2.7.0
 pycparser==2.20
 pydantic==1.8.2
@@ -65,7 +64,6 @@ rfc3986==1.5.0
 SecretStorage==3.3.1
 semver==2.13.0
 six==1.16.0
-snakeoil==0.8.9
 snowballstemmer==2.1.0
 Sphinx==4.2.0
 sphinx-autodoc-typehints==1.12.0

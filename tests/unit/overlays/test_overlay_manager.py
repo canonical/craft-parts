@@ -170,7 +170,7 @@ class TestPackageManagement:
         )
         self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         self.mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
-        self.mock_chroot = mocker.patch("pychroot.Chroot")
+        self.mock_chroot = mocker.patch("craft_parts.overlays.chroot.chroot")
         self.mock_refresh_packages_list = mocker.patch(
             "craft_parts.packages.Repository.refresh_packages_list"
         )
@@ -188,7 +188,9 @@ class TestPackageManagement:
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
-        self.mock_chroot.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_chroot.assert_called_once_with(
+            new_dir / "overlay/overlay", self.mock_refresh_packages_list
+        )
         self.mock_refresh_packages_list.called_once_with()
 
     def test_download_packages(self, mocker, new_dir):
@@ -207,7 +209,9 @@ class TestPackageManagement:
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
-        self.mock_chroot.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_chroot.assert_called_once_with(
+            new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
+        )
         mock_download_packages.called_once_with(["pkg1", "pkg2"])
 
     def test_install_packages(self, mocker, new_dir):
@@ -227,7 +231,9 @@ class TestPackageManagement:
             f"upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
         )
-        self.mock_chroot.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_chroot.assert_called_once_with(
+            new_dir / "overlay/overlay", mock_install_packages, ["pkg1", "pkg2"]
+        )
         mock_install_packages.called_once_with(["pkg1", "pkg2"])
 
     def test_package_cache_mount_refresh(self, mocker, new_dir):
@@ -248,7 +254,9 @@ class TestPackageManagement:
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
-        self.mock_chroot.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_chroot.assert_called_once_with(
+            new_dir / "overlay/overlay", self.mock_refresh_packages_list
+        )
         self.mock_refresh_packages_list.called_once_with()
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
 
@@ -273,7 +281,9 @@ class TestPackageManagement:
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
-        self.mock_chroot.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_chroot.assert_called_once_with(
+            new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
+        )
         mock_download_packages.called_once_with(["pkg1", "pkg2"])
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
 
@@ -300,17 +310,8 @@ class TestPackageManagement:
             f"upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
         )
-        self.mock_chroot.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_chroot.assert_called_once_with(
+            new_dir / "overlay/overlay", mock_install_packages, ["pkg1", "pkg2"]
+        )
         mock_install_packages.called_once_with(["pkg1", "pkg2"])
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
-
-    def test_fix_resolv_conf(self, new_dir):
-        self.om.mkdirs()
-        resolv = Path("overlay/overlay/etc/resolv.conf")
-        resolv.parent.mkdir()
-        resolv.symlink_to("/dev/null")
-
-        self.om.fix_resolv_conf()
-
-        assert resolv.is_symlink() is False
-        assert resolv.is_file()

@@ -45,7 +45,7 @@ class OverlayFS:
 
         :raises OverlayMountError: on mount error.
         """
-        logger.debug("mount overlayfs on %s", self._mountpoint)
+        logger.debug("mount overlayfs on %s", mountpoint)
         lower_dir = ":".join([str(p) for p in self._lower_dirs])
 
         try:

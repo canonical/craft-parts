@@ -235,7 +235,11 @@ def mount(device: str, mountpoint: str, *args) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
+    logger.debug("mount device=%r, mountpoint=%r, args=%r", device, mountpoint, args)
     subprocess.check_call(["/bin/mount", *args, device, mountpoint])
+
+
+_UMOUNT_RETRIES = 5
 
 
 def umount(mountpoint: str) -> None:
@@ -245,7 +249,21 @@ def umount(mountpoint: str) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
-    subprocess.check_call(["/bin/umount", mountpoint])
+    logger.debug("umount mountpoint=%r", mountpoint)
+    attempt = 0
+    while True:  # unmount in Github CI fails randomly and needs a retry
+        try:
+            subprocess.check_call(["/bin/umount", mountpoint])
+            break
+        except subprocess.CalledProcessError as err:
+            attempt += 1
+            if attempt > _UMOUNT_RETRIES:
+                raise err
+
+            time.sleep(1)
+            logger.debug(
+                "retry umount %r (%d/%d)", mountpoint, attempt, _UMOUNT_RETRIES
+            )
 
 
 _ID_TO_UBUNTU_CODENAME = {
