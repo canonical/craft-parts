@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import textwrap
 from pathlib import Path
 from typing import List
@@ -28,6 +29,12 @@ from craft_parts import Action, ActionType, Step
 @pytest.fixture
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")
+
+
+@pytest.fixture(autouse=True)
+def mock_overlay_support_prerequisites(mocker):
+    mocker.patch.object(sys, "platform", "linux")
+    mocker.patch("os.geteuid", return_value=0)
 
 
 class TestOverlayLayerOrder:

@@ -335,3 +335,17 @@ def test_invalid_action():
     assert err.brief == "Action is invalid: cannot update step 'stage'."
     assert err.details is None
     assert err.resolution is None
+
+
+def test_overlay_platform_error():
+    err = errors.OverlayPlatformError()
+    assert err.brief == "The overlay step is only supported on Linux."
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_overlay_permission_error():
+    err = errors.OverlayPermissionError()
+    assert err.brief == "Using the overlay step requires superuser privileges."
+    assert err.details is None
+    assert err.resolution is None

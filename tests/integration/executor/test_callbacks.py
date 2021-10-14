@@ -47,6 +47,11 @@ def mock_mount_unmount(mocker):
     mocker.patch("craft_parts.utils.os_utils.umount")
 
 
+@pytest.fixture(autouse=True)
+def mock_prerequisites_for_overlay(mocker):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+
+
 def _step_callback(info: StepInfo) -> bool:
     print(f"step = {info.step!r}")
     print(f"part_src_dir = {info.part_src_dir}")
