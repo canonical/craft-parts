@@ -94,7 +94,7 @@ class _FakeUbuntu:
 
 
 def test_fake_wrapper_apt_available(monkeypatch):
-    monkeypatch.setattr(deb, "_apt_cache_available", True)
+    monkeypatch.setattr(deb, "_APT_CACHE_AVAILABLE", True)
 
     fake_ubuntu = _FakeUbuntu()
     fake_ubuntu.call_apt()
@@ -103,7 +103,7 @@ def test_fake_wrapper_apt_available(monkeypatch):
 
 
 def test_fake_wrapper_apt_unavailable(monkeypatch):
-    monkeypatch.setattr(deb, "_apt_cache_available", False)
+    monkeypatch.setattr(deb, "_APT_CACHE_AVAILABLE", False)
 
     fake_ubuntu = _FakeUbuntu()
     with pytest.raises(errors.PackageBackendNotSupported):
