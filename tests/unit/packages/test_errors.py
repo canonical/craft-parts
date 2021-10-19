@@ -20,7 +20,7 @@ from craft_parts.packages import errors
 def test_package_backend_not_supported():
     err = errors.PackageBackendNotSupported("apt")
     assert err.backend == "apt"
-    assert err.brief == ("Package backed 'apt' is not supported on this environment.")
+    assert err.brief == "Package backend 'apt' is not supported on this environment."
     assert err.details is None
     assert err.resolution is None
 

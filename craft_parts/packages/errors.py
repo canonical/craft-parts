@@ -32,7 +32,7 @@ class PackageBackendNotSupported(PartsError):
     def __init__(self, backend: str) -> None:
         self.backend = backend
         super().__init__(
-            brief=f"Package backed {backend!r} is not supported on this environment.",
+            brief=f"Package backend {backend!r} is not supported on this environment.",
         )
 
 
