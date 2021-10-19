@@ -213,10 +213,10 @@ def _apt_cache_wrapper(method):
     """Decorate a method to handle apt availability."""
 
     @functools.wraps(method)
-    def wrapped(self, *args, **kwargs):
+    def wrapped(*args, **kwargs):
         if not _apt_cache_available:
             raise errors.PackageBackendNotSupported("apt")
-        return method(self, *args, **kwargs)
+        return method(*args, **kwargs)
 
     return wrapped
 
