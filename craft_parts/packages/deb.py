@@ -35,9 +35,16 @@ from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
 from .deb_package import DebPackage
 from .normalize import normalize
 
-if sys.platform == "linux":
-    # Ensure importing works on non-Linux.
+# Catch the ImportError to set availability of apt on this system
+# to fail appropriately on use instead. This implementation is
+# independent of the underlying host OS.
+try:
     from .apt_cache import AptCache
+
+    _apt_cache_available = True
+except ImportError:
+    _apt_cache_available = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -202,6 +209,18 @@ IGNORE_FILTERS: Dict[str, Set[str]] = {
 }
 
 
+def _apt_cache_wrapper(method):
+    """Decorate a method to handle apt availability."""
+
+    @functools.wraps(method)
+    def wrapped(*args, **kwargs):
+        if not _apt_cache_available:
+            raise errors.PackageBackendNotSupported("apt")
+        return method(*args, **kwargs)
+
+    return wrapped
+
+
 @functools.lru_cache(maxsize=256)
 def _run_dpkg_query_search(file_path: str) -> str:
     try:
@@ -280,6 +299,7 @@ class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
     @classmethod
+    @_apt_cache_wrapper
     def configure(cls, application_package_name: str) -> None:
         """Set up apt options and directories."""
         AptCache.configure_apt(application_package_name)
@@ -290,6 +310,7 @@ class Ubuntu(BaseRepository):
         return _run_dpkg_query_list_files(package_name)
 
     @classmethod
+    @_apt_cache_wrapper
     def get_packages_for_source_type(cls, source_type):
         """Return a list of packages required to to work with source_type."""
         if source_type == "bzr":
@@ -324,6 +345,7 @@ class Ubuntu(BaseRepository):
             ) from call_error
 
     @classmethod
+    @_apt_cache_wrapper
     def _check_if_all_packages_installed(cls, package_names: List[str]) -> bool:
         """Check if all given packages are installed.
 
@@ -348,6 +370,7 @@ class Ubuntu(BaseRepository):
         return True
 
     @classmethod
+    @_apt_cache_wrapper
     def _get_packages_marked_for_installation(
         cls, package_names: List[str]
     ) -> List[Tuple[str, str]]:
@@ -452,6 +475,7 @@ class Ubuntu(BaseRepository):
             logger.warning("Impossible to mark packages as auto-installed: %s", err)
 
     @classmethod
+    @_apt_cache_wrapper
     def fetch_stage_packages(
         cls,
         *,
@@ -527,12 +551,14 @@ class Ubuntu(BaseRepository):
             normalize(install_path, repository=cls)
 
     @classmethod
+    @_apt_cache_wrapper
     def is_package_installed(cls, package_name) -> bool:
         """Inform if a package is installed on the host system."""
         with AptCache() as apt_cache:
             return apt_cache.get_installed_version(package_name) is not None
 
     @classmethod
+    @_apt_cache_wrapper
     def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions."""
         with AptCache() as apt_cache:

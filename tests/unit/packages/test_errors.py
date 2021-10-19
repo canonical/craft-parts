@@ -17,6 +17,14 @@
 from craft_parts.packages import errors
 
 
+def test_package_backend_not_supported():
+    err = errors.PackageBackendNotSupported("apt")
+    assert err.backend == "apt"
+    assert err.brief == "Package backend 'apt' is not supported on this environment."
+    assert err.details is None
+    assert err.resolution is None
+
+
 def test_package_not_found():
     err = errors.PackageNotFound("foobar")
     assert err.package_name == "foobar"

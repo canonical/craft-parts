@@ -26,6 +26,16 @@ class PackagesError(PartsError):
     """Base class for package handler errors."""
 
 
+class PackageBackendNotSupported(PartsError):
+    """Requested package resolved not supported on this host."""
+
+    def __init__(self, backend: str) -> None:
+        self.backend = backend
+        super().__init__(
+            brief=f"Package backend {backend!r} is not supported on this environment.",
+        )
+
+
 class PackageNotFound(PackagesError):
     """Requested package doesn't exist in the remote repository.
 

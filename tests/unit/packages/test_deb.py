@@ -85,6 +85,34 @@ def cache_dirs(mocker, tmpdir):
     )
 
 
+class _FakeUbuntu:
+    def __init__(self) -> None:
+        self.apt_called = False
+
+    @deb._apt_cache_wrapper
+    def call_apt(self) -> None:
+        self.apt_called = True
+
+
+def test_fake_wrapper_apt_available(monkeypatch):
+    monkeypatch.setattr(deb, "_apt_cache_available", True)
+
+    fake_ubuntu = _FakeUbuntu()
+    fake_ubuntu.call_apt()
+
+    assert fake_ubuntu.apt_called is True
+
+
+def test_fake_wrapper_apt_unavailable(monkeypatch):
+    monkeypatch.setattr(deb, "_apt_cache_available", False)
+
+    fake_ubuntu = _FakeUbuntu()
+    with pytest.raises(errors.PackageBackendNotSupported):
+        fake_ubuntu.call_apt()
+
+    assert fake_ubuntu.apt_called is False
+
+
 class TestPackages:
     def test_fetch_stage_packages(self, mocker, tmpdir, fake_apt_cache):
         mocker.patch(
