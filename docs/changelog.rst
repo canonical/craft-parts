@@ -2,6 +2,15 @@
 Changelog
 *********
 
+1.0.3 (2021-10-19)
+------------------
+
+- Properly declare public API names
+- Allow non-snap applications running on non-apt systems to invoke parts
+  processing on build providers
+- Use Bash as script interpreter instead of /bin/sh to stay compatible
+  with Snapcraft V2 plugins
+
 1.0.2 (2021-09-16)
 ------------------
 
