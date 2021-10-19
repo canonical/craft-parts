@@ -25,3 +25,16 @@ from .infos import PartInfo, ProjectInfo, StepInfo  # noqa: F401
 from .lifecycle_manager import LifecycleManager  # noqa: F401
 from .parts import Part  # noqa: F401
 from .steps import Step  # noqa: F401
+
+__all__ = [
+    "Action",
+    "ActionType",
+    "ProjectDirs",
+    "PartsError",
+    "ProjectInfo",
+    "PartInfo",
+    "StepInfo",
+    "LifecycleManager",
+    "Part",
+    "Step",
+]

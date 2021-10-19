@@ -26,3 +26,10 @@ from .plugins import (  # noqa: F401
     register,
     unregister_all,
 )
+
+__all__ = [
+    "Plugin",
+    "PluginProperties",
+    "register",
+    "unregister_all",
+]
