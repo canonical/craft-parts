@@ -41,9 +41,9 @@ from .normalize import normalize
 try:
     from .apt_cache import AptCache
 
-    _apt_cache_available = True
+    _APT_CACHE_AVAILABLE = True
 except ImportError:
-    _apt_cache_available = False
+    _APT_CACHE_AVAILABLE = False
 
 
 logger = logging.getLogger(__name__)
@@ -214,7 +214,7 @@ def _apt_cache_wrapper(method):
 
     @functools.wraps(method)
     def wrapped(*args, **kwargs):
-        if not _apt_cache_available:
+        if not _APT_CACHE_AVAILABLE:
             raise errors.PackageBackendNotSupported("apt")
         return method(*args, **kwargs)
 
