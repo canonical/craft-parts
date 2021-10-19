@@ -35,9 +35,9 @@ from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
 from .deb_package import DebPackage
 from .normalize import normalize
 
-# Ensure importing works on non-Linux or linux without apt.
-# If the import fails provide a stub that appropriately fails
-# at runtime.
+# Catch the ImportError to set availability of apt on this system
+# to fail appropriately on use instead. This implementation is
+# independent of the underlying host OS.
 try:
     from .apt_cache import AptCache
 
