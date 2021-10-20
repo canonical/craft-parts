@@ -35,3 +35,11 @@ def test_overlay_unmount_error():
     assert err.brief == "Failed to unmount /mountpoint: something wrong happened"
     assert err.details is None
     assert err.resolution is None
+
+
+def test_overlay_chroot_execution_error():
+    err = errors.OverlayChrootExecutionError("something wrong happened")
+    assert err.message == "something wrong happened"
+    assert err.brief == "Overlay environment execution error: something wrong happened"
+    assert err.details is None
+    assert err.resolution is None
