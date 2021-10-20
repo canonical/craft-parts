@@ -35,6 +35,7 @@ def fake_call(mocker):
 def mock_overlay_support_prerequisites(mocker):
     mocker.patch.object(sys, "platform", "linux")
     mocker.patch("os.geteuid", return_value=0)
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
 
 
 class TestOverlayLayerOrder:

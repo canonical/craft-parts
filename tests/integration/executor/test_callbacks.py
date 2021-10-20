@@ -50,6 +50,7 @@ def mock_mount_unmount(mocker):
 @pytest.fixture(autouse=True)
 def mock_prerequisites_for_overlay(mocker):
     mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
 
 
 def _step_callback(info: StepInfo) -> bool:
