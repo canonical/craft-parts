@@ -51,3 +51,13 @@ class OverlayUnmountError(OverlayError):
         brief = f"Failed to unmount {mountpoint}: {message}"
 
         super().__init__(brief=brief)
+
+
+class OverlayChrootExecutionError(OverlayError):
+    """Failed to execute in a chroot environment."""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        brief = f"Overlay environment execution error: {message}"
+
+        super().__init__(brief=brief)

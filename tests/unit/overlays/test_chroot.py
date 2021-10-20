@@ -190,5 +190,5 @@ class TestChroot:
         assert mock_chdir.mock_calls == [call(Path("/some/path"))]
         assert mock_chroot.mock_calls == [call(Path("/some/path"))]
         assert fake_conn.sent[0] is None
-        assert isinstance(fake_conn.sent[1], RuntimeError)
+        assert isinstance(fake_conn.sent[1], str)
         assert str(fake_conn.sent[1]) == "bummer"

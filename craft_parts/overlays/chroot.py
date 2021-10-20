@@ -27,6 +27,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from craft_parts.utils import os_utils
 
+from . import errors
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,13 +50,13 @@ def chroot(path: Path, target: Callable, *args, **kwargs) -> Any:
     _setup_chroot(path)
     try:
         child.start()
-        res, exc = parent_conn.recv()
+        res, err = parent_conn.recv()
         child.join()
     finally:
         _cleanup_chroot(path)
 
-    if isinstance(exc, Exception):
-        raise exc
+    if isinstance(err, str):
+        raise errors.OverlayChrootExecutionError(err)
 
     return res
 
@@ -74,7 +76,7 @@ def _runner(
         os.chroot(path)
         res = target(*args, **kwargs)
     except Exception as exc:  # pylint: disable=broad-except
-        conn.send((None, exc))
+        conn.send((None, str(exc)))
         return
 
     conn.send((res, None))
