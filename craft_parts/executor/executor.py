@@ -22,7 +22,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from craft_parts import callbacks, packages, parts
+from craft_parts import callbacks, overlays, packages, parts
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.overlays import LayerHash, OverlayManager
@@ -84,6 +84,10 @@ class Executor:
         """
         self._install_build_packages()
         self._install_build_snaps()
+
+        if any(p.has_overlay for p in self._part_list):
+            with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+                ctx.refresh_packages_list()
 
         callbacks.run_prologue(self._project_info, part_list=self._part_list)
 
