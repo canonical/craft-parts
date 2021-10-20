@@ -16,7 +16,9 @@
 
 """Unit tests for the lifecycle manager."""
 
+import sys
 import textwrap
+from typing import Any, Dict
 
 import pytest
 import yaml
@@ -109,6 +111,49 @@ class TestLifecycleManager:
             ignore_outdated=["foo.*"],
             base_layer_hash=None,
         )
+
+
+class TestOverlaySupport:
+    """Overlays only supported in linux and must run as root."""
+
+    @pytest.fixture
+    def parts_data(self) -> Dict[str, Any]:
+        return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
+
+    def test_overlay_supported(self, mocker, new_dir, parts_data):
+        mocker.patch.object(sys, "platform", "linux")
+        mocker.patch("os.geteuid", return_value=0)
+        LifecycleManager(
+            parts_data,
+            application_name="test",
+            cache_dir=new_dir,
+            base_layer_dir=new_dir,
+            base_layer_hash=b"hash",
+        )
+
+    def test_overlay_platform_unsupported(self, mocker, new_dir, parts_data):
+        mocker.patch.object(sys, "platform", "darwin")
+        mocker.patch("os.geteuid", return_value=0)
+        with pytest.raises(errors.OverlayPlatformError):
+            LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                base_layer_dir=new_dir,
+                base_layer_hash=b"hash",
+            )
+
+    def test_overlay_requires_root(self, mocker, new_dir, parts_data):
+        mocker.patch.object(sys, "platform", "linux")
+        mocker.patch("os.geteuid", return_value=1000)
+        with pytest.raises(errors.OverlayPermissionError):
+            LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                base_layer_dir=new_dir,
+                base_layer_hash=b"hash",
+            )
 
 
 class TestPluginProperties:

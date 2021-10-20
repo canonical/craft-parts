@@ -46,6 +46,8 @@ def setup_fixture(new_dir, mocker):
 
 
 def test_ctl_client_steps(new_dir, capfd, mocker):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+
     parts_yaml = textwrap.dedent(
         """\
         parts:

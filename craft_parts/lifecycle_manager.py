@@ -16,7 +16,9 @@
 
 """The parts lifecycle manager."""
 
+import os
 import re
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 
@@ -123,6 +125,8 @@ class LifecycleManager:
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
+            _ensure_overlay_supported()
+
             if not base_layer_dir:
                 raise ValueError("base_layer_dir must be specified if using overlays")
             if not base_layer_hash:
@@ -203,6 +207,15 @@ class LifecycleManager:
     def action_executor(self) -> executor.ExecutionContext:
         """Return a context manager for action execution."""
         return executor.ExecutionContext(executor=self._executor)
+
+
+def _ensure_overlay_supported() -> None:
+    """Overlay is only supported in Linux and requires superuser privileges."""
+    if sys.platform != "linux":
+        raise errors.OverlayPlatformError()
+
+    if os.geteuid() != 0:
+        raise errors.OverlayPermissionError()
 
 
 def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> Part:

@@ -503,3 +503,21 @@ class InvalidAction(PartsError):
         brief = f"Action is invalid: {message}."
 
         super().__init__(brief=brief)
+
+
+class OverlayPlatformError(PartsError):
+    """A project using overlays was processed on a non-Linux platform."""
+
+    def __init__(self) -> None:
+        brief = "The overlay step is only supported on Linux."
+
+        super().__init__(brief=brief)
+
+
+class OverlayPermissionError(PartsError):
+    """A project using overlays was processed by a non-privileged user."""
+
+    def __init__(self) -> None:
+        brief = "Using the overlay step requires superuser privileges."
+
+        super().__init__(brief=brief)
