@@ -30,6 +30,9 @@ from .plugins import (  # noqa: F401
 __all__ = [
     "Plugin",
     "PluginProperties",
+    "extract_part_properties",
+    "get_plugin",
+    "get_plugin_class",
     "register",
     "unregister_all",
 ]
