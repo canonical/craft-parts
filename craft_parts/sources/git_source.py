@@ -30,16 +30,19 @@ from .base import SourceHandler
 
 
 class GitSource(SourceHandler):
-    """The git source handler."""
+    """The git source handler.
+
+    Retrieve part sources from a git repository. Branch, depth, commit
+    and tag can be specified using part properties ``source-branch``,
+    ``source-depth``, `source-commit`` and ``source-tag``.
+    """
 
     @classmethod
     def version(cls) -> str:
         """Get git version information."""
-        return (
-            subprocess.check_output(["git", "version"], stderr=subprocess.DEVNULL)
-            .decode(sys.getfilesystemencoding())
-            .strip()
-        )
+        return subprocess.check_output(
+            ["git", "version"], universal_newlines=True, stderr=subprocess.DEVNULL
+        ).strip()
 
     @classmethod
     def check_command_installed(cls) -> bool:
@@ -51,7 +54,7 @@ class GitSource(SourceHandler):
         return True
 
     @classmethod
-    def generate_version(cls, *, part_src_dir=None):
+    def generate_version(cls, *, part_src_dir=None) -> str:
         """Return the latest git tag from PWD or defined part_src_dir.
 
         The output depends on the use of annotated tags and will return
@@ -156,6 +159,7 @@ class GitSource(SourceHandler):
             )
 
     def _fetch_origin_commit(self):
+        """Fetch from origin, using source-commit if defined."""
         command = [
             self.command,
             "-C",
@@ -169,6 +173,7 @@ class GitSource(SourceHandler):
         self._run(command)
 
     def _pull_existing(self):
+        """Pull from origin, using branch, tag or commit if defined."""
         refspec = "HEAD"
         if self.source_branch:
             refspec = "refs/heads/" + self.source_branch
@@ -209,6 +214,7 @@ class GitSource(SourceHandler):
         self._run(command)
 
     def _clone_new(self):
+        """Clone a git repository, using branch and depth if defined."""
         command = [self.command, "clone", "--recursive"]
         if self.source_tag or self.source_branch:
             command.extend(["--branch", self.source_tag or self.source_branch])
@@ -227,11 +233,11 @@ class GitSource(SourceHandler):
             ]
             self._run(command)
 
-    def is_local(self):
+    def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
         return os.path.exists(os.path.join(self.part_src_dir, ".git"))
 
-    def pull(self):
+    def pull(self) -> None:
         """Retrieve the local or remote source files."""
         if self.is_local():
             self._pull_existing()
@@ -240,6 +246,7 @@ class GitSource(SourceHandler):
         self.source_details = self._get_source_details()
 
     def _get_source_details(self):
+        """Return a dictionary containing current source parameters."""
         tag = self.source_tag
         commit = self.source_commit
         branch = self.source_branch
