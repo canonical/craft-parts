@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.0.4 (2021-11-10)
+------------------
+
+- Declare additional public API names
+- Add git source handler
+
 1.0.3 (2021-10-19)
 ------------------
 
