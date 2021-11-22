@@ -36,8 +36,8 @@ class TarSource(FileSourceHandler):
 
     def __init__(
         self,
-        source,
-        part_src_dir,
+        source: str,
+        part_src_dir: Path,
         *,
         cache_dir: Path,
         source_tag: Optional[str] = None,

@@ -16,6 +16,7 @@
 
 import os
 import tarfile
+from pathlib import Path
 
 import pytest
 import requests
@@ -33,8 +34,8 @@ class TestTarSource:
         mock_prov = mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
 
         plugin_name = "test_plugin"
-        dest_dir = os.path.join("parts", plugin_name, "src")
-        os.makedirs(dest_dir)
+        dest_dir = Path("parts", plugin_name, "src")
+        dest_dir.mkdir(parents=True)
         tar_file_name = "test.tar"
         source = "http://{}:{}/{file_name}".format(
             *http_server.server_address, file_name=tar_file_name
@@ -44,7 +45,7 @@ class TestTarSource:
 
         tar_source.pull()
 
-        source_file = os.path.join(dest_dir, tar_file_name)
+        source_file = dest_dir / tar_file_name
         mock_prov.assert_called_once_with(dest_dir, src=source_file, clean_target=False)
         with open(os.path.join(dest_dir, tar_file_name), "r") as tar_file:
             assert tar_file.read() == "Test fake file"
@@ -63,7 +64,7 @@ class TestTarSource:
             "085b0c3"
         )
         tar_source = sources.TarSource(
-            source, ".", cache_dir=new_dir, source_checksum=expected_checksum
+            source, Path(), cache_dir=new_dir, source_checksum=expected_checksum
         )
 
         tar_source.pull()
@@ -81,7 +82,7 @@ class TestTarSource:
             tar.add(file_to_tar)
 
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"), "dst", cache_dir=new_dir
+            os.path.join("src", "test.tar"), Path("dst"), cache_dir=new_dir
         )
         os.mkdir("dst")
         tar_source.pull()
@@ -112,7 +113,7 @@ class TestTarSource:
             tar.add(file_to_link, filter=check_for_symlink)
 
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"), "dst", cache_dir=new_dir
+            os.path.join("src", "test.tar"), Path("dst"), cache_dir=new_dir
         )
         os.mkdir("dst")
         tar_source.pull()
@@ -143,7 +144,7 @@ class TestTarSource:
             tar.add(file_to_link, filter=check_for_hardlink)
 
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"), "dst", cache_dir=new_dir
+            os.path.join("src", "test.tar"), Path("dst"), cache_dir=new_dir
         )
         os.mkdir("dst")
         tar_source.pull()

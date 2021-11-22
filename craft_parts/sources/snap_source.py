@@ -41,8 +41,8 @@ class SnapSource(FileSourceHandler):
 
     def __init__(
         self,
-        source,
-        part_src_dir,
+        source: str,
+        part_src_dir: Path,
         *,
         cache_dir: Path,
         source_tag: str = None,
@@ -79,10 +79,10 @@ class SnapSource(FileSourceHandler):
 
     def provision(
         self,
-        dst: str,
+        dst: Path,
         clean_target: bool = True,
         keep: bool = False,
-        src: str = None,
+        src: Path = None,
     ) -> None:
         """Provision the snap source.
 
@@ -96,33 +96,39 @@ class SnapSource(FileSourceHandler):
         if src:
             snap_file = src
         else:
-            snap_file = os.path.join(self.part_src_dir, os.path.basename(self.source))
-        snap_file = os.path.realpath(snap_file)
+            snap_file = self.part_src_dir / os.path.basename(self.source)
+        snap_file = snap_file.resolve()
 
         if clean_target:
             with tempfile.NamedTemporaryFile() as tmp_file:
                 tmp_snap = tmp_file.name
-                shutil.move(snap_file, tmp_snap)
+                shutil.move(str(snap_file), tmp_snap)  # path-like arg requires 3.9
                 shutil.rmtree(dst)
                 os.makedirs(dst)
-                shutil.move(tmp_snap, snap_file)
-
-        snap_dir, snap = os.path.split(snap_file)
+                shutil.move(tmp_snap, str(snap_file))
 
         # unsquashfs [options] filesystem [directories or files to extract]
         # options:
         # -force: if file already exists then overwrite
         # -dest <pathname>: unsquash to <pathname>
-        with tempfile.TemporaryDirectory(prefix=snap_dir) as temp_dir:
-            extract_command = ["unsquashfs", "-force", "-dest", temp_dir, snap_file]
+        with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
+            extract_command = [
+                "unsquashfs",
+                "-force",
+                "-dest",
+                temp_dir,
+                str(snap_file),
+            ]
             self._run_output(extract_command)
-            snap_name = _get_snap_name(snap, temp_dir)
+            snap_name = _get_snap_name(snap_file.name, temp_dir)
             # Rename meta and snap dirs from the snap
             rename_paths = (os.path.join(temp_dir, d) for d in ["meta", "snap"])
             rename_paths = (d for d in rename_paths if os.path.exists(d))
             for rename in rename_paths:
                 shutil.move(rename, "{}.{}".format(rename, snap_name))
-            file_utils.link_or_copy_tree(source_tree=temp_dir, destination_tree=dst)
+            file_utils.link_or_copy_tree(
+                source_tree=temp_dir, destination_tree=str(dst)
+            )
 
         if not keep:
             os.remove(snap_file)

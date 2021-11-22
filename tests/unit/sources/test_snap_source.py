@@ -46,12 +46,14 @@ class TestSnapSource:
         with pytest.raises(errors.InvalidSourceOption) as raised:
             kwargs = {param: "foo"}
             sources.SnapSource(
-                source="test.snap", part_src_dir=".", cache_dir=new_dir, **kwargs
+                source="test.snap", part_src_dir=Path(), cache_dir=new_dir, **kwargs
             )
         assert raised.value.option == param.replace("_", "-")
 
     def test_pull_snap_file_must_extract(self, new_dir):
-        source = sources.SnapSource(self._test_file, self._dest_dir, cache_dir=new_dir)
+        source = sources.SnapSource(
+            str(self._test_file), self._dest_dir, cache_dir=new_dir
+        )
         source.pull()
 
         assert Path(self._dest_dir / "meta.basic").is_dir()
@@ -59,13 +61,15 @@ class TestSnapSource:
 
     def test_pull_snap_must_not_clean_targets(self, new_dir, mocker):
         mock_provision = mocker.patch.object(sources.SnapSource, "provision")
-        source = sources.SnapSource(self._test_file, self._dest_dir, cache_dir=new_dir)
+        source = sources.SnapSource(
+            str(self._test_file), self._dest_dir, cache_dir=new_dir
+        )
         source.pull()
 
         mock_provision.assert_called_once_with(
             self._dest_dir,
             clean_target=False,
-            src=os.path.join(self._dest_dir, "test-snap.snap"),
+            src=self._dest_dir / "test-snap.snap",
         )
 
     def test_has_source_handler_entry_on_linux(self):
@@ -78,7 +82,9 @@ class TestSnapSource:
         mocker.patch(
             "subprocess.check_output", side_effect=subprocess.CalledProcessError(1, [])
         )
-        source = sources.SnapSource(self._test_file, self._dest_dir, cache_dir=new_dir)
+        source = sources.SnapSource(
+            str(self._test_file), self._dest_dir, cache_dir=new_dir
+        )
 
         with pytest.raises(sources.errors.PullError) as raised:
             source.pull()

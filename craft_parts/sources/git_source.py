@@ -16,7 +16,6 @@
 
 """Implement the git source handler."""
 
-import os
 import re
 import subprocess
 import sys
@@ -54,7 +53,7 @@ class GitSource(SourceHandler):
         return True
 
     @classmethod
-    def generate_version(cls, *, part_src_dir=None) -> str:
+    def generate_version(cls, *, part_src_dir: Optional[Path] = None) -> str:
         """Return the latest git tag from PWD or defined part_src_dir.
 
         The output depends on the use of annotated tags and will return
@@ -66,13 +65,13 @@ class GitSource(SourceHandler):
         hash of the latest commit.
         """
         if not part_src_dir:
-            part_src_dir = os.getcwd()
+            part_src_dir = Path.cwd()
 
         encoding = sys.getfilesystemencoding()
         try:
             output = (
                 subprocess.check_output(
-                    ["git", "-C", part_src_dir, "describe", "--dirty"],
+                    ["git", "-C", str(part_src_dir), "describe", "--dirty"],
                     stderr=subprocess.DEVNULL,
                 )
                 .decode(encoding)
@@ -82,7 +81,7 @@ class GitSource(SourceHandler):
             # If we fall into this exception it is because the repo is not
             # tagged at all.
             proc = subprocess.Popen(  # pylint: disable=consider-using-with
-                ["git", "-C", part_src_dir, "describe", "--dirty", "--always"],
+                ["git", "-C", str(part_src_dir), "describe", "--dirty", "--always"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
@@ -112,8 +111,8 @@ class GitSource(SourceHandler):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        source,
-        part_src_dir,
+        source: str,
+        part_src_dir: Path,
         *,
         cache_dir: Path,
         source_tag: str = None,
@@ -163,7 +162,7 @@ class GitSource(SourceHandler):
         command = [
             self.command,
             "-C",
-            self.part_src_dir,
+            str(self.part_src_dir),
             "fetch",
             "origin",
         ]
@@ -188,14 +187,14 @@ class GitSource(SourceHandler):
         command = [
             self.command,
             "-C",
-            self.part_src_dir,
+            str(self.part_src_dir),
             "fetch",
             "--prune",
             "--recurse-submodules=yes",
         ]
         self._run(command)
 
-        command = [self.command, "-C", self.part_src_dir, "reset", "--hard"]
+        command = [self.command, "-C", str(self.part_src_dir), "reset", "--hard"]
         if reset_spec:
             command.append(reset_spec)
 
@@ -205,7 +204,7 @@ class GitSource(SourceHandler):
         command = [
             self.command,
             "-C",
-            self.part_src_dir,
+            str(self.part_src_dir),
             "submodule",
             "update",
             "--recursive",
@@ -220,14 +219,14 @@ class GitSource(SourceHandler):
             command.extend(["--branch", self.source_tag or self.source_branch])
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
-        self._run(command + [self.source, self.part_src_dir])
+        self._run(command + [self.source, str(self.part_src_dir)])
 
         if self.source_commit:
             self._fetch_origin_commit()
             command = [
                 self.command,
                 "-C",
-                self.part_src_dir,
+                str(self.part_src_dir),
                 "checkout",
                 self.source_commit,
             ]
@@ -235,7 +234,8 @@ class GitSource(SourceHandler):
 
     def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
-        return os.path.exists(os.path.join(self.part_src_dir, ".git"))
+        print("=== src_dir:", self.part_src_dir)
+        return Path(self.part_src_dir, ".git").exists()
 
     def pull(self) -> None:
         """Retrieve the local or remote source files."""
@@ -255,7 +255,7 @@ class GitSource(SourceHandler):
 
         if not tag and not branch and not commit:
             commit = self._run_output(
-                ["git", "-C", self.part_src_dir, "rev-parse", "HEAD"]
+                ["git", "-C", str(self.part_src_dir), "rev-parse", "HEAD"]
             )
 
         return {
