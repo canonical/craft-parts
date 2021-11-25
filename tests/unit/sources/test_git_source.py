@@ -68,7 +68,7 @@ class TestGitSource:
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+            ["git", "clone", "--recursive", "git://my-source", Path("source_dir")]
         )
 
     def test_pull_with_depth(self, fake_run, new_dir):
@@ -86,7 +86,7 @@ class TestGitSource:
                 "--depth",
                 "2",
                 "git://my-source",
-                "source_dir",
+                Path("source_dir"),
             ]
         )
 
@@ -107,7 +107,7 @@ class TestGitSource:
                 "--branch",
                 "my-branch",
                 "git://my-source",
-                "source_dir",
+                Path("source_dir"),
             ]
         )
 
@@ -125,7 +125,7 @@ class TestGitSource:
                 "--branch",
                 "tag",
                 "git://my-source",
-                "source_dir",
+                Path("source_dir"),
             ]
         )
 
@@ -141,13 +141,19 @@ class TestGitSource:
         fake_run.assert_has_calls(
             [
                 mock.call(
-                    ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+                    [
+                        "git",
+                        "clone",
+                        "--recursive",
+                        "git://my-source",
+                        Path("source_dir"),
+                    ]
                 ),
                 mock.call(
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "origin",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
@@ -157,7 +163,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "checkout",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
                     ]
@@ -177,20 +183,27 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
                     ]
                 ),
                 mock.call(
-                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "reset",
+                        "--hard",
+                        "origin/master",
+                    ]
                 ),
                 mock.call(
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -214,20 +227,27 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
                     ]
                 ),
                 mock.call(
-                    ["git", "-C", "source_dir", "reset", "--hard", "refs/tags/tag"]
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "reset",
+                        "--hard",
+                        "refs/tags/tag",
+                    ]
                 ),
                 mock.call(
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -254,7 +274,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
@@ -264,7 +284,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "reset",
                         "--hard",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
@@ -274,7 +294,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -301,7 +321,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
@@ -311,7 +331,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "reset",
                         "--hard",
                         "refs/heads/my-branch",
@@ -321,7 +341,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -393,7 +413,7 @@ class TestGitSource:
             "clone",
             "--recursive",
             "git://my-source",
-            "source_dir",
+            Path("source_dir"),
         ]
         assert raised.value.exit_code == 1
 

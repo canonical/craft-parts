@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -89,12 +88,12 @@ class TestSnapSource:
         with pytest.raises(sources.errors.PullError) as raised:
             source.pull()
 
-        assert re.match(
-            r"unsquashfs -force -dest {0}/\w+ {0}/dest_dir/test-snap.snap".format(
-                self._path
-            ),
-            " ".join(raised.value.command),
-        )
+        cmd = raised.value.command
+        assert cmd[0] == "unsquashfs"
+        assert cmd[1] == "-force"
+        assert cmd[2] == "-dest"
+        assert Path(cmd[3]).parent == self._path
+        assert cmd[4] == self._path / "dest_dir/test-snap.snap"
         assert raised.value.exit_code == 1
 
 

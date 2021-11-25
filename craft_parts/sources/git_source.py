@@ -162,7 +162,7 @@ class GitSource(SourceHandler):
         command = [
             self.command,
             "-C",
-            str(self.part_src_dir),
+            self.part_src_dir,
             "fetch",
             "origin",
         ]
@@ -187,14 +187,14 @@ class GitSource(SourceHandler):
         command = [
             self.command,
             "-C",
-            str(self.part_src_dir),
+            self.part_src_dir,
             "fetch",
             "--prune",
             "--recurse-submodules=yes",
         ]
         self._run(command)
 
-        command = [self.command, "-C", str(self.part_src_dir), "reset", "--hard"]
+        command = [self.command, "-C", self.part_src_dir, "reset", "--hard"]
         if reset_spec:
             command.append(reset_spec)
 
@@ -204,7 +204,7 @@ class GitSource(SourceHandler):
         command = [
             self.command,
             "-C",
-            str(self.part_src_dir),
+            self.part_src_dir,
             "submodule",
             "update",
             "--recursive",
@@ -219,14 +219,14 @@ class GitSource(SourceHandler):
             command.extend(["--branch", self.source_tag or self.source_branch])
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
-        self._run(command + [self.source, str(self.part_src_dir)])
+        self._run(command + [self.source, self.part_src_dir])
 
         if self.source_commit:
             self._fetch_origin_commit()
             command = [
                 self.command,
                 "-C",
-                str(self.part_src_dir),
+                self.part_src_dir,
                 "checkout",
                 self.source_commit,
             ]
@@ -234,7 +234,6 @@ class GitSource(SourceHandler):
 
     def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
-        print("=== src_dir:", self.part_src_dir)
         return Path(self.part_src_dir, ".git").exists()
 
     def pull(self) -> None:
@@ -255,7 +254,7 @@ class GitSource(SourceHandler):
 
         if not tag and not branch and not commit:
             commit = self._run_output(
-                ["git", "-C", str(self.part_src_dir), "rev-parse", "HEAD"]
+                ["git", "-C", self.part_src_dir, "rev-parse", "HEAD"]
             )
 
         return {

@@ -117,7 +117,7 @@ class SnapSource(FileSourceHandler):
                 "-force",
                 "-dest",
                 temp_dir,
-                str(snap_file),
+                snap_file,
             ]
             self._run_output(extract_command)
             snap_name = _get_snap_name(snap_file.name, temp_dir)
