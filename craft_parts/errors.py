@@ -396,7 +396,7 @@ class StageFilesConflict(PartsError):
 
 
 class PluginEnvironmentValidationError(PartsError):
-    """Plugin build script failed at runtime.
+    """Plugin environment validation failed at runtime.
 
     :param part_name: The name of the part being processed.
     """
