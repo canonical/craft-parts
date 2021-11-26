@@ -73,7 +73,7 @@ def directories(new_dir):  # pylint: disable=unused-argument
 # pylint: disable=line-too-long
 
 
-def test_generate_part_environment_build(new_dir):
+def test_generate_step_environment_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
@@ -81,7 +81,7 @@ def test_generate_part_environment_build(new_dir):
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    env = environment.generate_part_environment(
+    env = environment.generate_step_environment(
         part=p1, plugin=plugin, step_info=step_info
     )
 
@@ -118,7 +118,7 @@ def test_generate_part_environment_build(new_dir):
     )
 
 
-def test_generate_part_environment_no_build(new_dir):
+def test_generate_step_environment_no_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
@@ -126,7 +126,7 @@ def test_generate_part_environment_no_build(new_dir):
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    env = environment.generate_part_environment(
+    env = environment.generate_step_environment(
         part=p1, plugin=plugin, step_info=step_info
     )
 
@@ -162,7 +162,7 @@ def test_generate_part_environment_no_build(new_dir):
     )
 
 
-def test_generate_part_environment_no_user_env(new_dir):
+def test_generate_step_environment_no_user_env(new_dir):
     p1 = Part("p1", {})
     info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
@@ -170,7 +170,7 @@ def test_generate_part_environment_no_user_env(new_dir):
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    env = environment.generate_part_environment(
+    env = environment.generate_step_environment(
         part=p1, plugin=plugin, step_info=step_info
     )
 
