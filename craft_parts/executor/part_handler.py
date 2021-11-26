@@ -345,8 +345,11 @@ class PartHandler:
             part=self._part, plugin=self._plugin, step_info=step_info
         )
 
-        # Validate build environment
         if step_info.step == Step.BUILD:
+            # Validate build environment. Unlike the pre-validation we did in
+            # the execution prologue, we don't assume that a different part
+            # can add elements to the build environment. All part dependencies
+            # have already ran at this point.
             validator = self._plugin.validator_class(
                 part_name=step_info.part_name, env=step_env
             )
