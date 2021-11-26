@@ -53,6 +53,9 @@ def mytool_error(new_dir):
     yield tool
 
 
+_COMMAND_NOT_FOUND = 127  # shell return code for command not found
+
+
 class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
@@ -77,7 +80,7 @@ class AppPluginEnvironmentValidator(plugins.PluginEnvironmentValidator):
                     reason="mytool is expected to print ok",
                 )
         except subprocess.CalledProcessError as err:
-            if err.returncode != 127:
+            if err.returncode != _COMMAND_NOT_FOUND:
                 raise errors.PluginEnvironmentValidationError(
                     part_name=self._part_name,
                     reason=f"mytool failed with error code {err.returncode}",
@@ -162,7 +165,7 @@ def test_validate_plugin(new_dir, mytool):
         exe.execute(actions)
 
 
-def test_validate_plugin_created_in_part(new_dir):
+def test_validate_plugin_satisfied_with_part(new_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
