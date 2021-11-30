@@ -140,7 +140,7 @@ def test_get_build_packages(part_info):
     properties = GoPlugin.properties_class.unmarshal({"source": "."})
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_packages() == {"gcc"}
+    assert plugin.get_build_packages() == set()
 
 
 def test_get_build_environment(new_dir, part_info):
@@ -148,9 +148,7 @@ def test_get_build_environment(new_dir, part_info):
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {
-        "CGO_ENABLED": "1",
         "GOBIN": f"{new_dir}/parts/my-part/install/bin",
-        "PARTS_GO_LDFLAGS": "-ldflags -linkmode=external",
     }
 
 
@@ -160,7 +158,7 @@ def test_get_build_commands(part_info):
 
     assert plugin.get_build_commands() == [
         "go mod download",
-        'go install -p "1"  ${PARTS_GO_LDFLAGS} ./...',
+        'go install -p "1"  ./...',
     ]
 
 
@@ -172,7 +170,7 @@ def test_get_build_commands_with_buildtags(part_info):
 
     assert plugin.get_build_commands() == [
         "go mod download",
-        'go install -p "1" -tags=dev,debug ${PARTS_GO_LDFLAGS} ./...',
+        'go install -p "1" -tags=dev,debug ./...',
     ]
 
 

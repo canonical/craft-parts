@@ -123,13 +123,11 @@ class GoPlugin(Plugin):
 
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
-        return {"gcc"}
+        return set()
 
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
-            "PARTS_GO_LDFLAGS": "-ldflags -linkmode=external",
-            "CGO_ENABLED": "1",
             "GOBIN": "{}/bin".format(self._part_info.part_install_dir),
         }
 
@@ -144,8 +142,5 @@ class GoPlugin(Plugin):
 
         return [
             "go mod download",
-            'go install -p "{}" {} ${{PARTS_GO_LDFLAGS}} ./...'.format(
-                self._part_info.parallel_build_count,
-                tags,
-            ),
+            f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
         ]
