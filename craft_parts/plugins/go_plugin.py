@@ -22,9 +22,9 @@ from typing import Any, Dict, List, Optional, Set, cast
 
 from craft_parts import errors
 
+from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
-from .validator import PluginEnvironmentValidator
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class GoPluginProperties(PluginProperties, PluginModel):
         return cls(**plugin_data)
 
 
-class GoPluginEnvironmentValidator(PluginEnvironmentValidator):
+class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     """Check the execution environment for the Go plugin.
 
     :param part_name: The part whose build environment is being validated.
@@ -76,7 +76,7 @@ class GoPluginEnvironmentValidator(PluginEnvironmentValidator):
                 )
             logger.debug("found %s", version)
         except subprocess.CalledProcessError as err:
-            if err.returncode != PluginEnvironmentValidator.COMMAND_NOT_FOUND:
+            if err.returncode != validator.COMMAND_NOT_FOUND:
                 raise errors.PluginEnvironmentValidationError(
                     part_name=self._part_name,
                     reason=f"go compiler failed with error code {err.returncode}",

@@ -24,6 +24,10 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 
+COMMAND_NOT_FOUND = 127
+"""The shell error code for command not found."""
+
+
 class PluginEnvironmentValidator:
     """Base class for plugin environment validators.
 
@@ -37,9 +41,6 @@ class PluginEnvironmentValidator:
     :param part_name: The part whose build environment is being validated.
     :param env: A string containing the build step environment setup.
     """
-
-    COMMAND_NOT_FOUND = 127
-    """The shell error code for command not found."""
 
     def __init__(self, *, part_name: str, env: str):
         self._part_name = part_name
