@@ -140,6 +140,9 @@ class DotnetPlugin(Plugin):
             f"-o {self._part_info.part_install_dir}"
         )
         if options.dotnet_self_contained_runtime_identifier:
-            publish_cmd += f" --self-contained -r {options.dotnet_self_contained_runtime_identifier}"
+            publish_cmd += (
+                " --self-contained "
+                f"-r {options.dotnet_self_contained_runtime_identifier}"
+            )
 
         return [build_cmd, publish_cmd]

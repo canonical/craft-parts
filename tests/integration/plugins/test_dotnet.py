@@ -24,6 +24,7 @@ from craft_parts import LifecycleManager, Step
 
 
 def test_dotnet_plugin(new_dir):
+    # pylint: disable=line-too-long
     parts_yaml = textwrap.dedent(
         """
         parts:
@@ -45,6 +46,7 @@ def test_dotnet_plugin(new_dir):
               - -sdk
         """
     )
+    # pylint: enable=line-too-long
     parts = yaml.safe_load(parts_yaml)
 
     Path("dotnet.csproj").write_text(
