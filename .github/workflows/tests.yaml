@@ -45,7 +45,6 @@ jobs:
           sudo snap install --classic node
           sudo snap install --classic pyright
           make test-pyright
-
   tests:
     strategy:
       matrix:
