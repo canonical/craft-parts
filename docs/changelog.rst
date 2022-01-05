@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.1.1 (2022-01-05)
+------------------
+
+- Pin pydantic and pydantic-yaml dependency versions
+
 1.1.0 (2021-12-08)
 ------------------
 
