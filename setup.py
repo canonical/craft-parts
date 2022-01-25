@@ -93,7 +93,7 @@ setup(
     long_description=readme,
     author="Canonical Ltd.",
     author_email="snapcraft@lists.snapcraft.io",
-    url="https://github.com/canonical/craft_parts",
+    url="https://github.com/canonical/craft-parts",
     license="GNU General Public License v3",
     python_requires=">=3.7",
     classifiers=[
