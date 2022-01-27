@@ -31,7 +31,7 @@ class TestLocal:
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        open(os.path.join("src", "dir", "file"), "w", encoding="utf-8").close()
 
         os.mkdir("destination")
 
@@ -46,10 +46,12 @@ class TestLocal:
 
     def test_pull_with_existing_source_tree_creates_hardlinks(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        open(os.path.join("src", "dir", "file"), "w", encoding="utf-8").close()
 
         os.mkdir("destination")
-        open(os.path.join("destination", "existing-file"), "w").close()
+        open(
+            os.path.join("destination", "existing-file"), "w", encoding="utf-8"
+        ).close()
 
         local = LocalSource("src", "destination", cache_dir=new_dir)
         local.pull()
@@ -63,7 +65,7 @@ class TestLocal:
 
     def test_pull_with_existing_source_link_error(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        open(os.path.join("src", "dir", "file"), "w", encoding="utf-8").close()
 
         # Note that this is a symlink now instead of a directory
         os.symlink("dummy", "destination")
@@ -75,10 +77,10 @@ class TestLocal:
 
     def test_pull_with_existing_source_file_error(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        open(os.path.join("src", "dir", "file"), "w", encoding="utf-8").close()
 
         # Note that this is a file now instead of a directory
-        open("destination", "w").close()
+        open("destination", "w", encoding="utf-8").close()
 
         local = LocalSource("src", "destination", cache_dir=new_dir)
         with pytest.raises(errors.CopyTreeError):
@@ -86,7 +88,7 @@ class TestLocal:
 
     def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self, new_dir):
         os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        open(os.path.join("src", "dir", "file"), "w", encoding="utf-8").close()
 
         os.mkdir("destination")
 
@@ -108,11 +110,11 @@ class TestLocal:
         os.makedirs("other")
 
         # Create an application-specific file
-        open("foo.znap", "w").close()
+        open("foo.znap", "w", encoding="utf-8").close()
 
         # Now make some real files
         os.makedirs("dir")
-        open(os.path.join("dir", "file"), "w").close()
+        open(os.path.join("dir", "file"), "w", encoding="utf-8").close()
 
         local = LocalSource(
             ".", "parts/foo/src", cache_dir=new_dir, ignore_patterns=["*.znap"]
@@ -137,7 +139,7 @@ class TestLocal:
         os.makedirs(os.path.join("src", "stage"))
         os.makedirs(os.path.join("src", "prime"))
         os.makedirs(os.path.join("src", "other"))
-        open(os.path.join("src", "foo.znap"), "w").close()
+        open(os.path.join("src", "foo.znap"), "w", encoding="utf-8").close()
 
         os.mkdir("destination")
 
@@ -169,7 +171,7 @@ class TestLocal:
         os.makedirs(os.path.join("src", "prime"))
         os.makedirs(os.path.join("src", "other"))
         os.makedirs(os.path.join("src", "work_dir"))
-        open(os.path.join("src", "foo.znap"), "w").close()
+        open(os.path.join("src", "foo.znap"), "w", encoding="utf-8").close()
 
         os.mkdir("destination")
 
@@ -226,7 +228,7 @@ class TestLocal:
     def test_pull_keeps_symlinks(self, new_dir):
         # Create a source containing a directory, a file and symlinks to both.
         os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        open(os.path.join("src", "dir", "file"), "w", encoding="utf-8").close()
         os.symlink("dir", os.path.join("src", "dir_symlink"))
         os.symlink("file", os.path.join("src", "dir", "file_symlink"))
 
@@ -283,7 +285,7 @@ class TestLocalUpdate:
         os.mkdir(source)
         os.mkdir(destination)
 
-        with open(os.path.join(source, name), "w") as f:
+        with open(os.path.join(source, name), "w", encoding="utf-8") as f:
             f.write("1")
 
         # Now make a reference file with a timestamp later than the file was
@@ -307,12 +309,12 @@ class TestLocalUpdate:
         if ignored:
             assert os.path.exists(os.path.join(destination, name)) is False
         else:
-            with open(os.path.join(destination, name)) as f:
+            with open(os.path.join(destination, name), encoding="utf-8") as f:
                 assert f.read() == "1"
 
         # Now update the file in source, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
-        with open(os.path.join(source, name), "w") as f:
+        with open(os.path.join(source, name), "w", encoding="utf-8") as f:
             f.write("2")
 
         access_time = os.stat("reference").st_atime
@@ -327,7 +329,7 @@ class TestLocalUpdate:
         if ignored:
             assert os.path.exists(os.path.join(destination, name)) is False
         else:
-            with open(os.path.join(destination, name)) as f:
+            with open(os.path.join(destination, name), encoding="utf-8") as f:
                 assert f.read() == "2"
 
     def test_file_added(self, new_dir):
@@ -336,7 +338,7 @@ class TestLocalUpdate:
         os.mkdir(source)
         os.mkdir(destination)
 
-        with open(os.path.join(source, "file1"), "w") as f:
+        with open(os.path.join(source, "file1"), "w", encoding="utf-8") as f:
             f.write("1")
 
         # Now make a reference file with a timestamp later than the file was
@@ -356,7 +358,7 @@ class TestLocalUpdate:
 
         # Now add a new file, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
-        with open(os.path.join(source, "file2"), "w") as f:
+        with open(os.path.join(source, "file2"), "w", encoding="utf-8") as f:
             f.write("2")
 
         access_time = os.stat("reference").st_atime
@@ -376,7 +378,7 @@ class TestLocalUpdate:
         os.makedirs(source_dir)
         os.mkdir(destination)
 
-        with open(os.path.join(source_dir, "file1"), "w") as f:
+        with open(os.path.join(source_dir, "file1"), "w", encoding="utf-8") as f:
             f.write("1")
 
         # Now make a reference file with a timestamp later than the file was
@@ -396,7 +398,7 @@ class TestLocalUpdate:
 
         # Now add a new file to the directory, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
-        with open(os.path.join(source_dir, "file2"), "w") as f:
+        with open(os.path.join(source_dir, "file2"), "w", encoding="utf-8") as f:
             f.write("2")
 
         access_time = os.stat("reference").st_atime

@@ -64,10 +64,11 @@ def test_dotnet_plugin(new_dir):
 
             </Project>
             """
-        )
+        ),
+        encoding="utf-8",
     )
 
-    Path("hello.cs").write_text('Console.WriteLine("Hello, World!");')
+    Path("hello.cs").write_text('Console.WriteLine("Hello, World!");', encoding="utf-8")
 
     lf = LifecycleManager(parts, application_name="test_dotnet", cache_dir=new_dir)
     actions = lf.plan(Step.PRIME)

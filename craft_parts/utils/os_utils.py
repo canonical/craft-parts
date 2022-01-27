@@ -287,7 +287,7 @@ class OsRelease:
         """
         self._os_release: Dict[str, str] = {}
         with contextlib.suppress(FileNotFoundError):
-            with open(os_release_file) as file:
+            with open(os_release_file, encoding="utf-8") as file:
                 for line in file:
                     entry = line.rstrip().split("=")
                     if len(entry) == 2:

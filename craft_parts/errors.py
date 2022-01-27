@@ -361,7 +361,7 @@ class PartFilesConflict(PartsError):
         self.part_name = part_name
         self.other_part_name = other_part_name
         self.conflicting_files = conflicting_files
-        indented_conflicting_files = ("    {}".format(i) for i in conflicting_files)
+        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         brief = "Failed to stage: parts list the same file with different contents."
         details = (
@@ -383,7 +383,7 @@ class StageFilesConflict(PartsError):
     def __init__(self, *, part_name: str, conflicting_files: List[str]):
         self.part_name = part_name
         self.conflicting_files = conflicting_files
-        indented_conflicting_files = ("    {}".format(i) for i in conflicting_files)
+        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         brief = "Failed to stage: part files conflict with files already being staged."
         details = (

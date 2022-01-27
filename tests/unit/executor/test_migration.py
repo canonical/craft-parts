@@ -41,10 +41,10 @@ class TestFileMigration:
         stage_dir.mkdir()
 
         # Place the already-staged file
-        Path(stage_dir, "foo").write_text("staged")
+        Path(stage_dir, "foo").write_text("staged", encoding="utf-8")
 
         # Place the to-be-staged file with the same name
-        Path(install_dir, "foo").write_text("installed")
+        Path(install_dir, "foo").write_text("installed", encoding="utf-8")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -57,7 +57,7 @@ class TestFileMigration:
 
         # Verify that the staged file is the one that was staged last
         assert (
-            Path(stage_dir, "foo").read_text() == "installed"
+            Path(stage_dir, "foo").read_text(encoding="utf-8") == "installed"
         ), "Expected staging to allow overwriting of already-staged files"
 
     def test_migrate_files_supports_no_follow_symlinks(self):
@@ -67,7 +67,7 @@ class TestFileMigration:
         install_dir.mkdir()
         stage_dir.mkdir()
 
-        Path(install_dir, "foo").write_text("installed")
+        Path(install_dir, "foo").write_text("installed", encoding="utf-8")
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
@@ -99,7 +99,7 @@ class TestFileMigration:
         install_dir.mkdir()
         stage_dir.mkdir()
 
-        Path(install_dir, "foo").write_text("installed")
+        Path(install_dir, "foo").write_text("installed", encoding="utf-8")
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
@@ -123,7 +123,7 @@ class TestFileMigration:
         Path(install_dir, "usr/bin").mkdir(parents=True)
         stage_dir.mkdir()
 
-        Path(install_dir, "usr/bin/foo").write_text("installed")
+        Path(install_dir, "usr/bin/foo").write_text("installed", encoding="utf-8")
         Path("install/bin").symlink_to("usr/bin")
 
         files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
@@ -147,7 +147,7 @@ class TestFileMigration:
         Path(install_dir, "a").mkdir(parents=True)
         stage_dir.mkdir()
 
-        Path(install_dir, "a/foo").write_text("installed")
+        Path(install_dir, "a/foo").write_text("installed", encoding="utf-8")
         Path(install_dir, "a/bar").symlink_to("foo")
         Path(install_dir, "bar").symlink_to("a/foo")
 
@@ -200,7 +200,7 @@ class TestFileMigration:
 
         Path(install_dir, "bar").symlink_to("foo")
 
-        Path(install_dir, "foo/xfile").write_text("installed")
+        Path(install_dir, "foo/xfile").write_text("installed", encoding="utf-8")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -226,7 +226,7 @@ class TestFileMigration:
         Path(install_dir, "bar").symlink_to("a/b")
         Path(install_dir, "a/bar").symlink_to("b")
 
-        Path(install_dir, "a/b/xfile").write_text("installed")
+        Path(install_dir, "a/b/xfile").write_text("installed", encoding="utf-8")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -253,7 +253,7 @@ class TestFileMigration:
         install_dir.mkdir()
         stage_dir.mkdir()
 
-        Path(install_dir, "foo").write_text("installed")
+        Path(install_dir, "foo").write_text("installed", encoding="utf-8")
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
@@ -274,7 +274,7 @@ class TestFileMigration:
             Path(stage_dir, "bar").is_symlink() is False
         ), "Expected migrated 'bar' to no longer be a symlink."
         assert (
-            Path(stage_dir, "bar").read_text() == "installed"
+            Path(stage_dir, "bar").read_text(encoding="utf-8") == "installed"
         ), "Expected migrated 'bar' to be a copy of 'foo'"
 
     def test_migrate_files_preserves_file_mode(self):
@@ -285,7 +285,7 @@ class TestFileMigration:
         stage_dir.mkdir()
 
         filepath = Path(install_dir, "foo")
-        filepath.write_text("installed")
+        filepath.write_text("installed", encoding="utf-8")
 
         mode = filepath.stat().st_mode
 
@@ -314,7 +314,7 @@ class TestFileMigration:
         stage_dir.mkdir()
 
         filepath = Path(install_dir, "foo", "bar")
-        filepath.write_text("installed")
+        filepath.write_text("installed", encoding="utf-8")
 
         mode = filepath.stat().st_mode
 
@@ -343,13 +343,13 @@ class TestHelpers:
     def test_clean_shared_area(self, new_dir):
         p1 = Part("p1", {"plugin": "dump", "source": "subdir1"})
         Path("subdir1").mkdir()
-        Path("subdir1/foo.txt").write_text("content")
+        Path("subdir1/foo.txt").write_text("content", encoding="utf-8")
 
         p2 = Part("p2", {"plugin": "dump", "source": "subdir2"})
         Path("subdir2").mkdir()
-        Path("subdir2/foo.txt").write_text("content")
-        Path("subdir2/bar.txt").write_text("other content")
-        Path("subdir2/baz.txt").write_text("yet another content")
+        Path("subdir2/foo.txt").write_text("content", encoding="utf-8")
+        Path("subdir2/bar.txt").write_text("other content", encoding="utf-8")
+        Path("subdir2/baz.txt").write_text("yet another content", encoding="utf-8")
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(

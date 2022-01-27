@@ -282,7 +282,7 @@ class TestPartUpdateHandler:
             },
         )
         Path("subdir").mkdir()
-        Path("subdir/foo.txt").write_text("content")
+        Path("subdir/foo.txt").write_text("content", encoding="utf-8")
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
@@ -301,12 +301,12 @@ class TestPartUpdateHandler:
         self._handler.run_action(Action("foo", Step.PULL))
 
         source_file = Path("subdir/foo.txt")
-        os_utils.TimedWriter.write_text(source_file, "change")
+        os_utils.TimedWriter.write_text(source_file, "change", encoding="utf-8")
         Path("parts/foo/src/bar.txt").touch()
 
         self._handler.run_action(Action("foo", Step.PULL, ActionType.UPDATE))
 
-        assert Path("parts/foo/src/foo.txt").read_text() == "change"
+        assert Path("parts/foo/src/foo.txt").read_text(encoding="utf-8") == "change"
         assert Path("parts/foo/src/bar.txt").exists()
 
     def test_update_pull_no_source(self, new_dir, caplog):
@@ -354,11 +354,11 @@ class TestPartUpdateHandler:
         self._handler.run_action(Action("foo", Step.BUILD))
 
         source_file = Path("subdir/foo.txt")
-        os_utils.TimedWriter.write_text(source_file, "change")
+        os_utils.TimedWriter.write_text(source_file, "change", encoding="utf-8")
 
         self._handler.run_action(Action("foo", Step.BUILD, ActionType.UPDATE))
 
-        assert Path("parts/foo/install/foo.txt").read_text() == "change"
+        assert Path("parts/foo/install/foo.txt").read_text(encoding="utf-8") == "change"
 
     @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
     def test_update_invalid(self, step):
@@ -558,8 +558,8 @@ class TestOverlayMigration:
         "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_overlay_shared_file(self, step, step_dir):
-        Path("parts/p1/layer/file1").write_text("content")
-        Path("parts/p3/install/file1").write_text("content")
+        Path("parts/p1/layer/file1").write_text("content", encoding="utf-8")
+        Path("parts/p3/install/file1").write_text("content", encoding="utf-8")
 
         _run_step_migration(self._p2_handler, step)
         _run_step_migration(self._p3_handler, step)
@@ -579,8 +579,8 @@ class TestOverlayMigration:
         "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_part_shared_file(self, step, step_dir):
-        Path("parts/p1/layer/file1").write_text("content")
-        Path("parts/p3/install/file1").write_text("content")
+        Path("parts/p1/layer/file1").write_text("content", encoding="utf-8")
+        Path("parts/p3/install/file1").write_text("content", encoding="utf-8")
 
         _run_step_migration(self._p2_handler, step)
         _run_step_migration(self._p3_handler, step)
@@ -612,7 +612,7 @@ class TestPartCleanHandler:
         # pylint: disable=attribute-defined-outside-init
         self._part = Part("foo", {"plugin": "dump", "source": "subdir"})
         Path("subdir/bar").mkdir(parents=True)
-        Path("subdir/foo.txt").write_text("content")
+        Path("subdir/foo.txt").write_text("content", encoding="utf-8")
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
@@ -815,7 +815,7 @@ class TestPackages:
 
         Path("parts/p1/stage_snaps").mkdir(parents=True)
         Path("parts/p1/install").mkdir(parents=True)
-        Path("parts/p1/stage_snaps/snap1.snap").write_text("content")
+        Path("parts/p1/stage_snaps/snap1.snap").write_text("content", encoding="utf-8")
 
         handler._unpack_stage_snaps()
         mock_snap_provision.assert_called_once_with(
@@ -943,7 +943,7 @@ class TestHelpers:
 
     def test_remove_file(self):
         test_file = Path("foo.txt")
-        test_file.write_text("content")
+        test_file.write_text("content", encoding="utf-8")
         assert test_file.exists()
 
         part_handler._remove(test_file)

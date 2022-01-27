@@ -60,7 +60,7 @@ class OutdatedReport:
         reasons = []
 
         if self.previous_step_modified:
-            reasons.append("{!r} step".format(self.previous_step_modified.name))
+            reasons.append(f"{self.previous_step_modified.name!r} step")
 
         if self.source_modified:
             reasons.append("source")
@@ -68,7 +68,7 @@ class OutdatedReport:
         if not reasons:
             return ""
 
-        return "{} changed".format(formatting_utils.humanize_list(reasons, "and", "{}"))
+        return f'{formatting_utils.humanize_list(reasons, "and", "{}")} changed'
 
 
 class DirtyReport:
@@ -141,6 +141,6 @@ class DirtyReport:
         if not reasons:
             return ""
 
-        return "{} changed".format(formatting_utils.humanize_list(reasons, "and", "{}"))
+        return f'{formatting_utils.humanize_list(reasons, "and", "{}")} changed'
 
     # pylint: enable=too-many-branches

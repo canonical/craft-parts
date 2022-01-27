@@ -80,7 +80,7 @@ class AutotoolsPlugin(Plugin):
 
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
-        return dict()
+        return {}
 
     def _get_configure_command(self) -> str:
         options = cast(AutotoolsPluginProperties, self._options)
@@ -96,6 +96,6 @@ class AutotoolsPlugin(Plugin):
             "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
-            "make -j{}".format(self._part_info.parallel_build_count),
-            'make install DESTDIR="{}"'.format(self._part_info.part_install_dir),
+            f"make -j{self._part_info.parallel_build_count}",
+            f'make install DESTDIR="{self._part_info.part_install_dir}"',
         ]

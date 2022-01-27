@@ -415,7 +415,7 @@ class GitBaseTestCase:
         _call(["git", "config", "--local", "user.email", "dev@example.com"])
 
     def add_file(self, filename, body, message):
-        with open(filename, "w") as fp:
+        with open(filename, "w", encoding="utf-8") as fp:
             fp.write(body)
 
         _call(["git", "add", filename])
@@ -423,7 +423,7 @@ class GitBaseTestCase:
 
     def check_file_contents(self, path, expected):
         body = None
-        with open(path) as fp:
+        with open(path, encoding="utf-8") as fp:
             body = fp.read()
         assert body == expected
 
@@ -434,7 +434,7 @@ class TestGitConflicts(GitBaseTestCase):
     def test_git_conflicts(self, new_dir):
         repo = os.path.abspath("conflict-test.git")
         working_tree = os.path.abspath("git-conflict-test")
-        conflicting_tree = "{}-conflict".format(working_tree)
+        conflicting_tree = f"{working_tree}-conflict"
         git = GitSource(repo, working_tree, cache_dir=new_dir)
 
         self.clean_dir(repo)
@@ -464,7 +464,7 @@ class TestGitConflicts(GitBaseTestCase):
         git.pull()
 
         body = None
-        with open(os.path.join(working_tree, "fake")) as fp:
+        with open(os.path.join(working_tree, "fake"), encoding="utf-8") as fp:
             body = fp.read()
 
         assert body == "fake 2"
@@ -474,7 +474,7 @@ class TestGitConflicts(GitBaseTestCase):
         repo = os.path.abspath("submodules.git")
         sub_repo = os.path.abspath("subrepo")
         working_tree = os.path.abspath("git-submodules")
-        working_tree_two = "{}-two".format(working_tree)
+        working_tree_two = "{working_tree}-two"
         sub_working_tree = os.path.abspath("git-submodules-sub")
         git = GitSource(repo, working_tree, cache_dir=new_dir)
 
@@ -551,7 +551,7 @@ class TestGitDetails(GitBaseTestCase):
             if not message:
                 message = filename
 
-            with open(filename, "w") as fp:
+            with open(filename, "w", encoding="utf-8") as fp:
                 fp.write(content)
 
             _call(["git", "add", filename])

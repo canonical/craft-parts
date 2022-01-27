@@ -264,8 +264,8 @@ class Part:
     @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
-        return (
-            self.spec.overlay_packages != []
+        return bool(
+            self.spec.overlay_packages
             or self.spec.overlay_script is not None
             or self.spec.overlay_files != ["*"]
         )

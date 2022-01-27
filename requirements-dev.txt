@@ -45,8 +45,8 @@ pydantic-yaml==0.4.2
 pydocstyle==6.1.1
 pyflakes==2.3.1
 Pygments==2.10.0
-pylint==2.11.1
-pylint-fixme-info==1.0.2
+pylint==2.12.2
+pylint-fixme-info==1.0.3
 pylint-pytest==1.1.2
 pyparsing==2.4.7
 pytest==6.2.5

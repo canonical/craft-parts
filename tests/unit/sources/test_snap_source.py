@@ -84,9 +84,8 @@ class TestSnapSource:
             source.pull()
 
         assert re.match(
-            r"unsquashfs -force -dest {0}/\w+ {0}/dest_dir/test-snap.snap".format(
-                self._path
-            ),
+            f"unsquashfs -force -dest {self._path}/\\w+ "
+            f"{self._path}/dest_dir/test-snap.snap",
             " ".join(raised.value.command),
         )
         assert raised.value.exit_code == 1
@@ -99,14 +98,18 @@ class TestGetName:
     def test_get_name(self):
         os.mkdir("meta")
 
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
+        with open(
+            os.path.join("meta", "snap.yaml"), "w", encoding="utf-8"
+        ) as snap_yaml_file:
             print("name: my-snap", file=snap_yaml_file)
         assert snap_source._get_snap_name("snap", ".") == "my-snap"
 
     def test_no_name_yaml(self):
         os.mkdir("meta")
 
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
+        with open(
+            os.path.join("meta", "snap.yaml"), "w", encoding="utf-8"
+        ) as snap_yaml_file:
             print("summary: no name", file=snap_yaml_file)
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:

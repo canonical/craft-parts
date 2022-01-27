@@ -101,9 +101,8 @@ def fake_snapd():
         "craft_parts.packages.snaps.get_snapd_socket_path_template"
     )
     mock_socket_path = socket_path_patcher.start()
-    mock_socket_path.return_value = "http+unix://{}/v2/{{}}".format(
-        snapd_fake_socket_path.replace("/", "%2F")
-    )
+    mock_socket_path.return_value = f'\
+        http+unix://{snapd_fake_socket_path.replace("/", "%2F")}/v2/{{}}'
 
     thread = server.start_fake_server(snapd_fake_socket_path)
 

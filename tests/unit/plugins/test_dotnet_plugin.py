@@ -125,7 +125,7 @@ def test_get_build_environment(new_dir, part_info):
     properties = DotnetPlugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_environment() == {}
+    assert not plugin.get_build_environment()
 
 
 def test_get_build_commands(part_info):
