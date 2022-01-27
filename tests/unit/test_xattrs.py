@@ -35,7 +35,7 @@ class TestXattrs:
         with contextlib.suppress(FileNotFoundError):
             os.remove(self._test_file)
 
-        open(self._test_file, "w").close()
+        open(self._test_file, "w", encoding="utf-8").close()
 
     def teardown_method(self):
         with contextlib.suppress(FileNotFoundError):

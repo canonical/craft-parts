@@ -82,7 +82,7 @@ def test_fileset_only_includes():
     include, exclude = filesets._get_file_list(stage_set)
 
     assert include == ["opt/something", "usr/bin"]
-    assert exclude == []
+    assert not exclude
 
 
 def test_fileset_only_excludes():

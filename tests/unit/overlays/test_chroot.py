@@ -24,7 +24,7 @@ from craft_parts.overlays import chroot
 
 
 def target_func(content: str) -> int:
-    Path("foo.txt").write_text(content)
+    Path("foo.txt").write_text(content, encoding="utf-8")
     return 1337
 
 
@@ -66,7 +66,7 @@ class TestChroot:
 
         chroot.chroot(new_root, target_func, "content")
 
-        assert Path("dir1/foo.txt").read_text() == "content"
+        assert Path("dir1/foo.txt").read_text(encoding="utf-8") == "content"
         assert spy_process.mock_calls == [
             call(
                 target=chroot._runner,
@@ -101,7 +101,7 @@ class TestChroot:
         Path("dir1").mkdir()
         chroot.chroot(new_root, target_func, "content")
 
-        assert Path("dir1/foo.txt").read_text() == "content"
+        assert Path("dir1/foo.txt").read_text(encoding="utf-8") == "content"
         assert spy_process.mock_calls == [
             call(
                 target=chroot._runner,
@@ -126,7 +126,7 @@ class TestChroot:
         Path("dir1/etc/resolv.con").symlink_to("whatever")
         chroot.chroot(new_root, target_func, "content")
 
-        assert Path("dir1/foo.txt").read_text() == "content"
+        assert Path("dir1/foo.txt").read_text(encoding="utf-8") == "content"
         assert spy_process.mock_calls == [
             call(
                 target=chroot._runner,
@@ -154,7 +154,7 @@ class TestChroot:
         Path("dir1/etc").mkdir()
         chroot.chroot(new_root, target_func, "content")
 
-        assert Path("dir1/foo.txt").read_text() == "content"
+        assert Path("dir1/foo.txt").read_text(encoding="utf-8") == "content"
         assert spy_process.mock_calls == [
             call(
                 target=chroot._runner,
@@ -174,7 +174,7 @@ class TestChroot:
 
         chroot._runner(Path("/some/path"), fake_conn, target_func, ("func arg",), {})
 
-        assert Path("foo.txt").read_text() == "func arg"
+        assert Path("foo.txt").read_text(encoding="utf-8") == "func arg"
         assert mock_chdir.mock_calls == [call(Path("/some/path"))]
         assert mock_chroot.mock_calls == [call(Path("/some/path"))]
         assert fake_conn.sent == (1337, None)

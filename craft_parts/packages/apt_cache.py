@@ -67,9 +67,9 @@ class LogProgress(apt.progress.base.AcquireProgress):
             return
         item.owner.id = self._id
         self._id += 1
-        line = "Get: {} {}".format(item.owner.id, item.description)
+        line = f"Get: {item.owner.id} {item.description}"
         if item.owner.filesize:
-            line += " [{}B]".format(apt_pkg.size_to_str(item.owner.filesize))
+            line += f" [{apt_pkg.size_to_str(item.owner.filesize)}B]"
 
         logger.debug(line)
 
@@ -235,7 +235,7 @@ class AptCache(ContextDecorator):
 
         :return: A list of (<package-name>, <package-version>, <dl-path>) tuples.
         """
-        downloaded = list()
+        downloaded = []
         for package in self.cache.get_changes():
             if package.candidate is None:
                 continue
@@ -258,7 +258,7 @@ class AptCache(ContextDecorator):
 
         :return: A dictionary of files and installed versions.
         """
-        installed: Dict[str, str] = dict()
+        installed: Dict[str, str] = {}
         for package in self.cache:
             if package.installed is not None:
                 installed[package.name] = str(package.installed.version)
@@ -369,7 +369,7 @@ def _verify_marked_install(package: apt.package.Package):
     if package.candidate is None:
         raise errors.PackageNotFound(package.name)
 
-    broken_deps: List[str] = list()
+    broken_deps: List[str] = []
     for package_dependencies in package.candidate.dependencies:
         for dep in package_dependencies:
             if not dep.target_versions:
@@ -384,4 +384,4 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
         if pkg_version:
             package.candidate = pkg_version
     else:
-        raise errors.PackageNotFound("{}={}".format(package.name, version))
+        raise errors.PackageNotFound(f"{package.name}={version}")

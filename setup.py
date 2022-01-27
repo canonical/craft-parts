@@ -22,14 +22,14 @@ from setuptools import find_packages, setup  # type: ignore
 def is_ubuntu() -> bool:
     """Verify if running on Ubuntu."""
     try:
-        with open("/etc/os-release") as release_file:
+        with open("/etc/os-release", encoding="utf-8") as release_file:
             os_release = release_file.read()
         return "ID=ubuntu" in os_release
     except FileNotFoundError:
         return False
 
 
-with open("README.md") as readme_file:
+with open("README.md", encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
 install_requires = [
@@ -67,9 +67,7 @@ test_requires = [
     "isort",
     "mypy",
     "pydocstyle",
-    # Incompatible with current pylint-fixme-info==1.0.2
-    # https://github.com/PyCQA/pylint/issues/5390
-    "pylint<2.12.0",
+    "pylint",
     "pylint-fixme-info",
     "pylint-pytest",
     "pytest",

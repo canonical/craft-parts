@@ -27,7 +27,7 @@ def part0(tmpdir) -> Part:
     part = Part("part0", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
     p.mkdir(parents=True)
-    (p / "file.pc").write_text("prefix={}\nName: File".format(part.part_install_dir))
+    (p / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: File")
     return part
 
 
@@ -37,7 +37,7 @@ def part1(tmpdir) -> Part:
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "a" / "1").write_text("")
-    (p / "file.pc").write_text("prefix={}\nName: File".format(part.part_install_dir))
+    (p / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: File")
     return part
 
 
@@ -49,9 +49,7 @@ def part2(tmpdir) -> Part:
     (p / "1").write_text("1")
     (p / "2").write_text("")
     (p / "a" / "2").write_text("a/2")
-    (p / "a" / "file.pc").write_text(
-        "prefix={}\nName: File".format(part.part_install_dir)
-    )
+    (p / "a" / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: File")
     return part
 
 
@@ -73,9 +71,7 @@ def part4(tmpdir) -> Part:
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "a" / "2").write_text("")
-    (p / "file.pc").write_text(
-        "prefix={}\nName: ConflictFile".format(part.part_install_dir)
-    )
+    (p / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: ConflictFile")
     return part
 
 

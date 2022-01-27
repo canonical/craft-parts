@@ -36,8 +36,10 @@ class TestTarSource:
         dest_dir = os.path.join("parts", plugin_name, "src")
         os.makedirs(dest_dir)
         tar_file_name = "test.tar"
-        source = "http://{}:{}/{file_name}".format(
-            *http_server.server_address, file_name=tar_file_name
+        print(type(http_server.server_address))
+        source = (
+            f"http://{http_server.server_address[0]}:"
+            f"{http_server.server_address[1]}/{tar_file_name}"
         )
 
         tar_source = sources.TarSource(source, dest_dir, cache_dir=new_dir)
@@ -46,7 +48,9 @@ class TestTarSource:
 
         source_file = os.path.join(dest_dir, tar_file_name)
         mock_prov.assert_called_once_with(dest_dir, src=source_file, clean_target=False)
-        with open(os.path.join(dest_dir, tar_file_name), "r") as tar_file:
+        with open(
+            os.path.join(dest_dir, tar_file_name), "r", encoding="utf-8"
+        ) as tar_file:
             assert tar_file.read() == "Test fake file"
 
     def test_pull_twice_downloads_once(self, new_dir, mocker, http_server):
@@ -54,9 +58,11 @@ class TestTarSource:
 
         mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
 
-        source = "http://{}:{}/{file_name}".format(
-            *http_server.server_address, file_name="test.tar"
+        source = (
+            f"http://{http_server.server_address[0]}:"
+            f"{http_server.server_address[1]}/test.tar"
         )
+
         expected_checksum = (
             "sha384/d9da1f5d54432edc8963cd817ceced83f7c6d61d3"
             "50ad76d1c2f50c4935d11d50211945ca0ecb980c04c98099"
@@ -76,7 +82,7 @@ class TestTarSource:
         # Create tar file for testing
         os.makedirs(os.path.join("src", "test_prefix"))
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
+        open(file_to_tar, "w", encoding="utf-8").close()
         with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
             tar.add(file_to_tar)
 
@@ -93,7 +99,7 @@ class TestTarSource:
         # Create tar file for testing
         os.makedirs(os.path.join("src", "test_prefix"))
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
+        open(file_to_tar, "w", encoding="utf-8").close()
 
         file_to_link = os.path.join("src", "test_prefix", "link.txt")
         os.symlink("./test.txt", file_to_link)
@@ -125,7 +131,7 @@ class TestTarSource:
         # Create tar file for testing
         os.makedirs(os.path.join("src", "test_prefix"))
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
+        open(file_to_tar, "w", encoding="utf-8").close()
 
         file_to_link = os.path.join("src", "test_prefix", "link.txt")
         os.link(file_to_tar, file_to_link)

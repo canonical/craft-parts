@@ -50,7 +50,7 @@ class TestPluginMake:
         assert self._plugin.get_build_snaps() == set()
 
     def test_get_build_environment(self):
-        assert self._plugin.get_build_environment() == dict()
+        assert not self._plugin.get_build_environment()
 
     def test_get_build_commands(self):
         assert self._plugin.get_build_commands() == [

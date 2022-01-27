@@ -51,7 +51,7 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
         return None
 
     logger.debug("load state file: %s", filename)
-    with open(filename) as yaml_file:
+    with open(filename, encoding="utf-8") as yaml_file:
         state_data = yaml.safe_load(yaml_file)
 
     state_class: Type[StepState]
@@ -85,7 +85,7 @@ def load_overlay_migration_state(
         return None
 
     logger.debug("load overlay migration state file: %s", filename)
-    with open(filename) as yaml_file:
+    with open(filename, encoding="utf-8") as yaml_file:
         state_data = yaml.safe_load(yaml_file)
 
     return MigrationState.unmarshal(state_data)

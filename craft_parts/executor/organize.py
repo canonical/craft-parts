@@ -73,20 +73,18 @@ def organize_files(
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            "multiple files to be organized into {!r}. If this is "
-                            "supposed to be a directory, end it with a slash.".format(
-                                os.path.relpath(dst, base_dir)
-                            )
+                            f"multiple files to be organized into "
+                            f"{os.path.relpath(dst, base_dir)!r}. If this is "
+                            f"supposed to be a directory, end it with a slash."
                         ),
                     )
                 else:
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            "trying to organize file {key!r} to {dst!r}, but {dst!r} "
-                            "already exists".format(
-                                key=key, dst=os.path.relpath(dst, base_dir)
-                            )
+                            f"trying to organize file {key!r} to "
+                            f"{os.path.relpath(dst, base_dir)!r}, but "
+                            f"{os.path.relpath(dst, base_dir)!r} already exists"
                         ),
                     )
 

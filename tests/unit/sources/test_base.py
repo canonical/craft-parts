@@ -110,7 +110,7 @@ class TestFileSourceHandler:
     def test_pull_file(self, new_dir):
         self.source.source = "src/my_file"
         Path("src").mkdir()
-        Path("src/my_file").write_text("content")
+        Path("src/my_file").write_text("content", encoding="utf-8")
         Path("parts/foo/src").mkdir(parents=True)
 
         self.source.pull()
@@ -134,7 +134,7 @@ class TestFileSourceHandler:
         self.source.source = "src/my_file"
         self.source.source_checksum = "md5/9a0364b9e99bb480dd25e1f0284c8555"
         Path("src").mkdir()
-        Path("src/my_file").write_text("content")
+        Path("src/my_file").write_text("content", encoding="utf-8")
         Path("parts/foo/src").mkdir(parents=True)
 
         self.source.pull()
@@ -152,7 +152,7 @@ class TestFileSourceHandler:
         self.source.source = "src/my_file"
         self.source.source_checksum = "md5/12345"
         Path("src").mkdir()
-        Path("src/my_file").write_text("content")
+        Path("src/my_file").write_text("content", encoding="utf-8")
         Path("parts/foo/src").mkdir(parents=True)
 
         with pytest.raises(errors.ChecksumMismatch) as raised:
@@ -203,7 +203,7 @@ class TestFileSourceHandler:
         requests_mock.get(self.source.source, text="other_content")
 
         # pre-cache this file
-        Path("my_file").write_text("content")
+        Path("my_file").write_text("content", encoding="utf-8")
         file_cache = cache.FileCache(new_dir)
         file_cache.cache(filename="my_file", key=self.source.source_checksum)
 

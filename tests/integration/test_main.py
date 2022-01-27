@@ -76,7 +76,7 @@ def setup_new_dir(new_dir):  # pylint: disable=unused-argument
 
 
 def test_main_no_args(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd"])
     main.main()
@@ -117,7 +117,7 @@ def test_main_unreadable_parts_file(mocker, capfd):
 
 
 def test_main_invalid_parts_file(mocker, capfd):
-    Path("parts.yaml").write_text("not yaml data")
+    Path("parts.yaml").write_text("not yaml data", encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd"])
     with pytest.raises(SystemExit) as raised:
@@ -130,7 +130,7 @@ def test_main_invalid_parts_file(mocker, capfd):
 
 
 def test_main_missing_parts_entry(mocker, capfd):
-    Path("parts.yaml").write_text("name: file")
+    Path("parts.yaml").write_text("name: file", encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd"])
     with pytest.raises(SystemExit) as raised:
@@ -154,7 +154,7 @@ def test_main_version(mocker, capfd):
 
 
 def test_main_dry_run(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run"])
     with pytest.raises(SystemExit) as raised:
@@ -178,7 +178,7 @@ def test_main_application_name(new_dir, mocker, capfd):
             override-pull: env | grep ^ZNAPCRAFT_ | cut -f1 -d= | sort
         """
     )
-    Path("parts.yaml").write_text(my_parts_yaml)
+    Path("parts.yaml").write_text(my_parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--application-name", "znapcraft", "pull"])
     main.main()
@@ -205,7 +205,7 @@ def test_main_application_name(new_dir, mocker, capfd):
 
 
 def test_main_invalid_application_name(mocker):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
     Path("work_dir").mkdir()
 
     mocker.patch.object(
@@ -217,7 +217,7 @@ def test_main_invalid_application_name(mocker):
 
 
 def test_main_alternative_work_dir(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
     Path("work_dir").mkdir()
 
     mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir"])
@@ -238,7 +238,7 @@ def test_main_alternative_work_dir(mocker, capfd):
 
 @pytest.mark.parametrize("opt", ["--f", "--file"])
 def test_main_alternative_parts_file(mocker, capfd, opt):
-    Path("other.yaml").write_text(parts_yaml)
+    Path("other.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", opt, "other.yaml"])
     with pytest.raises(SystemExit) as raised:
@@ -251,7 +251,7 @@ def test_main_alternative_parts_file(mocker, capfd, opt):
 
 
 def test_main_alternative_parts_invalid_file(mocker, capfd):
-    Path("other.yaml").write_text(parts_yaml)
+    Path("other.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "-f", "missing.yaml"])
     with pytest.raises(SystemExit) as raised:
@@ -274,7 +274,7 @@ def test_main_alternative_parts_invalid_file(mocker, capfd):
     ],
 )
 def test_main_step(mocker, capfd, step, result):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", step])
     main.main()
@@ -296,7 +296,7 @@ def test_main_step(mocker, capfd, step, result):
     ],
 )
 def test_main_step_dry_run(mocker, capfd, step, result):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", step])
     with pytest.raises(SystemExit) as raised:
@@ -310,7 +310,7 @@ def test_main_step_dry_run(mocker, capfd, step, result):
 
 
 def test_main_step_dry_run_skip(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     # run it once to build state
     mocker.patch.object(sys, "argv", ["cmd"])
@@ -331,7 +331,7 @@ def test_main_step_dry_run_skip(mocker, capfd):
 
 
 def test_main_step_dry_run_show_skip(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     # run it once to build state
     mocker.patch.object(sys, "argv", ["cmd"])
@@ -352,7 +352,7 @@ def test_main_step_dry_run_show_skip(mocker, capfd):
 
 
 def test_main_step_specify_part(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "prime", "foo"])
     main.main()
@@ -366,7 +366,7 @@ def test_main_step_specify_part(mocker, capfd):
 
 
 def test_main_step_specify_part_dry_run(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "prime", "foo"])
     with pytest.raises(SystemExit) as raised:
@@ -404,7 +404,7 @@ def test_main_step_specify_part_dry_run(mocker, capfd):
     ],
 )
 def test_main_step_specify_multiple_parts(mocker, capfd, step, result):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", step, "foo", "bar"])
     with pytest.raises(SystemExit) as raised:
@@ -418,7 +418,7 @@ def test_main_step_specify_multiple_parts(mocker, capfd, step, result):
 
 
 def test_main_step_invalid_part(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "pull", "invalid"])
     with pytest.raises(SystemExit) as raised:
@@ -434,7 +434,7 @@ def test_main_step_invalid_part(mocker, capfd):
 
 
 def test_main_step_invalid_multiple_parts(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "pull", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
@@ -451,7 +451,7 @@ def test_main_step_invalid_multiple_parts(mocker, capfd):
 
 
 def test_main_step_invalid_part_dry_run(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "pull", "invalid"])
     with pytest.raises(SystemExit) as raised:
@@ -468,7 +468,7 @@ def test_main_step_invalid_part_dry_run(mocker, capfd):
 
 
 def test_main_step_invalid_multiple_parts_dry_run(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "pull", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
@@ -485,7 +485,7 @@ def test_main_step_invalid_multiple_parts_dry_run(mocker, capfd):
 
 
 def test_main_clean(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     # run it once to build state
     mocker.patch.object(sys, "argv", ["cmd"])
@@ -520,7 +520,7 @@ def test_main_clean(mocker, capfd):
 
 
 def test_main_clean_workdir(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
     Path("work_dir").mkdir()
 
     # run it once to build state
@@ -552,7 +552,7 @@ def test_main_clean_workdir(mocker, capfd):
 
 
 def test_main_clean_dry_run(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     Path("parts").mkdir()
     Path("stage").mkdir()
@@ -568,7 +568,7 @@ def test_main_clean_dry_run(mocker, capfd):
 
 
 def test_main_clean_part(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     # run it once to build state
     mocker.patch.object(sys, "argv", ["cmd"])
@@ -610,7 +610,7 @@ def test_main_clean_part(mocker, capfd):
 
 
 def test_main_clean_multiple_part(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     # run it once to build state
     mocker.patch.object(sys, "argv", ["cmd"])
@@ -642,7 +642,7 @@ def test_main_clean_multiple_part(mocker, capfd):
 
 
 def test_main_clean_invalid_part(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     # run it once to build state
     mocker.patch.object(sys, "argv", ["cmd", "clean", "invalid"])
@@ -659,7 +659,7 @@ def test_main_clean_invalid_part(mocker, capfd):
 
 
 def test_main_clean_invalid_multiple_part(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+    Path("parts.yaml").write_text(parts_yaml, encoding="utf-8")
 
     # run it once to build state
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo", "invalid"])

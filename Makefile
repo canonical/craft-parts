@@ -56,7 +56,7 @@ install: clean ## Install python package.
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-codespell test-flake8 test-isort test-mypy test-pydocstyle test-pyright test-pylint ## Run all linting tests
+lint: test-black test-codespell test-flake8 test-isort test-mypy test-pydocstyle test-pylint test-pyright ## Run all linting tests
 
 .PHONY: release
 release: dist ## Release with twine.
@@ -92,8 +92,8 @@ test-pydocstyle:
 
 .PHONY: test-pylint
 test-pylint:
-	pylint craft_parts *.py
-	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,consider-using-with
+	pylint craft_parts *.py --disable=fixme --load-plugins=pylint_fixme_info
+	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,consider-using-with,fixme --load-plugins=pylint_fixme_info,pylint_pytest
 
 .PHONY: test-pyright
 test-pyright:

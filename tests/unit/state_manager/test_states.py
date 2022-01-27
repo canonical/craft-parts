@@ -43,7 +43,7 @@ class TestStepStates:
         }
         state_file = Path("parts/foo/state/pull")
         state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(yaml.dump(state_data))
+        state_file.write_text(yaml.dump(state_data), encoding="utf-8")
 
         state = states.load_step_state(Part("foo", {}), Step.PULL)
 
@@ -61,7 +61,7 @@ class TestStepStates:
         }
         state_file = Path("parts/foo/state/build")
         state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(yaml.dump(state_data))
+        state_file.write_text(yaml.dump(state_data), encoding="utf-8")
 
         state = states.load_step_state(Part("foo", {}), Step.BUILD)
 
@@ -78,7 +78,7 @@ class TestStepStates:
         }
         state_file = Path("parts/foo/state/stage")
         state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(yaml.dump(state_data))
+        state_file.write_text(yaml.dump(state_data), encoding="utf-8")
 
         state = states.load_step_state(Part("foo", {}), Step.STAGE)
 
@@ -96,7 +96,7 @@ class TestStepStates:
         }
         state_file = Path("parts/foo/state/prime")
         state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(yaml.dump(state_data))
+        state_file.write_text(yaml.dump(state_data), encoding="utf-8")
 
         state = states.load_step_state(Part("foo", {}), Step.PRIME)
 
