@@ -28,7 +28,7 @@ def test_file_cache(new_dir):
     assert x.get(key=digest) is None
 
     test_file = Path("test_file")
-    test_file.write_text("content", encoding="utf-8")
+    test_file.write_text("content")
 
     # cache it
     result = x.cache(filename="test_file", key=digest)
@@ -54,7 +54,7 @@ def test_file_cache_clean(new_dir):
     x = FileCache(new_dir)
 
     test_file = Path("test_file")
-    test_file.write_text("content", encoding="utf-8")
+    test_file.write_text("content")
 
     result = x.cache(filename="test_file", key=digest)
     assert result is not None

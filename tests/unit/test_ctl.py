@@ -38,7 +38,7 @@ class TestClient:
         )
         ctl.client("pull", ["whatever"])
 
-        msg = call_fifo.read_text(encoding="utf-8")
+        msg = call_fifo.read_text()
         assert msg == '{"function": "pull", "args": ["whatever"]}'
 
     def test_call_function_with_feedback(self, new_dir, mocker):
@@ -46,7 +46,7 @@ class TestClient:
         feedback_fifo = Path("feedback_fifo")
 
         call_fifo.touch()
-        feedback_fifo.write_text("hello there!", encoding="utf-8")
+        feedback_fifo.write_text("hello there!")
 
         mocker.patch.dict(
             os.environ,

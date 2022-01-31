@@ -66,10 +66,10 @@ def client(cmd: str, args: List[str]):
 
     data = {"function": cmd, "args": args}
 
-    with open(call_fifo, "w", encoding="utf-8") as fifo:
+    with open(call_fifo, "w") as fifo:
         fifo.write(json.dumps(data))
 
-    with open(feedback_fifo, "r", encoding="utf-8") as fifo:
+    with open(feedback_fifo, "r") as fifo:
         feedback = fifo.readline().strip()
 
     # Any feedback is considered a fatal error.

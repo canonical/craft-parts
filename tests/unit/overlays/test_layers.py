@@ -77,7 +77,7 @@ class TestLayerHash:
     def test_load(self, new_dir):
         hash_file = Path("parts/p1/state/layer_hash")
         hash_file.parent.mkdir(parents=True)
-        hash_file.write_text(b"some value".hex(), encoding="utf-8")
+        hash_file.write_text(b"some value".hex())
 
         p1 = Part("p1", {})
         h = LayerHash.load(part=p1)
@@ -94,10 +94,7 @@ class TestLayerHash:
         p1 = Part("p1", {})
         h = LayerHash(b"some value")
         h.save(part=p1)
-        assert (
-            Path("parts/p1/state/layer_hash").read_text(encoding="utf-8")
-            == "736f6d652076616c7565"
-        )
+        assert Path("parts/p1/state/layer_hash").read_text() == "736f6d652076616c7565"
 
 
 @pytest.mark.usefixtures("new_dir")

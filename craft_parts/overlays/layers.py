@@ -85,7 +85,7 @@ class LayerHash:
         if not hash_file.exists():
             return None
 
-        with open(hash_file, encoding="utf-8") as file:
+        with open(hash_file) as file:
             hex_string = file.readline()
 
         return cls(bytes.fromhex(hex_string))

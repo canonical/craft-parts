@@ -109,9 +109,7 @@ def _file_collides(file_this: str, file_other: str) -> bool:
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     # pkgconfig files need special handling, only prefix line may be different.
-    with open(file_this, encoding="utf-8") as pc_file_1, open(
-        file_other, encoding="utf-8"
-    ) as pc_file_2:
+    with open(file_this) as pc_file_1, open(file_other) as pc_file_2:
         for line_pc_1, line_pc_2 in zip(pc_file_1, pc_file_2):
             if line_pc_1.startswith("prefix=") and line_pc_2.startswith("prefix="):
                 continue
