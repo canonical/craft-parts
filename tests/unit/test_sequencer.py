@@ -330,7 +330,7 @@ def test_overlay_dependencies_layer_reapply(mocker, new_dir):
 
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
-    Path("parts/p1/state/layer_hash").write_text("00000000", encoding="utf-8")
+    Path("parts/p1/state/layer_hash").write_text("00000000")
 
     info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"overlay-script": "ls"})
@@ -351,7 +351,7 @@ def test_overlay_dependencies_build_not_dirty(mocker, new_dir):
 
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
-    Path("parts/p1/state/layer_hash").write_text("00000000", encoding="utf-8")
+    Path("parts/p1/state/layer_hash").write_text("00000000")
 
     # create build state
     state = states.BuildState(overlay_hash="00000000")
@@ -372,7 +372,7 @@ def test_overlay_dependencies_build_rerun_step(mocker, new_dir):
 
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
-    Path("parts/p1/state/layer_hash").write_text("00000000", encoding="utf-8")
+    Path("parts/p1/state/layer_hash").write_text("00000000")
 
     # create build state
     state = states.BuildState(overlay_hash="11111111")
@@ -393,7 +393,7 @@ def test_overlay_dependencies_stage_not_dirty(mocker, new_dir):
 
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
-    Path("parts/p1/state/layer_hash").write_text("00000000", encoding="utf-8")
+    Path("parts/p1/state/layer_hash").write_text("00000000")
 
     # create build state
     state = states.StageState(overlay_hash="00000000")
@@ -414,7 +414,7 @@ def test_overlay_dependencies_stage_rerun_step(mocker, new_dir):
 
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
-    Path("parts/p1/state/layer_hash").write_text("00000000", encoding="utf-8")
+    Path("parts/p1/state/layer_hash").write_text("00000000")
 
     # create build state
     state = states.StageState(overlay_hash="11111111")

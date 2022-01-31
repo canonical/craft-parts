@@ -37,13 +37,13 @@ def setup_module_fixture(new_dir):  # pylint: disable=unused-argument
 )
 def test_calculate_hash(algo, digest):
     test_file = Path("test_file")
-    test_file.write_text("content", encoding="utf-8")
+    test_file.write_text("content")
     assert file_utils.calculate_hash(test_file, algorithm=algo) == digest
 
 
 def test_file_reader_iter():
     test_file = Path("test_file")
-    test_file.write_text("content", encoding="utf-8")
+    test_file.write_text("content")
     gen = file_utils._file_reader_iter(test_file, block_size=4)
     assert list(gen) == [b"cont", b"ent"]
 
@@ -53,10 +53,10 @@ class TestLinkOrCopyTree:
 
     def setup_method(self):
         os.makedirs("foo/bar/baz")
-        open("1", "w", encoding="utf-8").close()
-        open(os.path.join("foo", "2"), "w", encoding="utf-8").close()
-        open(os.path.join("foo", "bar", "3"), "w", encoding="utf-8").close()
-        open(os.path.join("foo", "bar", "baz", "4"), "w", encoding="utf-8").close()
+        open("1", "w").close()
+        open(os.path.join("foo", "2"), "w").close()
+        open(os.path.join("foo", "bar", "3"), "w").close()
+        open(os.path.join("foo", "bar", "baz", "4"), "w").close()
 
     def test_link_file_to_file_raises(self):
         with pytest.raises(errors.CopyTreeError) as raised:
@@ -76,7 +76,7 @@ class TestLinkOrCopyTree:
         assert os.path.isfile(os.path.join("qux", "bar", "baz", "4"))
 
     def test_link_directory_overwrite_file_raises(self):
-        open("qux", "w", encoding="utf-8").close()
+        open("qux", "w").close()
         with pytest.raises(errors.CopyTreeError) as raised:
             file_utils.link_or_copy_tree("foo", "qux")
         assert raised.value.message == (
@@ -117,10 +117,10 @@ class TestLinkOrCopy:
 
     def setup_method(self):
         os.makedirs("foo/bar/baz")
-        open("1", "w", encoding="utf-8").close()
-        open(os.path.join("foo", "2"), "w", encoding="utf-8").close()
-        open(os.path.join("foo", "bar", "3"), "w", encoding="utf-8").close()
-        open(os.path.join("foo", "bar", "baz", "4"), "w", encoding="utf-8").close()
+        open("1", "w").close()
+        open(os.path.join("foo", "2"), "w").close()
+        open(os.path.join("foo", "bar", "3"), "w").close()
+        open(os.path.join("foo", "bar", "baz", "4"), "w").close()
 
     def test_link_file_ioerror(self, mocker):
         orig_link = os.link
@@ -139,7 +139,7 @@ class TestLinkOrCopy:
 
     def test_destination_exists(self):
         os.mkdir("qux")
-        open(os.path.join("qux", "2"), "w", encoding="utf-8").close()
+        open(os.path.join("qux", "2"), "w").close()
         assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino
 
         file_utils.link_or_copy("foo/2", "qux/2")
@@ -150,7 +150,7 @@ class TestCopy:
     """Verify func:`copy` usage scenarios."""
 
     def setup_method(self):
-        open("1", "w", encoding="utf-8").close()
+        open("1", "w").close()
 
     def test_copy(self):
         file_utils.copy("1", "3")

@@ -243,7 +243,7 @@ def _search_and_replace_contents(
     :param replacement: The string to replace pattern.
     """
     try:
-        with open(file_path, "r+", encoding="utf-8") as fil:
+        with open(file_path, "r+") as fil:
             try:
                 original = fil.read()
             except UnicodeDecodeError:

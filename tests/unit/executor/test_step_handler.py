@@ -105,8 +105,8 @@ class TestStepHandlerBuiltins:
     def test_run_builtin_stage(self, new_dir, mocker):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
-        Path("parts/p1/install/foo").write_text("content", encoding="utf-8")
-        Path("parts/p1/install/subdir/bar").write_text("content", encoding="utf-8")
+        Path("parts/p1/install/foo").write_text("content")
+        Path("parts/p1/install/subdir/bar").write_text("content")
         Path("stage").mkdir()
         sh = _step_handler_for_step(Step.STAGE, cache_dir=new_dir)
         result = sh.run_builtin()
@@ -116,11 +116,11 @@ class TestStepHandlerBuiltins:
     def test_run_builtin_prime(self, new_dir, mocker):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
-        Path("parts/p1/install/foo").write_text("content", encoding="utf-8")
-        Path("parts/p1/install/subdir/bar").write_text("content", encoding="utf-8")
+        Path("parts/p1/install/foo").write_text("content")
+        Path("parts/p1/install/subdir/bar").write_text("content")
         Path("stage/subdir").mkdir(parents=True)
-        Path("stage/foo").write_text("content", encoding="utf-8")
-        Path("stage/subdir/bar").write_text("content", encoding="utf-8")
+        Path("stage/foo").write_text("content")
+        Path("stage/subdir/bar").write_text("content")
         sh = _step_handler_for_step(Step.PRIME, cache_dir=new_dir)
         result = sh.run_builtin()
 

@@ -41,10 +41,7 @@ class NonBlockingRWFifo:
         # Using RDWR for every FIFO just so we can open them reliably whenever
         # (i.e. write-only FIFOs can't be opened successfully until the reader
         # is in place)
-        self._fd = os.open(
-            self._path,
-            os.O_RDWR | os.O_NONBLOCK,
-        )
+        self._fd = os.open(self._path, os.O_RDWR | os.O_NONBLOCK)
 
     @property
     def path(self) -> str:

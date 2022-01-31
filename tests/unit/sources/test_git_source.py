@@ -415,7 +415,7 @@ class GitBaseTestCase:
         _call(["git", "config", "--local", "user.email", "dev@example.com"])
 
     def add_file(self, filename, body, message):
-        with open(filename, "w", encoding="utf-8") as fp:
+        with open(filename, "w") as fp:
             fp.write(body)
 
         _call(["git", "add", filename])
@@ -423,7 +423,7 @@ class GitBaseTestCase:
 
     def check_file_contents(self, path, expected):
         body = None
-        with open(path, encoding="utf-8") as fp:
+        with open(path) as fp:
             body = fp.read()
         assert body == expected
 
@@ -464,7 +464,7 @@ class TestGitConflicts(GitBaseTestCase):
         git.pull()
 
         body = None
-        with open(os.path.join(working_tree, "fake"), encoding="utf-8") as fp:
+        with open(os.path.join(working_tree, "fake")) as fp:
             body = fp.read()
 
         assert body == "fake 2"
@@ -551,7 +551,7 @@ class TestGitDetails(GitBaseTestCase):
             if not message:
                 message = filename
 
-            with open(filename, "w", encoding="utf-8") as fp:
+            with open(filename, "w") as fp:
                 fp.write(content)
 
             _call(["git", "add", filename])

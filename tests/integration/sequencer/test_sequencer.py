@@ -88,8 +88,8 @@ def pull_state(new_dir):
     # build current state
     Path(new_dir / "parts/foo/state").mkdir(parents=True)
     Path(new_dir / "parts/bar/state").mkdir(parents=True)
-    Path(new_dir / "parts/foo/state/pull").write_text(_pull_state_foo, encoding="utf-8")
-    Path(new_dir / "parts/bar/state/pull").write_text(_pull_state_bar, encoding="utf-8")
+    Path(new_dir / "parts/foo/state/pull").write_text(_pull_state_foo)
+    Path(new_dir / "parts/bar/state/pull").write_text(_pull_state_bar)
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -209,9 +209,9 @@ class TestSequencerPlan:
         p1 = Part("foo", {"plugin": "nil"})
 
         # touch pull step state
-        Path("parts/foo/state/build").write_text(_build_state_foo, encoding="utf-8")
+        Path("parts/foo/state/build").write_text(_build_state_foo)
         time.sleep(0.1)
-        Path("parts/foo/state/pull").write_text(_pull_state_foo, encoding="utf-8")
+        Path("parts/foo/state/pull").write_text(_pull_state_foo)
 
         seq = sequencer.Sequencer(
             part_list=[p1],

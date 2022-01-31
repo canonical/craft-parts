@@ -237,7 +237,7 @@ class TestOsRelease:
 
     def _write_os_release(self, contents) -> str:
         path = "os-release"
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w") as f:
             f.write(contents)
         return path
 

@@ -137,10 +137,7 @@ def _get_snap_name(snap: str, snap_dir: str) -> str:
     :return: The snap name.
     """
     try:
-        with open(
-            os.path.join(snap_dir, "meta", "snap.yaml"),
-            encoding="utf-8",
-        ) as snap_yaml:
+        with open(os.path.join(snap_dir, "meta", "snap.yaml")) as snap_yaml:
             return yaml.safe_load(snap_yaml)["name"]
     except (FileNotFoundError, KeyError) as snap_error:
         raise errors.InvalidSnapPackage(snap) from snap_error

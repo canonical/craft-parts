@@ -42,8 +42,7 @@ def test_go_plugin(new_dir, mocker):
             go 1.13
             require rsc.io/quote v1.5.2
             """
-        ),
-        encoding="utf-8",
+        )
     )
 
     Path("hello.go").write_text(
@@ -59,8 +58,7 @@ def test_go_plugin(new_dir, mocker):
                 fmt.Printf("%s", quote.Glass())
             }
             """
-        ),
-        encoding="utf-8",
+        )
     )
 
     # the go compiler is installed in the ci test setup

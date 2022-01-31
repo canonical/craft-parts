@@ -35,7 +35,7 @@ def test_source_tar(new_dir):
         """
     )
 
-    Path("foobar.txt").write_text("content", encoding="utf-8")
+    Path("foobar.txt").write_text("content")
     with tarfile.open("foobar.tar.gz", "w:gz") as tar:
         tar.add("foobar.txt")
 
@@ -49,7 +49,7 @@ def test_source_tar(new_dir):
 
     foo_src_dir = Path("parts", "foo", "src")
     assert list(foo_src_dir.rglob("*")) == [foo_src_dir / "foobar.txt"]
-    assert Path(foo_src_dir, "foobar.txt").read_text(encoding="utf-8") == "content"
+    assert Path(foo_src_dir, "foobar.txt").read_text() == "content"
 
 
 def test_source_tar_error(new_dir):
@@ -63,7 +63,7 @@ def test_source_tar_error(new_dir):
     )
 
     parts = yaml.safe_load(_parts_yaml)
-    Path("foobar.tar.gz").write_text("not a tar file", encoding="utf-8")
+    Path("foobar.tar.gz").write_text("not a tar file")
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_tar", cache_dir=new_dir
     )

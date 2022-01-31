@@ -73,7 +73,7 @@ def main():
 
 
 def _process_parts(options: argparse.Namespace) -> None:
-    with open(options.file, encoding="utf-8") as opt_file:
+    with open(options.file) as opt_file:
         part_data = yaml.safe_load(opt_file)
 
     cache_dir = options.cache_dir

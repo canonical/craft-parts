@@ -30,7 +30,7 @@ from craft_parts import Step, errors, plugins
 def mytool(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
-    tool.write_text("echo ok", encoding="utf-8")
+    tool.write_text("echo ok")
     tool.chmod(0o755)
     yield tool
 
@@ -39,7 +39,7 @@ def mytool(new_dir):
 def mytool_not_ok(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
-    tool.write_text("echo not ok", encoding="utf-8")
+    tool.write_text("echo not ok")
     tool.chmod(0o755)
     yield tool
 
@@ -48,7 +48,7 @@ def mytool_not_ok(new_dir):
 def mytool_error(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
-    tool.write_text("exit 22", encoding="utf-8")
+    tool.write_text("exit 22")
     tool.chmod(0o755)
     yield tool
 
