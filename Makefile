@@ -92,8 +92,8 @@ test-pydocstyle:
 
 .PHONY: test-pylint
 test-pylint:
-	pylint craft_parts *.py --disable=fixme --load-plugins=pylint_fixme_info
-	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,consider-using-with,fixme --load-plugins=pylint_fixme_info,pylint_pytest
+	pylint craft_parts
+	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,consider-using-with
 
 .PHONY: test-pyright
 test-pyright:
