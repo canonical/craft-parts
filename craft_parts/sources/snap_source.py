@@ -121,7 +121,7 @@ class SnapSource(FileSourceHandler):
             rename_paths = (os.path.join(temp_dir, d) for d in ["meta", "snap"])
             rename_paths = (d for d in rename_paths if os.path.exists(d))
             for rename in rename_paths:
-                shutil.move(rename, "{}.{}".format(rename, snap_name))
+                shutil.move(rename, f"{rename}.{snap_name}")
             file_utils.link_or_copy_tree(source_tree=temp_dir, destination_tree=dst)
 
         if not keep:

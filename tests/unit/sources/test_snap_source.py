@@ -84,9 +84,8 @@ class TestSnapSource:
             source.pull()
 
         assert re.match(
-            r"unsquashfs -force -dest {0}/\w+ {0}/dest_dir/test-snap.snap".format(
-                self._path
-            ),
+            f"unsquashfs -force -dest {self._path}/\\w+ "
+            f"{self._path}/dest_dir/test-snap.snap",
             " ".join(raised.value.command),
         )
         assert raised.value.exit_code == 1

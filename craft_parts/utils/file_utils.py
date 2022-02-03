@@ -272,7 +272,7 @@ def calculate_hash(filename: Path, *, algorithm: str) -> str:
 
 
 def _file_reader_iter(
-    path: Path, block_size: int = 2 ** 20
+    path: Path, block_size: int = 2**20
 ) -> Generator[bytes, None, None]:
     """Read a file in blocks.
 

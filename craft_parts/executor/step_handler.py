@@ -257,8 +257,8 @@ class StepHandler:
             function_json = json.loads(function_call)
         except json.decoder.JSONDecodeError as err:
             raise RuntimeError(
-                "{!r} scriptlet called a function with invalid json: "
-                "{}".format(scriptlet_name, function_call)
+                f"{scriptlet_name!r} scriptlet called a function with invalid json: "
+                f"{function_call}"
             ) from err
 
         for attr in ["function", "args"]:

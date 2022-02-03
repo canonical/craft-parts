@@ -88,16 +88,12 @@ def get_build_commands(new_dir: Path) -> List[str]:
 
 
 def test_get_build_commands(plugin, new_dir):
-    assert (
-        plugin.get_build_commands()
-        == [
-            f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-            f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-            "pip install  -U pip setuptools wheel",
-            "[ -f setup.py ] && pip install  -U .",
-        ]
-        + get_build_commands(new_dir)
-    )
+    assert plugin.get_build_commands() == [
+        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+        "pip install  -U pip setuptools wheel",
+        "[ -f setup.py ] && pip install  -U .",
+    ] + get_build_commands(new_dir)
 
 
 def test_get_build_commands_with_all_properties(new_dir):
@@ -114,17 +110,13 @@ def test_get_build_commands_with_all_properties(new_dir):
 
     python_plugin = PythonPlugin(part_info=part_info, properties=properties)
 
-    assert (
-        python_plugin.get_build_commands()
-        == [
-            f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-            f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-            "pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
-            "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-            "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
-        ]
-        + get_build_commands(new_dir)
-    )
+    assert python_plugin.get_build_commands() == [
+        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+        "pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
+        "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
+        "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
+    ] + get_build_commands(new_dir)
 
 
 def test_invalid_properties():

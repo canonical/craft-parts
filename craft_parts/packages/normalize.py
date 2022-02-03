@@ -99,7 +99,7 @@ def _fix_xml_tools(unpack_dir: Path) -> None:
         _search_and_replace_contents(
             xml2_config_path,
             re.compile(r"prefix=/usr"),
-            "prefix={}/usr".format(unpack_dir),
+            f"prefix={unpack_dir}/usr",
         )
 
     xslt_config_path = unpack_dir / "usr" / "bin" / "xslt-config"
@@ -107,7 +107,7 @@ def _fix_xml_tools(unpack_dir: Path) -> None:
         _search_and_replace_contents(
             xslt_config_path,
             re.compile(r"prefix=/usr"),
-            "prefix={}/usr".format(unpack_dir),
+            f"prefix={unpack_dir}/usr",
         )
 
 
@@ -157,9 +157,7 @@ def fix_pkg_config(
     # FIXME: see https://bugs.launchpad.net/snapcraft/+bug/1916281
     pattern_trim = None
     if prefix_trim:
-        pattern_trim = re.compile(
-            "^prefix={}(?P<prefix>.*)".format(prefix_trim.as_posix())
-        )
+        pattern_trim = re.compile(f"^prefix={prefix_trim.as_posix()}(?P<prefix>.*)")
     pattern = re.compile("^prefix=(?P<prefix>.*)")
 
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
@@ -169,9 +167,9 @@ def fix_pkg_config(
             if prefix_trim is not None and pattern_trim is not None:
                 match_trim = pattern_trim.search(str(line))
             if prefix_trim is not None and match_trim is not None:
-                print("prefix={}{}".format(root, match_trim.group("prefix")))
+                print(f'prefix={root}{match_trim.group("prefix")}')
             elif match:
-                print("prefix={}{}".format(root, match.group("prefix")))
+                print(f'prefix={root}{match.group("prefix")}')
             else:
                 print(line, end="")
 

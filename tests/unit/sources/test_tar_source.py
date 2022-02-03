@@ -36,8 +36,10 @@ class TestTarSource:
         dest_dir = os.path.join("parts", plugin_name, "src")
         os.makedirs(dest_dir)
         tar_file_name = "test.tar"
-        source = "http://{}:{}/{file_name}".format(
-            *http_server.server_address, file_name=tar_file_name
+        print(type(http_server.server_address))
+        source = (
+            f"http://{http_server.server_address[0]}:"
+            f"{http_server.server_address[1]}/{tar_file_name}"
         )
 
         tar_source = sources.TarSource(source, dest_dir, cache_dir=new_dir)
@@ -54,9 +56,11 @@ class TestTarSource:
 
         mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
 
-        source = "http://{}:{}/{file_name}".format(
-            *http_server.server_address, file_name="test.tar"
+        source = (
+            f"http://{http_server.server_address[0]}:"
+            f"{http_server.server_address[1]}/test.tar"
         )
+
         expected_checksum = (
             "sha384/d9da1f5d54432edc8963cd817ceced83f7c6d61d3"
             "50ad76d1c2f50c4935d11d50211945ca0ecb980c04c98099"

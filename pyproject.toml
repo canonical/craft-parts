@@ -7,7 +7,7 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.pylint.messages_control]
-disable = "bad-continuation,bad-whitespace,too-many-ancestors,too-few-public-methods,fixme"
+disable = "bad-continuation,bad-whitespace,too-many-ancestors,too-few-public-methods,fixme,fixme-info,unspecified-encoding,use-implicit-booleaness-not-comparison"
 
 [tool.pylint.similarities]
 min-similarity-lines=13

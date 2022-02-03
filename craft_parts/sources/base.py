@@ -224,7 +224,7 @@ class FileSourceHandler(SourceHandler):
         except requests.exceptions.RequestException as err:
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
-                "response={err.response!r}"
+                f"response={err.response!r})"
             )
 
         url_utils.download_request(request, str(self._file))

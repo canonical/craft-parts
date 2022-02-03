@@ -128,7 +128,7 @@ class GoPlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
-            "GOBIN": "{}/bin".format(self._part_info.part_install_dir),
+            "GOBIN": f"{self._part_info.part_install_dir}/bin",
         }
 
     def get_build_commands(self) -> List[str]:
@@ -136,7 +136,7 @@ class GoPlugin(Plugin):
         options = cast(GoPluginProperties, self._options)
 
         if options.go_buildtags:
-            tags = "-tags={}".format(",".join(options.go_buildtags))
+            tags = f'-tags={",".join(options.go_buildtags)}'
         else:
             tags = ""
 

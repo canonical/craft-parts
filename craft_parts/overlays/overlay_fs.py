@@ -53,9 +53,8 @@ class OverlayFS:
                 "overlay",
                 str(mountpoint),
                 "-toverlay",
-                "-olowerdir={!s},upperdir={!s},workdir={!s}".format(
-                    lower_dir, self._upper_dir, self._work_dir
-                ),
+                f"-olowerdir={lower_dir!s},upperdir={self._upper_dir!s},"
+                f"workdir={self._work_dir!s}",
             )
         except CalledProcessError as err:
             raise errors.OverlayMountError(str(mountpoint), message=str(err)) from err

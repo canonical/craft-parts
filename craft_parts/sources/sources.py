@@ -164,7 +164,7 @@ def get_source_type_from_uri(
     :raise InvalidSourceType: If the source type is unknown.
     """
     for extension in ["zip", "deb", "rpm", "7z", "snap"]:
-        if source.endswith(".{}".format(extension)):
+        if source.endswith(f".{extension}"):
             return extension
     source_type = ""
     if source.startswith("bzr:") or source.startswith("lp:"):
