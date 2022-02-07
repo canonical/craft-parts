@@ -65,7 +65,7 @@ class LocalSource(SourceHandler):
         """Retrieve the local source files."""
         file_utils.link_or_copy_tree(
             self.source_abspath,
-            self.part_src_dir,
+            str(self.part_src_dir),
             ignore=self._ignore,
             copy_function=self.copy_function,
         )

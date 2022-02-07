@@ -22,7 +22,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence
 
 import requests
 
@@ -48,8 +48,8 @@ class SourceHandler(abc.ABC):
 
     def __init__(
         self,
-        source: Union[str, Path],
-        part_src_dir: Union[str, Path],
+        source: str,
+        part_src_dir: Path,
         *,
         cache_dir: Path,
         source_tag: Optional[str] = None,
@@ -67,8 +67,8 @@ class SourceHandler(abc.ABC):
         if not ignore_patterns:
             ignore_patterns = []
 
-        self.source = str(source)
-        self.part_src_dir = str(part_src_dir)
+        self.source = source
+        self.part_src_dir = part_src_dir
         self._cache_dir = cache_dir
         self.source_tag = source_tag
         self.source_commit = source_commit
@@ -117,7 +117,7 @@ class SourceHandler(abc.ABC):
             raise errors.PullError(command=command, exit_code=err.returncode)
 
     @classmethod
-    def _run_output(cls, command: List[str]) -> str:
+    def _run_output(cls, command: Sequence) -> str:
         try:
             return subprocess.check_output(command, text=True).strip()
         except subprocess.CalledProcessError as err:
@@ -130,8 +130,8 @@ class FileSourceHandler(SourceHandler):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        source: Union[str, Path],
-        part_src_dir: Union[str, Path],
+        source: str,
+        part_src_dir: Path,
         *,
         cache_dir: Path,
         source_tag: Optional[str] = None,
@@ -162,7 +162,7 @@ class FileSourceHandler(SourceHandler):
 
     @abc.abstractmethod
     def provision(
-        self, dst: str, clean_target: bool = True, keep: bool = False, src: str = None
+        self, dst: Path, clean_target: bool = True, keep: bool = False, src: Path = None
     ) -> None:
         """Process the source file to extract its payload."""
 
@@ -191,7 +191,7 @@ class FileSourceHandler(SourceHandler):
 
         # We finally provision, but we don't clean the target so override-pull
         # can actually have meaning when using these sources.
-        self.provision(self.part_src_dir, src=str(source_file), clean_target=False)
+        self.provision(self.part_src_dir, src=source_file, clean_target=False)
 
     def download(self, filepath: Optional[Path] = None) -> Path:
         """Download the URL from a remote location.

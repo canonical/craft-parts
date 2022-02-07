@@ -38,7 +38,7 @@ class TestSourceHandler:
     def setup_method_fixture(self, new_dir):
         self.source = FooSourceHandler(
             source="source",
-            part_src_dir="parts/foo/src",
+            part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
         )
 
@@ -71,7 +71,7 @@ class TestSourceHandler:
         with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultySource(  # type: ignore
-                source=Path(), part_src_dir=Path(), cache_dir=Path()
+                source=".", part_src_dir=Path(), cache_dir=Path()
             )
 
 
@@ -79,7 +79,7 @@ class BarFileSource(FileSourceHandler):
     """A file source handler."""
 
     def provision(
-        self, dst: str, clean_target: bool = True, keep: bool = False, src: str = None
+        self, dst: Path, clean_target: bool = True, keep: bool = False, src: Path = None
     ) -> None:
         """Extract source payload."""
         self.provision_dst = dst
@@ -95,7 +95,7 @@ class TestFileSourceHandler:
     def setup_method_fixture(self, new_dir):
         self.source = BarFileSource(
             source="source",
-            part_src_dir="parts/foo/src",
+            part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
         )
 
@@ -115,10 +115,10 @@ class TestFileSourceHandler:
 
         self.source.pull()
 
-        assert self.source.provision_dst == "parts/foo/src"
+        assert self.source.provision_dst == Path("parts/foo/src")
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "parts/foo/src/my_file"
+        assert self.source.provision_src == Path("parts/foo/src/my_file")
 
         dest = Path(new_dir, "parts", "foo", "src", "my_file")
         assert dest.is_file()
@@ -139,10 +139,10 @@ class TestFileSourceHandler:
 
         self.source.pull()
 
-        assert self.source.provision_dst == "parts/foo/src"
+        assert self.source.provision_dst == Path("parts/foo/src")
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "parts/foo/src/my_file"
+        assert self.source.provision_src == Path("parts/foo/src/my_file")
 
         dest = Path(new_dir, "parts", "foo", "src", "my_file")
         assert dest.is_file()
@@ -167,10 +167,10 @@ class TestFileSourceHandler:
 
         self.source.pull()
 
-        assert self.source.provision_dst == "parts/foo/src"
+        assert self.source.provision_dst == Path("parts/foo/src")
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "parts/foo/src/some_file"
+        assert self.source.provision_src == Path("parts/foo/src/some_file")
 
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()
@@ -183,10 +183,10 @@ class TestFileSourceHandler:
 
         self.source.pull()
 
-        assert self.source.provision_dst == "parts/foo/src"
+        assert self.source.provision_dst == Path("parts/foo/src")
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "parts/foo/src/some_file"
+        assert self.source.provision_src == Path("parts/foo/src/some_file")
 
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()
@@ -209,10 +209,10 @@ class TestFileSourceHandler:
 
         self.source.pull()
 
-        assert self.source.provision_dst == "parts/foo/src"
+        assert self.source.provision_dst == Path("parts/foo/src")
         assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
-        assert self.source.provision_src == "parts/foo/src/some_file"
+        assert self.source.provision_src == Path("parts/foo/src/some_file")
 
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()

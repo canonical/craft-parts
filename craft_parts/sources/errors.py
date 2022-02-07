@@ -16,7 +16,7 @@
 
 """Source handler error definitions."""
 
-from typing import List
+from typing import List, Sequence
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -155,7 +155,7 @@ class PullError(SourceError):
     :param exit_code: The command exit code.
     """
 
-    def __init__(self, *, command: List[str], exit_code: int):
+    def __init__(self, *, command: Sequence, exit_code: int):
         self.command = command
         self.exit_code = exit_code
         brief = (

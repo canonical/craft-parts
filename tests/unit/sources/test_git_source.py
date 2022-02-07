@@ -17,6 +17,7 @@
 import os
 import shutil
 import subprocess
+from pathlib import Path
 from typing import List
 from unittest import mock
 
@@ -63,16 +64,16 @@ def fake_run(mocker):
 @pytest.mark.usefixtures("mock_get_source_details")
 class TestGitSource:
     def test_pull(self, fake_run, new_dir):
-        git = GitSource("git://my-source", "source_dir", cache_dir=new_dir)
+        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+            ["git", "clone", "--recursive", "git://my-source", Path("source_dir")]
         )
 
     def test_pull_with_depth(self, fake_run, new_dir):
         git = GitSource(
-            "git://my-source", "source_dir", cache_dir=new_dir, source_depth=2
+            "git://my-source", Path("source_dir"), cache_dir=new_dir, source_depth=2
         )
 
         git.pull()
@@ -85,14 +86,14 @@ class TestGitSource:
                 "--depth",
                 "2",
                 "git://my-source",
-                "source_dir",
+                Path("source_dir"),
             ]
         )
 
     def test_pull_branch(self, fake_run, new_dir):
         git = GitSource(
             "git://my-source",
-            "source_dir",
+            Path("source_dir"),
             cache_dir=new_dir,
             source_branch="my-branch",
         )
@@ -106,13 +107,13 @@ class TestGitSource:
                 "--branch",
                 "my-branch",
                 "git://my-source",
-                "source_dir",
+                Path("source_dir"),
             ]
         )
 
     def test_pull_tag(self, fake_run, new_dir):
         git = GitSource(
-            "git://my-source", "source_dir", cache_dir=new_dir, source_tag="tag"
+            "git://my-source", Path("source_dir"), cache_dir=new_dir, source_tag="tag"
         )
         git.pull()
 
@@ -124,14 +125,14 @@ class TestGitSource:
                 "--branch",
                 "tag",
                 "git://my-source",
-                "source_dir",
+                Path("source_dir"),
             ]
         )
 
     def test_pull_commit(self, fake_run, new_dir):
         git = GitSource(
             "git://my-source",
-            "source_dir",
+            Path("source_dir"),
             cache_dir=new_dir,
             source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
         )
@@ -140,13 +141,19 @@ class TestGitSource:
         fake_run.assert_has_calls(
             [
                 mock.call(
-                    ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+                    [
+                        "git",
+                        "clone",
+                        "--recursive",
+                        "git://my-source",
+                        Path("source_dir"),
+                    ]
                 ),
                 mock.call(
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "origin",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
@@ -156,7 +163,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "checkout",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
                     ]
@@ -165,9 +172,9 @@ class TestGitSource:
         )
 
     def test_pull_existing(self, mocker, fake_run, new_dir):
-        mocker.patch("os.path.exists", return_value=True)
+        Path("source_dir/.git").mkdir(parents=True)
 
-        git = GitSource("git://my-source", "source_dir", cache_dir=new_dir)
+        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
         git.pull()
 
         fake_run.assert_has_calls(
@@ -176,20 +183,27 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
                     ]
                 ),
                 mock.call(
-                    ["git", "-C", "source_dir", "reset", "--hard", "origin/master"]
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "reset",
+                        "--hard",
+                        "origin/master",
+                    ]
                 ),
                 mock.call(
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -200,10 +214,10 @@ class TestGitSource:
         )
 
     def test_pull_existing_with_tag(self, mocker, fake_run, new_dir):
-        mocker.patch("os.path.exists", return_value=True)
+        Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
-            "git://my-source", "source_dir", cache_dir=new_dir, source_tag="tag"
+            "git://my-source", Path("source_dir"), cache_dir=new_dir, source_tag="tag"
         )
         git.pull()
 
@@ -213,20 +227,27 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
                     ]
                 ),
                 mock.call(
-                    ["git", "-C", "source_dir", "reset", "--hard", "refs/tags/tag"]
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "reset",
+                        "--hard",
+                        "refs/tags/tag",
+                    ]
                 ),
                 mock.call(
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -237,11 +258,11 @@ class TestGitSource:
         )
 
     def test_pull_existing_with_commit(self, mocker, fake_run, new_dir):
-        mocker.patch("os.path.exists", return_value=True)
+        Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
             "git://my-source",
-            "source_dir",
+            Path("source_dir"),
             cache_dir=new_dir,
             source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
         )
@@ -253,7 +274,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
@@ -263,7 +284,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "reset",
                         "--hard",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
@@ -273,7 +294,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -284,11 +305,11 @@ class TestGitSource:
         )
 
     def test_pull_existing_with_branch(self, mocker, fake_run, new_dir):
-        mocker.patch("os.path.exists", return_value=True)
+        Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
             "git://my-source",
-            "source_dir",
+            Path("source_dir"),
             cache_dir=new_dir,
             source_branch="my-branch",
         )
@@ -300,7 +321,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
@@ -310,7 +331,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "reset",
                         "--hard",
                         "refs/heads/my-branch",
@@ -320,7 +341,7 @@ class TestGitSource:
                     [
                         "git",
                         "-C",
-                        "source_dir",
+                        Path("source_dir"),
                         "submodule",
                         "update",
                         "--recursive",
@@ -334,7 +355,7 @@ class TestGitSource:
         with pytest.raises(errors.IncompatibleSourceOptions) as raised:
             GitSource(
                 "git://mysource",
-                "source_dir",
+                Path("source_dir"),
                 cache_dir=new_dir,
                 source_tag="tag",
                 source_branch="branch",
@@ -346,7 +367,7 @@ class TestGitSource:
         with pytest.raises(errors.IncompatibleSourceOptions) as raised:
             GitSource(
                 "git://mysource",
-                "source_dir",
+                Path("source_dir"),
                 cache_dir=new_dir,
                 source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
                 source_branch="branch",
@@ -358,7 +379,7 @@ class TestGitSource:
         with pytest.raises(errors.IncompatibleSourceOptions) as raised:
             GitSource(
                 "git://mysource",
-                "source_dir",
+                Path("source_dir"),
                 cache_dir=new_dir,
                 source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
                 source_tag="tag",
@@ -370,7 +391,7 @@ class TestGitSource:
         with pytest.raises(errors.InvalidSourceOption) as raised:
             GitSource(
                 "git://mysource",
-                "source_dir",
+                Path("source_dir"),
                 cache_dir=new_dir,
                 source_checksum="md5/d9210476aac5f367b14e513bdefdee08",
             )
@@ -384,7 +405,7 @@ class TestGitSource:
         mock_process_run = mocker.patch("craft_parts.utils.os_utils.process_run")
         mock_process_run.side_effect = subprocess.CalledProcessError(1, [])
 
-        git = GitSource("git://my-source", "source_dir", cache_dir=new_dir)
+        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
         with pytest.raises(errors.PullError) as raised:
             git.pull()
         assert raised.value.command == [
@@ -392,7 +413,7 @@ class TestGitSource:
             "clone",
             "--recursive",
             "git://my-source",
-            "source_dir",
+            Path("source_dir"),
         ]
         assert raised.value.exit_code == 1
 
@@ -433,7 +454,7 @@ class TestGitConflicts(GitBaseTestCase):
 
     def test_git_conflicts(self, new_dir):
         repo = os.path.abspath("conflict-test.git")
-        working_tree = os.path.abspath("git-conflict-test")
+        working_tree = Path("git-conflict-test").absolute()
         conflicting_tree = f"{working_tree}-conflict"
         git = GitSource(repo, working_tree, cache_dir=new_dir)
 
@@ -473,7 +494,7 @@ class TestGitConflicts(GitBaseTestCase):
         """Test that updates to submodules are pulled"""
         repo = os.path.abspath("submodules.git")
         sub_repo = os.path.abspath("subrepo")
-        working_tree = os.path.abspath("git-submodules")
+        working_tree = Path("git-submodules").absolute()
         working_tree_two = "{working_tree}-two"
         sub_working_tree = os.path.abspath("git-submodules-sub")
         git = GitSource(repo, working_tree, cache_dir=new_dir)
@@ -558,7 +579,7 @@ class TestGitDetails(GitBaseTestCase):
             _call(["git", "commit", "-am", message])
 
         self.working_tree = "git-test"
-        self.source_dir = "git-checkout"
+        self.source_dir = Path("git-checkout")
         self.clean_dir(self.working_tree)
 
         os.chdir(self.working_tree)

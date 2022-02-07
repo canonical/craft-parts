@@ -16,7 +16,6 @@
 
 """Implement the git source handler."""
 
-import os
 import re
 import subprocess
 import sys
@@ -54,7 +53,7 @@ class GitSource(SourceHandler):
         return True
 
     @classmethod
-    def generate_version(cls, *, part_src_dir=None) -> str:
+    def generate_version(cls, *, part_src_dir: Optional[Path] = None) -> str:
         """Return the latest git tag from PWD or defined part_src_dir.
 
         The output depends on the use of annotated tags and will return
@@ -66,13 +65,13 @@ class GitSource(SourceHandler):
         hash of the latest commit.
         """
         if not part_src_dir:
-            part_src_dir = os.getcwd()
+            part_src_dir = Path.cwd()
 
         encoding = sys.getfilesystemencoding()
         try:
             output = (
                 subprocess.check_output(
-                    ["git", "-C", part_src_dir, "describe", "--dirty"],
+                    ["git", "-C", str(part_src_dir), "describe", "--dirty"],
                     stderr=subprocess.DEVNULL,
                 )
                 .decode(encoding)
@@ -82,7 +81,7 @@ class GitSource(SourceHandler):
             # If we fall into this exception it is because the repo is not
             # tagged at all.
             proc = subprocess.Popen(  # pylint: disable=consider-using-with
-                ["git", "-C", part_src_dir, "describe", "--dirty", "--always"],
+                ["git", "-C", str(part_src_dir), "describe", "--dirty", "--always"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
@@ -112,8 +111,8 @@ class GitSource(SourceHandler):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        source,
-        part_src_dir,
+        source: str,
+        part_src_dir: Path,
         *,
         cache_dir: Path,
         source_tag: str = None,
@@ -235,7 +234,7 @@ class GitSource(SourceHandler):
 
     def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
-        return os.path.exists(os.path.join(self.part_src_dir, ".git"))
+        return Path(self.part_src_dir, ".git").exists()
 
     def pull(self) -> None:
         """Retrieve the local or remote source files."""
