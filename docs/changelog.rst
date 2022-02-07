@@ -2,6 +2,16 @@
 Changelog
 *********
 
+1.1.2 (2022-02-07)
+------------------
+
+- Do not refresh already installed snaps
+- Fix URL in setup.py
+- Fix pydantic validation error handling
+- Unpin pydantic and pydantic-yaml dependency versions
+- Unpin pylint dependency version
+- Remove unused requirements files
+
 1.1.1 (2022-01-05)
 ------------------
 
