@@ -35,8 +35,8 @@ with open("README.md") as readme_file:
 
 install_requires = [
     "PyYAML",
-    "pydantic==1.8.2",
-    "pydantic-yaml==0.4.3",
+    "pydantic",
+    "pydantic-yaml",
     "pyxdg",
     "requests",
     "requests-unixsocket",

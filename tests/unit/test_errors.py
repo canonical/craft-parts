@@ -14,7 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import TYPE_CHECKING, List
+
 from craft_parts import errors
+
+if TYPE_CHECKING:
+    from pydantic.error_wrappers import ErrorDict
 
 
 def test_parts_error_brief():
@@ -84,10 +89,14 @@ def test_part_specification_error():
 
 
 def test_part_specification_error_from_validation_error():
-    error_list = [
-        {"loc": ("field-1", 0), "msg": "something is wrong"},
-        {"loc": ("field-2",), "msg": "field required"},
-        {"loc": ("field-3",), "msg": "extra fields not permitted"},
+    error_list: List["ErrorDict"] = [
+        {"loc": ("field-1", 0), "msg": "something is wrong", "type": "value_error"},
+        {"loc": ("field-2",), "msg": "field required", "type": "value_error"},
+        {
+            "loc": ("field-3",),
+            "msg": "extra fields not permitted",
+            "type": "value_error",
+        },
     ]
     err = errors.PartSpecificationError.from_validation_error(
         part_name="foo", error_list=error_list
@@ -99,22 +108,6 @@ def test_part_specification_error_from_validation_error():
         "- field 'field-2' is required\n"
         "- extra field 'field-3' not permitted"
     )
-    assert err.resolution == "Review part 'foo' and make sure it's correct."
-
-
-def test_part_specification_error_from_bad_validation_error():
-    error_list = [
-        {"loc": "field-1", "msg": "something is wrong"},
-        {"loc": "field-1"},
-        {"msg": "something is wrong"},
-        {},
-    ]
-    err = errors.PartSpecificationError.from_validation_error(
-        part_name="foo", error_list=error_list
-    )
-    assert err.part_name == "foo"
-    assert err.brief == "Part 'foo' validation failed."
-    assert err.details == ""
     assert err.resolution == "Review part 'foo' and make sure it's correct."
 
 

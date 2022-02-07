@@ -95,7 +95,6 @@ class TestPartHandling:
         assert state == states.OverlayState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            assets={},
         )
 
     def test_run_overlay_with_filter(self, mocker, new_dir):
