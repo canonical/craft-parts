@@ -17,7 +17,10 @@
 """Craft parts errors."""
 
 import dataclasses
-from typing import Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, List, Optional, Set
+
+if TYPE_CHECKING:
+    from pydantic.error_wrappers import ErrorDict
 
 
 @dataclasses.dataclass(repr=True)
@@ -117,7 +120,7 @@ class PartSpecificationError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
     @classmethod
-    def from_validation_error(cls, *, part_name: str, error_list: List[Dict[str, Any]]):
+    def from_validation_error(cls, *, part_name: str, error_list: List["ErrorDict"]):
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
