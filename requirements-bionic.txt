@@ -1,1 +1,0 @@
-python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/1.6.5ubuntu0.6/python-apt_1.6.5ubuntu0.6.tar.xz; sys_platform == 'linux'

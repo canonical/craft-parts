@@ -455,7 +455,7 @@ class TestGitConflicts(GitBaseTestCase):
     def test_git_conflicts(self, new_dir):
         repo = os.path.abspath("conflict-test.git")
         working_tree = Path("git-conflict-test").absolute()
-        conflicting_tree = "{}-conflict".format(working_tree)
+        conflicting_tree = f"{working_tree}-conflict"
         git = GitSource(repo, working_tree, cache_dir=new_dir)
 
         self.clean_dir(repo)
@@ -495,7 +495,7 @@ class TestGitConflicts(GitBaseTestCase):
         repo = os.path.abspath("submodules.git")
         sub_repo = os.path.abspath("subrepo")
         working_tree = Path("git-submodules").absolute()
-        working_tree_two = "{}-two".format(working_tree)
+        working_tree_two = "{working_tree}-two"
         sub_working_tree = os.path.abspath("git-submodules-sub")
         git = GitSource(repo, working_tree, cache_dir=new_dir)
 

@@ -90,7 +90,7 @@ class GitSource(SourceHandler):
                 # This most likely means the project we are in is not driven
                 # by git.
                 raise errors.VCSError(message=stderr.decode(encoding).strip()) from err
-            return "0+git.{}".format(stdout.decode(encoding).strip())
+            return f"0+git.{stdout.decode(encoding).strip()}"
 
         match = re.search(
             r"^(?P<tag>[a-zA-Z0-9.+~-]+)-"
@@ -107,7 +107,7 @@ class GitSource(SourceHandler):
         revs_ahead = match.group("revs_ahead")
         commit = match.group("commit")
 
-        return "{}+git{}.{}".format(tag, revs_ahead, commit)
+        return f"{tag}+git{revs_ahead}.{commit}"
 
     def __init__(  # pylint: disable=too-many-arguments
         self,

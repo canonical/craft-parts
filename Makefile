@@ -41,7 +41,7 @@ coverage: ## Run pytest with coverage report.
 docs: ## Generate documentation.
 	rm -f docs/craft_parts.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ craft_parts --force --no-toc --ext-githubpages --separate --module-first
+	pip install -r docs/requirements.txt
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
@@ -56,7 +56,7 @@ install: clean ## Install python package.
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-codespell test-flake8 test-isort test-mypy test-pydocstyle test-pyright test-pylint ## Run all linting tests
+lint: test-black test-codespell test-flake8 test-isort test-mypy test-pydocstyle test-pylint test-pyright ## Run all linting tests
 
 .PHONY: release
 release: dist ## Release with twine.
@@ -92,7 +92,7 @@ test-pydocstyle:
 
 .PHONY: test-pylint
 test-pylint:
-	pylint craft_parts *.py
+	pylint craft_parts
 	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,consider-using-with
 
 .PHONY: test-pyright

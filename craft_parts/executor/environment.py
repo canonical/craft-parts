@@ -29,7 +29,7 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
-def generate_part_environment(
+def generate_step_environment(
     *, part: Part, plugin: Plugin, step_info: StepInfo
 ) -> str:
     """Generate an environment to use during step execution.
@@ -49,7 +49,7 @@ def generate_part_environment(
     if step == Step.BUILD:
         plugin_environment = plugin.get_build_environment()
     else:
-        plugin_environment = dict()
+        plugin_environment = {}
 
     # Part's (user) say.
     user_build_environment = part.spec.build_environment
@@ -91,7 +91,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
     part_environment: Dict[str, str] = _get_step_environment(step_info)
     paths = [part.part_install_dir, part.stage_dir]
 
-    bin_paths = list()
+    bin_paths = []
     for path in paths:
         bin_paths.extend(os_utils.get_bin_paths(root=path, existing_only=True))
 
@@ -101,7 +101,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
             paths=bin_paths, prepend="", separator=":"
         )
 
-    include_paths = list()
+    include_paths = []
     for path in paths:
         include_paths.extend(
             os_utils.get_include_paths(root=path, arch_triplet=step_info.arch_triplet)
@@ -113,7 +113,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
                 paths=include_paths, prepend="-isystem ", separator=" "
             )
 
-    library_paths = list()
+    library_paths = []
     for path in paths:
         library_paths.extend(
             os_utils.get_library_paths(root=path, arch_triplet=step_info.arch_triplet)
@@ -124,7 +124,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
             paths=library_paths, prepend="-L", separator=" "
         )
 
-    pkg_config_paths = list()
+    pkg_config_paths = []
     for path in paths:
         pkg_config_paths.extend(
             os_utils.get_pkg_config_paths(
@@ -154,15 +154,15 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
     return {
         f"{prefix}_ARCH_TRIPLET": step_info.arch_triplet,
         f"{prefix}_TARGET_ARCH": step_info.target_arch,
-        f"{prefix}_PARALLEL_BUILD_COUNT": step_info.parallel_build_count,
+        f"{prefix}_PARALLEL_BUILD_COUNT": str(step_info.parallel_build_count),
         f"{prefix}_PART_NAME": step_info.part_name,
-        f"{prefix}_PART_SRC": step_info.part_src_dir,
-        f"{prefix}_PART_BUILD": step_info.part_build_dir,
-        f"{prefix}_PART_BUILD_WORK": step_info.part_build_subdir,
-        f"{prefix}_PART_INSTALL": step_info.part_install_dir,
-        f"{prefix}_OVERLAY": step_info.overlay_mount_dir,
-        f"{prefix}_STAGE": step_info.stage_dir,
-        f"{prefix}_PRIME": step_info.prime_dir,
+        f"{prefix}_PART_SRC": str(step_info.part_src_dir),
+        f"{prefix}_PART_BUILD": str(step_info.part_build_dir),
+        f"{prefix}_PART_BUILD_WORK": str(step_info.part_build_subdir),
+        f"{prefix}_PART_INSTALL": str(step_info.part_install_dir),
+        f"{prefix}_OVERLAY": str(step_info.overlay_mount_dir),
+        f"{prefix}_STAGE": str(step_info.stage_dir),
+        f"{prefix}_PRIME": str(step_info.prime_dir),
     }
 
 
@@ -175,5 +175,5 @@ def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
 
     :return: A string with the combined paths.
     """
-    paths = ["{}{}".format(prepend, p) for p in paths]
+    paths = [f"{prepend}{p}" for p in paths]
     return separator.join(paths)

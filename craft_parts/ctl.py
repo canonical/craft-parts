@@ -60,8 +60,8 @@ def client(cmd: str, args: List[str]):
         feedback_fifo = os.environ["PARTS_FEEDBACK_FIFO"]
     except KeyError as err:
         raise RuntimeError(
-            "{!s} environment variable must be defined.\nNote that this "
-            "utility is designed for use only in part scriptlets.".format(err)
+            f"{err!s} environment variable must be defined.\nNote that this "
+            f"utility is designed for use only in part scriptlets."
         ) from err
 
     data = {"function": cmd, "args": args}

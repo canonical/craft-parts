@@ -144,7 +144,7 @@ class SnapPackage:
     def _get_store_channels(self) -> Dict[str, Any]:
         snap_store_info = self.get_store_snap_info()
         if not snap_store_info or not self.in_store:
-            return dict()
+            return {}
 
         return snap_store_info["channels"]
 
@@ -156,7 +156,7 @@ class SnapPackage:
             if local_snap_info:
                 current_channel = local_snap_info["channel"]
                 if any(current_channel.startswith(risk) for risk in _CHANNEL_RISKS):
-                    current_channel = "latest/{}".format(current_channel)
+                    current_channel = f"latest/{current_channel}"
         return current_channel
 
     def has_assertions(self) -> bool:
@@ -283,22 +283,14 @@ def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
             snap_pkg_channel = store_snap_info["channel"]
             snap_pkg_type = store_snap_info["type"]
             if snap_pkg_channel != "stable" and snap_pkg_type == "base":
-                snap_pkg = SnapPackage(
-                    "{snap_name}/latest/{channel}".format(
-                        snap_name=snap_pkg.name, channel=snap_pkg_channel
-                    )
-                )
+                snap_pkg = SnapPackage(f"{snap_pkg.name}/latest/{snap_pkg_channel}")
 
             if not snap_pkg.installed:
                 snap_pkg.install()
-            elif snap_pkg.get_current_channel() != snap_pkg.channel:
-                snap_pkg.refresh()
 
         local_snap_info = snap_pkg.get_local_snap_info()
         if local_snap_info:
-            snaps_installed.append(
-                "{}={}".format(snap_pkg.name, local_snap_info["revision"])
-            )
+            snaps_installed.append(f'{snap_pkg.name}={local_snap_info["revision"]}')
     return snaps_installed
 
 
@@ -334,7 +326,7 @@ def get_snapd_socket_path_template():
 
 
 def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int):
-    slug = "snaps/{}/file".format(parse.quote(snap_name, safe=""))
+    slug = f'snaps/{parse.quote(snap_name, safe="")}/file'
     url = get_snapd_socket_path_template().format(slug)
     try:
         snap_file = requests_unixsocket.get(url)
@@ -345,7 +337,7 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int):
 
 
 def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
-    slug = "snaps/{}".format(parse.quote(snap_name, safe=""))
+    slug = f'snaps/{parse.quote(snap_name, safe="")}'
     url = get_snapd_socket_path_template().format(slug)
     try:
         snap_info = requests_unixsocket.get(url)
@@ -358,7 +350,7 @@ def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
 def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
-    slug = "find?{}".format(parse.urlencode(dict(name=snap_name)))
+    slug = f"find?{parse.urlencode(dict(name=snap_name))}"
     url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()
@@ -378,4 +370,4 @@ def get_installed_snaps() -> List[str]:
         local_snaps = snap_info.json()["result"]
     except exceptions.ConnectionError:
         local_snaps = []
-    return ["{}={}".format(snap["name"], snap["revision"]) for snap in local_snaps]
+    return [f'{snap["name"]}={snap["revision"]}' for snap in local_snaps]

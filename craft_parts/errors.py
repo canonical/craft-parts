@@ -17,7 +17,10 @@
 """Craft parts errors."""
 
 import dataclasses
-from typing import Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, List, Optional, Set
+
+if TYPE_CHECKING:
+    from pydantic.error_wrappers import ErrorDict
 
 
 @dataclasses.dataclass(repr=True)
@@ -117,7 +120,7 @@ class PartSpecificationError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
     @classmethod
-    def from_validation_error(cls, *, part_name: str, error_list: List[Dict[str, Any]]):
+    def from_validation_error(cls, *, part_name: str, error_list: List["ErrorDict"]):
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
@@ -361,7 +364,7 @@ class PartFilesConflict(PartsError):
         self.part_name = part_name
         self.other_part_name = other_part_name
         self.conflicting_files = conflicting_files
-        indented_conflicting_files = ("    {}".format(i) for i in conflicting_files)
+        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         brief = "Failed to stage: parts list the same file with different contents."
         details = (
@@ -383,7 +386,7 @@ class StageFilesConflict(PartsError):
     def __init__(self, *, part_name: str, conflicting_files: List[str]):
         self.part_name = part_name
         self.conflicting_files = conflicting_files
-        indented_conflicting_files = ("    {}".format(i) for i in conflicting_files)
+        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         brief = "Failed to stage: part files conflict with files already being staged."
         details = (
@@ -393,6 +396,20 @@ class StageFilesConflict(PartsError):
         )
 
         super().__init__(brief=brief, details=details)
+
+
+class PluginEnvironmentValidationError(PartsError):
+    """Plugin environment validation failed at runtime.
+
+    :param part_name: The name of the part being processed.
+    """
+
+    def __init__(self, *, part_name: str, reason: str):
+        self.part_name = part_name
+        self.reason = reason
+        brief = f"Environment validation failed for part {part_name!r}: {reason}."
+
+        super().__init__(brief=brief)
 
 
 class PluginBuildError(PartsError):

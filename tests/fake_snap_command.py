@@ -89,7 +89,7 @@ class FakeSnapCommand:
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
 
         if cmd == "whoami":
-            return "email: {}".format(self._email).encode()
+            return f"email: {self._email}".encode()
 
         if (
             cmd == "download"

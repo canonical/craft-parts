@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
 from pydantic import BaseModel
 
 from .properties import PluginProperties
+from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -32,17 +33,18 @@ class Plugin(abc.ABC):
     """The base class for plugins.
 
     :cvar properties_class: The plugin properties class.
+    :cvar validator_class: The plugin environment validator class.
 
     :param part_info: The part information for the applicable part.
     :param properties: Part-defined properties.
     """
 
     properties_class: Type[PluginProperties]
+    validator_class = PluginEnvironmentValidator
 
     def __init__(
         self, *, properties: PluginProperties, part_info: "infos.PartInfo"
     ) -> None:
-        self._name = part_info.part_name
         self._options = properties
         self._part_info = part_info
 

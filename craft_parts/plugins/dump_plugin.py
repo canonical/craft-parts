@@ -60,7 +60,7 @@ class DumpPlugin(Plugin):
 
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
-        return dict()
+        return {}
 
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""

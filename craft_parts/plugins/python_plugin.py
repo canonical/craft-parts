@@ -111,7 +111,7 @@ class PythonPlugin(Plugin):
             # Add PATH to the python interpreter we always intend to use with
             # this plugin. It can be user overridden, but that is an explicit
             # choice made by a user.
-            "PATH": "{}/bin:${{PATH}}".format(self._part_info.part_install_dir),
+            "PATH": f"{self._part_info.part_install_dir}/bin:${{PATH}}",
             "PARTS_PYTHON_INTERPRETER": "python3",
             "PARTS_PYTHON_VENV_ARGS": "",
         }
@@ -121,12 +121,8 @@ class PythonPlugin(Plugin):
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         build_commands = [
-            '"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{}"'.format(
-                self._part_info.part_install_dir
-            ),
-            'PARTS_PYTHON_VENV_INTERP_PATH="{}/bin/${{PARTS_PYTHON_INTERPRETER}}"'.format(
-                self._part_info.part_install_dir
-            ),
+            f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{self._part_info.part_install_dir}"',
+            f'PARTS_PYTHON_VENV_INTERP_PATH="{self._part_info.part_install_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         ]
 
         options = cast(PythonPluginProperties, self._options)
@@ -153,19 +149,17 @@ class PythonPlugin(Plugin):
         # Now fix shebangs.
         build_commands.append(
             dedent(
-                """\
-            find "{}" -type f -executable -print0 | xargs -0 \
+                f"""\
+            find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \
                 sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#\\!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
-            """.format(
-                    self._part_info.part_install_dir
-                )
+            """
             )
         )
 
         # Lastly, fix the symlink to the "real" python3 interpreter.
         build_commands.append(
             dedent(
-                """\
+                f"""\
             determine_link_target() {{
                 opts_state="$(set +o +x | grep xtrace)"
                 interp_dir="$(dirname "${{PARTS_PYTHON_VENV_INTERP_PATH}}")"
@@ -176,7 +170,7 @@ class PythonPlugin(Plugin):
                 # (4) /root/parts/<part>/install/usr/bin/python3 -> /root/parts/<part>/install/usr/bin/python3.8
                 python_path="$(which "${{PARTS_PYTHON_INTERPRETER}}")"
                 python_path="$(readlink -e "${{python_path}}")"
-                for dir in "{install_dir}" "{stage_dir}"; do
+                for dir in "{self._part_info.part_install_dir}" "{self._part_info.stage_dir}"; do
                     if  echo "${{python_path}}" | grep -q "${{dir}}"; then
                         python_path="$(realpath --strip --relative-to="${{interp_dir}}" \\
                                 "${{python_path}}")"
@@ -189,10 +183,7 @@ class PythonPlugin(Plugin):
 
             python_path="$(determine_link_target)"
             ln -sf "${{python_path}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
-            """.format(
-                    install_dir=self._part_info.part_install_dir,
-                    stage_dir=self._part_info.stage_dir,
-                )
+            """
             )
         )
 

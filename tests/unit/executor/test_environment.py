@@ -73,7 +73,7 @@ def directories(new_dir):  # pylint: disable=unused-argument
 # pylint: disable=line-too-long
 
 
-def test_generate_part_environment_build(new_dir):
+def test_generate_step_environment_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
@@ -81,12 +81,12 @@ def test_generate_part_environment_build(new_dir):
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    env = environment.generate_part_environment(
+    env = environment.generate_step_environment(
         part=p1, plugin=plugin, step_info=step_info
     )
 
     assert env == textwrap.dedent(
-        """\
+        f"""\
         #!/bin/bash
         set -euo pipefail
         # Environment
@@ -95,30 +95,28 @@ def test_generate_part_environment_build(new_dir):
         export XYZ_TARGET_ARCH="arm64"
         export XYZ_PARALLEL_BUILD_COUNT="1"
         export XYZ_PART_NAME="p1"
-        export XYZ_PART_SRC="{0}/parts/p1/src"
-        export XYZ_PART_BUILD="{0}/parts/p1/build"
-        export XYZ_PART_BUILD_WORK="{0}/parts/p1/build"
-        export XYZ_PART_INSTALL="{0}/parts/p1/install"
-        export XYZ_OVERLAY="{0}/overlay/overlay"
-        export XYZ_STAGE="{0}/stage"
-        export XYZ_PRIME="{0}/prime"
-        export PATH="{0}/parts/p1/install/usr/sbin:{0}/parts/p1/install/usr/bin:{0}/parts/p1/install/sbin:{0}/parts/p1/install/bin:$PATH"
-        export CPPFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export CFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export CXXFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export LDFLAGS="-L{0}/stage/lib -L{0}/stage/usr/lib -L{0}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="{0}/stage/usr/share/pkgconfig"
+        export XYZ_PART_SRC="{new_dir}/parts/p1/src"
+        export XYZ_PART_BUILD="{new_dir}/parts/p1/build"
+        export XYZ_PART_BUILD_WORK="{new_dir}/parts/p1/build"
+        export XYZ_PART_INSTALL="{new_dir}/parts/p1/install"
+        export XYZ_OVERLAY="{new_dir}/overlay/overlay"
+        export XYZ_STAGE="{new_dir}/stage"
+        export XYZ_PRIME="{new_dir}/prime"
+        export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
+        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin Environment
         export PLUGIN_ENVVAR="from_plugin"
         ## User Environment
         export PART_ENVVAR="from_part"
-        """.format(
-            new_dir
-        )
+        """
     )
 
 
-def test_generate_part_environment_no_build(new_dir):
+def test_generate_step_environment_no_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
@@ -126,12 +124,12 @@ def test_generate_part_environment_no_build(new_dir):
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    env = environment.generate_part_environment(
+    env = environment.generate_step_environment(
         part=p1, plugin=plugin, step_info=step_info
     )
 
     assert env == textwrap.dedent(
-        """\
+        f"""\
         #!/bin/bash
         set -euo pipefail
         # Environment
@@ -140,29 +138,27 @@ def test_generate_part_environment_no_build(new_dir):
         export XYZ_TARGET_ARCH="arm64"
         export XYZ_PARALLEL_BUILD_COUNT="1"
         export XYZ_PART_NAME="p1"
-        export XYZ_PART_SRC="{0}/parts/p1/src"
-        export XYZ_PART_BUILD="{0}/parts/p1/build"
-        export XYZ_PART_BUILD_WORK="{0}/parts/p1/build"
-        export XYZ_PART_INSTALL="{0}/parts/p1/install"
-        export XYZ_OVERLAY="{0}/overlay/overlay"
-        export XYZ_STAGE="{0}/stage"
-        export XYZ_PRIME="{0}/prime"
-        export PATH="{0}/parts/p1/install/usr/sbin:{0}/parts/p1/install/usr/bin:{0}/parts/p1/install/sbin:{0}/parts/p1/install/bin:$PATH"
-        export CPPFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export CFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export CXXFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export LDFLAGS="-L{0}/stage/lib -L{0}/stage/usr/lib -L{0}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="{0}/stage/usr/share/pkgconfig"
+        export XYZ_PART_SRC="{new_dir}/parts/p1/src"
+        export XYZ_PART_BUILD="{new_dir}/parts/p1/build"
+        export XYZ_PART_BUILD_WORK="{new_dir}/parts/p1/build"
+        export XYZ_PART_INSTALL="{new_dir}/parts/p1/install"
+        export XYZ_OVERLAY="{new_dir}/overlay/overlay"
+        export XYZ_STAGE="{new_dir}/stage"
+        export XYZ_PRIME="{new_dir}/prime"
+        export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
+        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin Environment
         ## User Environment
         export PART_ENVVAR="from_part"
-        """.format(
-            new_dir
-        )
+        """
     )
 
 
-def test_generate_part_environment_no_user_env(new_dir):
+def test_generate_step_environment_no_user_env(new_dir):
     p1 = Part("p1", {})
     info = ProjectInfo(arch="aarch64", application_name="xyz", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=p1)
@@ -170,12 +166,12 @@ def test_generate_part_environment_no_user_env(new_dir):
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    env = environment.generate_part_environment(
+    env = environment.generate_step_environment(
         part=p1, plugin=plugin, step_info=step_info
     )
 
     assert env == textwrap.dedent(
-        """\
+        f"""\
         #!/bin/bash
         set -euo pipefail
         # Environment
@@ -184,23 +180,21 @@ def test_generate_part_environment_no_user_env(new_dir):
         export XYZ_TARGET_ARCH="arm64"
         export XYZ_PARALLEL_BUILD_COUNT="1"
         export XYZ_PART_NAME="p1"
-        export XYZ_PART_SRC="{0}/parts/p1/src"
-        export XYZ_PART_BUILD="{0}/parts/p1/build"
-        export XYZ_PART_BUILD_WORK="{0}/parts/p1/build"
-        export XYZ_PART_INSTALL="{0}/parts/p1/install"
-        export XYZ_OVERLAY="{0}/overlay/overlay"
-        export XYZ_STAGE="{0}/stage"
-        export XYZ_PRIME="{0}/prime"
-        export PATH="{0}/parts/p1/install/usr/sbin:{0}/parts/p1/install/usr/bin:{0}/parts/p1/install/sbin:{0}/parts/p1/install/bin:$PATH"
-        export CPPFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export CFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export CXXFLAGS="-isystem {0}/parts/p1/install/usr/include"
-        export LDFLAGS="-L{0}/stage/lib -L{0}/stage/usr/lib -L{0}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="{0}/stage/usr/share/pkgconfig"
+        export XYZ_PART_SRC="{new_dir}/parts/p1/src"
+        export XYZ_PART_BUILD="{new_dir}/parts/p1/build"
+        export XYZ_PART_BUILD_WORK="{new_dir}/parts/p1/build"
+        export XYZ_PART_INSTALL="{new_dir}/parts/p1/install"
+        export XYZ_OVERLAY="{new_dir}/overlay/overlay"
+        export XYZ_STAGE="{new_dir}/stage"
+        export XYZ_PRIME="{new_dir}/prime"
+        export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
+        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin Environment
         export PLUGIN_ENVVAR="from_plugin"
         ## User Environment
-        """.format(
-            new_dir
-        )
+        """
     )

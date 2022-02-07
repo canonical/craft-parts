@@ -280,11 +280,11 @@ def get_packages_in_base(*, base: str) -> List[DebPackage]:
 
     base_package_list_path = _get_dpkg_list_path(base)
     if not base_package_list_path.exists():
-        return list()
+        return []
 
     # Lines we care about in dpkg.list had the following format:
     # ii adduser 3.118ubuntu1 all add and rem
-    package_list = list()
+    package_list = []
     with fileinput.input(str(base_package_list_path)) as file:
         for line in file:
             if not str(line).startswith("ii "):

@@ -41,4 +41,4 @@ def humanize_list(
     if len(quoted_items) > 2:
         humanized += ","
 
-    return "{} {} {}".format(humanized, conjunction, quoted_items[-1])
+    return f"{humanized} {conjunction} {quoted_items[-1]}"
