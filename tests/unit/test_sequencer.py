@@ -266,12 +266,12 @@ def test_sequencer_ensure_overlay_consistency_rerun(mocker, new_dir):
     p1 = Part("p1", {})
     p2 = Part("p2", {})
 
-    state = states.OverlayState(
-        # echo "some-hash-value" | sha1sum
-        layer_hash="4fc928c87171c54a4687d55899ca212d1b1c46e5"
-    )
     Path("parts/p1/state").mkdir(parents=True)
-    state.write(Path("parts/p1/state/overlay"))
+    layer_hash = LayerHash(
+        # echo "some-hash-value" | sha1sum
+        bytes.fromhex("4fc928c87171c54a4687d55899ca212d1b1c46e5")
+    )
+    layer_hash.save(p1)
 
     seq = Sequencer(part_list=[p1, p2], project_info=info)
 
