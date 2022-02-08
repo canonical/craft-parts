@@ -37,6 +37,7 @@ class PartSpec(BaseModel):
     source_commit: str = ""
     source_depth: int = 0
     source_subdir: str = ""
+    source_submodules: Optional[List[str]] = None
     source_tag: str = ""
     source_type: str = ""
     disable_parallel: bool = False

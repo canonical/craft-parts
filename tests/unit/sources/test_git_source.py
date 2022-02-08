@@ -171,6 +171,47 @@ class TestGitSource:
             ]
         )
 
+    def test_pull_with_submodules_default(self, fake_run, new_dir):
+        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git.pull()
+
+        fake_run.assert_called_once_with(
+            ["git", "clone", "--recursive", "git://my-source", Path("source_dir")]
+        )
+
+    def test_pull_with_submodules_empty(self, fake_run, new_dir):
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_submodules=[],
+        )
+        git.pull()
+
+        fake_run.assert_called_once_with(
+            ["git", "clone", "git://my-source", Path("source_dir")]
+        )
+
+    def test_pull_with_submodules(self, fake_run, new_dir):
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_submodules=["submodule_1", "dir/submodule_2"],
+        )
+        git.pull()
+
+        fake_run.assert_called_once_with(
+            [
+                "git",
+                "clone",
+                "--recursive=submodule_1",
+                "--recursive=dir/submodule_2",
+                "git://my-source",
+                Path("source_dir"),
+            ]
+        )
+
     def test_pull_existing(self, mocker, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
@@ -346,6 +387,132 @@ class TestGitSource:
                         "update",
                         "--recursive",
                         "--force",
+                    ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_submodules_default(self, mocker, fake_run, new_dir):
+        Path("source_dir/.git").mkdir(parents=True)
+
+        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git.pull()
+
+        fake_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "fetch",
+                        "--prune",
+                        "--recurse-submodules=yes",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "reset",
+                        "--hard",
+                        "origin/master",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "submodule",
+                        "update",
+                        "--recursive",
+                        "--force",
+                    ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_submodules_empty(self, mocker, fake_run, new_dir):
+        Path("source_dir/.git").mkdir(parents=True)
+
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_submodules=[],
+        )
+        git.pull()
+
+        fake_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "fetch",
+                        "--prune",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "reset",
+                        "--hard",
+                        "origin/master",
+                    ]
+                ),
+            ]
+        )
+
+    def test_pull_existing_with_submodules(self, mocker, fake_run, new_dir):
+        Path("source_dir/.git").mkdir(parents=True)
+
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_submodules=["submodule_1", "dir/submodule_2"],
+        )
+        git.pull()
+
+        fake_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "fetch",
+                        "--prune",
+                        "--recurse-submodules=yes",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "reset",
+                        "--hard",
+                        "origin/master",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        Path("source_dir"),
+                        "submodule",
+                        "update",
+                        "--recursive",
+                        "--force",
+                        "submodule_1",
+                        "dir/submodule_2",
                     ]
                 ),
             ]

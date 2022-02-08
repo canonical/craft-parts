@@ -60,6 +60,7 @@ class PullState(StepState):
             "source-type",
             "source-branch",
             "source-subdir",
+            "source-submodules",
             "override-pull",
             "stage-packages",
             "overlay-packages",
