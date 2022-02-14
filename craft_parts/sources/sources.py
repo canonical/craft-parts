@@ -65,6 +65,13 @@ code for that part, and how to unpack it if necessary.
     When building, Snapcraft will set the working directory to be this
     subdirectory within the source.
 
+  - source-submodules: <list-of-submodules>
+
+    Configure which submodules to fetch from the source tree.
+    If source-submodules in defined and empty, no submodules are fetched.
+    If source-submodules is not defined, all submodules are fetched (default
+    behavior).
+
 Note that plugins might well define their own semantics for the 'source'
 keywords, because they handle specific build systems, and many languages
 have their own built-in packaging systems (think CPAN, PyPI, NPM). In those
@@ -126,6 +133,7 @@ def get_source_handler(
             source_tag=part.spec.source_tag,
             source_depth=part.spec.source_depth,
             source_commit=part.spec.source_commit,
+            source_submodules=part.spec.source_submodules,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
         )

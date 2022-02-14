@@ -37,6 +37,7 @@ class TestPartSpecs:
             "source-commit": "2514f9533ec9b45d07883e10a561b248497a8e3c",
             "source-depth": 3,
             "source-subdir": "src",
+            "source-submodules": ["submodule_1", "dir/submodule_2"],
             "source-tag": "v2.3",
             "source-type": "tar",
             "disable-parallel": True,

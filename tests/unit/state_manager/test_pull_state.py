@@ -91,6 +91,7 @@ class TestPullStateChanges:
             "source-type",
             "source-branch",
             "source-subdir",
+            "source-submodules",
             "override-pull",
             "stage-packages",
         ]

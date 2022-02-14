@@ -36,6 +36,7 @@ _pull_state_foo = textwrap.dedent(
       source-branch: ''
       source-tag: ''
       source-commit: ''
+      source-submodules: null
       stage-packages: []
       overlay-packages: []
     project_options:
@@ -72,6 +73,7 @@ _pull_state_bar = textwrap.dedent(
       source-branch: ''
       source-tag: ''
       source-commit: ''
+      source-submodules: null
       stage-packages: []
       overlay-packages: []
     project_options:

@@ -45,6 +45,7 @@ class TarSource(FileSourceHandler):
         source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
+        source_submodules: Optional[List[str]] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
     ):
@@ -57,6 +58,7 @@ class TarSource(FileSourceHandler):
             source_branch=source_branch,
             source_depth=source_depth,
             source_checksum=source_checksum,
+            source_submodules=source_submodules,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
         )

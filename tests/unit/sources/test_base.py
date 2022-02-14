@@ -48,6 +48,7 @@ class TestSourceHandler:
         assert self.source.source_branch is None
         assert self.source.source_depth is None
         assert self.source.source_checksum is None
+        assert self.source.source_submodules is None
         assert self.source.command is None
 
     def test_source_check_if_outdated(self):
@@ -105,6 +106,7 @@ class TestFileSourceHandler:
         assert self.source.source_branch is None
         assert self.source.source_depth is None
         assert self.source.source_checksum is None
+        assert self.source.source_submodules is None
         assert self.source.command is None
 
     def test_pull_file(self, new_dir):

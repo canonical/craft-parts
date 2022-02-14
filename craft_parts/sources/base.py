@@ -57,6 +57,7 @@ class SourceHandler(abc.ABC):
         source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
+        source_submodules: Optional[List[str]] = None,
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
@@ -76,6 +77,7 @@ class SourceHandler(abc.ABC):
         self.source_depth = source_depth
         self.source_checksum = source_checksum
         self.source_details = None
+        self.source_submodules = source_submodules
         self.command = command
         self._dirs = project_dirs
         self._checked = False
@@ -139,6 +141,7 @@ class FileSourceHandler(SourceHandler):
         source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
+        source_submodules: Optional[List[str]] = None,
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
@@ -152,6 +155,7 @@ class FileSourceHandler(SourceHandler):
             source_branch=source_branch,
             source_depth=source_depth,
             source_checksum=source_checksum,
+            source_submodules=source_submodules,
             command=command,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,

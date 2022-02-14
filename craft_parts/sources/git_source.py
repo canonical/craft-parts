@@ -33,7 +33,7 @@ class GitSource(SourceHandler):
 
     Retrieve part sources from a git repository. Branch, depth, commit
     and tag can be specified using part properties ``source-branch``,
-    ``source-depth``, `source-commit`` and ``source-tag``.
+    ``source-depth``, `source-commit``, ``source-tag``, and ``source-submodules``.
     """
 
     @classmethod
@@ -120,6 +120,7 @@ class GitSource(SourceHandler):
         source_branch: str = None,
         source_depth: Optional[int] = None,
         source_checksum: str = None,
+        source_submodules: Optional[List[str]] = None,
         project_dirs: ProjectDirs = None,
         ignore_patterns: Optional[List[str]] = None,
     ):
@@ -132,6 +133,7 @@ class GitSource(SourceHandler):
             source_branch=source_branch,
             source_depth=source_depth,
             source_checksum=source_checksum,
+            source_submodules=source_submodules,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
             command="git",
@@ -190,8 +192,10 @@ class GitSource(SourceHandler):
             self.part_src_dir,
             "fetch",
             "--prune",
-            "--recurse-submodules=yes",
         ]
+
+        if self.source_submodules is None or len(self.source_submodules) > 0:
+            command.extend(["--recurse-submodules=yes"])
         self._run(command)
 
         command = [self.command, "-C", self.part_src_dir, "reset", "--hard"]
@@ -200,21 +204,29 @@ class GitSource(SourceHandler):
 
         self._run(command)
 
-        # Merge any updates for the submodules (if any).
-        command = [
-            self.command,
-            "-C",
-            self.part_src_dir,
-            "submodule",
-            "update",
-            "--recursive",
-            "--force",
-        ]
-        self._run(command)
+        if self.source_submodules is None or len(self.source_submodules) > 0:
+            command = [
+                self.command,
+                "-C",
+                self.part_src_dir,
+                "submodule",
+                "update",
+                "--recursive",
+                "--force",
+            ]
+            if self.source_submodules:
+                for submodule in self.source_submodules:
+                    command.extend([submodule])
+            self._run(command)
 
     def _clone_new(self):
-        """Clone a git repository, using branch and depth if defined."""
-        command = [self.command, "clone", "--recursive"]
+        """Clone a git repository, using submodules, branch, and depth if defined."""
+        command = [self.command, "clone"]
+        if self.source_submodules is None:
+            command.extend(["--recursive"])
+        else:
+            for submodule in self.source_submodules:
+                command.extend(["--recursive=" + submodule])
         if self.source_tag or self.source_branch:
             command.extend(["--branch", self.source_tag or self.source_branch])
         if self.source_depth:
