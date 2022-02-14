@@ -33,6 +33,7 @@ from craft_parts.utils import os_utils
 
 from .collisions import check_for_stage_collisions
 from .part_handler import PartHandler
+from .step_handler import Stream
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,13 @@ class Executor:
         """
         callbacks.run_epilogue(self._project_info, part_list=self._part_list)
 
-    def execute(self, actions: Union[Action, List[Action]]) -> None:
+    def execute(
+        self,
+        actions: Union[Action, List[Action]],
+        *,
+        stdout: Stream = None,
+        stderr: Stream = None,
+    ) -> None:
         """Execute the specified action or list of actions.
 
         :param actions: An :class:`Action` object or list of :class:`Action`
@@ -115,7 +122,7 @@ class Executor:
             actions = [actions]
 
         for act in actions:
-            self._run_action(act)
+            self._run_action(act, stdout=stdout, stderr=stderr)
 
     def clean(
         self, initial_step: Step, *, part_names: Optional[List[str]] = None
@@ -148,7 +155,13 @@ class Executor:
                 if initial_step <= Step.PULL:
                     shutil.rmtree(self._project_info.parts_dir)
 
-    def _run_action(self, action: Action) -> None:
+    def _run_action(
+        self,
+        action: Action,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> None:
         """Execute the given action for a part using the provided step information.
 
         :param action: The lifecycle action to run.
@@ -165,9 +178,12 @@ class Executor:
             check_for_stage_collisions(self._part_list)
 
         handler = self._create_part_handler(part)
-        handler.run_action(action)
+        handler.run_action(action, stdout=stdout, stderr=stderr)
 
-    def _create_part_handler(self, part: Part) -> PartHandler:
+    def _create_part_handler(
+        self,
+        part: Part,
+    ) -> PartHandler:
         """Instantiate a part handler for a new part."""
         if part.name in self._handler:
             return self._handler[part.name]
@@ -258,7 +274,13 @@ class ExecutionContext:
     def __exit__(self, *exc):
         self._executor.epilogue()
 
-    def execute(self, actions: Union[Action, List[Action]]) -> None:
+    def execute(
+        self,
+        actions: Union[Action, List[Action]],
+        *,
+        stdout: Stream = None,
+        stderr: Stream = None,
+    ) -> None:
         """Execute the specified action or list of actions.
 
         :param actions: An :class:`Action` object or list of :class:`Action`
@@ -266,4 +288,4 @@ class ExecutionContext:
 
         :raises InvalidActionException: If the action parameters are invalid.
         """
-        self._executor.execute(actions)
+        self._executor.execute(actions, stdout=stdout, stderr=stderr)

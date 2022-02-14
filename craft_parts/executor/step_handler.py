@@ -27,7 +27,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import Optional, Set, TextIO, Union
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -35,13 +35,15 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils, os_utils
+from craft_parts.utils import file_utils
 
 from . import filesets
 from .filesets import Fileset
 from .migration import migrate_files
 
 logger = logging.getLogger(__name__)
+
+Stream = Optional[Union[TextIO, int]]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -72,12 +74,16 @@ class StepHandler:
         plugin: Plugin,
         source_handler: Optional[SourceHandler],
         env: str,
+        stdout: Stream = None,
+        stderr: Stream = None,
     ):
         self._part = part
         self._step_info = step_info
         self._plugin = plugin
         self._source_handler = source_handler
         self._env = env
+        self._stdout = stdout
+        self._stderr = stderr
 
     def run_builtin(self) -> StepContents:
         """Run the built-in commands for the current step."""
@@ -126,7 +132,13 @@ class StepHandler:
         build_script_path.chmod(0o755)
 
         try:
-            process_run([str(build_script_path)], cwd=self._part.part_build_subdir)
+            subprocess.run(
+                [str(build_script_path)],
+                cwd=self._part.part_build_subdir,
+                check=True,
+                stdout=self._stdout,
+                stderr=self._stderr,
+            )
         except subprocess.CalledProcessError as process_error:
             raise errors.PluginBuildError(part_name=self._part.name) from process_error
 
@@ -179,7 +191,11 @@ class StepHandler:
         return StepContents(files, dirs)
 
     def run_scriptlet(
-        self, scriptlet: str, *, scriptlet_name: str, work_dir: Path
+        self,
+        scriptlet: str,
+        *,
+        scriptlet_name: str,
+        work_dir: Path,
     ) -> None:
         """Execute a scriptlet.
 
@@ -202,6 +218,7 @@ class StepHandler:
 
                 {env}
 
+                set -x
                 {scriptlet}"""
             ).format(
                 interpreter=sys.executable,
@@ -218,7 +235,11 @@ class StepHandler:
                 script_file.flush()
                 script_file.seek(0)
                 process = subprocess.Popen(  # pylint: disable=consider-using-with
-                    ["/bin/bash"], stdin=script_file, cwd=work_dir
+                    ["/bin/bash"],
+                    stdin=script_file,
+                    cwd=work_dir,
+                    stdout=self._stdout,
+                    stderr=self._stderr,
                 )
 
             status = None
@@ -313,10 +334,3 @@ class StepHandler:
             self._builtin_stage()
         elif function_name == "prime":
             self._builtin_prime()
-
-
-# XXX: this will be removed when user messages support is implemented.
-def process_run(command: List[str], **kwargs) -> None:
-    """Run a command and log its output."""
-    # Pass logger so messages can be logged as originating from this package.
-    os_utils.process_run(command, logger.debug, **kwargs)

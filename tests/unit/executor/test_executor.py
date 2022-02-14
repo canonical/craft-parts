@@ -179,3 +179,24 @@ class TestExecutionContext:
 
         captured = capfd.readouterr()
         assert captured.out == "build\nepilogue custom for p1\n"
+
+    def test_capture_stdout(self, capfd, new_dir):
+        def cbf(info, part_list):
+            print(f"prologue {info.custom} for {part_list[0].name}")
+
+        callbacks.register_prologue(cbf)
+        p1 = Part("p1", {"plugin": "nil", "override-build": "echo out; echo err >&2"})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        e = Executor(project_info=info, part_list=[p1])
+
+        output_path = Path("output.txt")
+        error_path = Path("error.txt")
+
+        with output_path.open("w") as output, error_path.open("w") as error:
+            with ExecutionContext(executor=e) as ctx:
+                ctx.execute(Action("p1", Step.BUILD), stdout=output, stderr=error)
+
+        captured = capfd.readouterr()
+        assert captured.out == "prologue custom for p1\n"
+        assert output_path.read_text() == "out\n"
+        assert error_path.read_text() == "+ echo out\n+ echo err\nerr\n"

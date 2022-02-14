@@ -24,6 +24,7 @@ of actions (using `--dry-run`) or execute them.
 
 import argparse
 import logging
+import subprocess
 import sys
 from functools import partial
 
@@ -116,6 +117,8 @@ def _do_step(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> 
 
     actions = lcm.plan(target_step, part_names)
 
+    output_stream = None if options.verbose else subprocess.DEVNULL
+
     if options.dry_run:
         printed = False
         for action in actions:
@@ -130,7 +133,7 @@ def _do_step(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> 
         for action in actions:
             if options.show_skipped or action.action_type != ActionType.SKIP:
                 print(f"Execute: {_action_message(action)}")
-                ctx.execute(action)
+                ctx.execute(action, stdout=output_stream, stderr=output_stream)
 
 
 def _do_clean(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:
@@ -260,6 +263,12 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="dirname",
         default="",
         help="Set an alternate cache directory location.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="show execution output",
     )
     parser.add_argument(
         "--trace",

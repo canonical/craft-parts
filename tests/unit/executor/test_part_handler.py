@@ -79,7 +79,9 @@ class TestPartHandling:
         mocker.patch("craft_parts.packages.snaps.download_snaps")
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
 
-        state = self._handler._run_pull(StepInfo(self._part_info, Step.PULL))
+        state = self._handler._run_pull(
+            StepInfo(self._part_info, Step.PULL), stdout=None, stderr=None
+        )
         assert state == states.PullState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -94,7 +96,9 @@ class TestPartHandling:
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
         mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
 
-        state = self._handler._run_overlay(StepInfo(self._part_info, Step.OVERLAY))
+        state = self._handler._run_overlay(
+            StepInfo(self._part_info, Step.OVERLAY), stdout=None, stderr=None
+        )
         assert state == states.OverlayState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -121,7 +125,7 @@ class TestPartHandling:
         file1.touch()
         file2.touch()
 
-        handler._run_overlay(StepInfo(part_info, Step.PULL))
+        handler._run_overlay(StepInfo(part_info, Step.PULL), stdout=None, stderr=None)
 
         assert file1.exists() is False
         assert file2.is_file()
@@ -138,7 +142,9 @@ class TestPartHandling:
         )
         mocker.patch("subprocess.check_output", return_value=b"os-info")
 
-        state = self._handler._run_build(StepInfo(self._part_info, Step.BUILD))
+        state = self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+        )
         assert state == states.BuildState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -188,7 +194,9 @@ class TestPartHandling:
         source_file = self._part_info.part_src_dir / "source.c"
         source_file.write_text('printf("hello\n");', encoding="UTF-8")
 
-        self._handler._run_build(StepInfo(self._part_info, Step.BUILD))
+        self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+        )
 
         # Check that 'source.c' exists in the source dir but not build dir.
         assert (self._part_info.part_src_dir / "source.c").exists()
@@ -208,7 +216,7 @@ class TestPartHandling:
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
-        handler._run_build(StepInfo(part_info, Step.BUILD))
+        handler._run_build(StepInfo(part_info, Step.BUILD), stdout=None, stderr=None)
 
         assert self._mock_mount.mock_calls == []
 
@@ -218,7 +226,9 @@ class TestPartHandling:
             return_value=StepContents({"file"}, {"dir"}),
         )
 
-        state = self._handler._run_stage(StepInfo(self._part_info, Step.STAGE))
+        state = self._handler._run_stage(
+            StepInfo(self._part_info, Step.STAGE), stdout=None, stderr=None
+        )
         assert state == states.StageState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -233,7 +243,9 @@ class TestPartHandling:
             return_value=StepContents({"file"}, {"dir"}),
         )
 
-        state = self._handler._run_prime(StepInfo(self._part_info, Step.PRIME))
+        state = self._handler._run_prime(
+            StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
+        )
         assert state == states.PrimeState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -264,11 +276,55 @@ class TestPartHandling:
         )
 
         handler._run_step(
-            step_info=step_info, scriptlet_name=scriptlet, work_dir=Path()
+            step_info=step_info,
+            scriptlet_name=scriptlet,
+            work_dir=Path(),
+            stdout=None,
+            stderr=None,
         )
         out, err = capfd.readouterr()
         assert out == "hello\n"
+        assert err == "+ echo hello\n"
+
+    @pytest.mark.parametrize(
+        "step,scriptlet",
+        [
+            (Step.PULL, "override-pull"),
+            (Step.OVERLAY, "overlay-script"),
+            (Step.BUILD, "override-build"),
+            (Step.STAGE, "override-stage"),
+            (Step.PRIME, "override-prime"),
+        ],
+    )
+    def test_run_step_scriptlet_streams(self, new_dir, capfd, step, scriptlet):
+        p1 = Part("p1", {"plugin": "nil", scriptlet: "echo hello; echo goodbye >&2"})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
+        step_info = StepInfo(part_info, step=step)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[self._part], base_layer_dir=None
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        output_path = Path("output.txt")
+        error_path = Path("error.txt")
+
+        with output_path.open("w") as output, error_path.open("w") as error:
+            handler._run_step(
+                step_info=step_info,
+                scriptlet_name=scriptlet,
+                work_dir=Path(),
+                stdout=output,
+                stderr=error,
+            )
+
+        out, err = capfd.readouterr()
+        assert out == ""
         assert err == ""
+        assert output_path.read_text() == "hello\n"
+        assert error_path.read_text() == "+ echo hello\n+ echo goodbye\ngoodbye\n"
 
     def test_compute_layer_hash(self, new_dir):
         p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["pkg1"]})
@@ -379,7 +435,7 @@ class TestPartUpdateHandler:
 
         out, err = capfd.readouterr()
         assert out == "hello\n"
-        assert err == ""
+        assert err == "+ echo hello\n"
 
     def test_update_build(self):
         self._handler._make_dirs()
@@ -817,7 +873,9 @@ class TestPackages:
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
 
-        state = handler._run_pull(StepInfo(part_info, Step.PULL))
+        state = handler._run_pull(
+            StepInfo(part_info, Step.PULL), stdout=None, stderr=None
+        )
         getpkg.assert_called_once_with(
             cache_dir=new_dir,
             base=mocker.ANY,
@@ -831,7 +889,7 @@ class TestPackages:
             "pkg2",
         ]
 
-        handler._run_build(StepInfo(part_info, Step.BUILD))
+        handler._run_build(StepInfo(part_info, Step.BUILD), stdout=None, stderr=None)
         unpack.assert_called_once()
 
     def test_unpack_stage_snaps(self, mocker, new_dir):

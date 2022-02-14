@@ -90,7 +90,7 @@ class TestStepHandlerBuiltins:
         assert result == StepContents()
 
     def test_run_builtin_build(self, new_dir, mocker):
-        mock_run = mocker.patch("craft_parts.executor.step_handler.process_run")
+        mock_run = mocker.patch("subprocess.run")
 
         Path("parts/p1/run").mkdir(parents=True)
         sh = _step_handler_for_step(Step.BUILD, cache_dir=new_dir)
@@ -99,6 +99,9 @@ class TestStepHandlerBuiltins:
         mock_run.assert_called_once_with(
             [str(new_dir / "parts/p1/run/build.sh")],
             cwd=Path(new_dir / "parts/p1/build"),
+            check=True,
+            stdout=None,
+            stderr=None,
         )
         assert result == StepContents()
 

@@ -24,6 +24,8 @@ from glob import iglob
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
 
+from typing_extensions import Protocol
+
 from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
@@ -38,9 +40,34 @@ from craft_parts.utils import file_utils, os_utils
 from . import filesets, migration
 from .environment import generate_step_environment
 from .organize import organize_files
-from .step_handler import StepContents, StepHandler
+from .step_handler import StepContents, StepHandler, Stream
 
 logger = logging.getLogger(__name__)
+
+
+# pylint: disable=too-many-lines
+
+
+class _RunHandler(Protocol):
+    def __call__(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> StepState:
+        ...
+
+
+class _UpdateHandler(Protocol):
+    def __call__(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> None:
+        ...
 
 
 class PartHandler:
@@ -84,7 +111,13 @@ class PartHandler:
         self.build_packages = _get_build_packages(part=self._part, plugin=self._plugin)
         self.build_snaps = _get_build_snaps(part=self._part, plugin=self._plugin)
 
-    def run_action(self, action: Action) -> None:
+    def run_action(
+        self,
+        action: Action,
+        *,
+        stdout: Stream = None,
+        stderr: Stream = None,
+    ) -> None:
         """Execute the given action for this part using a plugin.
 
         :param action: The action to execute.
@@ -92,18 +125,22 @@ class PartHandler:
         step_info = StepInfo(self._part_info, action.step)
 
         if action.action_type == ActionType.UPDATE:
-            self._update_action(action, step_info=step_info)
+            self._update_action(
+                action, step_info=step_info, stdout=stdout, stderr=stderr
+            )
             return
 
         if action.action_type == ActionType.REAPPLY:
-            self._reapply_action(action, step_info=step_info)
+            self._reapply_action(
+                action, step_info=step_info, stdout=stdout, stderr=stderr
+            )
             return
 
         if action.action_type == ActionType.RERUN:
             for step in [action.step] + action.step.next_steps():
                 self.clean_step(step=step)
 
-        handler: Callable[[StepInfo], StepState]
+        handler: _RunHandler
 
         if action.step == Step.PULL:
             handler = self._run_pull
@@ -119,12 +156,18 @@ class PartHandler:
             raise RuntimeError(f"cannot run action for invalid step {action.step!r}")
 
         callbacks.run_pre_step(step_info)
-        state = handler(step_info)
+        state = handler(step_info, stdout=stdout, stderr=stderr)
         state_file = states.get_step_state_path(self._part, action.step)
         state.write(state_file)
         callbacks.run_post_step(step_info)
 
-    def _run_pull(self, step_info: StepInfo) -> StepState:
+    def _run_pull(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> StepState:
         """Execute the pull step for this part.
 
         :param step_info: Information about the step to execute.
@@ -142,6 +185,8 @@ class PartHandler:
             step_info=step_info,
             scriptlet_name="override-pull",
             work_dir=self._part.part_src_dir,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         state = states.PullState(
@@ -156,7 +201,13 @@ class PartHandler:
 
         return state
 
-    def _run_overlay(self, step_info: StepInfo) -> StepState:
+    def _run_overlay(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> StepState:
         """Execute the overlay step for this part.
 
         :param step_info: Information about the step to execute.
@@ -180,6 +231,8 @@ class PartHandler:
                     step_info=step_info,
                     scriptlet_name="overlay-script",
                     work_dir=self._part.part_layer_dir,
+                    stdout=stdout,
+                    stderr=stderr,
                 )
 
             # apply overlay filter
@@ -202,7 +255,14 @@ class PartHandler:
             directories=contents.dirs,
         )
 
-    def _run_build(self, step_info: StepInfo, *, update=False) -> StepState:
+    def _run_build(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+        update=False,
+    ) -> StepState:
         """Execute the build step for this part.
 
         :param step_info: Information about the step to execute.
@@ -228,12 +288,16 @@ class PartHandler:
                     step_info=step_info,
                     scriptlet_name="override-build",
                     work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
                 )
         else:
             self._run_step(
                 step_info=step_info,
                 scriptlet_name="override-build",
                 work_dir=self._part.part_build_dir,
+                stdout=stdout,
+                stderr=stderr,
             )
 
         # Organize the installed files as requested. We do this in the build step for
@@ -274,7 +338,13 @@ class PartHandler:
         )
         return state
 
-    def _run_stage(self, step_info: StepInfo) -> StepState:
+    def _run_stage(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> StepState:
         """Execute the stage step for this part.
 
         :param step_info: Information about the step to execute.
@@ -287,6 +357,8 @@ class PartHandler:
             step_info=step_info,
             scriptlet_name="override-stage",
             work_dir=self._part.stage_dir,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         self._migrate_overlay_files_to_stage()
@@ -306,7 +378,13 @@ class PartHandler:
         )
         return state
 
-    def _run_prime(self, step_info: StepInfo) -> StepState:
+    def _run_prime(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> StepState:
         """Execute the prime step for this part.
 
         :param step_info: Information about the step to execute.
@@ -319,6 +397,8 @@ class PartHandler:
             step_info=step_info,
             scriptlet_name="override-prime",
             work_dir=self._part.prime_dir,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         self._migrate_overlay_files_to_prime()
@@ -332,7 +412,13 @@ class PartHandler:
         return state
 
     def _run_step(
-        self, *, step_info: StepInfo, scriptlet_name: str, work_dir: Path
+        self,
+        *,
+        step_info: StepInfo,
+        scriptlet_name: str,
+        work_dir: Path,
+        stdout: Stream,
+        stderr: Stream,
     ) -> StepContents:
         """Run the scriptlet if overriding, otherwise run the built-in handler.
 
@@ -363,12 +449,16 @@ class PartHandler:
             plugin=self._plugin,
             source_handler=self._source_handler,
             env=step_env,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
         if scriptlet:
             step_handler.run_scriptlet(
-                scriptlet, scriptlet_name=scriptlet_name, work_dir=work_dir
+                scriptlet,
+                scriptlet_name=scriptlet_name,
+                work_dir=work_dir,
             )
             return StepContents()
 
@@ -400,9 +490,16 @@ class PartHandler:
 
         return part_hash
 
-    def _update_action(self, action: Action, *, step_info: StepInfo) -> None:
+    def _update_action(
+        self,
+        action: Action,
+        *,
+        step_info: StepInfo,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> None:
         """Call the appropriate update handler for the given step."""
-        handler: Callable[[StepInfo], None]
+        handler: _UpdateHandler
 
         if action.step == Step.PULL:
             handler = self._update_pull
@@ -417,12 +514,14 @@ class PartHandler:
             )
 
         callbacks.run_pre_step(step_info)
-        handler(step_info)
+        handler(step_info, stdout=stdout, stderr=stderr)
         state_file = states.get_step_state_path(self._part, action.step)
         state_file.touch()
         callbacks.run_post_step(step_info)
 
-    def _update_pull(self, step_info: StepInfo) -> None:
+    def _update_pull(
+        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+    ) -> None:
         """Handle update action for the pull step.
 
         This handler is called if the pull step is outdated. In this case,
@@ -438,6 +537,8 @@ class PartHandler:
                 step_info=step_info,
                 scriptlet_name="override-pull",
                 work_dir=self._part.part_src_dir,
+                stdout=stdout,
+                stderr=stderr,
             )
             return
 
@@ -456,7 +557,9 @@ class PartHandler:
         self._source_handler.check_if_outdated(str(state_file))
         self._source_handler.update()
 
-    def _update_overlay(self, step_info: StepInfo) -> None:
+    def _update_overlay(
+        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+    ) -> None:
         """Handle update action for the overlay step.
 
         The overlay update handler is empty (out of date overlay must not rerun,
@@ -466,7 +569,9 @@ class PartHandler:
         :param step_info: The step information.
         """
 
-    def _update_build(self, step_info: StepInfo) -> None:
+    def _update_build(
+        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+    ) -> None:
         """Handle update action for the build step.
 
         This handler is called if the build step is outdated. In this case,
@@ -498,24 +603,33 @@ class PartHandler:
             step_info=step_info,
             scriptlet_name="override-build",
             work_dir=self._part.part_build_dir,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         self._organize(overwrite=True)
 
-    def _reapply_action(self, action: Action, *, step_info: StepInfo) -> None:
+    def _reapply_action(
+        self,
+        action: Action,
+        *,
+        step_info: StepInfo,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> None:
         """Call the appropriate reapply handler for the given step."""
         if action.step == Step.OVERLAY:
-            self._reapply_overlay(step_info)
+            self._reapply_overlay(step_info, stdout=stdout, stderr=stderr)
         else:
             step_name = action.step.name.lower()
             raise errors.InvalidAction(
                 f"cannot reapply step {step_name!r} of {self._part.name!r}"
             )
 
-    def _reapply_overlay(self, step_info) -> None:
+    def _reapply_overlay(self, step_info, *, stdout: Stream, stderr: Stream) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         shutil.rmtree(self._part.part_layer_dir)
-        self._run_overlay(step_info)
+        self._run_overlay(step_info, stdout=stdout, stderr=stderr)
 
     def _migrate_overlay_files_to_stage(self) -> None:
         """Stage overlay files create state.

@@ -180,12 +180,13 @@ def test_main_application_name(new_dir, mocker, capfd):
     )
     Path("parts.yaml").write_text(my_parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--application-name", "znapcraft", "pull"])
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--verbose", "--application-name", "znapcraft", "pull"]
+    )
     main.main()
 
     # check environment variables
-    out, err = capfd.readouterr()
-    assert err == ""
+    out, _ = capfd.readouterr()
     assert out == textwrap.dedent(
         """\
         Execute: Pull foo
