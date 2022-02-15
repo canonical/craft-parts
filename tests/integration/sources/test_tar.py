@@ -71,4 +71,4 @@ def test_source_tar_error(new_dir):
     with pytest.raises(tarfile.ReadError) as raised, lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
-    assert str(raised.value) == "file could not be opened successfully"
+    assert str(raised.value).startswith("file could not be opened successfully")
