@@ -33,6 +33,8 @@ from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
+# pylint: disable=too-many-lines
+
 
 @pytest.mark.usefixtures("new_dir")
 class TestPartHandling:
@@ -834,6 +836,24 @@ class TestPackages:
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
         assert sorted(handler.build_packages) == ["gcc", "make", "pkg1", "tar"]
+
+    def test_get_build_packages_with_source_type(self, new_dir):
+        p1 = Part(
+            "p1",
+            {
+                "plugin": "make",
+                "source": "source",
+                "source-type": "git",
+                "build-packages": ["pkg1"],
+            },
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
+        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+        assert sorted(handler.build_packages) == ["gcc", "git", "make", "pkg1"]
 
     def test_get_build_snaps(self, new_dir):
         p1 = Part("p1", {"plugin": "nil", "build-snaps": ["word-salad"]})

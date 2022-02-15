@@ -869,7 +869,11 @@ def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
     source = part.spec.source
     if source:
         repo = packages.Repository
-        source_type = sources.get_source_type_from_uri(source)
+
+        source_type = part.spec.source_type
+        if not source_type:
+            source_type = sources.get_source_type_from_uri(source)
+
         source_build_packages = repo.get_packages_for_source_type(source_type)
         if source_build_packages:
             logger.debug("source build packages: %s", source_build_packages)
