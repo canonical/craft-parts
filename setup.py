@@ -96,13 +96,14 @@ setup(
     license="GNU General Public License v3",
     python_requires=">=3.7",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     entry_points={
         "console_scripts": [
