@@ -35,6 +35,8 @@ from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
 from .deb_package import DebPackage
 from .normalize import normalize
 
+logger = logging.getLogger(__name__)
+
 # Catch the ImportError to set availability of apt on this system
 # to fail appropriately on use instead. This implementation is
 # independent of the underlying host OS.
@@ -42,11 +44,11 @@ try:
     from .apt_cache import AptCache
 
     _APT_CACHE_AVAILABLE = True
-except ImportError:
+except ImportError as import_error:
+    logger.debug(
+        "AppCache cannot be imported due to: %r: %s", import_error.name, import_error
+    )
     _APT_CACHE_AVAILABLE = False
-
-
-logger = logging.getLogger(__name__)
 
 
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
