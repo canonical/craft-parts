@@ -89,7 +89,7 @@ def unregister_all() -> None:
     _POST_STEP_HOOKS = []
 
 
-def run_prologue(project_info: ProjectInfo, *, part_list=List[Part]) -> None:
+def run_prologue(project_info: ProjectInfo, *, part_list: List[Part]) -> None:
     """Run all registered execution prologue callbacks.
 
     :param project_info: The project information.
@@ -99,7 +99,7 @@ def run_prologue(project_info: ProjectInfo, *, part_list=List[Part]) -> None:
         hook.function(project_info, part_list)
 
 
-def run_epilogue(project_info: ProjectInfo, *, part_list=List[Part]) -> None:
+def run_epilogue(project_info: ProjectInfo, *, part_list: List[Part]) -> None:
     """Run all registered execution epilogue callbacks.
 
     :param project_info: The project information.
