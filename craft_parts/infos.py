@@ -54,7 +54,7 @@ class ProjectInfo:
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
-        project_dirs: ProjectDirs = None,
+        project_dirs: Optional[ProjectDirs] = None,
         **custom_args,  # custom passthrough args
     ):
         if not project_dirs:

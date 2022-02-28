@@ -156,7 +156,7 @@ def _ignore(
     patterns: List[str],
     directory,
     files,
-    also_ignore: List[str] = None,
+    also_ignore: Optional[List[str]] = None,
 ) -> List[str]:
     if also_ignore:
         patterns.extend(also_ignore)

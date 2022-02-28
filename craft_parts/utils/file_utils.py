@@ -24,7 +24,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Callable, Generator, List, Set
+from typing import Callable, Generator, List, Optional, Set
 
 from craft_parts import errors
 
@@ -159,7 +159,7 @@ def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
 def link_or_copy_tree(
     source_tree: str,
     destination_tree: str,
-    ignore: Callable[[str, List[str]], List[str]] = None,
+    ignore: Optional[Callable[[str, List[str]], List[str]]] = None,
     copy_function: Callable[..., None] = link_or_copy,
 ) -> None:
     """Copy a source tree into a destination, hard-linking if possible.

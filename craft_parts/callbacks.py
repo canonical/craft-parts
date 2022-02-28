@@ -18,7 +18,7 @@
 
 import logging
 from collections import namedtuple
-from typing import Callable, List, Union
+from typing import Callable, List, Optional, Union
 
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
@@ -57,7 +57,9 @@ def register_epilogue(func: ExecutionCallback) -> None:
     _EPILOGUE_HOOKS.append(CallbackHook(func, None))
 
 
-def register_pre_step(func: StepCallback, *, step_list: List[Step] = None) -> None:
+def register_pre_step(
+    func: StepCallback, *, step_list: Optional[List[Step]] = None
+) -> None:
     """Register a pre-step callback function.
 
     :param func: The callback function to run.
@@ -68,7 +70,9 @@ def register_pre_step(func: StepCallback, *, step_list: List[Step] = None) -> No
     _PRE_STEP_HOOKS.append(CallbackHook(func, step_list))
 
 
-def register_post_step(func: StepCallback, *, step_list: List[Step] = None) -> None:
+def register_post_step(
+    func: StepCallback, *, step_list: Optional[List[Step]] = None
+) -> None:
     """Register a post-step callback function.
 
     :param func: The callback function to run.

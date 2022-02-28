@@ -17,7 +17,7 @@
 """Provide a report on why a step is outdated."""
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from craft_parts.steps import Step
 from craft_parts.utils import formatting_utils
@@ -42,7 +42,10 @@ class OutdatedReport:
     """
 
     def __init__(
-        self, *, previous_step_modified: Step = None, source_modified: bool = False
+        self,
+        *,
+        previous_step_modified: Optional[Step] = None,
+        source_modified: bool = False,
     ) -> None:
         """Create a new OutdatedReport.
 
@@ -85,9 +88,9 @@ class DirtyReport:
     def __init__(
         self,
         *,
-        dirty_properties: List[str] = None,
-        dirty_project_options: List[str] = None,
-        changed_dependencies: List[Dependency] = None,
+        dirty_properties: Optional[List[str]] = None,
+        dirty_project_options: Optional[List[str]] = None,
+        changed_dependencies: Optional[List[Dependency]] = None,
     ) -> None:
         """Create a new DirtyReport.
 

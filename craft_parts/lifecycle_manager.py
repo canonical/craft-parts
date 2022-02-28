@@ -163,7 +163,9 @@ class LifecycleManager:
         """Obtain information about this project."""
         return self._project_info
 
-    def clean(self, step: Step = Step.PULL, *, part_names: List[str] = None) -> None:
+    def clean(
+        self, step: Step = Step.PULL, *, part_names: Optional[List[str]] = None
+    ) -> None:
         """Clean the specified step and parts.
 
         Cleaning a step removes its state and all artifacts generated in that
@@ -185,7 +187,9 @@ class LifecycleManager:
         """
         packages.Repository.refresh_packages_list()
 
-    def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
+    def plan(
+        self, target_step: Step, part_names: Optional[Sequence[str]] = None
+    ) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.

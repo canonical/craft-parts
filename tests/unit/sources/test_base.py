@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
@@ -80,7 +81,11 @@ class BarFileSource(FileSourceHandler):
     """A file source handler."""
 
     def provision(
-        self, dst: Path, clean_target: bool = True, keep: bool = False, src: Path = None
+        self,
+        dst: Path,
+        clean_target: bool = True,
+        keep: bool = False,
+        src: Optional[Path] = None,
     ) -> None:
         """Extract source payload."""
         self.provision_dst = dst
