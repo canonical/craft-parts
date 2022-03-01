@@ -195,7 +195,7 @@ class SnapPackage:
         store_channels = self._get_store_channels()
         return self.channel in store_channels.keys()
 
-    def download(self, *, directory: str = None):
+    def download(self, *, directory: Optional[str] = None):
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.

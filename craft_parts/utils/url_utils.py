@@ -20,6 +20,7 @@ import logging
 import os
 import urllib.parse
 import urllib.request
+from typing import Optional
 
 from craft_parts.utils import os_utils
 
@@ -37,7 +38,7 @@ def is_url(url: str) -> bool:
 
 
 def download_request(
-    request, destination: str, message: str = None, total_read: int = 0
+    request, destination: str, message: Optional[str] = None, total_read: int = 0
 ):
     """Download a request with nice progress bars.
 

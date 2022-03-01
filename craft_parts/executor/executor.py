@@ -58,9 +58,9 @@ class Executor:
         *,
         part_list: List[Part],
         project_info: ProjectInfo,
-        extra_build_packages: List[str] = None,
-        extra_build_snaps: List[str] = None,
-        ignore_patterns: List[str] = None,
+        extra_build_packages: Optional[List[str]] = None,
+        extra_build_snaps: Optional[List[str]] = None,
+        ignore_patterns: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[LayerHash] = None,
     ):
@@ -117,7 +117,9 @@ class Executor:
         for act in actions:
             self._run_action(act)
 
-    def clean(self, initial_step: Step, *, part_names: List[str] = None) -> None:
+    def clean(
+        self, initial_step: Step, *, part_names: Optional[List[str]] = None
+    ) -> None:
         """Clean the given parts, or all parts if none is specified.
 
         :param initial_step: The step to clean. More steps may be cleaned

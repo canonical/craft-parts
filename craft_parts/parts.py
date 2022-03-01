@@ -148,7 +148,7 @@ class Part:
         name: str,
         data: Dict[str, Any],
         *,
-        project_dirs: ProjectDirs = None,
+        project_dirs: Optional[ProjectDirs] = None,
         plugin_properties: "Optional[PluginProperties]" = None,
     ):
         if not isinstance(data, dict):

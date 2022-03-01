@@ -74,18 +74,24 @@ class TarSource(FileSourceHandler):
         if source_depth:
             raise errors.InvalidSourceOption(source_type="tar", option="source-depth")
 
-    def provision(self, dst, clean_target=True, keep=False, src=None):
+    def provision(
+        self,
+        dst: Path,
+        clean_target: bool = True,
+        keep: bool = False,
+        src: Optional[Path] = None,
+    ):
         """Extract tarball contents to the part source dir."""
         # TODO add unit tests.
         if src:
             tarball = src
         else:
-            tarball = os.path.join(self.part_src_dir, os.path.basename(self.source))
+            tarball = self.part_src_dir / os.path.basename(self.source)
 
         if clean_target:
             with tempfile.NamedTemporaryFile() as tmp_file:
                 tmp_tarball = tmp_file.name
-                shutil.move(tarball, tmp_tarball)
+                shutil.move(str(tarball), tmp_tarball)
                 shutil.rmtree(dst)
                 os.makedirs(dst)
                 shutil.move(tmp_tarball, tarball)
@@ -96,7 +102,7 @@ class TarSource(FileSourceHandler):
             os.remove(tarball)
 
 
-def _extract(tarball: str, dst: str) -> None:
+def _extract(tarball: Path, dst: Path) -> None:
     with tarfile.open(tarball) as tar:
 
         def filter_members(tar):

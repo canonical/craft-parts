@@ -45,12 +45,12 @@ class SnapSource(FileSourceHandler):
         part_src_dir: Path,
         *,
         cache_dir: Path,
-        source_tag: str = None,
-        source_commit: str = None,
-        source_branch: str = None,
+        source_tag: Optional[str] = None,
+        source_commit: Optional[str] = None,
+        source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
-        source_checksum: str = None,
-        project_dirs: ProjectDirs = None,
+        source_checksum: Optional[str] = None,
+        project_dirs: Optional[ProjectDirs] = None,
     ) -> None:
         super().__init__(
             source,
@@ -82,7 +82,7 @@ class SnapSource(FileSourceHandler):
         dst: Path,
         clean_target: bool = True,
         keep: bool = False,
-        src: Path = None,
+        src: Optional[Path] = None,
     ) -> None:
         """Provision the snap source.
 
