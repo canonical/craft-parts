@@ -662,7 +662,7 @@ class TestGitConflicts(GitBaseTestCase):
         repo = os.path.abspath("submodules.git")
         sub_repo = os.path.abspath("subrepo")
         working_tree = Path("git-submodules").absolute()
-        working_tree_two = "{working_tree}-two"
+        working_tree_two = f"{working_tree}-two"
         sub_working_tree = os.path.abspath("git-submodules-sub")
         git = GitSource(repo, working_tree, cache_dir=new_dir)
 
