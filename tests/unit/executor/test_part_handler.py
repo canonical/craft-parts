@@ -47,6 +47,7 @@ class TestPartHandling:
             "foo",
             {
                 "plugin": "nil",
+                "source": ".",
                 "stage-packages": ["pkg1"],
                 "stage-snaps": ["snap1"],
                 "build-packages": ["pkg3"],
@@ -162,6 +163,38 @@ class TestPartHandling:
             ),
         )
         self._mock_umount.assert_called_with(f"{self._part_info.overlay_mount_dir}")
+
+    @pytest.mark.usefixtures("new_dir")
+    @pytest.mark.parametrize("out_of_source", [True, False])
+    def test_run_build_out_of_source_behavior(self, mocker, out_of_source):
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mocker.patch(
+            "craft_parts.packages.Repository.get_installed_packages",
+            return_value=["hello=2.10"],
+        )
+        mocker.patch(
+            "craft_parts.packages.snaps.get_installed_snaps",
+            return_value=["snapcraft=6466"],
+        )
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+
+        mocker.patch(
+            "craft_parts.plugins.plugins.NilPlugin.out_of_source_build",
+            return_value=out_of_source,
+            new_callable=mocker.PropertyMock,
+        )
+
+        self._part_info.part_src_dir.mkdir(parents=True)
+        source_file = self._part_info.part_src_dir / "source.c"
+        source_file.write_text('printf("hello\n");', encoding="UTF-8")
+
+        self._handler._run_build(StepInfo(self._part_info, Step.BUILD))
+
+        # Check that 'source.c' exists in the source dir but not build dir.
+        assert (self._part_info.part_src_dir / "source.c").exists()
+        assert (
+            self._part_info.part_build_dir / "source.c"
+        ).exists() is not out_of_source
 
     def test_run_build_without_overlay_visibility(self, mocker, new_dir):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
