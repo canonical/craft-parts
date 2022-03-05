@@ -210,14 +210,16 @@ class PartHandler:
         :return: The build step state.
         """
         self._make_dirs()
-        _remove(self._part.part_build_dir)
         self._unpack_stage_packages()
         self._unpack_stage_snaps()
 
-        # Copy source from the part source dir to the part build dir
-        shutil.copytree(
-            self._part.part_src_dir, self._part.part_build_dir, symlinks=True
-        )
+        if not self._plugin.out_of_source_build:
+            _remove(self._part.part_build_dir)
+
+            # Copy source from the part source dir to the part build dir
+            shutil.copytree(
+                self._part.part_src_dir, self._part.part_build_dir, symlinks=True
+            )
 
         # Perform the build step
         if has_overlay_visibility(self._part, part_list=self._part_list):
