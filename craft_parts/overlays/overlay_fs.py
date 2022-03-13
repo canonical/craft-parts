@@ -49,10 +49,8 @@ class OverlayFS:
         lower_dir = ":".join([str(p) for p in self._lower_dirs])
 
         try:
-            os_utils.mount(
-                "overlay",
+            os_utils.mount_overlayfs(
                 str(mountpoint),
-                "-toverlay",
                 f"-olowerdir={lower_dir!s},upperdir={self._upper_dir!s},"
                 f"workdir={self._work_dir!s}",
             )

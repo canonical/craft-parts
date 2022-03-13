@@ -42,6 +42,7 @@ def setup_fixture(new_dir, mocker):
     )
 
     mocker.patch("craft_parts.utils.os_utils.mount")
+    mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
     mocker.patch("craft_parts.utils.os_utils.umount")
 
 

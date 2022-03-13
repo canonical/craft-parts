@@ -66,6 +66,9 @@ class TestPartHandling:
             overlay_manager=ovmgr,
         )
         self._mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        self._mock_mount_overlayfs = mocker.patch(
+            "craft_parts.utils.os_utils.mount_overlayfs"
+        )
         self._mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         # pylint: enable=attribute-defined-outside-init
 
@@ -158,10 +161,8 @@ class TestPartHandling:
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 
-        self._mock_mount.assert_called_with(
-            "overlay",
+        self._mock_mount_overlayfs.assert_called_with(
             f"{self._part_info.overlay_mount_dir}",
-            "-toverlay",
             (
                 f"-olowerdir={self._part_info.overlay_packages_dir}:/base,"
                 f"upperdir={self._part.part_layer_dir},"
@@ -218,7 +219,7 @@ class TestPartHandling:
         )
         handler._run_build(StepInfo(part_info, Step.BUILD), stdout=None, stderr=None)
 
-        assert self._mock_mount.mock_calls == []
+        assert self._mock_mount_overlayfs.mock_calls == []
 
     def test_run_stage(self, mocker):
         mocker.patch(
@@ -477,6 +478,7 @@ class TestPartReapplyHandler:
         )
 
         mocker.patch("craft_parts.utils.os_utils.mount")
+        mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
         mocker.patch("craft_parts.utils.os_utils.umount")
         # pylint: enable=attribute-defined-outside-init
 

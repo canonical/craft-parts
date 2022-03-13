@@ -239,6 +239,18 @@ def mount(device: str, mountpoint: str, *args) -> None:
     subprocess.check_call(["/bin/mount", *args, device, mountpoint])
 
 
+def mount_overlayfs(mountpoint: str, *args) -> None:
+    """Mount an overlay filesystem using fuse-overlayfs.
+
+    :param mountpoint: Where the device will be mounted.
+    :param *args: Additional arguments to ``mount(8)``.
+
+    :raises subprocess.CalledProcessError: on error.
+    """
+    logger.debug("fuse-overlayfs mountpoint=%r, args=%r", mountpoint, args)
+    subprocess.check_call(["fuse-overlayfs", *args, mountpoint])
+
+
 _UMOUNT_RETRIES = 5
 
 
