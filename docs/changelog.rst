@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.3.0 (2022-03-05)
+------------------
+
+- Add meson plugin
+- Adjustments in git source tests
+
 1.2.0 (2022-03-01)
 ------------------
 
