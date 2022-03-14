@@ -98,7 +98,6 @@ def test_step_callback(tmpdir, capfd, step):
         ctx.execute(Action("foo", step))
 
     out, err = capfd.readouterr()
-    assert not err
     assert out == (
         f"step = {step!r}\n"
         f"part_src_dir = {tmpdir}/parts/foo/src\n"
@@ -125,7 +124,6 @@ def test_prologue_callback(tmpdir, capfd):
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
-    assert not err
     assert out == (
         "application_name = test_prologue_callback\n" "parts = foo\n" "step Step.PULL\n"
     )
@@ -163,7 +161,6 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
         ctx.execute(Action("foo", step, action_type=action_type))
 
     out, err = capfd.readouterr()
-    assert not err
     if action_type == ActionType.SKIP:
         assert not out
     else:
@@ -192,7 +189,6 @@ def test_callback_post(tmpdir, capfd, step, action_type):
         ctx.execute(Action("foo", step, action_type=action_type))
 
     out, err = capfd.readouterr()
-    assert not err
     if action_type == ActionType.SKIP:
         assert not out
     else:
@@ -233,7 +229,6 @@ def test_update_callback_pre(tmpdir, capfd, step):
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     out, err = capfd.readouterr()
-    assert not err
     assert out == f"callback\nstep {step!r}\n"
 
 
@@ -256,7 +251,6 @@ def test_update_callback_post(tmpdir, capfd, step):
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     out, err = capfd.readouterr()
-    assert not err
     assert out == f"step {step!r}\ncallback\n"
 
 
@@ -348,7 +342,6 @@ def test_callback_prologue(tmpdir, capfd):
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
-    assert not err
     assert out == "bar: prologue\nfoo: prologue\nfoo Step.PULL\n"
 
 
@@ -370,5 +363,4 @@ def test_callback_epilogue(tmpdir, capfd):
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
-    assert not err
     assert out == "foo Step.PULL\nbar: epilogue\nfoo: epilogue\n"

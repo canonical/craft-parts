@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import textwrap
+from pathlib import Path
 from typing import Any, Dict, List, Set
 
 import pytest
@@ -65,7 +65,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_application_plugin_happy(caplog, new_dir, mocker):
+def test_application_plugin_happy(new_dir, mocker):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -103,10 +103,15 @@ def test_application_plugin_happy(caplog, new_dir, mocker):
 
     mock_install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
-    with lf.action_executor() as exe, caplog.at_level(logging.DEBUG):
-        exe.execute(actions[2])
+    output_path = Path("output.txt")
+    error_path = Path("error.txt")
 
-    assert "hello application plugin" in caplog.text
+    with output_path.open("w") as output, error_path.open("w") as error:
+        with lf.action_executor() as exe:
+            exe.execute(actions[2], stdout=output, stderr=error)
+
+    assert output_path.read_text() == "hello application plugin\n"
+    assert error_path.read_text() == "+ echo hello application plugin\n"
 
     mock_install_packages.assert_called_once_with(["build_package"])
     mock_install_snaps.assert_called_once_with({"build_snap"})
