@@ -36,32 +36,32 @@ class TestOverlayFS:
         )
 
     def test_mount_single_lower(self, mocker):
-        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        mock_mount_overlayfs = mocker.patch(
+            "craft_parts.utils.os_utils.mount_overlayfs"
+        )
 
         ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
-        mock_mount.assert_called_once_with(
-            "overlay",
+        mock_mount_overlayfs.assert_called_once_with(
             "/mountpoint",
-            "-toverlay",
             "-olowerdir=/lower,upperdir=/upper,workdir=/work",
         )
 
     def test_mount_multiple_lower(self, mocker):
-        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        mock_mount_overlayfs = mocker.patch(
+            "craft_parts.utils.os_utils.mount_overlayfs"
+        )
 
         ovfs = self._make_overlay_fs([Path("/lower1"), Path("/lower2")])
         ovfs.mount(Path("/mountpoint"))
-        mock_mount.assert_called_once_with(
-            "overlay",
+        mock_mount_overlayfs.assert_called_once_with(
             "/mountpoint",
-            "-toverlay",
             "-olowerdir=/lower1:/lower2,upperdir=/upper,workdir=/work",
         )
 
     def test_mount_error(self, mocker):
         mocker.patch(
-            "craft_parts.utils.os_utils.mount",
+            "craft_parts.utils.os_utils.mount_overlayfs",
             side_effect=CalledProcessError(cmd=["some", "command"], returncode=42),
         )
 
@@ -75,7 +75,7 @@ class TestOverlayFS:
         )
 
     def test_unmount(self, mocker):
-        mocker.patch("craft_parts.utils.os_utils.mount")
+        mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
         ovfs = self._make_overlay_fs([Path("/lower")])
@@ -91,7 +91,7 @@ class TestOverlayFS:
         mock_umount.assert_not_called()
 
     def test_unmount_multiple(self, mocker):
-        mocker.patch("craft_parts.utils.os_utils.mount")
+        mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
         ovfs = self._make_overlay_fs([Path("/lower")])
@@ -102,7 +102,7 @@ class TestOverlayFS:
         mock_umount.assert_called_once_with("/mountpoint")
 
     def test_unmount_error(self, mocker):
-        mocker.patch("craft_parts.utils.os_utils.mount")
+        mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
         mocker.patch(
             "craft_parts.utils.os_utils.umount",
             side_effect=CalledProcessError(cmd=["some", "command"], returncode=42),

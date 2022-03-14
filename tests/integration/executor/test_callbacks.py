@@ -44,6 +44,7 @@ def teardown_module():
 @pytest.fixture(autouse=True)
 def mock_mount_unmount(mocker):
     mocker.patch("craft_parts.utils.os_utils.mount")
+    mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
     mocker.patch("craft_parts.utils.os_utils.umount")
 
 
