@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,26 +20,53 @@ import json
 import logging
 import os
 import sys
-from typing import List
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 
-def main():
-    """Run the ctl client cli."""
-    if len(sys.argv) < 2:
-        print(f"usage: {sys.argv[0]} <command> [arguments]")
-        sys.exit(1)
+class CraftCtl:
+    """Client for the craft-parts ctl protocol.
 
-    cmd, param = sys.argv[1], sys.argv[2:]
-    try:
-        client(cmd, param)
-    except RuntimeError as err:
-        logger.error("ctl error: %s", err)
-        sys.exit(1)
+    Craftctl is used to execute built-in step handlers and to get and set
+    variables in the running parts processor context.
+    """
+
+    @classmethod
+    def handle_command(
+        cls, cmd: str, args: List[str]  # pylint: disable=unused-argument
+    ) -> bool:
+        """Handle custom commands in application-specific implementations.
+
+        :param cmd: The command to handle.
+        :param args: Command arguments.
+        """
+        return False
+
+    @classmethod
+    def run(cls, cmd: str, args: List[str]) -> Optional[str]:
+        """Handle craftctl commands.
+
+        :param cmd: The command to handle.
+        :param args: Command arguments.
+
+        :raises RuntimeError: If the command is not handled.
+        """
+        if cmd in ["default", "set"]:
+            _client(cmd, args)
+            return None
+
+        if cmd in "get":
+            retval = _client(cmd, args)
+            return retval
+
+        if cls.handle_command(cmd, args):
+            return None
+
+        raise RuntimeError(f"invalid command {cmd!r}")
 
 
-def client(cmd: str, args: List[str]):
+def _client(cmd: str, args: List[str]):
     """Execute a command in the running step processor.
 
     The control protocol client allows a user scriptlet to execute
@@ -47,14 +74,11 @@ def client(cmd: str, args: List[str]):
     or set the value of a custom variable previously passed as an
     argument to :class:`craft_parts.LifecycleManager`.
 
-    :param cmd: The function to execute in the step processor.
+    :param cmd: The command to execute in the step processor.
     :param args: Optional arguments.
 
     :raise RuntimeError: If the command is invalid.
     """
-    if cmd not in ["pull", "build", "stage", "prime", "set"]:
-        raise RuntimeError(f"invalid command {cmd!r}")
-
     try:
         call_fifo = os.environ["PARTS_CALL_FIFO"]
         feedback_fifo = os.environ["PARTS_FEEDBACK_FIFO"]
@@ -70,8 +94,33 @@ def client(cmd: str, args: List[str]):
         fifo.write(json.dumps(data))
 
     with open(feedback_fifo, "r") as fifo:
-        feedback = fifo.readline().strip()
+        feedback = fifo.readline().split(" ", 1)
 
-    # Any feedback is considered a fatal error.
-    if feedback:
-        raise RuntimeError(feedback)
+    status = feedback[0]
+    message = feedback[1].strip() if len(feedback) > 1 else ""
+    retval = None
+
+    if status == "OK":
+        # command has succeeded
+        retval = message
+    elif status == "ERR":
+        # command has failed
+        raise RuntimeError(message)
+
+    return retval
+
+
+def main():
+    """Run the ctl client cli."""
+    if len(sys.argv) < 2:
+        print(f"usage: {sys.argv[0]} <command> [arguments]")
+        sys.exit(1)
+
+    cmd, args = sys.argv[1], sys.argv[2:]
+    try:
+        ret = CraftCtl.run(cmd, args)
+        if ret:
+            print(ret)
+    except RuntimeError as err:
+        logger.error("error: %s", err)
+        sys.exit(1)

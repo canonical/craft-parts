@@ -143,7 +143,9 @@ class TestStepHandlerRunScriptlet:
 
     def test_run_scriptlet(self, new_dir, capfd):
         sh = _step_handler_for_step(Step.PULL, cache_dir=new_dir)
-        sh.run_scriptlet("echo hello world", scriptlet_name="name", work_dir=new_dir)
+        sh.run_scriptlet(
+            "echo hello world", scriptlet_name="name", step=Step.BUILD, work_dir=new_dir
+        )
         captured = capfd.readouterr()
         assert captured.out == "hello world\n"
 

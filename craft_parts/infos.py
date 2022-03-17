@@ -18,8 +18,9 @@
 
 import logging
 import platform
+import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -27,6 +28,9 @@ from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
+
+
+_var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class ProjectInfo:
@@ -42,6 +46,9 @@ class ProjectInfo:
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param project_dirs: The project work directories.
+    :param project_vars_part_name: If defined, project variables can be set
+        only if the part name matches this name.
+    :param project_vars: A dictionary containing the project variables.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
     """
@@ -55,6 +62,8 @@ class ProjectInfo:
         base: str = "",
         parallel_build_count: int = 1,
         project_dirs: Optional[ProjectDirs] = None,
+        project_vars_part_name: Optional[str] = None,
+        project_vars: Optional[Dict[str, str]] = None,
         **custom_args,  # custom passthrough args
     ):
         if not project_dirs:
@@ -66,7 +75,10 @@ class ProjectInfo:
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs
+        self._project_vars_part_name = project_vars_part_name
+        self._project_vars = project_vars or {}
         self._custom_args = custom_args
+        self._consumed_project_vars: Set[str] = set()
 
     def __getattr__(self, name):
         if hasattr(self._dirs, name):
@@ -131,18 +143,55 @@ class ProjectInfo:
             "target_arch": self.target_arch,
         }
 
-    def set_custom_argument(self, name: str, value: str) -> None:
-        """Set the value of a custom argument.
+    def set_project_var(
+        self, name: str, value: str, *, part_name: Optional[str] = None
+    ) -> None:
+        """Set the value of a project variable.
 
         :param name: The custom argument name.
         :param value: The new custom argument value.
 
         :raise ValueError: If there is no custom argument with the given name.
         """
-        if name not in self._custom_args:
-            raise ValueError(f"{name!r} not in project custom arguments")
+        self._ensure_valid_variable_name(name)
 
-        self._custom_args[name] = value
+        if name in self._consumed_project_vars:
+            raise ValueError(
+                f"cannot set variable {name!r}, it has already been consumed"
+            )
+
+        if self._project_vars_part_name in [None, part_name]:
+            self._project_vars[name] = value
+
+    def get_project_var(self, name: str, *, consume: bool = True) -> str:
+        """Set the value of a project variable.
+
+        Variables consumed by the application should be marked as such to prevent
+        subsequent value changes during later steps. Not doing so may lead to
+        unexpected behavior since values set to variables already consumed will
+        not be used by the application.
+
+        :param name: The project variable name.
+        :param consume: Whether the variable should be marked as consumed.
+
+        :raise ValueError: If there is no project variable with the given name.
+        """
+        self._ensure_valid_variable_name(name)
+        if consume:
+            self._consumed_project_vars.add(name)
+
+        return str(self._project_vars[name])
+
+    def _ensure_valid_variable_name(self, name: str) -> None:
+        """Raise an error if variable name is invalid.
+
+        :param name: The variable name to verify.
+        """
+        if not _var_name_pattern.match(name):
+            raise ValueError(f"{name!r} is not a valid variable name")
+
+        if name not in self._project_vars:
+            raise ValueError(f"{name!r} not in project variables")
 
     def _set_machine(self, arch: Optional[str]):
         """Initialize machine information based on the architecture.
@@ -227,15 +276,25 @@ class PartInfo:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
 
-    def set_custom_argument(self, name: str, value: str) -> None:
-        """Set the value of a custom argument.
+    def set_project_var(self, name: str, value: str) -> None:
+        """Set the value of a project variable.
 
         :param name: The custom argument name.
         :param value: The new custom argument value.
 
         :raise ValueError: If there is no custom argument with the given name.
         """
-        self._project_info.set_custom_argument(name, value)
+        self._project_info.set_project_var(name, value, part_name=self._part_name)
+
+    def get_project_var(self, name: str, *, consume=True) -> str:
+        """Set the value of a project variable.
+
+        :param name: The project variable name.
+        :param consume: Whether the variable should be marked as consumed.
+
+        :raise ValueError: If there is no project variable with the given name.
+        """
+        return self._project_info.get_project_var(name, consume=consume)
 
 
 class StepInfo:
@@ -259,15 +318,25 @@ class StepInfo:
 
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
-    def set_custom_argument(self, name: str, value: str) -> None:
-        """Set the value of a custom argument.
+    def set_project_var(self, name: str, value: str) -> None:
+        """Set the value of a project variable.
 
         :param name: The custom argument name.
         :param value: The new custom argument value.
 
         :raise ValueError: If there is no custom argument with the given name.
         """
-        self._part_info.set_custom_argument(name, value)
+        self._part_info.set_project_var(name, value)
+
+    def get_project_var(self, name: str, *, consume=True) -> str:
+        """Set the value of a project variable.
+
+        :param name: The project variable name.
+        :param consume: Whether the variable should be marked as consumed.
+
+        :raise ValueError: If there is no project variable with the given name.
+        """
+        return self._part_info.get_project_var(name, consume=consume)
 
 
 def _get_host_architecture() -> str:

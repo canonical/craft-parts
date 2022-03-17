@@ -65,6 +65,9 @@ class LifecycleManager:
     :param base_layer_hash: The validation hash of the overlay base image, if using
         overlays. The validation hash should be constant for a given image, and should
         change if a different base image is used.
+    :param project_vars_part_name: If defined, project variables can only be set
+        in the part matching this name.
+    :param project_vars: A dictionary containing project variables.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -84,6 +87,8 @@ class LifecycleManager:
         extra_build_packages: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[bytes] = None,
+        project_vars_part_name: Optional[str] = None,
+        project_vars: Optional[Dict[str, str]] = None,
         **custom_args,  # custom passthrough args
     ):
         # pylint: disable=too-many-locals
@@ -111,6 +116,8 @@ class LifecycleManager:
             base=base,
             parallel_build_count=parallel_build_count,
             project_dirs=project_dirs,
+            project_vars_part_name=project_vars_part_name,
+            project_vars=project_vars,
             **custom_args,
         )
 

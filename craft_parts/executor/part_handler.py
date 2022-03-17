@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -458,6 +458,7 @@ class PartHandler:
             step_handler.run_scriptlet(
                 scriptlet,
                 scriptlet_name=scriptlet_name,
+                step=step_info.step,
                 work_dir=work_dir,
             )
             return StepContents()
