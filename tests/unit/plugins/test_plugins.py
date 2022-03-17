@@ -24,6 +24,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import nil_plugin
 from craft_parts.plugins.plugins import (
     AutotoolsPlugin,
+    CMakePlugin,
     DumpPlugin,
     MakePlugin,
     NilPlugin,
@@ -42,6 +43,7 @@ class TestGetPlugin:
         "name,plugin_class,data",
         [
             ("autotools", AutotoolsPlugin, {"source": "."}),
+            ("cmake", CMakePlugin, {"source": "."}),
             ("dump", DumpPlugin, {"source": "."}),
             ("make", MakePlugin, {"source": "."}),
             ("nil", NilPlugin, {}),

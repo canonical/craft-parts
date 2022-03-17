@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Dict, Type
 
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
+from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
@@ -41,6 +42,7 @@ PluginType = Type[Plugin]
 # Plugin registry by plugin API version
 _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "autotools": AutotoolsPlugin,
+    "cmake": CMakePlugin,
     "dotnet": DotnetPlugin,
     "dump": DumpPlugin,
     "go": GoPlugin,
