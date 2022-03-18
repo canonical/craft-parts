@@ -37,6 +37,7 @@ class ProjectDirs:
     """
 
     def __init__(self, *, work_dir: Union[Path, str] = "."):
+        self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
         self.parts_dir = self.work_dir / "parts"
         self.overlay_dir = self.work_dir / "overlay"

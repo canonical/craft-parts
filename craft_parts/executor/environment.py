@@ -143,26 +143,24 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
 def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
     """Add project and part information variables to the environment.
 
-    Variable names are prefixed by the application name in uppercase.
-
     :param step_info: Information about the current step.
 
     :return: A dictionary containing environment variables and values.
     """
-    prefix = step_info.application_name.upper()
-
     return {
-        f"{prefix}_ARCH_TRIPLET": step_info.arch_triplet,
-        f"{prefix}_TARGET_ARCH": step_info.target_arch,
-        f"{prefix}_PARALLEL_BUILD_COUNT": str(step_info.parallel_build_count),
-        f"{prefix}_PART_NAME": step_info.part_name,
-        f"{prefix}_PART_SRC": str(step_info.part_src_dir),
-        f"{prefix}_PART_BUILD": str(step_info.part_build_dir),
-        f"{prefix}_PART_BUILD_WORK": str(step_info.part_build_subdir),
-        f"{prefix}_PART_INSTALL": str(step_info.part_install_dir),
-        f"{prefix}_OVERLAY": str(step_info.overlay_mount_dir),
-        f"{prefix}_STAGE": str(step_info.stage_dir),
-        f"{prefix}_PRIME": str(step_info.prime_dir),
+        "CRAFT_ARCH_TRIPLET": step_info.arch_triplet,
+        "CRAFT_TARGET_ARCH": step_info.target_arch,
+        "CRAFT_PARALLEL_BUILD_COUNT": str(step_info.parallel_build_count),
+        "CRAFT_PROJECT_DIR": str(step_info.project_dir),
+        "CRAFT_PART_NAME": step_info.part_name,
+        "CRAFT_PART_SRC": str(step_info.part_src_dir),
+        "CRAFT_PART_SRC_WORK": str(step_info.part_src_subdir),
+        "CRAFT_PART_BUILD": str(step_info.part_build_dir),
+        "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
+        "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
+        "CRAFT_OVERLAY": str(step_info.overlay_mount_dir),
+        "CRAFT_STAGE": str(step_info.stage_dir),
+        "CRAFT_PRIME": str(step_info.prime_dir),
     }
 
 
