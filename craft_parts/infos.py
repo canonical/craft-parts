@@ -151,7 +151,8 @@ class ProjectInfo:
         :param name: The custom argument name.
         :param value: The new custom argument value.
 
-        :raise ValueError: If there is no custom argument with the given name.
+        :raise ValueError: If there is no custom argument with the given name,
+            or if the variable has already been consumed by the application.
         """
         self._ensure_valid_variable_name(name)
 
@@ -164,7 +165,7 @@ class ProjectInfo:
             self._project_vars[name] = value
 
     def get_project_var(self, name: str, *, consume: bool = True) -> str:
-        """Set the value of a project variable.
+        """Get the value of a project variable.
 
         Variables consumed by the application should be marked as such to prevent
         subsequent value changes during later steps. Not doing so may lead to
@@ -173,6 +174,7 @@ class ProjectInfo:
 
         :param name: The project variable name.
         :param consume: Whether the variable should be marked as consumed.
+        :return: The value of the variable.
 
         :raise ValueError: If there is no project variable with the given name.
         """
@@ -282,15 +284,22 @@ class PartInfo:
         :param name: The custom argument name.
         :param value: The new custom argument value.
 
-        :raise ValueError: If there is no custom argument with the given name.
+        :raise ValueError: If there is no custom argument with the given name,
+            or if the variable has already been consumed by the application.
         """
         self._project_info.set_project_var(name, value, part_name=self._part_name)
 
     def get_project_var(self, name: str, *, consume=True) -> str:
-        """Set the value of a project variable.
+        """Get the value of a project variable.
+
+        Variables consumed by the application should be marked as such to prevent
+        subsequent value changes during later steps. Not doing so may lead to
+        unexpected behavior since values set to variables already consumed will
+        not be used by the application.
 
         :param name: The project variable name.
         :param consume: Whether the variable should be marked as consumed.
+        :return: The value of the variable.
 
         :raise ValueError: If there is no project variable with the given name.
         """
@@ -324,15 +333,22 @@ class StepInfo:
         :param name: The custom argument name.
         :param value: The new custom argument value.
 
-        :raise ValueError: If there is no custom argument with the given name.
+        :raise ValueError: If there is no custom argument with the given name,
+            or if the variable has already been consumed by the application.
         """
         self._part_info.set_project_var(name, value)
 
     def get_project_var(self, name: str, *, consume=True) -> str:
-        """Set the value of a project variable.
+        """Get the value of a project variable.
+
+        Variables consumed by the application should be marked as such to prevent
+        subsequent value changes during later steps. Not doing so may lead to
+        unexpected behavior since values set to variables already consumed will
+        not be used by the application.
 
         :param name: The project variable name.
         :param consume: Whether the variable should be marked as consumed.
+        :return: The value of the variable.
 
         :raise ValueError: If there is no project variable with the given name.
         """
