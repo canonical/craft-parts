@@ -33,17 +33,6 @@ class CraftCtl:
     """
 
     @classmethod
-    def handle_command(
-        cls, cmd: str, args: List[str]  # pylint: disable=unused-argument
-    ) -> bool:
-        """Handle custom commands in application-specific implementations.
-
-        :param cmd: The command to handle.
-        :param args: Command arguments.
-        """
-        return False
-
-    @classmethod
     def run(cls, cmd: str, args: List[str]) -> Optional[str]:
         """Handle craftctl commands.
 
@@ -59,9 +48,6 @@ class CraftCtl:
         if cmd in "get":
             retval = _client(cmd, args)
             return retval
-
-        if cls.handle_command(cmd, args):
-            return None
 
         raise RuntimeError(f"invalid command {cmd!r}")
 
