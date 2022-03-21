@@ -319,27 +319,28 @@ class StepHandler:
                 )
             self._execute_builtin_handler(step)
         elif cmd_name == "set":
-            if len(cmd_args) < 1:
+            if len(cmd_args) != 1:
                 raise invalid_control_api_call(
                     message=(f"invalid arguments to command {cmd_name!r}"),
                 )
 
-            for arg in cmd_args:
-                if "=" not in arg:
-                    raise invalid_control_api_call(
-                        message=(f"invalid arguments to command {cmd_name!r}"),
-                    )
+            if "=" not in cmd_args[0]:
+                raise invalid_control_api_call(
+                    message=(
+                        f"invalid arguments to command {cmd_name!r} (want key=value)"
+                    ),
+                )
 
-                name, value = arg.split("=")
+            name, value = cmd_args[0].split("=")
 
-                try:
-                    self._step_info.set_project_var(name, value)
-                except ValueError as err:
-                    raise errors.InvalidControlAPICall(
-                        part_name=self._part.name,
-                        scriptlet_name=scriptlet_name,
-                        message=str(err),
-                    )
+            try:
+                self._step_info.set_project_var(name, value)
+            except ValueError as err:
+                raise errors.InvalidControlAPICall(
+                    part_name=self._part.name,
+                    scriptlet_name=scriptlet_name,
+                    message=str(err),
+                )
         elif cmd_name == "get":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(

@@ -196,10 +196,13 @@ def test_craftctl_set_multiple(new_dir):
         cache_dir=new_dir,
         project_vars={"myvar": "", "myvar2": ""},
     )
-    with lf.action_executor() as ctx:
-        ctx.execute(Action("foo", Step.PULL))
-    assert lf.project_info.get_project_var("myvar") == "myvalue"
-    assert lf.project_info.get_project_var("myvar2") == "myvalue2"
+    with pytest.raises(errors.InvalidControlAPICall) as raised:
+        with lf.action_executor() as ctx:
+            ctx.execute(Action("foo", Step.PULL))
+
+    assert raised.value.part_name == "foo"
+    assert raised.value.scriptlet_name == "override-pull"
+    assert raised.value.message == "invalid arguments to command 'set'"
 
 
 def test_craftctl_set_part_name(new_dir):
@@ -380,7 +383,9 @@ def test_craftctl_set_argument_error(new_dir, capfd, mocker):
 
     assert raised.value.part_name == "foo"
     assert raised.value.scriptlet_name == "override-pull"
-    assert raised.value.message == "invalid arguments to command 'set'"
+    assert raised.value.message == (
+        "invalid arguments to command 'set' (want key=value)"
+    )
 
 
 def test_craftctl_set_consume(new_dir, capfd):
