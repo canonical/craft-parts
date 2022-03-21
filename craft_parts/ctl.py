@@ -82,6 +82,11 @@ def _client(cmd: str, args: List[str]):
     with open(feedback_fifo, "r") as fifo:
         feedback = fifo.readline().split(" ", 1)
 
+    # response from server is in the form "<status> <message>" where
+    # <status> can be either "OK" or "ERR".  Previous server versions
+    # used an empty response as success, anything else was an error
+    # message.
+
     status = feedback[0]
     message = feedback[1].strip() if len(feedback) > 1 else ""
     retval = None
