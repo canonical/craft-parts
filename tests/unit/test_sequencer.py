@@ -81,6 +81,8 @@ def test_sequencer_run_step(step, state_class, new_dir):
         "application_name": "test",
         "arch_triplet": "aarch64-linux-gnu",
         "target_arch": "arm64",
+        "project_vars_part_name": None,
+        "project_vars": {},
     }
 
 
@@ -137,6 +139,8 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
         "application_name": "test",
         "arch_triplet": "aarch64-linux-gnu",
         "target_arch": "arm64",
+        "project_vars_part_name": None,
+        "project_vars": {},
     }
 
 

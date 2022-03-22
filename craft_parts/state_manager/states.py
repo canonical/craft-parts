@@ -23,6 +23,7 @@ from typing import Optional, Type
 
 import yaml
 
+from craft_parts.infos import ProjectVar
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -53,6 +54,14 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
     logger.debug("load state file: %s", filename)
     with open(filename) as yaml_file:
         state_data = yaml.safe_load(yaml_file)
+
+    # fix project vars in loaded state data
+    opt = state_data.get("project-options")
+    if opt:
+        pvars = opt.get("project_vars")
+        if pvars:
+            for key, val in pvars.items():
+                pvars[key] = ProjectVar(**val)
 
     state_class: Type[StepState]
 

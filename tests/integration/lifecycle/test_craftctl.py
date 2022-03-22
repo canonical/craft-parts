@@ -249,8 +249,13 @@ def test_craftctl_set_bad_part_name(new_dir):
         project_vars={"myvar": "x"},
     )
     with lf.action_executor() as ctx:
-        ctx.execute(Action("foo", Step.PULL))
-    assert lf.project_info.get_project_var("myvar") == "x"
+        with pytest.raises(errors.InvalidControlAPICall) as raised:
+            ctx.execute(Action("foo", Step.PULL))
+
+    err = raised.value
+    assert err.part_name == "foo"
+    assert err.scriptlet_name == "override-pull"
+    assert err.message == "variable 'myvar' can only be set in part 'bar'"
 
 
 def test_craftctl_set_multiple_parts(new_dir):
@@ -308,10 +313,16 @@ def test_craftctl_set_multiple_parts_restricted(new_dir):
     )
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
-        ctx.execute(Action("bar", Step.PULL))
+        with pytest.raises(errors.InvalidControlAPICall) as raised:
+            ctx.execute(Action("bar", Step.PULL))
 
     assert lf.project_info.get_project_var("myvar") == "myvalue"
     assert lf.project_info.get_project_var("myvar2") == "y"
+
+    err = raised.value
+    assert err.part_name == "bar"
+    assert err.scriptlet_name == "override-pull"
+    assert err.message == "variable 'myvar2' can only be set in part 'foo'"
 
 
 def test_craftctl_set_error(new_dir, capfd, mocker):
@@ -411,7 +422,7 @@ def test_craftctl_set_consume(new_dir, capfd):
     )
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
-        assert lf.project_info.get_project_var("myvar") == "val1"
+        assert lf.project_info.get_project_var("myvar", raw_read=True) == "val1"
 
         with pytest.raises(errors.InvalidControlAPICall) as raised:
             ctx.execute(Action("foo", Step.BUILD))
@@ -423,6 +434,104 @@ def test_craftctl_set_consume(new_dir, capfd):
 
         assert err.part_name == "foo"
         assert err.scriptlet_name == "override-build"
-        assert err.message == (
-            "cannot set variable 'myvar', it has already been consumed"
-        )
+        assert err.message == "variable 'myvar' can be set only once"
+
+
+def test_craftctl_project_vars_from_state(new_dir):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            override-pull: |
+              craftctl set myvar=val1
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    # run the lifecycle and execute pull. The pull scriptlet sets
+    # a project variable to "val1"
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars={"myvar": ""},
+    )
+
+    actions = lf.plan(Step.PULL)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # run the lifecycle again and execute build. The pull step is
+    # skipped because it already ran, but the variable value set
+    # in the previous execution must be
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars={"myvar": ""},
+    )
+
+    actions = lf.plan(Step.BUILD)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("myvar") == "val1"
+
+
+def test_craftctl_project_vars_write_once_from_state(new_dir):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            override-pull: |
+              craftctl set myvar=val1
+            override-build: |
+              craftctl set myvar2=val2
+              craftctl set myvar=val2
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    # run the lifecycle and execute pull. The pull scriptlet sets
+    # a project variable to "val1"
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars={"myvar": "", "myvar2": ""},
+    )
+
+    actions = lf.plan(Step.PULL)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # run the lifecycle again and execute build. The pull step is
+    # skipped because it already ran, and setting the variable again
+    # in build step must fail.
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars={"myvar": "", "myvar2": ""},
+    )
+
+    actions = lf.plan(Step.BUILD)
+
+    with lf.action_executor() as ctx:
+        with pytest.raises(errors.InvalidControlAPICall) as raised:
+            ctx.execute(actions)
+
+    err = raised.value
+    assert err.part_name == "foo"
+    assert err.scriptlet_name == "override-build"
+    assert err.message == "variable 'myvar' can be set only once"
+    assert lf.project_info.get_project_var("myvar2") == "val2"

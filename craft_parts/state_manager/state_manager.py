@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from craft_parts import parts, sources, steps
-from craft_parts.infos import ProjectInfo
+from craft_parts.infos import ProjectInfo, ProjectVar
 from craft_parts.parts import Part
 from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
@@ -253,6 +253,20 @@ class StateManager:
             return self.should_step_run(part, previous_steps[-1])
 
         return False
+
+    def project_vars(self, part: Part, step: Step) -> Optional[Dict[str, ProjectVar]]:
+        """Obtain the project variables for a given part and step.
+
+        :param part: The part corresponding to the state to retrieve.
+        :param part: The step corresponding to the state to retrieve.
+
+        :return: The project variables from the last execution.
+        """
+        stw = self._state_db.get(part_name=part.name, step=step)
+        if not stw:
+            return {}
+
+        return stw.state.project_options.get("project_vars") or None
 
     def check_if_outdated(self, part: Part, step: Step) -> Optional[OutdatedReport]:
         """Verify whether a step is outdated.

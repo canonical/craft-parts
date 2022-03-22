@@ -335,7 +335,7 @@ class StepHandler:
 
             try:
                 self._step_info.set_project_var(name, value)
-            except ValueError as err:
+            except (ValueError, RuntimeError) as err:
                 raise errors.InvalidControlAPICall(
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
@@ -349,7 +349,7 @@ class StepHandler:
             (name,) = cmd_args
 
             try:
-                retval = self._step_info.get_project_var(name, consume=False)
+                retval = self._step_info.get_project_var(name, raw_read=True)
             except ValueError as err:
                 raise errors.InvalidControlAPICall(
                     part_name=self._part.name,

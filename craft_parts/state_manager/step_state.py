@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Set
 
-from pydantic_yaml import YamlModel  # type: ignore
+from pydantic_yaml import YamlModel
 
 from craft_parts.utils import os_utils
 

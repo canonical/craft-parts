@@ -31,7 +31,7 @@ def test_action_representation():
     assert (
         f"{action!r}"
         == "Action(part_name='foo', step=Step.PULL, action_type=ActionType.SKIP, "
-        "reason='is tired')"
+        "reason='is tired', project_vars=None)"
     )
 
 
