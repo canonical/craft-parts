@@ -67,7 +67,7 @@ class Action:
     :param reason: A textual description of why this action should be
         executed.
     :param project_vars: The values of project variables from a previous
-        execution if the action type is ``ActionType.SKIP``.
+        execution, used if the action type is ``ActionType.SKIP``.
     """
 
     part_name: str
