@@ -55,13 +55,16 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
     with open(filename) as yaml_file:
         state_data = yaml.safe_load(yaml_file)
 
-    # fix project vars in loaded state data
-    opt = state_data.get("project-options")
-    if opt:
-        pvars = opt.get("project_vars")
+    # Fix project variables in loaded state data.
+    #
+    # FIXME: add proper type definition for project_options so that
+    # ProjectVar can be created by pydantic during model unmarshaling.
+    options = state_data.get("project-options")
+    if options:
+        pvars = options.get("project_vars")
         if pvars:
             for key, val in pvars.items():
-                pvars[key] = ProjectVar(**val)
+                state_data["project-options"]["project_vars"][key] = ProjectVar(**val)
 
     state_class: Type[StepState]
 
