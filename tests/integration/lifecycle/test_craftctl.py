@@ -84,6 +84,8 @@ def test_craftctl_default(new_dir, capfd, mocker):
         base_layer_dir=new_dir,
         base_layer_hash=b"hash",
     )
+
+    # Check if planning resulted in the correct list of actions.
     actions = lf.plan(Step.PRIME)
     assert actions == [
         Action("foo", Step.PULL),
@@ -92,7 +94,13 @@ def test_craftctl_default(new_dir, capfd, mocker):
         Action("foo", Step.STAGE),
         Action("foo", Step.PRIME),
     ]
+
+    # Execute each step and verify if scriptlet and built-in handler
+    # ran as expected.
+
     with lf.action_executor() as ctx:
+        # Execute the pull step. The source file must have been
+        # copied to the part src directory.
         ctx.execute(actions[0])
         captured = capfd.readouterr()
         assert captured.out == "pull step\n"
@@ -101,11 +109,15 @@ def test_craftctl_default(new_dir, capfd, mocker):
         assert Path("stage/foo.txt").exists() is False
         assert Path("prime/foo.txt").exists() is False
 
+        # Execute the overlay step and add a file to the overlay
+        # directory to track file migration.
         ctx.execute(actions[1])
         captured = capfd.readouterr()
         Path("parts/foo/layer/ovl.txt").touch()
         assert captured.out == "overlay step\n"
 
+        # Execute the build step. The source file must have been
+        # copied to the part install directory.
         ctx.execute(actions[2])
         captured = capfd.readouterr()
         assert captured.out == "build step\n"
@@ -115,6 +127,8 @@ def test_craftctl_default(new_dir, capfd, mocker):
         assert Path("prime/foo.txt").exists() is False
         assert Path("prime/ovl.txt").exists() is False
 
+        # Execute the stage step. Both source and overlay files
+        # must be in the stage directory.
         ctx.execute(actions[3])
         captured = capfd.readouterr()
         assert captured.out == "stage step\n"
@@ -123,6 +137,8 @@ def test_craftctl_default(new_dir, capfd, mocker):
         assert Path("prime/foo.txt").exists() is False
         assert Path("prime/ovl.txt").exists() is False
 
+        # Execute the prime step. Both source and overlay files
+        # must be in the prime directory.
         ctx.execute(actions[4])
         captured = capfd.readouterr()
         assert captured.out == "prime step\n"
