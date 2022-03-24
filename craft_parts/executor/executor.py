@@ -177,7 +177,9 @@ class Executor:
             if action.project_vars:
                 for var, pvar in action.project_vars.items():
                     if pvar.updated:
-                        self._project_info.set_project_var(var, pvar.value)
+                        self._project_info.set_project_var(
+                            var, pvar.value, raw_write=True
+                        )
             return
 
         if action.step == Step.STAGE:

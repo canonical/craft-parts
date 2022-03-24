@@ -507,15 +507,16 @@ def test_craftctl_project_vars_write_once_from_state(new_dir):
             plugin: nil
             override-pull: |
               craftctl set myvar=val1
-            override-build: |
+            override-prime: |
               craftctl set myvar2=val2
               craftctl set myvar=val2
         """
     )
     parts = yaml.safe_load(parts_yaml)
 
-    # run the lifecycle and execute pull. The pull scriptlet sets
-    # a project variable to "val1"
+    # run the lifecycle. The pull scriptlet sets a project variable
+    # to "val1". Plan for more than one step to generate multiple skipped
+    # steps in the second run.
 
     lf = craft_parts.LifecycleManager(
         parts,
@@ -524,14 +525,14 @@ def test_craftctl_project_vars_write_once_from_state(new_dir):
         project_vars={"myvar": "", "myvar2": ""},
     )
 
-    actions = lf.plan(Step.PULL)
+    actions = lf.plan(Step.STAGE)
 
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    # run the lifecycle again and execute build. The pull step is
-    # skipped because it already ran, and setting the variable again
-    # in build step must fail.
+    # run the lifecycle again and execute prime. Previous steps are
+    # skipped because they already ran, and setting the variable again
+    # in the prime step must fail.
 
     lf = craft_parts.LifecycleManager(
         parts,
@@ -540,7 +541,7 @@ def test_craftctl_project_vars_write_once_from_state(new_dir):
         project_vars={"myvar": "", "myvar2": ""},
     )
 
-    actions = lf.plan(Step.BUILD)
+    actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
         with pytest.raises(errors.InvalidControlAPICall) as raised:
@@ -548,6 +549,6 @@ def test_craftctl_project_vars_write_once_from_state(new_dir):
 
     err = raised.value
     assert err.part_name == "foo"
-    assert err.scriptlet_name == "override-build"
+    assert err.scriptlet_name == "override-prime"
     assert err.message == "variable 'myvar' can be set only once"
     assert lf.project_info.get_project_var("myvar2") == "val2"
