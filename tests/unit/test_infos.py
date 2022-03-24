@@ -113,6 +113,19 @@ def test_project_info_set_project_var():
     assert info.get_project_var("var", raw_read=True) == "bar"
 
 
+def test_project_info_set_project_raw_write():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
+
+    info.set_project_var("var", "bar")
+    info.set_project_var("var", "bar", raw_write=True)
+    with pytest.raises(RuntimeError) as raised:
+        info.set_project_var("var", "bar")
+
+    assert str(raised.value) == "variable 'var' can be set only once"
+
+
 def test_project_info_set_project_var_bad_name():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
@@ -256,6 +269,21 @@ def test_part_info_set_project_var():
     assert x.get_project_var("var", raw_read=True) == "bar"
 
 
+def test_part_info_set_project_var_raw_write():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
+    part = Part("p1", {})
+    x = PartInfo(project_info=info, part=part)
+
+    x.set_project_var("var", "bar")
+    x.set_project_var("var", "bar", raw_write=True)
+    with pytest.raises(RuntimeError) as raised:
+        x.set_project_var("var", "bar")
+
+    assert str(raised.value) == "variable 'var' can be set only once"
+
+
 def test_part_info_set_project_var_part_name():
     info = ProjectInfo(
         application_name="test",
@@ -362,6 +390,22 @@ def test_step_info_set_project_var():
 
     x.set_project_var("var", "bar")
     assert x.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_step_info_set_project_var_raw_write():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
+    part = Part("p1", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    x.set_project_var("var", "bar")
+    x.set_project_var("var", "bar", raw_write=True)
+    with pytest.raises(RuntimeError) as raised:
+        x.set_project_var("var", "bar")
+
+    assert str(raised.value) == "variable 'var' can be set only once"
 
 
 def test_step_info_set_project_var_part_name():

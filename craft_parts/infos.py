@@ -161,6 +161,7 @@ class ProjectInfo:
         self,
         name: str,
         value: str,
+        raw_write: bool = False,
         *,
         part_name: Optional[str] = None,
     ) -> None:
@@ -173,6 +174,7 @@ class ProjectInfo:
         :param name: The project variable name.
         :param value: The new project variable value.
         :param part_name: If not None, variable setting is restricted to the named part.
+        :param raw_write: Whether the variable is written without access verifications.
 
         :raise ValueError: If there is no custom argument with the given name.
         :raise RuntimeError: If a write-once variable is set a second time, or if a
@@ -180,7 +182,7 @@ class ProjectInfo:
         """
         self._ensure_valid_variable_name(name)
 
-        if self._project_vars[name].updated:
+        if not raw_write and self._project_vars[name].updated:
             raise RuntimeError(f"variable {name!r} can be set only once")
 
         if self._project_vars_part_name in [None, part_name]:
@@ -307,7 +309,9 @@ class PartInfo:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
 
-    def set_project_var(self, name: str, value: str) -> None:
+    def set_project_var(
+        self, name: str, value: str, *, raw_write: bool = False
+    ) -> None:
         """Set the value of a project variable.
 
         Variable values can be set once. Project variables are not intended for
@@ -316,12 +320,15 @@ class PartInfo:
 
         :param name: The project variable name.
         :param value: The new project variable value.
+        :param raw_write: Whether the variable is written without access verifications.
 
         :raise ValueError: If there is no custom argument with the given name.
         :raise RuntimeError: If a write-once variable is set a second time, or if a
             part name is specified and the variable is set from a different part.
         """
-        self._project_info.set_project_var(name, value, part_name=self._part_name)
+        self._project_info.set_project_var(
+            name, value, part_name=self._part_name, raw_write=raw_write
+        )
 
     def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
         """Get the value of a project variable.
@@ -360,7 +367,9 @@ class StepInfo:
 
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
-    def set_project_var(self, name: str, value: str) -> None:
+    def set_project_var(
+        self, name: str, value: str, *, raw_write: bool = False
+    ) -> None:
         """Set the value of a project variable.
 
         Variable values can be set once. Project variables are not intended for
@@ -369,12 +378,13 @@ class StepInfo:
 
         :param name: The project variable name.
         :param value: The new project variable value.
+        :param raw_write: Whether the variable is written without access verifications.
 
         :raise ValueError: If there is no custom argument with the given name.
         :raise RuntimeError: If a write-once variable is set a second time, or if a
             part name is specified and the variable is set from a different part.
         """
-        self._part_info.set_project_var(name, value)
+        self._part_info.set_project_var(name, value, raw_write=raw_write)
 
     def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
         """Get the value of a project variable.
