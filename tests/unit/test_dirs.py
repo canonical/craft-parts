@@ -21,6 +21,7 @@ from craft_parts.dirs import ProjectDirs
 
 def test_dirs(new_dir):
     dirs = ProjectDirs()
+    assert dirs.project_dir == new_dir
     assert dirs.work_dir == new_dir
     assert dirs.parts_dir == new_dir / "parts"
     assert dirs.overlay_dir == new_dir / "overlay"
@@ -33,6 +34,7 @@ def test_dirs(new_dir):
 
 def test_dirs_work_dir(new_dir):
     dirs = ProjectDirs(work_dir="foobar")
+    assert dirs.project_dir == new_dir
     assert dirs.work_dir == new_dir / "foobar"
     assert dirs.parts_dir == new_dir / "foobar/parts"
     assert dirs.overlay_dir == new_dir / "foobar/overlay"

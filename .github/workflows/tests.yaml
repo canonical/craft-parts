@@ -97,8 +97,8 @@ jobs:
               plugin: nil
               overlay-packages: [hello]
               overlay-script: |
-                chroot "\$CRAFT_PARTS_OVERLAY" /bin/bash -c "hello > hello.txt"
-                echo 1234 > "\$CRAFT_PARTS_OVERLAY/etc/issue"
+                chroot "\$CRAFT_OVERLAY" /bin/bash -c "hello > hello.txt"
+                echo 1234 > "\$CRAFT_OVERLAY/etc/issue"
               overlay:
                 - "*.txt"
                 - etc
@@ -108,13 +108,13 @@ jobs:
               after: [foo]
               overlay-packages: [bison]
               overlay-script: |
-                chroot "\$CRAFT_PARTS_OVERLAY" /bin/bash -c "rm -Rf /etc/shells /etc/ssh && mkdir /etc/ssh"
-                echo 5678 > "\$CRAFT_PARTS_OVERLAY/etc/issue"
+                chroot "\$CRAFT_OVERLAY" /bin/bash -c "rm -Rf /etc/shells /etc/ssh && mkdir /etc/ssh"
+                echo 5678 > "\$CRAFT_OVERLAY/etc/issue"
               overlay:
                 - -usr/share
                 - -var/cache
               override-build: |
-                rev "\$CRAFT_PARTS_OVERLAY/hello.txt" > "\$CRAFT_PARTS_PART_INSTALL/olleh.txt"
+                rev "\$CRAFT_OVERLAY/hello.txt" > "\$CRAFT_PART_INSTALL/olleh.txt"
           EOF
           python_exe=$(command -v python)
           cat <<-EOF > run.sh

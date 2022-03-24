@@ -169,48 +169,12 @@ def test_main_dry_run(mocker, capfd):
     assert Path("prime").is_dir() is False
 
 
-def test_main_application_name(new_dir, mocker, capfd):
-    my_parts_yaml = textwrap.dedent(
-        """
-        parts:
-          foo:
-            plugin: nil
-            override-pull: env | grep ^ZNAPCRAFT_ | cut -f1 -d= | sort
-        """
-    )
-    Path("parts.yaml").write_text(my_parts_yaml)
-
-    mocker.patch.object(
-        sys, "argv", ["cmd", "--verbose", "--application-name", "znapcraft", "pull"]
-    )
-    main.main()
-
-    # check environment variables
-    out, _ = capfd.readouterr()
-    assert out == textwrap.dedent(
-        """\
-        Execute: Pull foo
-        ZNAPCRAFT_ARCH_TRIPLET
-        ZNAPCRAFT_OVERLAY
-        ZNAPCRAFT_PARALLEL_BUILD_COUNT
-        ZNAPCRAFT_PART_BUILD
-        ZNAPCRAFT_PART_BUILD_WORK
-        ZNAPCRAFT_PART_INSTALL
-        ZNAPCRAFT_PART_NAME
-        ZNAPCRAFT_PART_SRC
-        ZNAPCRAFT_PRIME
-        ZNAPCRAFT_STAGE
-        ZNAPCRAFT_TARGET_ARCH
-        """
-    )
-
-
 def test_main_invalid_application_name(mocker):
     Path("parts.yaml").write_text(parts_yaml)
     Path("work_dir").mkdir()
 
     mocker.patch.object(
-        sys, "argv", ["cmd", "--dry-run", "--application-name", "znap-craft", "clean"]
+        sys, "argv", ["cmd", "--dry-run", "--application-name", "snap-craft", "clean"]
     )
     with pytest.raises(SystemExit) as raised:
         main.main()

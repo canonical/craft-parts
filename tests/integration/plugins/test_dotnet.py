@@ -33,7 +33,7 @@ def test_dotnet_plugin(new_dir):
             plugin: dotnet
             dotnet-self-contained-runtime-identifier: linux-x64
             build-environment:
-              - PATH: $TEST_DOTNET_STAGE/sdk:$PATH
+              - PATH: $CRAFT_STAGE/sdk:$PATH
             after: [dotnet]
           dotnet:
             plugin: dump
@@ -41,7 +41,7 @@ def test_dotnet_plugin(new_dir):
             source-checksum: sha256/8489a798fcd904a32411d64636e2747edf108192e0b65c6c3ccfb0d302da5ecb
             override-build: |
               # TODO: find out why this is a problem with "organize".XS
-              cp --archive --link --no-dereference . $TEST_DOTNET_PART_INSTALL/sdk
+              cp --archive --link --no-dereference . $CRAFT_PART_INSTALL/sdk
             prime:
               - -sdk
         """

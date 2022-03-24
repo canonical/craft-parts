@@ -172,9 +172,9 @@ def test_validate_plugin_satisfied_with_part(new_dir):
           mytool:
             plugin: nil
             override-build: |
-              mkdir "$MYTEST_PART_INSTALL"/bin
-              echo "echo ok" > "$MYTEST_PART_INSTALL"/bin/mytool
-              chmod +x "$MYTEST_PART_INSTALL"/bin/mytool
+              mkdir "$CRAFT_PART_INSTALL"/bin
+              echo "echo ok" > "$CRAFT_PART_INSTALL"/bin/mytool
+              chmod +x "$CRAFT_PART_INSTALL"/bin/mytool
         """
     )
 

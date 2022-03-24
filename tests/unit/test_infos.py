@@ -80,6 +80,7 @@ def test_project_info_work_dir(new_dir):
         project_dirs=ProjectDirs(work_dir="work_dir"),
     )
 
+    assert info.project_dir == new_dir
     assert info.parts_dir == new_dir / "work_dir/parts"
     assert info.stage_dir == new_dir / "work_dir/stage"
     assert info.prime_dir == new_dir / "work_dir/prime"
