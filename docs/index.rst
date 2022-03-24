@@ -19,6 +19,8 @@ final artifacts.
 
    examples
 
+   craftctl
+
    cli_tool
 
 
