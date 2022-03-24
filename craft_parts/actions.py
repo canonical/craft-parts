@@ -18,9 +18,12 @@
 
 import enum
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 from craft_parts.steps import Step
+
+if TYPE_CHECKING:
+    from craft_parts.infos import ProjectVar
 
 
 @enum.unique
@@ -63,9 +66,12 @@ class Action:
     :param action_type: Action to run for this step.
     :param reason: A textual description of why this action should be
         executed.
+    :param project_vars: The values of project variables from a previous
+        execution, used if the action type is ``ActionType.SKIP``.
     """
 
     part_name: str
     step: Step
     action_type: ActionType = ActionType.RUN
     reason: Optional[str] = None
+    project_vars: Optional[Dict[str, "ProjectVar"]] = None

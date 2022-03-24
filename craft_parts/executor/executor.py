@@ -102,6 +102,7 @@ class Executor:
 
         This method is called after executing lifecycle actions.
         """
+        self._project_info.execution_finished = True
         callbacks.run_epilogue(self._project_info, part_list=self._part_list)
 
     def execute(
@@ -172,6 +173,11 @@ class Executor:
 
         if action.action_type == ActionType.SKIP:
             logger.debug("Skip execution of %s (because %s)", action, action.reason)
+            # update project variables if action is skipped
+            if action.project_vars:
+                for var, pvar in action.project_vars.items():
+                    if pvar.updated:
+                        self._project_info.set_project_var(var, pvar.value)
             return
 
         if action.step == Step.STAGE:

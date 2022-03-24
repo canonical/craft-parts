@@ -18,8 +18,11 @@
 
 import logging
 import platform
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from pydantic_yaml import YamlModel
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -27,6 +30,16 @@ from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
+
+
+_var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+class ProjectVar(YamlModel):
+    """Project variables that can be updated using craftctl."""
+
+    value: str
+    updated: bool = False
 
 
 class ProjectInfo:
@@ -42,6 +55,9 @@ class ProjectInfo:
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param project_dirs: The project work directories.
+    :param project_vars_part_name: If defined, project variables can be set
+        only if the part name matches this name.
+    :param project_vars: A dictionary containing the project variables.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
     """
@@ -55,10 +71,14 @@ class ProjectInfo:
         base: str = "",
         parallel_build_count: int = 1,
         project_dirs: Optional[ProjectDirs] = None,
+        project_vars_part_name: Optional[str] = None,
+        project_vars: Optional[Dict[str, str]] = None,
         **custom_args,  # custom passthrough args
     ):
         if not project_dirs:
             project_dirs = ProjectDirs()
+
+        pvars = project_vars or {}
 
         self._application_name = application_name
         self._cache_dir = Path(cache_dir).expanduser().resolve()
@@ -66,7 +86,11 @@ class ProjectInfo:
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs
+        self._project_vars_part_name = project_vars_part_name
+        self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
         self._custom_args = custom_args
+
+        self.execution_finished = False
 
     def __getattr__(self, name):
         if hasattr(self._dirs, name):
@@ -129,20 +153,76 @@ class ProjectInfo:
             "application_name": self.application_name,
             "arch_triplet": self.arch_triplet,
             "target_arch": self.target_arch,
+            "project_vars_part_name": self._project_vars_part_name,
+            "project_vars": self._project_vars,
         }
 
-    def set_custom_argument(self, name: str, value: str) -> None:
-        """Set the value of a custom argument.
+    def set_project_var(
+        self,
+        name: str,
+        value: str,
+        *,
+        part_name: Optional[str] = None,
+    ) -> None:
+        """Set the value of a project variable.
 
-        :param name: The custom argument name.
-        :param value: The new custom argument value.
+        Variable values can be set once. Project variables are not intended for
+        logic construction in user scripts, setting it multiple times is likely to
+        be an error.
+
+        :param name: The project variable name.
+        :param value: The new project variable value.
+        :param part_name: If not None, variable setting is restricted to the named part.
 
         :raise ValueError: If there is no custom argument with the given name.
+        :raise RuntimeError: If a write-once variable is set a second time, or if a
+            part name is specified and the variable is set from a different part.
         """
-        if name not in self._custom_args:
-            raise ValueError(f"{name!r} not in project custom arguments")
+        self._ensure_valid_variable_name(name)
 
-        self._custom_args[name] = value
+        if self._project_vars[name].updated:
+            raise RuntimeError(f"variable {name!r} can be set only once")
+
+        if self._project_vars_part_name in [None, part_name]:
+            self._project_vars[name].value = value
+            self._project_vars[name].updated = True
+        else:
+            raise RuntimeError(
+                f"variable {name!r} can only be set "
+                f"in part {self._project_vars_part_name!r}"
+            )
+
+    def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
+        """Get the value of a project variable.
+
+        Variables must be consumed by the application only after the lifecycle
+        execution ends to prevent unexpected behavior if steps are skipped.
+
+        :param name: The project variable name.
+        :param raw_read: Whether the variable is read without access verifications.
+        :return: The value of the variable.
+
+        :raise ValueError: If there is no project variable with the given name.
+        :raise RuntimeError: If the variable is consumed during the lifecycle execution.
+        """
+        self._ensure_valid_variable_name(name)
+        if not raw_read and not self.execution_finished:
+            raise RuntimeError(
+                f"cannot consume variable {name!r} during lifecycle execution"
+            )
+
+        return self._project_vars[name].value
+
+    def _ensure_valid_variable_name(self, name: str) -> None:
+        """Raise an error if variable name is invalid.
+
+        :param name: The variable name to verify.
+        """
+        if not _var_name_pattern.match(name):
+            raise ValueError(f"{name!r} is not a valid variable name")
+
+        if name not in self._project_vars:
+            raise ValueError(f"{name!r} not in project variables")
 
     def _set_machine(self, arch: Optional[str]):
         """Initialize machine information based on the architecture.
@@ -227,15 +307,36 @@ class PartInfo:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
 
-    def set_custom_argument(self, name: str, value: str) -> None:
-        """Set the value of a custom argument.
+    def set_project_var(self, name: str, value: str) -> None:
+        """Set the value of a project variable.
 
-        :param name: The custom argument name.
-        :param value: The new custom argument value.
+        Variable values can be set once. Project variables are not intended for
+        logic construction in user scripts, setting it multiple times is likely to
+        be an error.
+
+        :param name: The project variable name.
+        :param value: The new project variable value.
 
         :raise ValueError: If there is no custom argument with the given name.
+        :raise RuntimeError: If a write-once variable is set a second time, or if a
+            part name is specified and the variable is set from a different part.
         """
-        self._project_info.set_custom_argument(name, value)
+        self._project_info.set_project_var(name, value, part_name=self._part_name)
+
+    def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
+        """Get the value of a project variable.
+
+        Variables must be consumed by the application only after the lifecycle
+        execution ends to prevent unexpected behavior if steps are skipped.
+
+        :param name: The project variable name.
+        :param raw_read: Whether the variable is read without access verifications.
+        :return: The value of the variable.
+
+        :raise ValueError: If there is no project variable with the given name.
+        :raise RuntimeError: If the variable is consumed during the lifecycle execution.
+        """
+        return self._project_info.get_project_var(name, raw_read=raw_read)
 
 
 class StepInfo:
@@ -259,15 +360,36 @@ class StepInfo:
 
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
-    def set_custom_argument(self, name: str, value: str) -> None:
-        """Set the value of a custom argument.
+    def set_project_var(self, name: str, value: str) -> None:
+        """Set the value of a project variable.
 
-        :param name: The custom argument name.
-        :param value: The new custom argument value.
+        Variable values can be set once. Project variables are not intended for
+        logic construction in user scripts, setting it multiple times is likely to
+        be an error.
+
+        :param name: The project variable name.
+        :param value: The new project variable value.
 
         :raise ValueError: If there is no custom argument with the given name.
+        :raise RuntimeError: If a write-once variable is set a second time, or if a
+            part name is specified and the variable is set from a different part.
         """
-        self._part_info.set_custom_argument(name, value)
+        self._part_info.set_project_var(name, value)
+
+    def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
+        """Get the value of a project variable.
+
+        Variables must be consumed by the application only after the lifecycle
+        execution ends to prevent unexpected behavior if steps are skipped.
+
+        :param name: The project variable name.
+        :param raw_read: Whether the variable is read without access verifications.
+        :return: The value of the variable.
+
+        :raise ValueError: If there is no project variable with the given name.
+        :raise RuntimeError: If the variable is consumed during the lifecycle execution.
+        """
+        return self._part_info.get_project_var(name, raw_read=raw_read)
 
 
 def _get_host_architecture() -> str:

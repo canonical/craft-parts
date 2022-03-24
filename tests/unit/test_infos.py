@@ -20,7 +20,7 @@ import pytest
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
-from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
+from craft_parts.infos import PartInfo, ProjectInfo, ProjectVar, StepInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -48,6 +48,8 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         cache_dir=Path(),
         arch=tc_arch,
         parallel_build_count=16,
+        project_vars_part_name="adopt",
+        project_vars={"a": "b"},
         custom1="foobar",
         custom2=[1, 2],
     )
@@ -62,6 +64,8 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         "application_name": "test",
         "arch_triplet": tc_triplet,
         "target_arch": tc_target_arch,
+        "project_vars_part_name": "adopt",
+        "project_vars": {"a": ProjectVar(value="b")},
     }
 
     assert x.parts_dir == new_dir / "parts"
@@ -99,19 +103,63 @@ def test_project_info_invalid_custom_args():
     assert str(raised.value) == "'ProjectInfo' has no attribute 'custom1'"
 
 
-def test_project_info_set_custom_args():
-    info = ProjectInfo(application_name="test", cache_dir=Path(), custom="foo")
+def test_project_info_set_project_var():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
 
-    info.set_custom_argument("custom", "bar")
-    assert info.custom == "bar"
+    info.set_project_var("var", "bar")
+    assert info.get_project_var("var", raw_read=True) == "bar"
 
 
-def test_project_info_set_invalid_custom_args():
+def test_project_info_set_project_var_bad_name():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
     with pytest.raises(ValueError) as raised:
-        info.set_custom_argument("custom", "bar")
-    assert str(raised.value) == "'custom' not in project custom arguments"
+        info.set_project_var("bad-name", "foo")
+    assert str(raised.value) == "'bad-name' is not a valid variable name"
+
+
+def test_project_info_set_project_var_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_var_part_name="part1",
+        project_vars={"var": "foo"},
+    )
+
+    info.set_project_var("var", "bar", part_name="part1")
+    assert info.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_project_info_set_project_var_other_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="part1",
+        project_vars={"var": "foo"},
+    )
+
+    with pytest.raises(RuntimeError) as raised:
+        info.set_project_var("var", "bar", part_name="part2")
+
+    assert str(raised.value) == "variable 'var' can only be set in part 'part1'"
+
+
+def test_project_info_set_invalid_project_vars():
+    info = ProjectInfo(application_name="test", cache_dir=Path())
+
+    with pytest.raises(ValueError) as raised:
+        info.set_project_var("var", "bar")
+    assert str(raised.value) == "'var' not in project variables"
+
+
+def test_project_info_get_project_var_bad_name():
+    info = ProjectInfo(application_name="test", cache_dir=Path())
+
+    with pytest.raises(ValueError) as raised:
+        info.get_project_var("bad-name")
+    assert str(raised.value) == "'bad-name' is not a valid variable name"
 
 
 def test_project_info_default():
@@ -122,6 +170,36 @@ def test_project_info_default():
 def test_project_info_cache_dir_resolving():
     info = ProjectInfo(application_name="test", cache_dir=Path("~/x/../y/."))
     assert info.cache_dir == Path.home() / "y"
+
+
+def test_project_info_get_project_var():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
+
+    info.set_project_var("var", "bar")
+    assert info.get_project_var("var", raw_read=True) == "bar"
+    with pytest.raises(RuntimeError) as raised:
+        info.get_project_var("var")
+
+    assert str(raised.value) == (
+        "cannot consume variable 'var' during lifecycle execution"
+    )
+
+
+def test_project_info_consume_project_var_during_lifecycle():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
+
+    info.set_project_var("var", "bar")
+    assert info.get_project_var("var", raw_read=True) == "bar"
+    with pytest.raises(RuntimeError) as raised:
+        info.get_project_var("var")
+
+    assert str(raised.value) == (
+        "cannot consume variable 'var' during lifecycle execution"
+    )
 
 
 def test_invalid_arch():
@@ -166,23 +244,72 @@ def test_part_info_invalid_custom_args():
     assert str(raised.value) == "'PartInfo' has no attribute 'custom1'"
 
 
-def test_part_info_set_custom_args():
-    info = ProjectInfo(application_name="test", cache_dir=Path(), custom="foo")
+def test_part_info_set_project_var():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
-    x.set_custom_argument("custom", "bar")
-    assert x.custom == "bar"
+    x.set_project_var("var", "bar")
+    assert x.get_project_var("var", raw_read=True) == "bar"
 
 
-def test_part_info_set_invalid_custom_args():
+def test_part_info_set_project_var_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
+    )
+    part = Part("p1", {})
+    x = PartInfo(project_info=info, part=part)
+
+    x.set_project_var("var", "bar")
+    assert x.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_part_info_set_project_var_other_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p2",
+        project_vars={"var": "foo"},
+    )
+    part = Part("p1", {})
+    x = PartInfo(project_info=info, part=part)
+
+    with pytest.raises(RuntimeError) as raised:
+        x.set_project_var("var", "bar")
+
+    assert str(raised.value) == "variable 'var' can only be set in part 'p2'"
+
+
+def test_part_info_set_invalid_project_vars():
     info = ProjectInfo(application_name="test", cache_dir=Path())
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
     with pytest.raises(ValueError) as raised:
-        x.set_custom_argument("custom", "bar")
-    assert str(raised.value) == "'custom' not in project custom arguments"
+        x.set_project_var("var", "bar")
+    assert str(raised.value) == "'var' not in project variables"
+
+
+def test_part_info_get_project_var():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
+    part = Part("p1", {})
+    x = PartInfo(project_info=info, part=part)
+
+    x.set_project_var("var", "bar")
+    assert x.get_project_var("var", raw_read=True) == "bar"
+    with pytest.raises(RuntimeError) as raised:
+        x.get_project_var("var")
+
+    assert str(raised.value) == (
+        "cannot consume variable 'var' during lifecycle execution"
+    )
 
 
 def test_step_info(new_dir):
@@ -224,22 +351,74 @@ def test_step_info_invalid_custom_args():
     assert str(raised.value) == "'StepInfo' has no attribute 'custom1'"
 
 
-def test_step_info_set_custom_args():
-    info = ProjectInfo(application_name="test", cache_dir=Path(), custom="foo")
+def test_step_info_set_project_var():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
     part = Part("p1", {})
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
 
-    x.set_custom_argument("custom", "bar")
-    assert x.custom == "bar"
+    x.set_project_var("var", "bar")
+    assert x.get_project_var("var", raw_read=True) == "bar"
 
 
-def test_step_info_set_invalid_custom_args():
+def test_step_info_set_project_var_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
+    )
+    part = Part("p1", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    x.set_project_var("var", "bar")
+    assert x.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_step_info_set_project_var_other_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p2",
+        project_vars={"var": "foo"},
+    )
+    part = Part("p1", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    with pytest.raises(RuntimeError) as raised:
+        x.set_project_var("var", "bar")
+
+    assert str(raised.value) == "variable 'var' can only be set in part 'p2'"
+
+
+def test_step_info_set_invalid_project_vars():
     info = ProjectInfo(application_name="test", cache_dir=Path())
     part = Part("p1", {})
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
 
     with pytest.raises(ValueError) as raised:
-        x.set_custom_argument("custom", "bar")
-    assert str(raised.value) == "'custom' not in project custom arguments"
+        x.set_project_var("var", "bar")
+    assert str(raised.value) == "'var' not in project variables"
+
+
+def test_step_info_get_project_var():
+    info = ProjectInfo(
+        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+    )
+    part = Part("p1", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    x.set_project_var("var", "bar")
+    assert x.get_project_var("var", raw_read=True) == "bar"
+    with pytest.raises(RuntimeError) as raised:
+        x.get_project_var("var")
+
+    assert str(raised.value) == (
+        "cannot consume variable 'var' during lifecycle execution"
+    )

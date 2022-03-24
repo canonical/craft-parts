@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2021 Canonical Ltd.
+# Copyright 2016-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import Optional, Set, TextIO, Union
+from typing import List, Optional, Set, TextIO, Union
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -195,6 +195,7 @@ class StepHandler:
         scriptlet: str,
         *,
         scriptlet_name: str,
+        step: Step,
         work_dir: Path,
     ) -> None:
         """Execute a scriptlet.
@@ -247,19 +248,21 @@ class StepHandler:
                 while status is None:
                     function_call = call_fifo.read()
                     if function_call:
-                        # Handle the function and let caller know that function
-                        # call has been handled (the feedback message must contain
-                        # at least a newline, anything beyond is considered an error
-                        # by the client).
-                        self._handle_control_api(scriptlet_name, function_call.strip())
-                        feedback_fifo.write("\n")
+                        # Handle the function and send feedback to caller.
+                        retval = self._handle_control_api(
+                            step, scriptlet_name, function_call.strip()
+                        )
+                        if retval:
+                            feedback_fifo.write(f"OK {retval!s}\n")
+                        else:
+                            feedback_fifo.write("OK\n")
 
                     status = process.poll()
 
                     # Don't loop TOO busily
                     time.sleep(0.1)
             except Exception as error:
-                feedback_fifo.write(f"{error!s}\n")
+                feedback_fifo.write(f"ERR {error!s}\n")
                 raise error
             finally:
                 call_fifo.close()
@@ -272,8 +275,10 @@ class StepHandler:
                     exit_code=status,
                 )
 
-    def _handle_control_api(self, scriptlet_name: str, function_call: str) -> None:
-        """Parse the message from the client and invoke the appropriate action."""
+    def _handle_control_api(
+        self, step: Step, scriptlet_name: str, function_call: str
+    ) -> str:
+        """Parse the command message received from the client."""
         try:
             function_json = json.loads(function_call)
         except json.decoder.JSONDecodeError as err:
@@ -288,8 +293,18 @@ class StepHandler:
                     f"{scriptlet_name!r} control call missing attribute {attr!r}"
                 )
 
-        function_name = function_json["function"]
-        function_args = function_json["args"]
+        cmd_name = function_json["function"]
+        cmd_args = function_json["args"]
+
+        return self._process_api_commands(
+            cmd_name, cmd_args, step=step, scriptlet_name=scriptlet_name
+        )
+
+    def _process_api_commands(
+        self, cmd_name: str, cmd_args: List[str], *, step: Step, scriptlet_name: str
+    ) -> str:
+        """Invoke API command actions."""
+        retval = ""
 
         invalid_control_api_call = functools.partial(
             errors.InvalidControlAPICall,
@@ -297,23 +312,44 @@ class StepHandler:
             scriptlet_name=scriptlet_name,
         )
 
-        if function_name in ["pull", "build", "stage", "prime"]:
-            if len(function_args) > 0:
+        if cmd_name == "default":
+            if len(cmd_args) > 0:
                 raise invalid_control_api_call(
-                    message=f"invalid arguments to function {function_name!r}",
+                    message=f"invalid arguments to command {cmd_name!r}",
                 )
-            self._handle_step_function(function_name)
-        elif function_name == "set":
-            if len(function_args) != 2:
+            self._execute_builtin_handler(step)
+        elif cmd_name == "set":
+            if len(cmd_args) != 1:
+                raise invalid_control_api_call(
+                    message=(f"invalid arguments to command {cmd_name!r}"),
+                )
+
+            if "=" not in cmd_args[0]:
                 raise invalid_control_api_call(
                     message=(
-                        f"invalid number of arguments to function {function_name!r}"
+                        f"invalid arguments to command {cmd_name!r} (want key=value)"
                     ),
                 )
-            name, value = function_args
+
+            name, value = cmd_args[0].split("=")
 
             try:
-                self._step_info.set_custom_argument(name, value)
+                self._step_info.set_project_var(name, value)
+            except (ValueError, RuntimeError) as err:
+                raise errors.InvalidControlAPICall(
+                    part_name=self._part.name,
+                    scriptlet_name=scriptlet_name,
+                    message=str(err),
+                )
+        elif cmd_name == "get":
+            if len(cmd_args) != 1:
+                raise invalid_control_api_call(
+                    message=(f"invalid number of arguments to command {cmd_name!r}"),
+                )
+            (name,) = cmd_args
+
+            try:
+                retval = self._step_info.get_project_var(name, raw_read=True)
             except ValueError as err:
                 raise errors.InvalidControlAPICall(
                     part_name=self._part.name,
@@ -322,15 +358,19 @@ class StepHandler:
                 )
         else:
             raise invalid_control_api_call(
-                message=f"invalid function {function_name!r}",
+                message=f"invalid command {cmd_name!r}",
             )
 
-    def _handle_step_function(self, function_name: str) -> None:
-        if function_name == "pull":
+        return retval
+
+    def _execute_builtin_handler(self, step: Step) -> None:
+        if step == Step.PULL:
             self._builtin_pull()
-        elif function_name == "build":
+        elif step == Step.OVERLAY:
+            self._builtin_overlay()
+        elif step == Step.BUILD:
             self._builtin_build()
-        elif function_name == "stage":
+        elif step == Step.STAGE:
             self._builtin_stage()
-        elif function_name == "prime":
+        elif step == Step.PRIME:
             self._builtin_prime()

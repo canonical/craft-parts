@@ -64,4 +64,4 @@ class OverlayState(StepState):
 
         :return: A dictionary containing project options of interest.
         """
-        return {}
+        return {"project_vars_part_name": project_options.get("project_vars_part_name")}

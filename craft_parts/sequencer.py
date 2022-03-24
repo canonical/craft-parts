@@ -21,7 +21,7 @@ from typing import Dict, List, Optional, Sequence, Set
 
 from craft_parts import parts, steps
 from craft_parts.actions import Action, ActionType
-from craft_parts.infos import ProjectInfo
+from craft_parts.infos import ProjectInfo, ProjectVar
 from craft_parts.overlays import LayerHash, LayerStateManager
 from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.state_manager import StateManager, states
@@ -168,9 +168,14 @@ class Sequencer:
             self._sm.mark_step_updated(part, current_step)
             return
 
-        # 5. Otherwise just skip it
+        # 5. Otherwise skip it. Note that this action must always be sent to the
+        #    executor to update project variables.
         self._add_action(
-            part, current_step, action_type=ActionType.SKIP, reason="already ran"
+            part,
+            current_step,
+            action_type=ActionType.SKIP,
+            reason="already ran",
+            project_vars=self._sm.project_vars(part, current_step),
         )
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
@@ -302,10 +307,17 @@ class Sequencer:
         *,
         action_type: ActionType = ActionType.RUN,
         reason: Optional[str] = None,
+        project_vars: Optional[Dict[str, ProjectVar]] = None,
     ) -> None:
         logger.debug("add action %s:%s(%s)", part.name, step, action_type)
         self._actions.append(
-            Action(part.name, step, action_type=action_type, reason=reason)
+            Action(
+                part.name,
+                step,
+                action_type=action_type,
+                reason=reason,
+                project_vars=project_vars,
+            )
         )
 
     def _ensure_overlay_consistency(

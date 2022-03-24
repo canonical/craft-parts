@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """The setup script."""
-
 
 from setuptools import find_packages, setup  # type: ignore
 
@@ -85,6 +84,7 @@ extras_requires = {
     "test": test_requires,
 }
 
+
 setup(
     name="craft-parts",
     version="1.3.0",
@@ -107,7 +107,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "partsctl=craft_parts.ctl:main",
+            "craftctl=craft_parts.ctl:main",
         ],
     },
     install_requires=install_requires,
