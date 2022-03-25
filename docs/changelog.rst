@@ -2,6 +2,15 @@
 Changelog
 *********
 
+1.4.0 (2022-03-24)
+------------------
+
+- Add cmake plugin
+- Mount overlays using fuse-overlayfs
+- Send execution output to user-specified streams
+- Update craftctl commands
+- Update step execution environment variables
+
 1.3.0 (2022-03-05)
 ------------------
 
