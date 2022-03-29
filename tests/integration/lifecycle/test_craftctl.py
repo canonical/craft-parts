@@ -187,6 +187,7 @@ def test_craftctl_set(new_dir):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
+        project_vars_part_name="foo",
         project_vars={"myvar": ""},
     )
     with lf.action_executor() as ctx:
@@ -210,6 +211,7 @@ def test_craftctl_set_multiple(new_dir):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
+        project_vars_part_name="foo",
         project_vars={"myvar": "", "myvar2": ""},
     )
     with pytest.raises(errors.InvalidControlAPICall) as raised:
@@ -219,30 +221,6 @@ def test_craftctl_set_multiple(new_dir):
     assert raised.value.part_name == "foo"
     assert raised.value.scriptlet_name == "override-pull"
     assert raised.value.message == "invalid arguments to command 'set'"
-
-
-def test_craftctl_set_part_name(new_dir):
-    parts_yaml = textwrap.dedent(
-        """\
-        parts:
-          foo:
-            plugin: nil
-            override-pull: |
-              craftctl set myvar=myvalue
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-
-    lf = craft_parts.LifecycleManager(
-        parts,
-        application_name="test_set",
-        cache_dir=new_dir,
-        project_vars_part_name="foo",
-        project_vars={"myvar": "x"},
-    )
-    with lf.action_executor() as ctx:
-        ctx.execute(Action("foo", Step.PULL))
-    assert lf.project_info.get_project_var("myvar") == "myvalue"
 
 
 def test_craftctl_set_bad_part_name(new_dir):
@@ -274,7 +252,7 @@ def test_craftctl_set_bad_part_name(new_dir):
     assert err.message == "variable 'myvar' can only be set in part 'bar'"
 
 
-def test_craftctl_set_multiple_parts(new_dir):
+def test_craftctl_set_no_part_name(new_dir):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -282,10 +260,6 @@ def test_craftctl_set_multiple_parts(new_dir):
             plugin: nil
             override-pull: |
               craftctl set myvar=myvalue
-          bar:
-            plugin: nil
-            override-pull: |
-              craftctl set myvar2=myvalue2
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -294,17 +268,21 @@ def test_craftctl_set_multiple_parts(new_dir):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
-        project_vars={"myvar": "x", "myvar2": "y"},
+        project_vars={"myvar": "x"},
     )
     with lf.action_executor() as ctx:
-        ctx.execute(Action("foo", Step.PULL))
-        ctx.execute(Action("bar", Step.PULL))
+        with pytest.raises(errors.InvalidControlAPICall) as raised:
+            ctx.execute(Action("foo", Step.PULL))
 
-    assert lf.project_info.get_project_var("myvar") == "myvalue"
-    assert lf.project_info.get_project_var("myvar2") == "myvalue2"
+    err = raised.value
+    assert err.part_name == "foo"
+    assert err.scriptlet_name == "override-pull"
+    assert err.message == (
+        "variable 'myvar' can only be set in a part that adopts external metadata"
+    )
 
 
-def test_craftctl_set_multiple_parts_restricted(new_dir):
+def test_craftctl_set_multiple_parts(new_dir):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -354,7 +332,10 @@ def test_craftctl_set_error(new_dir, capfd, mocker):
     parts = yaml.safe_load(parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_set", cache_dir=new_dir
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="foo",
     )
     with pytest.raises(errors.InvalidControlAPICall) as raised:
         with lf.action_executor() as ctx:
@@ -402,7 +383,10 @@ def test_craftctl_set_argument_error(new_dir, capfd, mocker):
     parts = yaml.safe_load(parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_set", cache_dir=new_dir
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="foo",
     )
     with pytest.raises(errors.InvalidControlAPICall) as raised:
         with lf.action_executor() as ctx:
@@ -434,6 +418,7 @@ def test_craftctl_set_consume(new_dir, capfd):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
+        project_vars_part_name="foo",
         project_vars={"myvar": ""},
     )
     with lf.action_executor() as ctx:
@@ -472,6 +457,7 @@ def test_craftctl_project_vars_from_state(new_dir):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
+        project_vars_part_name="foo",
         project_vars={"myvar": ""},
     )
 
@@ -488,6 +474,7 @@ def test_craftctl_project_vars_from_state(new_dir):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
+        project_vars_part_name="foo",
         project_vars={"myvar": ""},
     )
 
@@ -522,6 +509,7 @@ def test_craftctl_project_vars_write_once_from_state(new_dir):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
+        project_vars_part_name="foo",
         project_vars={"myvar": "", "myvar2": ""},
     )
 
@@ -538,6 +526,7 @@ def test_craftctl_project_vars_write_once_from_state(new_dir):
         parts,
         application_name="test_set",
         cache_dir=new_dir,
+        project_vars_part_name="foo",
         project_vars={"myvar": "", "myvar2": ""},
     )
 
