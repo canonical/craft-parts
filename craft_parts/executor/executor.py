@@ -178,7 +178,7 @@ class Executor:
                 for var, pvar in action.project_vars.items():
                     if pvar.updated:
                         self._project_info.set_project_var(
-                            var, pvar.value, raw_write=True
+                            var, pvar.value, raw_write=True, part_name=action.part_name
                         )
             return
 
