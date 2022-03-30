@@ -138,12 +138,27 @@ def test_project_info_set_project_var_part_name():
     info = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        project_var_part_name="part1",
+        project_vars_part_name="part1",
         project_vars={"var": "foo"},
     )
 
     info.set_project_var("var", "bar", part_name="part1")
     assert info.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_project_info_set_project_var_no_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
+    )
+
+    with pytest.raises(RuntimeError) as raised:
+        info.set_project_var("var", "bar", part_name="part2")
+
+    assert str(raised.value) == (
+        "variable 'var' can only be set in a part that adopts external metadata"
+    )
 
 
 def test_project_info_set_project_var_other_part_name():
@@ -260,7 +275,10 @@ def test_part_info_invalid_custom_args():
 
 def test_part_info_set_project_var():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
     )
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
@@ -271,7 +289,10 @@ def test_part_info_set_project_var():
 
 def test_part_info_set_project_var_raw_write():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
     )
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
@@ -296,6 +317,23 @@ def test_part_info_set_project_var_part_name():
 
     x.set_project_var("var", "bar")
     assert x.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_part_info_set_project_var_no_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
+    )
+    part = Part("p1", {})
+    x = PartInfo(project_info=info, part=part)
+
+    with pytest.raises(RuntimeError) as raised:
+        x.set_project_var("var", "bar")
+
+    assert str(raised.value) == (
+        "variable 'var' can only be set in a part that adopts external metadata"
+    )
 
 
 def test_part_info_set_project_var_other_part_name():
@@ -326,7 +364,10 @@ def test_part_info_set_invalid_project_vars():
 
 def test_part_info_get_project_var():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
     )
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
@@ -382,7 +423,10 @@ def test_step_info_invalid_custom_args():
 
 def test_step_info_set_project_var():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
     )
     part = Part("p1", {})
     part_info = PartInfo(project_info=info, part=part)
@@ -394,7 +438,10 @@ def test_step_info_set_project_var():
 
 def test_step_info_set_project_var_raw_write():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
     )
     part = Part("p1", {})
     part_info = PartInfo(project_info=info, part=part)
@@ -421,6 +468,24 @@ def test_step_info_set_project_var_part_name():
 
     x.set_project_var("var", "bar")
     assert x.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_step_info_set_project_var_no_part_name():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
+    )
+    part = Part("p1", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.PULL)
+
+    with pytest.raises(RuntimeError) as raised:
+        x.set_project_var("var", "bar")
+
+    assert str(raised.value) == (
+        "variable 'var' can only be set in a part that adopts external metadata"
+    )
 
 
 def test_step_info_set_project_var_other_part_name():
@@ -453,7 +518,10 @@ def test_step_info_set_invalid_project_vars():
 
 def test_step_info_get_project_var():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="p1",
+        project_vars={"var": "foo"},
     )
     part = Part("p1", {})
     part_info = PartInfo(project_info=info, part=part)

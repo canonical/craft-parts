@@ -55,8 +55,8 @@ class ProjectInfo:
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param project_dirs: The project work directories.
-    :param project_vars_part_name: If defined, project variables can be set
-        only if the part name matches this name.
+    :param project_vars_part_name: Project variables can be set only if
+        the part name matches this name.
     :param project_vars: A dictionary containing the project variables.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
@@ -185,9 +185,14 @@ class ProjectInfo:
         if not raw_write and self._project_vars[name].updated:
             raise RuntimeError(f"variable {name!r} can be set only once")
 
-        if self._project_vars_part_name in [None, part_name]:
+        if self._project_vars_part_name == part_name:
             self._project_vars[name].value = value
             self._project_vars[name].updated = True
+        elif not self._project_vars_part_name:
+            raise RuntimeError(
+                f"variable {name!r} can only be set in a part that "
+                "adopts external metadata"
+            )
         else:
             raise RuntimeError(
                 f"variable {name!r} can only be set "
