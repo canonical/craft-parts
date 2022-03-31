@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -182,6 +182,7 @@ class StateManager:
         self._part_list = part_list
         self._ignore_outdated = ignore_outdated
         self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
+        self._dirty_report_cache: Dict[Tuple[str, Step], Optional[DirtyReport]] = {}
 
         part_step_list = _sort_steps_by_state_timestamp(part_list)
 
@@ -198,6 +199,7 @@ class StateManager:
         """
         stw = self._state_db.wrap_state(state)
         self._state_db.set(part_name=part.name, step=step, state=stw)
+        self._dirty_report_cache.pop((part.name, step), None)
 
     def update_state_timestamp(self, part: Part, step: Step) -> None:
         """Mark the step as recently modified.
@@ -215,6 +217,8 @@ class StateManager:
         """
         for next_step in [step] + step.next_steps():
             self._state_db.remove(part_name=part.name, step=next_step)
+
+        self._dirty_report_cache.pop((part.name, step), None)
 
     def has_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part has already run.
@@ -346,6 +350,10 @@ class StateManager:
         """
         logger.debug("check if %s:%s is dirty", part, step)
 
+        # If we already have a dirty report, bail
+        if (part.name, step) in self._dirty_report_cache:
+            return self._dirty_report_cache[(part.name, step)]
+
         # Retrieve the stored state for this step (assuming it has already run)
         stw = self._state_db.get(part_name=part.name, step=step)
         if not stw:
@@ -365,13 +373,16 @@ class StateManager:
         )
 
         if properties or options:
-            return DirtyReport(
+            report = DirtyReport(
                 dirty_properties=list(properties),
                 dirty_project_options=list(options),
             )
+            self._dirty_report_cache[(part.name, step)] = report
+            return report
 
         prerequisite_step = steps.dependency_prerequisite_step(step)
         if not prerequisite_step:
+            self._dirty_report_cache[(part.name, step)] = None
             return None
 
         # The part is clean, check its dependencies
@@ -398,8 +409,11 @@ class StateManager:
                 )
 
         if changed_dependencies:
-            return DirtyReport(changed_dependencies=changed_dependencies)
+            report = DirtyReport(changed_dependencies=changed_dependencies)
+            self._dirty_report_cache[(part.name, step)] = report
+            return report
 
+        self._dirty_report_cache[(part.name, step)] = None
         return None
 
     def mark_step_updated(self, part: Part, step: Step) -> None:
