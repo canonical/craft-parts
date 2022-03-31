@@ -146,7 +146,7 @@ def test_craftctl_default(new_dir, capfd, mocker):
         assert Path("prime/ovl.txt").exists()
 
 
-def test_craftctl_default_argments(new_dir):
+def test_craftctl_default_arguments(new_dir, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -164,11 +164,14 @@ def test_craftctl_default_argments(new_dir):
         base_layer_dir=new_dir,
         base_layer_hash=b"hash",
     )
-    with pytest.raises(errors.InvalidControlAPICall) as raised:
+
+    expected = "override-pull' in part 'foo' failed with code 1"
+    with pytest.raises(errors.ScriptletRunError, match=expected):
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
 
-    assert raised.value.message == "invalid arguments to command 'default'"
+    captured = capfd.readouterr()
+    assert "invalid arguments to command 'default'" in captured.err
 
 
 def test_craftctl_set(new_dir):
@@ -195,7 +198,7 @@ def test_craftctl_set(new_dir):
     assert lf.project_info.get_project_var("myvar") == "myvalue"
 
 
-def test_craftctl_set_multiple(new_dir):
+def test_craftctl_set_multiple(new_dir, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -214,16 +217,17 @@ def test_craftctl_set_multiple(new_dir):
         project_vars_part_name="foo",
         project_vars={"myvar": "", "myvar2": ""},
     )
-    with pytest.raises(errors.InvalidControlAPICall) as raised:
+
+    expected = "override-pull' in part 'foo' failed with code 1"
+    with pytest.raises(errors.ScriptletRunError, match=expected):
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
 
-    assert raised.value.part_name == "foo"
-    assert raised.value.scriptlet_name == "override-pull"
-    assert raised.value.message == "invalid arguments to command 'set'"
+    captured = capfd.readouterr()
+    assert "invalid arguments to command 'set'" in captured.err
 
 
-def test_craftctl_set_bad_part_name(new_dir):
+def test_craftctl_set_bad_part_name(new_dir, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -242,17 +246,17 @@ def test_craftctl_set_bad_part_name(new_dir):
         project_vars_part_name="bar",
         project_vars={"myvar": "x"},
     )
-    with lf.action_executor() as ctx:
-        with pytest.raises(errors.InvalidControlAPICall) as raised:
+
+    expected = "override-pull' in part 'foo' failed with code 1"
+    with pytest.raises(errors.ScriptletRunError, match=expected):
+        with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
 
-    err = raised.value
-    assert err.part_name == "foo"
-    assert err.scriptlet_name == "override-pull"
-    assert err.message == "variable 'myvar' can only be set in part 'bar'"
+    captured = capfd.readouterr()
+    assert "variable 'myvar' can only be set in part 'bar'" in captured.err
 
 
-def test_craftctl_set_no_part_name(new_dir):
+def test_craftctl_set_no_part_name(new_dir, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -270,19 +274,20 @@ def test_craftctl_set_no_part_name(new_dir):
         cache_dir=new_dir,
         project_vars={"myvar": "x"},
     )
-    with lf.action_executor() as ctx:
-        with pytest.raises(errors.InvalidControlAPICall) as raised:
+
+    expected = "override-pull' in part 'foo' failed with code 1"
+    with pytest.raises(errors.ScriptletRunError, match=expected):
+        with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
 
-    err = raised.value
-    assert err.part_name == "foo"
-    assert err.scriptlet_name == "override-pull"
-    assert err.message == (
+    captured = capfd.readouterr()
+    assert (
         "variable 'myvar' can only be set in a part that adopts external metadata"
+        in captured.err
     )
 
 
-def test_craftctl_set_multiple_parts(new_dir):
+def test_craftctl_set_multiple_parts(new_dir, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -307,16 +312,15 @@ def test_craftctl_set_multiple_parts(new_dir):
     )
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
-        with pytest.raises(errors.InvalidControlAPICall) as raised:
+        expected = "override-pull' in part 'bar' failed with code 1"
+        with pytest.raises(errors.ScriptletRunError, match=expected):
             ctx.execute(Action("bar", Step.PULL))
 
     assert lf.project_info.get_project_var("myvar") == "myvalue"
     assert lf.project_info.get_project_var("myvar2") == "y"
 
-    err = raised.value
-    assert err.part_name == "bar"
-    assert err.scriptlet_name == "override-pull"
-    assert err.message == "variable 'myvar2' can only be set in part 'foo'"
+    captured = capfd.readouterr()
+    assert "variable 'myvar2' can only be set in part 'foo'" in captured.err
 
 
 def test_craftctl_set_error(new_dir, capfd, mocker):
@@ -337,13 +341,14 @@ def test_craftctl_set_error(new_dir, capfd, mocker):
         cache_dir=new_dir,
         project_vars_part_name="foo",
     )
-    with pytest.raises(errors.InvalidControlAPICall) as raised:
+
+    expected = "override-pull' in part 'foo' failed with code 1"
+    with pytest.raises(errors.ScriptletRunError, match=expected):
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
 
-    assert raised.value.part_name == "foo"
-    assert raised.value.scriptlet_name == "override-pull"
-    assert raised.value.message == "'myvar' not in project variables"
+    captured = capfd.readouterr()
+    assert "'myvar' not in project variables" in captured.err
 
 
 def test_craftctl_get_error(new_dir, capfd, mocker):
@@ -361,13 +366,14 @@ def test_craftctl_get_error(new_dir, capfd, mocker):
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_set", cache_dir=new_dir
     )
-    with pytest.raises(errors.InvalidControlAPICall) as raised:
+
+    expected = "override-pull' in part 'foo' failed with code 1"
+    with pytest.raises(errors.ScriptletRunError, match=expected):
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
 
-    assert raised.value.part_name == "foo"
-    assert raised.value.scriptlet_name == "override-pull"
-    assert raised.value.message == "'myvar' not in project variables"
+    captured = capfd.readouterr()
+    assert "'myvar' not in project variables" in captured.err
 
 
 def test_craftctl_set_argument_error(new_dir, capfd, mocker):
@@ -388,15 +394,14 @@ def test_craftctl_set_argument_error(new_dir, capfd, mocker):
         cache_dir=new_dir,
         project_vars_part_name="foo",
     )
-    with pytest.raises(errors.InvalidControlAPICall) as raised:
+
+    expected = "override-pull' in part 'foo' failed with code 1"
+    with pytest.raises(errors.ScriptletRunError, match=expected):
         with lf.action_executor() as ctx:
             ctx.execute(Action("foo", Step.PULL))
 
-    assert raised.value.part_name == "foo"
-    assert raised.value.scriptlet_name == "override-pull"
-    assert raised.value.message == (
-        "invalid arguments to command 'set' (want key=value)"
-    )
+    captured = capfd.readouterr()
+    assert "invalid arguments to command 'set' (want key=value)" in captured.err
 
 
 def test_craftctl_set_consume(new_dir, capfd):
@@ -425,17 +430,13 @@ def test_craftctl_set_consume(new_dir, capfd):
         ctx.execute(Action("foo", Step.PULL))
         assert lf.project_info.get_project_var("myvar", raw_read=True) == "val1"
 
-        with pytest.raises(errors.InvalidControlAPICall) as raised:
+        expected = "override-build' in part 'foo' failed with code 1"
+        with pytest.raises(errors.ScriptletRunError, match=expected):
             ctx.execute(Action("foo", Step.BUILD))
 
         captured = capfd.readouterr()
         assert captured.out == "val1\n"
-
-        err = raised.value
-
-        assert err.part_name == "foo"
-        assert err.scriptlet_name == "override-build"
-        assert err.message == "variable 'myvar' can be set only once"
+        assert "variable 'myvar' can be set only once" in captured.err
 
 
 def test_craftctl_project_vars_from_state(new_dir):
@@ -486,7 +487,7 @@ def test_craftctl_project_vars_from_state(new_dir):
     assert lf.project_info.get_project_var("myvar") == "val1"
 
 
-def test_craftctl_project_vars_write_once_from_state(new_dir):
+def test_craftctl_project_vars_write_once_from_state(new_dir, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -532,12 +533,11 @@ def test_craftctl_project_vars_write_once_from_state(new_dir):
 
     actions = lf.plan(Step.PRIME)
 
+    expected = "override-prime' in part 'foo' failed with code 1"
     with lf.action_executor() as ctx:
-        with pytest.raises(errors.InvalidControlAPICall) as raised:
+        with pytest.raises(errors.ScriptletRunError, match=expected):
             ctx.execute(actions)
 
-    err = raised.value
-    assert err.part_name == "foo"
-    assert err.scriptlet_name == "override-prime"
-    assert err.message == "variable 'myvar' can be set only once"
+    captured = capfd.readouterr()
+    assert "variable 'myvar' can be set only once" in captured.err
     assert lf.project_info.get_project_var("myvar2") == "val2"

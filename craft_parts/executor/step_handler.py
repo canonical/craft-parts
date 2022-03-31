@@ -247,22 +247,22 @@ class StepHandler:
             try:
                 while status is None:
                     function_call = call_fifo.read()
-                    if function_call:
-                        # Handle the function and send feedback to caller.
+                    if not function_call:
+                        status = process.poll()
+                        time.sleep(0.1)  # Don't loop TOO busily
+                        continue
+
+                    # Handle the function and send feedback to caller.
+                    try:
                         retval = self._handle_control_api(
                             step, scriptlet_name, function_call.strip()
                         )
-                        if retval:
-                            feedback_fifo.write(f"OK {retval!s}\n")
-                        else:
-                            feedback_fifo.write("OK\n")
+                        feedback_fifo.write(f"OK {retval!s}\n" if retval else "OK\n")
+                    except errors.PartsError as error:
+                        feedback_fifo.write(f"ERR {error!s}\n")
 
-                    status = process.poll()
-
-                    # Don't loop TOO busily
-                    time.sleep(0.1)
             except Exception as error:
-                feedback_fifo.write(f"ERR {error!s}\n")
+                logger.debug("scriptlet execution failed: %s", error)
                 raise error
             finally:
                 call_fifo.close()
