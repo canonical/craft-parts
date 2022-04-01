@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -338,6 +338,8 @@ class TestStateManager:
             assert sm.should_step_run(p1, step) == (step > Step.BUILD)
 
         # make the build step dirty
+        # this only happens between runs so recreate the state manager
+        sm = StateManager(project_info=info, part_list=[p1])
         stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
         assert stw is not None
 
@@ -463,6 +465,8 @@ class TestStepDirty:
             assert sm.check_if_dirty(p1, step) is None
 
         # make the build step dirty
+        # this only happens between runs so recreate the state manager
+        sm = StateManager(project_info=info, part_list=[p1])
         stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
         assert stw is not None
 
@@ -510,6 +514,8 @@ class TestStepDirty:
                 assert sm.check_if_dirty(part, step) is None
 
         # make p2 stage step dirty
+        # this only happens between runs so recreate the state manager
+        sm = StateManager(project_info=info, part_list=[p1, p2])
         stw = sm._state_db.get(part_name="p2", step=Step.STAGE)
         assert stw is not None
 
