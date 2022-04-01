@@ -16,7 +16,7 @@
 
 """Craft a project from several parts."""
 
-__version__ = "1.4.1"  # noqa: F401
+__version__ = "1.4.2"  # noqa: F401
 
 from .actions import Action, ActionType
 from .dirs import ProjectDirs
