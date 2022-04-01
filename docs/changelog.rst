@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.4.2 (2022-04-01)
+------------------
+
+- Fix craftctl error handling
+- Fix long recursions in dirty step verification
+
 1.4.1 (2022-03-30)
 ------------------
 
