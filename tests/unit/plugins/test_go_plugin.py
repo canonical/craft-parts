@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -26,33 +25,6 @@ from craft_parts.plugins.go_plugin import GoPlugin
 
 
 @pytest.fixture
-def go_exe(new_dir):
-    go_bin = Path(new_dir, "mock_bin", "go")
-    go_bin.parent.mkdir(exist_ok=True)
-    go_bin.write_text('#!/bin/sh\necho "go version go1.13.8 linux/amd64"')
-    go_bin.chmod(0o755)
-    yield go_bin
-
-
-@pytest.fixture
-def broken_go_exe(new_dir):
-    go_bin = Path(new_dir, "mock_bin", "go")
-    go_bin.parent.mkdir(exist_ok=True)
-    go_bin.write_text("#!/bin/sh\nexit 33")
-    go_bin.chmod(0o755)
-    yield go_bin
-
-
-@pytest.fixture
-def invalid_go_exe(new_dir):
-    go_bin = Path(new_dir, "mock_bin", "go")
-    go_bin.parent.mkdir(exist_ok=True)
-    go_bin.touch()
-    go_bin.chmod(0o755)
-    yield go_bin
-
-
-@pytest.fixture
 def part_info(new_dir):
     yield PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -60,12 +32,13 @@ def part_info(new_dir):
     )
 
 
-def test_validate_environment(go_exe, part_info):
+def test_validate_environment(dependency_fixture, part_info):
     properties = GoPlugin.properties_class.unmarshal({"source": "."})
     plugin = GoPlugin(properties=properties, part_info=part_info)
+    go = dependency_fixture("go", output="go version go1.17 linux/amd64")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(go_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(go.parent)}"
     )
     validator.validate_environment()
 
@@ -81,12 +54,13 @@ def test_validate_environment_missing_go(part_info):
     assert raised.value.reason == "'go' not found"
 
 
-def test_validate_environment_broken_go(broken_go_exe, part_info):
+def test_validate_environment_broken_go(dependency_fixture, part_info):
     properties = GoPlugin.properties_class.unmarshal({"source": "."})
     plugin = GoPlugin(properties=properties, part_info=part_info)
+    go = dependency_fixture("go", broken=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(broken_go_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(go.parent)}"
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -94,12 +68,13 @@ def test_validate_environment_broken_go(broken_go_exe, part_info):
     assert raised.value.reason == "'go' failed with error code 33"
 
 
-def test_validate_environment_invalid_go(invalid_go_exe, part_info):
+def test_validate_environment_invalid_go(dependency_fixture, part_info):
     properties = GoPlugin.properties_class.unmarshal({"source": "."})
     plugin = GoPlugin(properties=properties, part_info=part_info)
+    go = dependency_fixture("go", invalid=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(invalid_go_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(go.parent)}"
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()

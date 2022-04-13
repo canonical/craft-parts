@@ -18,6 +18,8 @@ import http.server
 import os
 import tempfile
 import threading
+from pathlib import Path
+from typing import Optional
 from unittest import mock
 
 import pytest
@@ -116,3 +118,38 @@ def fake_snapd():
 def fake_snap_command(mocker):
     """Mock the snap command."""
     return FakeSnapCommand(mocker)
+
+
+@pytest.fixture()
+def dependency_fixture(new_dir):
+    """Fixture factory for dependencies."""
+
+    def create_dependency_fixture(
+        name: str,
+        broken: bool = False,
+        invalid: bool = False,
+        output: Optional[str] = None,
+    ) -> Path:
+        """Creates a mock executable dependency.
+
+        :param name: name of the dependency
+        :param broken: if true, the dependency will return error code 33
+        :param invalid: if true, the dependency will return an empty string
+        :param output: text for dependency to return, default is `1.0.0`
+
+        :return: path to dependency
+        """
+        dependency_bin = Path(new_dir, "mock_bin", name)
+        dependency_bin.parent.mkdir(exist_ok=True)
+        if broken:
+            dependency_bin.write_text("#!/bin/sh\nexit 33")
+        elif invalid:
+            dependency_bin.touch()
+        elif output:
+            dependency_bin.write_text(f'#!/bin/sh\necho "{output}"')
+        else:
+            dependency_bin.write_text('#!/bin/sh\necho "1.0.0"')
+        dependency_bin.chmod(0o755)
+        return dependency_bin
+
+    yield create_dependency_fixture
