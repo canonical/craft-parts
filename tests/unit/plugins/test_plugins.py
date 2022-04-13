@@ -29,6 +29,7 @@ from craft_parts.plugins.plugins import (
     MakePlugin,
     NilPlugin,
     PythonPlugin,
+    RustPlugin,
 )
 
 
@@ -48,6 +49,7 @@ class TestGetPlugin:
             ("make", MakePlugin, {"source": "."}),
             ("nil", NilPlugin, {}),
             ("python", PythonPlugin, {"source": "."}),
+            ("rust", RustPlugin, {"source": "."}),
         ],
     )
     def test_get_plugin(self, new_dir, name, plugin_class, data):
