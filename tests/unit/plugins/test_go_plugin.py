@@ -78,7 +78,7 @@ def test_validate_environment_missing_go(part_info):
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
-    assert raised.value.reason == "go compiler not found"
+    assert raised.value.reason == "'go' not found"
 
 
 def test_validate_environment_broken_go(broken_go_exe, part_info):
@@ -91,7 +91,7 @@ def test_validate_environment_broken_go(broken_go_exe, part_info):
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
-    assert raised.value.reason == "go compiler failed with error code 33"
+    assert raised.value.reason == "'go' failed with error code 33"
 
 
 def test_validate_environment_invalid_go(invalid_go_exe, part_info):
@@ -124,8 +124,7 @@ def test_validate_environment_without_go_part(part_info):
         validator.validate_environment(part_dependencies=[])
 
     assert raised.value.reason == (
-        "go compiler not found and part 'my-part' "
-        "does not depend on a part named 'go'"
+        "'go' not found and part 'my-part' depends on a part named 'go'"
     )
 
 

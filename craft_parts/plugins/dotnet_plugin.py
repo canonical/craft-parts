@@ -17,10 +17,7 @@
 """The Dotnet plugin."""
 
 import logging
-import subprocess
 from typing import Any, Dict, List, Optional, Set, cast
-
-from craft_parts import errors
 
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
@@ -65,33 +62,10 @@ class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """Ensure the environment contains dependencies needed by the plugin.
 
         :param part_dependencies: A list of the parts this part depends on.
-
-        :raises PluginEnvironmentValidationError: If the environment is invalid.
         """
-        try:
-            version = self._execute("dotnet --version").strip()
-            logger.debug("found %s", version)
-        except subprocess.CalledProcessError as err:
-            if err.returncode != validator.COMMAND_NOT_FOUND:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=f"dotnet failed with error code {err.returncode}",
-                ) from err
-
-            if part_dependencies is None:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason="dotnet not found",
-                ) from err
-
-            if "dotnet" not in part_dependencies:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=(
-                        f"dotnet not found and part {self._part_name!r} "
-                        f"does not depend on a part named 'dotnet'"
-                    ),
-                ) from err
+        self.validate_dependency(
+            dependency="dotnet", part_dependencies=part_dependencies
+        )
 
 
 class DotnetPlugin(Plugin):

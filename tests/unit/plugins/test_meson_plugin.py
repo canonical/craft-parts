@@ -44,15 +44,6 @@ def broken_meson_exe(new_dir):
 
 
 @pytest.fixture
-def invalid_meson_exe(new_dir):
-    meson_bin = Path(new_dir, "mock_bin", "meson")
-    meson_bin.parent.mkdir(exist_ok=True)
-    meson_bin.touch()
-    meson_bin.chmod(0o755)
-    yield meson_bin
-
-
-@pytest.fixture
 def ninja_exe(new_dir):
     ninja_bin = Path(new_dir, "mock_bin", "ninja")
     ninja_bin.parent.mkdir(exist_ok=True)
@@ -66,15 +57,6 @@ def broken_ninja_exe(new_dir):
     ninja_bin = Path(new_dir, "mock_bin", "ninja")
     ninja_bin.parent.mkdir(exist_ok=True)
     ninja_bin.write_text("#!/bin/sh\nexit 33")
-    ninja_bin.chmod(0o755)
-    yield ninja_bin
-
-
-@pytest.fixture
-def invalid_ninja_exe(new_dir):
-    ninja_bin = Path(new_dir, "mock_bin", "ninja")
-    ninja_bin.parent.mkdir(exist_ok=True)
-    ninja_bin.touch()
     ninja_bin.chmod(0o755)
     yield ninja_bin
 
@@ -168,8 +150,7 @@ def test_validate_environment_without_meson_part(part_info):
         validator.validate_environment(part_dependencies=["ninja"])
 
     assert raised.value.reason == (
-        "'meson' not found and part 'my-part' "
-        "does not depend on a part named 'meson'"
+        "'meson' not found and part 'my-part' depends on a part named 'meson'"
     )
 
 
@@ -182,8 +163,7 @@ def test_validate_environment_without_ninja_part(part_info):
         validator.validate_environment(part_dependencies=["meson"])
 
     assert raised.value.reason == (
-        "'ninja' not found and part 'my-part' "
-        "does not depend on a part named 'ninja'"
+        "'ninja' not found and part 'my-part' depends on a part named 'ninja'"
     )
 
 
