@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -26,42 +25,6 @@ from craft_parts.plugins.meson_plugin import MesonPlugin
 
 
 @pytest.fixture
-def meson_exe(new_dir):
-    meson_bin = Path(new_dir, "mock_bin", "meson")
-    meson_bin.parent.mkdir(exist_ok=True)
-    meson_bin.write_text('#!/bin/sh\necho "1.13.8"')
-    meson_bin.chmod(0o755)
-    yield meson_bin
-
-
-@pytest.fixture
-def broken_meson_exe(new_dir):
-    meson_bin = Path(new_dir, "mock_bin", "meson")
-    meson_bin.parent.mkdir(exist_ok=True)
-    meson_bin.write_text("#!/bin/sh\nexit 33")
-    meson_bin.chmod(0o755)
-    yield meson_bin
-
-
-@pytest.fixture
-def ninja_exe(new_dir):
-    ninja_bin = Path(new_dir, "mock_bin", "ninja")
-    ninja_bin.parent.mkdir(exist_ok=True)
-    ninja_bin.write_text('#!/bin/sh\necho "2.13.8"')
-    ninja_bin.chmod(0o755)
-    yield ninja_bin
-
-
-@pytest.fixture
-def broken_ninja_exe(new_dir):
-    ninja_bin = Path(new_dir, "mock_bin", "ninja")
-    ninja_bin.parent.mkdir(exist_ok=True)
-    ninja_bin.write_text("#!/bin/sh\nexit 33")
-    ninja_bin.chmod(0o755)
-    yield ninja_bin
-
-
-@pytest.fixture
 def part_info(new_dir):
     yield PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -69,22 +32,25 @@ def part_info(new_dir):
     )
 
 
-def test_validate_environment(meson_exe, ninja_exe, part_info):
+def test_validate_environment(dependency_fixture, part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
+    meson = dependency_fixture("meson")
+    ninja = dependency_fixture("ninja")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(meson_exe.parent)}:{str(ninja_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(meson.parent)}:{str(ninja.parent)}"
     )
     validator.validate_environment()
 
 
-def test_validate_environment_missing_meson(part_info, ninja_exe):
+def test_validate_environment_missing_meson(dependency_fixture, part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
+    ninja = dependency_fixture("ninja")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ninja_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(ninja.parent)}"
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -92,12 +58,13 @@ def test_validate_environment_missing_meson(part_info, ninja_exe):
     assert raised.value.reason == "'meson' not found"
 
 
-def test_validate_environment_missing_ninja(part_info, meson_exe):
+def test_validate_environment_missing_ninja(dependency_fixture, part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
+    meson = dependency_fixture("meson")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(meson_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(meson.parent)}"
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -105,13 +72,15 @@ def test_validate_environment_missing_ninja(part_info, meson_exe):
     assert raised.value.reason == "'ninja' not found"
 
 
-def test_validate_environment_broken_meson(ninja_exe, broken_meson_exe, part_info):
+def test_validate_environment_broken_meson(dependency_fixture, part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
+    meson = dependency_fixture("meson", broken=True)
+    ninja = dependency_fixture("ninja")
 
     validator = plugin.validator_class(
         part_name="my-part",
-        env=f"PATH={str(ninja_exe.parent)}:{str(broken_meson_exe.parent)}",
+        env=f"PATH={str(ninja.parent)}:{str(meson.parent)}",
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -119,13 +88,15 @@ def test_validate_environment_broken_meson(ninja_exe, broken_meson_exe, part_inf
     assert raised.value.reason == "'meson' failed with error code 33"
 
 
-def test_validate_environment_broken_ninja(meson_exe, broken_ninja_exe, part_info):
+def test_validate_environment_broken_ninja(dependency_fixture, part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
+    meson = dependency_fixture("meson")
+    ninja = dependency_fixture("ninja", broken=True)
 
     validator = plugin.validator_class(
         part_name="my-part",
-        env=f"PATH={str(meson_exe.parent)}:{str(broken_ninja_exe.parent)}",
+        env=f"PATH={str(meson.parent)}:{str(ninja.parent)}",
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()

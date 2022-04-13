@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -26,24 +25,6 @@ from craft_parts.plugins.dotnet_plugin import DotnetPlugin
 
 
 @pytest.fixture
-def dotnet_exe(new_dir):
-    dotnet_bin = Path(new_dir, "mock_bin", "dotnet")
-    dotnet_bin.parent.mkdir(exist_ok=True)
-    dotnet_bin.write_text('#!/bin/sh\necho "6.0.0"')
-    dotnet_bin.chmod(0o755)
-    yield dotnet_bin
-
-
-@pytest.fixture
-def broken_dotnet_exe(new_dir):
-    dotnet_bin = Path(new_dir, "mock_bin", "dotnet")
-    dotnet_bin.parent.mkdir(exist_ok=True)
-    dotnet_bin.write_text("#!/bin/sh\nexit 33")
-    dotnet_bin.chmod(0o755)
-    yield dotnet_bin
-
-
-@pytest.fixture
 def part_info(new_dir):
     yield PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -51,12 +32,13 @@ def part_info(new_dir):
     )
 
 
-def test_validate_environment(dotnet_exe, part_info):
+def test_validate_environment(dependency_fixture, part_info):
     properties = DotnetPlugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
+    dotnet = dependency_fixture("dotnet")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(dotnet_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(dotnet.parent)}"
     )
     validator.validate_environment()
 
@@ -72,12 +54,13 @@ def test_validate_environment_missing_dotnet(part_info):
     assert raised.value.reason == "'dotnet' not found"
 
 
-def test_validate_environment_broken_dotnet(broken_dotnet_exe, part_info):
+def test_validate_environment_broken_dotnet(dependency_fixture, part_info):
     properties = DotnetPlugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
+    dotnet = dependency_fixture("dotnet", broken=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(broken_dotnet_exe.parent)}"
+        part_name="my-part", env=f"PATH={str(dotnet.parent)}"
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
