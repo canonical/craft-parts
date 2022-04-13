@@ -17,7 +17,6 @@
 """The Go plugin."""
 
 import logging
-import subprocess
 from typing import Any, Dict, List, Optional, Set, cast
 
 from craft_parts import errors
@@ -65,37 +64,19 @@ class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
 
-        :raises PluginEnvironmentValidationError: If the environment is invalid.
+        :raises PluginEnvironmentValidationError: If go is invalid
+        and there are no parts named go.
         """
-        try:
-            version = self._execute("go version").strip()
-            if not version.startswith("go version"):
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=f"invalid go compiler version {version!r}",
-                )
-            logger.debug("found %s", version)
-        except subprocess.CalledProcessError as err:
-            if err.returncode != validator.COMMAND_NOT_FOUND:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=f"go compiler failed with error code {err.returncode}",
-                ) from err
-
-            if part_dependencies is None:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason="go compiler not found",
-                ) from err
-
-            if "go" not in part_dependencies:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=(
-                        f"go compiler not found and part {self._part_name!r} "
-                        f"does not depend on a part named 'go'"
-                    ),
-                ) from err
+        version = self.validate_dependency(
+            dependency="go", part_dependencies=part_dependencies, argument="version"
+        )
+        if not version.startswith("go version") and (
+            part_dependencies is None or "go" not in part_dependencies
+        ):
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid go compiler version {version!r}",
+            )
 
 
 class GoPlugin(Plugin):

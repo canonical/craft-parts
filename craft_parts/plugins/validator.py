@@ -21,6 +21,8 @@ import subprocess
 import tempfile
 from typing import List, Optional
 
+from craft_parts import errors
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,6 +70,52 @@ class PluginEnvironmentValidator:
 
         :raises PluginEnvironmentValidationError: If the environment is invalid.
         """
+
+    def validate_dependency(
+        self,
+        dependency: str,
+        part_dependencies: Optional[List[str]],
+        argument: str = "--version",
+    ) -> str:
+        """Validate that the environment has a required dependency.
+
+        `<dependency-name> --version` is executed to confirm the dependency is valid.
+
+        :param dependency: name of the dependency to validate.
+        :param part_dependencies: A list of the parts this part depends on.
+        :param argument: argument to call with the dependency. Default is `--version`.
+
+        :raises PluginEnvironmentValidationError: If the environment is invalid.
+
+        :return: output from executed dependency
+        """
+        try:
+            command = f"{dependency} {argument}"
+            output = self._execute(command).strip()
+            logger.debug("executed %s with output %s", command, output)
+            return output
+        except subprocess.CalledProcessError as err:
+            if err.returncode != COMMAND_NOT_FOUND:
+                raise errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason=f"{dependency!r} failed with error code {err.returncode}",
+                ) from err
+
+            if part_dependencies is None:
+                raise errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason=f"{dependency!r} not found",
+                ) from err
+
+            if dependency not in part_dependencies:
+                raise errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason=(
+                        f"{dependency!r} not found and part {self._part_name!r} "
+                        f"depends on a part named {dependency!r}"
+                    ),
+                ) from err
+        return ""
 
     def _execute(self, cmd: str) -> str:
         """Execute a command in a build environment shell.

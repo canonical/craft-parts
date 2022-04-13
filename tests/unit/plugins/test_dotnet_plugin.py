@@ -69,7 +69,7 @@ def test_validate_environment_missing_dotnet(part_info):
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
-    assert raised.value.reason == "dotnet not found"
+    assert raised.value.reason == "'dotnet' not found"
 
 
 def test_validate_environment_broken_dotnet(broken_dotnet_exe, part_info):
@@ -82,7 +82,7 @@ def test_validate_environment_broken_dotnet(broken_dotnet_exe, part_info):
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
-    assert raised.value.reason == "dotnet failed with error code 33"
+    assert raised.value.reason == "'dotnet' failed with error code 33"
 
 
 def test_validate_environment_with_dotnet_part(part_info):
@@ -102,8 +102,7 @@ def test_validate_environment_without_dotnet_part(part_info):
         validator.validate_environment(part_dependencies=[])
 
     assert raised.value.reason == (
-        "dotnet not found and part 'my-part' "
-        "does not depend on a part named 'dotnet'"
+        "'dotnet' not found and part 'my-part' depends on a part named 'dotnet'"
     )
 
 

@@ -19,10 +19,7 @@
 
 import logging
 import shlex
-import subprocess
 from typing import Any, Dict, List, Optional, Set, cast
-
-from craft_parts import errors
 
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
@@ -69,34 +66,10 @@ class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :raises PluginEnvironmentValidationError: If the environment is invalid.
         """
-        for dep in ["meson", "ninja"]:
-            self._validate_dep(dep, part_dependencies)
-
-    def _validate_dep(self, dep: str, part_dependencies: Optional[List[str]]) -> None:
-        try:
-            version = self._execute(f"{dep} --version").strip()
-            logger.debug("found %s %s", dep, version)
-        except subprocess.CalledProcessError as err:
-            if err.returncode != validator.COMMAND_NOT_FOUND:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=f"{dep!r} failed with error code {err.returncode}",
-                ) from err
-
-            if part_dependencies is None:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=f"{dep!r} not found",
-                ) from err
-
-            if dep not in part_dependencies:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=(
-                        f"{dep!r} not found and part {self._part_name!r} "
-                        f"does not depend on a part named {dep!r}"
-                    ),
-                ) from err
+        for dependency in ["meson", "ninja"]:
+            self.validate_dependency(
+                dependency=dependency, part_dependencies=part_dependencies
+            )
 
 
 class MesonPlugin(Plugin):
