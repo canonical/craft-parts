@@ -28,6 +28,7 @@ from .go_plugin import GoPlugin
 from .make_plugin import MakePlugin
 from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
+from .npm_plugin import NpmPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
 from .rust_plugin import RustPlugin
@@ -50,6 +51,7 @@ _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "meson": MesonPlugin,
     "make": MakePlugin,
     "nil": NilPlugin,
+    "npm": NpmPlugin,
     "python": PythonPlugin,
     "rust": RustPlugin,
 }
