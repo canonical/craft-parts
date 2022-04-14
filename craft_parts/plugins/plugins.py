@@ -30,6 +30,7 @@ from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
+from .rust_plugin import RustPlugin
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -50,6 +51,7 @@ _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "make": MakePlugin,
     "nil": NilPlugin,
     "python": PythonPlugin,
+    "rust": RustPlugin,
 }
 
 _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)

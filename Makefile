@@ -68,7 +68,7 @@ test-black:
 
 .PHONY: test-codespell
 test-codespell:
-	codespell $(SOURCES)
+	codespell $(SOURCES) --ignore-words-list crate
 
 .PHONY: test-flake8
 test-flake8:
