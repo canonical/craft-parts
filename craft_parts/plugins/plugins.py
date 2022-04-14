@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, Type
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
 from .cmake_plugin import CMakePlugin
+from .conda_plugin import CondaPlugin
 from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
@@ -43,6 +44,7 @@ PluginType = Type[Plugin]
 _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "autotools": AutotoolsPlugin,
     "cmake": CMakePlugin,
+    "conda": CondaPlugin,
     "dotnet": DotnetPlugin,
     "dump": DumpPlugin,
     "go": GoPlugin,

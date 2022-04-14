@@ -87,6 +87,7 @@ class LifecycleManager:
         extra_build_packages: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[bytes] = None,
+        project_name: str = "",
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
         **custom_args,  # custom passthrough args
@@ -116,6 +117,7 @@ class LifecycleManager:
             base=base,
             parallel_build_count=parallel_build_count,
             project_dirs=project_dirs,
+            project_name=project_name,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
             **custom_args,

@@ -152,6 +152,7 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
         "CRAFT_TARGET_ARCH": step_info.target_arch,
         "CRAFT_PARALLEL_BUILD_COUNT": str(step_info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(step_info.project_dir),
+        "CRAFT_PROJECT_NAME": str(step_info.project_name),
         "CRAFT_PART_NAME": step_info.part_name,
         "CRAFT_PART_SRC": str(step_info.part_src_dir),
         "CRAFT_PART_SRC_WORK": str(step_info.part_src_subdir),
