@@ -28,6 +28,7 @@ from craft_parts.plugins.plugins import (
     DumpPlugin,
     MakePlugin,
     NilPlugin,
+    NpmPlugin,
     PythonPlugin,
     RustPlugin,
 )
@@ -48,6 +49,7 @@ class TestGetPlugin:
             ("dump", DumpPlugin, {"source": "."}),
             ("make", MakePlugin, {"source": "."}),
             ("nil", NilPlugin, {}),
+            ("npm", NpmPlugin, {"source": "."}),
             ("python", PythonPlugin, {"source": "."}),
             ("rust", RustPlugin, {"source": "."}),
         ],
