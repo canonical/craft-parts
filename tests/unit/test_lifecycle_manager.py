@@ -19,6 +19,7 @@
 import sys
 import textwrap
 from typing import Any, Dict
+from unittest.mock import ANY, call
 
 import pytest
 import yaml
@@ -70,6 +71,7 @@ class TestLifecycleManager:
         lf = LifecycleManager(
             self._data,
             application_name="test_manager",
+            project_name="project",
             cache_dir=new_dir,
             work_dir="work_dir",
             arch="aarch64",
@@ -79,6 +81,7 @@ class TestLifecycleManager:
         info = lf.project_info
 
         assert info.application_name == "test_manager"
+        assert info.project_name == "project"
         assert info.target_arch == "arm64"
         assert info.arch_triplet == "aarch64-linux-gnu"
         assert info.parallel_build_count == 16
@@ -111,6 +114,52 @@ class TestLifecycleManager:
             ignore_outdated=["foo.*"],
             base_layer_hash=None,
         )
+
+    def test_sequencer_creation(self, new_dir, mocker):
+        mock_sequencer = mocker.patch("craft_parts.sequencer.Sequencer")
+
+        LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            ignore_local_sources=["ign1", "ign2"],
+            custom="foo",
+        )
+
+        assert mock_sequencer.mock_calls == [
+            call(
+                part_list=[ANY],
+                project_info=ANY,
+                ignore_outdated=["ign1", "ign2"],
+                base_layer_hash=None,
+            )
+        ]
+
+    def test_executor_creation(self, new_dir, mocker):
+        mock_executor = mocker.patch("craft_parts.executor.Executor")
+
+        LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            parallel_build_count=16,
+            extra_build_packages=["pkg1", "pkg2"],
+            extra_build_snaps=["snap1", "snap2"],
+            ignore_local_sources=["ign1", "ign2"],
+            custom="foo",
+        )
+
+        assert mock_executor.mock_calls == [
+            call(
+                part_list=[ANY],
+                project_info=ANY,
+                ignore_patterns=["ign1", "ign2"],
+                extra_build_packages=["pkg1", "pkg2"],
+                extra_build_snaps=["snap1", "snap2"],
+                base_layer_dir=None,
+                base_layer_hash=None,
+            )
+        ]
 
 
 class TestOverlaySupport:
