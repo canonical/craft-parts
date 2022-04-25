@@ -62,6 +62,7 @@ class LifecycleManager:
         by the package manager used by the platform. Defaults to the application name.
     :param ignore_local_sources: A list of local source patterns to ignore.
     :param extra_build_packages: A list of additional build packages to install.
+    :param extra_build_snaps: A list of additional build snaps to install.
     :param base_layer_dir: The path to the overlay base layer, if using overlays.
     :param base_layer_hash: The validation hash of the overlay base image, if using
         overlays. The validation hash should be constant for a given image, and should
@@ -87,6 +88,7 @@ class LifecycleManager:
         application_package_name: Optional[str] = None,
         ignore_local_sources: Optional[List[str]] = None,
         extra_build_packages: Optional[List[str]] = None,
+        extra_build_snaps: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
@@ -162,6 +164,7 @@ class LifecycleManager:
             project_info=project_info,
             ignore_patterns=ignore_local_sources,
             extra_build_packages=extra_build_packages,
+            extra_build_snaps=extra_build_snaps,
             base_layer_dir=base_layer_dir,
             base_layer_hash=layer_hash,
         )
