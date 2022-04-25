@@ -181,7 +181,7 @@ class LifecycleManager:
         Cleaning a step removes its state and all artifacts generated in that
         step and subsequent steps for the specified parts.
 
-        :para step: The step to clean. If not specified, all steps will be
+        :param step: The step to clean. If not specified, all steps will be
             cleaned.
         :param part_names: The list of part names to clean. If not specified,
             all parts will be cleaned and work directories will be removed.
