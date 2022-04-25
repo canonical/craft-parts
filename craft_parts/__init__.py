@@ -16,8 +16,9 @@
 
 """Craft a project from several parts."""
 
-__version__ = "1.4.0"  # noqa: F401
+__version__ = "1.4.0"
 
+from . import plugins
 from .actions import Action, ActionType
 from .dirs import ProjectDirs
 from .errors import PartsError
@@ -37,4 +38,5 @@ __all__ = [
     "LifecycleManager",
     "Part",
     "Step",
+    "plugins",
 ]
