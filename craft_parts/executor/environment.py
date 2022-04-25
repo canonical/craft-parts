@@ -147,7 +147,7 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
 
     :return: A dictionary containing environment variables and values.
     """
-    return {
+    step_environment = {
         "CRAFT_ARCH_TRIPLET": step_info.arch_triplet,
         "CRAFT_TARGET_ARCH": step_info.target_arch,
         "CRAFT_PARALLEL_BUILD_COUNT": str(step_info.parallel_build_count),
@@ -162,6 +162,10 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
         "CRAFT_STAGE": str(step_info.stage_dir),
         "CRAFT_PRIME": str(step_info.prime_dir),
     }
+    if step_info.project_name is not None:
+        step_environment["CRAFT_PROJECT_NAME"] = str(step_info.project_name)
+
+    return step_environment
 
 
 def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
