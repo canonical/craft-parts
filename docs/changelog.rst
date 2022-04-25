@@ -2,6 +2,26 @@
 Changelog
 *********
 
+1.5.0 (2022-04-25)
+------------------
+
+- Add rust plugin
+- Add npm plugin
+- Add project name argument to LifecycleManager and set ``CRAFT_PROJECT_NAME``
+- Export symbols needed by application-defined plugins
+- Refactor plugin environment validation
+
+1.4.2 (2022-04-01)
+------------------
+
+- Fix craftctl error handling
+- Fix long recursions in dirty step verification
+
+1.4.1 (2022-03-30)
+------------------
+
+- Fix project variable adoption scope
+
 1.4.0 (2022-03-24)
 ------------------
 
