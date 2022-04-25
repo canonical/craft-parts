@@ -46,6 +46,7 @@ class LifecycleManager:
     :param application_name: A unique non-empty identifier for the application
         using Craft Parts. Valid application names contain upper and lower case
         letters, underscores or numbers, and must start with a letter.
+    :param project_name: name of the project being built.
     :param cache_dir: The path to store cached packages and files. If not
         specified, a directory under the application name entry in the XDG base
         directory will be used.
@@ -81,6 +82,7 @@ class LifecycleManager:
         work_dir: Union[Path, str] = ".",
         arch: str = "",
         base: str = "",
+        project_name: Optional[str] = None,
         parallel_build_count: int = 1,
         application_package_name: Optional[str] = None,
         ignore_local_sources: Optional[List[str]] = None,
@@ -115,6 +117,7 @@ class LifecycleManager:
             arch=arch,
             base=base,
             parallel_build_count=parallel_build_count,
+            project_name=project_name,
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,

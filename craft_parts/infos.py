@@ -47,6 +47,7 @@ class ProjectInfo:
 
     :param application_name: A unique identifier for the application using
         Craft Parts.
+    :param project_name: name of the project being built.
     :param cache_dir: The path to store cached packages and files. If not
         specified, a directory under the application name entry in the XDG
         base directory will be used.
@@ -55,6 +56,7 @@ class ProjectInfo:
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param project_dirs: The project work directories.
+    :param project_name: The name of the project.
     :param project_vars_part_name: Project variables can be set only if
         the part name matches this name.
     :param project_vars: A dictionary containing the project variables.
@@ -71,6 +73,7 @@ class ProjectInfo:
         base: str = "",
         parallel_build_count: int = 1,
         project_dirs: Optional[ProjectDirs] = None,
+        project_name: Optional[str] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
         **custom_args,  # custom passthrough args
@@ -86,6 +89,7 @@ class ProjectInfo:
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs
+        self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
         self._custom_args = custom_args
@@ -145,6 +149,11 @@ class ProjectInfo:
     def dirs(self) -> ProjectDirs:
         """Return the project's work directories."""
         return self._dirs
+
+    @property
+    def project_name(self) -> Optional[str]:
+        """Return the name of the project using craft-parts."""
+        return self._project_name
 
     @property
     def project_options(self) -> Dict[str, Any]:
