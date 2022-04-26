@@ -50,6 +50,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         parallel_build_count=16,
         project_vars_part_name="adopt",
         project_vars={"a": "b"},
+        project_name="project",
         custom1="foobar",
         custom2=[1, 2],
     )
@@ -60,6 +61,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     assert x.is_cross_compiling == tc_cross
     assert x.parallel_build_count == 16
     assert x.target_arch == tc_target_arch
+    assert x.project_name == "project"
     assert x.project_options == {
         "application_name": "test",
         "arch_triplet": tc_triplet,
@@ -239,13 +241,18 @@ def test_invalid_arch():
 
 def test_part_info(new_dir):
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), custom1="foobar", custom2=[1, 2]
+        application_name="test",
+        cache_dir=Path(),
+        project_name="project",
+        custom1="foobar",
+        custom2=[1, 2],
     )
     part = Part("foo", {})
     x = PartInfo(project_info=info, part=part)
 
     assert x.application_name == "test"
     assert x.cache_dir == new_dir
+    assert x.project_name == "project"
     assert x.parallel_build_count == 1
 
     assert x.part_name == "foo"
@@ -384,7 +391,11 @@ def test_part_info_get_project_var():
 
 def test_step_info(new_dir):
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), custom1="foobar", custom2=[1, 2]
+        application_name="test",
+        cache_dir=Path(),
+        project_name="project",
+        custom1="foobar",
+        custom2=[1, 2],
     )
     part = Part("foo", {})
     part_info = PartInfo(project_info=info, part=part)
@@ -392,6 +403,7 @@ def test_step_info(new_dir):
 
     assert x.application_name == "test"
     assert x.cache_dir == new_dir
+    assert x.project_name == "project"
     assert x.parallel_build_count == 1
 
     assert x.part_name == "foo"
