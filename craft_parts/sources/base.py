@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 
 import requests
+from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import os_utils, url_utils
@@ -168,12 +169,12 @@ class FileSourceHandler(SourceHandler):
     def provision(
         self,
         dst: Path,
-        clean_target: bool = True,
         keep: bool = False,
         src: Optional[Path] = None,
     ) -> None:
         """Process the source file to extract its payload."""
 
+    @overrides
     def pull(self) -> None:
         """Retrieve this source from its origin."""
         source_file = None
@@ -197,9 +198,7 @@ class FileSourceHandler(SourceHandler):
         if self.source_checksum:
             verify_checksum(self.source_checksum, source_file)
 
-        # We finally provision, but we don't clean the target so override-pull
-        # can actually have meaning when using these sources.
-        self.provision(self.part_src_dir, src=source_file, clean_target=False)
+        self.provision(self.part_src_dir, src=source_file)
 
     def download(self, filepath: Optional[Path] = None) -> Path:
         """Download the URL from a remote location.

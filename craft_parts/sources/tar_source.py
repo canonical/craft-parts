@@ -18,11 +18,11 @@
 
 import os
 import re
-import shutil
 import tarfile
-import tempfile
 from pathlib import Path
 from typing import List, Optional
+
+from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 
@@ -74,10 +74,10 @@ class TarSource(FileSourceHandler):
         if source_depth:
             raise errors.InvalidSourceOption(source_type="tar", option="source-depth")
 
+    @overrides
     def provision(
         self,
         dst: Path,
-        clean_target: bool = True,
         keep: bool = False,
         src: Optional[Path] = None,
     ):
@@ -87,14 +87,6 @@ class TarSource(FileSourceHandler):
             tarball = src
         else:
             tarball = self.part_src_dir / os.path.basename(self.source)
-
-        if clean_target:
-            with tempfile.NamedTemporaryFile() as tmp_file:
-                tmp_tarball = tmp_file.name
-                shutil.move(str(tarball), tmp_tarball)
-                shutil.rmtree(dst)
-                os.makedirs(dst)
-                shutil.move(tmp_tarball, tarball)
 
         _extract(tarball, dst)
 

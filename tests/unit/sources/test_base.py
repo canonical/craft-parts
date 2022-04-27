@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 import pytest
+from overrides import overrides
 
 from craft_parts.sources import cache, errors
 from craft_parts.sources.base import FileSourceHandler, SourceHandler
@@ -80,16 +81,15 @@ class TestSourceHandler:
 class BarFileSource(FileSourceHandler):
     """A file source handler."""
 
+    @overrides
     def provision(
         self,
         dst: Path,
-        clean_target: bool = True,
         keep: bool = False,
         src: Optional[Path] = None,
     ) -> None:
         """Extract source payload."""
         self.provision_dst = dst
-        self.provision_clean_target = clean_target
         self.provision_keep = keep
         self.provision_src = src
 
@@ -123,7 +123,6 @@ class TestFileSourceHandler:
         self.source.pull()
 
         assert self.source.provision_dst == Path("parts/foo/src")
-        assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
         assert self.source.provision_src == Path("parts/foo/src/my_file")
 
@@ -147,7 +146,6 @@ class TestFileSourceHandler:
         self.source.pull()
 
         assert self.source.provision_dst == Path("parts/foo/src")
-        assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
         assert self.source.provision_src == Path("parts/foo/src/my_file")
 
@@ -175,7 +173,6 @@ class TestFileSourceHandler:
         self.source.pull()
 
         assert self.source.provision_dst == Path("parts/foo/src")
-        assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
         assert self.source.provision_src == Path("parts/foo/src/some_file")
 
@@ -191,7 +188,6 @@ class TestFileSourceHandler:
         self.source.pull()
 
         assert self.source.provision_dst == Path("parts/foo/src")
-        assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
         assert self.source.provision_src == Path("parts/foo/src/some_file")
 
@@ -217,7 +213,6 @@ class TestFileSourceHandler:
         self.source.pull()
 
         assert self.source.provision_dst == Path("parts/foo/src")
-        assert self.source.provision_clean_target is False
         assert self.source.provision_keep is False
         assert self.source.provision_src == Path("parts/foo/src/some_file")
 

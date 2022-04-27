@@ -914,7 +914,6 @@ class TestPackages:
         handler._unpack_stage_snaps()
         mock_snap_provision.assert_called_once_with(
             new_dir / "parts/p1/install",
-            clean_target=False,
             keep=True,
         )
 

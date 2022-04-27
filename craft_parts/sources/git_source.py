@@ -22,6 +22,8 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+from overrides import overrides
+
 from craft_parts.dirs import ProjectDirs
 
 from . import errors
@@ -248,6 +250,7 @@ class GitSource(SourceHandler):
         """Verify whether the git repository is on the local filesystem."""
         return Path(self.part_src_dir, ".git").exists()
 
+    @overrides
     def pull(self) -> None:
         """Retrieve the local or remote source files."""
         if self.is_local():

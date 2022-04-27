@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
@@ -77,17 +78,16 @@ class SnapSource(FileSourceHandler):
         if source_depth:
             raise errors.InvalidSourceOption(source_type="snap", option="source-depth")
 
+    @overrides
     def provision(
         self,
         dst: Path,
-        clean_target: bool = True,
         keep: bool = False,
         src: Optional[Path] = None,
     ) -> None:
         """Provision the snap source.
 
         :param dst: The destination directory to provision to.
-        :param clean_target: Whether to clean dst before provisioning.
         :param keep: Whether to keep the snap after provisioning is complete.
         :param src: Force a new source to use for extraction.
 
@@ -98,14 +98,6 @@ class SnapSource(FileSourceHandler):
         else:
             snap_file = self.part_src_dir / os.path.basename(self.source)
         snap_file = snap_file.resolve()
-
-        if clean_target:
-            with tempfile.NamedTemporaryFile() as tmp_file:
-                tmp_snap = tmp_file.name
-                shutil.move(str(snap_file), tmp_snap)  # path-like arg requires 3.9
-                shutil.rmtree(dst)
-                os.makedirs(dst)
-                shutil.move(tmp_snap, str(snap_file))
 
         # unsquashfs [options] filesystem [directories or files to extract]
         # options:
