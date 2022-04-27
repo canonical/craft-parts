@@ -59,19 +59,6 @@ class TestSnapSource:
         assert Path(self._dest_dir / "meta.basic").is_dir()
         assert Path(self._dest_dir / "meta.basic/snap.yaml").is_file()
 
-    def test_pull_snap_must_not_clean_targets(self, new_dir, mocker):
-        mock_provision = mocker.patch.object(sources.SnapSource, "provision")
-        source = sources.SnapSource(
-            str(self._test_file), self._dest_dir, cache_dir=new_dir
-        )
-        source.pull()
-
-        mock_provision.assert_called_once_with(
-            self._dest_dir,
-            clean_target=False,
-            src=self._dest_dir / "test-snap.snap",
-        )
-
     def test_has_source_handler_entry_on_linux(self):
         if sys.platform == "linux":
             assert sources._source_handler["snap"] is sources.SnapSource

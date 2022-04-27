@@ -33,6 +33,7 @@ with open("README.md") as readme_file:
     readme = readme_file.read()
 
 install_requires = [
+    "overrides",
     "PyYAML",
     "pydantic",
     "pydantic-yaml",

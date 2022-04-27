@@ -48,7 +48,7 @@ class TestTarSource:
         tar_source.pull()
 
         source_file = dest_dir / tar_file_name
-        mock_prov.assert_called_once_with(dest_dir, src=source_file, clean_target=False)
+        mock_prov.assert_called_once_with(dest_dir, src=source_file)
         with open(os.path.join(dest_dir, tar_file_name), "r") as tar_file:
             assert tar_file.read() == "Test fake file"
 

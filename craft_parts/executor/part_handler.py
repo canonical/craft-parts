@@ -914,7 +914,7 @@ class PartHandler:
         )
 
         for snap_source in snap_sources:
-            snap_source.provision(install_dir, clean_target=False, keep=True)
+            snap_source.provision(install_dir, keep=True)
 
 
 def _remove(filename: Path) -> None:
