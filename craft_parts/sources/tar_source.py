@@ -30,10 +30,10 @@ from . import errors
 from .base import FileSourceHandler
 
 
-# pylint: disable=too-many-arguments
 class TarSource(FileSourceHandler):
     """The tar source handler."""
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         source: str,
@@ -74,6 +74,8 @@ class TarSource(FileSourceHandler):
         if source_depth:
             raise errors.InvalidSourceOption(source_type="tar", option="source-depth")
 
+    # pylint: enable=too-many-arguments
+
     @overrides
     def provision(
         self,
@@ -82,7 +84,6 @@ class TarSource(FileSourceHandler):
         src: Optional[Path] = None,
     ):
         """Extract tarball contents to the part source dir."""
-        # TODO add unit tests.
         if src:
             tarball = src
         else:

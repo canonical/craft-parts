@@ -91,6 +91,7 @@ from .git_source import GitSource
 from .local_source import LocalSource
 from .snap_source import SnapSource
 from .tar_source import TarSource
+from .zip_source import ZipSource
 
 if TYPE_CHECKING:
     from craft_parts.parts import Part
@@ -103,6 +104,7 @@ _source_handler: Dict[str, SourceHandlerType] = {
     "tar": TarSource,
     "git": GitSource,
     "snap": SnapSource,
+    "zip": ZipSource,
 }
 
 
