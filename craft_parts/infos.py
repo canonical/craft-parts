@@ -191,7 +191,12 @@ class ProjectInfo:
         """
         self._ensure_valid_variable_name(name)
 
-        if not raw_write and self._project_vars[name].updated:
+        if raw_write:
+            self._project_vars[name].value = value
+            self._project_vars[name].updated = True
+            return
+
+        if self._project_vars[name].updated:
             raise RuntimeError(f"variable {name!r} can be set only once")
 
         if self._project_vars_part_name == part_name:

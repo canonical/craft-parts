@@ -177,6 +177,29 @@ def test_project_info_set_project_var_other_part_name():
     assert str(raised.value) == "variable 'var' can only be set in part 'part1'"
 
 
+def test_project_info_set_project_var_no_part_name_raw():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
+    )
+
+    info.set_project_var("var", "bar", part_name="part2", raw_write=True)
+    assert info.get_project_var("var", raw_read=True) == "bar"
+
+
+def test_project_info_set_project_var_other_part_name_raw():
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars_part_name="part1",
+        project_vars={"var": "foo"},
+    )
+
+    info.set_project_var("var", "bar", part_name="part2", raw_write=True)
+    assert info.get_project_var("var", raw_read=True) == "bar"
+
+
 def test_project_info_set_invalid_project_vars():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
