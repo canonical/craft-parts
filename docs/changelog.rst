@@ -2,6 +2,18 @@
 Changelog
 *********
 
+1.6.0 (2022-04-29)
+------------------
+
+- Add zip source handler
+- Clean up source provisioning
+- Fix project variable setting for skipped parts
+
+1.5.1 (2022-04-25)
+------------------
+
+- Fix extra build snaps installation
+
 1.5.0 (2022-04-25)
 ------------------
 
