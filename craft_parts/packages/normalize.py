@@ -75,6 +75,8 @@ def _fix_artifacts(unpack_dir: Path, repository: "RepositoryType") -> None:
 
     :param unpack_dir: Directory containing unpacked files to normalize.
     """
+    logger.debug("fix artifacts: unpack_dir=%r", str(unpack_dir))
+
     for root, dirs, files in os.walk(unpack_dir):
         # Symlinks to directories will be in dirs, while symlinks to
         # non-directories will be in files.
@@ -114,16 +116,27 @@ def _fix_xml_tools(unpack_dir: Path) -> None:
 def _fix_symlink(
     path: Path, unpack_dir: Path, root: Path, repository: "RepositoryType"
 ) -> None:
+    logger.debug(
+        "fix symlink: path=%r, unpack_dir=%r, root=%r",
+        str(path),
+        str(unpack_dir),
+        str(root),
+    )
     host_target = os.readlink(path)
     if host_target in repository.get_package_libraries("libc6"):
         logger.debug("Not fixing symlink %s: it's pointing to libc", host_target)
         return
 
     target = unpack_dir / os.readlink(path)[1:]
+    logger.debug("fix symlink: target=%r", str(target))
+
     if not target.exists() and not _try_copy_local(path, target):
         return
     path.unlink()
-    path.symlink_to(target.relative_to(root))
+
+    # Path.relative_to() requires self to be the subpath of the argument,
+    # but os.path.relpath() does not.
+    path.symlink_to(os.path.relpath(target, start=root))
 
 
 def _fix_shebangs(unpack_dir: Path) -> None:
