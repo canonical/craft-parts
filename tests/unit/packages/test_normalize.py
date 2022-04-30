@@ -254,24 +254,24 @@ class TestFixPkgConfig:
 
 
 @pytest.mark.parametrize(
-    "src,dst",
+    "src,dst,result",
     [
-        ("a", "rel-to-a"),
-        # disabled: calls BaseRepository.get_package_libraries()
-        # ("/a", "abs-to-a"),
+        ("a", "rel-to-a", "a"),
+        ("/a", "abs-to-a", "a"),
+        ("/1", "a/abs-to-1", "../1"),
     ],
 )
 class TestFixSymlinks:
     """Check the normalization of symbolic links."""
 
-    def test_fix_symlinks(self, src, dst, new_dir):
+    def test_fix_symlinks(self, src, dst, result, new_dir):
         os.makedirs("a")
         open("1", mode="w").close()
 
         os.symlink(src, dst)
         normalize(new_dir, repository=DummyRepository)
 
-        assert os.readlink(dst) == src
+        assert os.readlink(dst) == result
 
 
 class TestFixSUID:
