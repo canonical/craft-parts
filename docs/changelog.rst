@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.6.1 (2022-05-02)
+------------------
+
+- Fix stage package symlink normalization
+
 1.6.0 (2022-04-29)
 ------------------
 
