@@ -16,7 +16,12 @@
 
 """The setup script."""
 
+import os
+
 from setuptools import find_packages, setup  # type: ignore
+
+with open("README.md") as readme_file:
+    readme = readme_file.read()
 
 
 def is_ubuntu() -> bool:
@@ -29,8 +34,10 @@ def is_ubuntu() -> bool:
         return False
 
 
-with open("README.md") as readme_file:
-    readme = readme_file.read()
+def is_rtd() -> bool:
+    """Verify if running on ReadTheDocs."""
+    return "READTHEDOCS" in os.environ
+
 
 install_requires = [
     "overrides",
@@ -43,10 +50,11 @@ install_requires = [
 ]
 
 
-if is_ubuntu():
+if is_ubuntu() and not is_rtd():
     install_requires += [
         "python-apt",
     ]
+
 
 dev_requires = [
     "autoflake",

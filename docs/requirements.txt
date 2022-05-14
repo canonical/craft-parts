@@ -1,3 +1,7 @@
+wheel
+setuptools
+python-distutils-extra @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-distutils-extra/2.43/python-distutils-extra_2.43.tar.xz
+python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz
 Sphinx==4.2.0
 sphinx-autodoc-typehints==1.12.0
 sphinx-jsonschema==1.16.11
