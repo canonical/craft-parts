@@ -82,9 +82,11 @@ def test_generate_step_environment_build(new_dir):
         project_name="test-project",
     )
     part_info = PartInfo(project_info=info, part=p1)
-    step_info = StepInfo(part_info=part_info, step=Step.BUILD)
+    step_info = StepInfo(part_info=part_info, step=Step.PULL)
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
+    step_info.global_environment["APP_GLOBAL_ENVVAR"] = "from_app"
+    step_info.step_environment["APP_STEP_ENVVAR"] = "from_app"
 
     env = environment.generate_step_environment(
         part=p1, plugin=plugin, step_info=step_info
@@ -95,30 +97,33 @@ def test_generate_step_environment_build(new_dir):
         #!/bin/bash
         set -euo pipefail
         # Environment
-        ## Part Environment
+        ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
+        export CRAFT_STAGE="{new_dir}/stage"
+        export CRAFT_PRIME="{new_dir}/prime"
+        export CRAFT_PROJECT_NAME="test-project"
         export CRAFT_PART_NAME="p1"
+        export CRAFT_STEP_NAME="PULL"
         export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
         export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
         export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
-        export CRAFT_STAGE="{new_dir}/stage"
-        export CRAFT_PRIME="{new_dir}/prime"
-        export CRAFT_PROJECT_NAME="test-project"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
         export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
-        ## Plugin Environment
-        export PLUGIN_ENVVAR="from_plugin"
-        ## User Environment
+        ## Plugin environment
+        ## Application environment
+        export APP_GLOBAL_ENVVAR="from_app"
+        export APP_STEP_ENVVAR="from_app"
+        ## User environment
         export PART_ENVVAR="from_part"
         """
     )
@@ -145,35 +150,38 @@ def test_generate_step_environment_no_project_name(new_dir):
         #!/bin/bash
         set -euo pipefail
         # Environment
-        ## Part Environment
+        ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
+        export CRAFT_STAGE="{new_dir}/stage"
+        export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PART_NAME="p1"
+        export CRAFT_STEP_NAME="BUILD"
         export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
         export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
         export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
-        export CRAFT_STAGE="{new_dir}/stage"
-        export CRAFT_PRIME="{new_dir}/prime"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
         export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
-        ## Plugin Environment
+        ## Plugin environment
         export PLUGIN_ENVVAR="from_plugin"
-        ## User Environment
+        ## Application environment
+        ## User environment
         export PART_ENVVAR="from_part"
         """
     )
 
 
-def test_generate_step_environment_no_build(new_dir):
+@pytest.mark.parametrize("step", set(Step) - {Step.BUILD})
+def test_generate_step_environment_no_build(new_dir, step):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
         arch="aarch64",
@@ -182,7 +190,7 @@ def test_generate_step_environment_no_build(new_dir):
         project_name="test-project",
     )
     part_info = PartInfo(project_info=info, part=p1)
-    step_info = StepInfo(part_info=part_info, step=Step.STAGE)
+    step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
@@ -195,29 +203,31 @@ def test_generate_step_environment_no_build(new_dir):
         #!/bin/bash
         set -euo pipefail
         # Environment
-        ## Part Environment
+        ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
+        export CRAFT_STAGE="{new_dir}/stage"
+        export CRAFT_PRIME="{new_dir}/prime"
+        export CRAFT_PROJECT_NAME="test-project"
         export CRAFT_PART_NAME="p1"
+        export CRAFT_STEP_NAME="{step.name}"
         export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
         export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
         export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
-        export CRAFT_STAGE="{new_dir}/stage"
-        export CRAFT_PRIME="{new_dir}/prime"
-        export CRAFT_PROJECT_NAME="test-project"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
         export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
-        ## Plugin Environment
-        ## User Environment
+        ## Plugin environment
+        ## Application environment
+        ## User environment
         export PART_ENVVAR="from_part"
         """
     )
@@ -232,7 +242,7 @@ def test_generate_step_environment_no_user_env(new_dir):
         project_name="test-project",
     )
     part_info = PartInfo(project_info=info, part=p1)
-    step_info = StepInfo(part_info=part_info, step=Step.BUILD)
+    step_info = StepInfo(part_info=part_info, step=Step.PRIME)
     props = plugins.PluginProperties()
     plugin = FooPlugin(properties=props, part_info=part_info)
 
@@ -245,29 +255,30 @@ def test_generate_step_environment_no_user_env(new_dir):
         #!/bin/bash
         set -euo pipefail
         # Environment
-        ## Part Environment
+        ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
+        export CRAFT_STAGE="{new_dir}/stage"
+        export CRAFT_PRIME="{new_dir}/prime"
+        export CRAFT_PROJECT_NAME="test-project"
         export CRAFT_PART_NAME="p1"
+        export CRAFT_STEP_NAME="PRIME"
         export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
         export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
         export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
-        export CRAFT_STAGE="{new_dir}/stage"
-        export CRAFT_PRIME="{new_dir}/prime"
-        export CRAFT_PROJECT_NAME="test-project"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
         export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
-        ## Plugin Environment
-        export PLUGIN_ENVVAR="from_plugin"
-        ## User Environment
+        ## Plugin environment
+        ## Application environment
+        ## User environment
         """
     )

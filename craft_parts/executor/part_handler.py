@@ -93,6 +93,7 @@ class PartHandler:
         self._part_list = part_list
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
+        self._app_environment: Dict[str, str] = {}
 
         self._plugin = plugins.get_plugin(
             part=part,
