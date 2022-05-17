@@ -50,6 +50,12 @@ final artifacts.
    reference
 
 
+.. toctree::
+   :caption About the project
+
+   changelog
+
+
 Indices and tables
 ==================
 

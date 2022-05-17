@@ -11,6 +11,8 @@ build:
   os: "ubuntu-20.04"
   tools:
     python: "3.8"
+  apt_packages:
+    - libapt-pkg-dev
 
 formats:
   - pdf
