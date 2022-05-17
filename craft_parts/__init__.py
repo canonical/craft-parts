@@ -22,6 +22,7 @@ from . import plugins
 from .actions import Action, ActionType
 from .dirs import ProjectDirs
 from .errors import PartsError
+from .executor.environment import expand_environment
 from .infos import PartInfo, ProjectInfo, StepInfo
 from .lifecycle_manager import LifecycleManager
 from .parts import Part
@@ -39,4 +40,5 @@ __all__ = [
     "Part",
     "Step",
     "plugins",
+    "expand_environment",
 ]

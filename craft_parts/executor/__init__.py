@@ -16,4 +16,5 @@
 
 """The action executor."""
 
+from .environment import expand_environment  # noqa: F401
 from .executor import ExecutionContext, Executor  # noqa: F401

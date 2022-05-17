@@ -18,7 +18,7 @@
 
 import io
 import logging
-from typing import Dict, Iterable
+from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.parts import Part
@@ -197,3 +197,57 @@ def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
     """
     paths = [f"{prepend}{p}" for p in paths]
     return separator.join(paths)
+
+
+def expand_environment(
+    data: Dict[str, Any], *, info: ProjectInfo, skip: Optional[List[str]] = None
+) -> None:
+    """Replace global variables with their values.
+
+    Global variables are defined by craft-parts and are the subset of the
+    ``CRAFT_*`` step execution environment variables that don't depend
+    on the part or step being executed. The list of global variables include
+    ``CRAFT_ARCH_TRIPLET``, ``CRAFT_PROJECT_DIR``, ``CRAFT_STAGE`` and
+    ``CRAFT_PRIME``. Additional global variables can be defined by the
+    application using craft-parts.
+
+    :param data: A dictionary whose values will have variable names expanded.
+    :param info: The project information.
+    :param skip: Keys to skip when performing expansion.
+    """
+    global_environment = _get_global_environment(info)
+    global_environment.update(info.global_environment)
+
+    replacements: Dict[str, str] = {}
+    for key, value in global_environment.items():
+        # Support both $VAR and ${VAR} syntax
+        replacements[f"${key}"] = value
+        replacements[f"${{{key}}}"] = value
+
+    for key in data:
+        if not skip or key not in skip:
+            data[key] = _replace_attr(data[key], replacements)
+
+
+def _replace_attr(
+    attr: Union[List[str], Dict[str, str], str], replacements: Dict[str, str]
+) -> Union[List[str], Dict[str, str], str]:
+    """Replace environment variables according to the replacements map."""
+    if isinstance(attr, str):
+        for replacement, value in replacements.items():
+            attr = attr.replace(replacement, str(value))
+        return attr
+
+    if isinstance(attr, (list, tuple)):
+        return [cast(str, _replace_attr(i, replacements)) for i in attr]
+
+    if isinstance(attr, dict):
+        result: Dict[str, str] = {}
+        for key, value in attr.items():
+            # Run replacements on both the key and value
+            key = cast(str, _replace_attr(key, replacements))
+            value = cast(str, _replace_attr(value, replacements))
+            result[key] = value
+        return result
+
+    return attr

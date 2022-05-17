@@ -128,6 +128,8 @@ class LifecycleManager:
 
         parts_data = all_parts.get("parts", {})
 
+        executor.expand_environment(parts_data, info=project_info)
+
         part_list = []
         for name, spec in parts_data.items():
             part_list.append(_build_part(name, spec, project_dirs))

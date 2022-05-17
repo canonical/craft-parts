@@ -21,6 +21,7 @@ from typing import Dict, List, Set
 import pytest
 
 from craft_parts import plugins
+from craft_parts.dirs import ProjectDirs
 from craft_parts.executor import environment
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
@@ -282,3 +283,54 @@ def test_generate_step_environment_no_user_env(new_dir):
         ## User environment
         """
     )
+
+
+@pytest.mark.parametrize(
+    "var,value",
+    [
+        ("CRAFT_ARCH_TRIPLET", "aarch64-linux-gnu"),
+        ("CRAFT_TARGET_ARCH", "arm64"),
+        ("CRAFT_STAGE", "/work/stage"),
+        ("CRAFT_PRIME", "/work/prime"),
+        ("CRAFT_PROJECT_NAME", "test-project"),
+        ("ENVVAR", "from_app"),
+    ],
+)
+def test_expand_variables(new_dir, var, value):
+    info = ProjectInfo(
+        project_dirs=ProjectDirs(work_dir="/work"),
+        arch="aarch64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        work_dir="/work",
+    )
+    info.global_environment.update({"ENVVAR": "from_app"})
+
+    data = {"foo": f"${var}", "bar": f"${{{var}}}"}
+    environment.expand_environment(data, info=info)
+
+    assert data == {
+        "foo": value,
+        "bar": value,
+    }
+
+
+def test_expand_variables_skip(new_dir):
+    info = ProjectInfo(
+        project_dirs=ProjectDirs(work_dir="/work"),
+        arch="aarch64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        work_dir="/work",
+    )
+    info.global_environment.update({"ENVVAR": "from_app"})
+
+    data = {"foo": "$CRAFT_PROJECT_NAME", "bar": "$CRAFT_PROJECT_NAME"}
+    environment.expand_environment(data, info=info, skip=["foo"])
+
+    assert data == {
+        "foo": "$CRAFT_PROJECT_NAME",  # this key was skipped
+        "bar": "test-project",
+    }
