@@ -63,7 +63,7 @@ def test_plugin(new_dir):
     props = FooPluginProperties.unmarshal({"foo-name": "world"})
     plugin = FooPlugin(properties=props, part_info=part_info)
 
-    validator = FooPlugin.validator_class(part_name=part.name, env="")
+    validator = FooPlugin.validator_class(part_name=part.name, env="", properties=props)
     validator.validate_environment()
 
     assert plugin.get_build_snaps() == {"build_snap"}

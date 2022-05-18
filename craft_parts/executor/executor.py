@@ -261,7 +261,9 @@ class Executor:
                 plugin=plugin,
                 step_info=StepInfo(part_info, Step.BUILD),
             )
-            validator = plugin_class.validator_class(part_name=part.name, env=env)
+            validator = plugin_class.validator_class(
+                part_name=part.name, env=env, properties=part.plugin_properties
+            )
             validator.validate_environment(part_dependencies=part.dependencies)
 
 
