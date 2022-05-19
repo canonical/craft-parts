@@ -63,6 +63,11 @@ def fake_dumb_terminal(mocker):
 
 
 @pytest.fixture(autouse=True)
+def apt_update_cache():
+    deb.Ubuntu.refresh_packages_list.cache_clear()
+
+
+@pytest.fixture(autouse=True)
 def cache_dirs(mocker, tmpdir):
     stage_cache_path = Path(tmpdir, "stage-cache")
     debs_path = Path(tmpdir, "debs")
@@ -114,7 +119,7 @@ def test_fake_wrapper_apt_unavailable(monkeypatch):
 
 
 class TestPackages:
-    def test_fetch_stage_packages(self, mocker, tmpdir, fake_apt_cache):
+    def test_fetch_stage_packages(self, mocker, tmpdir, fake_apt_cache, fake_run):
         mocker.patch(
             "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
             {"filtered-pkg-1", "filtered-pkg-2"},
@@ -135,6 +140,7 @@ class TestPackages:
             target_arch="amd64",
         )
 
+        fake_run.assert_has_calls([call(["apt-get", "update"])])
         fake_apt_cache.assert_has_calls(
             [
                 call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
@@ -149,7 +155,7 @@ class TestPackages:
 
         assert fetched_packages == ["fake-package=1.0"]
 
-    def test_fetch_virtual_stage_package(self, tmpdir, fake_apt_cache):
+    def test_fetch_virtual_stage_package(self, tmpdir, fake_apt_cache, fake_run):
         _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
@@ -165,9 +171,10 @@ class TestPackages:
             target_arch="amd64",
         )
 
+        fake_run.assert_has_calls([call(["apt-get", "update"])])
         assert fetched_packages == ["fake-package=1.0"]
 
-    def test_fetch_stage_package_with_deps(self, tmpdir, fake_apt_cache):
+    def test_fetch_stage_package_with_deps(self, tmpdir, fake_apt_cache, fake_run):
         _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
@@ -186,6 +193,7 @@ class TestPackages:
             target_arch="amd64",
         )
 
+        fake_run.assert_has_calls([call(["apt-get", "update"])])
         assert sorted(fetched_packages) == sorted(
             ["fake-package=1.0", "fake-package-dep=2.0"]
         )
@@ -205,7 +213,7 @@ class TestPackages:
 
         assert fetched_packages == []
 
-    def test_get_package_fetch_error(self, tmpdir, fake_apt_cache):
+    def test_get_package_fetch_error(self, tmpdir, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.side_effect = errors.PackageFetchError(
             "foo"
         )
@@ -218,7 +226,9 @@ class TestPackages:
                 base="core",
                 target_arch="amd64",
             )
+
         assert raised.value.message == "foo"
+        fake_run.assert_has_calls([call(["apt-get", "update"])])
 
     def test_unpack_stage_packages_dont_normalize(self, tmpdir, mocker):
         packages_path = Path(tmpdir, "pkg")

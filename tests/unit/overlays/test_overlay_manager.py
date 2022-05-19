@@ -214,7 +214,10 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", mock_install_packages, ["pkg1", "pkg2"]
+            new_dir / "overlay/overlay",
+            mock_install_packages,
+            ["pkg1", "pkg2"],
+            refresh_package_cache=False,
         )
         mock_install_packages.called_once_with(["pkg1", "pkg2"])
 
@@ -287,7 +290,10 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", mock_install_packages, ["pkg1", "pkg2"]
+            new_dir / "overlay/overlay",
+            mock_install_packages,
+            ["pkg1", "pkg2"],
+            refresh_package_cache=False,
         )
         mock_install_packages.called_once_with(["pkg1", "pkg2"])
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")

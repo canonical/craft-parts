@@ -121,6 +121,8 @@ class OverlayManager:
             raise RuntimeError("overlay filesystem not mounted")
 
         mount_dir = self._project_info.overlay_mount_dir
+        # Ensure we always run refresh_packages_list by resetting the cache
+        packages.Repository.refresh_packages_list.cache_clear()
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
     def download_packages(self, package_names: List[str]) -> None:
@@ -143,7 +145,12 @@ class OverlayManager:
             raise RuntimeError("overlay filesystem not mounted")
 
         mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(mount_dir, packages.Repository.install_packages, package_names)
+        chroot.chroot(
+            mount_dir,
+            packages.Repository.install_packages,
+            package_names,
+            refresh_package_cache=False,
+        )
 
 
 class LayerMount:

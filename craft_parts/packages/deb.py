@@ -335,8 +335,13 @@ class Ubuntu(BaseRepository):
         return packages
 
     @classmethod
+    @functools.lru_cache(maxsize=1)
     def refresh_packages_list(cls) -> None:
         """Refresh the list of packages available in the repository."""
+        # Return early when testing.
+        if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
+            return
+
         try:
             cmd = ["apt-get", "update"]
             logger.debug("Executing: %s", cmd)
@@ -414,7 +419,11 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def install_packages(
-        cls, package_names: List[str], *, list_only: bool = False
+        cls,
+        package_names: List[str],
+        *,
+        list_only: bool = False,
+        refresh_package_cache: bool = True,
     ) -> List[str]:
         """Install packages on the host system."""
         if not package_names:
@@ -434,6 +443,8 @@ class Ubuntu(BaseRepository):
         packages = [f"{name}={version}" for name, version in sorted(marked_packages)]
 
         if not list_only:
+            if refresh_package_cache and install_required:
+                cls.refresh_packages_list()
             if install_required:
                 cls._install_packages(packages)
             else:
@@ -506,6 +517,9 @@ class Ubuntu(BaseRepository):
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
 
         installed: Set[str] = set()
+
+        # Update the package cache
+        cls.refresh_packages_list()
 
         with AptCache(
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
