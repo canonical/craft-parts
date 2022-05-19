@@ -80,7 +80,11 @@ class BaseRepository(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def install_packages(
-        cls, package_names: List[str], *, list_only: bool = False
+        cls,
+        package_names: List[str],
+        *,
+        list_only: bool = False,
+        refresh_package_cache: bool = True,
     ) -> List[str]:
         """Install packages on the host system.
 
@@ -96,6 +100,8 @@ class BaseRepository(abc.ABC):
         host failed :class:`BuildPackagesNotInstalled` should be raised.
 
         :param package_names: A list of package names to install.
+        :param list_only: Only list the packages that would be installed.
+        :param refresh_package_cache: Refresh the cache before installing.
 
         :return: A list with the packages installed and their versions.
         """
@@ -191,6 +197,7 @@ class DummyRepository(BaseRepository):
         package_names: List[str],
         *,
         list_only: bool = False,  # pylint: disable=unused-argument
+        refresh_package_cache: bool = True,  # pylint: disable=unused-argument
     ) -> List[str]:
         """Install packages on the host system."""
         return []
