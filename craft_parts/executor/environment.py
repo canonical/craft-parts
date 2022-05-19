@@ -59,18 +59,18 @@ def generate_step_environment(
 
         print("# Environment", file=run_environment)
 
+        print("## Application environment", file=run_environment)
+        for key, val in step_info.global_environment.items():
+            print(f'export {key}="{val}"', file=run_environment)
+        for key, val in step_info.step_environment.items():
+            print(f'export {key}="{val}"', file=run_environment)
+
         print("## Part environment", file=run_environment)
         for key, val in parts_environment.items():
             print(f'export {key}="{val}"', file=run_environment)
 
         print("## Plugin environment", file=run_environment)
         for key, val in plugin_environment.items():
-            print(f'export {key}="{val}"', file=run_environment)
-
-        print("## Application environment", file=run_environment)
-        for key, val in step_info.global_environment.items():
-            print(f'export {key}="{val}"', file=run_environment)
-        for key, val in step_info.step_environment.items():
             print(f'export {key}="{val}"', file=run_environment)
 
         print("## User environment", file=run_environment)

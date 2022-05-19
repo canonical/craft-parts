@@ -97,6 +97,9 @@ def test_generate_step_environment_build(new_dir):
         #!/bin/bash
         set -euo pipefail
         # Environment
+        ## Application environment
+        export APP_GLOBAL_ENVVAR="from_app"
+        export APP_STEP_ENVVAR="from_app"
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
@@ -120,9 +123,6 @@ def test_generate_step_environment_build(new_dir):
         export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
-        ## Application environment
-        export APP_GLOBAL_ENVVAR="from_app"
-        export APP_STEP_ENVVAR="from_app"
         ## User environment
         export PART_ENVVAR="from_part"
         """
@@ -150,6 +150,7 @@ def test_generate_step_environment_no_project_name(new_dir):
         #!/bin/bash
         set -euo pipefail
         # Environment
+        ## Application environment
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
@@ -173,7 +174,6 @@ def test_generate_step_environment_no_project_name(new_dir):
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         export PLUGIN_ENVVAR="from_plugin"
-        ## Application environment
         ## User environment
         export PART_ENVVAR="from_part"
         """
@@ -203,6 +203,7 @@ def test_generate_step_environment_no_build(new_dir, step):
         #!/bin/bash
         set -euo pipefail
         # Environment
+        ## Application environment
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
@@ -226,7 +227,6 @@ def test_generate_step_environment_no_build(new_dir, step):
         export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
-        ## Application environment
         ## User environment
         export PART_ENVVAR="from_part"
         """
@@ -255,6 +255,7 @@ def test_generate_step_environment_no_user_env(new_dir):
         #!/bin/bash
         set -euo pipefail
         # Environment
+        ## Application environment
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
@@ -278,7 +279,6 @@ def test_generate_step_environment_no_user_env(new_dir):
         export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
-        ## Application environment
         ## User environment
         """
     )
