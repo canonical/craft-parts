@@ -23,6 +23,8 @@ from typing import List, Optional
 
 from craft_parts import errors
 
+from .properties import PluginProperties
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,9 +46,10 @@ class PluginEnvironmentValidator:
     :param env: A string containing the build step environment setup.
     """
 
-    def __init__(self, *, part_name: str, env: str):
+    def __init__(self, *, part_name: str, env: str, properties: PluginProperties):
         self._part_name = part_name
         self._env = env
+        self._options = properties
 
     def validate_environment(
         self, *, part_dependencies: Optional[List[str]] = None

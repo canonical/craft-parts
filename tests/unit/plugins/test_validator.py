@@ -115,14 +115,20 @@ class FooPlugin(Plugin):
 
 
 def test_validation_happy(part_info, foo_exe):
+    properties = FooPluginProperties()
     validator = FooPlugin.validator_class(
-        part_name=part_info.part_name, env=f"PATH={str(foo_exe.parent)}"
+        part_name=part_info.part_name,
+        env=f"PATH={str(foo_exe.parent)}",
+        properties=properties,
     )
     validator.validate_environment()
 
 
 def test_validation_error(part_info):
-    validator = FooPlugin.validator_class(part_name=part_info.part_name, env="")
+    properties = FooPluginProperties()
+    validator = FooPlugin.validator_class(
+        part_name=part_info.part_name, env="", properties=properties
+    )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
@@ -132,12 +138,18 @@ def test_validation_error(part_info):
 
 
 def test_validation_built_by_part(part_info):
-    validator = FooPlugin.validator_class(part_name=part_info.part_name, env="")
+    properties = FooPluginProperties()
+    validator = FooPlugin.validator_class(
+        part_name=part_info.part_name, env="", properties=properties
+    )
     validator.validate_environment(part_dependencies=["build-foo"])
 
 
 def test_validation_built_by_part_error(part_info):
-    validator = FooPlugin.validator_class(part_name=part_info.part_name, env="")
+    properties = FooPluginProperties()
+    validator = FooPlugin.validator_class(
+        part_name=part_info.part_name, env="", properties=properties
+    )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=[])
 
@@ -150,8 +162,11 @@ def test_validation_built_by_part_error(part_info):
 
 
 def test_validation_output_error(part_info, empty_foo_exe):
+    properties = FooPluginProperties()
     validator = FooPlugin.validator_class(
-        part_name=part_info.part_name, env=f"PATH={str(empty_foo_exe.parent)}"
+        part_name=part_info.part_name,
+        env=f"PATH={str(empty_foo_exe.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()

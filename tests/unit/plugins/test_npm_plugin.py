@@ -44,6 +44,7 @@ class TestPluginNpmPlugin:
         validator = plugin.validator_class(
             part_name="my-part",
             env=f"PATH={str(node.parent)}:{str(npm.parent)}",
+            properties=properties,
         )
 
         validator.validate_environment()
@@ -72,7 +73,9 @@ class TestPluginNpmPlugin:
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
-        validator = plugin.validator_class(part_name="my-part", env=path)
+        validator = plugin.validator_class(
+            part_name="my-part", env=path, properties=properties
+        )
 
         with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
             validator.validate_environment()
@@ -104,7 +107,9 @@ class TestPluginNpmPlugin:
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
-        validator = plugin.validator_class(part_name="my-part", env=path)
+        validator = plugin.validator_class(
+            part_name="my-part", env=path, properties=properties
+        )
 
         with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
             validator.validate_environment()
@@ -117,7 +122,9 @@ class TestPluginNpmPlugin:
     def test_validate_environment_part_dependencies(self, new_dir, part_info):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
-        validator = plugin.validator_class(part_name="my-part", env="PATH=/foo")
+        validator = plugin.validator_class(
+            part_name="my-part", env="PATH=/foo", properties=properties
+        )
 
         validator.validate_environment(part_dependencies=["node", "npm"])
 
@@ -140,7 +147,9 @@ class TestPluginNpmPlugin:
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
-        validator = plugin.validator_class(part_name="my-part", env="PATH=/foo")
+        validator = plugin.validator_class(
+            part_name="my-part", env="PATH=/foo", properties=properties
+        )
 
         with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
             validator.validate_environment(

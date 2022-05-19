@@ -39,7 +39,9 @@ def test_validate_environment(dependency_fixture, part_info):
     ninja = dependency_fixture("ninja")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(meson.parent)}:{str(ninja.parent)}"
+        part_name="my-part",
+        env=f"PATH={str(meson.parent)}:{str(ninja.parent)}",
+        properties=properties,
     )
     validator.validate_environment()
 
@@ -50,7 +52,9 @@ def test_validate_environment_missing_meson(dependency_fixture, part_info):
     ninja = dependency_fixture("ninja")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ninja.parent)}"
+        part_name="my-part",
+        env=f"PATH={str(ninja.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -64,7 +68,9 @@ def test_validate_environment_missing_ninja(dependency_fixture, part_info):
     meson = dependency_fixture("meson")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(meson.parent)}"
+        part_name="my-part",
+        env=f"PATH={str(meson.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -81,6 +87,7 @@ def test_validate_environment_broken_meson(dependency_fixture, part_info):
     validator = plugin.validator_class(
         part_name="my-part",
         env=f"PATH={str(ninja.parent)}:{str(meson.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -97,6 +104,7 @@ def test_validate_environment_broken_ninja(dependency_fixture, part_info):
     validator = plugin.validator_class(
         part_name="my-part",
         env=f"PATH={str(meson.parent)}:{str(ninja.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -108,7 +116,9 @@ def test_validate_environment_with_meson_and_ninja_part(part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
-    validator = plugin.validator_class(part_name="my-part", env="PATH=/foo")
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
     validator.validate_environment(part_dependencies=["meson", "ninja"])
 
 
@@ -116,7 +126,9 @@ def test_validate_environment_without_meson_part(part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
-    validator = plugin.validator_class(part_name="my-part", env="PATH=/foo")
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=["ninja"])
 
@@ -129,7 +141,9 @@ def test_validate_environment_without_ninja_part(part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
-    validator = plugin.validator_class(part_name="my-part", env="PATH=/foo")
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=["meson"])
 

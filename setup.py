@@ -42,7 +42,7 @@ def is_rtd() -> bool:
 install_requires = [
     "overrides",
     "PyYAML",
-    "pydantic",
+    "pydantic==1.9.0",  # needed by pydanic-yaml 0.6.3
     "pydantic-yaml",
     "pyxdg",
     "requests",
