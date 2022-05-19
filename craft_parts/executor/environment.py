@@ -90,8 +90,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
 
     :return: A dictionary containing the built-in environment.
     """
-    part_environment: Dict[str, str] = _get_global_environment(step_info.project_info)
-    part_environment.update(_get_step_environment(step_info))
+    part_environment = _get_step_environment(step_info)
     paths = [part.part_install_dir, part.stage_dir]
 
     bin_paths = []
@@ -172,7 +171,10 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
 
     :return: A dictionary containing environment variables and values.
     """
+    global_environment = _get_global_environment(step_info.project_info)
+
     step_environment = {
+        **global_environment,
         "CRAFT_PART_NAME": step_info.part_name,
         "CRAFT_STEP_NAME": getattr(step_info.step, "name", ""),
         "CRAFT_PART_SRC": str(step_info.part_src_dir),
