@@ -126,39 +126,41 @@ class TestPluginNpmPlugin:
             part_name="my-part", env="PATH=/foo", properties=properties
         )
 
-        validator.validate_environment(part_dependencies=["node", "npm"])
+        validator.validate_environment(part_dependencies=["npm-deps"])
 
     @pytest.mark.parametrize(
-        "dependencies",
+        "satisfied_dependency,error_dependency",
         [
-            ("node", ["npm"]),
-            ("npm", ["node"]),
+            ("node", "npm"),
+            ("npm", "node"),
         ],
     )
     def test_validate_environment_missing_part_dependencies(
-        self, dependencies, dependency_fixture, new_dir, part_info
+        self,
+        satisfied_dependency,
+        error_dependency,
+        dependency_fixture,
+        new_dir,
+        part_info,
     ):
-        """Validate that missing part dependencies raise an exception.
-
-        :param dependencies: tuple consisting of 1 missing part dependency
-        and a list of valid part dependencies
-        """
-        missing_part_dependency_name, valid_part_dependency_names = dependencies
+        """Validate that missing part dependencies raise an exception."""
+        dependency = dependency_fixture(name=satisfied_dependency)
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
         validator = plugin.validator_class(
-            part_name="my-part", env="PATH=/foo", properties=properties
+            part_name="my-part",
+            properties=properties,
+            env=f"PATH={str(dependency.parent)}",
         )
 
         with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
-            validator.validate_environment(
-                part_dependencies=valid_part_dependency_names
-            )
+            validator.validate_environment(part_dependencies=[])
 
         assert raised.value.reason == (
-            f"'{missing_part_dependency_name}' not found and part 'my-part' "
-            f"depends on a part named '{missing_part_dependency_name}'"
+            f"{error_dependency!r} not found and part 'my-part' "
+            "does not depend on a part named 'npm-deps' that "
+            "would satisfy the dependency"
         )
 
     def test_get_build_snaps(self, part_info, new_dir):
@@ -314,7 +316,8 @@ class TestPluginNpmPlugin:
         mocker.patch("platform.architecture", return_value=("64bit", "ELF"))
         assert NpmPlugin._get_architecture() == "x64"
 
-    def test_get_architecture_from_platform_invalid(self, mocker):
+    def test_get_architecture_from_platform_invalid(self, mocker, monkeypatch):
+        monkeypatch.delenv("SNAP_ARCH", raising=False)
         mocker.patch("platform.machine", return_value="System/360")
         mocker.patch("platform.architecture", return_value=("32bit", "OS/360"))
 

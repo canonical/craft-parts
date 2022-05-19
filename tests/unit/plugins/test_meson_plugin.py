@@ -112,14 +112,14 @@ def test_validate_environment_broken_ninja(dependency_fixture, part_info):
     assert raised.value.reason == "'ninja' failed with error code 33"
 
 
-def test_validate_environment_with_meson_and_ninja_part(part_info):
+def test_validate_environment_with_meson_deps_part(part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
     )
-    validator.validate_environment(part_dependencies=["meson", "ninja"])
+    validator.validate_environment(part_dependencies=["meson-deps"])
 
 
 def test_validate_environment_without_meson_part(part_info):
@@ -133,7 +133,8 @@ def test_validate_environment_without_meson_part(part_info):
         validator.validate_environment(part_dependencies=["ninja"])
 
     assert raised.value.reason == (
-        "'meson' not found and part 'my-part' depends on a part named 'meson'"
+        "'meson' not found and part 'my-part' does not depend on a part named "
+        "'meson-deps' that would satisfy the dependency"
     )
 
 
@@ -148,7 +149,8 @@ def test_validate_environment_without_ninja_part(part_info):
         validator.validate_environment(part_dependencies=["meson"])
 
     assert raised.value.reason == (
-        "'ninja' not found and part 'my-part' depends on a part named 'ninja'"
+        "'meson' not found and part 'my-part' does not depend on a part named "
+        "'meson-deps' that would satisfy the dependency"
     )
 
 

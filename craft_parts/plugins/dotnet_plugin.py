@@ -64,7 +64,9 @@ class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :param part_dependencies: A list of the parts this part depends on.
         """
         self.validate_dependency(
-            dependency="dotnet", part_dependencies=part_dependencies
+            dependency="dotnet",
+            plugin_name="dotnet",
+            part_dependencies=part_dependencies,
         )
 
 

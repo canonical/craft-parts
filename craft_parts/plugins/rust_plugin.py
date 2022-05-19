@@ -73,7 +73,9 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """
         for dependency in ["cargo", "rustc"]:
             self.validate_dependency(
-                dependency=dependency, part_dependencies=part_dependencies
+                dependency=dependency,
+                plugin_name="rust",
+                part_dependencies=part_dependencies,
             )
 
 
