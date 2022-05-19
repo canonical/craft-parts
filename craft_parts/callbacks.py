@@ -22,12 +22,11 @@ from typing import Callable, List, Optional, Union
 
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
-from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 CallbackHook = namedtuple("CallbackHook", ["function", "step_list"])
 
-ExecutionCallback = Callable[[ProjectInfo, List[Part]], None]
+ExecutionCallback = Callable[[ProjectInfo], None]
 StepCallback = Callable[[StepInfo], bool]
 Callback = Union[ExecutionCallback, StepCallback]
 
@@ -93,24 +92,22 @@ def unregister_all() -> None:
     _POST_STEP_HOOKS = []
 
 
-def run_prologue(project_info: ProjectInfo, *, part_list: List[Part]) -> None:
+def run_prologue(project_info: ProjectInfo) -> None:
     """Run all registered execution prologue callbacks.
 
-    :param project_info: The project information.
-    :param part_list: A list with all parts in the project.
+    :param project_info: The project information to be sent to callback functions.
     """
     for hook in _PROLOGUE_HOOKS:
-        hook.function(project_info, part_list)
+        hook.function(project_info)
 
 
-def run_epilogue(project_info: ProjectInfo, *, part_list: List[Part]) -> None:
+def run_epilogue(project_info: ProjectInfo) -> None:
     """Run all registered execution epilogue callbacks.
 
-    :param project_info: The project information.
-    :param part_list: A list with all parts in the project.
+    :param project_info: The project information to be sent to callback functions.
     """
     for hook in _EPILOGUE_HOOKS:
-        hook.function(project_info, part_list)
+        hook.function(project_info)
 
 
 def run_pre_step(step_info: StepInfo) -> None:

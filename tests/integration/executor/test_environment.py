@@ -16,13 +16,12 @@
 
 import os
 import textwrap
-from typing import List
 
 import pytest
 import yaml
 
 import craft_parts
-from craft_parts import Action, Part, ProjectInfo, Step, StepInfo, callbacks
+from craft_parts import Action, ProjectInfo, Step, StepInfo, callbacks
 
 
 def setup_function():
@@ -46,7 +45,7 @@ def mock_prerequisites_for_overlay(mocker):
     mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
 
 
-def _prologue_callback(info: ProjectInfo, part_list: List[Part]) -> None:
+def _prologue_callback(info: ProjectInfo) -> None:
     info.global_environment["TEST_GLOBAL"] = "prologue"
 
 

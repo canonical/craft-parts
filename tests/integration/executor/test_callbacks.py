@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
-from typing import List
 
 import pytest
 import yaml
@@ -24,7 +23,6 @@ import craft_parts
 from craft_parts import (
     Action,
     ActionType,
-    Part,
     ProjectInfo,
     Step,
     StepInfo,
@@ -62,9 +60,8 @@ def _step_callback(info: StepInfo) -> bool:
     return True
 
 
-def _exec_callback(info: ProjectInfo, part_list: List[Part]) -> None:
+def _exec_callback(info: ProjectInfo) -> None:
     print(f"application_name = {info.application_name}")
-    print(f"parts = {', '.join([x.name for x in part_list])}")
 
 
 _parts_yaml = textwrap.dedent(
@@ -125,9 +122,7 @@ def test_prologue_callback(tmpdir, capfd):
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
-    assert out == (
-        "application_name = test_prologue_callback\n" "parts = foo\n" "step Step.PULL\n"
-    )
+    assert out == ("application_name = test_prologue_callback\nstep Step.PULL\n")
 
 
 def _my_step_callback(info: StepInfo) -> bool:
@@ -299,9 +294,8 @@ def test_invalid_update_callback_post(tmpdir, step):
     assert raised.value.message == f"cannot update step {name!r} of 'foo'"
 
 
-def _my_exec_callback(info: ProjectInfo, part_list: List[Part]) -> None:
-    for part in part_list:
-        print(f"{part.name}: {getattr(info, 'message')}")
+def _my_exec_callback(info: ProjectInfo) -> None:
+    print(f"{getattr(info, 'message')}")
 
 
 _exec_yaml = textwrap.dedent(
@@ -343,7 +337,7 @@ def test_callback_prologue(tmpdir, capfd):
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
-    assert out == "bar: prologue\nfoo: prologue\nfoo Step.PULL\n"
+    assert out == "prologue\nfoo Step.PULL\n"
 
 
 def test_callback_epilogue(tmpdir, capfd):
@@ -364,4 +358,4 @@ def test_callback_epilogue(tmpdir, capfd):
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
-    assert out == "foo Step.PULL\nbar: epilogue\nfoo: epilogue\n"
+    assert out == "foo Step.PULL\nepilogue\n"

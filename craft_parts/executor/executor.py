@@ -95,7 +95,7 @@ class Executor:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 ctx.refresh_packages_list()
 
-        callbacks.run_prologue(self._project_info, part_list=self._part_list)
+        callbacks.run_prologue(self._project_info)
 
     def epilogue(self) -> None:
         """Finish and clean the execution environment.
@@ -103,7 +103,7 @@ class Executor:
         This method is called after executing lifecycle actions.
         """
         self._project_info.execution_finished = True
-        callbacks.run_epilogue(self._project_info, part_list=self._part_list)
+        callbacks.run_epilogue(self._project_info)
 
     def execute(
         self,
