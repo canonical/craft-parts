@@ -87,9 +87,15 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
         """
+        options = cast(NpmPluginProperties, self._options)
+        if options.npm_include_node:
+            return
+
         for dependency in ["node", "npm"]:
             self.validate_dependency(
-                dependency=dependency, part_dependencies=part_dependencies
+                dependency=dependency,
+                plugin_name="npm",
+                part_dependencies=part_dependencies,
             )
 
 

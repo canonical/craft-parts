@@ -68,7 +68,9 @@ class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """
         for dependency in ["meson", "ninja"]:
             self.validate_dependency(
-                dependency=dependency, part_dependencies=part_dependencies
+                dependency=dependency,
+                plugin_name="meson",
+                part_dependencies=part_dependencies,
             )
 
 
