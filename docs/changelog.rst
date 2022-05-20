@@ -2,6 +2,22 @@
 Changelog
 *********
 
+1.7.0 (2022-05-20)
+------------------
+
+- Add support for application-defined environment variables
+- Add package filter for core22
+- Refresh packages list before installing packages
+- Expand global variables in parts definition
+- Adjust prologue/epilogue callback parameters
+- Make plugin options available in plugin environment validator
+- Fix readthedocs documentation generation
+
+1.6.1 (2022-05-02)
+------------------
+
+- Fix stage package symlink normalization
+
 1.6.0 (2022-04-29)
 ------------------
 
