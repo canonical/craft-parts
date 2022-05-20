@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -37,16 +36,14 @@ def _callback_2(info: StepInfo) -> bool:
     return False
 
 
-def _callback_3(info: ProjectInfo, part_list: List[Part]) -> None:
+def _callback_3(info: ProjectInfo) -> None:
     greet = getattr(info, "greet")
-    names = " ".join([x.name for x in part_list])
-    print(f"{greet} callback 3 ({names})")
+    print(f"{greet} callback 3")
 
 
-def _callback_4(info: ProjectInfo, part_list: List[Part]) -> None:
+def _callback_4(info: ProjectInfo) -> None:
     greet = getattr(info, "greet")
-    names = " ".join([x.name for x in part_list])
-    print(f"{greet} callback 4 ({names})")
+    print(f"{greet} callback 4")
 
 
 class TestCallbackRegistration:
@@ -178,21 +175,17 @@ class TestCallbackExecution:
         assert out == "hello callback 1\nhello callback 2\n"
 
     def test_run_prologue(self, capfd):
-        part1 = Part("p1", {})
-        part2 = Part("p2", {})
         callbacks.register_prologue(_callback_3)
         callbacks.register_prologue(_callback_4)
-        callbacks.run_prologue(self._project_info, part_list=[part1, part2])
+        callbacks.run_prologue(self._project_info)
         out, err = capfd.readouterr()
         assert not err
-        assert out == "hello callback 3 (p1 p2)\nhello callback 4 (p1 p2)\n"
+        assert out == "hello callback 3\nhello callback 4\n"
 
     def test_run_epilogue(self, capfd):
-        part1 = Part("p1", {})
-        part2 = Part("p2", {})
         callbacks.register_epilogue(_callback_3)
         callbacks.register_epilogue(_callback_4)
-        callbacks.run_epilogue(self._project_info, part_list=[part1, part2])
+        callbacks.run_epilogue(self._project_info)
         out, err = capfd.readouterr()
         assert not err
-        assert out == "hello callback 3 (p1 p2)\nhello callback 4 (p1 p2)\n"
+        assert out == "hello callback 3\nhello callback 4\n"

@@ -151,8 +151,8 @@ class TestExecutionContext:
         callbacks.unregister_all()
 
     def test_prologue(self, capfd, new_dir):
-        def cbf(info, part_list):
-            print(f"prologue {info.custom} for {part_list[0].name}")
+        def cbf(info):
+            print(f"prologue {info.custom}")
 
         callbacks.register_prologue(cbf)
         p1 = Part("p1", {"plugin": "nil", "override-build": "echo build"})
@@ -163,11 +163,11 @@ class TestExecutionContext:
             ctx.execute(Action("p1", Step.BUILD))
 
         captured = capfd.readouterr()
-        assert captured.out == "prologue custom for p1\nbuild\n"
+        assert captured.out == "prologue custom\nbuild\n"
 
     def test_epilogue(self, capfd, new_dir):
-        def cbf(info, part_list):
-            print(f"epilogue {info.custom} for {part_list[0].name}")
+        def cbf(info):
+            print(f"epilogue {info.custom}")
 
         callbacks.register_epilogue(cbf)
         p1 = Part("p1", {"plugin": "nil", "override-build": "echo build"})
@@ -178,11 +178,11 @@ class TestExecutionContext:
             ctx.execute(Action("p1", Step.BUILD))
 
         captured = capfd.readouterr()
-        assert captured.out == "build\nepilogue custom for p1\n"
+        assert captured.out == "build\nepilogue custom\n"
 
     def test_capture_stdout(self, capfd, new_dir):
-        def cbf(info, part_list):
-            print(f"prologue {info.custom} for {part_list[0].name}")
+        def cbf(info):
+            print(f"prologue {info.custom}")
 
         callbacks.register_prologue(cbf)
         p1 = Part("p1", {"plugin": "nil", "override-build": "echo out; echo err >&2"})
@@ -197,6 +197,6 @@ class TestExecutionContext:
                 ctx.execute(Action("p1", Step.BUILD), stdout=output, stderr=error)
 
         captured = capfd.readouterr()
-        assert captured.out == "prologue custom for p1\n"
+        assert captured.out == "prologue custom\n"
         assert output_path.read_text() == "out\n"
         assert error_path.read_text() == "+ echo out\n+ echo err\nerr\n"
