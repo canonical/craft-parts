@@ -22,7 +22,6 @@ import json
 import logging
 import os
 import subprocess
-import sys
 import tempfile
 import textwrap
 import time
@@ -212,21 +211,15 @@ class StepHandler:
             )
 
             script = textwrap.dedent(
-                """\
-                set -e
-                export PARTS_CALL_FIFO={call_fifo}
-                export PARTS_FEEDBACK_FIFO={feedback_fifo}
+                f"""\
+                set -euo pipefail
+                export PARTS_CALL_FIFO={call_fifo.path}
+                export PARTS_FEEDBACK_FIFO={feedback_fifo.path}
 
-                {env}
+                {self._env}
 
                 set -x
                 {scriptlet}"""
-            ).format(
-                interpreter=sys.executable,
-                call_fifo=call_fifo.path,
-                feedback_fifo=feedback_fifo.path,
-                scriptlet=scriptlet,
-                env=self._env,
             )
 
             # FIXME: refactor ctl protocol server

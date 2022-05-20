@@ -93,6 +93,7 @@ class ProjectInfo:
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
         self._custom_args = custom_args
+        self.global_environment: Dict[str, str] = {}
 
         self.execution_finished = False
 
@@ -294,6 +295,11 @@ class PartInfo:
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
     @property
+    def project_info(self) -> ProjectInfo:
+        """Return the project information."""
+        return self._project_info
+
+    @property
     def part_name(self) -> str:
         """Return the name of the part we're providing information about."""
         return self._part_name
@@ -379,6 +385,7 @@ class StepInfo:
     ):
         self._part_info = part_info
         self.step = step
+        self.step_environment: Dict[str, str] = {}
 
     def __getattr__(self, name):
         if hasattr(self._part_info, name):

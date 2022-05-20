@@ -69,6 +69,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         "project_vars_part_name": "adopt",
         "project_vars": {"a": ProjectVar(value="b")},
     }
+    assert x.global_environment == {}
 
     assert x.parts_dir == new_dir / "parts"
     assert x.stage_dir == new_dir / "stage"
@@ -277,6 +278,7 @@ def test_part_info(new_dir):
     assert x.cache_dir == new_dir
     assert x.project_name == "project"
     assert x.parallel_build_count == 1
+    assert x.global_environment == {}
 
     assert x.part_name == "foo"
     assert x.part_src_dir == new_dir / "parts/foo/src"
@@ -439,6 +441,8 @@ def test_step_info(new_dir):
     assert x.prime_dir == new_dir / "prime"
 
     assert x.step == Step.BUILD
+    assert x.global_environment == {}
+    assert x.step_environment == {}
 
     assert x.custom_args == ["custom1", "custom2"]
     assert x.custom1 == "foobar"

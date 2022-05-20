@@ -20,7 +20,7 @@ import io
 import logging
 from typing import Dict, Iterable
 
-from craft_parts.infos import StepInfo
+from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.steps import Step
@@ -41,20 +41,16 @@ def generate_step_environment(
     :return: The environment to use when executing the step.
     """
     # Craft parts' say.
-    our_build_environment = _basic_environment_for_part(part=part, step_info=step_info)
-
-    step = step_info.step
+    parts_environment = _basic_environment_for_part(part=part, step_info=step_info)
 
     # Plugin's say.
-    if step == Step.BUILD:
+    if step_info.step == Step.BUILD:
         plugin_environment = plugin.get_build_environment()
     else:
         plugin_environment = {}
 
     # Part's (user) say.
-    user_build_environment = part.spec.build_environment
-    if not user_build_environment:
-        user_build_environment = []
+    user_environment = part.spec.build_environment or []
 
     # Create the script.
     with io.StringIO() as run_environment:
@@ -63,16 +59,22 @@ def generate_step_environment(
 
         print("# Environment", file=run_environment)
 
-        print("## Part Environment", file=run_environment)
-        for key, val in our_build_environment.items():
+        print("## Application environment", file=run_environment)
+        for key, val in step_info.global_environment.items():
+            print(f'export {key}="{val}"', file=run_environment)
+        for key, val in step_info.step_environment.items():
             print(f'export {key}="{val}"', file=run_environment)
 
-        print("## Plugin Environment", file=run_environment)
+        print("## Part environment", file=run_environment)
+        for key, val in parts_environment.items():
+            print(f'export {key}="{val}"', file=run_environment)
+
+        print("## Plugin environment", file=run_environment)
         for key, val in plugin_environment.items():
             print(f'export {key}="{val}"', file=run_environment)
 
-        print("## User Environment", file=run_environment)
-        for env in user_build_environment:
+        print("## User environment", file=run_environment)
+        for env in user_environment:
             for key, val in env.items():
                 print(f'export {key}="{val}"', file=run_environment)
 
@@ -88,7 +90,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
 
     :return: A dictionary containing the built-in environment.
     """
-    part_environment: Dict[str, str] = _get_step_environment(step_info)
+    part_environment = _get_step_environment(step_info)
     paths = [part.part_install_dir, part.stage_dir]
 
     bin_paths = []
@@ -140,6 +142,28 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
     return part_environment
 
 
+def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
+    """Add project and part information variables to the environment.
+
+    :param step_info: Information about the current step.
+
+    :return: A dictionary containing environment variables and values.
+    """
+    global_environment = {
+        "CRAFT_ARCH_TRIPLET": info.arch_triplet,
+        "CRAFT_TARGET_ARCH": info.target_arch,
+        "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
+        "CRAFT_PROJECT_DIR": str(info.project_dir),
+        "CRAFT_OVERLAY": str(info.overlay_mount_dir),
+        "CRAFT_STAGE": str(info.stage_dir),
+        "CRAFT_PRIME": str(info.prime_dir),
+    }
+    if info.project_name is not None:
+        global_environment["CRAFT_PROJECT_NAME"] = str(info.project_name)
+
+    return global_environment
+
+
 def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
     """Add project and part information variables to the environment.
 
@@ -147,24 +171,18 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
 
     :return: A dictionary containing environment variables and values.
     """
+    global_environment = _get_global_environment(step_info.project_info)
+
     step_environment = {
-        "CRAFT_ARCH_TRIPLET": step_info.arch_triplet,
-        "CRAFT_TARGET_ARCH": step_info.target_arch,
-        "CRAFT_PARALLEL_BUILD_COUNT": str(step_info.parallel_build_count),
-        "CRAFT_PROJECT_DIR": str(step_info.project_dir),
+        **global_environment,
         "CRAFT_PART_NAME": step_info.part_name,
+        "CRAFT_STEP_NAME": getattr(step_info.step, "name", ""),
         "CRAFT_PART_SRC": str(step_info.part_src_dir),
         "CRAFT_PART_SRC_WORK": str(step_info.part_src_subdir),
         "CRAFT_PART_BUILD": str(step_info.part_build_dir),
         "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
         "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
-        "CRAFT_OVERLAY": str(step_info.overlay_mount_dir),
-        "CRAFT_STAGE": str(step_info.stage_dir),
-        "CRAFT_PRIME": str(step_info.prime_dir),
     }
-    if step_info.project_name is not None:
-        step_environment["CRAFT_PROJECT_NAME"] = str(step_info.project_name)
-
     return step_environment
 
 
