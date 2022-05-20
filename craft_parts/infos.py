@@ -393,40 +393,6 @@ class StepInfo:
 
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
-    def set_project_var(
-        self, name: str, value: str, *, raw_write: bool = False
-    ) -> None:
-        """Set the value of a project variable.
-
-        Variable values can be set once. Project variables are not intended for
-        logic construction in user scripts, setting it multiple times is likely to
-        be an error.
-
-        :param name: The project variable name.
-        :param value: The new project variable value.
-        :param raw_write: Whether the variable is written without access verifications.
-
-        :raise ValueError: If there is no custom argument with the given name.
-        :raise RuntimeError: If a write-once variable is set a second time, or if a
-            part name is specified and the variable is set from a different part.
-        """
-        self._part_info.set_project_var(name, value, raw_write=raw_write)
-
-    def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
-        """Get the value of a project variable.
-
-        Variables must be consumed by the application only after the lifecycle
-        execution ends to prevent unexpected behavior if steps are skipped.
-
-        :param name: The project variable name.
-        :param raw_read: Whether the variable is read without access verifications.
-        :return: The value of the variable.
-
-        :raise ValueError: If there is no project variable with the given name.
-        :raise RuntimeError: If the variable is consumed during the lifecycle execution.
-        """
-        return self._part_info.get_project_var(name, raw_read=raw_read)
-
 
 def _get_host_architecture() -> str:
     """Obtain the host system architecture."""
