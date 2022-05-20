@@ -91,7 +91,7 @@ def test_validate_environment_with_go_part(part_info):
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
     )
-    validator.validate_environment(part_dependencies=["go"])
+    validator.validate_environment(part_dependencies=["go-deps"])
 
 
 def test_validate_environment_without_go_part(part_info):
@@ -105,7 +105,8 @@ def test_validate_environment_without_go_part(part_info):
         validator.validate_environment(part_dependencies=[])
 
     assert raised.value.reason == (
-        "'go' not found and part 'my-part' depends on a part named 'go'"
+        "'go' not found and part 'my-part' does not depend on a part named "
+        "'go-deps' that would satisfy the dependency"
     )
 
 

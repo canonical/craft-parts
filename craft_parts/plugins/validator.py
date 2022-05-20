@@ -77,6 +77,7 @@ class PluginEnvironmentValidator:
     def validate_dependency(
         self,
         dependency: str,
+        plugin_name: str,
         part_dependencies: Optional[List[str]],
         argument: str = "--version",
     ) -> str:
@@ -85,6 +86,8 @@ class PluginEnvironmentValidator:
         `<dependency-name> --version` is executed to confirm the dependency is valid.
 
         :param dependency: name of the dependency to validate.
+        :param plugin_name: used to generate the part name that would satisfy
+                            the dependency.
         :param part_dependencies: A list of the parts this part depends on.
         :param argument: argument to call with the dependency. Default is `--version`.
 
@@ -110,12 +113,14 @@ class PluginEnvironmentValidator:
                     reason=f"{dependency!r} not found",
                 ) from err
 
-            if dependency not in part_dependencies:
+            part_dependency = f"{plugin_name}-deps"
+            if part_dependency not in part_dependencies:
                 raise errors.PluginEnvironmentValidationError(
                     part_name=self._part_name,
                     reason=(
                         f"{dependency!r} not found and part {self._part_name!r} "
-                        f"depends on a part named {dependency!r}"
+                        f"does not depend on a part named {part_dependency!r} "
+                        "that would satisfy the dependency"
                     ),
                 ) from err
         return ""
