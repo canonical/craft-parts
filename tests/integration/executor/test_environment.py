@@ -160,3 +160,31 @@ def test_prologue_callback(new_dir, capfd, mocker):
             """
         )
     )
+
+
+def test_expand_environment(new_dir, mocker):
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    parts_yaml = """\
+        parts:
+          foo:
+            plugin: nil
+            override-build: |
+              touch $CRAFT_PART_INSTALL/bar
+            organize:
+              bar: usr/$CRAFT_ARCH_TRIPLET/bar
+        """
+
+    parts = yaml.safe_load(parts_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_expansion",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert (lf.project_info.prime_dir / "usr/aarch64-linux-gnu/bar").is_file()
