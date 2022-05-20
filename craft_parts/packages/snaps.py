@@ -19,8 +19,8 @@
 import contextlib
 import logging
 import os
+import subprocess
 import sys
-from subprocess import CalledProcessError, check_call, check_output
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 from urllib import parse
 
@@ -203,8 +203,14 @@ class SnapPackage:
         if self._original_channel:
             snap_download_cmd.extend(["--channel", self._original_channel])
         try:
-            check_output(snap_download_cmd, cwd=directory)
-        except CalledProcessError as err:
+            subprocess.run(
+                snap_download_cmd,
+                cwd=directory,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError as err:
             raise errors.SnapDownloadError(
                 snap_name=self.name, snap_channel=self.channel
             ) from err
@@ -222,8 +228,13 @@ class SnapPackage:
             pass
 
         try:
-            check_call(snap_install_cmd)
-        except CalledProcessError as err:
+            subprocess.run(
+                snap_install_cmd,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError as err:
             raise errors.SnapInstallError(
                 snap_name=self.name, snap_channel=self.channel
             ) from err
@@ -242,8 +253,13 @@ class SnapPackage:
             pass
 
         try:
-            check_call(snap_refresh_cmd)
-        except CalledProcessError as err:
+            subprocess.run(
+                snap_refresh_cmd,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError as err:
             raise errors.SnapRefreshError(
                 snap_name=self.name, snap_channel=self.channel
             ) from err
@@ -302,8 +318,8 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
     :rtype: bytes
     """
     try:
-        return check_output(["snap", "known", *assertion_params])
-    except CalledProcessError as call_error:
+        return subprocess.check_output(["snap", "known", *assertion_params])
+    except subprocess.CalledProcessError as call_error:
         raise errors.SnapGetAssertionError(
             assertion_params=assertion_params
         ) from call_error
