@@ -36,11 +36,11 @@ class FakeSnapCommand:
         self.fake_download = None
         self._email = "-"
 
-        original_check_call = craft_parts.packages.snaps.check_call
-        original_check_output = craft_parts.packages.snaps.check_output
+        original_run = craft_parts.packages.snaps.subprocess.run
+        original_check_output = craft_parts.packages.snaps.subprocess.check_output
 
-        def side_effect_check_call(cmd, *args, **kwargs):
-            return side_effect(original_check_call, cmd, *args, **kwargs)
+        def side_effect_run(cmd, *args, **kwargs):
+            return side_effect(original_run, cmd, *args, **kwargs)
 
         def side_effect_check_output(cmd, *args, **kwargs):
             if self._is_snap_command(cmd):
@@ -56,9 +56,10 @@ class FakeSnapCommand:
 
             return original(cmd, *args, **kwargs)
 
-        mocker.patch("craft_parts.packages.snaps.check_call", side_effect_check_call)
+        mocker.patch("craft_parts.packages.snaps.subprocess.run", side_effect_run)
         mocker.patch(
-            "craft_parts.packages.snaps.check_output", side_effect_check_output
+            "craft_parts.packages.snaps.subprocess.check_output",
+            side_effect_check_output,
         )
 
     def login(self, email):
