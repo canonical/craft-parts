@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.7.1 (2022-05-21)
+------------------
+
+- Fix stdout leak during snap package installation
+- Fix plugin validation dependencies
+
 1.7.0 (2022-05-20)
 ------------------
 
