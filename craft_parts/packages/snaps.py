@@ -199,6 +199,7 @@ class SnapPackage:
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.
+        logger.debug("Downloading snap: %s", self.name)
         snap_download_cmd = ["snap", "download", self.name]
         if self._original_channel:
             snap_download_cmd.extend(["--channel", self._original_channel])
@@ -217,6 +218,7 @@ class SnapPackage:
 
     def install(self):
         """Installs the snap onto the system."""
+        logger.debug("Installing snap: %s", self.name)
         snap_install_cmd = ["snap", "install", self.name]
         if self._original_channel:
             snap_install_cmd.extend(["--channel", self._original_channel])
@@ -244,6 +246,7 @@ class SnapPackage:
 
     def refresh(self):
         """Refresh a snap onto a channel on the system."""
+        logger.debug("Refreshing snap: %s (channel %s)", self.name, self.channel)
         snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
         try:
             if self.is_classic():
