@@ -68,10 +68,13 @@ class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         and there are no parts named go.
         """
         version = self.validate_dependency(
-            dependency="go", part_dependencies=part_dependencies, argument="version"
+            dependency="go",
+            plugin_name="go",
+            part_dependencies=part_dependencies,
+            argument="version",
         )
         if not version.startswith("go version") and (
-            part_dependencies is None or "go" not in part_dependencies
+            part_dependencies is None or "go-deps" not in part_dependencies
         ):
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
