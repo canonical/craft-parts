@@ -56,13 +56,65 @@ def fake_run(mocker):
     return mocker.patch("craft_parts.sources.base.SourceHandler._run")
 
 
+@pytest.fixture
+def fake_get_current_branch(mocker):
+    mocker.patch(
+        "craft_parts.sources.git_source.GitSource._get_current_branch",
+        return_value="test-branch",
+    )
+
+
 # pylint: disable=missing-class-docstring
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-public-methods
 
+
+@pytest.mark.usefixtures("new_dir")
+class GitBaseTestCase:
+    """Helper functions for git tests."""
+
+    def rm_dir(self, dir_name):
+        if os.path.exists(dir_name):
+            shutil.rmtree(dir_name)
+
+    def clean_dir(self, dir_name):
+        self.rm_dir(dir_name)
+        os.mkdir(dir_name)
+
+    def clone_repo(self, repo, tree):
+        self.clean_dir(tree)
+        _call(["git", "clone", repo, tree])
+        os.chdir(tree)
+        _call(["git", "config", "--local", "user.name", '"Example Dev"'])
+        _call(["git", "config", "--local", "user.email", "dev@example.com"])
+
+    def add_file(self, filename, body, message):
+        with open(filename, "w") as fp:
+            fp.write(body)
+
+        _call(["git", "add", filename])
+        _call(["git", "commit", "-am", message])
+
+    def check_file_contents(self, path, expected):
+        body = None
+        with open(path) as fp:
+            body = fp.read()
+        assert body == expected
+
+
 # LP: #1733584
 @pytest.mark.usefixtures("mock_get_source_details")
-class TestGitSource:
+class TestGitSource(GitBaseTestCase):
+    def test_get_current_branch(self, mocker, new_dir):
+        Path("source_dir/.git").mkdir(parents=True)
+        mocker.patch(
+            "craft_parts.sources.base.SourceHandler._run_output",
+            return_value="test-branch",
+        )
+
+        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        assert git._get_current_branch() == "test-branch"
+
     def test_pull(self, fake_run, new_dir):
         git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
         git.pull()
@@ -212,7 +264,7 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_existing(self, mocker, fake_run, new_dir):
+    def test_pull_existing(self, mocker, fake_run, fake_get_current_branch, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
@@ -237,7 +289,7 @@ class TestGitSource:
                         Path("source_dir"),
                         "reset",
                         "--hard",
-                        "origin/master",
+                        "refs/remotes/origin/test-branch",
                     ]
                 ),
                 mock.call(
@@ -375,7 +427,7 @@ class TestGitSource:
                         Path("source_dir"),
                         "reset",
                         "--hard",
-                        "refs/heads/my-branch",
+                        "refs/remotes/origin/my-branch",
                     ]
                 ),
                 mock.call(
@@ -392,7 +444,85 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_existing_with_submodules_default(self, mocker, fake_run, new_dir):
+    def test_pull_existing_after_update(self, new_dir):
+        """Test that `pull_existing` works after the remote is updated."""
+        # set up repositories
+        remote = Path("remote.git").absolute()
+        working_tree = Path("working-tree").absolute()
+        other_tree = Path("helper-tree").absolute()
+
+        git = GitSource(str(remote), working_tree, cache_dir=new_dir)
+
+        self.clean_dir(remote)
+        self.clean_dir(working_tree)
+        self.clean_dir(other_tree)
+
+        # initialize remote
+        os.chdir(remote)
+        _call(["git", "init", "--bare"])
+
+        # from the working tree, clone, commit, and push
+        self.clone_repo(remote, working_tree)
+        os.chdir(working_tree)
+        self.add_file("test.txt", "Hello, World!", "created test.txt")
+        _call(["git", "push", str(remote)])
+
+        # from the other tree, clone, commit and push
+        self.clone_repo(remote, other_tree)
+        os.chdir(other_tree)
+        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", "-f", str(remote)])
+
+        # go back to the working tree and pull the new commit
+        os.chdir(working_tree)
+        git.pull()
+
+        # assert we actually pulled the commit
+        with open(Path(working_tree / "test.txt")) as file:
+            assert file.read() == "Howdy, Partner!"
+
+    def test_pull_existing_with_branch_after_update(self, new_dir):
+        """Test that `pull_existing` with a branch works after the remote is updated."""
+        # set up repositories
+        remote = Path("remote.git").absolute()
+        working_tree = Path("working-tree").absolute()
+        other_tree = Path("helper-tree").absolute()
+
+        git = GitSource(
+            str(remote), working_tree, cache_dir=new_dir, source_branch="test-branch"
+        )
+
+        self.clean_dir(remote)
+        self.clean_dir(working_tree)
+        self.clean_dir(other_tree)
+
+        # initialize remote with a unique branch name
+        os.chdir(remote)
+        _call(["git", "init", "--bare", "--initial-branch", "test-branch"])
+
+        # from the working tree, clone, commit, and push
+        self.clone_repo(remote, working_tree)
+        os.chdir(working_tree)
+        self.add_file("test.txt", "Hello, World!", "created test.txt")
+        _call(["git", "push", str(remote)])
+
+        # from the other tree, clone, commit and push
+        self.clone_repo(remote, other_tree)
+        os.chdir(other_tree)
+        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", "-f", str(remote)])
+
+        # go back to the working tree and pull the new commit
+        os.chdir(working_tree)
+        git.pull()
+
+        # assert the commit was actually pulled
+        with open(Path(working_tree / "test.txt")) as file:
+            assert file.read() == "Howdy, Partner!"
+
+    def test_pull_existing_with_submodules_default(
+        self, mocker, fake_run, fake_get_current_branch, new_dir
+    ):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
@@ -417,7 +547,7 @@ class TestGitSource:
                         Path("source_dir"),
                         "reset",
                         "--hard",
-                        "origin/master",
+                        "refs/remotes/origin/test-branch",
                     ]
                 ),
                 mock.call(
@@ -434,7 +564,9 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_existing_with_submodules_empty(self, mocker, fake_run, new_dir):
+    def test_pull_existing_with_submodules_empty(
+        self, mocker, fake_run, fake_get_current_branch, new_dir
+    ):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -463,13 +595,15 @@ class TestGitSource:
                         Path("source_dir"),
                         "reset",
                         "--hard",
-                        "origin/master",
+                        "refs/remotes/origin/test-branch",
                     ]
                 ),
             ]
         )
 
-    def test_pull_existing_with_submodules(self, mocker, fake_run, new_dir):
+    def test_pull_existing_with_submodules(
+        self, mocker, fake_run, fake_get_current_branch, new_dir
+    ):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -499,7 +633,7 @@ class TestGitSource:
                         Path("source_dir"),
                         "reset",
                         "--hard",
-                        "origin/master",
+                        "refs/remotes/origin/test-branch",
                     ]
                 ),
                 mock.call(
@@ -583,37 +717,6 @@ class TestGitSource:
             Path("source_dir"),
         ]
         assert raised.value.exit_code == 1
-
-
-@pytest.mark.usefixtures("new_dir")
-class GitBaseTestCase:
-    def rm_dir(self, dir_name):
-        if os.path.exists(dir_name):
-            shutil.rmtree(dir_name)
-
-    def clean_dir(self, dir_name):
-        self.rm_dir(dir_name)
-        os.mkdir(dir_name)
-
-    def clone_repo(self, repo, tree):
-        self.clean_dir(tree)
-        _call(["git", "clone", repo, tree])
-        os.chdir(tree)
-        _call(["git", "config", "--local", "user.name", '"Example Dev"'])
-        _call(["git", "config", "--local", "user.email", "dev@example.com"])
-
-    def add_file(self, filename, body, message):
-        with open(filename, "w") as fp:
-            fp.write(body)
-
-        _call(["git", "add", filename])
-        _call(["git", "commit", "-am", message])
-
-    def check_file_contents(self, path, expected):
-        body = None
-        with open(path) as fp:
-            body = fp.read()
-        assert body == expected
 
 
 class TestGitConflicts(GitBaseTestCase):
