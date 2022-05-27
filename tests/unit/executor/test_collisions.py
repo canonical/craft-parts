@@ -60,7 +60,6 @@ def part3(tmpdir) -> Part:
     (p / "a").mkdir(parents=True)
     (p / "b").mkdir()
     (p / "1").write_text("2")
-    # (p / "2").write_text("1")
     (p / "a" / "2").write_text("")
     return part
 
