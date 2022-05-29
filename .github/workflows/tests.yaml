@@ -84,7 +84,7 @@ jobs:
           pip install -e .
       - name: Install additional test dependencies
         run: |
-          sudo apt install -y ninja-build cmake
+          sudo apt install -y ninja-build cmake p7zip-full
           # Build Chisel: needs a version of go than is available in Ubuntu 20.04 
           sudo snap install --classic --channel=latest/stable go
           git clone https://github.com/canonical/chisel.git chisel-tmp
