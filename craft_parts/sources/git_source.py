@@ -175,18 +175,39 @@ class GitSource(SourceHandler):
 
         self._run(command)
 
+    def _get_current_branch(self):
+        """Get current git branch."""
+        command = [
+            self.command,
+            "-C",
+            self.part_src_dir,
+            "branch",
+            "--show-current",
+        ]
+
+        return self._run_output(command)
+
     def _pull_existing(self):
-        """Pull from origin, using branch, tag or commit if defined."""
+        """Pull data for an existing repository.
+
+        For an existing (initialized) local git repository, pull from origin
+        using branch, tag, or commit if defined.
+
+        `git reset --hard` is preferred over `git pull` to avoid
+        merge and rebase conflicts.
+
+        If no branch, tag, or commit is defined, then pull from origin/<current-branch>.
+        """
         refspec = "HEAD"
         if self.source_branch:
-            refspec = "refs/heads/" + self.source_branch
+            refspec = "refs/remotes/origin/" + self.source_branch
         elif self.source_tag:
             refspec = "refs/tags/" + self.source_tag
         elif self.source_commit:
             refspec = self.source_commit
             self._fetch_origin_commit()
-
-        reset_spec = refspec if refspec != "HEAD" else "origin/master"
+        else:
+            refspec = "refs/remotes/origin/" + self._get_current_branch()
 
         command = [
             self.command,
@@ -200,9 +221,7 @@ class GitSource(SourceHandler):
             command.extend(["--recurse-submodules=yes"])
         self._run(command)
 
-        command = [self.command, "-C", self.part_src_dir, "reset", "--hard"]
-        if reset_spec:
-            command.append(reset_spec)
+        command = [self.command, "-C", self.part_src_dir, "reset", "--hard", refspec]
 
         self._run(command)
 
