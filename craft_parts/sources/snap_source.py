@@ -52,6 +52,7 @@ class SnapSource(FileSourceHandler):
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
+        **kwargs,
     ) -> None:
         super().__init__(
             source,
@@ -64,6 +65,7 @@ class SnapSource(FileSourceHandler):
             source_checksum=source_checksum,
             project_dirs=project_dirs,
             command="unsquashfs",
+            **kwargs,
         )
 
         if source_tag:
