@@ -259,7 +259,15 @@ class ProjectInfo:
 
         machine = _ARCH_TRANSLATIONS.get(arch)
         if not machine:
-            raise errors.InvalidArchitecture(arch)
+            # if arch is not the linux format, try searching the debian format
+            try:
+                machine = next(
+                    machine
+                    for machine in _ARCH_TRANSLATIONS.values()
+                    if machine.get("deb") == arch
+                )
+            except StopIteration as error:
+                raise errors.InvalidArchitecture(arch) from error
 
         self._arch = arch
         self._machine = machine
