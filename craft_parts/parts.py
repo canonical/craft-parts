@@ -67,7 +67,7 @@ class PartSpec(BaseModel):
         allow_mutation = False
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("stage_files", "prime_files", each_item=True)
     def validate_relative_path_list(cls, item):
         """Check if the list does not contain empty of absolute paths."""
@@ -77,7 +77,7 @@ class PartSpec(BaseModel):
         ), f"{item!r} must be a relative path (cannot start with '/')"
         return item
 
-    # pylint: enable=no-self-argument,no-self-use
+    # pylint: enable=no-self-argument
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "PartSpec":
