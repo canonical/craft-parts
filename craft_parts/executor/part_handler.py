@@ -274,7 +274,7 @@ class PartHandler:
         self._unpack_stage_packages()
         self._unpack_stage_snaps()
 
-        if not self._plugin.out_of_source_build:
+        if not update and not self._plugin.out_of_source_build:
             _remove(self._part.part_build_dir)
 
             # Copy source from the part source dir to the part build dir
@@ -309,14 +309,13 @@ class PartHandler:
         #   2. So collision detection takes organization into account, i.e. we can use
         #      organization to get around file collisions between parts when staging.
         #
-        # If `update` is true, we give the snapcraft CLI permission to overwrite files
-        # that already exist. Typically we do NOT want this, so that parts don't
-        # accidentally clobber e.g. files brought in from stage-packages, but in the
-        # case of updating build, we want the part to have the ability to organize over
-        # the files it organized last time around. We can be confident that this won't
-        # overwrite anything else, because to do so would require changing the
-        # `organize` keyword, which will make the build step dirty and require a clean
-        # instead of an update.
+        # If `update` is true, we give permission to overwrite files that already exist.
+        # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
+        # files brought in from stage-packages, but in the case of updating build, we
+        # want the part to have the ability to organize over the files it organized last
+        # time around. We can be confident that this won't overwrite anything else,
+        # because to do so would require changing the `organize` keyword, which will
+        # make the build step dirty and require a clean instead of an update.
         self._organize(overwrite=update)
 
         assets = {
@@ -583,10 +582,6 @@ class PartHandler:
 
         :param step_info: The step information.
         """
-        self._make_dirs()
-        self._unpack_stage_packages()
-        self._unpack_stage_snaps()
-
         if not self._plugin.out_of_source_build:
             # Use the local source to update. It's important to use
             # file_utils.copy instead of link_or_copy, as the build process
@@ -603,15 +598,7 @@ class PartHandler:
 
         _remove(self._part.part_install_dir)
 
-        self._run_step(
-            step_info=step_info,
-            scriptlet_name="override-build",
-            work_dir=self._part.part_build_dir,
-            stdout=stdout,
-            stderr=stderr,
-        )
-
-        self._organize(overwrite=True)
+        self._run_build(step_info, stdout=stdout, stderr=stderr, update=True)
 
     def _reapply_action(
         self,
