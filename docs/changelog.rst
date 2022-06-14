@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.7.2 (2022-06-14)
+------------------
+
+- Fix git repository updates
+- Fix stage packages removal on build update
+
 1.7.1 (2022-05-21)
 ------------------
 
