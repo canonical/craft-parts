@@ -451,6 +451,42 @@ class TestPartUpdateHandler:
 
         assert Path("parts/foo/install/foo.txt").read_text() == "change"
 
+    def test_update_build_stage_packages(self, new_dir, mocker):
+        def fake_unpack(**_):
+            Path("parts/foo/install/hello").touch()
+
+        mocker.patch(
+            "craft_parts.packages.Repository.unpack_stage_packages", new=fake_unpack
+        )
+        mocker.patch(
+            "craft_parts.packages.Repository.fetch_stage_packages",
+            return_value=["pkg1", "pkg2"],
+        )
+
+        part = Part(
+            "foo",
+            {"plugin": "dump", "source": "subdir", "stage-packages": ["pkg"]},
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+        handler._make_dirs()
+        handler.run_action(Action("foo", Step.PULL))
+        handler.run_action(Action("foo", Step.OVERLAY))
+        handler.run_action(Action("foo", Step.BUILD))
+
+        assert Path("parts/foo/install/hello").exists()
+
+        handler.run_action(Action("foo", Step.BUILD, ActionType.UPDATE))
+
+        assert Path("parts/foo/install/hello").exists()
+
     @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
     def test_update_invalid(self, step):
         with pytest.raises(errors.InvalidAction):
