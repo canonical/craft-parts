@@ -23,6 +23,12 @@ import yaml
 import craft_parts
 from craft_parts import Action, ActionType, Step
 
+
+@pytest.fixture(autouse=True)
+def setup(mocker):
+    mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+
+
 parts_yaml = textwrap.dedent(
     """\
     parts:

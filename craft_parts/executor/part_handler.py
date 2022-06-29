@@ -26,7 +26,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 from typing_extensions import Protocol
 
-from craft_parts import callbacks, errors, overlays, packages, plugins, sources
+from craft_parts import callbacks, errors, overlays, packages, plugins, sources, xattrs
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
@@ -403,11 +403,16 @@ class PartHandler:
 
         self._migrate_overlay_files_to_prime()
 
+        primed_stage_packages = _get_primed_stage_packages(
+            contents.files, prime_dir=self._part.prime_dir
+        )
+
         state = states.PrimeState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
+            primed_stage_packages=primed_stage_packages,
         )
         return state
 
@@ -1055,3 +1060,13 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Pa
     """
     oparts = get_parts_with_overlay(part_list=part_list)
     return [p for p in oparts if states.get_step_state_path(p, step).exists()]
+
+
+def _get_primed_stage_packages(snap_files: Set[str], *, prime_dir: Path) -> Set[str]:
+    primed_stage_packages: Set[str] = set()
+    for snap_file in snap_files:
+        snap_file = str(prime_dir / snap_file)
+        stage_package = xattrs.read_origin_stage_package(snap_file)
+        if stage_package:
+            primed_stage_packages.add(stage_package)
+    return primed_stage_packages

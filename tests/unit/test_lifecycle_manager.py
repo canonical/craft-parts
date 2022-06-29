@@ -18,6 +18,7 @@
 
 import sys
 import textwrap
+from pathlib import Path
 from typing import Any, Dict
 from unittest.mock import ANY, call
 
@@ -27,6 +28,7 @@ import yaml
 from craft_parts import errors
 from craft_parts.lifecycle_manager import LifecycleManager
 from craft_parts.plugins import nil_plugin
+from craft_parts.state_manager import states
 
 
 class TestLifecycleManager:
@@ -160,6 +162,49 @@ class TestLifecycleManager:
                 base_layer_hash=None,
             )
         ]
+
+    def test_get_primed_stage_packages(self, new_dir):
+        lf = LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+        )
+
+        state = states.PrimeState(primed_stage_packages={"pkg2==2", "pkg1==1"})
+        state.write(Path(new_dir, "parts/foo/state/prime"))
+
+        assert lf.get_primed_stage_packages(part_name="foo") == ["pkg1==1", "pkg2==2"]
+
+    def test_get_primed_stage_packages_no_state(self, new_dir):
+        lf = LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+        )
+        assert lf.get_primed_stage_packages(part_name="foo") is None
+
+    def test_get_pull_assets(self, new_dir):
+        lf = LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+        )
+
+        state = states.PullState(assets={"asset1": "val1", "asset2": "val2"})
+        state.write(Path(new_dir, "parts/foo/state/pull"))
+
+        assert lf.get_pull_assets(part_name="foo") == {
+            "asset1": "val1",
+            "asset2": "val2",
+        }
+
+    def test_get_pull_assets_no_state(self, new_dir):
+        lf = LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+        )
+        assert lf.get_pull_assets(part_name="foo") is None
 
 
 class TestOverlaySupport:

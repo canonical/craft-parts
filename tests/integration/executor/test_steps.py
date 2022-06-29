@@ -23,7 +23,9 @@ import craft_parts
 from craft_parts import Action, Step
 
 
-def test_run(tmpdir):
+def test_run(tmpdir, mocker):
+    mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:

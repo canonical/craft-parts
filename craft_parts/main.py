@@ -159,6 +159,7 @@ def _action_message(action: craft_parts.Action) -> str:
             ActionType.RERUN: "Re-overlay",
             ActionType.SKIP: "Skip overlay",
             ActionType.REAPPLY: "Reapply overlay for",
+            ActionType.UPDATE: "Update overlay for",
         },
         Step.BUILD: {
             ActionType.RUN: "Build",
