@@ -20,7 +20,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 from pydantic import ValidationError
 
@@ -29,7 +29,8 @@ from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
-from craft_parts.parts import Part
+from craft_parts.parts import Part, part_by_name
+from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
 
@@ -225,6 +226,33 @@ class LifecycleManager:
     def action_executor(self) -> executor.ExecutionContext:
         """Return a context manager for action execution."""
         return executor.ExecutionContext(executor=self._executor)
+
+    def get_pull_assets(self, *, part_name: str) -> Optional[Dict[str, Any]]:
+        """Return the part's pull state assets.
+
+        :param part_name: The name of the part to get assets from.
+
+        :return: The dictionary of the part's pull assets, or None if no state found.
+        """
+        part = part_by_name(part_name, self._part_list)
+        state = cast(states.PullState, states.load_step_state(part, Step.PULL))
+        return state.assets if state else None
+
+    def get_primed_stage_packages(self, *, part_name: str) -> Optional[List[str]]:
+        """Return the list of primed stage packages.
+
+        :param part_name: The name of the part to get primed stage packages from.
+
+        :return: The sorted list of primed stage packages, or None if no state found.
+        """
+        part = part_by_name(part_name, self._part_list)
+        state = cast(states.PrimeState, states.load_step_state(part, Step.PRIME))
+        if not state:
+            return None
+
+        package_list = list(state.primed_stage_packages)
+        package_list.sort()
+        return package_list
 
 
 def _ensure_overlay_supported() -> None:

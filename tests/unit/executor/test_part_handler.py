@@ -243,6 +243,7 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
         )
+        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
 
         state = self._handler._run_prime(
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
@@ -252,6 +253,7 @@ class TestPartHandling:
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
+            primed_stage_packages={"pkg"},
         )
 
     @pytest.mark.parametrize(
@@ -685,7 +687,9 @@ class TestOverlayMigration:
     @pytest.mark.parametrize(
         "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
-    def test_clean_overlay_shared_file(self, step, step_dir):
+    def test_clean_overlay_shared_file(self, mocker, step, step_dir):
+        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+
         Path("parts/p1/layer/file1").write_text("content")
         Path("parts/p3/install/file1").write_text("content")
 
@@ -706,7 +710,9 @@ class TestOverlayMigration:
     @pytest.mark.parametrize(
         "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
-    def test_clean_part_shared_file(self, step, step_dir):
+    def test_clean_part_shared_file(self, mocker, step, step_dir):
+        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+
         Path("parts/p1/layer/file1").write_text("content")
         Path("parts/p3/install/file1").write_text("content")
 
@@ -764,7 +770,9 @@ class TestPartCleanHandler:
             (Step.PRIME, "prime", "prime"),
         ],
     )
-    def test_clean_step(self, step, test_dir, state_file):
+    def test_clean_step(self, mocker, step, test_dir, state_file):
+        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+
         self._handler._make_dirs()
         for each_step in step.previous_steps() + [step]:
             self._handler.run_action(Action("foo", each_step))
