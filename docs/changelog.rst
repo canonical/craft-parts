@@ -2,6 +2,25 @@
 Changelog
 *********
 
+1.8.0 (2022-06-30)
+------------------
+
+- Add list of primed stage packages to prime state
+- Add lifecycle manager methods to obtain pull state assets and the list
+  of primed stage packages
+
+1.7.2 (2022-06-14)
+------------------
+
+- Fix git repository updates
+- Fix stage packages removal on build update
+
+1.7.1 (2022-05-21)
+------------------
+
+- Fix stdout leak during snap package installation
+- Fix plugin validation dependencies
+
 1.7.0 (2022-05-20)
 ------------------
 
