@@ -18,6 +18,7 @@ import logging
 import os
 from pathlib import Path
 from typing import cast
+from unittest.mock import call
 
 import pytest
 
@@ -266,7 +267,11 @@ class TestPartHandling:
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_scriptlet(self, new_dir, capfd, step, scriptlet):
+    def test_run_step_scriptlet(self, new_dir, mocker, capfd, step, scriptlet):
+        """If defined, scriptlets are executed instead of the built-in handler."""
+        run_builtin_mock = mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler.run_builtin"
+        )
         p1 = Part("p1", {"plugin": "nil", scriptlet: "echo hello"})
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
@@ -288,6 +293,75 @@ class TestPartHandling:
         out, err = capfd.readouterr()
         assert out == "hello\n"
         assert err == "+ echo hello\n"
+        assert run_builtin_mock.mock_calls == []
+
+    @pytest.mark.parametrize(
+        "step,scriptlet",
+        [
+            (Step.PULL, "override-pull"),
+            (Step.BUILD, "override-build"),
+            (Step.STAGE, "override-stage"),
+            (Step.PRIME, "override-prime"),
+        ],
+    )
+    def test_run_step_empty_scriptlet(self, new_dir, mocker, step, scriptlet):
+        """Even empty scriptlets are executed instead of the built-in handler."""
+        run_builtin_mock = mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler.run_builtin"
+        )
+        p1 = Part("p1", {"plugin": "nil", scriptlet: ""})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
+        step_info = StepInfo(part_info, step=step)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[self._part], base_layer_dir=None
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        handler._run_step(
+            step_info=step_info,
+            scriptlet_name=scriptlet,
+            work_dir=Path(),
+            stdout=None,
+            stderr=None,
+        )
+        assert run_builtin_mock.mock_calls == []
+
+    @pytest.mark.parametrize(
+        "step,scriptlet",
+        [
+            (Step.PULL, "override-pull"),
+            (Step.BUILD, "override-build"),
+            (Step.STAGE, "override-stage"),
+            (Step.PRIME, "override-prime"),
+        ],
+    )
+    def test_run_step_undefined_scriptlet(self, new_dir, mocker, step, scriptlet):
+        """If scriptlets are not defined, execute the built-in handler."""
+        run_builtin_mock = mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler.run_builtin"
+        )
+        p1 = Part("p1", {"plugin": "nil", scriptlet: None})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
+        step_info = StepInfo(part_info, step=step)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[self._part], base_layer_dir=None
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        handler._run_step(
+            step_info=step_info,
+            scriptlet_name=scriptlet,
+            work_dir=Path(),
+            stdout=None,
+            stderr=None,
+        )
+        assert run_builtin_mock.mock_calls == [call()]
 
     @pytest.mark.parametrize(
         "step,scriptlet",
