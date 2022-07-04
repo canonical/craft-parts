@@ -461,7 +461,7 @@ class PartHandler:
         )
 
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
-        if scriptlet:
+        if scriptlet is not None:
             step_handler.run_scriptlet(
                 scriptlet,
                 scriptlet_name=scriptlet_name,
