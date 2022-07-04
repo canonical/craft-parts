@@ -280,6 +280,20 @@ class Part:
         )
 
 
+def get_dependencies_full(part: Part, part_list: List[Part]) -> List[str]:
+    """Return the dependencies, taking into account the groups."""
+    dep_list = []
+    part_names = [p.name for p in part_list]
+    for dep in part.dependencies:
+        if dep in part_names:
+            dep_list.append(dep)
+            continue
+        for other in part_list:
+            if (dep in other.groups) and (other.name not in dep_list):
+                dep_list.append(other.name)
+    return dep_list
+
+
 def part_by_name(name: str, part_list: List[Part]) -> Part:
     """Obtain the part with the given name from the part list.
 
@@ -371,7 +385,7 @@ def part_dependencies(
 
     :returns: The set of parts the given part depends on.
     """
-    dependency_names = set(part.dependencies)
+    dependency_names = set(get_dependencies_full(part, part_list))
     dependencies = {p for p in part_list if p.name in dependency_names}
 
     if recursive:
