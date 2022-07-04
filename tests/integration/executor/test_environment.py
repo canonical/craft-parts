@@ -164,8 +164,6 @@ def test_prologue_callback(new_dir, capfd, mocker):
 
 def test_expand_environment(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
-    mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
-
     parts_yaml = """\
         parts:
           foo:
