@@ -58,6 +58,7 @@ class PartSpec(BaseModel):
     override_build: Optional[str] = None
     override_stage: Optional[str] = None
     override_prime: Optional[str] = None
+    groups: Optional[List[str]] = []
 
     class Config:
         """Pydantic model configuration."""
@@ -263,6 +264,13 @@ class Part:
         return self.spec.after
 
     @property
+    def groups(self) -> List[str]:
+        """Return the list of groups to which this part belongs."""
+        if not self.spec.groups:
+            return []
+        return self.spec.groups
+
+    @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
         return bool(
@@ -338,6 +346,10 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
                 if part.name in other.dependencies:
                     mentioned = True
                     break
+                for group in part.groups:
+                    if group in other.dependencies:
+                        mentioned = True
+                        break
             if not mentioned:
                 top_part = part
                 break

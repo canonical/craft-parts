@@ -41,6 +41,7 @@ class TestPartSpecs:
             "source-tag": "v2.3",
             "source-type": "tar",
             "disable-parallel": True,
+            "groups": ["group1"],
             "after": ["bar"],
             "overlay-packages": ["overlay-pkg1", "overlay-pkg2"],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
@@ -290,6 +291,14 @@ class TestPartOrdering:
 
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
+
+    def test_sort_parts_group(self):
+        p1 = Part("baz", {"after": ["foogroup"]})
+        p2 = Part("bar", {"after": ["foo"], "groups": ["foogroup"]})
+        p3 = Part("foo", {"groups": ["foogroup"]})
+
+        x = parts.sort_parts([p1, p2, p3])
+        assert x == [p3, p2, p1]
 
 
 class TestPartUnmarshal:
