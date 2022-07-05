@@ -762,8 +762,6 @@ class TestOverlayMigration:
         "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_overlay_shared_file(self, mocker, step, step_dir):
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
-
         Path("parts/p1/layer/file1").write_text("content")
         Path("parts/p3/install/file1").write_text("content")
 
@@ -785,8 +783,6 @@ class TestOverlayMigration:
         "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_part_shared_file(self, mocker, step, step_dir):
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
-
         Path("parts/p1/layer/file1").write_text("content")
         Path("parts/p3/install/file1").write_text("content")
 
@@ -845,8 +841,6 @@ class TestPartCleanHandler:
         ],
     )
     def test_clean_step(self, mocker, step, test_dir, state_file):
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
-
         self._handler._make_dirs()
         for each_step in step.previous_steps() + [step]:
             self._handler.run_action(Action("foo", each_step))

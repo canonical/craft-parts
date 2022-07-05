@@ -31,6 +31,7 @@ from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
+from craft_parts.packages.platform import is_deb_based
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import MigrationState, StepState, states
@@ -403,9 +404,12 @@ class PartHandler:
 
         self._migrate_overlay_files_to_prime()
 
-        primed_stage_packages = _get_primed_stage_packages(
-            contents.files, prime_dir=self._part.prime_dir
-        )
+        if self._part.spec.stage_packages and is_deb_based():
+            primed_stage_packages = _get_primed_stage_packages(
+                contents.files, prime_dir=self._part.prime_dir
+            )
+        else:
+            primed_stage_packages = set()
 
         state = states.PrimeState(
             part_properties=self._part_properties,
