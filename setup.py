@@ -96,7 +96,7 @@ extras_requires = {
 
 setup(
     name="craft-parts",
-    version="1.8.0",
+    version="1.8.1",
     description="Craft parts tooling",
     long_description=readme,
     author="Canonical Ltd.",
