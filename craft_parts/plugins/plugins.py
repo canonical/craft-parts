@@ -73,7 +73,7 @@ def get_plugin(
 
     :return: The plugin instance.
     """
-    plugin_name = part.plugin if part.plugin else part.name
+    plugin_name = part.plugin_name if part.plugin_name else part.name
     plugin_class = get_plugin_class(plugin_name)
 
     return plugin_class(properties=properties, part_info=part_info)

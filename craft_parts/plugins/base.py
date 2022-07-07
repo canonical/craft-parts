@@ -63,6 +63,11 @@ class Plugin(abc.ABC):
     @property
     def out_of_source_build(self) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
+        return self.get_out_of_source_build()
+
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
+        """Return whether the plugin performs out-of-source-tree builds."""
         return False
 
     @abc.abstractmethod

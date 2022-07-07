@@ -275,7 +275,7 @@ class PartHandler:
         self._unpack_stage_packages()
         self._unpack_stage_snaps()
 
-        if not update and not self._plugin.out_of_source_build:
+        if not update and not self._plugin.get_out_of_source_build():
             _remove(self._part.part_build_dir)
 
             # Copy source from the part source dir to the part build dir
@@ -591,7 +591,7 @@ class PartHandler:
 
         :param step_info: The step information.
         """
-        if not self._plugin.out_of_source_build:
+        if not self._plugin.get_out_of_source_build():
             # Use the local source to update. It's important to use
             # file_utils.copy instead of link_or_copy, as the build process
             # may modify these files

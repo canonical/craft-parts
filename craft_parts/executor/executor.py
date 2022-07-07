@@ -251,7 +251,7 @@ class Executor:
             logger.debug("verify plugin environment for part %r", part.name)
 
             part_info = PartInfo(self._project_info, part)
-            plugin_class = plugins.get_plugin_class(part.plugin)
+            plugin_class = plugins.get_plugin_class(part.plugin_name)
             plugin = plugin_class(
                 properties=part.plugin_properties,
                 part_info=part_info,

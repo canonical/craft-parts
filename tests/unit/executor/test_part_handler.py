@@ -187,9 +187,8 @@ class TestPartHandling:
         mocker.patch("subprocess.check_output", return_value=b"os-info")
 
         mocker.patch(
-            "craft_parts.plugins.plugins.NilPlugin.out_of_source_build",
+            "craft_parts.plugins.base.Plugin.get_out_of_source_build",
             return_value=out_of_source,
-            new_callable=mocker.PropertyMock,
         )
 
         self._part_info.part_src_dir.mkdir(parents=True)

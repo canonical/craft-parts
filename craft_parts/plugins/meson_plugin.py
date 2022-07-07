@@ -93,8 +93,8 @@ class MesonPlugin(Plugin):
     properties_class = MesonPluginProperties
     validator_class = MesonPluginEnvironmentValidator
 
-    @property
-    def out_of_source_build(self) -> bool:
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
@@ -114,7 +114,7 @@ class MesonPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(MesonPluginProperties, self._options)
 
-        meson_cmd = ["meson", str(self._part_info.part_src_dir)]
+        meson_cmd = ["meson", str(self._part_info.part_src_subdir)]
         if options.meson_parameters:
             meson_cmd.extend(shlex.quote(p) for p in options.meson_parameters)
 
