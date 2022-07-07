@@ -147,3 +147,8 @@ class TestPluginCMakePlugin:
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.out_of_source_build is True
+
+    def test_get_out_of_source_build(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(new_dir)
+
+        assert plugin.get_out_of_source_build() is True

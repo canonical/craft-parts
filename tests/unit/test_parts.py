@@ -24,6 +24,8 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
 
+# pylint: disable=too-many-public-methods
+
 
 class TestPartSpecs:
     """Test part specification creation."""
@@ -113,8 +115,42 @@ class TestPartData:
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
-    def test_part_subdirs(self, new_dir):
+    def test_part_subdirs_default(self, new_dir):
+        """Verify subdirectories for a part with no plugin."""
         p = Part("foo", {"source-subdir": "foobar"})
+        assert p.part_src_dir == new_dir / "parts/foo/src"
+        assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
+        assert p.part_build_dir == new_dir / "parts/foo/build"
+        assert p.part_build_subdir == new_dir / "parts/foo/build"
+
+    def test_part_subdirs_out_of_source_and_source_subdir(self, new_dir):
+        """
+        Verify subdirectories for a plugin that supports out-of-source builds
+        and has a source subdirectory defined.
+        """
+        p = Part("foo", {"plugin": "cmake", "source-subdir": "foobar"})
+        assert p.part_src_dir == new_dir / "parts/foo/src"
+        assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
+        assert p.part_build_dir == new_dir / "parts/foo/build"
+        assert p.part_build_subdir == new_dir / "parts/foo/build"
+
+    def test_part_subdirs_out_of_source(self, new_dir):
+        """
+        Verify subdirectories for a plugin that supports out-of-source builds
+        and no source subdirectory defined.
+        """
+        p = Part("foo", {"plugin": "cmake"})
+        assert p.part_src_dir == new_dir / "parts/foo/src"
+        assert p.part_src_subdir == new_dir / "parts/foo/src"
+        assert p.part_build_dir == new_dir / "parts/foo/build"
+        assert p.part_build_subdir == new_dir / "parts/foo/build"
+
+    def test_part_subdirs_source_subdir(self, new_dir):
+        """
+        Verify subdirectories for a plugin that does not support out-of-source builds
+        and has a source subdirectory defined.
+        """
+        p = Part("foo", {"plugin": "dump", "source-subdir": "foobar"})
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
         assert p.part_build_dir == new_dir / "parts/foo/build"

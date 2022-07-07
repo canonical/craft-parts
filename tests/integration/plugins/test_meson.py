@@ -80,3 +80,59 @@ def test_meson_plugin(new_dir):
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "hello world\n"
+
+
+@pytest.mark.usefixtures("mocker")
+@pytest.mark.usefixtures("meson")
+def test_meson_plugin_with_subdir(new_dir):
+    """Verify meson builds with a source subdirectory."""
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: meson
+            source: .
+            source-subdir: test-subdir
+            meson-parameters:
+              - --prefix=/
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    source_subdir = Path("test-subdir")
+    source_subdir.mkdir(parents=True)
+
+    (source_subdir / "meson.build").write_text(
+        textwrap.dedent(
+            """\
+            project('meson-hello', 'c')
+            executable('hello', 'hello.c', install : true)
+            """
+        )
+    )
+
+    (source_subdir / "hello.c").write_text(
+        textwrap.dedent(
+            """\
+            #include <stdio.h>
+
+            int main()
+            {
+                printf(\"hello world\\n\");
+                return 0;
+            }
+            """
+        )
+    )
+
+    # ninja is installed in the ci test setup
+    lf = LifecycleManager(parts, application_name="test_go", cache_dir=new_dir)
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    binary = Path(lf.project_info.prime_dir, "bin", "hello")
+
+    output = subprocess.check_output([str(binary)], text=True)
+    assert output == "hello world\n"
