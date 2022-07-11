@@ -41,13 +41,31 @@ def mock_env_copy():
 @pytest.fixture
 def fake_apt_cache(mocker):
     def get_installed_version(package_name, resolve_virtual_packages=False):
-        return "1.0" if "installed" in package_name else None
+        if "installed" in package_name:
+            return "1.0"
+        if "new-version" in package_name:
+            return "3.0"
+        if "resolved-virtual-package" in package_name:
+            return "1.0"
+        if package_name == "versioned-package":
+            return "2.0"
+        if package_name.endswith("package"):
+            return "1.0"
+        return None
 
     fake = mocker.patch("craft_parts.packages.deb.AptCache")
     fake.return_value.__enter__.return_value.get_installed_version.side_effect = (
         get_installed_version
     )
     return fake
+
+
+@pytest.fixture
+def fake_all_packages_installed(mocker):
+    mocker.patch(
+        "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
+        return_value=False,
+    )
 
 
 @pytest.fixture
@@ -276,6 +294,7 @@ class TestPackages:
 
 
 class TestBuildPackages:
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_install_build_packages(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0"),
@@ -296,46 +315,28 @@ class TestBuildPackages:
             "package-installed=1.0",
             "versioned-package=2.0",
         ]
-        fake_run.assert_has_calls(
-            [
-                call(["apt-get", "update"]),
-                call(
-                    [
-                        "apt-get",
-                        "--no-install-recommends",
-                        "-y",
-                        "-oDpkg::Use-Pty=0",
-                        "--allow-downgrades",
-                        "install",
-                        "dependency-package=1.0",
-                        "package=1.0",
-                        "package-installed=1.0",
-                        "versioned-package=2.0",
-                    ],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                    stdin=subprocess.DEVNULL,
-                ),
-                call(
-                    [
-                        "apt-mark",
-                        "auto",
-                        "dependency-package",
-                        "package",
-                        "package-installed",
-                        "versioned-package",
-                    ],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                ),
-            ]
-        )
+        assert fake_run.mock_calls == [
+            call(["apt-get", "update"]),
+            call(
+                [
+                    "apt-get",
+                    "--no-install-recommends",
+                    "-y",
+                    "-oDpkg::Use-Pty=0",
+                    "--allow-downgrades",
+                    "install",
+                    "package",
+                    "package-installed",
+                    "versioned-package=2.0",
+                ],
+                env={
+                    "DEBIAN_FRONTEND": "noninteractive",
+                    "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                    "DEBIAN_PRIORITY": "critical",
+                },
+                stdin=subprocess.DEVNULL,
+            ),
+        ]
 
     def test_install_packages_empty_list(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = (
@@ -347,6 +348,7 @@ class TestBuildPackages:
         assert build_packages == []
         fake_run.assert_has_calls([])
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_already_installed_no_specified_version(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
@@ -357,6 +359,7 @@ class TestBuildPackages:
         assert build_packages == ["package-installed=1.0"]
         fake_run.assert_has_calls([])
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_already_installed_with_specified_version(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
@@ -367,88 +370,71 @@ class TestBuildPackages:
         assert build_packages == ["package-installed=1.0"]
         fake_run.assert_has_calls([])
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_already_installed_with_different_version(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
-            ("package-installed", "3.0")
+            ("new-version", "3.0")
         ]
 
         deb.Ubuntu.refresh_packages_list()
 
-        build_packages = deb.Ubuntu.install_packages(["package-installed=3.0"])
+        build_packages = deb.Ubuntu.install_packages(["new-version=3.0"])
 
-        assert build_packages == ["package-installed=3.0"]
-        fake_run.assert_has_calls(
-            [
-                call(["apt-get", "update"]),
-                call(
-                    [
-                        "apt-get",
-                        "--no-install-recommends",
-                        "-y",
-                        "-oDpkg::Use-Pty=0",
-                        "--allow-downgrades",
-                        "install",
-                        "package-installed=3.0",
-                    ],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                    stdin=subprocess.DEVNULL,
-                ),
-                call(
-                    ["apt-mark", "auto", "package-installed"],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                ),
-            ]
-        )
+        assert build_packages == ["new-version=3.0"]
+        assert fake_run.mock_calls == [
+            call(["apt-get", "update"]),
+            call(
+                [
+                    "apt-get",
+                    "--no-install-recommends",
+                    "-y",
+                    "-oDpkg::Use-Pty=0",
+                    "--allow-downgrades",
+                    "install",
+                    "new-version=3.0",
+                ],
+                env={
+                    "DEBIAN_FRONTEND": "noninteractive",
+                    "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                    "DEBIAN_PRIORITY": "critical",
+                },
+                stdin=subprocess.DEVNULL,
+            ),
+        ]
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_install_virtual_build_package(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
-            ("package", "1.0")
+            ("resolved-virtual-package", "1.0")
         ]
 
         deb.Ubuntu.refresh_packages_list()
 
         build_packages = deb.Ubuntu.install_packages(["virtual-package"])
 
-        assert build_packages == ["package=1.0"]
-        fake_run.assert_has_calls(
-            [
-                call(["apt-get", "update"]),
-                call(
-                    [
-                        "apt-get",
-                        "--no-install-recommends",
-                        "-y",
-                        "-oDpkg::Use-Pty=0",
-                        "--allow-downgrades",
-                        "install",
-                        "package=1.0",
-                    ],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                    stdin=subprocess.DEVNULL,
-                ),
-                call(
-                    ["apt-mark", "auto", "package"],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                ),
-            ]
-        )
+        assert build_packages == ["resolved-virtual-package=1.0"]
+        assert fake_run.mock_calls == [
+            call(["apt-get", "update"]),
+            call(
+                [
+                    "apt-get",
+                    "--no-install-recommends",
+                    "-y",
+                    "-oDpkg::Use-Pty=0",
+                    "--allow-downgrades",
+                    "install",
+                    "virtual-package",
+                ],
+                env={
+                    "DEBIAN_FRONTEND": "noninteractive",
+                    "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                    "DEBIAN_PRIORITY": "critical",
+                },
+                stdin=subprocess.DEVNULL,
+            ),
+        ]
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_smart_terminal(self, fake_apt_cache, fake_run, fake_dumb_terminal):
         fake_dumb_terminal.return_value = False
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
@@ -459,37 +445,28 @@ class TestBuildPackages:
 
         deb.Ubuntu.install_packages(["package"])
 
-        fake_run.assert_has_calls(
-            [
-                call(["apt-get", "update"]),
-                call(
-                    [
-                        "apt-get",
-                        "--no-install-recommends",
-                        "-y",
-                        "-oDpkg::Use-Pty=0",
-                        "--allow-downgrades",
-                        "install",
-                        "package=1.0",
-                    ],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                    stdin=subprocess.DEVNULL,
-                ),
-                call(
-                    ["apt-mark", "auto", "package"],
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                ),
-            ]
-        )
+        assert fake_run.mock_calls == [
+            call(["apt-get", "update"]),
+            call(
+                [
+                    "apt-get",
+                    "--no-install-recommends",
+                    "-y",
+                    "-oDpkg::Use-Pty=0",
+                    "--allow-downgrades",
+                    "install",
+                    "package",
+                ],
+                env={
+                    "DEBIAN_FRONTEND": "noninteractive",
+                    "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                    "DEBIAN_PRIORITY": "critical",
+                },
+                stdin=subprocess.DEVNULL,
+            ),
+        ]
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_invalid_package_requested(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.mark_packages.side_effect = (
             errors.PackageNotFound("package-invalid")
@@ -498,6 +475,7 @@ class TestBuildPackages:
         with pytest.raises(errors.BuildPackageNotFound):
             deb.Ubuntu.install_packages(["package-invalid"])
 
+    @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_broken_package_apt_install(self, fake_apt_cache, fake_run, mocker):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")

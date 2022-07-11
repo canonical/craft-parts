@@ -26,7 +26,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Sequence, Set, Tuple
 
 from craft_parts.utils import file_utils, os_utils
 
@@ -418,6 +418,28 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
+    def _get_installed_package_versions(cls, package_names: Sequence[str]) -> List[str]:
+        packages: List[str] = []
+
+        with AptCache() as apt_cache:
+            for package_name in package_names:
+                package_version = apt_cache.get_installed_version(
+                    package_name, resolve_virtual_packages=True
+                )
+                if package_version is None:
+                    logger.debug("Expected package %s not installed", package_name)
+                    continue
+                logger.debug(
+                    "Found installed version %s for package %s",
+                    package_version,
+                    package_name,
+                )
+                packages.append(f"{package_name}={package_version}")
+
+        return packages
+
+    @classmethod
+    @_apt_cache_wrapper
     def _get_packages_marked_for_installation(
         cls, package_names: List[str]
     ) -> List[Tuple[str, str]]:
@@ -479,18 +501,23 @@ class Ubuntu(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
+        # Collect the list of marked packages to later construct a manifest
         marked_packages = cls._get_packages_marked_for_installation(package_names)
-        packages = [f"{name}={version}" for name, version in sorted(marked_packages)]
+        marked_package_names = [name for name, _ in sorted(marked_packages)]
 
         if not list_only:
             if refresh_package_cache and install_required:
                 cls.refresh_packages_list()
             if install_required:
-                cls._install_packages(packages)
+                cls._install_packages(package_names)
             else:
-                logger.debug("Requested build-packages already installed: %s", packages)
+                logger.debug(
+                    "Requested build-packages already installed: %s", package_names
+                )
 
-        return packages
+        # This result is a best effort approach for deps and virtual packages
+        # as they are not part of the installation list.
+        return cls._get_installed_package_versions(marked_package_names)
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
@@ -520,12 +547,6 @@ class Ubuntu(BaseRepository):
             process_run(apt_command + package_names, env=env, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as err:
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
-
-        versionless_names = [get_pkg_name_parts(p)[0] for p in package_names]
-        try:
-            process_run(["apt-mark", "auto"] + versionless_names, env=env)
-        except subprocess.CalledProcessError as err:
-            logger.warning("Impossible to mark packages as auto-installed: %s", err)
 
     @classmethod
     @_apt_cache_wrapper
