@@ -65,19 +65,19 @@ class Fileset:
 
         :param other: The fileset to combine with.
         """
-        my_excludes = set(self.excludes)
-        other_includes = set(other.includes)
-
-        contradicting_set = set.intersection(my_excludes, other_includes)
-        if contradicting_set:
-            raise errors.FilesetConflict(contradicting_set)
-
         to_combine = False
         # combine if the other fileset has a wildcard
         # XXX: should this only be a single wildcard and possibly excludes?
         if "*" in other.entries:
             to_combine = True
             other.remove("*")
+
+        my_excludes = set(self.excludes)
+        other_includes = set(other.includes)
+
+        contradicting_set = set.intersection(my_excludes, other_includes)
+        if contradicting_set:
+            raise errors.FilesetConflict(contradicting_set)
 
         # combine if the other fileset is only excludes
         if {x[0] for x in other.entries} == set("-"):
