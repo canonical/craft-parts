@@ -67,6 +67,9 @@ def test_remove():
         (["-foo"], ["bar"], ["bar"]),
         (["foo"], ["-bar", "baz"], ["-bar", "baz"]),
         (["-foo", "bar"], ["bar"], ["bar"]),
+        # combine wildcards
+        (["-*"], ["*"], ["-*"]),
+        (["-*"], ["somefile", "*"], ["-*", "somefile"]),
     ],
 )
 def test_combine(tc_fs1, tc_fs2, tc_result):
@@ -74,6 +77,15 @@ def test_combine(tc_fs1, tc_fs2, tc_result):
     fs2 = Fileset(tc_fs2)
     fs1.combine(fs2)
     assert sorted(fs1.entries) == sorted(tc_result)
+
+
+def test_fileset_combine_conflicts():
+    stage_set = Fileset(["thisfile", "otherfile"])
+    prime_set = Fileset(["-otherfile"])
+
+    with pytest.raises(errors.FilesetConflict) as raised:
+        prime_set.combine(stage_set)
+    assert raised.value.conflicting_files == {"otherfile"}
 
 
 def test_fileset_only_includes():
