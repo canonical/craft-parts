@@ -2,6 +2,19 @@
 Changelog
 *********
 
+1.9.0 (2022-07-14)
+------------------
+
+- Prevent wildcard symbol conflict in stage and prime filters
+- Apt installer changed to collect installed package versions after the
+  installation
+
+1.8.1 (2022-07-05)
+------------------
+
+- Fix execution of empty scriptlets
+- List primed stage packages only if deb stage packages are defined
+
 1.8.0 (2022-06-30)
 ------------------
 
