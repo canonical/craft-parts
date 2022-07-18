@@ -25,8 +25,11 @@ from craft_parts.plugins import nil_plugin
 from craft_parts.plugins.plugins import (
     AutotoolsPlugin,
     CMakePlugin,
+    DotnetPlugin,
     DumpPlugin,
+    GoPlugin,
     MakePlugin,
+    MesonPlugin,
     NilPlugin,
     NpmPlugin,
     PythonPlugin,
@@ -46,8 +49,11 @@ class TestGetPlugin:
         [
             ("autotools", AutotoolsPlugin, {"source": "."}),
             ("cmake", CMakePlugin, {"source": "."}),
+            ("dotnet", DotnetPlugin, {"source": "."}),
             ("dump", DumpPlugin, {"source": "."}),
+            ("go", GoPlugin, {"source": "."}),
             ("make", MakePlugin, {"source": "."}),
+            ("meson", MesonPlugin, {"source": "."}),
             ("nil", NilPlugin, {}),
             ("npm", NpmPlugin, {"source": "."}),
             ("python", PythonPlugin, {"source": "."}),

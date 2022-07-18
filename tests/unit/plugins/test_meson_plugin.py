@@ -154,13 +154,6 @@ def test_validate_environment_without_ninja_part(part_info):
     )
 
 
-def test_out_of_source_build(part_info):
-    properties = MesonPlugin.properties_class.unmarshal({"source": "."})
-    plugin = MesonPlugin(properties=properties, part_info=part_info)
-
-    assert plugin.out_of_source_build is True
-
-
 def test_get_out_of_source_build(part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)

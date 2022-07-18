@@ -60,11 +60,6 @@ class Plugin(abc.ABC):
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
 
-    @property
-    def out_of_source_build(self) -> bool:
-        """Return whether the plugin performs out-of-source-tree builds."""
-        return self.get_out_of_source_build()
-
     @classmethod
     def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""

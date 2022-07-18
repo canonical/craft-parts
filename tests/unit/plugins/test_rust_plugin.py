@@ -232,3 +232,9 @@ class TestPluginRustPlugin:
             RustPlugin.properties_class.unmarshal(
                 {"source": ".", "rust-path": rust_path}
             )
+
+    def test_get_out_of_source_build(self, part_info):
+        properties = RustPlugin.properties_class.unmarshal({"source": "."})
+        plugin = RustPlugin(properties=properties, part_info=part_info)
+
+        assert plugin.get_out_of_source_build() is False
