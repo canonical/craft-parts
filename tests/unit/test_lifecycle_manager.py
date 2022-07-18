@@ -107,7 +107,7 @@ class TestLifecycleManager:
 
         part = lf._part_list[0]
         assert part.name == "foo"
-        assert part.plugin == "nil"
+        assert part.plugin_name == "nil"
         assert isinstance(part.plugin_properties, nil_plugin.NilPluginProperties)
 
         mock_seq.assert_called_once_with(

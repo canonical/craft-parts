@@ -93,7 +93,7 @@ test-pydocstyle:
 .PHONY: test-pylint
 test-pylint:
 	pylint craft_parts
-	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,no-self-use,duplicate-code,protected-access,consider-using-with
+	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,duplicate-code,protected-access,consider-using-with
 
 .PHONY: test-pyright
 test-pyright:
