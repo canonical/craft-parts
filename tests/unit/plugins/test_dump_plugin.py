@@ -57,5 +57,5 @@ class TestPluginDump:
             'cp --archive --link --no-dereference . "install/dir"'
         ]
 
-    def test_out_of_source_build(self):
-        assert self._plugin.out_of_source_build is False
+    def test_get_out_of_source_build(self):
+        assert self._plugin.get_out_of_source_build() is False

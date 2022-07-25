@@ -69,7 +69,7 @@ def test_plugin(new_dir):
     assert plugin.get_build_snaps() == {"build_snap"}
     assert plugin.get_build_packages() == {"build_package"}
     assert plugin.get_build_environment() == {"ENV": "value"}
-    assert plugin.out_of_source_build is False
+    assert plugin.get_out_of_source_build() is False
     assert plugin.get_build_commands() == ["hello", "world"]
 
 

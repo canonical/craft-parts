@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field, ValidationError, validator
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
+from craft_parts.plugins import get_plugin_class
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 
@@ -205,8 +206,16 @@ class Part:
 
     @property
     def part_build_subdir(self) -> Path:
-        """Return the subdirectory in build containing the source subtree (if any)."""
-        if self.spec.source_subdir:
+        """Return the subdirectory in build containing the source subtree (if any).
+
+        Parts that have a source subdirectory and do not support out-of-source builds
+        will have a build subdirectory.
+        """
+        if (
+            self.plugin_name != ""
+            and self.spec.source_subdir
+            and not get_plugin_class(self.plugin_name).get_out_of_source_build()
+        ):
             return self.part_build_dir / self.spec.source_subdir
         return self.part_build_dir
 

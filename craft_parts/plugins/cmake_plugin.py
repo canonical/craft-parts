@@ -98,7 +98,7 @@ class CMakePlugin(Plugin):
 
         cmake_command = [
             "cmake",
-            f'"{self._part_info.part_src_dir}"',
+            f'"{self._part_info.part_src_subdir}"',
             "-G",
             f'"{options.cmake_generator}"',
         ] + options.cmake_parameters
@@ -112,7 +112,7 @@ class CMakePlugin(Plugin):
             ),
         ]
 
-    @property
-    def out_of_source_build(self) -> bool:
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True

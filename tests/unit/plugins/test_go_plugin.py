@@ -171,3 +171,10 @@ def test_missing_parameters():
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
     assert err[0]["type"] == "value_error.missing"
+
+
+def test_get_out_of_source_build(part_info):
+    properties = GoPlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_out_of_source_build() is False

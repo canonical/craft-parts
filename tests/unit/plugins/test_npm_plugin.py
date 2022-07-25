@@ -24,6 +24,8 @@ from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_plugin import NpmPlugin
 
+# pylint: disable=too-many-public-methods
+
 
 @pytest.fixture()
 def part_info(new_dir):
@@ -328,3 +330,9 @@ class TestPluginNpmPlugin:
             raised.value.brief
             == """Architecture "System/360 ('32bit', 'OS/360')" is not supported."""
         )
+
+    def test_get_out_of_source_build(self, part_info, new_dir):
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=part_info)
+
+        assert plugin.get_out_of_source_build() is False
