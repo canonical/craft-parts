@@ -154,7 +154,7 @@ class StepHandler:
             if not file_path.endswith(".pc"):
                 return
             packages.fix_pkg_config(
-                root=self._part.stage_dir,
+                prefix_prepend=self._part.stage_dir,
                 pkg_config_file=file_path,
                 prefix_trim=self._part.part_install_dir,
             )

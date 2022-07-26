@@ -16,13 +16,73 @@
 
 import os
 import stat
-import textwrap
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
 from craft_parts.packages.base import DummyRepository
-from craft_parts.packages.normalize import normalize
+from craft_parts.packages.normalize import fix_pkg_config, normalize
+
+
+@pytest.fixture()
+def pkg_config_file():
+    """Fixture for writing a pkg-config (.pc) files."""
+
+    def _pkg_config_file(filename: Path, prefix: str) -> None:
+        """Writes a pkg-config file.
+
+        :param filename: filename of pkg-config file
+        :param prefix: value of prefix parameter
+        """
+        with open(filename, "w", encoding="utf-8") as file:
+            file.write(
+                dedent(
+                    f"""\
+                    prefix={prefix}
+                    exec_prefix=${{prefix}}
+                    libdir=${{prefix}}/lib
+                    includedir=${{prefix}}/include
+
+                    Name: granite
+                    Description: elementary\'s Application Framework
+                    Version: 0.4
+                    Libs: -L${{libdir}} -lgranite
+                    Cflags: -I${{includedir}}/granite
+                    Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
+                    """
+                )
+            )
+
+    yield _pkg_config_file
+
+
+@pytest.fixture()
+def expected_pkg_config_content():
+    """Returns a string containing the expected content of the pkg-config fixture."""
+
+    def _expected_pkg_config_content(prefix: str) -> str:
+        """Returns the expected contents of a pkg-config file.
+
+        :param prefix: value of the prefix parameter
+        """
+        return dedent(
+            f"""\
+            prefix={prefix}
+            exec_prefix=${{prefix}}
+            libdir=${{prefix}}/lib
+            includedir=${{prefix}}/include
+
+            Name: granite
+            Description: elementary's Application Framework
+            Version: 0.4
+            Libs: -L${{libdir}} -lgranite
+            Cflags: -I${{includedir}}/granite
+            Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
+            """
+        )
+
+    yield _expected_pkg_config_content
 
 
 @pytest.mark.parametrize(
@@ -203,49 +263,120 @@ class TestRemoveUselessFiles:
 class TestFixPkgConfig:
     """Check the normalization of pkg-config files."""
 
-    def test_fix_pkg_config(self, tmpdir):
-        pc_file = tmpdir / "granite.pc"
+    @pytest.mark.parametrize(
+        "prefix,fixed_prefix",
+        [
+            ("/build/mir-core20/stage", ""),
+            ("/build/mir-core20/stage/usr", "/usr"),
+            ("/build/test/test/stage", "/build/test/test/stage"),
+        ],
+    )
+    def test_fix_pkg_config_trim_launchpad_prefix(
+        self,
+        tmpdir,
+        prefix,
+        fixed_prefix,
+        pkg_config_file,
+        expected_pkg_config_content,
+    ):
+        """Verify prefixes from snaps built via launchpad are trimmed."""
+        pc_file = tmpdir / "my-file.pc"
+        pkg_config_file(pc_file, prefix)
 
-        pc_file.write_text(
-            textwrap.dedent(
-                """\
-                prefix=/usr
-                exec_prefix=${prefix}
-                libdir=${prefix}/lib
-                includedir=${prefix}/include
+        fix_pkg_config(tmpdir, pc_file)
 
-                Name: granite
-                Description: elementary\'s Application Framework
-                Version: 0.4
-                Libs: -L${libdir} -lgranite
-                Cflags: -I${includedir}/granite
-                Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-                """
-            ),
-            encoding=None,
+        assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+            f"{tmpdir}{fixed_prefix}"
         )
 
+    @pytest.mark.parametrize(
+        "prefix,fixed_prefix",
+        [
+            ("/root/stage", ""),
+            ("/root/stage/usr", "/usr"),
+            ("/root/test/stage", "/root/test/stage"),
+        ],
+    )
+    def test_fix_pkg_config_trim_provider_prefix(
+        self,
+        tmpdir,
+        prefix,
+        fixed_prefix,
+        pkg_config_file,
+        expected_pkg_config_content,
+    ):
+        """Verify prefixes from snaps built via a provider are trimmed."""
+        pc_file = tmpdir / "my-file.pc"
+        pkg_config_file(pc_file, prefix)
+
+        fix_pkg_config(tmpdir, pc_file)
+
+        assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+            f"{tmpdir}{fixed_prefix}"
+        )
+
+    @pytest.mark.parametrize(
+        "prefix,prefix_trim,fixed_prefix",
+        [
+            ("/test/build/dir/stage", "/test/build/dir/stage", ""),
+            ("/test/build/dir/stage/usr", "/test/build/dir/stage", "/usr"),
+            ("/fake/dir/1", "/fake/dir/2", "/fake/dir/1"),
+        ],
+    )
+    def test_fix_pkg_config_trim_prefix(
+        self,
+        tmpdir,
+        prefix,
+        prefix_trim,
+        fixed_prefix,
+        pkg_config_file,
+        expected_pkg_config_content,
+    ):
+        """Verify prefixes from the `prefix_trim` argument are trimmed."""
+        pc_file = tmpdir / "my-file.pc"
+        pkg_config_file(pc_file, prefix)
+
+        fix_pkg_config(tmpdir, pc_file, Path(prefix_trim))
+
+        assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+            f"{tmpdir}{fixed_prefix}"
+        )
+
+    @pytest.mark.parametrize(
+        "prefix",
+        ["", "/", "/usr"],
+    )
+    def test_fix_pkg_config_no_trim(
+        self,
+        tmpdir,
+        prefix,
+        pkg_config_file,
+        expected_pkg_config_content,
+    ):
+        """Verify valid prefixes are not trimmed."""
+        pc_file = tmpdir / "my-file.pc"
+        pkg_config_file(pc_file, prefix)
+
+        fix_pkg_config(tmpdir, pc_file)
+
+        assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+            f"{tmpdir}{prefix}"
+        )
+
+    def test_normalize_fix_pkg_config(
+        self, tmpdir, pkg_config_file, expected_pkg_config_content
+    ):
+        """Verify normalization fixes pkg-config files."""
+        pc_file = tmpdir / "my-file.pc"
+        pkg_config_file(pc_file, "/root/stage/usr")
         normalize(tmpdir, repository=DummyRepository)
 
-        expected_pc_file_content = textwrap.dedent(
-            f"""\
-            prefix={tmpdir}/usr
-            exec_prefix=${{prefix}}
-            libdir=${{prefix}}/lib
-            includedir=${{prefix}}/include
-
-            Name: granite
-            Description: elementary's Application Framework
-            Version: 0.4
-            Libs: -L${{libdir}} -lgranite
-            Cflags: -I${{includedir}}/granite
-            Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-            """
+        assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+            f"{tmpdir}/usr"
         )
 
-        assert pc_file.read_text(encoding=None) == expected_pc_file_content
-
     def test_fix_pkg_config_is_dir(self, tmpdir):
+        """Verify directories ending in .pc do not raise an error."""
         pc_file = tmpdir / "granite.pc"
         pc_file.mkdir()
 
