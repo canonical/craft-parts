@@ -71,7 +71,9 @@ class NonBlockingRWFifo:
             os.close(self._fd)
 
 
-def link_or_copy(source: str, destination: str, follow_symlinks: bool = False) -> None:
+def link_or_copy(
+    source: str, destination: str, *, follow_symlinks: bool = False
+) -> None:
     """Hard-link source and destination files. Copy if it fails to link.
 
     Hard-linking may fail (e.g. a cross-device link, or permission denied), so
@@ -91,7 +93,7 @@ def link_or_copy(source: str, destination: str, follow_symlinks: bool = False) -
             # os.link will fail if the destination already exists, so let's
             # remove it and try again.
             os.remove(destination)
-            link_or_copy(source, destination, follow_symlinks)
+            link_or_copy(source, destination, follow_symlinks=follow_symlinks)
         else:
             copy(source, destination, follow_symlinks=follow_symlinks)
 
