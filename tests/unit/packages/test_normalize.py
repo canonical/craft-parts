@@ -266,38 +266,24 @@ class TestFixPkgConfig:
     @pytest.mark.parametrize(
         "prefix,fixed_prefix",
         [
+            # typical prefix from a snap built via launchpad
             ("/build/mir-core20/stage", ""),
             ("/build/mir-core20/stage/usr", "/usr"),
-            ("/build/test/test/stage", "/build/test/test/stage"),
-        ],
-    )
-    def test_fix_pkg_config_trim_launchpad_prefix(
-        self,
-        tmpdir,
-        prefix,
-        fixed_prefix,
-        pkg_config_file,
-        expected_pkg_config_content,
-    ):
-        """Verify prefixes from snaps built via launchpad are trimmed."""
-        pc_file = tmpdir / "my-file.pc"
-        pkg_config_file(pc_file, prefix)
-
-        fix_pkg_config(tmpdir, pc_file)
-
-        assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}{fixed_prefix}"
-        )
-
-    @pytest.mark.parametrize(
-        "prefix,fixed_prefix",
-        [
+            # typical prefix from a snap built via a provider
             ("/root/stage", ""),
             ("/root/stage/usr", "/usr"),
-            ("/root/test/stage", "/root/test/stage"),
+            # arbitrary prefixes, possibly from a locally built snap
+            ("/test/path/stage", ""),
+            ("/test/path/stage/usr", "/usr"),
+            ("/test/path/stage/usr/lib", "/usr/lib"),
+            # verify "stage" can be used elsewhere in the path name
+            ("/build/stage/stage", ""),
+            ("/build/stage/stage/usr", "/usr"),
+            ("/build/my-stage-snap/stage", ""),
+            ("/build/my-stage-snap/stage/usr", "/usr"),
         ],
     )
-    def test_fix_pkg_config_trim_provider_prefix(
+    def test_fix_pkg_config_trim_prefix_from_snap(
         self,
         tmpdir,
         prefix,
@@ -305,7 +291,7 @@ class TestFixPkgConfig:
         pkg_config_file,
         expected_pkg_config_content,
     ):
-        """Verify prefixes from snaps built via a provider are trimmed."""
+        """Verify prefixes from snaps are trimmed."""
         pc_file = tmpdir / "my-file.pc"
         pkg_config_file(pc_file, prefix)
 
