@@ -2,6 +2,13 @@
 Changelog
 *********
 
+1.10.0 (2022-07-28)
+-------------------
+
+- Add plugin class method to check for out of source builds
+- Normalize file copy functions signatures
+- Fix pkgconfig prefix in staged snaps
+
 1.9.0 (2022-07-14)
 ------------------
 
