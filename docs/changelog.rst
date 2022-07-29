@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.10.1 (2022-07-29)
+-------------------
+
+- Change staged snap pkgconfig prefix normalization to be predictable
+  regardless of the path used for destructive mode packing
+
 1.10.0 (2022-07-28)
 -------------------
 
