@@ -26,6 +26,8 @@ import pytest
 from craft_parts.sources import errors, sources
 from craft_parts.sources.git_source import GitSource
 
+# pylint: disable=too-many-lines
+
 
 def _call(cmd: List[str]) -> None:
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -260,6 +262,59 @@ class TestGitSource(GitBaseTestCase):
                 "--recursive=submodule_1",
                 "--recursive=dir/submodule_2",
                 "git://my-source",
+                Path("source_dir"),
+            ]
+        )
+
+    def test_pull_local(self, fake_run, new_dir):
+        """Verify cloning of a local filepath."""
+        git = GitSource(
+            "path/to/repo.git",
+            Path("source_dir"),
+            cache_dir=new_dir,
+        )
+
+        git.pull()
+
+        fake_run.assert_called_once_with(
+            [
+                "git",
+                "clone",
+                "--recursive",
+                f"file://{new_dir}/path/to/repo.git",
+                Path("source_dir"),
+            ]
+        )
+
+    @pytest.mark.parametrize(
+        "repository",
+        [
+            "ssh://user@host.xz:123/path/to/repo.git",
+            "user@host.xz:path/to/repo.git",
+            "https://host.xz/path/to/repo.git",
+            "user@host.xz:/~[user]/path/to/repo.git",
+            "file:///path/to/repo.git",
+        ],
+    )
+    def test_pull_repository_syntax(self, fake_run, new_dir, repository):
+        """Verify cloning of valid repository syntaxes.
+
+        This test should capture regressions in the reformatting of local filepaths.
+        """
+        git = GitSource(
+            repository,
+            Path("source_dir"),
+            cache_dir=new_dir,
+        )
+
+        git.pull()
+
+        fake_run.assert_called_once_with(
+            [
+                "git",
+                "clone",
+                "--recursive",
+                repository,
                 Path("source_dir"),
             ]
         )

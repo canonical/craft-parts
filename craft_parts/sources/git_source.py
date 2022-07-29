@@ -16,6 +16,7 @@
 
 """Implement the git source handler."""
 
+import logging
 import re
 import subprocess
 import sys
@@ -28,6 +29,8 @@ from craft_parts.dirs import ProjectDirs
 
 from . import errors
 from .base import SourceHandler
+
+logger = logging.getLogger(__name__)
 
 
 class GitSource(SourceHandler):
@@ -241,7 +244,11 @@ class GitSource(SourceHandler):
             self._run(command)
 
     def _clone_new(self):
-        """Clone a git repository, using submodules, branch, and depth if defined."""
+        """Clone a git repository, using submodules, branch, and depth if defined.
+
+        Local sources are reformatted as file:///absolute/path/to/local/source
+        This is done because `git clone --depth=1 path/to/local/source` is invalid.
+        """
         command = [self.command, "clone"]
         if self.source_submodules is None:
             command.extend(["--recursive"])
@@ -252,7 +259,15 @@ class GitSource(SourceHandler):
             command.extend(["--branch", self.source_tag or self.source_branch])
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
-        self._run(command + [self.source, self.part_src_dir])
+
+        # reformat local sources
+        if self._is_source_local():
+            command.extend([f"file://{Path(self.source).resolve()}"])
+        else:
+            command.extend([self.source])
+
+        logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+        self._run(command + [self.part_src_dir])
 
         if self.source_commit:
             self._fetch_origin_commit()
@@ -263,11 +278,20 @@ class GitSource(SourceHandler):
                 "checkout",
                 self.source_commit,
             ]
+            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 
     def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
         return Path(self.part_src_dir, ".git").exists()
+
+    def _is_source_local(self) -> bool:
+        """Verify if source is a filepath.
+
+        :return: True if source is a valid filepath,
+        """
+        pattern = re.compile(r"^[\w\-. \/]+$")
+        return pattern.search(self.source) is not None
 
     @overrides
     def pull(self) -> None:
