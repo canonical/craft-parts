@@ -167,21 +167,17 @@ def fix_pkg_config(
     3. Prepend `prefix_prepend` to the prefix.
 
     The prepended stage directory depends on the source of the pkg-config file:
-    - From snaps built via launchpad: `/build/<snap-name>/stage/`
-    - From snaps built via a provider: `/root/stage/`
+    - From snaps built via launchpad: `/build/<snap-name>/stage`
+    - From snaps built via a provider: `/root/stage`
     - From snaps built locally: `<local-path-to-project>/stage`
     - Built during the build stage: the install directory
-
-    To capture these possibilities, all directories prior to and
-    including `stage/` are trimmed.
-    For example, `/root/stage/usr` is trimmed to `/usr`.
 
     :param pkg_config_file: pkg-config (.pc) file to modify
     :param prefix_prepend: directory to prepend to the prefix
     :param prefix_trim: directory to remove from prefix
     """
     # build patterns
-    prefixes_to_trim = [r"[\w\-. /]*/stage"]
+    prefixes_to_trim = [r"/build/[\w\-. ]+/stage", "/root/stage"]
     if prefix_trim:
         prefixes_to_trim.append(prefix_trim.as_posix())
     pattern_trim = re.compile(
