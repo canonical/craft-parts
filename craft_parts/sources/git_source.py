@@ -16,6 +16,7 @@
 
 """Implement the git source handler."""
 
+import logging
 import re
 import subprocess
 import sys
@@ -28,6 +29,8 @@ from craft_parts.dirs import ProjectDirs
 
 from . import errors
 from .base import SourceHandler
+
+logger = logging.getLogger(__name__)
 
 
 class GitSource(SourceHandler):
@@ -218,7 +221,7 @@ class GitSource(SourceHandler):
         ]
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
-            command.extend(["--recurse-submodules=yes"])
+            command.append("--recurse-submodules=yes")
         self._run(command)
 
         command = [self.command, "-C", self.part_src_dir, "reset", "--hard", refspec]
@@ -237,22 +240,27 @@ class GitSource(SourceHandler):
             ]
             if self.source_submodules:
                 for submodule in self.source_submodules:
-                    command.extend([submodule])
+                    command.append(submodule)
             self._run(command)
 
     def _clone_new(self):
         """Clone a git repository, using submodules, branch, and depth if defined."""
         command = [self.command, "clone"]
         if self.source_submodules is None:
-            command.extend(["--recursive"])
+            command.append("--recursive")
         else:
             for submodule in self.source_submodules:
-                command.extend(["--recursive=" + submodule])
+                command.append("--recursive=" + submodule)
         if self.source_tag or self.source_branch:
             command.extend(["--branch", self.source_tag or self.source_branch])
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
-        self._run(command + [self.source, self.part_src_dir])
+
+        # reformat source string
+        command.append(self._format_source())
+
+        logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+        self._run(command + [self.part_src_dir])
 
         if self.source_commit:
             self._fetch_origin_commit()
@@ -263,11 +271,28 @@ class GitSource(SourceHandler):
                 "checkout",
                 self.source_commit,
             ]
+            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 
     def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
         return Path(self.part_src_dir, ".git").exists()
+
+    def _format_source(self) -> str:
+        """Format source to a git-compatible format.
+
+        Protocols for git are http[s]://, ftp[s]://, git://, ssh://, and file://.
+        Additionally, scp-style ssh syntax is also valid: [user@]host.xz:path/to/repo)
+
+        Local sources are formatted as file:///absolute/path/to/local/source
+        This is done because `git clone --depth=1 path/to/local/source` is invalid
+        """
+        protocol_pattern = re.compile(r"^[\w\-.@]+:")
+
+        if protocol_pattern.search(self.source):
+            return self.source
+
+        return f"file://{Path(self.source).resolve()}"
 
     @overrides
     def pull(self) -> None:
