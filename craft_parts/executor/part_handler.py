@@ -846,7 +846,7 @@ class PartHandler:
             fetched_packages = packages.Repository.fetch_stage_packages(
                 cache_dir=step_info.cache_dir,
                 package_names=stage_packages,
-                target_arch=step_info.target_arch,
+                arch=step_info.host_arch,
                 base=step_info.base,
                 stage_packages_path=self._part.part_packages_dir,
             )

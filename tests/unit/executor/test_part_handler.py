@@ -938,6 +938,30 @@ class TestPackages:
         assert raised.value.part_name == "p1"
         assert raised.value.package_name == "pkg1"
 
+    def test_pull_fetch_stage_packages_arch(self, mocker, new_dir):
+        """Verify _run_pull fetches stage packages from the host architecture."""
+        getpkg = mocker.patch(
+            "craft_parts.packages.Repository.fetch_stage_packages",
+            return_value=["pkg1"],
+        )
+
+        part = Part("foo", {"plugin": "nil", "stage-packages": ["pkg1"]})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, part)
+        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        handler = PartHandler(
+            part, part_info=part_info, part_list=[part], overlay_manager=ovmgr
+        )
+
+        handler._run_pull(StepInfo(part_info, Step.PULL), stdout=None, stderr=None)
+        getpkg.assert_called_once_with(
+            cache_dir=mocker.ANY,
+            base=mocker.ANY,
+            package_names=mocker.ANY,
+            stage_packages_path=mocker.ANY,
+            arch=part_info.host_arch,
+        )
+
     def test_fetch_stage_snaps(self, mocker, new_dir):
         mock_download_snaps = mocker.patch(
             "craft_parts.packages.snaps.download_snaps",
@@ -994,7 +1018,7 @@ class TestPackages:
             base=mocker.ANY,
             package_names=["pkg1"],
             stage_packages_path=Path(new_dir / "parts/foo/stage_packages"),
-            target_arch=mocker.ANY,
+            arch=mocker.ANY,
         )
 
         assert cast(states.PullState, state).assets["stage-packages"] == [
