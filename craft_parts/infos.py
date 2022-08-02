@@ -137,8 +137,13 @@ class ProjectInfo:
         return self._parallel_build_count
 
     @property
+    def host_arch(self) -> str:
+        """Return the host architecture used for debs, snaps and charms."""
+        return self._host_machine["deb"]
+
+    @property
     def target_arch(self) -> str:
-        """Return the architecture used for debs, snaps and charms."""
+        """Return the target architecture used for debs, snaps and charms."""
         return self._machine["deb"]
 
     @property
@@ -247,16 +252,22 @@ class ProjectInfo:
             raise ValueError(f"{name!r} not in project variables")
 
     def _set_machine(self, arch: Optional[str]):
-        """Initialize machine information based on the architecture.
+        """Initialize host and target machine information based on the architecture.
 
         :param arch: The architecture to use. If empty, assume the
             host system architecture.
         """
+        # set host machine and arch
         self._host_arch = _get_host_architecture()
+        host_machine = _ARCH_TRANSLATIONS.get(self._host_arch)
+        if not host_machine:
+            raise errors.InvalidArchitecture(self._host_arch)
+        self._host_machine = host_machine
+
+        # set target machine and arch
         if not arch:
             arch = self._host_arch
             logger.debug("Setting target machine to %s", arch)
-
         machine = _ARCH_TRANSLATIONS.get(arch)
         if not machine:
             raise errors.InvalidArchitecture(arch)

@@ -155,7 +155,7 @@ class TestPackages:
             package_names=["fake-package"],
             stage_packages_path=Path(tmpdir),
             base="core",
-            target_arch="amd64",
+            arch="amd64",
         )
 
         fake_run.assert_has_calls([call(["apt-get", "update"])])
@@ -186,7 +186,7 @@ class TestPackages:
             package_names=["virtual-fake-package"],
             stage_packages_path=Path(tmpdir),
             base="core",
-            target_arch="amd64",
+            arch="amd64",
         )
 
         fake_run.assert_has_calls([call(["apt-get", "update"])])
@@ -208,7 +208,7 @@ class TestPackages:
             package_names=["fake-package"],
             stage_packages_path=Path(tmpdir),
             base="core",
-            target_arch="amd64",
+            arch="amd64",
         )
 
         fake_run.assert_has_calls([call(["apt-get", "update"])])
@@ -226,7 +226,7 @@ class TestPackages:
             package_names=[],
             stage_packages_path=Path(tmpdir),
             base="core",
-            target_arch="amd64",
+            arch="amd64",
         )
 
         assert fetched_packages == []
@@ -242,7 +242,7 @@ class TestPackages:
                 package_names=["fake-package"],
                 stage_packages_path=Path(tmpdir),
                 base="core",
-                target_arch="amd64",
+                arch="amd64",
             )
 
         assert raised.value.message == "foo"

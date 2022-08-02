@@ -557,7 +557,7 @@ class Ubuntu(BaseRepository):
         package_names: List[str],
         stage_packages_path: pathlib.Path,
         base: str,
-        target_arch: str,
+        arch: str,
         list_only: bool = False,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
@@ -582,9 +582,7 @@ class Ubuntu(BaseRepository):
         # Update the package cache
         cls.refresh_packages_list()
 
-        with AptCache(
-            stage_cache=stage_cache_dir, stage_cache_arch=target_arch
-        ) as apt_cache:
+        with AptCache(stage_cache=stage_cache_dir, stage_cache_arch=arch) as apt_cache:
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
 
