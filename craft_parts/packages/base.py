@@ -133,7 +133,7 @@ class BaseRepository(abc.ABC):
         package_names: List[str],
         stage_packages_path: Path,
         base: str,
-        target_arch: str,
+        arch: str,
         list_only: bool = False,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path.
@@ -143,7 +143,7 @@ class BaseRepository(abc.ABC):
         :param package_names: A list with the names of the packages to fetch.
         :stage_packages_path: The path stage packages will be fetched to.
         :param base: The base this project will run on.
-        :param target_arch: The architecture of the packages to fetch.
+        :param arch: The architecture of the packages to fetch.
         :param list_only: Whether to obtain a list of packages to be fetched
             instead of actually fetching the packages.
 
