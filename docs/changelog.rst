@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.10.2 (2022-08-03)
+-------------------
+
+- Fix git source format error when cloning using depth
+- Use host architecture when installing stage packages
+
 1.10.1 (2022-07-29)
 -------------------
 
