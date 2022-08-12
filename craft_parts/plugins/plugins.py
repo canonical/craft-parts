@@ -94,6 +94,11 @@ def get_plugin_class(name: str) -> PluginType:
     return _PLUGINS[name]
 
 
+def get_registered_plugins() -> Dict[str, PluginType]:
+    """Return the list of currently registered plugins."""
+    return copy.deepcopy(_PLUGINS)
+
+
 def register(plugins: Dict[str, PluginType]) -> None:
     """Register part handler plugins.
 

@@ -145,6 +145,10 @@ class TestPluginRegistry:
         foo_plugin = plugins.get_plugin_class("foo")
         assert foo_plugin == FooPlugin
 
+        registered_plugins = plugins.get_registered_plugins()
+        assert "foo" in registered_plugins
+        assert registered_plugins["foo"] == FooPlugin
+
         plugins.unregister_all()
         with pytest.raises(ValueError):
             plugins.get_plugin_class("foo")
