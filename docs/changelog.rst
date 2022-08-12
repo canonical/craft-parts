@@ -2,6 +2,23 @@
 Changelog
 *********
 
+1.11.0 (2022-08-12)
+-------------------
+
+- Add API call to list registered plugins
+
+1.10.2 (2022-08-03)
+-------------------
+
+- Fix git source format error when cloning using depth
+- Use host architecture when installing stage packages
+
+1.10.1 (2022-07-29)
+-------------------
+
+- Change staged snap pkgconfig prefix normalization to be predictable
+  regardless of the path used for destructive mode packing
+
 1.10.0 (2022-07-28)
 -------------------
 
