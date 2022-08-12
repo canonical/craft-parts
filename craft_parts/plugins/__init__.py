@@ -23,6 +23,7 @@ from .plugins import (
     extract_part_properties,
     get_plugin,
     get_plugin_class,
+    get_registered_plugins,
     register,
     unregister_all,
 )
@@ -37,6 +38,7 @@ __all__ = [
     "extract_plugin_properties",
     "get_plugin",
     "get_plugin_class",
+    "get_registered_plugins",
     "register",
     "unregister_all",
 ]
