@@ -89,7 +89,8 @@ class CMakePlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
-            "CMAKE_PREFIX_PATH": "{self._part_info.stage_dir}",
+            # Also look for staged headers and libraries.
+            "CMAKE_PREFIX_PATH": str(self._part_info.stage_dir)
         }
 
     def get_build_commands(self) -> List[str]:
@@ -101,6 +102,11 @@ class CMakePlugin(Plugin):
             f'"{self._part_info.part_src_subdir}"',
             "-G",
             f'"{options.cmake_generator}"',
+            # Install on a location we search when building using staged files
+            # (e.g. CMAKE_PREFIX_PATH/lib, CMAKE_PREFIX_PATH/lib/<arch> for libs,
+            # see https://cmake.org/cmake/help/latest/command/find_library.html).
+            # This can be overridden by the user using cmake-parameters.
+            "-DCMAKE_INSTALL_PREFIX=",
         ] + options.cmake_parameters
 
         return [
