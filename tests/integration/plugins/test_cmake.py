@@ -18,12 +18,20 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 
 from craft_parts import LifecycleManager, Step
 
 
-def test_cmake_plugin(new_dir):
+@pytest.mark.parametrize(
+    "prefix,install_path",
+    [
+        (None, "bin"),
+        ("/usr/local", "usr/local/bin"),
+    ],
+)
+def test_cmake_plugin(new_dir, prefix, install_path):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -32,6 +40,9 @@ def test_cmake_plugin(new_dir):
             source: .
         """
     )
+    if prefix:
+        parts_yaml += f"    cmake-parameters: [-DCMAKE_INSTALL_PREFIX={prefix}]"
+
     parts = yaml.safe_load(parts_yaml)
 
     Path("cmake.build").write_text(
@@ -74,13 +85,20 @@ def test_cmake_plugin(new_dir):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    binary = Path(lf.project_info.prime_dir, "usr/local/bin", "cmake-hello")
+    binary = Path(lf.project_info.prime_dir, install_path, "cmake-hello")
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "hello world\n"
 
 
-def test_cmake_plugin_subdir(new_dir):
+@pytest.mark.parametrize(
+    "prefix,install_path",
+    [
+        (None, "bin"),
+        ("/usr/local", "usr/local/bin"),
+    ],
+)
+def test_cmake_plugin_subdir(new_dir, prefix, install_path):
     """Verify cmake builds with a source subdirectory."""
     parts_yaml = textwrap.dedent(
         """\
@@ -91,6 +109,9 @@ def test_cmake_plugin_subdir(new_dir):
             source-subdir: test-subdir
         """
     )
+    if prefix:
+        parts_yaml += f"    cmake-parameters: [-DCMAKE_INSTALL_PREFIX={prefix}]"
+
     parts = yaml.safe_load(parts_yaml)
 
     source_subdir = Path("test-subdir")
@@ -127,7 +148,7 @@ def test_cmake_plugin_subdir(new_dir):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    binary = Path(lf.project_info.prime_dir, "usr/local/bin", "cmake-hello")
+    binary = Path(lf.project_info.prime_dir, install_path, "cmake-hello")
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "hello world\n"
