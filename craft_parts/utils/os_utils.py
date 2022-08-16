@@ -23,7 +23,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional
 
 from craft_parts import errors
 
@@ -72,7 +72,7 @@ class TimedWriter:
         cls._last_write_time = time.time()
 
 
-def get_bin_paths(*, root: Union[str, Path], existing_only=True) -> List[str]:
+def get_bin_paths(*, root: Path, existing_only=True) -> List[str]:
     """List common system executable paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -80,16 +80,17 @@ def get_bin_paths(*, root: Union[str, Path], existing_only=True) -> List[str]:
 
     :return: The list of executable paths.
     """
-    paths = (os.path.join("usr", "sbin"), os.path.join("usr", "bin"), "sbin", "bin")
-    rooted_paths = (os.path.join(root, p) for p in paths)
+    paths = [
+        root / "usr" / "sbin",
+        root / "usr" / "bin",
+        root / "sbin",
+        root / "bin",
+    ]
 
-    if existing_only:
-        return [p for p in rooted_paths if os.path.exists(p)]
-
-    return list(rooted_paths)
+    return [str(p) for p in paths if not existing_only or p.exists()]
 
 
-def get_include_paths(*, root: Union[str, Path], arch_triplet: str) -> List[str]:
+def get_include_paths(*, root: Path, arch_triplet: str) -> List[str]:
     """List common include paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -98,17 +99,17 @@ def get_include_paths(*, root: Union[str, Path], arch_triplet: str) -> List[str]
     :return: The list of include paths.
     """
     paths = [
-        os.path.join(root, "include"),
-        os.path.join(root, "usr", "include"),
-        os.path.join(root, "include", arch_triplet),
-        os.path.join(root, "usr", "include", arch_triplet),
+        root / "include",
+        root / "usr" / "include",
+        root / "include" / arch_triplet,
+        root / "usr" / "include" / arch_triplet,
     ]
 
-    return [p for p in paths if os.path.exists(p)]
+    return [str(p) for p in paths if p.exists()]
 
 
 def get_library_paths(
-    *, root: Union[str, Path], arch_triplet: str, existing_only=True
+    *, root: Path, arch_triplet: str, existing_only=True
 ) -> List[str]:
     """List common library paths.
 
@@ -119,19 +120,16 @@ def get_library_paths(
     :return: The list of library paths.
     """
     paths = [
-        os.path.join(root, "lib"),
-        os.path.join(root, "usr", "lib"),
-        os.path.join(root, "lib", arch_triplet),
-        os.path.join(root, "usr", "lib", arch_triplet),
+        root / "lib",
+        root / "usr" / "lib",
+        root / "lib" / arch_triplet,
+        root / "usr" / "lib" / arch_triplet,
     ]
 
-    if existing_only:
-        paths = [p for p in paths if os.path.exists(p)]
-
-    return paths
+    return [str(p) for p in paths if not existing_only or p.exists()]
 
 
-def get_pkg_config_paths(*, root: Union[str, Path], arch_triplet: str) -> List[str]:
+def get_pkg_config_paths(*, root: Path, arch_triplet: str) -> List[str]:
     """List common pkg-config paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -140,17 +138,17 @@ def get_pkg_config_paths(*, root: Union[str, Path], arch_triplet: str) -> List[s
     :return: The list of pkg-config paths.
     """
     paths = [
-        os.path.join(root, "lib", "pkgconfig"),
-        os.path.join(root, "lib", arch_triplet, "pkgconfig"),
-        os.path.join(root, "usr", "lib", "pkgconfig"),
-        os.path.join(root, "usr", "lib", arch_triplet, "pkgconfig"),
-        os.path.join(root, "usr", "share", "pkgconfig"),
-        os.path.join(root, "usr", "local", "lib", "pkgconfig"),
-        os.path.join(root, "usr", "local", "lib", arch_triplet, "pkgconfig"),
-        os.path.join(root, "usr", "local", "share", "pkgconfig"),
+        root / "lib" / "pkgconfig",
+        root / "lib" / arch_triplet / "pkgconfig",
+        root / "usr" / "lib" / "pkgconfig",
+        root / "usr" / "lib" / arch_triplet / "pkgconfig",
+        root / "usr" / "share" / "pkgconfig",
+        root / "usr" / "local" / "lib" / "pkgconfig",
+        root / "usr" / "local" / "lib" / arch_triplet / "pkgconfig",
+        root / "usr" / "local" / "share" / "pkgconfig",
     ]
 
-    return [p for p in paths if os.path.exists(p)]
+    return [str(p) for p in paths if p.exists()]
 
 
 def is_dumb_terminal() -> bool:

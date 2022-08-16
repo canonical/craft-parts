@@ -115,7 +115,7 @@ class TestGetPaths:
         ]
 
     def test_get_bin_paths_not_exist(self):
-        x = os_utils.get_bin_paths(root="/invalid", existing_only=False)
+        x = os_utils.get_bin_paths(root=Path("/invalid"), existing_only=False)
         assert x == [
             "/invalid/usr/sbin",
             "/invalid/usr/bin",
@@ -124,7 +124,9 @@ class TestGetPaths:
         ]
 
     def test_get_include_paths_null(self):
-        x = os_utils.get_include_paths(root="/invalid", arch_triplet="my-arch-triplet")
+        x = os_utils.get_include_paths(
+            root=Path("/invalid"), arch_triplet="my-arch-triplet"
+        )
         assert x == []
 
     def test_get_include_paths(self, new_dir):
@@ -146,7 +148,9 @@ class TestGetPaths:
         ]
 
     def test_get_library_paths_null(self):
-        x = os_utils.get_library_paths(root="/invalid", arch_triplet="my-arch-triplet")
+        x = os_utils.get_library_paths(
+            root=Path("/invalid"), arch_triplet="my-arch-triplet"
+        )
         assert x == []
 
     def test_get_library_paths_exist(self, new_dir):
@@ -170,7 +174,7 @@ class TestGetPaths:
 
     def test_get_library_paths_not_exist(self):
         x = os_utils.get_library_paths(
-            root="/invalid", arch_triplet="my-arch-triplet", existing_only=False
+            root=Path("/invalid"), arch_triplet="my-arch-triplet", existing_only=False
         )
         assert x == [
             "/invalid/lib",
@@ -181,7 +185,7 @@ class TestGetPaths:
 
     def test_get_pkg_config_paths_null(self):
         x = os_utils.get_pkg_config_paths(
-            root="/invalid", arch_triplet="my-arch-triplet"
+            root=Path("/invalid"), arch_triplet="my-arch-triplet"
         )
         assert x == []
 
