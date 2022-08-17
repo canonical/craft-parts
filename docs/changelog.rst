@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.12.0 (2022-08-12)
+-------------------
+
+- Set install prefix in the cmake plugin
+- Fix prefix path in the cmake plugin
+
 1.11.0 (2022-08-12)
 -------------------
 
