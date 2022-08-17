@@ -250,9 +250,7 @@ class LifecycleManager:
         if not state:
             return None
 
-        package_list = list(state.primed_stage_packages)
-        package_list.sort()
-        return package_list
+        return sorted(state.primed_stage_packages)
 
 
 def _ensure_overlay_supported() -> None:
