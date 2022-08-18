@@ -27,8 +27,10 @@ from craft_parts import LifecycleManager, Step
 @pytest.mark.parametrize(
     "prefix,install_path",
     [
-        (None, "bin"),
+        (None, "usr/local/bin"),
+        ("", "bin"),
         ("/usr/local", "usr/local/bin"),
+        ("/something/else", "something/else/bin"),
     ],
 )
 def test_cmake_plugin(new_dir, prefix, install_path):
@@ -40,7 +42,7 @@ def test_cmake_plugin(new_dir, prefix, install_path):
             source: .
         """
     )
-    if prefix:
+    if prefix is not None:
         parts_yaml += f"    cmake-parameters: [-DCMAKE_INSTALL_PREFIX={prefix}]"
 
     parts = yaml.safe_load(parts_yaml)
@@ -94,8 +96,10 @@ def test_cmake_plugin(new_dir, prefix, install_path):
 @pytest.mark.parametrize(
     "prefix,install_path",
     [
-        (None, "bin"),
+        (None, "usr/local/bin"),
+        ("", "bin"),
         ("/usr/local", "usr/local/bin"),
+        ("/something/else", "something/else/bin"),
     ],
 )
 def test_cmake_plugin_subdir(new_dir, prefix, install_path):
@@ -109,7 +113,7 @@ def test_cmake_plugin_subdir(new_dir, prefix, install_path):
             source-subdir: test-subdir
         """
     )
-    if prefix:
+    if prefix is not None:
         parts_yaml += f"    cmake-parameters: [-DCMAKE_INSTALL_PREFIX={prefix}]"
 
     parts = yaml.safe_load(parts_yaml)
