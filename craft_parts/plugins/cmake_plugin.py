@@ -57,7 +57,16 @@ class CMakePlugin(Plugin):
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    This implementation follows the syntax and behavior used in the
+    Snapcraft cmake plugin for core20. Unlike the cmake plugin used for
+    core18, ``CMAKE_INSTALL_PREFIX`` is not automatically set. To retain
+    compatibility with the Snapcraft core18 plugin, define the cmake
+    parameter ``-DCMAKE_INSTALL_PREFIX=`` in your project.  This also
+    allows libraries built using the cmake plugin and staged by a different
+    part to be automatically recognized without defining additional
+    parameters such as ``CMAKE_INCLUDE_PATH`` or ``CMAKE_INSTALL_PATH``.
+
+    This plugin uses the following plugin-specific keywords:
 
         - cmake-parameters
           (list of strings)
@@ -102,11 +111,6 @@ class CMakePlugin(Plugin):
             f'"{self._part_info.part_src_subdir}"',
             "-G",
             f'"{options.cmake_generator}"',
-            # Install on a location we search when building using staged files
-            # (e.g. CMAKE_PREFIX_PATH/lib, CMAKE_PREFIX_PATH/lib/<arch> for libs,
-            # see https://cmake.org/cmake/help/latest/command/find_library.html).
-            # This can be overridden by the user using cmake-parameters.
-            "-DCMAKE_INSTALL_PREFIX=",
         ] + options.cmake_parameters
 
         return [

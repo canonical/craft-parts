@@ -87,10 +87,7 @@ class TestPluginCMakePlugin:
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_commands() == [
-            (
-                f'cmake "{plugin._part_info.part_src_dir}" -G "Unix Makefiles" '
-                "-DCMAKE_INSTALL_PREFIX="
-            ),
+            f'cmake "{plugin._part_info.part_src_dir}" -G "Unix Makefiles"',
             f"cmake --build . -- -j{plugin._part_info.parallel_build_count}",
             (
                 f'DESTDIR="{plugin._part_info.part_install_dir}" '
@@ -102,10 +99,7 @@ class TestPluginCMakePlugin:
         plugin = setup_method_fixture(new_dir, properties={"cmake-generator": "Ninja"})
 
         assert plugin.get_build_commands() == [
-            (
-                f'cmake "{plugin._part_info.part_src_dir}" -G "Ninja" '
-                "-DCMAKE_INSTALL_PREFIX="
-            ),
+            f'cmake "{plugin._part_info.part_src_dir}" -G "Ninja"',
             f"cmake --build . -- -j{plugin._part_info.parallel_build_count}",
             (
                 f'DESTDIR="{plugin._part_info.part_install_dir}" '
@@ -119,10 +113,7 @@ class TestPluginCMakePlugin:
         )
 
         assert plugin.get_build_commands() == [
-            (
-                f'cmake "{plugin._part_info.part_src_dir}" -G "Unix Makefiles" '
-                "-DCMAKE_INSTALL_PREFIX="
-            ),
+            f'cmake "{plugin._part_info.part_src_dir}" -G "Unix Makefiles"',
             f"cmake --build . -- -j{plugin._part_info.parallel_build_count}",
             (
                 f'DESTDIR="{plugin._part_info.part_install_dir}" '
@@ -143,7 +134,7 @@ class TestPluginCMakePlugin:
         assert plugin.get_build_commands() == [
             (
                 f'cmake "{plugin._part_info.part_src_dir}" -G "Unix Makefiles" '
-                f'-DCMAKE_INSTALL_PREFIX= {" ".join(cmake_parameters)}'
+                f'{" ".join(cmake_parameters)}'
             ),
             f"cmake --build . -- -j{plugin._part_info.parallel_build_count}",
             (
