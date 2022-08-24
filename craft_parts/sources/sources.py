@@ -87,6 +87,7 @@ from craft_parts.dirs import ProjectDirs
 
 from . import errors
 from .base import SourceHandler
+from .deb_source import DebSource
 from .git_source import GitSource
 from .local_source import LocalSource
 from .snap_source import SnapSource
@@ -105,6 +106,7 @@ _source_handler: Dict[str, SourceHandlerType] = {
     "git": GitSource,
     "snap": SnapSource,
     "zip": ZipSource,
+    "deb": DebSource,
 }
 
 

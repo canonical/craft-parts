@@ -28,7 +28,7 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Sequence, Set, Tuple
 
-from craft_parts.utils import file_utils, os_utils
+from craft_parts.utils import deb_utils, file_utils, os_utils
 
 from . import errors
 from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
@@ -615,7 +615,7 @@ class Ubuntu(BaseRepository):
                 suffix="deb-extract", dir=install_path.parent
             ) as extract_dir:
                 # Extract deb package.
-                cls._extract_deb(pkg_path, extract_dir)
+                deb_utils.extract_deb(pkg_path, Path(extract_dir), logger.debug)
                 # Mark source of files.
                 marked_name = cls._extract_deb_name_version(pkg_path)
                 mark_origin_stage_package(extract_dir, marked_name)
@@ -652,14 +652,6 @@ class Ubuntu(BaseRepository):
             raise errors.UnpackError(str(deb_path)) from err
 
         return output.decode().strip()
-
-    @classmethod
-    def _extract_deb(cls, deb_path: pathlib.Path, extract_dir: str) -> None:
-        """Extract deb and return `<package-name>=<version>`."""
-        try:
-            process_run(["dpkg-deb", "--extract", str(deb_path), extract_dir])
-        except subprocess.CalledProcessError as err:
-            raise errors.UnpackError(str(deb_path)) from err
 
 
 def get_cache_dirs(cache_dir: Path):

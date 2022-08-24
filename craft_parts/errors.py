@@ -538,3 +538,16 @@ class OverlayPermissionError(PartsError):
         brief = "Using the overlay step requires superuser privileges."
 
         super().__init__(brief=brief)
+
+
+class DebError(PartsError):
+    """A "deb"-related command failed."""
+
+    def __init__(self, deb_path, command, exit_code):
+        brief = (
+            f"Failed when handling {deb_path}: "
+            f"command {command!r} exited with code {exit_code}."
+        )
+        resolution = "Make sure the deb file is correctly specified."
+
+        super().__init__(brief=brief, resolution=resolution)
