@@ -226,7 +226,9 @@ class FileSourceHandler(SourceHandler):
             raise NotImplementedError("ftp download not implemented")
 
         try:
-            request = requests.get(self.source, stream=True, allow_redirects=True)
+            request = requests.get(
+                self.source, stream=True, allow_redirects=True, timeout=3600
+            )
             request.raise_for_status()
         except requests.exceptions.RequestException as err:
             raise errors.NetworkRequestError(

@@ -56,7 +56,7 @@ def test_download_request(requests_mock):
 
     test_file = Path("test_file")
 
-    request = requests.get(source_url, stream=True)
+    request = requests.get(source_url, stream=True, timeout=3600)
     url_utils.download_request(request, "test_file")
 
     assert test_file.is_file()
