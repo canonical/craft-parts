@@ -80,6 +80,7 @@ test_requires = [
     "pylint-fixme-info",
     "pylint-pytest",
     "pytest",
+    "pytest-datadir",
     "pytest-mock",
     "requests-mock",
     "tox",
