@@ -59,6 +59,7 @@ class PartSpec(BaseModel):
     override_build: Optional[str] = None
     override_stage: Optional[str] = None
     override_prime: Optional[str] = None
+    groups: Optional[List[str]] = []
 
     class Config:
         """Pydantic model configuration."""
@@ -272,6 +273,13 @@ class Part:
         return self.spec.after
 
     @property
+    def groups(self) -> List[str]:
+        """Return the list of groups to which this part belongs."""
+        if not self.spec.groups:
+            return []
+        return self.spec.groups
+
+    @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
         return bool(
@@ -279,6 +287,20 @@ class Part:
             or self.spec.overlay_script is not None
             or self.spec.overlay_files != ["*"]
         )
+
+
+def get_dependencies_full(part: Part, part_list: List[Part]) -> List[str]:
+    """Return the dependencies, taking into account the groups."""
+    dep_list = []
+    part_names = [p.name for p in part_list]
+    for dep in part.dependencies:
+        if dep in part_names:
+            dep_list.append(dep)
+            continue
+        for other in part_list:
+            if (dep in other.groups) and (other.name not in dep_list):
+                dep_list.append(other.name)
+    return dep_list
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -347,6 +369,10 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
                 if part.name in other.dependencies:
                     mentioned = True
                     break
+                for group in part.groups:
+                    if group in other.dependencies:
+                        mentioned = True
+                        break
             if not mentioned:
                 top_part = part
                 break
@@ -368,7 +394,7 @@ def part_dependencies(
 
     :returns: The set of parts the given part depends on.
     """
-    dependency_names = set(part.dependencies)
+    dependency_names = set(get_dependencies_full(part, part_list))
     dependencies = {p for p in part_list if p.name in dependency_names}
 
     if recursive:
