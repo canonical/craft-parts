@@ -27,6 +27,7 @@ import logging
 import subprocess
 import sys
 from functools import partial
+from pathlib import Path
 
 import yaml
 from xdg import BaseDirectory  # type: ignore
@@ -87,8 +88,10 @@ def _process_parts(options: argparse.Namespace) -> None:
         # to the base for simplicity, but applications can (and probably should)
         # use a real digest.
         base_layer_hash = options.overlay_base.encode()
+        overlay_base = Path(options.overlay_base)
     else:
         base_layer_hash = b""
+        overlay_base = None
 
     lcm = craft_parts.LifecycleManager(
         part_data,
@@ -96,7 +99,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         work_dir=options.work_dir,
         cache_dir=cache_dir,
         base=options.base,
-        base_layer_dir=options.overlay_base,
+        base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
     )
 

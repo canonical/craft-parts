@@ -720,6 +720,20 @@ class PartHandler:
             migrated_files |= layer_files
             migrated_dirs |= layer_dirs
 
+        # Clean up dangling whiteout files with no backing files to white out
+        dangling_whiteouts = migration.filter_dangling_whiteouts(
+            migrated_files, migrated_dirs, base_dir=self._overlay_manager.base_layer_dir
+        )
+        for whiteout in dangling_whiteouts:
+            primed_whiteout = self._part_info.prime_dir / whiteout
+            try:
+                primed_whiteout.unlink()
+                logger.debug("unlinked '%s'", str(primed_whiteout))
+            except OSError as err:
+                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?
+                logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
+
+        # Create overlay migration state file
         state = MigrationState(files=migrated_files, directories=migrated_dirs)
         state.write(prime_overlay_state_path)
 

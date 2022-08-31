@@ -78,6 +78,7 @@ def migrate_files(
         if oci_translation and _is_opaque_dir(src):
             oci_opaque_marker = overlays.oci_opaque_dir(Path(dirname))
             oci_dst = Path(destdir, oci_opaque_marker)
+            logger.debug("create OCI opaque dir marker '%s'", str(oci_dst))
             oci_dst.touch()
             migrated_files.add(str(oci_opaque_marker))
 
@@ -108,6 +109,7 @@ def migrate_files(
         if oci_translation and _is_whiteout_file(src):
             oci_whiteout = overlays.oci_whiteout(Path(filename))
             oci_dst = Path(destdir, oci_whiteout)
+            logger.debug("create OCI whiteout file '%s'", str(oci_dst))
             oci_dst.touch()
             migrated_files.add(str(oci_whiteout))
         else:
@@ -228,3 +230,44 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
                 "Skipping...",
                 each_dir,
             )
+
+
+def filter_dangling_whiteouts(
+    files: Set[str], dirs: Set[str], *, base_dir: Optional[Path]
+) -> Set[str]:
+    """Remove dangling whiteout file and directory names.
+
+    Names corresponding to dangling files and directories (i.e. without a
+    backing file in the base layer to be whited out) are to be removed from
+    the provided sets of files and directory names.
+
+    :param files: The set of files to be verified.
+    :param dirs: The set of directories to be verified.
+    :return: The set of filtered out whiteout files.
+    """
+    # Whiteouts are meaningless if no base dir is specified, ignore them
+    if not base_dir:
+        return set()
+
+    whiteouts: Set[str] = set()
+
+    # Remove whiteout files if no backing file exists in the base dir.
+    for file in list(files):
+        if overlays.is_oci_whiteout_file(Path(file)):
+            backing_file = base_dir / overlays.oci_whited_out_file(Path(file))
+            if not backing_file.exists():
+                logger.debug("filter whiteout file '%s'", file)
+                files.remove(file)
+                whiteouts.add(file)
+
+    # Do the same for opaque directory markers
+    for directory in list(dirs):
+        opaque_marker = str(overlays.oci_opaque_dir(Path(directory)))
+        if opaque_marker in files:
+            backing_file = base_dir / directory
+            if not backing_file.exists():
+                logger.debug("filter whiteout file '%s'", opaque_marker)
+                files.remove(opaque_marker)
+                whiteouts.add(opaque_marker)
+
+    return whiteouts

@@ -55,6 +55,17 @@ class TestHelpers:
         assert overlays.oci_whiteout(Path(name)) == Path(oci_name)
 
     @pytest.mark.parametrize(
+        "name,oci_name", [("whatever", ".wh.whatever"), ("/path/foo", "/path/.wh.foo")]
+    )
+    def test_oci_whited_out_file(self, name, oci_name):
+        assert overlays.oci_whited_out_file(Path(oci_name)) == Path(name)
+
+    def test_oci_whited_out_file_error(self):
+        with pytest.raises(ValueError) as raised:
+            overlays.oci_whited_out_file(Path("whatever"))
+        assert str(raised.value) == "argument is not an OCI whiteout file"
+
+    @pytest.mark.parametrize(
         "name,oci_name",
         [("foo", "foo/.wh..wh..opq"), ("/path/foo", "/path/foo/.wh..wh..opq")],
     )

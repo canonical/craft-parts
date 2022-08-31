@@ -442,3 +442,68 @@ class TestHelpers:
 
         # this shouldn't raise an exception
         migration._clean_migrated_files({"foo.txt"}, {"bar"}, Path("stage"))
+
+
+class TestFilterWhiteouts:
+    """Remove dangling file and opaque dir whiteouts."""
+
+    def test_file_whiteout_removal(self, new_dir):
+        """Expect all whiteout files to be removed."""
+        files = {
+            "f1",
+            "f2",
+            "f3",
+            ".wh.foo.txt",
+            "a/.wh.bar.txt",
+            "a/.wh.bar2.txt",
+            "b/baz.txt",
+            "b/.wh..wh..opq",
+        }
+        dirs = {"a", "b", "c"}
+
+        # Create a backing file and dir
+        Path("foo.txt").touch()
+        Path("a").mkdir()
+        Path("a/bar.txt").touch()
+        Path("b").mkdir()
+
+        migration.filter_dangling_whiteouts(files, dirs, base_dir=new_dir)
+
+        # expect no modification in files or dirs
+        assert files == {
+            "f1",
+            "f2",
+            "f3",
+            ".wh.foo.txt",  # backing file exists
+            "a/.wh.bar.txt",  # backing file exists
+            "b/baz.txt",
+            "b/.wh..wh..opq",  # backing dir exists
+        }
+        assert dirs == {"a", "b", "c"}
+
+    def test_file_whiteout_removal_no_base(self):
+        """Ignore whiteout files if no base set."""
+        files = {
+            "f1",
+            "f2",
+            "f3",
+            ".wh.foo.txt",
+            "a/.wh.bar.txt",
+            "b/baz.txt",
+            "b/.wh..wh..opq",
+        }
+        dirs = {"a", "b", "c"}
+
+        migration.filter_dangling_whiteouts(files, dirs, base_dir=None)
+
+        # expect no modification in files or dirs
+        assert files == {
+            "f1",
+            "f2",
+            "f3",
+            ".wh.foo.txt",
+            "a/.wh.bar.txt",
+            "b/baz.txt",
+            "b/.wh..wh..opq",
+        }
+        assert dirs == {"a", "b", "c"}
