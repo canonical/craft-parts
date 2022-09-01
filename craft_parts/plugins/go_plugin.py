@@ -90,6 +90,9 @@ class GoPlugin(Plugin):
     or to have it installed or built in a different part. In this case, the
     name of the part supplying the go compiler must be "go".
 
+    The plugin will call "go generate" during build to support go projects
+    that generate code.
+
     The go plugin uses the common plugin keywords as well as those for "sources".
     Additionally, the following plugin-specific keywords can be used:
 
@@ -126,5 +129,6 @@ class GoPlugin(Plugin):
 
         return [
             "go mod download",
+            "go generate ./...",
             f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
         ]

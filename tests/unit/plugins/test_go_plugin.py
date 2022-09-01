@@ -139,6 +139,7 @@ def test_get_build_commands(part_info):
 
     assert plugin.get_build_commands() == [
         "go mod download",
+        "go generate ./...",
         'go install -p "1"  ./...',
     ]
 
@@ -151,6 +152,7 @@ def test_get_build_commands_with_buildtags(part_info):
 
     assert plugin.get_build_commands() == [
         "go mod download",
+        "go generate ./...",
         'go install -p "1" -tags=dev,debug ./...',
     ]
 
