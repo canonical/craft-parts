@@ -799,6 +799,39 @@ class TestOverlayMigration:
         self._p1_handler.clean_step(step)
         assert Path(f"{step_dir}/file1").exists() is False
 
+    def test_migrate_overlay_filter_whiteout(self, mocker, new_dir):
+        cache_dir = new_dir / "cache"
+        base_dir = new_dir / "base"
+        cache_dir.mkdir()
+        base_dir.mkdir()
+
+        p1 = Part("p1", {"plugin": "nil", "overlay-script": "ls"})
+        info = ProjectInfo(application_name="test", cache_dir=cache_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=base_dir
+        )
+        p1_handler = PartHandler(
+            p1,
+            part_info=PartInfo(info, p1),
+            part_list=[p1],
+            overlay_manager=ovmgr,
+        )
+        p1_handler._make_dirs()
+
+        wh1 = p1.part_layer_dir / "file1"
+        wh2 = p1.part_layer_dir / "file2"
+        wh1.touch()
+        wh2.touch()
+        mocker.patch(
+            "craft_parts.overlays.is_whiteout_file", new=lambda x: x in (wh1, wh2)
+        )
+
+        Path(base_dir, "file2").touch()  # file2 has a backing file
+
+        _run_step_migration(p1_handler, Step.PRIME)
+        assert Path("prime/.wh.file1").exists() is False
+        assert Path("prime/.wh.file2").exists()
+
 
 def _run_step_migration(handler: PartHandler, step: Step) -> None:
     if step > Step.STAGE:

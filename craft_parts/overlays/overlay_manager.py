@@ -54,6 +54,11 @@ class OverlayManager:
         self._overlay_fs: Optional[OverlayFS] = None
         self._base_layer_dir = base_layer_dir
 
+    @property
+    def base_layer_dir(self) -> Optional[Path]:
+        """Return the path to the base layer, if any."""
+        return self._base_layer_dir
+
     def mount_layer(self, part: Part, *, pkg_cache: bool = False) -> None:
         """Mount the overlay step layer stack up to the given part.
 

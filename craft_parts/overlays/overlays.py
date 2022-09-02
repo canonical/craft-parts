@@ -131,6 +131,19 @@ def oci_whiteout(path: Path) -> Path:
     return path.parent / (".wh." + path.name)
 
 
+def oci_whited_out_file(whiteout_file: Path) -> Path:
+    """Find the whited out file corresponding to a whiteout file.
+
+    :param whiteout_file: The whiteout file to process.
+
+    :returns: The file that was whited out.
+    """
+    if not whiteout_file.name.startswith(".wh."):
+        raise ValueError("argument is not an OCI whiteout file")
+
+    return whiteout_file.parent / whiteout_file.name[4:]
+
+
 def oci_opaque_dir(path: Path) -> Path:
     """Return the OCI opaque directory marker.
 
