@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.12.1 (2022-08-19)
+-------------------
+
+- Revert changes to install prefix in cmake plugin to prevent
+  stable base incompatibilities
+
 1.12.0 (2022-08-12)
 -------------------
 
