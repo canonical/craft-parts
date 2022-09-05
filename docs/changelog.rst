@@ -2,6 +2,14 @@
 Changelog
 *********
 
+1.13.0 (2022-09-05)
+-------------------
+
+- Add go generate support to go plugin
+- Add support for deb sources
+- Add source download request timeout
+- Remove unnecessary overlay whiteout files
+
 1.12.1 (2022-08-19)
 -------------------
 
