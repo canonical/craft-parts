@@ -17,6 +17,7 @@
 from copy import deepcopy
 from functools import partial
 
+import pydantic
 import pytest
 
 from craft_parts import errors, parts
@@ -446,3 +447,47 @@ class TestPartHelpers:
 
         p = parts.get_parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
         assert p == [p2, p3, p5]
+
+
+class TestPartValidation:
+    """Part validation considering plugin-specific attributes."""
+
+    def test_part_validation_data_type(self):
+        with pytest.raises(TypeError) as raised:
+            parts.validate_part("invalid data")  # type: ignore
+
+        assert str(raised.value) == "value must be a dictionary"
+
+    def test_part_validation_immutable(self):
+        data = {
+            "plugin": "make",
+            "source": "foo",
+            "make-parameters": ["-C bar"],
+        }
+        data_copy = deepcopy(data)
+
+        parts.validate_part(data)
+
+        assert data == data_copy
+
+    def test_part_validation_extra(self):
+        data = {
+            "plugin": "make",
+            "source": "foo",
+            "make-parameters": ["-C bar"],
+            "unexpected-extra": True,
+        }
+
+        error = r"unexpected-extra\s+extra fields not permitted"
+        with pytest.raises(pydantic.ValidationError, match=error):
+            parts.validate_part(data)
+
+    def test_part_validation_missing(self):
+        data = {
+            "plugin": "make",
+            "make-parameters": ["-C bar"],
+        }
+
+        error = r"source\s+field required"
+        with pytest.raises(pydantic.ValidationError, match=error):
+            parts.validate_part(data)

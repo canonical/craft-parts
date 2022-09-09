@@ -21,9 +21,8 @@ from typing import Any, Dict, List, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError, validator
 
-from craft_parts import errors
+from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
-from craft_parts.plugins import get_plugin_class
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 
@@ -214,7 +213,7 @@ class Part:
         if (
             self.plugin_name != ""
             and self.spec.source_subdir
-            and not get_plugin_class(self.plugin_name).get_out_of_source_build()
+            and not plugins.get_plugin_class(self.plugin_name).get_out_of_source_build()
         ):
             return self.part_build_dir / self.spec.source_subdir
         return self.part_build_dir
@@ -419,3 +418,28 @@ def get_parts_with_overlay(*, part_list: List[Part]) -> List[Part]:
     :return: A list of parts with overlay parameters.
     """
     return [p for p in part_list if p.has_overlay]
+
+
+def validate_part(data: Dict[str, Any]) -> None:
+    """Validate the given part data against common and plugin models.
+
+    :param data: The part data to validate.
+    """
+    if not isinstance(data, dict):
+        raise TypeError("value must be a dictionary")
+
+    # copy the original data, we'll modify it
+    spec = data.copy()
+
+    plugin_name = spec.get("plugin")
+    if not plugin_name:
+        raise ValueError("'plugin' not defined")
+
+    plugin_class = plugins.get_plugin_class(plugin_name)
+
+    # validate plugin properties
+    plugin_class.properties_class.unmarshal(spec)
+
+    # validate common part properties
+    part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
+    PartSpec(**part_spec)

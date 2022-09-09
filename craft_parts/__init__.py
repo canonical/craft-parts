@@ -25,7 +25,7 @@ from .errors import PartsError
 from .executor.environment import expand_environment
 from .infos import PartInfo, ProjectInfo, StepInfo
 from .lifecycle_manager import LifecycleManager
-from .parts import Part
+from .parts import Part, validate_part
 from .steps import Step
 
 __all__ = [
@@ -41,4 +41,5 @@ __all__ = [
     "Step",
     "plugins",
     "expand_environment",
+    "validate_part",
 ]
