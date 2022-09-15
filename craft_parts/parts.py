@@ -19,10 +19,11 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set
 
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
+from craft_parts.packages import platform
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 
@@ -76,6 +77,27 @@ class PartSpec(BaseModel):
             item[0] != "/"
         ), f"{item!r} must be a relative path (cannot start with '/')"
         return item
+
+    @root_validator(pre=True)
+    def validate_root(cls, values):
+        """Check if the part spec has a valid configuration of packages and slices."""
+        if not platform.is_deb_based():
+            # This check is only relevant in deb systems.
+            return values
+
+        def is_slice(name):
+            return "_" in name
+
+        # Detect a mixture of .deb packages and chisel slices.
+        stage_packages = values.get("stage-packages", [])
+        has_slices = any(name for name in stage_packages if is_slice(name))
+        has_packages = any(name for name in stage_packages if not is_slice(name))
+
+        assert not (
+            has_slices and has_packages
+        ), "Cannot mix packages and slices in stage-packages"
+
+        return values
 
     # pylint: enable=no-self-argument
 

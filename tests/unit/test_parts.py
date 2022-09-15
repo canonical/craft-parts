@@ -22,6 +22,7 @@ import pytest
 
 from craft_parts import errors, parts
 from craft_parts.dirs import ProjectDirs
+from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
 
@@ -75,6 +76,30 @@ class TestPartSpecs:
         with pytest.raises(TypeError) as raised:
             PartSpec.unmarshal(False)  # type: ignore
         assert str(raised.value) == "part data is not a dictionary"
+
+    def test_unmarshal_mix_packages_slices(self, mocker):
+        """
+        Test that mixing packages and chisel slices raises validation errors
+        in Debian-based systems (and only in them).
+        """
+        is_deb_mock = mocker.patch.object(platform, "is_deb_based", autospec=True)
+
+        package_list = ["pkg1_bin", "pkg2_bin", "pkg3"]
+        data = {
+            "stage-packages": package_list,
+        }
+
+        # On Debian-based systems, mixing names with and without underscores means
+        # mixing .deb packages and chisel slices, which is not allowed.
+        is_deb_mock.return_value = True
+        with pytest.raises(pydantic.ValidationError):
+            PartSpec.unmarshal(data)
+
+        # On non-Debian-based systems, mixing is allowed because we can't know the
+        # semantics (and chisel is not supported).
+        is_deb_mock.return_value = False
+        spec = PartSpec.unmarshal(data)
+        assert spec.stage_packages == package_list
 
 
 class TestPartData:
