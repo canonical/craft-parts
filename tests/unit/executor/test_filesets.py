@@ -58,31 +58,39 @@ def test_remove():
     [
         ([], [], []),
         (["foo"], ["bar"], ["bar"]),
+        (["foo"], ["bar", "baz"], ["bar", "baz"]),
         # combine if fs2 has a wildcard
         (["foo"], ["bar", "*"], ["foo", "bar"]),
+        (["foo", "bar"], ["*"], ["foo", "bar"]),
+        (["*"], ["foo", "bar"], ["foo", "bar"]),
         # combine if fs2 is only excludes
         (["foo"], ["-bar"], ["foo", "-bar"]),
         (["foo", "*"], ["bar"], ["bar"]),
         (["-foo"], ["-bar"], ["-foo", "-bar"]),
         (["-foo"], ["bar"], ["bar"]),
+        (["-foo"], ["bar", "baz"], ["bar", "baz"]),
         (["foo"], ["-bar", "baz"], ["-bar", "baz"]),
+        (["foo", "bar"], ["-baz"], ["bar", "-baz", "foo"]),
         (["-foo", "bar"], ["bar"], ["bar"]),
+        # all files removed in prime
+        (["foo"], ["-*"], ["foo", "-*"]),
         # combine wildcards
         (["-*"], ["*"], ["-*"]),
         (["-*"], ["somefile", "*"], ["-*", "somefile"]),
     ],
 )
 def test_combine(tc_fs1, tc_fs2, tc_result):
-    fs1 = Fileset(tc_fs1)
-    fs2 = Fileset(tc_fs2)
-    fs1.combine(fs2)
-    assert sorted(fs1.entries) == sorted(tc_result)
+    stage_set = Fileset(tc_fs1)
+    prime_set = Fileset(tc_fs2)
+    prime_set.combine(stage_set)
+    assert sorted(prime_set.entries) == sorted(tc_result)
 
 
 def test_fileset_combine_conflicts():
-    stage_set = Fileset(["thisfile", "otherfile"])
-    prime_set = Fileset(["-otherfile"])
+    stage_set = Fileset(["thisfile", "-otherfile"])
+    prime_set = Fileset(["otherfile"])
 
+    # raise conflict if prime includes a file excluded in stage
     with pytest.raises(errors.FilesetConflict) as raised:
         prime_set.combine(stage_set)
     assert raised.value.conflicting_files == {"otherfile"}
