@@ -19,7 +19,7 @@
 __version__ = "1.15.1"
 
 from . import plugins
-from .actions import Action, ActionType
+from .actions import Action, ActionProperties, ActionType
 from .dirs import ProjectDirs
 from .errors import PartsError
 from .executor.environment import expand_environment
@@ -30,6 +30,7 @@ from .steps import Step
 
 __all__ = [
     "Action",
+    "ActionProperties",
     "ActionType",
     "ProjectDirs",
     "PartsError",

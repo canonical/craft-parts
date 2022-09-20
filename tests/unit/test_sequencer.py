@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from craft_parts.actions import Action, ActionType
+from craft_parts.actions import Action, ActionProperties, ActionType
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, PartSpec
@@ -173,7 +173,12 @@ def test_sequencer_update_step(step, state_class, new_dir):
 
     # check if action was created
     assert seq._actions == [
-        Action(part_name="p1", action_type=ActionType.UPDATE, step=step)
+        Action(
+            part_name="p1",
+            action_type=ActionType.UPDATE,
+            step=step,
+            properties=ActionProperties(),
+        )
     ]
 
     # check if serial updated

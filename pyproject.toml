@@ -14,7 +14,7 @@ min-similarity-lines=13
 
 [tool.pylint.format]
 max-line-length = "88"
-max-attributes = 15
+max-attributes = 16
 max-args= 6
 max-locals = 18
 

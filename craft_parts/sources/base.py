@@ -22,7 +22,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 import requests
 from overrides import overrides
@@ -84,6 +84,9 @@ class SourceHandler(abc.ABC):
         self._checked = False
         self._ignore_patterns = ignore_patterns.copy()
 
+        self.outdated_files: Optional[List[str]] = None
+        self.outdated_dirs: Optional[List[str]] = None
+
     # pylint: enable=too-many-arguments
 
     @abc.abstractmethod
@@ -99,6 +102,16 @@ class SourceHandler(abc.ABC):
         :param ignore_files: Files excluded from verification.
 
         :return: Whether the sources are outdated.
+
+        :raise errors.SourceUpdateUnsupported: If the source handler can't check if
+            files are outdated.
+        """
+        raise errors.SourceUpdateUnsupported(self.__class__.__name__)
+
+    def get_outdated_files(self) -> Tuple[List[str], List[str]]:
+        """Obtain lists of outdated files and directories.
+
+        :return: The lists of outdated files and directories.
 
         :raise errors.SourceUpdateUnsupported: If the source handler can't check if
             files are outdated.

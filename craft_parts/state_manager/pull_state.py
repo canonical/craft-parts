@@ -16,7 +16,7 @@
 
 """State definitions for the pull step."""
 
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from .step_state import StepState
 
@@ -25,6 +25,8 @@ class PullState(StepState):
     """Context information for the pull step."""
 
     assets: Dict[str, Any] = {}
+    outdated_files: Optional[List[str]] = None
+    outdated_dirs: Optional[List[str]] = None
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "PullState":
