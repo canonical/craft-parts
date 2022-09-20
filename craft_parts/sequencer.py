@@ -17,10 +17,11 @@
 """Determine the sequence of lifecycle actions to be executed."""
 
 import logging
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Set
 
 from craft_parts import parts, steps
-from craft_parts.actions import Action, ActionType
+from craft_parts.actions import Action, ActionProperties, ActionType
 from craft_parts.infos import ProjectInfo, ProjectVar
 from craft_parts.overlays import LayerHash, LayerStateManager
 from craft_parts.parts import Part, part_list_by_name, sort_parts
@@ -28,6 +29,14 @@ from craft_parts.state_manager import StateManager, states
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class _ChangedFiles:
+    """Files and directories changed from a previous lifecycle execution."""
+
+    files: Optional[List[str]] = None
+    dirs: Optional[List[str]] = None
 
 
 class Sequencer:
@@ -68,6 +77,8 @@ class Sequencer:
                 part, viewers=self._overlay_viewers, part_list=part_list
             ):
                 self._overlay_viewers.add(part)
+
+        self._changed_files: Dict[str, _ChangedFiles] = {}
 
     def plan(
         self, target_step: Step, part_names: Optional[Sequence[str]] = None
@@ -160,8 +171,25 @@ class Sequencer:
         if outdated_report:
             logger.debug("%s:%s is outdated", part.name, current_step)
 
+            outdated_files, outdated_dirs = None, None
+            if current_step == Step.PULL:
+                self._changed_files[part.name] = _ChangedFiles(
+                    outdated_report.outdated_files, outdated_report.outdated_dirs
+                )
+            elif current_step == Step.BUILD:
+                if part.name in self._changed_files:
+                    changes = self._changed_files[part.name]
+                    outdated_files = changes.files
+                    outdated_dirs = changes.dirs
+
             if current_step in (Step.PULL, Step.OVERLAY, Step.BUILD):
-                self._update_step(part, current_step, reason=outdated_report.reason())
+                self._update_step(
+                    part,
+                    current_step,
+                    reason=outdated_report.reason(),
+                    outdated_files=outdated_files,
+                    outdated_dirs=outdated_dirs,
+                )
             else:
                 self._rerun_step(part, current_step, reason=outdated_report.reason())
 
@@ -284,10 +312,27 @@ class Sequencer:
 
         self._run_step(part, step, reason=reason, rerun=True)
 
-    def _update_step(self, part: Part, step: Step, *, reason: Optional[str] = None):
+    def _update_step(
+        self,
+        part: Part,
+        step: Step,
+        *,
+        reason: Optional[str] = None,
+        outdated_files: Optional[List[str]] = None,
+        outdated_dirs: Optional[List[str]] = None,
+    ):
         """Set the step state as reexecuted by updating its timestamp."""
         logger.debug("update step %s:%s", part.name, step)
-        self._add_action(part, step, action_type=ActionType.UPDATE, reason=reason)
+        properties = ActionProperties(
+            updated_files=outdated_files, updated_dirs=outdated_dirs
+        )
+        self._add_action(
+            part,
+            step,
+            action_type=ActionType.UPDATE,
+            reason=reason,
+            properties=properties,
+        )
         self._sm.update_state_timestamp(part, step)
 
     def _reapply_layer(
@@ -308,6 +353,7 @@ class Sequencer:
         action_type: ActionType = ActionType.RUN,
         reason: Optional[str] = None,
         project_vars: Optional[Dict[str, ProjectVar]] = None,
+        properties: Optional[ActionProperties] = None,
     ) -> None:
         logger.debug("add action %s:%s(%s)", part.name, step, action_type)
         self._actions.append(
@@ -317,6 +363,7 @@ class Sequencer:
                 action_type=action_type,
                 reason=reason,
                 project_vars=project_vars,
+                properties=properties,
             )
         )
 

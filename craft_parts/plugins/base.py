@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
 
 from pydantic import BaseModel
 
+from craft_parts.actions import ActionProperties
+
 from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
@@ -47,6 +49,7 @@ class Plugin(abc.ABC):
     ) -> None:
         self._options = properties
         self._part_info = part_info
+        self.action_properties: Optional[ActionProperties] = None
 
     @abc.abstractmethod
     def get_build_snaps(self) -> Set[str]:

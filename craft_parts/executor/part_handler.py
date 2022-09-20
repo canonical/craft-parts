@@ -20,6 +20,7 @@ import logging
 import os
 import os.path
 import shutil
+from copy import deepcopy
 from glob import iglob
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
@@ -511,6 +512,7 @@ class PartHandler:
         stderr: Stream,
     ) -> None:
         """Call the appropriate update handler for the given step."""
+        self._plugin.action_properties = None
         handler: _UpdateHandler
 
         if action.step == Step.PULL:
@@ -519,6 +521,8 @@ class PartHandler:
             handler = self._update_overlay
         elif action.step == Step.BUILD:
             handler = self._update_build
+            if action.properties:
+                self._plugin.action_properties = deepcopy(action.properties)
         else:
             step_name = action.step.name.lower()
             raise errors.InvalidAction(

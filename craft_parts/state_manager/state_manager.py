@@ -313,7 +313,12 @@ class StateManager:
                 # Not all sources support checking for updates
                 with contextlib.suppress(sources.errors.SourceUpdateUnsupported):
                     if source_handler.check_if_outdated(str(state_file)):
-                        return OutdatedReport(source_modified=True)
+                        files, dirs = source_handler.get_outdated_files()
+                        return OutdatedReport(
+                            source_modified=True,
+                            outdated_files=files,
+                            outdated_dirs=dirs,
+                        )
 
         elif step == Step.BUILD:
             pull_stw = self._state_db.get(part_name=part.name, step=Step.PULL)
