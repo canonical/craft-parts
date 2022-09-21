@@ -66,27 +66,25 @@ class Fileset:
         :param other: The fileset to combine with.
         """
         to_combine = False
-        # combine if the other fileset has a wildcard
+        # combine if the fileset has a wildcard
         # XXX: should this only be a single wildcard and possibly excludes?
-        if "*" in other.entries:
+        if "*" in self.entries:
             to_combine = True
-            other.remove("*")
+            self.remove("*")
 
-        my_excludes = set(self.excludes)
-        other_includes = set(other.includes)
+        other_excludes = set(other.excludes)
+        my_includes = set(self.includes)
 
-        contradicting_set = set.intersection(my_excludes, other_includes)
+        contradicting_set = set.intersection(other_excludes, my_includes)
         if contradicting_set:
             raise errors.FilesetConflict(contradicting_set)
 
-        # combine if the other fileset is only excludes
-        if {x[0] for x in other.entries} == set("-"):
+        # combine if the fileset is only excludes
+        if {x[0] for x in self.entries} == set("-"):
             to_combine = True
 
         if to_combine:
             self._list = list(set(self._list + other.entries))
-        else:
-            self._list = other.entries
 
 
 def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[str]]:
