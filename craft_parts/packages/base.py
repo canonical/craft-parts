@@ -153,13 +153,19 @@ class BaseRepository(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def unpack_stage_packages(
-        cls, *, stage_packages_path: Path, install_path: Path
+        cls,
+        *,
+        stage_packages_path: Path,
+        install_path: Path,
+        stage_packages: Optional[List[str]] = None,
     ) -> None:
         """Unpack stage packages.
 
         :param stage_packages_path: The path to the directory containing the
             stage packages to unpack.
         :param install_path: The path stage packages will be unpacked to.
+        :param stage_packages: An optional list of the packages that were previously
+            pulled.
         """
 
 
@@ -222,7 +228,11 @@ class DummyRepository(BaseRepository):
 
     @classmethod
     def unpack_stage_packages(
-        cls, *, stage_packages_path: Path, install_path: Path
+        cls,
+        *,
+        stage_packages_path: Path,
+        install_path: Path,
+        stage_packages: Optional[List[str]] = None,
     ) -> None:
         """Unpack stage packages to install_path."""
 

@@ -79,7 +79,17 @@ jobs:
           pip install -e .
       - name: Install additional test dependencies
         run: |
-          sudo apt install -y golang ninja-build cmake
+          sudo apt install -y ninja-build cmake
+          # Build Chisel: needs a version of go than is available in Ubuntu 20.04 
+          sudo snap install --classic --channel=latest/stable go
+          git clone https://github.com/canonical/chisel.git chisel-tmp
+          cd chisel-tmp && git checkout f0bff5a30dfdcb400b # known "good" commit until Chisel has versions
+          go mod download
+          sudo go build -o /usr/bin ./...
+          chisel --help
+          # Remove newer go and install regular version for 20.04
+          sudo snap remove go
+          sudo apt install -y golang
       - name: Run unit tests
         run: |
           make test-units

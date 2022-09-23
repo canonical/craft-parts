@@ -22,7 +22,7 @@ import os.path
 import shutil
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, cast
 
 from typing_extensions import Protocol
 
@@ -902,9 +902,17 @@ class PartHandler:
 
     def _unpack_stage_packages(self):
         """Extract stage packages contents to the part's install directory."""
+        pulled_packages = None
+
+        pull_state = states.load_step_state(self._part, Step.PULL)
+        if pull_state is not None:
+            pull_state = cast(states.PullState, pull_state)
+            pulled_packages = pull_state.assets.get("stage-packages")
+
         packages.Repository.unpack_stage_packages(
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
+            stage_packages=pulled_packages,
         )
 
     def _unpack_stage_snaps(self):

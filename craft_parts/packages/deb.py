@@ -26,7 +26,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Sequence, Set, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -337,6 +337,21 @@ def get_packages_in_base(*, base: str) -> List[DebPackage]:
     return package_list
 
 
+def _is_list_of_slices(names: List[str]) -> bool:
+    """Whether `names` contains Chisel slices or Deb packages.
+
+    This function does not "validate" the names to see if they refer to existing slices/
+    packages; it only considers the format of the names. It also assumes that the list
+    has been pre-processed and is homogeneous - that is, it does *not* contain a mixture
+    of slices and deb packages.
+
+    :param name: A list of package names.
+    :return: `True` if the list refers to Chisel slices, or `False` if it refers to Deb
+    packages (or is empty).
+    """
+    return any("_" in name for name in names)
+
+
 class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
@@ -549,7 +564,6 @@ class Ubuntu(BaseRepository):
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
     @classmethod
-    @_apt_cache_wrapper
     def fetch_stage_packages(
         cls,
         *,
@@ -566,6 +580,32 @@ class Ubuntu(BaseRepository):
         if not package_names:
             return []
 
+        if _is_list_of_slices(package_names):
+            # TODO: fetching of Chisel slices is not supported yet.
+            return package_names
+
+        return cls._fetch_stage_debs(
+            cache_dir=cache_dir,
+            package_names=package_names,
+            stage_packages_path=stage_packages_path,
+            base=base,
+            arch=arch,
+            list_only=list_only,
+        )
+
+    @classmethod
+    @_apt_cache_wrapper
+    def _fetch_stage_debs(
+        cls,
+        *,
+        cache_dir: Path,
+        package_names: List[str],
+        stage_packages_path: pathlib.Path,
+        base: str,
+        arch: str,
+        list_only: bool = False,
+    ) -> List[str]:
+        """Fetch .deb stage packages to stage_packages_path."""
         filtered_names = _get_filtered_stage_package_names(
             base=base,
             package_list=[DebPackage.from_unparsed(name) for name in package_names],
@@ -605,9 +645,31 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def unpack_stage_packages(
-        cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
+        cls,
+        *,
+        stage_packages_path: pathlib.Path,
+        install_path: pathlib.Path,
+        stage_packages: Optional[List[str]] = None,
     ) -> None:
         """Unpack stage packages to install_path."""
+        if stage_packages is None:
+            stage_packages = []
+        if _is_list_of_slices(stage_packages):
+            cls._unpack_stage_slices(
+                stage_packages=stage_packages, install_path=install_path
+            )
+        else:
+            cls._unpack_stage_debs(
+                stage_packages_path=stage_packages_path, install_path=install_path
+            )
+
+    @classmethod
+    def _unpack_stage_debs(
+        cls,
+        *,
+        stage_packages_path: pathlib.Path,
+        install_path: pathlib.Path,
+    ) -> None:
         pkg_path = None
 
         for pkg_path in stage_packages_path.glob("*.deb"):
@@ -624,6 +686,21 @@ class Ubuntu(BaseRepository):
 
         if pkg_path:
             normalize(install_path, repository=cls)
+
+    @classmethod
+    def _unpack_stage_slices(
+        cls, *, stage_packages: List[str], install_path: pathlib.Path
+    ) -> None:
+        """Cut Chisel slices into a destination path.
+
+        :param stage_packages: The list of names of slices to cut.
+        :param install_path: The destination directory.
+        """
+        # Note that we must hardcode the release here because Chisel this one.
+        process_run(
+            ["chisel", "cut", "--root", str(install_path), "--release", "ubuntu-22.04"]
+            + stage_packages
+        )
 
     @classmethod
     @_apt_cache_wrapper
