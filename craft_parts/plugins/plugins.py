@@ -25,6 +25,7 @@ from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
+from .kernel_plugin import KernelPlugin
 from .make_plugin import MakePlugin
 from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
@@ -48,6 +49,7 @@ _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "dotnet": DotnetPlugin,
     "dump": DumpPlugin,
     "go": GoPlugin,
+    "kernel": KernelPlugin,
     "meson": MesonPlugin,
     "make": MakePlugin,
     "nil": NilPlugin,
