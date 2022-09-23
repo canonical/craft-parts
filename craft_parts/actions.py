@@ -17,7 +17,7 @@
 """Definitions of lifecycle actions and action types."""
 
 import enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from craft_parts.steps import Step
@@ -83,4 +83,4 @@ class Action:
     action_type: ActionType = ActionType.RUN
     reason: Optional[str] = None
     project_vars: Optional[Dict[str, "ProjectVar"]] = None
-    properties: Optional[ActionProperties] = None
+    properties: ActionProperties = field(default=ActionProperties())

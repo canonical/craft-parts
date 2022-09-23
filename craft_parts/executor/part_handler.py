@@ -20,10 +20,9 @@ import logging
 import os
 import os.path
 import shutil
-from copy import deepcopy
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, cast
 
 from typing_extensions import Protocol
 
@@ -129,7 +128,10 @@ class PartHandler:
 
         if action.action_type == ActionType.UPDATE:
             self._update_action(
-                action, step_info=step_info, stdout=stdout, stderr=stderr
+                action,
+                step_info=step_info,
+                stdout=stdout,
+                stderr=stderr,
             )
             return
 
@@ -151,6 +153,7 @@ class PartHandler:
             handler = self._run_overlay
         elif action.step == Step.BUILD:
             handler = self._run_build
+            self._plugin.set_action_properties(action.properties)
         elif action.step == Step.STAGE:
             handler = self._run_stage
         elif action.step == Step.PRIME:
@@ -512,7 +515,6 @@ class PartHandler:
         stderr: Stream,
     ) -> None:
         """Call the appropriate update handler for the given step."""
-        self._plugin.action_properties = None
         handler: _UpdateHandler
 
         if action.step == Step.PULL:
@@ -521,8 +523,7 @@ class PartHandler:
             handler = self._update_overlay
         elif action.step == Step.BUILD:
             handler = self._update_build
-            if action.properties:
-                self._plugin.action_properties = deepcopy(action.properties)
+            self._plugin.set_action_properties(action.properties)
         else:
             step_name = action.step.name.lower()
             raise errors.InvalidAction(
@@ -531,8 +532,23 @@ class PartHandler:
 
         callbacks.run_pre_step(step_info)
         handler(step_info, stdout=stdout, stderr=stderr)
+
+        # update state with updated files and dirs
         state_file = states.get_step_state_path(self._part, action.step)
-        state_file.touch()
+        if action.step == Step.PULL:
+            state = states.load_step_state(self._part, action.step)
+            if state:
+                new_state = states.PullState(
+                    part_properties=state.part_properties,
+                    project_options=state.project_options,
+                    assets=cast(states.PullState, state).assets,
+                    outdated_files=action.properties.updated_files,
+                    outdated_dirs=action.properties.updated_dirs,
+                )
+                new_state.write(state_file)
+        else:
+            state_file.touch()
+
         callbacks.run_post_step(step_info)
 
     def _update_pull(

@@ -33,6 +33,8 @@ class TestPullState:
             "project-options": {},
             "files": set(),
             "directories": set(),
+            "outdated-files": None,
+            "outdated-dirs": None,
         }
 
     def test_marshal_unmarshal(self):
@@ -42,6 +44,8 @@ class TestPullState:
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
             "directories": {"b"},
+            "outdated-files": ["a"],
+            "outdated-dirs": ["b"],
         }
 
         state = PullState.unmarshal(state_data)

@@ -20,7 +20,7 @@ import contextlib
 import itertools
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
 from craft_parts import parts, sources, steps
 from craft_parts.infos import ProjectInfo, ProjectVar
@@ -29,7 +29,7 @@ from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
 
 from .reports import Dependency, DirtyReport, OutdatedReport
-from .states import StepState, get_step_state_path, load_step_state
+from .states import PullState, StepState, get_step_state_path, load_step_state
 
 logger = logging.getLogger(__name__)
 
@@ -451,6 +451,34 @@ class StateManager:
             return b""
 
         return bytes.fromhex(overlay_hash)
+
+    def get_outdated_files(self, part: Part) -> Optional[List[str]]:
+        """Get the list of outdated files for this part.
+
+        :param part: The part being processed.
+
+        :returns: The list of outdated files from the part's pull step.
+        """
+        stw = self._state_db.get(part_name=part.name, step=Step.PULL)
+        if not stw:
+            return None
+
+        pull_state = cast(PullState, stw.state)
+        return pull_state.outdated_files
+
+    def get_outdated_dirs(self, part: Part) -> Optional[List[str]]:
+        """Get the list of outdated directories for this part.
+
+        :param part: The part being processed.
+
+        :returns: The list of outdated directories from the part's pull step.
+        """
+        stw = self._state_db.get(part_name=part.name, step=Step.PULL)
+        if not stw:
+            return None
+
+        pull_state = cast(PullState, stw.state)
+        return pull_state.outdated_dirs
 
 
 def _sort_steps_by_state_timestamp(

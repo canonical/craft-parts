@@ -17,6 +17,7 @@
 """Plugin base class and definitions."""
 
 import abc
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
 
 from pydantic import BaseModel
@@ -49,7 +50,7 @@ class Plugin(abc.ABC):
     ) -> None:
         self._options = properties
         self._part_info = part_info
-        self.action_properties: Optional[ActionProperties] = None
+        self._action_properties: ActionProperties
 
     @abc.abstractmethod
     def get_build_snaps(self) -> Set[str]:
@@ -71,6 +72,13 @@ class Plugin(abc.ABC):
     @abc.abstractmethod
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
+
+    def set_action_properties(self, action_properties: ActionProperties) -> None:
+        """Store a copy of the given action properties.
+
+        :param action_properties: The properties to store.
+        """
+        self._action_properties = deepcopy(action_properties)
 
 
 class PluginModel(BaseModel):
