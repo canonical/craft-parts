@@ -95,7 +95,7 @@ def test_step_callback(tmpdir, capfd, step):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == (
         f"step = {step!r}\n"
         f"part_src_dir = {tmpdir}/parts/foo/src\n"
@@ -121,7 +121,7 @@ def test_prologue_callback(tmpdir, capfd):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == ("application_name = test_prologue_callback\nstep Step.PULL\n")
 
 
@@ -156,7 +156,7 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=action_type))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     if action_type == ActionType.SKIP:
         assert not out
     else:
@@ -184,7 +184,7 @@ def test_callback_post(tmpdir, capfd, step, action_type):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=action_type))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     if action_type == ActionType.SKIP:
         assert not out
     else:
@@ -224,7 +224,7 @@ def test_update_callback_pre(tmpdir, capfd, step):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == f"callback\nstep {step!r}\n"
 
 
@@ -246,7 +246,7 @@ def test_update_callback_post(tmpdir, capfd, step):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == f"step {step!r}\ncallback\n"
 
 
@@ -336,7 +336,7 @@ def test_callback_prologue(tmpdir, capfd):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == "prologue\nfoo Step.PULL\n"
 
 
@@ -357,5 +357,5 @@ def test_callback_epilogue(tmpdir, capfd):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == "foo Step.PULL\nepilogue\n"

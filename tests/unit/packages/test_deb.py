@@ -34,7 +34,7 @@ from craft_parts.packages.deb_package import DebPackage
 
 @pytest.fixture(autouse=True)
 def mock_env_copy():
-    with mock.patch("os.environ.copy", return_value=dict()) as m:
+    with mock.patch("os.environ.copy", return_value={}) as m:
         yield m
 
 
@@ -111,6 +111,7 @@ def test_fake_wrapper_apt_unavailable(monkeypatch):
 
 class TestPackages:
     def test_fetch_stage_packages(self, mocker, tmpdir, fake_apt_cache, fake_deb_run):
+        # pylint: disable=unnecessary-dunder-call
         mocker.patch(
             "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
             {"filtered-pkg-1", "filtered-pkg-2"},
@@ -496,7 +497,7 @@ def fake_dpkg_query(mocker):
 
         raise CalledProcessError(
             1,
-            "dpkg-query: no path found matching pattern {}".format(args[0][2]),
+            f"dpkg-query: no path found matching pattern {args[0][2]}",
         )
 
     mocker.patch("subprocess.check_output", side_effect=dpkg_query)
@@ -551,7 +552,7 @@ class TestGetPackagesInBase:
             "craft_parts.packages.deb._get_dpkg_list_path", return_value=dpkg_list_path
         )
 
-        assert deb.get_packages_in_base(base="core22") == list()
+        assert deb.get_packages_in_base(base="core22") == []
 
 
 def test_get_filtered_stage_package_restricts_core20_ignore_filter(mocker):
