@@ -94,7 +94,7 @@ def test_step_callback(new_dir, mocker, capfd, step):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == (
         textwrap.dedent(
             f"""\
@@ -137,7 +137,7 @@ def test_prologue_callback(new_dir, capfd, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     assert out == (
         textwrap.dedent(
             f"""\

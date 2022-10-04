@@ -297,6 +297,7 @@ class TestFixPkgConfig:
             f"{tmpdir}{fixed_prefix}"
         )
 
+    # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
         "prefix,prefix_trim,fixed_prefix",
         [
@@ -313,7 +314,7 @@ class TestFixPkgConfig:
         fixed_prefix,
         pkg_config_file,
         expected_pkg_config_content,
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Verify prefixes from the `prefix_trim` argument are trimmed."""
         pc_file = tmpdir / "my-file.pc"
         pkg_config_file(pc_file, prefix)

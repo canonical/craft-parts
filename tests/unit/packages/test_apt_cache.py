@@ -43,7 +43,7 @@ class TestAptStageCache:
         stage_cache.mkdir(exist_ok=True, parents=True)
 
         AptCache.configure_apt("test_stage_packages")
-        with AptCache(stage_cache=stage_cache) as apt_cache:
+        with AptCache(stage_cache=stage_cache) as cache:
             package_names = {"pciutils"}
             filtered_names = {
                 "base-files",
@@ -65,19 +65,17 @@ class TestAptStageCache:
                 "tar",
             }
 
-            apt_cache.mark_packages(package_names)
-            apt_cache.unmark_packages(unmark_names=filtered_names)
+            cache.mark_packages(package_names)
+            cache.unmark_packages(unmark_names=filtered_names)
 
-            marked_packages = apt_cache.get_packages_marked_for_installation()
+            marked_packages = cache.get_packages_marked_for_installation()
             assert sorted([name for name, _ in marked_packages]) == [
                 "libpci3",
                 "pciutils",
             ]
 
             names = []
-            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                fetch_dir_path
-            ):
+            for pkg_name, pkg_version, dl_path in cache.fetch_archives(fetch_dir_path):
                 names.append(pkg_name)
                 assert dl_path.exists()
                 assert dl_path.parent == fetch_dir_path
@@ -97,9 +95,9 @@ class TestAptStageCache:
         bad_pkg = cast(apt.package.Package, MockPackage())
         mocker.patch("apt.cache.Cache.get_changes", return_value=[bad_pkg])
 
-        with AptCache(stage_cache=stage_cache) as apt_cache:
+        with AptCache(stage_cache=stage_cache) as cache:
             with pytest.raises(errors.PackagesNotFound) as raised:
-                apt_cache.get_packages_marked_for_installation()
+                cache.get_packages_marked_for_installation()
 
         assert raised.value.packages == ["mock"]
 
@@ -130,9 +128,9 @@ class TestAptStageCache:
         bad_pkg = cast(apt.package.Package, MockPackage())
         mocker.patch("apt.cache.Cache.get_changes", return_value=[bad_pkg])
 
-        with AptCache(stage_cache=stage_cache) as apt_cache:
+        with AptCache(stage_cache=stage_cache) as cache:
             with pytest.raises(errors.PackageNotFound) as raised:
-                apt_cache.unmark_packages({"mock"})
+                cache.unmark_packages({"mock"})
 
         assert raised.value.package_name == "mock"
 
@@ -208,18 +206,18 @@ class TestAptReadonlyHostCache:
     """Host cache tests."""
 
     def test_host_is_package_valid(self):
-        with AptCache() as apt_cache:
-            assert apt_cache.is_package_valid("apt")
-            assert apt_cache.is_package_valid("fake-news-bears") is False
+        with AptCache() as cache:
+            assert cache.is_package_valid("apt")
+            assert cache.is_package_valid("fake-news-bears") is False
 
     def test_host_get_installed_packages(self):
-        with AptCache() as apt_cache:
-            installed_packages = apt_cache.get_installed_packages()
+        with AptCache() as cache:
+            installed_packages = cache.get_installed_packages()
             assert isinstance(installed_packages, dict)
             assert "apt" in installed_packages
             assert "fake-news-bears" not in installed_packages
 
     def test_host_get_installed_version(self):
-        with AptCache() as apt_cache:
-            assert isinstance(apt_cache.get_installed_version("apt"), str)
-            assert apt_cache.get_installed_version("fake-news-bears") is None
+        with AptCache() as cache:
+            assert isinstance(cache.get_installed_version("apt"), str)
+            assert cache.get_installed_version("fake-news-bears") is None

@@ -23,7 +23,7 @@ import yaml
 import craft_parts
 from craft_parts import Action, ActionType, Step
 
-parts_yaml = textwrap.dedent(
+basic_parts_yaml = textwrap.dedent(
     """\
     parts:
       bar:
@@ -40,7 +40,7 @@ parts_yaml = textwrap.dedent(
 
 
 def test_basic_lifecycle_actions(new_dir, mocker):
-    parts = yaml.safe_load(parts_yaml)
+    parts = yaml.safe_load(basic_parts_yaml)
 
     Path("a.tar.gz").touch()
 
@@ -119,7 +119,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         ctx.execute(actions)
 
     # Modifying foo’s source marks bar as dirty
-    new_yaml = parts_yaml.replace("source: a.tar.gz", "source: .")
+    new_yaml = basic_parts_yaml.replace("source: a.tar.gz", "source: .")
     parts = yaml.safe_load(new_yaml)
 
     lf = craft_parts.LifecycleManager(
