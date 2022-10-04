@@ -297,7 +297,6 @@ class TestFixPkgConfig:
             f"{tmpdir}{fixed_prefix}"
         )
 
-    # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
         "prefix,prefix_trim,fixed_prefix",
         [
