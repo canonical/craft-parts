@@ -32,6 +32,7 @@ class GoPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the Go plugin."""
 
     go_buildtags: List[str] = []
+    go_generate: List[str] = []
 
     # part properties required by the plugin
     source: str
@@ -90,15 +91,16 @@ class GoPlugin(Plugin):
     or to have it installed or built in a different part. In this case, the
     name of the part supplying the go compiler must be "go".
 
-    The plugin will call "go generate" during build to support go projects
-    that generate code.
-
     The go plugin uses the common plugin keywords as well as those for "sources".
     Additionally, the following plugin-specific keywords can be used:
 
     - ``go-buildtags``
       (list of strings)
       Tags to use during the go build. Default is not to use any build tags.
+    - ``go-generate``
+      (list of strings)
+      Parameters to pass to `go generate` before building. Each item on the list
+      will be a separate `go generate` call. Default is not to call `go generate`.
     """
 
     properties_class = GoPluginProperties
@@ -127,8 +129,14 @@ class GoPlugin(Plugin):
         else:
             tags = ""
 
-        return [
-            "go mod download",
-            "go generate ./...",
-            f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
-        ]
+        generate_cmds: List[str] = []
+        for cmd in options.go_generate:
+            generate_cmds.append(f"go generate {cmd}")
+
+        return (
+            ["go mod download"]
+            + generate_cmds
+            + [
+                f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
+            ]
+        )

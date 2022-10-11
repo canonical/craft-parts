@@ -139,7 +139,6 @@ def test_get_build_commands(part_info):
 
     assert plugin.get_build_commands() == [
         "go mod download",
-        "go generate ./...",
         'go install -p "1"  ./...',
     ]
 
@@ -152,7 +151,6 @@ def test_get_build_commands_with_buildtags(part_info):
 
     assert plugin.get_build_commands() == [
         "go mod download",
-        "go generate ./...",
         'go install -p "1" -tags=dev,debug ./...',
     ]
 
@@ -180,3 +178,17 @@ def test_get_out_of_source_build(part_info):
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_out_of_source_build() is False
+
+
+def test_get_build_commands_go_generate(part_info):
+    properties = GoPlugin.properties_class.unmarshal(
+        {"source": ".", "go-generate": ["-v a", "-x b"]}
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "go mod download",
+        "go generate -v a",
+        "go generate -x b",
+        'go install -p "1"  ./...',
+    ]
