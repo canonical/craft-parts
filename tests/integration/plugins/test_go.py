@@ -88,8 +88,10 @@ def test_go_generate(new_dir):
           foo:
             plugin: go
             source: {source_location}
+            go-generate:
+              - gen/generator.go
             build-environment:
-            - GO111MODULE: "on"
+              - GO111MODULE: "on"
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -102,6 +104,7 @@ def test_go_generate(new_dir):
         ctx.execute(actions)
 
     binary = Path(lf.project_info.prime_dir, "bin", "generate")
+    assert binary.is_file()
 
     output = subprocess.check_output([str(binary)], text=True)
     # This is the expected output that "gen/generator.go" sets in "main.go"
