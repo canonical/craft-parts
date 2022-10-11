@@ -22,7 +22,7 @@ import glob
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from overrides import overrides
 
@@ -130,6 +130,17 @@ class LocalSource(SourceHandler):
         logger.debug("updated directories: %r", self._updated_directories)
 
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
+
+    @overrides
+    def get_outdated_files(self) -> Tuple[List[str], List[str]]:
+        """Obtain lists of outdated files and directories.
+
+        :return: The lists of outdated files and directories.
+
+        :raise errors.SourceUpdateUnsupported: If the source handler can't check if
+            files are outdated.
+        """
+        return (sorted(self._updated_files), sorted(self._updated_directories))
 
     @overrides
     def update(self):

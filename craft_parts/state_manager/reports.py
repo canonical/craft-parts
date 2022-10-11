@@ -46,6 +46,8 @@ class OutdatedReport:
         *,
         previous_step_modified: Optional[Step] = None,
         source_modified: bool = False,
+        outdated_files: Optional[List[str]] = None,
+        outdated_dirs: Optional[List[str]] = None,
     ) -> None:
         """Create a new OutdatedReport.
 
@@ -54,6 +56,8 @@ class OutdatedReport:
         """
         self.previous_step_modified = previous_step_modified
         self.source_modified = source_modified
+        self.outdated_files = outdated_files
+        self.outdated_dirs = outdated_dirs
 
     def reason(self) -> str:
         """Get summarized report.
