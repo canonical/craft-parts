@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.15.0 (2022-10-11)
+-------------------
+
+- Add support to chisel slices
+- Add ``go-generate`` property to the go plugin
+
 1.14.2 (2022-09-22)
 -------------------
 
