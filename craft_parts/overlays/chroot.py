@@ -47,12 +47,14 @@ def chroot(path: Path, target: Callable, *args, **kwargs) -> Any:
     child = multiprocessing.Process(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
+    logger.debug("[pid=%d] set up chroot", os.getpid())
     _setup_chroot(path)
     try:
         child.start()
         res, err = parent_conn.recv()
         child.join()
     finally:
+        logger.debug("[pid=%d] clean up chroot", os.getpid())
         _cleanup_chroot(path)
 
     if isinstance(err, str):
@@ -104,8 +106,8 @@ _linux_mounts: List[_Mount] = [
     _Mount(None, "/etc/resolv.conf", "/etc/resolv.conf", "--bind"),
     _Mount("proc", "proc", "/proc", None),
     _Mount("sysfs", "sysfs", "/sys", None),
-    _Mount(None, "/dev", "/dev", "--bind"),
-    _Mount("tmpfs", "tmpfs", "/dev/shm", None),
+    # Device nodes require MS_REC to be bind mounted inside a container.
+    _Mount(None, "/dev", "/dev", "--rbind"),
 ]
 
 
@@ -141,6 +143,8 @@ def _setup_chroot_linux(path: Path) -> None:
         else:
             logger.debug("[pid=%d] mountpoint %r does not exist", pid, str(mountpoint))
 
+    logger.debug("chroot setup complete")
+
 
 def _cleanup_chroot_linux(path: Path) -> None:
     """Linux-specific chroot environment cleanup."""
@@ -150,4 +154,10 @@ def _cleanup_chroot_linux(path: Path) -> None:
 
         if mountpoint.exists():
             logger.debug("[pid=%d] umount: %r", pid, str(mountpoint))
-            os_utils.umount(str(mountpoint))
+            if entry.option == "--rbind":
+                # Mount points under /dev may be in use and make the bind mount
+                # unmountable. This may happen in destructive mode depending on
+                # the host environment, so use MNT_DETACH to defer unmounting.
+                os_utils.umount(str(mountpoint), "--recursive", "--lazy")
+            else:
+                os_utils.umount(str(mountpoint))

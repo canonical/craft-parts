@@ -411,8 +411,10 @@ class TestMount:
 
     def test_umount(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.umount("/mountpoint")
-        mock_call.assert_called_once_with(["/bin/umount", "/mountpoint"])
+        os_utils.umount("/mountpoint", "some", "args")
+        mock_call.assert_called_once_with(
+            ["/bin/umount", "some", "args", "/mountpoint"]
+        )
 
     def test_umount_retry(self, mocker):
         gen = itertools.count()
