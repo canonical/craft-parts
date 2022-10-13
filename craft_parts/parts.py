@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field, ValidationError, root_validator, validato
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
+from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 
@@ -59,6 +60,7 @@ class PartSpec(BaseModel):
     override_build: Optional[str] = None
     override_stage: Optional[str] = None
     override_prime: Optional[str] = None
+    permissions: List[Permissions] = []
 
     class Config:
         """Pydantic model configuration."""
