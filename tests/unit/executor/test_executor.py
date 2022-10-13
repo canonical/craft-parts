@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from craft_parts import callbacks
+from craft_parts import callbacks, overlays
 from craft_parts.actions import Action
 from craft_parts.executor import ExecutionContext, Executor
 from craft_parts.infos import ProjectInfo
@@ -179,6 +179,17 @@ class TestExecutionContext:
 
         captured = capfd.readouterr()
         assert captured.out == "build\nepilogue custom\n"
+
+    def test_prologue_overlay_packages(self, new_dir, mocker):
+        """Check that the overlay package cache is not touched if the part doesn't have overlay packages"""
+        mock_mount = mocker.patch.object(overlays, "PackageCacheMount")
+
+        p1 = Part("p1", {"plugin": "nil", "overlay-script": "echo overlay"})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        e = Executor(project_info=info, part_list=[p1])
+
+        with ExecutionContext(executor=e):
+            assert not mock_mount.called
 
     def test_capture_stdout(self, capfd, new_dir):
         def cbf(info):

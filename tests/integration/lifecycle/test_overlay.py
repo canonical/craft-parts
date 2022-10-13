@@ -35,7 +35,13 @@ def fake_call(mocker):
 def mock_overlay_support_prerequisites(mocker):
     mocker.patch.object(sys, "platform", "linux")
     mocker.patch("os.geteuid", return_value=0)
-    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+    mock_refresh = mocker.patch(
+        "craft_parts.overlays.OverlayManager.refresh_packages_list"
+    )
+    yield
+    # Make sure that refresh_packages_list() was *not* called, as it's an expensive call that
+    # overlays without packages do not need.
+    assert not mock_refresh.called
 
 
 class TestOverlayLayerOrder:

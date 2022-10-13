@@ -91,7 +91,7 @@ class Executor:
 
         # update the overlay environment package list to allow installation of
         # overlay packages.
-        if any(p.has_overlay for p in self._part_list):
+        if any(p.spec.overlay_packages for p in self._part_list):
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 ctx.refresh_packages_list()
 
