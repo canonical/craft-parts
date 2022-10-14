@@ -27,18 +27,18 @@ from pydantic import BaseModel, root_validator
 class Permissions(BaseModel):
     """Description of the ownership and permission settings for a set of files.
 
-    A `Permissions` object specifies that a given pattern-like `path` should
-    be owned by `owner` with a given `group`, and have the read/write/execute
-    bits defined by `mode`.
+    A ``Permissions`` object specifies that a given pattern-like ``path`` should
+    be owned by ``owner`` with a given ``group``, and have the read/write/execute
+    bits defined by ``mode``.
 
     Notes
     -----
-      - `path` is optional and defaults to "everything";
-      - `owner` and `group` are optional if both are omitted - that is, if
+      - ``path`` is optional and defaults to "everything";
+      - ``owner`` and ``group`` are optional if both are omitted - that is, if
         one of the pair is specified then both must be;
-      - `mode` is a string containing an integer in base 8. For example, "755",
+      - ``mode`` is a string containing an integer in base 8. For example, "755",
       "0755" and "0o755" are all accepted and are the equivalent of calling
-      `chmod 755 ...`.
+      ``chmod 755 ...``.
 
     """
 
@@ -70,17 +70,17 @@ class Permissions(BaseModel):
         return int(self.mode, base=8)
 
     def applies_to(self, path: Union[Path, str]) -> bool:
-        """Whether this Permissions' path pattern applies to `path`."""
+        """Whether this Permissions' path pattern applies to ``path``."""
         if self.path == "*":
             return True
 
         return fnmatch(str(path), self.path)
 
     def apply_permissions(self, target: Union[Path, str]) -> None:
-        """Apply the permissions configuration to `target`.
+        """Apply the permissions configuration to ``target``.
 
-        Note that this method doesn't check if this `Permissions`'s path
-        pattern matches `target`; be sure to call `applies_to()` beforehand.
+        Note that this method doesn't check if this ``Permissions``'s path
+        pattern matches ``target``; be sure to call ``applies_to()`` beforehand.
         """
         if self.mode is not None:
             os.chmod(target, self.mode_octal)
@@ -92,11 +92,11 @@ class Permissions(BaseModel):
 def filter_permissions(
     target: Union[Path, str], permissions: List[Permissions]
 ) -> List[Permissions]:
-    """Get the subset of `permissions` whose path patterns apply to `target`."""
+    """Get the subset of ``permissions`` whose path patterns apply to ``target``."""
     return [p for p in permissions if p.applies_to(target)]
 
 
 def apply_permissions(target: Union[Path, str], permissions: List[Permissions]) -> None:
-    """Apply all permissions configurations in `permissions` to `target`."""
+    """Apply all permissions configurations in ``permissions`` to ``target``."""
     for permission in permissions:
         permission.apply_permissions(target)
