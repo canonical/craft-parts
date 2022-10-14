@@ -62,6 +62,9 @@ class TestPartSpecs:
             "override-build": "override-build",
             "override-stage": "override-stage",
             "override-prime": "override-prime",
+            "permissions": [
+                {"path": "etc/*", "owner": 1111, "group": 1111, "mode": "755"}
+            ],
         }
 
         data_copy = deepcopy(data)
