@@ -19,9 +19,10 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from craft_parts import overlays
+from craft_parts.permissions import Permissions, filter_permissions
 from craft_parts.state_manager.states import MigrationState, StepState
 from craft_parts.utils import file_utils
 
@@ -38,6 +39,7 @@ def migrate_files(
     follow_symlinks: bool = False,
     oci_translation: bool = False,
     fixup_func=lambda *args: None,
+    permissions: Optional[List[Permissions]] = None,
 ) -> Tuple[Set[str], Set[str]]:
     """Copy or link files from a directory to another.
 
@@ -53,11 +55,14 @@ def migrate_files(
     :param follow_symlinks: Migrate symlink targets.
     :param oci_translation: Convert to OCI whiteout files and opaque dirs.
     :param fixup_func: A function to run on each migrated file.
+    :param permissions: A list of permissions definitions to take into
+        account when migrating the files (the original files are not modified).
 
     :returns: A tuple containing sets of migrated files and directories.
     """
     migrated_files: Set[str] = set()
     migrated_dirs: Set[str] = set()
+    permissions = permissions or []
 
     for dirname in sorted(dirs):
         src = srcdir / dirname
@@ -69,7 +74,9 @@ def migrate_files(
             src = overlays.oci_whiteout(src)
             dst = overlays.oci_whiteout(dst)
 
-        file_utils.create_similar_directory(str(src), str(dst))
+        file_utils.create_similar_directory(
+            str(src), str(dst), filter_permissions(dirname, permissions)
+        )
         migrated_dirs.add(dirname)
 
         # If source is an opaque dir (overlayfs or OCI), create an OCI opaque
@@ -113,7 +120,12 @@ def migrate_files(
             oci_dst.touch()
             migrated_files.add(str(oci_whiteout))
         else:
-            file_utils.link_or_copy(str(src), str(dst), follow_symlinks=follow_symlinks)
+            file_utils.link_or_copy(
+                str(src),
+                str(dst),
+                follow_symlinks=follow_symlinks,
+                permissions=filter_permissions(filename, permissions),
+            )
             fixup_func(str(dst))
             migrated_files.add(str(filename))
 
