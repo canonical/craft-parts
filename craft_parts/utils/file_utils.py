@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Callable, Generator, List, Optional, Set
 
 from craft_parts import errors
+from craft_parts.permissions import Permissions, apply_permissions
 
 logger = logging.getLogger(__name__)
 
@@ -72,19 +73,26 @@ class NonBlockingRWFifo:
 
 
 def link_or_copy(
-    source: str, destination: str, *, follow_symlinks: bool = False
+    source: str,
+    destination: str,
+    *,
+    follow_symlinks: bool = False,
+    permissions: Optional[List[Permissions]] = None,
 ) -> None:
     """Hard-link source and destination files. Copy if it fails to link.
 
     Hard-linking may fail (e.g. a cross-device link, or permission denied), so
-    as a backup plan we just copy it.
+    as a backup plan we just copy it. Note that we always copy the file if its
+    ``permissions`` will change.
 
     :param source: The source to which destination will be linked.
     :param destination: The destination to be linked to source.
     :param follow_symlinks: Whether or not symlinks should be followed.
+    :param permissions: The permissions definitions that should be applied to the
+        new file.
     """
     try:
-        if not follow_symlinks and os.path.islink(source):
+        if permissions or (not follow_symlinks and os.path.islink(source)):
             copy(source, destination)
         else:
             link(source, destination, follow_symlinks=follow_symlinks)
@@ -93,9 +101,17 @@ def link_or_copy(
             # os.link will fail if the destination already exists, so let's
             # remove it and try again.
             os.remove(destination)
-            link_or_copy(source, destination, follow_symlinks=follow_symlinks)
+            link_or_copy(
+                source,
+                destination,
+                follow_symlinks=follow_symlinks,
+                permissions=permissions,
+            )
         else:
             copy(source, destination, follow_symlinks=follow_symlinks)
+
+    if permissions:
+        apply_permissions(destination, permissions)
 
 
 def link(source: str, destination: str, *, follow_symlinks: bool = False) -> None:
@@ -127,7 +143,13 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
         raise errors.CopyFileNotFound(source) from err
 
 
-def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> None:
+def copy(
+    source: str,
+    destination: str,
+    *,
+    follow_symlinks: bool = False,
+    permissions: Optional[List[Permissions]] = None,
+) -> None:
     """Copy source and destination files.
 
     This function overwrites the destination if it already exists, and also
@@ -136,6 +158,8 @@ def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     :param source: The source to be copied to destination.
     :param destination: Where to put the copy.
     :param follow_symlinks: Whether or not symlinks should be followed.
+    :param permissions: The permissions definitions that should be applied to the
+        new file.
 
     :raises CopyFileNotFound: If source doesn't exist.
     """
@@ -156,6 +180,9 @@ def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as err:
         logger.debug("Unable to chown %s: %s", destination, err)
+
+    if permissions:
+        apply_permissions(destination, permissions)
 
 
 def link_or_copy_tree(
@@ -227,13 +254,18 @@ def link_or_copy_tree(
             copy_function(source, destination)
 
 
-def create_similar_directory(source: str, destination: str) -> None:
+def create_similar_directory(
+    source: str, destination: str, permissions: Optional[List[Permissions]] = None
+) -> None:
     """Create a directory with the same permission bits and owner information.
 
     :param source: Directory from which to copy name, permission bits, and
          owner information.
-    :param destination: Directory to create and to which the `source`
+    :param destination: Directory to create and to which the ``source``
          information will be copied.
+    :param permissions: The permission definitions to apply to the new directory.
+        If omitted, the new directory will have the same permissions and ownership
+        of ``source``.
     """
     stat = os.stat(source, follow_symlinks=False)
     uid = stat.st_uid
@@ -251,6 +283,9 @@ def create_similar_directory(source: str, destination: str) -> None:
         logger.debug("Unable to chown %s: %s", destination, exception)
 
     shutil.copystat(source, destination, follow_symlinks=False)
+
+    if permissions:
+        apply_permissions(destination, permissions)
 
 
 def calculate_hash(filename: Path, *, algorithm: str) -> str:

@@ -26,6 +26,7 @@ from craft_parts.executor.filesets import Fileset
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
+from craft_parts.permissions import Permissions
 from craft_parts.steps import Step
 
 
@@ -334,6 +335,51 @@ class TestFileMigration:
 
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo/bar").stat().st_mode)
+
+    def test_migration_with_permissions(self, mock_chown):
+        source = Path("source")
+        source.mkdir()
+
+        (source / "1.txt").touch()
+        (source / "bar").mkdir()
+        (source / "bar/2.txt").touch()
+        (source / "baz").mkdir()
+        (source / "baz/3.txt").touch()
+        (source / "baz/qux").mkdir()
+        (source / "baz/qux/4.txt").touch()
+
+        os.chmod(source / "1.txt", 0o644)
+        os.chmod(source / "bar/2.txt", 0o555)
+
+        target = Path("target")
+        target.mkdir()
+
+        permissions = [
+            Permissions(path="1.txt", mode="755"),
+            Permissions(path="bar/*", mode="444"),
+            Permissions(path="baz/*", owner=1111, group=2222),
+        ]
+
+        migration.migrate_files(
+            files={"1.txt", "bar/2.txt", "baz/3.txt", "baz/qux/4.txt"},
+            dirs={"bar", "baz", "baz/qux"},
+            srcdir=source,
+            destdir=target,
+            permissions=permissions,
+        )
+
+        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755
+        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444
+
+        paths_with_chown = [
+            "target/baz/3.txt",
+            "target/baz/qux",
+            "target/baz/qux/4.txt",
+        ]
+        for p in paths_with_chown:
+            call = mock_chown[p]
+            assert call.owner == 1111
+            assert call.group == 2222
 
 
 @pytest.mark.usefixtures("new_dir")

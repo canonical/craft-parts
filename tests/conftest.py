@@ -13,13 +13,13 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import collections
 import http.server
 import os
 import tempfile
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 from unittest import mock
 
 import pytest
@@ -153,3 +153,23 @@ def dependency_fixture(new_dir):
         return dependency_bin
 
     yield create_dependency_fixture
+
+
+ChmodCall = collections.namedtuple("ChmodCall", ["owner", "group", "kwargs"])
+
+
+@pytest.fixture
+def mock_chown(mocker) -> Dict[str, ChmodCall]:
+    """Mock os.chown() and keep a record of calls to it.
+
+    The returned object is a dict where the keys match the ``path`` parameter of the
+    os.chown() call and the values are ``ChmodCall`` tuples containing the other parameters.
+    """
+    calls = {}
+
+    def fake_chown(path, uid, gid, **kwargs):
+        calls[path] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
+
+    mocker.patch.object(os, "chown", side_effect=fake_chown)
+
+    return calls

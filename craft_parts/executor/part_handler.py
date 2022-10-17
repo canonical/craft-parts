@@ -716,6 +716,7 @@ class PartHandler:
                 srcdir=part.stage_dir,
                 destdir=part.prime_dir,
                 oci_translation=True,
+                permissions=part.spec.permissions,
             )
             migrated_files |= layer_files
             migrated_dirs |= layer_dirs

@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import stat
 from pathlib import Path
 
 import pytest
 
 from craft_parts import errors
+from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
 
 
@@ -145,6 +147,27 @@ class TestLinkOrCopy:
         file_utils.link_or_copy("foo/2", "qux/2")
         assert os.stat("foo/2").st_ino == os.stat("qux/2").st_ino
 
+    def test_with_permissions(self, mock_chown):
+        os.chmod("foo/2", mode=0o644)
+
+        permissions = [
+            Permissions(path="foo/*", mode="755"),
+            Permissions(path="foo/2", owner=1111, group=2222),
+        ]
+
+        os.mkdir("qux")
+        file_utils.link_or_copy("foo/2", "qux/2", permissions=permissions)
+
+        # Check that the copied file has the correct permission bits and ownership
+        assert stat.S_IMODE(os.stat("qux/2").st_mode) == 0o755
+        mock_call = mock_chown["qux/2"]
+        assert mock_call.owner == 1111
+        assert mock_call.group == 2222
+
+        # Check that the copied file is *not* a link
+        assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino
+        assert os.stat("qux/2").st_nlink == 1
+
 
 class TestCopy:
     """Verify func:`copy` usage scenarios."""
@@ -163,3 +186,19 @@ class TestCopy:
 
 
 # TODO: test NonBlockingRWFifo
+
+
+def test_create_similar_directory_permissions(tmp_path, mock_chown):
+    source = tmp_path / "source"
+    source.mkdir()
+    os.chmod(source, 0o644)
+    target = tmp_path / "target"
+
+    permissions = [Permissions(mode="755", owner=1111, group=2222)]
+
+    file_utils.create_similar_directory(source, target, permissions=permissions)
+
+    assert stat.S_IMODE(os.stat(target).st_mode) == 0o755
+    mock_call = mock_chown[target]
+    assert mock_call.owner == 1111
+    assert mock_call.group == 2222
