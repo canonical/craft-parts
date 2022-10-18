@@ -50,18 +50,20 @@ def test_apply_permissions_mode(tmp_path):
     assert get_mode(target) == 0o644
 
 
-def test_apply_permissions_owner_group(tmp_path, mocker):
-    chown_mock = mocker.patch.object(os, "chown", autospec=True)
+def test_apply_permissions_owner_group(tmp_path, mock_chown):
     target = tmp_path / "a.txt"
     target.touch()
 
     perm = Permissions()
     perm.apply_permissions(target)
-    assert not chown_mock.called
+    assert len(mock_chown) == 0
 
     perm = Permissions(owner=1111, group=2222)
     perm.apply_permissions(target)
-    chown_mock.assert_called_once_with(target, 1111, 2222)
+
+    chown_call = mock_chown[target]
+    assert chown_call.owner == 1111
+    assert chown_call.group == 2222
 
 
 def test_applies_to():
@@ -89,20 +91,7 @@ def test_filter_permissions():
     assert filter_permissions("etc/file1.txt", permissions) == [p1, p2, p3]
 
 
-class OwnerGroup:
-    owner: int = -1
-    group: int = -1
-
-
-def test_apply_permissions(tmp_path, mocker):
-    chown_call = OwnerGroup
-
-    def fake_chown(_path, owner, group):
-        chown_call.owner = owner
-        chown_call.group = group
-
-    mocker.patch.object(os, "chown", side_effect=fake_chown)
-
+def test_apply_permissions(tmp_path, mock_chown):
     target = tmp_path / "a.txt"
     target.touch()
     os.chmod(target, 0)
@@ -115,5 +104,6 @@ def test_apply_permissions(tmp_path, mocker):
     apply_permissions(target, permissions)
 
     assert get_mode(target) == 0o755
+    chown_call = mock_chown[target]
     assert chown_call.owner == 3333
     assert chown_call.group == 4444
