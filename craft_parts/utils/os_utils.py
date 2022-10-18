@@ -252,18 +252,18 @@ def mount_overlayfs(mountpoint: str, *args) -> None:
 _UMOUNT_RETRIES = 5
 
 
-def umount(mountpoint: str) -> None:
+def umount(mountpoint: str, *args) -> None:
     """Unmount a filesystem.
 
     :param mountpoint: The mount point or device to unmount.
 
     :raises subprocess.CalledProcessError: on error.
     """
-    logger.debug("umount mountpoint=%r", mountpoint)
+    logger.debug("umount mountpoint=%r, args=%r", mountpoint, args)
     attempt = 0
     while True:  # unmount in Github CI fails randomly and needs a retry
         try:
-            subprocess.check_call(["/bin/umount", mountpoint])
+            subprocess.check_call(["/bin/umount", *args, mountpoint])
             break
         except subprocess.CalledProcessError as err:
             attempt += 1
