@@ -25,7 +25,13 @@ from craft_parts import plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
 from craft_parts.executor.step_handler import StepContents, StepHandler
-from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
+from craft_parts.infos import (
+    _ARCH_TRANSLATIONS,
+    PartInfo,
+    ProjectInfo,
+    StepInfo,
+    _get_host_architecture,
+)
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -104,18 +110,17 @@ class TestStepHandlerBuiltins:
         result = sh.run_builtin()
         build_script_path = Path(new_dir / "parts/p1/run/build.sh")
         environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
+        host_arch = _ARCH_TRANSLATIONS[_get_host_architecture()]
 
         assert get_mode(environment_script_path) == 0o644
         with open(environment_script_path, "r") as file:
             assert file.read() == dedent(
                 f"""\
-                #!/bin/bash
-                set -euo pipefail
                 # Environment
                 ## Application environment
                 ## Part environment
-                export CRAFT_ARCH_TRIPLET="x86_64-linux-gnu"
-                export CRAFT_TARGET_ARCH="amd64"
+                export CRAFT_ARCH_TRIPLET="{host_arch['triplet']}"
+                export CRAFT_TARGET_ARCH="{host_arch['deb']}"
                 export CRAFT_PARALLEL_BUILD_COUNT="1"
                 export CRAFT_PROJECT_DIR="{new_dir}"
                 export CRAFT_OVERLAY="{new_dir}/overlay/overlay"

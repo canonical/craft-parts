@@ -54,9 +54,6 @@ def generate_step_environment(
 
     # Create the script.
     with io.StringIO() as run_environment:
-        print("#!/bin/bash", file=run_environment)
-        print("set -euo pipefail", file=run_environment)
-
         print("# Environment", file=run_environment)
 
         print("## Application environment", file=run_environment)
