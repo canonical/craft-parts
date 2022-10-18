@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from pathlib import Path
+from textwrap import dedent
 from typing import Dict, List, Set
 
 import pytest
@@ -70,6 +72,11 @@ def _step_handler_for_step(step: Step, cache_dir: Path) -> StepHandler:
     )
 
 
+def get_mode(path) -> int:
+    """Shortcut the retrieve the read/write/execute mode for a given path."""
+    return os.stat(path).st_mode & 0o777
+
+
 class TestStepHandlerBuiltins:
     """Verify the built-in handlers."""
 
@@ -95,9 +102,51 @@ class TestStepHandlerBuiltins:
         Path("parts/p1/run").mkdir(parents=True)
         sh = _step_handler_for_step(Step.BUILD, cache_dir=new_dir)
         result = sh.run_builtin()
+        build_script_path = Path(new_dir / "parts/p1/run/build.sh")
+        environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
+
+        assert get_mode(environment_script_path) == 0o644
+        with open(environment_script_path, "r") as file:
+            assert file.read() == dedent(
+                f"""\
+                #!/bin/bash
+                set -euo pipefail
+                # Environment
+                ## Application environment
+                ## Part environment
+                export CRAFT_ARCH_TRIPLET="x86_64-linux-gnu"
+                export CRAFT_TARGET_ARCH="amd64"
+                export CRAFT_PARALLEL_BUILD_COUNT="1"
+                export CRAFT_PROJECT_DIR="{new_dir}"
+                export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
+                export CRAFT_STAGE="{new_dir}/stage"
+                export CRAFT_PRIME="{new_dir}/prime"
+                export CRAFT_PART_NAME="p1"
+                export CRAFT_STEP_NAME="BUILD"
+                export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
+                export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
+                export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
+                export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
+                export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
+                ## Plugin environment
+                ## User environment
+                """
+            )
+
+        assert get_mode(build_script_path) == 0o755
+        with open(build_script_path, "r") as file:
+            assert file.read() == dedent(
+                f"""\
+                #!/bin/bash
+                set -euo pipefail
+                source {environment_script_path}
+                set -x
+                hello
+                """
+            )
 
         mock_run.assert_called_once_with(
-            [str(new_dir / "parts/p1/run/build.sh")],
+            [str(build_script_path)],
             cwd=Path(new_dir / "parts/p1/build"),
             check=True,
             stdout=None,

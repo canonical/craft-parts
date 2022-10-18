@@ -119,16 +119,26 @@ class StepHandler:
         # Plugin commands.
         plugin_build_commands = self._plugin.get_build_commands()
 
-        # Save script to execute.
+        # save script to set the build environment
+        build_environment_script_path = (
+            self._part.part_run_dir.absolute() / "environment.sh"
+        )
+        build_environment_script_path.write_text(self._env)
+        build_environment_script_path.chmod(0o644)
+
+        # save script to execute the build commands
         build_script_path = self._part.part_run_dir.absolute() / "build.sh"
         with build_script_path.open("w") as run_file:
-            print(self._env, file=run_file)
+            print("#!/bin/bash", file=run_file)
+            print("set -euo pipefail", file=run_file)
+            print(f"source {build_environment_script_path}", file=run_file)
             print("set -x", file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
 
         build_script_path.chmod(0o755)
+        logger.debug("Executing %r", build_script_path)
 
         try:
             subprocess.run(
