@@ -233,10 +233,11 @@ def test_part_files_conflict():
     assert err.other_part_name == "bar"
     assert err.conflicting_files == ["file1", "file2"]
     assert err.brief == (
-        "Failed to stage: parts list the same file with different contents."
+        "Failed to stage: parts list the same file with different contents or permissions."
     )
     assert err.details == (
-        "Parts 'foo' and 'bar' list the following files, but with different contents:\n"
+        "Parts 'foo' and 'bar' list the following files, "
+        "but with different contents or permissions:\n"
         "    file1\n"
         "    file2"
     )

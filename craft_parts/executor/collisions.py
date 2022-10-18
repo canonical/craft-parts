@@ -18,12 +18,13 @@
 
 import filecmp
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from craft_parts import errors
+from craft_parts import errors, permissions
 from craft_parts.executor import filesets
 from craft_parts.executor.filesets import Fileset
 from craft_parts.parts import Part
+from craft_parts.permissions import Permissions
 
 
 def check_for_stage_collisions(part_list: List[Part]) -> None:
@@ -56,7 +57,15 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
                 this = os.path.join(part.part_install_dir, file)
                 other = os.path.join(other_part_files["installdir"], file)
 
-                if paths_collide(this, other):
+                permissions_this = permissions.filter_permissions(
+                    file, part.spec.permissions
+                )
+
+                permissions_other = permissions.filter_permissions(
+                    file, other_part_files["part"].spec.permissions
+                )
+
+                if paths_collide(this, other, permissions_this, permissions_other):
                     conflict_files.append(file)
 
             if conflict_files:
@@ -70,11 +79,25 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         all_parts_files[part.name] = {
             "files": part_contents,
             "installdir": part.part_install_dir,
+            "part": part,
         }
 
 
-def paths_collide(path1: str, path2: str) -> bool:
-    """Check whether the provided paths conflict to each other."""
+def paths_collide(
+    path1: str,
+    path2: str,
+    permissions_path1: Optional[List[Permissions]] = None,
+    permissions_path2: Optional[List[Permissions]] = None,
+) -> bool:
+    """Check whether the provided paths conflict to each other.
+
+    If both paths have Permissions definitions, they are considered to be conflicting
+    (the Permissions are not compared).
+
+    :param permissions_path1: The list of ``Permissions`` that affect ``path1``.
+    :param permissions_path2: The list of ``Permissions`` that affect ``path2``.
+
+    """
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
@@ -100,8 +123,8 @@ def paths_collide(path1: str, path2: str) -> bool:
     if not (path1_is_dir and path2_is_dir) and _file_collides(path1, path2):
         return True
 
-    # Otherwise, paths do not conflict.
-    return False
+    # Otherwise, paths only conflict if both have permissions defined for them.
+    return all([permissions_path1, permissions_path2])
 
 
 def _file_collides(file_this: str, file_other: str) -> bool:

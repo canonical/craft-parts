@@ -366,10 +366,13 @@ class PartFilesConflict(PartsError):
         self.conflicting_files = conflicting_files
         indented_conflicting_files = (f"    {i}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
-        brief = "Failed to stage: parts list the same file with different contents."
+        brief = (
+            "Failed to stage: parts list the same file "
+            "with different contents or permissions."
+        )
         details = (
             f"Parts {part_name!r} and {other_part_name!r} list the following "
-            f"files, but with different contents:\n"
+            f"files, but with different contents or permissions:\n"
             f"{file_paths}"
         )
 
