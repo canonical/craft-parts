@@ -95,8 +95,6 @@ def test_generate_step_environment_build(new_dir):
 
     assert env == textwrap.dedent(
         f"""\
-        #!/bin/bash
-        set -euo pipefail
         # Environment
         ## Application environment
         export APP_GLOBAL_ENVVAR="from_app"
@@ -148,8 +146,6 @@ def test_generate_step_environment_no_project_name(new_dir):
 
     assert env == textwrap.dedent(
         f"""\
-        #!/bin/bash
-        set -euo pipefail
         # Environment
         ## Application environment
         ## Part environment
@@ -201,8 +197,6 @@ def test_generate_step_environment_no_build(new_dir, step):
 
     assert env == textwrap.dedent(
         f"""\
-        #!/bin/bash
-        set -euo pipefail
         # Environment
         ## Application environment
         ## Part environment
@@ -253,8 +247,6 @@ def test_generate_step_environment_no_user_env(new_dir):
 
     assert env == textwrap.dedent(
         f"""\
-        #!/bin/bash
-        set -euo pipefail
         # Environment
         ## Application environment
         ## Part environment
