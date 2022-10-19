@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from pathlib import Path
+from typing import List
 
 import pytest
 
@@ -20,6 +22,7 @@ from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.collisions import check_for_stage_collisions
 from craft_parts.parts import Part
+from craft_parts.permissions import Permissions
 
 
 @pytest.fixture
@@ -164,3 +167,45 @@ class TestCollisions:
 
         # a part not built doesn't have the stage file in the installdir.
         check_for_stage_collisions([part_built, part_not_built])
+
+    def create_part_with_permissions(
+        self, part_name: str, permissions: List[Permissions], tmpdir: Path
+    ) -> Part:
+        part = Part(
+            part_name,
+            {"permissions": permissions},
+            project_dirs=ProjectDirs(work_dir=tmpdir),
+        )
+        p = part.part_install_dir
+        p.mkdir(parents=True)
+        (p / "1").write_text("1")
+        (p / "2").write_text("2")
+
+        return part
+
+    def test_collision_with_permissions(self, tmpdir):
+        """Test that Parts' Permissions are taken into account in collision verification"""
+
+        # Create two parts with identical contents (files "1" and "2"). One part has
+        # permissions to set all files to 1111:2222 and *also* set the mode of file
+        # "2" to 0o755, while the other part sets file "1" to 1111:2222 and file "2"'s
+        # permissions to 0o755. The permissions conflict because of "2"'s ownership.
+        part1_permissions = [
+            Permissions(owner=1111, group=2222),
+            Permissions(path="2", mode="755"),
+        ]
+        part2_permissions = [
+            Permissions(path="1", owner=1111, group=2222),
+            Permissions(path="2", mode="755"),
+        ]
+        p1 = self.create_part_with_permissions("part1", part1_permissions, tmpdir)
+        p2 = self.create_part_with_permissions("part2", part2_permissions, tmpdir)
+
+        with pytest.raises(errors.PartFilesConflict) as raised:
+            check_for_stage_collisions([p1, p2])
+
+        # Even though both parts define Permissions for file "1", they are compatible.
+        # Therefore, only "2" should be marked as conflicting.
+        assert raised.value.other_part_name == "part1"
+        assert raised.value.part_name == "part2"
+        assert raised.value.conflicting_files == ["2"]

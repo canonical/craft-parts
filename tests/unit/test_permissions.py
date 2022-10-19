@@ -19,7 +19,12 @@ import os
 import pydantic
 import pytest
 
-from craft_parts.permissions import Permissions, apply_permissions, filter_permissions
+from craft_parts.permissions import (
+    Permissions,
+    apply_permissions,
+    filter_permissions,
+    permissions_are_compatible,
+)
 
 
 def get_mode(path) -> int:
@@ -107,3 +112,18 @@ def test_apply_permissions(tmp_path, mock_chown):
     chown_call = mock_chown[target]
     assert chown_call.owner == 3333
     assert chown_call.group == 4444
+
+
+def test_permissions_are_compatible():
+    perm1 = [Permissions(mode="755"), Permissions(owner=1111, group=2222)]
+    perm2 = [Permissions(mode="0o755", owner=1111, group=2222)]
+    perm3 = [Permissions(owner=1111, group=2222)]
+    perm4 = None
+    perm5 = []
+
+    assert permissions_are_compatible(perm1, perm2)
+    assert not permissions_are_compatible(perm1, perm3)
+    assert not permissions_are_compatible(perm2, perm3)
+    assert permissions_are_compatible(perm1, perm4)
+    assert permissions_are_compatible(perm1, perm5)
+    assert permissions_are_compatible(perm4, perm5)
