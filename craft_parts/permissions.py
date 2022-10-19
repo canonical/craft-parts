@@ -100,3 +100,81 @@ def apply_permissions(target: Union[Path, str], permissions: List[Permissions]) 
     """Apply all permissions configurations in ``permissions`` to ``target``."""
     for permission in permissions:
         permission.apply_permissions(target)
+
+
+def permissions_are_compatible(
+    left: Optional[List[Permissions]], right: Optional[List[Permissions]]
+) -> bool:
+    """Whether two sets of permissions definitions are not in conflict with each other.
+
+    The function determines whether applying the two lists of Permissions to a given
+    path would result in the same ``owner``, ``group`` and ``mode``.
+
+    Remarks:
+    --------
+    - If either of the parameters is None or empty, they are considered compatible
+        because they are understood to not be "in conflict".
+    - Otherwise, the permissions are incompatible if one would they would set one
+        of the attributes (owner, group and mode) to different values, *even if* one
+        of them would not modify the attribute at all.
+    - The ``path`` attribute of the ``Permissions`` are completely ignored, as they
+        are understood to apply to the same file of interest through a previous call
+        of ``filter_permissions()``.
+
+    :param left: the first set of permissions.
+    :param right: the second set of permissions.
+    """
+    left = left or []
+    right = right or []
+
+    if len(left) == 0 or len(right) == 0:
+        # If either (or both) of the lists are empty, consider them "compatible".
+        return True
+
+    # Otherwise, "squash" both lists into individual Permissions objects to
+    # compare them.
+    squashed_left = _squash_permissions(left)
+    squashed_right = _squash_permissions(right)
+
+    if squashed_left.owner != squashed_right.owner:
+        return False
+
+    if squashed_left.group != squashed_right.group:
+        return False
+
+    if squashed_left.mode is None and squashed_right.mode is None:
+        return True
+
+    if squashed_left.mode is None or squashed_right.mode is None:
+        return False
+
+    return squashed_left.mode_octal == squashed_right.mode_octal
+
+
+def _squash_permissions(permissions: List[Permissions]) -> Permissions:
+    """Compress a sequence of Permissions into a single one.
+
+    This function produces a single ``Permissions`` object whose application to a path
+    is equivalent to calling ``apply_permissions()`` with the full list ``permissions``.
+    Note that the ``path`` attribute of the Permissions objects are ignored, as they
+    are assumed to all match (so they must have been pre-filtered with
+    ``filter_permissions``).
+
+    :param permissions: A series of Permissions objects to be "squashed" into a single
+        one.
+    """
+    attributes = {
+        "path": "*",
+        "owner": None,
+        "group": None,
+        "mode": None,
+    }
+
+    keys = tuple(attributes.keys())
+    for permission in permissions:
+        for key in keys:
+            permission_value = getattr(permission, key)
+            if permission_value is not None:
+                attributes[key] = permission_value
+
+    return Permissions(**attributes)

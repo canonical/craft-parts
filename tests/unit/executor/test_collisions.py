@@ -186,18 +186,26 @@ class TestCollisions:
     def test_collision_with_permissions(self, tmpdir):
         """Test that Parts' Permissions are taken into account in collision verification"""
 
-        # Create two parts with identical contents (files "1" and "2"). One part has permissions
-        # to set all files to 0o644, and the other part has permissions to set file "2" to 0o755.
-        part1_permissions = [Permissions(mode="644")]
-        part2_permissions = [Permissions(path="2", mode="755")]
+        # Create two parts with identical contents (files "1" and "2"). One part has
+        # permissions to set all files to 1111:2222 and *also* set the mode of file
+        # "2" to 0o755, while the other part sets file "1" to 1111:2222 and file "2"'s
+        # permissions to 0o755. The permissions conflict because of "2"'s ownership.
+        part1_permissions = [
+            Permissions(owner=1111, group=2222),
+            Permissions(path="2", mode="755"),
+        ]
+        part2_permissions = [
+            Permissions(path="1", owner=1111, group=2222),
+            Permissions(path="2", mode="755"),
+        ]
         p1 = self.create_part_with_permissions("part1", part1_permissions, tmpdir)
         p2 = self.create_part_with_permissions("part2", part2_permissions, tmpdir)
 
         with pytest.raises(errors.PartFilesConflict) as raised:
             check_for_stage_collisions([p1, p2])
 
-        # Permissions only collide if both parts define them for a given path, so only "2"
-        # should collide.
+        # Even though both parts define Permissions for file "1", they are compatible.
+        # Therefore, only "2" should be marked as conflicting.
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part2"
         assert raised.value.conflicting_files == ["2"]

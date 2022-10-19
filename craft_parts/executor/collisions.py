@@ -24,7 +24,7 @@ from craft_parts import errors, permissions
 from craft_parts.executor import filesets
 from craft_parts.executor.filesets import Fileset
 from craft_parts.parts import Part
-from craft_parts.permissions import Permissions
+from craft_parts.permissions import Permissions, permissions_are_compatible
 
 
 def check_for_stage_collisions(part_list: List[Part]) -> None:
@@ -92,7 +92,8 @@ def paths_collide(
     """Check whether the provided paths conflict to each other.
 
     If both paths have Permissions definitions, they are considered to be conflicting
-    (the Permissions are not compared).
+    if the permissions are incompatible (as defined by
+    ``permissions.permissions_are_compatible()``).
 
     :param permissions_path1: The list of ``Permissions`` that affect ``path1``.
     :param permissions_path2: The list of ``Permissions`` that affect ``path2``.
@@ -123,8 +124,8 @@ def paths_collide(
     if not (path1_is_dir and path2_is_dir) and _file_collides(path1, path2):
         return True
 
-    # Otherwise, paths only conflict if both have permissions defined for them.
-    return all([permissions_path1, permissions_path2])
+    # Otherwise, paths conflict if they have incompatible permissions.
+    return not permissions_are_compatible(permissions_path1, permissions_path2)
 
 
 def _file_collides(file_this: str, file_other: str) -> bool:
