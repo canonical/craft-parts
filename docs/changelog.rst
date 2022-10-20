@@ -2,6 +2,15 @@
 Changelog
 *********
 
+1.16.0 (2022-10-20)
+-------------------
+
+- Add file permission setting
+- Take permissions into account when checking file collisions
+- Only refresh overlay packages if necessary
+- Generate separate environment setup file
+- Make changed file list available to plugins
+
 1.15.1 (2022-10-14)
 -------------------
 
