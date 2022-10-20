@@ -815,6 +815,10 @@ class TestGitConflicts(GitBaseTestCase):
 
         assert body == "fake 2"
 
+    @pytest.mark.xfail(
+        reason="Current version of git no longer allows adding local repos as submodules",
+        strict=True,
+    )
     def test_git_submodules(self, new_dir):
         """Test that updates to submodules are pulled"""
         repo = os.path.abspath("submodules.git")
