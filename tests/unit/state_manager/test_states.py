@@ -40,6 +40,8 @@ class TestStepStates:
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
             "directories": {"b"},
+            "outdated-files": ["a"],
+            "outdated-dirs": ["b"],
         }
         state_file = Path("parts/foo/state/pull")
         state_file.parent.mkdir(parents=True, exist_ok=True)

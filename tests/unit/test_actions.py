@@ -28,10 +28,10 @@ def test_action_type():
 
 def test_action_representation():
     action = Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="is tired")
-    assert (
-        f"{action!r}"
-        == "Action(part_name='foo', step=Step.PULL, action_type=ActionType.SKIP, "
-        "reason='is tired', project_vars=None)"
+    assert f"{action!r}" == (
+        "Action(part_name='foo', step=Step.PULL, action_type=ActionType.SKIP, "
+        "reason='is tired', project_vars=None, properties=ActionProperties("
+        "changed_files=None, changed_dirs=None))"
     )
 
 
