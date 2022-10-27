@@ -16,14 +16,19 @@
 import os
 import textwrap
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import pytest
 import yaml
 
 import craft_parts
 from craft_parts import Step
+from craft_parts.utils import os_utils
 
 IS_CI: bool = os.getenv("CI") == "true"
+
+# These are the Ubuntu versions that Chisel currently supports.
+SUPPORTED_UBUNTU_VERSIONS = {"22.04", "22.10"}
 
 
 @pytest.mark.skipif(not IS_CI, reason="This test needs 'chisel' and only runs on CI.")
@@ -47,10 +52,21 @@ def test_chisel_lifecycle(new_dir):
         parts, application_name="test_slice", cache_dir=new_dir, work_dir=new_dir
     )
 
-    actions = lf.plan(Step.PRIME)
-    with lf.action_executor() as ctx:
-        ctx.execute(actions)
+    release = os_utils.OsRelease()
+    chisel_supported = (
+        release.id() == "ubuntu" and release.version_id() in SUPPORTED_UBUNTU_VERSIONS
+    )
 
-    root = Path(new_dir)
-    assert (root / "prime/etc/ssl/certs/ca-certificates.crt").is_file()
-    assert (root / "prime/usr/share/ca-certificates").is_dir()
+    actions = lf.plan(Step.PRIME)
+
+    if chisel_supported:
+        with lf.action_executor() as ctx:
+            ctx.execute(actions)
+
+        root = Path(new_dir)
+        assert (root / "prime/etc/ssl/certs/ca-certificates.crt").is_file()
+        assert (root / "prime/usr/share/ca-certificates").is_dir()
+    else:
+        with pytest.raises(CalledProcessError, match="chisel"):
+            with lf.action_executor() as ctx:
+                ctx.execute(actions)

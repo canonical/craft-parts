@@ -71,8 +71,6 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):
             "cut",
             "--root",
             str(install_dir),
-            "--release",
-            "ubuntu-22.04",
             "package1_slice1",
             "package2_slice2",
         ]
@@ -109,8 +107,6 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):
             "cut",
             "--root",
             str(install_dir),
-            "--release",
-            "ubuntu-22.04",
             "package1_slice1",
             "package2_slice2",
         ]
