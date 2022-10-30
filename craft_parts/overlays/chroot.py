@@ -19,6 +19,7 @@
 import logging
 import multiprocessing
 import os
+import subprocess
 import sys
 from collections import namedtuple
 from multiprocessing.connection import Connection
@@ -89,6 +90,10 @@ def _setup_chroot(path: Path) -> None:
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
         _setup_chroot_linux(path)
+
+    print("========================================")
+    subprocess.run(["ls", "-l", "/dev"])
+    subprocess.run(["/usr/bin/apt-key"])
 
 
 def _cleanup_chroot(path: Path) -> None:

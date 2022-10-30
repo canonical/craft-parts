@@ -102,7 +102,7 @@ jobs:
         run: |
           make test-integrations
       - name: Run overlay smoke test
-        if: ${{ matrix.adjective == 'focal' }} #TODO: fix this smoke test for jammy
+        # if: ${{ matrix.adjective == 'focal' }} #TODO: fix this smoke test for jammy
         run: |
           wget -q https://cloud-images.ubuntu.com/${{ matrix.adjective }}/current/${{ matrix.adjective }}-server-cloudimg-amd64.squashfs
           mkdir base
