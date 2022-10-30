@@ -134,7 +134,7 @@ class GoPlugin(Plugin):
             generate_cmds.append(f"go generate {cmd}")
 
         return (
-            ["go mod download"]
+            ["go mod download all"]
             + generate_cmds
             + [
                 f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
