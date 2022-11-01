@@ -697,10 +697,7 @@ class Ubuntu(BaseRepository):
         :param install_path: The destination directory.
         """
         # Note that we must hardcode the release here because Chisel this one.
-        process_run(
-            ["chisel", "cut", "--root", str(install_path), "--release", "ubuntu-22.04"]
-            + stage_packages
-        )
+        process_run(["chisel", "cut", "--root", str(install_path)] + stage_packages)
 
     @classmethod
     @_apt_cache_wrapper
