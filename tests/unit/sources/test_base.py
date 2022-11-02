@@ -219,17 +219,3 @@ class TestFileSourceHandler:
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert downloaded.is_file()
         assert downloaded.read_bytes() == b"content"
-
-    def test_file_source_abstract_methods(self):
-        class FaultyFileSource(FileSourceHandler):
-            """A file source handler that doesn't implement abstract methods."""
-
-        expected = (
-            "^Can't instantiate abstract class FaultyFileSource with "
-            "abstract methods? provision$"
-        )
-        with pytest.raises(TypeError, match=expected):
-            # pylint: disable=abstract-class-instantiated
-            FaultyFileSource(
-                source=None, part_src_dir=None, cache_dir=Path()  # type: ignore
-            )
