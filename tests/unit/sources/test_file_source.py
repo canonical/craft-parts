@@ -59,8 +59,7 @@ class TestFileSource:
             source, Path(), cache_dir=new_dir, source_checksum=expected_checksum
         )
 
-        file_source.pull()
-
         download_spy = mocker.spy(requests, "get")
         file_source.pull()
-        assert download_spy.call_count == 0
+        file_source.pull()
+        assert download_spy.call_count == 1
