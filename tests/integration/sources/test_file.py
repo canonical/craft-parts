@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -49,7 +49,7 @@ def test_source_file(new_dir):
     assert Path(foo_src_dir, "foobar").read_text() == "content"
 
 
-def test_source_tar_error(new_dir):
+def test_source_file_error(new_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:

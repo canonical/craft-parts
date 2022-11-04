@@ -24,7 +24,7 @@ from craft_parts.sources import sources
 
 @pytest.mark.http_request_handler("FakeFileHTTPRequestHandler")
 class TestFileSource:
-    """Tests for the tar source handler."""
+    """Tests for the plain file source handler."""
 
     def test_pull_file_must_download_to_sourcedir(self, new_dir, mocker, http_server):
         dest_dir = Path("parts/foo/src")
