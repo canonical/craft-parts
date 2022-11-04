@@ -178,6 +178,7 @@ class FileSourceHandler(SourceHandler):
 
     # pylint: enable=too-many-arguments
 
+    @abc.abstractmethod
     def provision(
         self,
         dst: Path,

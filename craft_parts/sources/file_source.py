@@ -19,6 +19,8 @@
 from pathlib import Path
 from typing import List, Optional
 
+from overrides import overrides
+
 from craft_parts.dirs import ProjectDirs
 
 from . import errors
@@ -69,3 +71,13 @@ class FileSource(FileSourceHandler):
 
         if source_branch:
             raise errors.InvalidSourceOption(source_type="file", option="source-branch")
+
+    @overrides
+    def provision(
+        self,
+        dst: Path,
+        keep: bool = False,
+        src: Optional[Path] = None,
+    ) -> None:
+        """Process the source file to extract its payload."""
+        # No payload to extract
