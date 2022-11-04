@@ -26,7 +26,7 @@ from .base import FileSourceHandler
 
 
 class FileSource(FileSourceHandler):
-    """The tar source handler."""
+    """The plain file source handler."""
 
     # pylint: disable-next=too-many-arguments
     def __init__(
