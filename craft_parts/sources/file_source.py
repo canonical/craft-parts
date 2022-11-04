@@ -28,7 +28,7 @@ from .base import FileSourceHandler
 class FileSource(FileSourceHandler):
     """The tar source handler."""
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable-next=too-many-arguments
     def __init__(
         self,
         source: str,
@@ -69,5 +69,3 @@ class FileSource(FileSourceHandler):
 
         if source_branch:
             raise errors.InvalidSourceOption(source_type="file", option="source-branch")
-
-    # pylint: enable=too-many-arguments
