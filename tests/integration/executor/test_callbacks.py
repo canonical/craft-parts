@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ from craft_parts import (
     callbacks,
     errors,
 )
+from craft_parts.state_manager import StepState
 
 
 def setup_function():
@@ -131,6 +132,12 @@ def _my_step_callback(info: StepInfo) -> bool:
     return True
 
 
+def _state_step_callback(info: StepInfo) -> bool:
+    assert info.state is not None
+    assert isinstance(info.state, StepState)
+    return True
+
+
 # Test the update action separately because it's only defined
 # for steps PULL and BUILD.
 
@@ -189,6 +196,25 @@ def test_callback_post(tmpdir, capfd, step, action_type):
         assert not out
     else:
         assert out == f"step {step!r}\ncallback\n"
+
+
+@pytest.mark.parametrize("step", list(Step))
+def test_callback_post_state_info(tmpdir, step):
+    callbacks.register_post_step(_state_step_callback, step_list=[step])
+
+    parts = yaml.safe_load(_parts_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_callback",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
+        base_layer_dir=tmpdir,
+        base_layer_hash=b"hash",
+        message="callback",
+    )
+
+    with lf.action_executor() as ctx:
+        ctx.execute(Action("foo", step))
 
 
 _update_yaml = textwrap.dedent(

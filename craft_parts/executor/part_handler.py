@@ -165,6 +165,7 @@ class PartHandler:
         state = handler(step_info, stdout=stdout, stderr=stderr)
         state_file = states.get_step_state_path(self._part, action.step)
         state.write(state_file)
+        step_info.state = state
         callbacks.run_post_step(step_info)
 
     def _run_pull(

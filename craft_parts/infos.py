@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ import logging
 import platform
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from pydantic_yaml import YamlModel
 
@@ -28,6 +28,10 @@ from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+
+if TYPE_CHECKING:
+    from craft_parts.state_manager import states
+
 
 logger = logging.getLogger(__name__)
 
@@ -296,6 +300,7 @@ class PartInfo:
         self._part_build_subdir = part.part_build_subdir
         self._part_install_dir = part.part_install_dir
         self._part_state_dir = part.part_state_dir
+        self.build_attributes = part.spec.build_attributes.copy()
 
     def __getattr__(self, name):
         # Use composition and attribute cascading to avoid setting attributes
@@ -397,6 +402,7 @@ class StepInfo:
         self._part_info = part_info
         self.step = step
         self.step_environment: Dict[str, str] = {}
+        self.state: "Optional[states.StepState]" = None
 
     def __getattr__(self, name):
         if hasattr(self._part_info, name):

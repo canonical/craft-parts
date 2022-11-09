@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -271,7 +271,7 @@ def test_part_info(new_dir):
         custom1="foobar",
         custom2=[1, 2],
     )
-    part = Part("foo", {})
+    part = Part("foo", {"build-attributes": ["bar"]})
     x = PartInfo(project_info=info, part=part)
 
     assert x.application_name == "test"
@@ -289,6 +289,7 @@ def test_part_info(new_dir):
     assert x.part_state_dir == new_dir / "parts/foo/state"
     assert x.stage_dir == new_dir / "stage"
     assert x.prime_dir == new_dir / "prime"
+    assert x.build_attributes == ["bar"]
 
     assert x.custom_args == ["custom1", "custom2"]
     assert x.custom1 == "foobar"
@@ -443,6 +444,7 @@ def test_step_info(new_dir):
     assert x.step == Step.BUILD
     assert x.global_environment == {}
     assert x.step_environment == {}
+    assert x.state is None
 
     assert x.custom_args == ["custom1", "custom2"]
     assert x.custom1 == "foobar"
