@@ -132,12 +132,6 @@ def _my_step_callback(info: StepInfo) -> bool:
     return True
 
 
-def _state_step_callback(info: StepInfo) -> bool:
-    assert info.state is not None
-    assert isinstance(info.state, StepState)
-    return True
-
-
 # Test the update action separately because it's only defined
 # for steps PULL and BUILD.
 
@@ -200,6 +194,14 @@ def test_callback_post(tmpdir, capfd, step, action_type):
 
 @pytest.mark.parametrize("step", list(Step))
 def test_callback_post_state_info(tmpdir, step):
+    callback_called = [False]
+
+    def _state_step_callback(info: StepInfo) -> bool:
+        assert info.state is not None
+        assert isinstance(info.state, StepState)
+        callback_called[0] = True
+        return True
+
     callbacks.register_post_step(_state_step_callback, step_list=[step])
 
     parts = yaml.safe_load(_parts_yaml)
@@ -215,6 +217,8 @@ def test_callback_post_state_info(tmpdir, step):
 
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step))
+
+    assert callback_called[0]
 
 
 _update_yaml = textwrap.dedent(
