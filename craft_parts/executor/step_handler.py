@@ -196,7 +196,6 @@ class StepHandler:
             destdir=self._part.prime_dir,
             permissions=self._part.spec.permissions,
         )
-        # TODO: handle elf dependencies
 
         return StepContents(files, dirs)
 
