@@ -2,6 +2,14 @@
 Changelog
 *********
 
+1.17.0 (2022-11-14)
+-------------------
+
+- Fix go plugin mod download in jammy
+- Remove hardcoded ubuntu version in chisel call
+- Add plain file source handler
+- Pass build attributes and state to post-step callback
+
 1.16.0 (2022-10-20)
 -------------------
 
