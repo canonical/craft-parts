@@ -287,7 +287,7 @@ class GitSource(SourceHandler):
         Local sources are formatted as file:///absolute/path/to/local/source
         This is done because `git clone --depth=1 path/to/local/source` is invalid
         """
-        protocol_pattern = re.compile(r"^[\w\-.@]+:")
+        protocol_pattern = re.compile(r"^[\w\-.@+]+:")
 
         if protocol_pattern.search(self.source):
             return self.source
