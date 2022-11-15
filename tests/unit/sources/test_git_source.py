@@ -290,6 +290,7 @@ class TestGitSource(GitBaseTestCase):
         "repository",
         [
             "ssh://user@host.xz:123/path/to/repo.git",
+            "git+ssh://user@host.xz:123/path/to/repo.git",
             "user@host.xz:path/to/repo.git",
             "https://host.xz/path/to/repo.git",
             "user@host.xz:/~[user]/path/to/repo.git",
