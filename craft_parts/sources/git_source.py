@@ -281,8 +281,8 @@ class GitSource(SourceHandler):
     def _format_source(self) -> str:
         """Format source to a git-compatible format.
 
-        Protocols for git are http[s]://, ftp[s]://, git://, ssh://, and file://.
-        Additionally, scp-style ssh syntax is also valid: [user@]host.xz:path/to/repo)
+        Protocols for git are http[s]://, ftp[s]://, git://, ssh://, git+ssh://, and
+        file://. Additionally, scp-style syntax is also valid: [user@]host:path/to/repo)
 
         Local sources are formatted as file:///absolute/path/to/local/source
         This is done because `git clone --depth=1 path/to/local/source` is invalid
