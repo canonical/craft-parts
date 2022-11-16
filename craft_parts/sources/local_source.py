@@ -28,6 +28,7 @@ from overrides import overrides
 
 from craft_parts.utils import file_utils
 
+from . import errors
 from .base import SourceHandler
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,9 @@ class LocalSource(SourceHandler):
     @overrides
     def pull(self):
         """Retrieve the local source files."""
+        if not Path(self.source_abspath).exists():
+            raise errors.SourceNotFound(self.source)
+
         file_utils.link_or_copy_tree(
             self.source_abspath,
             str(self.part_src_dir),
