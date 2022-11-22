@@ -32,6 +32,7 @@ from .npm_plugin import NpmPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
 from .rust_plugin import RustPlugin
+from .scons_plugin import SConsPlugin
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -54,6 +55,7 @@ _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "npm": NpmPlugin,
     "python": PythonPlugin,
     "rust": RustPlugin,
+    "scons": SConsPlugin,
 }
 
 _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
