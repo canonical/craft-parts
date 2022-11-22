@@ -234,14 +234,12 @@ class Executor:
 
         if os_utils.is_inside_container():
             logger.warning(
-                (
-                    "The following snaps are required but not installed as the "
-                    "application is running inside docker or podman container: %s.\n"
-                    "Please ensure the environment is properly setup before "
-                    "continuing.\nIgnore this message if the appropriate measures "
-                    "have already been taken.",
-                    ", ".join(build_snaps),
-                )
+                "The following snaps are required but not installed as the "
+                "application is running inside docker or podman container: %s.\n"
+                "Please ensure the environment is properly setup before "
+                "continuing.\nIgnore this message if the appropriate measures "
+                "have already been taken.",
+                ", ".join(build_snaps),
             )
         else:
             packages.snaps.install_snaps(build_snaps)
