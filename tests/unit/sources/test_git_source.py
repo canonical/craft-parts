@@ -841,7 +841,7 @@ class TestGitConflicts(GitBaseTestCase):
         _call(["git", "init", "--bare"])
 
         self.clone_repo(repo, working_tree)
-        _call(["git", "submodule", "add", sub_repo])
+        _call(["git", "-c", "protocol.file.allow=always", "submodule", "add", sub_repo])
         _call(["git", "commit", "-am", "added submodule"])
         _call(["git", "push", repo])
 
@@ -867,7 +867,18 @@ class TestGitConflicts(GitBaseTestCase):
 
         # update the submodule
         self.clone_repo(repo, working_tree_two)
-        _call(["git", "submodule", "update", "--init", "--recursive", "--remote"])
+        _call(
+            [
+                "git",
+                "-c",
+                "protocol.file.allow=always",
+                "submodule",
+                "update",
+                "--init",
+                "--recursive",
+                "--remote",
+            ]
+        )
         _call(["git", "add", "subrepo"])
         _call(["git", "commit", "-am", "updated submodule"])
         _call(["git", "push"])
