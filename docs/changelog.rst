@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.15.2 (2022-11-23)
+-------------------
+
+- Backport fix to allow plus symbol in git url scheme
+
 1.15.1 (2022-10-14)
 -------------------
 
