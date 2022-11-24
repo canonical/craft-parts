@@ -53,8 +53,8 @@ class SConsPlugin(Plugin):
     (C/C++ compiler, Java compiler, etc) must be declared via ``build-packages``.
     Since there is no "official" way of defining the target installation directory
     for SCons-built artifacts, the default build will set the DESTDIR environment
-    variable which the SConstruct file should use to configure its ``Install()``
-    builder target.
+    variable which contains the root which the SConstruct file should use to
+    configure its ``Install()`` builder target.
 
     The plugin supports the following keywords:
 
@@ -77,7 +77,7 @@ class SConsPlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
-            "DESTDIR": f"{self._part_info.part_install_dir}/bin",
+            "DESTDIR": f"{self._part_info.part_install_dir}",
         }
 
     def get_build_commands(self) -> List[str]:

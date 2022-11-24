@@ -1,7 +1,7 @@
 import os
 import os.path
 
-install_dir = os.environ['DESTDIR']
+install_dir = os.path.join(os.environ['DESTDIR'], "bin")
 
 # "greeting" and "person-name" should come from the "scons" command line; if the program outputs
 # "WRONG PARAMETERS!", then the arguments were not provided correctly.

@@ -26,7 +26,7 @@ def test_get_build_environment(part_info):
     plugin = SConsPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {
-        "DESTDIR": f"{part_info.part_install_dir}/bin"
+        "DESTDIR": str(part_info.part_install_dir)
     }
 
 
