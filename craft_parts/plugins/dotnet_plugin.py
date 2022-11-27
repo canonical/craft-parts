@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class DotnetPluginProperties(PluginProperties, PluginModel):
-    """The part properties used by the Go plugin."""
+    """The part properties used by the Dotnet plugin."""
 
     dotnet_build_configuration: str = "Release"
     dotnet_self_contained_runtime_identifier: Optional[str]
