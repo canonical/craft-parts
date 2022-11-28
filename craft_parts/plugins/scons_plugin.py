@@ -27,7 +27,7 @@ from .properties import PluginProperties
 class SConsPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the SCons plugin."""
 
-    scons_options: List[str] = []
+    scons_parameters: List[str] = []
 
     # part properties required by the plugin
     source: str
@@ -98,7 +98,7 @@ class SConsPlugin(Plugin):
 
     The plugin supports the following keywords:
 
-    - ``scons-options``
+    - ``scons-parameters``
       (list of strings)
       Additional values to pass to the ``scons`` and ``scons install`` command
       lines.
@@ -126,6 +126,6 @@ class SConsPlugin(Plugin):
         options = cast(SConsPluginProperties, self._options)
 
         return [
-            " ".join(["scons"] + options.scons_options),
-            " ".join(["scons", "install"] + options.scons_options),
+            " ".join(["scons"] + options.scons_parameters),
+            " ".join(["scons", "install"] + options.scons_parameters),
         ]

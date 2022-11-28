@@ -17,7 +17,7 @@ def test_scons_plugin(new_dir):
           foo:
             plugin: scons
             source: {source_location}
-            scons-options:
+            scons-parameters:
               - greeting=Hello
               - person-name=craft-parts
         """
@@ -35,5 +35,5 @@ def test_scons_plugin(new_dir):
     assert binary.is_file()
 
     output = subprocess.check_output([str(binary)], text=True)
-    # The output "Hello, craft-parts!" verifies that the scons-options were forwarded correctly.
+    # The output "Hello, craft-parts!" verifies that the scons-parameters were forwarded correctly.
     assert output == "Hello, craft-parts!\n"

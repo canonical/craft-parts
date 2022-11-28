@@ -124,9 +124,9 @@ def test_get_build_commands(part_info):
     assert plugin.get_build_commands() == ["scons", "scons install"]
 
 
-def test_get_build_commands_with_options(part_info):
+def test_get_build_commands_with_parameters(part_info):
     properties = SConsPlugin.properties_class.unmarshal(
-        {"source": ".", "scons-options": ["a=1", "b=2"]}
+        {"source": ".", "scons-parameters": ["a=1", "b=2"]}
     )
     plugin = SConsPlugin(properties=properties, part_info=part_info)
 
