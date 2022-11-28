@@ -122,25 +122,6 @@ class AntPlugin(Plugin):
 
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
-        # command = ["ant"]
-        # if self.options.ant_buildfile:
-        #     command.extend(["-f", self.options.ant_buildfile])
-        #
-        # if self.options.ant_build_targets:
-        #     command.extend(self.options.ant_build_targets)
-        #
-        # for prop, value in self.options.ant_properties.items():
-        #     command.extend(["-D{}={}".format(prop, value)])
-        #
-        # self.run(command, rootdir=self.builddir)
-        # files = glob(os.path.join(self.builddir, "target", "*.jar"))
-        # if files:
-        #     jardir = os.path.join(self.installdir, "jar")
-        #     os.makedirs(jardir)
-        #     for f in files:
-        #         base = os.path.basename(f)
-        #         os.link(f, os.path.join(jardir, base))
-        # pylint: disable=line-too-long
         options = cast(AntPluginProperties, self._options)
 
         command = ["ant"]
@@ -153,23 +134,35 @@ class AntPlugin(Plugin):
 
         command.extend(options.ant_build_targets)
 
-        link_java = [
-            '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
-            "mkdir -p ${CRAFT_PART_INSTALL}/bin",
-            "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
-            "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
-        ]
+        return [
+            " ".join(command),
+        ] + get_java_post_build_commands()
 
-        link_jars = [
-            "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
-            "mkdir -p ${CRAFT_PART_INSTALL}/jar",
-            r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
-        ]
 
-        return (
-            [
-                " ".join(command),
-            ]
-            + link_java
-            + link_jars
-        )
+def get_java_post_build_commands() -> List[str]:
+    """Get the bash commands to structure a Java build in the part's install dir.
+
+    :return: The returned list contains the bash commands to do the following:
+
+    - Create bin/ and jar/ directories in ${CRAFT_PART_INSTALL};
+    - Find the ``java`` executable (provided by whatever jre the part used) and link it
+      as ${CRAFT_PART_INSTALL}/bin/java;
+    - Hardlink the .jar files generated in ${CRAFT_PART_SOURCE} to
+      ${CRAFT_PART_INSTALL}/jar.
+    """
+    # pylint: disable=line-too-long
+
+    link_java = [
+        '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
+        "mkdir -p ${CRAFT_PART_INSTALL}/bin",
+        "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
+        "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
+    ]
+
+    link_jars = [
+        "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
+        "mkdir -p ${CRAFT_PART_INSTALL}/jar",
+        r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
+    ]
+
+    return link_java + link_jars
