@@ -32,6 +32,8 @@ class AntPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the Ant plugin."""
 
     ant_build_targets: List[str] = []
+    ant_buildfile: Optional[str] = None
+    ant_properties: Dict[str, str] = {}
     # go_generate: List[str] = []
 
     # part properties required by the plugin
@@ -143,16 +145,23 @@ class AntPlugin(Plugin):
 
         command = ["ant"]
 
+        if options.ant_buildfile:
+            command.extend(["-f", options.ant_buildfile])
+
+        for prop_name, prop_value in options.ant_properties.items():
+            command.append(f"-D{prop_name}={prop_value}")
+
         command.extend(options.ant_build_targets)
 
-        # Find the "java" executable make a link to it in CRAFT_PART_INSTALL/bin/java
         link_java = [
-            "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
+            '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
             "mkdir -p ${CRAFT_PART_INSTALL}/bin",
+            "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
             "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
         ]
-        # Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/
+
         link_jars = [
+            "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
             "mkdir -p ${CRAFT_PART_INSTALL}/jar",
             r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
         ]

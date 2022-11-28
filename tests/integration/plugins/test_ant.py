@@ -33,8 +33,12 @@ def test_ant_plugin(new_dir, monkeypatch):
           foo:
             plugin: ant
             source: {source_location}
-            ant-build-targets: [compile, jar]
             stage-packages: [default-jre-headless]
+            ant-build-targets: [compile, jar]
+            ant-buildfile: "my-build.xml"
+            ant-properties:
+              # The build will fail unless this property is propagated to Ant.
+              EnableBuild: "yes"
         """
     )
     parts = yaml.safe_load(parts_yaml)
