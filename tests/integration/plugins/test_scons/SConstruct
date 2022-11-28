@@ -1,0 +1,17 @@
+import os
+import os.path
+
+install_dir = os.path.join(os.environ['DESTDIR'], "bin")
+
+# "greeting" and "person-name" should come from the "scons" command line; if the program outputs
+# "WRONG PARAMETERS!", then the arguments were not provided correctly.
+env = Environment(
+    CPPDEFINES={
+        "GREETING": ARGUMENTS.get("greeting", "WRONG"),
+        "PERSON_NAME": ARGUMENTS.get("person-name", "PARAMETERS"),
+    }
+)
+
+hello = env.Program("hello.c")
+env.Install(install_dir, hello)
+env.Alias('install', install_dir)
