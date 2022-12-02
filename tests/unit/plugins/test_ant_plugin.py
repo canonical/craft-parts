@@ -151,8 +151,7 @@ def test_get_build_commands_with_parameters(part_info):
     )
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
-    assert (
-        plugin.get_build_commands()
-        == ["ant -f myfile.txt -Dprop1=1 -Dprop2=2 compile jar"]
+    assert plugin.get_build_commands() == (
+        ["ant -f myfile.txt -Dprop1=1 -Dprop2=2 compile jar"]
         + get_java_post_build_commands()
     )
