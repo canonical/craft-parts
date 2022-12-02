@@ -19,6 +19,7 @@
 import copy
 from typing import TYPE_CHECKING, Any, Dict, Type
 
+from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
 from .cmake_plugin import CMakePlugin
@@ -44,6 +45,7 @@ PluginType = Type[Plugin]
 
 # Plugin registry by plugin API version
 _BUILTIN_PLUGINS: Dict[str, PluginType] = {
+    "ant": AntPlugin,
     "autotools": AutotoolsPlugin,
     "cmake": CMakePlugin,
     "dotnet": DotnetPlugin,
