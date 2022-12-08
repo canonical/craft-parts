@@ -22,6 +22,7 @@ import pytest
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
+from craft_parts.sources import errors as sources_errors
 from craft_parts.sources import sources
 from craft_parts.sources.local_source import LocalSource
 
@@ -265,6 +266,18 @@ class TestLocal:
             ignore_patterns=ignore_patterns,
         )
         assert s2._ignore_patterns == ["hello", "work"]
+
+    def test_source_does_not_exist(self, new_dir):
+        dirs = ProjectDirs(work_dir=Path("src/work"))
+        local = LocalSource(
+            "does-not-exist",
+            "destination",
+            cache_dir=new_dir,
+            project_dirs=dirs,
+        )
+
+        with pytest.raises(sources_errors.SourceNotFound):
+            local.pull()
 
 
 class TestLocalUpdate:
