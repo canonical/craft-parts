@@ -25,6 +25,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from io import StringIO
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
@@ -696,8 +697,26 @@ class Ubuntu(BaseRepository):
         :param stage_packages: The list of names of slices to cut.
         :param install_path: The destination directory.
         """
-        # Note that we must hardcode the release here because Chisel this one.
-        process_run(["chisel", "cut", "--root", str(install_path)] + stage_packages)
+        output_stream = StringIO()
+        handler = logging.StreamHandler(stream=output_stream)
+        logger.addHandler(handler)
+        try:
+            process_run(
+                [
+                    "chisel",
+                    "cut",
+                    "--root",
+                    str(install_path),
+                ]
+                + stage_packages
+            )
+        except subprocess.CalledProcessError as err:
+            command_output = output_stream.getvalue()
+            raise errors.ChiselError(
+                slices=stage_packages, output=command_output
+            ) from err
+        finally:
+            logger.removeHandler(handler)
 
     @classmethod
     @_apt_cache_wrapper
