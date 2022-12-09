@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,9 @@
 import logging
 from typing import Dict, List, Optional, Sequence, Set
 
-from craft_parts import parts, steps
+from craft_parts import errors, parts, steps
 from craft_parts.actions import Action, ActionProperties, ActionType
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, ProjectVar
 from craft_parts.overlays import LayerHash, LayerStateManager
 from craft_parts.parts import Part, part_list_by_name, sort_parts
@@ -79,6 +80,9 @@ class Sequencer:
 
         :returns: The list of actions that should be executed.
         """
+        if target_step == Step.OVERLAY and not Features().enable_overlay:
+            raise errors.FeatureDisabled("Overlay step is not supported.")
+
         self._actions = []
         self._add_all_actions(target_step, part_names)
         return self._actions
@@ -120,6 +124,10 @@ class Sequencer:
         reason: Optional[str] = None,
     ) -> None:
         """Verify if this step should be executed."""
+        # if overlays disabled, don't generate overlay actions
+        if not Features().enable_overlay and current_step == Step.OVERLAY:
+            return
+
         # check if step already ran, if not then run it
         if not self._sm.has_step_run(part, current_step):
             self._run_step(part, current_step, reason=reason)
