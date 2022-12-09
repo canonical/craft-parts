@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -51,6 +51,14 @@ def test_part_dependency_cycle():
     assert err.brief == "A circular dependency chain was detected."
     assert err.details is None
     assert err.resolution == "Review the parts definition to remove dependency cycles."
+
+
+def test_feature_disabled():
+    err = errors.FeatureDisabled("bummer")
+    assert err.message == "bummer"
+    assert err.brief == "bummer"
+    assert err.details is None
+    assert err.resolution == "This operation cannot be executed."
 
 
 def test_invalid_application_name():
