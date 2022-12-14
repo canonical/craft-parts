@@ -185,9 +185,9 @@ class RPMRepository(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
-        # Collect the list of marked packages to later construct a manifest
-        marked_packages = cls._get_packages_marked_for_installation(package_names)
-        marked_package_names = [name for name, _ in sorted(marked_packages)]
+        # # Collect the list of marked packages to later construct a manifest
+        # marked_packages = cls._get_packages_marked_for_installation(package_names)
+        # marked_package_names = [name for name, _ in sorted(marked_packages)]
 
         if not list_only:
             if refresh_package_cache and install_required:
@@ -199,9 +199,10 @@ class RPMRepository(BaseRepository):
                     "Requested build-packages already installed: %s", package_names
                 )
 
-        # This result is a best effort approach for deps and virtual packages
-        # as they are not part of the installation list.
-        return cls._get_installed_package_versions(marked_package_names)
+        # # This result is a best effort approach for deps and virtual packages
+        # # as they are not part of the installation list.
+        # return cls._get_installed_package_versions(marked_package_names)
+        return []
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
