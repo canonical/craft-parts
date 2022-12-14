@@ -35,3 +35,18 @@ def is_deb_based(distro=None) -> bool:
         except errors.OsReleaseIdError:
             distro = "unknown"
     return distro in _DEB_BASED_PLATFORM
+
+
+def is_rpm_based(distro=None) -> bool:
+    """Verify the distribution packaging system.
+
+    :param distro: The distribution name.
+
+    :return: Whether the distribution uses .rpm packages.
+    """
+    if not distro:
+        try:
+            distro = os_utils.OsRelease().id()
+        except errors.OsReleaseIdError:
+            distro = "unknown"
+    return distro == "centos"
