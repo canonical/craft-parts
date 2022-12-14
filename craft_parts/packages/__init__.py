@@ -19,7 +19,7 @@
 from . import errors  # noqa: F401
 from . import snaps  # noqa: F401
 from .normalize import fix_pkg_config  # noqa: F401
-from .platform import is_deb_based
+from .platform import is_deb_based, is_rpm_based
 
 # pylint: disable=import-outside-toplevel
 
@@ -29,6 +29,11 @@ def _get_repository_for_platform():
         from .deb import Ubuntu
 
         return Ubuntu
+
+    if is_rpm_based():
+        from .rpm import RPMRepository
+
+        return RPMRepository
 
     from .base import DummyRepository
 
