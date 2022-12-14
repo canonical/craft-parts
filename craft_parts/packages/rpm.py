@@ -49,7 +49,6 @@ class RPMRepository(BaseRepository):
     @classmethod
     def get_packages_for_source_type(cls, source_type):
         """Return a list of packages required to to work with source_type."""
-        print("====================== USED??? 0")
         if source_type == "bzr":
             packages = {"bzr"}
         elif source_type == "git":
@@ -61,9 +60,10 @@ class RPMRepository(BaseRepository):
         elif source_type == ["svn", "subversion"]:
             packages = {"subversion"}
         elif source_type == "rpm2cpio":
-            packages = {"rpm2cpio"}
+            # installed by default in CentOS systems
+            packages = {}
         elif source_type == "7zip":
-            packages = {"p7zip-full"}
+            packages = {"p7zip"}
         else:
             packages = set()
 
@@ -73,18 +73,17 @@ class RPMRepository(BaseRepository):
     @functools.lru_cache(maxsize=1)
     def refresh_packages_list(cls) -> None:
         """Refresh the list of packages available in the repository."""
-        print("====================== USED??? 1")
         # Return early when testing.
         if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
             return
 
         try:
-            cmd = ["apt-get", "update"]
+            cmd = ["yum", "update"]
             logger.debug("Executing: %s", cmd)
             process_run(cmd)
         except subprocess.CalledProcessError as call_error:
             raise errors.PackageListRefreshError(
-                "failed to run apt update"
+                "failed to run yum update"
             ) from call_error
 
     @classmethod
@@ -97,20 +96,8 @@ class RPMRepository(BaseRepository):
 
         :return True if _all_ packages are installed (with correct versions).
         """
-        print("====================== USED??? 2")
-        with AptCache() as apt_cache:
-            for package in package_names:
-                pkg_name, pkg_version = get_pkg_name_parts(package)
-                installed_version = apt_cache.get_installed_version(
-                    pkg_name, resolve_virtual_packages=True
-                )
-
-                if installed_version is None or (
-                    pkg_version is not None and installed_version != pkg_version
-                ):
-                    return False
-
-        return True
+        # XXX need to do this
+        return False
 
     @classmethod
     def _get_installed_package_versions(cls, package_names: Sequence[str]) -> List[str]:
@@ -185,7 +172,6 @@ class RPMRepository(BaseRepository):
         refresh_package_cache: bool = True,
     ) -> List[str]:
         """Install packages on the host system."""
-        print("====================== USED??? 6")
         if not package_names:
             return []
 
@@ -219,50 +205,25 @@ class RPMRepository(BaseRepository):
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
-        print("====================== USED??? 7")
         logger.debug("Installing packages: %s", " ".join(package_names))
-        env = os.environ.copy()
-        env.update(
-            {
-                "DEBIAN_FRONTEND": "noninteractive",
-                "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                "DEBIAN_PRIORITY": "critical",
-            }
-        )
-
-        apt_command = [
-            "apt-get",
-            "--no-install-recommends",
-            "-y",
-            "-oDpkg::Use-Pty=0",
-            "--allow-downgrades",
-            "install",
-        ]
-
-        # Set stdin to /dev/null to prevent SIGTTIN/SIGTTOU problems, see
-        # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=555632
+        apt_command = ["yum", "-y", "install"]
 
         try:
-            process_run(apt_command + package_names, env=env, stdin=subprocess.DEVNULL)
+            process_run(apt_command + package_names)
         except subprocess.CalledProcessError as err:
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
     @classmethod
     def is_package_installed(cls, package_name) -> bool:
         """Inform if a package is installed on the host system."""
-        print("====================== USED??? 8")
-        with AptCache() as apt_cache:
-            return apt_cache.get_installed_version(package_name) is not None
+        # XXX need to do this
+        return False
 
     @classmethod
     def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions."""
-        print("====================== USED??? 9")
-        with AptCache() as apt_cache:
-            return [
-                f"{pkg_name}={pkg_version}"
-                for pkg_name, pkg_version in apt_cache.get_installed_packages().items()
-            ]
+        # XXX need to do this
+        return []
 
 
 def get_cache_dirs(cache_dir: Path):
