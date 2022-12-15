@@ -78,7 +78,7 @@ class RPMRepository(BaseRepository):
             return
 
         try:
-            cmd = ["yum", "update"]
+            cmd = ["yum", "update", "-y"]
             logger.debug("Executing: %s", cmd)
             process_run(cmd)
         except subprocess.CalledProcessError as call_error:
@@ -207,7 +207,7 @@ class RPMRepository(BaseRepository):
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
         logger.debug("Installing packages: %s", " ".join(package_names))
-        apt_command = ["yum", "-y", "install"]
+        apt_command = ["yum", "install", "-y"]
 
         try:
             process_run(apt_command + package_names)
@@ -239,6 +239,5 @@ def get_cache_dirs(cache_dir: Path):
 # XXX: this will be removed when user messages support is implemented.
 def process_run(command: List[str], **kwargs) -> None:
     """Run a command and log its output."""
-    print("====================== USED??? B")
     # Pass logger so messages can be logged as originating from this package.
     os_utils.process_run(command, logger.debug, **kwargs)
