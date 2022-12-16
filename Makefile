@@ -56,7 +56,7 @@ install: clean ## Install python package.
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-codespell test-flake8 test-isort test-mypy test-pydocstyle test-pylint test-pyright ## Run all linting tests
+lint: test-black test-codespell test-ruff test-isort test-mypy test-pydocstyle test-pylint test-pyright ## Run all linting tests
 
 .PHONY: release
 release: dist ## Release with twine.
@@ -72,7 +72,12 @@ test-codespell:
 
 .PHONY: test-flake8
 test-flake8:
+	echo "\033[0;31mWARNING\033[0m: Did you mean to run \`make ruff\`?"
 	flake8 $(SOURCES)
+
+.PHONY: test-ruff
+test-ruff:
+	ruff .
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
