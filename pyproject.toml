@@ -49,7 +49,7 @@ select = [
     "C4",  # better comprehensions
     "T10",  # Ensure we don't leave code that starts the debugger in
     "ICN",  # Unconventional import aliases.
-    "Q",  # oh gawd there's gonna be a lot of this isn't there
+    "Q",  # Consistent quotations
     "RET",  # Return values
 ]
 ignore = [
