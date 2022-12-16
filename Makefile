@@ -77,7 +77,7 @@ test-flake8:
 
 .PHONY: test-ruff
 test-ruff:
-	ruff .
+	ruff $(SOURCES)
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
