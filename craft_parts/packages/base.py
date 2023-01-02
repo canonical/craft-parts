@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -158,6 +158,7 @@ class BaseRepository(abc.ABC):
         stage_packages_path: Path,
         install_path: Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages.
 
@@ -233,6 +234,7 @@ class DummyRepository(BaseRepository):
         stage_packages_path: Path,
         install_path: Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages to install_path."""
 

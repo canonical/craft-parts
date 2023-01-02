@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -238,7 +238,37 @@ class TestPartHandling:
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 
-    def test_run_prime(self, mocker):
+    def test_run_prime(self, new_dir, mocker):
+        mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler._builtin_prime",
+            return_value=StepContents({"file"}, {"dir"}),
+        )
+        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[self._part], base_layer_dir=Path("/base")
+        )
+        handler = PartHandler(
+            self._part,
+            track_stage_packages=True,
+            part_info=self._part_info,
+            part_list=[self._part],
+            overlay_manager=ovmgr,
+        )
+
+        state = handler._run_prime(
+            StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
+        )
+        assert state == states.PrimeState(
+            part_properties=self._part.spec.marshal(),
+            project_options=self._part_info.project_options,
+            files={"file"},
+            directories={"dir"},
+            primed_stage_packages={"pkg"},
+        )
+
+    def test_run_prime_dont_track_packages(self, mocker):
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
@@ -253,7 +283,7 @@ class TestPartHandling:
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
-            primed_stage_packages={"pkg"},
+            primed_stage_packages=set(),
         )
 
     @pytest.mark.parametrize(
