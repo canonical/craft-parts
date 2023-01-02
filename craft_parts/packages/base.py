@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,9 @@ from typing import List, Optional, Set, Tuple, Type
 from craft_parts import xattrs
 
 logger = logging.getLogger(__name__)
+
+
+_STAGE_PACKAGE_KEY = "origin_stage_package"
 
 
 class BaseRepository(abc.ABC):
@@ -247,17 +250,21 @@ def get_pkg_name_parts(pkg_name: str) -> Tuple[str, Optional[str]]:
     return name, version
 
 
-def mark_origin_stage_package(sources_dir: str, stage_package: str) -> Set[str]:
+def read_origin_stage_package(path: str) -> Optional[str]:
+    """Read origin stage package."""
+    return xattrs.read_xattr(path, _STAGE_PACKAGE_KEY)
+
+
+def write_origin_stage_package(path: str, value: str) -> None:
+    """Write origin stage package."""
+    xattrs.write_xattr(path, _STAGE_PACKAGE_KEY, value)
+
+
+def mark_origin_stage_package(sources_dir: str, stage_package: str) -> None:
     """Mark all files in sources_dir as coming from stage_package."""
-    file_list = set()
     for (root, _, files) in os.walk(sources_dir):
         for file_name in files:
             file_path = os.path.join(root, file_name)
 
             # Mark source.
-            xattrs.write_origin_stage_package(file_path, stage_package)
-
-            file_path = os.path.relpath(root, sources_dir)
-            file_list.add(file_path)
-
-    return file_list
+            write_origin_stage_package(file_path, stage_package)
