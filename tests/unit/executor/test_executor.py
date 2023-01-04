@@ -41,8 +41,14 @@ class TestExecutor:
         file2.parent.mkdir(parents=True)
         file2.touch()
 
+        stage_dir = Path("stage")
+        stage_dir.mkdir()
+        file3 = Path("stage/foobar.txt")
+        file3.touch()
+
         assert file1.exists()
         assert file2.exists()
+        assert file3.exists()
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         e = Executor(project_info=info, part_list=[p1, p2])
@@ -50,6 +56,8 @@ class TestExecutor:
 
         assert file1.exists() is False
         assert file2.exists() is False
+        assert file3.exists() is False
+        assert stage_dir.exists() is False
 
     def test_clean_part(self, new_dir):
         p1 = Part("p1", {"plugin": "nil"})

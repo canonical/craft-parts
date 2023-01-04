@@ -16,7 +16,6 @@
 
 """Definitions and helpers for the action executor."""
 
-import contextlib
 import logging
 import shutil
 from pathlib import Path
@@ -149,12 +148,14 @@ class Executor:
 
         if not part_names:
             # also remove toplevel directories if part names are not specified
-            with contextlib.suppress(FileNotFoundError):
+            if self._project_info.prime_dir.exists():
                 shutil.rmtree(self._project_info.prime_dir)
-                if initial_step <= Step.STAGE:
-                    shutil.rmtree(self._project_info.stage_dir)
-                if initial_step <= Step.PULL:
-                    shutil.rmtree(self._project_info.parts_dir)
+
+            if initial_step <= Step.STAGE and self._project_info.stage_dir.exists():
+                shutil.rmtree(self._project_info.stage_dir)
+
+            if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
+                shutil.rmtree(self._project_info.parts_dir)
 
     def _run_action(
         self,
