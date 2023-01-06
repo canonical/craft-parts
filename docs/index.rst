@@ -14,50 +14,32 @@ also depend on each other in order to assemble the subtree containing the
 final artifacts.
 
 .. toctree::
-   :caption: Getting started
-   :maxdepth: 2
-
-   examples
-
-   craftctl
-
-   cli_tool
-
-
-.. toctree::
-   :caption: Public API
    :maxdepth: 1
+   :hidden:
 
-   lifecycle_manager
-
-   parts_steps
-
-   actions
-
-   infos
-
-   exceptions
+   tutorials/index
+   how-to/index
+   reference/index
+   explanation/index
 
 
-.. toctree::
-   :caption: Internals
-   :maxdepth: 1
+.. grid:: 1 1 2 2
 
-   lifecycle
+   .. grid-item-card:: :ref:`Tutorial <tutorial>`
 
-   implementation
+      **Get started** with a hands-on introduction to Craft Parts
 
-   reference
+   .. grid-item-card:: :ref:`How-to guides <howto>`
 
+      **Step-by-step guides** covering key operations and common tasks
 
-.. toctree::
-   :caption About the project
+.. grid:: 1 1 2 2
+   :reverse:
 
-   changelog
+   .. grid-item-card:: :ref:`Reference <reference>`
 
+      **Technical information** about Craft Parts' components and modules
 
-Indices and tables
-==================
+   .. grid-item-card:: :ref:`Explanation <explanation>`
 
-* :ref:`genindex`
-* :ref:`modindex`
+      **Discussion and clarification** of key topics
