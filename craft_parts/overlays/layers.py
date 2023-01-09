@@ -53,20 +53,20 @@ class LayerHash:
         :returns: The validation hash computed for the layer corresponding
             to the given part.
         """
-        hasher = hashlib.sha1()
+        hasher = hashlib.sha1()  # noqa: S324
         if previous_layer_hash:
             hasher.update(previous_layer_hash.digest)
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
         digest = hasher.digest()
 
-        hasher = hashlib.sha1()
+        hasher = hashlib.sha1()  # noqa: S324
         hasher.update(digest)
         for entry in part.spec.overlay_files:
             hasher.update(entry.encode())
         digest = hasher.digest()
 
-        hasher = hashlib.sha1()
+        hasher = hashlib.sha1()  # noqa: S324
         hasher.update(digest)
         if part.spec.overlay_script:
             hasher.update(part.spec.overlay_script.encode())

@@ -110,6 +110,8 @@ ignore = [
     "ANN", # Ignore type annotations in tests
     "S101",  # Yeah of course we assert in tests
     "B009",  # Allow calling `getattr` in tests since it can be used to make the test clearer.
+    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S108", # Allow Probable insecure usage of temporary file or directory
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
 
