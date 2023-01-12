@@ -11,4 +11,4 @@ based on the parts definition and existing state loaded from disk. Execution of 
 actions is handled by the :class:`Executor <craft_parts.executor.executor.Executor>`
 class.
 
-.. image:: images/class_diagram.png
+.. image:: /images/class_diagram.png

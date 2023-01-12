@@ -5,4 +5,4 @@ Lifecycle details
 Lifecycle processing diagram
 ----------------------------
 
-.. image:: images/lifecycle_logic.png
+.. image:: /images/lifecycle_logic.png

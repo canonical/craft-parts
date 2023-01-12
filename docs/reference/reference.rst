@@ -4,4 +4,4 @@ Package reference
 
 .. toctree::
 
-   craft_parts
+   gen/craft_parts
