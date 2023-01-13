@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Set, cast
 from craft_parts import errors
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import JavaPlugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             )
 
 
-class AntPlugin(Plugin):
+class AntPlugin(JavaPlugin):
     """A plugin for Apache Ant projects.
 
     The plugin requires the ``ant`` tool installed on the system. This can
@@ -151,33 +151,4 @@ class AntPlugin(Plugin):
 
         return [
             " ".join(command),
-        ] + get_java_post_build_commands()
-
-
-def get_java_post_build_commands() -> List[str]:
-    """Get the bash commands to structure a Java build in the part's install dir.
-
-    :return: The returned list contains the bash commands to do the following:
-
-      - Create bin/ and jar/ directories in ${CRAFT_PART_INSTALL};
-      - Find the ``java`` executable (provided by whatever jre the part used) and link
-        it as ${CRAFT_PART_INSTALL}/bin/java;
-      - Hardlink the .jar files generated in ${CRAFT_PART_SOURCE} to
-        ${CRAFT_PART_INSTALL}/jar.
-    """
-    # pylint: disable=line-too-long
-
-    link_java = [
-        '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
-        "mkdir -p ${CRAFT_PART_INSTALL}/bin",
-        "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
-        "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
-    ]
-
-    link_jars = [
-        "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
-        "mkdir -p ${CRAFT_PART_INSTALL}/jar",
-        r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
-    ]
-
-    return link_java + link_jars
+        ] + self._get_java_post_build_commands()

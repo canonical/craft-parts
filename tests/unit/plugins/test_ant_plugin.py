@@ -18,7 +18,7 @@ import pytest
 from pydantic import ValidationError
 
 from craft_parts import Part, PartInfo, ProjectInfo, errors
-from craft_parts.plugins.ant_plugin import AntPlugin, get_java_post_build_commands
+from craft_parts.plugins.ant_plugin import AntPlugin
 
 
 @pytest.fixture
@@ -137,7 +137,9 @@ def test_get_build_commands(part_info):
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_commands() == ["ant"] + get_java_post_build_commands()
+    assert (
+        plugin.get_build_commands() == ["ant"] + plugin._get_java_post_build_commands()
+    )
 
 
 def test_get_build_commands_with_parameters(part_info):
@@ -153,5 +155,5 @@ def test_get_build_commands_with_parameters(part_info):
 
     assert plugin.get_build_commands() == (
         ["ant -f myfile.txt -Dprop1=1 -Dprop2=2 compile jar"]
-        + get_java_post_build_commands()
+        + plugin._get_java_post_build_commands()
     )
