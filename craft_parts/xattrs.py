@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2019-2021 Canonical Ltd.
+# Copyright 2019-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,21 +16,24 @@
 
 """Helpers to read and write filesystem extended attributes."""
 
+import logging
 import os
 import sys
 from typing import Optional
 
 from craft_parts import errors
 
-# TODO: this might be a separations of concern leak, improve this handling.
-_STAGE_PACKAGE_KEY = "origin_stage_package"
+logger = logging.getLogger(__name__)
 
 
-def _get_xattr_key(key: str) -> str:
-    return f"user.craft_parts.{key}"
+def read_xattr(path: str, key: str) -> Optional[str]:
+    """Get extended attribute metadata from a file.
 
+    :param path: The file to get metadata from.
+    :param key: The attribute key.
 
-def _read_xattr(path: str, key: str) -> Optional[str]:
+    :return: The attribute value.
+    """
     if sys.platform != "linux":
         raise RuntimeError("xattr support only available for Linux")
 
@@ -38,7 +41,8 @@ def _read_xattr(path: str, key: str) -> Optional[str]:
     if os.path.islink(path):
         return None
 
-    key = _get_xattr_key(key)
+    key = f"user.craft_parts.{key}"
+
     try:
         value = os.getxattr(path, key)
     except OSError as error:
@@ -53,7 +57,13 @@ def _read_xattr(path: str, key: str) -> Optional[str]:
     return value.decode().strip()
 
 
-def _write_xattr(path: str, key: str, value: str) -> None:
+def write_xattr(path: str, key: str, value: str) -> None:
+    """Add extended attribute metadata to a file.
+
+    :param path: The file to add metadata to.
+    :param key: The attribute key.
+    :param value: The attribute value.
+    """
     if sys.platform != "linux":
         raise RuntimeError("xattr support only available for Linux")
 
@@ -61,7 +71,7 @@ def _write_xattr(path: str, key: str, value: str) -> None:
     if os.path.islink(path):
         return
 
-    key = _get_xattr_key(key)
+    key = f"user.craft_parts.{key}"
 
     try:
         os.setxattr(path, key, value.encode())
@@ -73,13 +83,3 @@ def _write_xattr(path: str, key: str, value: str) -> None:
 
         # Chain unknown variants of OSError.
         raise errors.XAttributeError(key=key, path=path, is_write=True) from error
-
-
-def read_origin_stage_package(path: str) -> Optional[str]:
-    """Read origin stage package."""
-    return _read_xattr(path, _STAGE_PACKAGE_KEY)
-
-
-def write_origin_stage_package(path: str, value: str) -> None:
-    """Write origin stage package."""
-    _write_xattr(path, _STAGE_PACKAGE_KEY, value)

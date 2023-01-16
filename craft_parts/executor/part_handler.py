@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2022 Canonical Ltd.
+# Copyright 2017-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,11 +26,12 @@ from typing import Any, Callable, Dict, List, Optional, Set, cast
 
 from typing_extensions import Protocol
 
-from craft_parts import callbacks, errors, overlays, packages, plugins, sources, xattrs
+from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
+from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
 from craft_parts.plugins import Plugin
@@ -1114,7 +1115,7 @@ def _get_primed_stage_packages(snap_files: Set[str], *, prime_dir: Path) -> Set[
     primed_stage_packages: Set[str] = set()
     for snap_file in snap_files:
         snap_file = str(prime_dir / snap_file)
-        stage_package = xattrs.read_origin_stage_package(snap_file)
+        stage_package = read_origin_stage_package(snap_file)
         if stage_package:
             primed_stage_packages.add(stage_package)
     return primed_stage_packages

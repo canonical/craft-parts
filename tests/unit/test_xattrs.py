@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2019-2021 Canonical Ltd.
+# Copyright 2019-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,93 +14,93 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
 from craft_parts import errors, xattrs
+from tests import linux_only
 
 
 class TestXattrs:
     """Extended attribute tests."""
 
-    def setup_method(self):
+    @pytest.fixture
+    def test_file(self, new_dir):
         # These tests don't work on tmpfs
-        self._test_file = (  # pylint: disable=attribute-defined-outside-init
-            ".tests-xattr-test-file"
-        )
+        file_path = Path(".tests-xattr-test-file")
+        file_path.touch()
 
-        with contextlib.suppress(FileNotFoundError):
-            os.remove(self._test_file)
+        yield str(file_path)
 
-        open(self._test_file, "w").close()
+        file_path.unlink()
 
-    def teardown_method(self):
-        with contextlib.suppress(FileNotFoundError):
-            os.remove(self._test_file)
-            os.remove(self._test_file + "-symlink")
-
-    def test_read_origin_stage_package(self):
+    def test_read_xattr(self, test_file):
         if sys.platform == "linux":
-            result = xattrs.read_origin_stage_package(self._test_file)
-            assert result is None
-        else:
-            with pytest.raises(RuntimeError):
-                xattrs.read_origin_stage_package(self._test_file)
-
-    def test_write_origin_stage_package(self):
-        package = "foo-1.0"
-        if sys.platform == "linux":
-            result = xattrs.read_origin_stage_package(self._test_file)
-            assert result is None
-
-            xattrs.write_origin_stage_package(self._test_file, package)
-            result = xattrs.read_origin_stage_package(self._test_file)
-            assert result == package
-        else:
-            with pytest.raises(RuntimeError):
-                xattrs.write_origin_stage_package(self._test_file, package)
-
-    def test_write_origin_stage_package_long(self):
-        package = "a" * 100000
-        if sys.platform == "linux":
-            result = xattrs.read_origin_stage_package(self._test_file)
-            assert result is None
-
-            with pytest.raises(errors.XAttributeTooLong) as raised:
-                xattrs.write_origin_stage_package(self._test_file, package)
-            assert raised.value.key == "user.craft_parts.origin_stage_package"
-            assert raised.value.path == self._test_file
-
-            result = xattrs.read_origin_stage_package(self._test_file)
+            result = xattrs.read_xattr(test_file, "attr")
             assert result is None
         else:
             with pytest.raises(RuntimeError) as raised:
-                xattrs.write_origin_stage_package(self._test_file, package)
+                xattrs.read_xattr(test_file, "attr")
             assert str(raised.value) == "xattr support only available for Linux"
 
-    def test_symlink(self):
-        test_symlink = self._test_file + "-symlink"
-        os.symlink(self._test_file, test_symlink)
+    def test_write_xattr(self, test_file):
+        value = "foo"
+        if sys.platform == "linux":
+            result = xattrs.read_xattr(test_file, "attr")
+            assert result is None
 
-        if sys.platform != "linux":
-            return
+            xattrs.write_xattr(test_file, "attr", value)
+            result = xattrs.read_xattr(test_file, "attr")
+            assert result == value
+        else:
+            with pytest.raises(RuntimeError) as raised:
+                xattrs.write_xattr(test_file, "attr", value)
+            assert str(raised.value) == "xattr support only available for Linux"
 
-        result = xattrs._read_xattr(test_symlink, "attr")
-        assert result is None
+    def test_write_xattr_long(self, test_file):
+        value = "a" * 100000
+        if sys.platform == "linux":
+            result = xattrs.read_xattr(test_file, "attr")
+            assert result is None
 
-        xattrs._write_xattr(test_symlink, "attr", "value")
-        result = xattrs._read_xattr(test_symlink, "attr")
-        assert result is None
+            with pytest.raises(errors.XAttributeTooLong) as raised:
+                xattrs.write_xattr(test_file, "attr", value)
+            assert raised.value.key == "user.craft_parts.attr"
+            assert raised.value.path == test_file
 
-    def test_read_non_linux(self, mocker):
+            result = xattrs.read_xattr(test_file, "attr")
+            assert result is None
+        else:
+            with pytest.raises(RuntimeError) as raised:
+                xattrs.write_xattr(test_file, "attr", value)
+            assert str(raised.value) == "xattr support only available for Linux"
+
+    @linux_only
+    def test_symlink(self, test_file):
+        test_symlink = test_file + "-symlink"
+        try:
+            os.symlink(test_file, test_symlink)
+
+            result = xattrs.read_xattr(test_symlink, "attr")
+            assert result is None
+
+            xattrs.write_xattr(test_symlink, "attr", "value")
+            result = xattrs.read_xattr(test_symlink, "attr")
+            assert result is None
+        finally:
+            os.unlink(test_symlink)
+
+    def test_read_non_linux(self, test_file, mocker):
         mocker.patch("sys.platform", return_value="win32")
-        with pytest.raises(RuntimeError):
-            xattrs._read_xattr(self._test_file, "attr")
+        with pytest.raises(RuntimeError) as raised:
+            xattrs.read_xattr(test_file, "attr")
+        assert str(raised.value) == "xattr support only available for Linux"
 
-    def test_write_non_linux(self, mocker):
+    def test_write_non_linux(self, test_file, mocker):
         mocker.patch("sys.platform", return_value="win32")
-        with pytest.raises(RuntimeError):
-            xattrs._write_xattr(self._test_file, "attr", "value")
+        with pytest.raises(RuntimeError) as raised:
+            xattrs.write_xattr(test_file, "attr", "value")
+        assert str(raised.value) == "xattr support only available for Linux"
