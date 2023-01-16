@@ -31,7 +31,7 @@ class MakePluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]) -> "MakePluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.

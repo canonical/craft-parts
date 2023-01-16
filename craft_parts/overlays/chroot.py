@@ -32,7 +32,7 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 
-def chroot(path: Path, target: Callable, *args, **kwargs) -> Any:
+def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.

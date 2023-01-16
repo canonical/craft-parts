@@ -72,7 +72,7 @@ class PartSpec(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("stage_files", "prime_files", each_item=True)
-    def validate_relative_path_list(cls, item):
+    def validate_relative_path_list(cls, item: str) -> str:
         """Check if the list does not contain empty of absolute paths."""
         assert item != "", "path cannot be empty"
         assert (
@@ -81,13 +81,13 @@ class PartSpec(BaseModel):
         return item
 
     @root_validator(pre=True)
-    def validate_root(cls, values):
+    def validate_root(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.
             return values
 
-        def is_slice(name):
+        def is_slice(name: str) -> bool:
             return "_" in name
 
         # Detect a mixture of .deb packages and chisel slices.
@@ -202,7 +202,7 @@ class Part:
                 part_name=name, error_list=err.errors()
             )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Part({self.name!r})"
 
     @property

@@ -24,7 +24,7 @@ import re
 import shutil
 from contextlib import ContextDecorator
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import apt
 import apt.cache
@@ -47,7 +47,7 @@ _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+
 class LogProgress(apt.progress.base.AcquireProgress):
     """Internal Base class for text progress classes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._id = 1
 
     def fail(self, item: apt_pkg.AcquireItemDesc) -> None:
@@ -101,7 +101,7 @@ class AptCache(ContextDecorator):
 
     # pylint: enable=attribute-defined-outside-init
 
-    def __exit__(self, *exc) -> None:
+    def __exit__(self, *exc: Any) -> None:
         self.cache.close()
 
     @classmethod
@@ -362,7 +362,7 @@ class AptCache(ContextDecorator):
         self._autokeep_packages()
 
 
-def _verify_marked_install(package: apt.package.Package):
+def _verify_marked_install(package: apt.package.Package) -> None:
     if package.installed or package.marked_install:
         return
 

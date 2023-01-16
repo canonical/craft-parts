@@ -126,7 +126,7 @@ class BuildPackageNotFound(PackagesError):
     :param package: The name of the missing package.
     """
 
-    def __init__(self, package):
+    def __init__(self, package: str):
         self.package = package
         brief = f"Cannot find package listed in 'build-packages': {package}"
 
@@ -205,7 +205,7 @@ class SnapInstallError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name, snap_channel):
+    def __init__(self, *, snap_name: str, snap_channel: str):
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error installing snap {snap_name!r} from channel {snap_channel!r}."
@@ -220,7 +220,7 @@ class SnapDownloadError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name, snap_channel):
+    def __init__(self, *, snap_name: str, snap_channel: str):
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error downloading snap {snap_name!r} from channel {snap_channel!r}."
@@ -235,7 +235,7 @@ class SnapRefreshError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name, snap_channel):
+    def __init__(self, *, snap_name: str, snap_channel: str):
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error refreshing snap {snap_name!r} to channel {snap_channel!r}."

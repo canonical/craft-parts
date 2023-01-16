@@ -66,7 +66,9 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
-    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
+    def validate_environment(
+        self, *, part_dependencies: Optional[List[str]] = None
+    ) -> None:
         """Ensure the environment has the dependencies to build Rust applications.
 
         :param part_dependencies: A list of the parts this part depends on.

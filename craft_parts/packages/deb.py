@@ -27,7 +27,7 @@ import sys
 import tempfile
 from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -252,11 +252,11 @@ IGNORE_FILTERS: Dict[str, Set[str]] = {
 }
 
 
-def _apt_cache_wrapper(method):
+def _apt_cache_wrapper(method: Any) -> Callable[..., Any]:
     """Decorate a method to handle apt availability."""
 
     @functools.wraps(method)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
         if not _APT_CACHE_AVAILABLE:
             raise errors.PackageBackendNotSupported("apt")
         return method(*args, **kwargs)
@@ -369,7 +369,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
-    def get_packages_for_source_type(cls, source_type):
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         """Return a list of packages required to to work with source_type."""
         if source_type == "bzr":
             packages = {"bzr"}
@@ -720,7 +720,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
-    def is_package_installed(cls, package_name) -> bool:
+    def is_package_installed(cls, package_name: str) -> bool:
         """Inform if a package is installed on the host system."""
         with AptCache() as apt_cache:
             return apt_cache.get_installed_version(package_name) is not None
@@ -747,7 +747,7 @@ class Ubuntu(BaseRepository):
         return output.decode().strip()
 
 
-def get_cache_dirs(cache_dir: Path):
+def get_cache_dirs(cache_dir: Path) -> Tuple[Path, Path]:
     """Return the paths to the stage and deb cache directories."""
     stage_cache_dir = cache_dir / "stage-packages"
     deb_cache_dir = cache_dir / "download"
@@ -756,7 +756,7 @@ def get_cache_dirs(cache_dir: Path):
 
 
 # XXX: this will be removed when user messages support is implemented.
-def process_run(command: List[str], **kwargs) -> None:
+def process_run(command: List[str], **kwargs: Any) -> None:
     """Run a command and log its output."""
     # Pass logger so messages can be logged as originating from this package.
     os_utils.process_run(command, logger.debug, **kwargs)

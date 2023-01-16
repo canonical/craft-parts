@@ -21,7 +21,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, cast
 
 from overrides import overrides
 
@@ -164,12 +164,13 @@ class GitSource(SourceHandler):
                 source_type="git", option="source-checksum"
             )
 
-    def _fetch_origin_commit(self):
+    def _fetch_origin_commit(self) -> None:
         """Fetch from origin, using source-commit if defined."""
+        command_str = cast(str, self.command)
         command = [
-            self.command,
+            command_str,
             "-C",
-            self.part_src_dir,
+            str(self.part_src_dir),
             "fetch",
             "origin",
         ]
@@ -178,7 +179,7 @@ class GitSource(SourceHandler):
 
         self._run(command)
 
-    def _get_current_branch(self):
+    def _get_current_branch(self) -> str:
         """Get current git branch."""
         command = [
             self.command,
@@ -190,7 +191,7 @@ class GitSource(SourceHandler):
 
         return self._run_output(command)
 
-    def _pull_existing(self):
+    def _pull_existing(self) -> None:
         """Pull data for an existing repository.
 
         For an existing (initialized) local git repository, pull from origin
@@ -212,10 +213,12 @@ class GitSource(SourceHandler):
         else:
             refspec = "refs/remotes/origin/" + self._get_current_branch()
 
-        command = [
-            self.command,
+        command_prefix = [
+            cast(str, self.command),
             "-C",
-            self.part_src_dir,
+            str(self.part_src_dir),
+        ]
+        command = command_prefix + [
             "fetch",
             "--prune",
         ]
@@ -224,15 +227,12 @@ class GitSource(SourceHandler):
             command.append("--recurse-submodules=yes")
         self._run(command)
 
-        command = [self.command, "-C", self.part_src_dir, "reset", "--hard", refspec]
+        command = command_prefix + ["reset", "--hard", refspec]
 
         self._run(command)
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
-            command = [
-                self.command,
-                "-C",
-                self.part_src_dir,
+            command = command_prefix + [
                 "submodule",
                 "update",
                 "--recursive",
@@ -243,16 +243,18 @@ class GitSource(SourceHandler):
                     command.append(submodule)
             self._run(command)
 
-    def _clone_new(self):
+    def _clone_new(self) -> None:
         """Clone a git repository, using submodules, branch, and depth if defined."""
-        command = [self.command, "clone"]
+        command = [cast(str, self.command), "clone"]
         if self.source_submodules is None:
             command.append("--recursive")
         else:
             for submodule in self.source_submodules:
                 command.append("--recursive=" + submodule)
         if self.source_tag or self.source_branch:
-            command.extend(["--branch", self.source_tag or self.source_branch])
+            command.extend(
+                ["--branch", cast(str, self.source_tag or self.source_branch)]
+            )
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
 
@@ -260,14 +262,14 @@ class GitSource(SourceHandler):
         command.append(self._format_source())
 
         logger.debug("Executing: %s", " ".join([str(i) for i in command]))
-        self._run(command + [self.part_src_dir])
+        self._run(command + [str(self.part_src_dir)])
 
         if self.source_commit:
             self._fetch_origin_commit()
             command = [
-                self.command,
+                cast(str, self.command),
                 "-C",
-                self.part_src_dir,
+                str(self.part_src_dir),
                 "checkout",
                 self.source_commit,
             ]
@@ -303,7 +305,7 @@ class GitSource(SourceHandler):
             self._clone_new()
         self.source_details = self._get_source_details()
 
-    def _get_source_details(self):
+    def _get_source_details(self) -> Dict[str, Optional[str]]:
         """Return a dictionary containing current source parameters."""
         tag = self.source_tag
         commit = self.source_commit

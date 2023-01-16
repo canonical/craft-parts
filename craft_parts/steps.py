@@ -41,7 +41,7 @@ class Step(enum.IntEnum):
     STAGE = 4
     PRIME = 5
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
 
     def previous_steps(self) -> List["Step"]:

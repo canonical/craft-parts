@@ -30,7 +30,7 @@ class Fileset:
         self._name = name
         self._list = entries
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Fileset({self._list!r}, name={self._name!r})"
 
     @property

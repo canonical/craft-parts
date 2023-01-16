@@ -18,7 +18,7 @@
 
 import hashlib
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from craft_parts.parts import Part
 
@@ -31,10 +31,10 @@ class LayerHash:
     def __init__(self, layer_hash: bytes):
         self.digest = layer_hash
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.hex()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, LayerHash):
             return False
 

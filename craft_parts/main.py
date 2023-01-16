@@ -37,7 +37,7 @@ import craft_parts.errors
 from craft_parts import ActionType, Step
 
 
-def main():
+def main() -> None:
     """Run the command-line interface."""
     options = _parse_arguments()
 

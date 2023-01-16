@@ -22,7 +22,7 @@ import os.path
 import shutil
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, cast
 
 from typing_extensions import Protocol
 
@@ -269,7 +269,7 @@ class PartHandler:
         *,
         stdout: Stream,
         stderr: Stream,
-        update=False,
+        update: bool = False,
     ) -> StepState:
         """Execute the build step for this part.
 
@@ -648,7 +648,9 @@ class PartHandler:
                 f"cannot reapply step {step_name!r} of {self._part.name!r}"
             )
 
-    def _reapply_overlay(self, step_info, *, stdout: Stream, stderr: Stream) -> None:
+    def _reapply_overlay(
+        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+    ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         shutil.rmtree(self._part.part_layer_dir)
         self._run_overlay(step_info, stdout=stdout, stderr=stderr)
@@ -847,7 +849,7 @@ class PartHandler:
             )
             overlay_migration_state_path.unlink()
 
-    def _make_dirs(self):
+    def _make_dirs(self) -> None:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
@@ -861,7 +863,7 @@ class PartHandler:
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
 
-    def _organize(self, *, overwrite=False):
+    def _organize(self, *, overwrite: bool = False) -> None:
         mapping = self._part.spec.organize_files
         organize_files(
             part_name=self._part.name,
@@ -894,7 +896,7 @@ class PartHandler:
 
         return fetched_packages
 
-    def _fetch_stage_snaps(self):
+    def _fetch_stage_snaps(self) -> Optional[Sequence[str]]:
         """Download snap packages to the part's snap directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
@@ -923,7 +925,7 @@ class PartHandler:
                 part_name=self._part.name, package_name=err.package_name
             )
 
-    def _unpack_stage_packages(self):
+    def _unpack_stage_packages(self) -> None:
         """Extract stage packages contents to the part's install directory."""
         pulled_packages = None
 
@@ -938,7 +940,7 @@ class PartHandler:
             stage_packages=pulled_packages,
         )
 
-    def _unpack_stage_snaps(self):
+    def _unpack_stage_snaps(self) -> None:
         """Extract stage snap contents to the part's install directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:

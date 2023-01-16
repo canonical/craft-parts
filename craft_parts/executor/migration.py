@@ -19,7 +19,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from craft_parts import overlays
 from craft_parts.permissions import Permissions, filter_permissions
@@ -38,7 +38,7 @@ def migrate_files(
     missing_ok: bool = False,
     follow_symlinks: bool = False,
     oci_translation: bool = False,
-    fixup_func=lambda *args: None,
+    fixup_func: Callable[..., None] = lambda *args: None,
     permissions: Optional[List[Permissions]] = None,
 ) -> Tuple[Set[str], Set[str]]:
     """Copy or link files from a directory to another.

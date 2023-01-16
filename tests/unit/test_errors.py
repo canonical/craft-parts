@@ -88,7 +88,7 @@ def test_part_specification_error():
     assert err.resolution == "Review part 'foo' and make sure it's correct."
 
 
-def test_part_specification_error_from_validation_error():
+def test_part_specification_error_from_validation_error() -> None:
     error_list: List["ErrorDict"] = [
         {"loc": ("field-1", 0), "msg": "something is wrong", "type": "value_error"},
         {"loc": ("field-2",), "msg": "field required", "type": "value_error"},

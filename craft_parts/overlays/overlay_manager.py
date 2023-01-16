@@ -20,7 +20,9 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
+
+from typing_extensions import Literal
 
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
@@ -127,7 +129,8 @@ class OverlayManager:
 
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
-        packages.Repository.refresh_packages_list.cache_clear()
+        if hasattr(packages.Repository.refresh_packages_list, "cache_clear"):
+            packages.Repository.refresh_packages_list.cache_clear()  # type: ignore
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
     def download_packages(self, package_names: List[str]) -> None:
@@ -178,14 +181,14 @@ class LayerMount:
         self._pkg_cache = pkg_cache
         self._pid = os.getpid()
 
-    def __enter__(self):
+    def __enter__(self) -> "LayerMount":
         self._overlay_manager.mount_layer(
             self._top_part,
             pkg_cache=self._pkg_cache,
         )
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, *exc: Any) -> Literal[False]:
         # prevent pychroot process leak
         if os.getpid() != self._pid:
             sys.exit()
@@ -211,11 +214,11 @@ class PackageCacheMount:
         self._overlay_manager.mkdirs()
         self._pid = os.getpid()
 
-    def __enter__(self):
+    def __enter__(self) -> "PackageCacheMount":
         self._overlay_manager.mount_pkg_cache()
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, *exc: Any) -> Literal[False]:
         # prevent pychroot process leak
         if os.getpid() != self._pid:
             sys.exit()

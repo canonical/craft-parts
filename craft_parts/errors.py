@@ -17,10 +17,11 @@
 """Craft parts errors."""
 
 import dataclasses
+import pathlib
 from typing import TYPE_CHECKING, List, Optional, Set
 
 if TYPE_CHECKING:
-    from pydantic.error_wrappers import ErrorDict
+    from pydantic.error_wrappers import ErrorDict, Loc
 
 
 @dataclasses.dataclass(repr=True)
@@ -120,7 +121,9 @@ class PartSpecificationError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
     @classmethod
-    def from_validation_error(cls, *, part_name: str, error_list: List["ErrorDict"]):
+    def from_validation_error(
+        cls, *, part_name: str, error_list: List["ErrorDict"]
+    ) -> "PartSpecificationError":
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
@@ -146,7 +149,7 @@ class PartSpecificationError(PartsError):
         return cls(part_name=part_name, message="\n".join(formatted_errors))
 
     @classmethod
-    def _format_loc(cls, loc):
+    def _format_loc(cls, loc: "Loc") -> str:
         """Format location."""
         loc_parts = []
         for loc_part in loc:
@@ -160,11 +163,11 @@ class PartSpecificationError(PartsError):
             else:
                 raise RuntimeError(f"unhandled loc: {loc_part}")
 
-        loc = ".".join(loc_parts)
+        loc_str = ".".join(loc_parts)
 
         # Filter out internal __root__ detail.
-        loc = loc.replace(".__root__", "")
-        return loc
+        loc_str = loc_str.replace(".__root__", "")
+        return loc_str
 
 
 class CopyTreeError(PartsError):
@@ -266,7 +269,7 @@ class InvalidPlugin(PartsError):
 class OsReleaseIdError(PartsError):
     """Failed to determine the host operating system identification string."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         brief = "Unable to determine the host operating system ID."
 
         super().__init__(brief=brief)
@@ -275,7 +278,7 @@ class OsReleaseIdError(PartsError):
 class OsReleaseNameError(PartsError):
     """Failed to determine the host operating system name."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         brief = "Unable to determine the host operating system name."
 
         super().__init__(brief=brief)
@@ -284,7 +287,7 @@ class OsReleaseNameError(PartsError):
 class OsReleaseVersionIdError(PartsError):
     """Failed to determine the host operating system version."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         brief = "Unable to determine the host operating system version ID."
 
         super().__init__(brief=brief)
@@ -293,7 +296,7 @@ class OsReleaseVersionIdError(PartsError):
 class OsReleaseCodenameError(PartsError):
     """Failed to determine the host operating system version codename."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         brief = "Unable to determine the host operating system codename."
 
         super().__init__(brief=brief)
@@ -306,7 +309,7 @@ class FilesetError(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, *, name: str, message: str):
+    def __init__(self, *, name: str, message: str) -> None:
         self.name = name
         self.message = message
         brief = f"{name!r} fileset error: {message}."
@@ -321,7 +324,7 @@ class FilesetConflict(PartsError):
     :param conflicting_files: A set containing the conflicting file names.
     """
 
-    def __init__(self, conflicting_files: Set[str]):
+    def __init__(self, conflicting_files: Set[str]) -> None:
         self.conflicting_files = conflicting_files
         brief = "Failed to filter files: inconsistent 'stage' and 'prime' filesets."
         details = (
@@ -342,7 +345,7 @@ class FileOrganizeError(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, *, part_name, message):
+    def __init__(self, *, part_name: str, message: str) -> None:
         self.part_name = part_name
         self.message = message
         brief = f"Failed to organize part {part_name!r}: {message}."
@@ -360,7 +363,7 @@ class PartFilesConflict(PartsError):
 
     def __init__(
         self, *, part_name: str, other_part_name: str, conflicting_files: List[str]
-    ):
+    ) -> None:
         self.part_name = part_name
         self.other_part_name = other_part_name
         self.conflicting_files = conflicting_files
@@ -386,7 +389,7 @@ class StageFilesConflict(PartsError):
     :param conflicting_files: The list of confictling files.
     """
 
-    def __init__(self, *, part_name: str, conflicting_files: List[str]):
+    def __init__(self, *, part_name: str, conflicting_files: List[str]) -> None:
         self.part_name = part_name
         self.conflicting_files = conflicting_files
         indented_conflicting_files = (f"    {i}" for i in conflicting_files)
@@ -546,7 +549,9 @@ class OverlayPermissionError(PartsError):
 class DebError(PartsError):
     """A "deb"-related command failed."""
 
-    def __init__(self, deb_path, command, exit_code):
+    def __init__(
+        self, deb_path: pathlib.Path, command: List[str], exit_code: int
+    ) -> None:
         brief = (
             f"Failed when handling {deb_path}: "
             f"command {command!r} exited with code {exit_code}."

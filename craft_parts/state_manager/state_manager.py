@@ -47,7 +47,7 @@ class _StateWrapper:
     serial: int
     step_updated: bool = False
 
-    def is_newer_than(self, other: "_StateWrapper"):
+    def is_newer_than(self, other: "_StateWrapper") -> bool:
         """Verify if this state is newer than the specified state.
 
         :param other: The wrapped state to compare this state to.
@@ -58,7 +58,7 @@ class _StateWrapper:
 class _StateDB:
     """A dictionary-backed simple database manager for wrapped states."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._state: Dict[Tuple[str, Step], _StateWrapper] = {}
         self._serial_gen = itertools.count(1)
 
