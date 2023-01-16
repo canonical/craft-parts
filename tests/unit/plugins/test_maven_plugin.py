@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -164,7 +164,7 @@ def test_get_build_commands_with_parameters(part_info):
 def test_settings_no_proxy(part_info, new_dir):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    settings_path = Path(new_dir / "parts/my-part/run/m2/settings.xml")
+    settings_path = Path(new_dir / "parts/my-part/build/.parts/.m2/settings.xml")
 
     with mock.patch.dict(os.environ, {}):
         assert plugin.get_build_commands() == (
@@ -182,7 +182,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
     settings_path = Path(
-        part_info._dirs.parts_dir / "my-part/build/.parts/m2/settings.xml"
+        part_info._dirs.parts_dir / "my-part/build/.parts/.m2/settings.xml"
     )
 
     expected_content = dedent(

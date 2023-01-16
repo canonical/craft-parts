@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2022 Canonical Ltd.
+# Copyright 2015-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -121,7 +121,7 @@ class MavenPlugin(JavaPlugin):
 
         mvn_cmd = ["mvn", "package"]
         if self._use_proxy():
-            settings_path = self._part_info.part_build_dir / ".parts/m2/settings.xml"
+            settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
             _create_settings(settings_path)
             mvn_cmd += ["-s", str(settings_path)]
 
@@ -129,11 +129,18 @@ class MavenPlugin(JavaPlugin):
             " ".join(mvn_cmd + options.maven_parameters)
         ] + self._get_java_post_build_commands()
 
-    def _use_proxy(self):
+    def _use_proxy(self) -> bool:
         return any(k in os.environ for k in ("http_proxy", "https_proxy"))
 
 
 def _create_settings(settings_path: Path) -> None:
+    """Create a Maven configuration file.
+
+    The settings file contains additional configuration for Maven, such
+    as proxy parameters.
+
+    :param settings_path: the location the settings file will be created.
+    """
     settings = ElementTree.Element(
         "settings",
         attrib={
