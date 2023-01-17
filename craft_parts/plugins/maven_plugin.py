@@ -74,7 +74,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             plugin_name="maven",
             part_dependencies=part_dependencies,
         )
-        if not re.match(r"\S*Apache Maven ", version) and (
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
             part_dependencies is None or "maven-deps" not in part_dependencies
         ):
             raise errors.PluginEnvironmentValidationError(

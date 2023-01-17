@@ -36,13 +36,16 @@ def part_info(new_dir):
     )
 
 
-def test_validate_environment(dependency_fixture, part_info):
+@pytest.mark.parametrize(
+    "mvn_version", ("\x1b[1mApache Maven 3.6.3\x1b[m", "Apache Maven 3.6.3")
+)
+def test_validate_environment(dependency_fixture, part_info, mvn_version):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    ant = dependency_fixture("mvn", output="\x1b]1mApache Maven 3.6.3\x1b[m")
+    mvn = dependency_fixture("mvn", output=mvn_version)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ant.parent)}", properties=properties
+        part_name="my-part", env=f"PATH={str(mvn.parent)}", properties=properties
     )
     validator.validate_environment()
 
