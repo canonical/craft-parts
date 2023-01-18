@@ -39,7 +39,7 @@ class MavenPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]) -> "MavenPluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -61,7 +61,9 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
-    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
+    def validate_environment(
+        self, *, part_dependencies: Optional[List[str]] = None
+    ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
         :param part_dependencies: A list of the parts this part depends on.
