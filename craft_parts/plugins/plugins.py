@@ -27,6 +27,7 @@ from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
 from .make_plugin import MakePlugin
+from .maven_plugin import MavenPlugin
 from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
 from .npm_plugin import NpmPlugin
@@ -51,8 +52,9 @@ _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "dotnet": DotnetPlugin,
     "dump": DumpPlugin,
     "go": GoPlugin,
-    "meson": MesonPlugin,
     "make": MakePlugin,
+    "maven": MavenPlugin,
+    "meson": MesonPlugin,
     "nil": NilPlugin,
     "npm": NpmPlugin,
     "python": PythonPlugin,
