@@ -344,7 +344,7 @@ def get_snapd_socket_path_template() -> str:
     return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
 
 
-def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator:
+def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[bytes]:
     slug = f'snaps/{parse.quote(snap_name, safe="")}/file'
     url = get_snapd_socket_path_template().format(slug)
     try:

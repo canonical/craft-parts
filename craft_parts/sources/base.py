@@ -22,7 +22,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import requests
 from overrides import overrides
@@ -77,7 +77,7 @@ class SourceHandler(abc.ABC):
         self.source_branch = source_branch
         self.source_depth = source_depth
         self.source_checksum = source_checksum
-        self.source_details: Any = None
+        self.source_details: Optional[Dict[str, Optional[str]]] = None
         self.source_submodules = source_submodules
         self.command = command
         self._dirs = project_dirs

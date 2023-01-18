@@ -184,7 +184,7 @@ class GitSource(SourceHandler):
         command = [
             self.command,
             "-C",
-            self.part_src_dir,
+            str(self.part_src_dir),
             "branch",
             "--show-current",
         ]
@@ -315,7 +315,7 @@ class GitSource(SourceHandler):
 
         if not tag and not branch and not commit:
             commit = self._run_output(
-                ["git", "-C", self.part_src_dir, "rev-parse", "HEAD"]
+                ["git", "-C", str(self.part_src_dir), "rev-parse", "HEAD"]
             )
 
         return {
