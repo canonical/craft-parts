@@ -129,8 +129,8 @@ class OverlayManager:
 
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
-        if hasattr(packages.Repository.refresh_packages_list, "cache_clear"):
-            packages.Repository.refresh_packages_list.cache_clear()  # type: ignore
+        # TODO: this assumes an Ubuntu repository, we must improve this API
+        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
     def download_packages(self, package_names: List[str]) -> None:
