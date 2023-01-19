@@ -22,7 +22,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import requests
 from overrides import overrides
@@ -77,7 +77,7 @@ class SourceHandler(abc.ABC):
         self.source_branch = source_branch
         self.source_depth = source_depth
         self.source_checksum = source_checksum
-        self.source_details = None
+        self.source_details: Optional[Dict[str, Optional[str]]] = None
         self.source_submodules = source_submodules
         self.command = command
         self._dirs = project_dirs
@@ -118,7 +118,7 @@ class SourceHandler(abc.ABC):
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
-    def update(self):
+    def update(self) -> None:
         """Update pulled source.
 
         :raise errors.SourceUpdateUnsupported: If the source can't update its files.
@@ -126,7 +126,7 @@ class SourceHandler(abc.ABC):
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
     @classmethod
-    def _run(cls, command: List[str], **kwargs):
+    def _run(cls, command: List[str], **kwargs: Any) -> None:
         try:
             os_utils.process_run(command, logger.debug, **kwargs)
         except subprocess.CalledProcessError as err:

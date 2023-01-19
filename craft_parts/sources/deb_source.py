@@ -82,7 +82,7 @@ class DebSource(FileSourceHandler):
         dst: Path,
         keep: bool = False,
         src: Optional[Path] = None,
-    ):
+    ) -> None:
         """Extract deb file contents to the part source dir."""
         if src:
             deb_file = src

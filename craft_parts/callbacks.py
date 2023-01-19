@@ -126,13 +126,13 @@ def run_post_step(step_info: StepInfo) -> None:
     return _run_step(hook_list=_POST_STEP_HOOKS, step_info=step_info)
 
 
-def _run_step(*, hook_list: List[CallbackHook], step_info: StepInfo):
+def _run_step(*, hook_list: List[CallbackHook], step_info: StepInfo) -> None:
     for hook in hook_list:
         if not hook.step_list or step_info.step in hook.step_list:
             hook.function(step_info)
 
 
-def _ensure_not_defined(func: Callback, hook_list: List[CallbackHook]):
+def _ensure_not_defined(func: Callback, hook_list: List[CallbackHook]) -> None:
     for hook in hook_list:
         if func == hook.function:
             raise errors.CallbackRegistrationError(

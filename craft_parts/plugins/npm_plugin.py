@@ -53,7 +53,7 @@ class NpmPluginProperties(PluginProperties, PluginModel):
 
     @root_validator
     @classmethod
-    def node_version_defined(cls, values):
+    def node_version_defined(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """If npm-include-node is true, then npm-node-version must be defined."""
         if values.get("npm_include_node") and not values.get("npm_node_version"):
             raise ValueError("npm-node-version is required if npm-include-node is true")
@@ -82,7 +82,9 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
-    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
+    def validate_environment(
+        self, *, part_dependencies: Optional[List[str]] = None
+    ) -> None:
         """Ensure the environment has the dependencies to build npm applications.
 
         :param part_dependencies: A list of the parts this part depends on.

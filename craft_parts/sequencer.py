@@ -306,7 +306,7 @@ class Sequencer:
         reason: Optional[str] = None,
         outdated_files: Optional[List[str]] = None,
         outdated_dirs: Optional[List[str]] = None,
-    ):
+    ) -> None:
         """Set the step state as reexecuted by updating its timestamp."""
         logger.debug("update step %s:%s", part.name, step)
         properties = ActionProperties(
@@ -332,7 +332,7 @@ class Sequencer:
 
     def _reapply_layer(
         self, part: Part, layer_hash: LayerHash, *, reason: Optional[str] = None
-    ):
+    ) -> None:
         """Update the layer hash without changing the step state."""
         logger.debug("reapply layer %s: hash=%s", part.name, layer_hash)
         self._layer_state.set_layer_hash(part, layer_hash)

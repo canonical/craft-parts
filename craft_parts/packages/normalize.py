@@ -218,7 +218,7 @@ def _fix_filemode(path: Path) -> None:
         path.chmod(mode & 0o1777)
 
 
-def _rewrite_python_shebangs(root_dir: Path):
+def _rewrite_python_shebangs(root_dir: Path) -> None:
     """Recursively change #!/usr/bin/pythonX shebangs to #!/usr/bin/env pythonX.
 
     :param str root_dir: Directory that will be crawled for shebangs.

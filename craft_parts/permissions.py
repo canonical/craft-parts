@@ -19,7 +19,7 @@
 import os
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, root_validator
 
@@ -49,7 +49,7 @@ class Permissions(BaseModel):
 
     # pylint: disable=no-self-argument
     @root_validator(pre=True)
-    def validate_root(cls, values):
+    def validate_root(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:
         """Validate that "owner" and "group" are correctly specified."""
         has_owner = "owner" in values
         has_group = "group" in values

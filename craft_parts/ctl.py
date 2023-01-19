@@ -52,7 +52,7 @@ class CraftCtl:
         raise RuntimeError(f"invalid command {cmd!r}")
 
 
-def _client(cmd: str, args: List[str]):
+def _client(cmd: str, args: List[str]) -> Optional[str]:
     """Execute a command in the running step processor.
 
     The control protocol client allows a user scriptlet to execute
@@ -101,7 +101,7 @@ def _client(cmd: str, args: List[str]):
     return retval
 
 
-def main():
+def main() -> None:
     """Run the ctl client cli."""
     if len(sys.argv) < 2:
         print(f"usage: {sys.argv[0]} <command> [arguments]")

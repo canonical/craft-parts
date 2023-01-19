@@ -19,7 +19,7 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
@@ -280,7 +280,7 @@ class ExecutionContext:
         self._executor.prologue()
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, *exc: Any) -> None:
         self._executor.epilogue()
 
     def execute(

@@ -22,6 +22,8 @@ import urllib.parse
 import urllib.request
 from typing import Optional
 
+import requests
+
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
@@ -38,8 +40,11 @@ def is_url(url: str) -> bool:
 
 
 def download_request(
-    request, destination: str, message: Optional[str] = None, total_read: int = 0
-):
+    request: requests.Response,
+    destination: str,
+    message: Optional[str] = None,
+    total_read: int = 0,
+) -> None:
     """Download a request with nice progress bars.
 
     :param request: The URL download request.

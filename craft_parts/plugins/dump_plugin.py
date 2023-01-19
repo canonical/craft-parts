@@ -29,7 +29,7 @@ class DumpPluginProperties(PluginProperties):
     """The part properties used by the dump plugin."""
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]) -> "DumpPluginProperties":
         """Populate dump properties from the part specification.
 
         'source' is a required part property.

@@ -22,7 +22,7 @@ import glob
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Set, Tuple
 
 from overrides import overrides
 
@@ -39,7 +39,12 @@ logger = logging.getLogger(__name__)
 class LocalSource(SourceHandler):
     """The local source handler."""
 
-    def __init__(self, *args, copy_function=file_utils.link_or_copy, **kwargs):
+    def __init__(
+        self,
+        *args: Any,
+        copy_function: Callable[..., None] = file_utils.link_or_copy,
+        **kwargs: Any
+    ):
         super().__init__(*args, **kwargs)
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function
@@ -61,11 +66,11 @@ class LocalSource(SourceHandler):
         self._ignore = functools.partial(
             _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns
         )
-        self._updated_files = set()
-        self._updated_directories = set()
+        self._updated_files: Set[str] = set()
+        self._updated_directories: Set[str] = set()
 
     @overrides
-    def pull(self):
+    def pull(self) -> None:
         """Retrieve the local source files."""
         if not Path(self.source_abspath).exists():
             raise errors.SourceNotFound(self.source)
@@ -147,7 +152,7 @@ class LocalSource(SourceHandler):
         return (sorted(self._updated_files), sorted(self._updated_directories))
 
     @overrides
-    def update(self):
+    def update(self) -> None:
         """Update pulled source.
 
         Call method :meth:`check_if_outdated` before updating to populate the
@@ -174,8 +179,8 @@ def _ignore(
     source: str,
     current_directory: str,
     patterns: List[str],
-    directory,
-    files,
+    directory: str,
+    _files: Any,
     also_ignore: Optional[List[str]] = None,
 ) -> List[str]:
     if also_ignore:

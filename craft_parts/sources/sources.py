@@ -147,7 +147,9 @@ def get_source_handler(
     return source_handler
 
 
-def _get_source_handler_class(source, *, source_type: str = "") -> SourceHandlerType:
+def _get_source_handler_class(
+    source: str, *, source_type: str = ""
+) -> SourceHandlerType:
     """Return the appropriate handler class for the given source.
 
     :param source: The source specification.

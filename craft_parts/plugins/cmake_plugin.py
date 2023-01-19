@@ -32,7 +32,7 @@ class CMakePluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]) -> "CMakePluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.

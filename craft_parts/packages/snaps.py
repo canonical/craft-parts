@@ -21,7 +21,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
 from urllib import parse
 
 import requests_unixsocket  # type: ignore
@@ -195,7 +195,7 @@ class SnapPackage:
         store_channels = self._get_store_channels()
         return self.channel in store_channels.keys()
 
-    def download(self, *, directory: Optional[str] = None):
+    def download(self, *, directory: Optional[str] = None) -> None:
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.
@@ -216,7 +216,7 @@ class SnapPackage:
                 snap_name=self.name, snap_channel=self.channel
             ) from err
 
-    def install(self):
+    def install(self) -> None:
         """Installs the snap onto the system."""
         logger.debug("Installing snap: %s", self.name)
         snap_install_cmd = ["snap", "install", self.name]
@@ -244,7 +244,7 @@ class SnapPackage:
         # Now that the snap is installed, invalidate the data we had on it.
         self._is_installed = None
 
-    def refresh(self):
+    def refresh(self) -> None:
         """Refresh a snap onto a channel on the system."""
         logger.debug("Refreshing snap: %s (channel %s)", self.name, self.channel)
         snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
@@ -339,12 +339,12 @@ def _get_parsed_snap(snap: str) -> Tuple[str, str]:
     return snap_name, snap_channel
 
 
-def get_snapd_socket_path_template():
+def get_snapd_socket_path_template() -> str:
     """Return the template for the snapd socket URI."""
     return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
 
 
-def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int):
+def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[bytes]:
     slug = f'snaps/{parse.quote(snap_name, safe="")}/file'
     url = get_snapd_socket_path_template().format(slug)
     try:

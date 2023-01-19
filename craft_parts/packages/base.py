@@ -21,7 +21,7 @@ import contextlib
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Set, Tuple, Type
+from typing import Any, List, Optional, Set, Tuple, Type
 
 from craft_parts import xattrs
 
@@ -223,8 +223,8 @@ class DummyRepository(BaseRepository):
 
     @classmethod
     def fetch_stage_packages(
-        cls,
-        **kwargs,  # pylint: disable=unused-argument
+        cls,  # pylint: disable=unused-argument
+        **kwargs: Any,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         return []

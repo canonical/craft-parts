@@ -94,7 +94,7 @@ class LifecycleManager:
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
-        **custom_args,  # custom passthrough args
+        **custom_args: Any,  # custom passthrough args
     ):
         # pylint: disable=too-many-locals
 

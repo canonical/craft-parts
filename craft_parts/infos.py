@@ -80,7 +80,7 @@ class ProjectInfo:
         project_name: Optional[str] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
-        **custom_args,  # custom passthrough args
+        **custom_args: Any,  # custom passthrough args
     ):
         if not project_dirs:
             project_dirs = ProjectDirs()
@@ -101,7 +101,7 @@ class ProjectInfo:
 
         self.execution_finished = False
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if hasattr(self._dirs, name):
             return getattr(self._dirs, name)
 
@@ -255,7 +255,7 @@ class ProjectInfo:
         if name not in self._project_vars:
             raise ValueError(f"{name!r} not in project variables")
 
-    def _set_machine(self, arch: Optional[str]):
+    def _set_machine(self, arch: Optional[str]) -> None:
         """Initialize host and target machine information based on the architecture.
 
         :param arch: The architecture to use. If empty, assume the
@@ -302,7 +302,7 @@ class PartInfo:
         self._part_state_dir = part.part_state_dir
         self.build_attributes = part.spec.build_attributes.copy()
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         # Use composition and attribute cascading to avoid setting attributes
         # cumulatively in the init method.
         if hasattr(self._project_info, name):
@@ -404,7 +404,7 @@ class StepInfo:
         self.step_environment: Dict[str, str] = {}
         self.state: "Optional[states.StepState]" = None
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if hasattr(self._part_info, name):
             return getattr(self._part_info, name)
 

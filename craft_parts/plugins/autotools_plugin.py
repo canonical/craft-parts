@@ -31,7 +31,7 @@ class AutotoolsPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]) -> "AutotoolsPluginProperties":
         """Populate autotools properties from the part specification.
 
         :param data: A dictionary containing part properties.

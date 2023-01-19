@@ -49,7 +49,7 @@ class ActionType(enum.IntEnum):
     UPDATE = 3
     REAPPLY = 4
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
 
 

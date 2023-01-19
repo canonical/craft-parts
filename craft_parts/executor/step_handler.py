@@ -158,14 +158,14 @@ class StepHandler:
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(stage_fileset, srcdir)
 
-        def pkgconfig_fixup(file_path):
+        def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
                 return
             if not file_path.endswith(".pc"):
                 return
             packages.fix_pkg_config(
                 prefix_prepend=self._part.stage_dir,
-                pkg_config_file=file_path,
+                pkg_config_file=Path(file_path),
                 prefix_trim=self._part.part_install_dir,
             )
 

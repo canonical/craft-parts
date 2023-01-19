@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Helpers to determine the repository for the platform."""
+from typing import Optional
 
 from craft_parts import errors
 from craft_parts.utils import os_utils
@@ -22,7 +23,7 @@ from craft_parts.utils import os_utils
 _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"]
 
 
-def is_deb_based(distro=None) -> bool:
+def is_deb_based(distro: Optional[str] = None) -> bool:
     """Verify the distribution packaging system.
 
     :param distro: The distribution name.
