@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -158,6 +158,7 @@ class TestLifecycleManager:
                 ignore_patterns=["ign1", "ign2"],
                 extra_build_packages=["pkg1", "pkg2"],
                 extra_build_snaps=["snap1", "snap2"],
+                track_stage_packages=False,
                 base_layer_dir=None,
                 base_layer_hash=None,
             )

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -651,6 +651,7 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         install_path: pathlib.Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages to install_path."""
         if stage_packages is None:
@@ -661,7 +662,9 @@ class Ubuntu(BaseRepository):
             )
         else:
             cls._unpack_stage_debs(
-                stage_packages_path=stage_packages_path, install_path=install_path
+                stage_packages_path=stage_packages_path,
+                install_path=install_path,
+                track_stage_packages=track_stage_packages,
             )
 
     @classmethod
@@ -670,6 +673,7 @@ class Ubuntu(BaseRepository):
         *,
         stage_packages_path: pathlib.Path,
         install_path: pathlib.Path,
+        track_stage_packages: bool,
     ) -> None:
         pkg_path = None
 
@@ -679,9 +683,12 @@ class Ubuntu(BaseRepository):
             ) as extract_dir:
                 # Extract deb package.
                 deb_utils.extract_deb(pkg_path, Path(extract_dir), logger.debug)
+
                 # Mark source of files.
-                marked_name = cls._extract_deb_name_version(pkg_path)
-                mark_origin_stage_package(extract_dir, marked_name)
+                if track_stage_packages:
+                    marked_name = cls._extract_deb_name_version(pkg_path)
+                    mark_origin_stage_package(extract_dir, marked_name)
+
                 # Stage files to install_dir.
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
 

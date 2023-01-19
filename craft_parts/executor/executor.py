@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,7 @@ class Executor:
 
     :param part_list: The list of parts to process.
     :param project_info: Information about this project.
+    :param track_stage_packages: Add primed stage packages to the prime state.
     :param extra_build_packages: Additional packages to install on the host system.
     :param extra_build_snaps: Additional snaps to install on the host system.
     :param ignore_patterns: File patterns to ignore when pulling local sources.
@@ -60,6 +61,7 @@ class Executor:
         project_info: ProjectInfo,
         extra_build_packages: Optional[List[str]] = None,
         extra_build_snaps: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
         ignore_patterns: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[LayerHash] = None,
@@ -68,6 +70,7 @@ class Executor:
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
+        self._track_stage_packages = track_stage_packages
         self._base_layer_hash = base_layer_hash
         self._handler: Dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
@@ -201,6 +204,7 @@ class Executor:
             part,
             part_info=PartInfo(self._project_info, part),
             part_list=self._part_list,
+            track_stage_packages=self._track_stage_packages,
             overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,

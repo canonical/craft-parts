@@ -161,6 +161,7 @@ class BaseRepository(abc.ABC):
         stage_packages_path: Path,
         install_path: Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages.
 
@@ -236,6 +237,7 @@ class DummyRepository(BaseRepository):
         stage_packages_path: Path,
         install_path: Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages to install_path."""
 

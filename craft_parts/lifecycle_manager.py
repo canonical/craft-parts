@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -64,6 +64,7 @@ class LifecycleManager:
     :param ignore_local_sources: A list of local source patterns to ignore.
     :param extra_build_packages: A list of additional build packages to install.
     :param extra_build_snaps: A list of additional build snaps to install.
+    :param track_stage_packages: Add primed stage packages to the prime state.
     :param base_layer_dir: The path to the overlay base layer, if using overlays.
     :param base_layer_hash: The validation hash of the overlay base image, if using
         overlays. The validation hash should be constant for a given image, and should
@@ -90,6 +91,7 @@ class LifecycleManager:
         ignore_local_sources: Optional[List[str]] = None,
         extra_build_packages: Optional[List[str]] = None,
         extra_build_snaps: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
@@ -168,6 +170,7 @@ class LifecycleManager:
             ignore_patterns=ignore_local_sources,
             extra_build_packages=extra_build_packages,
             extra_build_snaps=extra_build_snaps,
+            track_stage_packages=track_stage_packages,
             base_layer_dir=base_layer_dir,
             base_layer_hash=layer_hash,
         )

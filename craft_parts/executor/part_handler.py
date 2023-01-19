@@ -86,6 +86,7 @@ class PartHandler:
         *,
         part_info: PartInfo,
         part_list: List[Part],
+        track_stage_packages: bool = False,
         overlay_manager: OverlayManager,
         ignore_patterns: Optional[List[str]] = None,
         base_layer_hash: Optional[LayerHash] = None,
@@ -93,6 +94,7 @@ class PartHandler:
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
+        self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
         self._app_environment: Dict[str, str] = {}
@@ -410,7 +412,11 @@ class PartHandler:
 
         self._migrate_overlay_files_to_prime()
 
-        if self._part.spec.stage_packages and is_deb_based():
+        if (
+            self._part.spec.stage_packages
+            and self._track_stage_packages
+            and is_deb_based()
+        ):
             primed_stage_packages = _get_primed_stage_packages(
                 contents.files, prime_dir=self._part.prime_dir
             )
@@ -938,6 +944,7 @@ class PartHandler:
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
             stage_packages=pulled_packages,
+            track_stage_packages=self._track_stage_packages,
         )
 
     def _unpack_stage_snaps(self) -> None:
