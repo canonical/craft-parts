@@ -2,6 +2,18 @@
 Changelog
 *********
 
+1.18.0 (2023-01-19)
+-------------------
+
+- Add SCons plugin
+- Add Ant plugin
+- Add Maven plugin
+- Fix lifecycle work directory cleaning
+- Make stage package tracking optional
+- Improve chisel error handling
+- Improve missing local source error message
+- Documentation fixes and updates
+
 1.17.1 (2022-11-23)
 -------------------
 
