@@ -18,6 +18,8 @@
 
 from typing import Any, Dict, List, Set, cast
 
+from overrides import override
+
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
@@ -31,6 +33,7 @@ class AutotoolsPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "AutotoolsPluginProperties":
         """Populate autotools properties from the part specification.
 
@@ -70,14 +73,17 @@ class AutotoolsPlugin(Plugin):
 
     properties_class = AutotoolsPluginProperties
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"autoconf", "automake", "autopoint", "gcc", "libtool"}
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
@@ -89,6 +95,7 @@ class AutotoolsPlugin(Plugin):
 
     # pylint: disable=line-too-long
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         return [

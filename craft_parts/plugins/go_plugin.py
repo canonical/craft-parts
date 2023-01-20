@@ -19,6 +19,8 @@
 import logging
 from typing import Any, Dict, List, Optional, Set, cast
 
+from overrides import override
+
 from craft_parts import errors
 
 from . import validator
@@ -38,6 +40,7 @@ class GoPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "GoPluginProperties":
         """Populate make properties from the part specification.
 
@@ -60,6 +63,7 @@ class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
+    @override
     def validate_environment(
         self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
@@ -108,20 +112,24 @@ class GoPlugin(Plugin):
     properties_class = GoPluginProperties
     validator_class = GoPluginEnvironmentValidator
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
             "GOBIN": f"{self._part_info.part_install_dir}/bin",
         }
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(GoPluginProperties, self._options)
