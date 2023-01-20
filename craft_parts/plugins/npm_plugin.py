@@ -22,6 +22,7 @@ import platform
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, Set, cast
 
+from overrides import override
 from pydantic import root_validator
 
 from craft_parts.errors import InvalidArchitecture
@@ -60,6 +61,7 @@ class NpmPluginProperties(PluginProperties, PluginModel):
         return values
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "NpmPluginProperties":
         """Populate class attributes from the part specification.
 
@@ -82,6 +84,7 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
+    @override
     def validate_environment(
         self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
@@ -147,22 +150,26 @@ class NpmPlugin(Plugin):
 
         return node_arch
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         if cast(NpmPluginProperties, self._options).npm_include_node:
             return {"curl", "gcc"}
         return {"gcc"}
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         if cast(NpmPluginProperties, self._options).npm_include_node:
             return dict(PATH="${CRAFT_PART_INSTALL}/bin:${PATH}")
         return {}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(NpmPluginProperties, self._options)

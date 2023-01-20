@@ -23,6 +23,8 @@ from typing import Any, Dict, List, Optional, Set, cast
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
+from overrides import override
+
 from craft_parts import errors
 
 from . import validator
@@ -39,6 +41,7 @@ class MavenPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "MavenPluginProperties":
         """Populate class attributes from the part specification.
 
@@ -61,6 +64,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
+    @override
     def validate_environment(
         self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
@@ -105,18 +109,22 @@ class MavenPlugin(JavaPlugin):
     properties_class = MavenPluginProperties
     validator_class = MavenPluginEnvironmentValidator
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)

@@ -19,6 +19,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
 
+from overrides import override
 from pydantic import conlist
 
 from . import validator
@@ -44,6 +45,7 @@ class RustPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "RustPluginProperties":
         """Populate class attributes from the part specification.
 
@@ -66,6 +68,7 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
+    @override
     def validate_environment(
         self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
@@ -100,18 +103,22 @@ class RustPlugin(Plugin):
     properties_class = RustPluginProperties
     validator_class = RustPluginEnvironmentValidator
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"gcc", "git"}
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {"PATH": "${HOME}/.cargo/bin:${PATH}"}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(RustPluginProperties, self._options)

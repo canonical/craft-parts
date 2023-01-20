@@ -21,6 +21,8 @@ import logging
 import shlex
 from typing import Any, Dict, List, Optional, Set, cast
 
+from overrides import override
+
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
@@ -37,6 +39,7 @@ class MesonPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "MesonPluginProperties":
         """Populate make properties from the part specification.
 
@@ -59,6 +62,7 @@ class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
+    @override
     def validate_environment(
         self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
@@ -96,22 +100,27 @@ class MesonPlugin(Plugin):
     validator_class = MesonPluginEnvironmentValidator
 
     @classmethod
+    @override
     def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MesonPluginProperties, self._options)
