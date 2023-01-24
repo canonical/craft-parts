@@ -12,7 +12,7 @@ Reference
    infos
    exceptions
    reference
-   changelog
+   ../changelog
 
 Indices and tables
 ==================
