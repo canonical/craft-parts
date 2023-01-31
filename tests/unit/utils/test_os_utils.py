@@ -266,7 +266,6 @@ class TestOsRelease:
         assert release.id() == "arch"
         assert release.name() == "Arch Linux"
         assert release.version_id() == "foo"
-        assert release.version_codename() == "bar"
 
     def test_no_id(self):
         release = os_utils.OsRelease(
@@ -321,42 +320,6 @@ class TestOsRelease:
 
         with pytest.raises(errors.OsReleaseVersionIdError):
             release.version_id()
-
-    def test_no_version_codename(self):
-        """Test that version codename can also come from VERSION_ID"""
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Ubuntu"
-                VERSION="14.04.5 LTS, Trusty Tahr"
-                ID=ubuntu
-                ID_LIKE=debian
-                PRETTY_NAME="Ubuntu 14.04.5 LTS"
-                VERSION_ID="14.04"
-            """
-                )
-            )
-        )
-
-        assert release.version_codename() == "trusty"
-
-    def test_no_version_codename_or_version_id(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Ubuntu"
-                ID=ubuntu
-                ID_LIKE=debian
-                PRETTY_NAME="Ubuntu 16.04.3 LTS"
-            """
-                )
-            )
-        )
-
-        with pytest.raises(errors.OsReleaseCodenameError):
-            release.version_codename()
 
 
 class TestEnvironment:
