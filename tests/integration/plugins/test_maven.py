@@ -24,6 +24,7 @@ from craft_parts import LifecycleManager, Step
 
 
 def test_maven_plugin(new_dir, monkeypatch):
+    monkeypatch.setenv("CRAFT_PARTS_PACKAGE_REFRESH", "0")
     source_location = Path(__file__).parent / "test_maven"
 
     parts_yaml = textwrap.dedent(
