@@ -264,7 +264,7 @@ def write_origin_stage_package(path: str, value: str) -> None:
 
 def mark_origin_stage_package(sources_dir: str, stage_package: str) -> None:
     """Mark all files in sources_dir as coming from stage_package."""
-    for (root, _, files) in os.walk(sources_dir):
+    for root, _, files in os.walk(sources_dir):
         for file_name in files:
             file_path = os.path.join(root, file_name)
 

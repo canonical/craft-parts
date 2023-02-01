@@ -46,7 +46,7 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> Tuple[Set[str], Set[st
     visible_dirs: Set[str] = set()
 
     logger.debug("check layer visibility in %s", lower_dir)
-    for (root, directories, files) in os.walk(lower_dir, topdown=True):
+    for root, directories, files in os.walk(lower_dir, topdown=True):
         for file_name in files:
             path = Path(root, file_name)
             relpath = path.relative_to(lower_dir)

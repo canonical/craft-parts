@@ -115,7 +115,6 @@ class StepHandler:
         return StepContents()
 
     def _builtin_build(self) -> StepContents:
-
         # Plugin commands.
         plugin_build_commands = self._plugin.get_build_commands()
 

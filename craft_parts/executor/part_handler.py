@@ -994,7 +994,7 @@ def _apply_file_filter(
     :param filter_files: The set of files to keep.
     :param filter_dirs: The set of directories to keep.
     """
-    for (root, directories, files) in os.walk(destdir, topdown=True):
+    for root, directories, files in os.walk(destdir, topdown=True):
         for file_name in files:
             path = Path(root, file_name)
             relpath = path.relative_to(destdir)
