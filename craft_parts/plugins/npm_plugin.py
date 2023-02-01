@@ -166,7 +166,7 @@ class NpmPlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         if cast(NpmPluginProperties, self._options).npm_include_node:
-            return dict(PATH="${CRAFT_PART_INSTALL}/bin:${PATH}")
+            return {"PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}"}
         return {}
 
     @override

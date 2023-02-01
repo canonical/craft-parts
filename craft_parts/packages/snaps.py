@@ -365,7 +365,7 @@ def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
 def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
-    slug = f"find?{parse.urlencode(dict(name=snap_name))}"
+    slug = f"find?{parse.urlencode({'name': snap_name})}"
     url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()

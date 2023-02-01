@@ -51,6 +51,8 @@ select = [
     "ICN",  # Unconventional import aliases.
     "Q",  # Consistent quotations
     "RET",  # Return values
+
+    "UP018", "C408",  # Convert type calls to literals.
 ]
 ignore = [
     # These following copy the flake8 configuration
