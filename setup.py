@@ -69,7 +69,7 @@ doc_requires = [
 ]
 
 test_requires = [
-    "black",
+    "black==23.1.0",
     "codespell",
     "coverage",
     "isort",
