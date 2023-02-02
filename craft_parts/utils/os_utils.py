@@ -276,14 +276,6 @@ def umount(mountpoint: str, *args: str) -> None:
             )
 
 
-_ID_TO_UBUNTU_CODENAME = {
-    "17.10": "artful",
-    "17.04": "zesty",
-    "16.04": "xenial",
-    "14.04": "trusty",
-}
-
-
 # TODO: consolidate os-release strategy with craft-providers/charmcraft
 
 
@@ -332,23 +324,6 @@ class OsRelease:
             return self._os_release["VERSION_ID"]
 
         raise errors.OsReleaseVersionIdError()
-
-    def version_codename(self) -> str:
-        """Return the OS version codename.
-
-        This first tries to use the VERSION_CODENAME. If that's missing, it
-        tries to use the VERSION_ID to figure out the codename on its own.
-
-        :raises OsReleaseCodenameError: If no version codename can be
-            determined.
-        """
-        with contextlib.suppress(KeyError):
-            return self._os_release["VERSION_CODENAME"]
-
-        with contextlib.suppress(KeyError):
-            return _ID_TO_UBUNTU_CODENAME[self._os_release["VERSION_ID"]]
-
-        raise errors.OsReleaseCodenameError()
 
 
 def process_run(
