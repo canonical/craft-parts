@@ -271,7 +271,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
             subprocess.check_output(
                 ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],
                 stderr=subprocess.STDOUT,
-                env=dict(LANG="C.UTF-8"),
+                env={"LANG": "C.UTF-8"},
             )
             .decode()
             .strip()

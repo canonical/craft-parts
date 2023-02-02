@@ -66,7 +66,6 @@ def sample_deb(tmp_path: Path) -> Path:
 
 
 def test_source_deb(sample_deb, tmp_path):
-
     parts_yaml = textwrap.dedent(
         f"""\
         parts:

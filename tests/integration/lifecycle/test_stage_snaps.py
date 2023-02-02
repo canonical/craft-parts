@@ -122,7 +122,7 @@ def test_stage_snap_unpack_error(new_dir, fake_snap_command):
     ]
 
     Path("bad-snap.snap").write_text("not a snap")
-    fake_snap_command.fake_download = str("bad-snap.snap")
+    fake_snap_command.fake_download = "bad-snap.snap"
 
     with lf.action_executor() as ctx:
         ctx.execute(actions[0])

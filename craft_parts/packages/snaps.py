@@ -222,12 +222,10 @@ class SnapPackage:
         snap_install_cmd = ["snap", "install", self.name]
         if self._original_channel:
             snap_install_cmd.extend(["--channel", self._original_channel])
-        try:
+        with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
                 # TODO make this a user explicit choice
                 snap_install_cmd.append("--classic")
-        except (errors.SnapUnavailable, KeyError):
-            pass
 
         try:
             subprocess.run(
@@ -248,12 +246,10 @@ class SnapPackage:
         """Refresh a snap onto a channel on the system."""
         logger.debug("Refreshing snap: %s (channel %s)", self.name, self.channel)
         snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
-        try:
+        with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
                 # TODO make this a user explicit choice
                 snap_refresh_cmd.append("--classic")
-        except (errors.SnapUnavailable, KeyError):
-            pass
 
         try:
             subprocess.run(
@@ -369,7 +365,7 @@ def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
 def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
-    slug = f"find?{parse.urlencode(dict(name=snap_name))}"
+    slug = f"find?{parse.urlencode({'name': snap_name})}"
     url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()

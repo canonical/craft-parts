@@ -29,130 +29,130 @@ from craft_parts.executor.organize import organize_files
     "data",
     [
         # simple_file
-        dict(
-            setup_dirs=[],
-            setup_files=["foo"],
-            organize_map={"foo": "bar"},
-            expected=[(["bar"], "")],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+        {
+            "setup_dirs": [],
+            "setup_files": ["foo"],
+            "organize_map": {"foo": "bar"},
+            "expected": [(["bar"], "")],
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # simple_dir_with_file
-        dict(
-            setup_dirs=["foodir"],
-            setup_files=[os.path.join("foodir", "foo")],
-            organize_map={"foodir": "bardir"},
-            expected=[(["bardir"], ""), (["foo"], "bardir")],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+        {
+            "setup_dirs": ["foodir"],
+            "setup_files": [os.path.join("foodir", "foo")],
+            "organize_map": {"foodir": "bardir"},
+            "expected": [(["bardir"], ""), (["foo"], "bardir")],
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # organize_to_the_same_directory
-        dict(
-            setup_dirs=["bardir", "foodir"],
-            setup_files=[
+        {
+            "setup_dirs": ["bardir", "foodir"],
+            "setup_files": [
                 os.path.join("foodir", "foo"),
                 os.path.join("bardir", "bar"),
                 "basefoo",
             ],
-            organize_map={
+            "organize_map": {
                 "foodir": "bin",
                 "bardir": "bin",
                 "basefoo": "bin/basefoo",
             },
-            expected=[(["bin"], ""), (["bar", "basefoo", "foo"], "bin")],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+            "expected": [(["bin"], ""), (["bar", "basefoo", "foo"], "bin")],
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # leading_slash_in_value
-        dict(
-            setup_dirs=[],
-            setup_files=["foo"],
-            organize_map={"foo": "/bar"},
-            expected=[(["bar"], "")],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+        {
+            "setup_dirs": [],
+            "setup_files": ["foo"],
+            "organize_map": {"foo": "/bar"},
+            "expected": [(["bar"], "")],
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # overwrite_existing_file
-        dict(
-            setup_dirs=[],
-            setup_files=["foo", "bar"],
-            organize_map={"foo": "bar"},
-            expected=errors.FileOrganizeError,
-            expected_message=(
+        {
+            "setup_dirs": [],
+            "setup_files": ["foo", "bar"],
+            "organize_map": {"foo": "bar"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
                 r".*trying to organize file 'foo' to 'bar', but 'bar' already exists.*"
             ),
-            expected_overwrite=[(["bar"], "")],
-        ),
+            "expected_overwrite": [(["bar"], "")],
+        },
         # *_for_files
-        dict(
-            setup_dirs=[],
-            setup_files=["foo.conf", "bar.conf"],
-            organize_map={"*.conf": "dir/"},
-            expected=[(["dir"], ""), (["bar.conf", "foo.conf"], "dir")],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+        {
+            "setup_dirs": [],
+            "setup_files": ["foo.conf", "bar.conf"],
+            "organize_map": {"*.conf": "dir/"},
+            "expected": [(["dir"], ""), (["bar.conf", "foo.conf"], "dir")],
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # *_for_files_with_non_dir_dst
-        dict(
-            setup_dirs=[],
-            setup_files=["foo.conf", "bar.conf"],
-            organize_map={"*.conf": "dir"},
-            expected=errors.FileOrganizeError,
-            expected_message=r".*multiple files to be organized into 'dir'.*",
-            expected_overwrite=None,
-        ),
+        {
+            "setup_dirs": [],
+            "setup_files": ["foo.conf", "bar.conf"],
+            "organize_map": {"*.conf": "dir"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": r".*multiple files to be organized into 'dir'.*",
+            "expected_overwrite": None,
+        },
         # *_for_directories
-        dict(
-            setup_dirs=["dir1", "dir2"],
-            setup_files=[
+        {
+            "setup_dirs": ["dir1", "dir2"],
+            "setup_files": [
                 os.path.join("dir1", "foo"),
                 os.path.join("dir2", "bar"),
             ],
-            organize_map={"dir*": "dir/"},
-            expected=[
+            "organize_map": {"dir*": "dir/"},
+            "expected": [
                 (["dir"], ""),
                 (["dir1", "dir2"], "dir"),
                 (["foo"], os.path.join("dir", "dir1")),
                 (["bar"], os.path.join("dir", "dir2")),
             ],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # combined_*_with_file
-        dict(
-            setup_dirs=["dir1", "dir2"],
-            setup_files=[
+        {
+            "setup_dirs": ["dir1", "dir2"],
+            "setup_files": [
                 os.path.join("dir1", "foo"),
                 os.path.join("dir1", "bar"),
                 os.path.join("dir2", "bar"),
             ],
-            organize_map={"dir*": "dir/", "dir1/bar": "."},
-            expected=[
+            "organize_map": {"dir*": "dir/", "dir1/bar": "."},
+            "expected": [
                 (["bar", "dir"], ""),
                 (["dir1", "dir2"], "dir"),
                 (["foo"], os.path.join("dir", "dir1")),
                 (["bar"], os.path.join("dir", "dir2")),
             ],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # *_into_dir
-        dict(
-            setup_dirs=["dir"],
-            setup_files=[
+        {
+            "setup_dirs": ["dir"],
+            "setup_files": [
                 os.path.join("dir", "foo"),
                 os.path.join("dir", "bar"),
             ],
-            organize_map={"dir/f*": "nested/dir/"},
-            expected=[
+            "organize_map": {"dir/f*": "nested/dir/"},
+            "expected": [
                 (["dir", "nested"], ""),
                 (["bar"], "dir"),
                 (["dir"], "nested"),
                 (["foo"], os.path.join("nested", "dir")),
             ],
-            expected_message=None,
-            expected_overwrite=None,
-        ),
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
     ],
 )
 def test_organize(new_dir, data):

@@ -106,7 +106,7 @@ class LocalSource(SourceHandler):
         self._updated_files = set()
         self._updated_directories = set()
 
-        for (root, directories, files) in os.walk(self.source_abspath, topdown=True):
+        for root, directories, files in os.walk(self.source_abspath, topdown=True):
             ignored = set(
                 self._ignore(root, directories + files, also_ignore=ignore_files)
             )
