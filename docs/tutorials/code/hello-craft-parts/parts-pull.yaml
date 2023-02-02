@@ -1,0 +1,5 @@
+parts:
+  hello:
+    plugin: nil
+    source: hello.sh
+    source-type: file
