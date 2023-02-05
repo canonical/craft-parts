@@ -87,8 +87,6 @@ class LocalSource(SourceHandler):
         if not ignore_files:
             ignore_files = []
 
-        ignore_files.extend(self._ignore_patterns)
-
         try:
             target_mtime = os.lstat(target).st_mtime
         except FileNotFoundError:
@@ -163,12 +161,10 @@ def _ignore(
     files,
     also_ignore: Optional[List[str]] = None,
 ) -> List[str]:
-    if also_ignore:
-        patterns.extend(also_ignore)
-
+    """Build a list of files to ignore based on the given patterns."""
     ignored = []
     if directory in (source, current_directory):
-        for pattern in patterns:
+        for pattern in patterns + (also_ignore or []):
             files = glob.glob(os.path.join(directory, pattern))
             if files:
                 files = [os.path.basename(f) for f in files]
