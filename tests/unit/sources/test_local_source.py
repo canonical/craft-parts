@@ -421,3 +421,22 @@ class TestLocalUpdate:
 
         local.update()
         assert os.path.isfile(os.path.join(destination, "dir", "file2"))
+
+    def test_ignored_files(self, new_dir):
+        Path("source").mkdir()
+        Path("destination").mkdir()
+        Path("source/foo.txt").touch()
+        Path("reference").touch()
+
+        ignore_patterns = ["*.ignore"]
+        also_ignore = ["also ignore"]
+
+        local = LocalSource(
+            "source", "destination", cache_dir=new_dir, ignore_patterns=ignore_patterns
+        )
+        local.pull()
+
+        # Add a file to ignore, it shouldnt affect existing patterns
+        local.check_if_outdated("reference", ignore_files=also_ignore)
+        assert also_ignore == ["also ignore"]
+        assert local._ignore_patterns == ["*.ignore"]
