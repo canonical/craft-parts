@@ -13,8 +13,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Fixtures for all plugin tests to use."""
 
-import pytest
 from craft_parts.packages import deb
+import pytest
 
 
 @pytest.fixture(autouse=True)
