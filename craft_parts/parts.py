@@ -253,6 +253,11 @@ class Part:
         return self._part_dir / "state"
 
     @property
+    def part_cache_dir(self) -> Path:
+        """Return the subdirectory containing the part cache directory."""
+        return self._part_dir / "cache"
+
+    @property
     def part_packages_dir(self) -> Path:
         """Return the subdirectory containing the part stage packages directory."""
         return self._part_dir / "stage_packages"

@@ -44,6 +44,7 @@ class Plugin(abc.ABC):
 
     properties_class: Type[PluginProperties]
     validator_class = PluginEnvironmentValidator
+    offline = False
 
     def __init__(
         self, *, properties: PluginProperties, part_info: "infos.PartInfo"
@@ -79,6 +80,20 @@ class Plugin(abc.ABC):
         :param action_properties: The properties to store.
         """
         self._action_properties = deepcopy(action_properties)
+
+
+class StrictPlugin(Plugin):
+    """Base class for strict plugins.
+
+    Strict plugins will retrieve all dependencies from remote locations during
+    the pull step, allowing the build step to run offline.
+    """
+
+    offline = True
+
+    @abc.abstractmethod
+    def get_pull_prepare_commands(self) -> List[str]:
+        """Return a list commands to retrieve dependencies during the pull step."""
 
 
 class JavaPlugin(Plugin):

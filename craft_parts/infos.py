@@ -59,6 +59,7 @@ class ProjectInfo:
         architecture.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
+    :param offline_build: Only allow plugins capable of offline building.
     :param project_dirs: The project work directories.
     :param project_name: The name of the project.
     :param project_vars_part_name: Project variables can be set only if
@@ -76,6 +77,7 @@ class ProjectInfo:
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
+        offline_build: bool = False,
         project_dirs: Optional[ProjectDirs] = None,
         project_name: Optional[str] = None,
         project_vars_part_name: Optional[str] = None,
@@ -92,6 +94,7 @@ class ProjectInfo:
         self._set_machine(arch)
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count
+        self._offline_build = offline_build
         self._dirs = project_dirs
         self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
@@ -139,6 +142,11 @@ class ProjectInfo:
     def parallel_build_count(self) -> int:
         """Return the maximum allowable number of concurrent build jobs."""
         return self._parallel_build_count
+
+    @property
+    def offline_build(self) -> bool:
+        """Return whether it must be possible to build the project offline."""
+        return self._offline_build
 
     @property
     def host_arch(self) -> str:
@@ -300,6 +308,7 @@ class PartInfo:
         self._part_build_subdir = part.part_build_subdir
         self._part_install_dir = part.part_install_dir
         self._part_state_dir = part.part_state_dir
+        self._part_cache_dir = part.part_cache_dir
         self.build_attributes = part.spec.build_attributes.copy()
 
     def __getattr__(self, name: str) -> Any:
@@ -349,6 +358,11 @@ class PartInfo:
     def part_state_dir(self) -> Path:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
+
+    @property
+    def part_cache_dir(self) -> Path:
+        """Return the subdirectory containing this part's cache directory."""
+        return self._part_cache_dir
 
     def set_project_var(
         self, name: str, value: str, *, raw_write: bool = False

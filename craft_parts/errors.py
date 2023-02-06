@@ -266,6 +266,22 @@ class InvalidPlugin(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
+class PluginNotStrict(PartsError):
+    """A request was made to use a plugin that's not strict.
+
+    :param plugin_name: The plugin name.
+    :param part_name: The name of the part defining the plugin.
+    """
+
+    def __init__(self, plugin_name: str, *, part_name: str):
+        self.plugin_name = plugin_name
+        self.part_name = part_name
+        brief = f"Plugin {plugin_name!r} in part {part_name!r} cannot be used."
+        details = "Only plugins that are capable of building offline are allowed."
+
+        super().__init__(brief=brief, details=details)
+
+
 class OsReleaseIdError(PartsError):
     """Failed to determine the host operating system identification string."""
 
@@ -418,6 +434,19 @@ class PluginEnvironmentValidationError(PartsError):
         super().__init__(brief=brief)
 
 
+class PluginPullError(PartsError):
+    """Plugin pull script failed at runtime.
+
+    :param part_name: The name of the part being processed.
+    """
+
+    def __init__(self, *, part_name: str):
+        self.part_name = part_name
+        brief = f"Failed to run the pull script for part {part_name!r}."
+
+        super().__init__(brief=brief)
+
+
 class PluginBuildError(PartsError):
     """Plugin build script failed at runtime.
 
@@ -427,6 +456,19 @@ class PluginBuildError(PartsError):
     def __init__(self, *, part_name: str):
         self.part_name = part_name
         brief = f"Failed to run the build script for part {part_name!r}."
+
+        super().__init__(brief=brief)
+
+
+class PluginCleanError(PartsError):
+    """Script to clean strict build preparation failed at runtime.
+
+    :param part_name: The name of the part being processed.
+    """
+
+    def __init__(self, *, part_name: str):
+        self.part_name = part_name
+        brief = f"Failed to run the clean script for part {part_name!r}."
 
         super().__init__(brief=brief)
 

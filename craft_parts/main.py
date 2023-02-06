@@ -98,6 +98,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         application_name=options.application_name,
         work_dir=options.work_dir,
         cache_dir=cache_dir,
+        offline_build=options.strict,
         base=options.base,
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
@@ -238,6 +239,11 @@ def _parse_arguments() -> argparse.Namespace:
         "--show-skipped",
         action="store_true",
         help="Also display skipped actions.",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Enable offline builds.",
     )
     parser.add_argument(
         "--work-dir",

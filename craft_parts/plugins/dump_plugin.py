@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Set
 
 from overrides import override
 
-from .base import Plugin
+from .base import StrictPlugin
 from .properties import PluginProperties
 
 
@@ -48,7 +48,7 @@ class DumpPluginProperties(PluginProperties):
         return cls()
 
 
-class DumpPlugin(Plugin):
+class DumpPlugin(StrictPlugin):
     """Copy the content from the part source."""
 
     properties_class = DumpPluginProperties
@@ -57,6 +57,11 @@ class DumpPlugin(Plugin):
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
+
+    @override
+    def get_pull_prepare_commands(self) -> List[str]:
+        """Return a list commands to retrieve dependencies during the pull step."""
+        return []
 
     @override
     def get_build_packages(self) -> Set[str]:

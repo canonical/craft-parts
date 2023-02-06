@@ -26,7 +26,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, TextIO, Union
+from typing import List, Optional, Set, TextIO, Union, cast
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -36,6 +36,7 @@ from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils
 
+from ..plugins.base import StrictPlugin
 from . import filesets
 from .filesets import Fileset
 from .migration import migrate_files
@@ -108,6 +109,26 @@ class StepHandler:
     def _builtin_pull(self) -> StepContents:
         if self._source_handler:
             self._source_handler.pull()
+
+        # Plugin prepare commands.
+        if self._step_info.offline_build:
+            # If offline build is enabled we're using only strict plugins
+            plugin = cast(StrictPlugin, self._plugin)
+            pull_prepare_commands = plugin.get_pull_prepare_commands()
+
+            try:
+                _create_and_run_script(
+                    pull_prepare_commands,
+                    script_path=self._part.part_run_dir.absolute() / "pull.sh",
+                    cwd=self._part.part_src_subdir,
+                    stdout=self._stdout,
+                    stderr=self._stderr,
+                )
+            except subprocess.CalledProcessError as process_error:
+                raise errors.PluginPullError(
+                    part_name=self._part.name
+                ) from process_error
+
         return StepContents()
 
     @staticmethod
@@ -116,7 +137,7 @@ class StepHandler:
 
     def _builtin_build(self) -> StepContents:
         # Plugin commands.
-        plugin_build_commands = self._plugin.get_build_commands()
+        build_commands = self._plugin.get_build_commands()
 
         # save script to set the build environment
         build_environment_script_path = (
@@ -125,25 +146,12 @@ class StepHandler:
         build_environment_script_path.write_text(self._env)
         build_environment_script_path.chmod(0o644)
 
-        # save script to execute the build commands
-        build_script_path = self._part.part_run_dir.absolute() / "build.sh"
-        with build_script_path.open("w") as run_file:
-            print("#!/bin/bash", file=run_file)
-            print("set -euo pipefail", file=run_file)
-            print(f"source {build_environment_script_path}", file=run_file)
-            print("set -x", file=run_file)
-
-            for build_command in plugin_build_commands:
-                print(build_command, file=run_file)
-
-        build_script_path.chmod(0o755)
-        logger.debug("Executing %r", build_script_path)
-
         try:
-            subprocess.run(
-                [str(build_script_path)],
+            _create_and_run_script(
+                build_commands,
+                script_path=self._part.part_run_dir.absolute() / "build.sh",
+                build_environment_script_path=build_environment_script_path,
                 cwd=self._part.part_build_subdir,
-                check=True,
                 stdout=self._stdout,
                 stderr=self._stderr,
             )
@@ -376,3 +384,36 @@ class StepHandler:
             self._builtin_stage()
         elif step == Step.PRIME:
             self._builtin_prime()
+
+
+def _create_and_run_script(  # noqa: PLR0913
+    commands: List[str],
+    script_path: Path,
+    cwd: Path,
+    stdout: Stream,
+    stderr: Stream,
+    build_environment_script_path: Optional[Path] = None,
+) -> None:
+    """Create a script with step-specific commands and execute it."""
+    with script_path.open("w") as run_file:
+        print("#!/bin/bash", file=run_file)
+        print("set -euo pipefail", file=run_file)
+
+        if build_environment_script_path:
+            print(f"source {build_environment_script_path}", file=run_file)
+
+        print("set -x", file=run_file)
+
+        for cmd in commands:
+            print(cmd, file=run_file)
+
+    script_path.chmod(0o755)
+    logger.debug("Executing %r", script_path)
+
+    subprocess.run(
+        [script_path],
+        cwd=cwd,
+        check=True,
+        stdout=stdout,
+        stderr=stderr,
+    )
