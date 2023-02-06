@@ -25,3 +25,6 @@ extension-pkg-whitelist = [
 ]
 load-plugins = "pylint_fixme_info,pylint_pytest"
 good-names = "id"
+# Disable no-self-use because I can't find a version of pylint that doesn't error
+# DO NOT MERGE FORWARD
+disable = "no-self-use"

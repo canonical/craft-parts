@@ -164,7 +164,9 @@ class StepHandler:
             dirs=dirs,
             srcdir=self._part.part_install_dir,
             destdir=self._part.stage_dir,
-            fixup_func=pkgconfig_fixup,
+            # DO NOT MERGE pyright ignore to main
+            # This is only for linting backwards compatibility.
+            fixup_func=pkgconfig_fixup,  # pyright: ignore [reportGeneralTypeIssues]
         )
         return StepContents(files, dirs)
 

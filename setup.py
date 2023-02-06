@@ -69,14 +69,14 @@ doc_requires = [
 ]
 
 test_requires = [
-    "black",
-    "codespell",
+    "black==22.12.0",
+    "codespell==2.2.2",
     "coverage",
-    "flake8",
-    "isort",
-    "mypy",
+    "flake8==5.0.4",
+    "isort==5.11.5",
+    "mypy==0.991",
     "pydocstyle",
-    "pylint",
+    "pylint==2.15.10",
     "pylint-fixme-info",
     "pylint-pytest",
     "pytest",
