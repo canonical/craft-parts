@@ -76,7 +76,7 @@ test_requires = [
     "isort==5.11.5",
     "mypy==0.991",
     "pydocstyle",
-    "pylint==2.15.10",
+    "pylint==2.15.6",
     "pylint-fixme-info",
     "pylint-pytest",
     "pytest",
