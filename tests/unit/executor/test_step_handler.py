@@ -34,6 +34,7 @@ from craft_parts.infos import (
 )
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+from tests.unit.common_plugins import StrictTestPlugin
 
 
 class FooPlugin(plugins.Plugin):
@@ -54,14 +55,24 @@ class FooPlugin(plugins.Plugin):
         return ["hello"]
 
 
-def _step_handler_for_step(step: Step, cache_dir: Path) -> StepHandler:
+def _step_handler_for_step(
+    step: Step, cache_dir: Path, offline_build: bool = False, plugin_class=None
+) -> StepHandler:
     p1 = Part("p1", {"source": "."})
     dirs = ProjectDirs()
-    info = ProjectInfo(project_dirs=dirs, application_name="test", cache_dir=cache_dir)
+    info = ProjectInfo(
+        project_dirs=dirs,
+        application_name="test",
+        cache_dir=cache_dir,
+        offline_build=offline_build,
+    )
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
-    plugin = FooPlugin(properties=props, part_info=part_info)
+    if plugin_class:
+        plugin = plugin_class(properties=props, part_info=part_info)
+    else:
+        plugin = FooPlugin(properties=props, part_info=part_info)
     source_handler = sources.get_source_handler(
         cache_dir=cache_dir,
         part=p1,
@@ -151,7 +162,7 @@ class TestStepHandlerBuiltins:
             )
 
         mock_run.assert_called_once_with(
-            [str(build_script_path)],
+            [build_script_path],
             cwd=Path(new_dir / "parts/p1/build"),
             check=True,
             stdout=None,
@@ -190,6 +201,26 @@ class TestStepHandlerBuiltins:
         assert str(raised.value) == (
             "Request to run the built-in handler for an invalid step."
         )
+
+    def test_run_builtin_pull_strict(self, new_dir, mocker):
+        """Test the Pull step in offline build calls get_pull_prepare_commands()"""
+        Path("parts/p1/run").mkdir(parents=True)
+        mock_run = mocker.patch("subprocess.run")
+        sh = _step_handler_for_step(
+            Step.PULL,
+            cache_dir=new_dir,
+            offline_build=True,
+            plugin_class=StrictTestPlugin,
+        )
+
+        sh.run_builtin()
+
+        # Check that the contents of StrictTestPlugin.get_pull_prepare_commands()
+        # are in the script ran during the pull step.
+        assert mock_run.called
+        run_args = mock_run.call_args[0][0]
+        script_path = run_args[0]
+        assert "StrictTestPlugin.get_pull_prepare_commands()" in script_path.read_text()
 
 
 class TestStepHandlerRunScriptlet:
