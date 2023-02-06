@@ -16,6 +16,7 @@
 import pytest
 from craft_parts.packages import deb
 
+
 @pytest.fixture(autouse=True)
 def clear_function_cache_after_run():
     yield
