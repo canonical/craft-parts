@@ -436,7 +436,7 @@ class TestLocalUpdate:
         )
         local.pull()
 
-        # Add a file to ignore, it shouldnt affect existing patterns
+        # Add a file to ignore, existing patterns must not change.
         local.check_if_outdated("reference", ignore_files=also_ignore)
         assert also_ignore == ["also ignore"]
         assert local._ignore_patterns == ["*.ignore"]
