@@ -47,6 +47,11 @@ However, because ``OVERLAY`` steps may overwrite the same areas of the file
 system, parts with the same priority are processed alphabetically to
 guarantee deterministic ordering.
 
+Lifecycle processing diagram
+----------------------------
+
+.. image:: /images/lifecycle_logic.png
+
 Further Information
 -------------------
 
@@ -55,7 +60,4 @@ Further information can be found in the `Snapcraft parts lifecycle documentation
 
 .. _snapcraft-parts-lifecycle: https://snapcraft.io/docs/parts-lifecycle
 
-Lifecycle processing diagram
-----------------------------
 
-.. image:: /images/lifecycle_logic.png
