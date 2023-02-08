@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Helpers to determine the repository for the platform."""
-from typing import Optional, List
+from typing import List, Optional
 
 from craft_parts import errors
 from craft_parts.utils import os_utils
@@ -24,10 +24,10 @@ _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"
 _RPM_BASED_PLATFORM = ["fedora", "centos"]
 
 
-def _check(distro: str, platform_distros: List[str]) -> bool:
+def _check(distro: Optional[str], platform_distros: List[str]) -> bool:
     """Check if the indicated distro is included in the specified platform distros.
 
-    If the indicated `distro` is None it will be retrived from OsRelease
+    If the indicated `distro` is None it will be retrieved from OsRelease
     ("unknown" on error).
     """
     if not distro:

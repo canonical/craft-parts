@@ -74,16 +74,19 @@ def test_is_rpm_based_default(mocker):
 
 
 def test_is_rpm_based_error(mocker):
-    mocker.patch("craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError())
+    mocker.patch(
+        "craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError()
+    )
     assert platform.is_rpm_based() is False
 
 
 @pytest.mark.parametrize(
-    "distro,repo", [
+    "distro,repo",
+    [
         ("ubuntu", Ubuntu),
         ("centos", RPMRepository),
         ("other", DummyRepository),
-    ]
+    ],
 )
 def test_get_repository_for_platform(mocker, distro, repo):
     mocker.patch("craft_parts.utils.os_utils.OsRelease.id", return_value=distro)
