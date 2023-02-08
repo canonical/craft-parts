@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ from functools import partial
 import pydantic
 import pytest
 
-from craft_parts import errors, parts
+from craft_parts import Features, errors, parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
@@ -103,6 +103,25 @@ class TestPartSpecs:
         is_deb_mock.return_value = False
         spec = PartSpec.unmarshal(data)
         assert spec.stage_packages == package_list
+
+    @pytest.mark.parametrize(
+        "key,value",
+        [
+            ("overlay-packages", ["overlay-pkg1", "overlay-pkg2"]),
+            ("overlay", ["etc/issue"]),
+            ("overlay-script", "overlay-script"),
+        ],
+    )
+    def test_overlay_data_with_overlay_feature_disabled(self, key, value):
+        Features.reset()
+        Features(enable_overlay=False)
+        try:
+            data = {"plugin": "nil", key: value}
+            error = r"overlays not supported"
+            with pytest.raises(pydantic.ValidationError, match=error):
+                PartSpec.unmarshal(data)
+        finally:
+            Features.reset()
 
 
 class TestPartData:

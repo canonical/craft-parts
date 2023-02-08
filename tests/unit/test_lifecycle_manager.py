@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@ import pytest
 import yaml
 
 from craft_parts import errors
+from craft_parts.features import Features
 from craft_parts.lifecycle_manager import LifecycleManager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
@@ -248,6 +249,69 @@ class TestOverlaySupport:
                 base_layer_dir=new_dir,
                 base_layer_hash=b"hash",
             )
+
+
+class TestOverlayDisabled:
+    """Overlays only supported in linux and must run as root."""
+
+    @pytest.fixture(autouse=True)
+    def _setup_fixture(self):
+        Features.reset()
+        Features(enable_overlay=False)
+        yield
+        Features.reset()
+
+    @pytest.fixture
+    def parts_data(self) -> Dict[str, Any]:
+        return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
+
+    def test_overlay_supported(self, mocker, new_dir, parts_data):
+        mocker.patch.object(sys, "platform", "linux")
+        mocker.patch("os.geteuid", return_value=0)
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                base_layer_dir=new_dir,
+                base_layer_hash=b"hash",
+            )
+        assert raised.value.part_name == "foo"
+        assert (
+            raised.value.message == "- overlays not supported in field 'overlay-script'"
+        )
+
+    def test_overlay_platform_unsupported(self, mocker, new_dir, parts_data):
+        mocker.patch.object(sys, "platform", "darwin")
+        mocker.patch("os.geteuid", return_value=0)
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                base_layer_dir=new_dir,
+                base_layer_hash=b"hash",
+            )
+        assert raised.value.part_name == "foo"
+        assert (
+            raised.value.message == "- overlays not supported in field 'overlay-script'"
+        )
+
+    def test_overlay_requires_root(self, mocker, new_dir, parts_data):
+        mocker.patch.object(sys, "platform", "linux")
+        mocker.patch("os.geteuid", return_value=1000)
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                base_layer_dir=new_dir,
+                base_layer_hash=b"hash",
+            )
+        assert raised.value.part_name == "foo"
+        assert (
+            raised.value.message == "- overlays not supported in field 'overlay-script'"
+        )
 
 
 class TestPluginProperties:

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,7 @@ from pydantic import ValidationError
 from craft_parts import errors, executor, packages, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
@@ -255,6 +256,9 @@ class LifecycleManager:
 
 def _ensure_overlay_supported() -> None:
     """Overlay is only supported in Linux and requires superuser privileges."""
+    if not Features().enable_overlay:
+        raise errors.FeatureDisabled("Overlays are not supported.")
+
     if sys.platform != "linux":
         raise errors.OverlayPlatformError()
 
