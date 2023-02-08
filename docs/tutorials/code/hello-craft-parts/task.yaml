@@ -1,0 +1,36 @@
+###############################################################################
+# Spread-ready task file for hello craft-parts
+# IMPORTANT
+# Comments matter!
+# The docs use the wrapping comments as markers for including said
+# instructions as snippets in the docs.
+###############################################################################
+summary: parts from scratch tutorial
+
+execute: |
+  # Test that each parts file along the way is valid.
+  python -m craft_parts -f parts-empty.yaml
+  python -m craft_parts -f parts-empty.yaml clean
+  python -m craft_parts -f parts-pull.yaml
+  python -m craft_parts -f parts-pull.yaml clean
+  # [docs:first-dry-run]
+  python -m craft_parts --dry-run
+  # [docs:first-dry-run-end]
+  # [docs:first-real-run]
+  python -m craft_parts
+  # [docs:first-real-run-end]
+  # [docs:find-directory-structure]
+  find .
+  # [docs:find-directory-structure-end]
+  # [docs:run-verbose]
+  python -m craft_parts --verbose
+  # [docs:run-verbose-end]
+  # [docs:execute-part]
+  cd prime
+  ./hello
+  # [docs:execute-part-end]
+
+artifacts:
+  - parts/
+  - prime/
+  - stage/
