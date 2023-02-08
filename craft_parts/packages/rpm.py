@@ -35,19 +35,27 @@ class RPMRepository(BaseRepository):
     def configure(cls, application_package_name: str) -> None:
         """Set up yum options and directories.
 
-        XXX: method left out of RPMRepository's MVP.
+        XXX: method left out of RPMRepository's MVP; it should be implemented
+        in the future to allow configuring the yum system.
         """
+        logger.debug(
+            "Called not implemented method 'RPMRepository.configure' with name %r",
+            application_package_name,
+        )
 
     @classmethod
-    def get_package_libraries(cls, package_name: str) -> Set[str]:
+    def get_package_libraries(
+        cls, package_name: str
+    ) -> Set[str]:  # pylint: disable=unused-argument
         """Return a list of libraries in package_name.
 
-        XXX: method left out of RPMRepository's MVP.
+        XXX: method left out of RPMRepository's MVP; cannot return a sane default so
+        raising an error to ensure it's not used.
         """
-        return set()
+        raise NotImplementedError("Functionality not yet provided by RPMRepository.")
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type):
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         """Return a list of packages required to to work with source_type."""
         if source_type == "bzr":
             packages = {"bzr"}
@@ -96,15 +104,23 @@ class RPMRepository(BaseRepository):
 
         :return True if _all_ packages are installed (with correct versions).
 
-        XXX: method left out of RPMRepository's MVP.
+        XXX: method left out of RPMRepository's MVP; returning False would lead to
+        an inefficiency, this should be implemented in the future.
         """
+        logger.debug(
+            "Called not implemented method "
+            "'RPMRepository._check_if_all_packages_installed' "
+            "with names %s",
+            package_names,
+        )
         return False
 
     @classmethod
     def download_packages(cls, package_names: List[str]) -> None:
         """Download the specified packages to the local package cache area.
 
-        XXX: method left out of RPMRepository's MVP.
+        XXX: method left out of RPMRepository's MVP; nothing will be
+        downloaded, so raise an error to ensure it's not used.
         """
         raise NotImplementedError("Functionality not yet provided by RPMRepository.")
 
@@ -152,19 +168,29 @@ class RPMRepository(BaseRepository):
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
     @classmethod
-    def is_package_installed(cls, package_name) -> bool:
+    def is_package_installed(cls, package_name: str) -> bool:
         """Inform if a package is installed on the host system.
 
-        XXX: method left out of RPMRepository's MVP.
+        XXX: method left out of RPMRepository's MVP; returning False would lead to
+        an inefficiency, this should be implemented in the future.
         """
+        logger.debug(
+            "Called not implemented method 'RPMRepository.is_package_installed' "
+            "with name %r",
+            package_name,
+        )
         return False
 
     @classmethod
     def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions.
 
-        XXX: method left out of RPMRepository's MVP.
+        XXX: method left out of RPMRepository's MVP; returning an empty list
+        would lead to an inefficiency, this should be implemented in the future.
         """
+        logger.debug(
+            "Called not implemented method 'RPMRepository.get_installed_packages'"
+        )
         return []
 
 
