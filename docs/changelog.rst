@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.15.3 (2023-02-08)
+-------------------
+
+- Backport local sources ignore patterns fix
+
 1.15.2 (2022-11-23)
 -------------------
 
