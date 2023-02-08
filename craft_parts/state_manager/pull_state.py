@@ -18,6 +18,8 @@
 
 from typing import Any, Dict, List, Optional
 
+from overrides import override
+
 from .step_state import StepState
 
 
@@ -29,6 +31,7 @@ class PullState(StepState):
     outdated_dirs: Optional[List[str]] = None
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "PullState":
         """Create and populate a new ``PullState`` object from dictionary data.
 
@@ -46,10 +49,17 @@ class PullState(StepState):
 
         return cls(**data)
 
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    @override
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
+        :param extra_properties: Additional relevant properties to return.
 
         :return: A dictionary containing properties of interest.
         """
@@ -66,14 +76,12 @@ class PullState(StepState):
             "override-pull",
             "stage-packages",
             "overlay-packages",
+            *(extra_properties or []),
         ]
 
-        properties: Dict[str, Any] = {}
-        for name in relevant_properties:
-            properties[name] = part_properties.get(name)
+        return {name: part_properties.get(name) for name in relevant_properties}
 
-        return properties
-
+    @override
     def project_options_of_interest(
         self, project_options: Dict[str, Any]
     ) -> Dict[str, Any]:

@@ -16,7 +16,9 @@
 
 """State definitions for the prime state."""
 
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Optional, Set
+
+from overrides import override
 
 from .step_state import StepState
 
@@ -28,6 +30,7 @@ class PrimeState(StepState):
     primed_stage_packages: Set[str] = set()
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "PrimeState":
         """Create and populate a new ``PrimeState`` object from dictionary data.
 
@@ -45,18 +48,29 @@ class PrimeState(StepState):
 
         return cls(**data)
 
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    @override
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
+        :param extra_properties: Additional relevant properties to be returned.
 
         :return: A dictionary containing properties of interest.
         """
-        return {
-            "override-prime": part_properties.get("override-prime"),
-            "prime": part_properties.get("prime", ["*"]) or ["*"],
-        }
+        relevant_properties = [
+            "override-prime",
+            "prime",
+            *(extra_properties or []),
+        ]
 
+        return {name: part_properties.get(name) for name in relevant_properties}
+
+    @override
     def project_options_of_interest(
         self, project_options: Dict[str, Any]
     ) -> Dict[str, Any]:

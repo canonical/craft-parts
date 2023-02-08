@@ -18,7 +18,7 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Optional, Set
 
 from pydantic_yaml import YamlModel
 
@@ -84,7 +84,12 @@ class StepState(MigrationState, ABC):
         allow_population_by_field_name = True
 
     @abstractmethod
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step."""
 
     @abstractmethod
@@ -93,7 +98,9 @@ class StepState(MigrationState, ABC):
     ) -> Dict[str, Any]:
         """Return relevant project options concerning this step."""
 
-    def diff_properties_of_interest(self, other_properties: Dict[str, Any]) -> Set[str]:
+    def diff_properties_of_interest(
+        self, other_properties: Dict[str, Any], also_compare: Optional[List[str]] = None
+    ) -> Set[str]:
         """Return properties of interest that differ.
 
         Take a dictionary of properties and compare to our own, returning
@@ -105,8 +112,12 @@ class StepState(MigrationState, ABC):
             project options stored in this state.
         """
         return _get_differing_keys(
-            self.properties_of_interest(self.part_properties),
-            self.properties_of_interest(other_properties),
+            self.properties_of_interest(
+                self.part_properties, extra_properties=also_compare
+            ),
+            self.properties_of_interest(
+                other_properties, extra_properties=also_compare
+            ),
         )
 
     def diff_project_options_of_interest(

@@ -20,11 +20,9 @@ import abc
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
 
-from pydantic import BaseModel
-
 from craft_parts.actions import ActionProperties
 
-from .properties import PluginProperties
+from .properties import PluginProperties, PluginPropertiesModel
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
@@ -117,21 +115,13 @@ class JavaPlugin(Plugin):
         return link_java + link_jars
 
 
-class PluginModel(BaseModel):
+class PluginModel(PluginPropertiesModel):
     """Model for plugins using pydantic validation.
 
     Plugins with configuration properties can use pydantic validation to unmarshal
     data from part specs. In this case, extract plugin-specific properties using
     the :func:`extract_plugin_properties` helper.
     """
-
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
 
 def extract_plugin_properties(

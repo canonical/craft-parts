@@ -16,8 +16,9 @@
 
 """State definitions for the build step."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from overrides import override
 from pydantic import validator
 
 from .step_state import StepState, validate_hex_string
@@ -34,6 +35,7 @@ class BuildState(StepState):
     )
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "BuildState":
         """Create and populate a new ``BuildState`` object from dictionary data.
 
@@ -51,10 +53,17 @@ class BuildState(StepState):
 
         return cls(**data)
 
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    @override
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
+        :param extra_properties: Additional relevant properties to return.
 
         :return: A dictionary containing properties of interest.
         """
@@ -65,14 +74,12 @@ class BuildState(StepState):
             "disable-parallel",
             "organize",
             "override-build",
+            *(extra_properties or []),
         ]
 
-        properties: Dict[str, Any] = {}
-        for name in relevant_properties:
-            properties[name] = part_properties.get(name)
+        return {name: part_properties.get(name) for name in relevant_properties}
 
-        return properties
-
+    @override
     def project_options_of_interest(
         self, project_options: Dict[str, Any]
     ) -> Dict[str, Any]:
