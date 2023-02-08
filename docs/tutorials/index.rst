@@ -10,3 +10,4 @@ the necessary competencies from real-life examples with fully reproducible steps
    :maxdepth: 1
 
    examples
+   hello-craft-parts
