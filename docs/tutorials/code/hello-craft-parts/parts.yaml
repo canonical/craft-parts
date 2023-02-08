@@ -1,0 +1,9 @@
+parts:
+  hello:
+    plugin: nil
+    source: hello.sh
+    source-type: file
+    override-build: |
+      pwd
+      cp hello.sh "${CRAFT_PART_INSTALL}/hello"
+      chmod +x "${CRAFT_PART_INSTALL}/hello"

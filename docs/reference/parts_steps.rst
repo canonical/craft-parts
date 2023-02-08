@@ -50,6 +50,7 @@ with the following keys:
   in base 8. This field is *optional*.
 
 
+.. _craft_parts_steps:
 
 Steps
 =====
@@ -60,6 +61,8 @@ defined by the :class:`Step <craft_parts.Step>` enumeration, containing
 entries for the lifecycle steps ``PULL``, ``OVERLAY``, ``BUILD``,
 ``STAGE``, and ``PRIME``.
 
+
+.. _step_execution_environment:
 
 Step execution environment
 --------------------------
