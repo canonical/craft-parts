@@ -2,18 +2,21 @@
 Lifecycle details
 *****************
 
-Each part is built in five separate steps:
+Each part is built in :ref:`five separate steps <lifecycle_steps>`, each with
+its own input and output locations:
 
-#. ``PULL`` — The components for the part are retrieved from their stated
-   location and placed into a package cache area.
-#. ``OVERLAY`` — Any overlay packages are incorporated into the staging area
-   and the overlay script is run. Finally, any overlay filters are applied.
+#. ``PULL`` — The source and external dependencies (such as package
+   dependencies) for the part are retrieved from their stated location and
+   placed into a package cache area.
+#. ``OVERLAY`` — Any overlay packages are installed in an overlay of the
+   filesystem base, and the overlay script is run. Finally, any overlay filters
+   are applied.
 #. ``BUILD`` — The part is built according to the particular part plugin and
    build override.
 #. ``STAGE`` — The specified outputs from the ``BUILD`` stage are copied into
    a unified staging area for all parts.
 #. ``PRIME`` — The specified files are copied from the staging area to the
-   priming area for use in the final project. This is distinct from ``STAGE``
+   priming area for use in the final payload. This is distinct from ``STAGE``
    in that the ``STAGE`` step allows files that are used in the ``BUILD`` steps
    of dependent parts to be accessed, while the ``PRIME`` step occurs after all
    parts have been staged.
@@ -26,7 +29,7 @@ not necessarily run immediately following each other, especially if multiple
 parts are included in a project. While specifics are implementation-dependent,
 the general rules for combining parts are:
 
-#. ``PULL`` all parts before running further steps
+#. ``PULL`` all parts before running further steps.
 #. ``OVERLAY`` parts in their processing order (defined below).
 #. ``BUILD`` any unbuilt parts whose dependencies have been staged. If a part
    has no dependencies, this part is built in the first iteration.
