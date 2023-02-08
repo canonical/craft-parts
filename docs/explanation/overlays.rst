@@ -1,11 +1,10 @@
-*************
-Part Overlays
-*************
+****************
+``OVERLAY`` Step
+****************
 
-While many parts-based projects will only use the original four steps (``PULL``,
-``BUILD``, ``STAGE`` and ``PRIME``), it's sometimes necessary to modify the
-base filesystem used in a parts-based project. When this is necessary, the
-``OVERLAY`` step provides the means to do so.
+It is sometimes necessary to modify the base filesystem used in when generating
+a parts-based payload. On these occasions, the ``OVERLAY`` step provides the
+means to do so.
 
 Overlay Parameters
 ------------------
