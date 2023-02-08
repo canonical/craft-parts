@@ -2,7 +2,7 @@
 Lifecycle details
 *****************
 
-Each part is built in :ref:`five separate steps <lifecycle_steps>`, each with
+Each part is built in :ref:`five separate steps <craft_parts_steps>`, each with
 its own input and output locations:
 
 #. ``PULL`` — The source and external dependencies (such as package
