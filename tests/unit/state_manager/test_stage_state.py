@@ -111,3 +111,28 @@ class TestStageStateChanges:
     def test_project_option_changes(self, project_options):
         state = StageState(project_options=project_options)
         assert state.diff_project_options_of_interest({}) == set()
+
+    def test_extra_property_changes(self, properties):
+        augmented_properties = {**properties, "extra-property": "foo"}
+        state = StageState(part_properties=augmented_properties)
+
+        relevant_properties = [
+            "filesets",
+            "override-stage",
+            "stage",
+            "extra-property",
+        ]
+
+        for prop in augmented_properties.keys():
+            other = augmented_properties.copy()
+            other[prop] = "new value"
+
+            diff = state.diff_properties_of_interest(
+                other, also_compare=["extra-property"]
+            )
+            if prop in relevant_properties:
+                # relevant project options changed
+                assert diff == {prop}
+            else:
+                # relevant properties didn't change
+                assert diff == set()
