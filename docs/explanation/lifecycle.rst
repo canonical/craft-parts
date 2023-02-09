@@ -37,18 +37,90 @@ the general rules for combining parts are:
 #. Repeat the ``BUILD`` and ``STAGE`` steps until all parts have been staged.
 #. ``PRIME`` all parts.
 
-Part Processing Order
+.. _part_processing_order:
+
+Part processing order
 =====================
 
 The processing of various parts is ordered based on dependencies. Circular
-dependencies are not permitted between parts. Parts without dependencies are
-prioritised first. Next priority contains parts that have dependencies met,
-repeated until all parts have an order.
+dependencies are not permitted between parts. The ordering rules are as follows:
 
-Parts of the same priority should be able to be processed in any order.
-However, because ``OVERLAY`` steps may overwrite the same areas of the file
-system, parts with the same priority are processed alphabetically to
-guarantee deterministic ordering.
+#. Parts are ordered alphabetically by name
+#. Any part that requires another part (using the ``after`` key) will move that
+   dependency ahead of the declaring part.
+
+NOTE: This means that renaming parts and adding, modifying or removing ``after``
+keys for parts can change the order.
+
+In the example below, the parts will run each stage, ordering the parts
+alphabetically at each stage (even though C is listed before B):
+
+.. code-block:: yaml
+
+  parts:
+    A:
+      plugin: nil
+    C:
+      plugin: nil
+    B:
+      plugin: nil
+
+.. collapse:: craft_parts output
+
+  .. code-block:: text
+
+    Execute: Pull A
+    Execute: Pull B
+    Execute: Pull C
+    Execute: Overlay A
+    Execute: Overlay B
+    Execute: Overlay C
+    Execute: Build A
+    Execute: Build B
+    Execute: Build C
+    Execute: Stage A
+    Execute: Stage B
+    Execute: Stage C
+    Execute: Prime A
+    Execute: Prime B
+    Execute: Prime C
+
+However, if parts specify dependencies, both the ``build`` and ``stage`` steps
+of a dependency will be moved ahead of the dependent part in addition to the
+parts being reordered within a step:
+
+.. code-block:: yaml
+
+  parts:
+    A:
+      plugin: nil
+      after: [C]
+    C:
+      plugin: nil
+    B:
+      plugin: nil
+
+.. collapse:: craft_parts output
+
+  .. code-block:: text
+    :emphasize-lines: 7-8
+
+    Execute: Pull C
+    Execute: Pull A
+    Execute: Pull B
+    Execute: Overlay C
+    Execute: Overlay A
+    Execute: Overlay B
+    Execute: Build C
+    Execute: Stage C (required to build 'A')
+    Execute: Build A
+    Execute: Build B
+    Execute: Stage A
+    Execute: Stage B
+    Execute: Prime C
+    Execute: Prime A
+    Execute: Prime B
+
 
 Lifecycle processing diagram
 ----------------------------

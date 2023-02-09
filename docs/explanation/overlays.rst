@@ -2,8 +2,8 @@
 ``OVERLAY`` Step
 ****************
 
-It is sometimes necessary to modify the base filesystem used in when generating
-a parts-based payload. On these occasions, the ``OVERLAY`` step provides the
+It is sometimes necessary to modify the base filesystem when generating a
+parts-based payload. On these occasions, the ``OVERLAY`` step provides the
 means to do so.
 
 Overlay Parameters
@@ -34,7 +34,7 @@ An example parts section with overlay parameters looks as follows:
           - usr/bin
 
 After running this part, the overlay layer (and the final package) will only
-contain ``ed`` as an editor, with vi/vim, emacs, and nano all having been
+contain ed as an editor, with vi/vim, emacs, and nano all having been
 removed.
 
 .. _overlay_visibility:
@@ -69,15 +69,6 @@ Because ``no-overlay-access`` has no access to the overlay directory, the
 variable is unset. Removing that attempted access will make this project
 build.
 
-Parts are ordered deterministically for a project, guaranteeing that order will
-be preserved between runs. The current ordering rules are as follows:
-
-#. Parts are ordered alphabetically by name
-#. Any part that is required before another part is moved ahead of it
-
-This means that renaming parts and adding or removing ``after`` sections
-for parts can modify the overlay order.
-
 .. _overlay_layers:
 
 Layers
@@ -95,7 +86,7 @@ Each layer combines its parameters with the checksum for the layer below it
 and checksums that in order to form its own checksum. The base layer is
 checksummed to feed the layer for the first part. As a result, a change to
 any layer will require the recalculation of the overlay for all layers
-above.
+above. The order of layers is determined by the :ref:`part_processing_order`.
 
 Filesystem Mutations
 ====================

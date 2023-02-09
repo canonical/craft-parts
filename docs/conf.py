@@ -52,6 +52,7 @@ extensions = [
     "sphinx_autodoc_typehints",  # must be loaded after napoleon
     "sphinx-pydantic",
     "sphinx_design",
+    "sphinx_toolbox.collapse",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
