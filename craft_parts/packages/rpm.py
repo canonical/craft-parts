@@ -102,7 +102,7 @@ class RPMRepository(BaseRepository):
         get_pkg_name_parts().  Used as an optimization to skip installation
         and cache refresh if dependencies are already satisfied.
 
-        :return True if _all_ packages are installed (with correct versions).
+        :return: True if _all_ packages are installed (with correct versions).
 
         XXX: method left out of RPMRepository's MVP; returning False would lead to
         an inefficiency, this should be implemented in the future.
