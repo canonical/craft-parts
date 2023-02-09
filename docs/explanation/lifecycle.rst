@@ -13,7 +13,7 @@ its own input and output locations:
    are applied.
 #. ``BUILD`` — The part is built according to the particular part plugin and
    build override.
-#. ``STAGE`` — The specified outputs from the ``BUILD`` stage are copied into
+#. ``STAGE`` — The specified outputs from the ``BUILD`` step are copied into
    a unified staging area for all parts.
 #. ``PRIME`` — The specified files are copied from the staging area to the
    priming area for use in the final payload. This is distinct from ``STAGE``
