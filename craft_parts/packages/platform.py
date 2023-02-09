@@ -21,7 +21,7 @@ from craft_parts import errors
 from craft_parts.utils import os_utils
 
 _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"]
-_RPM_BASED_PLATFORM = ["fedora", "centos"]
+_RPM_BASED_PLATFORM = ["centos"]
 
 
 def _check(distro: Optional[str], platform_distros: List[str]) -> bool:
