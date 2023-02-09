@@ -25,10 +25,10 @@ _RPM_BASED_PLATFORM = ["fedora", "centos"]
 
 
 def _check(distro: Optional[str], platform_distros: List[str]) -> bool:
-    """Check if the indicated distro is included in the specified platform distros.
+    """Check if `distro` is included in the specified platform distros.
 
-    If the indicated `distro` is None it will be retrieved from OsRelease
-    ("unknown" on error).
+    If the indicated `distro` is None it will be retrieved from OsRelease or
+    return "unknown" on error.
     """
     if not distro:
         try:
