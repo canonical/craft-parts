@@ -32,7 +32,7 @@ class Features(metaclass=Singleton):
     enable_overlay: bool = False
 
     @classmethod
-    def reset(cls):
+    def reset(cls) -> None:
         """Delete stored class instance."""
         logger.warning("deleting current features configuration")
         with contextlib.suppress(KeyError):

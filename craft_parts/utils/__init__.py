@@ -16,7 +16,7 @@
 
 """Utilities and helpers."""
 
-from typing import Dict
+from typing import Any, Dict
 
 
 def package_name() -> str:
@@ -29,7 +29,7 @@ class Singleton(type):
 
     _instances: Dict = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
         """Return an existing instance, or create a new instance."""
         if cls not in cls._instances:
             instance = super().__call__(*args, **kwargs)

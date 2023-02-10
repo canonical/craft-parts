@@ -82,7 +82,7 @@ class PartSpec(BaseModel):
         return item
 
     @validator("overlay_packages", "overlay_files", "overlay_script")
-    def validate_overlay_feature(cls, item):
+    def validate_overlay_feature(cls, item: Any) -> Any:
         """Check if overlay attributes specified when feature is disabled."""
         assert Features().enable_overlay, "overlays not supported"
         return item
