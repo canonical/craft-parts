@@ -16,7 +16,7 @@
 
 """Craft Parts plugins subsystem."""
 
-from .base import Plugin, PluginModel, StrictPlugin, extract_plugin_properties
+from .base import Plugin, PluginModel, extract_plugin_properties
 from .plugins import (
     PluginProperties,
     extract_part_properties,
@@ -33,7 +33,6 @@ __all__ = [
     "PluginEnvironmentValidator",
     "PluginModel",
     "PluginProperties",
-    "StrictPlugin",
     "extract_part_properties",
     "extract_plugin_properties",
     "get_plugin",

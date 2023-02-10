@@ -65,7 +65,7 @@ class LifecycleManager:
     :param extra_build_packages: A list of additional build packages to install.
     :param extra_build_snaps: A list of additional build snaps to install.
     :param track_stage_packages: Add primed stage packages to the prime state.
-    :param offline_build: Only allow plugins capable of offline building.
+    :param strict_mode: Only allow plugins capable of building in strict mode.
     :param base_layer_dir: The path to the overlay base layer, if using overlays.
     :param base_layer_hash: The validation hash of the overlay base image, if using
         overlays. The validation hash should be constant for a given image, and should
@@ -93,7 +93,7 @@ class LifecycleManager:
         extra_build_packages: Optional[List[str]] = None,
         extra_build_snaps: Optional[List[str]] = None,
         track_stage_packages: bool = False,
-        offline_build: bool = False,
+        strict_mode: bool = False,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
@@ -124,7 +124,7 @@ class LifecycleManager:
             arch=arch,
             base=base,
             parallel_build_count=parallel_build_count,
-            offline_build=offline_build,
+            strict_mode=strict_mode,
             project_name=project_name,
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
@@ -138,7 +138,7 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs, offline_build))
+            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
 
         self._has_overlay = any(p.has_overlay for p in part_list)
 
@@ -299,7 +299,7 @@ def _build_part(
             raise errors.UndefinedPlugin(part_name=name) from err
         raise errors.InvalidPlugin(plugin_name, part_name=name) from err
 
-    if strict_plugins and not plugin_class.offline:
+    if strict_plugins and not plugin_class.supports_strict_mode:
         raise errors.PluginNotStrict(plugin_name, part_name=name)
 
     # validate and unmarshal plugin properties

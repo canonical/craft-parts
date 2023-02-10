@@ -665,6 +665,6 @@ def test_main_strict(mocker):
         "base_layer_dir": None,
         "base_layer_hash": b"",
         "cache_dir": mocker.ANY,
-        "offline_build": True,
+        "strict_mode": True,
         "work_dir": ".",
     }

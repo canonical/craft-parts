@@ -26,7 +26,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, TextIO, Union, cast
+from typing import List, Optional, Set, TextIO, Union
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -36,7 +36,6 @@ from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils
 
-from ..plugins.base import StrictPlugin
 from . import filesets
 from .filesets import Fileset
 from .migration import migrate_files
@@ -110,15 +109,12 @@ class StepHandler:
         if self._source_handler:
             self._source_handler.pull()
 
-        # Plugin prepare commands.
-        if self._step_info.offline_build:
-            # If offline build is enabled we're using only strict plugins
-            plugin = cast(StrictPlugin, self._plugin)
-            pull_prepare_commands = plugin.get_pull_prepare_commands()
+        pull_commands = self._plugin.get_pull_commands()
 
+        if pull_commands:
             try:
                 _create_and_run_script(
-                    pull_prepare_commands,
+                    pull_commands,
                     script_path=self._part.part_run_dir.absolute() / "pull.sh",
                     cwd=self._part.part_src_subdir,
                     stdout=self._stdout,

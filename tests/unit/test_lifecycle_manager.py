@@ -220,22 +220,22 @@ class TestLifecycleManager:
         assert lf.get_pull_assets(part_name="foo") is None
 
     def test_strict_plugins(self, new_dir, mock_available_plugins):
-        """Test using a strict plugin in offline mode."""
+        """Test using a strict plugin in strict mode."""
         data = create_data("p1", "strict")
         lf = LifecycleManager(
-            data, application_name="test_manager", cache_dir=new_dir, offline_build=True
+            data, application_name="test_manager", cache_dir=new_dir, strict_mode=True
         )
         assert lf.get_pull_assets(part_name="p1") is None
 
     def test_strict_plugins_error(self, new_dir, mock_available_plugins):
-        """Test that using a non-strict plugin in offline mode is an error."""
+        """Test that using a non-strict plugin in strict mode is an error."""
         data = create_data("p1", "nonstrict")
         with pytest.raises(errors.PluginNotStrict) as exc:
             LifecycleManager(
                 data,
                 application_name="test_manager",
                 cache_dir=new_dir,
-                offline_build=True,
+                strict_mode=True,
             )
         assert "p1" in str(exc.value)
 

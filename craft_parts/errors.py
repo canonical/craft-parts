@@ -277,7 +277,9 @@ class PluginNotStrict(PartsError):
         self.plugin_name = plugin_name
         self.part_name = part_name
         brief = f"Plugin {plugin_name!r} in part {part_name!r} cannot be used."
-        details = "Only plugins that are capable of building offline are allowed."
+        details = (
+            "Only plugins that are capable of building in strict mode are allowed."
+        )
 
         super().__init__(brief=brief, details=details)
 

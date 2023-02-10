@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Set
 
 from overrides import override
 
-from .base import StrictPlugin
+from .base import Plugin
 from .properties import PluginProperties
 
 
@@ -43,7 +43,7 @@ class NilPluginProperties(PluginProperties):
         return cls()
 
 
-class NilPlugin(StrictPlugin):
+class NilPlugin(Plugin):
     """A plugin that defines no build commands.
 
     The nil plugin is useful in two contexts:
@@ -63,6 +63,8 @@ class NilPlugin(StrictPlugin):
 
     properties_class = NilPluginProperties
 
+    supports_strict_mode = True
+
     @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
@@ -79,7 +81,7 @@ class NilPlugin(StrictPlugin):
         return {}
 
     @override
-    def get_pull_prepare_commands(self) -> List[str]:
+    def get_pull_commands(self) -> List[str]:
         """Return a list commands to retrieve dependencies during the pull step."""
         return []
 

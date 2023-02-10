@@ -56,7 +56,7 @@ class FooPlugin(plugins.Plugin):
 
 
 def _step_handler_for_step(
-    step: Step, cache_dir: Path, offline_build: bool = False, plugin_class=None
+    step: Step, cache_dir: Path, strict_mode: bool = False, plugin_class=None
 ) -> StepHandler:
     p1 = Part("p1", {"source": "."})
     dirs = ProjectDirs()
@@ -64,7 +64,7 @@ def _step_handler_for_step(
         project_dirs=dirs,
         application_name="test",
         cache_dir=cache_dir,
-        offline_build=offline_build,
+        strict_mode=strict_mode,
     )
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=step)
@@ -203,24 +203,24 @@ class TestStepHandlerBuiltins:
         )
 
     def test_run_builtin_pull_strict(self, new_dir, mocker):
-        """Test the Pull step in offline build calls get_pull_prepare_commands()"""
+        """Test the Pull step in strict mode calls get_pull_commands()"""
         Path("parts/p1/run").mkdir(parents=True)
         mock_run = mocker.patch("subprocess.run")
         sh = _step_handler_for_step(
             Step.PULL,
             cache_dir=new_dir,
-            offline_build=True,
+            strict_mode=True,
             plugin_class=StrictTestPlugin,
         )
 
         sh.run_builtin()
 
-        # Check that the contents of StrictTestPlugin.get_pull_prepare_commands()
-        # are in the script ran during the pull step.
+        # Check that when StrictTestPlugin.get_pull_commands() is called
+        # 'strict mode' is correctly enabled.
         assert mock_run.called
         run_args = mock_run.call_args[0][0]
         script_path = run_args[0]
-        assert "StrictTestPlugin.get_pull_prepare_commands()" in script_path.read_text()
+        assert "strict mode: True" in script_path.read_text()
 
 
 class TestStepHandlerRunScriptlet:

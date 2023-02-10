@@ -59,7 +59,7 @@ class ProjectInfo:
         architecture.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
-    :param offline_build: Only allow plugins capable of offline building.
+    :param strict_mode: Only allow plugins capable of building in strict mode.
     :param project_dirs: The project work directories.
     :param project_name: The name of the project.
     :param project_vars_part_name: Project variables can be set only if
@@ -77,7 +77,7 @@ class ProjectInfo:
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
-        offline_build: bool = False,
+        strict_mode: bool = False,
         project_dirs: Optional[ProjectDirs] = None,
         project_name: Optional[str] = None,
         project_vars_part_name: Optional[str] = None,
@@ -94,7 +94,7 @@ class ProjectInfo:
         self._set_machine(arch)
         self._base = base  # TODO: infer base if not specified
         self._parallel_build_count = parallel_build_count
-        self._offline_build = offline_build
+        self._strict_mode = strict_mode
         self._dirs = project_dirs
         self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
@@ -144,9 +144,9 @@ class ProjectInfo:
         return self._parallel_build_count
 
     @property
-    def offline_build(self) -> bool:
-        """Return whether it must be possible to build the project offline."""
-        return self._offline_build
+    def strict_mode(self) -> bool:
+        """Return whether this project must be built in 'strict' mode."""
+        return self._strict_mode
 
     @property
     def host_arch(self) -> str:

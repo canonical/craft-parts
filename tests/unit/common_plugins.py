@@ -16,16 +16,18 @@
 """Plugins used in unit tests."""
 from typing import Dict, List, Set
 
-from craft_parts.plugins import Plugin, PluginProperties, StrictPlugin
+from craft_parts.plugins import Plugin, PluginProperties
 
 
-class StrictTestPlugin(StrictPlugin):
+class StrictTestPlugin(Plugin):
     """Test plugin that is strict (works in offline builds)."""
 
     properties_class = PluginProperties
 
-    def get_pull_prepare_commands(self) -> List[str]:
-        return ["echo StrictTestPlugin.get_pull_prepare_commands()"]
+    supports_strict_mode = True
+
+    def get_pull_commands(self) -> List[str]:
+        return [f"strict mode: {self._part_info.strict_mode}"]
 
     def get_build_snaps(self) -> Set[str]:
         return set()

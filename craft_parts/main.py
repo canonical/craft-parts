@@ -98,7 +98,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         application_name=options.application_name,
         work_dir=options.work_dir,
         cache_dir=cache_dir,
-        offline_build=options.strict,
+        strict_mode=options.strict,
         base=options.base,
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
@@ -243,7 +243,7 @@ def _parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Enable offline builds.",
+        help="Enable strict builds.",
     )
     parser.add_argument(
         "--work-dir",
