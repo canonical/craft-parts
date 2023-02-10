@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -104,3 +104,23 @@ class TestPrimeStateChanges:
     def test_project_option_changes(self, project_options):
         state = PrimeState(project_options=project_options)
         assert state.diff_project_options_of_interest({}) == set()
+
+    def test_extra_property_changes(self, properties):
+        augmented_properties = {**properties, "extra-property": "foo"}
+        state = PrimeState(part_properties=augmented_properties)
+
+        relevant_properties = ["override-prime", "prime", "extra-property"]
+
+        for prop in augmented_properties.keys():
+            other = augmented_properties.copy()
+            other[prop] = "new value"
+
+            diff = state.diff_properties_of_interest(
+                other, also_compare=["extra-property"]
+            )
+            if prop in relevant_properties:
+                # relevant project options changed
+                assert diff == {prop}
+            else:
+                # relevant properties didn't change
+                assert diff == set()

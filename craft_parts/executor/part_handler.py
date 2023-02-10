@@ -105,7 +105,11 @@ class PartHandler:
             part_info=part_info,
         )
 
-        self._part_properties = part.spec.marshal()
+        self._part_properties = {
+            **part.spec.marshal(),
+            **part.plugin_properties.marshal(),
+        }
+
         self._source_handler = sources.get_source_handler(
             cache_dir=part_info.cache_dir,
             part=part,

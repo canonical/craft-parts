@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2021 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,8 +16,9 @@
 
 """State definitions for the stage step."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from overrides import override
 from pydantic import validator
 
 from .step_state import StepState, validate_hex_string
@@ -33,6 +34,7 @@ class StageState(StepState):
     )
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "StageState":
         """Create and populate a new ``StageState`` object from dictionary data.
 
@@ -50,19 +52,28 @@ class StageState(StepState):
 
         return cls(**data)
 
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    @override
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
+        :param extra_properties: Additional relevant properties to be returned.
 
         :return: A dictionary containing properties of interest.
         """
-        return {
-            "filesets": part_properties.get("filesets", {}) or {},
-            "override-stage": part_properties.get("override-stage"),
-            "stage": part_properties.get("stage", ["*"]) or ["*"],
-        }
+        relevant_properties = [
+            "override-stage",
+            "stage",
+            *(extra_properties or []),
+        ]
+        return {name: part_properties.get(name) for name in relevant_properties}
 
+    @override
     def project_options_of_interest(
         self, project_options: Dict[str, Any]
     ) -> Dict[str, Any]:
