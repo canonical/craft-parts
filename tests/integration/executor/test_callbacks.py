@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2022 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,9 @@ from craft_parts.state_manager import StepState
 
 
 def setup_function():
+    craft_parts.Features.reset()
+    craft_parts.Features(enable_overlay=True)
+
     callbacks.unregister_all()
 
 

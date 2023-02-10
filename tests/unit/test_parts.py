@@ -33,6 +33,9 @@ class TestPartSpecs:
     """Test part specification creation."""
 
     def test_marshal_unmarshal(self):
+        Features.reset()
+        Features(enable_overlay=True)
+
         data = {
             "plugin": "nil",
             "source": "http://example.com/hello-2.3.tar.gz",
@@ -126,6 +129,10 @@ class TestPartSpecs:
 
 class TestPartData:
     """Test basic part creation and representation."""
+
+    def setup_method(self):
+        Features.reset()
+        Features(enable_overlay=True)
 
     def test_part_dirs(self, new_dir):
         p = Part("foo", {"plugin": "nil"})

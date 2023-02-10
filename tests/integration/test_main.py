@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -75,7 +75,13 @@ def setup_new_dir(new_dir):  # pylint: disable=unused-argument
     pass
 
 
+def setup_function():
+    craft_parts.Features.reset()
+    craft_parts.Features(enable_overlay=True)
+
+
 def test_main_no_args(mocker, capfd):
+
     Path("parts.yaml").write_text(parts_yaml)
 
     mocker.patch.object(sys, "argv", ["cmd"])

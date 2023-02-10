@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -77,6 +77,9 @@ _parts_yaml = textwrap.dedent(
 
 @pytest.mark.parametrize("step", list(Step))
 def test_step_callback(new_dir, mocker, capfd, step):
+    craft_parts.Features.reset()
+    craft_parts.Features(enable_overlay=True)
+
     mocker.patch("platform.machine", return_value="aarch64")
 
     callbacks.register_pre_step(_step_callback, step_list=[step])
@@ -120,6 +123,9 @@ def test_step_callback(new_dir, mocker, capfd, step):
 
 
 def test_prologue_callback(new_dir, capfd, mocker):
+    craft_parts.Features.reset()
+    craft_parts.Features(enable_overlay=True)
+
     mocker.patch("platform.machine", return_value="aarch64")
 
     callbacks.register_prologue(_prologue_callback)

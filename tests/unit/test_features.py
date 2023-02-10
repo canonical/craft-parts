@@ -28,7 +28,7 @@ def setup_features():
 
 def test_features():
     features = Features()
-    assert features.enable_overlay is True
+    assert features.enable_overlay is False
 
 
 def test_features_set():

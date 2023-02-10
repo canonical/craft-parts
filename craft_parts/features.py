@@ -29,7 +29,7 @@ logger = logging.getLogger()
 class Features(metaclass=Singleton):
     """Configurable craft-parts features."""
 
-    enable_overlay: bool = True
+    enable_overlay: bool = False
 
     @classmethod
     def reset(cls):

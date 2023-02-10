@@ -211,6 +211,10 @@ class TestLifecycleManager:
 class TestOverlaySupport:
     """Overlays only supported in linux and must run as root."""
 
+    def setup_method(self):
+        Features.reset()
+        Features(enable_overlay=True)
+
     @pytest.fixture
     def parts_data(self) -> Dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
