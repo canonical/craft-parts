@@ -65,7 +65,7 @@ alphabetically at each stage (even though C is listed before B):
     B:
       plugin: nil
 
-.. collapse:: craft_parts output
+.. details:: craft_parts output
 
   .. code-block:: text
 
@@ -100,7 +100,7 @@ parts being reordered within a step:
     B:
       plugin: nil
 
-.. collapse:: craft_parts output
+.. details:: craft_parts output
 
   .. code-block:: text
     :emphasize-lines: 7-8
