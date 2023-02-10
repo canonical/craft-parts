@@ -81,7 +81,6 @@ def setup_function():
 
 
 def test_main_no_args(mocker, capfd):
-
     Path("parts.yaml").write_text(parts_yaml)
 
     mocker.patch.object(sys, "argv", ["cmd"])
