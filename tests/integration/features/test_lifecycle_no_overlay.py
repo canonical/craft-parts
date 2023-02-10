@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -138,13 +138,11 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    print("=== >>>>>>>>>>>>>>>>>>>>>>>>>>")
     # A request to build all parts skips everything
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_demo", cache_dir=new_dir
     )
     actions = lf.plan(Step.BUILD)
-    print("=== <<<<<<<<<<<<<<<<<<<<<<<<<<")
     assert actions == [
         # fmt: off
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
