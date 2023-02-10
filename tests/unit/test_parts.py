@@ -123,6 +123,7 @@ class TestPartData:
         assert p.part_snaps_dir == new_dir / "parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.part_layer_dir == new_dir / "parts/foo/layer"
+        assert p.part_cache_dir == new_dir / "parts/foo/cache"
         assert p.overlay_dir == new_dir / "overlay"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"

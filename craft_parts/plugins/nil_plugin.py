@@ -63,6 +63,8 @@ class NilPlugin(Plugin):
 
     properties_class = NilPluginProperties
 
+    supports_strict_mode = True
+
     @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
@@ -77,6 +79,11 @@ class NilPlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
+
+    @override
+    def get_pull_commands(self) -> List[str]:
+        """Return a list commands to retrieve dependencies during the pull step."""
+        return []
 
     @override
     def get_build_commands(self) -> List[str]:

@@ -43,12 +43,19 @@ class Plugin(abc.ABC):
     properties_class: Type[PluginProperties]
     validator_class = PluginEnvironmentValidator
 
+    supports_strict_mode = False
+    """Plugins that can run in 'strict' mode must set this classvar to True."""
+
     def __init__(
         self, *, properties: PluginProperties, part_info: "infos.PartInfo"
     ) -> None:
         self._options = properties
         self._part_info = part_info
         self._action_properties: ActionProperties
+
+    def get_pull_commands(self) -> List[str]:
+        """Return the commands to retrieve dependencies during the pull step."""
+        return []
 
     @abc.abstractmethod
     def get_build_snaps(self) -> Set[str]:

@@ -53,10 +53,17 @@ class DumpPlugin(Plugin):
 
     properties_class = DumpPluginProperties
 
+    supports_strict_mode = True
+
     @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
+
+    @override
+    def get_pull_commands(self) -> List[str]:
+        """Return a list commands to retrieve dependencies during the pull step."""
+        return []
 
     @override
     def get_build_packages(self) -> Set[str]:

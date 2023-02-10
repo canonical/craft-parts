@@ -25,10 +25,22 @@ from unittest.mock import ANY, call
 import pytest
 import yaml
 
+import craft_parts
 from craft_parts import errors
 from craft_parts.lifecycle_manager import LifecycleManager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
+from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
+
+
+@pytest.fixture
+def mock_available_plugins(monkeypatch):
+    available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
+    monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
+
+
+def create_data(part_name: str, plugin_name: str) -> Dict[str, Any]:
+    return {"parts": {part_name: {"plugin": plugin_name}}}
 
 
 class TestLifecycleManager:
@@ -206,6 +218,26 @@ class TestLifecycleManager:
             cache_dir=new_dir,
         )
         assert lf.get_pull_assets(part_name="foo") is None
+
+    def test_strict_plugins(self, new_dir, mock_available_plugins):
+        """Test using a strict plugin in strict mode."""
+        data = create_data("p1", "strict")
+        lf = LifecycleManager(
+            data, application_name="test_manager", cache_dir=new_dir, strict_mode=True
+        )
+        assert lf.get_pull_assets(part_name="p1") is None
+
+    def test_strict_plugins_error(self, new_dir, mock_available_plugins):
+        """Test that using a non-strict plugin in strict mode is an error."""
+        data = create_data("p1", "nonstrict")
+        with pytest.raises(errors.PluginNotStrict) as exc:
+            LifecycleManager(
+                data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                strict_mode=True,
+            )
+        assert "p1" in str(exc.value)
 
 
 class TestOverlaySupport:

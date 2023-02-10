@@ -648,3 +648,23 @@ def test_main_import(mocker, capfd):
     out, err = capfd.readouterr()
     assert out == f"craft-parts {craft_parts.__version__}\n"
     assert err == ""
+
+
+def test_main_strict(mocker):
+    """Test passing "--strict" on the command line."""
+    Path("parts.yaml").write_text(parts_yaml)
+    mocker.patch.object(sys, "argv", ["cmd", "--strict"])
+
+    spied_lcm = mocker.spy(craft_parts.LifecycleManager, name="__init__")
+    main.main()
+
+    kwargs = spied_lcm.call_args[1]
+    assert kwargs == {
+        "application_name": "craft_parts",
+        "base": "",
+        "base_layer_dir": None,
+        "base_layer_hash": b"",
+        "cache_dir": mocker.ANY,
+        "strict_mode": True,
+        "work_dir": ".",
+    }
