@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -44,3 +44,8 @@ def fake_apt_cache(mocker):
 @pytest.fixture
 def fake_deb_run(mocker):
     return mocker.patch("craft_parts.packages.deb.process_run")
+
+
+@pytest.fixture
+def fake_yum_run(mocker):
+    return mocker.patch("craft_parts.packages.yum.process_run")
