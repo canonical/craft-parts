@@ -66,6 +66,7 @@ doc_requires = [
     "sphinx-autodoc-typehints",
     "sphinx-pydantic",
     "sphinx-rtd-theme",
+    "sphinxcontrib-details-directive==0.1.0",
 ]
 
 test_requires = [
