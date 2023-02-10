@@ -21,7 +21,7 @@ from craft_parts import errors
 from craft_parts.utils import os_utils
 
 _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"]
-_RPM_BASED_PLATFORM = ["centos"]
+_YUM_BASED_PLATFORM = ["centos"]
 
 
 def _check(distro: Optional[str], platform_distros: List[str]) -> bool:
@@ -48,11 +48,11 @@ def is_deb_based(distro: Optional[str] = None) -> bool:
     return _check(distro, _DEB_BASED_PLATFORM)
 
 
-def is_rpm_based(distro: Optional[str] = None) -> bool:
+def is_yum_based(distro: Optional[str] = None) -> bool:
     """Verify the distribution packaging system.
 
     :param distro: The distribution name.
 
-    :return: Whether the distribution uses .rpm packages.
+    :return: Whether the distribution handles packages through YUM.
     """
-    return _check(distro, _RPM_BASED_PLATFORM)
+    return _check(distro, _YUM_BASED_PLATFORM)

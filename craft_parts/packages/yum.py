@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Support for RPM files."""
+"""Support for files installed/updated through YUM."""
 
 import functools
 import logging
@@ -28,18 +28,18 @@ from .base import BaseRepository
 logger = logging.getLogger(__name__)
 
 
-class RPMRepository(BaseRepository):
-    """Repository management for RPM packages."""
+class YUMRepository(BaseRepository):
+    """Repository management using YUM."""
 
     @classmethod
     def configure(cls, application_package_name: str) -> None:
         """Set up yum options and directories.
 
-        XXX: method left out of RPMRepository's MVP; it should be implemented
+        XXX: method left out of YUMRepository's MVP; it should be implemented
         in the future to allow configuring the yum system.
         """
         logger.debug(
-            "Called not implemented method 'RPMRepository.configure' with name %r",
+            "Called not implemented method 'YUMRepository.configure' with name %r",
             application_package_name,
         )
 
@@ -49,10 +49,10 @@ class RPMRepository(BaseRepository):
     ) -> Set[str]:  # pylint: disable=unused-argument
         """Return a list of libraries in package_name.
 
-        XXX: method left out of RPMRepository's MVP; cannot return a sane default so
+        XXX: method left out of YUMRepository's MVP; cannot return a sane default so
         raising an error to ensure it's not used.
         """
-        raise NotImplementedError("Functionality not yet provided by RPMRepository.")
+        raise NotImplementedError("Functionality not yet provided by YUMRepository.")
 
     @classmethod
     def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
@@ -104,12 +104,12 @@ class RPMRepository(BaseRepository):
 
         :return: True if _all_ packages are installed (with correct versions).
 
-        XXX: method left out of RPMRepository's MVP; returning False would lead to
+        XXX: method left out of YUMRepository's MVP; returning False would lead to
         an inefficiency, this should be implemented in the future.
         """
         logger.debug(
             "Called not implemented method "
-            "'RPMRepository._check_if_all_packages_installed' "
+            "'YUMRepository._check_if_all_packages_installed' "
             "with names %s",
             package_names,
         )
@@ -119,10 +119,10 @@ class RPMRepository(BaseRepository):
     def download_packages(cls, package_names: List[str]) -> None:
         """Download the specified packages to the local package cache area.
 
-        XXX: method left out of RPMRepository's MVP; nothing will be
+        XXX: method left out of YUMRepository's MVP; nothing will be
         downloaded, so raise an error to ensure it's not used.
         """
-        raise NotImplementedError("Functionality not yet provided by RPMRepository.")
+        raise NotImplementedError("Functionality not yet provided by YUMRepository.")
 
     @classmethod
     def install_packages(
@@ -171,11 +171,11 @@ class RPMRepository(BaseRepository):
     def is_package_installed(cls, package_name: str) -> bool:
         """Inform if a package is installed on the host system.
 
-        XXX: method left out of RPMRepository's MVP; returning False would lead to
+        XXX: method left out of YUMRepository's MVP; returning False would lead to
         an inefficiency, this should be implemented in the future.
         """
         logger.debug(
-            "Called not implemented method 'RPMRepository.is_package_installed' "
+            "Called not implemented method 'YUMRepository.is_package_installed' "
             "with name %r",
             package_name,
         )
@@ -185,11 +185,11 @@ class RPMRepository(BaseRepository):
     def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions.
 
-        XXX: method left out of RPMRepository's MVP; returning an empty list
+        XXX: method left out of YUMRepository's MVP; returning an empty list
         would lead to an inefficiency, this should be implemented in the future.
         """
         logger.debug(
-            "Called not implemented method 'RPMRepository.get_installed_packages'"
+            "Called not implemented method 'YUMRepository.get_installed_packages'"
         )
         return []
 

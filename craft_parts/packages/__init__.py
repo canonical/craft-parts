@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Type
 from . import errors  # noqa: F401
 from . import snaps  # noqa: F401
 from .normalize import fix_pkg_config  # noqa: F401
-from .platform import is_deb_based, is_rpm_based
+from .platform import is_deb_based, is_yum_based
 
 if TYPE_CHECKING:
     from .base import BaseRepository
@@ -34,10 +34,10 @@ def _get_repository_for_platform() -> Type["BaseRepository"]:
 
         return Ubuntu
 
-    if is_rpm_based():
-        from .rpm import RPMRepository
+    if is_yum_based():
+        from .yum import YUMRepository
 
-        return RPMRepository
+        return YUMRepository
 
     from .base import DummyRepository
 
