@@ -14,9 +14,7 @@
 
 """Support for files installed/updated through YUM."""
 
-import functools
 import logging
-import os
 import subprocess
 from typing import List, Set
 
@@ -78,21 +76,12 @@ class YUMRepository(BaseRepository):
         return packages
 
     @classmethod
-    @functools.lru_cache(maxsize=1)
     def refresh_packages_list(cls) -> None:
-        """Refresh the list of packages available in the repository."""
-        # Return early when integration testing
-        if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
-            return
+        """Refresh the list of packages available in the repository.
 
-        try:
-            cmd = ["yum", "update", "-y"]
-            logger.debug("Executing: %s", cmd)
-            process_run(cmd)
-        except subprocess.CalledProcessError as call_error:
-            raise errors.PackageListRefreshError(
-                "failed to run yum update"
-            ) from call_error
+        This is a NOOP in YUM based systems because `yum install` updates the cache
+        itself, no separate previous action is needed.
+        """
 
     @classmethod
     def _check_if_all_packages_installed(cls, package_names: List[str]) -> bool:

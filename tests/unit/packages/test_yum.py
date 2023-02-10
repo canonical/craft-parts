@@ -23,19 +23,12 @@ from craft_parts.packages import errors
 from craft_parts.packages.yum import YUMRepository
 
 
-@pytest.fixture(autouse=True)
-def yum_update_cache():
-    """Clean the cache around the `refresh_packages_list` call."""
-    YUMRepository.refresh_packages_list.cache_clear()
-
-
 def test_install_packages_simple(fake_yum_run):
     """Simple and complete procedure when installing packages."""
     YUMRepository.install_packages(
         ["package-installed", "package", "versioned-package=2.0"]
     )
     assert fake_yum_run.mock_calls == [
-        call(["yum", "update", "-y"]),
         call(
             [
                 "yum",
@@ -84,21 +77,9 @@ def test_install_packages_broken_package_yum_install(fake_yum_run):
 
 
 def test_refresh_packages_list(fake_yum_run):
-    """Refresh the list of packages."""
+    """Check that refreshing the list of packages is a NOOP."""
     YUMRepository.refresh_packages_list()
-    fake_yum_run.assert_called_once_with(["yum", "update", "-y"])
-
-
-def test_refresh_packages_list_fails(fake_yum_run):
-    """Support command error when refreshing the list of packages."""
-    fake_yum_run.side_effect = CalledProcessError(
-        returncode=1, cmd=["yum", "update", "-y"]
-    )
-
-    with pytest.raises(errors.PackageListRefreshError):
-        YUMRepository.refresh_packages_list()
-
-    fake_yum_run.assert_has_calls([call(["yum", "update", "-y"])])
+    fake_yum_run.assert_not_called()
 
 
 @pytest.mark.parametrize(
