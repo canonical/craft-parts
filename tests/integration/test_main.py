@@ -77,7 +77,6 @@ def setup_new_dir(new_dir):  # pylint: disable=unused-argument
 
 def setup_function():
     craft_parts.Features.reset()
-    craft_parts.Features(enable_overlay=True)
 
 
 def test_main_no_args(mocker, capfd):
@@ -291,6 +290,7 @@ def test_main_step_dry_run_skip(mocker, capfd):
 
     # run it again on the existing state
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "prime"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -312,6 +312,7 @@ def test_main_step_dry_run_show_skip(mocker, capfd):
 
     # run it again on the existing state
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "--show-skip", "prime"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -469,6 +470,7 @@ def test_main_clean(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "clean"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -482,6 +484,7 @@ def test_main_clean(mocker, capfd):
 
     # clean again should not fail
     mocker.patch.object(sys, "argv", ["cmd", "clean"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -507,6 +510,7 @@ def test_main_clean_workdir(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir", "clean"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -552,6 +556,7 @@ def test_main_clean_part(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -572,6 +577,7 @@ def test_main_clean_part(mocker, capfd):
 
     # clean the again should not fail
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -594,6 +600,7 @@ def test_main_clean_multiple_part(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo", "bar"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
