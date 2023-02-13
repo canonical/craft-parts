@@ -28,10 +28,15 @@ from tests import TESTS_DIR
 
 
 @pytest.fixture(autouse=True)
-def setup_fixture(new_dir, mocker):
+def _setup_module():
     craft_parts.Features.reset()
     craft_parts.Features(enable_overlay=True)
+    yield
+    craft_parts.Features.reset()
 
+
+@pytest.fixture(autouse=True)
+def setup_fixture(new_dir, mocker):
     craftctl = Path("craftctl")
     craftctl.write_text(f"#!{sys.executable}\nfrom craft_parts import ctl\nctl.main()")
     craftctl.chmod(0o755)

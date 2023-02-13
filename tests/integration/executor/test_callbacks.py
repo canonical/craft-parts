@@ -41,6 +41,7 @@ def setup_function():
 
 def teardown_module():
     callbacks.unregister_all()
+    craft_parts.Features.reset()
 
 
 @pytest.fixture(autouse=True)

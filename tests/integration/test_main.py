@@ -79,6 +79,10 @@ def setup_function():
     craft_parts.Features.reset()
 
 
+def teardown_function():
+    craft_parts.Features.reset()
+
+
 def test_main_no_args(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 

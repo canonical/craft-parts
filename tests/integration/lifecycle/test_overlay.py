@@ -26,6 +26,15 @@ import craft_parts
 from craft_parts import Action, ActionType, Step
 
 
+def setup_module():
+    craft_parts.Features.reset()
+    craft_parts.Features(enable_overlay=True)
+
+
+def teardown_module():
+    craft_parts.Features.reset()
+
+
 @pytest.fixture
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")

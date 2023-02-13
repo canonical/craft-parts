@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -93,7 +93,6 @@ def test_application_plugin_happy(new_dir, mocker):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL, action_type=ActionType.RUN),
-        Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
         Action("foo", Step.BUILD, action_type=ActionType.RUN),
     ]
 
@@ -108,7 +107,7 @@ def test_application_plugin_happy(new_dir, mocker):
 
     with output_path.open("w") as output, error_path.open("w") as error:
         with lf.action_executor() as exe:
-            exe.execute(actions[2], stdout=output, stderr=error)
+            exe.execute(actions[1], stdout=output, stderr=error)
 
     assert output_path.read_text() == "hello application plugin\n"
     assert error_path.read_text() == "+ echo hello application plugin\n"

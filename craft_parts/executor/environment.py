@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@ import io
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
@@ -151,10 +152,14 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
         "CRAFT_TARGET_ARCH": info.target_arch,
         "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(info.project_dir),
-        "CRAFT_OVERLAY": str(info.overlay_mount_dir),
-        "CRAFT_STAGE": str(info.stage_dir),
-        "CRAFT_PRIME": str(info.prime_dir),
     }
+
+    if Features().enable_overlay:
+        global_environment["CRAFT_OVERLAY"] = str(info.overlay_mount_dir)
+
+    global_environment["CRAFT_STAGE"] = str(info.stage_dir)
+    global_environment["CRAFT_PRIME"] = str(info.prime_dir)
+
     if info.project_name is not None:
         global_environment["CRAFT_PROJECT_NAME"] = str(info.project_name)
 
