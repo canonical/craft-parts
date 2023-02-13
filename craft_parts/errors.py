@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -47,6 +47,17 @@ class PartsError(Exception):
             components.append(self.resolution)
 
         return "\n".join(components)
+
+
+class FeatureDisabled(PartsError):
+    """The requested feature is not enabled."""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        brief = message
+        resolution = "This operation cannot be executed."
+
+        super().__init__(brief=brief, resolution=resolution)
 
 
 class PartDependencyCycle(PartsError):

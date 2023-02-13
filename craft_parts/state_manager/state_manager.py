@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, cast
 
 from craft_parts import parts, sources, steps
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, ProjectVar
 from craft_parts.parts import Part
 from craft_parts.sources import SourceHandler
@@ -254,7 +255,13 @@ class StateManager:
 
         previous_steps = step.previous_steps()
         if previous_steps:
-            return self.should_step_run(part, previous_steps[-1])
+            prev_step = previous_steps[-1]
+
+            # Skip testing overlay state if overlays are disabled
+            if not Features().enable_overlay and prev_step == Step.OVERLAY:
+                prev_step = previous_steps[-2]
+
+            return self.should_step_run(part, prev_step)
 
         return False
 

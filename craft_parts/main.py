@@ -52,6 +52,8 @@ def main() -> None:
 
     logging.basicConfig(level=log_level)
 
+    craft_parts.Features(enable_overlay=True)
+
     try:
         _process_parts(options)
     except OSError as err:
