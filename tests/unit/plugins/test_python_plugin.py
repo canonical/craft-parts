@@ -53,36 +53,42 @@ def get_build_commands(new_dir: Path) -> List[str]:
     return [
         dedent(
             f"""\
-            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \
-                sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#\\!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
+            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\
+                sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
             """
         ),
         dedent(
             f"""\
-            determine_link_target() {{
-                opts_state="$(set +o +x | grep xtrace)"
-                interp_dir="$(dirname "${{PARTS_PYTHON_VENV_INTERP_PATH}}")"
-                # Determine python based on PATH, then resolve it, e.g:
-                # (1) <application venv dir>/bin/python3 -> /usr/bin/python3.8
-                # (2) /usr/bin/python3 -> /usr/bin/python3.8
-                # (3) /root/stage/python3 -> /root/stage/python3.8
-                # (4) /root/parts/<part>/install/usr/bin/python3 -> /root/parts/<part>/install/usr/bin/python3.8
-                python_path="$(which "${{PARTS_PYTHON_INTERPRETER}}")"
-                python_path="$(readlink -e "${{python_path}}")"
-                for dir in "{new_dir}/parts/p1/install" "{new_dir}/stage"; do
-                    if  echo "${{python_path}}" | grep -q "${{dir}}"; then
-                        python_path="$(realpath --strip --relative-to="${{interp_dir}}" \\
-                                "${{python_path}}")"
-                        break
-                    fi
-                done
-                echo "${{python_path}}"
-                eval "${{opts_state}}"
-            }}
+            # look for a provisioned python interpreter
+            opts_state="$(set +o|grep errexit)"
+            set +e
+            install_dir="{str(new_dir)}/parts/p1/install/usr/bin"
+            stage_dir="{str(new_dir)}/stage/usr/bin"
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "python3.*" -print -quit 2>/dev/null)
 
-            python_path="$(determine_link_target)"
-            ln -sf "${{python_path}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
-        """
+            if [ -n "$payload_python" ]; then
+                # We found a provisioned interpreter, use it.
+                installed_python="${{payload_python##{str(new_dir)}/parts/p1/install}}"
+                if [ "$installed_python" = "$payload_python" ]; then
+                    # Found a staged interpreter.
+                    symlink_target="..${{payload_python##{str(new_dir)}/stage}}"
+                else
+                    # The interpreter was installed but not staged yet.
+                    symlink_target="..$installed_python"
+                fi
+            else
+                # Otherwise use what _get_system_python_interpreter() told us.
+                symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
+            fi
+
+            if [ -z "$symlink_target" ]; then
+                echo "No suitable Python interpreter found, giving up."
+                exit 1
+            fi
+
+            eval "${{opts_state}}"
+            ln -sf "${{symlink_target}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
+            """
         ),
     ]
 
@@ -139,3 +145,37 @@ def test_missing_properties():
 
 def test_get_out_of_source_build(plugin):
     assert plugin.get_out_of_source_build() is False
+
+
+def test_should_remove_symlinks(plugin):
+    assert plugin._should_remove_symlinks() is False
+
+
+def test_get_system_python_interpreter(plugin):
+    assert plugin._get_system_python_interpreter() == (
+        '$(readlink -f "$(which "${PARTS_PYTHON_INTERPRETER}")")'
+    )
+
+
+def test_script_interpreter(plugin):
+    assert plugin._get_script_interpreter() == (
+        "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"
+    )
+
+
+def test_call_should_remove_symlinks(plugin, new_dir, mocker):
+    mocker.patch(
+        "craft_parts.plugins.python_plugin.PythonPlugin._should_remove_symlinks",
+        return_value=True,
+    )
+
+    assert plugin.get_build_commands() == [
+        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+        "pip install  -U pip setuptools wheel",
+        "[ -f setup.py ] && pip install  -U .",
+        f'find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\\n'
+        f'    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"\n',
+        f"echo Removing python symlinks in {str(new_dir)}/parts/p1/install/bin\n"
+        f'rm "{str(new_dir)}/parts/p1/install"/bin/python*\n',
+    ]
