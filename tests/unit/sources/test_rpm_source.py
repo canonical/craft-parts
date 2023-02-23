@@ -17,6 +17,7 @@
 import pathlib
 import subprocess
 import tarfile
+import unittest.mock
 
 import pytest
 
@@ -124,30 +125,35 @@ def test_popen_process_error(rpm_source, mock_popen, tmp_path):
     mock_popen.side_effect = inner_error = subprocess.CalledProcessError(
         returncode=1, cmd="some command"
     )
+    src = tmp_path / "test.rpm"
+    src.touch()
 
     with pytest.raises(errors.InvalidRpmPackage) as exc_info:
-        rpm_source.provision(tmp_path)
+        rpm_source.provision(tmp_path, src=src)
 
     assert exc_info.value.__cause__ == inner_error
 
 
 def test_tar_error(rpm_source, mock_popen, mock_tarfile_open, tmp_path):
     mock_tarfile_open.side_effect = inner_error = tarfile.TarError()
+    src = tmp_path / "test.rpm"
+    src.touch()
 
     with pytest.raises(errors.InvalidRpmPackage) as exc_info:
-        rpm_source.provision(tmp_path)
+        rpm_source.provision(tmp_path, src=src)
 
     assert exc_info.value.__cause__ == inner_error
 
 
-def test_correct_command(rpm_source, tmp_path, mock_popen, mock_tarfile_open):
+def test_correct_command(mocker, rpm_source, tmp_path, mock_popen, mock_tarfile_open):
     src = tmp_path / "some-package.rpm"
     src.touch()
 
-    rpm_source.provision(tmp_path, src=src)
+    rpm_source.provision(tmp_path, keep=True, src=src)
 
     mock_popen.assert_called_once_with(
-        ["rpm2archive", "--nocompression", str(src)],
+        ["rpm2archive", "--nocompression", "-"],
+        stdin=mocker.ANY,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
