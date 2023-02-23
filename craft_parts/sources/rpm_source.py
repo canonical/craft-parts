@@ -101,7 +101,7 @@ class RpmSource(FileSourceHandler):
         rpm_path = src or self.part_src_dir / os.path.basename(self.source)
         command = ["rpm2archive", "--nocompression", "-"]
 
-        with rpm_path.open('rb') as rpm:
+        with rpm_path.open("rb") as rpm:
             try:
                 with subprocess.Popen(
                     command, stdin=rpm, stdout=subprocess.PIPE, stderr=subprocess.PIPE

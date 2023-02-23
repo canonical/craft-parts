@@ -72,7 +72,7 @@ def sample_rpm(tmp_path: Path) -> Path:
         ["rpmbuild", "-bb", "--verbose"] + rpmbuild_params + [str(spec_file)],
         check=True,
         text=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # The asterisks in this glob allow this to be
