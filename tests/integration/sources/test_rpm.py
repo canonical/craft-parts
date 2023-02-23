@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import platform
+import shutil
 import subprocess
 import textwrap
 from pathlib import Path
@@ -83,6 +84,7 @@ def sample_rpm(tmp_path: Path) -> Path:
     return rpm_path
 
 
+@pytest.mark.skipif(not shutil.which("rpmbuild"), reason="rpmbuild is not installed")
 def test_source_rpm(sample_rpm, tmp_path):
     parts_yaml = textwrap.dedent(
         f"""\

@@ -95,6 +95,8 @@ jobs:
           # Remove newer go and install regular version for 20.04
           sudo snap remove go
           sudo apt install -y golang
+          # Install RPM dependencies for RPM tests
+          sudo apt install rpm
       - name: specify node version
         uses: actions/setup-node@v3
         with:
