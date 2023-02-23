@@ -79,3 +79,45 @@ def test_dotnet_plugin(new_dir):
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "Hello, World!\n"
+
+
+def test_dotnet_plugin_no_dotnet(new_dir, mocker):
+    """Test the dotnet plugin while pretending dotnet isn't installed."""
+    real_subprocess_run = subprocess.run
+    mock_method = mocker.patch.object(subprocess, "run")
+
+    # Patch the first call to subprocess.run to throw an exception, mimicking not
+    # having dotnet installed, but allow future calls to succeed.
+    first_call = True
+
+    def patch_first_call(*args, **kwargs):
+        nonlocal first_call
+        if first_call:
+            first_call = False
+            raise subprocess.CalledProcessError(127, "nonexistent_command")
+        return real_subprocess_run(*args, **kwargs)
+
+    mock_method.side_effect = patch_first_call
+
+    test_dotnet_plugin(new_dir)
+
+
+def test_dotnet_plugin_fake_dotnet(new_dir, mocker):
+    """Test the dotnet plugin while pretending dotnet is installed."""
+    real_subprocess_run = subprocess.run
+    mock_method = mocker.patch.object(subprocess, "run")
+
+    # Patch the first call to subprocess.run to throw an exception, mimicking not
+    # having dotnet installed, but allow future calls to succeed.
+    first_call = True
+
+    def patch_first_call(*args, **kwargs):
+        nonlocal first_call
+        if first_call:
+            first_call = False
+            return mocker.Mock()
+        return real_subprocess_run(*args, **kwargs)
+
+    mock_method.side_effect = patch_first_call
+
+    test_dotnet_plugin(new_dir)
