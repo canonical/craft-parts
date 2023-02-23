@@ -58,6 +58,27 @@ class InvalidSourceOption(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
+# TODO: Merge this with InvalidSourceOption above
+class InvalidSourceOptions(SourceError):
+    """A source option is not allowed for the given source type.
+
+    :param source_type: The part's source type.
+    :param options: The invalid source options.
+    """
+
+    def __init__(self, *, source_type: str, options: List[str]):
+        self.source_type = source_type
+        self.options = options
+        humanized_options = formatting_utils.humanize_list(options, "and")
+        brief = (
+            f"Failed to pull source: {humanized_options} cannot be used "
+            f"with a {source_type} source."
+        )
+        resolution = "Make sure sources are correctly specified."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class IncompatibleSourceOptions(SourceError):
     """Source specified options that cannot be used at the same time.
 
@@ -144,6 +165,20 @@ class InvalidSnapPackage(SourceError):
         self.snap_file = snap_file
         brief = f"Snap {snap_file!r} does not contain valid data."
         resolution = "Ensure the source lists a proper snap file."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class InvalidRpmPackage(SourceError):
+    """An rpm package is invalid.
+
+    :param rpm_file: The filename.
+    """
+
+    def __init__(self, rpm_file: str):
+        self.rpm_file = rpm_file
+        brief = f"RPM file {rpm_file!r} could not be extracted."
+        resolution = "Ensure the source lists a valid rpm file."
 
         super().__init__(brief=brief, resolution=resolution)
 
