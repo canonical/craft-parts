@@ -24,7 +24,7 @@ import re
 import shutil
 from contextlib import ContextDecorator
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import apt
 import apt.cache
@@ -163,7 +163,8 @@ class AptCache(ContextDecorator):
 
         # Copy current cache configuration.
         cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree("/etc/apt", cache_etc_apt_path)
+
+        shutil.copytree("/etc/apt", cache_etc_apt_path, ignore=_ignore_unreadable_files)
 
         # Specify default arch (if specified).
         if self.stage_cache_arch is not None:
@@ -385,3 +386,24 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
             package.candidate = pkg_version
     else:
         raise errors.PackageNotFound(f"{package.name}={version}")
+
+
+def _ignore_unreadable_files(
+    path: Union[str, os.PathLike[str]], names: Iterable[str]
+) -> List[str]:
+    """Ignore unreadable files for copytree.
+
+    Pass this function as the ignore parameter for shutil.copytree to not
+    fail on any unreadable files.
+    """
+    path = Path(path)
+    skip = []
+    for name in names:
+        child_path = path / name
+        if not child_path.is_file():
+            continue
+        try:
+            child_path.open("rb").close()
+        except PermissionError:
+            skip.append(name)
+    return skip
