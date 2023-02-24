@@ -195,7 +195,6 @@ class NpmPlugin(Plugin):
                     """
                 )
             )
-        command.append("npm config set unsafe-perm true")
         command.append(
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)'
         )

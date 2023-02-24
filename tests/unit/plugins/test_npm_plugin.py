@@ -232,7 +232,6 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            "npm config set unsafe-perm true",
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
 
@@ -243,7 +242,6 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            "npm config set unsafe-perm true",
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
 
@@ -265,7 +263,6 @@ class TestPluginNpmPlugin:
             '    tar xzf - -C "${CRAFT_PART_INSTALL}/"                         '
             "--no-same-owner --strip-components=1\n"
             "fi\n",
-            "npm config set unsafe-perm true",
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
 
