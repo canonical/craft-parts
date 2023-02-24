@@ -73,8 +73,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install apt build dependencies
         run: |
-          sudo apt update
-          sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs
+          apt update
+          apt install -y libapt-pkg-dev intltool fuse-overlayfs sudo
       - name: Install python-apt dependencies
         run: |
           pip install https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-distutils-extra/2.43/python-distutils-extra_2.43.tar.xz
