@@ -15,8 +15,7 @@ Free software: GNU Lesser General Public License v3
 
 # Documentation
 
-https://craft-parts.readthedocs.io
-
+https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 
 # Contributing
 
