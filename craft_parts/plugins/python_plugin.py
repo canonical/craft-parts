@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,7 @@
 
 import shlex
 from textwrap import dedent
-from typing import Any, Dict, List, Set, cast
+from typing import Any, Dict, List, Optional, Set, cast
 
 from overrides import override
 
@@ -154,44 +154,91 @@ class PythonPlugin(Plugin):
         build_commands.append(f"[ -f setup.py ] && pip install {constraints} -U .")
 
         # Now fix shebangs.
+        script_interpreter = self._get_script_interpreter()
         build_commands.append(
             dedent(
                 f"""\
-            find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \
-                sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#\\!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
-            """
+                find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \\
+                    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"
+                """
             )
         )
 
-        # Lastly, fix the symlink to the "real" python3 interpreter.
+        # And check if venv symlinks should be removed.
+        if self._should_remove_symlinks():
+            build_commands.append(
+                dedent(
+                    f"""\
+                    echo Removing python symlinks in {self._part_info.part_install_dir}/bin
+                    rm "{self._part_info.part_install_dir}"/bin/python*
+                    """
+                )
+            )
+            return build_commands
+
+        # If we didn't remove the symlink, point it to the real python3 interpreter.
+        python_interpreter = self._get_system_python_interpreter() or ""
         build_commands.append(
             dedent(
                 f"""\
-            determine_link_target() {{
-                opts_state="$(set +o +x | grep xtrace)"
-                interp_dir="$(dirname "${{PARTS_PYTHON_VENV_INTERP_PATH}}")"
-                # Determine python based on PATH, then resolve it, e.g:
-                # (1) <application venv dir>/bin/python3 -> /usr/bin/python3.8
-                # (2) /usr/bin/python3 -> /usr/bin/python3.8
-                # (3) /root/stage/python3 -> /root/stage/python3.8
-                # (4) /root/parts/<part>/install/usr/bin/python3 -> /root/parts/<part>/install/usr/bin/python3.8
-                python_path="$(which "${{PARTS_PYTHON_INTERPRETER}}")"
-                python_path="$(readlink -e "${{python_path}}")"
-                for dir in "{self._part_info.part_install_dir}" "{self._part_info.stage_dir}"; do
-                    if  echo "${{python_path}}" | grep -q "${{dir}}"; then
-                        python_path="$(realpath --strip --relative-to="${{interp_dir}}" \\
-                                "${{python_path}}")"
-                        break
-                    fi
-                done
-                echo "${{python_path}}"
-                eval "${{opts_state}}"
-            }}
+                # look for a provisioned python interpreter
+                opts_state="$(set +o|grep errexit)"
+                set +e
+                install_dir="{self._part_info.part_install_dir}/usr/bin"
+                stage_dir="{self._part_info.stage_dir}/usr/bin"
+                payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "python3.*" -print -quit 2>/dev/null)
 
-            python_path="$(determine_link_target)"
-            ln -sf "${{python_path}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
-            """
+                if [ -n "$payload_python" ]; then
+                    # We found a provisioned interpreter, use it.
+                    installed_python="${{payload_python##{self._part_info.part_install_dir}}}"
+                    if [ "$installed_python" = "$payload_python" ]; then
+                        # Found a staged interpreter.
+                        symlink_target="..${{payload_python##{self._part_info.stage_dir}}}"
+                    else
+                        # The interpreter was installed but not staged yet.
+                        symlink_target="..$installed_python"
+                    fi
+                else
+                    # Otherwise use what _get_system_python_interpreter() told us.
+                    symlink_target="{python_interpreter}"
+                fi
+
+                if [ -z "$symlink_target" ]; then
+                    echo "No suitable Python interpreter found, giving up."
+                    exit 1
+                fi
+
+                eval "${{opts_state}}"
+                ln -sf "${{symlink_target}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
+                """
             )
         )
 
         return build_commands
+
+    def _should_remove_symlinks(self) -> bool:
+        """Configure executables symlink removal.
+
+        This method can be overridden by application-specific subclasses to control
+        whether symlinks in the virtual environment should be removed. Default is
+        False.  If True, the venv-created symlinks to python* in bin/ will be
+        removed and will not be recreated.
+        """
+        return False
+
+    def _get_system_python_interpreter(self) -> Optional[str]:
+        """Obtain the path to the system-provided python interpreter.
+
+        This method can be overridden by application-specific subclasses. It
+        returns the path to the Python that bin/python3 should be symlinked to
+        if Python is not part of the payload.
+        """
+        return '$(readlink -f "$(which "${PARTS_PYTHON_INTERPRETER}")")'
+
+    def _get_script_interpreter(self) -> str:
+        """Obtain the shebang line to use in Python scripts.
+
+        This method can be overridden by application-specific subclasses. It
+        returns the script interpreter to use in existing Python scripts.
+        """
+        return "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"
