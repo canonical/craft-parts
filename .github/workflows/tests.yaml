@@ -95,6 +95,10 @@ jobs:
           # Remove newer go and install regular version for 20.04
           sudo snap remove go
           sudo apt install -y golang
+      - name: specify node version
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
       - name: Run unit tests
         run: |
           make test-units
