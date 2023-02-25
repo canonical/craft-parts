@@ -62,16 +62,16 @@ def get_build_commands(new_dir: Path) -> List[str]:
             # look for a provisioned python interpreter
             opts_state="$(set +o|grep errexit)"
             set +e
-            install_dir="{str(new_dir)}/parts/p1/install/usr/bin"
-            stage_dir="{str(new_dir)}/stage/usr/bin"
+            install_dir="{new_dir}/parts/p1/install/usr/bin"
+            stage_dir="{new_dir}/stage/usr/bin"
             payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "python3.*" -print -quit 2>/dev/null)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
-                installed_python="${{payload_python##{str(new_dir)}/parts/p1/install}}"
+                installed_python="${{payload_python##{new_dir}/parts/p1/install}}"
                 if [ "$installed_python" = "$payload_python" ]; then
                     # Found a staged interpreter.
-                    symlink_target="..${{payload_python##{str(new_dir)}/stage}}"
+                    symlink_target="..${{payload_python##{new_dir}/stage}}"
                 else
                     # The interpreter was installed but not staged yet.
                     symlink_target="..$installed_python"
@@ -97,8 +97,8 @@ def test_get_build_commands(plugin, new_dir):
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        "pip install  -U pip setuptools wheel",
-        "[ -f setup.py ] && pip install  -U .",
+        f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
+        f"[ -f setup.py ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
     ] + get_build_commands(new_dir)
 
 
@@ -119,9 +119,9 @@ def test_get_build_commands_with_all_properties(new_dir):
     assert python_plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        "pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
-        "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-        "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
+        f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
+        f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U -r 'requirements.txt'",
+        f"[ -f setup.py ] && {new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U .",
     ] + get_build_commands(new_dir)
 
 
@@ -172,10 +172,10 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        "pip install  -U pip setuptools wheel",
-        "[ -f setup.py ] && pip install  -U .",
+        f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
+        f"[ -f setup.py ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
         f'find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\\n'
         f'    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"\n',
-        f"echo Removing python symlinks in {str(new_dir)}/parts/p1/install/bin\n"
-        f'rm "{str(new_dir)}/parts/p1/install"/bin/python*\n',
+        f"echo Removing python symlinks in {new_dir}/parts/p1/install/bin\n"
+        f'rm "{new_dir}/parts/p1/install"/bin/python*\n',
     ]
