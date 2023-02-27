@@ -127,6 +127,8 @@ class PythonPlugin(Plugin):
 
         options = cast(PythonPluginProperties, self._options)
 
+        pip = f"{self._part_info.part_install_dir}/bin/pip"
+
         if options.python_constraints:
             constraints = " ".join(f"-c {c!r}" for c in options.python_constraints)
         else:
@@ -136,15 +138,15 @@ class PythonPlugin(Plugin):
             python_packages = " ".join(
                 [shlex.quote(pkg) for pkg in options.python_packages]
             )
-            python_packages_cmd = f"pip install {constraints} -U {python_packages}"
+            python_packages_cmd = f"{pip} install {constraints} -U {python_packages}"
             build_commands.append(python_packages_cmd)
 
         if options.python_requirements:
             requirements = " ".join(f"-r {r!r}" for r in options.python_requirements)
-            requirements_cmd = f"pip install {constraints} -U {requirements}"
+            requirements_cmd = f"{pip} install {constraints} -U {requirements}"
             build_commands.append(requirements_cmd)
 
-        build_commands.append(f"[ -f setup.py ] && pip install {constraints} -U .")
+        build_commands.append(f"[ -f setup.py ] && {pip} install {constraints} -U .")
 
         # Now fix shebangs.
         script_interpreter = self._get_script_interpreter()
