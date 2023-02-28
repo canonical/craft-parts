@@ -21,7 +21,6 @@ from pathlib import Path
 import yaml
 from overrides import override
 
-import errors
 from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
 
@@ -86,26 +85,32 @@ def test_dotnet_plugin(new_dir):
 
 def test_dotnet_plugin_no_dotnet(new_dir, mocker):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
+
     class FailSpecificCmdValidator(dotnet_plugin.DotPluginEnvironmentValidator):
         """A validator that always fails the first time we run `dotnet --version`."""
+
         __already_run = False
 
         @override
         def _execute(self, cmd: str) -> str:
-            if cmd == 'dotnet --version' and not self.__already_run:
+            if cmd == "dotnet --version" and not self.__already_run:
                 self.__class__.__already_run = True
                 raise subprocess.CalledProcessError(127, cmd)
             return super()._execute(cmd)
 
-    mocker.patch.object(dotnet_plugin.DotnetPlugin, 'validator_class', FailSpecificCmdValidator)
+    mocker.patch.object(
+        dotnet_plugin.DotnetPlugin, "validator_class", FailSpecificCmdValidator
+    )
 
     test_dotnet_plugin(new_dir)
 
 
 def test_dotnet_plugin_fake_dotnet(new_dir, mocker):
     """Test the dotnet plugin while pretending dotnet is installed."""
+
     class AlwaysFindDotnetValidator(dotnet_plugin.DotPluginEnvironmentValidator):
-        """A validator that always succeeds when running `dotnet --version`."""
+        """A validator that always succeeds the first time running `dotnet --version`."""
+
         __already_run = False
 
         @override
@@ -114,13 +119,15 @@ def test_dotnet_plugin_fake_dotnet(new_dir, mocker):
                 return super()._execute(cmd)
             try:
                 return super()._execute(cmd)
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 if self.__already_run:
                     raise
                 return ""
             finally:
                 self.__class__.__already_run = True
 
-    mocker.patch.object(dotnet_plugin.DotnetPlugin, 'validator_class', AlwaysFindDotnetValidator)
+    mocker.patch.object(
+        dotnet_plugin.DotnetPlugin, "validator_class", AlwaysFindDotnetValidator
+    )
 
     test_dotnet_plugin(new_dir)
