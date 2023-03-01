@@ -221,3 +221,14 @@ class TestAptReadonlyHostCache:
         with AptCache() as cache:
             assert isinstance(cache.get_installed_version("apt"), str)
             assert cache.get_installed_version("fake-news-bears") is None
+
+
+def test_ignore_unreadable_files(tmp_path):
+    unreadable = tmp_path / "unreadable"
+    unreadable.touch(000)
+    readable = tmp_path / "readable"
+    readable.touch()
+
+    result = apt_cache._ignore_unreadable_files(tmp_path, ["unreadable", "readable"])
+
+    assert result == ["unreadable"]
