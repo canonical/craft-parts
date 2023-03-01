@@ -17,7 +17,6 @@
 import pathlib
 import subprocess
 import tarfile
-import unittest.mock
 
 import pytest
 
