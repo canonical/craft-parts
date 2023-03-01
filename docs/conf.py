@@ -37,7 +37,7 @@ copyright = "2023, Canonical Ltd."
 author = "Canonical Ltd."
 
 # The full version, including alpha/beta/rc tags
-release = "1.18.0"
+release = "1.18.1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -52,6 +52,7 @@ extensions = [
     "sphinx_autodoc_typehints",  # must be loaded after napoleon
     "sphinx-pydantic",
     "sphinx_design",
+    "sphinxcontrib.details.directive",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field, ValidationError, root_validator, validato
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
+from craft_parts.features import Features
 from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
@@ -78,6 +79,12 @@ class PartSpec(BaseModel):
         assert (
             item[0] != "/"
         ), f"{item!r} must be a relative path (cannot start with '/')"
+        return item
+
+    @validator("overlay_packages", "overlay_files", "overlay_script")
+    def validate_overlay_feature(cls, item: Any) -> Any:
+        """Check if overlay attributes specified when feature is disabled."""
+        assert Features().enable_overlay, "overlays not supported"
         return item
 
     @root_validator(pre=True)
@@ -251,6 +258,11 @@ class Part:
     def part_state_dir(self) -> Path:
         """Return the subdirectory containing the part lifecycle state."""
         return self._part_dir / "state"
+
+    @property
+    def part_cache_dir(self) -> Path:
+        """Return the subdirectory containing the part cache directory."""
+        return self._part_dir / "cache"
 
     @property
     def part_packages_dir(self) -> Path:

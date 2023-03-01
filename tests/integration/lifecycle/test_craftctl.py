@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,9 @@ from tests import TESTS_DIR
 
 @pytest.fixture(autouse=True)
 def setup_fixture(new_dir, mocker):
+    craft_parts.Features.reset()
+    craft_parts.Features(enable_overlay=True)
+
     craftctl = Path("craftctl")
     craftctl.write_text(f"#!{sys.executable}\nfrom craft_parts import ctl\nctl.main()")
     craftctl.chmod(0o755)

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -73,6 +73,10 @@ skip_result = ["".join(skip_steps[0:n]) for n in range(1, len(skip_steps) + 1)]
 @pytest.fixture(autouse=True)
 def setup_new_dir(new_dir):  # pylint: disable=unused-argument
     pass
+
+
+def setup_function():
+    craft_parts.Features.reset()
 
 
 def test_main_no_args(mocker, capfd):
@@ -286,6 +290,7 @@ def test_main_step_dry_run_skip(mocker, capfd):
 
     # run it again on the existing state
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "prime"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -307,6 +312,7 @@ def test_main_step_dry_run_show_skip(mocker, capfd):
 
     # run it again on the existing state
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "--show-skip", "prime"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -464,6 +470,7 @@ def test_main_clean(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "clean"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -477,6 +484,7 @@ def test_main_clean(mocker, capfd):
 
     # clean again should not fail
     mocker.patch.object(sys, "argv", ["cmd", "clean"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -502,6 +510,7 @@ def test_main_clean_workdir(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir", "clean"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -547,6 +556,7 @@ def test_main_clean_part(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -567,6 +577,7 @@ def test_main_clean_part(mocker, capfd):
 
     # clean the again should not fail
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -589,6 +600,7 @@ def test_main_clean_multiple_part(mocker, capfd):
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo", "bar"])
+    craft_parts.Features.reset()
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -648,3 +660,23 @@ def test_main_import(mocker, capfd):
     out, err = capfd.readouterr()
     assert out == f"craft-parts {craft_parts.__version__}\n"
     assert err == ""
+
+
+def test_main_strict(mocker):
+    """Test passing "--strict" on the command line."""
+    Path("parts.yaml").write_text(parts_yaml)
+    mocker.patch.object(sys, "argv", ["cmd", "--strict"])
+
+    spied_lcm = mocker.spy(craft_parts.LifecycleManager, name="__init__")
+    main.main()
+
+    kwargs = spied_lcm.call_args[1]
+    assert kwargs == {
+        "application_name": "craft_parts",
+        "base": "",
+        "base_layer_dir": None,
+        "base_layer_hash": b"",
+        "cache_dir": mocker.ANY,
+        "strict_mode": True,
+        "work_dir": ".",
+    }

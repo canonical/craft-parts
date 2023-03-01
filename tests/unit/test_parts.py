@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ from functools import partial
 import pydantic
 import pytest
 
-from craft_parts import errors, parts
+from craft_parts import Features, errors, parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
@@ -33,6 +33,9 @@ class TestPartSpecs:
     """Test part specification creation."""
 
     def test_marshal_unmarshal(self):
+        Features.reset()
+        Features(enable_overlay=True)
+
         data = {
             "plugin": "nil",
             "source": "http://example.com/hello-2.3.tar.gz",
@@ -104,9 +107,32 @@ class TestPartSpecs:
         spec = PartSpec.unmarshal(data)
         assert spec.stage_packages == package_list
 
+    @pytest.mark.parametrize(
+        "key,value",
+        [
+            ("overlay-packages", ["overlay-pkg1", "overlay-pkg2"]),
+            ("overlay", ["etc/issue"]),
+            ("overlay-script", "overlay-script"),
+        ],
+    )
+    def test_overlay_data_with_overlay_feature_disabled(self, key, value):
+        Features.reset()
+        Features(enable_overlay=False)
+        try:
+            data = {"plugin": "nil", key: value}
+            error = r"overlays not supported"
+            with pytest.raises(pydantic.ValidationError, match=error):
+                PartSpec.unmarshal(data)
+        finally:
+            Features.reset()
+
 
 class TestPartData:
     """Test basic part creation and representation."""
+
+    def setup_method(self):
+        Features.reset()
+        Features(enable_overlay=True)
 
     def test_part_dirs(self, new_dir):
         p = Part("foo", {"plugin": "nil"})
@@ -123,6 +149,7 @@ class TestPartData:
         assert p.part_snaps_dir == new_dir / "parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.part_layer_dir == new_dir / "parts/foo/layer"
+        assert p.part_cache_dir == new_dir / "parts/foo/cache"
         assert p.overlay_dir == new_dir / "overlay"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"

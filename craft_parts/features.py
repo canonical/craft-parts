@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,30 +14,26 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Craft Parts plugins subsystem."""
+"""Global features to be configured by the application."""
 
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .plugins import (
-    PluginProperties,
-    extract_part_properties,
-    get_plugin,
-    get_plugin_class,
-    get_registered_plugins,
-    register,
-    unregister_all,
-)
-from .validator import PluginEnvironmentValidator
+import contextlib
+import dataclasses
+import logging
 
-__all__ = [
-    "Plugin",
-    "PluginEnvironmentValidator",
-    "PluginModel",
-    "PluginProperties",
-    "extract_part_properties",
-    "extract_plugin_properties",
-    "get_plugin",
-    "get_plugin_class",
-    "get_registered_plugins",
-    "register",
-    "unregister_all",
-]
+from craft_parts.utils import Singleton
+
+logger = logging.getLogger()
+
+
+@dataclasses.dataclass(frozen=True)
+class Features(metaclass=Singleton):
+    """Configurable craft-parts features."""
+
+    enable_overlay: bool = False
+
+    @classmethod
+    def reset(cls) -> None:
+        """Delete stored class instance."""
+        logger.warning("deleting current features configuration")
+        with contextlib.suppress(KeyError):
+            del cls._instances[cls]
