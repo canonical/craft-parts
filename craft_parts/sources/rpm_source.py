@@ -99,14 +99,14 @@ class RpmSource(FileSourceHandler):
     ) -> None:
         """Extract rpm file contents to the part source dir."""
         rpm_path = src or self.part_src_dir / os.path.basename(self.source)
-        command = ["rpm2archive", "--nocompression", "-"]
+        command = ["rpm2archive", "-"]
 
         with rpm_path.open("rb") as rpm:
             try:
                 with subprocess.Popen(
                     command, stdin=rpm, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 ) as archive:
-                    with tarfile.open(mode="r|", fileobj=archive.stdout) as tar:
+                    with tarfile.open(mode="r|*", fileobj=archive.stdout) as tar:
                         tar.extractall(path=dst)
             except (tarfile.TarError, subprocess.CalledProcessError) as err:
                 raise errors.InvalidRpmPackage(rpm_path.name) from err

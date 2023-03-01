@@ -151,7 +151,7 @@ def test_correct_command(mocker, rpm_source, tmp_path, mock_popen, mock_tarfile_
     rpm_source.provision(tmp_path, keep=True, src=src)
 
     mock_popen.assert_called_once_with(
-        ["rpm2archive", "--nocompression", "-"],
+        ["rpm2archive", "-"],
         stdin=mocker.ANY,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
