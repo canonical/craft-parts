@@ -19,8 +19,10 @@ import textwrap
 from pathlib import Path
 
 import yaml
+from overrides import override
 
 from craft_parts import LifecycleManager, Step
+from craft_parts.plugins import dotnet_plugin
 
 
 def test_dotnet_plugin(new_dir):
@@ -34,8 +36,8 @@ def test_dotnet_plugin(new_dir):
             dotnet-self-contained-runtime-identifier: linux-x64
             build-environment:
               - PATH: $CRAFT_STAGE/sdk:$PATH
-            after: [dotnet]
-          dotnet:
+            after: [dotnet-deps]
+          dotnet-deps:
             plugin: dump
             source: https://download.visualstudio.microsoft.com/download/pr/17b6759f-1af0-41bc-ab12-209ba0377779/e8d02195dbf1434b940e0f05ae086453/dotnet-sdk-6.0.100-linux-x64.tar.gz
             source-checksum: sha256/8489a798fcd904a32411d64636e2747edf108192e0b65c6c3ccfb0d302da5ecb
@@ -79,3 +81,53 @@ def test_dotnet_plugin(new_dir):
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "Hello, World!\n"
+
+
+def test_dotnet_plugin_no_dotnet(new_dir, mocker):
+    """Test the dotnet plugin while pretending dotnet isn't installed."""
+
+    class FailSpecificCmdValidator(dotnet_plugin.DotPluginEnvironmentValidator):
+        """A validator that always fails the first time we run `dotnet --version`."""
+
+        __already_run = False
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd == "dotnet --version" and not self.__already_run:
+                self.__class__.__already_run = True
+                raise subprocess.CalledProcessError(127, cmd)
+            return super()._execute(cmd)
+
+    mocker.patch.object(
+        dotnet_plugin.DotnetPlugin, "validator_class", FailSpecificCmdValidator
+    )
+
+    test_dotnet_plugin(new_dir)
+
+
+def test_dotnet_plugin_fake_dotnet(new_dir, mocker):
+    """Test the dotnet plugin while pretending dotnet is installed."""
+
+    class AlwaysFindDotnetValidator(dotnet_plugin.DotPluginEnvironmentValidator):
+        """A validator that always succeeds the first time running `dotnet --version`."""
+
+        __already_run = False
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd != "dotnet --version":
+                return super()._execute(cmd)
+            try:
+                return super()._execute(cmd)
+            except subprocess.CalledProcessError:
+                if self.__already_run:
+                    raise
+                return ""
+            finally:
+                self.__class__.__already_run = True
+
+    mocker.patch.object(
+        dotnet_plugin.DotnetPlugin, "validator_class", AlwaysFindDotnetValidator
+    )
+
+    test_dotnet_plugin(new_dir)

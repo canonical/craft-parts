@@ -95,6 +95,13 @@ jobs:
           # Remove newer go and install regular version for 20.04
           sudo snap remove go
           sudo apt install -y golang
+          # Ensure we don't have dotnet installed, to properly test dotnet-deps
+          # Based on https://github.com/actions/runner-images/blob/main/images/linux/scripts/installers/dotnetcore-sdk.sh
+          sudo apt remove dotnet-* || true
+          # Remove manually-installed dotnet from tarballs
+          sudo rm -rf /usr/share/dotnet
+          # Remove dotnet tools
+          rm -rf $HOME/.dotnet
       - name: specify node version
         uses: actions/setup-node@v3
         with:
