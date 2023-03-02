@@ -99,6 +99,10 @@ class RpmSource(FileSourceHandler):
     ) -> None:
         """Extract rpm file contents to the part source dir."""
         rpm_path = src or self.part_src_dir / os.path.basename(self.source)
+        # NOTE: rpm2archive chosen here because while it's slower, it has broader
+        # compatibility than rpm2cpio.
+        # --nocompression parameter excluded until all supported platforms
+        # include rpm >= 4.17
         command = ["rpm2archive", "-"]
 
         with rpm_path.open("rb") as rpm:
