@@ -76,7 +76,6 @@ def sample_rpm(tmp_path: Path) -> Path:
         capture_output=True,
     )
 
-    # The asterisks in this glob allow this to be
     arch = platform.machine()
     rpm_path = rpm_dir / "build/RPMS" / arch / f"sample-1.0-0.{arch}.rpm"
     if not rpm_path.exists():

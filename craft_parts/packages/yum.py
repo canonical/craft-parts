@@ -70,6 +70,8 @@ class YUMRepository(BaseRepository):
             packages = set()
         elif source_type == "7zip":
             packages = {"p7zip"}
+        elif source_type == "deb":
+            raise NotImplementedError("Deb files not yet supported on this base.")
         else:
             packages = set()
 

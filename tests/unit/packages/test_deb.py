@@ -481,6 +481,29 @@ class TestBuildPackages:
         fake_deb_run.assert_has_calls([call(["apt-get", "update"])])
 
 
+@pytest.mark.parametrize(
+    "source_type, packages",
+    [
+        ("7zip", {"p7zip-full"}),
+        ("bzr", {"bzr"}),
+        ("git", {"git"}),
+        ("hg", {"mercurial"}),
+        ("mercurial", {"mercurial"}),
+        ("rpm2cpio", {"rpm2cpio"}),
+        ("rpm", {"rpm"}),
+        ("subversion", set()),
+        ("svn", set()),
+        ("tar", {"tar"}),
+        ("deb", set()),
+        ("whatever-unknown", set()),
+    ],
+)
+def test_packages_for_source_type(source_type, packages):
+    assert deb.Ubuntu.get_packages_for_source_type(source_type) == packages
+
+
+
+
 @pytest.fixture
 def fake_dpkg_query(mocker):
     def dpkg_query(*args, **kwargs):

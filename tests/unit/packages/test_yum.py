@@ -91,6 +91,7 @@ def test_refresh_packages_list(fake_yum_run):
         ("hg", {"mercurial"}),
         ("mercurial", {"mercurial"}),
         ("rpm2cpio", set()),
+        ("rpm", set()),
         ("subversion", {"subversion"}),
         ("svn", {"subversion"}),
         ("tar", {"tar"}),
@@ -100,6 +101,10 @@ def test_refresh_packages_list(fake_yum_run):
 def test_packages_for_source_type(source_type, packages):
     assert YUMRepository.get_packages_for_source_type(source_type) == packages
 
+
+def test_deb_source_type_not_implemented():
+    with pytest.raises(NotImplementedError):
+        YUMRepository.get_packages_for_source_type("deb")
 
 # -- tests for methods left out of the YUMRepository MVP
 
