@@ -106,6 +106,7 @@ def test_deb_source_type_not_implemented():
     with pytest.raises(NotImplementedError):
         YUMRepository.get_packages_for_source_type("deb")
 
+
 # -- tests for methods left out of the YUMRepository MVP
 
 

@@ -54,7 +54,7 @@ class YUMRepository(BaseRepository):
 
     @classmethod
     def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
-        """Return a list of packages required to to work with source_type."""
+        """Return a list of packages required to work with source_type."""
         if source_type == "bzr":
             packages = {"bzr"}
         elif source_type == "git":
@@ -65,8 +65,8 @@ class YUMRepository(BaseRepository):
             packages = {"mercurial"}
         elif source_type in ["svn", "subversion"]:
             packages = {"subversion"}
-        elif source_type == "rpm2cpio":
-            # installed by default in CentOS systems
+        elif source_type in ["rpm2cpio", "rpm"]:
+            # installed by default in CentOS systems by the rpm package
             packages = set()
         elif source_type == "7zip":
             packages = {"p7zip"}

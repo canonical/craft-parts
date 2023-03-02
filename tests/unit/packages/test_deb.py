@@ -502,8 +502,6 @@ def test_packages_for_source_type(source_type, packages):
     assert deb.Ubuntu.get_packages_for_source_type(source_type) == packages
 
 
-
-
 @pytest.fixture
 def fake_dpkg_query(mocker):
     def dpkg_query(*args, **kwargs):
