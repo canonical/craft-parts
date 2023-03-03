@@ -47,8 +47,6 @@ class SourceHandler(abc.ABC):
     """
 
     # pylint: disable=too-many-arguments
-    _source_type: str
-
     def __init__(
         self,
         source: str,

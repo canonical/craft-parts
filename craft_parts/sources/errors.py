@@ -59,27 +59,6 @@ class InvalidSourceOptions(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-# TODO: Merge this with InvalidSourceOption above
-class InvalidSourceOptions(SourceError):
-    """A source option is not allowed for the given source type.
-
-    :param source_type: The part's source type.
-    :param options: The invalid source options.
-    """
-
-    def __init__(self, *, source_type: str, options: List[str]):
-        self.source_type = source_type
-        self.options = options
-        humanized_options = formatting_utils.humanize_list(options, "and")
-        brief = (
-            f"Failed to pull source: {humanized_options} cannot be used "
-            f"with a {source_type} source."
-        )
-        resolution = "Make sure sources are correctly specified."
-
-        super().__init__(brief=brief, resolution=resolution)
-
-
 class IncompatibleSourceOptions(SourceError):
     """Source specified options that cannot be used at the same time.
 
