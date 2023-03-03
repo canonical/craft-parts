@@ -39,26 +39,6 @@ class InvalidSourceType(SourceError):
         super().__init__(brief=brief)
 
 
-class InvalidSourceOption(SourceError):
-    """A source option is not allowed for the given source type.
-
-    :param source_type: The part's source type.
-    :param option: The invalid source option.
-    """
-
-    def __init__(self, *, source_type: str, option: str):
-        self.source_type = source_type
-        self.option = option
-        brief = (
-            f"Failed to pull source: {option!r} cannot be used "
-            f"with a {source_type} source."
-        )
-        resolution = "Make sure sources are correctly specified."
-
-        super().__init__(brief=brief, resolution=resolution)
-
-
-# TODO: Merge this with InvalidSourceOption above
 class InvalidSourceOptions(SourceError):
     """A source option is not allowed for the given source type.
 

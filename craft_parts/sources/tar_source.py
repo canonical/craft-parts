@@ -26,7 +26,6 @@ from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 
-from . import errors
 from .base import FileSourceHandler
 
 
@@ -40,39 +39,20 @@ class TarSource(FileSourceHandler):
         part_src_dir: Path,
         *,
         cache_dir: Path,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
+        **invalid_options: None,
     ):
+        self._check_invalid_options("tar", invalid_options)
         super().__init__(
             source,
             part_src_dir,
             cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_commit=source_commit,
-            source_branch=source_branch,
-            source_depth=source_depth,
             source_checksum=source_checksum,
-            source_submodules=source_submodules,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
         )
-        if source_tag:
-            raise errors.InvalidSourceOption(source_type="tar", option="source-tag")
-
-        if source_commit:
-            raise errors.InvalidSourceOption(source_type="tar", option="source-commit")
-
-        if source_branch:
-            raise errors.InvalidSourceOption(source_type="tar", option="source-branch")
-
-        if source_depth:
-            raise errors.InvalidSourceOption(source_type="tar", option="source-depth")
 
     # pylint: enable=too-many-arguments
 

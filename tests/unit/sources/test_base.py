@@ -78,6 +78,28 @@ class TestSourceHandler:
             )
 
 
+# region Validation tests
+
+
+@pytest.mark.parametrize(
+    ["options", "error_brief"],
+    [
+        pytest.param(
+            {"source_commit": "abc", "source_tag": "fail"},
+            "Failed to pull source: 'source-commit' and 'source-tag' cannot be used with a foo source.",
+        ),
+    ],
+)
+def test_invalid_options(options, error_brief):
+    with pytest.raises(errors.InvalidSourceOptions) as exc_info:
+        FooSourceHandler._check_invalid_options("foo", options)
+
+    assert exc_info.value.brief == error_brief
+
+
+# endregion
+
+
 class BarFileSource(FileSourceHandler):
     """A file source handler."""
 

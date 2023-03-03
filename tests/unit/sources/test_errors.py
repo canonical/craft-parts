@@ -27,17 +27,6 @@ def test_invalid_source_type():
     assert err.resolution is None
 
 
-def test_invalid_source_option():
-    err = errors.InvalidSourceOption(source_type="lzx", option="source-depth")
-    assert err.source_type == "lzx"
-    assert err.option == "source-depth"
-    assert err.brief == (
-        "Failed to pull source: 'source-depth' cannot be used with a lzx source."
-    )
-    assert err.details is None
-    assert err.resolution == "Make sure sources are correctly specified."
-
-
 def test_incompatible_source_options():
     err = errors.IncompatibleSourceOptions(
         source_type="dms", options=["source-tag", "source-branch"]

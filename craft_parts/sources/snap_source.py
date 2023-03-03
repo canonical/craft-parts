@@ -46,37 +46,19 @@ class SnapSource(FileSourceHandler):
         part_src_dir: Path,
         *,
         cache_dir: Path,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
+        **invalid_options: None,
     ) -> None:
+        self._check_invalid_options("snap", invalid_options)
         super().__init__(
             source,
             part_src_dir,
             cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_commit=source_commit,
-            source_branch=source_branch,
-            source_depth=source_depth,
             source_checksum=source_checksum,
             project_dirs=project_dirs,
             command="unsquashfs",
         )
-
-        if source_tag:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-tag")
-
-        if source_commit:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-commit")
-
-        if source_branch:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-branch")
-
-        if source_depth:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-depth")
 
     @overrides
     def provision(

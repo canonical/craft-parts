@@ -124,11 +124,12 @@ class GitSource(SourceHandler):
         source_commit: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_branch: Optional[str] = None,
-        source_checksum: Optional[str] = None,
         source_submodules: Optional[List[str]] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
+        **invalid_options: None,
     ):
+        self._check_invalid_options("git", invalid_options)
         super().__init__(
             source,
             part_src_dir,
@@ -137,7 +138,6 @@ class GitSource(SourceHandler):
             source_commit=source_commit,
             source_depth=source_depth,
             source_branch=source_branch,
-            source_checksum=source_checksum,
             source_submodules=source_submodules,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
@@ -158,10 +158,6 @@ class GitSource(SourceHandler):
         if source_branch and source_commit:
             raise errors.IncompatibleSourceOptions(
                 "git", ["source-branch", "source-commit"]
-            )
-        if source_checksum:
-            raise errors.InvalidSourceOption(
-                source_type="git", option="source-checksum"
             )
 
     def _fetch_origin_commit(self) -> None:

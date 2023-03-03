@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 import requests
 from overrides import overrides
 
+from craft_parts import parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import os_utils, url_utils
 
@@ -46,6 +47,7 @@ class SourceHandler(abc.ABC):
     """
 
     # pylint: disable=too-many-arguments
+    _source_type: str
 
     def __init__(
         self,
@@ -139,23 +141,38 @@ class SourceHandler(abc.ABC):
         except subprocess.CalledProcessError as err:
             raise errors.PullError(command=command, exit_code=err.returncode)
 
+    @staticmethod
+    def _check_invalid_options(
+        source_type: str, options: Dict[str, Optional[Any]]
+    ) -> None:
+        """Validate any unexpected options against their defaults.
+
+        :raises: InvalidSourceOptions if any bad options are used.
+        """
+        invalid_options = []
+        for option, value in options.items():
+            if option not in parts.PartSpec.__fields__:
+                invalid_options.append(option)
+                continue
+            spec_option = parts.PartSpec.__fields__[option]
+            if value != spec_option.default:
+                invalid_options.append(spec_option.alias)
+        if invalid_options:
+            raise errors.InvalidSourceOptions(
+                source_type=source_type, options=invalid_options
+            )
+
 
 class FileSourceHandler(SourceHandler):
     """Base class for file source types."""
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
         command: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
@@ -164,19 +181,12 @@ class FileSourceHandler(SourceHandler):
             source,
             part_src_dir,
             cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_commit=source_commit,
-            source_branch=source_branch,
-            source_depth=source_depth,
             source_checksum=source_checksum,
-            source_submodules=source_submodules,
             command=command,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
         )
         self._file = Path()
-
-    # pylint: enable=too-many-arguments
 
     @abc.abstractmethod
     def provision(

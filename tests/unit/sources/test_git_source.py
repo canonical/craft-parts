@@ -745,15 +745,16 @@ class TestGitSource(GitBaseTestCase):
         assert raised.value.options == ["source-tag", "source-commit"]
 
     def test_source_checksum_raises_exception(self, new_dir):
-        with pytest.raises(errors.InvalidSourceOption) as raised:
+        with pytest.raises(errors.InvalidSourceOptions) as raised:
             GitSource(
                 "git://mysource",
                 Path("source_dir"),
                 cache_dir=new_dir,
-                source_checksum="md5/d9210476aac5f367b14e513bdefdee08",
+                # Ignore typing here because the checksum should be an invalid type.
+                source_checksum="md5/d9210476aac5f367b14e513bdefdee08",  # type: ignore
             )
         assert raised.value.source_type == "git"
-        assert raised.value.option == "source-checksum"
+        assert raised.value.options == ["source-checksum"]
 
     def test_has_source_handler_entry(self):
         assert sources._source_handler["git"] is GitSource

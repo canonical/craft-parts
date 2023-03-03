@@ -66,9 +66,9 @@ def test_type_from_uri(source, result):
 @pytest.mark.parametrize(
     "source_type,source_branch,source_tag,source_commit,error",
     [
-        ("tar", "test_branch", None, None, "source-branch"),  # tar with source branch
-        ("tar", None, "test_tag", None, "source-tag"),  # tar with source tag
-        ("tar", None, None, "commit", "source-commit"),  # tar with source commit
+        ("tar", "test_branch", None, None, ["source-branch"]),  # tar with source branch
+        ("tar", None, "test_tag", None, ["source-tag"]),  # tar with source tag
+        ("tar", None, None, "commit", ["source-commit"]),  # tar with source commit
     ],
 )
 def test_sources_with_branch_errors(
@@ -90,9 +90,9 @@ def test_sources_with_branch_errors(
 
     p1 = Part("p1", part_data)
 
-    with pytest.raises(errors.InvalidSourceOption) as err:
+    with pytest.raises(errors.InvalidSourceOptions) as err:
         sources.get_source_handler(
             part=p1, project_dirs=ProjectDirs(), cache_dir=new_dir
         )
     assert err.value.source_type == source_type
-    assert err.value.option == error
+    assert err.value.options == error
