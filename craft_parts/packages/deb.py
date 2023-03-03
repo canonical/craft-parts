@@ -370,7 +370,7 @@ class Ubuntu(BaseRepository):
     @classmethod
     @_apt_cache_wrapper
     def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
-        """Return a list of packages required to to work with source_type."""
+        """Return the packages required to work with source_type."""
         if source_type == "bzr":
             packages = {"bzr"}
         elif source_type == "git":
@@ -383,6 +383,8 @@ class Ubuntu(BaseRepository):
             packages = {"subversion"}
         elif source_type == "rpm2cpio":
             packages = {"rpm2cpio"}
+        elif source_type == "rpm":
+            packages = {"rpm"}
         elif source_type == "7zip":
             packages = {"p7zip-full"}
         else:
