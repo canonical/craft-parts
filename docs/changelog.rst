@@ -2,6 +2,16 @@
 Changelog
 *********
 
+1.18.3 (2023-02-27)
+-------------------
+
+- Fix pip path in Python plugin
+
+1.18.2 (2023-02-24)
+-------------------
+
+- Refactor Python plugin for subclassing
+
 1.18.1 (2023-02-10)
 -------------------
 
