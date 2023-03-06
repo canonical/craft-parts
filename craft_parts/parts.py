@@ -74,7 +74,7 @@ class PartSpec(BaseModel):
     # pylint: disable=no-self-argument
     @validator("stage_files", "prime_files", each_item=True)
     def validate_relative_path_list(cls, item: str) -> str:
-        """Check if the list does not contain empty of absolute paths."""
+        """Verify list is not empty and does not contain any absolute paths."""
         assert item != "", "path cannot be empty"
         assert (
             item[0] != "/"
@@ -359,7 +359,7 @@ def part_list_by_name(
 
 
 def sort_parts(part_list: List[Part]) -> List[Part]:
-    """Perform an inneficient but easy to follow sorting of parts.
+    """Perform an inefficient but easy to follow sorting of parts.
 
     :param part_list: The list of parts to sort.
 
