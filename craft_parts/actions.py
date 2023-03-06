@@ -34,7 +34,7 @@ class ActionType(enum.IntEnum):
 
     ``RUN``: execute the expected commands for step processing.
 
-    ``RERUN``: clear the existing data and state before procceeding.
+    ``RERUN``: clear the existing data and state before proceeding.
 
     ``UPDATE``: try to continue processing the step.
 

@@ -88,7 +88,7 @@ class InvalidApplicationName(PartsError):
 
 
 class InvalidPartName(PartsError):
-    """An operation was requested on a part that's in the parts specification.
+    """An operation was requested on a part that's not in the parts specification.
 
     :param part_name: The invalid part name.
     """
