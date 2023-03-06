@@ -29,7 +29,7 @@ class CraftCtl:
     """Client for the craft-parts ctl protocol.
 
     Craftctl is used to execute built-in step handlers and to get and set
-    variables in the running parts processor context.
+    variables in the running part's processor context.
     """
 
     @classmethod

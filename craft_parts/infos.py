@@ -51,7 +51,7 @@ class ProjectInfo:
 
     :param application_name: A unique identifier for the application using
         Craft Parts.
-    :param project_name: name of the project being built.
+    :param project_name: Name of the project being built.
     :param cache_dir: The path to store cached packages and files. If not
         specified, a directory under the application name entry in the XDG
         base directory will be used.

@@ -230,7 +230,7 @@ def _parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--refresh",
         action="store_true",
-        help="Update the stage packages list before procceeding.",
+        help="Update the stage packages list before proceeding.",
     )
     parser.add_argument(
         "--dry-run",
@@ -280,7 +280,7 @@ def _parse_arguments() -> argparse.Namespace:
         "-v",
         "--verbose",
         action="store_true",
-        help="show execution output",
+        help="Show execution output",
     )
     parser.add_argument(
         "--trace",
