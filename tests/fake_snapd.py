@@ -128,9 +128,7 @@ class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
         details_func = self.snap_details_func
         if details_func:
             # pylint: disable-next=not-callable
-            status_code, params = details_func(  # type: ignore
-                snap_name
-            )
+            status_code, params = details_func(snap_name)  # type: ignore
         else:
             for snap in self.snaps_result:
                 if snap["name"] == snap_name:
