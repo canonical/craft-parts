@@ -17,6 +17,34 @@ Free software: GNU Lesser General Public License v3
 
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 
+# Setting up a development environment
+
+To run tests and build documentation, set up a development environment
+by running the following command:
+
+```
+./tools/freeze-requirements.sh
+```
+
+This creates a virtual environment that can be entered by sourcing the
+`activate` file in a bash shell:
+
+```
+. venv/bin/activate
+```
+
+The `deactivate` shell alias is used to deactivate the environment when it is
+no longer needed.
+
+Use the following command to install the tools and libraries needed for
+development:
+
+```
+pip3 install -r requirements-dev.txt
+```
+
+You should now be able to to run the commands given in the next section.
+
 # Contributing
 
 A `Makefile` is provided for easy interaction with the project. To see
