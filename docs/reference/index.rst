@@ -11,6 +11,7 @@ Reference
    infos
    lifecycle_manager
    part_properties
+   parts_keys
    parts_steps
    plugins
    reference
