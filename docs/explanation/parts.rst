@@ -11,8 +11,8 @@ mostly-declarative format.
 
 When the Craft Parts framework is used to process a part on behalf of a tool
 or library, it performs the steps described in the
-:ref:`parts lifecycle <lifecycle>` to obtain the source code and dependencies, set up a build environment, build the part, and prepare the build products for
-further processing.
+:ref:`parts lifecycle <lifecycle>` to *pull* the source code and dependencies, *overlay* them onto a base file system, *build* the part, then *organize*,
+*stage* and *prime* the build products for further processing.
 
 Describing a part
 -----------------
@@ -61,7 +61,7 @@ keys to accurately specify where source code is found. The ``source-branch``,
 a specific branch, commit or tag.
 
 Since some repositories can contain large amounts of data, the
-``source-depth`` key can be used to specify the number of commits to in a
+``source-depth`` key can be used to specify the number of commits in a
 repository's history that should be fetched instead of the complete history.
 For repositories that use submodules, the ``source-submodules`` key can be
 used to selectively fetch only those submodules that are needed.
@@ -129,7 +129,12 @@ a plugin, and it can be used to replace or extend it.
 Build products
 ~~~~~~~~~~~~~~
 
-After a part has been built, it is
+After a part has been built in the *build* step, the build products are
+prepared in three further steps.
+
+If the ``organize`` key is specified, it is used to move files
+specify a list of mappings between files
+in the part key-value pairs
 
    * How to manage the different steps in the build process
 
