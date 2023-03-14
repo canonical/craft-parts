@@ -65,6 +65,11 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autodoc_mock_imports = ["apt"]
 
+rst_prolog = """
+.. |br| raw:: html
+
+   <br />
+"""
 
 # -- Options for HTML output -------------------------------------------------
 
