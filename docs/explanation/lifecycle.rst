@@ -1,3 +1,5 @@
+.. _lifecycle:
+
 *****************
 Lifecycle details
 *****************
@@ -134,5 +136,3 @@ Further information can be found in the `Snapcraft parts lifecycle documentation
 <snapcraft-parts-lifecycle_>`_.
 
 .. _snapcraft-parts-lifecycle: https://snapcraft.io/docs/parts-lifecycle
-
-

@@ -1,0 +1,2 @@
+.. _`Juju`: https://juju.is/docs/sdk
+.. _`Snapcraft`: https://snapcraft.io/docs/snapcraft
