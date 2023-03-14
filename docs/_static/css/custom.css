@@ -26,3 +26,7 @@ ul .toctree-l1 {
 .log-snippets {
     color: rgb(141, 141, 141);
 }
+
+.row-even{
+    background-color: lightgray
+}
