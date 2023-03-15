@@ -221,7 +221,7 @@ subdirectory.
 
 After the *build* step is run, the directory for each part in the ``parts``
 directory will contain updated ``build`` and ``install`` directories. The
-``build` directory will contain the build products, and the ``install``
+``build`` directory will contain the build products, and the ``install``
 directory will contain the files to be installed in the snap.
 
 .. Python representation of parts
