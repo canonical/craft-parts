@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ import pytest
 from craft_parts import callbacks, overlays
 from craft_parts.actions import Action
 from craft_parts.executor import ExecutionContext, Executor
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -190,6 +191,9 @@ class TestExecutionContext:
 
     def test_prologue_overlay_packages(self, new_dir, mocker):
         """Check that the overlay package cache is not touched if the part doesn't have overlay packages"""
+        Features.reset()
+        Features(enable_overlay=True)
+
         mock_mount = mocker.patch.object(overlays, "PackageCacheMount")
 
         p1 = Part("p1", {"plugin": "nil", "overlay-script": "echo overlay"})
@@ -198,6 +202,8 @@ class TestExecutionContext:
 
         with ExecutionContext(executor=e):
             assert not mock_mount.called
+
+        Features.reset()
 
     def test_capture_stdout(self, capfd, new_dir):
         def cbf(info):

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2022 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.state_manager import StateManager, state_manager, states
@@ -255,6 +256,32 @@ class TestStateManager:
 
         # add states for all steps
         sm.set_state(p1, Step.PULL, state=states.PullState())
+        sm.set_state(p1, Step.BUILD, state=states.BuildState())
+        sm.set_state(p1, Step.STAGE, state=states.StageState())
+        sm.set_state(p1, Step.PRIME, state=states.PrimeState())
+
+        # make sure steps were added to the database
+        for step in [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME]:
+            assert sm._state_db.get(part_name="p1", step=step) is not None
+
+        # now clean the first step
+        sm.clean_part(p1, Step.PULL)
+
+        # all steps are now gone
+        for step in list(Step):
+            assert sm._state_db.get(part_name="p1", step=step) is None
+
+    def test_clean_part_overlay_enabled(self, new_dir):
+        Features.reset()
+        Features(enable_overlay=True)
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        p1 = Part("p1", {})
+
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        # add states for all steps
+        sm.set_state(p1, Step.PULL, state=states.PullState())
         sm.set_state(p1, Step.OVERLAY, state=states.OverlayState())
         sm.set_state(p1, Step.BUILD, state=states.BuildState())
         sm.set_state(p1, Step.STAGE, state=states.StageState())
@@ -270,6 +297,8 @@ class TestStateManager:
         # all steps are now gone
         for step in list(Step):
             assert sm._state_db.get(part_name="p1", step=step) is None
+
+        Features.reset()
 
     def test_should_step_run_trivial(self, new_dir):
         info = ProjectInfo(application_name="test", cache_dir=new_dir)

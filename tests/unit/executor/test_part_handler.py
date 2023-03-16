@@ -27,6 +27,7 @@ from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
 from craft_parts.executor.part_handler import PartHandler
 from craft_parts.executor.step_handler import StepContents
+from craft_parts.features import Features
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
@@ -35,6 +36,15 @@ from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
 # pylint: disable=too-many-lines
+
+
+def setup_module():
+    Features.reset()
+    Features(enable_overlay=True)
+
+
+def teardown_module():
+    Features.reset()
 
 
 @pytest.mark.usefixtures("new_dir")
