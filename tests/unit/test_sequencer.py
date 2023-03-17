@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,12 +19,22 @@ from pathlib import Path
 import pytest
 
 from craft_parts.actions import Action, ActionProperties, ActionType
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, PartSpec
 from craft_parts.sequencer import Sequencer
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
+
+
+def setup_module():
+    Features.reset()
+    Features(enable_overlay=True)
+
+
+def teardown_module():
+    Features.reset()
 
 
 def test_sequencer_add_actions(new_dir):
