@@ -299,8 +299,6 @@ class TestStateManager:
         for step in list(Step):
             assert sm._state_db.get(part_name="p1", step=step) is None
 
-        Features.reset()
-
     def test_should_step_run_trivial(self, new_dir):
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})

@@ -204,8 +204,6 @@ class TestExecutionContext:
         with ExecutionContext(executor=e):
             assert not mock_mount.called
 
-        Features.reset()
-
     def test_capture_stdout(self, capfd, new_dir):
         def cbf(info):
             print(f"prologue {info.custom}")
