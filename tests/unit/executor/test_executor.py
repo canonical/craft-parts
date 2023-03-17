@@ -189,10 +189,11 @@ class TestExecutionContext:
         captured = capfd.readouterr()
         assert captured.out == "build\nepilogue custom\n"
 
-    def test_prologue_overlay_packages(self, new_dir, mocker):
+    def test_prologue_overlay_packages(self, new_dir, mocker, request):
         """Check that the overlay package cache is not touched if the part doesn't have overlay packages"""
         Features.reset()
         Features(enable_overlay=True)
+        request.addfinalizer(Features.reset)
 
         mock_mount = mocker.patch.object(overlays, "PackageCacheMount")
 

@@ -271,9 +271,10 @@ class TestStateManager:
         for step in list(Step):
             assert sm._state_db.get(part_name="p1", step=step) is None
 
-    def test_clean_part_overlay_enabled(self, new_dir):
+    def test_clean_part_overlay_enabled(self, new_dir, request):
         Features.reset()
         Features(enable_overlay=True)
+        request.addfinalizer(Features.reset)
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
