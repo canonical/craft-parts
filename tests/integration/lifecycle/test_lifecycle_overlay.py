@@ -40,11 +40,8 @@ basic_parts_yaml = textwrap.dedent(
 
 
 @pytest.fixture(autouse=True)
-def _setup_module():
-    craft_parts.Features.reset()
-    craft_parts.Features(enable_overlay=True)
+def setup_feature(enable_overlay_feature):
     yield
-    craft_parts.Features.reset()
 
 
 def test_basic_lifecycle_actions(new_dir, mocker):

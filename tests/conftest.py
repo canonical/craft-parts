@@ -26,6 +26,8 @@ from unittest import mock
 import pytest
 import xdg  # type: ignore
 
+from craft_parts.features import Features
+
 from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
@@ -47,6 +49,17 @@ def new_dir(tmpdir):
     yield tmpdir
 
     os.chdir(cwd)
+
+
+@pytest.fixture
+def enable_overlay_feature():
+    assert Features().enable_overlay is False
+    Features.reset()
+    Features(enable_overlay=True)
+
+    yield
+
+    Features.reset()
 
 
 @pytest.fixture(autouse=True)

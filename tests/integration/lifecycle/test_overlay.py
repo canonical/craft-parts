@@ -26,13 +26,9 @@ import craft_parts
 from craft_parts import Action, ActionType, Step
 
 
-def setup_module():
-    craft_parts.Features.reset()
-    craft_parts.Features(enable_overlay=True)
-
-
-def teardown_module():
-    craft_parts.Features.reset()
+@pytest.fixture(autouse=True)
+def setup_feature(enable_overlay_feature):
+    yield
 
 
 @pytest.fixture

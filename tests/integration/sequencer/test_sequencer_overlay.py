@@ -20,7 +20,6 @@ from pathlib import Path
 
 import pytest
 
-import craft_parts
 from craft_parts import sequencer
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import ProjectInfo
@@ -28,13 +27,9 @@ from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 
-def setup_module():
-    craft_parts.Features.reset()
-    craft_parts.Features(enable_overlay=True)
-
-
-def teardown_module():
-    craft_parts.Features.reset()
+@pytest.fixture(autouse=True)
+def setup_feature(enable_overlay_feature):
+    yield
 
 
 _pull_state_foo = textwrap.dedent(

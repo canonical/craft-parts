@@ -19,7 +19,6 @@ from pathlib import Path
 
 import pytest
 
-from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.state_manager import StateManager, state_manager, states
@@ -271,11 +270,7 @@ class TestStateManager:
         for step in list(Step):
             assert sm._state_db.get(part_name="p1", step=step) is None
 
-    def test_clean_part_overlay_enabled(self, new_dir, request):
-        Features.reset()
-        Features(enable_overlay=True)
-        request.addfinalizer(Features.reset)
-
+    def test_clean_part_overlay_enabled(self, enable_overlay_feature, new_dir):
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 

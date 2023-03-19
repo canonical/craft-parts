@@ -24,18 +24,17 @@ import craft_parts
 from craft_parts import Action, ProjectInfo, Step, StepInfo, callbacks
 
 
+@pytest.fixture(autouse=True)
+def setup_feature(enable_overlay_feature):
+    yield
+
+
 def setup_function():
     callbacks.unregister_all()
 
 
-def setup_module():
-    craft_parts.Features.reset()
-    craft_parts.Features(enable_overlay=True)
-
-
 def teardown_module():
     callbacks.unregister_all()
-    craft_parts.Features.reset()
 
 
 @pytest.fixture(autouse=True)
