@@ -21,7 +21,6 @@ import pytest
 from craft_parts import callbacks, overlays
 from craft_parts.actions import Action
 from craft_parts.executor import ExecutionContext, Executor
-from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -189,12 +188,8 @@ class TestExecutionContext:
         captured = capfd.readouterr()
         assert captured.out == "build\nepilogue custom\n"
 
-    def test_prologue_overlay_packages(self, new_dir, mocker, request):
+    def test_prologue_overlay_packages(self, enable_overlay_feature, new_dir, mocker):
         """Check that the overlay package cache is not touched if the part doesn't have overlay packages"""
-        Features.reset()
-        Features(enable_overlay=True)
-        request.addfinalizer(Features.reset)
-
         mock_mount = mocker.patch.object(overlays, "PackageCacheMount")
 
         p1 = Part("p1", {"plugin": "nil", "overlay-script": "echo overlay"})

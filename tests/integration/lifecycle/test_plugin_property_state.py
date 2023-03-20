@@ -69,7 +69,7 @@ class ExamplePlugin(plugins.Plugin):
         return []
 
 
-@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
 def test_plugin_property_state(new_dir, step):
     plugins.register({"example": ExamplePlugin})
 
@@ -135,7 +135,6 @@ def test_plugin_property_build_dirty(new_dir):
     actions = lcm.plan(Step.PRIME)
     assert actions == [
         Action("foo", Step.PULL, ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, ActionType.SKIP, reason="already ran"),
         Action("foo", Step.STAGE, ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PRIME, ActionType.SKIP, reason="already ran"),
@@ -151,7 +150,6 @@ def test_plugin_property_build_dirty(new_dir):
     actions = lcm.plan(Step.PRIME)
     assert actions == [
         Action("foo", Step.PULL, ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, ActionType.SKIP, reason="already ran"),
         Action(
             "foo",
             Step.BUILD,
@@ -235,7 +233,6 @@ def test_plugin_property_pull_dirty(new_dir):
     actions = lcm.plan(Step.PRIME)
     assert actions == [
         Action("foo", Step.PULL, ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, ActionType.SKIP, reason="already ran"),
         Action("foo", Step.STAGE, ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PRIME, ActionType.SKIP, reason="already ran"),
@@ -256,7 +253,6 @@ def test_plugin_property_pull_dirty(new_dir):
             ActionType.RERUN,
             reason="'example-property' property changed",
         ),
-        Action("foo", Step.OVERLAY),
         Action("foo", Step.BUILD),
         Action("foo", Step.STAGE),
         Action("foo", Step.PRIME),

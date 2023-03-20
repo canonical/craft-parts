@@ -46,7 +46,6 @@ def test_stage_prime_filtering(new_dir):
     actions = lf.plan(Step.PRIME)
     assert actions == [
         Action("my-part", Step.PULL),
-        Action("my-part", Step.OVERLAY),
         Action("my-part", Step.BUILD),
         Action("my-part", Step.STAGE),
         Action("my-part", Step.PRIME),

@@ -27,7 +27,6 @@ import yaml
 
 import craft_parts
 from craft_parts import errors
-from craft_parts.features import Features
 from craft_parts.lifecycle_manager import LifecycleManager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
@@ -241,63 +240,9 @@ class TestLifecycleManager:
         assert "p1" in str(exc.value)
 
 
-class TestOverlaySupport:
-    """Overlays only supported in linux and must run as root."""
-
-    def setup_method(self):
-        Features.reset()
-        Features(enable_overlay=True)
-
-    @pytest.fixture
-    def parts_data(self) -> Dict[str, Any]:
-        return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
-
-    def test_overlay_supported(self, mocker, new_dir, parts_data):
-        mocker.patch.object(sys, "platform", "linux")
-        mocker.patch("os.geteuid", return_value=0)
-        LifecycleManager(
-            parts_data,
-            application_name="test",
-            cache_dir=new_dir,
-            base_layer_dir=new_dir,
-            base_layer_hash=b"hash",
-        )
-
-    def test_overlay_platform_unsupported(self, mocker, new_dir, parts_data):
-        mocker.patch.object(sys, "platform", "darwin")
-        mocker.patch("os.geteuid", return_value=0)
-        with pytest.raises(errors.OverlayPlatformError):
-            LifecycleManager(
-                parts_data,
-                application_name="test",
-                cache_dir=new_dir,
-                base_layer_dir=new_dir,
-                base_layer_hash=b"hash",
-            )
-
-    def test_overlay_requires_root(self, mocker, new_dir, parts_data):
-        mocker.patch.object(sys, "platform", "linux")
-        mocker.patch("os.geteuid", return_value=1000)
-        with pytest.raises(errors.OverlayPermissionError):
-            LifecycleManager(
-                parts_data,
-                application_name="test",
-                cache_dir=new_dir,
-                base_layer_dir=new_dir,
-                base_layer_hash=b"hash",
-            )
-
-
 class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
 
-    @pytest.fixture(autouse=True)
-    def _setup_fixture(self):
-        Features.reset()
-        Features(enable_overlay=False)
-        yield
-        Features.reset()
-
     @pytest.fixture
     def parts_data(self) -> Dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
@@ -305,38 +250,6 @@ class TestOverlayDisabled:
     def test_overlay_supported(self, mocker, new_dir, parts_data):
         mocker.patch.object(sys, "platform", "linux")
         mocker.patch("os.geteuid", return_value=0)
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            LifecycleManager(
-                parts_data,
-                application_name="test",
-                cache_dir=new_dir,
-                base_layer_dir=new_dir,
-                base_layer_hash=b"hash",
-            )
-        assert raised.value.part_name == "foo"
-        assert (
-            raised.value.message == "- overlays not supported in field 'overlay-script'"
-        )
-
-    def test_overlay_platform_unsupported(self, mocker, new_dir, parts_data):
-        mocker.patch.object(sys, "platform", "darwin")
-        mocker.patch("os.geteuid", return_value=0)
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            LifecycleManager(
-                parts_data,
-                application_name="test",
-                cache_dir=new_dir,
-                base_layer_dir=new_dir,
-                base_layer_hash=b"hash",
-            )
-        assert raised.value.part_name == "foo"
-        assert (
-            raised.value.message == "- overlays not supported in field 'overlay-script'"
-        )
-
-    def test_overlay_requires_root(self, mocker, new_dir, parts_data):
-        mocker.patch.object(sys, "platform", "linux")
-        mocker.patch("os.geteuid", return_value=1000)
         with pytest.raises(errors.PartSpecificationError) as raised:
             LifecycleManager(
                 parts_data,

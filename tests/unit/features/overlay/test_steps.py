@@ -17,17 +17,7 @@
 import pytest
 
 from craft_parts import steps
-from craft_parts.features import Features
 from craft_parts.steps import Step
-
-
-def setup_module():
-    Features.reset()
-    Features(enable_overlay=True)
-
-
-def teardown_module():
-    Features.reset()
 
 
 def test_step():
