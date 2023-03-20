@@ -114,9 +114,6 @@ the ``libsdl2-dev`` package in the :ref:`build_packages` property.
 
 .. _build_process:
 
-For example, a part that is built against the SDL 2 libraries could include
-the ``libsdl2-dev`` package in the ``build-packages`` property.
-
 Build process
 ~~~~~~~~~~~~~
 
