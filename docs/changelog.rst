@@ -2,6 +2,19 @@
 Changelog
 *********
 
+1.19.0 (2023-03-20)
+-------------------
+
+- Initial support for offline plugins
+- Initial support for yum and CentOS
+- Introduce feature selection, make overlay support optional
+- Check if plugin-specific properties are dirty when computing
+  lifecycle actions
+- Add source handler for rpm packages
+- Ignore unreadable files in /etc/apt
+- Documentation updates
+- OsRelease code cleanup
+
 1.18.4 (2023-03-09)
 -------------------
 
