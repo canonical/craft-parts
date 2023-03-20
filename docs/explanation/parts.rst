@@ -2,22 +2,23 @@ Parts
 =====
 
 In the Craft Parts framework, parts are descriptions of the components to be
-built and prepared for deployment, either individually or as part of a larger
-project containing many components.
+built and prepared for deployment in a payload, either individually or as
+part of a larger project containing many components.
 
 When the Craft Parts framework is used to process a part on behalf of a tool
 or library, it performs some or all of the steps described in the
 :ref:`parts lifecycle <lifecycle>`:
 
- * The *pull* step pulls the source code and dependencies from locations
-   defined in the part and places them into a package cache.
- * The *overlay* step unpacks them onto a base file system chosen from a
-   collection of standard file system images.
- * The *build* step runs a suitable build tool for the sources to compile
-   a set of build products.
- * The *stage* step copies the build products for the part into a common
-   area for all parts in a project.
- * The *prime* step copies the required files for deployment.
+ #. The *pull* step pulls the source code and dependencies from locations
+    defined in the part and places them into a package cache.
+ #. The *overlay* step unpacks them into a base file system chosen from a
+    collection of standard file system images.
+ #. The *build* step runs a suitable build tool for the sources to compile
+    a set of build products.
+ #. The *stage* step copies the build products for the part into a common
+    area for all parts in a project.
+ #. The *prime* step copies the files to be deployed into an area for
+    further processing.
 
 Not all of these steps may be needed for every use case, and tools that use
 the Craft Parts framework can skip those that are not appropriate for their
@@ -25,7 +26,8 @@ purposes.
 
 Tools like `Snapcraft`_ and `Charmcraft`_ that use the concepts of parts to
 describe a build process typically accept specifications of parts in YAML format. This allows each part to be described in a convenient,
-mostly-declarative format.
+mostly-declarative format. Libraries that use parts may use the underlying
+data structures to describe parts.
 
 Describing a part
 -----------------
@@ -43,6 +45,8 @@ Generally, each part includes information about the following:
 Each of these are described in the following sections.
 
 .. ### Link to a schema or complete overview in the reference section.
+
+.. _parts_source:
 
 Source
 ~~~~~~
@@ -90,6 +94,12 @@ The dependencies of a part are described using the ``build-snaps`` and
 ``build-packages`` properties. These specify lists of snaps and system
 packages to be installed before the part is built.
 
+Snaps are referred to by the names that they are identified in the Snap
+Store and can also include the channel information so that specific versions
+of snaps are used. For example, the ``juju`` snap could be specified as
+``juju/stable``, ``juju/2.9/stable`` or ``juju/latest/stable`` to select
+different versions.
+
 System packages are referred to by the names that they are identified by on
 the host system, and they are installed using the host's native package
 manager, such as :command:`apt` or :command:`dnf`.
@@ -106,9 +116,8 @@ describe how it should be built. The available plugins are provided by the modul
 Plugins simplify the process of building source code written in a variety of
 programming languages using appropriate build systems, libraries and
 frameworks. If a plugin is not available for a particular combination of
-these attributes, a custom plugin can be created or a basic plugin can be
-used to manually specify the build actions to be taken, using the
-``override-build`` property.
+these attributes, a basic plugin can be used to manually specify the build
+actions to be taken, using the ``override-build`` property.
 
 When a plugin is used, it exposes additional properties that can be used to
 define behaviour that is specific to the type of project that the plugin
@@ -143,28 +152,36 @@ the *stage* step is run.
 
 The ``organize`` property is used to customise how files are copied from the
 building area to the staging area. It defines an ordered dictionary whose
-properties are paths in the building area and values are paths in the staging area.
+key are paths in the building area and values are paths in the staging area.
+In the following example, the ``hello.py`` file in the build area is copied
+to the ``bin`` directory in the staging area and renamed to ``hello``:
+
+.. code:: yaml
+
+   organize:
+     hello.py: bin/hello
 
 After the *build* step, the *stage* step is run to collect the build products
-from all the parts into a common staging area. Additional snaps and system
+into a common staging area for all parts. Additional snaps and system
 packages that need to be deployed with the part are specified using the
-``stage-snaps`` and ``stage-packages`` properties. Files and :doc:`Filesets`
-are specified using the ``stage`` property.
+``stage-snaps`` and ``stage-packages`` properties. Files and `filesets`_ to
+be deployed are specified using the ``stage`` property.
 
 In the final *prime* step, the files needed for deployment are copied from
 the staging area to the priming area. During this step the ``prime`` property
-is used to include files and filesets.
+is typically used to exclude files and filesets in the staging area that are
+not required at run-time. This is especially useful for multi-part projects
+that include their own compilers or development tools.
 
-.. _build-order:
+.. _parts_build-order:
 
 Defining the build order
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default, when more than one part is specified, they are built in alphabetical order unless there are dependencies between parts.
-
-One way to define a dependency for a part is to use the ``after`` property in
-a part's definition to specify a list of parts that it will be built after. The parts whose names are supplied in the list will be *built and staged*
-before the part is built.
+If a part uses other parts in the project as build dependencies then it can
+define this dependency using the ``after`` property. This property specifies
+a list containing the names of parts that it will be built after. The parts
+in the list will be *built and staged* before the part is built.
 
 By default, Craft Parts uses the defined build order to determine which
 parts can be built in parallel. This can be disabled by setting the
@@ -178,5 +195,7 @@ This is covered in detail in :ref:`part_processing_order`.
 ..
 ..    override-stage string
 ..    override-prime string
+
+.. include:: how_parts_are_built.rst
 
 .. include:: /links.txt

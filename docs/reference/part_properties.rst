@@ -58,8 +58,10 @@ filesets
 **Step:** all
 
 Defines named lists of paths to files and directories that can be referred to
-by name in keys that accept lists of paths. See :doc:`Filesets`_ for more
+by name in keys that accept lists of paths. See :doc:`Filesets` for more
 information.
+
+.. _organize:
 
 organize
 --------
@@ -222,7 +224,7 @@ from a repository.
 
 source-type
 -----------
-**Type:** one of "bzr", "git", "hg", "mercurial", "subversion", "svn", "tar", "zip", "deb", "rpm", "7z", "local" |br|
+**Type:** one of "deb", "file", "git", "local", "rpm", "snap", "tar", "zip" |br|
 **Step:** pull
 
 The type of container for the source code. If not specified, Craft Parts will
@@ -235,6 +237,8 @@ stage
 
 The files to copy from the building area to the staging area.
 
+.. _stage_packages:
+
 stage-packages
 --------------
 **Type:** grammar-array |br|
@@ -243,6 +247,8 @@ stage-packages
 The packages to install in the staging area for deployment with the build
 products. These provide libraries and executables to support the deployed
 part.
+
+.. _stage_snaps:
 
 stage-snaps
 -----------
