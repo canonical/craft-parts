@@ -17,6 +17,8 @@ build-attributes
 
 The customisations to apply to the build.
 
+.. _build_environment:
+
 build-environment
 -----------------
 **Type:** build-environment-grammar |br|
@@ -24,6 +26,14 @@ build-environment
 
 The environment variables to be defined in the build environment specified as
 a list of key-value pairs.
+
+**Example:**
+
+.. code:: yaml
+
+   build-environment:
+     - MESSAGE: "Hello world"
+     - NAME: "Craft Parts"
 
 build-packages
 --------------
@@ -58,7 +68,7 @@ filesets
 **Step:** all
 
 Defines named lists of paths to files and directories that can be referred to
-by name in keys that accept lists of paths. See :doc:`Filesets` for more
+by name in keys that accept lists of paths. See :ref:`filesets` for more
 information.
 
 .. _organize:
@@ -70,6 +80,14 @@ organize
 
 Describes how files in the building area should be represented in the staging
 area.
+
+In the following example, the ``hello.py`` file in the build area is copied
+to the ``bin`` directory in the staging area and renamed to ``hello``:
+
+.. code:: yaml
+
+   organize:
+     hello.py: bin/hello
 
 override-build
 --------------

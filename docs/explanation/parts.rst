@@ -14,7 +14,7 @@ or library, it performs some or all of the steps described in the
  #. The *overlay* step unpacks them into a base file system chosen from a
     collection of standard file system images.
  #. The *build* step runs a suitable build tool for the sources to compile
-    a set of build products.
+    a set of build products or artifacts.
  #. The *stage* step copies the build products for the part into a common
     area for all parts in a project.
  #. The *prime* step copies the files to be deployed into an area for
@@ -40,7 +40,7 @@ Generally, each part includes information about the following:
  * Its `source <Source_>`_ (where it is obtained from)
  * Its `build dependencies <Build dependencies_>`_ (snaps and packages)
  * The `build process <Build process_>`_
- * How `build products <Build products_>`_ are exported/installed
+ * How `build artifacts <Build artifacts_>`_ are handled
 
 Each of these are described in the following sections.
 
@@ -117,7 +117,8 @@ Plugins simplify the process of building source code written in a variety of
 programming languages using appropriate build systems, libraries and
 frameworks. If a plugin is not available for a particular combination of
 these attributes, a basic plugin can be used to manually specify the build
-actions to be taken, using the ``override-build`` property.
+actions to be taken, using the ``override-build`` property. This property can
+also be used to replace or extend the build process provided by a plugin.
 
 When a plugin is used, it exposes additional properties that can be used to
 define behaviour that is specific to the type of project that the plugin
@@ -125,47 +126,36 @@ supports. For example, the :py:mod:`cmake plugin <craft_parts.plugins.cmake_plug
 ``cmake-generator`` properties that can be used to configure how
 :command:`cmake` is used in the build process.
 
-The build process can be further customised with the ``build-environment``,
+The build process can be further customised with the ```build-environment``,
 ``build-attributes`` and ``override-build`` properties.
 
-The ``build-environment`` property defines assignments to shell environment variables in the build environment, specified as a list of key-value pairs,
-as in the following YAML format example:
-
-.. code:: yaml
-
-   build-environment:
-     - MESSAGE: "Hello world"
-     - NAME: "Craft Parts"
+The :ref:`build_environment` property defines assignments to shell environment
+variables in the build environment.
 
 The ``build-attributes`` property allows a number of standard customisations
 to be applied to the build. Some of these are used to address issues that
 occur in specific situations; others, such as ``debug`` are generally useful.
 
-The ``override-build`` property is used to override the build process
-provided by a plugin, and it can be used to replace or extend it.
+The result of the *build* step is a set of build artifacts or products that
+are the same as those that would be produced by manually compiling or
+building the software.
 
-Build products
-~~~~~~~~~~~~~~
+Build artifacts
+~~~~~~~~~~~~~~~
 
-At the end of the *build* step, the build products can be organized before
+At the end of the *build* step, the build artifacts can be organized before
 the *stage* step is run.
 
 The ``organize`` property is used to customise how files are copied from the
-building area to the staging area. It defines an ordered dictionary whose
-key are paths in the building area and values are paths in the staging area.
-In the following example, the ``hello.py`` file in the build area is copied
-to the ``bin`` directory in the staging area and renamed to ``hello``:
+building area to the staging area. It defines an ordered dictionary that maps
+paths in the building area to paths in the staging area.
 
-.. code:: yaml
-
-   organize:
-     hello.py: bin/hello
-
-After the *build* step, the *stage* step is run to collect the build products
-into a common staging area for all parts. Additional snaps and system
-packages that need to be deployed with the part are specified using the
-``stage-snaps`` and ``stage-packages`` properties. Files and `filesets`_ to
-be deployed are specified using the ``stage`` property.
+After the *build* step, the *stage* step is run to collect the artifacts from
+the build into a common staging area for all parts. Additional snaps and
+system packages that need to be deployed with the part are specified using
+the ``stage-snaps`` and ``stage-packages`` properties. Files and
+:ref:`filesets <filesets>` to be deployed are specified using the ``stage``
+property.
 
 In the final *prime* step, the files needed for deployment are copied from
 the staging area to the priming area. During this step the ``prime`` property
@@ -178,23 +168,16 @@ that include their own compilers or development tools.
 Defining the build order
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-If a part uses other parts in the project as build dependencies then it can
-define this dependency using the ``after`` property. This property specifies
-a list containing the names of parts that it will be built after. The parts
-in the list will be *built and staged* before the part is built.
+If a part depends on other parts in a project as build dependencies then it
+can use the ``after`` property to define this relationship. This property
+specifies a list containing the names of parts that it will be built after.
+The parts in the list will be *built and staged* before the part is built.
 
 By default, Craft Parts uses the defined build order to determine which
 parts can be built in parallel. This can be disabled by setting the
 ``disable-parallel`` property to ``True``.
 
 This is covered in detail in :ref:`part_processing_order`.
-
-.. Overriding aspects of the build
-.. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-..   * How to manage the different steps in the build process
-..
-..    override-stage string
-..    override-prime string
 
 .. include:: how_parts_are_built.rst
 
