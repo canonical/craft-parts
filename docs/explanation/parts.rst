@@ -177,7 +177,7 @@ The parts in the list will be *built and staged* before the part is built.
 
 By default, Craft Parts uses the defined build order to determine which
 parts can be built in parallel. This can be disabled by setting the
-``disable-parallel`` property to ``True``.
+:ref:`disable_parallel` property to ``True``.
 
 This is covered in detail in :ref:`part_processing_order`.
 
