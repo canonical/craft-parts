@@ -27,7 +27,7 @@ purposes.
 Tools like `Snapcraft`_ and `Charmcraft`_ that use the concepts of parts to
 describe a build process typically accept specifications of parts in YAML format. This allows each part to be described in a convenient,
 mostly-declarative format. Libraries that use parts may use the underlying
-data structures to describe parts.
+data structures to describe them.
 
 Describing a part
 -----------------
@@ -51,7 +51,7 @@ Each of these are described in the following sections.
 Source
 ~~~~~~
 
-The source for a part is described using the ``source`` property. This
+The source for a part is described using the :ref:`source` property. This
 specifies a location where the source code or other information is to be
 *pulled* from. This may be a repository on a remote server, a directory on
 the build host, or some other location.
@@ -61,28 +61,29 @@ precise description of the source location can be given, and also to specify
 the type of source to be processed.
 
 Where the type of the source information cannot be automatically determined,
-the ``source-type`` property is used to explicitly specify the source format.
-This influences the way in which the source code or data is processed.
+the :ref:`source_type` property is used to explicitly specify the source
+format. This influences the way in which the source code or data is processed.
 A list of supported formats can be found in the :mod:`craft_parts.sources`
 file. These include repository types, such as ``git``, archive formats such
 as ``zip``, and ``local`` for files in the local file system.
 
-If the source type represents a file, the ``source-checksum`` property can be
-used to provide a checksum value to be compared against the checksum of the
-downloaded file.
+If the source type represents a file, the :ref:`source_checksum` property can
+be used to provide a checksum value to be compared against the checksum of
+the downloaded file.
 
 Parts with source types that describe repositories can also use additional
 properties to accurately specify where source code is found.
-The ``source-branch``, ``source-commit`` and ``source-tag`` properties allow
-sources to be obtained from a specific branch, commit or tag.
+The :ref:`source_branch`, :ref:`source_commit` and :ref:`source_tag`
+properties allow sources to be obtained from a specific branch, commit or
+tag.
 
 Since some repositories can contain large amounts of data, the
-``source-depth`` property can be used to specify the number of commits in a
-repository's history that should be fetched instead of the complete history.
-For repositories that use submodules, the ``source-submodules`` property can
-be used to selectively fetch only those submodules that are needed.
+:ref:`source_depth` property can be used to specify the number of commits in
+a repository's history that should be fetched instead of the complete history.
+For repositories that use submodules, the :ref:`source_submodules` property
+can be used to fetch only those submodules that are needed.
 
-The ``source-subdir`` property specifies the subdirectory in the unpacked
+The :ref:`source_subdir` property specifies the subdirectory in the unpacked
 sources where builds will occur. **Note:** This property restricts the build
 to the subdirectory specified, preventing access to files in the parent
 directory and elsewhere in the file system directory structure.
@@ -90,22 +91,22 @@ directory and elsewhere in the file system directory structure.
 Build dependencies
 ~~~~~~~~~~~~~~~~~~
 
-The dependencies of a part are described using the ``build-snaps`` and
-``build-packages`` properties. These specify lists of snaps and system
+The dependencies of a part are described using the :ref:`build_snaps` and
+:ref:`build_packages` properties. These specify lists of snaps and system
 packages to be installed before the part is built.
 
-Snaps are referred to by the names that they are identified in the Snap
-Store and can also include the channel information so that specific versions
-of snaps are used. For example, the ``juju`` snap could be specified as
+Snaps are referred to by the names that identify them in the Snap Store and
+can also include the channel information so that specific versions of snaps
+are used. For example, the ``juju`` snap could be specified as
 ``juju/stable``, ``juju/2.9/stable`` or ``juju/latest/stable`` to select
 different versions.
 
-System packages are referred to by the names that they are identified by on
-the host system, and they are installed using the host's native package
-manager, such as :command:`apt` or :command:`dnf`.
+System packages are referred to by the names that identify them on the host
+system, and they are installed using the host's native package manager, such
+as :command:`apt` or :command:`dnf`.
 
 For example, a part that is built against the SDL 2 libraries could include
-the ``libsdl2-dev`` package in the ``build-packages`` property.
+the ``libsdl2-dev`` package in the :ref:`build_packages` property.
 
 Build process
 ~~~~~~~~~~~~~
@@ -117,8 +118,8 @@ Plugins simplify the process of building source code written in a variety of
 programming languages using appropriate build systems, libraries and
 frameworks. If a plugin is not available for a particular combination of
 these attributes, a basic plugin can be used to manually specify the build
-actions to be taken, using the ``override-build`` property. This property can
-also be used to replace or extend the build process provided by a plugin.
+actions to be taken, using the :ref:`override_build` property. This property
+can also be used to replace or extend the build process provided by a plugin.
 
 When a plugin is used, it exposes additional properties that can be used to
 define behaviour that is specific to the type of project that the plugin
@@ -126,15 +127,15 @@ supports. For example, the :py:mod:`cmake plugin <craft_parts.plugins.cmake_plug
 ``cmake-generator`` properties that can be used to configure how
 :command:`cmake` is used in the build process.
 
-The build process can be further customised with the ```build-environment``,
-``build-attributes`` and ``override-build`` properties.
+The :ref:`build_attributes` property allows a number of standard
+customisations to be applied to the build. Some of these are used to address
+issues that occur in specific situations; others, such as ``debug`` are
+generally useful.
 
 The :ref:`build_environment` property defines assignments to shell environment
-variables in the build environment.
-
-The ``build-attributes`` property allows a number of standard customisations
-to be applied to the build. Some of these are used to address issues that
-occur in specific situations; others, such as ``debug`` are generally useful.
+variables in the build environment. This is useful in situations where the
+build process of a part needs to be fine-tuned and can be configured by
+setting environment variables.
 
 The result of the *build* step is a set of build artifacts or products that
 are the same as those that would be produced by manually compiling or
@@ -146,16 +147,15 @@ Build artifacts
 At the end of the *build* step, the build artifacts can be organized before
 the *stage* step is run.
 
-The ``organize`` property is used to customise how files are copied from the
-building area to the staging area. It defines an ordered dictionary that maps
-paths in the building area to paths in the staging area.
+The :ref:`organize` property is used to customise how files are copied from
+the building area to the staging area. It defines an ordered dictionary that
+maps paths in the building area to paths in the staging area.
 
 After the *build* step, the *stage* step is run to collect the artifacts from
 the build into a common staging area for all parts. Additional snaps and
 system packages that need to be deployed with the part are specified using
-the ``stage-snaps`` and ``stage-packages`` properties. Files and
-:ref:`filesets <filesets>` to be deployed are specified using the ``stage``
-property.
+the :ref:`stage_snaps` and :ref:`stage_packages` properties. Files and
+:ref:`filesets` to be deployed are specified using the :ref:`stage` property.
 
 In the final *prime* step, the files needed for deployment are copied from
 the staging area to the priming area. During this step the ``prime`` property
@@ -169,13 +169,13 @@ Defining the build order
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 If a part depends on other parts in a project as build dependencies then it
-can use the ``after`` property to define this relationship. This property
+can use the :ref:`after` property to define this relationship. This property
 specifies a list containing the names of parts that it will be built after.
 The parts in the list will be *built and staged* before the part is built.
 
 By default, Craft Parts uses the defined build order to determine which
 parts can be built in parallel. This can be disabled by setting the
-``disable-parallel`` property to ``True``.
+:ref:`disable_parallel` property to ``True``.
 
 This is covered in detail in :ref:`part_processing_order`.
 

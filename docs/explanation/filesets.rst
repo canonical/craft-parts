@@ -1,4 +1,4 @@
-.. _filesets:
+.. _filesets_explanation:
 
 Filesets
 ========

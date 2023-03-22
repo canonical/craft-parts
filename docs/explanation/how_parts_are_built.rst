@@ -19,7 +19,7 @@ The pull step
 ~~~~~~~~~~~~~
 
 When the *pull* step is run the :ref:`sources <parts_source>` are obtained
-using the ``source*`` definitions for each part. After the step, the ``/root``
+using the source definitions for each part. After the step, the ``/root``
 directory contains a ``state`` file to manage the state of the build and a
 number of subdirectories:
 
@@ -31,7 +31,7 @@ number of subdirectories:
  * ``stage`` will contain staged files after a build, before they are primed.
 
 The standard actions for the *pull* step can be overridden or extended by
-using the ``override-pull`` key to describe a series of actions.
+using the :ref:`override_pull` key to describe a series of actions.
 
 The build step
 ~~~~~~~~~~~~~~
@@ -69,7 +69,8 @@ The prime step
 ~~~~~~~~~~~~~~
 
 When the *prime* step is run for a part, the contents of the common ``stage``
-directory are copied into the ``prime`` directory.
+directory are filtered using the rules in the :ref:`prime` property and
+copied into the ``prime`` directory.
 
 In a multi-part project the ``stage`` directory may contain resources that
 were required to build certain parts, or the build products may include files
