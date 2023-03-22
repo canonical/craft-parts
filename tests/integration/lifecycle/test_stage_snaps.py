@@ -47,7 +47,6 @@ def test_stage_snap(new_dir, fake_snap_command):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL),
-        Action("foo", Step.OVERLAY),
         Action("foo", Step.BUILD),
     ]
 
@@ -60,7 +59,7 @@ def test_stage_snap(new_dir, fake_snap_command):
     assert len(snaps) == 1
     assert snaps[0].name == "basic.snap"
 
-    ctx.execute(actions[2])
+    ctx.execute(actions[1])
 
     foo_install_dir = Path(new_dir / "parts" / "foo" / "install")
     assert (foo_install_dir / "meta.basic" / "snap.yaml").is_file()
@@ -85,7 +84,6 @@ def test_stage_snap_download_error(new_dir, fake_snap_command):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL),
-        Action("foo", Step.OVERLAY),
         Action("foo", Step.BUILD),
     ]
 
@@ -117,7 +115,6 @@ def test_stage_snap_unpack_error(new_dir, fake_snap_command):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL),
-        Action("foo", Step.OVERLAY),
         Action("foo", Step.BUILD),
     ]
 
@@ -132,5 +129,5 @@ def test_stage_snap_unpack_error(new_dir, fake_snap_command):
     assert snaps[0].name == "bad-snap.snap"
 
     with pytest.raises(PullError) as raised:
-        ctx.execute(actions[2])
+        ctx.execute(actions[1])
     assert raised.value.exit_code == 1

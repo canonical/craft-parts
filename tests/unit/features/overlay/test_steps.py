@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -43,9 +43,10 @@ def test_ordering():
     "tc_step,tc_result",
     [
         (Step.PULL, []),
-        (Step.BUILD, [Step.PULL]),
-        (Step.STAGE, [Step.PULL, Step.BUILD]),
-        (Step.PRIME, [Step.PULL, Step.BUILD, Step.STAGE]),
+        (Step.OVERLAY, [Step.PULL]),
+        (Step.BUILD, [Step.PULL, Step.OVERLAY]),
+        (Step.STAGE, [Step.PULL, Step.OVERLAY, Step.BUILD]),
+        (Step.PRIME, [Step.PULL, Step.OVERLAY, Step.BUILD, Step.STAGE]),
     ],
 )
 def test_previous_steps(tc_step, tc_result):
@@ -55,7 +56,8 @@ def test_previous_steps(tc_step, tc_result):
 @pytest.mark.parametrize(
     "tc_step,tc_result",
     [
-        (Step.PULL, [Step.BUILD, Step.STAGE, Step.PRIME]),
+        (Step.PULL, [Step.OVERLAY, Step.BUILD, Step.STAGE, Step.PRIME]),
+        (Step.OVERLAY, [Step.BUILD, Step.STAGE, Step.PRIME]),
         (Step.BUILD, [Step.STAGE, Step.PRIME]),
         (Step.STAGE, [Step.PRIME]),
         (Step.PRIME, []),

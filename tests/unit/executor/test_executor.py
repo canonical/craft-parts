@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -188,7 +188,7 @@ class TestExecutionContext:
         captured = capfd.readouterr()
         assert captured.out == "build\nepilogue custom\n"
 
-    def test_prologue_overlay_packages(self, new_dir, mocker):
+    def test_prologue_overlay_packages(self, enable_overlay_feature, new_dir, mocker):
         """Check that the overlay package cache is not touched if the part doesn't have overlay packages"""
         mock_mount = mocker.patch.object(overlays, "PackageCacheMount")
 

@@ -134,7 +134,6 @@ class TestStepHandlerBuiltins:
                 export CRAFT_TARGET_ARCH="{host_arch['deb']}"
                 export CRAFT_PARALLEL_BUILD_COUNT="1"
                 export CRAFT_PROJECT_DIR="{new_dir}"
-                export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
                 export CRAFT_STAGE="{new_dir}/stage"
                 export CRAFT_PRIME="{new_dir}/prime"
                 export CRAFT_PART_NAME="p1"

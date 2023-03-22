@@ -32,10 +32,12 @@ from craft_parts import (
 from craft_parts.state_manager import StepState
 
 
-def setup_function():
-    craft_parts.Features.reset()
-    craft_parts.Features(enable_overlay=True)
+@pytest.fixture(autouse=True)
+def setup_feature(enable_overlay_feature):
+    yield
 
+
+def setup_function():
     callbacks.unregister_all()
 
 

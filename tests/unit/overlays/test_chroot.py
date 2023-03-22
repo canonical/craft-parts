@@ -77,7 +77,7 @@ class TestChroot:
             call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
             call("proc", f"{new_root}/proc", "-tproc"),
             call("sysfs", f"{new_root}/sys", "-tsysfs"),
-            call("/dev", f"{new_root}/dev", "--rbind"),
+            call("/dev", f"{new_root}/dev", "--rbind", "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
             call(f"{new_root}/dev", "--recursive", "--lazy"),

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -72,11 +72,6 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     assert actions == [
         # fmt: off
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.RUN, reason="required to overlay 'foobar'"),
-        Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.OVERLAY, action_type=ActionType.RUN, reason="required to overlay 'foobar'"),
-        Action("foobar", Step.OVERLAY),
         Action("foobar", Step.BUILD),
         Action("foobar", Step.STAGE),
         Action("foobar", Step.PRIME),
@@ -93,9 +88,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, reason="required to build 'bar'"),
         Action("foo", Step.STAGE, reason="required to build 'bar'"),
         Action("bar", Step.BUILD),
@@ -111,7 +104,6 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
         # fmt: on
     ]
@@ -129,9 +121,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.RUN, reason="required to build 'bar'"),
         Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
         Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
@@ -150,9 +140,6 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -171,13 +158,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
                properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", step=Step.OVERLAY, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
-        Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
                properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="required to build 'bar'"),
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
@@ -194,9 +177,6 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -273,8 +253,6 @@ class TestCleaning:
 
         assert sorted(state_dir.rglob("*")) == [
             state_dir / "build",
-            state_dir / "layer_hash",
-            state_dir / "overlay",
             state_dir / "prime",
             state_dir / "pull",
             state_dir / "stage",
@@ -311,8 +289,6 @@ class TestCleaning:
         assert Path("prime/bar.txt").is_file()
         assert sorted(bar_state_dir.rglob("*")) == [
             bar_state_dir / "build",
-            bar_state_dir / "layer_hash",
-            bar_state_dir / "overlay",
             bar_state_dir / "prime",
             bar_state_dir / "pull",
             bar_state_dir / "stage",
@@ -330,7 +306,6 @@ class TestCleaning:
         bar_state_dir = Path("parts/bar/state")
 
         step_is_overlay_or_later = step >= Step.OVERLAY
-        step_is_build_or_later = step >= Step.BUILD
         step_is_stage_or_later = step >= Step.STAGE
         step_is_prime = step == Step.PRIME
 
@@ -349,11 +324,6 @@ class TestCleaning:
         if step_is_overlay_or_later:
             all_states.append(foo_state_dir / "pull")
             all_states.append(bar_state_dir / "pull")
-        if step_is_build_or_later:
-            all_states.append(foo_state_dir / "overlay")
-            all_states.append(bar_state_dir / "overlay")
-            all_states.append(foo_state_dir / "layer_hash")
-            all_states.append(bar_state_dir / "layer_hash")
         if step_is_stage_or_later:
             all_states.append(foo_state_dir / "build")
             all_states.append(bar_state_dir / "build")

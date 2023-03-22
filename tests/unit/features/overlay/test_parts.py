@@ -46,6 +46,7 @@ class TestPartSpecs:
             "source-type": "tar",
             "disable-parallel": True,
             "after": ["bar"],
+            "overlay-packages": ["overlay-pkg1", "overlay-pkg2"],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
             "stage-packages": ["stage-pkg1", "stage-pkg2"],
             "build-snaps": ["build-snap1", "build-snap2"],
@@ -53,9 +54,11 @@ class TestPartSpecs:
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
+            "overlay": ["etc/issue"],
             "stage": ["-usr/docs"],
             "prime": ["*"],
             "override-pull": "override-pull",
+            "overlay-script": "overlay-script",
             "override-build": "override-build",
             "override-stage": "override-stage",
             "override-prime": "override-prime",
@@ -66,13 +69,11 @@ class TestPartSpecs:
 
         data_copy = deepcopy(data)
 
-        # Overlay defaults
-        data_copy["overlay"] = ["*"]
-        data_copy["overlay-packages"] = []
-        data_copy["overlay-script"] = None
-
         spec = PartSpec.unmarshal(data)
-        assert spec.marshal() == data_copy
+        assert data == data_copy
+
+        new_data = spec.marshal()
+        assert new_data == data_copy
 
     def test_unmarshal_not_dict(self):
         with pytest.raises(TypeError) as raised:
@@ -103,20 +104,6 @@ class TestPartSpecs:
         spec = PartSpec.unmarshal(data)
         assert spec.stage_packages == package_list
 
-    @pytest.mark.parametrize(
-        "key,value",
-        [
-            ("overlay-packages", ["overlay-pkg1", "overlay-pkg2"]),
-            ("overlay", ["etc/issue"]),
-            ("overlay-script", "overlay-script"),
-        ],
-    )
-    def test_overlay_data_with_overlay_feature_disabled(self, key, value):
-        data = {"plugin": "nil", key: value}
-        error = r"overlays not supported"
-        with pytest.raises(pydantic.ValidationError, match=error):
-            PartSpec.unmarshal(data)
-
 
 class TestPartData:
     """Test basic part creation and representation."""
@@ -137,6 +124,7 @@ class TestPartData:
         assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.part_layer_dir == new_dir / "parts/foo/layer"
         assert p.part_cache_dir == new_dir / "parts/foo/cache"
+        assert p.overlay_dir == new_dir / "overlay"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
@@ -153,6 +141,7 @@ class TestPartData:
         assert p.part_snaps_dir == new_dir / "foobar/parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
         assert p.part_layer_dir == new_dir / "foobar/parts/foo/layer"
+        assert p.overlay_dir == new_dir / "foobar/overlay"
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
@@ -284,6 +273,7 @@ class TestPartData:
         "tc_step,tc_content",
         [
             (Step.PULL, "pull"),
+            (Step.OVERLAY, "overlay"),
             (Step.BUILD, "build"),
             (Step.STAGE, "stage"),
             (Step.PRIME, "prime"),
@@ -297,6 +287,7 @@ class TestPartData:
                 "override-build": "build",
                 "override-stage": "stage",
                 "override-prime": "prime",
+                "overlay-script": "overlay",
             },
         )
         assert p.spec.get_scriptlet(tc_step) == tc_content
@@ -306,9 +297,25 @@ class TestPartData:
         p = Part("foo", {})
         assert p.spec.get_scriptlet(step) is None
 
-    def test_part_has_overlay(self):
-        p = Part("foo", {})
-        assert p.has_overlay is False
+    @pytest.mark.parametrize(
+        "packages,script,files,result",
+        [
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
+        ],
+    )
+    def test_part_has_overlay(self, packages, script, files, result):
+        p = Part(
+            "foo",
+            {
+                "overlay-packages": packages,
+                "overlay-script": script,
+                "overlay": files,
+            },
+        )
+        assert p.has_overlay == result
 
 
 class TestPartOrdering:
@@ -445,7 +452,7 @@ class TestPartHelpers:
         p1 = Part("foo", {"after": ["bar", "baz"]})
         p2 = Part("bar", {"after": ["qux"]})
         p3 = Part("baz", {})
-        p4 = Part("qux", {})
+        p4 = Part("qux", {"overlay-script": "echo"})
         p5 = Part("foobar", {"after": ["baz"]})
 
         part_list = [p1, p2, p3, p4, p5]
@@ -454,21 +461,21 @@ class TestPartHelpers:
             parts.has_overlay_visibility, viewers=set(), part_list=part_list
         )
 
-        assert has_overlay_visibility(p1) is False
-        assert has_overlay_visibility(p2) is False
+        assert has_overlay_visibility(p1) is True
+        assert has_overlay_visibility(p2) is True
         assert has_overlay_visibility(p3) is False
-        assert has_overlay_visibility(p4) is False
+        assert has_overlay_visibility(p4) is True
         assert has_overlay_visibility(p5) is False
 
     def test_get_parts_with_overlay(self):
         p1 = Part("foo", {})
-        p2 = Part("bar", {})
-        p3 = Part("baz", {})
-        p4 = Part("qux", {})
-        p5 = Part("quux", {})
+        p2 = Part("bar", {"overlay-packages": ["pkg1"]})
+        p3 = Part("baz", {"overlay-script": "echo"})
+        p4 = Part("qux", {"overlay": ["*"]})
+        p5 = Part("quux", {"overlay": ["-etc/passwd"]})
 
         p = parts.get_parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
-        assert p == []
+        assert p == [p2, p3, p5]
 
 
 class TestPartValidation:

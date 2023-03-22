@@ -17,10 +17,5 @@
 from craft_parts.features import Features
 
 
-def setup_module():
-    Features.reset()
-    Features(enable_overlay=True)
-
-
-def teardown_module():
-    Features.reset()
+def test_overlay_feature_enabled():
+    assert Features().enable_overlay is True
