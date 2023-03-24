@@ -62,16 +62,6 @@ The snaps to be installed in the build environment before the build is
 performed. These provide libraries and executables that the part needs during
 the build process.
 
-.. _disable_parallel:
-
-disable-parallel
-----------------
-**Type:** boolean |br|
-**Step:** build
-
-By default, Craft Parts builds independent parts in parallel. This can be
-disabled by setting the ``disable-parallel`` key to ``True``.
-
 .. _filesets:
 
 filesets

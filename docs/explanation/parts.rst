@@ -93,7 +93,8 @@ Build dependencies
 
 The dependencies of a part are described using the :ref:`build_snaps` and
 :ref:`build_packages` properties. These specify lists of snaps and system
-packages to be installed before the part is built.
+packages to be installed before the part is built. If a part depends on
+other parts, the :ref:`after` property is used to specify these -- see :ref:`parts_build-order`.
 
 Snaps are referred to by the names that identify them in the Snap Store and
 can also include the channel information so that specific versions of snaps
