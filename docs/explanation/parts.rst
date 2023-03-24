@@ -154,14 +154,14 @@ maps paths in the building area to paths in the staging area.
 After the *build* step, the *stage* step is run to collect the artifacts from
 the build into a common staging area for all parts. Additional snaps and
 system packages that need to be deployed with the part are specified using
-the :ref:`stage_snaps` and :ref:`stage_packages` properties. Files and
-:ref:`filesets` to be deployed are specified using the :ref:`stage` property.
+the :ref:`stage_snaps` and :ref:`stage_packages` properties. Files to be
+deployed are specified using the :ref:`stage` property.
 
 In the final *prime* step, the files needed for deployment are copied from
 the staging area to the priming area. During this step the ``prime`` property
-is typically used to exclude files and filesets in the staging area that are
-not required at run-time. This is especially useful for multi-part projects
-that include their own compilers or development tools.
+is typically used to exclude files in the staging area that are not required
+at run-time. This is especially useful for multi-part projects that include
+their own compilers or development tools.
 
 .. _parts_build-order:
 
@@ -172,10 +172,6 @@ If a part depends on other parts in a project as build dependencies then it
 can use the :ref:`after` property to define this relationship. This property
 specifies a list containing the names of parts that it will be built after.
 The parts in the list will be *built and staged* before the part is built.
-
-By default, Craft Parts uses the defined build order to determine which
-parts can be built in parallel. This can be disabled by setting the
-:ref:`disable_parallel` property to ``True``.
 
 This is covered in detail in :ref:`part_processing_order`.
 

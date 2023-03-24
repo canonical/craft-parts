@@ -9,5 +9,4 @@ Explanation
    parts
    lifecycle
    implementation
-   filesets
    overlays
