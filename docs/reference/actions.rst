@@ -16,7 +16,3 @@ determined by its action type.
 
 .. autoclass:: craft_parts.Action
    :members:
-
-
-
-

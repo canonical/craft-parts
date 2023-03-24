@@ -7,6 +7,7 @@ Reference
    :maxdepth: 1
 
    lifecycle_manager
+   part_properties
    parts_steps
    actions
    infos
