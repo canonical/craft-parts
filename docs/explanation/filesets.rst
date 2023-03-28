@@ -3,9 +3,10 @@
 Filesets
 ========
 
-Filesets are named collections of file paths that are used to conveniently
-refer to files and directories. Filesets are used to collect and filter the
-files and directories a part needs in the *stage* and *prime* steps.
+Filesets are named collections of files and directories that can be migrated
+between areas in the process of building a part. They are used to collect and
+filter the files and directories a part needs in the *stage* and *prime*
+steps.
 
 Specifying paths
 ----------------
