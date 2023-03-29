@@ -4,9 +4,14 @@ Filesets
 ========
 
 Filesets are named collections of files and directories that can be migrated
-between areas in the process of building a part. They are used to collect and
-filter the files and directories a part needs in the *stage* and *prime*
-steps.
+between areas in the process of :ref:`building a part <parts>`. They are used
+within Craft Parts to collect and filter the files and directories a part
+needs in the *stage* and *prime* :ref:`steps <lifecycle>`.
+
+Tools that depend on Craft Parts can use filesets to simplify and automate
+migration of files and directories between build steps. Users of those tools
+may need to know about filesets if they need to adjust the contents of the
+packages that the tools produce.
 
 Specifying paths
 ----------------
@@ -16,26 +21,25 @@ directory. Absolute paths cannot be used.
 
 Paths can specify single files or directories, like these:
 
- * ``usr/bin/hello``
- * ``usr/share``
+* :file:`usr/bin/hello`
+* :file:`usr/share`
 
 They can also contain wildcards to select multiple files and directories, such
 as these:
 
- * ``usr/bin/*``
- * ``usr/lib/**/*.so*``
+* :file:`usr/bin/*`
+* :file:`usr/lib/**/*.so*`
 
 The second of these examples selects all the shared libraries in all nested
-directories inside the ``usr/lib`` directory.
+directories inside the :file:`usr/lib` directory.
 
 Filesets can also *exclude* files and directories. This is done by prefixing
 a path with the ``-`` character, as in these examples:
 
- * ``-usr/bin/hello``
- * ``-usr/share/**/*.gz``
+* :file:`-usr/bin/hello`
+* :file:`-usr/share/**/*.gz`
 
-The second example selects and discards gzipped files in all nested directories
-inside the ``usr/share`` directory.
+The second example selects and discards gzipped files in all nested directories inside the :file:`usr/share` directory.
 
 Defining filesets
 -----------------
@@ -96,30 +100,23 @@ is removed:
         stage: [$usr-files, $exclude-docs]
 
 If the order of the two filesets in the :ref:`stage` property is reversed,
-the ``usr/share/doc`` directory is still excluded.
+the :file:`usr/share/doc` directory is still excluded.
 
 Summary
 -------
 
 When defined:
 
- * Filesets specify named collections of files and directories using file
-   paths that can contain wildcards. Only relative paths are allowed.
- * They can both include and exclude sets of files and directories.
- * They are defined for a given part, not for multiple parts.
+* Filesets specify named collections of files and directories using file
+  paths that can contain wildcards. Only relative paths are allowed.
+* They can both include and exclude sets of files and directories.
+* They are defined for a given part, not for multiple parts.
 
 When used:
 
- * Filesets are used at the start of a step to collect and filter artifacts
-   from the previous step.
- * Their file paths are applied to the directory containing the artifacts
-   from the previous step.
- * All files and directories included by filesets are first located, then
-   filtered by the filesets that *exclude* paths.
-
-References
-----------
-
-See `Snapcraft filesets`_ for further details and examples.
-
-.. _`Snapcraft filesets`: https://snapcraft.io/docs/snapcraft-filesets
+* Filesets are used at the start of a step to collect and filter artifacts
+  from the previous step.
+* Their file paths are applied to the directory containing the artifacts
+  from the previous step.
+* All files and directories included by filesets are first located, then
+  filtered by the filesets that *exclude* paths.
