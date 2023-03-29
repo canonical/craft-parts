@@ -23,6 +23,9 @@ its own input and output locations:
    of dependent parts to be accessed, while the ``PRIME`` step occurs after all
    parts have been staged.
 
+.. graphviz:: figures/parts.dot
+   :align: center
+
 Step order
 ----------
 
