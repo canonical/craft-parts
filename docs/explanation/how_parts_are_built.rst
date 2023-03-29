@@ -12,14 +12,14 @@ subdirectories and configured to use snaps.
 
 .. ### Verify that snap is available in general for non-Snapcraft builds.
 
-Initially, before the *pull* step is run, the ``/root`` directory contains a
+Initially, before the *pull* step is run, the *working* directory contains a
 ``project`` directory containing the files for the project to be built.
 
 The pull step
 ~~~~~~~~~~~~~
 
 When the *pull* step is run the :ref:`sources <parts_source>` are obtained
-using the source definitions for each part. After the step, the ``/root``
+using the source definitions for each part. After the step, the *working*
 directory contains a ``state`` file to manage the state of the build and a
 number of subdirectories:
 
