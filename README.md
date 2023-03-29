@@ -26,10 +26,11 @@ by running the following command:
 ./tools/freeze-requirements.sh
 ```
 
-This creates a virtual environment that can be entered by sourcing the
-`activate` file in a bash shell:
+This creates a set of requirements for a virtual environment. Create and
+enter this environment with these commands:
 
 ```
+python3 -m venv venv
 . venv/bin/activate
 ```
 
