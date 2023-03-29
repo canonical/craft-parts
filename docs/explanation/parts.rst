@@ -9,16 +9,16 @@ When the Craft Parts framework is used to process a part on behalf of a tool
 or library, it performs some or all of the steps described in the
 :ref:`parts lifecycle <lifecycle>`:
 
- #. The *pull* step pulls the source code and dependencies from locations
-    defined in the part and places them into a package cache.
- #. The *overlay* step unpacks them into a base file system chosen from a
-    collection of standard file system images.
- #. The *build* step runs a suitable build tool for the sources to compile
-    a set of build products or artifacts.
- #. The *stage* step copies the build products for the part into a common
-    area for all parts in a project.
- #. The *prime* step copies the files to be deployed into an area for
-    further processing.
+#. The *pull* step pulls the source code and dependencies from locations
+   defined in the part and places them into a package cache.
+#. The *overlay* step unpacks them into a base file system chosen from a
+   collection of standard file system images.
+#. The *build* step runs a suitable build tool for the sources to compile
+   a set of build products or artifacts.
+#. The *stage* step copies the build products for the part into a common
+   area for all parts in a project.
+#. The *prime* step copies the files to be deployed into an area for
+   further processing.
 
 Not all of these steps may be needed for every use case, and tools that use
 the Craft Parts framework can skip those that are not appropriate for their
@@ -37,10 +37,11 @@ and is organised like a dictionary. Each piece of information is accessed
 by name using a property.
 
 Generally, each part includes information about the following:
- * Its `source <Source_>`_ (where it is obtained from)
- * Its `build dependencies <Build dependencies_>`_ (snaps and packages)
- * The `build process <Build process_>`_
- * How `build artifacts <Build artifacts_>`_ are handled
+
+* Its `source <Source_>`_ (where it is obtained from)
+* Its `build dependencies <Build dependencies_>`_ (snaps and packages)
+* The `build process <Build process_>`_
+* How `build artifacts <Build artifacts_>`_ are handled
 
 Each of these are described in the following sections.
 
