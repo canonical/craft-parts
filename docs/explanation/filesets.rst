@@ -33,7 +33,7 @@ which is used to perform operations on lists of file paths. This accepts a
 string containing the name of the fileset and a list of strings containing the
 file paths.
 
-When using :ref:`YAML` syntax to describe a part, the :ref:`filesets` property
+When using `YAML`_ syntax to describe a part, the :ref:`filesets` property
 is used to define filesets. This property defines a dictionary that maps the
 name of each fileset to a list of file paths.
 
@@ -73,9 +73,12 @@ inside the :file:`usr/share` directory.
 Using filesets
 --------------
 
-Internally, filesets for the *stage* and *prime* steps are both applied to the
-directory containing the artifacts from the *build* step. This locates the
-files and directories to migrate to the *stage* and *prime* steps.
+Built-in filesets for the *stage* and *prime* steps are both applied to the
+directory containing the artifacts from the *build* step. These are used to
+specify the files and directories to migrate to the *stage* and *prime* steps.
+
+The contents of the filesets for these steps are specified using the
+:ref:`stage` and :ref:`prime` properties when defining a part.
 
 The order in which paths are defined in a fileset is not important. The paths
 are collected so that all files and directories to be included are first
@@ -99,6 +102,6 @@ When used:
 * Their file paths are applied to the directory containing the artifacts
   from the earlier step.
 * All files and directories included by filesets are first located, then
-  filtered by the filesets that *exclude* paths.
+  filtered by the filesets that exclude paths.
 
 .. include:: /links.txt
