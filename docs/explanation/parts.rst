@@ -176,6 +176,7 @@ If a part depends on other parts in a project as build dependencies then it
 can use the :ref:`after` property to define this relationship. This property
 specifies a list containing the names of parts that it will be built after.
 The parts in the list will be *built and staged* before the part is built.
+
 This is covered in detail in :ref:`part_processing_order`.
 
 .. include:: how_parts_are_built.rst
