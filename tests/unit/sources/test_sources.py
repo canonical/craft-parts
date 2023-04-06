@@ -53,6 +53,7 @@ def test_get_source_handler_class_with_invalid_type():
         (".tar", "tar"),
         ("git:", "git"),
         ("git@", "git"),
+        ("git+ssh:", "git"),
         (".git", "git"),
         ("lp:", "bzr"),
         ("bzr:", "bzr"),
