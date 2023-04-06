@@ -21,10 +21,6 @@ to migrate files from all parts into the corresponding steps. For example,
 the *stage* fileset refers to all the files and directories that will be moved
 into the staging area ready for the *stage* step to be run.
 
-Tools that use Craft Parts can define filesets with arbitrary names and they
-can also expose the feature to users. Names are only limited by the format
-used to describe them.
-
 Defining filesets
 -----------------
 
