@@ -17,7 +17,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Tuple, cast
 
 import pytest
 
@@ -220,6 +220,7 @@ def _organize_and_assert(
             base_dir=base_dir,
             overwrite=overwrite,
         )
+        expected = cast(List[Tuple[List[str], str]], expected)
         for expect in expected:
             dir_path = (base_dir / expect[1]).as_posix()
             dir_contents = os.listdir(dir_path)
