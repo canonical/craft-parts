@@ -4,6 +4,7 @@
 .. _`Cargo`: https://crates.io/
 .. _`Charmcraft`: https://juju.is/docs/sdk/charmcraft
 .. _`CMake`: https://cmake.org/
+.. _`Craft Providers`: https://canonical-craft-providers.readthedocs-hosted.com/en/latest/
 .. _`Go`: https://golang.org/
 .. _`Juju`: https://juju.is/docs/sdk
 .. _`Make`: https://www.gnu.org/software/make/manual/make.html
@@ -14,3 +15,4 @@
 .. _`SCons`: https://scons.org/
 .. _`SDL`: https://www.libsdl.org/
 .. _`Snapcraft`: https://snapcraft.io/docs/snapcraft
+.. _`YAML`: https://yaml.org/
