@@ -176,11 +176,6 @@ If a part depends on other parts in a project as build dependencies then it
 can use the :ref:`after` property to define this relationship. This property
 specifies a list containing the names of parts that it will be built after.
 The parts in the list will be *built and staged* before the part is built.
-
-By default, Craft Parts uses the defined build order to determine which
-parts can be built in parallel. This can be disabled by setting the
-:ref:`disable_parallel` property to ``True``.
-
 This is covered in detail in :ref:`part_processing_order`.
 
 .. include:: how_parts_are_built.rst
