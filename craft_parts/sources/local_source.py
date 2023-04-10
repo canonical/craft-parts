@@ -118,12 +118,13 @@ class LocalSource(SourceHandler):
                 if os.lstat(path).st_mtime >= target_mtime:
                     self._updated_files.add(os.path.relpath(path, self.source))
 
+            directories_to_remove = []
             for directory in directories:
                 path = os.path.join(root, directory)
                 if os.lstat(path).st_mtime >= target_mtime:
                     # Don't descend into this directory-- we'll just copy it
                     # entirely.
-                    directories.remove(directory)
+                    directories_to_remove.append(directory)
 
                     # os.walk will include symlinks to directories here, but we
                     # want to treat those as files
@@ -132,6 +133,8 @@ class LocalSource(SourceHandler):
                         self._updated_files.add(relpath)
                     else:
                         self._updated_directories.add(relpath)
+            for directory in directories_to_remove:
+                directories.remove(directory)
 
         logger.debug("updated files: %r", self._updated_files)
         logger.debug("updated directories: %r", self._updated_directories)
