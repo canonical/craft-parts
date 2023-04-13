@@ -2,6 +2,8 @@
 Package reference
 *****************
 
-.. toctree::
+.. autosummary::
+   :toctree:
+   :recursive:
 
-   gen/craft_parts
+   craft_parts

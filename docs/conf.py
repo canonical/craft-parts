@@ -115,5 +115,5 @@ def run_apidoc(_):
     main(["-e", "-o", output_dir, module, "--no-toc", "--force"])
 
 
-def setup(app):
-    app.connect("builder-inited", run_apidoc)
+#def setup(app):
+#    app.connect("builder-inited", run_apidoc)
