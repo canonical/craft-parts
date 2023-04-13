@@ -190,6 +190,7 @@ def get_source_type_from_uri(
     elif (
         source.startswith("git:")
         or source.startswith("git@")
+        or source.startswith("git+ssh:")
         or source.endswith(".git")
     ):
         source_type = "git"
