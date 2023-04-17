@@ -2,6 +2,13 @@
 Changelog
 *********
 
+1.19.1 (2023-04-17)
+-------------------
+
+- Additional documentation
+- Fix "git+ssh" not automatically recognised as a git source
+- Fix pydantic dependency being frozen at 1.9.0
+
 1.19.0 (2023-03-20)
 -------------------
 
