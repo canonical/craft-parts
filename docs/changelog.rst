@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.19.1 (2023-04-18)
+-------------------
+
+- Allow git+ssh in git source type
+- Loosen pydantic dependency
+
 1.19.0 (2023-03-20)
 -------------------
 
