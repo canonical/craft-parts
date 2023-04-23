@@ -190,6 +190,53 @@ class TestPackages:
             ["fake-package=1.0", "fake-package-dep=2.0"]
         )
 
+    # // DERE
+    def test_fetch_stage_package_with_deps_with_package_filters(
+        self, mocker, tmpdir, fake_apt_cache, fake_deb_run
+    ):
+        mocker.patch(
+            "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
+            {"filtered-pkg-1"},
+        )
+        stage_cache_path, debs_path = deb.get_cache_dirs(tmpdir)
+        fake_package = debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
+        fake_package_dep = debs_path / "fake-package-dep_2.0_all.deb"
+        fake_package_dep.touch()
+        other_fake_package = debs_path / "other-fake-package_1.0_all.deb"
+        other_fake_package.touch()
+        fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
+            ("fake-package", "1.0", fake_package)
+        ]
+
+        package_names = ["fake-package", "other-fake-package"]
+
+        fetched_packages = deb.Ubuntu.fetch_stage_packages(
+            cache_dir=tmpdir,
+            package_names=package_names,
+            stage_packages_path=Path(tmpdir),
+            base="core",
+            arch="amd64",
+            packages_filters={"fake-package-dep", "other-fake-package"},
+        )
+
+        fake_deb_run.assert_has_calls([call(["apt-get", "update"])])
+        fake_apt_cache.assert_has_calls(
+            [
+                call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
+                call().__enter__(),
+                call().__enter__().mark_packages(set(package_names)),
+                call()
+                .__enter__()
+                .unmark_packages(
+                    {"filtered-pkg-1", "fake-package-dep", "other-fake-package"}
+                ),
+                call().__enter__().fetch_archives(debs_path),
+            ]
+        )
+
+        assert fetched_packages == ["fake-package=1.0"]
+
     def test_fetch_stage_package_empty_list(self, tmpdir, fake_apt_cache):
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = (
             []
