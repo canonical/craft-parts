@@ -190,10 +190,10 @@ class TestPackages:
             ["fake-package=1.0", "fake-package-dep=2.0"]
         )
 
-    # // DERE
     def test_fetch_stage_package_with_deps_with_package_filters(
         self, mocker, tmpdir, fake_apt_cache, fake_deb_run
     ):
+        # pylint: disable=unnecessary-dunder-call
         mocker.patch(
             "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
             {"filtered-pkg-1"},
