@@ -576,6 +576,7 @@ class Ubuntu(BaseRepository):
         base: str,
         arch: str,
         list_only: bool = False,
+        packages_filters: Optional[Set[str]] = None,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         logger.debug("Requested stage-packages: %s", sorted(package_names))
@@ -594,6 +595,7 @@ class Ubuntu(BaseRepository):
             base=base,
             arch=arch,
             list_only=list_only,
+            packages_filters=packages_filters,
         )
 
     @classmethod
@@ -607,12 +609,16 @@ class Ubuntu(BaseRepository):
         base: str,
         arch: str,
         list_only: bool = False,
+        packages_filters: Optional[Set[str]] = None,
     ) -> List[str]:
         """Fetch .deb stage packages to stage_packages_path."""
         filtered_names = _get_filtered_stage_package_names(
             base=base,
             package_list=[DebPackage.from_unparsed(name) for name in package_names],
         )
+
+        if packages_filters:
+            filtered_names.update(packages_filters)
 
         if not list_only:
             stage_packages_path.mkdir(exist_ok=True)
