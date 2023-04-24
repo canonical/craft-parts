@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.19.2 (2023-04-24)
+-------------------
+
+- Fix ignored files exclusion in local source
+
 1.19.1 (2023-04-18)
 -------------------
 
