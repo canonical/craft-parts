@@ -51,6 +51,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",  # must be loaded after napoleon
+    "sphinx-mermaid",
     "sphinx-pydantic",
     "sphinx_design",
     "sphinxcontrib.details.directive",

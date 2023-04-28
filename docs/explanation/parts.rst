@@ -31,6 +31,31 @@ describe a build process typically accept specifications of parts in YAML format
 mostly-declarative format. Libraries that use parts may use the underlying
 data structures to describe them.
 
+.. mermaid ::
+
+    graph LR
+
+    project
+    cache
+    style cache stroke-dasharray: 5 5
+
+    subgraph parts["part(s)"]
+    src
+    build
+    install
+    end
+
+    stage
+    prime
+
+    project -->|pull| cache
+    cache -->|overlay| src
+    src -->|build| build
+    build -->|organize| install
+    install -->|stage| stage
+    stage -->|prime| prime
+
+
 Describing a part
 -----------------
 
