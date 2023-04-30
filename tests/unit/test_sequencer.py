@@ -21,6 +21,7 @@ import pytest
 from craft_parts.actions import Action, ActionProperties, ActionType
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part, PartSpec
+from craft_parts.plugins.make_plugin import MakePluginProperties
 from craft_parts.sequencer import Sequencer
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
@@ -56,7 +57,14 @@ def test_sequencer_add_actions(new_dir):
 )
 def test_sequencer_run_step(step, state_class, new_dir):
     info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
-    p1 = Part("p1", {"stage": ["pkg"]})
+    plugin_props = MakePluginProperties.unmarshal(
+        {"source": "src", "make-parameters": ["-Dfoo=bar"]}
+    )
+    p1 = Part(
+        "p1",
+        {"plugin": "make", "stage": ["pkg"]},
+        plugin_properties=plugin_props,
+    )
 
     seq = Sequencer(part_list=[p1], project_info=info)
     seq._run_step(p1, step)
@@ -73,8 +81,12 @@ def test_sequencer_run_step(step, state_class, new_dir):
     ]
 
     # check if states were updated
-    props = PartSpec.unmarshal({"stage": ["pkg"]})
-    assert state.part_properties == props.marshal()
+    props = PartSpec.unmarshal({"plugin": "make", "stage": ["pkg"]})
+    assert state.part_properties == {
+        **props.marshal(),
+        "source": "src",
+        "make-parameters": ["-Dfoo=bar"],
+    }
     assert state.project_options == {
         "application_name": "test",
         "arch_triplet": "aarch64-linux-gnu",
