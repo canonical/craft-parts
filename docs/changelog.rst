@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.19.3 (2023-04-30)
+-------------------
+
+- Fix plugin properties state in planning phase
+
 1.19.2 (2023-04-24)
 -------------------
 
