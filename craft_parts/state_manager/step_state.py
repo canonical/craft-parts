@@ -16,6 +16,7 @@
 
 """The step state preserves step execution context information."""
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Set
@@ -23,6 +24,8 @@ from typing import Any, Dict, Set
 from pydantic_yaml import YamlModel
 
 from craft_parts.utils import os_utils
+
+logger = logging.getLogger(__name__)
 
 
 class MigrationState(YamlModel):
@@ -144,11 +147,13 @@ def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
         if dict1_value != dict2_value:
+            logger.debug("%s: %r != %r", key, dict1_value, dict2_value)
             differing_keys.add(key)
 
     for key, dict2_value in dict2.items():
         dict1_value = dict1.get(key)
         if dict1_value != dict2_value:
+            logger.debug("%s: %r != %r", key, dict1_value, dict2_value)
             differing_keys.add(key)
 
     return differing_keys

@@ -245,7 +245,7 @@ class Sequencer:
             self._add_action(part, step, reason=reason)
 
         state: states.StepState
-        part_properties = part.spec.marshal()
+        part_properties = {**part.spec.marshal(), **part.plugin_properties.marshal()}
 
         # create step state
 
