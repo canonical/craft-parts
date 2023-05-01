@@ -170,7 +170,7 @@ Overlay State
 
 The overlay state for a particular part includes the overlay script and
 any overlay filesets. The list of overlay packages is included in the state of
-the pull step, so if the list of overlay packges is changed, the pull step
+the pull step, so if the list of overlay packages is changed, the pull step
 for the part will re-run. If the :ref:`overlay is visible <overlay_visibility>`
 to a part, the overlay integrity code is added to future steps of the part,
 ensuring proper invalidation of those steps if overlay data changes.

@@ -48,7 +48,7 @@ class OverlayManager:
         *,
         project_info: ProjectInfo,
         part_list: List[Part],
-        base_layer_dir: Optional[Path]
+        base_layer_dir: Optional[Path],
     ):
         self._project_info = project_info
         self._part_list = part_list

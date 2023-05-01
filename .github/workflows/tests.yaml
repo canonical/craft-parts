@@ -85,7 +85,7 @@ jobs:
       - name: Install additional test dependencies
         run: |
           sudo apt install -y ninja-build cmake scons
-          # Build Chisel: needs a version of go than is available in Ubuntu 20.04 
+          # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
           sudo snap install --classic --channel=latest/stable go
           git clone https://github.com/canonical/chisel.git chisel-tmp
           cd chisel-tmp && git checkout f0bff5a30dfdcb400b # known "good" commit until Chisel has versions
@@ -115,7 +115,7 @@ jobs:
         run: |
           make test-integrations
       - name: Run overlay smoke test
-        if: ${{ matrix.adjective == 'focal' }} #TODO: fix this smoke test for jammy
+        if: ${{ matrix.adjective == 'focal' }}  # TODO: fix this smoke test for jammy
         run: |
           wget -q https://cloud-images.ubuntu.com/${{ matrix.adjective }}/current/${{ matrix.adjective }}-server-cloudimg-amd64.squashfs
           mkdir base

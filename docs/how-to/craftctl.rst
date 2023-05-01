@@ -10,7 +10,7 @@ application-defined variables.
 Calling default step handlers
 =============================
 
-Use ``craftctl default`` from within a overriden step scriptlet
+Use ``craftctl default`` from within a overridden step scriptlet
 to execute the built-in handler for the step being processed::
 
   import yaml

@@ -59,7 +59,7 @@ class SomeStepState(step_state.StepState):
         self,
         part_properties: Dict[str, Any],
         *,
-        extra_properties: Optional[List[str]] = None
+        extra_properties: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         return {"name": part_properties.get("name")}
 
