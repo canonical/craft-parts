@@ -27,7 +27,7 @@ from craft_parts.utils import os_utils
 def extract_deb(
     deb_path: Path, extract_dir: Path, log_func: Callable[[str], None]
 ) -> None:
-    """Extract file `deb_path` into `extract_dir."""
+    """Extract file `deb_path` into `extract_dir`."""
     command = ["dpkg-deb", "--extract", str(deb_path), str(extract_dir)]
     try:
         os_utils.process_run(
