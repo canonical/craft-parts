@@ -1,0 +1,30 @@
+name: Documentation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install python packages and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tox
+      - name: Lint docs
+        run: tox run -e lint-docs
+      - name: Build docs
+        if: always()
+        run: tox run -e build-docs
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sphinx-docs
+          path: docs/_build

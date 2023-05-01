@@ -21,7 +21,10 @@ import pathlib
 from typing import TYPE_CHECKING, List, Optional, Set
 
 if TYPE_CHECKING:
-    from pydantic.error_wrappers import ErrorDict, Loc
+    try:  # Needed because sphinx sets TYPE_CHECKING=True
+        from pydantic.error_wrappers import ErrorDict, Loc
+    except ImportError:
+        ErrorDict = dict
 
 
 @dataclasses.dataclass(repr=True)

@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """Definitions of lifecycle actions and action types."""
 
 import enum
@@ -41,6 +40,8 @@ class ActionType(enum.IntEnum):
     ``SKIP``: don't execute this action.
 
     ``REAPPLY``: run the step commands without updating its state.
+
+    :noindex:
     """
 
     RUN = 0

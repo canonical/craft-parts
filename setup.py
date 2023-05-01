@@ -81,8 +81,12 @@ dev_requires = [
 ]
 
 doc_requires = [
+    "furo",
     "sphinx",
+    "sphinx-autobuild",
     "sphinx-autodoc-typehints",
+    "sphinx-design",
+    "sphinx-jsonschema",
     "sphinx-lint",
     "sphinx-pydantic",
     "sphinx-rtd-theme",

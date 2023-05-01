@@ -101,19 +101,20 @@ typehints_document_rtype = True
 napoleon_use_ivar = True
 
 
-def run_apidoc(_):
-    from sphinx.ext.apidoc import main
-    import os
-    import sys
+# def run_apidoc(_):
+#     from sphinx.ext.apidoc import main
+#     import os
+#     import sys
+#
+#     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+#     cur_dir = os.path.abspath(os.path.dirname(__file__))
+#     # Add the apidoc-generated rst files inside of "reference/gen", to avoid
+#     # cluttering the "main" docs dirs.
+#     output_dir = os.path.join(cur_dir, "reference/gen")
+#     module = os.path.join(cur_dir, "..", "craft_parts")
+#     main(["-e", "-o", output_dir, module, "--no-toc", "--force"])
 
-    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-    cur_dir = os.path.abspath(os.path.dirname(__file__))
-    # Add the apidoc-generated rst files inside of "reference/gen", to avoid
-    # cluttering the "main" docs dirs.
-    output_dir = os.path.join(cur_dir, "reference/gen")
-    module = os.path.join(cur_dir, "..", "craft_parts")
-    main(["-e", "-o", output_dir, module, "--no-toc", "--force"])
 
+# def setup(app):
+    # app.connect("builder-inited", run_apidoc)
 
-def setup(app):
-    app.connect("builder-inited", run_apidoc)

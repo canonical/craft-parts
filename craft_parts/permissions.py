@@ -37,8 +37,8 @@ class Permissions(BaseModel):
       - ``owner`` and ``group`` are optional if both are omitted - that is, if
         one of the pair is specified then both must be;
       - ``mode`` is a string containing an integer in base 8. For example, "755",
-      "0755" and "0o755" are all accepted and are the equivalent of calling
-      ``chmod 755 ...``.
+        "0755" and "0o755" are all accepted and are the equivalent of calling
+        ``chmod 755 ...``.
 
     """
 

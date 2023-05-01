@@ -67,7 +67,7 @@ class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :param part_dependencies: A list of the parts this part depends on.
 
         :raises PluginEnvironmentValidationError: If scons is invalid
-        and there are no parts named "scons-deps".
+            and there are no parts named "scons-deps".
         """
         version = self.validate_dependency(
             dependency="scons",
@@ -92,7 +92,7 @@ class SConsPlugin(Plugin):
 
     - Add "scons" to the part's ``build-packages``;
     - Build a custom version of ``scons`` on a separate part called ``scons-deps``
-    and have the part that uses this plugin depend on the ``scons-deps`` part.
+      and have the part that uses this plugin depend on the ``scons-deps`` part.
 
     Note that other dependencies (C/C++ compiler, Java compiler, etc) must be
     declared via ``build-packages`` or otherwise provisioned.
