@@ -16,11 +16,14 @@
 
 """Provide a report on why a step is outdated."""
 
+import logging
 from dataclasses import dataclass
 from typing import List, Optional
 
 from craft_parts.steps import Step
 from craft_parts.utils import formatting_utils
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -123,6 +126,7 @@ class DirtyReport:
             reasons_count += 1
 
         if self.dirty_properties:
+            logger.debug("dirty properties: %r", self.dirty_properties)
             # Be specific only if this is the only reason
             if reasons_count > 1 or len(self.dirty_properties) > 1:
                 reasons.append("properties")
@@ -130,6 +134,7 @@ class DirtyReport:
                 reasons.append(f"{self.dirty_properties[0]!r} property")
 
         if self.dirty_project_options:
+            logger.debug("dirty project options: %r", self.dirty_project_options)
             # Be specific only if this is the only reason
             if reasons_count > 1 or len(self.dirty_project_options) > 1:
                 reasons.append("options")
@@ -137,6 +142,7 @@ class DirtyReport:
                 reasons.append(f"{self.dirty_project_options[0]!r} option")
 
         if self.changed_dependencies:
+            logger.debug("changed dependencies: %r", self.changed_dependencies)
             # Be specific only if this is the only reason
             if reasons_count > 1 or len(self.changed_dependencies) > 1:
                 reasons.append("dependencies")
