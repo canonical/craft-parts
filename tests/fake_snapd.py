@@ -48,7 +48,7 @@ class FakeSnapd:
     def snap_details_func(
         self,
     ) -> Optional[Callable[[str], Tuple[int, Dict[str, Any]]]]:
-        return self.request_handler.snap_details_func
+        return self.request_handler.snap_details_func  # type: ignore[no-any-return]
 
     @snap_details_func.setter
     def snap_details_func(self, value):

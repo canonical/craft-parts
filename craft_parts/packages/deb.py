@@ -379,7 +379,7 @@ class Ubuntu(BaseRepository):
             packages = {"tar"}
         elif source_type in ["hg", "mercurial"]:
             packages = {"mercurial"}
-        elif source_type == ["svn", "subversion"]:
+        elif source_type in ["svn", "subversion"]:
             packages = {"subversion"}
         elif source_type == "rpm2cpio":
             packages = {"rpm2cpio"}
@@ -535,7 +535,7 @@ class Ubuntu(BaseRepository):
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
-        return cls._get_installed_package_versions(marked_package_names)
+        return cls._get_installed_package_versions(marked_package_names)  # type: ignore[no-any-return] # ignore until we can use PEP 612 (Python 3.10)
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
@@ -588,7 +588,7 @@ class Ubuntu(BaseRepository):
             # TODO: fetching of Chisel slices is not supported yet.
             return package_names
 
-        return cls._fetch_stage_debs(
+        return cls._fetch_stage_debs(  # type: ignore[no-any-return] # ignore until we can use PEP 612 (Python 3.10)
             cache_dir=cache_dir,
             package_names=package_names,
             stage_packages_path=stage_packages_path,
