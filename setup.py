@@ -64,6 +64,7 @@ dev_requires = [
 ]
 
 doc_requires = [
+    f"craft-parts-docs=={VERSION}",
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-pydantic",
