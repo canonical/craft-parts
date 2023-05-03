@@ -35,25 +35,25 @@ data structures to describe them.
 
     graph LR
 
-    project
-    cache
-    style cache stroke-dasharray: 5 5
-
-    subgraph parts["part(s)"]
-    src
-    build
-    install
+    subgraph Part
+    CRAFT_PART_SRC
+    CRAFT_PART_BUILD
+    CRAFT_PART_INSTALL
     end
 
-    stage
-    prime
+    CRAFT_PROJECT_DIR
+    --->|pull| CRAFT_PART_SRC
+    --->|build| CRAFT_PART_BUILD
+    --->|build| CRAFT_PART_INSTALL
+    --->|stage| CRAFT_STAGE
+    --->|prime| CRAFT_PRIME
 
-    project -->|pull| cache
-    cache -->|overlay| src
-    src -->|build| build
-    build -->|organize| install
-    install -->|stage| stage
-    stage -->|prime| prime
+    CRAFT_PROJECT_DIR
+    --->|overlay| CRAFT_OVERLAY
+    --->|stage| CRAFT_STAGE
+
+    CRAFT_PART_INSTALL
+    --->|organize| CRAFT_PART_INSTALL
 
 
 Describing a part
