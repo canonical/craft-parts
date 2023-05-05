@@ -43,12 +43,13 @@ def pytest_configure(config):
 def new_dir(tmpdir):
     """Change to a new temporary directory."""
 
+    original_chdir = os.chdir
     cwd = os.getcwd()
     os.chdir(tmpdir)
 
     yield tmpdir
 
-    os.chdir(cwd)
+    original_chdir(cwd)
 
 
 @pytest.fixture
