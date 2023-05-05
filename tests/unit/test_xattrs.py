@@ -28,7 +28,7 @@ class TestXattrs:
     """Extended attribute tests."""
 
     @pytest.fixture
-    def test_file(self, new_dir):
+    def test_file(self):
         # These tests don't work on tmpfs
         file_path = Path(".tests-xattr-test-file")
         file_path.touch()
