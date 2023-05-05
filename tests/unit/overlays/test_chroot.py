@@ -15,7 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import multiprocessing
+import os
 from pathlib import Path
+from unittest import mock
 from unittest.mock import ANY, call
 
 import pytest
@@ -50,7 +52,7 @@ def fake_conn():
 class TestChroot:
     """Fork process and execute in chroot."""
 
-    def test_chroot(self, mocker, new_dir):
+    def test_chroot(self, mocker, new_dir, mock_chroot):
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
@@ -58,8 +60,6 @@ class TestChroot:
         new_root = Path(new_dir, "dir1")
 
         # this runs in the child process
-        mocker.patch("os.chroot")
-
         Path("dir1").mkdir()
         for subdir in ["etc", "proc", "sys", "dev", "dev/shm"]:
             Path(new_root, subdir).mkdir()
@@ -166,10 +166,7 @@ class TestChroot:
             call(f"{new_root}/etc/resolv.conf"),
         ]
 
-    def test_runner(self, mocker, new_dir, fake_conn):
-        mock_chdir = mocker.patch("os.chdir")
-        mock_chroot = mocker.patch("os.chroot")
-
+    def test_runner(self, fake_conn, mock_chdir, mock_chroot):
         chroot._runner(Path("/some/path"), fake_conn, target_func, ("func arg",), {})
 
         assert Path("foo.txt").read_text() == "func arg"
@@ -177,10 +174,7 @@ class TestChroot:
         assert mock_chroot.mock_calls == [call(Path("/some/path"))]
         assert fake_conn.sent == (1337, None)
 
-    def test_runner_error(self, mocker, new_dir, fake_conn):
-        mock_chdir = mocker.patch("os.chdir")
-        mock_chroot = mocker.patch("os.chroot")
-
+    def test_runner_error(self, new_dir, fake_conn, mock_chdir, mock_chroot):
         chroot._runner(
             Path("/some/path"), fake_conn, target_func_error, ("func arg",), {}
         )
