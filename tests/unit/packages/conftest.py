@@ -49,3 +49,8 @@ def fake_deb_run(mocker):
 @pytest.fixture
 def fake_yum_run(mocker):
     return mocker.patch("craft_parts.packages.yum.process_run")
+
+
+@pytest.fixture
+def fake_dnf_run(mocker):
+    return mocker.patch("craft_parts.packages.dnf.process_run")
