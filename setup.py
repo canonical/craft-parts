@@ -17,6 +17,7 @@
 """The setup script."""
 
 import os
+import re
 from typing import Optional
 
 from setuptools import find_packages, setup  # type: ignore
@@ -30,7 +31,9 @@ def is_ubuntu() -> bool:
     try:
         with open("/etc/os-release") as release_file:
             os_release = release_file.read()
-        return "ID=ubuntu" in os_release
+        if re.search(r"^ID(?:_LIKE)?=.*\bubuntu\b.*$", os_release, re.MULTILINE):
+            return True
+        return False
     except FileNotFoundError:
         return False
 
