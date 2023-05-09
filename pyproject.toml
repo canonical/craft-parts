@@ -41,6 +41,10 @@ no_implicit_optional = true
 module = ["tests.*"]
 strict = false
 
+[tool.pylint]
+load-plugins = "pylint_fixme_info"
+disable = "fixme"
+
 [tool.pylint.messages_control]
 disable = "too-many-ancestors,too-few-public-methods,fixme,unspecified-encoding,use-implicit-booleaness-not-comparison,unnecessary-lambda-assignment"
 
