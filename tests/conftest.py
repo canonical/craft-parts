@@ -40,16 +40,24 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def new_dir(tmpdir):
+def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
-
-    original_chdir = os.chdir
-    cwd = os.getcwd()
-    os.chdir(tmpdir)
-
+    monkeypatch.chdir(tmpdir)
     yield tmpdir
 
-    original_chdir(cwd)
+
+@pytest.fixture
+def mock_chdir(monkeypatch):
+    mock_fn = mock.Mock(spec=os.chdir)
+    monkeypatch.setattr(os, "chdir", mock_fn)
+    yield mock_fn
+
+
+@pytest.fixture
+def mock_chroot(monkeypatch):
+    mock_fn = mock.Mock(spec=os.chdir)
+    monkeypatch.setattr(os, "chroot", mock_fn)
+    yield mock_fn
 
 
 @pytest.fixture
