@@ -22,6 +22,7 @@ from craft_parts.utils import os_utils
 
 _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"]
 _YUM_BASED_PLATFORM = ["centos"]
+_DNF_BASED_PLATFORM = ["almalinux"]
 
 
 def _check(distro: Optional[str], platform_distros: List[str]) -> bool:
@@ -56,3 +57,13 @@ def is_yum_based(distro: Optional[str] = None) -> bool:
     :return: Whether the distribution handles packages through YUM.
     """
     return _check(distro, _YUM_BASED_PLATFORM)
+
+
+def is_dnf_based(distro: Optional[str] = None) -> bool:
+    """Verify the distribution packaging system.
+
+    :param distro: The distribution name.
+
+    :return: Whether the distribution handles packages through DNF.
+    """
+    return _check(distro, _DNF_BASED_PLATFORM)
