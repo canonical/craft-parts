@@ -20,6 +20,8 @@ python_version = "3.8"
 exclude = [
     "build",
     "results",
+    "venv",
+    ".venv"
 ]
 warn_unused_configs = true
 warn_redundant_casts = true
