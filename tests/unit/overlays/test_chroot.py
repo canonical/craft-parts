@@ -15,9 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import multiprocessing
-import os
 from pathlib import Path
-from unittest import mock
 from unittest.mock import ANY, call
 
 import pytest
