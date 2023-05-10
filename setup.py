@@ -62,6 +62,7 @@ install_requires = [
     "pyxdg",
     "requests",
     "requests-unixsocket",
+    "urllib3<2",  # keep compatible API
 ]
 
 
