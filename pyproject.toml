@@ -118,6 +118,3 @@ ignore = [
     "PLR0913",  # Allow many arguments for test functions
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
-
-[tool.ruff.flake8-annotations]
-suppress-none-returning = true  # We don't need to explicitly point out that a function doesn't return anything
