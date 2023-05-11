@@ -1,12 +1,13 @@
 Python plugin
 -------------
 
-The Python plugin can be used for python projects where you would want to do
-the following things:
+The Python plugin can be used for Python projects where you would want to do
+any of the following things:
 
-- import python modules with a requirements.txt file
-- build a python project that has a setup.py
-- install packages straight from pip
+- Import Python modules with a :file:`requirements.txt` file.
+- Build a Python project that has a :file:`setup.py` or
+  :file:`pyproject.toml` file.
+- Install packages using :command:`pip`.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
@@ -36,9 +37,9 @@ This plugin also interprets these specific build-environment entries:
 - ``PARTS_PYTHON_VENV_ARGS``
   Additional arguments for venv.
 
-By default this plugin uses python from the base. If a different
-interpreter is desired, it must be bundled (including venv) and must
-be in PATH.
+By default this plugin uses Python from the base. If a different
+interpreter is desired, it must be bundled (including the ``venv`` module)
+and must be in the PATH.
 
 Use of python3-<python-package> in stage-packages will force the
 inclusion of the python interpreter.
