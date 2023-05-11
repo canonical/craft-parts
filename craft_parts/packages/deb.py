@@ -27,7 +27,7 @@ import sys
 import tempfile
 from io import StringIO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -167,7 +167,7 @@ _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
 ]
 
 
-IGNORE_FILTERS: Dict[str, Set[str]] = {
+_IGNORE_FILTERS: Dict[str, Set[str]] = {
     "core20": {
         "python3-attr",
         "python3-blinker",
@@ -304,15 +304,22 @@ def _get_dpkg_list_path(base: str) -> pathlib.Path:
 
 
 def _get_filtered_stage_package_names(
-    *, base: str, package_list: List[DebPackage]
+    *,
+    base: str,
+    package_list: List[DebPackage],
+    base_package_names: Optional[Iterable[str]],
 ) -> Set[str]:
     """Get filtered packages by name only - no version or architectures."""
-    manifest_packages = [p.name for p in get_packages_in_base(base=base)]
-    stage_packages = [p.name for p in package_list]
+    if base_package_names:
+        filtered_packages = set(base_package_names)
+    else:
+        manifest_packages = {p.name for p in get_packages_in_base(base=base)}
+        ignored_packages = _IGNORE_FILTERS.get(base, set())
+        filtered_packages = manifest_packages - ignored_packages
 
-    return (
-        set(manifest_packages) - set(stage_packages) - IGNORE_FILTERS.get(base, set())
-    )
+    stage_packages = {p.name for p in package_list}
+
+    return filtered_packages - stage_packages
 
 
 def get_packages_in_base(*, base: str) -> List[DebPackage]:
@@ -619,6 +626,7 @@ class Ubuntu(BaseRepository):
         filtered_names = _get_filtered_stage_package_names(
             base=base,
             package_list=[DebPackage.from_unparsed(name) for name in package_names],
+            base_package_names=cls.stage_packages_filters,
         )
 
         if packages_filters:

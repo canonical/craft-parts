@@ -86,6 +86,10 @@ class Executor:
 
         This method is called before executing lifecycle actions.
         """
+        packages.Repository.stage_packages_filters = (
+            callbacks.get_stage_packages_filters(self._project_info)
+        )
+
         self._install_build_packages()
         self._install_build_snaps()
 

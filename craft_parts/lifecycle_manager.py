@@ -56,8 +56,8 @@ class LifecycleManager:
         directory will be used if none is specified.
     :param arch: The architecture to build for. Defaults to the host system
         architecture.
-    :param base: The system base the project being processed will run on. Defaults
-        to the system where Craft Parts is being executed.
+    :param base: [deprecated] The system base the project being processed will
+        run on. Defaults to the system where Craft Parts is being executed.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param application_package_name: The name of the application package, if required

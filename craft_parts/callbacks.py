@@ -16,9 +16,10 @@
 
 """Register and execute callback functions."""
 
+import itertools
 import logging
 from collections import namedtuple
-from typing import Callable, List, Optional, Union
+from typing import Callable, Iterable, List, Optional, Union
 
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
@@ -26,16 +27,31 @@ from craft_parts.steps import Step
 
 CallbackHook = namedtuple("CallbackHook", ["function", "step_list"])
 
+FilterCallback = Callable[[ProjectInfo], Iterable[str]]
 ExecutionCallback = Callable[[ProjectInfo], None]
 StepCallback = Callable[[StepInfo], bool]
-Callback = Union[ExecutionCallback, StepCallback]
+Callback = Union[FilterCallback, ExecutionCallback, StepCallback]
 
+_STAGE_PACKAGE_FILTERS: List[CallbackHook] = []
 _PROLOGUE_HOOKS: List[CallbackHook] = []
 _EPILOGUE_HOOKS: List[CallbackHook] = []
 _PRE_STEP_HOOKS: List[CallbackHook] = []
 _POST_STEP_HOOKS: List[CallbackHook] = []
 
 logger = logging.getLogger(__name__)
+
+
+def register_stage_packages_filter(func: FilterCallback) -> None:
+    """Register a callback function for stage packages dependency cutoff.
+
+    Craft Parts includes mechanisms to filter out stage package dependencies
+    in snap bases. This is now deprecated, and a function providing an explicit
+    list of exclusions should be provided by the application.
+
+    :param func: The callback function returning the filtered packages iterator.
+    """
+    _ensure_not_defined(func, _STAGE_PACKAGE_FILTERS)
+    _STAGE_PACKAGE_FILTERS.append(CallbackHook(func, None))
 
 
 def register_prologue(func: ExecutionCallback) -> None:
@@ -84,12 +100,24 @@ def register_post_step(
 
 def unregister_all() -> None:
     """Clear all existing registered callback functions."""
-    global _PROLOGUE_HOOKS, _EPILOGUE_HOOKS  # pylint: disable=global-statement
-    global _PRE_STEP_HOOKS, _POST_STEP_HOOKS  # pylint: disable=global-statement
-    _PROLOGUE_HOOKS = []
-    _EPILOGUE_HOOKS = []
-    _PRE_STEP_HOOKS = []
-    _POST_STEP_HOOKS = []
+    _STAGE_PACKAGE_FILTERS[:] = []
+    _PROLOGUE_HOOKS[:] = []
+    _EPILOGUE_HOOKS[:] = []
+    _PRE_STEP_HOOKS[:] = []
+    _POST_STEP_HOOKS[:] = []
+
+
+def get_stage_packages_filters(project_info: ProjectInfo) -> Optional[Iterable[str]]:
+    """Obtain the list of stage packages to be filtered out.
+
+    :param project_info: The project information to be sent to callback functions.
+
+    :return: An iterator for the list of packages to be filtered out.
+    """
+    if not _STAGE_PACKAGE_FILTERS:
+        return None
+
+    return itertools.chain(*[f.function(project_info) for f in _STAGE_PACKAGE_FILTERS])
 
 
 def run_prologue(project_info: ProjectInfo) -> None:
