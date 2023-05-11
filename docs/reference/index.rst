@@ -11,6 +11,7 @@ Reference
    parts_steps
    actions
    infos
+   plugins
    exceptions
    reference
    ../changelog
