@@ -1,0 +1,7 @@
+*******
+Plugins
+*******
+
+.. toctree::
+
+   python.rst
