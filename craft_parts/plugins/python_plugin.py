@@ -54,8 +54,7 @@ class PythonPluginProperties(PluginProperties, PluginModel):
 
 
 class PythonPlugin(Plugin):
-    """A plugin to build python parts.
-    """
+    """A plugin to build python parts."""
 
     properties_class = PythonPluginProperties
 
