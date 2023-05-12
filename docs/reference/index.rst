@@ -6,13 +6,13 @@ Reference
 .. toctree::
    :maxdepth: 1
 
+   actions
+   exceptions
+   infos
    lifecycle_manager
    part_properties
    parts_steps
-   actions
-   infos
    plugins/index
-   exceptions
    reference
    ../changelog
 
