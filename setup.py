@@ -20,6 +20,8 @@ import os
 
 from setuptools import find_packages, setup  # type: ignore
 
+VERSION = "1.19.3"
+
 with open("README.md") as readme_file:
     readme = readme_file.read()
 
@@ -98,7 +100,7 @@ extras_requires = {
 
 setup(
     name="craft-parts",
-    version="1.19.3",
+    version=VERSION,
     description="Craft parts tooling",
     long_description=readme,
     author="Canonical Ltd.",
@@ -123,8 +125,14 @@ setup(
     },
     install_requires=install_requires,
     extras_require=extras_requires,
-    packages=find_packages(include=["craft_parts", "craft_parts.*"]),
-    package_data={"craft_parts": ["py.typed"]},
+    packages=find_packages(include=["craft_parts", "craft_parts.*"])
+    + ["craft_parts_docs"],
+    # todo: can we make the docs optional?
+    package_dir={"craft_parts_docs": "docs/base"},
+    package_data={
+        "craft_parts": ["py.typed"],
+        "craft_parts_docs": ["**"],
+    },
     include_package_data=True,
     zip_safe=False,
 )
