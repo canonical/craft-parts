@@ -124,7 +124,8 @@ setup(
     },
     install_requires=install_requires,
     extras_require=extras_requires,
-    packages=find_packages(include=["craft_parts", "craft_parts.*"]) + ["craft_parts_docs"],
+    packages=find_packages(include=["craft_parts", "craft_parts.*"])
+    + ["craft_parts_docs"],
     # todo: can we make the docs optional?
     package_dir={"craft_parts_docs": "docs/base"},
     package_data={
