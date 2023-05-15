@@ -58,7 +58,7 @@ class BuildState(StepState):
         self,
         part_properties: Dict[str, Any],
         *,
-        extra_properties: Optional[List[str]] = None
+        extra_properties: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 

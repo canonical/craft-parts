@@ -17,9 +17,12 @@
 """The setup script."""
 
 import os
+import re
 from typing import Optional
 
 from setuptools import find_packages, setup  # type: ignore
+
+VERSION = "1.19.3"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -30,7 +33,9 @@ def is_ubuntu() -> bool:
     try:
         with open("/etc/os-release") as release_file:
             os_release = release_file.read()
-        return "ID=ubuntu" in os_release
+        if re.search(r"^ID(?:_LIKE)?=.*\bubuntu\b.*$", os_release, re.MULTILINE):
+            return True
+        return False
     except FileNotFoundError:
         return False
 
@@ -59,6 +64,7 @@ install_requires = [
     "pyxdg",
     "requests",
     "requests-unixsocket",
+    "urllib3<2",  # keep compatible API
 ]
 
 
@@ -80,7 +86,7 @@ dev_requires = [
     "twine",
 ]
 
-doc_requires = [
+docs_require = [
     "furo",
     "sphinx",
     "sphinx-autobuild",
@@ -94,7 +100,7 @@ doc_requires = [
 ]
 
 types_requires = [
-    "mypy[reports]==1.1.1",
+    "mypy[reports]==0.991",
     "types-colorama",
     "types-docutils",
     "types-Pillow",
@@ -123,8 +129,8 @@ test_requires = [
 ]
 
 extras_requires = {
-    "dev": dev_requires + doc_requires + test_requires + types_requires,
-    "doc": doc_requires,
+    "dev": dev_requires + docs_require + test_requires + types_requires,
+    "docs": docs_require,
     "test": test_requires + types_requires,
     "types": types_requires,
 }
@@ -132,7 +138,7 @@ extras_requires = {
 
 setup(
     name="craft-parts",
-    version="1.19.3",
+    version=VERSION,
     description="Craft parts tooling",
     long_description=readme,
     author="Canonical Ltd.",
@@ -157,8 +163,14 @@ setup(
     },
     install_requires=install_requires,
     extras_require=extras_requires,
-    packages=find_packages(include=["craft_parts", "craft_parts.*"]),
-    package_data={"craft_parts": ["py.typed"]},
+    packages=find_packages(include=["craft_parts", "craft_parts.*"])
+    + ["craft_parts_docs"],
+    # todo: can we make the docs optional?
+    package_dir={"craft_parts_docs": "docs/base"},
+    package_data={
+        "craft_parts": ["py.typed"],
+        "craft_parts_docs": ["**"],
+    },
     include_package_data=True,
     zip_safe=False,
 )

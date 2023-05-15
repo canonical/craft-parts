@@ -21,6 +21,8 @@ exclude = [
     "build",
     "tests",
     "results",
+    "venv",
+    ".venv"
 ]
 warn_unused_configs = true
 warn_redundant_casts = true
@@ -28,17 +30,21 @@ strict_equality = true
 strict_concatenate = true
 warn_return_any = true
 disallow_subclassing_any = true
-disallow_untyped_decorators = true
-disallow_any_generics = true
+#disallow_untyped_decorators = true
+#disallow_any_generics = true
 
 [[tool.mypy.overrides]]
-module = ["starcraft"]
-disallow_untyped_defs = true
+module = ["craft-parts"]
+#disallow_untyped_defs = true
 no_implicit_optional = true
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 strict = false
+
+[tool.pylint]
+load-plugins = "pylint_fixme_info"
+disable = "fixme"
 
 [tool.pylint.messages_control]
 disable = "too-many-ancestors,too-few-public-methods,fixme,unspecified-encoding,use-implicit-booleaness-not-comparison,unnecessary-lambda-assignment"
@@ -101,7 +107,7 @@ ignore = [
 
 
     # Stricter type checking rules that that are disabled.
-    "A003",  # Class attribute shadowing a python bulit-in (class attributes are seldom if ever referred to bare)
+    "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
     "N818",  # Exception names ending with suffix `Error`
     "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
     "ANN101", "ANN102",  # Type annotations for `self` and `cls` in methods
@@ -152,6 +158,3 @@ ignore = [
     "PLR0913",  # Allow many arguments for test functions
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
-
-[tool.ruff.flake8-annotations]
-suppress-none-returning = true  # We don't need to explicitly point out that a function doesn't return anything

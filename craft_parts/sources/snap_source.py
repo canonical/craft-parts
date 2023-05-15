@@ -20,7 +20,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import yaml
 from overrides import overrides
@@ -136,6 +136,6 @@ def _get_snap_name(snap: str, snap_dir: str) -> str:
     """
     try:
         with open(os.path.join(snap_dir, "meta", "snap.yaml")) as snap_yaml:
-            return yaml.safe_load(snap_yaml)["name"]
+            return cast(str, yaml.safe_load(snap_yaml)["name"])
     except (FileNotFoundError, KeyError) as snap_error:
         raise errors.InvalidSnapPackage(snap) from snap_error

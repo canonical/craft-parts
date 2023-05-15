@@ -142,7 +142,7 @@ class StepState(MigrationState, ABC):
         )
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> Any:
+    def unmarshal(cls, data: Dict[str, Any]) -> "StepState":
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
 

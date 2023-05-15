@@ -18,10 +18,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libapt-pkg-dev
-          pip install -U \
-                         https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-distutils-extra/2.43/python-distutils-extra_2.43.tar.xz \
-                         https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz \
-                         .[dev]
+          pip install -U -e .[dev]
       - name: Run black
         run: |
           make test-black

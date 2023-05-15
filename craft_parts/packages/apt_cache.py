@@ -380,10 +380,9 @@ def _verify_marked_install(package: apt.package.Package) -> None:
 
 def _set_pkg_version(package: apt.package.Package, version: str) -> None:
     """Set candidate version to a specific version if available."""
-    if version in package.versions:
-        pkg_version = package.versions.get(version)
-        if pkg_version:
-            package.candidate = pkg_version
+    pkg_version = package.versions.get(version)
+    if pkg_version:
+        package.candidate = pkg_version
     else:
         raise errors.PackageNotFound(f"{package.name}={version}")
 

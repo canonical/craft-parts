@@ -21,9 +21,21 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 from urllib import parse
 
+import requests
 import requests_unixsocket  # type: ignore
 from requests import exceptions
 
@@ -146,7 +158,7 @@ class SnapPackage:
         if not snap_store_info or not self.in_store:
             return {}
 
-        return snap_store_info["channels"]
+        return cast(Dict[str, Any], snap_store_info["channels"])
 
     def get_current_channel(self) -> str:
         """Obtain the current channel for this snap."""
@@ -172,7 +184,7 @@ class SnapPackage:
         """Verify whether this snap is a classic snap."""
         store_channels = self._get_store_channels()
         try:
-            return store_channels[self.channel]["confinement"] == "classic"
+            return bool(store_channels[self.channel]["confinement"] == "classic")
         except KeyError:
             # We have seen some KeyError issues when running tests that are
             # hard to debug as they only occur there, logging in debug mode
@@ -344,7 +356,7 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[by
     slug = f'snaps/{parse.quote(snap_name, safe="")}/file'
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_file = requests_unixsocket.get(url)
+        snap_file: requests.Response = requests_unixsocket.get(url)
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_file.raise_for_status()
@@ -359,7 +371,7 @@ def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_info.raise_for_status()
-    return snap_info.json()["result"]
+    return cast(Dict[str, Any], snap_info.json()["result"])
 
 
 def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
@@ -369,7 +381,7 @@ def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
     url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()
-    return snap_info.json()["result"][0]
+    return cast(Dict[str, Any], snap_info.json()["result"][0])
 
 
 def get_installed_snaps() -> List[str]:

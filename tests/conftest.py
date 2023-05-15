@@ -40,15 +40,24 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def new_dir(tmpdir):
+def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
-
-    cwd = os.getcwd()
-    os.chdir(tmpdir)
-
+    monkeypatch.chdir(tmpdir)
     yield tmpdir
 
-    os.chdir(cwd)
+
+@pytest.fixture
+def mock_chdir(monkeypatch):
+    mock_fn = mock.Mock(spec=os.chdir)
+    monkeypatch.setattr(os, "chdir", mock_fn)
+    yield mock_fn
+
+
+@pytest.fixture
+def mock_chroot(monkeypatch):
+    mock_fn = mock.Mock(spec=os.chdir)
+    monkeypatch.setattr(os, "chroot", mock_fn)
+    yield mock_fn
 
 
 @pytest.fixture
@@ -72,10 +81,16 @@ def temp_xdg(tmpdir, mocker):
     mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))
     mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_dirs", new=[xdg.BaseDirectory.xdg_config_home]
+        "xdg.BaseDirectory.xdg_config_dirs",
+        new=[
+            xdg.BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
+        ],
     )
     mocker.patch(
-        "xdg.BaseDirectory.xdg_data_dirs", new=[xdg.BaseDirectory.xdg_data_home]
+        "xdg.BaseDirectory.xdg_data_dirs",
+        new=[
+            xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
+        ],
     )
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
 

@@ -431,7 +431,7 @@ def _get_host_architecture() -> str:
     return platform.machine()
 
 
-_ARCH_TRANSLATIONS: Dict[str, Dict[str, Any]] = {
+_ARCH_TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "aarch64": {
         "kernel": "arm64",
         "deb": "arm64",

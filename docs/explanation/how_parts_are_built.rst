@@ -23,12 +23,12 @@ using the source definitions for each part. After the step, the *working*
 directory contains a ``state`` file to manage the state of the build and a
 number of subdirectories:
 
- * ``parts`` is where individual parts for the project are prepared for build.
-   The directory for each part in the ``parts`` directory contains ``src``, ``build`` and ``install`` directories that will be used during the *build*
-   step.
- * ``prime`` will contain the finished build product later in the process.
- * ``project`` contains the original, unmodified project files.
- * ``stage`` will contain staged files after a build, before they are primed.
+* ``parts`` is where individual parts for the project are prepared for build.
+  The directory for each part in the ``parts`` directory contains ``src``, ``build`` and ``install`` directories that will be used during the *build*
+  step.
+* ``prime`` will contain the finished build product later in the process.
+* ``project`` contains the original, unmodified project files.
+* ``stage`` will contain staged files after a build, before they are primed.
 
 The standard actions for the *pull* step can be overridden or extended by
 using the :ref:`override_pull` key to describe a series of actions.

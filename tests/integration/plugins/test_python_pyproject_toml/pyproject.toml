@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plugin_test_pyproject_toml"
+description = "My package description"
+version = "0.0.1"
+
+[project.scripts]
+mytestpyprojecttoml = "mytestpyprojecttoml:main"

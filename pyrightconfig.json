@@ -6,6 +6,8 @@
     ".direnv",
     ".tox",
     "build",
-    "docs"
+    "docs",
+    "venv",
+    ".venv"
   ]
 }
