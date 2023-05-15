@@ -43,7 +43,7 @@ class LocalSource(SourceHandler):
         self,
         *args: Any,
         copy_function: Callable[..., None] = file_utils.link_or_copy,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
         self.source_abspath = os.path.abspath(self.source)

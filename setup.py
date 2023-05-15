@@ -17,6 +17,8 @@
 """The setup script."""
 
 import os
+import re
+from typing import Optional
 
 from setuptools import find_packages, setup  # type: ignore
 
@@ -31,9 +33,22 @@ def is_ubuntu() -> bool:
     try:
         with open("/etc/os-release") as release_file:
             os_release = release_file.read()
-        return "ID=ubuntu" in os_release
+        if re.search(r"^ID(?:_LIKE)?=.*\bubuntu\b.*$", os_release, re.MULTILINE):
+            return True
+        return False
     except FileNotFoundError:
         return False
+
+
+def ubuntu_version() -> Optional[str]:
+    """Get the ubuntu codename."""
+    if not is_ubuntu():
+        return None
+    with open("/etc/os-release") as release_file:
+        for line in release_file:
+            if line.startswith("VERSION_CODENAME="):
+                return line.partition("=")[2].strip()
+    return None
 
 
 def is_rtd() -> bool:
@@ -54,9 +69,16 @@ install_requires = [
 
 
 if is_ubuntu() and not is_rtd():
-    install_requires += [
-        "python-apt",
-    ]
+    version = ubuntu_version()
+    apt_source_packages = {
+        "bionic": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_1.6.6.tar.xz",
+        "focal": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.0.1ubuntu0.20.04.1.tar.xz",
+        "jammy": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.4.0ubuntu1.tar.xz",
+    }
+    if version in apt_source_packages:
+        install_requires.append(apt_source_packages[version])
+    else:
+        install_requires.append("python-apt")
 
 
 dev_requires = [
@@ -64,12 +86,25 @@ dev_requires = [
     "twine",
 ]
 
-doc_requires = [
+docs_require = [
     "sphinx",
     "sphinx-autodoc-typehints",
+    "sphinx-lint",
     "sphinx-pydantic",
     "sphinx-rtd-theme",
     "sphinxcontrib-details-directive==0.1.0",
+]
+
+types_requires = [
+    "mypy[reports]==0.991",
+    "types-colorama",
+    "types-docutils",
+    "types-Pillow",
+    "types-Pygments",
+    "types-pytz",
+    "types-PyYAML",
+    "types-requests",
+    "types-setuptools",
 ]
 
 test_requires = [
@@ -77,7 +112,6 @@ test_requires = [
     "codespell",
     "coverage",
     "isort",
-    "mypy==0.991",
     "pydocstyle",
     "pylint",
     "pylint-fixme-info",
@@ -87,14 +121,14 @@ test_requires = [
     "requests-mock",
     "ruff==0.0.239",
     "tox",
-    "types-PyYAML",
-    "types-requests",
+    "yamllint==1.29.0",
 ]
 
 extras_requires = {
-    "dev": dev_requires + doc_requires + test_requires,
-    "doc": doc_requires,
-    "test": test_requires,
+    "dev": dev_requires + docs_require + test_requires + types_requires,
+    "docs": docs_require,
+    "test": test_requires + types_requires,
+    "types": types_requires,
 }
 
 
