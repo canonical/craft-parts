@@ -19,7 +19,6 @@ line_length = 88
 python_version = "3.8"
 exclude = [
     "build",
-    "tests",
     "results",
     "venv",
     ".venv"
