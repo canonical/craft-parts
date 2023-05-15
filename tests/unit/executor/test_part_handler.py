@@ -72,7 +72,7 @@ class TestPartHandling:
         self._mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         # pylint: enable=attribute-defined-outside-init
 
-    def test_run_pull(self, mocker):
+    def test_run_pull(self, mocker, new_dir):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_pull")
         mocker.patch("craft_parts.packages.Repository.unpack_stage_packages")
         mocker.patch(
@@ -81,10 +81,10 @@ class TestPartHandling:
         )
         mocker.patch("craft_parts.packages.snaps.download_snaps")
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
+        mock_run_step = mocker.spy(PartHandler, "_run_step")
 
-        state = self._handler._run_pull(
-            StepInfo(self._part_info, Step.PULL), stdout=None, stderr=None
-        )
+        step_info = StepInfo(self._part_info, Step.PULL)
+        state = self._handler._run_pull(step_info, stdout=None, stderr=None)
         assert state == states.PullState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -95,7 +95,53 @@ class TestPartHandling:
             },
         )
 
-    def test_run_build(self, mocker):
+        assert mock_run_step.mock_calls == [
+            call(
+                self._handler,
+                step_info=step_info,
+                scriptlet_name="override-pull",
+                work_dir=new_dir / "parts/foo/src",
+                stdout=None,
+                stderr=None,
+            )
+        ]
+
+    def test_run_pull_subdir(self, mocker, new_dir):
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_pull")
+        mock_run_step = mocker.spy(PartHandler, "_run_step")
+
+        part = Part(
+            "foo",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "source-subdir": "some/subdir",
+            },
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        step_info = StepInfo(part_info, Step.PULL)
+        handler._run_pull(step_info, stdout=None, stderr=None)
+        assert mock_run_step.mock_calls == [
+            call(
+                handler,
+                step_info=step_info,
+                scriptlet_name="override-pull",
+                work_dir=Path(new_dir, "parts/foo/src/some/subdir"),
+                stdout=None,
+                stderr=None,
+            )
+        ]
+
+    def test_run_build(self, mocker, new_dir):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
         mocker.patch(
             "craft_parts.packages.Repository.get_installed_packages",
@@ -106,10 +152,10 @@ class TestPartHandling:
             return_value=["snapcraft=6466"],
         )
         mocker.patch("subprocess.check_output", return_value=b"os-info")
+        mock_run_step = mocker.spy(PartHandler, "_run_step")
 
-        state = self._handler._run_build(
-            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
-        )
+        step_info = StepInfo(self._part_info, Step.BUILD)
+        state = self._handler._run_build(step_info, stdout=None, stderr=None)
         assert state == states.BuildState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -123,8 +169,55 @@ class TestPartHandling:
             overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
+        assert mock_run_step.mock_calls == [
+            call(
+                self._handler,
+                step_info=step_info,
+                scriptlet_name="override-build",
+                work_dir=Path(new_dir, "parts/foo/build"),
+                stdout=None,
+                stderr=None,
+            )
+        ]
+
         assert self._mock_mount_overlayfs.mock_calls == []
         assert self._mock_umount.mock_calls == []
+
+    def test_run_build_subdir(self, mocker, new_dir):
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mock_run_step = mocker.spy(PartHandler, "_run_step")
+
+        part = Part(
+            "foo",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "source-subdir": "some/subdir",
+            },
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        step_info = StepInfo(self._part_info, Step.BUILD)
+        handler._run_build(step_info, stdout=None, stderr=None)
+
+        assert mock_run_step.mock_calls == [
+            call(
+                handler,
+                step_info=step_info,
+                scriptlet_name="override-build",
+                work_dir=Path(new_dir, "parts/foo/build/some/subdir"),
+                stdout=None,
+                stderr=None,
+            )
+        ]
 
     @pytest.mark.usefixtures("new_dir")
     @pytest.mark.parametrize("out_of_source", [True, False])
