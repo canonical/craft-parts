@@ -84,7 +84,7 @@ dev_requires = [
     "twine",
 ]
 
-doc_requires = [
+docs_require = [
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
@@ -123,8 +123,8 @@ test_requires = [
 ]
 
 extras_requires = {
-    "dev": dev_requires + doc_requires + test_requires + types_requires,
-    "doc": doc_requires,
+    "dev": dev_requires + docs_require + test_requires + types_requires,
+    "docs": docs_require,
     "test": test_requires + types_requires,
     "types": types_requires,
 }
