@@ -530,7 +530,7 @@ class TestBuildPackages:
 
 
 @pytest.mark.parametrize(
-    "source_type, packages",
+    "source_type, pkgs",
     [
         ("7zip", {"p7zip-full"}),
         ("bzr", {"bzr"}),
@@ -546,8 +546,8 @@ class TestBuildPackages:
         ("whatever-unknown", set()),
     ],
 )
-def test_packages_for_source_type(source_type, packages):
-    assert deb.Ubuntu.get_packages_for_source_type(source_type) == packages
+def test_packages_for_source_type(source_type, pkgs):
+    assert deb.Ubuntu.get_packages_for_source_type(source_type) == pkgs
 
 
 @pytest.fixture
@@ -575,11 +575,11 @@ def fake_dpkg_query(mocker):
 class TestGetPackagesInBase:
     def test_hardcoded_bases(self):
         for base in ("core", "core16", "core18"):
-            packages = [
+            pkgs = [
                 DebPackage.from_unparsed(p)
                 for p in deb._DEFAULT_FILTERED_STAGE_PACKAGES
             ]
-            assert deb.get_packages_in_base(base=base) == packages
+            assert deb.get_packages_in_base(base=base) == pkgs
 
     def test_package_list_from_dpkg_list(self, tmpdir, mocker):
         dpkg_list_path = Path(tmpdir, "dpkg.list")
@@ -660,6 +660,8 @@ class TestStagePackagesFilters:
             arch="amd64",
         )
 
+        # pylint: disable=unnecessary-dunder-call
+
         fake_deb_run.assert_has_calls([call(["apt-get", "update"])])
         fake_apt_cache.assert_has_calls(
             [
@@ -672,6 +674,8 @@ class TestStagePackagesFilters:
                 call().__enter__().fetch_archives(debs_path),
             ]
         )
+
+        # pylint: enable=unnecessary-dunder-call
 
         assert fetched_packages == ["fake-package=1.0"]
 

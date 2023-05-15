@@ -236,6 +236,7 @@ class TestCallbackExecution:
         for fn in funcs:
             callbacks.register_stage_packages_filter(fn)
         res = callbacks.get_stage_packages_filters(self._project_info)
+        assert res is not None
         assert list(res) == result
 
         out, err = capfd.readouterr()
