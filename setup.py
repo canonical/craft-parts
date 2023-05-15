@@ -71,9 +71,9 @@ install_requires = [
 if is_ubuntu() and not is_rtd():
     version = ubuntu_version()
     apt_source_packages = {
-        "bionic": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_1.6.6.tar.xz",
-        "focal": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.0.1ubuntu0.20.04.1.tar.xz",
-        "jammy": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.4.0ubuntu1.tar.xz",
+        "bionic": "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/1.6.6/python-apt_1.6.6.tar.xz",
+        "focal": "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz",
+        "jammy": "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz",
     }
     if version in apt_source_packages:
         install_requires.append(apt_source_packages[version])
