@@ -125,20 +125,7 @@ class PythonPlugin(Plugin):
                 """
             )
         )
-
-        # And check if venv symlinks should be removed.
-        if self._should_remove_symlinks():
-            build_commands.append(
-                dedent(
-                    f"""\
-                    echo Removing python symlinks in {self._part_info.part_install_dir}/bin
-                    rm "{self._part_info.part_install_dir}"/bin/python*
-                    """
-                )
-            )
-            return build_commands
-
-        # If we didn't remove the symlink, point it to the real python3 interpreter.
+        # Find the "real" python3 interpreter.
         python_interpreter = self._get_system_python_interpreter() or ""
         build_commands.append(
             dedent(
@@ -171,10 +158,28 @@ class PythonPlugin(Plugin):
                 fi
 
                 eval "${{opts_state}}"
-                ln -sf "${{symlink_target}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
                 """
             )
         )
+
+        # Handle the venv symlink (either remove it or set the final correct target)
+        if self._should_remove_symlinks():
+            build_commands.append(
+                dedent(
+                    f"""\
+                    echo Removing python symlinks in {self._part_info.part_install_dir}/bin
+                    rm "{self._part_info.part_install_dir}"/bin/python*
+                    """
+                )
+            )
+        else:
+            build_commands.append(
+                dedent(
+                    """\
+                    ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
+                    """
+                )
+            )
 
         return build_commands
 
