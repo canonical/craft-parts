@@ -67,18 +67,19 @@ install_requires = [
     "urllib3<2",  # keep compatible API
 ]
 
+dependency_links = []
+
 
 if is_ubuntu() and not is_rtd():
     version = ubuntu_version()
     apt_source_packages = {
-        "bionic": "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/1.6.6/python-apt_1.6.6.tar.xz",
-        "focal": "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz",
-        "jammy": "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz",
+        "bionic": "https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/1.6.6/python-apt_1.6.6.tar.xz",
+        "focal": "https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz",
+        "jammy": "https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz",
     }
     if version in apt_source_packages:
-        install_requires.append(apt_source_packages[version])
-    else:
-        install_requires.append("python-apt")
+        dependency_links.append(apt_source_packages[version])
+    install_requires.append("python-apt")
 
 
 dev_requires = [
@@ -167,6 +168,7 @@ setup(
         "craft_parts": ["py.typed"],
         "craft_parts_docs": ["**"],
     },
+    dependency_links=dependency_links,
     include_package_data=True,
     zip_safe=False,
 )
