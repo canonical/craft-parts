@@ -39,6 +39,7 @@ class Permissions(BaseModel):
     - ``mode`` is a string containing an integer in base 8. For example, "755",
       "0755" and "0o755" are all accepted and are the equivalent of calling
       ``chmod 755 ...``.
+
     """
 
     path: str = "*"
