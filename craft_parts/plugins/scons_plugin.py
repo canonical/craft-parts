@@ -92,7 +92,7 @@ class SConsPlugin(Plugin):
 
     - Add "scons" to the part's ``build-packages``;
     - Build a custom version of ``scons`` on a separate part called ``scons-deps``
-    and have the part that uses this plugin depend on the ``scons-deps`` part.
+      and have the part that uses this plugin depend on the ``scons-deps`` part.
 
     Note that other dependencies (C/C++ compiler, Java compiler, etc) must be
     declared via ``build-packages`` or otherwise provisioned.
@@ -108,6 +108,7 @@ class SConsPlugin(Plugin):
       (list of strings)
       Additional values to pass to the ``scons`` and ``scons install`` command
       lines.
+
     """
 
     properties_class = SConsPluginProperties

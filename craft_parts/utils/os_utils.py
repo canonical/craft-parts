@@ -229,7 +229,7 @@ def mount(device: str, mountpoint: str, *args: str) -> None:
 
     :param device: The device to mount.
     :param mountpoint: Where the device will be mounted.
-    :param *args: Additional arguments to ``mount(8)``.
+    :param args: Additional arguments to ``mount(8)``.
 
     :raises subprocess.CalledProcessError: on error.
     """
@@ -241,7 +241,7 @@ def mount_overlayfs(mountpoint: str, *args: str) -> None:
     """Mount an overlay filesystem using fuse-overlayfs.
 
     :param mountpoint: Where the device will be mounted.
-    :param *args: Additional arguments to ``mount(8)``.
+    :param args: Additional arguments to ``mount(8)``.
 
     :raises subprocess.CalledProcessError: on error.
     """
