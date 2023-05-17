@@ -27,7 +27,7 @@ import sys
 import tempfile
 from io import StringIO
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -307,11 +307,11 @@ def _get_filtered_stage_package_names(
     *,
     base: str,
     package_list: List[DebPackage],
-    base_package_names: Optional[Iterable[str]],
+    base_package_names: Optional[Set[str]],
 ) -> Set[str]:
     """Get filtered packages by name only - no version or architectures."""
     if base_package_names:
-        filtered_packages = set(base_package_names)
+        filtered_packages = base_package_names
     else:
         manifest_packages = {p.name for p in get_packages_in_base(base=base)}
         ignored_packages = _IGNORE_FILTERS.get(base, set())
