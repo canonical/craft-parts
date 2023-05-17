@@ -26,12 +26,18 @@ from contextlib import ContextDecorator
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
-import apt
-import apt.cache
-import apt.package
-import apt.progress
-import apt.progress.base
-import apt_pkg
+try:
+    import apt
+    import apt.cache
+    import apt.package
+    import apt.progress
+    import apt.progress.base
+    import apt_pkg
+except ImportError as e:
+    raise ImportError(
+        "python-apt is needed for apt operations. "
+        "Check the craft-parts README for more information."
+    ) from e
 
 from craft_parts.utils import os_utils
 
