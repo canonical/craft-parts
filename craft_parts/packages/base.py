@@ -21,7 +21,7 @@ import contextlib
 import logging
 import os
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Set, Tuple, Type
+from typing import Any, List, Optional, Set, Tuple, Type
 
 from craft_parts import xattrs
 
@@ -34,7 +34,7 @@ _STAGE_PACKAGE_KEY = "origin_stage_package"
 class BaseRepository(abc.ABC):
     """Base implementation for a platform specific repository handler."""
 
-    stage_packages_filters: Optional[Iterable[str]] = None
+    stage_packages_filters: Optional[Set[str]] = None
 
     @classmethod
     @abc.abstractmethod

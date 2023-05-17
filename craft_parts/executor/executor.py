@@ -86,10 +86,6 @@ class Executor:
 
         This method is called before executing lifecycle actions.
         """
-        packages.Repository.stage_packages_filters = (
-            callbacks.get_stage_packages_filters(self._project_info)
-        )
-
         self._install_build_packages()
         self._install_build_snaps()
 
@@ -102,6 +98,11 @@ class Executor:
                 ctx.refresh_packages_list()
 
         callbacks.run_prologue(self._project_info)
+
+        # obtain the stage package exclusion set.
+        packages.Repository.stage_packages_filters = (
+            callbacks.get_stage_packages_filters(self._project_info)
+        )
 
     def epilogue(self) -> None:
         """Finish and clean the execution environment.

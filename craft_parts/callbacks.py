@@ -19,7 +19,7 @@
 import itertools
 import logging
 from collections import namedtuple
-from typing import Callable, Iterable, List, Optional, Union
+from typing import Callable, Iterable, List, Optional, Set, Union
 
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
@@ -107,7 +107,7 @@ def unregister_all() -> None:
     _POST_STEP_HOOKS[:] = []
 
 
-def get_stage_packages_filters(project_info: ProjectInfo) -> Optional[Iterable[str]]:
+def get_stage_packages_filters(project_info: ProjectInfo) -> Optional[Set[str]]:
     """Obtain the list of stage packages to be filtered out.
 
     :param project_info: The project information to be sent to callback functions.
@@ -117,7 +117,9 @@ def get_stage_packages_filters(project_info: ProjectInfo) -> Optional[Iterable[s
     if not _STAGE_PACKAGE_FILTERS:
         return None
 
-    return itertools.chain(*[f.function(project_info) for f in _STAGE_PACKAGE_FILTERS])
+    return set(
+        itertools.chain(*[f.function(project_info) for f in _STAGE_PACKAGE_FILTERS])
+    )
 
 
 def run_prologue(project_info: ProjectInfo) -> None:

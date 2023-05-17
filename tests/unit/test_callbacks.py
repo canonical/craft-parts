@@ -223,11 +223,11 @@ class TestCallbackExecution:
     @pytest.mark.parametrize(
         "funcs,result,message",
         [
-            ([_callback_filter_1], ["a", "b", "c"], "hello filter 1\n"),
-            ([_callback_filter_2], ["d", "e", "f"], "hello filter 2\n"),
+            ([_callback_filter_1], {"a", "b", "c"}, "hello filter 1\n"),
+            ([_callback_filter_2], {"d", "e", "f"}, "hello filter 2\n"),
             (
                 [_callback_filter_1, _callback_filter_2],
-                ["a", "b", "c", "d", "e", "f"],
+                {"a", "b", "c", "d", "e", "f"},
                 "hello filter 1\nhello filter 2\n",
             ),
         ],
@@ -236,8 +236,7 @@ class TestCallbackExecution:
         for fn in funcs:
             callbacks.register_stage_packages_filter(fn)
         res = callbacks.get_stage_packages_filters(self._project_info)
-        assert res is not None
-        assert list(res) == result
+        assert res == result
 
         out, err = capfd.readouterr()
         assert not err
