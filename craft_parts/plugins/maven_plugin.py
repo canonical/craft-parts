@@ -101,9 +101,10 @@ class MavenPlugin(JavaPlugin):
 
     Additionally, this plugin uses the following plugin-specific keywords:
 
-        - maven-parameters:
-          (list of strings)
-          Flags to pass to the build using the maven semantics for parameters.
+    - maven-parameters:
+      (list of strings)
+      Flags to pass to the build using the maven semantics for parameters.
+
     """
 
     properties_class = MavenPluginProperties

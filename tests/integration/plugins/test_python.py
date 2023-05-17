@@ -145,13 +145,20 @@ def test_python_plugin_override_get_system_interpreter(new_dir):
     assert os.readlink(python_link) == "use-this-python"
 
 
-def test_python_plugin_no_system_interpreter(new_dir):
-    """Override the system interpreter, link should use it."""
+@pytest.mark.parametrize("remove_symlinks", (True, False))
+def test_python_plugin_no_system_interpreter(new_dir, remove_symlinks):
+    """Check that the build fails if a payload interpreter is needed but not found."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override
         def _get_system_python_interpreter(self) -> Optional[str]:
             return None
+
+        @override
+        def _should_remove_symlinks(self) -> bool:
+            # Parametrize this to make sure that the build fails even if the
+            # venv symlinks will be removed.
+            return remove_symlinks
 
     plugins.register({"python": MyPythonPlugin})
 

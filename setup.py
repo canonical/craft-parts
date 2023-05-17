@@ -18,11 +18,10 @@
 
 import os
 import re
-from typing import Optional
 
 from setuptools import find_packages, setup  # type: ignore
 
-VERSION = "1.19.3"
+VERSION = "1.20.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -38,17 +37,6 @@ def is_ubuntu() -> bool:
         return False
     except FileNotFoundError:
         return False
-
-
-def ubuntu_version() -> Optional[str]:
-    """Get the ubuntu codename."""
-    if not is_ubuntu():
-        return None
-    with open("/etc/os-release") as release_file:
-        for line in release_file:
-            if line.startswith("VERSION_CODENAME="):
-                return line.partition("=")[2].strip()
-    return None
 
 
 def is_rtd() -> bool:
@@ -69,16 +57,7 @@ install_requires = [
 
 
 if is_ubuntu() and not is_rtd():
-    version = ubuntu_version()
-    apt_source_packages = {
-        "bionic": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_1.6.6.tar.xz",
-        "focal": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.0.1ubuntu0.20.04.1.tar.xz",
-        "jammy": "python-apt@http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_2.4.0ubuntu1.tar.xz",
-    }
-    if version in apt_source_packages:
-        install_requires.append(apt_source_packages[version])
-    else:
-        install_requires.append("python-apt")
+    install_requires.append("python-apt")
 
 
 dev_requires = [

@@ -49,7 +49,23 @@ def test_get_build_environment(plugin, new_dir):
 # pylint: disable=line-too-long
 
 
-def get_build_commands(new_dir: Path) -> List[str]:
+def get_build_commands(
+    new_dir: Path, *, should_remove_symlinks: bool = False
+) -> List[str]:
+    if should_remove_symlinks:
+        postfix = dedent(
+            f"""\
+            echo Removing python symlinks in {new_dir}/parts/p1/install/bin
+            rm "{new_dir}/parts/p1/install"/bin/python*
+            """
+        )
+    else:
+        postfix = dedent(
+            """\
+            ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
+            """
+        )
+
     return [
         dedent(
             f"""\
@@ -87,9 +103,9 @@ def get_build_commands(new_dir: Path) -> List[str]:
             fi
 
             eval "${{opts_state}}"
-            ln -sf "${{symlink_target}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
             """
         ),
+        postfix,
     ]
 
 
@@ -174,8 +190,4 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
-        f'find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\\n'
-        f'    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"\n',
-        f"echo Removing python symlinks in {new_dir}/parts/p1/install/bin\n"
-        f'rm "{new_dir}/parts/p1/install"/bin/python*\n',
-    ]
+    ] + get_build_commands(new_dir, should_remove_symlinks=True)

@@ -108,6 +108,7 @@ class SConsPlugin(Plugin):
       (list of strings)
       Additional values to pass to the ``scons`` and ``scons install`` command
       lines.
+
     """
 
     properties_class = SConsPluginProperties
