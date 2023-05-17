@@ -2,6 +2,16 @@
 Changelog
 *********
 
+1.20.0 (2023-05-15)
+-------------------
+
+- Add initial support for dnf-based distros
+- Add support for pyproject.toml projects in Python plugin
+- Improve interpreter detection in Python plugin
+- Fix subdir in pull and build steps
+- Tox and packaging updates
+- Documentation updates
+
 1.19.3 (2023-04-30)
 -------------------
 
