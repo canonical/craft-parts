@@ -34,6 +34,8 @@ _STAGE_PACKAGE_KEY = "origin_stage_package"
 class BaseRepository(abc.ABC):
     """Base implementation for a platform specific repository handler."""
 
+    stage_packages_filters: Optional[Set[str]] = None
+
     @classmethod
     @abc.abstractmethod
     def configure(cls, application_package_name: str) -> None:

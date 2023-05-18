@@ -99,6 +99,11 @@ class Executor:
 
         callbacks.run_prologue(self._project_info)
 
+        # obtain the stage package exclusion set.
+        packages.Repository.stage_packages_filters = (
+            callbacks.get_stage_packages_filters(self._project_info)
+        )
+
     def epilogue(self) -> None:
         """Finish and clean the execution environment.
 
