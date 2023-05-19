@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.19.4 (2023-05-19)
+-------------------
+
+- Backport support for pyproject.toml projects from 1.20.0
+- Backport pull and build steps subdir from 1.20.0
+
 1.19.3 (2023-04-30)
 -------------------
 
