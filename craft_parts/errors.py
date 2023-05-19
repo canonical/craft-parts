@@ -18,13 +18,14 @@
 
 import dataclasses
 import pathlib
-from typing import TYPE_CHECKING, List, Optional, Set
+from typing import TYPE_CHECKING, List, Optional, Set, Tuple, Union
 
 if TYPE_CHECKING:
     try:  # Needed because sphinx sets TYPE_CHECKING=True
         from pydantic.error_wrappers import ErrorDict, Loc
     except ImportError:
-        ErrorDict = dict
+        ErrorDict = dict  # type: ignore
+        Loc = Tuple[Union[int, str], ...]  # type: ignore
 
 
 @dataclasses.dataclass(repr=True)

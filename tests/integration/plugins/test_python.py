@@ -146,7 +146,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir):
 
 
 @pytest.mark.parametrize("remove_symlinks", (True, False))
-def test_python_plugin_no_system_interpreter(new_dir, remove_symlinks):
+def test_python_plugin_no_system_interpreter(new_dir, remove_symlinks: bool):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
