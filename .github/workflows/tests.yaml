@@ -45,8 +45,8 @@ jobs:
           make test-pylint
       - name: Run pyright
         run: |
-          sudo snap install --classic node
-          sudo snap install --classic pyright
+          sudo snap install --classic node --channel=18/stable
+          sudo snap install --classic pyright --revision=575
           make test-pyright
 
   tests:
@@ -86,7 +86,7 @@ jobs:
         run: |
           sudo apt install -y ninja-build cmake scons
           # Build Chisel: needs a version of go than is available in Ubuntu 20.04 
-          sudo snap install --classic --channel=latest/stable go
+          sudo snap install --classic --channel=1.20/stable go
           git clone https://github.com/canonical/chisel.git chisel-tmp
           cd chisel-tmp && git checkout f0bff5a30dfdcb400b # known "good" commit until Chisel has versions
           go mod download
