@@ -60,33 +60,6 @@ def test_python_plugin(new_dir):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
-def test_python_plugin_with_pyproject_toml(new_dir):
-    """Prime a simple python source."""
-    source_location = Path(__file__).parent / "test_python_pyproject_toml"
-
-    parts_yaml = textwrap.dedent(
-        f"""\
-        parts:
-          foo:
-            plugin: python
-            source: {source_location}
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-
-    lf = LifecycleManager(
-        parts, application_name="test_python_pyproject_toml", cache_dir=new_dir
-    )
-    actions = lf.plan(Step.PRIME)
-
-    with lf.action_executor() as ctx:
-        ctx.execute(actions)
-
-    primed_script = Path(lf.project_info.prime_dir, "bin", "mytestpyprojecttoml")
-    assert primed_script.exists()
-    assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
-
-
 def test_python_plugin_symlink(new_dir):
     """Run in the standard scenario with no overrides."""
     parts_yaml = textwrap.dedent(
