@@ -98,7 +98,7 @@ def test_get_build_commands(plugin, new_dir):
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
+        f"[ -f setup.py ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
     ] + get_build_commands(new_dir)
 
 
@@ -121,7 +121,7 @@ def test_get_build_commands_with_all_properties(new_dir):
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
         f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U .",
+        f"[ -f setup.py ] && {new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U .",
     ] + get_build_commands(new_dir)
 
 
@@ -173,7 +173,7 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
+        f"[ -f setup.py ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
         f'find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\\n'
         f'    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"\n',
         f"echo Removing python symlinks in {new_dir}/parts/p1/install/bin\n"
