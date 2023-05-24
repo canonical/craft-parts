@@ -33,6 +33,7 @@ from .nil_plugin import NilPlugin
 from .npm_plugin import NpmPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
+from .qmake_plugin import QmakePlugin
 from .rust_plugin import RustPlugin
 from .scons_plugin import SConsPlugin
 
@@ -58,6 +59,7 @@ _BUILTIN_PLUGINS: Dict[str, PluginType] = {
     "nil": NilPlugin,
     "npm": NpmPlugin,
     "python": PythonPlugin,
+    "qmake": QmakePlugin,
     "rust": RustPlugin,
     "scons": SConsPlugin,
 }

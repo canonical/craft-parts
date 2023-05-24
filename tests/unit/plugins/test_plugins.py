@@ -33,6 +33,7 @@ from craft_parts.plugins.plugins import (
     NilPlugin,
     NpmPlugin,
     PythonPlugin,
+    QmakePlugin,
     RustPlugin,
 )
 
@@ -57,6 +58,7 @@ class TestGetPlugin:
             ("nil", NilPlugin, {}),
             ("npm", NpmPlugin, {"source": "."}),
             ("python", PythonPlugin, {"source": "."}),
+            ("qmake", QmakePlugin, {"source": "."}),
             ("rust", RustPlugin, {"source": "."}),
         ],
     )
