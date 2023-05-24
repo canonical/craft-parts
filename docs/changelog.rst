@@ -12,6 +12,11 @@ Changelog
 - Tox and packaging updates
 - Documentation updates
 
+1.19.5 (2023-05-23)
+-------------------
+
+- Revert pyproject.toml change (breaks semantic versioning)
+
 1.19.4 (2023-05-19)
 -------------------
 
