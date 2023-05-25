@@ -32,7 +32,7 @@ class QmakePluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshel(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]):
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
