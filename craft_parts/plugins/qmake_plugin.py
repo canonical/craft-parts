@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2020-2023 Canonical Ltd
+# Copyright (C) 2023 Canonical Ltd
+# Copyright 2023 Scarlett Moore <sgmoore@kde.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
