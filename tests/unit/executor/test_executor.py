@@ -199,6 +199,40 @@ class TestExecutionContext:
         with ExecutionContext(executor=e):
             assert not mock_mount.called
 
+    def test_configure_overlay(self, enable_overlay_feature, new_dir, mocker):
+        """Check that the configure_overlay callback is called when mounting the overlay's package cache."""
+
+        mocker.patch.object(overlays.OverlayManager, "mount_pkg_cache")
+        mocker.patch.object(overlays.OverlayManager, "unmount")
+
+        # This list will contain a record of the calls that are made, in order.
+        call_order = []
+
+        def configure_overlay(overlay_dir: Path, project_info: ProjectInfo) -> None:
+            call_order.append(f"configure_overlay: {overlay_dir} {project_info.custom}")
+
+        def refresh_packages_list() -> None:
+            call_order.append("refresh_packages_list")
+
+        callbacks.register_configure_overlay(configure_overlay)
+        mocker.patch.object(
+            overlays.PackageCacheMount,
+            "refresh_packages_list",
+            side_effect=refresh_packages_list,
+        )
+
+        p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["fake-pkg"]})
+        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        e = Executor(project_info=info, part_list=[p1])
+
+        with ExecutionContext(executor=e):
+            # The `configure_overlay()` callback must've been called _before_
+            # refresh_packages_list().
+            assert call_order == [
+                f"configure_overlay: {info.overlay_mount_dir} custom",
+                "refresh_packages_list",
+            ]
+
     def test_capture_stdout(self, capfd, new_dir):
         def cbf(info):
             print(f"prologue {info.custom}")
