@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright 2023 Canonical Ltd.
+# Copyright 2023 Scarlett Moore <sgmoore@kde.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -75,7 +76,9 @@ class TestPluginQMakePlugin:
         ]
 
     def test_get_build_commands_qmake_project_file(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(new_dir, properties={"qmake_project_file": "hello.pro"})
+        plugin = setup_method_fixture(
+            new_dir, properties={"qmake_project_file": "hello.pro"}
+        )
 
         assert plugin.get_build_commands() == [
             f"qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} \
@@ -94,7 +97,7 @@ class TestPluginQMakePlugin:
         assert plugin.get_build_commands() == [
             (
                 f"qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} QMAKE_LFLAGS+=${LDFLAGS:-}",
-                f'{" ".join(qmake_parameters)}'
+                f'{" ".join(qmake_parameters)}',
             ),
             f"env -u CFLAGS -u CXXFLAGS make -j{self._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={self._part_info.part_install_dir}",
