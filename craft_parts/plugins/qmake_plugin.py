@@ -47,7 +47,7 @@ class QmakePluginProperties(PluginProperties, PluginModel):
         return cls(**plugin_data)
 
 
-class QMakePlugin(Plugin):
+class QmakePlugin(Plugin):
     """The qmake plugin is useful for building qmake-based parts.
 
     These are projects that are built using .pro files.
@@ -96,7 +96,7 @@ class QMakePlugin(Plugin):
         ] + options.qmake_parameters
 
         if options.qmake_project_file:
-            qmake_configure_command.append(
+            qmake_configure_command.extend(
                 [
                     f'"{self._part_info.part_src_dir}"',
                     "/",
