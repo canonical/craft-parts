@@ -95,6 +95,9 @@ class Executor:
         # overlay packages.
         if any(p.spec.overlay_packages for p in self._part_list):
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+                callbacks.run_configure_overlay(
+                    self._project_info.overlay_mount_dir, self._project_info
+                )
                 ctx.refresh_packages_list()
 
         callbacks.run_prologue(self._project_info)

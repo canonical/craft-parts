@@ -19,6 +19,7 @@
 import itertools
 import logging
 from collections import namedtuple
+from pathlib import Path
 from typing import Callable, Iterable, List, Optional, Set, Union
 
 from craft_parts import errors
@@ -30,9 +31,13 @@ CallbackHook = namedtuple("CallbackHook", ["function", "step_list"])
 FilterCallback = Callable[[ProjectInfo], Iterable[str]]
 ExecutionCallback = Callable[[ProjectInfo], None]
 StepCallback = Callable[[StepInfo], bool]
-Callback = Union[FilterCallback, ExecutionCallback, StepCallback]
+ConfigureOverlayCallback = Callable[[Path, ProjectInfo], None]
+Callback = Union[
+    FilterCallback, ExecutionCallback, StepCallback, ConfigureOverlayCallback
+]
 
 _STAGE_PACKAGE_FILTERS: List[CallbackHook] = []
+_OVERLAY_HOOKS: List[CallbackHook] = []
 _PROLOGUE_HOOKS: List[CallbackHook] = []
 _EPILOGUE_HOOKS: List[CallbackHook] = []
 _PRE_STEP_HOOKS: List[CallbackHook] = []
@@ -52,6 +57,22 @@ def register_stage_packages_filter(func: FilterCallback) -> None:
     """
     _ensure_not_defined(func, _STAGE_PACKAGE_FILTERS)
     _STAGE_PACKAGE_FILTERS.append(CallbackHook(func, None))
+
+
+def register_configure_overlay(func: ConfigureOverlayCallback) -> None:
+    """Register a callback function to configure the mounted overlay.
+
+    This "hook" is called after the overlay's package cache layer is mounted, but
+    *before* the package list is refreshed. It can be used to configure the
+    overlay's system, typically to install extra package repositories for Apt.
+    Note that when the hook is called the overlay is mounted but *not* chroot'ed
+    into.
+
+    :param func: The callback function that will be called with the location of
+      the overlay mount and the project info.
+    """
+    _ensure_not_defined(func, _OVERLAY_HOOKS)
+    _OVERLAY_HOOKS.append(CallbackHook(func, None))
 
 
 def register_prologue(func: ExecutionCallback) -> None:
@@ -101,6 +122,7 @@ def register_post_step(
 def unregister_all() -> None:
     """Clear all existing registered callback functions."""
     _STAGE_PACKAGE_FILTERS[:] = []
+    _OVERLAY_HOOKS[:] = []
     _PROLOGUE_HOOKS[:] = []
     _EPILOGUE_HOOKS[:] = []
     _PRE_STEP_HOOKS[:] = []
@@ -120,6 +142,16 @@ def get_stage_packages_filters(project_info: ProjectInfo) -> Optional[Set[str]]:
     return set(
         itertools.chain(*[f.function(project_info) for f in _STAGE_PACKAGE_FILTERS])
     )
+
+
+def run_configure_overlay(overlay_dir: Path, project_info: ProjectInfo) -> None:
+    """Run all registered 'configure overlay' callbacks.
+
+    :param overlay_dir: The location where the overlay is mounted.
+    :param project_info: The project information to be sent to callback functions.
+    """
+    for hook in _OVERLAY_HOOKS:
+        hook.function(overlay_dir, project_info)
 
 
 def run_prologue(project_info: ProjectInfo) -> None:
