@@ -65,7 +65,8 @@ def register_configure_overlay(func: ConfigureOverlayCallback) -> None:
     This "hook" is called after the overlay's package cache layer is mounted, but
     *before* the package list is refreshed. It can be used to configure the
     overlay's system, typically to install extra package repositories for Apt.
-    Note that when hook is called the overlay is mounted by *not* chroot'ed into.
+    Note that when the hook is called the overlay is mounted but *not* chroot'ed
+    into.
 
     :param func: The callback function that will be called with the location of
       the overlay mount and the project info.
