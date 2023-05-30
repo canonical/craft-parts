@@ -59,6 +59,16 @@ def _callback_filter_2(info: ProjectInfo) -> Generator[str, None, None]:
     return (i for i in ["d", "e", "f"])
 
 
+def _callback_overlay_1(overlay_dir: Path, info: ProjectInfo) -> None:
+    greet = getattr(info, "greet")
+    print(f"{overlay_dir} {greet} 1")
+
+
+def _callback_overlay_2(overlay_dir: Path, info: ProjectInfo) -> None:
+    greet = getattr(info, "greet")
+    print(f"{overlay_dir} {greet} 2")
+
+
 class TestCallbackRegistration:
     """Test different scenarios of callback function registration."""
 
@@ -133,6 +143,19 @@ class TestCallbackRegistration:
         # But we can register a different one
         callbacks.register_stage_packages_filter(_callback_filter_2)
 
+    def test_register_configure_overlay(self):
+        callbacks.register_configure_overlay(_callback_overlay_1)
+
+        # A callback function shouldn't be registered again
+        with pytest.raises(errors.CallbackRegistrationError) as raised:
+            callbacks.register_configure_overlay(_callback_overlay_1)
+        assert raised.value.message == (
+            "callback function '_callback_overlay_1' is already registered."
+        )
+
+        # But we can register a different one
+        callbacks.register_configure_overlay(_callback_overlay_2)
+
     def test_register_both_pre_and_post(self):
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
@@ -144,6 +167,8 @@ class TestCallbackRegistration:
     def test_unregister_all(self):
         callbacks.register_stage_packages_filter(_callback_filter_1)
         callbacks.register_stage_packages_filter(_callback_filter_2)
+        callbacks.register_configure_overlay(_callback_overlay_1)
+        callbacks.register_configure_overlay(_callback_overlay_2)
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
         callbacks.register_prologue(_callback_3)
@@ -151,6 +176,8 @@ class TestCallbackRegistration:
         callbacks.unregister_all()
         callbacks.register_stage_packages_filter(_callback_filter_1)
         callbacks.register_stage_packages_filter(_callback_filter_2)
+        callbacks.register_configure_overlay(_callback_overlay_1)
+        callbacks.register_configure_overlay(_callback_overlay_2)
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
         callbacks.register_prologue(_callback_3)
@@ -241,3 +268,14 @@ class TestCallbackExecution:
         out, err = capfd.readouterr()
         assert not err
         assert out == message
+
+    def test_configure_callback(self, capfd):
+        callbacks.register_configure_overlay(_callback_overlay_1)
+        callbacks.register_configure_overlay(_callback_overlay_2)
+
+        overlay_dir = Path("/overlay/mount")
+        callbacks.run_configure_overlay(overlay_dir, self._project_info)
+
+        out, err = capfd.readouterr()
+        assert not err
+        assert out == "/overlay/mount hello 1\n/overlay/mount hello 2\n"
