@@ -60,9 +60,7 @@ class TestPluginQMakePlugin:
         }
 
     def test_get_build_packages_qt6(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(
-            new_dir, properties={"qmake_major_version": "6"}
-        )
+        plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": "6"})
 
         assert plugin.get_build_packages() == {
             "g++",
@@ -78,9 +76,7 @@ class TestPluginQMakePlugin:
         }
 
     def test_get_build_environment_qt6(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(
-            new_dir, properties={"qmake_major_version": "6"}
-        )
+        plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": "6"})
 
         assert plugin.get_build_environment() == {
             "QT_SELECT": "qt6",
@@ -96,9 +92,7 @@ class TestPluginQMakePlugin:
         ]
 
     def test_get_build_commands_qt6(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(
-            new_dir, properties={"qmake_major_version": "6"}
-        )
+        plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": "6"})
 
         assert plugin.get_build_commands() == [
             "qmake6 QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} QMAKE_LFLAGS+=${LDFLAGS:-}",
