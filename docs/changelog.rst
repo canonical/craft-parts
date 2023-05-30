@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.21.0 (2023-05-20)
+-------------------
+
+- Add callback to explicitly list base packages
+- Add callback to configure overlay package layer
+
 1.20.0 (2023-05-15)
 -------------------
 
