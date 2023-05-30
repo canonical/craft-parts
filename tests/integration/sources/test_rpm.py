@@ -47,14 +47,14 @@ def sample_rpm(tmp_path: Path) -> Path:
             Release: 0
             Summary: A sample package
             License: GPL
-
+            
             %description
             A little sample package!
-
+            
             %install
             mkdir -p %{buildroot}/etc
             bash -c "echo Sample contents > %{buildroot}/etc/sample.txt"
-
+            
             %files
             /etc/sample.txt
             """
