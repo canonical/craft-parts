@@ -59,11 +59,31 @@ class TestPluginQMakePlugin:
             "qt5-qmake",
         }
 
-    def test_get_build_environment(self, setup_method_fixture, new_dir):
+    def test_get_build_packages_qt6(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(
+            new_dir, properties={"qmake_major_version": "6"}
+        )
+
+        assert plugin.get_build_packages() == {
+            "g++",
+            "make",
+            "qmake6",
+        }
+
+    def test_get_build_environment_default(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_environment() == {
             "QT_SELECT": "qt5",
+        }
+
+    def test_get_build_environment_qt6(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(
+            new_dir, properties={"qmake_major_version": "6"}
+        )
+
+        assert plugin.get_build_environment() == {
+            "QT_SELECT": "qt6",
         }
 
     def test_get_build_commands_default(self, setup_method_fixture, new_dir):
@@ -71,6 +91,17 @@ class TestPluginQMakePlugin:
 
         assert plugin.get_build_commands() == [
             "qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} QMAKE_LFLAGS+=${LDFLAGS:-}",
+            f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
+            f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
+        ]
+
+    def test_get_build_commands_qt6(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(
+            new_dir, properties={"qmake_major_version": "6"}
+        )
+
+        assert plugin.get_build_commands() == [
+            "qmake6 QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} QMAKE_LFLAGS+=${LDFLAGS:-}",
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
@@ -87,7 +118,7 @@ class TestPluginQMakePlugin:
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
 
-    def test_get_build_commands_cmake_parameters(self, setup_method_fixture, new_dir):
+    def test_get_build_commands_qmake_parameters(self, setup_method_fixture, new_dir):
         qmake_parameters = [
             "QMAKE_LIBDIR+=/foo",
         ]
