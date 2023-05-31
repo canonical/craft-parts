@@ -37,7 +37,7 @@ copyright = "2023, Canonical Ltd."
 author = "Canonical Ltd."
 
 # The full version, including alpha/beta/rc tags
-release = "1.20.0"
+release = "1.21.0"
 
 
 # -- General configuration ---------------------------------------------------
