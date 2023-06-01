@@ -65,7 +65,7 @@ dev_requires = [
     "twine",
 ]
 
-doc_requires = [
+docs_require = [
     f"craft-parts-docs=={VERSION}",
     "sphinx",
     "sphinx-autodoc-typehints",
