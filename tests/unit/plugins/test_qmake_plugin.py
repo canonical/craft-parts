@@ -51,7 +51,7 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir)
         assert plugin.get_build_snaps() == set()
 
-    def test_get_build_packages(self, setup_method_fixture, new_dir):
+    def test_get_build_packages_default(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
         assert plugin.get_build_packages() == {
             "g++",
@@ -59,7 +59,7 @@ class TestPluginQMakePlugin:
             "qt5-qmake",
         }
 
-    def test_get_build_packages(self, setup_method_fixture, new_dir):
+    def test_get_build_packages_qt6(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": "6"})
 
         assert plugin.get_build_packages() == {
@@ -68,21 +68,21 @@ class TestPluginQMakePlugin:
             "qmake6",
         }
 
-    def test_get_build_environment(self, setup_method_fixture, new_dir):
+    def test_get_build_environment_default(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_environment() == {
             "QT_SELECT": "qt5",
         }
 
-    def test_get_build_environment(self, setup_method_fixture, new_dir):
+    def test_get_build_environment_qt6(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": "6"})
 
         assert plugin.get_build_environment() == {
             "QT_SELECT": "qt6",
         }
 
-    def test_get_build_commands(self, setup_method_fixture, new_dir):
+    def test_get_build_commands_default(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_commands() == [
@@ -91,7 +91,7 @@ class TestPluginQMakePlugin:
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
 
-    def test_get_build_commands(self, setup_method_fixture, new_dir):
+    def test_get_build_commands_qt6(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": "6"})
 
         assert plugin.get_build_commands() == [
