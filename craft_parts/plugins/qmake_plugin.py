@@ -96,9 +96,9 @@ class QmakePlugin(Plugin):
         options = cast(QmakePluginProperties, self._options)
 
         if options.qmake_major_version == "6":
-            return {"QT_SELECT": qt6}
-        else:
-            return {"QT_SELECT": "qt5"}
+            return {"QT_SELECT": "qt6"}
+
+        return {"QT_SELECT": "qt5"}
 
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
