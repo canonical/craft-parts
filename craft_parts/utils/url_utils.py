@@ -67,18 +67,13 @@ def download_request(
     else:
         logger.debug("Downloading %r", destination)
 
-    # FIXME: re-impement progress bar support when messages to user support is ready
-    # progress_bar = _init_progress_bar(total_length, destination, message)
-    # progress_bar.start()
-
     if os.path.exists(destination):
         mode = "ab"
     else:
         mode = "wb"
+
     with open(destination, mode) as destination_file:
         for buf in request.iter_content(1024):
             destination_file.write(buf)
             if not os_utils.is_dumb_terminal():
                 total_read += len(buf)
-                # progress_bar.update(total_read)
-    # progress_bar.finish()

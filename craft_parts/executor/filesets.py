@@ -67,7 +67,6 @@ class Fileset:
         """
         to_combine = False
         # combine if the fileset has a wildcard
-        # XXX: should this only be a single wildcard and possibly excludes?
         if "*" in self.entries:
             to_combine = True
             self.remove("*")

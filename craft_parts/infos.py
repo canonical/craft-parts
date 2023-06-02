@@ -92,7 +92,7 @@ class ProjectInfo:
         self._application_name = application_name
         self._cache_dir = Path(cache_dir).expanduser().resolve()
         self._set_machine(arch)
-        self._base = base  # TODO: infer base if not specified
+        self._base = base  # base usage is deprecated
         self._parallel_build_count = parallel_build_count
         self._strict_mode = strict_mode
         self._dirs = project_dirs
