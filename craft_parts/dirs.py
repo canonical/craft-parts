@@ -19,6 +19,8 @@
 from pathlib import Path
 from typing import Union
 
+from craft_parts.features import Features
+
 
 class ProjectDirs:
     """The project's main work directories.
@@ -44,5 +46,9 @@ class ProjectDirs:
         self.overlay_mount_dir = self.overlay_dir / "overlay"
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
-        self.stage_dir = self.work_dir / "stage"
-        self.prime_dir = self.work_dir / "prime"
+        if Features().enable_partitions:
+            self.stage_dir = self.work_dir / "stage" / "default"
+            self.prime_dir = self.work_dir / "prime" / "default"
+        else:
+            self.stage_dir = self.work_dir / "stage"
+            self.prime_dir = self.work_dir / "prime"

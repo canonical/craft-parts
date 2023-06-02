@@ -263,6 +263,8 @@ class Part:
     @property
     def part_install_dir(self) -> Path:
         """Return the subdirectory to install the part build artifacts."""
+        if Features().enable_partitions:
+            return self._part_dir / "install/default"
         return self._part_dir / "install"
 
     @property

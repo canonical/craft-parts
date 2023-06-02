@@ -146,12 +146,16 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
+            part_list.append(
+                _build_part(name, spec, project_dirs, strict_mode)
+            )
 
         if partitions:
             validate_partition_usage(part_list, partitions)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
+
+        _validate_partition_usage_in_parts(part_list, partitions)
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
@@ -369,3 +373,68 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
         raise errors.FeatureError(
             "Partitions are defined but partition feature is not enabled."
         )
+
+
+def _validate_partition_usage_in_parts(part_list, partitions):
+    # skip validation if partitions are not enabled
+    if not Features().enable_partitions:
+        return
+
+    for part in part_list:
+        for filepaths in [
+            part.spec.organize_files,
+            part.spec.overlay_files,
+            part.spec.prime_files,
+            part.spec.stage_files,
+        ]:
+            _validate_partitions_in_keywords(filepaths, partitions)
+
+
+def _validate_partitions_in_keywords(
+        filepaths: List[str], partitions: List[str]
+) -> None:
+    """Get a filepath compatible with the partitions feature."""
+    # do not validate default glob
+    if filepaths == ["*"]:
+        return
+
+    for filepath in filepaths:
+        match = re.match("-?\\((?P<partition>[a-z]+)\\)", filepath)
+        if match:
+            partition = match.group("partition")
+            if partition not in partitions:
+                raise Exception(f"filepath {filepath} is using an unknown partition")
+        match = re.match("-?(?P<possible_partition>[a-z]+)/?", filepath)
+        if match:
+            partition = match.group("possible_partition")
+            if partition in partitions:
+                raise Exception(
+                    f"Warning: A filepath {filepath} starts with a valid partition "
+                    f"{partition} but is not wrapped in parentheses."
+                )
+
+
+def _validate_partitions(partitions: Optional[List[str]]) -> None:
+    """Validate partitions data.
+
+    If partitions are defined, the first partition must be "default" and each partition
+     must contain only lowercase letters.
+
+    :param partitions: Partition data to verify.
+
+    :raises ValueError: If the partitions are not valid.
+    """
+    if partitions:
+        if not Features().enable_partitions:
+            raise errors.FeatureDisabled("Partition feature is not enabled.")
+
+        # TODO: check for empty list?
+
+        if partitions[0] != "default":
+            raise ValueError("First partition must be 'default'.")
+
+        for partition in partitions:
+            if not re.fullmatch("[a-z]+", partition):
+                raise ValueError(
+                    f"Partition {partition} must only contain lowercase letters."
+                )

@@ -157,6 +157,11 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
     if Features().enable_overlay:
         global_environment["CRAFT_OVERLAY"] = str(info.overlay_mount_dir)
 
+    if Features().enable_partitions:
+        for partition in info.partitions:
+            global_environment[f"CRAFT_{partition.upper()}_STAGE"] = str(info.work_dir / "stage" / partition)
+            global_environment[f"CRAFT_{partition.upper()}_PRIME"] = str(info.work_dir / "prime" / partition)
+
     global_environment["CRAFT_STAGE"] = str(info.stage_dir)
     global_environment["CRAFT_PRIME"] = str(info.prime_dir)
 

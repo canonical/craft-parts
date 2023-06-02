@@ -28,6 +28,7 @@ from typing_extensions import Protocol
 
 from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
+from craft_parts.features import Features
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
@@ -875,10 +876,14 @@ class PartHandler:
 
     def _organize(self, *, overwrite: bool = False) -> None:
         mapping = self._part.spec.organize_files
+        if Features().enable_partitions:
+            base_dir = self._part.part_install_dir.parent
+        else:
+            base_dir = self._part.part_install_dir
         organize_files(
             part_name=self._part.name,
             mapping=mapping,
-            base_dir=self._part.part_install_dir,
+            base_dir=base_dir,
             overwrite=overwrite,
         )
 
