@@ -32,9 +32,6 @@ logger = logging.getLogger(__name__)
 _WRITE_TIME_INTERVAL = 0.02
 
 
-# TODO:stdmsg: replace/remove terminal-related utilities
-
-
 class TimedWriter:
     """Enforce minimum times between writes.
 

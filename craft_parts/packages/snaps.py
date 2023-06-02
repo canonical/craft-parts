@@ -52,9 +52,6 @@ _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
 logger = logging.getLogger(__name__)
 
 
-# TODO https://bugs.launchpad.net/snapcraft/+bug/1786868
-
-
 class SnapPackage:
     """SnapPackage acts as a mediator to install or refresh a snap.
 
@@ -236,7 +233,6 @@ class SnapPackage:
             snap_install_cmd.extend(["--channel", self._original_channel])
         with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
-                # TODO make this a user explicit choice
                 snap_install_cmd.append("--classic")
 
         try:
@@ -260,7 +256,6 @@ class SnapPackage:
         snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
         with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
-                # TODO make this a user explicit choice
                 snap_refresh_cmd.append("--classic")
 
         try:
@@ -284,13 +279,9 @@ def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
 
     The target directory is created if it does not exist.
     """
-    # TODO manifest.yaml with snap revision from future machine output
-    # for `snap download`.
     os.makedirs(directory, exist_ok=True)
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-
-        # TODO: use dependency injected echoer
         logger.debug("Downloading snap %s", snap_pkg.name)
         snap_pkg.download(directory=directory)
 
