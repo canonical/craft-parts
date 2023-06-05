@@ -782,7 +782,6 @@ def get_cache_dirs(cache_dir: Path) -> Tuple[Path, Path]:
     return (stage_cache_dir, deb_cache_dir)
 
 
-# XXX: this will be removed when user messages support is implemented.
 def process_run(command: List[str], **kwargs: Any) -> None:
     """Run a command and log its output."""
     # Pass logger so messages can be logged as originating from this package.

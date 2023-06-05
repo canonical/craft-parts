@@ -235,7 +235,6 @@ class FileSourceHandler(SourceHandler):
 
         # if not we download and store
         if url_utils.get_url_scheme(self.source) == "ftp":
-            # FIXME: handle ftp downloads
             raise NotImplementedError("ftp download not implemented")
 
         try:
