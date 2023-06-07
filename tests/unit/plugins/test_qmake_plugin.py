@@ -106,7 +106,7 @@ class TestPluginQMakePlugin:
         )
 
         assert plugin.get_build_commands() == [
-            "qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} "
+            "qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} ",
             f"QMAKE_LFLAGS+=${{LDFLAGS:-}} {plugin._part_info.part_src_dir}/hello.pro",
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
