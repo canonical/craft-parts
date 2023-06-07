@@ -137,6 +137,6 @@ class QmakePlugin(Plugin):
         ]
 
     @property
-    def out_of_source_build(self) -> bool:
+    def get_out_of_source_build(self) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
