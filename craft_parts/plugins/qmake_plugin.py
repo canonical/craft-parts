@@ -28,7 +28,7 @@ class QmakePluginProperties(PluginProperties, PluginModel):
 
     qmake_parameters: List[str] = []
     qmake_project_file: str = ""
-    qmake_major_version: str = "5"
+    qmake_major_version: int = 5
 
     # part properties required by the plugin
     source: str
@@ -70,7 +70,7 @@ class QmakePlugin(Plugin):
       qmake can not determine what project file to use on its own.
 
     - qmake_major_version:
-      (string)
+      (int)
       set the qt major version. This is only needed to support qt6 builds.
       Version 5 is default.
     """
@@ -85,7 +85,7 @@ class QmakePlugin(Plugin):
         """Return a set of required packages to install in the build environment."""
         options = cast(QmakePluginProperties, self._options)
 
-        if options.qmake_major_version == "6":
+        if options.qmake_major_version == 6:
             build_packages = {"g++", "make", "qmake6"}
         else:
             build_packages = {"g++", "make", "qt5-qmake"}
