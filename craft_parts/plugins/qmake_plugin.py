@@ -49,7 +49,7 @@ class QmakePluginProperties(PluginProperties, PluginModel):
         return cls(**plugin_data)
 
 
-class QmakePlugin(Plugin):
+class QmakePlugin(Plugin, PluginProperties):
     """The qmake plugin is useful for building qmake-based parts.
 
     These are projects that are built using .pro files.
@@ -95,7 +95,7 @@ class QmakePlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         options = cast(QmakePluginProperties, self._options)
 
-        if options.qmake_major_version == "6":
+        if options.qmake_major_version == 6:
             return {"QT_SELECT": "qt6"}
 
         return {"QT_SELECT": "qt5"}
@@ -104,7 +104,7 @@ class QmakePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(QmakePluginProperties, self._options)
 
-        if options.qmake_major_version == "6":
+        if options.qmake_major_version == 6:
             qmake_configure_command = [
                 "qmake6",
                 'QMAKE_CFLAGS+="${CFLAGS:-}"',
@@ -123,7 +123,7 @@ class QmakePlugin(Plugin):
             qmake_configure_command.extend(
                 [
                     f'"{self._part_info.part_src_dir}"',
-                    "/",
+                    '/',
                     f'"{options.qmake_project_file}"',
                 ]
             )
