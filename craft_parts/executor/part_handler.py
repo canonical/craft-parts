@@ -198,7 +198,7 @@ class PartHandler:
         self._run_step(
             step_info=step_info,
             scriptlet_name="override-pull",
-            work_dir=self._part.part_src_subdir,
+            work_dir=self._part.part_src_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -301,7 +301,7 @@ class PartHandler:
                 self._run_step(
                     step_info=step_info,
                     scriptlet_name="override-build",
-                    work_dir=self._part.part_build_subdir,
+                    work_dir=self._part.part_build_dir,
                     stdout=stdout,
                     stderr=stderr,
                 )
@@ -309,7 +309,7 @@ class PartHandler:
             self._run_step(
                 step_info=step_info,
                 scriptlet_name="override-build",
-                work_dir=self._part.part_build_subdir,
+                work_dir=self._part.part_build_dir,
                 stdout=stdout,
                 stderr=stderr,
             )
