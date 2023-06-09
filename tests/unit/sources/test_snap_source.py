@@ -40,11 +40,17 @@ class TestSnapSource:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        "param", ["source_tag", "source_branch", "source_commit", "source_depth"]
+        ("param", "value"),
+        [
+            ("source_tag", "fake-tag"),
+            ("source_branch", "fake-branch"),
+            ("source_commit", "fake-commit"),
+            ("source_depth", 1),
+        ],
     )
-    def test_invalid_parameter(self, new_dir, param):
+    def test_invalid_parameter(self, new_dir, param, value):
         with pytest.raises(errors.InvalidSourceOption) as raised:
-            kwargs = {param: "foo"}
+            kwargs = {param: value}
             sources.SnapSource(
                 source="test.snap", part_src_dir=Path(), cache_dir=new_dir, **kwargs
             )
