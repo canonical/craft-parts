@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.21.1 (2023-06-09)
+-------------------
+
+- Revert subdir changes in pull and build steps
+
 1.21.0 (2023-05-20)
 -------------------
 
