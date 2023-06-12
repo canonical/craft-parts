@@ -123,7 +123,7 @@ class QmakePlugin(Plugin, PluginProperties):
             qmake_configure_command.extend(
                 [
                     f'"{self._part_info.part_src_dir}"',
-                    '/',
+                    "/",
                     f'"{options.qmake_project_file}"',
                 ]
             )
