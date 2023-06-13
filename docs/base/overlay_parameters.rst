@@ -17,9 +17,9 @@ An example parts section with overlay parameters looks as follows:
     parts:
       part_with_overlay:
         plugin: nil
-        overlay_packages:
+        overlay-packages:
           - ed
-        overlay_script: |
+        overlay-script: |
           rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
           rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
           rm -f ${CRAFT_OVERLAY}/bin/nano
