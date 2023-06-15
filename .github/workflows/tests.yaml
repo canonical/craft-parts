@@ -71,14 +71,9 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs
-      - name: Install python-apt dependencies
-        run: |
-          pip install https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-distutils-extra/2.43/python-distutils-extra_2.43.tar.xz
-          pip install https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz
       - name: Install general python dependencies
         run: |
-          pip install .[dev]
-          pip install -e .
+          pip install -e .[dev,${{ matrix.adjective }}-dev]
       - name: Install additional test dependencies
         run: |
           sudo apt install -y ninja-build cmake scons

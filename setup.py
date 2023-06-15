@@ -55,11 +55,6 @@ install_requires = [
     "urllib3<2",  # keep compatible API
 ]
 
-
-if is_ubuntu() and not is_rtd():
-    install_requires.append("python-apt")
-
-
 dev_requires = [
     "autoflake",
     "twine",
@@ -108,6 +103,21 @@ extras_requires = {
     "docs": docs_require,
     "test": test_requires + types_requires,
     "types": types_requires,
+    # Python-apt bindings for specific Ubuntu versions.
+    # Up to date package links can be found at https://launchpad.net/ubuntu/+source/python-apt
+    # Note: These extras can break requirements from other packages, so
+    # do not use them in dependencies unless you know what you're doing.
+    "focal-dev": [
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz"
+    ],
+    "jammy-dev": [
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz"
+    ],
+    "lunar-dev": [
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.5.3ubuntu1/python-apt_2.5.3ubuntu1.tar.xz"
+    ],
+    # Generic "apt" extra for handling any apt-based platforms (e.g. Debian, Ubuntu)
+    "apt": ["python-apt"],
 }
 
 
