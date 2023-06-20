@@ -427,8 +427,18 @@ class StepInfo:
 
 def _get_host_architecture() -> str:
     """Obtain the host system architecture."""
-    return platform.machine()
+    machine = platform.machine()
+    return _PLATFORM_MACHINE_TRANSLATIONS.get(machine.lower(), machine)
 
+
+_PLATFORM_MACHINE_TRANSLATIONS: Dict[str, str] = {
+    # Maps other possible ``platform.machine()`` values to the arch translations below.
+    "arm64": "aarch64",
+    "armv7hl": "armv7l",
+    "i386": "i686",
+    "amd64": "x86_64",
+    "x64": "x86_64",
+}
 
 _ARCH_TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "aarch64": {
