@@ -427,7 +427,6 @@ class StepInfo:
 
 def _get_host_architecture() -> str:
     """Obtain the host system architecture."""
-    # TODO: handle Windows architectures
     return platform.machine()
 
 
