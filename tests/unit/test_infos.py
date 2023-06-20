@@ -86,7 +86,9 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         ("aarch64", "aarch64"),
     ],
 )
-@pytest.mark.parametrize("tc_arch,tc_target_arch,tc_triplet,unused_tc_cross", LINUX_ARCHS)
+@pytest.mark.parametrize(
+    "tc_arch,tc_target_arch,tc_triplet,unused_tc_cross", LINUX_ARCHS
+)
 def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
     mocker,
     new_dir,
