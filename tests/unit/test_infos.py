@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from craft_parts import errors
+from craft_parts import errors, infos
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import PartInfo, ProjectInfo, ProjectVar, StepInfo
 from craft_parts.parts import Part
@@ -26,20 +26,19 @@ from craft_parts.steps import Step
 
 _MOCK_NATIVE_ARCH = "aarch64"
 
+LINUX_ARCHS = [
+    ("aarch64", "arm64", "aarch64-linux-gnu", False),
+    ("armv7l", "armhf", "arm-linux-gnueabihf", True),
+    ("i686", "i386", "i386-linux-gnu", True),
+    ("ppc", "powerpc", "powerpc-linux-gnu", True),
+    ("ppc64le", "ppc64el", "powerpc64le-linux-gnu", True),
+    ("riscv64", "riscv64", "riscv64-linux-gnu", True),
+    ("s390x", "s390x", "s390x-linux-gnu", True),
+    ("x86_64", "amd64", "x86_64-linux-gnu", True),
+]
 
-@pytest.mark.parametrize(
-    "tc_arch,tc_target_arch,tc_triplet,tc_cross",
-    [
-        ("aarch64", "arm64", "aarch64-linux-gnu", False),
-        ("armv7l", "armhf", "arm-linux-gnueabihf", True),
-        ("i686", "i386", "i386-linux-gnu", True),
-        ("ppc", "powerpc", "powerpc-linux-gnu", True),
-        ("ppc64le", "ppc64el", "powerpc64le-linux-gnu", True),
-        ("riscv64", "riscv64", "riscv64-linux-gnu", True),
-        ("s390x", "s390x", "s390x-linux-gnu", True),
-        ("x86_64", "amd64", "x86_64-linux-gnu", True),
-    ],
-)
+
+@pytest.mark.parametrize("tc_arch,tc_target_arch,tc_triplet,tc_cross", LINUX_ARCHS)
 def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
@@ -74,6 +73,73 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     assert x.parts_dir == new_dir / "parts"
     assert x.stage_dir == new_dir / "stage"
     assert x.prime_dir == new_dir / "prime"
+
+
+@pytest.mark.parametrize(
+    "machine_arch,expected_arch",
+    [
+        ("ARM64", "aarch64"),
+        ("armv7hl", "armv7l"),
+        ("i386", "i686"),
+        ("AMD64", "x86_64"),
+        ("x64", "x86_64"),
+        ("aarch64", "aarch64"),
+    ],
+)
+@pytest.mark.parametrize("tc_arch,tc_target_arch,tc_triplet,tc_cross", LINUX_ARCHS)
+def test_project_info_translated_arch(
+    mocker,
+    new_dir,
+    tc_arch,
+    tc_target_arch,
+    tc_triplet,
+    tc_cross,
+    machine_arch,
+    expected_arch,
+):
+    mocker.patch("platform.machine", return_value=machine_arch)
+
+    x = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        arch=tc_arch,
+        parallel_build_count=16,
+        project_vars_part_name="adopt",
+        project_vars={"a": "b"},
+        project_name="project",
+        custom1="foobar",
+        custom2=[1, 2],
+    )
+
+    assert x.application_name == "test"
+    assert x.cache_dir == new_dir
+    assert x.arch_triplet == tc_triplet
+    assert x.is_cross_compiling == (expected_arch != tc_arch)
+    assert x.parallel_build_count == 16
+    assert x.target_arch == tc_target_arch
+    assert x.project_name == "project"
+    assert x.project_options == {
+        "application_name": "test",
+        "arch_triplet": tc_triplet,
+        "target_arch": tc_target_arch,
+        "project_vars_part_name": "adopt",
+        "project_vars": {"a": ProjectVar(value="b")},
+    }
+    assert x.global_environment == {}
+
+    assert x.parts_dir == new_dir / "parts"
+    assert x.stage_dir == new_dir / "stage"
+    assert x.prime_dir == new_dir / "prime"
+
+
+@pytest.mark.parametrize("arch", ["Z80", "invalid-arch"])
+def test_project_info_invalid_arch(arch):
+    with pytest.raises(errors.InvalidArchitecture):
+        ProjectInfo(
+            application_name="test",
+            cache_dir=Path(),
+            arch=arch,
+        )
 
 
 def test_project_info_work_dir(new_dir):
@@ -576,3 +642,25 @@ def test_step_info_get_project_var():
     assert str(raised.value) == (
         "cannot consume variable 'var' during lifecycle execution"
     )
+
+
+@pytest.mark.parametrize(
+    "machine,translated_machine",
+    [
+        ("arm64", "aarch64"),
+        ("armv7hl", "armv7l"),
+        ("i386", "i686"),
+        ("AMD64", "x86_64"),
+        ("x64", "x86_64"),
+        ("aarch64", "aarch64"),
+        ("invalid-architecture", "invalid-architecture"),
+    ],
+)
+def test_get_host_architecture_returns_valid_arch(
+    monkeypatch, machine, translated_machine
+):
+    monkeypatch.setattr("platform.machine", lambda: machine)
+
+    result = infos._get_host_architecture()
+
+    assert result == translated_machine
