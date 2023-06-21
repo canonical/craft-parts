@@ -158,6 +158,15 @@ class PartSpec(BaseModel):
 
         raise RuntimeError(f"cannot get scriptlet for invalid step {step!r}")
 
+    @property
+    def has_overlay(self) -> bool:
+        """Return whether this spec declares overlay content."""
+        return bool(
+            self.overlay_packages
+            or self.overlay_script is not None
+            or self.overlay_files != ["*"]
+        )
+
 
 class Part:
     """Each of the components used in the project specification.
@@ -309,11 +318,7 @@ class Part:
     @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
-        return bool(
-            self.spec.overlay_packages
-            or self.spec.overlay_script is not None
-            or self.spec.overlay_files != ["*"]
-        )
+        return self.spec.has_overlay
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -461,6 +466,20 @@ def validate_part(data: Dict[str, Any]) -> None:
 
     :param data: The part data to validate.
     """
+    _get_part_spec(data)
+
+
+def part_has_overlay(data: Dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` employs the Overlay step.
+
+    :param data: The part data to query for overlay use.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_overlay
+
+
+def _get_part_spec(data: Dict[str, Any]) -> PartSpec:
     if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
 
@@ -478,4 +497,4 @@ def validate_part(data: Dict[str, Any]) -> None:
 
     # validate common part properties
     part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
-    PartSpec(**part_spec)
+    return PartSpec(**part_spec)

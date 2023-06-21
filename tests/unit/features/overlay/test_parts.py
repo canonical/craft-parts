@@ -30,7 +30,7 @@ from craft_parts.steps import Step
 
 
 class TestPartSpecs:
-    """Test part specification creation."""
+    """Test part specification creation and query."""
 
     def test_marshal_unmarshal(self):
         data = {
@@ -103,6 +103,24 @@ class TestPartSpecs:
         is_deb_mock.return_value = False
         spec = PartSpec.unmarshal(data)
         assert spec.stage_packages == package_list
+
+    @pytest.mark.parametrize(
+        "packages,script,files,result",
+        [
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
+        ],
+    )
+    def test_spec_has_overlay(self, packages, script, files, result):
+        data = {
+            "overlay-packages": packages,
+            "overlay-script": script,
+            "overlay": files,
+        }
+        spec = PartSpec.unmarshal(data)
+        assert spec.has_overlay == result
 
 
 class TestPartData:
@@ -476,6 +494,24 @@ class TestPartHelpers:
 
         p = parts.get_parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
         assert p == [p2, p3, p5]
+
+    @pytest.mark.parametrize(
+        "packages,script,files,result",
+        [
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
+        ],
+    )
+    def test_part_has_overlay(self, packages, script, files, result):
+        data = {
+            "plugin": "nil",
+            "overlay-packages": packages,
+            "overlay-script": script,
+            "overlay": files,
+        }
+        assert parts.part_has_overlay(data) == result
 
 
 class TestPartValidation:
