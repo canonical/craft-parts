@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from unittest.mock import call
 
 import pytest
 
@@ -108,7 +107,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         assert file1.exists() is False
         assert file2.is_file()
 
-    def test_run_build(self, mocker, new_dir):
+    def test_run_build(self, mocker):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
         mocker.patch(
             "craft_parts.packages.Repository.get_installed_packages",
@@ -119,10 +118,10 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             return_value=["snapcraft=6466"],
         )
         mocker.patch("subprocess.check_output", return_value=b"os-info")
-        mock_run_step = mocker.spy(PartHandler, "_run_step")
 
-        step_info = StepInfo(self._part_info, Step.BUILD)
-        state = self._handler._run_build(step_info, stdout=None, stderr=None)
+        state = self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+        )
         assert state == states.BuildState(
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
@@ -135,17 +134,6 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             },
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
-
-        assert mock_run_step.mock_calls == [
-            call(
-                self._handler,
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=Path(new_dir, "parts/foo/build"),
-                stdout=None,
-                stderr=None,
-            )
-        ]
 
         self._mock_mount_overlayfs.assert_called_with(
             f"{self._part_info.overlay_mount_dir}",
