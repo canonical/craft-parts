@@ -112,3 +112,6 @@ ENV/
 parts/
 stage/
 prime/
+
+# Tox environments
+/.tox/
