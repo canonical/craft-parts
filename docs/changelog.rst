@@ -2,6 +2,15 @@
 Changelog
 *********
 
+1.22.0 (2023-06-25)
+-------------------
+
+- Add helper to query overlay use
+- Improve architecture mapping
+- Forward unmatched snap source parameters
+- Build system updates
+- Documentation updates
+
 1.21.1 (2023-06-09)
 -------------------
 
