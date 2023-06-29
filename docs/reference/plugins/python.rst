@@ -10,7 +10,6 @@ any of the following things:
 - Install packages using :command:`pip`.
 
 
-
 Keywords
 --------
 
@@ -75,3 +74,16 @@ variable.
 
 Use of ``python3-<python-package>`` in stage-packages will force the
 inclusion of the Python interpreter.
+
+How it works
+------------
+
+During the build step, the plugin performs the following actions:
+
+* It creates a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
+  directory.
+* It uses :command:`pip` to install the required Python packages as configured
+  in the ``python-requirements``, ``python-constraints`` and
+  ``python-packages`` keywords.
+* If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
+  files are used to install the dependencies specified by the package itself.

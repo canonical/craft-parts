@@ -9,7 +9,6 @@ lifecycle.
    :maxdepth: 1
 
    plugins/python.rst
-   plugins/plugin_template.rst
 
 
-For consistency, new plugins should be documented using the :ref:`template <parts-plugin-template>`.
+When documenting a new plugin, follow the guidelines in :ref:`how_to_document_a_plugin`.

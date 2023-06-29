@@ -1,4 +1,4 @@
-.._part_properties:
+.. _part_properties:
 
 Part properties
 ===============

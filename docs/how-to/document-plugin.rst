@@ -1,7 +1,7 @@
-.. _parts-plugin-template:
+.. _how_to_document_a_plugin:
 
-Plugin template
-===============
+How to document a plugin
+========================
 
 This document contains a template that should be used when documenting new
 plugins. Substitute values for each of the following placeholders in the
