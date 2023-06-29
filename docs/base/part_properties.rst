@@ -5,19 +5,22 @@
 after
 -----
 **Type:** array of unique strings with at least 1 item
+
 **Step:** build
 
 Specifies a list of parts that a given part will be built *after*.
 
-.. _build_attributes:
+.. ifconfig:: project in ["Snapcraft"]
 
-build-attributes
-----------------
-**Type:** array of unique strings with at least 1 item from "core22-step-dependencies", "enable-patchelf", "no-patchelf", "no-install", "debug", "keep-execstack".
+   .. _build_attributes:
 
-**Step:** build
+   build-attributes
+   ----------------
+   **Type:** array of unique strings with at least 1 item from "core22-step-dependencies", "enable-patchelf", "no-patchelf", "no-install", "debug", "keep-execstack".
 
-The customisations to apply to the build.
+   **Step:** build
+
+   The customisations to apply to the build.
 
 .. _build_environment:
 
@@ -62,17 +65,6 @@ build-snaps
 The snaps to be installed in the build environment before the build is
 performed. These provide libraries and executables that the part needs during
 the build process.
-
-.. _filesets:
-
-filesets
---------
-**Type:** dictionary mapping strings to lists of strings
-
-**Step:** all
-
-Defines named lists of paths to files and directories that can be referred to
-by name in keys that accept lists of paths.
 
 .. _organize:
 
