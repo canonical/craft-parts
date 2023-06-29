@@ -12,7 +12,7 @@ Reference
    lifecycle_manager
    part_properties
    parts_steps
-   plugins/index
+   plugins
    reference
    ../changelog
 
