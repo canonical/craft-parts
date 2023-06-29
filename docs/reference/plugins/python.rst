@@ -61,9 +61,17 @@ Additional arguments for venv.
 Dependencies
 ------------
 
-By default this plugin uses Python from the base. If a different
-interpreter is desired, it must be bundled (including the ``venv`` module)
-and its path must be included in the ``PATH`` environment variable.
+By default this plugin uses Python from the base when it is available and
+appropriate to use. This depends on the tool and format in use.
 
-Use of python3-<python-package> in stage-packages will force the
+* The bases used by Rockcraft do not contain Python, so it will need to be
+  supplied in ROCKs that use it.
+* Snaps that use strict confinement will use the version of Python in the
+  base. Snaps that use classic confinement will use the host system's Python.
+
+If a different interpreter is desired, it must be bundled (including the
+``venv`` module) and its path must be included in the ``PATH`` environment
+variable.
+
+Use of ``python3-<python-package>`` in stage-packages will force the
 inclusion of the Python interpreter.
