@@ -48,6 +48,7 @@ release = "1.22.0"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.ifconfig",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",  # must be loaded after napoleon
@@ -63,6 +64,10 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**venv", "base"]
+
+rst_epilog = """
+.. include:: /reuse/links.txt
+"""
 
 autodoc_mock_imports = ["apt"]
 
