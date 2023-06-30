@@ -61,6 +61,7 @@ defined by the :class:`Step <craft_parts.Step>` enumeration, containing
 entries for the lifecycle steps ``PULL``, ``OVERLAY``, ``BUILD``,
 ``STAGE``, and ``PRIME``.
 
+.. step_execution_environment:
 .. include:: /base/step_execution_environment.rst
 
 .. include:: /base/step_output_directories.rst

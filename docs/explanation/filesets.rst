@@ -29,10 +29,6 @@ which is used to perform operations on lists of file paths. This accepts a
 string containing the name of the fileset and a list of strings containing the
 file paths.
 
-When using `YAML`_ syntax to describe a part, the :ref:`filesets` property
-is used to define filesets. This property defines a dictionary that maps the
-name of each fileset to a list of file paths.
-
 Filesets are defined for individual parts. The scope of each fileset is the
 part it is defined in. Filesets defined in one part cannot be used by another
 part, and filesets cannot be shared between parts.

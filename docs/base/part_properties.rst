@@ -136,6 +136,8 @@ parse-info
 
 **Step:** all
 
+.. _part-properties-plugin:
+
 plugin
 ------
 **Type:** string
@@ -186,6 +188,7 @@ prime
 
 The files to copy from the staging area to the priming area.
 
+.. _part-properties-sources:
 .. _source:
 
 source
