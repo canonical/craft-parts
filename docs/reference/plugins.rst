@@ -2,6 +2,13 @@
 Plugins
 *******
 
-.. toctree::
+Plugins are used to provide support for specific technologies during the parts
+lifecycle.
 
-   plugins/python
+.. toctree::
+   :maxdepth: 1
+
+   plugins/python.rst
+
+
+When documenting a new plugin, follow the guidelines in :ref:`how_to_document_a_plugin`.
