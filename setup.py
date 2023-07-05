@@ -86,6 +86,7 @@ test_requires = [
     "codespell",
     "coverage",
     "isort",
+    "hypothesis",
     "pydocstyle",
     "pylint",
     "pylint-fixme-info",

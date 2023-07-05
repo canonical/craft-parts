@@ -27,9 +27,16 @@ logger = logging.getLogger()
 
 @dataclasses.dataclass(frozen=True)
 class Features(metaclass=Singleton):
-    """Configurable craft-parts features."""
+    """Configurable craft-parts features.
+
+    The overlay and partitions features are mutually exclusive.
+
+    :cvar enable_overlay: Enables the overlay step.
+    :cvar enable_partitions: Enables the usage of partitions.
+    """
 
     enable_overlay: bool = False
+    enable_partitions: bool = False
 
     @classmethod
     def reset(cls) -> None:

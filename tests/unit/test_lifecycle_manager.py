@@ -264,6 +264,27 @@ class TestOverlayDisabled:
         )
 
 
+class TestPartitionsDisabled:
+    """Partition feature must be enabled when partition are defined."""
+
+    @pytest.fixture
+    def parts_data(self) -> Dict[str, Any]:
+        return {"parts": {"foo": {"plugin": "nil"}}}
+
+    def test_partitions_disabled(self, new_dir, parts_data):
+        with pytest.raises(errors.FeatureDisabled) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                partitions=["default"],
+            )
+        assert (
+            raised.value.message
+            == "Partitions are defined but partition feature is not enabled."
+        )
+
+
 class TestPluginProperties:
     """Verify if plugin properties are correctly handled."""
 

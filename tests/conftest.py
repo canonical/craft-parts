@@ -71,6 +71,17 @@ def enable_overlay_feature():
     Features.reset()
 
 
+@pytest.fixture
+def enable_partitions_feature():
+    assert Features().enable_partitions is False
+    Features.reset()
+    Features(enable_partitions=True)
+
+    yield
+
+    Features.reset()
+
+
 @pytest.fixture(autouse=True)
 def temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
