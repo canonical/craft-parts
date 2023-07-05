@@ -49,11 +49,14 @@ def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
     _setup_chroot(path)
+    log_records = []
     try:
         child.start()
-        res, err = parent_conn.recv()
+        res, err, log_records = parent_conn.recv()
         child.join()
     finally:
+        for record in log_records:
+            logger.callHandlers(record)
         logger.debug("[pid=%d] clean up chroot", os.getpid())
         _cleanup_chroot(path)
 
@@ -61,6 +64,17 @@ def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:
         raise errors.OverlayChrootExecutionError(err)
 
     return res
+
+
+class _CollectingHandler(logging.Handler):
+    """A handler that just collects the records in a list."""
+
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
 
 
 def _runner(
@@ -71,17 +85,35 @@ def _runner(
     kwargs: Dict,
 ) -> None:
     """Chroot to the execution directory and call the target function."""
+    # Disable all existing log handlers, to avoid logging twice
+    def block_all(_record):
+        return False
+
+    for existing in logging.getLogger().handlers:
+        existing.addFilter(block_all)
+
+    # Add a new handler that collects the logged messages so we can return
+    # them to the parent process
+    handler = _CollectingHandler()
+    logging.getLogger().addHandler(handler)
+
     logger.debug("[pid=%d] child process: target=%r", os.getpid(), target)
     try:
-        logger.debug("[pid=%d] chroot to %r", os.getpid(), path)
+        logger.debug("[pid=%d] chroot to %s", os.getpid(), path)
         os.chdir(path)
         os.chroot(path)
         res = target(*args, **kwargs)
     except Exception as exc:  # pylint: disable=broad-except
-        conn.send((None, str(exc)))
+        conn.send((None, str(exc), handler.records))
         return
+    finally:
+        # Remove our handler
+        logging.getLogger().removeHandler(handler)
+        # Re-enable the existing handlers.
+        for existing in logging.getLogger().handlers:
+            existing.removeFilter(block_all)
 
-    conn.send((res, None))
+    conn.send((res, None, handler.records))
 
 
 def _setup_chroot(path: Path) -> None:
