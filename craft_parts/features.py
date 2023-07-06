@@ -29,8 +29,6 @@ logger = logging.getLogger()
 class Features(metaclass=Singleton):
     """Configurable craft-parts features.
 
-    The overlay and partitions features are mutually exclusive.
-
     :cvar enable_overlay: Enables the overlay step.
     :cvar enable_partitions: Enables the usage of partitions.
     """

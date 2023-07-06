@@ -81,7 +81,7 @@ class Sequencer:
         :returns: The list of actions that should be executed.
         """
         if target_step == Step.OVERLAY and not Features().enable_overlay:
-            raise errors.FeatureDisabled("Overlay step is not supported.")
+            raise errors.FeatureError("Overlay step is not supported.")
 
         self._actions = []
         self._add_all_actions(target_step, part_names)

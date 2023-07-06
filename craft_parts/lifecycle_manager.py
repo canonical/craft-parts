@@ -270,7 +270,7 @@ class LifecycleManager:
 def _ensure_overlay_supported() -> None:
     """Overlay is only supported in Linux and requires superuser privileges."""
     if not Features().enable_overlay:
-        raise errors.FeatureDisabled("Overlays are not supported.")
+        raise errors.FeatureError("Overlays are not supported.")
 
     if sys.platform != "linux":
         raise errors.OverlayPlatformError()
@@ -339,20 +339,14 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
     If the partition feature is enabled, then:
       - the first partition must be "default"
       - each partition must contain only lowercase alphabetical characters
-      - the overlay feature is not enabled
 
     :param partitions: Partition data to verify.
 
     :raises ValueError: If the partitions are not valid or the feature is not enabled.
     """
     if Features().enable_partitions:
-        if Features().enable_overlay:
-            raise errors.FeatureEnabled(
-                "Overlay and partitions features are mutually exclusive."
-            )
-
         if not partitions:
-            raise errors.FeatureEnabled(
+            raise errors.FeatureError(
                 "Partition feature is enabled but no partitions are defined."
             )
 
@@ -365,6 +359,6 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
             )
 
     elif partitions:
-        raise errors.FeatureDisabled(
+        raise errors.FeatureError(
             "Partitions are defined but partition feature is not enabled."
         )

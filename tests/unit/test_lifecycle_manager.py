@@ -272,7 +272,7 @@ class TestPartitionsDisabled:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     def test_partitions_disabled(self, new_dir, parts_data):
-        with pytest.raises(errors.FeatureDisabled) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             LifecycleManager(
                 parts_data,
                 application_name="test",

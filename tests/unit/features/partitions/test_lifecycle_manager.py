@@ -64,7 +64,7 @@ class TestPartitionsSupport:
     @pytest.mark.parametrize("partitions", [None, []])
     def test_no_partitions(self, new_dir, parts_data, partitions):
         """Raise an error if the partitions feature is enabled but not defined."""
-        with pytest.raises(errors.FeatureEnabled) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             LifecycleManager(
                 parts_data,
                 application_name="test_manager",

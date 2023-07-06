@@ -54,7 +54,7 @@ def test_part_dependency_cycle():
 
 
 def test_feature_enabled():
-    err = errors.FeatureEnabled("bummer")
+    err = errors.FeatureError("bummer")
     assert err.message == "bummer"
     assert err.brief == "bummer"
     assert err.details is None
@@ -62,7 +62,7 @@ def test_feature_enabled():
 
 
 def test_feature_disabled():
-    err = errors.FeatureDisabled("bummer")
+    err = errors.FeatureError("bummer")
     assert err.message == "bummer"
     assert err.brief == "bummer"
     assert err.details is None
