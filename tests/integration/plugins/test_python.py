@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import textwrap
 from pathlib import Path
 from typing import Optional
@@ -259,3 +260,91 @@ def test_python_plugin_override_shebangs(new_dir):
 
     primed_script = Path("prime/bin/pip")
     assert primed_script.open().readline().rstrip() == "#!/my/script/interpreter"
+
+
+# A part whose override-build copies the system's Python interpreter into the
+# payload
+PART_WITH_PAYLOAD_PYTHON = """\
+parts:
+  foo:
+    plugin: python
+    source: .
+    override-build: |
+      # Put a binary called "{payload_python}" in the payload
+      mkdir -p ${{CRAFT_PART_INSTALL}}/usr/bin
+      cp {real_python} ${{CRAFT_PART_INSTALL}}/usr/bin/{payload_python}
+      craftctl default 
+"""
+
+
+def test_find_payload_python_bad_version(new_dir):
+    """Test that the build fails if a payload interpreter is needed but it's the
+    wrong Python version."""
+
+    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+        @override
+        def _get_system_python_interpreter(self) -> Optional[str]:
+            # To have the build fail after failing to find the payload interpreter
+            return None
+
+    plugins.register({"python": MyPythonPlugin})
+
+    real_python = Path(sys.executable).resolve()
+    real_basename = real_python.name
+
+    # Copy the "real" binary into the payload before calling the plugin's build,
+    # but name it "python3.3".
+    parts_yaml = PART_WITH_PAYLOAD_PYTHON.format(
+        real_python=real_python, payload_python="python3.3"
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    actions = lf.plan(Step.PRIME)
+
+    out = Path("out.txt")
+    with out.open(mode="w") as outfile, pytest.raises(errors.ScriptletRunError):
+        with lf.action_executor() as ctx:
+            ctx.execute(actions, stdout=outfile)
+
+    output = out.read_text()
+    expected_text = textwrap.dedent(
+        f"""\
+        Looking for a Python interpreter called "{real_basename}" in the payload...
+        Python interpreter not found in payload.
+        No suitable Python interpreter found, giving up.
+        """
+    )
+    assert expected_text in output
+
+
+def test_find_payload_python_good_version(new_dir):
+    """Test that the build succeeds if a payload interpreter is needed, and it's
+    the right Python version."""
+
+    real_python = Path(sys.executable).resolve()
+    real_basename = real_python.name
+
+    # Copy the "real" binary into the payload before calling the plugin's build.
+    parts_yaml = PART_WITH_PAYLOAD_PYTHON.format(
+        real_python=real_python, payload_python=real_basename
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    actions = lf.plan(Step.PRIME)
+
+    out = Path("out.txt")
+    with out.open(mode="w") as outfile:
+        with lf.action_executor() as ctx:
+            ctx.execute(actions, stdout=outfile)
+
+    output = out.read_text()
+    payload_python = Path(f"parts/foo/install/usr/bin/{real_basename}").resolve()
+    expected_text = textwrap.dedent(
+        f"""\
+        Looking for a Python interpreter called "{real_basename}" in the payload...
+        Found interpreter in payload: "{payload_python}"
+        """
+    )
+    assert expected_text in output
