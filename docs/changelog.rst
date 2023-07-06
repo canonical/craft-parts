@@ -2,6 +2,13 @@
 Changelog
 *********
 
+1.23.0 (2023-07-06)
+-------------------
+
+- Improve interpreter version detection in the Python plugin
+- Fix and improve documentation
+- Pin Pydantic to version 1.x
+
 1.22.0 (2023-06-25)
 -------------------
 
