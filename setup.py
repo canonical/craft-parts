@@ -93,6 +93,7 @@ test_requires = [
     "pylint-pytest",
     "pyright",
     "pytest",
+    "pytest-check",
     "pytest-cov",
     "pytest-mock",
     "requests-mock",

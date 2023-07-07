@@ -26,6 +26,21 @@ from craft_parts import errors
 from craft_parts.lifecycle_manager import LifecycleManager
 
 
+def valid_partitions_strategy():
+    """A strategy for a list of valid partitions.
+
+    The ruleset is defined in the LifecycleManager docstrings.
+    """
+    strategy = strategies.lists(
+        strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1),
+        min_size=1,
+        unique=True,
+    ).map(lambda lst: ["default"] + lst)
+
+    # ensure "default" is not repeated in the list
+    return strategy.filter(lambda partitions: "default" not in partitions[1:])
+
+
 class TestPartitionsSupport:
     """Verify LifecycleManager supports partitions."""
 
@@ -34,7 +49,7 @@ class TestPartitionsSupport:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     @pytest.mark.parametrize("partitions", [["default"], ["default", "kernel"]])
-    def test_project_info(self, new_dir, parts_data, partitions):
+    def test_project_info(self, check, new_dir, parts_data, partitions):
         """Verify partitions are parsed and passed to ProjectInfo."""
         lifecycle = LifecycleManager(
             parts_data,
@@ -49,17 +64,17 @@ class TestPartitionsSupport:
         )
         info = lifecycle.project_info
 
-        assert info.application_name == "test_manager"
-        assert info.project_name == "project"
-        assert info.target_arch == "arm64"
-        assert info.arch_triplet == "aarch64-linux-gnu"
-        assert info.parallel_build_count == 16
-        assert info.dirs.parts_dir == new_dir / "work_dir" / "parts"
-        assert info.dirs.stage_dir == new_dir / "work_dir" / "stage"
-        assert info.dirs.prime_dir == new_dir / "work_dir" / "prime"
-        assert info.custom_args == ["custom"]
-        assert info.custom == "foo"
-        assert info.partitions == partitions
+        check.equal(info.application_name, "test_manager")
+        check.equal(info.project_name, "project")
+        check.equal(info.target_arch, "arm64")
+        check.equal(info.arch_triplet, "aarch64-linux-gnu")
+        check.equal(info.parallel_build_count, 16)
+        check.equal(info.dirs.parts_dir, new_dir / "work_dir" / "parts")
+        check.equal(info.dirs.stage_dir, new_dir / "work_dir" / "stage")
+        check.equal(info.dirs.prime_dir, new_dir / "work_dir" / "prime")
+        check.equal(info.custom_args, ["custom"])
+        check.equal(info.custom, "foo")
+        check.equal(info.partitions, partitions)
 
     @pytest.mark.parametrize("partitions", [None, []])
     def test_no_partitions(self, new_dir, parts_data, partitions):
@@ -77,28 +92,9 @@ class TestPartitionsSupport:
             == "Partition feature is enabled but no partitions are defined."
         )
 
-    @pytest.mark.parametrize(
-        "partitions", [["defaulta"], ["kernel"], ["kernel", "default"]]
-    )
-    def test_default_not_first(self, new_dir, parts_data, partitions):
-        """Raise an error if the first partition is not 'default'."""
-        with pytest.raises(ValueError) as raised:
-            LifecycleManager(
-                parts_data,
-                application_name="test_manager",
-                cache_dir=new_dir,
-                partitions=partitions,
-            )
-
-        assert str(raised.value) == "First partition must be 'default'."
-
+    # `new_dir` is function-scoped but does not affect the testing of partition names
     @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-    @given(
-        partitions=strategies.lists(
-            strategies.text(strategies.sampled_from([*ascii_lowercase]), min_size=1),
-            min_size=1,
-        ).map(lambda lst: ["default"] + lst)
-    )
+    @given(partitions=valid_partitions_strategy())
     def test_partitions_valid(self, new_dir, parts_data, partitions):
         """Process valid partition names."""
         lifecycle = LifecycleManager(
@@ -115,15 +111,36 @@ class TestPartitionsSupport:
     @pytest.mark.parametrize(
         "partitions",
         [
-            ["Test"],
-            ["TEST"],
-            ["test1"],
-            ["te-st"],
+            ["defaultbad"],
+            ["kernel"],
+            ["kernel", "kernel"],
+            ["kernel", "default"],
+        ],
+    )
+    def test_partitions_default_not_first(self, new_dir, parts_data, partitions):
+        """Raise an error if the first partition is not 'default'."""
+        with pytest.raises(ValueError) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=partitions,
+            )
+
+        assert str(raised.value) == "First partition must be 'default'."
+
+    @pytest.mark.parametrize(
+        "partitions",
+        [
+            ["default", ""],
+            ["default", "Test"],
+            ["default", "TEST"],
+            ["default", "test1"],
+            ["default", "te-st"],
         ],
     )
     def test_partitions_invalid(self, new_dir, parts_data, partitions):
         """Raise an error if partitions are not lowercase alphabetical characters."""
-        partitions.insert(0, "default")
         with pytest.raises(ValueError) as raised:
             LifecycleManager(
                 parts_data,
@@ -136,3 +153,24 @@ class TestPartitionsSupport:
             str(raised.value)
             == "Partitions must only contain lowercase alphabetical characters."
         )
+
+    @pytest.mark.parametrize(
+        "partitions",
+        [
+            ["default", "default"],
+            ["default", "default", "kernel"],
+            ["default", "default", "kernel", "kernel"],
+            ["default", "kernel", "kernel"],
+        ],
+    )
+    def test_partitions_duplicates(self, new_dir, parts_data, partitions):
+        """Raise an error if there are duplicate partitions."""
+        with pytest.raises(ValueError) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=partitions,
+            )
+
+        assert str(raised.value) == "Partitions must be unique."

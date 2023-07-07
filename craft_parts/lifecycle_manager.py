@@ -339,6 +339,7 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
     If the partition feature is enabled, then:
       - the first partition must be "default"
       - each partition must contain only lowercase alphabetical characters
+      - partitions are unique
 
     :param partitions: Partition data to verify.
 
@@ -357,6 +358,9 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
             raise ValueError(
                 "Partitions must only contain lowercase alphabetical characters."
             )
+
+        if len(partitions) != len(set(partitions)):
+            raise ValueError("Partitions must be unique.")
 
     elif partitions:
         raise errors.FeatureError(
