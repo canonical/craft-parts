@@ -49,8 +49,8 @@ class PartsError(Exception):
         return "\n".join(components)
 
 
-class FeatureDisabled(PartsError):
-    """The requested feature is not enabled."""
+class FeatureError(PartsError):
+    """A feature is not configured as expected."""
 
     def __init__(self, message: str) -> None:
         self.message = message

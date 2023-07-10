@@ -46,6 +46,7 @@ class ProjectVar(YamlModel):
     updated: bool = False
 
 
+# pylint: disable-next=too-many-instance-attributes
 class ProjectInfo:
     """Project-level information containing project-specific fields.
 
@@ -67,6 +68,7 @@ class ProjectInfo:
     :param project_vars: A dictionary containing the project variables.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
+    :param partitions: A list of partitions.
     """
 
     def __init__(
@@ -82,6 +84,7 @@ class ProjectInfo:
         project_name: Optional[str] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
+        partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
     ):
         if not project_dirs:
@@ -99,6 +102,7 @@ class ProjectInfo:
         self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
+        self._partitions = partitions
         self._custom_args = custom_args
         self.global_environment: Dict[str, str] = {}
 
@@ -183,6 +187,11 @@ class ProjectInfo:
             "project_vars_part_name": self._project_vars_part_name,
             "project_vars": self._project_vars,
         }
+
+    @property
+    def partitions(self) -> Optional[List[str]]:
+        """Return the project's partitions."""
+        return self._partitions
 
     def set_project_var(
         self,

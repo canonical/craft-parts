@@ -74,6 +74,9 @@ class LifecycleManager:
     :param project_vars_part_name: Project variables can only be set in the part
         matching this name.
     :param project_vars: A dictionary containing project variables.
+    :param partitions: A list of partitions to use when the partitions feature is
+        enabled. The first partition must be "default" and all partitions must be
+        lowercase alphabetical.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -99,6 +102,7 @@ class LifecycleManager:
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
+        partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
     ):
         # pylint: disable=too-many-locals
@@ -115,6 +119,8 @@ class LifecycleManager:
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
+        _validate_partitions(partitions)
+
         packages.Repository.configure(application_package_name)
 
         project_dirs = ProjectDirs(work_dir=work_dir)
@@ -130,6 +136,7 @@ class LifecycleManager:
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
+            partitions=partitions,
             **custom_args,
         )
 
@@ -263,7 +270,7 @@ class LifecycleManager:
 def _ensure_overlay_supported() -> None:
     """Overlay is only supported in Linux and requires superuser privileges."""
     if not Features().enable_overlay:
-        raise errors.FeatureDisabled("Overlays are not supported.")
+        raise errors.FeatureError("Overlays are not supported.")
 
     if sys.platform != "linux":
         raise errors.OverlayPlatformError()
@@ -324,3 +331,38 @@ def _build_part(
     )
 
     return part
+
+
+def _validate_partitions(partitions: Optional[List[str]]) -> None:
+    """Validate the partition feature set.
+
+    If the partition feature is enabled, then:
+      - the first partition must be "default"
+      - each partition must contain only lowercase alphabetical characters
+      - partitions are unique
+
+    :param partitions: Partition data to verify.
+
+    :raises ValueError: If the partitions are not valid or the feature is not enabled.
+    """
+    if Features().enable_partitions:
+        if not partitions:
+            raise errors.FeatureError(
+                "Partition feature is enabled but no partitions are defined."
+            )
+
+        if partitions[0] != "default":
+            raise ValueError("First partition must be 'default'.")
+
+        if any(not re.fullmatch("[a-z]+", partition) for partition in partitions):
+            raise ValueError(
+                "Partitions must only contain lowercase alphabetical characters."
+            )
+
+        if len(partitions) != len(set(partitions)):
+            raise ValueError("Partitions must be unique.")
+
+    elif partitions:
+        raise errors.FeatureError(
+            "Partitions are defined but partition feature is not enabled."
+        )
