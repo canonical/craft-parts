@@ -22,6 +22,15 @@ def error_in_chroot():
     raise errors.PartsError("Error from 'inside' chroot")
 
 
+def complex_in_chroot():
+    class C:
+        def __str__(self):
+            return "<local C>"
+
+    complex_object = C()
+    test_logger.info("Log message with local object: %s", complex_object)
+
+
 @pytest.fixture
 def mock_get_pid(mocker):
     """Mock for os.getpid() with a function that returns 0 for the first process
@@ -103,3 +112,10 @@ def test_chroot_logging_error(tmp_path, mock_get_pid, mock_chroot, logfile):
     with pytest.raises(OverlayChrootExecutionError, match="Error from 'inside' chroot"):
         chroot.chroot(tmp_path, error_in_chroot)
     assert logfile.read_text() == get_expected_log(tmp_path, error_in_chroot)
+
+
+def test_chroot_logging_complex_objects(tmp_path, mock_get_pid, mock_chroot, logfile):
+    """Test that messages logged by the callable passed to chroot() are captured,
+    even if they log objects that are not pickleable."""
+    chroot.chroot(tmp_path, complex_in_chroot)
+    assert "Log message with local object: <local C>" in logfile.read_text()

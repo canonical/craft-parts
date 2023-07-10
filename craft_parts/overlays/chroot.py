@@ -19,6 +19,7 @@
 import logging
 import multiprocessing
 import os
+import pickle
 import sys
 from collections import namedtuple
 from multiprocessing.connection import Connection
@@ -55,7 +56,9 @@ def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:
         res, err, log_records = parent_conn.recv()
         child.join()
     finally:
-        for record in log_records:
+        for pickled_record in log_records:
+            record_dict = pickle.loads(pickled_record)
+            record = logging.makeLogRecord(record_dict)
             logger.callHandlers(record)
         logger.debug("[pid=%d] clean up chroot", os.getpid())
         _cleanup_chroot(path)
@@ -74,7 +77,20 @@ class _CollectingHandler(logging.Handler):
         self.records = []
 
     def emit(self, record: logging.LogRecord) -> None:
-        self.records.append(record)
+        ei = record.exc_info
+        if ei:
+            # just to get traceback text into record.exc_text ...
+            dummy = self.format(record)
+        # See issue #14436: If msg or args are objects, they may not be
+        # available on the receiving end. So we convert the msg % args
+        # to a string, save it as msg and zap the args.
+        d = dict(record.__dict__)
+        d["msg"] = record.getMessage()
+        d["args"] = None
+        d["exc_info"] = None
+        d.pop("message", None)
+        s = pickle.dumps(d, 1)
+        self.records.append(s)
 
 
 def _runner(
