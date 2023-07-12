@@ -17,6 +17,7 @@
 """Unit tests for the lifecycle manager with the partitions feature."""
 
 from string import ascii_lowercase
+from textwrap import dedent
 from typing import Any, Dict
 
 import pytest
@@ -43,6 +44,11 @@ def valid_partitions_strategy():
 
 class TestPartitionsSupport:
     """Verify LifecycleManager supports partitions."""
+
+    @pytest.fixture
+    def partition_list(self):
+        """Return a list of partitions, 'default' and 'kernel'."""
+        return ["default", "kernel"]
 
     @pytest.fixture
     def parts_data(self) -> Dict[str, Any]:
@@ -174,3 +180,48 @@ class TestPartitionsSupport:
             )
 
         assert str(raised.value) == "Partitions must be unique."
+
+    def test_partitions_usage_valid(self, new_dir, partition_list):
+        """Verify partitions can be used in parts when creating a LifecycleManager."""
+        parts_data = {
+            "parts": {
+                "foo": {
+                    "plugin": "nil",
+                    "stage": ["(default)/foo"],
+                },
+            }
+        }
+
+        # nothing to assert, just ensure an exception is not raised
+        LifecycleManager(
+            parts_data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            partitions=partition_list,
+        )
+
+    def test_partitions_usage_invalid(self, new_dir, partition_list):
+        """Invalid uses of partitions are raised when creating a LifecycleManager."""
+        parts_data = {
+            "parts": {
+                "foo": {
+                    "plugin": "nil",
+                    "stage": ["(test)/foo"],
+                },
+            }
+        }
+        with pytest.raises(ValueError) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=partition_list,
+            )
+
+        assert str(raised.value) == dedent(
+            """\
+            Error: Invalid usage of partitions:
+              parts -> foo -> stage
+                unknown partition 'test' in '(test)/foo'
+            Valid partitions are 'default' and 'kernel'."""
+        )

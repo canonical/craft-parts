@@ -118,6 +118,23 @@ class TestPartSpecs:
             PartSpec.unmarshal(data)
 
 
+class TestPartPartitionUsage:
+    """Test usage of partitions in parts."""
+
+    def test_part_invalid_partition_usage_no_error(self):
+        """Do not error for invalid partition usage when the feature is disabled."""
+        # if partitions were enabled, this would raise a ValueError
+        part_data = {
+            "organize": {"test": "(foo)"},
+            "stage": ["(bar)/test"],
+            "prime": ["(baz)"],
+        }
+
+        part_list = [Part("a", part_data), Part("b", part_data)]
+
+        assert not parts.validate_partition_usage(part_list, ["default", "kernel"])
+
+
 class TestPartData:
     """Test basic part creation and representation."""
 
