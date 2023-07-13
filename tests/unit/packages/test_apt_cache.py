@@ -63,6 +63,9 @@ class TestAptStageCache:
                 "pci.ids",
                 "perl-base",
                 "tar",
+                # dependencies in jammy
+                "gcc-13-base",
+                "libgcc-s1",
             }
 
             cache.mark_packages(package_names)
