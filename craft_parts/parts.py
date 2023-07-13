@@ -369,11 +369,9 @@ class Part:
                 partition = match.group("partition")
                 if partition not in partitions:
                     error_list.append(
-                        f"    unknown partition {partition!r} in {filepath!r}"
+                        f"- unknown partition {partition!r} in {filepath!r} "
+                        f"in field 'parts.{self.name}.{fileset_name}'"
                     )
-
-        if error_list:
-            error_list.insert(0, f"  parts -> {self.name} -> {fileset_name}")
 
         return error_list
 

@@ -221,7 +221,6 @@ class TestPartitionsSupport:
         assert str(raised.value) == dedent(
             """\
             Error: Invalid usage of partitions:
-              parts -> foo -> stage
-                unknown partition 'test' in '(test)/foo'
+            - unknown partition 'test' in '(test)/foo' in field 'parts.foo.stage'
             Valid partitions are 'default' and 'kernel'."""
         )
