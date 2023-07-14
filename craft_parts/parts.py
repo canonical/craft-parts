@@ -362,16 +362,19 @@ class Part:
         :returns: A list of invalid uses of partitions in the fileset.
         """
         error_list = []
+        pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
 
         for filepath in fileset:
-            match = re.match("^-?\\((?P<partition>.*?)\\)", filepath)
+            match = re.match(pattern, filepath)
             if match:
                 partition = match.group("partition")
                 if partition not in partitions:
                     error_list.append(
-                        f"- unknown partition {partition!r} in {filepath!r} "
-                        f"in field 'parts.{self.name}.{fileset_name}'"
+                        f"    unknown partition {partition!r} in {filepath!r}"
                     )
+
+        if error_list:
+            error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
 
         return error_list
 

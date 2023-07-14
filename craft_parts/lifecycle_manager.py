@@ -148,10 +148,10 @@ class LifecycleManager:
         for name, spec in parts_data.items():
             part_list.append(_build_part(name, spec, project_dirs, strict_mode))
 
-        self._has_overlay = any(p.has_overlay for p in part_list)
-
         if partitions:
             validate_partition_usage(part_list, partitions)
+
+        self._has_overlay = any(p.has_overlay for p in part_list)
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:

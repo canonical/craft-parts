@@ -88,7 +88,7 @@ class TestPartPartitionUsage:
 
         part_list = [Part("a", part_data), Part("b", part_data)]
 
-        assert not parts.validate_partition_usage(part_list, partition_list)
+        assert parts.validate_partition_usage(part_list, partition_list) is None
 
     def test_part_invalid_partition_usage_simple(self, partition_list):
         """Raise an error if partitions are improperly used in parts."""
@@ -106,10 +106,14 @@ class TestPartPartitionUsage:
         assert str(raised.value) == dedent(
             """\
             Error: Invalid usage of partitions:
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-a.overlay'
-            - unknown partition 'foo' in '(foo)/test' in field 'parts.part-a.organize'
-            - unknown partition 'baz' in '(baz)/test' in field 'parts.part-a.stage'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-a.prime'
+              parts.part-a.overlay
+                unknown partition 'bar' in '(bar)/test'
+              parts.part-a.organize
+                unknown partition 'foo' in '(foo)/test'
+              parts.part-a.stage
+                unknown partition 'baz' in '(baz)/test'
+              parts.part-a.prime
+                unknown partition '123' in '(123)/test'
             Valid partitions are 'default' and 'kernel'."""
         )
 
@@ -135,69 +139,77 @@ class TestPartPartitionUsage:
         assert str(raised.value) == dedent(
             """\
             Error: Invalid usage of partitions:
-            - unknown partition '' in '()' in field 'parts.part-a.overlay'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-a.overlay'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-a.overlay'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-a.overlay'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-a.overlay'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-a.overlay'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-a.overlay'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-a.overlay'
-            - unknown partition '' in '()' in field 'parts.part-a.organize'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-a.organize'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-a.organize'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-a.organize'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-a.organize'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-a.organize'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-a.organize'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-a.organize'
-            - unknown partition '' in '()' in field 'parts.part-a.stage'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-a.stage'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-a.stage'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-a.stage'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-a.stage'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-a.stage'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-a.stage'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-a.stage'
-            - unknown partition '' in '()' in field 'parts.part-a.prime'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-a.prime'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-a.prime'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-a.prime'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-a.prime'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-a.prime'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-a.prime'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-a.prime'
-            - unknown partition '' in '()' in field 'parts.part-b.overlay'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-b.overlay'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-b.overlay'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-b.overlay'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-b.overlay'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-b.overlay'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-b.overlay'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-b.overlay'
-            - unknown partition '' in '()' in field 'parts.part-b.organize'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-b.organize'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-b.organize'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-b.organize'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-b.organize'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-b.organize'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-b.organize'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-b.organize'
-            - unknown partition '' in '()' in field 'parts.part-b.stage'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-b.stage'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-b.stage'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-b.stage'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-b.stage'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-b.stage'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-b.stage'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-b.stage'
-            - unknown partition '' in '()' in field 'parts.part-b.prime'
-            - unknown partition 'foo' in '(foo)' in field 'parts.part-b.prime'
-            - unknown partition 'bar' in '(bar)/test' in field 'parts.part-b.prime'
-            - unknown partition 'baz' in '(baz)' in field 'parts.part-b.prime'
-            - unknown partition '123' in '(123)/test' in field 'parts.part-b.prime'
-            - unknown partition '123' in '(123)/test/(456)' in field 'parts.part-b.prime'
-            - unknown partition '123' in '(123)/test/(default)' in field 'parts.part-b.prime'
-            - unknown partition '123' in '(123)/test/(kernel)' in field 'parts.part-b.prime'
+              parts.part-a.overlay
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
+              parts.part-a.organize
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
+              parts.part-a.stage
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
+              parts.part-a.prime
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
+              parts.part-b.overlay
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
+              parts.part-b.organize
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
+              parts.part-b.stage
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
+              parts.part-b.prime
+                unknown partition '' in '()'
+                unknown partition 'foo' in '(foo)'
+                unknown partition 'bar' in '(bar)/test'
+                unknown partition 'baz' in '(baz)'
+                unknown partition '123' in '(123)/test'
+                unknown partition '123' in '(123)/test/(456)'
+                unknown partition '123' in '(123)/test/(default)'
+                unknown partition '123' in '(123)/test/(kernel)'
             Valid partitions are 'default' and 'kernel'."""
         )
