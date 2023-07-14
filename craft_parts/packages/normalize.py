@@ -199,10 +199,10 @@ def fix_pkg_config(
                 new_prefix = f"prefix={prefix_prepend}{match.group('prefix')}"
             else:
                 new_prefix = None
-                print(line, end="")
+                # print(line, end="")
 
             if new_prefix is not None:
-                print(new_prefix)
+                # print(new_prefix)
                 logger.debug(
                     "For pkg-config file %s, prefix was changed from %s to %s",
                     pkg_config_file,
