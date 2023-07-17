@@ -30,7 +30,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
-from craft_parts.parts import Part, part_by_name
+from craft_parts.parts import Part, part_by_name, validate_partition_usage
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
@@ -147,6 +147,9 @@ class LifecycleManager:
         part_list = []
         for name, spec in parts_data.items():
             part_list.append(_build_part(name, spec, project_dirs, strict_mode))
+
+        if partitions:
+            validate_partition_usage(part_list, partitions)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
 

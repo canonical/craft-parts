@@ -16,8 +16,9 @@
 
 """Definitions and helpers to handle parts."""
 
+import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
@@ -28,6 +29,7 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
+from craft_parts.utils.formatting_utils import humanize_list
 
 
 class PartSpec(BaseModel):
@@ -320,6 +322,62 @@ class Part:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
 
+    def check_partition_usage(self, partitions: List[str]) -> List[str]:
+        """Check if partitions are properly used in a part.
+
+        :param partitions: The list of valid partitions.
+
+        :returns: A list of invalid uses of partitions in the part.
+        """
+        error_list: List[str] = []
+
+        if not Features().enable_partitions:
+            return error_list
+
+        for fileset_name, fileset in [
+            ("overlay", self.spec.overlay_files),
+            # only the destination of organize filepaths use partitions
+            ("organize", self.spec.organize_files.values()),
+            ("stage", self.spec.stage_files),
+            ("prime", self.spec.prime_files),
+        ]:
+            error_list.extend(
+                self._check_partitions_in_filepaths(fileset_name, fileset, partitions)
+            )
+
+        return error_list
+
+    def _check_partitions_in_filepaths(
+        self, fileset_name: str, fileset: Iterable[str], partitions: List[str]
+    ) -> List[str]:
+        """Check if partitions are properly used in a fileset.
+
+        If a filepath begins with a parentheses, then the text inside the parentheses
+        must be a valid partition.
+
+        :param fileset_name: The name of the fileset being checked.
+        :param fileset: The list of filepaths to check.
+        :param partitions: The list of valid partitions.
+
+        :returns: A list of invalid uses of partitions in the fileset.
+        """
+        error_list = []
+        pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
+
+        for filepath in fileset:
+            match = re.match(pattern, filepath)
+            if match:
+                partition = match.group("partition")
+                if partition not in partitions:
+                    error_list.append(
+                        f"    unknown partition {partition!r} in {filepath!r}"
+                    )
+
+        if error_list:
+            error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
+
+        return error_list
+
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
     """Obtain the part with the given name from the part list.
@@ -467,6 +525,33 @@ def validate_part(data: Dict[str, Any]) -> None:
     :param data: The part data to validate.
     """
     _get_part_spec(data)
+
+
+def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> None:
+    """Validate usage of partitions in a list of parts.
+
+    For each part, the use of partitions in filepaths in overlay, stage, prime, and
+    organize keywords are validated.
+
+    :param part_list: The list of parts to validate.
+    :param partitions: The list of valid partitions.
+
+    :raises ValueError: If partitions are not used properly in the list of parts.
+    """
+    if not Features().enable_partitions:
+        return
+
+    error_list = []
+
+    for part in part_list:
+        error_list.extend(part.check_partition_usage(partitions))
+
+    if error_list:
+        raise ValueError(
+            "Error: Invalid usage of partitions:\n"
+            + "\n".join(error_list)
+            + f"\nValid partitions are {humanize_list(partitions, 'and')}."
+        )
 
 
 def part_has_overlay(data: Dict[str, Any]) -> bool:
