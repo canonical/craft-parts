@@ -17,17 +17,23 @@
 """Partition helpers."""
 
 import re
-from pathlib import Path
-from typing import Union
+from pathlib import PurePath, PurePosixPath
+from typing import TypeVar, Union
 
 from craft_parts.features import Features
 
-
-# XXX: for context, you can see where this function in the prototype:
-# https://github.com/mr-cal/craft-parts/commit/e2d15f1bb1da3207463ad3015b68509537b007c3
+FlexiblePath = TypeVar("FlexiblePath", bound=Union[PurePath, str])
 
 
-def get_partition_compatible_filepath(filepath: Union[Path, str]) -> Union[Path, str]:
+HAS_PARTITION_REGEX = re.compile(r"^\([a-z]+\)(/.*)?$")
+
+
+def _has_partition(path: FlexiblePath) -> bool:
+    """Check whether a path has an explicit partition."""
+    return bool(HAS_PARTITION_REGEX.match(str(path)))
+
+
+def get_partition_compatible_filepath(filepath: FlexiblePath) -> FlexiblePath:
     """Get a filepath compatible with the partitions feature.
 
     If the filepath begins with a partition, then the parentheses are stripped from the
@@ -43,25 +49,22 @@ def get_partition_compatible_filepath(filepath: Union[Path, str]) -> Union[Path,
     if not Features().enable_partitions:
         return filepath
 
-    # XXX: I think this is the correct thing to do. The default globs should not be
-    # modified (which comes from craft_parts/parts.py lines 55-58)
-    if filepath == "*":
+    str_path = str(filepath)
+
+    # Anything that starts with a glob should be assumed to remain that same glob.
+    if str_path.startswith("*"):
         return filepath
 
-    # XXX: I know there is at least one problem with this regex: `(default)` and
-    # `(default)/` are treated differently
-    match = re.match("^\\((?P<partition>[a-z]+)\\)/(?P<filepath>.*)", str(filepath))
-    if match:
-        partition = match.group("partition")
-        everything_else = match.group("filepath")
+    if _has_partition(str_path):
+        if "/" not in str_path:
+            partition = str_path.strip("()")
+            inner_path = ""
+        else:
+            partition, inner_path = str_path.split("/", maxsplit=1)
+            partition = partition.strip("()")
     else:
         partition = "default"
-        everything_else = filepath
+        inner_path = str_path
 
-    new_filepath = Path(partition, everything_else)
-
-    # XXX: craft-parts calls this function in different places. Sometimes the filepath
-    # is a string and something it is a Path object. I decided to make this function
-    # handle both scenarios but I wonder if this approach will create
-    # type-checking issues in the future.
-    return str(new_filepath) if isinstance(filepath, str) else new_filepath
+    new_filepath = PurePosixPath(partition, inner_path)
+    return filepath.__class__(new_filepath)
