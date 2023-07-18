@@ -92,6 +92,7 @@ from .file_source import FileSource
 from .git_source import GitSource
 from .local_source import LocalSource
 from .rpm_source import RpmSource
+from .sevenzip_source import SevenzipSource
 from .snap_source import SnapSource
 from .tar_source import TarSource
 from .zip_source import ZipSource
@@ -110,6 +111,7 @@ _source_handler: Dict[str, SourceHandlerType] = {
     "zip": ZipSource,
     "deb": DebSource,
     "file": FileSource,
+    "7z": SevenzipSource,
     "rpm": RpmSource,
 }
 

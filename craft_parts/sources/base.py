@@ -133,9 +133,9 @@ class SourceHandler(abc.ABC):
             raise errors.PullError(command=command, exit_code=err.returncode)
 
     @classmethod
-    def _run_output(cls, command: Sequence) -> str:
+    def _run_output(cls, command: Sequence, **kwargs) -> str:
         try:
-            return subprocess.check_output(command, text=True).strip()
+            return subprocess.check_output(command, text=True, **kwargs).strip()
         except subprocess.CalledProcessError as err:
             raise errors.PullError(command=command, exit_code=err.returncode)
 
