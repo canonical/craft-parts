@@ -22,6 +22,7 @@ import platform
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, Set, cast
 
+from overrides import override
 from pydantic import root_validator
 
 from craft_parts.errors import InvalidArchitecture
@@ -53,13 +54,14 @@ class NpmPluginProperties(PluginProperties, PluginModel):
 
     @root_validator
     @classmethod
-    def node_version_defined(cls, values):
+    def node_version_defined(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """If npm-include-node is true, then npm-node-version must be defined."""
         if values.get("npm_include_node") and not values.get("npm_node_version"):
             raise ValueError("npm-node-version is required if npm-include-node is true")
         return values
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "NpmPluginProperties":
         """Populate class attributes from the part specification.
 
@@ -82,7 +84,10 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
-    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
+    @override
+    def validate_environment(
+        self, *, part_dependencies: Optional[List[str]] = None
+    ) -> None:
         """Ensure the environment has the dependencies to build npm applications.
 
         :param part_dependencies: A list of the parts this part depends on.
@@ -145,22 +150,26 @@ class NpmPlugin(Plugin):
 
         return node_arch
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         if cast(NpmPluginProperties, self._options).npm_include_node:
             return {"curl", "gcc"}
         return {"gcc"}
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         if cast(NpmPluginProperties, self._options).npm_include_node:
-            return dict(PATH="${CRAFT_PART_INSTALL}/bin:${PATH}")
+            return {"PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}"}
         return {}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(NpmPluginProperties, self._options)
@@ -186,7 +195,6 @@ class NpmPlugin(Plugin):
                     """
                 )
             )
-        command.append("npm config set unsafe-perm true")
         command.append(
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)'
         )

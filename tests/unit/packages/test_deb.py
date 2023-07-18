@@ -24,6 +24,7 @@ from unittest.mock import call
 
 import pytest
 
+from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
 from craft_parts.packages.deb_package import DebPackage
 
@@ -189,6 +190,53 @@ class TestPackages:
         assert sorted(fetched_packages) == sorted(
             ["fake-package=1.0", "fake-package-dep=2.0"]
         )
+
+    def test_fetch_stage_package_with_deps_with_package_filters(
+        self, mocker, tmpdir, fake_apt_cache, fake_deb_run
+    ):
+        # pylint: disable=unnecessary-dunder-call
+        mocker.patch(
+            "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
+            {"filtered-pkg-1"},
+        )
+        stage_cache_path, debs_path = deb.get_cache_dirs(tmpdir)
+        fake_package = debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
+        fake_package_dep = debs_path / "fake-package-dep_2.0_all.deb"
+        fake_package_dep.touch()
+        other_fake_package = debs_path / "other-fake-package_1.0_all.deb"
+        other_fake_package.touch()
+        fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
+            ("fake-package", "1.0", fake_package)
+        ]
+
+        package_names = ["fake-package", "other-fake-package"]
+
+        fetched_packages = deb.Ubuntu.fetch_stage_packages(
+            cache_dir=tmpdir,
+            package_names=package_names,
+            stage_packages_path=Path(tmpdir),
+            base="core",
+            arch="amd64",
+            packages_filters={"fake-package-dep", "other-fake-package"},
+        )
+
+        fake_deb_run.assert_has_calls([call(["apt-get", "update"])])
+        fake_apt_cache.assert_has_calls(
+            [
+                call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
+                call().__enter__(),
+                call().__enter__().mark_packages(set(package_names)),
+                call()
+                .__enter__()
+                .unmark_packages(
+                    {"filtered-pkg-1", "fake-package-dep", "other-fake-package"}
+                ),
+                call().__enter__().fetch_archives(debs_path),
+            ]
+        )
+
+        assert fetched_packages == ["fake-package=1.0"]
 
     def test_fetch_stage_package_empty_list(self, tmpdir, fake_apt_cache):
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = (
@@ -481,6 +529,27 @@ class TestBuildPackages:
         fake_deb_run.assert_has_calls([call(["apt-get", "update"])])
 
 
+@pytest.mark.parametrize(
+    "source_type, pkgs",
+    [
+        ("7zip", {"p7zip-full"}),
+        ("bzr", {"bzr"}),
+        ("git", {"git"}),
+        ("hg", {"mercurial"}),
+        ("mercurial", {"mercurial"}),
+        ("rpm2cpio", {"rpm2cpio"}),
+        ("rpm", {"rpm"}),
+        ("subversion", {"subversion"}),
+        ("svn", {"subversion"}),
+        ("tar", {"tar"}),
+        ("deb", set()),
+        ("whatever-unknown", set()),
+    ],
+)
+def test_packages_for_source_type(source_type, pkgs):
+    assert deb.Ubuntu.get_packages_for_source_type(source_type) == pkgs
+
+
 @pytest.fixture
 def fake_dpkg_query(mocker):
     def dpkg_query(*args, **kwargs):
@@ -506,11 +575,11 @@ def fake_dpkg_query(mocker):
 class TestGetPackagesInBase:
     def test_hardcoded_bases(self):
         for base in ("core", "core16", "core18"):
-            packages = [
+            pkgs = [
                 DebPackage.from_unparsed(p)
                 for p in deb._DEFAULT_FILTERED_STAGE_PACKAGES
             ]
-            assert deb.get_packages_in_base(base=base) == packages
+            assert deb.get_packages_in_base(base=base) == pkgs
 
     def test_package_list_from_dpkg_list(self, tmpdir, mocker):
         dpkg_list_path = Path(tmpdir, "dpkg.list")
@@ -555,6 +624,62 @@ class TestGetPackagesInBase:
         assert deb.get_packages_in_base(base="core22") == []
 
 
+class TestStagePackagesFilters:
+    def setup_method(self):
+        callbacks.unregister_all()
+        packages.Repository.stage_packages_filters = None
+
+    def teardown_class(self):
+        callbacks.unregister_all()
+        packages.Repository.stage_packages_filters = None
+
+    def test_fetch_stage_packages_with_filtering(
+        self, mocker, tmpdir, fake_apt_cache, fake_deb_run
+    ):
+        callbacks.register_stage_packages_filter(lambda x: ["base-pkg-1"])
+        callbacks.register_stage_packages_filter(lambda x: ["base-pkg-2", "base-pkg-3"])
+
+        # this is set in the execution prologue
+        project_info = ProjectInfo(application_name="test", cache_dir=tmpdir)
+        packages.Repository.stage_packages_filters = (
+            callbacks.get_stage_packages_filters(project_info)
+        )
+
+        stage_cache_path, debs_path = deb.get_cache_dirs(tmpdir)
+        fake_package = debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
+        fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
+            ("fake-package", "1.0", fake_package)
+        ]
+
+        fetched_packages = deb.Ubuntu.fetch_stage_packages(
+            cache_dir=tmpdir,
+            package_names=["fake-package"],
+            stage_packages_path=Path(tmpdir),
+            base="core",
+            arch="amd64",
+        )
+
+        # pylint: disable=unnecessary-dunder-call
+
+        fake_deb_run.assert_has_calls([call(["apt-get", "update"])])
+        fake_apt_cache.assert_has_calls(
+            [
+                call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
+                call().__enter__(),
+                call().__enter__().mark_packages({"fake-package"}),
+                call()
+                .__enter__()
+                .unmark_packages({"base-pkg-1", "base-pkg-2", "base-pkg-3"}),
+                call().__enter__().fetch_archives(debs_path),
+            ]
+        )
+
+        # pylint: enable=unnecessary-dunder-call
+
+        assert fetched_packages == ["fake-package=1.0"]
+
+
 def test_get_filtered_stage_package_restricts_core20_ignore_filter(mocker):
     mock_get_packages_in_base = mocker.patch.object(deb, "get_packages_in_base")
     mock_get_packages_in_base.return_value = [
@@ -592,7 +717,9 @@ def test_get_filtered_stage_package_restricts_core20_ignore_filter(mocker):
     ]
 
     filtered_names = deb._get_filtered_stage_package_names(
-        base="core20", package_list=[]
+        base="core20",
+        package_list=[],
+        base_package_names=None,
     )
 
     assert filtered_names == {"foo", "foo2"}
@@ -606,7 +733,9 @@ def test_get_filtered_stage_package_empty_ignore_filter(mocker):
     ]
 
     filtered_names = deb._get_filtered_stage_package_names(
-        base="core00", package_list=[]
+        base="core00",
+        package_list=[],
+        base_package_names=None,
     )
 
     assert filtered_names == {"some-base-pkg", "some-other-base-pkg"}

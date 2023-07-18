@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2021 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,13 +16,16 @@
 
 """The step state preserves step execution context information."""
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Optional, Set
 
 from pydantic_yaml import YamlModel
 
 from craft_parts.utils import os_utils
+
+logger = logging.getLogger(__name__)
 
 
 class MigrationState(YamlModel):
@@ -84,7 +87,12 @@ class StepState(MigrationState, ABC):
         allow_population_by_field_name = True
 
     @abstractmethod
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step."""
 
     @abstractmethod
@@ -93,7 +101,9 @@ class StepState(MigrationState, ABC):
     ) -> Dict[str, Any]:
         """Return relevant project options concerning this step."""
 
-    def diff_properties_of_interest(self, other_properties: Dict[str, Any]) -> Set[str]:
+    def diff_properties_of_interest(
+        self, other_properties: Dict[str, Any], also_compare: Optional[List[str]] = None
+    ) -> Set[str]:
         """Return properties of interest that differ.
 
         Take a dictionary of properties and compare to our own, returning
@@ -105,8 +115,12 @@ class StepState(MigrationState, ABC):
             project options stored in this state.
         """
         return _get_differing_keys(
-            self.properties_of_interest(self.part_properties),
-            self.properties_of_interest(other_properties),
+            self.properties_of_interest(
+                self.part_properties, extra_properties=also_compare
+            ),
+            self.properties_of_interest(
+                other_properties, extra_properties=also_compare
+            ),
         )
 
     def diff_project_options_of_interest(
@@ -128,7 +142,7 @@ class StepState(MigrationState, ABC):
         )
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]) -> "StepState":
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
 
@@ -144,11 +158,13 @@ def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
         if dict1_value != dict2_value:
+            logger.debug("%s: %r != %r", key, dict1_value, dict2_value)
             differing_keys.add(key)
 
     for key, dict2_value in dict2.items():
         dict1_value = dict1.get(key)
         if dict1_value != dict2_value:
+            logger.debug("%s: %r != %r", key, dict1_value, dict2_value)
             differing_keys.add(key)
 
     return differing_keys

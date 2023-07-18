@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,11 @@ import yaml
 import craft_parts
 from craft_parts import Action, Step, errors
 from tests import TESTS_DIR
+
+
+@pytest.fixture(autouse=True)
+def setup_feature(enable_overlay_feature):
+    yield
 
 
 @pytest.fixture(autouse=True)

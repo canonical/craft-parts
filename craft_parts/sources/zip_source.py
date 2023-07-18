@@ -78,7 +78,7 @@ class ZipSource(FileSourceHandler):
         dst: Path,
         keep: bool = False,
         src: Optional[Path] = None,
-    ):
+    ) -> None:
         """Extract zip file contents to the part source dir."""
         if src:
             zip_file = src

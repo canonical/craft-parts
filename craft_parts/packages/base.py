@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,15 +21,20 @@ import contextlib
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Set, Tuple, Type
+from typing import Any, List, Optional, Set, Tuple, Type
 
 from craft_parts import xattrs
 
 logger = logging.getLogger(__name__)
 
 
+_STAGE_PACKAGE_KEY = "origin_stage_package"
+
+
 class BaseRepository(abc.ABC):
     """Base implementation for a platform specific repository handler."""
+
+    stage_packages_filters: Optional[Set[str]] = None
 
     @classmethod
     @abc.abstractmethod
@@ -158,6 +163,7 @@ class BaseRepository(abc.ABC):
         stage_packages_path: Path,
         install_path: Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages.
 
@@ -220,8 +226,8 @@ class DummyRepository(BaseRepository):
 
     @classmethod
     def fetch_stage_packages(
-        cls,
-        **kwargs,  # pylint: disable=unused-argument
+        cls,  # pylint: disable=unused-argument
+        **kwargs: Any,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         return []
@@ -233,6 +239,7 @@ class DummyRepository(BaseRepository):
         stage_packages_path: Path,
         install_path: Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages to install_path."""
 
@@ -247,17 +254,21 @@ def get_pkg_name_parts(pkg_name: str) -> Tuple[str, Optional[str]]:
     return name, version
 
 
-def mark_origin_stage_package(sources_dir: str, stage_package: str) -> Set[str]:
+def read_origin_stage_package(path: str) -> Optional[str]:
+    """Read origin stage package."""
+    return xattrs.read_xattr(path, _STAGE_PACKAGE_KEY)
+
+
+def write_origin_stage_package(path: str, value: str) -> None:
+    """Write origin stage package."""
+    xattrs.write_xattr(path, _STAGE_PACKAGE_KEY, value)
+
+
+def mark_origin_stage_package(sources_dir: str, stage_package: str) -> None:
     """Mark all files in sources_dir as coming from stage_package."""
-    file_list = set()
-    for (root, _, files) in os.walk(sources_dir):
+    for root, _, files in os.walk(sources_dir):
         for file_name in files:
             file_path = os.path.join(root, file_name)
 
             # Mark source.
-            xattrs.write_origin_stage_package(file_path, stage_package)
-
-            file_path = os.path.relpath(root, sources_dir)
-            file_list.add(file_path)
-
-    return file_list
+            write_origin_stage_package(file_path, stage_package)

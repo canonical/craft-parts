@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,10 +25,22 @@ from unittest.mock import ANY, call
 import pytest
 import yaml
 
+import craft_parts
 from craft_parts import errors
 from craft_parts.lifecycle_manager import LifecycleManager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
+from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
+
+
+@pytest.fixture
+def mock_available_plugins(monkeypatch):
+    available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
+    monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
+
+
+def create_data(part_name: str, plugin_name: str) -> Dict[str, Any]:
+    return {"parts": {part_name: {"plugin": plugin_name}}}
 
 
 class TestLifecycleManager:
@@ -158,6 +170,7 @@ class TestLifecycleManager:
                 ignore_patterns=["ign1", "ign2"],
                 extra_build_packages=["pkg1", "pkg2"],
                 extra_build_snaps=["snap1", "snap2"],
+                track_stage_packages=False,
                 base_layer_dir=None,
                 base_layer_hash=None,
             )
@@ -206,8 +219,28 @@ class TestLifecycleManager:
         )
         assert lf.get_pull_assets(part_name="foo") is None
 
+    def test_strict_plugins(self, new_dir, mock_available_plugins):
+        """Test using a strict plugin in strict mode."""
+        data = create_data("p1", "strict")
+        lf = LifecycleManager(
+            data, application_name="test_manager", cache_dir=new_dir, strict_mode=True
+        )
+        assert lf.get_pull_assets(part_name="p1") is None
 
-class TestOverlaySupport:
+    def test_strict_plugins_error(self, new_dir, mock_available_plugins):
+        """Test that using a non-strict plugin in strict mode is an error."""
+        data = create_data("p1", "nonstrict")
+        with pytest.raises(errors.PluginNotStrict) as exc:
+            LifecycleManager(
+                data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                strict_mode=True,
+            )
+        assert "p1" in str(exc.value)
+
+
+class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
 
     @pytest.fixture
@@ -217,37 +250,39 @@ class TestOverlaySupport:
     def test_overlay_supported(self, mocker, new_dir, parts_data):
         mocker.patch.object(sys, "platform", "linux")
         mocker.patch("os.geteuid", return_value=0)
-        LifecycleManager(
-            parts_data,
-            application_name="test",
-            cache_dir=new_dir,
-            base_layer_dir=new_dir,
-            base_layer_hash=b"hash",
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                base_layer_dir=new_dir,
+                base_layer_hash=b"hash",
+            )
+        assert raised.value.part_name == "foo"
+        assert (
+            raised.value.message == "- overlays not supported in field 'overlay-script'"
         )
 
-    def test_overlay_platform_unsupported(self, mocker, new_dir, parts_data):
-        mocker.patch.object(sys, "platform", "darwin")
-        mocker.patch("os.geteuid", return_value=0)
-        with pytest.raises(errors.OverlayPlatformError):
-            LifecycleManager(
-                parts_data,
-                application_name="test",
-                cache_dir=new_dir,
-                base_layer_dir=new_dir,
-                base_layer_hash=b"hash",
-            )
 
-    def test_overlay_requires_root(self, mocker, new_dir, parts_data):
-        mocker.patch.object(sys, "platform", "linux")
-        mocker.patch("os.geteuid", return_value=1000)
-        with pytest.raises(errors.OverlayPermissionError):
+class TestPartitionsDisabled:
+    """Partition feature must be enabled when partition are defined."""
+
+    @pytest.fixture
+    def parts_data(self) -> Dict[str, Any]:
+        return {"parts": {"foo": {"plugin": "nil"}}}
+
+    def test_partitions_disabled(self, new_dir, parts_data):
+        with pytest.raises(errors.FeatureError) as raised:
             LifecycleManager(
                 parts_data,
                 application_name="test",
                 cache_dir=new_dir,
-                base_layer_dir=new_dir,
-                base_layer_hash=b"hash",
+                partitions=["default"],
             )
+        assert (
+            raised.value.message
+            == "Partitions are defined but partition feature is not enabled."
+        )
 
 
 class TestPluginProperties:

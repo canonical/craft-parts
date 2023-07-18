@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,9 @@
 
 import shlex
 from textwrap import dedent
-from typing import Any, Dict, List, Set, cast
+from typing import Any, Dict, List, Optional, Set, cast
+
+from overrides import override
 
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
@@ -35,7 +37,8 @@ class PythonPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    @override
+    def unmarshal(cls, data: Dict[str, Any]) -> "PythonPluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -51,60 +54,21 @@ class PythonPluginProperties(PluginProperties, PluginModel):
 
 
 class PythonPlugin(Plugin):
-    """A plugin to build python parts.
-
-    It can be used for python projects where you would want to do:
-
-        - import python modules with a requirements.txt
-        - build a python project that has a setup.py
-        - install packages straight from pip
-
-    This plugin uses the common plugin keywords as well as those for "sources".
-    For more information check the 'plugins' topic for the former and the
-    'sources' topic for the latter.
-
-    Additionally, this plugin uses the following plugin-specific keywords:
-
-        - ``python-requirements``
-          (list of strings)
-          List of paths to requirements files.
-
-        - ``python-constraints``
-          (list of strings)
-          List of paths to constraint files.
-
-        - ``python-packages``
-          (list)
-          A list of dependencies to get from PyPI. If needed, pip,
-          setuptools and wheel can be upgraded here.
-
-    This plugin also interprets these specific build-environment entries:
-
-        - ``PARTS_PYTHON_INTERPRETER``
-          (default: python3)
-          The interpreter binary to search for in PATH.
-
-        - ``PARTS_PYTHON_VENV_ARGS``
-          Additional arguments for venv.
-
-    By default this plugin uses python from the base. If a different
-    interpreter is desired, it must be bundled (including venv) and must
-    be in PATH.
-
-    Use of python3-<python-package> in stage-packages will force the
-    inclusion of the python interpreter.
-    """
+    """A plugin to build python parts."""
 
     properties_class = PythonPluginProperties
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"findutils", "python3-dev", "python3-venv"}
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
@@ -118,6 +82,7 @@ class PythonPlugin(Plugin):
 
     # pylint: disable=line-too-long
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         build_commands = [
@@ -126,6 +91,8 @@ class PythonPlugin(Plugin):
         ]
 
         options = cast(PythonPluginProperties, self._options)
+
+        pip = f"{self._part_info.part_install_dir}/bin/pip"
 
         if options.python_constraints:
             constraints = " ".join(f"-c {c!r}" for c in options.python_constraints)
@@ -136,55 +103,116 @@ class PythonPlugin(Plugin):
             python_packages = " ".join(
                 [shlex.quote(pkg) for pkg in options.python_packages]
             )
-            python_packages_cmd = f"pip install {constraints} -U {python_packages}"
+            python_packages_cmd = f"{pip} install {constraints} -U {python_packages}"
             build_commands.append(python_packages_cmd)
 
         if options.python_requirements:
             requirements = " ".join(f"-r {r!r}" for r in options.python_requirements)
-            requirements_cmd = f"pip install {constraints} -U {requirements}"
+            requirements_cmd = f"{pip} install {constraints} -U {requirements}"
             build_commands.append(requirements_cmd)
 
-        build_commands.append(f"[ -f setup.py ] && pip install {constraints} -U .")
+        build_commands.append(
+            f"[ -f setup.py ] || [ -f pyproject.toml ] && {pip} install {constraints} -U ."
+        )
 
         # Now fix shebangs.
+        script_interpreter = self._get_script_interpreter()
         build_commands.append(
             dedent(
                 f"""\
-            find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \
-                sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#\\!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
-            """
+                find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \\
+                    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"
+                """
             )
         )
-
-        # Lastly, fix the symlink to the "real" python3 interpreter.
+        # Find the "real" python3 interpreter.
+        python_interpreter = self._get_system_python_interpreter() or ""
         build_commands.append(
             dedent(
                 f"""\
-            determine_link_target() {{
-                opts_state="$(set +o +x | grep xtrace)"
-                interp_dir="$(dirname "${{PARTS_PYTHON_VENV_INTERP_PATH}}")"
-                # Determine python based on PATH, then resolve it, e.g:
-                # (1) <application venv dir>/bin/python3 -> /usr/bin/python3.8
-                # (2) /usr/bin/python3 -> /usr/bin/python3.8
-                # (3) /root/stage/python3 -> /root/stage/python3.8
-                # (4) /root/parts/<part>/install/usr/bin/python3 -> /root/parts/<part>/install/usr/bin/python3.8
-                python_path="$(which "${{PARTS_PYTHON_INTERPRETER}}")"
-                python_path="$(readlink -e "${{python_path}}")"
-                for dir in "{self._part_info.part_install_dir}" "{self._part_info.stage_dir}"; do
-                    if  echo "${{python_path}}" | grep -q "${{dir}}"; then
-                        python_path="$(realpath --strip --relative-to="${{interp_dir}}" \\
-                                "${{python_path}}")"
-                        break
+                # look for a provisioned python interpreter
+                opts_state="$(set +o|grep errexit)"
+                set +e
+                install_dir="{self._part_info.part_install_dir}/usr/bin"
+                stage_dir="{self._part_info.stage_dir}/usr/bin"
+
+                # look for the right Python version - if the venv was created with python3.10,
+                # look for python3.10
+                basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
+                echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
+                payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+
+                if [ -n "$payload_python" ]; then
+                    # We found a provisioned interpreter, use it.
+                    echo Found interpreter in payload: \\"${{payload_python}}\\"
+                    installed_python="${{payload_python##{self._part_info.part_install_dir}}}"
+                    if [ "$installed_python" = "$payload_python" ]; then
+                        # Found a staged interpreter.
+                        symlink_target="..${{payload_python##{self._part_info.stage_dir}}}"
+                    else
+                        # The interpreter was installed but not staged yet.
+                        symlink_target="..$installed_python"
                     fi
-                done
-                echo "${{python_path}}"
-                eval "${{opts_state}}"
-            }}
+                else
+                    # Otherwise use what _get_system_python_interpreter() told us.
+                    echo "Python interpreter not found in payload."
+                    symlink_target="{python_interpreter}"
+                fi
 
-            python_path="$(determine_link_target)"
-            ln -sf "${{python_path}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"
-            """
+                if [ -z "$symlink_target" ]; then
+                    echo "No suitable Python interpreter found, giving up."
+                    exit 1
+                fi
+
+                eval "${{opts_state}}"
+                """
             )
         )
+
+        # Handle the venv symlink (either remove it or set the final correct target)
+        if self._should_remove_symlinks():
+            build_commands.append(
+                dedent(
+                    f"""\
+                    echo Removing python symlinks in {self._part_info.part_install_dir}/bin
+                    rm "{self._part_info.part_install_dir}"/bin/python*
+                    """
+                )
+            )
+        else:
+            build_commands.append(
+                dedent(
+                    """\
+                    ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
+                    """
+                )
+            )
 
         return build_commands
+
+    def _should_remove_symlinks(self) -> bool:
+        """Configure executables symlink removal.
+
+        This method can be overridden by application-specific subclasses to control
+        whether symlinks in the virtual environment should be removed. Default is
+        False.  If True, the venv-created symlinks to python* in bin/ will be
+        removed and will not be recreated.
+        """
+        return False
+
+    def _get_system_python_interpreter(self) -> Optional[str]:
+        """Obtain the path to the system-provided python interpreter.
+
+        This method can be overridden by application-specific subclasses. It
+        returns the path to the Python that bin/python3 should be symlinked to
+        if Python is not part of the payload.
+        """
+        return '$(readlink -f "$(which "${PARTS_PYTHON_INTERPRETER}")")'
+
+    def _get_script_interpreter(self) -> str:
+        """Obtain the shebang line to use in Python scripts.
+
+        This method can be overridden by application-specific subclasses. It
+        returns the script interpreter to use in existing Python scripts.
+        """
+        return "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"

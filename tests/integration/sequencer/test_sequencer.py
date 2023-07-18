@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -111,8 +111,6 @@ class TestSequencerPlan:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
             Action("foo", Step.PULL, action_type=ActionType.RUN),
-            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
-            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
             Action("bar", Step.STAGE, action_type=ActionType.RUN),
@@ -136,11 +134,8 @@ class TestSequencerPlan:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
             Action("foo", Step.PULL, action_type=ActionType.RUN),
-            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
-            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
             Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action("bar", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'foo'"),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
@@ -163,7 +158,6 @@ class TestSequencerPlan:
         actions = seq.plan(Step.PRIME, part_names=["bar"])
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
-            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("bar", Step.STAGE, action_type=ActionType.RUN),
             Action("bar", Step.PRIME, action_type=ActionType.RUN),
@@ -229,7 +223,6 @@ class TestSequencerPlan:
                 action_type=ActionType.SKIP,
                 reason="already ran",
             ),
-            Action(part_name="foo", step=Step.OVERLAY),
             Action(
                 part_name="foo",
                 step=Step.BUILD,
@@ -256,8 +249,6 @@ class TestSequencerStates:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
-            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]
@@ -278,8 +269,6 @@ class TestSequencerStates:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
-            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]
@@ -290,8 +279,6 @@ class TestSequencerStates:
         assert actions == [
             Action("bar", Step.PULL, action_type=ActionType.RUN),
             Action("foo", Step.PULL, action_type=ActionType.RUN),
-            Action("bar", Step.OVERLAY, action_type=ActionType.RUN),
-            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]

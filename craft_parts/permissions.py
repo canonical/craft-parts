@@ -19,7 +19,7 @@
 import os
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, root_validator
 
@@ -33,10 +33,10 @@ class Permissions(BaseModel):
 
     Notes
     -----
-      - ``path`` is optional and defaults to "everything";
-      - ``owner`` and ``group`` are optional if both are omitted - that is, if
-        one of the pair is specified then both must be;
-      - ``mode`` is a string containing an integer in base 8. For example, "755",
+    - ``path`` is optional and defaults to "everything";
+    - ``owner`` and ``group`` are optional if both are omitted - that is, if
+      one of the pair is specified then both must be;
+    - ``mode`` is a string containing an integer in base 8. For example, "755",
       "0755" and "0o755" are all accepted and are the equivalent of calling
       ``chmod 755 ...``.
 
@@ -49,7 +49,7 @@ class Permissions(BaseModel):
 
     # pylint: disable=no-self-argument
     @root_validator(pre=True)
-    def validate_root(cls, values):
+    def validate_root(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:
         """Validate that "owner" and "group" are correctly specified."""
         has_owner = "owner" in values
         has_group = "group" in values

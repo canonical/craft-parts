@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2022 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ import logging
 import platform
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from pydantic_yaml import YamlModel
 
@@ -28,6 +28,10 @@ from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+
+if TYPE_CHECKING:
+    from craft_parts.state_manager import states
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +46,13 @@ class ProjectVar(YamlModel):
     updated: bool = False
 
 
+# pylint: disable-next=too-many-instance-attributes
 class ProjectInfo:
     """Project-level information containing project-specific fields.
 
     :param application_name: A unique identifier for the application using
         Craft Parts.
-    :param project_name: name of the project being built.
+    :param project_name: Name of the project being built.
     :param cache_dir: The path to store cached packages and files. If not
         specified, a directory under the application name entry in the XDG
         base directory will be used.
@@ -55,6 +60,7 @@ class ProjectInfo:
         architecture.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
+    :param strict_mode: Only allow plugins capable of building in strict mode.
     :param project_dirs: The project work directories.
     :param project_name: The name of the project.
     :param project_vars_part_name: Project variables can be set only if
@@ -62,6 +68,7 @@ class ProjectInfo:
     :param project_vars: A dictionary containing the project variables.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
+    :param partitions: A list of partitions.
     """
 
     def __init__(
@@ -72,11 +79,13 @@ class ProjectInfo:
         arch: str = "",
         base: str = "",
         parallel_build_count: int = 1,
+        strict_mode: bool = False,
         project_dirs: Optional[ProjectDirs] = None,
         project_name: Optional[str] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
-        **custom_args,  # custom passthrough args
+        partitions: Optional[List[str]] = None,
+        **custom_args: Any,  # custom passthrough args
     ):
         if not project_dirs:
             project_dirs = ProjectDirs()
@@ -86,18 +95,20 @@ class ProjectInfo:
         self._application_name = application_name
         self._cache_dir = Path(cache_dir).expanduser().resolve()
         self._set_machine(arch)
-        self._base = base  # TODO: infer base if not specified
+        self._base = base  # base usage is deprecated
         self._parallel_build_count = parallel_build_count
+        self._strict_mode = strict_mode
         self._dirs = project_dirs
         self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
+        self._partitions = partitions
         self._custom_args = custom_args
         self.global_environment: Dict[str, str] = {}
 
         self.execution_finished = False
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if hasattr(self._dirs, name):
             return getattr(self._dirs, name)
 
@@ -137,6 +148,11 @@ class ProjectInfo:
         return self._parallel_build_count
 
     @property
+    def strict_mode(self) -> bool:
+        """Return whether this project must be built in 'strict' mode."""
+        return self._strict_mode
+
+    @property
     def host_arch(self) -> str:
         """Return the host architecture used for debs, snaps and charms."""
         return self._host_machine["deb"]
@@ -171,6 +187,11 @@ class ProjectInfo:
             "project_vars_part_name": self._project_vars_part_name,
             "project_vars": self._project_vars,
         }
+
+    @property
+    def partitions(self) -> Optional[List[str]]:
+        """Return the project's partitions."""
+        return self._partitions
 
     def set_project_var(
         self,
@@ -251,7 +272,7 @@ class ProjectInfo:
         if name not in self._project_vars:
             raise ValueError(f"{name!r} not in project variables")
 
-    def _set_machine(self, arch: Optional[str]):
+    def _set_machine(self, arch: Optional[str]) -> None:
         """Initialize host and target machine information based on the architecture.
 
         :param arch: The architecture to use. If empty, assume the
@@ -296,8 +317,10 @@ class PartInfo:
         self._part_build_subdir = part.part_build_subdir
         self._part_install_dir = part.part_install_dir
         self._part_state_dir = part.part_state_dir
+        self._part_cache_dir = part.part_cache_dir
+        self.build_attributes = part.spec.build_attributes.copy()
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         # Use composition and attribute cascading to avoid setting attributes
         # cumulatively in the init method.
         if hasattr(self._project_info, name):
@@ -344,6 +367,11 @@ class PartInfo:
     def part_state_dir(self) -> Path:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
+
+    @property
+    def part_cache_dir(self) -> Path:
+        """Return the subdirectory containing this part's cache directory."""
+        return self._part_cache_dir
 
     def set_project_var(
         self, name: str, value: str, *, raw_write: bool = False
@@ -397,8 +425,9 @@ class StepInfo:
         self._part_info = part_info
         self.step = step
         self.step_environment: Dict[str, str] = {}
+        self.state: "Optional[states.StepState]" = None
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if hasattr(self._part_info, name):
             return getattr(self._part_info, name)
 
@@ -407,11 +436,20 @@ class StepInfo:
 
 def _get_host_architecture() -> str:
     """Obtain the host system architecture."""
-    # TODO: handle Windows architectures
-    return platform.machine()
+    machine = platform.machine()
+    return _PLATFORM_MACHINE_TRANSLATIONS.get(machine.lower(), machine)
 
 
-_ARCH_TRANSLATIONS: Dict[str, Dict[str, Any]] = {
+_PLATFORM_MACHINE_TRANSLATIONS: Dict[str, str] = {
+    # Maps other possible ``platform.machine()`` values to the arch translations below.
+    "arm64": "aarch64",
+    "armv7hl": "armv7l",
+    "i386": "i686",
+    "amd64": "x86_64",
+    "x64": "x86_64",
+}
+
+_ARCH_TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "aarch64": {
         "kernel": "arm64",
         "deb": "arm64",

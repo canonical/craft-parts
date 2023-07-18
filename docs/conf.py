@@ -33,11 +33,11 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Craft Parts"
-copyright = "2021, Canonical Ltd."
+copyright = "2023, Canonical Ltd."
 author = "Canonical Ltd."
 
 # The full version, including alpha/beta/rc tags
-release = "1.16.0"
+release = "1.23.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -47,10 +47,14 @@ release = "1.16.0"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.ifconfig",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",  # must be loaded after napoleon
     "sphinx-pydantic",
+    "sphinx_design",
+    "sphinxcontrib.details.directive",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,22 +63,35 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**venv", "base"]
+
+rst_epilog = """
+.. include:: /reuse/links.txt
+"""
 
 autodoc_mock_imports = ["apt"]
 
+rst_prolog = """
+.. |br| raw:: html
+
+   <br />
+"""
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+html_css_files = [
+    "css/custom.css",
+]
 
 # Do (not) include module names.
 add_module_names = True
@@ -88,6 +105,7 @@ typehints_document_rtype = True
 # Enable support for google-style instance attributes.
 napoleon_use_ivar = True
 
+
 def run_apidoc(_):
     from sphinx.ext.apidoc import main
     import os
@@ -95,8 +113,11 @@ def run_apidoc(_):
 
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
     cur_dir = os.path.abspath(os.path.dirname(__file__))
+    # Add the apidoc-generated rst files inside of "reference/gen", to avoid
+    # cluttering the "main" docs dirs.
+    output_dir = os.path.join(cur_dir, "reference/gen")
     module = os.path.join(cur_dir, "..", "craft_parts")
-    main(["-e", "-o", cur_dir, module, "--no-toc", "--force"])
+    main(["-e", "-o", output_dir, module, "--no-toc", "--force"])
 
 
 def setup(app):

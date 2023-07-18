@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import collections
 import http.server
 import os
@@ -24,6 +25,8 @@ from unittest import mock
 
 import pytest
 import xdg  # type: ignore
+
+from craft_parts.features import Features
 
 from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
@@ -37,15 +40,58 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def new_dir(tmpdir):
+def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
-
-    cwd = os.getcwd()
-    os.chdir(tmpdir)
-
+    monkeypatch.chdir(tmpdir)
     yield tmpdir
 
-    os.chdir(cwd)
+
+@pytest.fixture
+def mock_chdir(monkeypatch):
+    mock_fn = mock.Mock(spec=os.chdir)
+    monkeypatch.setattr(os, "chdir", mock_fn)
+    yield mock_fn
+
+
+@pytest.fixture
+def mock_chroot(monkeypatch):
+    mock_fn = mock.Mock(spec=os.chdir)
+    monkeypatch.setattr(os, "chroot", mock_fn)
+    yield mock_fn
+
+
+@pytest.fixture
+def enable_overlay_feature():
+    assert Features().enable_overlay is False
+    Features.reset()
+    Features(enable_overlay=True)
+
+    yield
+
+    Features.reset()
+
+
+@pytest.fixture
+def enable_partitions_feature():
+    assert Features().enable_partitions is False
+    Features.reset()
+    Features(enable_partitions=True)
+
+    yield
+
+    Features.reset()
+
+
+@pytest.fixture
+def enable_all_features():
+    assert Features().enable_overlay is False
+    assert Features().enable_partitions is False
+    Features.reset()
+    Features(enable_overlay=True, enable_partitions=True)
+
+    yield
+
+    Features.reset()
 
 
 @pytest.fixture(autouse=True)
@@ -58,10 +104,16 @@ def temp_xdg(tmpdir, mocker):
     mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))
     mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_dirs", new=[xdg.BaseDirectory.xdg_config_home]
+        "xdg.BaseDirectory.xdg_config_dirs",
+        new=[
+            xdg.BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
+        ],
     )
     mocker.patch(
-        "xdg.BaseDirectory.xdg_data_dirs", new=[xdg.BaseDirectory.xdg_data_home]
+        "xdg.BaseDirectory.xdg_data_dirs",
+        new=[
+            xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
+        ],
     )
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
 
@@ -102,9 +154,9 @@ def fake_snapd():
     socket_path_patcher = mock.patch(
         "craft_parts.packages.snaps.get_snapd_socket_path_template"
     )
+    escaped_path = snapd_fake_socket_path.replace("/", "%2F")
     mock_socket_path = socket_path_patcher.start()
-    mock_socket_path.return_value = f'\
-        http+unix://{snapd_fake_socket_path.replace("/", "%2F")}/v2/{{}}'
+    mock_socket_path.return_value = f"http+unix://{escaped_path}/v2/{{}}"
 
     thread = server.start_fake_server(snapd_fake_socket_path)
 

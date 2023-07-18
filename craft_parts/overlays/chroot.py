@@ -32,7 +32,7 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 
-def chroot(path: Path, target: Callable, *args, **kwargs) -> Any:
+def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.
@@ -98,16 +98,16 @@ def _cleanup_chroot(path: Path) -> None:
         _cleanup_chroot_linux(path)
 
 
-_Mount = namedtuple("_Mount", ["fstype", "src", "mountpoint", "option"])
+_Mount = namedtuple("_Mount", ["fstype", "src", "mountpoint", "options"])
 
 # Essential filesystems to mount in order to have basic utilities and
 # name resolution working inside the chroot environment.
 _linux_mounts: List[_Mount] = [
-    _Mount(None, "/etc/resolv.conf", "/etc/resolv.conf", "--bind"),
+    _Mount(None, "/etc/resolv.conf", "/etc/resolv.conf", ["--bind"]),
     _Mount("proc", "proc", "/proc", None),
     _Mount("sysfs", "sysfs", "/sys", None),
     # Device nodes require MS_REC to be bind mounted inside a container.
-    _Mount(None, "/dev", "/dev", "--rbind"),
+    _Mount(None, "/dev", "/dev", ["--rbind", "--make-rprivate"]),
 ]
 
 
@@ -129,8 +129,8 @@ def _setup_chroot_linux(path: Path) -> None:
     pid = os.getpid()
     for entry in _linux_mounts:
         args = []
-        if entry.option:
-            args.append(entry.option)
+        if entry.options:
+            args.extend(entry.options)
         if entry.fstype:
             args.append(f"-t{entry.fstype}")
 
@@ -154,7 +154,7 @@ def _cleanup_chroot_linux(path: Path) -> None:
 
         if mountpoint.exists():
             logger.debug("[pid=%d] umount: %r", pid, str(mountpoint))
-            if entry.option == "--rbind":
+            if entry.options and "--rbind" in entry.options:
                 # Mount points under /dev may be in use and make the bind mount
                 # unmountable. This may happen in destructive mode depending on
                 # the host environment, so use MNT_DETACH to defer unmounting.

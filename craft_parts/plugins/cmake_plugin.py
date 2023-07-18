@@ -18,6 +18,8 @@
 
 from typing import Any, Dict, List, Set, cast
 
+from overrides import override
+
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
@@ -32,7 +34,8 @@ class CMakePluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    @override
+    def unmarshal(cls, data: Dict[str, Any]) -> "CMakePluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -80,10 +83,12 @@ class CMakePlugin(Plugin):
 
     properties_class = CMakePluginProperties
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         build_packages = {"gcc", "cmake"}
@@ -95,6 +100,7 @@ class CMakePlugin(Plugin):
 
         return build_packages
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
@@ -102,6 +108,7 @@ class CMakePlugin(Plugin):
             "CMAKE_PREFIX_PATH": str(self._part_info.stage_dir)
         }
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(CMakePluginProperties, self._options)
@@ -123,6 +130,7 @@ class CMakePlugin(Plugin):
         ]
 
     @classmethod
+    @override
     def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True

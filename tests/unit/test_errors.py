@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -53,6 +53,22 @@ def test_part_dependency_cycle():
     assert err.resolution == "Review the parts definition to remove dependency cycles."
 
 
+def test_feature_enabled():
+    err = errors.FeatureError("bummer")
+    assert err.message == "bummer"
+    assert err.brief == "bummer"
+    assert err.details is None
+    assert err.resolution == "This operation cannot be executed."
+
+
+def test_feature_disabled():
+    err = errors.FeatureError("bummer")
+    assert err.message == "bummer"
+    assert err.brief == "bummer"
+    assert err.details is None
+    assert err.resolution == "This operation cannot be executed."
+
+
 def test_invalid_application_name():
     err = errors.InvalidApplicationName("foo")
     assert err.name == "foo"
@@ -88,7 +104,7 @@ def test_part_specification_error():
     assert err.resolution == "Review part 'foo' and make sure it's correct."
 
 
-def test_part_specification_error_from_validation_error():
+def test_part_specification_error_from_validation_error() -> None:
     error_list: List["ErrorDict"] = [
         {"loc": ("field-1", 0), "msg": "something is wrong", "type": "value_error"},
         {"loc": ("field-2",), "msg": "field required", "type": "value_error"},

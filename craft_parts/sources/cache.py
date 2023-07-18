@@ -67,6 +67,6 @@ class FileCache:
 
         return None
 
-    def clean(self):
+    def clean(self) -> None:
         """Remove all files from the cache namespace."""
         shutil.rmtree(self.file_cache)

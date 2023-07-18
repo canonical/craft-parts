@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,8 +25,9 @@ import re
 import subprocess
 import sys
 import tempfile
+from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -166,7 +167,7 @@ _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
 ]
 
 
-IGNORE_FILTERS: Dict[str, Set[str]] = {
+_IGNORE_FILTERS: Dict[str, Set[str]] = {
     "core20": {
         "python3-attr",
         "python3-blinker",
@@ -251,11 +252,11 @@ IGNORE_FILTERS: Dict[str, Set[str]] = {
 }
 
 
-def _apt_cache_wrapper(method):
+def _apt_cache_wrapper(method: Any) -> Callable[..., Any]:
     """Decorate a method to handle apt availability."""
 
     @functools.wraps(method)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
         if not _APT_CACHE_AVAILABLE:
             raise errors.PackageBackendNotSupported("apt")
         return method(*args, **kwargs)
@@ -270,7 +271,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
             subprocess.check_output(
                 ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],
                 stderr=subprocess.STDOUT,
-                env=dict(LANG="C.UTF-8"),
+                env={"LANG": "C.UTF-8"},
             )
             .decode()
             .strip()
@@ -303,15 +304,22 @@ def _get_dpkg_list_path(base: str) -> pathlib.Path:
 
 
 def _get_filtered_stage_package_names(
-    *, base: str, package_list: List[DebPackage]
+    *,
+    base: str,
+    package_list: List[DebPackage],
+    base_package_names: Optional[Set[str]],
 ) -> Set[str]:
     """Get filtered packages by name only - no version or architectures."""
-    manifest_packages = [p.name for p in get_packages_in_base(base=base)]
-    stage_packages = [p.name for p in package_list]
+    if base_package_names:
+        filtered_packages = base_package_names
+    else:
+        manifest_packages = {p.name for p in get_packages_in_base(base=base)}
+        ignored_packages = _IGNORE_FILTERS.get(base, set())
+        filtered_packages = manifest_packages - ignored_packages
 
-    return (
-        set(manifest_packages) - set(stage_packages) - IGNORE_FILTERS.get(base, set())
-    )
+    stage_packages = {p.name for p in package_list}
+
+    return filtered_packages - stage_packages
 
 
 def get_packages_in_base(*, base: str) -> List[DebPackage]:
@@ -368,8 +376,8 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
-    def get_packages_for_source_type(cls, source_type):
-        """Return a list of packages required to to work with source_type."""
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+        """Return the packages required to work with source_type."""
         if source_type == "bzr":
             packages = {"bzr"}
         elif source_type == "git":
@@ -378,10 +386,12 @@ class Ubuntu(BaseRepository):
             packages = {"tar"}
         elif source_type in ["hg", "mercurial"]:
             packages = {"mercurial"}
-        elif source_type == ["svn", "subversion"]:
+        elif source_type in ["svn", "subversion"]:
             packages = {"subversion"}
         elif source_type == "rpm2cpio":
             packages = {"rpm2cpio"}
+        elif source_type == "rpm":
+            packages = {"rpm"}
         elif source_type == "7zip":
             packages = {"p7zip-full"}
         else:
@@ -532,7 +542,10 @@ class Ubuntu(BaseRepository):
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
-        return cls._get_installed_package_versions(marked_package_names)
+        # Tell static type checkers to ignore until we can use PEP 612 (Python 3.10)
+        return cls._get_installed_package_versions(  # type: ignore[no-any-return]
+            marked_package_names
+        )
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
@@ -573,6 +586,7 @@ class Ubuntu(BaseRepository):
         base: str,
         arch: str,
         list_only: bool = False,
+        packages_filters: Optional[Set[str]] = None,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         logger.debug("Requested stage-packages: %s", sorted(package_names))
@@ -584,13 +598,15 @@ class Ubuntu(BaseRepository):
             # TODO: fetching of Chisel slices is not supported yet.
             return package_names
 
-        return cls._fetch_stage_debs(
+        # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
+        return cls._fetch_stage_debs(  # type: ignore[no-any-return]
             cache_dir=cache_dir,
             package_names=package_names,
             stage_packages_path=stage_packages_path,
             base=base,
             arch=arch,
             list_only=list_only,
+            packages_filters=packages_filters,
         )
 
     @classmethod
@@ -604,12 +620,17 @@ class Ubuntu(BaseRepository):
         base: str,
         arch: str,
         list_only: bool = False,
+        packages_filters: Optional[Set[str]] = None,
     ) -> List[str]:
         """Fetch .deb stage packages to stage_packages_path."""
         filtered_names = _get_filtered_stage_package_names(
             base=base,
             package_list=[DebPackage.from_unparsed(name) for name in package_names],
+            base_package_names=cls.stage_packages_filters,
         )
+
+        if packages_filters:
+            filtered_names.update(packages_filters)
 
         if not list_only:
             stage_packages_path.mkdir(exist_ok=True)
@@ -650,6 +671,7 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         install_path: pathlib.Path,
         stage_packages: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages to install_path."""
         if stage_packages is None:
@@ -660,7 +682,9 @@ class Ubuntu(BaseRepository):
             )
         else:
             cls._unpack_stage_debs(
-                stage_packages_path=stage_packages_path, install_path=install_path
+                stage_packages_path=stage_packages_path,
+                install_path=install_path,
+                track_stage_packages=track_stage_packages,
             )
 
     @classmethod
@@ -669,6 +693,7 @@ class Ubuntu(BaseRepository):
         *,
         stage_packages_path: pathlib.Path,
         install_path: pathlib.Path,
+        track_stage_packages: bool,
     ) -> None:
         pkg_path = None
 
@@ -678,9 +703,12 @@ class Ubuntu(BaseRepository):
             ) as extract_dir:
                 # Extract deb package.
                 deb_utils.extract_deb(pkg_path, Path(extract_dir), logger.debug)
+
                 # Mark source of files.
-                marked_name = cls._extract_deb_name_version(pkg_path)
-                mark_origin_stage_package(extract_dir, marked_name)
+                if track_stage_packages:
+                    marked_name = cls._extract_deb_name_version(pkg_path)
+                    mark_origin_stage_package(extract_dir, marked_name)
+
                 # Stage files to install_dir.
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
 
@@ -696,12 +724,30 @@ class Ubuntu(BaseRepository):
         :param stage_packages: The list of names of slices to cut.
         :param install_path: The destination directory.
         """
-        # Note that we must hardcode the release here because Chisel this one.
-        process_run(["chisel", "cut", "--root", str(install_path)] + stage_packages)
+        output_stream = StringIO()
+        handler = logging.StreamHandler(stream=output_stream)
+        logger.addHandler(handler)
+        try:
+            process_run(
+                [
+                    "chisel",
+                    "cut",
+                    "--root",
+                    str(install_path),
+                ]
+                + stage_packages
+            )
+        except subprocess.CalledProcessError as err:
+            command_output = output_stream.getvalue()
+            raise errors.ChiselError(
+                slices=stage_packages, output=command_output
+            ) from err
+        finally:
+            logger.removeHandler(handler)
 
     @classmethod
     @_apt_cache_wrapper
-    def is_package_installed(cls, package_name) -> bool:
+    def is_package_installed(cls, package_name: str) -> bool:
         """Inform if a package is installed on the host system."""
         with AptCache() as apt_cache:
             return apt_cache.get_installed_version(package_name) is not None
@@ -728,7 +774,7 @@ class Ubuntu(BaseRepository):
         return output.decode().strip()
 
 
-def get_cache_dirs(cache_dir: Path):
+def get_cache_dirs(cache_dir: Path) -> Tuple[Path, Path]:
     """Return the paths to the stage and deb cache directories."""
     stage_cache_dir = cache_dir / "stage-packages"
     deb_cache_dir = cache_dir / "download"
@@ -736,8 +782,7 @@ def get_cache_dirs(cache_dir: Path):
     return (stage_cache_dir, deb_cache_dir)
 
 
-# XXX: this will be removed when user messages support is implemented.
-def process_run(command: List[str], **kwargs) -> None:
+def process_run(command: List[str], **kwargs: Any) -> None:
     """Run a command and log its output."""
     # Pass logger so messages can be logged as originating from this package.
     os_utils.process_run(command, logger.debug, **kwargs)

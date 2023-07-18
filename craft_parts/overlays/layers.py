@@ -18,7 +18,7 @@
 
 import hashlib
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from craft_parts.parts import Part
 
@@ -31,10 +31,10 @@ class LayerHash:
     def __init__(self, layer_hash: bytes):
         self.digest = layer_hash
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.hex()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, LayerHash):
             return False
 
@@ -53,20 +53,20 @@ class LayerHash:
         :returns: The validation hash computed for the layer corresponding
             to the given part.
         """
-        hasher = hashlib.sha1()
+        hasher = hashlib.sha1()  # noqa: S324
         if previous_layer_hash:
             hasher.update(previous_layer_hash.digest)
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
         digest = hasher.digest()
 
-        hasher = hashlib.sha1()
+        hasher = hashlib.sha1()  # noqa: S324
         hasher.update(digest)
         for entry in part.spec.overlay_files:
             hasher.update(entry.encode())
         digest = hasher.digest()
 
-        hasher = hashlib.sha1()
+        hasher = hashlib.sha1()  # noqa: S324
         hasher.update(digest)
         if part.spec.overlay_script:
             hasher.update(part.spec.overlay_script.encode())

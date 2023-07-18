@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,11 +16,10 @@
 
 """Definitions and helpers for the action executor."""
 
-import contextlib
 import logging
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
@@ -49,6 +48,7 @@ class Executor:
 
     :param part_list: The list of parts to process.
     :param project_info: Information about this project.
+    :param track_stage_packages: Add primed stage packages to the prime state.
     :param extra_build_packages: Additional packages to install on the host system.
     :param extra_build_snaps: Additional snaps to install on the host system.
     :param ignore_patterns: File patterns to ignore when pulling local sources.
@@ -61,6 +61,7 @@ class Executor:
         project_info: ProjectInfo,
         extra_build_packages: Optional[List[str]] = None,
         extra_build_snaps: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
         ignore_patterns: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[LayerHash] = None,
@@ -69,6 +70,7 @@ class Executor:
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
+        self._track_stage_packages = track_stage_packages
         self._base_layer_hash = base_layer_hash
         self._handler: Dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
@@ -93,9 +95,17 @@ class Executor:
         # overlay packages.
         if any(p.spec.overlay_packages for p in self._part_list):
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+                callbacks.run_configure_overlay(
+                    self._project_info.overlay_mount_dir, self._project_info
+                )
                 ctx.refresh_packages_list()
 
         callbacks.run_prologue(self._project_info)
+
+        # obtain the stage package exclusion set.
+        packages.Repository.stage_packages_filters = (
+            callbacks.get_stage_packages_filters(self._project_info)
+        )
 
     def epilogue(self) -> None:
         """Finish and clean the execution environment.
@@ -149,12 +159,14 @@ class Executor:
 
         if not part_names:
             # also remove toplevel directories if part names are not specified
-            with contextlib.suppress(FileNotFoundError):
+            if self._project_info.prime_dir.exists():
                 shutil.rmtree(self._project_info.prime_dir)
-                if initial_step <= Step.STAGE:
-                    shutil.rmtree(self._project_info.stage_dir)
-                if initial_step <= Step.PULL:
-                    shutil.rmtree(self._project_info.parts_dir)
+
+            if initial_step <= Step.STAGE and self._project_info.stage_dir.exists():
+                shutil.rmtree(self._project_info.stage_dir)
+
+            if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
+                shutil.rmtree(self._project_info.parts_dir)
 
     def _run_action(
         self,
@@ -200,6 +212,7 @@ class Executor:
             part,
             part_info=PartInfo(self._project_info, part),
             part_list=self._part_list,
+            track_stage_packages=self._track_stage_packages,
             overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,
@@ -234,14 +247,12 @@ class Executor:
 
         if os_utils.is_inside_container():
             logger.warning(
-                (
-                    "The following snaps are required but not installed as the "
-                    "application is running inside docker or podman container: %s.\n"
-                    "Please ensure the environment is properly setup before "
-                    "continuing.\nIgnore this message if the appropriate measures "
-                    "have already been taken.",
-                    ", ".join(build_snaps),
-                )
+                "The following snaps are required but not installed as the "
+                "application is running inside docker or podman container: %s.\n"
+                "Please ensure the environment is properly setup before "
+                "continuing.\nIgnore this message if the appropriate measures "
+                "have already been taken.",
+                ", ".join(build_snaps),
             )
         else:
             packages.snaps.install_snaps(build_snaps)
@@ -281,7 +292,7 @@ class ExecutionContext:
         self._executor.prologue()
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, *exc: Any) -> None:
         self._executor.epilogue()
 
     def execute(

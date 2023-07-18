@@ -24,14 +24,20 @@ import re
 import shutil
 from contextlib import ContextDecorator
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
-import apt
-import apt.cache
-import apt.package
-import apt.progress
-import apt.progress.base
-import apt_pkg
+try:
+    import apt
+    import apt.cache
+    import apt.package
+    import apt.progress
+    import apt.progress.base
+    import apt_pkg
+except ImportError as e:
+    raise ImportError(
+        "python-apt is needed for apt operations. "
+        "Check the craft-parts README for more information."
+    ) from e
 
 from craft_parts.utils import os_utils
 
@@ -47,7 +53,7 @@ _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+
 class LogProgress(apt.progress.base.AcquireProgress):
     """Internal Base class for text progress classes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._id = 1
 
     def fail(self, item: apt_pkg.AcquireItemDesc) -> None:
@@ -101,7 +107,7 @@ class AptCache(ContextDecorator):
 
     # pylint: enable=attribute-defined-outside-init
 
-    def __exit__(self, *exc) -> None:
+    def __exit__(self, *exc: Any) -> None:
         self.cache.close()
 
     @classmethod
@@ -163,7 +169,8 @@ class AptCache(ContextDecorator):
 
         # Copy current cache configuration.
         cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree("/etc/apt", cache_etc_apt_path)
+
+        shutil.copytree("/etc/apt", cache_etc_apt_path, ignore=_ignore_unreadable_files)
 
         # Specify default arch (if specified).
         if self.stage_cache_arch is not None:
@@ -362,7 +369,7 @@ class AptCache(ContextDecorator):
         self._autokeep_packages()
 
 
-def _verify_marked_install(package: apt.package.Package):
+def _verify_marked_install(package: apt.package.Package) -> None:
     if package.installed or package.marked_install:
         return
 
@@ -379,9 +386,29 @@ def _verify_marked_install(package: apt.package.Package):
 
 def _set_pkg_version(package: apt.package.Package, version: str) -> None:
     """Set candidate version to a specific version if available."""
-    if version in package.versions:
-        pkg_version = package.versions.get(version)
-        if pkg_version:
-            package.candidate = pkg_version
+    pkg_version = package.versions.get(version)
+    if pkg_version:
+        package.candidate = pkg_version
     else:
         raise errors.PackageNotFound(f"{package.name}={version}")
+
+
+def _ignore_unreadable_files(
+    path: Union[str, os.PathLike[str]], names: Iterable[str]
+) -> List[str]:
+    """Ignore unreadable files for copytree.
+
+    Pass this function as the ignore parameter for shutil.copytree to not
+    fail on any unreadable files.
+    """
+    path = Path(path)
+    skip = []
+    for name in names:
+        child_path = path / name
+        if not child_path.is_file():
+            continue
+        try:
+            child_path.open("rb").close()
+        except PermissionError:
+            skip.append(name)
+    return skip

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -32,19 +32,6 @@ def teardown_module():
     callbacks.unregister_all()
 
 
-@pytest.fixture(autouse=True)
-def mock_mount_unmount(mocker):
-    mocker.patch("craft_parts.utils.os_utils.mount")
-    mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
-    mocker.patch("craft_parts.utils.os_utils.umount")
-
-
-@pytest.fixture(autouse=True)
-def mock_prerequisites_for_overlay(mocker):
-    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
-    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
-
-
 def _prologue_callback(info: ProjectInfo) -> None:
     info.global_environment["TEST_GLOBAL"] = "prologue"
 
@@ -65,7 +52,6 @@ _parts_yaml = textwrap.dedent(
       foo:
         plugin: nil
         override-pull: env | egrep "^(TEST|CRAFT)_" | sort
-        overlay-script: env | egrep "^(TEST|CRAFT)_" | sort
         override-build: env | egrep "^(TEST|CRAFT)_" | sort
         override-stage: env | egrep "^(TEST|CRAFT)_" | sort
         override-prime: env | egrep "^(TEST|CRAFT)_" | sort
@@ -75,7 +61,7 @@ _parts_yaml = textwrap.dedent(
 )
 
 
-@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
 def test_step_callback(new_dir, mocker, capfd, step):
     mocker.patch("platform.machine", return_value="aarch64")
 
@@ -99,7 +85,6 @@ def test_step_callback(new_dir, mocker, capfd, step):
         textwrap.dedent(
             f"""\
             CRAFT_ARCH_TRIPLET=aarch64-linux-gnu
-            CRAFT_OVERLAY={new_dir}/overlay/overlay
             CRAFT_PARALLEL_BUILD_COUNT=1
             CRAFT_PART_BUILD={new_dir}/parts/foo/build
             CRAFT_PART_BUILD_WORK={new_dir}/parts/foo/build
@@ -142,7 +127,6 @@ def test_prologue_callback(new_dir, capfd, mocker):
         textwrap.dedent(
             f"""\
             CRAFT_ARCH_TRIPLET=aarch64-linux-gnu
-            CRAFT_OVERLAY={new_dir}/overlay/overlay
             CRAFT_PARALLEL_BUILD_COUNT=1
             CRAFT_PART_BUILD={new_dir}/parts/foo/build
             CRAFT_PART_BUILD_WORK={new_dir}/parts/foo/build

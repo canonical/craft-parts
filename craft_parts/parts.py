@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,17 +16,20 @@
 
 """Definitions and helpers to handle parts."""
 
+import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
+from craft_parts.features import Features
 from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
+from craft_parts.utils.formatting_utils import humanize_list
 
 
 class PartSpec(BaseModel):
@@ -72,22 +75,28 @@ class PartSpec(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("stage_files", "prime_files", each_item=True)
-    def validate_relative_path_list(cls, item):
-        """Check if the list does not contain empty of absolute paths."""
+    def validate_relative_path_list(cls, item: str) -> str:
+        """Verify list is not empty and does not contain any absolute paths."""
         assert item != "", "path cannot be empty"
         assert (
             item[0] != "/"
         ), f"{item!r} must be a relative path (cannot start with '/')"
         return item
 
+    @validator("overlay_packages", "overlay_files", "overlay_script")
+    def validate_overlay_feature(cls, item: Any) -> Any:
+        """Check if overlay attributes specified when feature is disabled."""
+        assert Features().enable_overlay, "overlays not supported"
+        return item
+
     @root_validator(pre=True)
-    def validate_root(cls, values):
+    def validate_root(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.
             return values
 
-        def is_slice(name):
+        def is_slice(name: str) -> bool:
             return "_" in name
 
         # Detect a mixture of .deb packages and chisel slices.
@@ -151,6 +160,15 @@ class PartSpec(BaseModel):
 
         raise RuntimeError(f"cannot get scriptlet for invalid step {step!r}")
 
+    @property
+    def has_overlay(self) -> bool:
+        """Return whether this spec declares overlay content."""
+        return bool(
+            self.overlay_packages
+            or self.overlay_script is not None
+            or self.overlay_files != ["*"]
+        )
+
 
 class Part:
     """Each of the components used in the project specification.
@@ -202,7 +220,7 @@ class Part:
                 part_name=name, error_list=err.errors()
             )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Part({self.name!r})"
 
     @property
@@ -253,6 +271,11 @@ class Part:
         return self._part_dir / "state"
 
     @property
+    def part_cache_dir(self) -> Path:
+        """Return the subdirectory containing the part cache directory."""
+        return self._part_dir / "cache"
+
+    @property
     def part_packages_dir(self) -> Path:
         """Return the subdirectory containing the part stage packages directory."""
         return self._part_dir / "stage_packages"
@@ -297,11 +320,63 @@ class Part:
     @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
-        return bool(
-            self.spec.overlay_packages
-            or self.spec.overlay_script is not None
-            or self.spec.overlay_files != ["*"]
-        )
+        return self.spec.has_overlay
+
+    def check_partition_usage(self, partitions: List[str]) -> List[str]:
+        """Check if partitions are properly used in a part.
+
+        :param partitions: The list of valid partitions.
+
+        :returns: A list of invalid uses of partitions in the part.
+        """
+        error_list: List[str] = []
+
+        if not Features().enable_partitions:
+            return error_list
+
+        for fileset_name, fileset in [
+            ("overlay", self.spec.overlay_files),
+            # only the destination of organize filepaths use partitions
+            ("organize", self.spec.organize_files.values()),
+            ("stage", self.spec.stage_files),
+            ("prime", self.spec.prime_files),
+        ]:
+            error_list.extend(
+                self._check_partitions_in_filepaths(fileset_name, fileset, partitions)
+            )
+
+        return error_list
+
+    def _check_partitions_in_filepaths(
+        self, fileset_name: str, fileset: Iterable[str], partitions: List[str]
+    ) -> List[str]:
+        """Check if partitions are properly used in a fileset.
+
+        If a filepath begins with a parentheses, then the text inside the parentheses
+        must be a valid partition.
+
+        :param fileset_name: The name of the fileset being checked.
+        :param fileset: The list of filepaths to check.
+        :param partitions: The list of valid partitions.
+
+        :returns: A list of invalid uses of partitions in the fileset.
+        """
+        error_list = []
+        pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
+
+        for filepath in fileset:
+            match = re.match(pattern, filepath)
+            if match:
+                partition = match.group("partition")
+                if partition not in partitions:
+                    error_list.append(
+                        f"    unknown partition {partition!r} in {filepath!r}"
+                    )
+
+        if error_list:
+            error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
+
+        return error_list
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -347,7 +422,7 @@ def part_list_by_name(
 
 
 def sort_parts(part_list: List[Part]) -> List[Part]:
-    """Perform an inneficient but easy to follow sorting of parts.
+    """Perform an inefficient but easy to follow sorting of parts.
 
     :param part_list: The list of parts to sort.
 
@@ -449,6 +524,47 @@ def validate_part(data: Dict[str, Any]) -> None:
 
     :param data: The part data to validate.
     """
+    _get_part_spec(data)
+
+
+def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> None:
+    """Validate usage of partitions in a list of parts.
+
+    For each part, the use of partitions in filepaths in overlay, stage, prime, and
+    organize keywords are validated.
+
+    :param part_list: The list of parts to validate.
+    :param partitions: The list of valid partitions.
+
+    :raises ValueError: If partitions are not used properly in the list of parts.
+    """
+    if not Features().enable_partitions:
+        return
+
+    error_list = []
+
+    for part in part_list:
+        error_list.extend(part.check_partition_usage(partitions))
+
+    if error_list:
+        raise ValueError(
+            "Error: Invalid usage of partitions:\n"
+            + "\n".join(error_list)
+            + f"\nValid partitions are {humanize_list(partitions, 'and')}."
+        )
+
+
+def part_has_overlay(data: Dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` employs the Overlay step.
+
+    :param data: The part data to query for overlay use.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_overlay
+
+
+def _get_part_spec(data: Dict[str, Any]) -> PartSpec:
     if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
 
@@ -466,4 +582,4 @@ def validate_part(data: Dict[str, Any]) -> None:
 
     # validate common part properties
     part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
-    PartSpec(**part_spec)
+    return PartSpec(**part_spec)

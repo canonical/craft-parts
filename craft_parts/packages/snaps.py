@@ -21,9 +21,21 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 from urllib import parse
 
+import requests
 import requests_unixsocket  # type: ignore
 from requests import exceptions
 
@@ -38,9 +50,6 @@ _STORE_ASSERTION = [
 
 _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
 logger = logging.getLogger(__name__)
-
-
-# TODO https://bugs.launchpad.net/snapcraft/+bug/1786868
 
 
 class SnapPackage:
@@ -146,7 +155,7 @@ class SnapPackage:
         if not snap_store_info or not self.in_store:
             return {}
 
-        return snap_store_info["channels"]
+        return cast(Dict[str, Any], snap_store_info["channels"])
 
     def get_current_channel(self) -> str:
         """Obtain the current channel for this snap."""
@@ -172,7 +181,7 @@ class SnapPackage:
         """Verify whether this snap is a classic snap."""
         store_channels = self._get_store_channels()
         try:
-            return store_channels[self.channel]["confinement"] == "classic"
+            return bool(store_channels[self.channel]["confinement"] == "classic")
         except KeyError:
             # We have seen some KeyError issues when running tests that are
             # hard to debug as they only occur there, logging in debug mode
@@ -195,7 +204,7 @@ class SnapPackage:
         store_channels = self._get_store_channels()
         return self.channel in store_channels.keys()
 
-    def download(self, *, directory: Optional[str] = None):
+    def download(self, *, directory: Optional[str] = None) -> None:
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.
@@ -216,18 +225,15 @@ class SnapPackage:
                 snap_name=self.name, snap_channel=self.channel
             ) from err
 
-    def install(self):
+    def install(self) -> None:
         """Installs the snap onto the system."""
         logger.debug("Installing snap: %s", self.name)
         snap_install_cmd = ["snap", "install", self.name]
         if self._original_channel:
             snap_install_cmd.extend(["--channel", self._original_channel])
-        try:
+        with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
-                # TODO make this a user explicit choice
                 snap_install_cmd.append("--classic")
-        except (errors.SnapUnavailable, KeyError):
-            pass
 
         try:
             subprocess.run(
@@ -244,16 +250,13 @@ class SnapPackage:
         # Now that the snap is installed, invalidate the data we had on it.
         self._is_installed = None
 
-    def refresh(self):
+    def refresh(self) -> None:
         """Refresh a snap onto a channel on the system."""
         logger.debug("Refreshing snap: %s (channel %s)", self.name, self.channel)
         snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
-        try:
+        with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
-                # TODO make this a user explicit choice
                 snap_refresh_cmd.append("--classic")
-        except (errors.SnapUnavailable, KeyError):
-            pass
 
         try:
             subprocess.run(
@@ -276,13 +279,9 @@ def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
 
     The target directory is created if it does not exist.
     """
-    # TODO manifest.yaml with snap revision from future machine output
-    # for `snap download`.
     os.makedirs(directory, exist_ok=True)
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-
-        # TODO: use dependency injected echoer
         logger.debug("Downloading snap %s", snap_pkg.name)
         snap_pkg.download(directory=directory)
 
@@ -339,16 +338,16 @@ def _get_parsed_snap(snap: str) -> Tuple[str, str]:
     return snap_name, snap_channel
 
 
-def get_snapd_socket_path_template():
+def get_snapd_socket_path_template() -> str:
     """Return the template for the snapd socket URI."""
     return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
 
 
-def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int):
+def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[bytes]:
     slug = f'snaps/{parse.quote(snap_name, safe="")}/file'
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_file = requests_unixsocket.get(url)
+        snap_file: requests.Response = requests_unixsocket.get(url)
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_file.raise_for_status()
@@ -363,17 +362,17 @@ def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_info.raise_for_status()
-    return snap_info.json()["result"]
+    return cast(Dict[str, Any], snap_info.json()["result"])
 
 
 def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
-    slug = f"find?{parse.urlencode(dict(name=snap_name))}"
+    slug = f"find?{parse.urlencode({'name': snap_name})}"
     url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()
-    return snap_info.json()["result"][0]
+    return cast(Dict[str, Any], snap_info.json()["result"][0])
 
 
 def get_installed_snaps() -> List[str]:

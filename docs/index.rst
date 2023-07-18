@@ -6,58 +6,48 @@
 Welcome to Craft Parts' documentation!
 ======================================
 
+Craft Parts is a Python package to support a family of tools that create
+standalone software packages for deployment on Linux-based systems.
+
 Craft Parts provides a mechanism to obtain data from different sources,
 process it in various ways, and prepare a filesystem subtree suitable for
 deployment. The components used in its project specification are called
-*parts*, which can be independently downloaded, built and installed, and
-also depend on each other in order to assemble the subtree containing the
-final artifacts.
+*parts*, which are independently downloaded, built and installed, but can
+also depend on each other.
+
+This package implements common functionality to prepare package data that
+would otherwise be duplicated in separate tools.
+
+Craft Parts is useful for implementers of packaging tools that share a
+similar view of how data should be processed and prepared for deployment.
 
 .. toctree::
-   :caption: Getting started
-   :maxdepth: 2
-
-   examples
-
-   craftctl
-
-   cli_tool
-
-
-.. toctree::
-   :caption: Public API
    :maxdepth: 1
+   :hidden:
 
-   lifecycle_manager
-
-   parts_steps
-
-   actions
-
-   infos
-
-   exceptions
+   tutorials/index
+   how-to/index
+   reference/index
+   explanation/index
 
 
-.. toctree::
-   :caption: Internals
-   :maxdepth: 1
+.. grid:: 1 1 2 2
 
-   lifecycle
+   .. grid-item-card:: :ref:`Tutorial <tutorial>`
 
-   implementation
+      **Get started** with a hands-on introduction to Craft Parts
 
-   reference
+   .. grid-item-card:: :ref:`How-to guides <howto>`
 
+      **Step-by-step guides** covering key operations and common tasks
 
-.. toctree::
-   :caption About the project
+.. grid:: 1 1 2 2
+   :reverse:
 
-   changelog
+   .. grid-item-card:: :ref:`Reference <reference>`
 
+      **Technical information** about Craft Parts' components and modules
 
-Indices and tables
-==================
+   .. grid-item-card:: :ref:`Explanation <explanation>`
 
-* :ref:`genindex`
-* :ref:`modindex`
+      **Discussion and clarification** of key topics

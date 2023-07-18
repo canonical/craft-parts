@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,11 +20,9 @@ import abc
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
 
-from pydantic import BaseModel
-
 from craft_parts.actions import ActionProperties
 
-from .properties import PluginProperties
+from .properties import PluginProperties, PluginPropertiesModel
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
@@ -45,12 +43,19 @@ class Plugin(abc.ABC):
     properties_class: Type[PluginProperties]
     validator_class = PluginEnvironmentValidator
 
+    supports_strict_mode = False
+    """Plugins that can run in 'strict' mode must set this classvar to True."""
+
     def __init__(
         self, *, properties: PluginProperties, part_info: "infos.PartInfo"
     ) -> None:
         self._options = properties
         self._part_info = part_info
         self._action_properties: ActionProperties
+
+    def get_pull_commands(self) -> List[str]:
+        """Return the commands to retrieve dependencies during the pull step."""
+        return []
 
     @abc.abstractmethod
     def get_build_snaps(self) -> Set[str]:
@@ -81,21 +86,49 @@ class Plugin(abc.ABC):
         self._action_properties = deepcopy(action_properties)
 
 
-class PluginModel(BaseModel):
+class JavaPlugin(Plugin):
+    """A base class for java-related plugins.
+
+    Provide common methods to deal with the java executable location and
+    symlink creation.
+    """
+
+    def _get_java_post_build_commands(self) -> List[str]:
+        """Get the bash commands to structure a Java build in the part's install dir.
+
+        :return: The returned list contains the bash commands to do the following:
+
+          - Create bin/ and jar/ directories in ${CRAFT_PART_INSTALL};
+          - Find the ``java`` executable (provided by whatever jre the part used) and
+            link it as ${CRAFT_PART_INSTALL}/bin/java;
+          - Hardlink the .jar files generated in ${CRAFT_PART_SOURCE} to
+            ${CRAFT_PART_INSTALL}/jar.
+        """
+        # pylint: disable=line-too-long
+        link_java = [
+            '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
+            "mkdir -p ${CRAFT_PART_INSTALL}/bin",
+            "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
+            "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
+        ]
+
+        link_jars = [
+            "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
+            "mkdir -p ${CRAFT_PART_INSTALL}/jar",
+            r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
+        ]
+        # pylint: enable=line-too-long
+
+        return link_java + link_jars
+
+
+class PluginModel(PluginPropertiesModel):
     """Model for plugins using pydantic validation.
 
     Plugins with configuration properties can use pydantic validation to unmarshal
     data from part specs. In this case, extract plugin-specific properties using
     the :func:`extract_plugin_properties` helper.
     """
-
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
 
 def extract_plugin_properties(

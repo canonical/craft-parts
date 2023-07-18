@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,20 +15,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Operations with platform-specific package repositories."""
+from typing import TYPE_CHECKING, Type
 
 from . import errors  # noqa: F401
 from . import snaps  # noqa: F401
 from .normalize import fix_pkg_config  # noqa: F401
-from .platform import is_deb_based
+from .platform import is_deb_based, is_dnf_based, is_yum_based
+
+if TYPE_CHECKING:
+    from .base import BaseRepository
 
 # pylint: disable=import-outside-toplevel
 
 
-def _get_repository_for_platform():
+def _get_repository_for_platform() -> Type["BaseRepository"]:
     if is_deb_based():
         from .deb import Ubuntu
 
         return Ubuntu
+
+    if is_yum_based():
+        from .yum import YUMRepository
+
+        return YUMRepository
+
+    if is_dnf_based():
+        from .dnf import DNFRepository
+
+        return DNFRepository
 
     from .base import DummyRepository
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,9 +27,10 @@ from pydantic import ValidationError
 from craft_parts import errors, executor, packages, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
-from craft_parts.parts import Part, part_by_name
+from craft_parts.parts import Part, part_by_name, validate_partition_usage
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
@@ -55,8 +56,8 @@ class LifecycleManager:
         directory will be used if none is specified.
     :param arch: The architecture to build for. Defaults to the host system
         architecture.
-    :param base: The system base the project being processed will run on. Defaults
-        to the system where Craft Parts is being executed.
+    :param base: [deprecated] The system base the project being processed will
+        run on. Defaults to the system where Craft Parts is being executed.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param application_package_name: The name of the application package, if required
@@ -64,6 +65,8 @@ class LifecycleManager:
     :param ignore_local_sources: A list of local source patterns to ignore.
     :param extra_build_packages: A list of additional build packages to install.
     :param extra_build_snaps: A list of additional build snaps to install.
+    :param track_stage_packages: Add primed stage packages to the prime state.
+    :param strict_mode: Only allow plugins capable of building in strict mode.
     :param base_layer_dir: The path to the overlay base layer, if using overlays.
     :param base_layer_hash: The validation hash of the overlay base image, if using
         overlays. The validation hash should be constant for a given image, and should
@@ -71,6 +74,9 @@ class LifecycleManager:
     :param project_vars_part_name: Project variables can only be set in the part
         matching this name.
     :param project_vars: A dictionary containing project variables.
+    :param partitions: A list of partitions to use when the partitions feature is
+        enabled. The first partition must be "default" and all partitions must be
+        lowercase alphabetical.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -90,11 +96,14 @@ class LifecycleManager:
         ignore_local_sources: Optional[List[str]] = None,
         extra_build_packages: Optional[List[str]] = None,
         extra_build_snaps: Optional[List[str]] = None,
+        track_stage_packages: bool = False,
+        strict_mode: bool = False,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
-        **custom_args,  # custom passthrough args
+        partitions: Optional[List[str]] = None,
+        **custom_args: Any,  # custom passthrough args
     ):
         # pylint: disable=too-many-locals
 
@@ -110,6 +119,8 @@ class LifecycleManager:
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
+        _validate_partitions(partitions)
+
         packages.Repository.configure(application_package_name)
 
         project_dirs = ProjectDirs(work_dir=work_dir)
@@ -120,10 +131,12 @@ class LifecycleManager:
             arch=arch,
             base=base,
             parallel_build_count=parallel_build_count,
+            strict_mode=strict_mode,
             project_name=project_name,
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
+            partitions=partitions,
             **custom_args,
         )
 
@@ -133,7 +146,10 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs))
+            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
+
+        if partitions:
+            validate_partition_usage(part_list, partitions)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
 
@@ -168,6 +184,7 @@ class LifecycleManager:
             ignore_patterns=ignore_local_sources,
             extra_build_packages=extra_build_packages,
             extra_build_snaps=extra_build_snaps,
+            track_stage_packages=track_stage_packages,
             base_layer_dir=base_layer_dir,
             base_layer_hash=layer_hash,
         )
@@ -255,6 +272,9 @@ class LifecycleManager:
 
 def _ensure_overlay_supported() -> None:
     """Overlay is only supported in Linux and requires superuser privileges."""
+    if not Features().enable_overlay:
+        raise errors.FeatureError("Overlays are not supported.")
+
     if sys.platform != "linux":
         raise errors.OverlayPlatformError()
 
@@ -262,7 +282,9 @@ def _ensure_overlay_supported() -> None:
         raise errors.OverlayPermissionError()
 
 
-def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> Part:
+def _build_part(
+    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, strict_plugins: bool
+) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
     :param spec: A dictionary containing the part specification.
@@ -291,6 +313,9 @@ def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> P
             raise errors.UndefinedPlugin(part_name=name) from err
         raise errors.InvalidPlugin(plugin_name, part_name=name) from err
 
+    if strict_plugins and not plugin_class.supports_strict_mode:
+        raise errors.PluginNotStrict(plugin_name, part_name=name)
+
     # validate and unmarshal plugin properties
     try:
         properties = plugin_class.properties_class.unmarshal(spec)
@@ -309,3 +334,38 @@ def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> P
     )
 
     return part
+
+
+def _validate_partitions(partitions: Optional[List[str]]) -> None:
+    """Validate the partition feature set.
+
+    If the partition feature is enabled, then:
+      - the first partition must be "default"
+      - each partition must contain only lowercase alphabetical characters
+      - partitions are unique
+
+    :param partitions: Partition data to verify.
+
+    :raises ValueError: If the partitions are not valid or the feature is not enabled.
+    """
+    if Features().enable_partitions:
+        if not partitions:
+            raise errors.FeatureError(
+                "Partition feature is enabled but no partitions are defined."
+            )
+
+        if partitions[0] != "default":
+            raise ValueError("First partition must be 'default'.")
+
+        if any(not re.fullmatch("[a-z]+", partition) for partition in partitions):
+            raise ValueError(
+                "Partitions must only contain lowercase alphabetical characters."
+            )
+
+        if len(partitions) != len(set(partitions)):
+            raise ValueError("Partitions must be unique.")
+
+    elif partitions:
+        raise errors.FeatureError(
+            "Partitions are defined but partition feature is not enabled."
+        )

@@ -26,6 +26,11 @@ import craft_parts
 from craft_parts import Action, ActionType, Step
 
 
+@pytest.fixture(autouse=True)
+def setup_feature(enable_overlay_feature):
+    yield
+
+
 @pytest.fixture
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")

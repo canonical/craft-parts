@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,8 @@
 
 import enum
 from typing import List, Optional
+
+from craft_parts.features import Features
 
 
 @enum.unique
@@ -41,7 +43,7 @@ class Step(enum.IntEnum):
     STAGE = 4
     PRIME = 5
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
 
     def previous_steps(self) -> List["Step"]:
@@ -53,7 +55,7 @@ class Step(enum.IntEnum):
 
         if self >= Step.OVERLAY:
             steps.append(Step.PULL)
-        if self >= Step.BUILD:
+        if self >= Step.BUILD and Features().enable_overlay:
             steps.append(Step.OVERLAY)
         if self >= Step.STAGE:
             steps.append(Step.BUILD)
@@ -69,7 +71,7 @@ class Step(enum.IntEnum):
         """
         steps = []
 
-        if self == Step.PULL:
+        if self == Step.PULL and Features().enable_overlay:
             steps.append(Step.OVERLAY)
         if self <= Step.OVERLAY:
             steps.append(Step.BUILD)

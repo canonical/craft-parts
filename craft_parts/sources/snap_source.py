@@ -20,7 +20,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import yaml
 from overrides import overrides
@@ -52,6 +52,7 @@ class SnapSource(FileSourceHandler):
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
         project_dirs: Optional[ProjectDirs] = None,
+        **kwargs,
     ) -> None:
         super().__init__(
             source,
@@ -64,6 +65,7 @@ class SnapSource(FileSourceHandler):
             source_checksum=source_checksum,
             project_dirs=project_dirs,
             command="unsquashfs",
+            **kwargs,
         )
 
         if source_tag:
@@ -136,6 +138,6 @@ def _get_snap_name(snap: str, snap_dir: str) -> str:
     """
     try:
         with open(os.path.join(snap_dir, "meta", "snap.yaml")) as snap_yaml:
-            return yaml.safe_load(snap_yaml)["name"]
+            return cast(str, yaml.safe_load(snap_yaml)["name"])
     except (FileNotFoundError, KeyError) as snap_error:
         raise errors.InvalidSnapPackage(snap) from snap_error

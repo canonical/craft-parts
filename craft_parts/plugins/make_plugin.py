@@ -18,6 +18,8 @@
 
 from typing import Any, Dict, List, Set, cast
 
+from overrides import override
+
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
@@ -31,7 +33,8 @@ class MakePluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    @override
+    def unmarshal(cls, data: Dict[str, Any]) -> "MakePluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -68,14 +71,17 @@ class MakePlugin(Plugin):
 
     properties_class = MakePluginProperties
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"gcc", "make"}
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
@@ -91,6 +97,7 @@ class MakePlugin(Plugin):
 
         return " ".join(cmd)
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         return [

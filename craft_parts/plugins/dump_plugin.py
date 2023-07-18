@@ -21,6 +21,8 @@ This plugin just dumps the content from a specified part source.
 
 from typing import Any, Dict, List, Set
 
+from overrides import override
+
 from .base import Plugin
 from .properties import PluginProperties
 
@@ -29,7 +31,8 @@ class DumpPluginProperties(PluginProperties):
     """The part properties used by the dump plugin."""
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    @override
+    def unmarshal(cls, data: Dict[str, Any]) -> "DumpPluginProperties":
         """Populate dump properties from the part specification.
 
         'source' is a required part property.
@@ -50,18 +53,29 @@ class DumpPlugin(Plugin):
 
     properties_class = DumpPluginProperties
 
+    supports_strict_mode = True
+
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
+    def get_pull_commands(self) -> List[str]:
+        """Return a list commands to retrieve dependencies during the pull step."""
+        return []
+
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         install_dir = self._part_info.part_install_dir

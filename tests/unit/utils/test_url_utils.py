@@ -48,7 +48,6 @@ def test_is_url(url, result):
     assert url_utils.is_url(url) == result
 
 
-# TODO:stdmsg: add better download test after refactoring
 @pytest.mark.usefixtures("new_dir")
 def test_download_request(requests_mock):
     source_url = "http://test.com/source"

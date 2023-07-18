@@ -92,6 +92,7 @@ from .file_source import FileSource
 from .git_source import GitSource
 from .local_source import LocalSource
 from .sevenzip_source import SevenzipSource
+from .rpm_source import RpmSource
 from .snap_source import SnapSource
 from .tar_source import TarSource
 from .zip_source import ZipSource
@@ -111,6 +112,7 @@ _source_handler: Dict[str, SourceHandlerType] = {
     "deb": DebSource,
     "file": FileSource,
     "7z": SevenzipSource,
+    "rpm": RpmSource,
 }
 
 
@@ -149,7 +151,9 @@ def get_source_handler(
     return source_handler
 
 
-def _get_source_handler_class(source, *, source_type: str = "") -> SourceHandlerType:
+def _get_source_handler_class(
+    source: str, *, source_type: str = ""
+) -> SourceHandlerType:
     """Return the appropriate handler class for the given source.
 
     :param source: The source specification.
@@ -188,6 +192,7 @@ def get_source_type_from_uri(
     elif (
         source.startswith("git:")
         or source.startswith("git@")
+        or source.startswith("git+ssh:")
         or source.endswith(".git")
     ):
         source_type = "git"

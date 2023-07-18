@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
+from typing import Generator, List
 
 import pytest
 
@@ -44,6 +45,28 @@ def _callback_3(info: ProjectInfo) -> None:
 def _callback_4(info: ProjectInfo) -> None:
     greet = getattr(info, "greet")
     print(f"{greet} callback 4")
+
+
+def _callback_filter_1(info: ProjectInfo) -> List[str]:
+    greet = getattr(info, "greet")
+    print(f"{greet} filter 1")
+    return ["a", "b", "c"]
+
+
+def _callback_filter_2(info: ProjectInfo) -> Generator[str, None, None]:
+    greet = getattr(info, "greet")
+    print(f"{greet} filter 2")
+    return (i for i in ["d", "e", "f"])
+
+
+def _callback_overlay_1(overlay_dir: Path, info: ProjectInfo) -> None:
+    greet = getattr(info, "greet")
+    print(f"{overlay_dir} {greet} 1")
+
+
+def _callback_overlay_2(overlay_dir: Path, info: ProjectInfo) -> None:
+    greet = getattr(info, "greet")
+    print(f"{overlay_dir} {greet} 2")
 
 
 class TestCallbackRegistration:
@@ -107,6 +130,32 @@ class TestCallbackRegistration:
         # But we can register a different one
         callbacks.register_epilogue(_callback_4)
 
+    def test_register_stage_packages_filters(self):
+        callbacks.register_stage_packages_filter(_callback_filter_1)
+
+        # A callback function shouldn't be registered again
+        with pytest.raises(errors.CallbackRegistrationError) as raised:
+            callbacks.register_stage_packages_filter(_callback_filter_1)
+        assert raised.value.message == (
+            "callback function '_callback_filter_1' is already registered."
+        )
+
+        # But we can register a different one
+        callbacks.register_stage_packages_filter(_callback_filter_2)
+
+    def test_register_configure_overlay(self):
+        callbacks.register_configure_overlay(_callback_overlay_1)
+
+        # A callback function shouldn't be registered again
+        with pytest.raises(errors.CallbackRegistrationError) as raised:
+            callbacks.register_configure_overlay(_callback_overlay_1)
+        assert raised.value.message == (
+            "callback function '_callback_overlay_1' is already registered."
+        )
+
+        # But we can register a different one
+        callbacks.register_configure_overlay(_callback_overlay_2)
+
     def test_register_both_pre_and_post(self):
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
@@ -116,11 +165,19 @@ class TestCallbackRegistration:
         callbacks.register_epilogue(_callback_3)
 
     def test_unregister_all(self):
+        callbacks.register_stage_packages_filter(_callback_filter_1)
+        callbacks.register_stage_packages_filter(_callback_filter_2)
+        callbacks.register_configure_overlay(_callback_overlay_1)
+        callbacks.register_configure_overlay(_callback_overlay_2)
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
         callbacks.register_prologue(_callback_3)
         callbacks.register_epilogue(_callback_3)
         callbacks.unregister_all()
+        callbacks.register_stage_packages_filter(_callback_filter_1)
+        callbacks.register_stage_packages_filter(_callback_filter_2)
+        callbacks.register_configure_overlay(_callback_overlay_1)
+        callbacks.register_configure_overlay(_callback_overlay_2)
         callbacks.register_pre_step(_callback_1)
         callbacks.register_post_step(_callback_1)
         callbacks.register_prologue(_callback_3)
@@ -189,3 +246,36 @@ class TestCallbackExecution:
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 3\nhello callback 4\n"
+
+    @pytest.mark.parametrize(
+        "funcs,result,message",
+        [
+            ([_callback_filter_1], {"a", "b", "c"}, "hello filter 1\n"),
+            ([_callback_filter_2], {"d", "e", "f"}, "hello filter 2\n"),
+            (
+                [_callback_filter_1, _callback_filter_2],
+                {"a", "b", "c", "d", "e", "f"},
+                "hello filter 1\nhello filter 2\n",
+            ),
+        ],
+    )
+    def test_filter_package_list(self, capfd, funcs, result, message):
+        for fn in funcs:
+            callbacks.register_stage_packages_filter(fn)
+        res = callbacks.get_stage_packages_filters(self._project_info)
+        assert res == result
+
+        out, err = capfd.readouterr()
+        assert not err
+        assert out == message
+
+    def test_configure_callback(self, capfd):
+        callbacks.register_configure_overlay(_callback_overlay_1)
+        callbacks.register_configure_overlay(_callback_overlay_2)
+
+        overlay_dir = Path("/overlay/mount")
+        callbacks.run_configure_overlay(overlay_dir, self._project_info)
+
+        out, err = capfd.readouterr()
+        assert not err
+        assert out == "/overlay/mount hello 1\n/overlay/mount hello 2\n"

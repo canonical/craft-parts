@@ -37,7 +37,7 @@ import craft_parts.errors
 from craft_parts import ActionType, Step
 
 
-def main():
+def main() -> None:
     """Run the command-line interface."""
     options = _parse_arguments()
 
@@ -51,6 +51,8 @@ def main():
         log_level = logging.INFO
 
     logging.basicConfig(level=log_level)
+
+    craft_parts.Features(enable_overlay=True)
 
     try:
         _process_parts(options)
@@ -98,6 +100,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         application_name=options.application_name,
         work_dir=options.work_dir,
         cache_dir=cache_dir,
+        strict_mode=options.strict,
         base=options.base,
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
@@ -227,7 +230,7 @@ def _parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--refresh",
         action="store_true",
-        help="Update the stage packages list before procceeding.",
+        help="Update the stage packages list before proceeding.",
     )
     parser.add_argument(
         "--dry-run",
@@ -238,6 +241,11 @@ def _parse_arguments() -> argparse.Namespace:
         "--show-skipped",
         action="store_true",
         help="Also display skipped actions.",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Enable strict builds.",
     )
     parser.add_argument(
         "--work-dir",
@@ -272,7 +280,7 @@ def _parse_arguments() -> argparse.Namespace:
         "-v",
         "--verbose",
         action="store_true",
-        help="show execution output",
+        help="Show execution output",
     )
     parser.add_argument(
         "--trace",

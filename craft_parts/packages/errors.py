@@ -16,7 +16,7 @@
 
 """Exceptions raised by the packages handling subsystem."""
 
-from typing import Sequence
+from typing import List, Sequence
 
 from craft_parts.errors import PartsError
 from craft_parts.utils import formatting_utils
@@ -126,7 +126,7 @@ class BuildPackageNotFound(PackagesError):
     :param package: The name of the missing package.
     """
 
-    def __init__(self, package):
+    def __init__(self, package: str):
         self.package = package
         brief = f"Cannot find package listed in 'build-packages': {package}"
 
@@ -205,7 +205,7 @@ class SnapInstallError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name, snap_channel):
+    def __init__(self, *, snap_name: str, snap_channel: str):
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error installing snap {snap_name!r} from channel {snap_channel!r}."
@@ -220,7 +220,7 @@ class SnapDownloadError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name, snap_channel):
+    def __init__(self, *, snap_name: str, snap_channel: str):
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error downloading snap {snap_name!r} from channel {snap_channel!r}."
@@ -235,7 +235,7 @@ class SnapRefreshError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name, snap_channel):
+    def __init__(self, *, snap_name: str, snap_channel: str):
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error refreshing snap {snap_name!r} to channel {snap_channel!r}."
@@ -273,3 +273,23 @@ class SnapdConnectionError(PackagesError):
         )
 
         super().__init__(brief=brief)
+
+
+class ChiselError(PackagesError):
+    """A "chisel"-related command failed."""
+
+    def __init__(self, *, slices: List[str], output: str):
+        """Create a ChiselError from a list of slices and the command output.
+
+        :param slices: The Chisel slices that were requested.
+        :param output: The output of the Chisel command.
+        """
+        brief = f"Failed to cut requested chisel slices: {', '.join(slices)}"
+
+        details = None
+        for line in output.splitlines():
+            if line.startswith(":: error:"):
+                details = line
+                break
+
+        super().__init__(brief=brief, details=details)

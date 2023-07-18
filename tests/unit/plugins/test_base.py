@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass
 from typing import Any, Dict, List, Set, cast
 
 import pytest
@@ -25,7 +24,6 @@ from craft_parts.plugins import Plugin, PluginProperties
 from craft_parts.plugins.base import extract_plugin_properties
 
 
-@dataclass
 class FooPluginProperties(PluginProperties):
     """Test plugin properties."""
 

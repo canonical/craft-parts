@@ -4,7 +4,10 @@
     "**/.mypy_cache",
     "**/.pytest_cache",
     ".direnv",
+    ".tox",
     "build",
-    "docs"
+    "docs",
+    "venv",
+    ".venv"
   ]
 }

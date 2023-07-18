@@ -23,16 +23,13 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
 _WRITE_TIME_INTERVAL = 0.02
-
-
-# TODO:stdmsg: replace/remove terminal-related utilities
 
 
 class TimedWriter:
@@ -72,7 +69,7 @@ class TimedWriter:
         cls._last_write_time = time.time()
 
 
-def get_bin_paths(*, root: Path, existing_only=True) -> List[str]:
+def get_bin_paths(*, root: Path, existing_only: bool = True) -> List[str]:
     """List common system executable paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -109,7 +106,7 @@ def get_include_paths(*, root: Path, arch_triplet: str) -> List[str]:
 
 
 def get_library_paths(
-    *, root: Path, arch_triplet: str, existing_only=True
+    *, root: Path, arch_triplet: str, existing_only: bool = True
 ) -> List[str]:
     """List common library paths.
 
@@ -224,12 +221,12 @@ def get_system_info() -> str:
     return uname
 
 
-def mount(device: str, mountpoint: str, *args) -> None:
+def mount(device: str, mountpoint: str, *args: str) -> None:
     """Mount a filesystem.
 
     :param device: The device to mount.
     :param mountpoint: Where the device will be mounted.
-    :param *args: Additional arguments to ``mount(8)``.
+    :param args: Additional arguments to ``mount(8)``.
 
     :raises subprocess.CalledProcessError: on error.
     """
@@ -237,11 +234,11 @@ def mount(device: str, mountpoint: str, *args) -> None:
     subprocess.check_call(["/bin/mount", *args, device, mountpoint])
 
 
-def mount_overlayfs(mountpoint: str, *args) -> None:
+def mount_overlayfs(mountpoint: str, *args: str) -> None:
     """Mount an overlay filesystem using fuse-overlayfs.
 
     :param mountpoint: Where the device will be mounted.
-    :param *args: Additional arguments to ``mount(8)``.
+    :param args: Additional arguments to ``mount(8)``.
 
     :raises subprocess.CalledProcessError: on error.
     """
@@ -252,7 +249,7 @@ def mount_overlayfs(mountpoint: str, *args) -> None:
 _UMOUNT_RETRIES = 5
 
 
-def umount(mountpoint: str, *args) -> None:
+def umount(mountpoint: str, *args: str) -> None:
     """Unmount a filesystem.
 
     :param mountpoint: The mount point or device to unmount.
@@ -274,14 +271,6 @@ def umount(mountpoint: str, *args) -> None:
             logger.debug(
                 "retry umount %r (%d/%d)", mountpoint, attempt, _UMOUNT_RETRIES
             )
-
-
-_ID_TO_UBUNTU_CODENAME = {
-    "17.10": "artful",
-    "17.04": "zesty",
-    "16.04": "xenial",
-    "14.04": "trusty",
-}
 
 
 # TODO: consolidate os-release strategy with craft-providers/charmcraft
@@ -333,25 +322,10 @@ class OsRelease:
 
         raise errors.OsReleaseVersionIdError()
 
-    def version_codename(self) -> str:
-        """Return the OS version codename.
 
-        This first tries to use the VERSION_CODENAME. If that's missing, it
-        tries to use the VERSION_ID to figure out the codename on its own.
-
-        :raises OsReleaseCodenameError: If no version codename can be
-            determined.
-        """
-        with contextlib.suppress(KeyError):
-            return self._os_release["VERSION_CODENAME"]
-
-        with contextlib.suppress(KeyError):
-            return _ID_TO_UBUNTU_CODENAME[self._os_release["VERSION_ID"]]
-
-        raise errors.OsReleaseCodenameError()
-
-
-def process_run(command: List[str], log_func: Callable[[str], None], **kwargs) -> None:
+def process_run(
+    command: List[str], log_func: Callable[[str], None], **kwargs: Any
+) -> None:
     """Run a command and handle its output."""
     with subprocess.Popen(
         command,

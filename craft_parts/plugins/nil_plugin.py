@@ -22,6 +22,8 @@ automatically included, e.g. stage-packages.
 
 from typing import Any, Dict, List, Set
 
+from overrides import override
+
 from .base import Plugin
 from .properties import PluginProperties
 
@@ -30,6 +32,7 @@ class NilPluginProperties(PluginProperties):
     """The part properties used by the nil plugin."""
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "NilPluginProperties":
         """Populate class attributes from the part specification.
 
@@ -60,18 +63,29 @@ class NilPlugin(Plugin):
 
     properties_class = NilPluginProperties
 
+    supports_strict_mode = True
+
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
+    @override
+    def get_pull_commands(self) -> List[str]:
+        """Return a list commands to retrieve dependencies during the pull step."""
+        return []
+
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         return []

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2022 Canonical Ltd.
+# Copyright 2017-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,15 +22,16 @@ import os.path
 import shutil
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, cast
 
 from typing_extensions import Protocol
 
-from craft_parts import callbacks, errors, overlays, packages, plugins, sources, xattrs
+from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
+from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
 from craft_parts.plugins import Plugin
@@ -85,6 +86,7 @@ class PartHandler:
         *,
         part_info: PartInfo,
         part_list: List[Part],
+        track_stage_packages: bool = False,
         overlay_manager: OverlayManager,
         ignore_patterns: Optional[List[str]] = None,
         base_layer_hash: Optional[LayerHash] = None,
@@ -92,6 +94,7 @@ class PartHandler:
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
+        self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
         self._app_environment: Dict[str, str] = {}
@@ -102,7 +105,11 @@ class PartHandler:
             part_info=part_info,
         )
 
-        self._part_properties = part.spec.marshal()
+        self._part_properties = {
+            **part.spec.marshal(),
+            **part.plugin_properties.marshal(),
+        }
+
         self._source_handler = sources.get_source_handler(
             cache_dir=part_info.cache_dir,
             part=part,
@@ -165,6 +172,7 @@ class PartHandler:
         state = handler(step_info, stdout=stdout, stderr=stderr)
         state_file = states.get_step_state_path(self._part, action.step)
         state.write(state_file)
+        step_info.state = state
         callbacks.run_post_step(step_info)
 
     def _run_pull(
@@ -267,7 +275,7 @@ class PartHandler:
         *,
         stdout: Stream,
         stderr: Stream,
-        update=False,
+        update: bool = False,
     ) -> StepState:
         """Execute the build step for this part.
 
@@ -408,7 +416,11 @@ class PartHandler:
 
         self._migrate_overlay_files_to_prime()
 
-        if self._part.spec.stage_packages and is_deb_based():
+        if (
+            self._part.spec.stage_packages
+            and self._track_stage_packages
+            and is_deb_based()
+        ):
             primed_stage_packages = _get_primed_stage_packages(
                 contents.files, prime_dir=self._part.prime_dir
             )
@@ -646,7 +658,9 @@ class PartHandler:
                 f"cannot reapply step {step_name!r} of {self._part.name!r}"
             )
 
-    def _reapply_overlay(self, step_info, *, stdout: Stream, stderr: Stream) -> None:
+    def _reapply_overlay(
+        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+    ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         shutil.rmtree(self._part.part_layer_dir)
         self._run_overlay(step_info, stdout=stdout, stderr=stderr)
@@ -845,7 +859,7 @@ class PartHandler:
             )
             overlay_migration_state_path.unlink()
 
-    def _make_dirs(self):
+    def _make_dirs(self) -> None:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
@@ -859,7 +873,7 @@ class PartHandler:
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
 
-    def _organize(self, *, overwrite=False):
+    def _organize(self, *, overwrite: bool = False) -> None:
         mapping = self._part.spec.organize_files
         organize_files(
             part_name=self._part.name,
@@ -892,7 +906,7 @@ class PartHandler:
 
         return fetched_packages
 
-    def _fetch_stage_snaps(self):
+    def _fetch_stage_snaps(self) -> Optional[Sequence[str]]:
         """Download snap packages to the part's snap directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
@@ -921,7 +935,7 @@ class PartHandler:
                 part_name=self._part.name, package_name=err.package_name
             )
 
-    def _unpack_stage_packages(self):
+    def _unpack_stage_packages(self) -> None:
         """Extract stage packages contents to the part's install directory."""
         pulled_packages = None
 
@@ -934,9 +948,10 @@ class PartHandler:
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
             stage_packages=pulled_packages,
+            track_stage_packages=self._track_stage_packages,
         )
 
-    def _unpack_stage_snaps(self):
+    def _unpack_stage_snaps(self) -> None:
         """Extract stage snap contents to the part's install directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
@@ -983,7 +998,7 @@ def _apply_file_filter(
     :param filter_files: The set of files to keep.
     :param filter_dirs: The set of directories to keep.
     """
-    for (root, directories, files) in os.walk(destdir, topdown=True):
+    for root, directories, files in os.walk(destdir, topdown=True):
         for file_name in files:
             path = Path(root, file_name)
             relpath = path.relative_to(destdir)
@@ -1113,7 +1128,7 @@ def _get_primed_stage_packages(snap_files: Set[str], *, prime_dir: Path) -> Set[
     primed_stage_packages: Set[str] = set()
     for snap_file in snap_files:
         snap_file = str(prime_dir / snap_file)
-        stage_package = xattrs.read_origin_stage_package(snap_file)
+        stage_package = read_origin_stage_package(snap_file)
         if stage_package:
             primed_stage_packages.add(stage_package)
     return primed_stage_packages

@@ -34,7 +34,7 @@ class ActionType(enum.IntEnum):
 
     ``RUN``: execute the expected commands for step processing.
 
-    ``RERUN``: clear the existing data and state before procceeding.
+    ``RERUN``: clear the existing data and state before proceeding.
 
     ``UPDATE``: try to continue processing the step.
 
@@ -49,7 +49,7 @@ class ActionType(enum.IntEnum):
     UPDATE = 3
     REAPPLY = 4
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
 
 

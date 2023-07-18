@@ -11,26 +11,23 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Install python packages and dependencies
         run: |
           sudo apt update
           sudo apt install -y libapt-pkg-dev
-          pip install -U \
-                         https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-distutils-extra/2.43/python-distutils-extra_2.43.tar.xz \
-                         https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz \
-                         .[dev]
+          pip install -U -e .[dev]
       - name: Run black
         run: |
           make test-black
       - name: Run codespell
         run: |
           make test-codespell
-      - name: Run flake8
+      - name: Run ruff
         run: |
-          make test-flake8
+          make test-ruff
       - name: Run isort
         run: |
           make test-isort
@@ -63,29 +60,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install apt build dependencies
         run: |
           sudo apt update
           sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs
-      - name: Install python-apt dependencies
-        run: |
-          pip install https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-distutils-extra/2.43/python-distutils-extra_2.43.tar.xz
-          pip install https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz
       - name: Install general python dependencies
         run: |
-          pip install .[dev]
-          pip install -e .
+          pip install -e .[dev,${{ matrix.adjective }}-dev]
       - name: Install additional test dependencies
         run: |
-          sudo apt install -y ninja-build cmake p7zip-full
-          # Build Chisel: needs a version of go than is available in Ubuntu 20.04 
+          sudo apt install -y ninja-build cmake scons p7zip-full
+          # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
           sudo snap install --classic --channel=latest/stable go
           git clone https://github.com/canonical/chisel.git chisel-tmp
           cd chisel-tmp && git checkout f0bff5a30dfdcb400b # known "good" commit until Chisel has versions
@@ -95,6 +87,19 @@ jobs:
           # Remove newer go and install regular version for 20.04
           sudo snap remove go
           sudo apt install -y golang
+          # Install RPM dependencies for RPM tests
+          sudo apt install rpm
+          # Ensure we don't have dotnet installed, to properly test dotnet-deps
+          # Based on https://github.com/actions/runner-images/blob/main/images/linux/scripts/installers/dotnetcore-sdk.sh
+          sudo apt remove -y dotnet-* || true
+          # Remove manually-installed dotnet from tarballs
+          sudo rm -rf /usr/share/dotnet
+          # Remove dotnet tools
+          rm -rf $HOME/.dotnet
+      - name: specify node version
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
       - name: Run unit tests
         run: |
           make test-units
@@ -102,7 +107,7 @@ jobs:
         run: |
           make test-integrations
       - name: Run overlay smoke test
-        if: ${{ matrix.adjective == 'focal' }} #TODO: fix this smoke test for jammy
+        if: ${{ matrix.adjective == 'focal' }}  # TODO: fix this smoke test for jammy
         run: |
           wget -q https://cloud-images.ubuntu.com/${{ matrix.adjective }}/current/${{ matrix.adjective }}-server-cloudimg-amd64.squashfs
           mkdir base

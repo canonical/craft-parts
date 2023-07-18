@@ -20,7 +20,7 @@ import os
 import re
 import tarfile
 from pathlib import Path
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 from overrides import overrides
 
@@ -82,7 +82,7 @@ class TarSource(FileSourceHandler):
         dst: Path,
         keep: bool = False,
         src: Optional[Path] = None,
-    ):
+    ) -> None:
         """Extract tarball contents to the part source dir."""
         if src:
             tarball = src
@@ -98,7 +98,7 @@ class TarSource(FileSourceHandler):
 def _extract(tarball: Path, dst: Path) -> None:
     with tarfile.open(tarball) as tar:
 
-        def filter_members(tar):
+        def filter_members(tar: tarfile.TarFile) -> Iterator[tarfile.TarInfo]:
             """Strip common prefix and ban dangerous names."""
             members = tar.getmembers()
             common = os.path.commonprefix([m.name for m in members])

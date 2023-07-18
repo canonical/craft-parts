@@ -89,7 +89,6 @@ def test_changesets(new_dir, mocker, capfd):
     actions = lcm.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL),
-        Action("foo", Step.OVERLAY),
         Action("foo", Step.BUILD),
     ]
 
@@ -120,14 +119,6 @@ def test_changesets(new_dir, mocker, capfd):
             action_type=ActionType.UPDATE,
             reason="source changed",
             properties=ActionProperties(changed_files=["foo"], changed_dirs=[]),
-        ),
-        Action(
-            "foo",
-            Step.OVERLAY,
-            action_type=ActionType.UPDATE,
-            reason="'PULL' step changed",
-            project_vars=None,
-            properties=ActionProperties(changed_files=None, changed_dirs=None),
         ),
         Action(
             "foo",
@@ -173,7 +164,6 @@ def test_changesets_reload_state(new_dir, mocker, capfd):
     actions = lcm.plan(Step.BUILD)
     assert actions == [
         Action("foo", Step.PULL),
-        Action("foo", Step.OVERLAY),
         Action("foo", Step.BUILD),
     ]
 
@@ -210,14 +200,6 @@ def test_changesets_reload_state(new_dir, mocker, capfd):
             Step.PULL,
             action_type=ActionType.SKIP,
             reason="already ran",
-        ),
-        Action(
-            "foo",
-            Step.OVERLAY,
-            action_type=ActionType.UPDATE,
-            reason="'PULL' step changed",
-            project_vars=None,
-            properties=ActionProperties(changed_files=None, changed_dirs=None),
         ),
         Action(
             "foo",

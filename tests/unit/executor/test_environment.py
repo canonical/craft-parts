@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -104,7 +104,6 @@ def test_generate_step_environment_build(new_dir):
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PROJECT_NAME="test-project"
@@ -153,7 +152,6 @@ def test_generate_step_environment_no_project_name(new_dir):
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PART_NAME="p1"
@@ -204,7 +202,6 @@ def test_generate_step_environment_no_build(new_dir, step):
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PROJECT_NAME="test-project"
@@ -254,7 +251,6 @@ def test_generate_step_environment_no_user_env(new_dir):
         export CRAFT_TARGET_ARCH="arm64"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
-        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PROJECT_NAME="test-project"

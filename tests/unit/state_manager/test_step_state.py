@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import pytest
 import yaml
@@ -55,7 +55,12 @@ class TestMigrationState:
 class SomeStepState(step_state.StepState):
     """A concrete step state implementing abstract methods."""
 
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         return {"name": part_properties.get("name")}
 
     def project_options_of_interest(

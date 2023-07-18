@@ -1,0 +1,3 @@
+parts:
+  hello:
+    plugin: nil

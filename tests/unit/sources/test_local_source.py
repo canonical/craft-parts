@@ -22,6 +22,7 @@ import pytest
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
+from craft_parts.sources import errors as sources_errors
 from craft_parts.sources import sources
 from craft_parts.sources.local_source import LocalSource
 
@@ -266,6 +267,18 @@ class TestLocal:
         )
         assert s2._ignore_patterns == ["hello", "work"]
 
+    def test_source_does_not_exist(self, new_dir):
+        dirs = ProjectDirs(work_dir=Path("src/work"))
+        local = LocalSource(
+            "does-not-exist",
+            "destination",
+            cache_dir=new_dir,
+            project_dirs=dirs,
+        )
+
+        with pytest.raises(sources_errors.SourceNotFound):
+            local.pull()
+
 
 class TestLocalUpdate:
     """Verify that the local source can detect changes and update."""
@@ -408,3 +421,22 @@ class TestLocalUpdate:
 
         local.update()
         assert os.path.isfile(os.path.join(destination, "dir", "file2"))
+
+    def test_ignored_files(self, new_dir):
+        Path("source").mkdir()
+        Path("destination").mkdir()
+        Path("source/foo.txt").touch()
+        Path("reference").touch()
+
+        ignore_patterns = ["*.ignore"]
+        also_ignore = ["also ignore"]
+
+        local = LocalSource(
+            "source", "destination", cache_dir=new_dir, ignore_patterns=ignore_patterns
+        )
+        local.pull()
+
+        # Add a file to ignore, existing patterns must not change.
+        local.check_if_outdated("reference", ignore_files=also_ignore)
+        assert also_ignore == ["also ignore"]
+        assert local._ignore_patterns == ["*.ignore"]

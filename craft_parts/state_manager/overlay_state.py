@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,9 @@
 
 """State definitions for the overlay step."""
 
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
+
+from overrides import override
 
 from .step_state import StepState
 
@@ -25,6 +27,7 @@ class OverlayState(StepState):
     """Context information for the overlay step."""
 
     @classmethod
+    @override
     def unmarshal(cls, data: Dict[str, Any]) -> "OverlayState":
         """Create and populate a new ``OverlayState`` object from dictionary data.
 
@@ -42,19 +45,29 @@ class OverlayState(StepState):
 
         return cls(**data)
 
-    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+    @override
+    def properties_of_interest(
+        self,
+        part_properties: Dict[str, Any],
+        *,
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
+        :param extra_properties: Additional relevant properties to return.
 
         :return: A dictionary containing properties of interest.
         """
-        return {
-            "filesets": part_properties.get("filesets", {}) or {},
-            "overlay-script": part_properties.get("overlay-script"),
-            "overlay": part_properties.get("overlay", ["*"]) or ["*"],
-        }
+        relevant_properties = [
+            "overlay-script",
+            "overlay",
+            *(extra_properties or []),
+        ]
 
+        return {name: part_properties.get(name) for name in relevant_properties}
+
+    @override
     def project_options_of_interest(
         self, project_options: Dict[str, Any]
     ) -> Dict[str, Any]:

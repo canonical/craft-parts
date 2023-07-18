@@ -60,8 +60,6 @@ def organize_files(
 
             if os.path.isdir(src) and "*" not in key:
                 file_utils.link_or_copy_tree(src, dst)
-                # TODO create alternate organization location to avoid
-                # deletions.
                 shutil.rmtree(src)
                 continue
 

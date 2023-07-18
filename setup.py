@@ -17,8 +17,11 @@
 """The setup script."""
 
 import os
+import re
 
 from setuptools import find_packages, setup  # type: ignore
+
+VERSION = "1.23.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -29,7 +32,9 @@ def is_ubuntu() -> bool:
     try:
         with open("/etc/os-release") as release_file:
             os_release = release_file.read()
-        return "ID=ubuntu" in os_release
+        if re.search(r"^ID(?:_LIKE)?=.*\bubuntu\b.*$", os_release, re.MULTILINE):
+            return True
+        return False
     except FileNotFoundError:
         return False
 
@@ -42,61 +47,87 @@ def is_rtd() -> bool:
 install_requires = [
     "overrides",
     "PyYAML",
-    "pydantic==1.9.0",  # needed by pydanic-yaml 0.6.3
-    "pydantic-yaml",
+    "pydantic>=1.9.0,<2.0.0",
+    "pydantic-yaml[pyyaml]",
     "pyxdg",
     "requests",
     "requests-unixsocket",
+    "urllib3<2",  # keep compatible API
 ]
-
-
-if is_ubuntu() and not is_rtd():
-    install_requires += [
-        "python-apt",
-    ]
-
 
 dev_requires = [
     "autoflake",
     "twine",
 ]
 
-doc_requires = [
+docs_require = [
     "sphinx",
     "sphinx-autodoc-typehints",
+    "sphinx-lint",
     "sphinx-pydantic",
     "sphinx-rtd-theme",
+    "sphinxcontrib-details-directive==0.1.0",
+]
+
+types_requires = [
+    "mypy[reports]==0.991",
+    "types-colorama",
+    "types-docutils",
+    "types-Pillow",
+    "types-Pygments",
+    "types-pytz",
+    "types-PyYAML",
+    "types-requests",
+    "types-setuptools",
 ]
 
 test_requires = [
     "black",
     "codespell",
     "coverage",
-    "flake8",
     "isort",
-    "mypy",
+    "hypothesis",
     "pydocstyle",
     "pylint",
     "pylint-fixme-info",
     "pylint-pytest",
+    "pyright",
     "pytest",
+    "pytest-check",
+    "pytest-cov",
     "pytest-mock",
     "requests-mock",
+    "ruff==0.0.239",
     "tox",
-    "types-PyYAML",
-    "types-requests",
+    "yamllint==1.29.0",
 ]
 
 extras_requires = {
-    "dev": dev_requires + doc_requires + test_requires,
-    "doc": doc_requires,
-    "test": test_requires,
+    "dev": dev_requires + docs_require + test_requires + types_requires,
+    "docs": docs_require,
+    "test": test_requires + types_requires,
+    "types": types_requires,
+    # Python-apt bindings for specific Ubuntu versions.
+    # Up to date package links can be found at https://launchpad.net/ubuntu/+source/python-apt
+    # Note: These extras can break requirements from other packages, so
+    # do not use them in dependencies unless you know what you're doing.
+    "focal-dev": [
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz"
+    ],
+    "jammy-dev": [
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz"
+    ],
+    "lunar-dev": [
+        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.5.3ubuntu1/python-apt_2.5.3ubuntu1.tar.xz"
+    ],
+    # Generic "apt" extra for handling any apt-based platforms (e.g. Debian, Ubuntu)
+    "apt": ["python-apt"],
 }
 
 
 setup(
     name="craft-parts",
-    version="1.16.0",
+    version=VERSION,
     description="Craft parts tooling",
     long_description=readme,
     author="Canonical Ltd.",
@@ -121,8 +152,14 @@ setup(
     },
     install_requires=install_requires,
     extras_require=extras_requires,
-    packages=find_packages(include=["craft_parts", "craft_parts.*"]),
-    package_data={"craft_parts": ["py.typed"]},
+    packages=find_packages(include=["craft_parts", "craft_parts.*"])
+    + ["craft_parts_docs"],
+    # todo: can we make the docs optional?
+    package_dir={"craft_parts_docs": "docs/base"},
+    package_data={
+        "craft_parts": ["py.typed"],
+        "craft_parts_docs": ["**"],
+    },
     include_package_data=True,
     zip_safe=False,
 )

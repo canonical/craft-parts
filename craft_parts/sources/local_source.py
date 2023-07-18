@@ -22,12 +22,13 @@ import glob
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Set, Tuple
 
 from overrides import overrides
 
 from craft_parts.utils import file_utils
 
+from . import errors
 from .base import SourceHandler
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,12 @@ logger = logging.getLogger(__name__)
 class LocalSource(SourceHandler):
     """The local source handler."""
 
-    def __init__(self, *args, copy_function=file_utils.link_or_copy, **kwargs):
+    def __init__(
+        self,
+        *args: Any,
+        copy_function: Callable[..., None] = file_utils.link_or_copy,
+        **kwargs: Any,
+    ):
         super().__init__(*args, **kwargs)
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function
@@ -60,12 +66,15 @@ class LocalSource(SourceHandler):
         self._ignore = functools.partial(
             _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns
         )
-        self._updated_files = set()
-        self._updated_directories = set()
+        self._updated_files: Set[str] = set()
+        self._updated_directories: Set[str] = set()
 
     @overrides
-    def pull(self):
+    def pull(self) -> None:
         """Retrieve the local source files."""
+        if not Path(self.source_abspath).exists():
+            raise errors.SourceNotFound(self.source)
+
         file_utils.link_or_copy_tree(
             self.source_abspath,
             str(self.part_src_dir),
@@ -87,8 +96,6 @@ class LocalSource(SourceHandler):
         if not ignore_files:
             ignore_files = []
 
-        ignore_files.extend(self._ignore_patterns)
-
         try:
             target_mtime = os.lstat(target).st_mtime
         except FileNotFoundError:
@@ -97,7 +104,7 @@ class LocalSource(SourceHandler):
         self._updated_files = set()
         self._updated_directories = set()
 
-        for (root, directories, files) in os.walk(self.source_abspath, topdown=True):
+        for root, directories, files in os.walk(self.source_abspath, topdown=True):
             ignored = set(
                 self._ignore(root, directories + files, also_ignore=ignore_files)
             )
@@ -111,12 +118,13 @@ class LocalSource(SourceHandler):
                 if os.lstat(path).st_mtime >= target_mtime:
                     self._updated_files.add(os.path.relpath(path, self.source))
 
+            directories_to_remove = []
             for directory in directories:
                 path = os.path.join(root, directory)
                 if os.lstat(path).st_mtime >= target_mtime:
                     # Don't descend into this directory-- we'll just copy it
                     # entirely.
-                    directories.remove(directory)
+                    directories_to_remove.append(directory)
 
                     # os.walk will include symlinks to directories here, but we
                     # want to treat those as files
@@ -125,6 +133,8 @@ class LocalSource(SourceHandler):
                         self._updated_files.add(relpath)
                     else:
                         self._updated_directories.add(relpath)
+            for directory in directories_to_remove:
+                directories.remove(directory)
 
         logger.debug("updated files: %r", self._updated_files)
         logger.debug("updated directories: %r", self._updated_directories)
@@ -143,7 +153,7 @@ class LocalSource(SourceHandler):
         return (sorted(self._updated_files), sorted(self._updated_directories))
 
     @overrides
-    def update(self):
+    def update(self) -> None:
         """Update pulled source.
 
         Call method :meth:`check_if_outdated` before updating to populate the
@@ -170,16 +180,14 @@ def _ignore(
     source: str,
     current_directory: str,
     patterns: List[str],
-    directory,
-    files,
+    directory: str,
+    _files: Any,
     also_ignore: Optional[List[str]] = None,
 ) -> List[str]:
-    if also_ignore:
-        patterns.extend(also_ignore)
-
+    """Build a list of files to ignore based on the given patterns."""
     ignored = []
     if directory in (source, current_directory):
-        for pattern in patterns:
+        for pattern in patterns + (also_ignore or []):
             files = glob.glob(os.path.join(directory, pattern))
             if files:
                 files = [os.path.basename(f) for f in files]

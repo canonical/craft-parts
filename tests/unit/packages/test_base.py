@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,6 +13,12 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import shutil
+import sys
+from pathlib import Path
+
+import pytest
 
 from craft_parts.packages import base
 from craft_parts.packages.base import BaseRepository, DummyRepository
@@ -70,4 +76,49 @@ class TestPkgNameParts:
         assert version == "2.10-1"
 
 
-# TODO: add tests for mark_origin_stage_package()
+class TestOriginStagePackage:
+    """Check extended attribute setting."""
+
+    @pytest.fixture
+    def test_file(self):
+        # These tests don't work on tmpfs
+        file_path = Path(".tests-xattr-test-file")
+        file_path.touch()
+
+        yield str(file_path)
+
+        file_path.unlink()
+
+    def test_read_origin_stage_package(self, test_file):
+        if sys.platform == "linux":
+            result = base.read_origin_stage_package(test_file)
+            assert result is None
+        else:
+            with pytest.raises(RuntimeError):
+                base.read_origin_stage_package(test_file)
+
+    def test_write_origin_stage_package(self, test_file):
+        package = "foo-1.0"
+        if sys.platform == "linux":
+            result = base.read_origin_stage_package(test_file)
+            assert result is None
+
+            base.write_origin_stage_package(test_file, package)
+            result = base.read_origin_stage_package(test_file)
+            assert result == package
+        else:
+            with pytest.raises(RuntimeError):
+                base.write_origin_stage_package(test_file, package)
+
+    def test_mark_origin_stage_package(self):
+        test_dir = Path(".tests-xattr-test-dir")
+        if test_dir.exists():
+            shutil.rmtree(test_dir)
+        test_dir.mkdir()
+
+        Path(test_dir / "foo").touch()
+        Path(test_dir / "bar").touch()
+
+        base.mark_origin_stage_package(str(test_dir), "package")
+        assert base.read_origin_stage_package(str(test_dir / "foo")) == "package"
+        assert base.read_origin_stage_package(str(test_dir / "bar")) == "package"

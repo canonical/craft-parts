@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2022 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, cast
 
 from craft_parts import parts, sources, steps
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, ProjectVar
 from craft_parts.parts import Part
 from craft_parts.sources import SourceHandler
@@ -47,7 +48,7 @@ class _StateWrapper:
     serial: int
     step_updated: bool = False
 
-    def is_newer_than(self, other: "_StateWrapper"):
+    def is_newer_than(self, other: "_StateWrapper") -> bool:
         """Verify if this state is newer than the specified state.
 
         :param other: The wrapped state to compare this state to.
@@ -58,7 +59,7 @@ class _StateWrapper:
 class _StateDB:
     """A dictionary-backed simple database manager for wrapped states."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._state: Dict[Tuple[str, Step], _StateWrapper] = {}
         self._serial_gen = itertools.count(1)
 
@@ -175,7 +176,7 @@ class StateManager:
         *,
         project_info: ProjectInfo,
         part_list: List[Part],
-        ignore_outdated: Optional[List[str]] = None
+        ignore_outdated: Optional[List[str]] = None,
     ):
         self._state_db = _StateDB()
         self._project_info = project_info
@@ -254,7 +255,13 @@ class StateManager:
 
         previous_steps = step.previous_steps()
         if previous_steps:
-            return self.should_step_run(part, previous_steps[-1])
+            prev_step = previous_steps[-1]
+
+            # Skip testing overlay state if overlays are disabled
+            if not Features().enable_overlay and prev_step == Step.OVERLAY:
+                prev_step = previous_steps[-2]
+
+            return self.should_step_run(part, prev_step)
 
         return False
 
@@ -371,8 +378,11 @@ class StateManager:
         # comparing it to those same properties and options in the current
         # state. If they've changed, then this step is dirty and needs to
         # run again.
-        part_properties = part.spec.marshal()
-        properties = state.diff_properties_of_interest(part_properties)
+        part_properties = {**part.spec.marshal(), **part.plugin_properties.marshal()}
+        plugin_properties_to_check = _get_relevant_plugin_properties(part, step)
+        properties = state.diff_properties_of_interest(
+            part_properties, also_compare=plugin_properties_to_check
+        )
         options = state.diff_project_options_of_interest(
             self._project_info.project_options
         )
@@ -479,6 +489,21 @@ class StateManager:
 
         pull_state = cast(PullState, stw.state)
         return pull_state.outdated_dirs
+
+
+def _get_relevant_plugin_properties(part: Part, step: Step) -> List[str]:
+    """Obtain additional properties from plugin.
+
+    These are plugin-specific and defines additional properties to compare
+    when verifying if a step is dirty.
+    """
+    if step == Step.PULL:
+        return part.plugin_properties.get_pull_properties()
+
+    if step == Step.BUILD:
+        return part.plugin_properties.get_build_properties()
+
+    return []
 
 
 def _sort_steps_by_state_timestamp(

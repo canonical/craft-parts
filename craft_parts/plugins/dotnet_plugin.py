@@ -19,6 +19,8 @@
 import logging
 from typing import Any, Dict, List, Optional, Set, cast
 
+from overrides import override
+
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
@@ -27,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class DotnetPluginProperties(PluginProperties, PluginModel):
-    """The part properties used by the Go plugin."""
+    """The part properties used by the Dotnet plugin."""
 
     dotnet_build_configuration: str = "Release"
     dotnet_self_contained_runtime_identifier: Optional[str]
@@ -36,7 +38,8 @@ class DotnetPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    @override
+    def unmarshal(cls, data: Dict[str, Any]) -> "DotnetPluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -58,7 +61,10 @@ class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
-    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
+    @override
+    def validate_environment(
+        self, *, part_dependencies: Optional[List[str]] = None
+    ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
         :param part_dependencies: A list of the parts this part depends on.
@@ -93,18 +99,22 @@ class DotnetPlugin(Plugin):
     properties_class = DotnetPluginProperties
     validator_class = DotPluginEnvironmentValidator
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(DotnetPluginProperties, self._options)

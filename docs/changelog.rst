@@ -2,6 +2,128 @@
 Changelog
 *********
 
+1.23.0 (2023-07-06)
+-------------------
+
+- Improve interpreter version detection in the Python plugin
+- Fix and improve documentation
+- Pin Pydantic to version 1.x
+
+1.22.0 (2023-06-25)
+-------------------
+
+- Add helper to query overlay use
+- Improve architecture mapping
+- Forward unmatched snap source parameters
+- Build system updates
+- Documentation updates
+
+1.21.1 (2023-06-09)
+-------------------
+
+- Revert subdir changes in pull and build steps
+
+1.21.0 (2023-05-20)
+-------------------
+
+- Add callback to explicitly list base packages
+- Add callback to configure overlay package layer
+
+1.20.0 (2023-05-15)
+-------------------
+
+- Add initial support for dnf-based distros
+- Add support for pyproject.toml projects in Python plugin
+- Improve interpreter detection in Python plugin
+- Fix subdir in pull and build steps
+- Tox and packaging updates
+- Documentation updates
+
+1.19.5 (2023-05-23)
+-------------------
+
+- Revert pyproject.toml change (breaks semantic versioning)
+
+1.19.4 (2023-05-19)
+-------------------
+
+- Backport support for pyproject.toml projects from 1.20.0
+- Backport pull and build steps subdir from 1.20.0
+
+1.19.3 (2023-04-30)
+-------------------
+
+- Fix plugin properties state in planning phase
+
+1.19.2 (2023-04-24)
+-------------------
+
+- Fix ignored files exclusion in local source
+
+1.19.1 (2023-04-18)
+-------------------
+
+- Allow git+ssh in git source type
+- Loosen pydantic dependency
+
+1.19.0 (2023-03-20)
+-------------------
+
+- Initial support for offline plugins
+- Initial support for yum and CentOS
+- Introduce feature selection, make overlay support optional
+- Check if plugin-specific properties are dirty when computing
+  lifecycle actions
+- Add source handler for rpm packages
+- Ignore unreadable files in /etc/apt
+- Documentation updates
+- OsRelease code cleanup
+
+1.18.4 (2023-03-09)
+-------------------
+
+- Make chroot /dev mount private
+
+1.18.3 (2023-02-27)
+-------------------
+
+- Fix pip path in Python plugin
+
+1.18.2 (2023-02-24)
+-------------------
+
+- Refactor Python plugin for subclassing
+
+1.18.1 (2023-02-10)
+-------------------
+
+- Fix ignore patterns in local sources
+
+1.18.0 (2023-01-19)
+-------------------
+
+- Add SCons plugin
+- Add Ant plugin
+- Add Maven plugin
+- Fix lifecycle work directory cleaning
+- Make stage package tracking optional
+- Improve chisel error handling
+- Improve missing local source error message
+- Documentation fixes and updates
+
+1.17.1 (2022-11-23)
+-------------------
+
+- Allow plus symbol in git url scheme
+
+1.17.0 (2022-11-14)
+-------------------
+
+- Fix go plugin mod download in jammy
+- Remove hardcoded ubuntu version in chisel call
+- Add plain file source handler
+- Pass build attributes and state to post-step callback
+
 1.16.0 (2022-10-20)
 -------------------
 

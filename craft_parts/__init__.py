@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,19 +16,21 @@
 
 """Craft a project from several parts."""
 
-__version__ = "1.16.0"
+__version__ = "1.23.0"
 
 from . import plugins
 from .actions import Action, ActionProperties, ActionType
 from .dirs import ProjectDirs
 from .errors import PartsError
 from .executor.environment import expand_environment
+from .features import Features
 from .infos import PartInfo, ProjectInfo, StepInfo
 from .lifecycle_manager import LifecycleManager
-from .parts import Part, validate_part
+from .parts import Part, part_has_overlay, validate_part
 from .steps import Step
 
 __all__ = [
+    "Features",
     "Action",
     "ActionProperties",
     "ActionType",
@@ -43,4 +45,5 @@ __all__ = [
     "plugins",
     "expand_environment",
     "validate_part",
+    "part_has_overlay",
 ]

@@ -19,6 +19,7 @@
 import copy
 from typing import TYPE_CHECKING, Any, Dict, Type
 
+from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
 from .cmake_plugin import CMakePlugin
@@ -26,12 +27,14 @@ from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
 from .make_plugin import MakePlugin
+from .maven_plugin import MavenPlugin
 from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
 from .npm_plugin import NpmPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
 from .rust_plugin import RustPlugin
+from .scons_plugin import SConsPlugin
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -43,17 +46,20 @@ PluginType = Type[Plugin]
 
 # Plugin registry by plugin API version
 _BUILTIN_PLUGINS: Dict[str, PluginType] = {
+    "ant": AntPlugin,
     "autotools": AutotoolsPlugin,
     "cmake": CMakePlugin,
     "dotnet": DotnetPlugin,
     "dump": DumpPlugin,
     "go": GoPlugin,
-    "meson": MesonPlugin,
     "make": MakePlugin,
+    "maven": MavenPlugin,
+    "meson": MesonPlugin,
     "nil": NilPlugin,
     "npm": NpmPlugin,
     "python": PythonPlugin,
     "rust": RustPlugin,
+    "scons": SConsPlugin,
 }
 
 _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
