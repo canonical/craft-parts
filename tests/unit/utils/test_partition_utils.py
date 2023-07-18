@@ -55,6 +55,10 @@ assert len(PARTITION_PATHS) == len(
         ("(default)/", True),
         ("(part)/some/path", True),
         ("(nota)partition", False),
+        ("(not/a)partition", False),
+        ("(not/a)/partition", False),
+        ("(NOTA)/partition", False),
+        ("(not1)/partition", False),
     ],
 )
 def test_has_partition(full_path, expected):
