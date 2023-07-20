@@ -39,12 +39,25 @@ author = "Canonical Ltd."
 # The full version, including alpha/beta/rc tags
 release = "1.23.0"
 
+# Open Graph configuration - defines what is displayed in the website preview
+ogp_site_url = "https://canonical-craft-parts.readthedocs-hosted.com"
+ogp_site_name = project
+ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg"
+
+# Update with the favicon for your product
+html_favicon = "sphinx-resources/.sphinx/_static/favicon.png"
+
+html_context = {
+    'product_page': 'https://github.com/canonical/craft-parts',
+    'product_tag': 'sphinx-resources/.sphinx/_static/tag.png',
+    "github_url": "https://github.com/canonical/craft-parts",
+    "github_version": "main",
+    "github_folder": "/docs/",
+    "github_issues": "enabled",
+}
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -57,13 +70,10 @@ extensions = [
     "sphinxcontrib.details.directive",
 ]
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
-
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**venv", "base"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**venv", "base", "sphinx-resources"]
 
 rst_epilog = """
 .. include:: /reuse/links.txt
@@ -79,19 +89,89 @@ rst_prolog = """
 
 # -- Options for HTML output -------------------------------------------------
 
+# Find the current builder
+builder = "dirhtml"
+if "-b" in sys.argv:
+    builder = sys.argv[sys.argv.index("-b") + 1]
+
+# Setting templates_path for epub makes the build fail
+if builder == "dirhtml" or builder == "html":
+    templates_path = ["sphinx-resources/.sphinx/_templates"]
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 html_theme = "furo"
+html_last_updated_fmt = ""
+html_permalinks_icon = "¶"
+html_theme_options = {
+    "light_css_variables": {
+        "color-sidebar-background-border": "none",
+        "font-stack": "Ubuntu, -apple-system, Segoe UI, Roboto, Oxygen, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif",
+        "font-stack--monospace": "Ubuntu Mono, Consolas, Monaco, Courier, monospace",
+        "color-foreground-primary": "#111",
+        "color-foreground-secondary": "var(--color-foreground-primary)",
+        "color-foreground-muted": "#333",
+        "color-background-secondary": "#FFF",
+        "color-background-hover": "#f2f2f2",
+        "color-brand-primary": "#111",
+        "color-brand-content": "#06C",
+        "color-api-background": "#cdcdcd",
+        "color-inline-code-background": "rgba(0,0,0,.03)",
+        "color-sidebar-link-text": "#111",
+        "color-sidebar-item-background--current": "#ebebeb",
+        "color-sidebar-item-background--hover": "#f2f2f2",
+        "toc-font-size": "var(--font-size--small)",
+        "color-admonition-title-background--note": "var(--color-background-primary)",
+        "color-admonition-title-background--tip": "var(--color-background-primary)",
+        "color-admonition-title-background--important": "var(--color-background-primary)",
+        "color-admonition-title-background--caution": "var(--color-background-primary)",
+        "color-admonition-title--note": "#24598F",
+        "color-admonition-title--tip": "#24598F",
+        "color-admonition-title--important": "#C7162B",
+        "color-admonition-title--caution": "#F99B11",
+        "color-highlighted-background": "#EbEbEb",
+        "color-link-underline": "var(--color-background-primary)",
+        "color-link-underline--hover": "var(--color-background-primary)",
+        "color-version-popup": "#772953",
+    },
+    "dark_css_variables": {
+        "color-foreground-secondary": "var(--color-foreground-primary)",
+        "color-foreground-muted": "#CDCDCD",
+        "color-background-secondary": "var(--color-background-primary)",
+        "color-background-hover": "#666",
+        "color-brand-primary": "#fff",
+        "color-brand-content": "#06C",
+        "color-sidebar-link-text": "#f7f7f7",
+        "color-sidebar-item-background--current": "#666",
+        "color-sidebar-item-background--hover": "#333",
+        "color-admonition-background": "transparent",
+        "color-admonition-title-background--note": "var(--color-background-primary)",
+        "color-admonition-title-background--tip": "var(--color-background-primary)",
+        "color-admonition-title-background--important": "var(--color-background-primary)",
+        "color-admonition-title-background--caution": "var(--color-background-primary)",
+        "color-admonition-title--note": "#24598F",
+        "color-admonition-title--tip": "#24598F",
+        "color-admonition-title--important": "#C7162B",
+        "color-admonition-title--caution": "#F99B11",
+        "color-highlighted-background": "#666",
+        "color-link-underline": "var(--color-background-primary)",
+        "color-link-underline--hover": "var(--color-background-primary)",
+        "color-version-popup": "#F29879",
+    },
+}
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
-
+html_static_path = ["sphinx-resources/.sphinx/_static"]
 html_css_files = [
-    "css/custom.css",
+    "custom.css",
+    'header.css',
+    "github_issue_links.css",
 ]
+
+html_js_files = []
+if "github_issues" in html_context and html_context["github_issues"]:
+    html_js_files.append("github_issue_links.js")
+
 
 # Do (not) include module names.
 add_module_names = True
