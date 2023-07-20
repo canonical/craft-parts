@@ -87,6 +87,8 @@ rst_prolog = """
    <br />
 """
 
+disable_feedback_button = False
+
 # -- Options for HTML output -------------------------------------------------
 
 # Find the current builder
