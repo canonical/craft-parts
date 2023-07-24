@@ -1,0 +1,3 @@
+[submodule "docs/sphinx-resources"]
+	path = docs/sphinx-resources
+	url = https://github.com/canonical/sphinx-docs-starter-pack.git

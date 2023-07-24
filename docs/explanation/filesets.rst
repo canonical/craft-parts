@@ -95,5 +95,3 @@ When used:
   from the earlier step.
 * All files and directories included by filesets are first located, then
   filtered by the filesets that exclude paths.
-
-.. include:: /links.txt

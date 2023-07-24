@@ -4,6 +4,10 @@
 
 version: 2
 
+submodules:
+  include:
+    - docs/sphinx-resources
+
 sphinx:
   configuration: docs/conf.py
 
