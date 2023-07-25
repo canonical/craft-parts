@@ -48,7 +48,7 @@ ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg
 html_favicon = "sphinx-resources/.sphinx/_static/favicon.png"
 
 html_context = {
-    'product_page': 'https://github.com/canonical/craft-parts',
+    'product_page': 'github.com/canonical/craft-parts',
     'product_tag': 'sphinx-resources/.sphinx/_static/tag.png',
     "github_url": "https://github.com/canonical/craft-parts",
     "github_version": "main",
