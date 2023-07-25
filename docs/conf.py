@@ -87,6 +87,8 @@ rst_prolog = """
    <br />
 """
 
+disable_feedback_button = False
+
 # -- Options for HTML output -------------------------------------------------
 
 # Find the current builder
@@ -168,9 +170,9 @@ html_css_files = [
     "github_issue_links.css",
 ]
 
-html_js_files = []
-if "github_issues" in html_context and html_context["github_issues"]:
-    html_js_files.append("github_issue_links.js")
+html_js_files = ['header-nav.js']
+if 'github_issues' in html_context and html_context['github_issues'] and not disable_feedback_button:
+    html_js_files.append('github_issue_links.js')
 
 
 # Do (not) include module names.
