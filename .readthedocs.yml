@@ -18,9 +18,6 @@ build:
   apt_packages:
     - libapt-pkg-dev
 
-formats:
-  - pdf
-
 python:
   install:
     - requirements: docs/requirements.txt
