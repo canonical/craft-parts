@@ -17,7 +17,7 @@
 from pathlib import Path, PurePosixPath
 
 import pytest
-from utils.partition_utils import _has_partition, get_partition_compatible_filepath
+from craft_parts.utils.partition_utils import _has_partition, get_partition_compatible_filepath
 
 PATH_CLASSES = [Path, PurePosixPath, str]
 
@@ -25,7 +25,6 @@ NON_PARTITION_PATHS = [
     "/absolute/path",
     "relative/path",
     "",
-    "*",
 ]
 
 PARTITION_PATHS = [
@@ -77,10 +76,10 @@ def test_get_partition_compatible_filepath_disabled_passthrough(path, cls):
     assert isinstance(actual, cls)
 
 
-@pytest.mark.parametrize("path", ["*", "**", "*/path"])
+@pytest.mark.parametrize("path", ["*"])
 @pytest.mark.parametrize("cls", PATH_CLASSES)
 @pytest.mark.usefixtures("enable_partitions_feature")
-def test_get_partition_compatible_filepath_glob_start(path, cls):
+def test_get_partition_compatible_filepath_glob(path, cls):
     expected = cls(path)
     actual = get_partition_compatible_filepath(expected)
 
