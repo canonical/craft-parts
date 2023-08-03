@@ -18,7 +18,7 @@
 
 import re
 from pathlib import PurePath, PurePosixPath
-from typing import TypeVar, Union
+from typing import TypeVar, Union, cast
 
 from craft_parts.features import Features
 
@@ -51,8 +51,7 @@ def get_partition_compatible_filepath(filepath: FlexiblePath) -> FlexiblePath:
 
     str_path = str(filepath)
 
-    # Anything that starts with a glob should be assumed to remain that same glob.
-    if str_path.startswith("*"):
+    if str_path == "*":
         return filepath
 
     if _has_partition(str_path):
@@ -67,4 +66,4 @@ def get_partition_compatible_filepath(filepath: FlexiblePath) -> FlexiblePath:
         inner_path = str_path
 
     new_filepath = PurePosixPath(partition, inner_path)
-    return filepath.__class__(new_filepath)
+    return cast(FlexiblePath, filepath.__class__(new_filepath))

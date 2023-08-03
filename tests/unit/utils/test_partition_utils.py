@@ -25,6 +25,7 @@ NON_PARTITION_PATHS = [
     "/absolute/path",
     "relative/path",
     "",
+    "*",
 ]
 
 PARTITION_PATHS = [
