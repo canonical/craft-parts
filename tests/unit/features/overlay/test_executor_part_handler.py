@@ -51,11 +51,13 @@ class TestPartHandling(test_part_handler.TestPartHandling):
                 "overlay-packages": ["pkg4"],
             },
         )
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=Path("/base")
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=Path("/base"),
         )
-        self._part_info = PartInfo(info, self._part)
+        self._part_info = PartInfo(self._project_info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,
@@ -304,11 +306,13 @@ class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
         Path("subdir").mkdir()
         Path("subdir/foo.txt").write_text("content")
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=Path("/base")
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=Path("/base"),
         )
-        self._part_info = PartInfo(info, self._part)
+        self._part_info = PartInfo(self._project_info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,

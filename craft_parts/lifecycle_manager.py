@@ -19,6 +19,7 @@
 import os
 import re
 import sys
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
@@ -146,9 +147,7 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(
-                _build_part(name, spec, project_dirs, strict_mode)
-            )
+            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
 
         if partitions:
             validate_partition_usage(part_list, partitions)
@@ -361,13 +360,14 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
         if partitions[0] != "default":
             raise ValueError("First partition must be 'default'.")
 
-        if any(not re.fullmatch("[a-z]+", partition) for partition in partitions):
-            raise ValueError(
-                "Partitions must only contain lowercase alphabetical characters."
-            )
-
         if len(partitions) != len(set(partitions)):
             raise ValueError("Partitions must be unique.")
+
+        for partition in partitions:
+            if not re.fullmatch("[a-z]+", partition):
+                raise ValueError(
+                    f"Partition {partition!r} must only contain lowercase letters."
+                )
 
     elif partitions:
         raise errors.FeatureError(
@@ -391,7 +391,7 @@ def _validate_partition_usage_in_parts(part_list, partitions):
 
 
 def _validate_partitions_in_keywords(
-        filepaths: List[str], partitions: List[str]
+    filepaths: List[str], valid_partitions: List[str]
 ) -> None:
     """Get a filepath compatible with the partitions feature."""
     # do not validate default glob
@@ -402,39 +402,23 @@ def _validate_partitions_in_keywords(
         match = re.match("-?\\((?P<partition>[a-z]+)\\)", filepath)
         if match:
             partition = match.group("partition")
-            if partition not in partitions:
-                raise Exception(f"filepath {filepath} is using an unknown partition")
+            if partition not in valid_partitions:
+                raise errors.InvalidPartitionError(
+                    partition, filepath, valid_partitions
+                )
         match = re.match("-?(?P<possible_partition>[a-z]+)/?", filepath)
         if match:
             partition = match.group("possible_partition")
-            if partition in partitions:
-                raise Exception(
-                    f"Warning: A filepath {filepath} starts with a valid partition "
-                    f"{partition} but is not wrapped in parentheses."
-                )
-
-
-def _validate_partitions(partitions: Optional[List[str]]) -> None:
-    """Validate partitions data.
-
-    If partitions are defined, the first partition must be "default" and each partition
-     must contain only lowercase letters.
-
-    :param partitions: Partition data to verify.
-
-    :raises ValueError: If the partitions are not valid.
-    """
-    if partitions:
-        if not Features().enable_partitions:
-            raise errors.FeatureDisabled("Partition feature is not enabled.")
-
-        # TODO: check for empty list?
-
-        if partitions[0] != "default":
-            raise ValueError("First partition must be 'default'.")
-
-        for partition in partitions:
-            if not re.fullmatch("[a-z]+", partition):
-                raise ValueError(
-                    f"Partition {partition} must only contain lowercase letters."
+            if partition in valid_partitions:
+                warnings.warn(
+                    errors.PartitionWarning(
+                        partition,
+                        f"Path begins with a valid partition name ({partition!r}), "
+                        "but it is not wrapped in parentheses.",
+                        details="This path will go into the default partition.",
+                        resolution=(
+                            "Specify the correct partition name, for example "
+                            f"'(default)/{filepath}'"
+                        ),
+                    )
                 )

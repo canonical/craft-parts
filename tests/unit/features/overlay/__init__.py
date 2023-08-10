@@ -19,7 +19,7 @@ from craft_parts import Features
 
 def setup_module():
     Features.reset()
-    Features(enable_overlay=True)
+    Features(enable_overlay=True, enable_partitions=False)
 
 
 def teardown_module():

@@ -51,10 +51,15 @@ def organize_files(
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        dst = os.path.join(
-            base_dir,
-            partition_utils.get_partition_compatible_filepath(mapping[key]).lstrip("/"),
+        partition, inner_path = partition_utils.get_partition_and_path(
+            mapping[key].lstrip("/")
         )
+        if partition:
+            dst = os.path.join(base_dir, partition, inner_path)
+            partition_path = os.path.join(f"({partition})", inner_path)
+        else:
+            dst = os.path.join(base_dir, inner_path)
+            partition_path = inner_path
 
         sources = iglob(src, recursive=True)
 
@@ -78,7 +83,7 @@ def organize_files(
                         part_name=part_name,
                         message=(
                             f"multiple files to be organized into "
-                            f"{os.path.relpath(dst, base_dir)!r}. If this is "
+                            f"{partition_path!r}. If this is "
                             f"supposed to be a directory, end it with a slash."
                         ),
                     )
@@ -87,8 +92,8 @@ def organize_files(
                         part_name=part_name,
                         message=(
                             f"trying to organize file {key!r} to "
-                            f"{os.path.relpath(dst, base_dir)!r}, but "
-                            f"{os.path.relpath(dst, base_dir)!r} already exists"
+                            f"{mapping[key]!r}, but "
+                            f"{partition_path!r} already exists"
                         ),
                     )
 

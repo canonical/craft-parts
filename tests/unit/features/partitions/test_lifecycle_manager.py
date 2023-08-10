@@ -13,18 +13,22 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """Unit tests for the lifecycle manager with the partitions feature."""
-
+import sys
+import textwrap
 from string import ascii_lowercase
 from textwrap import dedent
 from typing import Any, Dict
 
 import pytest
+import pytest_check  # type: ignore[import]
+import yaml
 from hypothesis import HealthCheck, given, settings, strategies
 
-from craft_parts import errors
-from craft_parts.lifecycle_manager import LifecycleManager
+from craft_parts import errors, lifecycle_manager
+from tests.unit import test_lifecycle_manager
+
+mock_available_plugins = test_lifecycle_manager.mock_available_plugins
 
 
 def valid_partitions_strategy():
@@ -55,14 +59,15 @@ class TestPartitionsSupport:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     @pytest.mark.parametrize("partitions", [["default"], ["default", "kernel"]])
-    def test_project_info(self, check, new_dir, parts_data, partitions):
+    @pytest.mark.parametrize("work_dir", [".", "work_dir"])
+    def test_project_info(self, check, new_dir, parts_data, partitions, work_dir):
         """Verify partitions are parsed and passed to ProjectInfo."""
-        lifecycle = LifecycleManager(
+        lifecycle = lifecycle_manager.LifecycleManager(
             parts_data,
             application_name="test_manager",
             project_name="project",
             cache_dir=new_dir,
-            work_dir="work_dir",
+            work_dir=work_dir,
             arch="aarch64",
             parallel_build_count=16,
             custom="foo",
@@ -75,9 +80,9 @@ class TestPartitionsSupport:
         check.equal(info.target_arch, "arm64")
         check.equal(info.arch_triplet, "aarch64-linux-gnu")
         check.equal(info.parallel_build_count, 16)
-        check.equal(info.dirs.parts_dir, new_dir / "work_dir" / "parts")
-        check.equal(info.dirs.stage_dir, new_dir / "work_dir" / "stage")
-        check.equal(info.dirs.prime_dir, new_dir / "work_dir" / "prime")
+        check.equal(info.dirs.parts_dir, new_dir / work_dir / "parts")
+        check.equal(info.dirs.stage_dir, new_dir / work_dir / "stage/default")
+        check.equal(info.dirs.prime_dir, new_dir / work_dir / "prime/default")
         check.equal(info.custom_args, ["custom"])
         check.equal(info.custom, "foo")
         check.equal(info.partitions, partitions)
@@ -86,7 +91,7 @@ class TestPartitionsSupport:
     def test_no_partitions(self, new_dir, parts_data, partitions):
         """Raise an error if the partitions feature is enabled but not defined."""
         with pytest.raises(errors.FeatureError) as raised:
-            LifecycleManager(
+            lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
                 cache_dir=new_dir,
@@ -103,7 +108,7 @@ class TestPartitionsSupport:
     @given(partitions=valid_partitions_strategy())
     def test_partitions_valid(self, new_dir, parts_data, partitions):
         """Process valid partition names."""
-        lifecycle = LifecycleManager(
+        lifecycle = lifecycle_manager.LifecycleManager(
             parts_data,
             application_name="test_manager",
             cache_dir=new_dir,
@@ -112,7 +117,7 @@ class TestPartitionsSupport:
 
         info = lifecycle.project_info
 
-        assert info.partitions == partitions
+        pytest_check.equal(info.partitions, partitions)
 
     @pytest.mark.parametrize(
         "partitions",
@@ -126,7 +131,7 @@ class TestPartitionsSupport:
     def test_partitions_default_not_first(self, new_dir, parts_data, partitions):
         """Raise an error if the first partition is not 'default'."""
         with pytest.raises(ValueError) as raised:
-            LifecycleManager(
+            lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
                 cache_dir=new_dir,
@@ -147,18 +152,15 @@ class TestPartitionsSupport:
     )
     def test_partitions_invalid(self, new_dir, parts_data, partitions):
         """Raise an error if partitions are not lowercase alphabetical characters."""
-        with pytest.raises(ValueError) as raised:
-            LifecycleManager(
+        with pytest.raises(
+            ValueError, match=r"Partition '[\w-]*' must only contain lowercase letters."
+        ):
+            lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
                 cache_dir=new_dir,
                 partitions=partitions,
             )
-
-        assert (
-            str(raised.value)
-            == "Partitions must only contain lowercase alphabetical characters."
-        )
 
     @pytest.mark.parametrize(
         "partitions",
@@ -172,7 +174,7 @@ class TestPartitionsSupport:
     def test_partitions_duplicates(self, new_dir, parts_data, partitions):
         """Raise an error if there are duplicate partitions."""
         with pytest.raises(ValueError) as raised:
-            LifecycleManager(
+            lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
                 cache_dir=new_dir,
@@ -193,7 +195,7 @@ class TestPartitionsSupport:
         }
 
         # nothing to assert, just ensure an exception is not raised
-        LifecycleManager(
+        lifecycle_manager.LifecycleManager(
             parts_data,
             application_name="test_manager",
             cache_dir=new_dir,
@@ -211,7 +213,7 @@ class TestPartitionsSupport:
             }
         }
         with pytest.raises(ValueError) as raised:
-            LifecycleManager(
+            lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
                 cache_dir=new_dir,
@@ -225,3 +227,112 @@ class TestPartitionsSupport:
                 unknown partition 'test' in '(test)/foo'
             Valid partitions are 'default' and 'kernel'."""
         )
+
+
+class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
+    """Lifecycle manager tests with partitions enabled."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self):
+        # pylint: disable=attribute-defined-outside-init
+        yaml_data = textwrap.dedent(
+            """
+            parts:
+              foo:
+                plugin: nil
+            """
+        )
+        self._data = yaml.safe_load(yaml_data)
+        self._lcm_kwargs = {"partitions": ["default", "mypart", "yourpart"]}
+        # pylint: enable=attribute-defined-outside-init
+
+    @pytest.mark.parametrize("work_dir", [".", "work_dir"])
+    def test_project_info(self, new_dir, work_dir):
+        lf = lifecycle_manager.LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            project_name="project",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            arch="aarch64",
+            parallel_build_count=16,
+            custom="foo",
+            **self._lcm_kwargs,
+        )
+        info = lf.project_info
+
+        pytest_check.equal(info.application_name, "test_manager")
+        pytest_check.equal(info.project_name, "project")
+        pytest_check.equal(info.target_arch, "arm64")
+        pytest_check.equal(info.arch_triplet, "aarch64-linux-gnu")
+        pytest_check.equal(info.parallel_build_count, 16)
+        pytest_check.equal(info.dirs.parts_dir, new_dir / work_dir / "parts")
+        pytest_check.equal(info.dirs.stage_dir, new_dir / work_dir / "stage/default")
+        pytest_check.equal(info.dirs.prime_dir, new_dir / work_dir / "prime/default")
+        pytest_check.equal(info.custom_args, ["custom"])
+        pytest_check.equal(info.custom, "foo")
+
+
+class TestOverlayDisabled(test_lifecycle_manager.TestOverlayDisabled):
+    """Check that the overlay feature is still disabled."""
+
+    def test_overlay_supported(self, mocker, new_dir, parts_data):
+        mocker.patch.object(sys, "platform", "linux")
+        mocker.patch("os.geteuid", return_value=0)
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            lifecycle_manager.LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                base_layer_dir=new_dir,
+                base_layer_hash=b"hash",
+                partitions=["default"],
+            )
+        assert raised.value.part_name == "foo"
+        assert (
+            raised.value.message == "- overlays not supported in field 'overlay-script'"
+        )
+
+
+class TestPluginProperties(test_lifecycle_manager.TestPluginProperties):
+    """Tests for plugin properties with partitions enabled."""
+
+    def _get_manager(self, new_dir, **kwargs):
+        manager_kwargs = {
+            "application_name": "test_manager",
+            "cache_dir": new_dir,
+            "partitions": ["default", "mypart", "yourpart"],
+        }
+        manager_kwargs.update(kwargs)
+        return lifecycle_manager.LifecycleManager(**manager_kwargs)
+
+
+class TestValidatePartitions(test_lifecycle_manager.TestValidatePartitions):
+    """Validate partitions tests with partitions enabled."""
+
+    @pytest.mark.parametrize("partitions", [["default"], ["default", "mypart"]])
+    def test_validate_partitions_success(self, partitions):
+        lifecycle_manager._validate_partitions(partitions)
+
+    @pytest.mark.parametrize(
+        ("partitions", "exc_class", "message"),
+        [
+            (
+                [],
+                errors.FeatureError,
+                "Partition feature is enabled but no partitions are defined.",
+            ),
+            (["lol"], ValueError, "First partition must be 'default'."),
+            (["default", "default"], ValueError, "Partitions must be unique."),
+            (
+                ["default", "!!!"],
+                ValueError,
+                "Partition '!!!' must only contain lowercase letters.",
+            ),
+        ],
+    )
+    def test_validate_partitions_failure(self, partitions, exc_class, message):
+        with pytest.raises(exc_class) as exc_info:
+            lifecycle_manager._validate_partitions(partitions)
+
+        assert exc_info.value.args[0] == message

@@ -33,7 +33,7 @@ def meson():
 
 @pytest.mark.usefixtures("mocker")
 @pytest.mark.usefixtures("meson")
-def test_meson_plugin(new_dir):
+def test_meson_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -70,7 +70,9 @@ def test_meson_plugin(new_dir):
     )
 
     # ninja is installed in the ci test setup
-    lf = LifecycleManager(parts, application_name="test_go", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_go", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -84,7 +86,7 @@ def test_meson_plugin(new_dir):
 
 @pytest.mark.usefixtures("mocker")
 @pytest.mark.usefixtures("meson")
-def test_meson_plugin_with_subdir(new_dir):
+def test_meson_plugin_with_subdir(new_dir, partitions):
     """Verify meson builds with a source subdirectory."""
     parts_yaml = textwrap.dedent(
         """\
@@ -126,7 +128,9 @@ def test_meson_plugin_with_subdir(new_dir):
     )
 
     # ninja is installed in the ci test setup
-    lf = LifecycleManager(parts, application_name="test_go", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_go", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:

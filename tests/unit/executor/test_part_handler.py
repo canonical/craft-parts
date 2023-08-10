@@ -17,10 +17,11 @@
 import logging
 import os
 from pathlib import Path
-from typing import cast
+from typing import List, Optional, cast
 from unittest.mock import call
 
 import pytest
+import pytest_check  # type: ignore[import]
 
 from craft_parts import errors, packages
 from craft_parts.actions import Action, ActionType
@@ -41,6 +42,8 @@ from craft_parts.utils import os_utils
 class TestPartHandling:
     """Verify the part handler step processing."""
 
+    _partitions: Optional[List[str]] = None
+
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir):
         # pylint: disable=attribute-defined-outside-init
@@ -54,7 +57,9 @@ class TestPartHandling:
                 "build-packages": ["pkg3"],
             },
         )
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._project_info = info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=self._partitions
+        )
         ovmgr = OverlayManager(
             project_info=info, part_list=[self._part], base_layer_dir=None
         )
@@ -154,18 +159,19 @@ class TestPartHandling:
         )
 
         # Check that 'source.c' exists in the source dir but not build dir.
-        assert (self._part_info.part_src_dir / "source.c").exists()
-        assert (
-            self._part_info.part_build_dir / "source.c"
-        ).exists() is not out_of_source
+        pytest_check.is_true((self._part_info.part_src_dir / "source.c").exists())
+        pytest_check.is_not(
+            (self._part_info.part_build_dir / "source.c").exists(), out_of_source
+        )
 
     def test_run_build_without_overlay_visibility(self, mocker, new_dir):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
 
         p1 = Part("p1", {"plugin": "nil"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
-        part_info = PartInfo(info, p1)
+        ovmgr = OverlayManager(
+            project_info=self._project_info, part_list=[p1], base_layer_dir=None
+        )
+        part_info = PartInfo(self._project_info, p1)
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -197,9 +203,8 @@ class TestPartHandling:
         )
         mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
         )
         handler = PartHandler(
             self._part,
@@ -253,11 +258,10 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler.run_builtin"
         )
         p1 = Part("p1", {"plugin": "nil", scriptlet: "echo hello"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        part_info = PartInfo(info, p1)
+        part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -290,11 +294,10 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler.run_builtin"
         )
         p1 = Part("p1", {"plugin": "nil", scriptlet: ""})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        part_info = PartInfo(info, p1)
+        part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -324,11 +327,10 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler.run_builtin"
         )
         p1 = Part("p1", {"plugin": "nil", scriptlet: None})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        part_info = PartInfo(info, p1)
+        part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -354,11 +356,10 @@ class TestPartHandling:
     )
     def test_run_step_scriptlet_streams(self, new_dir, capfd, step, scriptlet):
         p1 = Part("p1", {"plugin": "nil", scriptlet: "echo hello; echo goodbye >&2"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        part_info = PartInfo(info, p1)
+        part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -387,6 +388,8 @@ class TestPartHandling:
 class TestPartUpdateHandler:
     """Verify step update processing."""
 
+    _partitions: Optional[List[str]] = None
+
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir):
         # pylint: disable=attribute-defined-outside-init
@@ -400,11 +403,13 @@ class TestPartUpdateHandler:
         Path("subdir").mkdir()
         Path("subdir/foo.txt").write_text("content")
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+        self._project_info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=self._partitions
         )
-        self._part_info = PartInfo(info, self._part)
+        ovmgr = OverlayManager(
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+        )
+        self._part_info = PartInfo(self._project_info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,
@@ -428,10 +433,9 @@ class TestPartUpdateHandler:
     def test_update_pull_no_source(self, new_dir, caplog):
         caplog.set_level(logging.WARNING)
         p1 = Part("p1", {"plugin": "nil"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        part_info = PartInfo(info, part=p1)
+        part_info = PartInfo(self._project_info, part=p1)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -448,10 +452,9 @@ class TestPartUpdateHandler:
 
     def test_update_pull_with_scriptlet(self, new_dir, capfd):
         p1 = Part("p1", {"plugin": "nil", "override-pull": "echo hello"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        part_info = PartInfo(info, p1)
+        part_info = PartInfo(self._project_info, p1)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -462,6 +465,8 @@ class TestPartUpdateHandler:
         out, err = capfd.readouterr()
         assert out == "hello\n"
         assert err == "+ echo hello\n"
+
+    _update_build_path = Path("parts/foo/install/foo.txt")
 
     def test_update_build(self):
         self._handler._make_dirs()
@@ -474,7 +479,7 @@ class TestPartUpdateHandler:
 
         self._handler.run_action(Action("foo", Step.BUILD, ActionType.UPDATE))
 
-        assert Path("parts/foo/install/foo.txt").read_text() == "change"
+        assert self._update_build_path.read_text() == "change"
 
     def test_update_build_stage_packages(self, new_dir, mocker):
         def fake_unpack(**_):
@@ -492,9 +497,10 @@ class TestPartUpdateHandler:
             "foo",
             {"plugin": "dump", "source": "subdir", "stage-packages": ["pkg"]},
         )
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
-        part_info = PartInfo(info, part)
+        ovmgr = OverlayManager(
+            project_info=self._project_info, part_list=[part], base_layer_dir=None
+        )
+        part_info = PartInfo(self._project_info, part)
         handler = PartHandler(
             part,
             part_info=part_info,
@@ -528,6 +534,8 @@ def _run_step_migration(handler: PartHandler, step: Step) -> None:
 class TestPartCleanHandler:
     """Verify step update processing."""
 
+    _partitions: Optional[List[str]] = None
+
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir):
         # pylint: disable=attribute-defined-outside-init
@@ -535,7 +543,9 @@ class TestPartCleanHandler:
         Path("subdir/bar").mkdir(parents=True)
         Path("subdir/foo.txt").write_text("content")
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=self._partitions
+        )
         ovmgr = OverlayManager(
             project_info=info, part_list=[self._part], base_layer_dir=None
         )
@@ -568,19 +578,23 @@ class TestPartCleanHandler:
 
         self._handler.clean_step(step)
 
-        assert Path(test_dir, "foo.txt").is_file() is False
-        assert Path(test_dir, "bar").is_dir() is False
-        assert Path(f"parts/foo/state/{state_file}").is_file() is False
+        pytest_check.is_false(Path(test_dir, "foo.txt").is_file())
+        pytest_check.is_false(Path(test_dir, "bar").is_dir())
+        pytest_check.is_false(Path(f"parts/foo/state/{state_file}").is_file())
 
 
 @pytest.mark.usefixtures("new_dir")
 class TestRerunStep:
     """Verify rerun actions."""
 
+    _partitions: Optional[List[str]] = None
+
     @pytest.mark.parametrize("step", list(Step))
     def test_rerun_action(self, mocker, new_dir, step):
         p1 = Part("p1", {"plugin": "nil"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=self._partitions
+        )
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
@@ -814,90 +828,87 @@ class TestPackages:
 class TestFileFilter:
     """File filter test cases."""
 
+    _destdir = Path("destdir")
+    _default_destdir = Path("destdir")  # Overridden if partitions are enabled.
+
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir):
-        Path("destdir").mkdir()
-        Path("destdir/dir1").mkdir()
-        Path("destdir/dir1/dir2").mkdir()
-        Path("destdir/file1").touch()
-        Path("destdir/file2").touch()
-        Path("destdir/dir1/file3").touch()
-        Path("destdir/file4").symlink_to("file2")
-        Path("destdir/dir3").symlink_to("dir1")
+        (self._default_destdir / "dir1").mkdir(parents=True)
+        (self._default_destdir / "dir1/dir2").mkdir(parents=True)
+        (self._default_destdir / "file1").touch()
+        (self._default_destdir / "file2").touch()
+        (self._default_destdir / "dir1/file3").touch()
+        (self._default_destdir / "file4").symlink_to("file2")
+        (self._default_destdir / "dir3").symlink_to("dir1")
 
     def test_apply_file_filter_empty(self, new_dir):
-        destdir = Path("destdir")
         fileset = filesets.Fileset([])
-        files, dirs = filesets.migratable_filesets(fileset, str(destdir))
+        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=destdir
+            filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        assert Path("destdir/file1").is_file()
-        assert Path("destdir/file2").is_file()
-        assert Path("destdir/dir1/dir2").is_dir()
-        assert Path("destdir/dir1/file3").is_file()
-        assert Path("destdir/file4").is_symlink()
-        assert Path("destdir/dir3").is_symlink()
+        pytest_check.is_true((self._default_destdir / "file1").is_file())
+        pytest_check.is_true((self._default_destdir / "file2").is_file())
+        pytest_check.is_true((self._default_destdir / "dir1/dir2").is_dir())
+        pytest_check.is_true((self._default_destdir / "dir1/file3").is_file())
+        pytest_check.is_true((self._default_destdir / "file4").is_symlink())
+        pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
 
     def test_apply_file_filter_remove_file(self, new_dir):
-        destdir = Path("destdir")
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(destdir))
+        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=destdir
+            filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        assert Path("destdir/file1").exists() is False
-        assert Path("destdir/file2").is_file()
-        assert Path("destdir/dir1/dir2").is_dir()
-        assert Path("destdir/dir1/file3").exists() is False
-        assert Path("destdir/file4").is_symlink()
-        assert Path("destdir/dir3").is_symlink()
+        pytest_check.is_false((self._default_destdir / "file1").exists())
+        pytest_check.is_true((self._default_destdir / "file2").is_file())
+        pytest_check.is_true((self._default_destdir / "dir1/dir2").is_dir())
+        pytest_check.is_false((self._default_destdir / "dir1/file3").exists())
+        pytest_check.is_true((self._default_destdir / "file4").is_symlink())
+        pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
 
     def test_apply_file_filter_remove_dir(self, new_dir):
-        destdir = Path("destdir")
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
-        files, dirs = filesets.migratable_filesets(fileset, str(destdir))
+        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=destdir
+            filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        assert Path("destdir/file1").is_file()
-        assert Path("destdir/file2").is_file()
-        assert Path("destdir/dir1").exists() is False
-        assert Path("destdir/file4").is_symlink()
-        assert Path("destdir/dir3").is_symlink()
+        pytest_check.is_true((self._default_destdir / "file1").is_file())
+        pytest_check.is_true((self._default_destdir / "file2").is_file())
+        pytest_check.is_false((self._default_destdir / "dir1").exists())
+        pytest_check.is_true((self._default_destdir / "file4").is_symlink())
+        pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
 
     def test_apply_file_filter_remove_symlink(self, new_dir):
-        destdir = Path("destdir")
         fileset = filesets.Fileset(["-file4", "-dir3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(destdir))
+        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=destdir
+            filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        assert Path("destdir/file1").is_file()
-        assert Path("destdir/file2").is_file()
-        assert Path("destdir/dir1/dir2").is_dir()
-        assert Path("destdir/dir1/file3").is_file()
-        assert Path("destdir/file4").exists() is False
-        assert Path("destdir/dir3").exists() is False
+        pytest_check.is_true((self._default_destdir / "file1").is_file())
+        pytest_check.is_true((self._default_destdir / "file2").is_file())
+        pytest_check.is_true((self._default_destdir / "dir1/dir2").is_dir())
+        pytest_check.is_true((self._default_destdir / "dir1/file3").is_file())
+        pytest_check.is_false((self._default_destdir / "file4").exists())
+        pytest_check.is_false((self._default_destdir / "dir3").exists())
 
     def test_apply_file_filter_keep_file(self, new_dir):
-        destdir = Path("destdir")
         fileset = filesets.Fileset(["dir1/file3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(destdir))
+        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=destdir
+            filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        assert Path("destdir/file1").exists() is False
-        assert Path("destdir/file2").exists() is False
-        assert Path("destdir/dir1/dir2").exists() is False
-        assert Path("destdir/dir1/file3").is_file()
-        assert Path("destdir/file4").exists() is False
-        assert Path("destdir/dir3").exists() is False
+        pytest_check.is_false((self._default_destdir / "file1").exists())
+        pytest_check.is_false((self._default_destdir / "file2").exists())
+        pytest_check.is_false((self._default_destdir / "dir1/dir2").exists())
+        pytest_check.is_true((self._default_destdir / "dir1/file3").is_file())
+        pytest_check.is_false((self._default_destdir / "file4").exists())
+        pytest_check.is_false((self._default_destdir / "dir3").exists())
 
 
 @pytest.mark.usefixtures("new_dir")

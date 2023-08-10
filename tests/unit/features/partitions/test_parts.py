@@ -17,8 +17,9 @@
 from textwrap import dedent
 
 import pytest
+import pytest_check  # type: ignore[import]
 
-from craft_parts import parts
+from craft_parts import ProjectDirs, parts
 from craft_parts.parts import Part
 from tests.unit import test_parts
 
@@ -31,6 +32,45 @@ class TestPartSpecs(test_parts.TestPartSpecs):
 
 class TestPartData(test_parts.TestPartData):
     """Test basic part creation and representation."""
+
+    def test_part_dirs(self, new_dir):
+        p = Part("foo", {"plugin": "nil"})
+        pytest_check.equal(p.parts_dir, new_dir / "parts")
+        pytest_check.equal(p.part_src_dir, new_dir / "parts/foo/src")
+        pytest_check.equal(p.part_src_subdir, new_dir / "parts/foo/src")
+        pytest_check.equal(p.part_build_dir, new_dir / "parts/foo/build")
+        pytest_check.equal(p.part_build_subdir, new_dir / "parts/foo/build")
+        pytest_check.equal(p.part_install_dir, new_dir / "parts/foo/install/default")
+        pytest_check.equal(p.part_state_dir, new_dir / "parts/foo/state")
+        pytest_check.equal(p.part_packages_dir, new_dir / "parts/foo/stage_packages")
+        pytest_check.equal(p.part_snaps_dir, new_dir / "parts/foo/stage_snaps")
+        pytest_check.equal(p.part_run_dir, new_dir / "parts/foo/run")
+        pytest_check.equal(p.part_layer_dir, new_dir / "parts/foo/layer")
+        pytest_check.equal(p.stage_dir, new_dir / "stage/default")
+        pytest_check.equal(p.prime_dir, new_dir / "prime/default")
+
+    def test_part_work_dir(self, new_dir):
+        work_dir = "foobar"
+        p = Part("foo", {}, project_dirs=ProjectDirs(work_dir=work_dir))
+        pytest_check.equal(p.parts_dir, new_dir / work_dir / "parts")
+        pytest_check.equal(p.part_src_dir, new_dir / work_dir / "parts/foo/src")
+        pytest_check.equal(p.part_src_subdir, new_dir / work_dir / "parts/foo/src")
+        pytest_check.equal(p.part_build_dir, new_dir / work_dir / "parts/foo/build")
+        pytest_check.equal(p.part_build_subdir, new_dir / work_dir / "parts/foo/build")
+        pytest_check.equal(
+            p.part_install_dir, new_dir / work_dir / "parts/foo/install/default"
+        )
+        pytest_check.equal(p.part_state_dir, new_dir / work_dir / "parts/foo/state")
+        pytest_check.equal(
+            p.part_packages_dir, new_dir / work_dir / "parts/foo/stage_packages"
+        )
+        pytest_check.equal(
+            p.part_snaps_dir, new_dir / work_dir / "parts/foo/stage_snaps"
+        )
+        pytest_check.equal(p.part_run_dir, new_dir / work_dir / "parts/foo/run")
+        pytest_check.equal(p.part_layer_dir, new_dir / work_dir / "parts/foo/layer")
+        pytest_check.equal(p.stage_dir, new_dir / work_dir / "stage/default")
+        pytest_check.equal(p.prime_dir, new_dir / work_dir / "prime/default")
 
 
 class TestPartOrdering(test_parts.TestPartOrdering):

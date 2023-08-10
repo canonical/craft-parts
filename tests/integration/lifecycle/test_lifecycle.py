@@ -18,10 +18,11 @@ import textwrap
 from pathlib import Path
 
 import pytest
+import pytest_check  # type: ignore[import]
 import yaml
 
 import craft_parts
-from craft_parts import Action, ActionProperties, ActionType, Step
+from craft_parts import Action, ActionProperties, ActionType, Features, Step
 
 basic_parts_yaml = textwrap.dedent(
     """\
@@ -39,7 +40,7 @@ basic_parts_yaml = textwrap.dedent(
 )
 
 
-def test_basic_lifecycle_actions(new_dir, mocker):
+def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     parts = yaml.safe_load(basic_parts_yaml)
 
     Path("a.tar.gz").touch()
@@ -52,7 +53,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     # first run
     # command: pull
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
     actions = lf.plan(Step.PULL)
     assert actions == [
@@ -66,7 +67,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     # foobar part depends on nothing
     # command: prime foobar
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
     actions = lf.plan(Step.PRIME, ["foobar"])
     assert actions == [
@@ -83,7 +84,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     # Then running build for bar that depends on foo
     # command: build bar
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -98,7 +99,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 
     # Building bar again rebuilds it (explicit request)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -115,7 +116,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     parts = yaml.safe_load(new_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -132,7 +133,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 
     # A request to build all parts skips everything
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
     actions = lf.plan(Step.BUILD)
     assert actions == [
@@ -149,7 +150,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     # Touching a source file triggers an update
     Path("a.tar.gz").touch()
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
     actions = lf.plan(Step.BUILD)
     assert actions == [
@@ -189,7 +190,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning:
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
         parts_yaml = textwrap.dedent(
             """
@@ -210,10 +211,35 @@ class TestCleaning:
         parts = yaml.safe_load(parts_yaml)
 
         self._lifecycle = craft_parts.LifecycleManager(
-            parts, application_name="test_clean", cache_dir=new_dir
+            parts,
+            application_name="test_clean",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
 
         # pylint: enable=attribute-defined-outside-init
+
+    @pytest.fixture
+    def foo_files(self):
+        return [
+            Path("parts/foo/src/foo.txt"),
+            Path("parts/foo/install/foo.txt"),
+            Path("stage/foo.txt"),
+            Path("prime/foo.txt"),
+        ]
+
+    @pytest.fixture
+    def bar_files(self):
+        return [
+            Path("parts/bar/src/bar.txt"),
+            Path("parts/bar/install/bar.txt"),
+            Path("stage/bar.txt"),
+            Path("prime/bar.txt"),
+        ]
+
+    @pytest.fixture
+    def state_files(self):
+        return ["build", "prime", "pull", "stage"]
 
     @pytest.mark.parametrize(
         "step,test_dir,state_file",
@@ -238,24 +264,19 @@ class TestCleaning:
         assert Path(test_dir, "foo.txt").is_file() is False
         assert Path("parts/foo/state", state_file).is_file() is False
 
-    def test_clean_default(self):
+    def test_clean_default(self, foo_files, state_files):
         actions = self._lifecycle.plan(Step.PRIME)
 
         with self._lifecycle.action_executor() as ctx:
             ctx.execute(actions)
 
-        assert Path("parts/foo/src/foo.txt").is_file()
-        assert Path("parts/foo/install/foo.txt").is_file()
-        assert Path("stage/foo.txt").is_file()
-        assert Path("prime/foo.txt").is_file()
+        for file in foo_files:
+            assert file.is_file()
 
         state_dir = Path("parts/foo/state")
 
         assert sorted(state_dir.rglob("*")) == [
-            state_dir / "build",
-            state_dir / "prime",
-            state_dir / "pull",
-            state_dir / "stage",
+            state_dir / file for file in state_files
         ]
 
         self._lifecycle.clean()
@@ -266,7 +287,7 @@ class TestCleaning:
 
         assert list(state_dir.rglob("*")) == []
 
-    def test_clean_part(self):
+    def test_clean_part(self, foo_files, bar_files, state_files):
         actions = self._lifecycle.plan(Step.PRIME)
 
         with self._lifecycle.action_executor() as ctx:
@@ -277,25 +298,19 @@ class TestCleaning:
 
         self._lifecycle.clean(part_names=["foo"])
 
-        assert Path("parts/foo/src/foo.txt").is_file() is False
-        assert Path("parts/foo/install/foo.txt").is_file() is False
-        assert Path("stage/foo.txt").is_file() is False
-        assert Path("prime/foo.txt").is_file() is False
+        for non_file in foo_files:
+            pytest_check.is_false(non_file.is_file())
         assert list(foo_state_dir.rglob("*")) == []
 
-        assert Path("parts/bar/src/bar.txt").is_file()
-        assert Path("parts/bar/install/bar.txt").is_file()
-        assert Path("stage/bar.txt").is_file()
-        assert Path("prime/bar.txt").is_file()
+        for file in bar_files:
+            pytest_check.is_true(file.is_file())
         assert sorted(bar_state_dir.rglob("*")) == [
-            bar_state_dir / "build",
-            bar_state_dir / "prime",
-            bar_state_dir / "pull",
-            bar_state_dir / "stage",
+            bar_state_dir / file for file in state_files
         ]
 
     @pytest.mark.parametrize("step", list(Step))
     def test_clean_all_parts(self, step):
+        part_dir = "default" if Features().enable_partitions else "."
         # always run all steps
         actions = self._lifecycle.plan(Step.PRIME)
 
@@ -308,16 +323,23 @@ class TestCleaning:
         step_is_overlay_or_later = step >= Step.OVERLAY
         step_is_stage_or_later = step >= Step.STAGE
         step_is_prime = step == Step.PRIME
+        includes_overlay = Features().enable_overlay and step > Step.OVERLAY
 
         self._lifecycle.clean(step)
 
         assert Path("parts").exists() == step_is_overlay_or_later
         assert Path("parts/foo/src/foo.txt").exists() == step_is_overlay_or_later
         assert Path("parts/bar/src/bar.txt").exists() == step_is_overlay_or_later
-        assert Path("parts/foo/install/foo.txt").exists() == step_is_stage_or_later
-        assert Path("parts/bar/install/bar.txt").exists() == step_is_stage_or_later
-        assert Path("stage/foo.txt").exists() == step_is_prime
-        assert Path("stage/bar.txt").exists() == step_is_prime
+        assert (
+            Path("parts/foo/install", part_dir, "foo.txt").exists()
+            == step_is_stage_or_later
+        )
+        assert (
+            Path("parts/bar/install", part_dir, "bar.txt").exists()
+            == step_is_stage_or_later
+        )
+        assert Path("stage", part_dir, "foo.txt").exists() == step_is_prime
+        assert Path("stage", part_dir, "bar.txt").exists() == step_is_prime
         assert Path("prime").is_file() is False
 
         all_states = []
@@ -330,16 +352,19 @@ class TestCleaning:
         if step_is_prime:
             all_states.append(foo_state_dir / "stage")
             all_states.append(bar_state_dir / "stage")
+        if includes_overlay:
+            all_states.append(foo_state_dir / "layer_hash")
+            all_states.append(bar_state_dir / "layer_hash")
+            all_states.append(foo_state_dir / "overlay")
+            all_states.append(bar_state_dir / "overlay")
 
         assert sorted(Path("parts").rglob("*/state/*")) == sorted(all_states)
 
 
 class TestUpdating:
-    def test_refresh_system_packages_list(self, new_dir, mocker):
-        mock_refresh_packages_list = mocker.patch(
-            "craft_parts.packages.Repository.refresh_packages_list"
-        )
-
+    @pytest.fixture(autouse=True)
+    def setup(self, new_dir, partitions):
+        # pylint: disable=attribute-defined-outside-init
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -348,10 +373,20 @@ class TestUpdating:
             """
         )
         parts = yaml.safe_load(parts_yaml)
-
-        lf = craft_parts.LifecycleManager(
-            parts, application_name="test_update", cache_dir=new_dir, arch="aarch64"
+        self._lifecycle = craft_parts.LifecycleManager(
+            parts,
+            application_name="test_update",
+            cache_dir=new_dir,
+            arch="aarch64",
+            partitions=partitions,
         )
-        lf.refresh_packages_list()
+        # pylint: enable=attribute-defined-outside-init
+
+    def test_refresh_system_packages_list(self, new_dir, mocker):
+        mock_refresh_packages_list = mocker.patch(
+            "craft_parts.packages.Repository.refresh_packages_list"
+        )
+
+        self._lifecycle.refresh_packages_list()
 
         mock_refresh_packages_list.assert_called_once_with()

@@ -17,13 +17,20 @@
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 
 import craft_parts
 from craft_parts import Action, Step
 
 
-def test_dump_source(new_dir):
+@pytest.fixture
+def install_dir():
+    """Installation directory for the standard dump plugin."""
+    return Path("parts", "foo", "install")
+
+
+def test_dump_source(new_dir, partitions, install_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -38,20 +45,18 @@ def test_dump_source(new_dir):
     source_dir.mkdir()
     Path(source_dir / "foobar.txt").touch()
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_dump", cache_dir=new_dir
+        parts, application_name="test_dump", cache_dir=new_dir, partitions=partitions
     )
 
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
         ctx.execute(Action("foo", Step.BUILD))
 
-    install_dir = Path("parts", "foo", "install")
-
     # only the file in subdir should be installed
     assert list(install_dir.rglob("*")) == [install_dir / "foobar.txt"]
 
 
-def test_dump_ignore_dirs(new_dir):
+def test_dump_ignore_dirs(new_dir, partitions, install_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -66,14 +71,12 @@ def test_dump_ignore_dirs(new_dir):
     Path("src/foobar.txt").touch()
     Path("src/subdir").mkdir()
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_dump", cache_dir=new_dir
+        parts, application_name="test_dump", cache_dir=new_dir, partitions=partitions
     )
 
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
         ctx.execute(Action("foo", Step.BUILD))
-
-    install_dir = Path("parts", "foo", "install")
 
     # craft-parts subdirectories should be ignored
     assert Path("parts").is_dir()

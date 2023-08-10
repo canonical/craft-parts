@@ -313,6 +313,22 @@ class Part:
         return self._dirs.prime_dir
 
     @property
+    def base_stage_dir(self) -> Path:
+        """Return the base staging area.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self._dirs.base_stage_dir
+
+    @property
+    def base_prime_dir(self) -> Path:
+        """Return the primed tree containing the artifacts to deploy.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self._dirs.base_prime_dir
+
+    @property
     def dependencies(self) -> List[str]:
         """Return the list of parts this part depends on."""
         if not self.spec.after:

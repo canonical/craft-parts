@@ -156,7 +156,7 @@ from craft_parts.executor.organize import organize_files
     ],
 )
 def test_organize(new_dir, data):
-    _organize_and_assert(
+    organize_and_assert(
         tmp_path=new_dir,
         setup_dirs=data["setup_dirs"],
         setup_files=data["setup_files"],
@@ -168,7 +168,7 @@ def test_organize(new_dir, data):
     )
 
     # Verify that it can be organized again by overwriting
-    _organize_and_assert(
+    organize_and_assert(
         tmp_path=new_dir,
         setup_dirs=data["setup_dirs"],
         setup_files=data["setup_files"],
@@ -180,7 +180,7 @@ def test_organize(new_dir, data):
     )
 
 
-def _organize_and_assert(
+def organize_and_assert(
     *,
     tmp_path: Path,
     setup_dirs,

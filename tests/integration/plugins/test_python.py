@@ -36,7 +36,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_python_plugin(new_dir):
+def test_python_plugin(new_dir, partitions):
     """Prime a simple python source."""
     source_location = Path(__file__).parent / "test_python"
 
@@ -50,7 +50,9 @@ def test_python_plugin(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -61,7 +63,7 @@ def test_python_plugin(new_dir):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
-def test_python_plugin_with_pyproject_toml(new_dir):
+def test_python_plugin_with_pyproject_toml(new_dir, partitions):
     """Prime a simple python source."""
     source_location = Path(__file__).parent / "test_python_pyproject_toml"
 
@@ -76,7 +78,10 @@ def test_python_plugin_with_pyproject_toml(new_dir):
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python_pyproject_toml", cache_dir=new_dir
+        parts,
+        application_name="test_python_pyproject_toml",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -88,7 +93,7 @@ def test_python_plugin_with_pyproject_toml(new_dir):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
-def test_python_plugin_symlink(new_dir):
+def test_python_plugin_symlink(new_dir, partitions):
     """Run in the standard scenario with no overrides."""
     parts_yaml = textwrap.dedent(
         """\
@@ -100,7 +105,9 @@ def test_python_plugin_symlink(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -115,7 +122,7 @@ def test_python_plugin_symlink(new_dir):
     assert os.path.basename(python_link).startswith("python3")
 
 
-def test_python_plugin_override_get_system_interpreter(new_dir):
+def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     """Override the system interpreter, link should use it."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
@@ -135,7 +142,9 @@ def test_python_plugin_override_get_system_interpreter(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -147,7 +156,9 @@ def test_python_plugin_override_get_system_interpreter(new_dir):
 
 
 @pytest.mark.parametrize("remove_symlinks", (True, False))
-def test_python_plugin_no_system_interpreter(new_dir, remove_symlinks: bool):
+def test_python_plugin_no_system_interpreter(
+    new_dir, partitions, remove_symlinks: bool
+):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
@@ -173,14 +184,16 @@ def test_python_plugin_no_system_interpreter(new_dir, remove_symlinks: bool):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx, pytest.raises(errors.PluginBuildError):
         ctx.execute(actions)
 
 
-def test_python_plugin_remove_symlinks(new_dir):
+def test_python_plugin_remove_symlinks(new_dir, partitions):
     """Override symlink removal."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
@@ -200,7 +213,9 @@ def test_python_plugin_remove_symlinks(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -210,7 +225,7 @@ def test_python_plugin_remove_symlinks(new_dir):
     assert python_link.exists() is False
 
 
-def test_python_plugin_fix_shebangs(new_dir):
+def test_python_plugin_fix_shebangs(new_dir, partitions):
     """Check if shebangs are properly fixed in scripts."""
     parts_yaml = textwrap.dedent(
         """\
@@ -222,17 +237,19 @@ def test_python_plugin_fix_shebangs(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    primed_script = Path("prime/bin/pip")
+    primed_script = Path(lf.project_info.prime_dir, "bin/pip")
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
-def test_python_plugin_override_shebangs(new_dir):
+def test_python_plugin_override_shebangs(new_dir, partitions):
     """Override what we want in script shebang lines."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
@@ -252,13 +269,15 @@ def test_python_plugin_override_shebangs(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    primed_script = Path("prime/bin/pip")
+    primed_script = Path(lf.project_info.prime_dir, "bin/pip")
     assert primed_script.open().readline().rstrip() == "#!/my/script/interpreter"
 
 
@@ -277,7 +296,7 @@ parts:
 """
 
 
-def test_find_payload_python_bad_version(new_dir):
+def test_find_payload_python_bad_version(new_dir, partitions):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
 
@@ -299,7 +318,9 @@ def test_find_payload_python_bad_version(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     out = Path("out.txt")
@@ -318,12 +339,13 @@ def test_find_payload_python_bad_version(new_dir):
     assert expected_text in output
 
 
-def test_find_payload_python_good_version(new_dir):
+def test_find_payload_python_good_version(new_dir, partitions):
     """Test that the build succeeds if a payload interpreter is needed, and it's
     the right Python version."""
 
     real_python = Path(sys.executable).resolve()
     real_basename = real_python.name
+    install_dir = Path("parts/foo/install", "default" if partitions else ".")
 
     # Copy the "real" binary into the payload before calling the plugin's build.
     parts_yaml = PART_WITH_PAYLOAD_PYTHON.format(
@@ -331,7 +353,9 @@ def test_find_payload_python_good_version(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
 
-    lf = LifecycleManager(parts, application_name="test_python", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     out = Path("out.txt")
@@ -340,7 +364,7 @@ def test_find_payload_python_good_version(new_dir):
             ctx.execute(actions, stdout=outfile)
 
     output = out.read_text()
-    payload_python = Path(f"parts/foo/install/usr/bin/{real_basename}").resolve()
+    payload_python = (install_dir / f"usr/bin/{real_basename}").resolve()
     expected_text = textwrap.dedent(
         f"""\
         Looking for a Python interpreter called "{real_basename}" in the payload...

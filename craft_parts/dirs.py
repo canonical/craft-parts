@@ -46,9 +46,11 @@ class ProjectDirs:
         self.overlay_mount_dir = self.overlay_dir / "overlay"
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
+        self.base_stage_dir = self.work_dir / "stage"
+        self.base_prime_dir = self.work_dir / "prime"
         if Features().enable_partitions:
-            self.stage_dir = self.work_dir / "stage" / "default"
-            self.prime_dir = self.work_dir / "prime" / "default"
+            self.stage_dir = self.base_stage_dir / "default"
+            self.prime_dir = self.base_prime_dir / "default"
         else:
-            self.stage_dir = self.work_dir / "stage"
-            self.prime_dir = self.work_dir / "prime"
+            self.stage_dir = self.base_stage_dir
+            self.prime_dir = self.base_prime_dir
