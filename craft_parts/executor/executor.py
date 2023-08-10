@@ -94,6 +94,7 @@ class Executor:
         # update the overlay environment package list to allow installation of
         # overlay packages.
         if any(p.spec.overlay_packages for p in self._part_list):
+            logger.info("Updating base overlay system")
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 callbacks.run_configure_overlay(
                     self._project_info.overlay_mount_dir, self._project_info
@@ -232,6 +233,7 @@ class Executor:
         if self._extra_build_packages:
             build_packages.update(self._extra_build_packages)
 
+        logger.info("Installing build-packages")
         packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
@@ -255,6 +257,7 @@ class Executor:
                 ", ".join(build_snaps),
             )
         else:
+            logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
 
     def _verify_plugin_environment(self) -> None:
