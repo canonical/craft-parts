@@ -26,9 +26,9 @@ parts_yaml = textwrap.dedent(
       foo:
         plugin: nil
         build-packages: [libc6]
-        # Note that this will fail if pyright is not already installed and the
+        # Note that this will fail if core20 is not already installed and the
         # test is executed as a regular user
-        build-snaps: [pyright] 
+        build-snaps: [core20] 
         stage-packages: [hello]
     """
 )
