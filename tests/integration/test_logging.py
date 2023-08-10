@@ -42,10 +42,6 @@ def test_logging_info(new_dir, caplog, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["build"])
     monkeypatch.setenv("CRAFT_PARTS_PACKAGE_REFRESH", "0")
 
-    import subprocess
-    result = subprocess.check_output(["snap", "list"]).decode()
-    assert 0, result
-
     main.main()
 
     assert "Installing build-packages" in caplog.text
