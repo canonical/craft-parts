@@ -892,7 +892,7 @@ class PartHandler:
             return None
 
         try:
-            logger.info("Fetching requested stage-packages")
+            logger.info("Fetching stage-packages")
             fetched_packages = packages.Repository.fetch_stage_packages(
                 cache_dir=step_info.cache_dir,
                 package_names=stage_packages,

@@ -233,7 +233,7 @@ class Executor:
         if self._extra_build_packages:
             build_packages.update(self._extra_build_packages)
 
-        logger.info("Installing requested build-packages")
+        logger.info("Installing build-packages")
         packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
@@ -257,7 +257,7 @@ class Executor:
                 ", ".join(build_snaps),
             )
         else:
-            logger.info("Installing requested build-snaps")
+            logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
 
     def _verify_plugin_environment(self) -> None:

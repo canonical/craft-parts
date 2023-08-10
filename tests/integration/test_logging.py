@@ -26,6 +26,9 @@ parts_yaml = textwrap.dedent(
       foo:
         plugin: nil
         build-packages: [libc6]
+        # Note that this will fail if pyright is not already installed and the
+        # test is executed as a regular user
+        build-snaps: [pyright] 
         stage-packages: [hello]
     """
 )
@@ -41,5 +44,6 @@ def test_logging_info(new_dir, caplog, monkeypatch):
 
     main.main()
 
-    assert "Installing requested build-packages" in caplog.text
-    assert "Fetching requested stage-packages" in caplog.text
+    assert "Installing build-packages" in caplog.text
+    assert "Installing build-snaps" in caplog.text
+    assert "Fetching stage-packages" in caplog.text
