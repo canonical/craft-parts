@@ -440,9 +440,7 @@ class TestValidatePartitions:
         ],
     )
     @pytest.mark.filterwarnings("error")
-    def test_validate_partitions_in_keywords_failure(
-        self, filepaths, message
-    ):
+    def test_validate_partitions_in_keywords_failure(self, filepaths, message):
         with pytest.raises(errors.PartitionError) as exc_info:
             lifecycle_manager._validate_partitions_in_paths(
                 filepaths, ["default", "other"]

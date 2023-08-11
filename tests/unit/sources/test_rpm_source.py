@@ -63,6 +63,7 @@ def test_valid_options(partitions):
         source_depth=None,
     )
 
+
 # pylint: disable=too-many-arguments
 @pytest.mark.parametrize(
     (
@@ -128,6 +129,8 @@ def test_invalid_options(
     assert exc_info.value.brief == (
         f"Failed to pull source: {expected} cannot be used with a rpm source."
     )
+
+
 # pylint: enable=too-many-arguments
 
 

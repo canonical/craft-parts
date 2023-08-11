@@ -80,6 +80,7 @@ class GitBaseTestCase:
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
         self._dirs = ProjectDirs(partitions=partitions)
+
     # pylint: enable=attribute-defined-outside-init
 
     def rm_dir(self, dir_name):
