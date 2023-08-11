@@ -26,6 +26,7 @@ class ProjectDirs:
 
     :param work_dir: The parent directory containing the parts, prime and stage
         subdirectories. If not specified, the current directory will be used.
+    :param partitions: If partitions are enabled, the list of partitions.
 
     :ivar work_dir: The root of the work directories used for project processing.
     :ivar parts_dir: The directory containing work subdirectories for each part.
@@ -52,6 +53,7 @@ class ProjectDirs:
         self.overlay_work_dir = self.overlay_dir / "work"
         self.base_stage_dir = self.work_dir / "stage"
         self.base_prime_dir = self.work_dir / "prime"
+        self._partitions = partitions or [None]
         if partitions:
             self.stage_dir = self.base_stage_dir / "default"
             self.prime_dir = self.base_prime_dir / "default"
@@ -68,3 +70,15 @@ class ProjectDirs:
             prime_dirs = {None: self.prime_dir}
         self.stage_dirs = MappingProxyType(stage_dirs)
         self.prime_dirs = MappingProxyType(prime_dirs)
+
+    def get_stage_dir(self, partition: Optional[str] = None) -> Path:
+        """Get the stage directory for the given partition."""
+        if partition not in self._partitions:
+            raise ValueError(f"Unknown partition {partition}")
+        return self.stage_dirs[partition]
+
+    def get_prime_dir(self, partition: Optional[str] = None) -> Path:
+        """Get the stage directory for the given partition."""
+        if partition not in self._partitions:
+            raise ValueError(f"Unknown partition {partition}")
+        return self.prime_dirs[partition]

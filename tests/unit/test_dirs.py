@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import string
 from pathlib import Path
+
+from hypothesis import given, strategies
 
 from craft_parts.dirs import ProjectDirs
 
@@ -56,3 +58,43 @@ def test_dirs_work_dir(new_dir):
 def test_dirs_work_dir_resolving():
     dirs = ProjectDirs(work_dir="~/x/../y/.")
     assert dirs.work_dir == Path.home() / "y"
+
+
+@given(
+    partitions=strategies.lists(
+        strategies.text(strategies.sampled_from(string.ascii_lowercase))
+    )
+)
+def test_get_stage_dir_with_partitions(partitions):
+    dirs = ProjectDirs(partitions=["default", *partitions])
+
+    for partition in partitions:
+        assert dirs.get_stage_dir(partition=partition) == dirs.stage_dirs[partition]
+    assert dirs.get_stage_dir(partition="default") == dirs.stage_dir
+    assert dirs.get_stage_dir(partition="default") == dirs.stage_dirs["default"]
+
+
+@given(
+    partitions=strategies.lists(
+        strategies.text(strategies.sampled_from(string.ascii_lowercase))
+    )
+)
+def test_get_prime_dir_with_partitions(partitions):
+    dirs = ProjectDirs(partitions=["default", *partitions])
+
+    for partition in partitions:
+        assert dirs.get_prime_dir(partition=partition) == dirs.prime_dirs[partition]
+    assert dirs.get_prime_dir(partition="default") == dirs.prime_dir
+    assert dirs.get_prime_dir(partition="default") == dirs.prime_dirs["default"]
+
+
+def test_get_stage_dir_without_partitions():
+    dirs = ProjectDirs()
+    assert dirs.get_stage_dir() == dirs.stage_dir
+    assert dirs.get_stage_dir(None) == dirs.stage_dir
+
+
+def test_get_prime_dir_without_partitions():
+    dirs = ProjectDirs()
+    assert dirs.get_prime_dir() == dirs.prime_dir
+    assert dirs.get_prime_dir(None) == dirs.prime_dir
