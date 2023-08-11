@@ -966,7 +966,10 @@ class PartHandler:
         snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
         snap_sources = (
             sources.SnapSource(
-                source=s, part_src_dir=snaps_dir, cache_dir=self._part_info.cache_dir
+                source=s,
+                part_src_dir=snaps_dir,
+                cache_dir=self._part_info.cache_dir,
+                project_dirs=self._part.dirs,
             )
             for s in snap_files
         )

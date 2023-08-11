@@ -101,11 +101,13 @@ class TestFileSourceHandler:
     """Verify FileSourceHandler methods and attributes."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, partitions):
+        dirs = ProjectDirs(partitions=partitions)
         self.source = BarFileSource(
             source="source",
             part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
+            project_dirs=dirs,
         )
 
     def test_file_source(self):

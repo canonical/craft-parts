@@ -22,6 +22,7 @@ from pathlib import Path
 
 import pytest
 
+from craft_parts import ProjectDirs
 from craft_parts.sources import errors, snap_source, sources
 
 _LOCAL_DIR = Path(__file__).parent
@@ -31,12 +32,13 @@ class TestSnapSource:
     """Snap source pull tests."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
         self._path = new_dir
         self._test_file = _LOCAL_DIR / "data" / "test-snap.snap"
         self._dest_dir = new_dir / "dest_dir"
         self._dest_dir.mkdir()
+        self._dirs = ProjectDirs(partitions=partitions)
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
@@ -52,13 +54,20 @@ class TestSnapSource:
         with pytest.raises(errors.InvalidSourceOption) as raised:
             kwargs = {param: value}
             sources.SnapSource(
-                source="test.snap", part_src_dir=Path(), cache_dir=new_dir, **kwargs
+                source="test.snap",
+                part_src_dir=Path(),
+                cache_dir=new_dir,
+                project_dirs=self._dirs,
+                **kwargs,
             )
         assert raised.value.option == param.replace("_", "-")
 
     def test_pull_snap_file_must_extract(self, new_dir):
         source = sources.SnapSource(
-            str(self._test_file), self._dest_dir, cache_dir=new_dir
+            str(self._test_file),
+            self._dest_dir,
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
         )
         source.pull()
 
@@ -76,7 +85,10 @@ class TestSnapSource:
             "subprocess.check_output", side_effect=subprocess.CalledProcessError(1, [])
         )
         source = sources.SnapSource(
-            str(self._test_file), self._dest_dir, cache_dir=new_dir
+            str(self._test_file),
+            self._dest_dir,
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
         )
 
         with pytest.raises(sources.errors.PullError) as raised:

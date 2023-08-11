@@ -20,8 +20,7 @@ import io
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
-import errors
-
+from craft_parts import errors
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.parts import Part

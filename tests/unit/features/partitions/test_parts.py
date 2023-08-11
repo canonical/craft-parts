@@ -19,8 +19,7 @@ from textwrap import dedent
 import pytest
 import pytest_check  # type: ignore[import]
 
-from craft_parts import errors
-from craft_parts import ProjectDirs, parts
+from craft_parts import ProjectDirs, errors, parts
 from craft_parts.parts import Part
 from tests.unit import test_parts
 

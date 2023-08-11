@@ -147,6 +147,7 @@ class FileSourceHandler(SourceHandler):
         part_src_dir: Path,
         *,
         cache_dir: Path,
+        project_dirs: ProjectDirs,
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,
@@ -154,7 +155,6 @@ class FileSourceHandler(SourceHandler):
         source_checksum: Optional[str] = None,
         source_submodules: Optional[List[str]] = None,
         command: Optional[str] = None,
-        project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
     ):
         super().__init__(

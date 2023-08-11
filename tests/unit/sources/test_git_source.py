@@ -23,6 +23,7 @@ from unittest import mock
 
 import pytest
 
+from craft_parts import ProjectDirs
 from craft_parts.sources import errors, sources
 from craft_parts.sources.git_source import GitSource
 
@@ -75,6 +76,10 @@ def fake_get_current_branch(mocker):
 class GitBaseTestCase:
     """Helper functions for git tests."""
 
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir, partitions):
+        self._dirs = ProjectDirs(partitions=partitions)
+
     def rm_dir(self, dir_name):
         if os.path.exists(dir_name):
             shutil.rmtree(dir_name)
@@ -114,11 +119,21 @@ class TestGitSource(GitBaseTestCase):
             return_value="test-branch",
         )
 
-        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+        )
         assert git._get_current_branch() == "test-branch"
 
     def test_pull(self, fake_run, new_dir):
-        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+        )
         git.pull()
 
         fake_run.assert_called_once_with(
@@ -127,7 +142,11 @@ class TestGitSource(GitBaseTestCase):
 
     def test_pull_with_depth(self, fake_run, new_dir):
         git = GitSource(
-            "git://my-source", Path("source_dir"), cache_dir=new_dir, source_depth=2
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_depth=2,
+            project_dirs=self._dirs,
         )
 
         git.pull()
@@ -150,6 +169,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_branch="my-branch",
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -167,7 +187,11 @@ class TestGitSource(GitBaseTestCase):
 
     def test_pull_tag(self, fake_run, new_dir):
         git = GitSource(
-            "git://my-source", Path("source_dir"), cache_dir=new_dir, source_tag="tag"
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_tag="tag",
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -189,6 +213,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -226,7 +251,12 @@ class TestGitSource(GitBaseTestCase):
         )
 
     def test_pull_with_submodules_default(self, fake_run, new_dir):
-        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+        )
         git.pull()
 
         fake_run.assert_called_once_with(
@@ -239,6 +269,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_submodules=[],
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -252,6 +283,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_submodules=["submodule_1", "dir/submodule_2"],
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -272,6 +304,7 @@ class TestGitSource(GitBaseTestCase):
             "path/to/repo.git",
             Path("source_dir"),
             cache_dir=new_dir,
+            project_dirs=self._dirs,
         )
 
         git.pull()
@@ -303,9 +336,7 @@ class TestGitSource(GitBaseTestCase):
         This test should capture regressions in the reformatting of local filepaths.
         """
         git = GitSource(
-            repository,
-            Path("source_dir"),
-            cache_dir=new_dir,
+            repository, Path("source_dir"), cache_dir=new_dir, project_dirs=self._dirs
         )
 
         git.pull()
@@ -323,7 +354,12 @@ class TestGitSource(GitBaseTestCase):
     def test_pull_existing(self, mocker, fake_run, fake_get_current_branch, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
-        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+        )
         git.pull()
 
         fake_run.assert_has_calls(
@@ -366,7 +402,11 @@ class TestGitSource(GitBaseTestCase):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
-            "git://my-source", Path("source_dir"), cache_dir=new_dir, source_tag="tag"
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_tag="tag",
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -414,6 +454,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -461,6 +502,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_branch="my-branch",
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -507,7 +549,9 @@ class TestGitSource(GitBaseTestCase):
         working_tree = Path("working-tree").absolute()
         other_tree = Path("helper-tree").absolute()
 
-        git = GitSource(str(remote), working_tree, cache_dir=new_dir)
+        git = GitSource(
+            str(remote), working_tree, cache_dir=new_dir, project_dirs=self._dirs
+        )
 
         self.clean_dir(remote)
         self.clean_dir(working_tree)
@@ -545,7 +589,11 @@ class TestGitSource(GitBaseTestCase):
         other_tree = Path("helper-tree").absolute()
 
         git = GitSource(
-            str(remote), working_tree, cache_dir=new_dir, source_branch="test-branch"
+            str(remote),
+            working_tree,
+            cache_dir=new_dir,
+            source_branch="test-branch",
+            project_dirs=self._dirs,
         )
 
         self.clean_dir(remote)
@@ -581,7 +629,12 @@ class TestGitSource(GitBaseTestCase):
     ):
         Path("source_dir/.git").mkdir(parents=True)
 
-        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+        )
         git.pull()
 
         fake_run.assert_has_calls(
@@ -630,6 +683,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_submodules=[],
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -667,6 +721,7 @@ class TestGitSource(GitBaseTestCase):
             Path("source_dir"),
             cache_dir=new_dir,
             source_submodules=["submodule_1", "dir/submodule_2"],
+            project_dirs=self._dirs,
         )
         git.pull()
 
@@ -716,6 +771,7 @@ class TestGitSource(GitBaseTestCase):
                 cache_dir=new_dir,
                 source_tag="tag",
                 source_branch="branch",
+                project_dirs=self._dirs,
             )
         assert raised.value.source_type == "git"
         assert raised.value.options == ["source-tag", "source-branch"]
@@ -728,6 +784,7 @@ class TestGitSource(GitBaseTestCase):
                 cache_dir=new_dir,
                 source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
                 source_branch="branch",
+                project_dirs=self._dirs,
             )
         assert raised.value.source_type == "git"
         assert raised.value.options == ["source-branch", "source-commit"]
@@ -740,17 +797,20 @@ class TestGitSource(GitBaseTestCase):
                 cache_dir=new_dir,
                 source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
                 source_tag="tag",
+                project_dirs=self._dirs,
             )
         assert raised.value.source_type == "git"
         assert raised.value.options == ["source-tag", "source-commit"]
 
-    def test_source_checksum_raises_exception(self, new_dir):
+    def test_source_checksum_raises_exception(self, new_dir, partitions):
+        dirs = ProjectDirs(partitions=partitions)
         with pytest.raises(errors.InvalidSourceOption) as raised:
             GitSource(
                 "git://mysource",
                 Path("source_dir"),
                 cache_dir=new_dir,
                 source_checksum="md5/d9210476aac5f367b14e513bdefdee08",
+                project_dirs=dirs,
             )
         assert raised.value.source_type == "git"
         assert raised.value.option == "source-checksum"
@@ -762,7 +822,12 @@ class TestGitSource(GitBaseTestCase):
         mock_process_run = mocker.patch("craft_parts.utils.os_utils.process_run")
         mock_process_run.side_effect = subprocess.CalledProcessError(1, [])
 
-        git = GitSource("git://my-source", Path("source_dir"), cache_dir=new_dir)
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+        )
         with pytest.raises(errors.PullError) as raised:
             git.pull()
         assert raised.value.command == [
@@ -782,7 +847,7 @@ class TestGitConflicts(GitBaseTestCase):
         repo = os.path.abspath("conflict-test.git")
         working_tree = Path("git-conflict-test").absolute()
         conflicting_tree = f"{working_tree}-conflict"
-        git = GitSource(repo, working_tree, cache_dir=new_dir)
+        git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
 
         self.clean_dir(repo)
         self.clean_dir(working_tree)
@@ -823,7 +888,7 @@ class TestGitConflicts(GitBaseTestCase):
         working_tree = Path("git-submodules").absolute()
         working_tree_two = f"{working_tree}-two"
         sub_working_tree = os.path.abspath("git-submodules-sub")
-        git = GitSource(repo, working_tree, cache_dir=new_dir)
+        git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
 
         self.clean_dir(repo)
         self.clean_dir(sub_repo)
@@ -901,7 +966,7 @@ class TestGitConflicts(GitBaseTestCase):
 
 class TestGitDetails(GitBaseTestCase):
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):  # pylint: disable=unused-argument
+    def setup_method_fixture(self, new_dir, partitions):
         def _add_and_commit_file(filename, content=None, message=None):
             if not content:
                 content = filename
@@ -936,11 +1001,13 @@ class TestGitDetails(GitBaseTestCase):
 
         os.chdir("..")
 
+        self._dirs = ProjectDirs(partitions=partitions)
         self.git = GitSource(
             self.working_tree,
             self.source_dir,
             cache_dir=new_dir,
             source_commit=self.expected_commit,
+            project_dirs=self._dirs,
         )
         self.git.pull()
 
@@ -956,6 +1023,7 @@ class TestGitDetails(GitBaseTestCase):
             self.source_dir,
             cache_dir=new_dir,
             source_branch=self.expected_branch,
+            project_dirs=self._dirs,
         )
         self.git.pull()
 
@@ -968,6 +1036,7 @@ class TestGitDetails(GitBaseTestCase):
             self.source_dir,
             cache_dir=new_dir,
             source_tag="test-tag",
+            project_dirs=self._dirs,
         )
         self.git.pull()
 
