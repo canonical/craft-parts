@@ -369,7 +369,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
-            work_dir=self._part.stage_dir,
+            work_dir=self._part.base_stage_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -409,7 +409,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
-            work_dir=self._part.prime_dir,
+            work_dir=self._part.base_prime_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -863,12 +863,12 @@ class PartHandler:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
-            self._part.part_install_dir,
+            *self._part.part_install_dirs.values(),
             self._part.part_layer_dir,
             self._part.part_state_dir,
             self._part.part_run_dir,
-            self._part.stage_dir,
-            self._part.prime_dir,
+            *self._part.stage_dirs.values(),
+            *self._part.prime_dirs.values(),
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)

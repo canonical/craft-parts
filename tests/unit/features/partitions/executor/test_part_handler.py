@@ -31,22 +31,17 @@ TEST_FILES = ["filea", "dir1/file1a", "dir1/file1b", "dir2/dir3/file2a"]
 class TestPartHandling(test_part_handler.TestPartHandling):
     """Part handling tests with partitions enabled"""
 
-    _partitions = PARTITIONS
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     """Verify step update processing with partitions enabled."""
 
-    _partitions = PARTITIONS
     _update_build_path = pathlib.Path("parts/foo/install/default/foo.txt")
 
 
 @pytest.mark.usefixtures("new_dir")
 class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
     """Verify step update processing."""
-
-    _partitions = PARTITIONS
 
     @pytest.mark.parametrize(
         "step,test_dir,state_file",
@@ -77,14 +72,10 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
 class TestRerunStep(test_part_handler.TestRerunStep):
     """Verify rerun actions."""
 
-    _partitions = PARTITIONS
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPackages:
     """Verify package handling."""
-
-    _partitions = PARTITIONS
 
 
 class TestFileFilter(test_part_handler.TestFileFilter):
@@ -99,7 +90,10 @@ class TestFileFilter(test_part_handler.TestFileFilter):
             yield f"{partition}/{file}"
 
     @pytest.fixture
-    def make_files(self, new_dir):
+    def make_files(
+        self,
+        new_dir,
+    ):
         for file in self._iter_files():
             path = self._destdir / file
             path.parent.mkdir(parents=True, exist_ok=True)

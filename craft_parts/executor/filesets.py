@@ -173,13 +173,9 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
     processed_includes: List[str] = []
     processed_excludes: List[str] = []
     for file in includes:
-        processed_includes.append(
-            path_utils.get_partition_compatible_path(file)
-        )
+        processed_includes.append(path_utils.get_partition_compatible_path(file))
     for file in excludes:
-        processed_excludes.append(
-            path_utils.get_partition_compatible_path(file)
-        )
+        processed_excludes.append(path_utils.get_partition_compatible_path(file))
     return processed_includes, processed_excludes
 
 

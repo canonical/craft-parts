@@ -45,9 +45,7 @@ def organize_files(
         it previously organized.
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
-        src = os.path.join(
-            base_dir, path_utils.get_partition_compatible_path(key)
-        )
+        src = os.path.join(base_dir, path_utils.get_partition_compatible_path(key))
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!

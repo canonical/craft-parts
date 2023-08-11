@@ -17,7 +17,7 @@
 """Utility functions for paths.."""
 import re
 from pathlib import PurePath, PurePosixPath
-from typing import Optional, Tuple, TypeVar, Union, cast, NamedTuple
+from typing import NamedTuple, Optional, TypeVar, Union, cast
 
 from craft_parts.features import Features
 
@@ -28,6 +28,7 @@ HAS_PARTITION_REGEX = re.compile(r"^\([a-z]+\)(/.*)?$")
 
 class PartitionPathPair(NamedTuple):
     """A pair containing a partition name and a path."""
+
     partition: Optional[str]
     path: FlexiblePath
 

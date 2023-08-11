@@ -17,9 +17,8 @@
 """Definitions for project directories."""
 
 from pathlib import Path
-from typing import Union
-
-from craft_parts.features import Features
+from types import MappingProxyType
+from typing import Dict, Optional, Sequence, Union
 
 
 class ProjectDirs:
@@ -38,7 +37,12 @@ class ProjectDirs:
     :ivar prime_dir: The primed tree containing the final artifacts to deploy.
     """
 
-    def __init__(self, *, work_dir: Union[Path, str] = "."):
+    def __init__(
+        self,
+        *,
+        work_dir: Union[Path, str] = ".",
+        partitions: Optional[Sequence[str]] = None,
+    ):
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
         self.parts_dir = self.work_dir / "parts"
@@ -48,9 +52,19 @@ class ProjectDirs:
         self.overlay_work_dir = self.overlay_dir / "work"
         self.base_stage_dir = self.work_dir / "stage"
         self.base_prime_dir = self.work_dir / "prime"
-        if Features().enable_partitions:
+        if partitions:
             self.stage_dir = self.base_stage_dir / "default"
             self.prime_dir = self.base_prime_dir / "default"
+            stage_dirs: Dict[Optional[str], Path] = {
+                part: self.base_stage_dir / part for part in partitions
+            }
+            prime_dirs: Dict[Optional[str], Path] = {
+                part: self.base_prime_dir / part for part in partitions
+            }
         else:
             self.stage_dir = self.base_stage_dir
             self.prime_dir = self.base_prime_dir
+            stage_dirs = {None: self.stage_dir}
+            prime_dirs = {None: self.prime_dir}
+        self.stage_dirs = MappingProxyType(stage_dirs)
+        self.prime_dirs = MappingProxyType(prime_dirs)

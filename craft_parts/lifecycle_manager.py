@@ -124,7 +124,7 @@ class LifecycleManager:
 
         packages.Repository.configure(application_package_name)
 
-        project_dirs = ProjectDirs(work_dir=work_dir)
+        project_dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
 
         project_info = ProjectInfo(
             application_name=application_name,
@@ -147,7 +147,9 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
+            part_list.append(
+                _build_part(name, spec, project_dirs, strict_mode, partitions)
+            )
 
         if partitions:
             validate_partition_usage(part_list, partitions)
@@ -231,7 +233,6 @@ class LifecycleManager:
         :param target_step: The final step we want to reach.
         :param part_names: The list of parts to process. If not specified, all
             parts will be processed.
-        :param update: Refresh the list of available packages.
 
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
@@ -286,7 +287,11 @@ def _ensure_overlay_supported() -> None:
 
 
 def _build_part(
-    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, strict_plugins: bool
+    name: str,
+    spec: Dict[str, Any],
+    project_dirs: ProjectDirs,
+    strict_plugins: bool,
+    partitions: Optional[List[str]],
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -333,7 +338,11 @@ def _build_part(
 
     # initialize part and unmarshal part specs
     part = Part(
-        name, part_spec, project_dirs=project_dirs, plugin_properties=properties
+        name,
+        part_spec,
+        project_dirs=project_dirs,
+        plugin_properties=properties,
+        partitions=partitions,
     )
 
     return part

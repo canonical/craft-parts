@@ -88,7 +88,7 @@ class ProjectInfo:
         **custom_args: Any,  # custom passthrough args
     ):
         if not project_dirs:
-            project_dirs = ProjectDirs()
+            project_dirs = ProjectDirs(partitions=partitions)
 
         pvars = project_vars or {}
 

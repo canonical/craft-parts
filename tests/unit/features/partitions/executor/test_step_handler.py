@@ -16,12 +16,10 @@
 
 from tests.unit.executor import test_step_handler
 
-PARTITIONS = ["default", "mypart", "yourpart"]
-
 
 class TestStepHandlerBuiltins(test_step_handler.TestStepHandlerBuiltins):
-    _partitions = PARTITIONS
+    """Test handler built-in tests with partitions enabled."""
 
 
 class TestStepHandlerRunScriptlet(test_step_handler.TestStepHandlerRunScriptlet):
-    _partitions = PARTITIONS
+    """Step handler scriptlet tests with partitions enabled."""

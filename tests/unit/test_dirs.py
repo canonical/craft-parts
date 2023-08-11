@@ -28,8 +28,12 @@ def test_dirs(new_dir):
     assert dirs.overlay_mount_dir == new_dir / "overlay/overlay"
     assert dirs.overlay_packages_dir == new_dir / "overlay/packages"
     assert dirs.overlay_work_dir == new_dir / "overlay/work"
-    assert dirs.stage_dir == new_dir / "stage"
-    assert dirs.prime_dir == new_dir / "prime"
+    assert dirs.base_stage_dir == new_dir / "stage"
+    assert dirs.stage_dir == dirs.base_stage_dir
+    assert set(dirs.stage_dirs.values()) == {dirs.base_stage_dir}
+    assert dirs.base_prime_dir == new_dir / "prime"
+    assert dirs.prime_dir == dirs.base_prime_dir
+    assert set(dirs.prime_dirs.values()) == {dirs.base_prime_dir}
 
 
 def test_dirs_work_dir(new_dir):
@@ -41,8 +45,12 @@ def test_dirs_work_dir(new_dir):
     assert dirs.overlay_mount_dir == new_dir / "foobar/overlay/overlay"
     assert dirs.overlay_packages_dir == new_dir / "foobar/overlay/packages"
     assert dirs.overlay_work_dir == new_dir / "foobar/overlay/work"
-    assert dirs.stage_dir == new_dir / "foobar/stage"
-    assert dirs.prime_dir == new_dir / "foobar/prime"
+    assert dirs.base_stage_dir == new_dir / "foobar/stage"
+    assert dirs.stage_dir == dirs.base_stage_dir
+    assert set(dirs.stage_dirs.values()) == {dirs.base_stage_dir}
+    assert dirs.base_prime_dir == new_dir / "foobar/prime"
+    assert dirs.prime_dir == dirs.base_prime_dir
+    assert set(dirs.prime_dirs.values()) == {dirs.base_prime_dir}
 
 
 def test_dirs_work_dir_resolving():

@@ -18,7 +18,7 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
@@ -180,7 +180,9 @@ class Part:
 
     :param name: The part name.
     :param data: A dictionary containing the part properties.
+    :param partitions: A Sequence of partition names if partitions are enabled, or None
     :param project_dirs: The project work directories.
+    :param plugin_properties: An optional PluginProperties object for this plugin.
 
     :raise PartSpecificationError: If part validation fails.
     """
@@ -192,14 +194,16 @@ class Part:
         *,
         project_dirs: Optional[ProjectDirs] = None,
         plugin_properties: "Optional[PluginProperties]" = None,
+        partitions: Optional[Sequence[str]] = None,
     ):
+        self._partitions = partitions
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
             )
 
         if not project_dirs:
-            project_dirs = ProjectDirs()
+            project_dirs = ProjectDirs(partitions=partitions)
 
         if not plugin_properties:
             plugin_properties = PluginProperties()
@@ -280,9 +284,22 @@ class Part:
         as ``part_base_install_dir``
         With partitions enabled, this is the install directory for the default partition
         """
-        if Features().enable_partitions:
-            return self.part_base_install_dir / "default"
-        return self.part_base_install_dir
+        if self._partitions is None:
+            return self.part_base_install_dir
+        return self.part_base_install_dir / "default"
+
+    @property
+    def part_install_dirs(self) -> Mapping[Optional[str], Path]:
+        """Return a mapping of partition names to install directories.
+
+        With partitions disabled, the only partition name is ``None``
+        """
+        if self._partitions is None:
+            return {None: self.part_base_install_dir}
+        return {
+            partition: self.part_base_install_dir / partition
+            for partition in self._partitions
+        }
 
     @property
     def part_state_dir(self) -> Path:
@@ -320,12 +337,36 @@ class Part:
         return self._dirs.overlay_dir
 
     @property
+    def base_stage_dir(self) -> Path:
+        """Return the base staging area.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self._dirs.base_stage_dir
+
+    @property
     def stage_dir(self) -> Path:
         """Return the staging area containing the installed files from all parts.
 
         If partitions are enabled, this is the stage directory for the default partition
         """
         return self._dirs.stage_dir
+
+    @property
+    def stage_dirs(self) -> Mapping[Optional[str], Path]:
+        """A mapping of partition name to partition staging directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self._dirs.stage_dirs
+
+    @property
+    def base_prime_dir(self) -> Path:
+        """Return the primed tree containing the artifacts to deploy.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self._dirs.base_prime_dir
 
     @property
     def prime_dir(self) -> Path:
@@ -336,20 +377,12 @@ class Part:
         return self._dirs.prime_dir
 
     @property
-    def base_stage_dir(self) -> Path:
-        """Return the base staging area.
+    def prime_dirs(self) -> Mapping[Optional[str], Path]:
+        """A mapping of partition name to partition prime directory.
 
-        If partitions are enabled, this is the directory containing those partitions.
+        If partitions are disabled, the only key is ``None``.
         """
-        return self._dirs.base_stage_dir
-
-    @property
-    def base_prime_dir(self) -> Path:
-        """Return the primed tree containing the artifacts to deploy.
-
-        If partitions are enabled, this is the directory containing those partitions.
-        """
-        return self._dirs.base_prime_dir
+        return self._dirs.prime_dirs
 
     @property
     def dependencies(self) -> List[str]:

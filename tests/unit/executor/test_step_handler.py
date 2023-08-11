@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Set, Type
+from typing import Dict, List, Set, Type
 
 import pytest
 
@@ -90,13 +90,12 @@ def get_mode(path) -> int:
 class TestStepHandlerBuiltins:
     """Verify the built-in handlers."""
 
-    _partitions: Optional[List[str]] = None
-
     @pytest.fixture(autouse=True)
-    def setup(self, new_dir):
+    def setup(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
-        self._part = Part("p1", {"source": "."})
-        self._dirs = ProjectDirs()
+        self._partitions = partitions
+        self._part = Part("p1", {"source": "."}, partitions=partitions)
+        self._dirs = ProjectDirs(partitions=partitions)
         self._project_info = ProjectInfo(
             project_dirs=self._dirs,
             application_name="test",
@@ -136,7 +135,7 @@ class TestStepHandlerBuiltins:
         result = sh.run_builtin()
         assert result == StepContents()
 
-    def test_run_builtin_build(self, new_dir, mocker):
+    def test_run_builtin_build(self, new_dir, partitions, mocker):
         mock_run = mocker.patch("subprocess.run")
 
         Path("parts/p1/run").mkdir(parents=True)
@@ -151,31 +150,54 @@ class TestStepHandlerBuiltins:
         build_script_path = Path(new_dir / "parts/p1/run/build.sh")
         environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
         host_arch = _ARCH_TRANSLATIONS[_get_host_architecture()]
+        triplet = host_arch["triplet"]
+        deb = host_arch["deb"]
+        if partitions is not None:
+            default_partition_dir = "/default"
+            partition_script_lines = itertools.chain.from_iterable(
+                zip(
+                    (
+                        f'export CRAFT_{p.upper()}_STAGE="{new_dir}/stage/{p}"'
+                        for p in partitions
+                    ),
+                    (
+                        f'export CRAFT_{p.upper()}_PRIME="{new_dir}/prime/{p}"'
+                        for p in partitions
+                    ),
+                )
+            )
+        else:
+            partition_script_lines = []
+            default_partition_dir = ""
+
+        expected_script = "\n".join(
+            (
+                "# Environment",
+                "## Application environment",
+                "## Part environment",
+                f'export CRAFT_ARCH_TRIPLET="{triplet}"',
+                f'export CRAFT_TARGET_ARCH="{deb}"',
+                'export CRAFT_PARALLEL_BUILD_COUNT="1"',
+                f'export CRAFT_PROJECT_DIR="{new_dir}"',
+                *partition_script_lines,
+                f'export CRAFT_STAGE="{new_dir}/stage{default_partition_dir}"',
+                f'export CRAFT_PRIME="{new_dir}/prime{default_partition_dir}"',
+                'export CRAFT_PART_NAME="p1"',
+                'export CRAFT_STEP_NAME="BUILD"',
+                f'export CRAFT_PART_SRC="{new_dir}/parts/p1/src"',
+                f'export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"',
+                f'export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"',
+                f'export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"',
+                f'export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install{default_partition_dir}"',
+                "## Plugin environment",
+                "## User environment",
+                "",
+            )
+        )
 
         assert get_mode(environment_script_path) == 0o644
         with open(environment_script_path, "r") as file:
-            assert file.read() == dedent(
-                f"""\
-                # Environment
-                ## Application environment
-                ## Part environment
-                export CRAFT_ARCH_TRIPLET="{host_arch['triplet']}"
-                export CRAFT_TARGET_ARCH="{host_arch['deb']}"
-                export CRAFT_PARALLEL_BUILD_COUNT="1"
-                export CRAFT_PROJECT_DIR="{new_dir}"
-                export CRAFT_STAGE="{new_dir}/stage"
-                export CRAFT_PRIME="{new_dir}/prime"
-                export CRAFT_PART_NAME="p1"
-                export CRAFT_STEP_NAME="BUILD"
-                export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
-                export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
-                export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
-                export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
-                export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
-                ## Plugin environment
-                ## User environment
-                """
-            )
+            assert file.read() == expected_script
 
         assert get_mode(build_script_path) == 0o755
         with open(build_script_path, "r") as file:
@@ -269,19 +291,17 @@ class TestStepHandlerBuiltins:
 class TestStepHandlerRunScriptlet:
     """Verify the scriptlet runner."""
 
-    _partitions: Optional[List[str]] = None
-
     @pytest.fixture(autouse=True)
-    def setup(self, new_dir):
+    def setup(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
-        self._part = Part("p1", {"source": "."})
+        self._part = Part("p1", {"source": "."}, partitions=partitions)
         self._dirs = ProjectDirs()
         self._project_info = ProjectInfo(
             project_dirs=self._dirs,
             application_name="test",
             cache_dir=new_dir,
             strict_mode=False,
-            partitions=self._partitions,
+            partitions=partitions,
         )
         self._part_info = PartInfo(project_info=self._project_info, part=self._part)
         self._props = plugins.PluginProperties()

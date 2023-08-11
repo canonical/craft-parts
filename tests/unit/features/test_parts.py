@@ -86,7 +86,10 @@ class TestPartPartitionUsage:
             "prime": valid_filesets,
         }
 
-        part_list = [Part("a", part_data), Part("b", part_data)]
+        part_list = [
+            Part("a", part_data, partitions=partition_list),
+            Part("b", part_data, partitions=partition_list),
+        ]
 
         assert parts.validate_partition_usage(part_list, partition_list) is None
 
@@ -101,7 +104,9 @@ class TestPartPartitionUsage:
         }
 
         with pytest.raises(ValueError) as raised:
-            parts.validate_partition_usage([Part("part-a", part_data)], partition_list)
+            parts.validate_partition_usage(
+                [Part("part-a", part_data, partitions=partition_list)], partition_list
+            )
 
         assert str(raised.value) == dedent(
             """\
@@ -131,7 +136,10 @@ class TestPartPartitionUsage:
             "prime": valid_filesets + invalid_filesets,
         }
 
-        part_list = [Part("part-a", part_data), Part("part-b", part_data)]
+        part_list = [
+            Part("part-a", part_data, partitions=partition_list),
+            Part("part-b", part_data, partitions=partition_list),
+        ]
 
         with pytest.raises(ValueError) as raised:
             parts.validate_partition_usage(part_list, partition_list)

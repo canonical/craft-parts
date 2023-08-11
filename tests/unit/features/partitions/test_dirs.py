@@ -20,16 +20,22 @@ from craft_parts import ProjectDirs
 
 
 @pytest.mark.parametrize("work_dir", [".", "my_work_dir"])
-def test_dirs_partitions(new_dir, work_dir):
-    dirs = ProjectDirs(work_dir=work_dir)
+def test_dirs_partitions(new_dir, work_dir, partitions):
+    dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
     pytest_check.equal(dirs.project_dir, new_dir)
-    pytest_check.equal(dirs.work_dir, new_dir / work_dir)
-    pytest_check.equal(dirs.parts_dir, new_dir / work_dir / "parts")
-    pytest_check.equal(dirs.overlay_dir, new_dir / work_dir / "overlay")
-    pytest_check.equal(dirs.overlay_mount_dir, new_dir / work_dir / "overlay/overlay")
-    pytest_check.equal(
-        dirs.overlay_packages_dir, new_dir / work_dir / "overlay/packages"
-    )
-    pytest_check.equal(dirs.overlay_work_dir, new_dir / work_dir / "overlay/work")
-    pytest_check.equal(dirs.stage_dir, new_dir / work_dir / "stage/default")
-    pytest_check.equal(dirs.prime_dir, new_dir / work_dir / "prime/default")
+    pytest_check.equal(dirs.work_dir, dirs.work_dir)
+    pytest_check.equal(dirs.parts_dir, dirs.work_dir / "parts")
+    pytest_check.equal(dirs.overlay_dir, dirs.work_dir / "overlay")
+    pytest_check.equal(dirs.overlay_mount_dir, dirs.overlay_dir / "overlay")
+    pytest_check.equal(dirs.overlay_packages_dir, dirs.overlay_dir / "packages")
+    pytest_check.equal(dirs.overlay_work_dir, dirs.overlay_dir / "work")
+    pytest_check.equal(dirs.base_stage_dir, dirs.work_dir / "stage")
+    pytest_check.equal(dirs.stage_dir, dirs.base_stage_dir / "default")
+    pytest_check.equal(dirs.base_prime_dir, dirs.work_dir / "prime")
+    pytest_check.equal(dirs.prime_dir, dirs.base_prime_dir / "default")
+    pytest_check.equal(dirs.stage_dirs.keys(), set(partitions))
+    pytest_check.equal(dirs.prime_dirs.keys(), set(partitions))
+    for partition, directory in dirs.stage_dirs.items():
+        pytest_check.equal(directory, dirs.base_stage_dir / partition)
+    for partition, directory in dirs.prime_dirs.items():
+        pytest_check.equal(directory, dirs.base_prime_dir / partition)
