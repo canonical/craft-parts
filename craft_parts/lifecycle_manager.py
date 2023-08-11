@@ -287,11 +287,8 @@ def _ensure_overlay_supported() -> None:
 
 
 def _build_part(
-    name: str,
-    spec: Dict[str, Any],
-    project_dirs: ProjectDirs,
-    strict_plugins: bool,
-    partitions: Optional[List[str]],
+    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, strict_plugins: bool,
+    partitions: Optional[List[str]]
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -338,11 +335,8 @@ def _build_part(
 
     # initialize part and unmarshal part specs
     part = Part(
-        name,
-        part_spec,
-        project_dirs=project_dirs,
-        plugin_properties=properties,
-        partitions=partitions,
+        name, part_spec, project_dirs=project_dirs, plugin_properties=properties,
+        partitions=partitions
     )
 
     return part
@@ -396,26 +390,35 @@ def _validate_partition_usage_in_parts(part_list, partitions):
             part.spec.prime_files,
             part.spec.stage_files,
         ]:
-            _validate_partitions_in_keywords(filepaths, partitions)
+            _validate_partitions_in_paths(filepaths, partitions)
 
 
-def _validate_partitions_in_keywords(
-    filepaths: List[str], valid_partitions: List[str]
+def _validate_partitions_in_paths(
+    paths: List[str], valid_partitions: List[str]
 ) -> None:
-    """Get a filepath compatible with the partitions feature."""
+    """Validate a list of paths to ensure that any partitions are unambiguous.
+
+    Each path in the the list of paths should either explicitly name a valid
+    partition or should not begin with a partition name. If a path contains
+    an explicitly declared invalid partition, an error will be raised.
+    If a path begins with a name that is a valid partition but does not use
+    the parenthetical to indicate that it is a partition, a warning will be
+    logged that the path will go into the default partition and that the user
+    should specify the default partition in that path to silence the warning.
+    """
     # do not validate default glob
-    if filepaths == ["*"]:
+    if paths == ["*"]:
         return
 
-    for filepath in filepaths:
-        match = re.match("-?\\((?P<partition>[a-z]+)\\)", filepath)
+    for filepath in paths:
+        match = re.match("^-?\\((?P<partition>[a-z]+)\\)", filepath)
         if match:
             partition = match.group("partition")
             if partition not in valid_partitions:
                 raise errors.InvalidPartitionError(
                     partition, filepath, valid_partitions
                 )
-        match = re.match("-?(?P<possible_partition>[a-z]+)/?", filepath)
+        match = re.match("^-?(?P<possible_partition>[a-z]+)/?", filepath)
         if match:
             partition = match.group("possible_partition")
             if partition in valid_partitions:

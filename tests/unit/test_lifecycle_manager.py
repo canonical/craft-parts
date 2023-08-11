@@ -424,7 +424,7 @@ class TestValidatePartitions:
         ],
     )
     def test_validate_partitions_in_keywords_success(self, filepaths, partitions):
-        lifecycle_manager._validate_partitions_in_keywords(filepaths, partitions)
+        lifecycle_manager._validate_partitions_in_paths(filepaths, partitions)
 
     @pytest.mark.parametrize(
         ("filepaths", "exc_class", "message"),
@@ -446,7 +446,7 @@ class TestValidatePartitions:
         self, filepaths, exc_class, message
     ):
         with pytest.raises(exc_class) as exc_info:
-            lifecycle_manager._validate_partitions_in_keywords(
+            lifecycle_manager._validate_partitions_in_paths(
                 filepaths, ["default", "other"]
             )
 
