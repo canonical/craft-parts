@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Utility functions for paths.."""
+"""Utility functions for paths."""
 import re
 from pathlib import PurePath, PurePosixPath
 from typing import NamedTuple, Optional, TypeVar, Union, cast
