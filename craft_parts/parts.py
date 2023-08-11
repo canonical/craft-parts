@@ -214,7 +214,7 @@ class Part:
         self.name = name
         self.plugin_name = plugin_name
         self.plugin_properties = plugin_properties
-        self._dirs = project_dirs
+        self.dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
         self._part_dir = project_dirs.parts_dir / name
 
@@ -231,7 +231,7 @@ class Part:
     @property
     def parts_dir(self) -> Path:
         """Return the directory containing work files for each part."""
-        return self._dirs.parts_dir
+        return self.dirs.parts_dir
 
     @property
     def part_src_dir(self) -> Path:
@@ -335,7 +335,7 @@ class Part:
     @property
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
-        return self._dirs.overlay_dir
+        return self.dirs.overlay_dir
 
     @property
     def base_stage_dir(self) -> Path:
@@ -343,7 +343,7 @@ class Part:
 
         If partitions are enabled, this is the directory containing those partitions.
         """
-        return self._dirs.base_stage_dir
+        return self.dirs.base_stage_dir
 
     @property
     def stage_dir(self) -> Path:
@@ -351,7 +351,7 @@ class Part:
 
         If partitions are enabled, this is the stage directory for the default partition
         """
-        return self._dirs.stage_dir
+        return self.dirs.stage_dir
 
     @property
     def stage_dirs(self) -> Mapping[Optional[str], Path]:
@@ -359,7 +359,7 @@ class Part:
 
         If partitions are disabled, the only key is ``None``.
         """
-        return self._dirs.stage_dirs
+        return self.dirs.stage_dirs
 
     @property
     def base_prime_dir(self) -> Path:
@@ -367,7 +367,7 @@ class Part:
 
         If partitions are enabled, this is the directory containing those partitions.
         """
-        return self._dirs.base_prime_dir
+        return self.dirs.base_prime_dir
 
     @property
     def prime_dir(self) -> Path:
@@ -375,7 +375,7 @@ class Part:
 
         If partitions are enabled, this is the prime directory for the default partition
         """
-        return self._dirs.prime_dir
+        return self.dirs.prime_dir
 
     @property
     def prime_dirs(self) -> Mapping[Optional[str], Path]:
@@ -383,7 +383,7 @@ class Part:
 
         If partitions are disabled, the only key is ``None``.
         """
-        return self._dirs.prime_dirs
+        return self.dirs.prime_dirs
 
     @property
     def dependencies(self) -> List[str]:

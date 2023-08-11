@@ -41,8 +41,8 @@ class ProjectDirs:
     def __init__(
         self,
         *,
+        partitions: Optional[Sequence[str]],
         work_dir: Union[Path, str] = ".",
-        partitions: Optional[Sequence[str]] = None,
     ):
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()

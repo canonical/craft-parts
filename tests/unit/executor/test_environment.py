@@ -284,9 +284,9 @@ def test_generate_step_environment_no_user_env(new_dir):
         ("ENVVAR", "from_app"),
     ],
 )
-def test_expand_variables(new_dir, var, value):
+def test_expand_variables(new_dir, partitions, var, value):
     info = ProjectInfo(
-        project_dirs=ProjectDirs(work_dir="/work"),
+        project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
         arch="aarch64",
         application_name="xyz",
         cache_dir=new_dir,
@@ -304,9 +304,9 @@ def test_expand_variables(new_dir, var, value):
     }
 
 
-def test_expand_variables_skip(new_dir):
+def test_expand_variables_skip(new_dir, partitions):
     info = ProjectInfo(
-        project_dirs=ProjectDirs(work_dir="/work"),
+        project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
         arch="aarch64",
         application_name="xyz",
         cache_dir=new_dir,
@@ -330,10 +330,10 @@ def test_expand_variables_skip(new_dir):
         {"CRAFT_DEFAULT_STAGE", "CRAFT_DEFAULT_PRIME"},
     ],
 )
-def test_get_global_environment(new_dir, invalid_vars):
+def test_get_global_environment(new_dir, partitions, invalid_vars):
     """Test that get_global_environment doesn't include partitions when disabled."""
     info = ProjectInfo(
-        project_dirs=ProjectDirs(work_dir="/work"),
+        project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
         arch="aarch64",
         application_name="xyz",
         cache_dir=new_dir,

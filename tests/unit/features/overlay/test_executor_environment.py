@@ -47,8 +47,8 @@ class FooPlugin(plugins.Plugin):
 
 
 @pytest.fixture(autouse=True)
-def directories(new_dir):  # pylint: disable=unused-argument
-    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+def directories(new_dir, partitions):
+    info = ProjectInfo(application_name="test", cache_dir=new_dir, partitions=partitions)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
     for directory in [
@@ -74,8 +74,8 @@ def directories(new_dir):  # pylint: disable=unused-argument
 # pylint: disable=line-too-long
 
 
-def test_generate_step_environment_build(new_dir):
-    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
+def test_generate_step_environment_build(new_dir, partitions):
+    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]}, partitions=partitions)
     info = ProjectInfo(
         arch="aarch64",
         application_name="xyz",
@@ -128,8 +128,8 @@ def test_generate_step_environment_build(new_dir):
     )
 
 
-def test_generate_step_environment_no_project_name(new_dir):
-    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
+def test_generate_step_environment_no_project_name(new_dir, partitions):
+    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]}, partitions=partitions)
     info = ProjectInfo(
         arch="aarch64",
         application_name="xyz",
@@ -178,8 +178,8 @@ def test_generate_step_environment_no_project_name(new_dir):
 
 
 @pytest.mark.parametrize("step", set(Step) - {Step.BUILD})
-def test_generate_step_environment_no_build(new_dir, step):
-    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
+def test_generate_step_environment_no_build(new_dir, partitions, step):
+    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]}, partitions=partitions)
     info = ProjectInfo(
         arch="aarch64",
         application_name="xyz",
@@ -228,13 +228,14 @@ def test_generate_step_environment_no_build(new_dir, step):
     )
 
 
-def test_generate_step_environment_no_user_env(new_dir):
+def test_generate_step_environment_no_user_env(new_dir, partitions):
     p1 = Part("p1", {})
     info = ProjectInfo(
         arch="aarch64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
+        partitions=partitions,
     )
     part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=Step.PRIME)
@@ -288,14 +289,15 @@ def test_generate_step_environment_no_user_env(new_dir):
         ("ENVVAR", "from_app"),
     ],
 )
-def test_expand_variables(new_dir, var, value):
+def test_expand_variables(new_dir, partitions, var, value):
     info = ProjectInfo(
-        project_dirs=ProjectDirs(work_dir="/work"),
+        project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
         arch="aarch64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
         work_dir="/work",
+        partitions=partitions
     )
     info.global_environment.update({"ENVVAR": "from_app"})
 
@@ -308,14 +310,15 @@ def test_expand_variables(new_dir, var, value):
     }
 
 
-def test_expand_variables_skip(new_dir):
+def test_expand_variables_skip(new_dir, partitions):
     info = ProjectInfo(
-        project_dirs=ProjectDirs(work_dir="/work"),
+        project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
         arch="aarch64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
         work_dir="/work",
+        partitions=partitions
     )
     info.global_environment.update({"ENVVAR": "from_app"})
 

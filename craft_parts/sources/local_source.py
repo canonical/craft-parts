@@ -26,6 +26,7 @@ from typing import Any, Callable, List, Optional, Set, Tuple
 
 from overrides import overrides
 
+from craft_parts import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors
@@ -42,10 +43,11 @@ class LocalSource(SourceHandler):
     def __init__(
         self,
         *args: Any,
+        project_dirs: ProjectDirs,
         copy_function: Callable[..., None] = file_utils.link_or_copy,
         **kwargs: Any,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, project_dirs=project_dirs, **kwargs)
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function
 

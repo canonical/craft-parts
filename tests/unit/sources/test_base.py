@@ -20,6 +20,7 @@ from typing import Optional
 import pytest
 from overrides import overrides
 
+from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
 from craft_parts.sources.base import FileSourceHandler, SourceHandler
 
@@ -37,11 +38,13 @@ class TestSourceHandler:
     """Verify SourceHandler methods and attributes."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, partitions):
+        dirs = ProjectDirs(partitions=partitions)
         self.source = FooSourceHandler(
             source="source",
             part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
+            project_dirs=dirs
         )
 
     def test_source(self):

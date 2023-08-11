@@ -23,7 +23,7 @@ from unittest.mock import call
 import pytest
 import pytest_check  # type: ignore[import]
 
-from craft_parts import errors, packages
+from craft_parts import errors, packages, ProjectDirs
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
 from craft_parts.executor.part_handler import PartHandler
@@ -418,8 +418,11 @@ class TestPartUpdateHandler:
         Path("subdir").mkdir()
         Path("subdir/foo.txt").write_text("content")
 
+        self._dirs = ProjectDirs(partitions=partitions)
+
         self._project_info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test", cache_dir=new_dir, partitions=partitions,
+            project_dirs=self._dirs
         )
         ovmgr = OverlayManager(
             project_info=self._project_info, part_list=[self._part], base_layer_dir=None

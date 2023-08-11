@@ -162,10 +162,10 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
             raise RuntimeError("Partitions enabled but no partitions specified.")
         for partition in info.partitions:
             global_environment[f"CRAFT_{partition.upper()}_STAGE"] = str(
-                info.work_dir / "stage" / partition
+                info.get_stage_dir(partition=partition)
             )
             global_environment[f"CRAFT_{partition.upper()}_PRIME"] = str(
-                info.work_dir / "prime" / partition
+                info.get_prime_dir(partition=partition)
             )
 
     global_environment["CRAFT_STAGE"] = str(info.stage_dir)

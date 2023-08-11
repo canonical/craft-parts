@@ -632,6 +632,7 @@ class PartHandler:
                 self._part.part_build_dir,
                 copy_function=file_utils.copy,
                 cache_dir=step_info.cache_dir,
+                project_dirs=self._part.dirs
             )
             state_file = states.get_step_state_path(self._part, step_info.step)
             source.check_if_outdated(str(state_file))  # required by source.update()

@@ -295,7 +295,7 @@ class TestStepHandlerRunScriptlet:
     def setup(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
         self._part = Part("p1", {"source": "."}, partitions=partitions)
-        self._dirs = ProjectDirs()
+        self._dirs = ProjectDirs(partitions=partitions)
         self._project_info = ProjectInfo(
             project_dirs=self._dirs,
             application_name="test",

@@ -30,13 +30,14 @@ from craft_parts.sources.local_source import LocalSource
 class TestLocal:
     """Various tests for the local source handler."""
 
-    def test_pull_with_existing_empty_source_dir_creates_hardlinks(self, new_dir):
+    def test_pull_with_existing_empty_source_dir_creates_hardlinks(self, new_dir, partitions):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         os.mkdir("destination")
 
-        local = LocalSource("src", "destination", cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
         local.pull()
 
         # Verify that the directories are not symlinks, but the file is a
@@ -45,14 +46,15 @@ class TestLocal:
         assert os.path.islink(os.path.join("destination", "dir")) is False
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_with_existing_source_tree_creates_hardlinks(self, new_dir):
+    def test_pull_with_existing_source_tree_creates_hardlinks(self, new_dir, partitions):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         os.mkdir("destination")
         open(os.path.join("destination", "existing-file"), "w").close()
 
-        local = LocalSource("src", "destination", cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
         local.pull()
 
         # Verify that the directories are not symlinks, but the file is a
@@ -62,36 +64,41 @@ class TestLocal:
         assert os.path.isfile(os.path.join("destination", "existing-file"))
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_with_existing_source_link_error(self, new_dir):
+    def test_pull_with_existing_source_link_error(self, new_dir, partitions):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         # Note that this is a symlink now instead of a directory
         os.symlink("dummy", "destination")
 
-        local = LocalSource("src", "destination", cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
 
         with pytest.raises(errors.CopyTreeError):
             local.pull()
 
-    def test_pull_with_existing_source_file_error(self, new_dir):
+    def test_pull_with_existing_source_file_error(self, new_dir, partitions):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         # Note that this is a file now instead of a directory
         open("destination", "w").close()
 
-        local = LocalSource("src", "destination", cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+
+        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
         with pytest.raises(errors.CopyTreeError):
             local.pull()
 
-    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self, new_dir):
+    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self, new_dir, partitions):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
         os.mkdir("destination")
 
-        local = LocalSource("src", "destination", cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+
+        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
         local.pull()
         local.pull()
 
@@ -101,7 +108,7 @@ class TestLocal:
         assert os.path.islink(os.path.join("destination", "dir")) is False
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_ignores_own_work_data(self, new_dir):
+    def test_pull_ignores_own_work_data(self, new_dir, partitions):
         # Make the snapcraft-specific directories
         os.makedirs("parts/foo/src")
         os.makedirs("stage")
@@ -115,8 +122,11 @@ class TestLocal:
         os.makedirs("dir")
         open(os.path.join("dir", "file"), "w").close()
 
+        dirs = ProjectDirs(partitions=partitions)
+
         local = LocalSource(
-            ".", "parts/foo/src", cache_dir=new_dir, ignore_patterns=["*.znap"]
+            ".", "parts/foo/src", cache_dir=new_dir, ignore_patterns=["*.znap"],
+            project_dirs=dirs
         )
         local.pull()
 
@@ -131,7 +141,7 @@ class TestLocal:
         assert os.path.isdir(os.path.join("parts", "foo", "src", "dir"))
         assert os.stat(os.path.join("parts", "foo", "src", "dir", "file")).st_nlink > 1
 
-    def test_pull_ignores_own_work_data_work_dir(self, new_dir):
+    def test_pull_ignores_own_work_data_work_dir(self, new_dir, partitions):
         # Make the snapcraft-specific directories
         os.makedirs(os.path.join("src", "work_dir"))
         os.makedirs(os.path.join("src", "parts"))
@@ -142,7 +152,7 @@ class TestLocal:
 
         os.mkdir("destination")
 
-        dirs = ProjectDirs(work_dir="src/work_dir")
+        dirs = ProjectDirs(work_dir="src/work_dir", partitions=partitions)
         local = LocalSource(
             "src",
             "destination",
@@ -162,7 +172,7 @@ class TestLocal:
         assert os.path.isdir(os.path.join("destination", "stage"))
         assert os.path.isdir(os.path.join("destination", "prime"))
 
-    def test_pull_ignores_own_work_data_deep_work_dir(self, new_dir):
+    def test_pull_ignores_own_work_data_deep_work_dir(self, new_dir, partitions):
         # Make the snapcraft-specific directories
         os.makedirs(os.path.join("src", "some/deep/work_dir"))
         os.makedirs(os.path.join("src", "parts"))
@@ -174,7 +184,7 @@ class TestLocal:
 
         os.mkdir("destination")
 
-        dirs = ProjectDirs(work_dir="src/some/deep/work_dir")
+        dirs = ProjectDirs(work_dir="src/some/deep/work_dir", partitions=partitions)
         local = LocalSource(
             "src",
             "destination",
@@ -197,7 +207,7 @@ class TestLocal:
         # This has the same name but it's not the real work dir
         assert os.path.isdir(os.path.join("destination", "work_dir"))
 
-    def test_pull_work_dir_outside(self, new_dir):
+    def test_pull_work_dir_outside(self, new_dir, partitions):
         # Make the snapcraft-specific directories
         os.makedirs(os.path.join("src", "work_dir"))
         os.makedirs(os.path.join("src", "parts"))
@@ -207,7 +217,7 @@ class TestLocal:
 
         os.mkdir("destination")
 
-        dirs = ProjectDirs(work_dir="/work_dir")
+        dirs = ProjectDirs(work_dir="/work_dir", partitions=partitions)
         local = LocalSource(
             "src",
             "destination",
@@ -224,14 +234,16 @@ class TestLocal:
         assert os.path.isdir(os.path.join("destination", "stage"))
         assert os.path.isdir(os.path.join("destination", "prime"))
 
-    def test_pull_keeps_symlinks(self, new_dir):
+    def test_pull_keeps_symlinks(self, new_dir, partitions):
         # Create a source containing a directory, a file and symlinks to both.
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
         os.symlink("dir", os.path.join("src", "dir_symlink"))
         os.symlink("file", os.path.join("src", "dir", "file_symlink"))
 
-        local = LocalSource("src", "destination", cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+
+        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
         local.pull()
 
         # Verify that both the file and the directory symlinks were kept.
@@ -245,9 +257,9 @@ class TestLocal:
     def test_has_source_handler_entry(self):
         assert sources._source_handler["local"] is LocalSource
 
-    def test_ignore_patterns_workdir(self, new_dir):
+    def test_ignore_patterns_workdir(self, new_dir, partitions):
         ignore_patterns = ["hello"]
-        project_dirs = ProjectDirs(work_dir=Path("src/work"))
+        project_dirs = ProjectDirs(work_dir=Path("src/work"), partitions=partitions)
 
         s1 = LocalSource(
             "src",
@@ -267,8 +279,8 @@ class TestLocal:
         )
         assert s2._ignore_patterns == ["hello", "work"]
 
-    def test_source_does_not_exist(self, new_dir):
-        dirs = ProjectDirs(work_dir=Path("src/work"))
+    def test_source_does_not_exist(self, new_dir, partitions):
+        dirs = ProjectDirs(work_dir=Path("src/work"), partitions=partitions)
         local = LocalSource(
             "does-not-exist",
             "destination",
@@ -290,7 +302,7 @@ class TestLocalUpdate:
             ("file.ignore", True),
         ],
     )
-    def test_file_modified(self, new_dir, name, ignored):
+    def test_file_modified(self, new_dir, partitions, name, ignored):
         source = "source"
         destination = "destination"
         os.mkdir(source)
@@ -306,8 +318,11 @@ class TestLocalUpdate:
         modify_time = os.stat("reference").st_mtime
         os.utime("reference", (access_time, modify_time + 1))
 
+        dirs = ProjectDirs(partitions=partitions)
+
         local = LocalSource(
-            source, destination, cache_dir=new_dir, ignore_patterns=["*.ignore"]
+            source, destination, cache_dir=new_dir, ignore_patterns=["*.ignore"],
+            project_dirs=dirs
         )
         local.pull()
 
@@ -343,7 +358,7 @@ class TestLocalUpdate:
             with open(os.path.join(destination, name)) as f:
                 assert f.read() == "2"
 
-    def test_file_added(self, new_dir):
+    def test_file_added(self, new_dir, partitions):
         source = "source"
         destination = "destination"
         os.mkdir(source)
@@ -359,7 +374,9 @@ class TestLocalUpdate:
         modify_time = os.stat("reference").st_mtime
         os.utime("reference", (access_time, modify_time + 1))
 
-        local = LocalSource(source, destination, cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+
+        local = LocalSource(source, destination, cache_dir=new_dir, project_dirs=dirs)
         local.pull()
 
         # Expect no updates to be available
@@ -382,7 +399,7 @@ class TestLocalUpdate:
         local.update()
         assert os.path.isfile(os.path.join(destination, "file2"))
 
-    def test_directory_modified(self, new_dir):
+    def test_directory_modified(self, new_dir, partitions):
         source = "source"
         source_dir = os.path.join(source, "dir")
         destination = "destination"
@@ -398,8 +415,9 @@ class TestLocalUpdate:
         access_time = os.stat("reference").st_atime
         modify_time = os.stat("reference").st_mtime
         os.utime("reference", (access_time, modify_time + 1))
+        dirs = ProjectDirs(partitions=partitions)
 
-        local = LocalSource(source, destination, cache_dir=new_dir)
+        local = LocalSource(source, destination, cache_dir=new_dir, project_dirs=dirs)
         local.pull()
 
         # Expect no updates to be available
@@ -422,7 +440,7 @@ class TestLocalUpdate:
         local.update()
         assert os.path.isfile(os.path.join(destination, "dir", "file2"))
 
-    def test_ignored_files(self, new_dir):
+    def test_ignored_files(self, new_dir, partitions):
         Path("source").mkdir()
         Path("destination").mkdir()
         Path("source/foo.txt").touch()
@@ -431,8 +449,11 @@ class TestLocalUpdate:
         ignore_patterns = ["*.ignore"]
         also_ignore = ["also ignore"]
 
+        dirs = ProjectDirs(partitions=partitions)
+
         local = LocalSource(
-            "source", "destination", cache_dir=new_dir, ignore_patterns=ignore_patterns
+            "source", "destination", cache_dir=new_dir, ignore_patterns=ignore_patterns,
+            project_dirs=dirs
         )
         local.pull()
 
