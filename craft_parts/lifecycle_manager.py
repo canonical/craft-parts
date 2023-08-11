@@ -367,14 +367,14 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
             )
 
         if partitions[0] != "default":
-            raise ValueError("First partition must be 'default'.")
+            raise errors.FeatureError("First partition must be 'default'.")
 
         if len(partitions) != len(set(partitions)):
-            raise ValueError("Partitions must be unique.")
+            raise errors.FeatureError("Partitions must be unique.")
 
         for partition in partitions:
             if not re.fullmatch("[a-z]+", partition):
-                raise ValueError(
+                raise errors.FeatureError(
                     f"Partition {partition!r} must only contain lowercase letters."
                 )
 

@@ -130,7 +130,7 @@ class TestPartitionsSupport:
     )
     def test_partitions_default_not_first(self, new_dir, parts_data, partitions):
         """Raise an error if the first partition is not 'default'."""
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
@@ -138,7 +138,7 @@ class TestPartitionsSupport:
                 partitions=partitions,
             )
 
-        assert str(raised.value) == "First partition must be 'default'."
+        assert raised.value.brief == "First partition must be 'default'."
 
     @pytest.mark.parametrize(
         "partitions",
@@ -153,7 +153,8 @@ class TestPartitionsSupport:
     def test_partitions_invalid(self, new_dir, parts_data, partitions):
         """Raise an error if partitions are not lowercase alphabetical characters."""
         with pytest.raises(
-            ValueError, match=r"Partition '[\w-]*' must only contain lowercase letters."
+            errors.FeatureError,
+            match=r"Partition '[\w-]*' must only contain lowercase letters.*",
         ):
             lifecycle_manager.LifecycleManager(
                 parts_data,
@@ -173,7 +174,7 @@ class TestPartitionsSupport:
     )
     def test_partitions_duplicates(self, new_dir, parts_data, partitions):
         """Raise an error if there are duplicate partitions."""
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
@@ -181,7 +182,7 @@ class TestPartitionsSupport:
                 partitions=partitions,
             )
 
-        assert str(raised.value) == "Partitions must be unique."
+        assert raised.value.message == "Partitions must be unique."
 
     def test_partitions_usage_valid(self, new_dir, partition_list):
         """Verify partitions can be used in parts when creating a LifecycleManager."""
@@ -212,7 +213,7 @@ class TestPartitionsSupport:
                 },
             }
         }
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
@@ -220,7 +221,7 @@ class TestPartitionsSupport:
                 partitions=partition_list,
             )
 
-        assert str(raised.value) == dedent(
+        assert raised.value.message == dedent(
             """\
             Error: Invalid usage of partitions:
               parts.foo.stage
@@ -315,24 +316,19 @@ class TestValidatePartitions(test_lifecycle_manager.TestValidatePartitions):
         lifecycle_manager._validate_partitions(partitions)
 
     @pytest.mark.parametrize(
-        ("partitions", "exc_class", "message"),
+        ("partitions", "message"),
         [
-            (
-                [],
-                errors.FeatureError,
-                "Partition feature is enabled but no partitions are defined.",
-            ),
-            (["lol"], ValueError, "First partition must be 'default'."),
-            (["default", "default"], ValueError, "Partitions must be unique."),
+            ([], "Partition feature is enabled but no partitions are defined."),
+            (["lol"], "First partition must be 'default'."),
+            (["default", "default"], "Partitions must be unique."),
             (
                 ["default", "!!!"],
-                ValueError,
                 "Partition '!!!' must only contain lowercase letters.",
             ),
         ],
     )
-    def test_validate_partitions_failure(self, partitions, exc_class, message):
-        with pytest.raises(exc_class) as exc_info:
+    def test_validate_partitions_failure(self, partitions, message):
+        with pytest.raises(errors.FeatureError) as exc_info:
             lifecycle_manager._validate_partitions(partitions)
 
         assert exc_info.value.args[0] == message

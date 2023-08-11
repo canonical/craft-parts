@@ -20,6 +20,8 @@ import io
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
+import errors
+
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.parts import Part
@@ -159,7 +161,7 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
 
     if Features().enable_partitions:
         if not info.partitions:
-            raise RuntimeError("Partitions enabled but no partitions specified.")
+            raise errors.FeatureError("Partitions enabled but no partitions specified.")
         for partition in info.partitions:
             global_environment[f"CRAFT_{partition.upper()}_STAGE"] = str(
                 info.get_stage_dir(partition=partition)

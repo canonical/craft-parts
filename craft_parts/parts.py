@@ -625,7 +625,7 @@ def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> No
         error_list.extend(part.check_partition_usage(partitions))
 
     if error_list:
-        raise ValueError(
+        raise errors.FeatureError(
             "Error: Invalid usage of partitions:\n"
             + "\n".join(error_list)
             + f"\nValid partitions are {humanize_list(partitions, 'and')}."

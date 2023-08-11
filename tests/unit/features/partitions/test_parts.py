@@ -19,6 +19,7 @@ from textwrap import dedent
 import pytest
 import pytest_check  # type: ignore[import]
 
+from craft_parts import errors
 from craft_parts import ProjectDirs, parts
 from craft_parts.parts import Part
 from tests.unit import test_parts
@@ -190,12 +191,12 @@ class TestPartPartitionUsage:
             "prime": ["(baz)"],
         }
 
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             parts.validate_partition_usage(
                 [Part("part-a", part_data, partitions=partition_list)], partition_list
             )
 
-        assert str(raised.value) == dedent(
+        assert raised.value.brief == dedent(
             """\
             Error: Invalid usage of partitions:
               parts.part-a.organize
@@ -225,10 +226,10 @@ class TestPartPartitionUsage:
             Part("part-b", part_data, partitions=partition_list),
         ]
 
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             parts.validate_partition_usage(part_list, partition_list)
 
-        assert str(raised.value) == dedent(
+        assert raised.value.message == dedent(
             """\
             Error: Invalid usage of partitions:
               parts.part-a.organize
