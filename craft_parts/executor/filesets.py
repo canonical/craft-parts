@@ -47,19 +47,13 @@ class Fileset:
     @property
     def includes(self) -> List[str]:
         """Return the list of files to be included."""
-        return [
-            path_utils.get_partition_compatible_path(x)
-            for x in self._list
-            if x[0] != "-"
-        ]
+        return [path_utils.get_partitioned_path(x) for x in self._list if x[0] != "-"]
 
     @property
     def excludes(self) -> List[str]:
         """Return the list of files to be excluded."""
         return [
-            path_utils.get_partition_compatible_path(x[1:])
-            for x in self._list
-            if x[0] == "-"
+            path_utils.get_partitioned_path(x[1:]) for x in self._list if x[0] == "-"
         ]
 
     def remove(self, item: str) -> None:
@@ -173,9 +167,9 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
     processed_includes: List[str] = []
     processed_excludes: List[str] = []
     for file in includes:
-        processed_includes.append(path_utils.get_partition_compatible_path(file))
+        processed_includes.append(path_utils.get_partitioned_path(file))
     for file in excludes:
-        processed_excludes.append(path_utils.get_partition_compatible_path(file))
+        processed_excludes.append(path_utils.get_partitioned_path(file))
     return processed_includes, processed_excludes
 
 

@@ -121,17 +121,17 @@ class TestFileMigration:
     def test_migrate_files_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
-        bin_path = path_utils.get_partition_compatible_path("bin")
+        bin_path = path_utils.get_partitioned_path("bin")
         expected_dirs = {"default"} if partitions else set()
 
-        Path(install_dir, path_utils.get_partition_compatible_path("usr/bin")).mkdir(
+        Path(install_dir, path_utils.get_partitioned_path("usr/bin")).mkdir(
             parents=True
         )
         stage_dir.mkdir()
 
-        Path(
-            install_dir, path_utils.get_partition_compatible_path("usr/bin/foo")
-        ).write_text("installed")
+        Path(install_dir, path_utils.get_partitioned_path("usr/bin/foo")).write_text(
+            "installed"
+        )
         Path("install", bin_path).symlink_to("usr/bin")
 
         files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
@@ -144,7 +144,7 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert files == {path_utils.get_partition_compatible_path("bin")}
+        assert files == {path_utils.get_partitioned_path("bin")}
         assert dirs == expected_dirs
         assert Path(stage_dir, bin_path).is_symlink()
 

@@ -38,7 +38,7 @@ def _has_partition(path: Union[PurePath, str]) -> bool:
     return bool(HAS_PARTITION_REGEX.match(str(path)))
 
 
-def get_partition_compatible_path(path: FlexiblePath) -> FlexiblePath:
+def get_partitioned_path(path: FlexiblePath) -> FlexiblePath:
     """Get a filepath compatible with the partitions feature.
 
     If the filepath begins with a partition, then the parentheses are stripped from the
