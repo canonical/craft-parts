@@ -39,12 +39,12 @@ class TestSourceHandler:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
-        dirs = ProjectDirs(partitions=partitions)
+        self._dirs = ProjectDirs(partitions=partitions)
         self.source = FooSourceHandler(
             source="source",
             part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
-            project_dirs=dirs,
+            project_dirs=self._dirs,
         )
 
     def test_source(self):
@@ -77,7 +77,8 @@ class TestSourceHandler:
         with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultySource(  # type: ignore
-                source=".", part_src_dir=Path(), cache_dir=Path()
+                source=".", part_src_dir=Path(), cache_dir=Path(),
+                project_dirs=self._dirs,
             )
 
 
@@ -102,12 +103,12 @@ class TestFileSourceHandler:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
-        dirs = ProjectDirs(partitions=partitions)
+        self._dirs = ProjectDirs(partitions=partitions)
         self.source = BarFileSource(
             source="source",
             part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
-            project_dirs=dirs,
+            project_dirs=self._dirs,
         )
 
     def test_file_source(self):
@@ -236,5 +237,6 @@ class TestFileSourceHandler:
         with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultyFileSource(
-                source=None, part_src_dir=None, cache_dir=Path()  # type: ignore
+                source=None, part_src_dir=None, cache_dir=Path(),
+                project_dirs=self._dirs  # type: ignore
             )

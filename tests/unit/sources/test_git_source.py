@@ -76,9 +76,11 @@ def fake_get_current_branch(mocker):
 class GitBaseTestCase:
     """Helper functions for git tests."""
 
+    # pylint: disable=attribute-defined-outside-init
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
         self._dirs = ProjectDirs(partitions=partitions)
+    # pylint: enable=attribute-defined-outside-init
 
     def rm_dir(self, dir_name):
         if os.path.exists(dir_name):

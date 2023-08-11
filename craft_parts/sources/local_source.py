@@ -26,7 +26,7 @@ from typing import Any, Callable, List, Optional, Set, Tuple
 
 from overrides import overrides
 
-from craft_parts import ProjectDirs
+from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors

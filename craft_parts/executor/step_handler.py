@@ -32,7 +32,7 @@ from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
-from craft_parts.sources import SourceHandler
+from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils
 
