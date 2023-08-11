@@ -181,6 +181,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 
+    # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
         "step,scriptlet",
         [
@@ -222,6 +223,8 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         assert out == "hello\n"
         assert err == "+ echo hello\n"
         assert run_builtin_mock.mock_calls == []
+
+    # pylint: enable=too-many-arguments
 
     @pytest.mark.parametrize(
         "step,scriptlet",

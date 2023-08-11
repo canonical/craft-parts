@@ -242,6 +242,7 @@ class TestPartHandling:
             primed_stage_packages=set(),
         )
 
+    # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
         "step,scriptlet",
         [
@@ -281,6 +282,8 @@ class TestPartHandling:
         assert out == "hello\n"
         assert err == "+ echo hello\n"
         assert run_builtin_mock.mock_calls == []
+
+    # pylint: enable=too-many-arguments
 
     @pytest.mark.parametrize(
         "step,scriptlet",

@@ -53,8 +53,8 @@ class ProjectDirs:
         self.overlay_work_dir = self.overlay_dir / "work"
         self.base_stage_dir = self.work_dir / "stage"
         self.base_prime_dir = self.work_dir / "prime"
-        self._partitions = partitions or [None]
         if partitions:
+            self._partitions: Sequence[Optional[str]] = partitions
             self.stage_dir = self.base_stage_dir / "default"
             self.prime_dir = self.base_prime_dir / "default"
             stage_dirs: Dict[Optional[str], Path] = {
@@ -64,6 +64,7 @@ class ProjectDirs:
                 part: self.base_prime_dir / part for part in partitions
             }
         else:
+            self._partitions = [None]
             self.stage_dir = self.base_stage_dir
             self.prime_dir = self.base_prime_dir
             stage_dirs = {None: self.stage_dir}

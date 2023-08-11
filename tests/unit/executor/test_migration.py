@@ -405,8 +405,8 @@ class TestHelpers:
         Path("subdir2/baz.txt").write_text("yet another content")
 
         stage = Path("stage/default" if partitions else "stage")
-        foo = stage / "foo.txt"
-        bar = stage / "bar.txt"
+        foo_path = stage / "foo.txt"
+        bar_path = stage / "bar.txt"
 
         info = ProjectInfo(
             application_name="test", cache_dir=new_dir, partitions=partitions
@@ -434,8 +434,8 @@ class TestHelpers:
 
         part_states = part_handler._load_part_states(Step.STAGE, part_list=[p1, p2])
 
-        assert foo.is_file()
-        assert bar.is_file()
+        assert foo_path.is_file()
+        assert bar_path.is_file()
 
         # TODO: also test files shared with overlay
 
@@ -446,8 +446,8 @@ class TestHelpers:
             overlay_migration_state=None,
         )
 
-        assert foo.is_file()  # remains, it's shared with p2
-        assert bar.is_file()
+        assert foo_path.is_file()  # remains, it's shared with p2
+        assert bar_path.is_file()
 
         migration.clean_shared_area(
             part_name="p2",
@@ -456,8 +456,8 @@ class TestHelpers:
             overlay_migration_state=None,
         )
 
-        assert not foo.exists()
-        assert not bar.exists()
+        assert not foo_path.exists()
+        assert not bar_path.exists()
 
     def test_clean_migrated_files(self, new_dir, partitions):
         Path("subdir").mkdir()
@@ -465,8 +465,8 @@ class TestHelpers:
         Path("subdir/bar").mkdir()
 
         stage = Path(new_dir, "stage/default" if partitions else "stage")
-        foo = stage / "foo.txt"
-        bar = stage / "bar"
+        foo_path = stage / "foo.txt"
+        bar_path = stage / "bar"
 
         p1 = Part("p1", {"plugin": "dump", "source": "subdir"}, partitions=partitions)
         info = ProjectInfo(
@@ -482,13 +482,13 @@ class TestHelpers:
         handler.run_action(Action("p1", Step.BUILD))
         handler.run_action(Action("p1", Step.STAGE))
 
-        assert foo.is_file()
-        assert bar.is_dir()
+        assert foo_path.is_file()
+        assert bar_path.is_dir()
 
         migration._clean_migrated_files({"foo.txt"}, {"bar"}, stage)
 
-        assert not foo.exists()
-        assert not bar.exists()
+        assert not foo_path.exists()
+        assert not bar_path.exists()
 
     def test_clean_migrated_files_missing(self, new_dir, partitions):
         Path("subdir").mkdir()

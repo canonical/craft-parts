@@ -170,6 +170,7 @@ class PartSpec(BaseModel):
         )
 
 
+# pylint: disable=too-many-public-methods
 class Part:
     """Each of the components used in the project specification.
 
@@ -451,6 +452,9 @@ class Part:
             error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
 
         return error_list
+
+
+# pylint: enable=too-many-public-methods
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
