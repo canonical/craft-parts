@@ -27,7 +27,9 @@ from craft_parts.permissions import Permissions
 
 @pytest.fixture
 def part0(tmpdir, partitions) -> Part:
-    part = Part("part0", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions))
+    part = Part(
+        "part0", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+    )
     p = part.part_install_dir
     p.mkdir(parents=True)
     (p / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: File")
@@ -36,7 +38,9 @@ def part0(tmpdir, partitions) -> Part:
 
 @pytest.fixture
 def part1(tmpdir, partitions) -> Part:
-    part = Part("part1", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions))
+    part = Part(
+        "part1", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+    )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "a" / "1").write_text("")
@@ -46,7 +50,9 @@ def part1(tmpdir, partitions) -> Part:
 
 @pytest.fixture
 def part2(tmpdir, partitions) -> Part:
-    part = Part("part2", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions))
+    part = Part(
+        "part2", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+    )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "1").write_text("1")
@@ -58,7 +64,9 @@ def part2(tmpdir, partitions) -> Part:
 
 @pytest.fixture
 def part3(tmpdir, partitions) -> Part:
-    part = Part("part3", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions))
+    part = Part(
+        "part3", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+    )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "b").mkdir()
@@ -69,7 +77,9 @@ def part3(tmpdir, partitions) -> Part:
 
 @pytest.fixture
 def part4(tmpdir, partitions) -> Part:
-    part = Part("part4", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions))
+    part = Part(
+        "part4", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+    )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "a" / "2").write_text("")
@@ -81,7 +91,9 @@ def part4(tmpdir, partitions) -> Part:
 def part5(tmpdir, partitions) -> Part:
     # Create a new part with a symlink that collides with part1's
     # non-symlink.
-    part = Part("part5", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions))
+    part = Part(
+        "part5", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+    )
     p = part.part_install_dir
     p.mkdir(parents=True)
     (p / "a").symlink_to("foo")
@@ -93,7 +105,9 @@ def part5(tmpdir, partitions) -> Part:
 def part6(tmpdir, partitions) -> Part:
     # Create a new part with a symlink that points to a different place
     # than part5's symlink.
-    part = Part("part6", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions))
+    part = Part(
+        "part6", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+    )
     p = part.part_install_dir
     p.mkdir(parents=True)
     (p / "a").symlink_to("bar")
@@ -169,7 +183,11 @@ class TestCollisions:
         check_for_stage_collisions([part_built, part_not_built])
 
     def create_part_with_permissions(
-        self, part_name: str, permissions: List[Permissions], tmpdir: Path, partitions: List[str]
+        self,
+        part_name: str,
+        permissions: List[Permissions],
+        tmpdir: Path,
+        partitions: List[str],
     ) -> Part:
         part = Part(
             part_name,
@@ -198,8 +216,12 @@ class TestCollisions:
             Permissions(path="1", owner=1111, group=2222),
             Permissions(path="2", mode="755"),
         ]
-        p1 = self.create_part_with_permissions("part1", part1_permissions, tmpdir, partitions)
-        p2 = self.create_part_with_permissions("part2", part2_permissions, tmpdir, partitions)
+        p1 = self.create_part_with_permissions(
+            "part1", part1_permissions, tmpdir, partitions
+        )
+        p2 = self.create_part_with_permissions(
+            "part2", part2_permissions, tmpdir, partitions
+        )
 
         with pytest.raises(errors.PartFilesConflict) as raised:
             check_for_stage_collisions([p1, p2])

@@ -48,7 +48,9 @@ class FooPlugin(plugins.Plugin):
 
 @pytest.fixture(autouse=True)
 def directories(new_dir, partitions):
-    info = ProjectInfo(application_name="test", cache_dir=new_dir, partitions=partitions)
+    info = ProjectInfo(
+        application_name="test", cache_dir=new_dir, partitions=partitions
+    )
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
     for directory in [
@@ -75,7 +77,11 @@ def directories(new_dir, partitions):
 
 
 def test_generate_step_environment_build(new_dir, partitions):
-    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]}, partitions=partitions)
+    p1 = Part(
+        "p1",
+        {"build-environment": [{"PART_ENVVAR": "from_part"}]},
+        partitions=partitions,
+    )
     info = ProjectInfo(
         arch="aarch64",
         application_name="xyz",
@@ -129,7 +135,11 @@ def test_generate_step_environment_build(new_dir, partitions):
 
 
 def test_generate_step_environment_no_project_name(new_dir, partitions):
-    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]}, partitions=partitions)
+    p1 = Part(
+        "p1",
+        {"build-environment": [{"PART_ENVVAR": "from_part"}]},
+        partitions=partitions,
+    )
     info = ProjectInfo(
         arch="aarch64",
         application_name="xyz",
@@ -179,7 +189,11 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
 
 @pytest.mark.parametrize("step", set(Step) - {Step.BUILD})
 def test_generate_step_environment_no_build(new_dir, partitions, step):
-    p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]}, partitions=partitions)
+    p1 = Part(
+        "p1",
+        {"build-environment": [{"PART_ENVVAR": "from_part"}]},
+        partitions=partitions,
+    )
     info = ProjectInfo(
         arch="aarch64",
         application_name="xyz",
@@ -297,7 +311,7 @@ def test_expand_variables(new_dir, partitions, var, value):
         cache_dir=new_dir,
         project_name="test-project",
         work_dir="/work",
-        partitions=partitions
+        partitions=partitions,
     )
     info.global_environment.update({"ENVVAR": "from_app"})
 
@@ -318,7 +332,7 @@ def test_expand_variables_skip(new_dir, partitions):
         cache_dir=new_dir,
         project_name="test-project",
         work_dir="/work",
-        partitions=partitions
+        partitions=partitions,
     )
     info.global_environment.update({"ENVVAR": "from_app"})
 

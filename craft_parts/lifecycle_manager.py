@@ -287,8 +287,11 @@ def _ensure_overlay_supported() -> None:
 
 
 def _build_part(
-    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, strict_plugins: bool,
-    partitions: Optional[List[str]]
+    name: str,
+    spec: Dict[str, Any],
+    project_dirs: ProjectDirs,
+    strict_plugins: bool,
+    partitions: Optional[List[str]],
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -335,8 +338,11 @@ def _build_part(
 
     # initialize part and unmarshal part specs
     part = Part(
-        name, part_spec, project_dirs=project_dirs, plugin_properties=properties,
-        partitions=partitions
+        name,
+        part_spec,
+        project_dirs=project_dirs,
+        plugin_properties=properties,
+        partitions=partitions,
     )
 
     return part

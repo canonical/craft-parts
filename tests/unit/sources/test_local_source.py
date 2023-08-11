@@ -30,7 +30,9 @@ from craft_parts.sources.local_source import LocalSource
 class TestLocal:
     """Various tests for the local source handler."""
 
-    def test_pull_with_existing_empty_source_dir_creates_hardlinks(self, new_dir, partitions):
+    def test_pull_with_existing_empty_source_dir_creates_hardlinks(
+        self, new_dir, partitions
+    ):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
@@ -46,7 +48,9 @@ class TestLocal:
         assert os.path.islink(os.path.join("destination", "dir")) is False
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
-    def test_pull_with_existing_source_tree_creates_hardlinks(self, new_dir, partitions):
+    def test_pull_with_existing_source_tree_creates_hardlinks(
+        self, new_dir, partitions
+    ):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
@@ -90,7 +94,9 @@ class TestLocal:
         with pytest.raises(errors.CopyTreeError):
             local.pull()
 
-    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self, new_dir, partitions):
+    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(
+        self, new_dir, partitions
+    ):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
 
@@ -125,8 +131,11 @@ class TestLocal:
         dirs = ProjectDirs(partitions=partitions)
 
         local = LocalSource(
-            ".", "parts/foo/src", cache_dir=new_dir, ignore_patterns=["*.znap"],
-            project_dirs=dirs
+            ".",
+            "parts/foo/src",
+            cache_dir=new_dir,
+            ignore_patterns=["*.znap"],
+            project_dirs=dirs,
         )
         local.pull()
 
@@ -321,8 +330,11 @@ class TestLocalUpdate:
         dirs = ProjectDirs(partitions=partitions)
 
         local = LocalSource(
-            source, destination, cache_dir=new_dir, ignore_patterns=["*.ignore"],
-            project_dirs=dirs
+            source,
+            destination,
+            cache_dir=new_dir,
+            ignore_patterns=["*.ignore"],
+            project_dirs=dirs,
         )
         local.pull()
 
@@ -452,8 +464,11 @@ class TestLocalUpdate:
         dirs = ProjectDirs(partitions=partitions)
 
         local = LocalSource(
-            "source", "destination", cache_dir=new_dir, ignore_patterns=ignore_patterns,
-            project_dirs=dirs
+            "source",
+            "destination",
+            cache_dir=new_dir,
+            ignore_patterns=ignore_patterns,
+            project_dirs=dirs,
         )
         local.pull()
 

@@ -44,7 +44,7 @@ class TestSourceHandler:
             source="source",
             part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
-            project_dirs=dirs
+            project_dirs=dirs,
         )
 
     def test_source(self):

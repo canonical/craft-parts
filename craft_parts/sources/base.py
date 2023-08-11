@@ -63,7 +63,6 @@ class SourceHandler(abc.ABC):
         command: Optional[str] = None,
         ignore_patterns: Optional[List[str]] = None,
     ):
-
         if not ignore_patterns:
             ignore_patterns = []
 
