@@ -19,7 +19,6 @@ import stat
 from pathlib import Path
 
 import pytest
-from utils import path_utils
 
 from craft_parts.actions import Action
 from craft_parts.executor import filesets, migration, part_handler
@@ -29,6 +28,7 @@ from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions
 from craft_parts.steps import Step
+from craft_parts.utils import path_utils
 
 
 @pytest.mark.usefixtures("new_dir")

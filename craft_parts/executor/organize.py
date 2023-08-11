@@ -57,7 +57,7 @@ def organize_files(
             partition_path = os.path.join(f"({partition})", inner_path)
         else:
             dst = os.path.join(base_dir, inner_path)
-            partition_path = inner_path
+            partition_path = str(inner_path)
 
         sources = iglob(src, recursive=True)
 

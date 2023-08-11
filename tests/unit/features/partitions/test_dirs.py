@@ -35,7 +35,6 @@ def test_dirs_partitions(new_dir, work_dir, partitions):
     pytest_check.equal(dirs.prime_dir, dirs.base_prime_dir / "default")
     pytest_check.equal(dirs.stage_dirs.keys(), set(partitions))
     pytest_check.equal(dirs.prime_dirs.keys(), set(partitions))
-    for partition, directory in dirs.stage_dirs.items():
-        pytest_check.equal(directory, dirs.base_stage_dir / partition)
-    for partition, directory in dirs.prime_dirs.items():
-        pytest_check.equal(directory, dirs.base_prime_dir / partition)
+    for partition in partitions:
+        pytest_check.equal(dirs.stage_dirs[partition], dirs.base_stage_dir / partition)
+        pytest_check.equal(dirs.prime_dirs[partition], dirs.base_prime_dir / partition)

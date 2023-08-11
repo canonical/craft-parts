@@ -30,7 +30,7 @@ class PartitionPathPair(NamedTuple):
     """A pair containing a partition name and a path."""
 
     partition: Optional[str]
-    path: FlexiblePath
+    path: Union[PurePath, str]
 
 
 def _has_partition(path: Union[PurePath, str]) -> bool:
