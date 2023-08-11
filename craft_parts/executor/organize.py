@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Dict
 
 from craft_parts import errors
-from craft_parts.utils import file_utils, partition_utils
+from craft_parts.utils import file_utils, path_utils
 
 
 def organize_files(
@@ -46,12 +46,12 @@ def organize_files(
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
         src = os.path.join(
-            base_dir, partition_utils.get_partition_compatible_filepath(key)
+            base_dir, path_utils.get_partition_compatible_path(key)
         )
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        partition, inner_path = partition_utils.get_partition_and_path(
+        partition, inner_path = path_utils.get_partition_and_path(
             mapping[key].lstrip("/")
         )
         if partition:

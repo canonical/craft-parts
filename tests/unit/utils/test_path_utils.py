@@ -18,9 +18,9 @@ from pathlib import Path, PurePosixPath
 
 import pytest
 
-from craft_parts.utils.partition_utils import (
+from craft_parts.utils.path_utils import (
     _has_partition,
-    get_partition_compatible_filepath,
+    get_partition_compatible_path,
 )
 
 PATH_CLASSES = [Path, PurePosixPath, str]
@@ -74,7 +74,7 @@ def test_has_partition(full_path, expected):
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class):
     """Test that when partitions are disabled this is a no-op."""
-    actual = get_partition_compatible_filepath(path_class(path))
+    actual = get_partition_compatible_path(path_class(path))
 
     assert actual == path_class(path)
     assert isinstance(actual, path_class)
@@ -85,7 +85,7 @@ def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class
 @pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_glob(path, path_class):
     expected = path_class(path)
-    actual = get_partition_compatible_filepath(expected)
+    actual = get_partition_compatible_path(expected)
 
     assert actual == expected
 
@@ -95,7 +95,7 @@ def test_get_partition_compatible_filepath_glob(path, path_class):
 @pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_non_partition(path, path_class):
     """Non-partitioned paths get a default partition."""
-    actual = get_partition_compatible_filepath(path_class(path))
+    actual = get_partition_compatible_path(path_class(path))
 
     assert actual == path_class(PurePosixPath("default", path))
     assert isinstance(actual, path_class)
@@ -109,7 +109,7 @@ def test_get_partition_compatible_filepath_non_partition(path, path_class):
 @pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_partition(path, expected, path_class):
     """Non-partitioned paths match their given partition."""
-    actual = get_partition_compatible_filepath(path_class(path))
+    actual = get_partition_compatible_path(path_class(path))
 
     assert actual == path_class(expected)
     assert isinstance(actual, path_class)

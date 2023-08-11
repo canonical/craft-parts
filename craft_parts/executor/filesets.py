@@ -21,7 +21,7 @@ from glob import iglob
 from typing import List, Set, Tuple
 
 from craft_parts import errors
-from craft_parts.utils import partition_utils
+from craft_parts.utils import path_utils
 
 
 class Fileset:
@@ -48,7 +48,7 @@ class Fileset:
     def includes(self) -> List[str]:
         """Return the list of files to be included."""
         return [
-            partition_utils.get_partition_compatible_filepath(x)
+            path_utils.get_partition_compatible_path(x)
             for x in self._list
             if x[0] != "-"
         ]
@@ -57,7 +57,7 @@ class Fileset:
     def excludes(self) -> List[str]:
         """Return the list of files to be excluded."""
         return [
-            partition_utils.get_partition_compatible_filepath(x[1:])
+            path_utils.get_partition_compatible_path(x[1:])
             for x in self._list
             if x[0] == "-"
         ]
@@ -174,11 +174,11 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
     processed_excludes: List[str] = []
     for file in includes:
         processed_includes.append(
-            partition_utils.get_partition_compatible_filepath(file)
+            path_utils.get_partition_compatible_path(file)
         )
     for file in excludes:
         processed_excludes.append(
-            partition_utils.get_partition_compatible_filepath(file)
+            path_utils.get_partition_compatible_path(file)
         )
     return processed_includes, processed_excludes
 
