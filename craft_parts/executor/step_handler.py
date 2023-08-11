@@ -29,7 +29,6 @@ from pathlib import Path
 from typing import List, Optional, Set, TextIO, Union
 
 from craft_parts import errors, packages
-from craft_parts.features import Features
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
@@ -158,15 +157,10 @@ class StepHandler:
         return StepContents()
 
     def _builtin_stage(self) -> StepContents:
-        if Features().enable_partitions:
-            stage_dest = self._part.stage_dir.parent
-            srcdir = self._part.part_install_dir.parent
-        else:
-            stage_dest = self._part.stage_dir
-            srcdir = self._part.part_install_dir
-
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
-        files, dirs = filesets.migratable_filesets(stage_fileset, str(srcdir))
+        files, dirs = filesets.migratable_filesets(
+            stage_fileset, str(self._part.part_base_install_dir)
+        )
 
         def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
@@ -174,30 +168,21 @@ class StepHandler:
             if not file_path.endswith(".pc"):
                 return
             packages.fix_pkg_config(
-                prefix_prepend=stage_dest,
+                prefix_prepend=self._part.base_stage_dir,
                 pkg_config_file=Path(file_path),
-                prefix_trim=srcdir,
+                prefix_trim=self._part.part_base_install_dir,
             )
 
         files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=srcdir,
-            destdir=stage_dest,
+            srcdir=self._part.part_base_install_dir,
+            destdir=self._part.base_stage_dir,
             fixup_func=pkgconfig_fixup,
         )
         return StepContents(files, dirs)
 
     def _builtin_prime(self) -> StepContents:
-        if Features().enable_partitions:
-            stage_src = self._part.stage_dir.parent
-            prime_dest = self._part.prime_dir.parent
-            srcdir = self._part.part_install_dir.parent
-        else:
-            stage_src = self._part.stage_dir
-            prime_dest = self._part.prime_dir
-            srcdir = self._part.part_install_dir
-
         prime_fileset = Fileset(self._part.spec.prime_files, name="prime")
 
         # If we're priming and we don't have an explicit set of files to prime
@@ -206,12 +191,14 @@ class StepHandler:
             stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
             prime_fileset.combine(stage_fileset)
 
-        files, dirs = filesets.migratable_filesets(prime_fileset, str(srcdir))
+        files, dirs = filesets.migratable_filesets(
+            prime_fileset, str(self._part.part_base_install_dir)
+        )
         files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=stage_src,
-            destdir=prime_dest,
+            srcdir=self._part.base_stage_dir,
+            destdir=self._part.base_prime_dir,
             permissions=self._part.spec.permissions,
         )
 

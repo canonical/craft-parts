@@ -261,11 +261,28 @@ class Part:
         return self.part_build_dir
 
     @property
-    def part_install_dir(self) -> Path:
-        """Return the subdirectory to install the part build artifacts."""
-        if Features().enable_partitions:
-            return self._part_dir / "install/default"
+    def part_base_install_dir(self) -> Path:
+        """The base of the part's install directories.
+
+        With partitions disabled, this is the install directory.
+        With partitions enabled, this is the directory containing the partitions.
+
+        A full path to an install location can always be found with:
+        ``part.part_base_install_dir / get_partition_compatible_filepath(location)``
+        """
         return self._part_dir / "install"
+
+    @property
+    def part_install_dir(self) -> Path:
+        """Return the subdirectory to install the part build artifacts.
+
+        With partitions disabled, this is the install directory and is the same
+        as ``part_base_install_dir``
+        With partitions enabled, this is the install directory for the default partition
+        """
+        if Features().enable_partitions:
+            return self.part_base_install_dir / "default"
+        return self.part_base_install_dir
 
     @property
     def part_state_dir(self) -> Path:
@@ -304,12 +321,18 @@ class Part:
 
     @property
     def stage_dir(self) -> Path:
-        """Return the staging area containing the installed files from all parts."""
+        """Return the staging area containing the installed files from all parts.
+
+        If partitions are enabled, this is the stage directory for the default partition
+        """
         return self._dirs.stage_dir
 
     @property
     def prime_dir(self) -> Path:
-        """Return the primed tree containing the artifacts to deploy."""
+        """Return the primed tree containing the artifacts to deploy.
+
+        If partitions are enabled, this is the prime directory for the default partition
+        """
         return self._dirs.prime_dir
 
     @property
