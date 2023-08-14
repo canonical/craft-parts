@@ -239,8 +239,8 @@ class TestFileSourceHandler:
         with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultyFileSource(
-                source=None,
-                part_src_dir=None,
+                source=None,  # type: ignore
+                part_src_dir=None,  # type: ignore
                 cache_dir=Path(),
-                project_dirs=self._dirs,  # type: ignore
+                project_dirs=self._dirs,
             )
