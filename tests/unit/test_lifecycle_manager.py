@@ -398,17 +398,16 @@ class TestValidatePartitions:
         lifecycle_manager._validate_partitions(partitions)
 
     @pytest.mark.parametrize(
-        ("partitions", "exc_class", "message"),
+        ("partitions", "message"),
         [
             (
                 ["anything"],
-                errors.FeatureError,
                 "Partitions are defined but partition feature is not enabled.",
             ),
         ],
     )
-    def test_validate_partitions_failure(self, partitions, exc_class, message):
-        with pytest.raises(exc_class) as exc_info:
+    def test_validate_partitions_failure(self, partitions, message):
+        with pytest.raises(errors.FeatureError) as exc_info:
             lifecycle_manager._validate_partitions(partitions)
 
         assert exc_info.value.message == message
