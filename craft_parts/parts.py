@@ -18,7 +18,7 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
@@ -170,6 +170,7 @@ class PartSpec(BaseModel):
         )
 
 
+# pylint: disable=too-many-public-methods
 class Part:
     """Each of the components used in the project specification.
 
@@ -180,7 +181,9 @@ class Part:
 
     :param name: The part name.
     :param data: A dictionary containing the part properties.
+    :param partitions: A Sequence of partition names if partitions are enabled, or None
     :param project_dirs: The project work directories.
+    :param plugin_properties: An optional PluginProperties object for this plugin.
 
     :raise PartSpecificationError: If part validation fails.
     """
@@ -192,14 +195,16 @@ class Part:
         *,
         project_dirs: Optional[ProjectDirs] = None,
         plugin_properties: "Optional[PluginProperties]" = None,
+        partitions: Optional[Sequence[str]] = None,
     ):
+        self._partitions = partitions
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
             )
 
         if not project_dirs:
-            project_dirs = ProjectDirs()
+            project_dirs = ProjectDirs(partitions=partitions)
 
         if not plugin_properties:
             plugin_properties = PluginProperties()
@@ -209,7 +214,7 @@ class Part:
         self.name = name
         self.plugin_name = plugin_name
         self.plugin_properties = plugin_properties
-        self._dirs = project_dirs
+        self.dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
         self._part_dir = project_dirs.parts_dir / name
 
@@ -226,7 +231,7 @@ class Part:
     @property
     def parts_dir(self) -> Path:
         """Return the directory containing work files for each part."""
-        return self._dirs.parts_dir
+        return self.dirs.parts_dir
 
     @property
     def part_src_dir(self) -> Path:
@@ -261,9 +266,41 @@ class Part:
         return self.part_build_dir
 
     @property
-    def part_install_dir(self) -> Path:
-        """Return the subdirectory to install the part build artifacts."""
+    def part_base_install_dir(self) -> Path:
+        """The base of the part's install directories.
+
+        With partitions disabled, this is the install directory.
+        With partitions enabled, this is the directory containing the partitions.
+
+        A full path to an install location can always be found with:
+        ``part.part_base_install_dir / get_partition_compatible_filepath(location)``
+        """
         return self._part_dir / "install"
+
+    @property
+    def part_install_dir(self) -> Path:
+        """Return the subdirectory to install the part build artifacts.
+
+        With partitions disabled, this is the install directory and is the same
+        as ``part_base_install_dir``
+        With partitions enabled, this is the install directory for the default partition
+        """
+        if self._partitions is None:
+            return self.part_base_install_dir
+        return self.part_base_install_dir / "default"
+
+    @property
+    def part_install_dirs(self) -> Mapping[Optional[str], Path]:
+        """Return a mapping of partition names to install directories.
+
+        With partitions disabled, the only partition name is ``None``
+        """
+        if self._partitions is None:
+            return {None: self.part_base_install_dir}
+        return {
+            partition: self.part_base_install_dir / partition
+            for partition in self._partitions
+        }
 
     @property
     def part_state_dir(self) -> Path:
@@ -298,17 +335,55 @@ class Part:
     @property
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
-        return self._dirs.overlay_dir
+        return self.dirs.overlay_dir
+
+    @property
+    def base_stage_dir(self) -> Path:
+        """Return the base staging area.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self.dirs.base_stage_dir
 
     @property
     def stage_dir(self) -> Path:
-        """Return the staging area containing the installed files from all parts."""
-        return self._dirs.stage_dir
+        """Return the staging area containing the installed files from all parts.
+
+        If partitions are enabled, this is the stage directory for the default partition
+        """
+        return self.dirs.stage_dir
+
+    @property
+    def stage_dirs(self) -> Mapping[Optional[str], Path]:
+        """A mapping of partition name to partition staging directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.stage_dirs
+
+    @property
+    def base_prime_dir(self) -> Path:
+        """Return the primed tree containing the artifacts to deploy.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self.dirs.base_prime_dir
 
     @property
     def prime_dir(self) -> Path:
-        """Return the primed tree containing the artifacts to deploy."""
-        return self._dirs.prime_dir
+        """Return the primed tree containing the artifacts to deploy.
+
+        If partitions are enabled, this is the prime directory for the default partition
+        """
+        return self.dirs.prime_dir
+
+    @property
+    def prime_dirs(self) -> Mapping[Optional[str], Path]:
+        """A mapping of partition name to partition prime directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.prime_dirs
 
     @property
     def dependencies(self) -> List[str]:
@@ -377,6 +452,9 @@ class Part:
             error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
 
         return error_list
+
+
+# pylint: enable=too-many-public-methods
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -547,7 +625,7 @@ def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> No
         error_list.extend(part.check_partition_usage(partitions))
 
     if error_list:
-        raise ValueError(
+        raise errors.FeatureError(
             "Error: Invalid usage of partitions:\n"
             + "\n".join(error_list)
             + f"\nValid partitions are {humanize_list(partitions, 'and')}."

@@ -13,14 +13,3 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from craft_parts import Features
-
-
-def setup_module():
-    Features.reset()
-    Features(enable_partitions=True)
-
-
-def teardown_module():
-    Features.reset()

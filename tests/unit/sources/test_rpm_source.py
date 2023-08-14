@@ -20,15 +20,19 @@ import tarfile
 
 import pytest
 
+from craft_parts import ProjectDirs
 from craft_parts.sources import errors, sources
 
 
 # region Fixtures
 @pytest.fixture
-def rpm_source(tmp_path: pathlib.Path):
+def rpm_source(tmp_path: pathlib.Path, partitions):
     dest_dir = tmp_path / "src"
     dest_dir.mkdir()
-    yield sources.RpmSource(str(dest_dir / "test.rpm"), dest_dir, cache_dir=tmp_path)
+    dirs = ProjectDirs(partitions=partitions)
+    yield sources.RpmSource(
+        str(dest_dir / "test.rpm"), dest_dir, cache_dir=tmp_path, project_dirs=dirs
+    )
 
 
 @pytest.fixture
@@ -45,11 +49,13 @@ def mock_tarfile_open(mocker):
 
 
 # region Validation tests
-def test_valid_options():
+def test_valid_options(partitions):
+    dirs = ProjectDirs(partitions=partitions)
     sources.RpmSource(
         "source",
         pathlib.Path(),
         cache_dir=pathlib.Path(),
+        project_dirs=dirs,
         source_tag=None,
         source_commit=None,
         source_branch=None,
@@ -58,6 +64,7 @@ def test_valid_options():
     )
 
 
+# pylint: disable=too-many-arguments
 @pytest.mark.parametrize(
     (
         "source_tag",
@@ -97,13 +104,21 @@ def test_valid_options():
     ],
 )
 def test_invalid_options(
-    source_tag, source_commit, source_branch, source_submodules, source_depth, expected
+    partitions,
+    source_tag,
+    source_commit,
+    source_branch,
+    source_submodules,
+    source_depth,
+    expected,
 ):
+    dirs = ProjectDirs(partitions=partitions)
     with pytest.raises(errors.InvalidSourceOptions) as exc_info:
         sources.RpmSource(
             "source",
             pathlib.Path("part_src_dir"),
             cache_dir=pathlib.Path(),
+            project_dirs=dirs,
             source_tag=source_tag,
             source_commit=source_commit,
             source_branch=source_branch,
@@ -114,6 +129,9 @@ def test_invalid_options(
     assert exc_info.value.brief == (
         f"Failed to pull source: {expected} cannot be used with a rpm source."
     )
+
+
+# pylint: enable=too-many-arguments
 
 
 # endregion

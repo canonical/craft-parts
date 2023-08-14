@@ -38,7 +38,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
     """Verify the part handler step processing."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, mocker, new_dir):
+    def setup_method_fixture(self, mocker, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
         self._part = Part(
             "foo",
@@ -50,12 +50,15 @@ class TestPartHandling(test_part_handler.TestPartHandling):
                 "build-packages": ["pkg3"],
                 "overlay-packages": ["pkg4"],
             },
+            partitions=partitions,
         )
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=Path("/base")
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=Path("/base"),
         )
-        self._part_info = PartInfo(info, self._part)
+        self._part_info = PartInfo(self._project_info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,
@@ -81,11 +84,11 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             project_options=self._part_info.project_options,
         )
 
-    def test_run_overlay_with_filter(self, mocker, new_dir):
+    def test_run_overlay_with_filter(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
         mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
 
-        p1 = Part("p1", {"plugin": "nil", "overlay": ["-foo"]})
+        p1 = Part("p1", {"plugin": "nil", "overlay": ["-foo"]}, partitions=partitions)
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
             project_info=info, part_list=[p1], base_layer_dir=Path("/base")
@@ -145,10 +148,10 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
         self._mock_umount.assert_called_with(f"{self._part_info.overlay_mount_dir}")
 
-    def test_run_build_without_overlay_visibility(self, mocker, new_dir):
+    def test_run_build_without_overlay_visibility(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
 
-        p1 = Part("p1", {"plugin": "nil"})
+        p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
             project_info=info, part_list=[p1], base_layer_dir=Path("/base")
@@ -178,6 +181,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 
+    # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
         "step,scriptlet",
         [
@@ -188,12 +192,16 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_scriptlet(self, new_dir, mocker, capfd, step, scriptlet):
+    def test_run_step_scriptlet(
+        self, new_dir, partitions, mocker, capfd, step, scriptlet
+    ):
         """If defined, scriptlets are executed instead of the built-in handler."""
         run_builtin_mock = mocker.patch(
             "craft_parts.executor.step_handler.StepHandler.run_builtin"
         )
-        p1 = Part("p1", {"plugin": "nil", scriptlet: "echo hello"})
+        p1 = Part(
+            "p1", {"plugin": "nil", scriptlet: "echo hello"}, partitions=partitions
+        )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=step)
@@ -216,6 +224,8 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         assert err == "+ echo hello\n"
         assert run_builtin_mock.mock_calls == []
 
+    # pylint: enable=too-many-arguments
+
     @pytest.mark.parametrize(
         "step,scriptlet",
         [
@@ -226,8 +236,14 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_scriptlet_streams(self, new_dir, capfd, step, scriptlet):
-        p1 = Part("p1", {"plugin": "nil", scriptlet: "echo hello; echo goodbye >&2"})
+    def test_run_step_scriptlet_streams(
+        self, new_dir, partitions, capfd, step, scriptlet
+    ):
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", scriptlet: "echo hello; echo goodbye >&2"},
+            partitions=partitions,
+        )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=step)
@@ -256,9 +272,13 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         assert output_path.read_text() == "hello\n"
         assert error_path.read_text() == "+ echo hello\n+ echo goodbye\ngoodbye\n"
 
-    def test_compute_layer_hash(self, new_dir):
-        p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["pkg1"]})
-        p2 = Part("p2", {"plugin": "nil", "overlay-script": "ls"})
+    def test_compute_layer_hash(self, new_dir, partitions):
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-packages": ["pkg1"]}, partitions=partitions
+        )
+        p2 = Part(
+            "p2", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(
@@ -271,9 +291,13 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         layer_hash = handler._compute_layer_hash(all_parts=False)
         assert layer_hash.hex() == "80ab51c6c76eb2b6fc01adc3143ebaf2b982ae56"
 
-    def test_compute_layer_hash_for_all_parts(self, new_dir):
-        p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["pkg1"]})
-        p2 = Part("p2", {"plugin": "nil", "overlay-script": "ls"})
+    def test_compute_layer_hash_for_all_parts(self, new_dir, partitions):
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-packages": ["pkg1"]}, partitions=partitions
+        )
+        p2 = Part(
+            "p2", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(
@@ -292,7 +316,7 @@ class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     """Verify step update processing."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, mocker, new_dir):
+    def setup_method_fixture(self, mocker, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
         self._part = Part(
             "foo",
@@ -300,15 +324,18 @@ class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
                 "plugin": "dump",
                 "source": "subdir",
             },
+            partitions=partitions,
         )
         Path("subdir").mkdir()
         Path("subdir/foo.txt").write_text("content")
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self._project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=Path("/base")
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=Path("/base"),
         )
-        self._part_info = PartInfo(info, self._part)
+        self._part_info = PartInfo(self._project_info, self._part)
         self._handler = PartHandler(
             self._part,
             part_info=self._part_info,
@@ -323,9 +350,13 @@ class TestPartReapplyHandler:
     """Verify step reapplication processing."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, mocker, new_dir):
+    def setup_method_fixture(self, mocker, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
-        self._part = Part("foo", {"plugin": "nil", "overlay-script": "touch bar.txt"})
+        self._part = Part(
+            "foo",
+            {"plugin": "nil", "overlay-script": "touch bar.txt"},
+            partitions=partitions,
+        )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
             project_info=info, part_list=[self._part], base_layer_dir=new_dir
@@ -364,11 +395,15 @@ class TestOverlayMigration:
     """Overlay migration to stage and prime test cases"""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
-        p1 = Part("p1", {"plugin": "nil", "overlay-script": "ls"})
-        p2 = Part("p2", {"plugin": "nil", "overlay-script": "ls"})
-        p3 = Part("p3", {"plugin": "nil"})
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
+        p2 = Part(
+            "p2", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
+        p3 = Part("p3", {"plugin": "nil"}, partitions=partitions)
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         ovmgr = OverlayManager(
@@ -549,13 +584,15 @@ class TestOverlayMigration:
         self._p1_handler.clean_step(step)
         assert Path(f"{step_dir}/file1").exists() is False
 
-    def test_migrate_overlay_filter_whiteout(self, mocker, new_dir):
+    def test_migrate_overlay_filter_whiteout(self, mocker, new_dir, partitions):
         cache_dir = new_dir / "cache"
         base_dir = new_dir / "base"
         cache_dir.mkdir()
         base_dir.mkdir()
 
-        p1 = Part("p1", {"plugin": "nil", "overlay-script": "ls"})
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
         info = ProjectInfo(application_name="test", cache_dir=cache_dir)
         ovmgr = OverlayManager(
             project_info=info, part_list=[p1], base_layer_dir=base_dir
@@ -614,11 +651,15 @@ class TestHelpers(test_part_handler.TestHelpers):
     """Verify helper functions."""
 
     @pytest.mark.parametrize("step", list(Step))
-    def test_parts_with_overlay_in_step(self, step):
-        p1 = Part("p1", {"plugin": "nil"})
-        p2 = Part("p2", {"plugin": "nil", "overlay-script": "ls"})
-        p3 = Part("p3", {"plugin": "nil", "overlay-packages": ["pkg1"]})
-        p4 = Part("p4", {"plugin": "nil", "overlay": ["/etc"]})
+    def test_parts_with_overlay_in_step(self, partitions, step):
+        p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part(
+            "p2", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
+        p3 = Part(
+            "p3", {"plugin": "nil", "overlay-packages": ["pkg1"]}, partitions=partitions
+        )
+        p4 = Part("p4", {"plugin": "nil", "overlay": ["/etc"]}, partitions=partitions)
 
         res = part_handler._parts_with_overlay_in_step(step, part_list=[p1, p2, p3, p4])
         assert res == []

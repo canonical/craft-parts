@@ -13,14 +13,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import string
 from pathlib import Path
+
+from hypothesis import given, strategies
 
 from craft_parts.dirs import ProjectDirs
 
 
-def test_dirs(new_dir):
-    dirs = ProjectDirs()
+def test_dirs(new_dir, partitions):
+    dirs = ProjectDirs(partitions=partitions)
     assert dirs.project_dir == new_dir
     assert dirs.work_dir == new_dir
     assert dirs.parts_dir == new_dir / "parts"
@@ -28,12 +30,16 @@ def test_dirs(new_dir):
     assert dirs.overlay_mount_dir == new_dir / "overlay/overlay"
     assert dirs.overlay_packages_dir == new_dir / "overlay/packages"
     assert dirs.overlay_work_dir == new_dir / "overlay/work"
-    assert dirs.stage_dir == new_dir / "stage"
-    assert dirs.prime_dir == new_dir / "prime"
+    assert dirs.base_stage_dir == new_dir / "stage"
+    assert dirs.stage_dir == dirs.base_stage_dir
+    assert set(dirs.stage_dirs.values()) == {dirs.base_stage_dir}
+    assert dirs.base_prime_dir == new_dir / "prime"
+    assert dirs.prime_dir == dirs.base_prime_dir
+    assert set(dirs.prime_dirs.values()) == {dirs.base_prime_dir}
 
 
-def test_dirs_work_dir(new_dir):
-    dirs = ProjectDirs(work_dir="foobar")
+def test_dirs_work_dir(new_dir, partitions):
+    dirs = ProjectDirs(work_dir="foobar", partitions=partitions)
     assert dirs.project_dir == new_dir
     assert dirs.work_dir == new_dir / "foobar"
     assert dirs.parts_dir == new_dir / "foobar/parts"
@@ -41,10 +47,54 @@ def test_dirs_work_dir(new_dir):
     assert dirs.overlay_mount_dir == new_dir / "foobar/overlay/overlay"
     assert dirs.overlay_packages_dir == new_dir / "foobar/overlay/packages"
     assert dirs.overlay_work_dir == new_dir / "foobar/overlay/work"
-    assert dirs.stage_dir == new_dir / "foobar/stage"
-    assert dirs.prime_dir == new_dir / "foobar/prime"
+    assert dirs.base_stage_dir == new_dir / "foobar/stage"
+    assert dirs.stage_dir == dirs.base_stage_dir
+    assert set(dirs.stage_dirs.values()) == {dirs.base_stage_dir}
+    assert dirs.base_prime_dir == new_dir / "foobar/prime"
+    assert dirs.prime_dir == dirs.base_prime_dir
+    assert set(dirs.prime_dirs.values()) == {dirs.base_prime_dir}
 
 
-def test_dirs_work_dir_resolving():
-    dirs = ProjectDirs(work_dir="~/x/../y/.")
+def test_dirs_work_dir_resolving(partitions):
+    dirs = ProjectDirs(work_dir="~/x/../y/.", partitions=partitions)
     assert dirs.work_dir == Path.home() / "y"
+
+
+@given(
+    partitions=strategies.lists(
+        strategies.text(strategies.sampled_from(string.ascii_lowercase))
+    )
+)
+def test_get_stage_dir_with_partitions(partitions):
+    dirs = ProjectDirs(partitions=["default", *partitions])
+
+    for partition in partitions:
+        assert dirs.get_stage_dir(partition=partition) == dirs.stage_dirs[partition]
+    assert dirs.get_stage_dir(partition="default") == dirs.stage_dir
+    assert dirs.get_stage_dir(partition="default") == dirs.stage_dirs["default"]
+
+
+@given(
+    partitions=strategies.lists(
+        strategies.text(strategies.sampled_from(string.ascii_lowercase))
+    )
+)
+def test_get_prime_dir_with_partitions(partitions):
+    dirs = ProjectDirs(partitions=["default", *partitions])
+
+    for partition in partitions:
+        assert dirs.get_prime_dir(partition=partition) == dirs.prime_dirs[partition]
+    assert dirs.get_prime_dir(partition="default") == dirs.prime_dir
+    assert dirs.get_prime_dir(partition="default") == dirs.prime_dirs["default"]
+
+
+def test_get_stage_dir_without_partitions():
+    dirs = ProjectDirs(partitions=None)
+    assert dirs.get_stage_dir() == dirs.stage_dir
+    assert dirs.get_stage_dir(None) == dirs.stage_dir
+
+
+def test_get_prime_dir_without_partitions():
+    dirs = ProjectDirs(partitions=None)
+    assert dirs.get_prime_dir() == dirs.prime_dir
+    assert dirs.get_prime_dir(None) == dirs.prime_dir

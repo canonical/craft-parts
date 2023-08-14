@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Dict
 
 from craft_parts import errors
-from craft_parts.utils import file_utils
+from craft_parts.utils import file_utils, path_utils
 
 
 def organize_files(
@@ -45,10 +45,19 @@ def organize_files(
         it previously organized.
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
-        src = os.path.join(base_dir, key)
+        src = os.path.join(base_dir, path_utils.get_partitioned_path(key))
+
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        dst = os.path.join(base_dir, mapping[key].lstrip("/"))
+        partition, inner_path = path_utils.get_partition_and_path(
+            mapping[key].lstrip("/")
+        )
+        if partition:
+            dst = os.path.join(base_dir, partition, inner_path)
+            partition_path = os.path.join(f"({partition})", inner_path)
+        else:
+            dst = os.path.join(base_dir, inner_path)
+            partition_path = str(inner_path)
 
         sources = iglob(src, recursive=True)
 
@@ -72,7 +81,7 @@ def organize_files(
                         part_name=part_name,
                         message=(
                             f"multiple files to be organized into "
-                            f"{os.path.relpath(dst, base_dir)!r}. If this is "
+                            f"{partition_path!r}. If this is "
                             f"supposed to be a directory, end it with a slash."
                         ),
                     )
@@ -81,8 +90,8 @@ def organize_files(
                         part_name=part_name,
                         message=(
                             f"trying to organize file {key!r} to "
-                            f"{os.path.relpath(dst, base_dir)!r}, but "
-                            f"{os.path.relpath(dst, base_dir)!r} already exists"
+                            f"{mapping[key]!r}, but "
+                            f"{partition_path!r} already exists"
                         ),
                     )
 

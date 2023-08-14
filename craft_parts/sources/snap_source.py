@@ -46,12 +46,12 @@ class SnapSource(FileSourceHandler):
         part_src_dir: Path,
         *,
         cache_dir: Path,
+        project_dirs: ProjectDirs,
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
-        project_dirs: Optional[ProjectDirs] = None,
         **kwargs,
     ) -> None:
         super().__init__(

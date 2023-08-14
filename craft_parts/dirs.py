@@ -17,7 +17,8 @@
 """Definitions for project directories."""
 
 from pathlib import Path
-from typing import Union
+from types import MappingProxyType
+from typing import Dict, Optional, Sequence, Union
 
 
 class ProjectDirs:
@@ -25,6 +26,7 @@ class ProjectDirs:
 
     :param work_dir: The parent directory containing the parts, prime and stage
         subdirectories. If not specified, the current directory will be used.
+    :param partitions: If partitions are enabled, the list of partitions.
 
     :ivar work_dir: The root of the work directories used for project processing.
     :ivar parts_dir: The directory containing work subdirectories for each part.
@@ -36,7 +38,12 @@ class ProjectDirs:
     :ivar prime_dir: The primed tree containing the final artifacts to deploy.
     """
 
-    def __init__(self, *, work_dir: Union[Path, str] = "."):
+    def __init__(
+        self,
+        *,
+        partitions: Optional[Sequence[str]],
+        work_dir: Union[Path, str] = ".",
+    ):
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
         self.parts_dir = self.work_dir / "parts"
@@ -44,5 +51,35 @@ class ProjectDirs:
         self.overlay_mount_dir = self.overlay_dir / "overlay"
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
-        self.stage_dir = self.work_dir / "stage"
-        self.prime_dir = self.work_dir / "prime"
+        self.base_stage_dir = self.work_dir / "stage"
+        self.base_prime_dir = self.work_dir / "prime"
+        if partitions:
+            self._partitions: Sequence[Optional[str]] = partitions
+            self.stage_dir = self.base_stage_dir / "default"
+            self.prime_dir = self.base_prime_dir / "default"
+            stage_dirs: Dict[Optional[str], Path] = {
+                part: self.base_stage_dir / part for part in partitions
+            }
+            prime_dirs: Dict[Optional[str], Path] = {
+                part: self.base_prime_dir / part for part in partitions
+            }
+        else:
+            self._partitions = [None]
+            self.stage_dir = self.base_stage_dir
+            self.prime_dir = self.base_prime_dir
+            stage_dirs = {None: self.stage_dir}
+            prime_dirs = {None: self.prime_dir}
+        self.stage_dirs = MappingProxyType(stage_dirs)
+        self.prime_dirs = MappingProxyType(prime_dirs)
+
+    def get_stage_dir(self, partition: Optional[str] = None) -> Path:
+        """Get the stage directory for the given partition."""
+        if partition not in self._partitions:
+            raise ValueError(f"Unknown partition {partition}")
+        return self.stage_dirs[partition]
+
+    def get_prime_dir(self, partition: Optional[str] = None) -> Path:
+        """Get the stage directory for the given partition."""
+        if partition not in self._partitions:
+            raise ValueError(f"Unknown partition {partition}")
+        return self.prime_dirs[partition]

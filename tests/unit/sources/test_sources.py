@@ -64,6 +64,7 @@ def test_type_from_uri(source, result):
     assert sources.get_source_type_from_uri(source) == result
 
 
+# pylint: disable=too-many-arguments
 @pytest.mark.parametrize(
     "source_type,source_branch,source_tag,source_commit,error",
     [
@@ -73,7 +74,7 @@ def test_type_from_uri(source, result):
     ],
 )
 def test_sources_with_branch_errors(
-    new_dir, source_type, source_branch, source_tag, source_commit, error
+    new_dir, partitions, source_type, source_branch, source_tag, source_commit, error
 ):
     part_data = {
         "source": "https://source.com",
@@ -93,7 +94,12 @@ def test_sources_with_branch_errors(
 
     with pytest.raises(errors.InvalidSourceOption) as err:
         sources.get_source_handler(
-            part=p1, project_dirs=ProjectDirs(), cache_dir=new_dir
+            part=p1,
+            project_dirs=ProjectDirs(partitions=partitions),
+            cache_dir=new_dir,
         )
     assert err.value.source_type == source_type
     assert err.value.option == error
+
+
+# pylint: enable=too-many-arguments

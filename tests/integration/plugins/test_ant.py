@@ -23,7 +23,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_ant_plugin(new_dir, monkeypatch):
+def test_ant_plugin(new_dir, partitions, monkeypatch):
     monkeypatch.setenv("CRAFT_PARTS_PACKAGE_REFRESH", "0")
     source_location = Path(__file__).parent / "test_ant"
 
@@ -43,7 +43,11 @@ def test_ant_plugin(new_dir, monkeypatch):
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
-        parts, application_name="test_ant", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_ant",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 

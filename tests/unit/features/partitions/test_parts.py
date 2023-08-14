@@ -17,8 +17,9 @@
 from textwrap import dedent
 
 import pytest
+import pytest_check  # type: ignore[import]
 
-from craft_parts import parts
+from craft_parts import ProjectDirs, errors, parts
 from craft_parts.parts import Part
 from tests.unit import test_parts
 
@@ -31,6 +32,69 @@ class TestPartSpecs(test_parts.TestPartSpecs):
 
 class TestPartData(test_parts.TestPartData):
     """Test basic part creation and representation."""
+
+    def test_part_dirs(self, new_dir, partitions):
+        p = Part(
+            "foo",
+            {"plugin": "nil"},
+            partitions=partitions,
+            project_dirs=ProjectDirs(work_dir=new_dir, partitions=partitions),
+        )
+        pytest_check.equal(p.parts_dir, new_dir / "parts")
+        pytest_check.equal(p.part_src_dir, new_dir / "parts/foo/src")
+        pytest_check.equal(p.part_src_subdir, new_dir / "parts/foo/src")
+        pytest_check.equal(p.part_build_dir, new_dir / "parts/foo/build")
+        pytest_check.equal(p.part_build_subdir, new_dir / "parts/foo/build")
+        pytest_check.equal(p.part_install_dir, new_dir / "parts/foo/install/default")
+        pytest_check.equal(p.part_state_dir, new_dir / "parts/foo/state")
+        pytest_check.equal(p.part_packages_dir, new_dir / "parts/foo/stage_packages")
+        pytest_check.equal(p.part_snaps_dir, new_dir / "parts/foo/stage_snaps")
+        pytest_check.equal(p.part_run_dir, new_dir / "parts/foo/run")
+        pytest_check.equal(p.part_layer_dir, new_dir / "parts/foo/layer")
+        pytest_check.equal(p.stage_dir, new_dir / "stage/default")
+        pytest_check.equal(p.prime_dir, new_dir / "prime/default")
+        pytest_check.equal(
+            p.part_install_dirs,
+            {
+                partition: p.part_base_install_dir / partition
+                for partition in partitions
+            },
+        )
+
+    def test_part_work_dir(self, new_dir, partitions):
+        work_dir = "foobar"
+        p = Part(
+            "foo",
+            {},
+            project_dirs=ProjectDirs(work_dir=work_dir, partitions=partitions),
+            partitions=partitions,
+        )
+        pytest_check.equal(p.parts_dir, new_dir / work_dir / "parts")
+        pytest_check.equal(p.part_src_dir, new_dir / work_dir / "parts/foo/src")
+        pytest_check.equal(p.part_src_subdir, new_dir / work_dir / "parts/foo/src")
+        pytest_check.equal(p.part_build_dir, new_dir / work_dir / "parts/foo/build")
+        pytest_check.equal(p.part_build_subdir, new_dir / work_dir / "parts/foo/build")
+        pytest_check.equal(
+            p.part_install_dir, new_dir / work_dir / "parts/foo/install/default"
+        )
+        pytest_check.equal(p.part_state_dir, new_dir / work_dir / "parts/foo/state")
+        pytest_check.equal(
+            p.part_packages_dir, new_dir / work_dir / "parts/foo/stage_packages"
+        )
+        pytest_check.equal(
+            p.part_snaps_dir, new_dir / work_dir / "parts/foo/stage_snaps"
+        )
+        pytest_check.equal(p.part_run_dir, new_dir / work_dir / "parts/foo/run")
+        pytest_check.equal(p.part_layer_dir, new_dir / work_dir / "parts/foo/layer")
+        pytest_check.equal(p.stage_dir, new_dir / work_dir / "stage/default")
+        pytest_check.equal(p.prime_dir, new_dir / work_dir / "prime/default")
+        pytest_check.equal(
+            p.part_install_dirs,
+            {
+                partition: p.part_base_install_dir / partition
+                for partition in partitions
+            },
+        )
 
 
 class TestPartOrdering(test_parts.TestPartOrdering):
@@ -111,7 +175,10 @@ class TestPartPartitionUsage:
             "prime": valid_filesets,
         }
 
-        part_list = [Part("a", part_data), Part("b", part_data)]
+        part_list = [
+            Part("a", part_data, partitions=partition_list),
+            Part("b", part_data, partitions=partition_list),
+        ]
 
         assert parts.validate_partition_usage(part_list, partition_list) is None
 
@@ -123,10 +190,12 @@ class TestPartPartitionUsage:
             "prime": ["(baz)"],
         }
 
-        with pytest.raises(ValueError) as raised:
-            parts.validate_partition_usage([Part("part-a", part_data)], partition_list)
+        with pytest.raises(errors.FeatureError) as raised:
+            parts.validate_partition_usage(
+                [Part("part-a", part_data, partitions=partition_list)], partition_list
+            )
 
-        assert str(raised.value) == dedent(
+        assert raised.value.brief == dedent(
             """\
             Error: Invalid usage of partitions:
               parts.part-a.organize
@@ -151,12 +220,15 @@ class TestPartPartitionUsage:
             "prime": valid_filesets + invalid_filesets,
         }
 
-        part_list = [Part("part-a", part_data), Part("part-b", part_data)]
+        part_list = [
+            Part("part-a", part_data, partitions=partition_list),
+            Part("part-b", part_data, partitions=partition_list),
+        ]
 
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(errors.FeatureError) as raised:
             parts.validate_partition_usage(part_list, partition_list)
 
-        assert str(raised.value) == dedent(
+        assert raised.value.message == dedent(
             """\
             Error: Invalid usage of partitions:
               parts.part-a.organize

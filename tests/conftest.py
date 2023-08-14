@@ -83,6 +83,13 @@ def enable_partitions_feature():
 
 
 @pytest.fixture
+def partitions():
+    if Features().enable_partitions:
+        return ["default", "mypart", "yourpart"]
+    return None
+
+
+@pytest.fixture
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False

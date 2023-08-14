@@ -160,11 +160,14 @@ class Executor:
 
         if not part_names:
             # also remove toplevel directories if part names are not specified
-            if self._project_info.prime_dir.exists():
-                shutil.rmtree(self._project_info.prime_dir)
+            if self._project_info.base_prime_dir.exists():
+                shutil.rmtree(self._project_info.base_prime_dir)
 
-            if initial_step <= Step.STAGE and self._project_info.stage_dir.exists():
-                shutil.rmtree(self._project_info.stage_dir)
+            if (
+                initial_step <= Step.STAGE
+                and self._project_info.base_stage_dir.exists()
+            ):
+                shutil.rmtree(self._project_info.base_stage_dir)
 
             if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
                 shutil.rmtree(self._project_info.parts_dir)

@@ -33,7 +33,7 @@ from craft_parts import LifecycleManager, Step
         ("/something/else", "something/else/bin"),
     ],
 )
-def test_cmake_plugin(new_dir, prefix, install_path):
+def test_cmake_plugin(new_dir, partitions, prefix, install_path):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -81,7 +81,9 @@ def test_cmake_plugin(new_dir, prefix, install_path):
         )
     )
 
-    lf = LifecycleManager(parts, application_name="test_cmake", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_cmake", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -102,7 +104,7 @@ def test_cmake_plugin(new_dir, prefix, install_path):
         ("/something/else", "something/else/bin"),
     ],
 )
-def test_cmake_plugin_subdir(new_dir, prefix, install_path):
+def test_cmake_plugin_subdir(new_dir, partitions, prefix, install_path):
     """Verify cmake builds with a source subdirectory."""
     parts_yaml = textwrap.dedent(
         """\
@@ -146,7 +148,9 @@ def test_cmake_plugin_subdir(new_dir, prefix, install_path):
         )
     )
 
-    lf = LifecycleManager(parts, application_name="test_cmake", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_cmake", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:

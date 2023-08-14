@@ -23,7 +23,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_go_plugin(new_dir, mocker):
+def test_go_plugin(new_dir, partitions, mocker):
     parts_yaml = textwrap.dedent(
         """
         parts:
@@ -62,7 +62,9 @@ def test_go_plugin(new_dir, mocker):
     )
 
     # the go compiler is installed in the ci test setup
-    lf = LifecycleManager(parts, application_name="test_go", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_go", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -74,7 +76,7 @@ def test_go_plugin(new_dir, mocker):
     assert output == "I can eat glass and it doesn't hurt me."
 
 
-def test_go_generate(new_dir):
+def test_go_generate(new_dir, partitions):
     """Test code generation via "go generate" in parts using the go plugin
 
     The go code in the "test_go" dir uses "gen/generator.go" to create, at build time,
@@ -96,7 +98,11 @@ def test_go_generate(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
-        parts, application_name="test_go", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2021 Canonical Ltd.
+# Copyright 2016-2023 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@ from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions
 from craft_parts.steps import Step
+from craft_parts.utils import path_utils
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -117,15 +118,21 @@ class TestFileMigration:
             stage_dir, "bar"
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
-    def test_migrate_files_no_follow_symlinks(self):
+    def test_migrate_files_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
+        bin_path = path_utils.get_partitioned_path("bin")
+        expected_dirs = {"default"} if partitions else set()
 
-        Path(install_dir, "usr/bin").mkdir(parents=True)
+        Path(install_dir, path_utils.get_partitioned_path("usr/bin")).mkdir(
+            parents=True
+        )
         stage_dir.mkdir()
 
-        Path(install_dir, "usr/bin/foo").write_text("installed")
-        Path("install/bin").symlink_to("usr/bin")
+        Path(install_dir, path_utils.get_partitioned_path("usr/bin/foo")).write_text(
+            "installed"
+        )
+        Path("install", bin_path).symlink_to("usr/bin")
 
         files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -137,9 +144,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert files == {"bin"}
-        assert dirs == set()
-        assert Path(stage_dir, "bin").is_symlink()
+        assert files == {path_utils.get_partitioned_path("bin")}
+        assert dirs == expected_dirs
+        assert Path(stage_dir, bin_path).is_symlink()
 
     def test_migrate_files_preserves_symlink_nested_file(self):
         install_dir = Path("install")
@@ -386,18 +393,24 @@ class TestFileMigration:
 class TestHelpers:
     """Verify helper functions."""
 
-    def test_clean_shared_area(self, new_dir):
-        p1 = Part("p1", {"plugin": "dump", "source": "subdir1"})
+    def test_clean_shared_area(self, new_dir, partitions):
+        p1 = Part("p1", {"plugin": "dump", "source": "subdir1"}, partitions=partitions)
         Path("subdir1").mkdir()
         Path("subdir1/foo.txt").write_text("content")
 
-        p2 = Part("p2", {"plugin": "dump", "source": "subdir2"})
+        p2 = Part("p2", {"plugin": "dump", "source": "subdir2"}, partitions=partitions)
         Path("subdir2").mkdir()
         Path("subdir2/foo.txt").write_text("content")
         Path("subdir2/bar.txt").write_text("other content")
         Path("subdir2/baz.txt").write_text("yet another content")
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        stage = Path("stage/default" if partitions else "stage")
+        foo_path = stage / "foo.txt"
+        bar_path = stage / "bar.txt"
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
         ovmgr = OverlayManager(
             project_info=info, part_list=[p1, p2], base_layer_dir=None
         )
@@ -421,38 +434,44 @@ class TestHelpers:
 
         part_states = part_handler._load_part_states(Step.STAGE, part_list=[p1, p2])
 
-        assert Path("stage/foo.txt").is_file()
-        assert Path("stage/bar.txt").is_file()
+        assert foo_path.is_file()
+        assert bar_path.is_file()
 
         # TODO: also test files shared with overlay
 
         migration.clean_shared_area(
             part_name="p1",
-            shared_dir=p1.stage_dir,
+            shared_dir=p1.base_stage_dir,
             part_states=part_states,
             overlay_migration_state=None,
         )
 
-        assert Path("stage/foo.txt").is_file()  # remains, it's shared with p2
-        assert Path("stage/bar.txt").is_file()
+        assert foo_path.is_file()  # remains, it's shared with p2
+        assert bar_path.is_file()
 
         migration.clean_shared_area(
             part_name="p2",
-            shared_dir=p2.stage_dir,
+            shared_dir=p2.base_stage_dir,
             part_states=part_states,
             overlay_migration_state=None,
         )
 
-        assert Path("stage/foo.txt").exists() is False
-        assert Path("stage/bar.txt").exists() is False
+        assert not foo_path.exists()
+        assert not bar_path.exists()
 
-    def test_clean_migrated_files(self, new_dir):
+    def test_clean_migrated_files(self, new_dir, partitions):
         Path("subdir").mkdir()
         Path("subdir/foo.txt").touch()
         Path("subdir/bar").mkdir()
 
-        p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        stage = Path(new_dir, "stage/default" if partitions else "stage")
+        foo_path = stage / "foo.txt"
+        bar_path = stage / "bar"
+
+        p1 = Part("p1", {"plugin": "dump", "source": "subdir"}, partitions=partitions)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
         part_info = PartInfo(info, part=p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = part_handler.PartHandler(
@@ -463,19 +482,21 @@ class TestHelpers:
         handler.run_action(Action("p1", Step.BUILD))
         handler.run_action(Action("p1", Step.STAGE))
 
-        assert Path("stage/foo.txt").is_file()
-        assert Path("stage/bar").is_dir()
+        assert foo_path.is_file()
+        assert bar_path.is_dir()
 
-        migration._clean_migrated_files({"foo.txt"}, {"bar"}, Path("stage"))
+        migration._clean_migrated_files({"foo.txt"}, {"bar"}, stage)
 
-        assert Path("stage/foo.txt").exists() is False
-        assert Path("stage/bar").exists() is False
+        assert not foo_path.exists()
+        assert not bar_path.exists()
 
-    def test_clean_migrated_files_missing(self, new_dir):
+    def test_clean_migrated_files_missing(self, new_dir, partitions):
         Path("subdir").mkdir()
 
-        p1 = Part("p1", {"plugin": "dump", "source": "subdir"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        p1 = Part("p1", {"plugin": "dump", "source": "subdir"}, partitions=partitions)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
         part_info = PartInfo(info, part=p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = part_handler.PartHandler(

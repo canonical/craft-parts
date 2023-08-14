@@ -20,6 +20,7 @@ from typing import Optional
 import pytest
 from overrides import overrides
 
+from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
 from craft_parts.sources.base import FileSourceHandler, SourceHandler
 
@@ -37,11 +38,13 @@ class TestSourceHandler:
     """Verify SourceHandler methods and attributes."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, partitions):
+        self._dirs = ProjectDirs(partitions=partitions)
         self.source = FooSourceHandler(
             source="source",
             part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
+            project_dirs=self._dirs,
         )
 
     def test_source(self):
@@ -74,7 +77,10 @@ class TestSourceHandler:
         with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultySource(  # type: ignore
-                source=".", part_src_dir=Path(), cache_dir=Path()
+                source=".",
+                part_src_dir=Path(),
+                cache_dir=Path(),
+                project_dirs=self._dirs,
             )
 
 
@@ -98,11 +104,13 @@ class TestFileSourceHandler:
     """Verify FileSourceHandler methods and attributes."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, partitions):
+        self._dirs = ProjectDirs(partitions=partitions)
         self.source = BarFileSource(
             source="source",
             part_src_dir=Path("parts/foo/src"),
             cache_dir=new_dir,
+            project_dirs=self._dirs,
         )
 
     def test_file_source(self):
@@ -231,5 +239,8 @@ class TestFileSourceHandler:
         with pytest.raises(TypeError, match=expected):
             # pylint: disable=abstract-class-instantiated
             FaultyFileSource(
-                source=None, part_src_dir=None, cache_dir=Path()  # type: ignore
+                source=None,  # type: ignore
+                part_src_dir=None,  # type: ignore
+                cache_dir=Path(),
+                project_dirs=self._dirs,
             )

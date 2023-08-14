@@ -144,11 +144,11 @@ def test_project_info_invalid_arch(arch):
         )
 
 
-def test_project_info_work_dir(new_dir):
+def test_project_info_work_dir(new_dir, partitions):
     info = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        project_dirs=ProjectDirs(work_dir="work_dir"),
+        project_dirs=ProjectDirs(work_dir="work_dir", partitions=partitions),
     )
 
     assert info.project_dir == new_dir

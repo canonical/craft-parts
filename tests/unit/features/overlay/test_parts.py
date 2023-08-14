@@ -126,8 +126,8 @@ class TestPartSpecs:
 class TestPartData:
     """Test basic part creation and representation."""
 
-    def test_part_dirs(self, new_dir):
-        p = Part("foo", {"plugin": "nil"})
+    def test_part_dirs(self, new_dir, partitions):
+        p = Part("foo", {"plugin": "nil"}, partitions=partitions)
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.parts_dir == new_dir / "parts"
@@ -146,8 +146,13 @@ class TestPartData:
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
-    def test_part_work_dir(self, new_dir):
-        p = Part("foo", {}, project_dirs=ProjectDirs(work_dir="foobar"))
+    def test_part_work_dir(self, new_dir, partitions):
+        p = Part(
+            "foo",
+            {},
+            project_dirs=ProjectDirs(work_dir="foobar", partitions=partitions),
+            partitions=partitions,
+        )
         assert p.parts_dir == new_dir / "foobar/parts"
         assert p.part_src_dir == new_dir / "foobar/parts/foo/src"
         assert p.part_src_subdir == new_dir / "foobar/parts/foo/src"

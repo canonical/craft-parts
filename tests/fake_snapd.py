@@ -17,7 +17,7 @@
 import json
 import socketserver
 import threading
-from typing import Any, Callable, Dict, List, Optional, Tuple  # noqa
+from typing import Any, Callable, Dict, List, Optional, Tuple  # noqa: F401
 from urllib import parse
 
 from tests import fake_servers

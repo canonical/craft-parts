@@ -32,7 +32,7 @@ from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
-from craft_parts.sources import SourceHandler
+from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils
 
@@ -158,8 +158,9 @@ class StepHandler:
 
     def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
-        srcdir = str(self._part.part_install_dir)
-        files, dirs = filesets.migratable_filesets(stage_fileset, srcdir)
+        files, dirs = filesets.migratable_filesets(
+            stage_fileset, str(self._part.part_base_install_dir)
+        )
 
         def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
@@ -167,16 +168,16 @@ class StepHandler:
             if not file_path.endswith(".pc"):
                 return
             packages.fix_pkg_config(
-                prefix_prepend=self._part.stage_dir,
+                prefix_prepend=self._part.base_stage_dir,
                 pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_install_dir,
+                prefix_trim=self._part.part_base_install_dir,
             )
 
         files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=self._part.part_install_dir,
-            destdir=self._part.stage_dir,
+            srcdir=self._part.part_base_install_dir,
+            destdir=self._part.base_stage_dir,
             fixup_func=pkgconfig_fixup,
         )
         return StepContents(files, dirs)
@@ -190,13 +191,14 @@ class StepHandler:
             stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
             prime_fileset.combine(stage_fileset)
 
-        srcdir = str(self._part.part_install_dir)
-        files, dirs = filesets.migratable_filesets(prime_fileset, srcdir)
+        files, dirs = filesets.migratable_filesets(
+            prime_fileset, str(self._part.part_base_install_dir)
+        )
         files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=self._part.stage_dir,
-            destdir=self._part.prime_dir,
+            srcdir=self._part.base_stage_dir,
+            destdir=self._part.base_prime_dir,
             permissions=self._part.spec.permissions,
         )
 

@@ -28,7 +28,12 @@ from craft_parts.sources.errors import PullError
 _LOCAL_DIR = Path(__file__).parent
 
 
-def test_stage_snap(new_dir, fake_snap_command):
+@pytest.fixture
+def foo_install_dir(new_dir):
+    return Path(new_dir, "parts", "foo", "install")
+
+
+def test_stage_snap(new_dir, partitions, fake_snap_command, foo_install_dir):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -41,7 +46,11 @@ def test_stage_snap(new_dir, fake_snap_command):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_snap", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_snap",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.BUILD)
@@ -61,11 +70,10 @@ def test_stage_snap(new_dir, fake_snap_command):
 
     ctx.execute(actions[1])
 
-    foo_install_dir = Path(new_dir / "parts" / "foo" / "install")
     assert (foo_install_dir / "meta.basic" / "snap.yaml").is_file()
 
 
-def test_stage_snap_download_error(new_dir, fake_snap_command):
+def test_stage_snap_download_error(new_dir, partitions, fake_snap_command):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -78,7 +86,11 @@ def test_stage_snap_download_error(new_dir, fake_snap_command):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_snap", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_snap",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.BUILD)
@@ -96,7 +108,7 @@ def test_stage_snap_download_error(new_dir, fake_snap_command):
     assert raised.value.snap_channel == "latest/stable"
 
 
-def test_stage_snap_unpack_error(new_dir, fake_snap_command):
+def test_stage_snap_unpack_error(new_dir, partitions, fake_snap_command):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -109,7 +121,11 @@ def test_stage_snap_unpack_error(new_dir, fake_snap_command):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_snap", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_snap",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.BUILD)

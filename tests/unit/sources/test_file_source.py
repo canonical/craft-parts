@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 import requests
 
+from craft_parts import ProjectDirs
 from craft_parts.sources import sources
 
 
@@ -26,7 +27,9 @@ from craft_parts.sources import sources
 class TestFileSource:
     """Tests for the plain file source handler."""
 
-    def test_pull_file_must_download_to_sourcedir(self, new_dir, mocker, http_server):
+    def test_pull_file_must_download_to_sourcedir(
+        self, new_dir, mocker, http_server, partitions
+    ):
         dest_dir = Path("parts/foo/src")
         dest_dir.mkdir(parents=True)
         file_name = "test.tar"
@@ -35,14 +38,16 @@ class TestFileSource:
             f"{http_server.server_address[1]}/{file_name}"
         )
 
-        file_source = sources.FileSource(source, dest_dir, cache_dir=new_dir)
-
+        dirs = ProjectDirs(partitions=partitions)
+        file_source = sources.FileSource(
+            source, dest_dir, cache_dir=new_dir, project_dirs=dirs
+        )
         file_source.pull()
 
         source_file = dest_dir / file_name
         assert source_file.read_text() == "Test fake file"
 
-    def test_pull_twice_downloads_once(self, new_dir, mocker, http_server):
+    def test_pull_twice_downloads_once(self, new_dir, mocker, http_server, partitions):
         """If a source checksum is defined, the cache should be tried first."""
 
         source = (
@@ -55,8 +60,13 @@ class TestFileSource:
             "50ad76d1c2f50c4935d11d50211945ca0ecb980c04c98099"
             "085b0c3"
         )
+        dirs = ProjectDirs(partitions=partitions)
         file_source = sources.FileSource(
-            source, Path(), cache_dir=new_dir, source_checksum=expected_checksum
+            source,
+            Path(),
+            cache_dir=new_dir,
+            source_checksum=expected_checksum,
+            project_dirs=dirs,
         )
 
         download_spy = mocker.spy(requests, "get")

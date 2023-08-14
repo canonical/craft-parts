@@ -51,13 +51,13 @@ class RpmSource(FileSourceHandler):
         part_src_dir: Path,
         *,
         cache_dir: Path,
+        project_dirs: ProjectDirs,
         source_tag: None = None,
         source_commit: None = None,
         source_branch: None = None,
         source_checksum: Optional[str] = None,
         source_submodules: None = None,
         source_depth: None = None,
-        project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
     ):
         super().__init__(

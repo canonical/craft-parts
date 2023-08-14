@@ -19,6 +19,7 @@
 import os
 import re
 import sys
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
@@ -123,7 +124,7 @@ class LifecycleManager:
 
         packages.Repository.configure(application_package_name)
 
-        project_dirs = ProjectDirs(work_dir=work_dir)
+        project_dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
 
         project_info = ProjectInfo(
             application_name=application_name,
@@ -146,12 +147,16 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
+            part_list.append(
+                _build_part(name, spec, project_dirs, strict_mode, partitions)
+            )
 
         if partitions:
             validate_partition_usage(part_list, partitions)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
+
+        _validate_partition_usage_in_parts(part_list, partitions)
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
@@ -228,7 +233,6 @@ class LifecycleManager:
         :param target_step: The final step we want to reach.
         :param part_names: The list of parts to process. If not specified, all
             parts will be processed.
-        :param update: Refresh the list of available packages.
 
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
@@ -283,7 +287,11 @@ def _ensure_overlay_supported() -> None:
 
 
 def _build_part(
-    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, strict_plugins: bool
+    name: str,
+    spec: Dict[str, Any],
+    project_dirs: ProjectDirs,
+    strict_plugins: bool,
+    partitions: Optional[List[str]],
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -330,7 +338,11 @@ def _build_part(
 
     # initialize part and unmarshal part specs
     part = Part(
-        name, part_spec, project_dirs=project_dirs, plugin_properties=properties
+        name,
+        part_spec,
+        project_dirs=project_dirs,
+        plugin_properties=properties,
+        partitions=partitions,
     )
 
     return part
@@ -355,17 +367,76 @@ def _validate_partitions(partitions: Optional[List[str]]) -> None:
             )
 
         if partitions[0] != "default":
-            raise ValueError("First partition must be 'default'.")
-
-        if any(not re.fullmatch("[a-z]+", partition) for partition in partitions):
-            raise ValueError(
-                "Partitions must only contain lowercase alphabetical characters."
-            )
+            raise errors.FeatureError("First partition must be 'default'.")
 
         if len(partitions) != len(set(partitions)):
-            raise ValueError("Partitions must be unique.")
+            raise errors.FeatureError("Partitions must be unique.")
+
+        for partition in partitions:
+            if not re.fullmatch("[a-z]+", partition):
+                raise errors.FeatureError(
+                    f"Partition {partition!r} must only contain lowercase letters."
+                )
 
     elif partitions:
         raise errors.FeatureError(
             "Partitions are defined but partition feature is not enabled."
         )
+
+
+def _validate_partition_usage_in_parts(part_list, partitions):
+    # skip validation if partitions are not enabled
+    if not Features().enable_partitions:
+        return
+
+    for part in part_list:
+        for filepaths in [
+            part.spec.organize_files,
+            part.spec.overlay_files,
+            part.spec.prime_files,
+            part.spec.stage_files,
+        ]:
+            _validate_partitions_in_paths(filepaths, partitions)
+
+
+def _validate_partitions_in_paths(
+    paths: List[str], valid_partitions: List[str]
+) -> None:
+    """Validate a list of paths to ensure that any partitions are unambiguous.
+
+    Each path in the the list of paths should either explicitly name a valid
+    partition or should not begin with a partition name. If a path contains
+    an explicitly declared invalid partition, an error will be raised.
+    If a path begins with a name that is a valid partition but does not use
+    the parenthetical to indicate that it is a partition, a warning will be
+    logged that the path will go into the default partition and that the user
+    should specify the default partition in that path to silence the warning.
+    """
+    # do not validate default glob
+    if paths == ["*"]:
+        return
+
+    for filepath in paths:
+        match = re.match("^-?\\((?P<partition>[a-z]+)\\)", filepath)
+        if match:
+            partition = match.group("partition")
+            if partition not in valid_partitions:
+                raise errors.InvalidPartitionError(
+                    partition, filepath, valid_partitions
+                )
+        match = re.match("^-?(?P<possible_partition>[a-z]+)/?", filepath)
+        if match:
+            partition = match.group("possible_partition")
+            if partition in valid_partitions:
+                warnings.warn(
+                    errors.PartitionWarning(
+                        partition,
+                        f"Path begins with a valid partition name ({partition!r}), "
+                        "but it is not wrapped in parentheses.",
+                        details="This path will go into the default partition.",
+                        resolution=(
+                            "Specify the correct partition name, for example "
+                            f"'(default)/{filepath}'"
+                        ),
+                    )
+                )

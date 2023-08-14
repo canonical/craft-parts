@@ -48,8 +48,8 @@ ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg
 html_favicon = "sphinx-resources/.sphinx/_static/favicon.png"
 
 html_context = {
-    'product_page': 'github.com/canonical/craft-parts',
-    'product_tag': 'sphinx-resources/.sphinx/_static/tag.png',
+    "product_page": "github.com/canonical/craft-parts",
+    "product_tag": "sphinx-resources/.sphinx/_static/tag.png",
     "github_url": "https://github.com/canonical/craft-parts",
     "github_version": "main",
     "github_folder": "/docs/",
@@ -73,7 +73,14 @@ extensions = [
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**venv", "base", "sphinx-resources"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "**venv",
+    "base",
+    "sphinx-resources",
+]
 
 rst_epilog = """
 .. include:: /reuse/links.txt
@@ -166,13 +173,17 @@ html_theme_options = {
 html_static_path = ["sphinx-resources/.sphinx/_static"]
 html_css_files = [
     "custom.css",
-    'header.css',
+    "header.css",
     "github_issue_links.css",
 ]
 
-html_js_files = ['header-nav.js']
-if 'github_issues' in html_context and html_context['github_issues'] and not disable_feedback_button:
-    html_js_files.append('github_issue_links.js')
+html_js_files = ["header-nav.js"]
+if (
+    "github_issues" in html_context
+    and html_context["github_issues"]
+    and not disable_feedback_button
+):
+    html_js_files.append("github_issue_links.js")
 
 
 # Do (not) include module names.
