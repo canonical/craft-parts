@@ -20,6 +20,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Dict, Optional, Sequence, Union
 
+from craft_parts.utils import partition_utils
+
 
 class ProjectDirs:
     """The project's main work directories.
@@ -41,9 +43,10 @@ class ProjectDirs:
     def __init__(
         self,
         *,
-        partitions: Optional[Sequence[str]],
+        partitions: Optional[Sequence[str]] = None,
         work_dir: Union[Path, str] = ".",
     ):
+        partition_utils.validate_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
         self.parts_dir = self.work_dir / "parts"

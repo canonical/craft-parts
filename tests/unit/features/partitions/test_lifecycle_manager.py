@@ -306,29 +306,3 @@ class TestPluginProperties(test_lifecycle_manager.TestPluginProperties):
         }
         manager_kwargs.update(kwargs)
         return lifecycle_manager.LifecycleManager(**manager_kwargs)
-
-
-class TestValidatePartitions(test_lifecycle_manager.TestValidatePartitions):
-    """Validate partitions tests with partitions enabled."""
-
-    @pytest.mark.parametrize("partitions", [["default"], ["default", "mypart"]])
-    def test_validate_partitions_success(self, partitions):
-        lifecycle_manager._validate_partitions(partitions)
-
-    @pytest.mark.parametrize(
-        ("partitions", "message"),
-        [
-            ([], "Partition feature is enabled but no partitions are defined."),
-            (["lol"], "First partition must be 'default'."),
-            (["default", "default"], "Partitions must be unique."),
-            (
-                ["default", "!!!"],
-                "Partition '!!!' must only contain lowercase letters.",
-            ),
-        ],
-    )
-    def test_validate_partitions_failure(self, partitions, message):
-        with pytest.raises(errors.FeatureError) as exc_info:
-            lifecycle_manager._validate_partitions(partitions)
-
-        assert exc_info.value.args[0] == message

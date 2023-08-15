@@ -26,6 +26,7 @@ import pytest
 import yaml
 
 import craft_parts
+import craft_parts.utils.partition_utils
 from craft_parts import errors, lifecycle_manager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
@@ -392,25 +393,6 @@ class TestValidatePartitions:
 
     Overridden in partition tests for where partitions are enabled.
     """
-
-    @pytest.mark.parametrize("partitions", [None, []])
-    def test_validate_partitions_success(self, partitions):
-        lifecycle_manager._validate_partitions(partitions)
-
-    @pytest.mark.parametrize(
-        ("partitions", "message"),
-        [
-            (
-                ["anything"],
-                "Partitions are defined but partition feature is not enabled.",
-            ),
-        ],
-    )
-    def test_validate_partitions_failure(self, partitions, message):
-        with pytest.raises(errors.FeatureError) as exc_info:
-            lifecycle_manager._validate_partitions(partitions)
-
-        assert exc_info.value.message == message
 
     @pytest.mark.parametrize(
         ("filepaths", "partitions"),
