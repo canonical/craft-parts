@@ -366,7 +366,7 @@ def test_craftctl_set_error(new_dir, partitions, capfd, mocker):
     assert "'myvar' not in project variables" in captured.err
 
 
-def test_craftctl_set_only_once(new_dir, capfd, mocker):  # see LP #1831135
+def test_craftctl_set_only_once(new_dir, partitions, capfd, mocker):  # see LP #1831135
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -389,6 +389,7 @@ def test_craftctl_set_only_once(new_dir, capfd, mocker):  # see LP #1831135
         cache_dir=new_dir,
         project_vars_part_name="part1",
         project_vars={"version": ""},
+        partitions=partitions,
     )
 
     assert lf.project_info.get_project_var("version", raw_read=True) == ""
@@ -409,6 +410,7 @@ def test_craftctl_set_only_once(new_dir, capfd, mocker):  # see LP #1831135
         cache_dir=new_dir,
         project_vars_part_name="part1",
         project_vars={"version": ""},
+        partitions=partitions,
     )
 
     assert lf.project_info.get_project_var("version", raw_read=True) == ""
@@ -421,7 +423,7 @@ def test_craftctl_set_only_once(new_dir, capfd, mocker):  # see LP #1831135
     assert lf.project_info.get_project_var("version") == "xx"
 
 
-def test_craftctl_update_project_vars(new_dir, capfd, mocker):
+def test_craftctl_update_project_vars(new_dir, partitions, capfd, mocker):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -444,6 +446,7 @@ def test_craftctl_update_project_vars(new_dir, capfd, mocker):
         cache_dir=new_dir,
         project_vars_part_name="part1",
         project_vars={"version": ""},
+        partitions=partitions,
     )
 
     assert lf.project_info.get_project_var("version", raw_read=True) == ""
@@ -461,6 +464,7 @@ def test_craftctl_update_project_vars(new_dir, capfd, mocker):
         cache_dir=new_dir,
         project_vars_part_name="part1",
         project_vars={"version": ""},
+        partitions=partitions,
     )
 
     assert lf.project_info.get_project_var("version", raw_read=True) == ""
