@@ -39,6 +39,16 @@ Changelog
 - Tox and packaging updates
 - Documentation updates
 
+1.19.7 (2023-08-09)
+-------------------
+
+- Only load project variables in adopting part 
+
+1.19.6 (2023-06-09)
+-------------------
+
+- Revert subdir changes in pull and build steps
+
 1.19.5 (2023-05-23)
 -------------------
 

@@ -200,8 +200,15 @@ class Sequencer:
             current_step,
             action_type=ActionType.SKIP,
             reason="already ran",
-            project_vars=self._sm.project_vars(part, current_step),
+            project_vars=self._get_project_vars(part, current_step),
         )
+
+    def _get_project_vars(
+        self, part: Part, step: Step
+    ) -> Optional[Dict[str, ProjectVar]]:
+        if part.name == self._project_info.project_vars_part_name:
+            return self._sm.project_vars(part, step)
+        return None
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
         prerequisite_step = steps.dependency_prerequisite_step(step)

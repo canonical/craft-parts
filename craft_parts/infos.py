@@ -178,6 +178,11 @@ class ProjectInfo:
         return self._project_name
 
     @property
+    def project_vars_part_name(self) -> Optional[str]:
+        """Return the name of the part that can set project vars."""
+        return self._project_vars_part_name
+
+    @property
     def project_options(self) -> Dict[str, Any]:
         """Obtain a project-wide options dictionary."""
         return {
