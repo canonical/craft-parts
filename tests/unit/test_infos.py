@@ -68,6 +68,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         "project_vars_part_name": "adopt",
         "project_vars": {"a": ProjectVar(value="b")},
     }
+    assert x.project_vars_part_name == "adopt"
     assert x.global_environment == {}
 
     assert x.parts_dir == new_dir / "parts"
