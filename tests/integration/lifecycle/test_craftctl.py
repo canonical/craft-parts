@@ -23,7 +23,7 @@ import pytest
 import yaml
 
 import craft_parts
-from craft_parts import Action, Step, errors
+from craft_parts import Action, ActionType, Step, errors
 from tests import TESTS_DIR
 
 
@@ -354,6 +354,117 @@ def test_craftctl_set_error(new_dir, capfd, mocker):
 
     captured = capfd.readouterr()
     assert "'myvar' not in project variables" in captured.err
+
+
+def test_craftctl_set_only_once(new_dir, capfd, mocker):  # see LP #1831135
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          part1:
+            plugin: nil
+            override-pull: |
+              craftctl default
+              craftctl set version=xx
+
+          part2:
+            plugin: nil
+            after: [part1]
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    actions = lf.plan(Step.BUILD)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
+
+    # change something in part1 to make it dirty
+    parts["parts"]["part1"]["override-pull"] += "\necho foo"
+
+    # now build only part2 so that pull order will be reversed
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    # execution of actions must succeed
+    actions = lf.plan(Step.BUILD, part_names=["part2"])
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
+
+
+def test_craftctl_update_project_vars(new_dir, capfd, mocker):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          part1:
+            plugin: nil
+            override-pull: |
+              craftctl default
+              craftctl set version=xx
+
+          part2:
+            plugin: nil
+            after: [part1]
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    actions = lf.plan(Step.BUILD)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
+
+    # re-execute the lifecycle with no changes
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    actions = lf.plan(Step.BUILD)
+
+    # all actions should be skipped
+    for action in actions:
+        assert action.action_type == ActionType.SKIP
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
 
 
 def test_craftctl_get_error(new_dir, capfd, mocker):
