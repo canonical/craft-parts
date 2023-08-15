@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.23.1 (2023-08-15)
+-------------------
+
+- Only load project variables in adopting part
+
 1.23.0 (2023-07-06)
 -------------------
 
