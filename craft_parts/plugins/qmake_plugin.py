@@ -49,7 +49,7 @@ class QmakePluginProperties(PluginProperties, PluginModel):
         return cls(**plugin_data)
 
 
-class QmakePlugin(Plugin, PluginProperties):
+class QmakePlugin(Plugin):
     """The qmake plugin is useful for building qmake-based parts.
 
     These are projects that are built using .pro files.
@@ -136,7 +136,8 @@ class QmakePlugin(Plugin, PluginProperties):
             f"make install INSTALL_ROOT={self._part_info.part_install_dir}",
         ]
 
-    @property
+    @classmethod
+    @override
     def get_out_of_source_build(self) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
