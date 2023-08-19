@@ -70,7 +70,7 @@ docs_require = [
 ]
 
 types_requires = [
-    "mypy[reports]==0.991",
+    "mypy[reports]==1.5.1",
     "types-colorama",
     "types-docutils",
     "types-Pillow",
