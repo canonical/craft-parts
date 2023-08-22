@@ -34,6 +34,7 @@ from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name, validate_partition_usage
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
+from craft_parts.utils.partition_utils import validate_partition_names
 
 
 class LifecycleManager:
@@ -120,7 +121,7 @@ class LifecycleManager:
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
-        _validate_partitions(partitions)
+        validate_partition_names(partitions)
 
         packages.Repository.configure(application_package_name)
 
@@ -346,42 +347,6 @@ def _build_part(
     )
 
     return part
-
-
-def _validate_partitions(partitions: Optional[List[str]]) -> None:
-    """Validate the partition feature set.
-
-    If the partition feature is enabled, then:
-      - the first partition must be "default"
-      - each partition must contain only lowercase alphabetical characters
-      - partitions are unique
-
-    :param partitions: Partition data to verify.
-
-    :raises ValueError: If the partitions are not valid or the feature is not enabled.
-    """
-    if Features().enable_partitions:
-        if not partitions:
-            raise errors.FeatureError(
-                "Partition feature is enabled but no partitions are defined."
-            )
-
-        if partitions[0] != "default":
-            raise errors.FeatureError("First partition must be 'default'.")
-
-        if len(partitions) != len(set(partitions)):
-            raise errors.FeatureError("Partitions must be unique.")
-
-        for partition in partitions:
-            if not re.fullmatch("[a-z]+", partition):
-                raise errors.FeatureError(
-                    f"Partition {partition!r} must only contain lowercase letters."
-                )
-
-    elif partitions:
-        raise errors.FeatureError(
-            "Partitions are defined but partition feature is not enabled."
-        )
 
 
 def _validate_partition_usage_in_parts(part_list, partitions):
