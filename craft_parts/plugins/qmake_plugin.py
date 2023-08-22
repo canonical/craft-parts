@@ -19,6 +19,8 @@
 
 from typing import Any, Dict, List, Set, cast
 
+from overrides import override
+
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
