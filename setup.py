@@ -91,7 +91,7 @@ test_requires = [
     "pylint",
     "pylint-fixme-info",
     "pylint-pytest",
-    "pyright",
+    "pyright==1.1.323",
     "pytest",
     "pytest-check",
     "pytest-cov",

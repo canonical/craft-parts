@@ -22,6 +22,7 @@ import pytest
 
 # These wildcard imports make pytest run any non-overridden plugin tests here.
 # pylint: disable=wildcard-import, unused-import, function-redefined, unused-wildcard-import
+# pyright: reportGeneralTypeIssues=false
 from tests.integration.plugins.test_ant import *  # noqa: F403
 from tests.integration.plugins.test_application_plugin import *  # noqa: F403
 from tests.integration.plugins.test_autotools import *  # noqa: F403
