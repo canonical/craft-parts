@@ -46,7 +46,7 @@ class ProjectVar(YamlModel):
     updated: bool = False
 
 
-# pylint: disable-next=too-many-instance-attributes
+# pylint: disable-next=too-many-instance-attributes,too-many-public-methods
 class ProjectInfo:
     """Project-level information containing project-specific fields.
 
@@ -131,6 +131,26 @@ class ProjectInfo:
     def cache_dir(self) -> Path:
         """Return the directory used to store cached files."""
         return self._cache_dir
+
+    @property
+    def arch_build_on(self) -> str:
+        """The architecture we are building on."""
+        return self._host_machine["deb"]
+
+    @property
+    def arch_build_for(self) -> str:
+        """The architecture we are building for."""
+        return self._machine["deb"]
+
+    @property
+    def arch_triplet_build_on(self) -> str:
+        """The machine-vendor-os triplet for the platform we are building on."""
+        return self._host_machine["triplet"]
+
+    @property
+    def arch_triplet_build_for(self) -> str:
+        """The machine-vendor-os triplet for the platform we are building for."""
+        return self._machine["triplet"]
 
     @property
     def arch_triplet(self) -> str:

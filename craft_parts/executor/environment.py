@@ -151,6 +151,10 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
     global_environment = {
         "CRAFT_ARCH_TRIPLET": info.arch_triplet,
         "CRAFT_TARGET_ARCH": info.target_arch,
+        "CRAFT_ARCH_BUILD_ON": info.arch_build_on,
+        "CRAFT_ARCH_BUILD_FOR": info.arch_build_for,
+        "CRAFT_ARCH_TRIPLET_BUILD_ON": info.arch_triplet_build_on,
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR": info.arch_triplet_build_for,
         "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(info.project_dir),
     }

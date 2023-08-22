@@ -84,7 +84,11 @@ def test_step_callback(new_dir, mocker, capfd, step):
     assert out == (
         textwrap.dedent(
             f"""\
+            CRAFT_ARCH_BUILD_FOR=arm64
+            CRAFT_ARCH_BUILD_ON=arm64
             CRAFT_ARCH_TRIPLET=aarch64-linux-gnu
+            CRAFT_ARCH_TRIPLET_BUILD_FOR=aarch64-linux-gnu
+            CRAFT_ARCH_TRIPLET_BUILD_ON=aarch64-linux-gnu
             CRAFT_PARALLEL_BUILD_COUNT=1
             CRAFT_PART_BUILD={new_dir}/parts/foo/build
             CRAFT_PART_BUILD_WORK={new_dir}/parts/foo/build
@@ -126,7 +130,11 @@ def test_prologue_callback(new_dir, capfd, mocker):
     assert out == (
         textwrap.dedent(
             f"""\
+            CRAFT_ARCH_BUILD_FOR=arm64
+            CRAFT_ARCH_BUILD_ON=arm64
             CRAFT_ARCH_TRIPLET=aarch64-linux-gnu
+            CRAFT_ARCH_TRIPLET_BUILD_FOR=aarch64-linux-gnu
+            CRAFT_ARCH_TRIPLET_BUILD_ON=aarch64-linux-gnu
             CRAFT_PARALLEL_BUILD_COUNT=1
             CRAFT_PART_BUILD={new_dir}/parts/foo/build
             CRAFT_PART_BUILD_WORK={new_dir}/parts/foo/build
