@@ -57,7 +57,7 @@ def test_autotools_plugin(new_dir, partitions, monkeypatch):
         ctx.execute(actions)
 
     prime_dir = lf.project_info.prime_dir
-    hello_binary = Path(prime_dir, "bin", "hello")
+    hello_binary = Path(prime_dir, "usr", "bin", "hello")
     assert hello_binary.is_file()
 
     output = subprocess.check_output([str(hello_binary)], text=True)
