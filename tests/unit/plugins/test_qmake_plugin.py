@@ -86,7 +86,7 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_commands() == [
-            "qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} QMAKE_LFLAGS+=${LDFLAGS:-}",
+            'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" QMAKE_LFLAGS+="${LDFLAGS:-}" ',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
@@ -95,7 +95,7 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": 6})
 
         assert plugin.get_build_commands() == [
-            "qmake6 QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} QMAKE_LFLAGS+=${LDFLAGS:-}",
+            'qmake6 QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" QMAKE_LFLAGS+="${LDFLAGS:-}" ',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
@@ -106,7 +106,7 @@ class TestPluginQMakePlugin:
         )
 
         assert plugin.get_build_commands() == [
-            "qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} ",
+            'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" ',
             f"QMAKE_LFLAGS+=${{LDFLAGS:-}} {plugin._part_info.part_src_dir}/hello.pro",
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
@@ -121,7 +121,7 @@ class TestPluginQMakePlugin:
 
         assert plugin.get_build_commands() == [
             (
-                "qmake QMAKE_CFLAGS+=${CFLAGS:-} QMAKE_CXXFLAGS+=${CXXFLAGS:-} QMAKE_LFLAGS+=${LDFLAGS:-}",
+                'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" QMAKE_LFLAGS+="${LDFLAGS:-}" ',
                 f'{" ".join(qmake_parameters)}',
             ),
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
