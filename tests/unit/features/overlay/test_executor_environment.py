@@ -108,6 +108,10 @@ def test_generate_step_environment_build(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
@@ -161,6 +165,10 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
@@ -216,6 +224,10 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
@@ -267,6 +279,10 @@ def test_generate_step_environment_no_user_env(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"

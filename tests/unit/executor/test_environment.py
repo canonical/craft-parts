@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import textwrap
 from pathlib import Path
 from typing import Dict, List, Set
@@ -102,6 +103,10 @@ def test_generate_step_environment_build(new_dir):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_STAGE="{new_dir}/stage"
@@ -150,6 +155,10 @@ def test_generate_step_environment_no_project_name(new_dir):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_STAGE="{new_dir}/stage"
@@ -200,6 +209,10 @@ def test_generate_step_environment_no_build(new_dir, step):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_STAGE="{new_dir}/stage"
@@ -249,6 +262,10 @@ def test_generate_step_environment_no_user_env(new_dir):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_STAGE="{new_dir}/stage"
@@ -322,6 +339,34 @@ def test_expand_variables_skip(new_dir, partitions):
         "foo": "$CRAFT_PROJECT_NAME",  # this key was skipped
         "bar": "test-project",
     }
+
+
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("$CRAFT_TARGET_ARCH", "arm64"),
+        ("${CRAFT_TARGET_ARCH}", "arm64"),
+        ("$CRAFT_ARCH_TRIPLET", "aarch64-linux-gnu"),
+        ("${CRAFT_ARCH_TRIPLET}", "aarch64-linux-gnu"),
+    ],
+)
+def test_expand_variables_deprecated(new_dir, name, value, caplog):
+    info = ProjectInfo(
+        project_dirs=ProjectDirs(work_dir="/work"),
+        arch="aarch64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        work_dir="/work",
+    )
+
+    data = {"foo": name}
+    varname = name.strip("${}")
+
+    with caplog.at_level(logging.DEBUG):
+        environment.expand_environment(data, info=info)
+        assert data == {"foo": value}  # the variable is still expanded
+        assert f"{varname} is deprecated, use" in caplog.text  # but a warning is issued
 
 
 @pytest.mark.parametrize(
