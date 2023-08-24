@@ -2,6 +2,15 @@
 Changelog
 *********
 
+1.24.0 (2023-08-24)
+-------------------
+
+- Add support to partitions
+- Add lifecycle prologue log messages
+- Add build-on/for architecture environment variables
+- Add bootstrap parameters to autotools plugin
+- Documentation updates
+
 1.23.1 (2023-08-15)
 -------------------
 
