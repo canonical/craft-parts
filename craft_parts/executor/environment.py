@@ -149,7 +149,9 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
     :return: A dictionary containing environment variables and values.
     """
     global_environment = {
+        # deprecated, use CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}
         "CRAFT_ARCH_TRIPLET": info.arch_triplet,
+        # deprecated, use CRAFT_ARCH_BUILD_{ON|FOR}
         "CRAFT_TARGET_ARCH": info.target_arch,
         "CRAFT_ARCH_BUILD_ON": info.arch_build_on,
         "CRAFT_ARCH_BUILD_FOR": info.arch_build_for,
@@ -252,8 +254,10 @@ def _replace_attr(
 ) -> Union[List[str], Dict[str, str], str]:
     """Replace environment variables according to the replacements map."""
     if isinstance(attr, str):
-        for replacement, value in replacements.items():
-            attr = attr.replace(replacement, str(value))
+        for key, value in replacements.items():
+            if key in attr:
+                _warn_if_deprecated_key(key)
+                attr = attr.replace(key, str(value))
         return attr
 
     if isinstance(attr, (list, tuple)):
@@ -269,3 +273,12 @@ def _replace_attr(
         return result
 
     return attr
+
+
+def _warn_if_deprecated_key(key: str) -> None:
+    if key in ("$CRAFT_TARGET_ARCH", "${CRAFT_TARGET_ARCH}"):
+        logger.info("CRAFT_TARGET_ARCH is deprecated, use CRAFT_ARCH_BUILD_{ON|FOR}")
+    elif key in ("$CRAFT_ARCH_TRIPLET", "${CRAFT_ARCH_TRIPLET}"):
+        logger.info(
+            "CRAFT_ARCH_TRIPLET is deprecated, use CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}"
+        )

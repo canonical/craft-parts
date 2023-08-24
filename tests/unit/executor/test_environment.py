@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import textwrap
 from pathlib import Path
 from typing import Dict, List, Set
@@ -338,6 +339,34 @@ def test_expand_variables_skip(new_dir, partitions):
         "foo": "$CRAFT_PROJECT_NAME",  # this key was skipped
         "bar": "test-project",
     }
+
+
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("$CRAFT_TARGET_ARCH", "arm64"),
+        ("${CRAFT_TARGET_ARCH}", "arm64"),
+        ("$CRAFT_ARCH_TRIPLET", "aarch64-linux-gnu"),
+        ("${CRAFT_ARCH_TRIPLET}", "aarch64-linux-gnu"),
+    ],
+)
+def test_expand_variables_deprecated(new_dir, name, value, caplog):
+    info = ProjectInfo(
+        project_dirs=ProjectDirs(work_dir="/work"),
+        arch="aarch64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        work_dir="/work",
+    )
+
+    data = {"foo": name}
+    varname = name.strip("${}")
+
+    with caplog.at_level(logging.DEBUG):
+        environment.expand_environment(data, info=info)
+        assert data == {"foo": value}  # the variable is still expanded
+        assert f"{varname} is deprecated, use" in caplog.text  # but a warning is issued
 
 
 @pytest.mark.parametrize(
