@@ -28,6 +28,7 @@ class AutotoolsPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the autotools plugin."""
 
     autotools_configure_parameters: List[str] = []
+    autotools_bootstrap_parameters: List[str] = []
 
     # part properties required by the plugin
     source: str
@@ -65,6 +66,12 @@ class AutotoolsPlugin(Plugin):
 
     In addition, this plugin uses the following plugin-specific keywords:
 
+        - autotools-bootstrap-parameters
+          (list of strings)
+          bootstrap flags to pass to the build if a bootstrap file is found in
+          the project. These can in some cases be seen by running
+          './bootstrap --help'
+
         - autotools-configure-parameters
           (list of strings)
           configure flags to pass to the build such as those shown by running
@@ -93,6 +100,15 @@ class AutotoolsPlugin(Plugin):
         cmd = ["./configure"] + options.autotools_configure_parameters
         return " ".join(cmd)
 
+    def _get_bootstrap_command(self) -> str:
+        options = cast(AutotoolsPluginProperties, self._options)
+        cmd = [
+            "env",
+            "NOCONFIGURE=1",
+            "./bootstrap",
+        ] + options.autotools_bootstrap_parameters
+        return " ".join(cmd)
+
     # pylint: disable=line-too-long
 
     @override
@@ -100,7 +116,7 @@ class AutotoolsPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         return [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
-            "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
+            f"[ ! -f ./configure ] && [ -f ./bootstrap ] && {self._get_bootstrap_command()}",
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
             f"make -j{self._part_info.parallel_build_count}",
