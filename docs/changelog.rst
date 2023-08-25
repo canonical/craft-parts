@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.24.1 (2023-08-25)
+-------------------
+
+- Don't write log information in overlays (workaround for craft-cli
+  issue)
+
 1.24.0 (2023-08-24)
 -------------------
 
