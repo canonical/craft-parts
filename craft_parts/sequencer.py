@@ -81,7 +81,7 @@ class Sequencer:
         :returns: The list of actions that should be executed.
         """
         if target_step == Step.OVERLAY and not Features().enable_overlay:
-            raise errors.FeatureDisabled("Overlay step is not supported.")
+            raise errors.FeatureError("Overlay step is not supported.")
 
         self._actions = []
         self._add_all_actions(target_step, part_names)
@@ -200,8 +200,15 @@ class Sequencer:
             current_step,
             action_type=ActionType.SKIP,
             reason="already ran",
-            project_vars=self._sm.project_vars(part, current_step),
+            project_vars=self._get_project_vars(part, current_step),
         )
+
+    def _get_project_vars(
+        self, part: Part, step: Step
+    ) -> Optional[Dict[str, ProjectVar]]:
+        if part.name == self._project_info.project_vars_part_name:
+            return self._sm.project_vars(part, step)
+        return None
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
         prerequisite_step = steps.dependency_prerequisite_step(step)

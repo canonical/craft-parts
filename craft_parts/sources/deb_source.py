@@ -40,13 +40,13 @@ class DebSource(FileSourceHandler):
         part_src_dir: Path,
         *,
         cache_dir: Path,
+        project_dirs: ProjectDirs,
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,
         source_checksum: Optional[str] = None,
         source_submodules: Optional[List[str]] = None,
         source_depth: Optional[int] = None,
-        project_dirs: Optional[ProjectDirs] = None,
         ignore_patterns: Optional[List[str]] = None,
     ):
         super().__init__(

@@ -16,8 +16,9 @@
 
 """Definitions and helpers to handle parts."""
 
+import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
@@ -28,6 +29,7 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
+from craft_parts.utils.formatting_utils import humanize_list
 
 
 class PartSpec(BaseModel):
@@ -158,7 +160,17 @@ class PartSpec(BaseModel):
 
         raise RuntimeError(f"cannot get scriptlet for invalid step {step!r}")
 
+    @property
+    def has_overlay(self) -> bool:
+        """Return whether this spec declares overlay content."""
+        return bool(
+            self.overlay_packages
+            or self.overlay_script is not None
+            or self.overlay_files != ["*"]
+        )
 
+
+# pylint: disable=too-many-public-methods
 class Part:
     """Each of the components used in the project specification.
 
@@ -169,7 +181,9 @@ class Part:
 
     :param name: The part name.
     :param data: A dictionary containing the part properties.
+    :param partitions: A Sequence of partition names if partitions are enabled, or None
     :param project_dirs: The project work directories.
+    :param plugin_properties: An optional PluginProperties object for this plugin.
 
     :raise PartSpecificationError: If part validation fails.
     """
@@ -181,14 +195,16 @@ class Part:
         *,
         project_dirs: Optional[ProjectDirs] = None,
         plugin_properties: "Optional[PluginProperties]" = None,
+        partitions: Optional[Sequence[str]] = None,
     ):
+        self._partitions = partitions
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
             )
 
         if not project_dirs:
-            project_dirs = ProjectDirs()
+            project_dirs = ProjectDirs(partitions=partitions)
 
         if not plugin_properties:
             plugin_properties = PluginProperties()
@@ -198,7 +214,7 @@ class Part:
         self.name = name
         self.plugin_name = plugin_name
         self.plugin_properties = plugin_properties
-        self._dirs = project_dirs
+        self.dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
         self._part_dir = project_dirs.parts_dir / name
 
@@ -215,7 +231,7 @@ class Part:
     @property
     def parts_dir(self) -> Path:
         """Return the directory containing work files for each part."""
-        return self._dirs.parts_dir
+        return self.dirs.parts_dir
 
     @property
     def part_src_dir(self) -> Path:
@@ -250,9 +266,41 @@ class Part:
         return self.part_build_dir
 
     @property
-    def part_install_dir(self) -> Path:
-        """Return the subdirectory to install the part build artifacts."""
+    def part_base_install_dir(self) -> Path:
+        """The base of the part's install directories.
+
+        With partitions disabled, this is the install directory.
+        With partitions enabled, this is the directory containing the partitions.
+
+        A full path to an install location can always be found with:
+        ``part.part_base_install_dir / get_partition_compatible_filepath(location)``
+        """
         return self._part_dir / "install"
+
+    @property
+    def part_install_dir(self) -> Path:
+        """Return the subdirectory to install the part build artifacts.
+
+        With partitions disabled, this is the install directory and is the same
+        as ``part_base_install_dir``
+        With partitions enabled, this is the install directory for the default partition
+        """
+        if self._partitions is None:
+            return self.part_base_install_dir
+        return self.part_base_install_dir / "default"
+
+    @property
+    def part_install_dirs(self) -> Mapping[Optional[str], Path]:
+        """Return a mapping of partition names to install directories.
+
+        With partitions disabled, the only partition name is ``None``
+        """
+        if self._partitions is None:
+            return {None: self.part_base_install_dir}
+        return {
+            partition: self.part_base_install_dir / partition
+            for partition in self._partitions
+        }
 
     @property
     def part_state_dir(self) -> Path:
@@ -287,17 +335,55 @@ class Part:
     @property
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
-        return self._dirs.overlay_dir
+        return self.dirs.overlay_dir
+
+    @property
+    def base_stage_dir(self) -> Path:
+        """Return the base staging area.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self.dirs.base_stage_dir
 
     @property
     def stage_dir(self) -> Path:
-        """Return the staging area containing the installed files from all parts."""
-        return self._dirs.stage_dir
+        """Return the staging area containing the installed files from all parts.
+
+        If partitions are enabled, this is the stage directory for the default partition
+        """
+        return self.dirs.stage_dir
+
+    @property
+    def stage_dirs(self) -> Mapping[Optional[str], Path]:
+        """A mapping of partition name to partition staging directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.stage_dirs
+
+    @property
+    def base_prime_dir(self) -> Path:
+        """Return the primed tree containing the artifacts to deploy.
+
+        If partitions are enabled, this is the directory containing those partitions.
+        """
+        return self.dirs.base_prime_dir
 
     @property
     def prime_dir(self) -> Path:
-        """Return the primed tree containing the artifacts to deploy."""
-        return self._dirs.prime_dir
+        """Return the primed tree containing the artifacts to deploy.
+
+        If partitions are enabled, this is the prime directory for the default partition
+        """
+        return self.dirs.prime_dir
+
+    @property
+    def prime_dirs(self) -> Mapping[Optional[str], Path]:
+        """A mapping of partition name to partition prime directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.prime_dirs
 
     @property
     def dependencies(self) -> List[str]:
@@ -309,11 +395,66 @@ class Part:
     @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
-        return bool(
-            self.spec.overlay_packages
-            or self.spec.overlay_script is not None
-            or self.spec.overlay_files != ["*"]
-        )
+        return self.spec.has_overlay
+
+    def check_partition_usage(self, partitions: List[str]) -> List[str]:
+        """Check if partitions are properly used in a part.
+
+        :param partitions: The list of valid partitions.
+
+        :returns: A list of invalid uses of partitions in the part.
+        """
+        error_list: List[str] = []
+
+        if not Features().enable_partitions:
+            return error_list
+
+        for fileset_name, fileset in [
+            ("overlay", self.spec.overlay_files),
+            # only the destination of organize filepaths use partitions
+            ("organize", self.spec.organize_files.values()),
+            ("stage", self.spec.stage_files),
+            ("prime", self.spec.prime_files),
+        ]:
+            error_list.extend(
+                self._check_partitions_in_filepaths(fileset_name, fileset, partitions)
+            )
+
+        return error_list
+
+    def _check_partitions_in_filepaths(
+        self, fileset_name: str, fileset: Iterable[str], partitions: List[str]
+    ) -> List[str]:
+        """Check if partitions are properly used in a fileset.
+
+        If a filepath begins with a parentheses, then the text inside the parentheses
+        must be a valid partition.
+
+        :param fileset_name: The name of the fileset being checked.
+        :param fileset: The list of filepaths to check.
+        :param partitions: The list of valid partitions.
+
+        :returns: A list of invalid uses of partitions in the fileset.
+        """
+        error_list = []
+        pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
+
+        for filepath in fileset:
+            match = re.match(pattern, filepath)
+            if match:
+                partition = match.group("partition")
+                if partition not in partitions:
+                    error_list.append(
+                        f"    unknown partition {partition!r} in {filepath!r}"
+                    )
+
+        if error_list:
+            error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
+
+        return error_list
+
+
+# pylint: enable=too-many-public-methods
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -461,6 +602,47 @@ def validate_part(data: Dict[str, Any]) -> None:
 
     :param data: The part data to validate.
     """
+    _get_part_spec(data)
+
+
+def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> None:
+    """Validate usage of partitions in a list of parts.
+
+    For each part, the use of partitions in filepaths in overlay, stage, prime, and
+    organize keywords are validated.
+
+    :param part_list: The list of parts to validate.
+    :param partitions: The list of valid partitions.
+
+    :raises ValueError: If partitions are not used properly in the list of parts.
+    """
+    if not Features().enable_partitions:
+        return
+
+    error_list = []
+
+    for part in part_list:
+        error_list.extend(part.check_partition_usage(partitions))
+
+    if error_list:
+        raise errors.FeatureError(
+            "Error: Invalid usage of partitions:\n"
+            + "\n".join(error_list)
+            + f"\nValid partitions are {humanize_list(partitions, 'and')}."
+        )
+
+
+def part_has_overlay(data: Dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` employs the Overlay step.
+
+    :param data: The part data to query for overlay use.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_overlay
+
+
+def _get_part_spec(data: Dict[str, Any]) -> PartSpec:
     if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
 
@@ -478,4 +660,4 @@ def validate_part(data: Dict[str, Any]) -> None:
 
     # validate common part properties
     part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
-    PartSpec(**part_spec)
+    return PartSpec(**part_spec)

@@ -2,6 +2,41 @@
 Changelog
 *********
 
+1.24.0 (2023-08-24)
+-------------------
+
+- Add support to partitions
+- Add lifecycle prologue log messages
+- Add build-on/for architecture environment variables
+- Add bootstrap parameters to autotools plugin
+- Documentation updates
+
+1.23.1 (2023-08-15)
+-------------------
+
+- Only load project variables in adopting part
+
+1.23.0 (2023-07-06)
+-------------------
+
+- Improve interpreter version detection in the Python plugin
+- Fix and improve documentation
+- Pin Pydantic to version 1.x
+
+1.22.0 (2023-06-25)
+-------------------
+
+- Add helper to query overlay use
+- Improve architecture mapping
+- Forward unmatched snap source parameters
+- Build system updates
+- Documentation updates
+
+1.21.1 (2023-06-09)
+-------------------
+
+- Revert subdir changes in pull and build steps
+
 1.21.0 (2023-05-20)
 -------------------
 
@@ -17,6 +52,16 @@ Changelog
 - Fix subdir in pull and build steps
 - Tox and packaging updates
 - Documentation updates
+
+1.19.7 (2023-08-09)
+-------------------
+
+- Only load project variables in adopting part 
+
+1.19.6 (2023-06-09)
+-------------------
+
+- Revert subdir changes in pull and build steps
 
 1.19.5 (2023-05-23)
 -------------------

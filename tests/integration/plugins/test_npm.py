@@ -23,7 +23,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_npm_plugin(new_dir):
+def test_npm_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -77,7 +77,10 @@ def test_npm_plugin(new_dir):
     )
 
     lifecycle = LifecycleManager(
-        parts, application_name="test_npm_plugin", cache_dir=new_dir
+        parts,
+        application_name="test_npm_plugin",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lifecycle.plan(Step.PRIME)
 
@@ -92,7 +95,7 @@ def test_npm_plugin(new_dir):
     assert Path(lifecycle.project_info.prime_dir, "bin", "node").exists() is False
 
 
-def test_npm_plugin_include_node(new_dir):
+def test_npm_plugin_include_node(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -148,7 +151,10 @@ def test_npm_plugin_include_node(new_dir):
     )
 
     lifecycle = LifecycleManager(
-        parts, application_name="test_npm_plugin", cache_dir=new_dir
+        parts,
+        application_name="test_npm_plugin",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lifecycle.plan(Step.PRIME)
 

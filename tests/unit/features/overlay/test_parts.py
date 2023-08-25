@@ -30,7 +30,7 @@ from craft_parts.steps import Step
 
 
 class TestPartSpecs:
-    """Test part specification creation."""
+    """Test part specification creation and query."""
 
     def test_marshal_unmarshal(self):
         data = {
@@ -104,12 +104,30 @@ class TestPartSpecs:
         spec = PartSpec.unmarshal(data)
         assert spec.stage_packages == package_list
 
+    @pytest.mark.parametrize(
+        "packages,script,files,result",
+        [
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
+        ],
+    )
+    def test_spec_has_overlay(self, packages, script, files, result):
+        data = {
+            "overlay-packages": packages,
+            "overlay-script": script,
+            "overlay": files,
+        }
+        spec = PartSpec.unmarshal(data)
+        assert spec.has_overlay == result
+
 
 class TestPartData:
     """Test basic part creation and representation."""
 
-    def test_part_dirs(self, new_dir):
-        p = Part("foo", {"plugin": "nil"})
+    def test_part_dirs(self, new_dir, partitions):
+        p = Part("foo", {"plugin": "nil"}, partitions=partitions)
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.parts_dir == new_dir / "parts"
@@ -128,8 +146,13 @@ class TestPartData:
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
-    def test_part_work_dir(self, new_dir):
-        p = Part("foo", {}, project_dirs=ProjectDirs(work_dir="foobar"))
+    def test_part_work_dir(self, new_dir, partitions):
+        p = Part(
+            "foo",
+            {},
+            project_dirs=ProjectDirs(work_dir="foobar", partitions=partitions),
+            partitions=partitions,
+        )
         assert p.parts_dir == new_dir / "foobar/parts"
         assert p.part_src_dir == new_dir / "foobar/parts/foo/src"
         assert p.part_src_subdir == new_dir / "foobar/parts/foo/src"
@@ -476,6 +499,24 @@ class TestPartHelpers:
 
         p = parts.get_parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
         assert p == [p2, p3, p5]
+
+    @pytest.mark.parametrize(
+        "packages,script,files,result",
+        [
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
+        ],
+    )
+    def test_part_has_overlay(self, packages, script, files, result):
+        data = {
+            "plugin": "nil",
+            "overlay-packages": packages,
+            "overlay-script": script,
+            "overlay": files,
+        }
+        assert parts.part_has_overlay(data) == result
 
 
 class TestPartValidation:

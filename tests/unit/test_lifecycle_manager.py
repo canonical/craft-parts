@@ -26,8 +26,8 @@ import pytest
 import yaml
 
 import craft_parts
-from craft_parts import errors
-from craft_parts.lifecycle_manager import LifecycleManager
+import craft_parts.utils.partition_utils
+from craft_parts import errors, lifecycle_manager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
 from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
@@ -47,7 +47,7 @@ class TestLifecycleManager:
     """Verify lifecycle manager initialization."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self):
+    def setup_method_fixture(self) -> None:
         # pylint: disable=attribute-defined-outside-init
         yaml_data = textwrap.dedent(
             """
@@ -57,40 +57,48 @@ class TestLifecycleManager:
             """
         )
         self._data = yaml.safe_load(yaml_data)
+        self._lcm_kwargs: Dict[str, Any] = {}
         # pylint: enable=attribute-defined-outside-init
 
     def test_invalid_arch(self, new_dir):
         with pytest.raises(errors.InvalidArchitecture) as raised:
-            LifecycleManager(
+            lifecycle_manager.LifecycleManager(
                 self._data,
                 application_name="test_manager",
                 cache_dir=new_dir,
                 arch="invalid",
+                **self._lcm_kwargs,
             )
         assert raised.value.arch_name == "invalid"
 
     @pytest.mark.parametrize("name", ["myapp", "Myapp_2", "MYAPP", "x"])
     def test_application_name(self, new_dir, name):
-        lf = LifecycleManager(self._data, application_name=name, cache_dir=new_dir)
+        lf = lifecycle_manager.LifecycleManager(
+            self._data, application_name=name, cache_dir=new_dir, **self._lcm_kwargs
+        )
         info = lf.project_info
         assert info.application_name == name
 
     @pytest.mark.parametrize("name", ["", "1", "_", "_myapp", "myapp-2", "myapp_2.1"])
     def test_application_name_invalid(self, new_dir, name):
         with pytest.raises(errors.InvalidApplicationName) as raised:
-            LifecycleManager(self._data, application_name=name, cache_dir=new_dir)
+            lifecycle_manager.LifecycleManager(
+                self._data, application_name=name, cache_dir=new_dir
+            )
         assert raised.value.name == name
 
-    def test_project_info(self, new_dir):
-        lf = LifecycleManager(
+    @pytest.mark.parametrize("work_dir", [".", "work_dir"])
+    def test_project_info(self, new_dir, work_dir):
+        lf = lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             project_name="project",
             cache_dir=new_dir,
-            work_dir="work_dir",
+            work_dir=work_dir,
             arch="aarch64",
             parallel_build_count=16,
             custom="foo",
+            **self._lcm_kwargs,
         )
         info = lf.project_info
 
@@ -99,20 +107,21 @@ class TestLifecycleManager:
         assert info.target_arch == "arm64"
         assert info.arch_triplet == "aarch64-linux-gnu"
         assert info.parallel_build_count == 16
-        assert info.dirs.parts_dir == new_dir / "work_dir" / "parts"
-        assert info.dirs.stage_dir == new_dir / "work_dir" / "stage"
-        assert info.dirs.prime_dir == new_dir / "work_dir" / "prime"
+        assert info.dirs.parts_dir == new_dir / work_dir / "parts"
+        assert info.dirs.stage_dir == new_dir / work_dir / "stage"
+        assert info.dirs.prime_dir == new_dir / work_dir / "prime"
         assert info.custom_args == ["custom"]
         assert info.custom == "foo"
 
     def test_part_initialization(self, new_dir, mocker):
         mock_seq = mocker.patch("craft_parts.sequencer.Sequencer")
 
-        lf = LifecycleManager(
+        lf = lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["foo.*"],
+            **self._lcm_kwargs,
         )
 
         assert len(lf._part_list) == 1
@@ -132,12 +141,13 @@ class TestLifecycleManager:
     def test_sequencer_creation(self, new_dir, mocker):
         mock_sequencer = mocker.patch("craft_parts.sequencer.Sequencer")
 
-        LifecycleManager(
+        lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["ign1", "ign2"],
             custom="foo",
+            **self._lcm_kwargs,
         )
 
         assert mock_sequencer.mock_calls == [
@@ -152,7 +162,7 @@ class TestLifecycleManager:
     def test_executor_creation(self, new_dir, mocker):
         mock_executor = mocker.patch("craft_parts.executor.Executor")
 
-        LifecycleManager(
+        lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
@@ -161,6 +171,7 @@ class TestLifecycleManager:
             extra_build_snaps=["snap1", "snap2"],
             ignore_local_sources=["ign1", "ign2"],
             custom="foo",
+            **self._lcm_kwargs,
         )
 
         assert mock_executor.mock_calls == [
@@ -177,10 +188,11 @@ class TestLifecycleManager:
         ]
 
     def test_get_primed_stage_packages(self, new_dir):
-        lf = LifecycleManager(
+        lf = lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
+            **self._lcm_kwargs,
         )
 
         state = states.PrimeState(primed_stage_packages={"pkg2==2", "pkg1==1"})
@@ -189,18 +201,20 @@ class TestLifecycleManager:
         assert lf.get_primed_stage_packages(part_name="foo") == ["pkg1==1", "pkg2==2"]
 
     def test_get_primed_stage_packages_no_state(self, new_dir):
-        lf = LifecycleManager(
+        lf = lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
+            **self._lcm_kwargs,
         )
         assert lf.get_primed_stage_packages(part_name="foo") is None
 
     def test_get_pull_assets(self, new_dir):
-        lf = LifecycleManager(
+        lf = lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
+            **self._lcm_kwargs,
         )
 
         state = states.PullState(assets={"asset1": "val1", "asset2": "val2"})
@@ -212,18 +226,23 @@ class TestLifecycleManager:
         }
 
     def test_get_pull_assets_no_state(self, new_dir):
-        lf = LifecycleManager(
+        lf = lifecycle_manager.LifecycleManager(
             self._data,
             application_name="test_manager",
             cache_dir=new_dir,
+            **self._lcm_kwargs,
         )
         assert lf.get_pull_assets(part_name="foo") is None
 
     def test_strict_plugins(self, new_dir, mock_available_plugins):
         """Test using a strict plugin in strict mode."""
         data = create_data("p1", "strict")
-        lf = LifecycleManager(
-            data, application_name="test_manager", cache_dir=new_dir, strict_mode=True
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            strict_mode=True,
+            **self._lcm_kwargs,
         )
         assert lf.get_pull_assets(part_name="p1") is None
 
@@ -231,11 +250,12 @@ class TestLifecycleManager:
         """Test that using a non-strict plugin in strict mode is an error."""
         data = create_data("p1", "nonstrict")
         with pytest.raises(errors.PluginNotStrict) as exc:
-            LifecycleManager(
+            lifecycle_manager.LifecycleManager(
                 data,
                 application_name="test_manager",
                 cache_dir=new_dir,
                 strict_mode=True,
+                **self._lcm_kwargs,
             )
         assert "p1" in str(exc.value)
 
@@ -251,7 +271,7 @@ class TestOverlayDisabled:
         mocker.patch.object(sys, "platform", "linux")
         mocker.patch("os.geteuid", return_value=0)
         with pytest.raises(errors.PartSpecificationError) as raised:
-            LifecycleManager(
+            lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test",
                 cache_dir=new_dir,
@@ -264,14 +284,44 @@ class TestOverlayDisabled:
         )
 
 
+class TestPartitionsDisabled:
+    """Partition feature must be enabled when partition are defined."""
+
+    @pytest.fixture
+    def parts_data(self) -> Dict[str, Any]:
+        return {"parts": {"foo": {"plugin": "nil"}}}
+
+    def test_partitions_disabled(self, new_dir, parts_data):
+        with pytest.raises(errors.FeatureError) as raised:
+            lifecycle_manager.LifecycleManager(
+                parts_data,
+                application_name="test",
+                cache_dir=new_dir,
+                partitions=["default"],
+            )
+        assert (
+            raised.value.message
+            == "Partitions are defined but partition feature is not enabled."
+        )
+
+
 class TestPluginProperties:
     """Verify if plugin properties are correctly handled."""
+
+    def _get_manager(self, new_dir, **kwargs):
+        manager_kwargs = {
+            "application_name": "test_manager",
+            "cache_dir": new_dir,
+        }
+        manager_kwargs.update(kwargs)
+        return lifecycle_manager.LifecycleManager(**manager_kwargs)
 
     def test_plugin_properties(self, new_dir, mocker):
         mocker.patch("craft_parts.sequencer.Sequencer")
 
-        lf = LifecycleManager(
-            {
+        lf = self._get_manager(
+            new_dir,
+            all_parts={
                 "parts": {
                     "bar": {
                         "source": ".",
@@ -280,8 +330,6 @@ class TestPluginProperties:
                     }
                 }
             },
-            application_name="test_manager",
-            cache_dir=new_dir,
         )
 
         assert len(lf._part_list) == 1
@@ -291,8 +339,9 @@ class TestPluginProperties:
     def test_fallback_plugin_name(self, new_dir, mocker):
         mocker.patch("craft_parts.sequencer.Sequencer")
 
-        lf = LifecycleManager(
-            {
+        lf = self._get_manager(
+            new_dir,
+            all_parts={
                 "parts": {
                     "make": {
                         "source": ".",
@@ -300,8 +349,6 @@ class TestPluginProperties:
                     }
                 }
             },
-            application_name="test_manager",
-            cache_dir=new_dir,
         )
 
         assert len(lf._part_list) == 1
@@ -310,8 +357,9 @@ class TestPluginProperties:
 
     def test_invalid_plugin_name(self, new_dir):
         with pytest.raises(errors.InvalidPlugin) as raised:
-            LifecycleManager(
-                {
+            self._get_manager(
+                new_dir,
+                all_parts={
                     "parts": {
                         "bar": {
                             "plugin": "invalid",
@@ -327,15 +375,56 @@ class TestPluginProperties:
 
     def test_undefined_plugin_name(self, new_dir):
         with pytest.raises(errors.UndefinedPlugin) as raised:
-            LifecycleManager(
-                {
+            self._get_manager(
+                new_dir,
+                all_parts={
                     "parts": {
                         "bar": {
                             "make-parameters": ["-DTEST_PARAMETER"],
                         }
                     }
                 },
-                application_name="test_manager",
-                cache_dir=new_dir,
             )
         assert raised.value.part_name == "bar"
+
+
+class TestValidatePartitions:
+    """Tests for protected partition validation methods.
+
+    Overridden in partition tests for where partitions are enabled.
+    """
+
+    @pytest.mark.parametrize(
+        ("filepaths", "partitions"),
+        [
+            (["*"], []),
+            ([], []),
+            (["foo"], ["default"]),
+            (["(default)/foo"], ["default"]),
+            (["(mypart)/bar"], ["default", "mypart", "yourpart"]),
+        ],
+    )
+    def test_validate_partitions_in_keywords_success(self, filepaths, partitions):
+        lifecycle_manager._validate_partitions_in_paths(filepaths, partitions)
+
+    @pytest.mark.parametrize(
+        ("filepaths", "message"),
+        [
+            (
+                ["(fake)/foo"],
+                "Invalid partition 'fake' in path '(fake)/foo'",
+            ),
+            (
+                ["default/foo"],
+                "Path begins with a valid partition name ('default'), but it is not wrapped in parentheses.",
+            ),
+        ],
+    )
+    @pytest.mark.filterwarnings("error")
+    def test_validate_partitions_in_keywords_failure(self, filepaths, message):
+        with pytest.raises(errors.PartitionError) as exc_info:
+            lifecycle_manager._validate_partitions_in_paths(
+                filepaths, ["default", "other"]
+            )
+
+        assert exc_info.value.brief == message

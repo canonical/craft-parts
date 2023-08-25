@@ -80,10 +80,16 @@ def get_build_commands(
             set +e
             install_dir="{new_dir}/parts/p1/install/usr/bin"
             stage_dir="{new_dir}/stage/usr/bin"
-            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "python3.*" -print -quit 2>/dev/null)
+
+            # look for the right Python version - if the venv was created with python3.10,
+            # look for python3.10
+            basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
+            echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
+                echo Found interpreter in payload: \\"${{payload_python}}\\"
                 installed_python="${{payload_python##{new_dir}/parts/p1/install}}"
                 if [ "$installed_python" = "$payload_python" ]; then
                     # Found a staged interpreter.
@@ -94,6 +100,7 @@ def get_build_commands(
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
+                echo "Python interpreter not found in payload."
                 symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
             fi
 

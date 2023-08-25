@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Charmcraft Discourse
+    url: https://discourse.charmhub.io/c/charmcraft/3
+    about: Issues creating charms
+  - name: Snapcraft Discourse
+    url: https://forum.snapcraft.io/c/snapcraft/13
+    about: Issues creating snaps
+  - name: Rockcraft Discourse
+    url: https://discourse.ubuntu.com/c/rocks/117
+    about: Issues creating ROCKs

@@ -53,8 +53,16 @@ def test_part_dependency_cycle():
     assert err.resolution == "Review the parts definition to remove dependency cycles."
 
 
+def test_feature_enabled():
+    err = errors.FeatureError("bummer")
+    assert err.message == "bummer"
+    assert err.brief == "bummer"
+    assert err.details is None
+    assert err.resolution == "This operation cannot be executed."
+
+
 def test_feature_disabled():
-    err = errors.FeatureDisabled("bummer")
+    err = errors.FeatureError("bummer")
     assert err.message == "bummer"
     assert err.brief == "bummer"
     assert err.details is None

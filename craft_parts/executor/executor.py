@@ -94,6 +94,7 @@ class Executor:
         # update the overlay environment package list to allow installation of
         # overlay packages.
         if any(p.spec.overlay_packages for p in self._part_list):
+            logger.info("Updating base overlay system")
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 callbacks.run_configure_overlay(
                     self._project_info.overlay_mount_dir, self._project_info
@@ -159,11 +160,14 @@ class Executor:
 
         if not part_names:
             # also remove toplevel directories if part names are not specified
-            if self._project_info.prime_dir.exists():
-                shutil.rmtree(self._project_info.prime_dir)
+            if self._project_info.base_prime_dir.exists():
+                shutil.rmtree(self._project_info.base_prime_dir)
 
-            if initial_step <= Step.STAGE and self._project_info.stage_dir.exists():
-                shutil.rmtree(self._project_info.stage_dir)
+            if (
+                initial_step <= Step.STAGE
+                and self._project_info.base_stage_dir.exists()
+            ):
+                shutil.rmtree(self._project_info.base_stage_dir)
 
             if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
                 shutil.rmtree(self._project_info.parts_dir)
@@ -232,6 +236,7 @@ class Executor:
         if self._extra_build_packages:
             build_packages.update(self._extra_build_packages)
 
+        logger.info("Installing build-packages")
         packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
@@ -255,6 +260,7 @@ class Executor:
                 ", ".join(build_snaps),
             )
         else:
+            logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
 
     def _verify_plugin_environment(self) -> None:

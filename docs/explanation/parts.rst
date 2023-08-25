@@ -133,10 +133,12 @@ supports. For example, the :py:mod:`cmake plugin <craft_parts.plugins.cmake_plug
 ``cmake-generator`` properties that can be used to configure how
 :command:`cmake` is used in the build process.
 
-The :ref:`build_attributes` property allows a number of standard
-customisations to be applied to the build. Some of these are used to address
-issues that occur in specific situations; others, such as ``debug`` are
-generally useful.
+.. ifconfig:: project in ["Snapcraft"]
+
+   The :ref:`build_attributes` property allows a number of standard
+   customisations to be applied to the build. Some of these are used to address
+   issues that occur in specific situations; others, such as ``debug`` are
+   generally useful.
 
 The :ref:`build_environment` property defines assignments to shell environment
 variables in the build environment. This is useful in situations where the
@@ -182,5 +184,3 @@ The parts in the list will be *built and staged* before the part is built.
 This is covered in detail in :ref:`part_processing_order`.
 
 .. include:: how_parts_are_built.rst
-
-.. include:: /links.txt

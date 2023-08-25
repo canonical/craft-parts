@@ -20,6 +20,7 @@ import io
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
+from craft_parts import errors
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.parts import Part
@@ -148,14 +149,31 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
     :return: A dictionary containing environment variables and values.
     """
     global_environment = {
+        # deprecated, use CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}
         "CRAFT_ARCH_TRIPLET": info.arch_triplet,
+        # deprecated, use CRAFT_ARCH_BUILD_FOR
         "CRAFT_TARGET_ARCH": info.target_arch,
+        "CRAFT_ARCH_BUILD_ON": info.arch_build_on,
+        "CRAFT_ARCH_BUILD_FOR": info.arch_build_for,
+        "CRAFT_ARCH_TRIPLET_BUILD_ON": info.arch_triplet_build_on,
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR": info.arch_triplet_build_for,
         "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(info.project_dir),
     }
 
     if Features().enable_overlay:
         global_environment["CRAFT_OVERLAY"] = str(info.overlay_mount_dir)
+
+    if Features().enable_partitions:
+        if not info.partitions:
+            raise errors.FeatureError("Partitions enabled but no partitions specified.")
+        for partition in info.partitions:
+            global_environment[f"CRAFT_{partition.upper()}_STAGE"] = str(
+                info.get_stage_dir(partition=partition)
+            )
+            global_environment[f"CRAFT_{partition.upper()}_PRIME"] = str(
+                info.get_prime_dir(partition=partition)
+            )
 
     global_environment["CRAFT_STAGE"] = str(info.stage_dir)
     global_environment["CRAFT_PRIME"] = str(info.prime_dir)
@@ -236,8 +254,10 @@ def _replace_attr(
 ) -> Union[List[str], Dict[str, str], str]:
     """Replace environment variables according to the replacements map."""
     if isinstance(attr, str):
-        for replacement, value in replacements.items():
-            attr = attr.replace(replacement, str(value))
+        for key, value in replacements.items():
+            if key in attr:
+                _warn_if_deprecated_key(key)
+                attr = attr.replace(key, str(value))
         return attr
 
     if isinstance(attr, (list, tuple)):
@@ -253,3 +273,12 @@ def _replace_attr(
         return result
 
     return attr
+
+
+def _warn_if_deprecated_key(key: str) -> None:
+    if key in ("$CRAFT_TARGET_ARCH", "${CRAFT_TARGET_ARCH}"):
+        logger.info("CRAFT_TARGET_ARCH is deprecated, use CRAFT_ARCH_BUILD_FOR")
+    elif key in ("$CRAFT_ARCH_TRIPLET", "${CRAFT_ARCH_TRIPLET}"):
+        logger.info(
+            "CRAFT_ARCH_TRIPLET is deprecated, use CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}"
+        )

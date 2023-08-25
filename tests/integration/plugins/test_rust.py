@@ -23,7 +23,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_rust_plugin(new_dir):
+def test_rust_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -57,7 +57,10 @@ def test_rust_plugin(new_dir):
     )
 
     lifecycle = LifecycleManager(
-        parts, application_name="test_rust_plugin", cache_dir=new_dir
+        parts,
+        application_name="test_rust_plugin",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lifecycle.plan(Step.PRIME)
 
@@ -70,7 +73,7 @@ def test_rust_plugin(new_dir):
     assert output == "hello world\n"
 
 
-def test_rust_plugin_features(new_dir):
+def test_rust_plugin_features(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -114,7 +117,10 @@ def test_rust_plugin_features(new_dir):
     )
 
     lifecycle = LifecycleManager(
-        parts, application_name="test_rust_plugin_features", cache_dir=new_dir
+        parts,
+        application_name="test_rust_plugin_features",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lifecycle.plan(Step.PRIME)
 
@@ -127,7 +133,7 @@ def test_rust_plugin_features(new_dir):
     assert output == "hello world\n"
 
 
-def test_rust_plugin_workspace(new_dir):
+def test_rust_plugin_workspace(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -202,7 +208,10 @@ def test_rust_plugin_workspace(new_dir):
     )
 
     lifecycle = LifecycleManager(
-        parts, application_name="test_rust_hello_workspace", cache_dir=new_dir
+        parts,
+        application_name="test_rust_hello_workspace",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lifecycle.plan(Step.PRIME)
 

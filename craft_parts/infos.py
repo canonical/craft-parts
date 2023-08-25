@@ -46,6 +46,7 @@ class ProjectVar(YamlModel):
     updated: bool = False
 
 
+# pylint: disable-next=too-many-instance-attributes,too-many-public-methods
 class ProjectInfo:
     """Project-level information containing project-specific fields.
 
@@ -67,6 +68,7 @@ class ProjectInfo:
     :param project_vars: A dictionary containing the project variables.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
+    :param partitions: A list of partitions.
     """
 
     def __init__(
@@ -82,10 +84,11 @@ class ProjectInfo:
         project_name: Optional[str] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
+        partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
     ):
         if not project_dirs:
-            project_dirs = ProjectDirs()
+            project_dirs = ProjectDirs(partitions=partitions)
 
         pvars = project_vars or {}
 
@@ -99,6 +102,7 @@ class ProjectInfo:
         self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
+        self._partitions = partitions
         self._custom_args = custom_args
         self.global_environment: Dict[str, str] = {}
 
@@ -127,6 +131,26 @@ class ProjectInfo:
     def cache_dir(self) -> Path:
         """Return the directory used to store cached files."""
         return self._cache_dir
+
+    @property
+    def arch_build_on(self) -> str:
+        """The architecture we are building on."""
+        return self._host_machine["deb"]
+
+    @property
+    def arch_build_for(self) -> str:
+        """The architecture we are building for."""
+        return self._machine["deb"]
+
+    @property
+    def arch_triplet_build_on(self) -> str:
+        """The machine-vendor-os triplet for the platform we are building on."""
+        return self._host_machine["triplet"]
+
+    @property
+    def arch_triplet_build_for(self) -> str:
+        """The machine-vendor-os triplet for the platform we are building for."""
+        return self._machine["triplet"]
 
     @property
     def arch_triplet(self) -> str:
@@ -174,6 +198,11 @@ class ProjectInfo:
         return self._project_name
 
     @property
+    def project_vars_part_name(self) -> Optional[str]:
+        """Return the name of the part that can set project vars."""
+        return self._project_vars_part_name
+
+    @property
     def project_options(self) -> Dict[str, Any]:
         """Obtain a project-wide options dictionary."""
         return {
@@ -183,6 +212,11 @@ class ProjectInfo:
             "project_vars_part_name": self._project_vars_part_name,
             "project_vars": self._project_vars,
         }
+
+    @property
+    def partitions(self) -> Optional[List[str]]:
+        """Return the project's partitions."""
+        return self._partitions
 
     def set_project_var(
         self,
@@ -427,9 +461,18 @@ class StepInfo:
 
 def _get_host_architecture() -> str:
     """Obtain the host system architecture."""
-    # TODO: handle Windows architectures
-    return platform.machine()
+    machine = platform.machine()
+    return _PLATFORM_MACHINE_TRANSLATIONS.get(machine.lower(), machine)
 
+
+_PLATFORM_MACHINE_TRANSLATIONS: Dict[str, str] = {
+    # Maps other possible ``platform.machine()`` values to the arch translations below.
+    "arm64": "aarch64",
+    "armv7hl": "armv7l",
+    "i386": "i686",
+    "amd64": "x86_64",
+    "x64": "x86_64",
+}
 
 _ARCH_TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "aarch64": {

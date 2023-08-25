@@ -98,13 +98,21 @@ def pull_state(new_dir):
 class TestSequencerPlan:
     """Verify action planning sanity."""
 
-    def test_plan_default_parts(self):
-        p1 = Part("foo", {"plugin": "nil"})
-        p2 = Part("bar", {"plugin": "nil"})
+    @pytest.fixture(autouse=True)
+    def setup_project(self, partitions):
+        self._project_info = (  # pylint: disable=attribute-defined-outside-init
+            ProjectInfo(
+                application_name="test", cache_dir=Path(), partitions=partitions
+            )
+        )
+
+    def test_plan_default_parts(self, partitions):
+        p1 = Part("foo", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part("bar", {"plugin": "nil"}, partitions=partitions)
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         actions = seq.plan(Step.PRIME)
@@ -119,13 +127,13 @@ class TestSequencerPlan:
             Action("foo", Step.PRIME, action_type=ActionType.RUN),
         ]
 
-    def test_plan_dependencies(self):
-        p1 = Part("foo", {"plugin": "nil", "after": ["bar"]})
-        p2 = Part("bar", {"plugin": "nil"})
+    def test_plan_dependencies(self, partitions):
+        p1 = Part("foo", {"plugin": "nil", "after": ["bar"]}, partitions=partitions)
+        p2 = Part("bar", {"plugin": "nil"}, partitions=partitions)
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         # pylint: disable=line-too-long
@@ -146,13 +154,13 @@ class TestSequencerPlan:
         ]
         # fmt: on
 
-    def test_plan_specific_part(self):
-        p1 = Part("foo", {"plugin": "nil"})
-        p2 = Part("bar", {"plugin": "nil"})
+    def test_plan_specific_part(self, partitions):
+        p1 = Part("foo", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part("bar", {"plugin": "nil"}, partitions=partitions)
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         actions = seq.plan(Step.PRIME, part_names=["bar"])
@@ -164,12 +172,12 @@ class TestSequencerPlan:
         ]
 
     @pytest.mark.usefixtures("pull_state")
-    def test_plan_requested_part_step(self):
-        p1 = Part("foo", {"plugin": "nil"})
+    def test_plan_requested_part_step(self, partitions):
+        p1 = Part("foo", {"plugin": "nil"}, partitions=partitions)
 
         seq = sequencer.Sequencer(
             part_list=[p1],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         actions = seq.plan(Step.PULL, part_names=["foo"])
@@ -181,12 +189,12 @@ class TestSequencerPlan:
         ]
 
     @pytest.mark.usefixtures("pull_state")
-    def test_plan_dirty_step(self):
-        p1 = Part("foo", {"plugin": "dump"})
+    def test_plan_dirty_step(self, partitions):
+        p1 = Part("foo", {"plugin": "dump"}, partitions=partitions)
 
         seq = sequencer.Sequencer(
             part_list=[p1],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         actions = seq.plan(Step.PULL)
@@ -201,8 +209,8 @@ class TestSequencerPlan:
         ]
 
     @pytest.mark.usefixtures("pull_state")
-    def test_plan_outdated_step(self):
-        p1 = Part("foo", {"plugin": "nil"})
+    def test_plan_outdated_step(self, partitions):
+        p1 = Part("foo", {"plugin": "nil"}, partitions=partitions)
 
         # touch pull step state
         Path("parts/foo/state/build").write_text(_build_state_foo)
@@ -211,7 +219,7 @@ class TestSequencerPlan:
 
         seq = sequencer.Sequencer(
             part_list=[p1],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         actions = seq.plan(Step.BUILD)
@@ -236,13 +244,21 @@ class TestSequencerPlan:
 class TestSequencerStates:
     """Check existing state loading."""
 
-    def test_plan_load_state(self):
-        p1 = Part("foo", {"plugin": "nil"})
-        p2 = Part("bar", {"plugin": "nil"})
+    @pytest.fixture(autouse=True)
+    def setup_project(self, partitions):
+        self._project_info = (  # pylint: disable=attribute-defined-outside-init
+            ProjectInfo(
+                application_name="test", cache_dir=Path(), partitions=partitions
+            )
+        )
+
+    def test_plan_load_state(self, partitions):
+        p1 = Part("foo", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part("bar", {"plugin": "nil"}, partitions=partitions)
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         actions = seq.plan(Step.BUILD)
@@ -253,13 +269,13 @@ class TestSequencerStates:
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]
 
-    def test_plan_reload_state(self):
-        p1 = Part("foo", {"plugin": "nil"})
-        p2 = Part("bar", {"plugin": "nil"})
+    def test_plan_reload_state(self, partitions):
+        p1 = Part("foo", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part("bar", {"plugin": "nil"}, partitions=partitions)
 
         seq = sequencer.Sequencer(
             part_list=[p1, p2],
-            project_info=ProjectInfo(application_name="test", cache_dir=Path()),
+            project_info=self._project_info,
         )
 
         Path("parts/foo/state/pull").unlink()

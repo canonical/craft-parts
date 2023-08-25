@@ -65,7 +65,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_application_plugin_happy(new_dir, mocker):
+def test_application_plugin_happy(new_dir, partitions, mocker):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -86,7 +86,10 @@ def test_application_plugin_happy(new_dir, mocker):
     old_parts = parts.copy()
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_application_plugin", cache_dir=new_dir
+        parts,
+        application_name="test_application_plugin",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     # plugins act on the build step
@@ -119,7 +122,7 @@ def test_application_plugin_happy(new_dir, mocker):
     assert parts == old_parts
 
 
-def test_application_plugin_missing_stuff(new_dir):
+def test_application_plugin_missing_stuff(new_dir, partitions):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -136,14 +139,17 @@ def test_application_plugin_missing_stuff(new_dir):
 
     with pytest.raises(errors.PartSpecificationError) as raised:
         craft_parts.LifecycleManager(
-            parts, application_name="test_application_plugin", cache_dir=new_dir
+            parts,
+            application_name="test_application_plugin",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
 
     assert raised.value.part_name == "foo"
     assert raised.value.message == "- field 'app-stuff' is required"
 
 
-def test_application_plugin_type_error(new_dir):
+def test_application_plugin_type_error(new_dir, partitions):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -161,14 +167,17 @@ def test_application_plugin_type_error(new_dir):
 
     with pytest.raises(errors.PartSpecificationError) as raised:
         craft_parts.LifecycleManager(
-            parts, application_name="test_application_plugin", cache_dir=new_dir
+            parts,
+            application_name="test_application_plugin",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
 
     assert raised.value.part_name == "foo"
     assert raised.value.message == "- value is not a valid list in field 'app-stuff'"
 
 
-def test_application_plugin_extra_property(new_dir):
+def test_application_plugin_extra_property(new_dir, partitions):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -187,14 +196,17 @@ def test_application_plugin_extra_property(new_dir):
 
     with pytest.raises(errors.PartSpecificationError) as raised:
         craft_parts.LifecycleManager(
-            parts, application_name="test_application_plugin", cache_dir=new_dir
+            parts,
+            application_name="test_application_plugin",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
 
     assert raised.value.part_name == "foo"
     assert raised.value.message == "- extra field 'app-other' not permitted"
 
 
-def test_application_plugin_not_registered(new_dir):
+def test_application_plugin_not_registered(new_dir, partitions):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -209,7 +221,10 @@ def test_application_plugin_not_registered(new_dir):
 
     with pytest.raises(errors.InvalidPlugin) as raised:
         craft_parts.LifecycleManager(
-            parts, application_name="test_application_plugin", cache_dir=new_dir
+            parts,
+            application_name="test_application_plugin",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
 
     assert raised.value.plugin_name == "app"

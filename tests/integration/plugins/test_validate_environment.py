@@ -135,7 +135,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_validate_plugin(new_dir, mytool):
+def test_validate_plugin(new_dir, partitions, mytool):
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:
@@ -152,7 +152,7 @@ def test_validate_plugin(new_dir, mytool):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir
+        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
     )
 
     # plugins act on the build step
@@ -162,7 +162,7 @@ def test_validate_plugin(new_dir, mytool):
         exe.execute(actions)
 
 
-def test_validate_plugin_satisfied_with_part(new_dir):
+def test_validate_plugin_satisfied_with_part(new_dir, partitions):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -184,7 +184,7 @@ def test_validate_plugin_satisfied_with_part(new_dir):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir
+        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
     )
 
     # plugins act on the build step
@@ -194,7 +194,7 @@ def test_validate_plugin_satisfied_with_part(new_dir):
         exe.execute(actions)
 
 
-def test_validate_plugin_early_error(new_dir):
+def test_validate_plugin_early_error(new_dir, partitions):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -209,7 +209,7 @@ def test_validate_plugin_early_error(new_dir):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir
+        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
     )
 
     # plugins act on the build step
@@ -223,7 +223,7 @@ def test_validate_plugin_early_error(new_dir):
     )
 
 
-def test_validate_plugin_bad_output(new_dir, mytool_not_ok):
+def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:
@@ -240,7 +240,7 @@ def test_validate_plugin_bad_output(new_dir, mytool_not_ok):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir
+        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
     )
 
     # plugins act on the build step
@@ -252,7 +252,7 @@ def test_validate_plugin_bad_output(new_dir, mytool_not_ok):
     assert raised.value.reason == "mytool is expected to print ok"
 
 
-def test_validate_plugin_command_error(new_dir, mytool_error):
+def test_validate_plugin_command_error(new_dir, partitions, mytool_error):
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:
@@ -269,7 +269,7 @@ def test_validate_plugin_command_error(new_dir, mytool_error):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir
+        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
     )
 
     # plugins act on the build step

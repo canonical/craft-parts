@@ -19,6 +19,7 @@
 import os
 import re
 import sys
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
@@ -30,9 +31,10 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
-from craft_parts.parts import Part, part_by_name
+from craft_parts.parts import Part, part_by_name, validate_partition_usage
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
+from craft_parts.utils.partition_utils import validate_partition_names
 
 
 class LifecycleManager:
@@ -74,6 +76,9 @@ class LifecycleManager:
     :param project_vars_part_name: Project variables can only be set in the part
         matching this name.
     :param project_vars: A dictionary containing project variables.
+    :param partitions: A list of partitions to use when the partitions feature is
+        enabled. The first partition must be "default" and all partitions must be
+        lowercase alphabetical.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -99,6 +104,7 @@ class LifecycleManager:
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
+        partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
     ):
         # pylint: disable=too-many-locals
@@ -115,9 +121,11 @@ class LifecycleManager:
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
+        validate_partition_names(partitions)
+
         packages.Repository.configure(application_package_name)
 
-        project_dirs = ProjectDirs(work_dir=work_dir)
+        project_dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
 
         project_info = ProjectInfo(
             application_name=application_name,
@@ -130,6 +138,7 @@ class LifecycleManager:
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
+            partitions=partitions,
             **custom_args,
         )
 
@@ -139,9 +148,16 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
+            part_list.append(
+                _build_part(name, spec, project_dirs, strict_mode, partitions)
+            )
+
+        if partitions:
+            validate_partition_usage(part_list, partitions)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
+
+        _validate_partition_usage_in_parts(part_list, partitions)
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
@@ -218,7 +234,6 @@ class LifecycleManager:
         :param target_step: The final step we want to reach.
         :param part_names: The list of parts to process. If not specified, all
             parts will be processed.
-        :param update: Refresh the list of available packages.
 
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
@@ -263,7 +278,7 @@ class LifecycleManager:
 def _ensure_overlay_supported() -> None:
     """Overlay is only supported in Linux and requires superuser privileges."""
     if not Features().enable_overlay:
-        raise errors.FeatureDisabled("Overlays are not supported.")
+        raise errors.FeatureError("Overlays are not supported.")
 
     if sys.platform != "linux":
         raise errors.OverlayPlatformError()
@@ -273,7 +288,11 @@ def _ensure_overlay_supported() -> None:
 
 
 def _build_part(
-    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, strict_plugins: bool
+    name: str,
+    spec: Dict[str, Any],
+    project_dirs: ProjectDirs,
+    strict_plugins: bool,
+    partitions: Optional[List[str]],
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -320,7 +339,69 @@ def _build_part(
 
     # initialize part and unmarshal part specs
     part = Part(
-        name, part_spec, project_dirs=project_dirs, plugin_properties=properties
+        name,
+        part_spec,
+        project_dirs=project_dirs,
+        plugin_properties=properties,
+        partitions=partitions,
     )
 
     return part
+
+
+def _validate_partition_usage_in_parts(part_list, partitions):
+    # skip validation if partitions are not enabled
+    if not Features().enable_partitions:
+        return
+
+    for part in part_list:
+        for filepaths in [
+            part.spec.organize_files,
+            part.spec.overlay_files,
+            part.spec.prime_files,
+            part.spec.stage_files,
+        ]:
+            _validate_partitions_in_paths(filepaths, partitions)
+
+
+def _validate_partitions_in_paths(
+    paths: List[str], valid_partitions: List[str]
+) -> None:
+    """Validate a list of paths to ensure that any partitions are unambiguous.
+
+    Each path in the the list of paths should either explicitly name a valid
+    partition or should not begin with a partition name. If a path contains
+    an explicitly declared invalid partition, an error will be raised.
+    If a path begins with a name that is a valid partition but does not use
+    the parenthetical to indicate that it is a partition, a warning will be
+    logged that the path will go into the default partition and that the user
+    should specify the default partition in that path to silence the warning.
+    """
+    # do not validate default glob
+    if paths == ["*"]:
+        return
+
+    for filepath in paths:
+        match = re.match("^-?\\((?P<partition>[a-z]+)\\)", filepath)
+        if match:
+            partition = match.group("partition")
+            if partition not in valid_partitions:
+                raise errors.InvalidPartitionError(
+                    partition, filepath, valid_partitions
+                )
+        match = re.match("^-?(?P<possible_partition>[a-z]+)/?", filepath)
+        if match:
+            partition = match.group("possible_partition")
+            if partition in valid_partitions:
+                warnings.warn(
+                    errors.PartitionWarning(
+                        partition,
+                        f"Path begins with a valid partition name ({partition!r}), "
+                        "but it is not wrapped in parentheses.",
+                        details="This path will go into the default partition.",
+                        resolution=(
+                            "Specify the correct partition name, for example "
+                            f"'(default)/{filepath}'"
+                        ),
+                    )
+                )

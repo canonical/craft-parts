@@ -19,6 +19,7 @@ from unittest.mock import call
 
 import pytest
 
+from craft_parts import ProjectDirs
 from craft_parts.sources import sources
 
 
@@ -26,7 +27,9 @@ from craft_parts.sources import sources
 class TestZipSource:
     """Tests for the zip source handler."""
 
-    def test_pull_zipfile_must_download_and_extract(self, new_dir, http_server, mocker):
+    def test_pull_zipfile_must_download_and_extract(
+        self, new_dir, http_server, mocker, partitions
+    ):
         mock_prov = mocker.patch("craft_parts.sources.zip_source.ZipSource.provision")
 
         dest_dir = Path("src")
@@ -36,7 +39,10 @@ class TestZipSource:
             f"http://{http_server.server_address[0]}:"
             f"{http_server.server_address[1]}/{zip_file_name}"
         )
-        zip_source = sources.ZipSource(source, dest_dir, cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+        zip_source = sources.ZipSource(
+            source, dest_dir, cache_dir=new_dir, project_dirs=dirs
+        )
 
         zip_source.pull()
 
@@ -46,7 +52,7 @@ class TestZipSource:
         with (dest_dir / zip_file_name).open("r") as zip_file:
             assert zip_file.read() == "Test fake file"
 
-    def test_extract_and_keep_zipfile(self, new_dir, http_server, mocker):
+    def test_extract_and_keep_zipfile(self, new_dir, http_server, mocker, partitions):
         mock_zip = mocker.patch("zipfile.ZipFile")
 
         zip_file_name = "test.zip"
@@ -55,7 +61,10 @@ class TestZipSource:
             f"{http_server.server_address[1]}/{zip_file_name}"
         )
         dest_dir = Path().absolute()
-        zip_source = sources.ZipSource(source, dest_dir, cache_dir=new_dir)
+        dirs = ProjectDirs(partitions=partitions)
+        zip_source = sources.ZipSource(
+            source, dest_dir, cache_dir=new_dir, project_dirs=dirs
+        )
 
         zip_source.download()
         zip_source.provision(dst=dest_dir, keep=True)

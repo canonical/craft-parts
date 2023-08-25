@@ -25,7 +25,7 @@ from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
 
 
-def test_dotnet_plugin(new_dir):
+def test_dotnet_plugin(new_dir, partitions):
     # pylint: disable=line-too-long
     parts_yaml = textwrap.dedent(
         """
@@ -71,7 +71,9 @@ def test_dotnet_plugin(new_dir):
 
     Path("hello.cs").write_text('Console.WriteLine("Hello, World!");')
 
-    lf = LifecycleManager(parts, application_name="test_dotnet", cache_dir=new_dir)
+    lf = LifecycleManager(
+        parts, application_name="test_dotnet", cache_dir=new_dir, partitions=partitions
+    )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
@@ -83,7 +85,7 @@ def test_dotnet_plugin(new_dir):
     assert output == "Hello, World!\n"
 
 
-def test_dotnet_plugin_no_dotnet(new_dir, mocker):
+def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
 
     class FailSpecificCmdValidator(dotnet_plugin.DotPluginEnvironmentValidator):
@@ -102,10 +104,10 @@ def test_dotnet_plugin_no_dotnet(new_dir, mocker):
         dotnet_plugin.DotnetPlugin, "validator_class", FailSpecificCmdValidator
     )
 
-    test_dotnet_plugin(new_dir)
+    test_dotnet_plugin(new_dir, partitions)
 
 
-def test_dotnet_plugin_fake_dotnet(new_dir, mocker):
+def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet is installed."""
 
     class AlwaysFindDotnetValidator(dotnet_plugin.DotPluginEnvironmentValidator):
@@ -130,4 +132,4 @@ def test_dotnet_plugin_fake_dotnet(new_dir, mocker):
         dotnet_plugin.DotnetPlugin, "validator_class", AlwaysFindDotnetValidator
     )
 
-    test_dotnet_plugin(new_dir)
+    test_dotnet_plugin(new_dir, partitions)

@@ -4,6 +4,10 @@
 
 version: 2
 
+submodules:
+  include:
+    - docs/sphinx-resources
+
 sphinx:
   configuration: docs/conf.py
 
@@ -13,9 +17,6 @@ build:
     python: "3.8"
   apt_packages:
     - libapt-pkg-dev
-
-formats:
-  - pdf
 
 python:
   install:

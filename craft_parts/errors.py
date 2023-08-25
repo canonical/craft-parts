@@ -18,7 +18,7 @@
 
 import dataclasses
 import pathlib
-from typing import TYPE_CHECKING, List, Optional, Set
+from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Union
 
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
@@ -49,8 +49,8 @@ class PartsError(Exception):
         return "\n".join(components)
 
 
-class FeatureDisabled(PartsError):
-    """The requested feature is not enabled."""
+class FeatureError(PartsError):
+    """A feature is not configured as expected."""
 
     def __init__(self, message: str) -> None:
         self.message = message
@@ -614,3 +614,53 @@ class DebError(PartsError):
         resolution = "Make sure the deb file is correctly specified."
 
         super().__init__(brief=brief, resolution=resolution)
+
+
+class PartitionError(PartsError):
+    """Errors related to partitions."""
+
+    def __init__(
+        self,
+        partition: str,
+        brief: str,
+        *,
+        details: Optional[str] = None,
+        resolution: Optional[str] = None,
+    ) -> None:
+        self.partition = partition
+        super().__init__(brief=brief, details=details, resolution=resolution)
+
+
+class InvalidPartitionError(PartitionError):
+    """Partition is not valid for this application."""
+
+    def __init__(
+        self,
+        partition: str,
+        path: Union[str, pathlib.Path],
+        valid_partitions: Iterable[str],
+    ) -> None:
+        self.valid_partitions = valid_partitions
+        super().__init__(
+            partition,
+            brief=f"Invalid partition {partition!r} in path {str(path)!r}",
+            details="Valid partitions: " + ", ".join(valid_partitions),
+            resolution="Correct the invalid partition name and try again.",
+        )
+
+
+class PartitionWarning(PartitionError, Warning):
+    """Warnings for partition-related items."""
+
+    def __init__(
+        self,
+        partition: str,
+        brief: str,
+        *,
+        details: Optional[str] = None,
+        resolution: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            partition=partition, brief=brief, details=details, resolution=resolution
+        )
+        Warning.__init__(self)

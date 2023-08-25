@@ -23,7 +23,7 @@ import pytest
 import yaml
 
 import craft_parts
-from craft_parts import Action, Step, errors
+from craft_parts import Action, ActionType, Step, errors
 from tests import TESTS_DIR
 
 
@@ -51,9 +51,11 @@ def setup_fixture(new_dir, mocker):
     mocker.patch("craft_parts.utils.os_utils.umount")
 
 
-def test_craftctl_default(new_dir, capfd, mocker):
+def test_craftctl_default(new_dir, partitions, capfd, mocker):
     mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
     mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+
+    partition_dir = "default" if partitions else "."
 
     parts_yaml = textwrap.dedent(
         """\
@@ -88,6 +90,7 @@ def test_craftctl_default(new_dir, capfd, mocker):
         cache_dir=new_dir,
         base_layer_dir=new_dir,
         base_layer_hash=b"hash",
+        partitions=partitions,
     )
 
     # Check if planning resulted in the correct list of actions.
@@ -110,9 +113,9 @@ def test_craftctl_default(new_dir, capfd, mocker):
         captured = capfd.readouterr()
         assert captured.out == "pull step\n"
         assert Path("parts/foo/src/foo.txt").exists()
-        assert Path("parts/foo/install/foo.txt").exists() is False
-        assert Path("stage/foo.txt").exists() is False
-        assert Path("prime/foo.txt").exists() is False
+        assert Path("parts/foo/install", partition_dir, "foo.txt").exists() is False
+        assert Path("stage", partition_dir, "foo.txt").exists() is False
+        assert Path("prime", partition_dir, "foo.txt").exists() is False
 
         # Execute the overlay step and add a file to the overlay
         # directory to track file migration.
@@ -126,32 +129,32 @@ def test_craftctl_default(new_dir, capfd, mocker):
         ctx.execute(actions[2])
         captured = capfd.readouterr()
         assert captured.out == "build step\n"
-        assert Path("parts/foo/install/foo.txt").exists()
-        assert Path("stage/foo.txt").exists() is False
-        assert Path("stage/ovl.txt").exists() is False
-        assert Path("prime/foo.txt").exists() is False
-        assert Path("prime/ovl.txt").exists() is False
+        assert Path("parts/foo/install", partition_dir, "foo.txt").exists()
+        assert Path("stage", partition_dir, "foo.txt").exists() is False
+        assert Path("stage", partition_dir, "ovl.txt").exists() is False
+        assert Path("prime", partition_dir, "foo.txt").exists() is False
+        assert Path("prime", partition_dir, "ovl.txt").exists() is False
 
         # Execute the stage step. Both source and overlay files
         # must be in the stage directory.
         ctx.execute(actions[3])
         captured = capfd.readouterr()
         assert captured.out == "stage step\n"
-        assert Path("stage/foo.txt").exists()
-        assert Path("stage/ovl.txt").exists()
-        assert Path("prime/foo.txt").exists() is False
-        assert Path("prime/ovl.txt").exists() is False
+        assert Path("stage", partition_dir, "foo.txt").exists()
+        assert Path("stage", partition_dir, "ovl.txt").exists()
+        assert Path("prime", partition_dir, "foo.txt").exists() is False
+        assert Path("prime", partition_dir, "ovl.txt").exists() is False
 
         # Execute the prime step. Both source and overlay files
         # must be in the prime directory.
         ctx.execute(actions[4])
         captured = capfd.readouterr()
         assert captured.out == "prime step\n"
-        assert Path("prime/foo.txt").exists()
-        assert Path("prime/ovl.txt").exists()
+        assert Path("prime", partition_dir, "foo.txt").exists()
+        assert Path("prime", partition_dir, "ovl.txt").exists()
 
 
-def test_craftctl_default_arguments(new_dir, capfd):
+def test_craftctl_default_arguments(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -168,6 +171,7 @@ def test_craftctl_default_arguments(new_dir, capfd):
         cache_dir=new_dir,
         base_layer_dir=new_dir,
         base_layer_hash=b"hash",
+        partitions=partitions,
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -179,7 +183,7 @@ def test_craftctl_default_arguments(new_dir, capfd):
     assert "invalid arguments to command 'default'" in captured.err
 
 
-def test_craftctl_set(new_dir):
+def test_craftctl_set(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -197,13 +201,14 @@ def test_craftctl_set(new_dir):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": ""},
+        partitions=partitions,
     )
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
     assert lf.project_info.get_project_var("myvar") == "myvalue"
 
 
-def test_craftctl_set_multiple(new_dir, capfd):
+def test_craftctl_set_multiple(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -221,6 +226,7 @@ def test_craftctl_set_multiple(new_dir, capfd):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": "", "myvar2": ""},
+        partitions=partitions,
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -232,7 +238,7 @@ def test_craftctl_set_multiple(new_dir, capfd):
     assert "invalid arguments to command 'set'" in captured.err
 
 
-def test_craftctl_set_bad_part_name(new_dir, capfd):
+def test_craftctl_set_bad_part_name(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -250,6 +256,7 @@ def test_craftctl_set_bad_part_name(new_dir, capfd):
         cache_dir=new_dir,
         project_vars_part_name="bar",
         project_vars={"myvar": "x"},
+        partitions=partitions,
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -261,7 +268,7 @@ def test_craftctl_set_bad_part_name(new_dir, capfd):
     assert "variable 'myvar' can only be set in part 'bar'" in captured.err
 
 
-def test_craftctl_set_no_part_name(new_dir, capfd):
+def test_craftctl_set_no_part_name(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -278,6 +285,7 @@ def test_craftctl_set_no_part_name(new_dir, capfd):
         application_name="test_set",
         cache_dir=new_dir,
         project_vars={"myvar": "x"},
+        partitions=partitions,
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -292,7 +300,7 @@ def test_craftctl_set_no_part_name(new_dir, capfd):
     )
 
 
-def test_craftctl_set_multiple_parts(new_dir, capfd):
+def test_craftctl_set_multiple_parts(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -314,6 +322,7 @@ def test_craftctl_set_multiple_parts(new_dir, capfd):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": "x", "myvar2": "y"},
+        partitions=partitions,
     )
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
@@ -328,7 +337,7 @@ def test_craftctl_set_multiple_parts(new_dir, capfd):
     assert "variable 'myvar2' can only be set in part 'foo'" in captured.err
 
 
-def test_craftctl_set_error(new_dir, capfd, mocker):
+def test_craftctl_set_error(new_dir, partitions, capfd, mocker):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -345,6 +354,7 @@ def test_craftctl_set_error(new_dir, capfd, mocker):
         application_name="test_set",
         cache_dir=new_dir,
         project_vars_part_name="foo",
+        partitions=partitions,
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -356,7 +366,122 @@ def test_craftctl_set_error(new_dir, capfd, mocker):
     assert "'myvar' not in project variables" in captured.err
 
 
-def test_craftctl_get_error(new_dir, capfd, mocker):
+def test_craftctl_set_only_once(new_dir, partitions, capfd, mocker):  # see LP #1831135
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          part1:
+            plugin: nil
+            override-pull: |
+              craftctl default
+              craftctl set version=xx
+
+          part2:
+            plugin: nil
+            after: [part1]
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+        partitions=partitions,
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    actions = lf.plan(Step.BUILD)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
+
+    # change something in part1 to make it dirty
+    parts["parts"]["part1"]["override-pull"] += "\necho foo"
+
+    # now build only part2 so that pull order will be reversed
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+        partitions=partitions,
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    # execution of actions must succeed
+    actions = lf.plan(Step.BUILD, part_names=["part2"])
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
+
+
+def test_craftctl_update_project_vars(new_dir, partitions, capfd, mocker):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          part1:
+            plugin: nil
+            override-pull: |
+              craftctl default
+              craftctl set version=xx
+
+          part2:
+            plugin: nil
+            after: [part1]
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+        partitions=partitions,
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    actions = lf.plan(Step.BUILD)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
+
+    # re-execute the lifecycle with no changes
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars_part_name="part1",
+        project_vars={"version": ""},
+        partitions=partitions,
+    )
+
+    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+
+    actions = lf.plan(Step.BUILD)
+
+    # all actions should be skipped
+    for action in actions:
+        assert action.action_type == ActionType.SKIP
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert lf.project_info.get_project_var("version") == "xx"
+
+
+def test_craftctl_get_error(new_dir, partitions, capfd, mocker):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -369,7 +494,7 @@ def test_craftctl_get_error(new_dir, capfd, mocker):
     parts = yaml.safe_load(parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_set", cache_dir=new_dir
+        parts, application_name="test_set", cache_dir=new_dir, partitions=partitions
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -381,7 +506,7 @@ def test_craftctl_get_error(new_dir, capfd, mocker):
     assert "'myvar' not in project variables" in captured.err
 
 
-def test_craftctl_set_argument_error(new_dir, capfd, mocker):
+def test_craftctl_set_argument_error(new_dir, partitions, capfd, mocker):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -398,6 +523,7 @@ def test_craftctl_set_argument_error(new_dir, capfd, mocker):
         application_name="test_set",
         cache_dir=new_dir,
         project_vars_part_name="foo",
+        partitions=partitions,
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -409,7 +535,7 @@ def test_craftctl_set_argument_error(new_dir, capfd, mocker):
     assert "invalid arguments to command 'set' (want key=value)" in captured.err
 
 
-def test_craftctl_set_consume(new_dir, capfd):
+def test_craftctl_set_consume(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -430,6 +556,7 @@ def test_craftctl_set_consume(new_dir, capfd):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": ""},
+        partitions=partitions,
     )
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
@@ -444,7 +571,7 @@ def test_craftctl_set_consume(new_dir, capfd):
         assert "variable 'myvar' can be set only once" in captured.err
 
 
-def test_craftctl_project_vars_from_state(new_dir):
+def test_craftctl_project_vars_from_state(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -465,6 +592,7 @@ def test_craftctl_project_vars_from_state(new_dir):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": ""},
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.PULL)
@@ -482,6 +610,7 @@ def test_craftctl_project_vars_from_state(new_dir):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": ""},
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.BUILD)
@@ -492,7 +621,7 @@ def test_craftctl_project_vars_from_state(new_dir):
     assert lf.project_info.get_project_var("myvar") == "val1"
 
 
-def test_craftctl_project_vars_write_once_from_state(new_dir, capfd):
+def test_craftctl_project_vars_write_once_from_state(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -517,6 +646,7 @@ def test_craftctl_project_vars_write_once_from_state(new_dir, capfd):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": "", "myvar2": ""},
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.STAGE)
@@ -534,6 +664,7 @@ def test_craftctl_project_vars_write_once_from_state(new_dir, capfd):
         cache_dir=new_dir,
         project_vars_part_name="foo",
         project_vars={"myvar": "", "myvar2": ""},
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.PRIME)

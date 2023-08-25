@@ -26,6 +26,20 @@ all available options run:
 make help
 ```
 
+## Development Environment
+
+In order to develop any `apt` related items, the `python-apt` package is needed.
+The `apt` extra will require this package in general. For development on an
+Ubuntu system, the `focal-dev`, `jammy-dev`, and `lunar-dev` extras are available
+instead, which will build a local `python-apt` package that matches the
+declared Ubuntu version.
+
+Apt package prerequisites for this development environment on an Ubuntu system can be installed with:
+
+```bash
+sudo apt install libapt-pkg-dev intltool fuse-overlayfs
+```
+
 ## Running tests
 
 To run all tests in the suite run:

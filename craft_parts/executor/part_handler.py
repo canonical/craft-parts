@@ -198,7 +198,7 @@ class PartHandler:
         self._run_step(
             step_info=step_info,
             scriptlet_name="override-pull",
-            work_dir=self._part.part_src_subdir,
+            work_dir=self._part.part_src_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -301,7 +301,7 @@ class PartHandler:
                 self._run_step(
                     step_info=step_info,
                     scriptlet_name="override-build",
-                    work_dir=self._part.part_build_subdir,
+                    work_dir=self._part.part_build_dir,
                     stdout=stdout,
                     stderr=stderr,
                 )
@@ -309,7 +309,7 @@ class PartHandler:
             self._run_step(
                 step_info=step_info,
                 scriptlet_name="override-build",
-                work_dir=self._part.part_build_subdir,
+                work_dir=self._part.part_build_dir,
                 stdout=stdout,
                 stderr=stderr,
             )
@@ -369,7 +369,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
-            work_dir=self._part.stage_dir,
+            work_dir=self._part.base_stage_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -409,7 +409,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
-            work_dir=self._part.prime_dir,
+            work_dir=self._part.base_prime_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -632,6 +632,7 @@ class PartHandler:
                 self._part.part_build_dir,
                 copy_function=file_utils.copy,
                 cache_dir=step_info.cache_dir,
+                project_dirs=self._part.dirs,
             )
             state_file = states.get_step_state_path(self._part, step_info.step)
             source.check_if_outdated(str(state_file))  # required by source.update()
@@ -820,11 +821,11 @@ class PartHandler:
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
-        self._clean_shared(Step.STAGE, shared_dir=self._part.stage_dir)
+        self._clean_shared(Step.STAGE, shared_dir=self._part.base_stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
-        self._clean_shared(Step.PRIME, shared_dir=self._part.prime_dir)
+        self._clean_shared(Step.PRIME, shared_dir=self._part.base_prime_dir)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
@@ -863,12 +864,12 @@ class PartHandler:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
-            self._part.part_install_dir,
+            *self._part.part_install_dirs.values(),
             self._part.part_layer_dir,
             self._part.part_state_dir,
             self._part.part_run_dir,
-            self._part.stage_dir,
-            self._part.prime_dir,
+            *self._part.stage_dirs.values(),
+            *self._part.prime_dirs.values(),
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
@@ -878,7 +879,7 @@ class PartHandler:
         organize_files(
             part_name=self._part.name,
             mapping=mapping,
-            base_dir=self._part.part_install_dir,
+            base_dir=self._part.part_base_install_dir,
             overwrite=overwrite,
         )
 
@@ -892,6 +893,7 @@ class PartHandler:
             return None
 
         try:
+            logger.info("Fetching stage-packages")
             fetched_packages = packages.Repository.fetch_stage_packages(
                 cache_dir=step_info.cache_dir,
                 package_names=stage_packages,
@@ -965,7 +967,10 @@ class PartHandler:
         snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
         snap_sources = (
             sources.SnapSource(
-                source=s, part_src_dir=snaps_dir, cache_dir=self._part_info.cache_dir
+                source=s,
+                part_src_dir=snaps_dir,
+                cache_dir=self._part_info.cache_dir,
+                project_dirs=self._part.dirs,
             )
             for s in snap_files
         )

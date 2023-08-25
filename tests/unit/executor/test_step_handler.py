@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Type
 
 import pytest
 
@@ -56,32 +56,25 @@ class FooPlugin(plugins.Plugin):
 
 
 def _step_handler_for_step(
-    step: Step, cache_dir: Path, strict_mode: bool = False, plugin_class=None
+    step: Step,
+    cache_dir: Path,
+    part_info: PartInfo,
+    part: Part,
+    dirs: ProjectDirs,
+    plugin_class: Type[plugins.Plugin] = FooPlugin,
 ) -> StepHandler:
-    p1 = Part("p1", {"source": "."})
-    dirs = ProjectDirs()
-    info = ProjectInfo(
-        project_dirs=dirs,
-        application_name="test",
-        cache_dir=cache_dir,
-        strict_mode=strict_mode,
-    )
-    part_info = PartInfo(project_info=info, part=p1)
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
-    if plugin_class:
-        plugin = plugin_class(properties=props, part_info=part_info)
-    else:
-        plugin = FooPlugin(properties=props, part_info=part_info)
+    plugin = plugin_class(properties=props, part_info=part_info)
     source_handler = sources.get_source_handler(
         cache_dir=cache_dir,
-        part=p1,
+        part=part,
         project_dirs=dirs,
     )
-    step_env = generate_step_environment(part=p1, plugin=plugin, step_info=step_info)
+    step_env = generate_step_environment(part=part, plugin=plugin, step_info=step_info)
 
     return StepHandler(
-        part=p1,
+        part=part,
         step_info=step_info,
         plugin=plugin,
         source_handler=source_handler,
@@ -97,56 +90,118 @@ def get_mode(path) -> int:
 class TestStepHandlerBuiltins:
     """Verify the built-in handlers."""
 
+    @pytest.fixture(autouse=True)
+    def setup(self, new_dir, partitions):
+        # pylint: disable=attribute-defined-outside-init
+        self._partitions = partitions
+        self._part = Part("p1", {"source": "."}, partitions=partitions)
+        self._dirs = ProjectDirs(partitions=partitions)
+        self._project_info = ProjectInfo(
+            project_dirs=self._dirs,
+            application_name="test",
+            cache_dir=new_dir,
+            strict_mode=False,
+            partitions=self._partitions,
+        )
+        self._part_info = PartInfo(project_info=self._project_info, part=self._part)
+        self._props = plugins.PluginProperties()
+        # pylint: enable=attribute-defined-outside-init
+
     def test_run_builtin_pull(self, new_dir, mocker):
         mock_source_pull = mocker.patch(
             "craft_parts.sources.local_source.LocalSource.pull"
         )
 
-        sh = _step_handler_for_step(Step.PULL, cache_dir=new_dir)
+        sh = _step_handler_for_step(
+            Step.PULL,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         result = sh.run_builtin()
 
         mock_source_pull.assert_called_once_with()
         assert result == StepContents()
 
     def test_run_builtin_overlay(self, new_dir, mocker):
-        sh = _step_handler_for_step(Step.OVERLAY, cache_dir=new_dir)
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         result = sh.run_builtin()
         assert result == StepContents()
 
-    def test_run_builtin_build(self, new_dir, mocker):
+    def test_run_builtin_build(self, new_dir, partitions, mocker):
         mock_run = mocker.patch("subprocess.run")
 
         Path("parts/p1/run").mkdir(parents=True)
-        sh = _step_handler_for_step(Step.BUILD, cache_dir=new_dir)
+        sh = _step_handler_for_step(
+            Step.BUILD,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         result = sh.run_builtin()
         build_script_path = Path(new_dir / "parts/p1/run/build.sh")
         environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
         host_arch = _ARCH_TRANSLATIONS[_get_host_architecture()]
+        triplet = host_arch["triplet"]
+        deb = host_arch["deb"]
+        if partitions is not None:
+            default_partition_dir = "/default"
+            partition_script_lines = itertools.chain.from_iterable(
+                zip(
+                    (
+                        f'export CRAFT_{p.upper()}_STAGE="{new_dir}/stage/{p}"'
+                        for p in partitions
+                    ),
+                    (
+                        f'export CRAFT_{p.upper()}_PRIME="{new_dir}/prime/{p}"'
+                        for p in partitions
+                    ),
+                )
+            )
+        else:
+            partition_script_lines = []
+            default_partition_dir = ""
+
+        expected_script = "\n".join(
+            (
+                "# Environment",
+                "## Application environment",
+                "## Part environment",
+                f'export CRAFT_ARCH_TRIPLET="{triplet}"',
+                f'export CRAFT_TARGET_ARCH="{deb}"',
+                f'export CRAFT_ARCH_BUILD_ON="{deb}"',
+                f'export CRAFT_ARCH_BUILD_FOR="{deb}"',
+                f'export CRAFT_ARCH_TRIPLET_BUILD_ON="{triplet}"',
+                f'export CRAFT_ARCH_TRIPLET_BUILD_FOR="{triplet}"',
+                'export CRAFT_PARALLEL_BUILD_COUNT="1"',
+                f'export CRAFT_PROJECT_DIR="{new_dir}"',
+                *partition_script_lines,
+                f'export CRAFT_STAGE="{new_dir}/stage{default_partition_dir}"',
+                f'export CRAFT_PRIME="{new_dir}/prime{default_partition_dir}"',
+                'export CRAFT_PART_NAME="p1"',
+                'export CRAFT_STEP_NAME="BUILD"',
+                f'export CRAFT_PART_SRC="{new_dir}/parts/p1/src"',
+                f'export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"',
+                f'export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"',
+                f'export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"',
+                f'export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install{default_partition_dir}"',
+                "## Plugin environment",
+                "## User environment",
+                "",
+            )
+        )
 
         assert get_mode(environment_script_path) == 0o644
         with open(environment_script_path, "r") as file:
-            assert file.read() == dedent(
-                f"""\
-                # Environment
-                ## Application environment
-                ## Part environment
-                export CRAFT_ARCH_TRIPLET="{host_arch['triplet']}"
-                export CRAFT_TARGET_ARCH="{host_arch['deb']}"
-                export CRAFT_PARALLEL_BUILD_COUNT="1"
-                export CRAFT_PROJECT_DIR="{new_dir}"
-                export CRAFT_STAGE="{new_dir}/stage"
-                export CRAFT_PRIME="{new_dir}/prime"
-                export CRAFT_PART_NAME="p1"
-                export CRAFT_STEP_NAME="BUILD"
-                export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
-                export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
-                export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
-                export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
-                export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
-                ## Plugin environment
-                ## User environment
-                """
-            )
+            assert file.read() == expected_script
 
         assert get_mode(build_script_path) == 0o755
         with open(build_script_path, "r") as file:
@@ -175,7 +230,13 @@ class TestStepHandlerBuiltins:
         Path("parts/p1/install/foo").write_text("content")
         Path("parts/p1/install/subdir/bar").write_text("content")
         Path("stage").mkdir()
-        sh = _step_handler_for_step(Step.STAGE, cache_dir=new_dir)
+        sh = _step_handler_for_step(
+            Step.STAGE,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         result = sh.run_builtin()
 
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
@@ -188,13 +249,19 @@ class TestStepHandlerBuiltins:
         Path("stage/subdir").mkdir(parents=True)
         Path("stage/foo").write_text("content")
         Path("stage/subdir/bar").write_text("content")
-        sh = _step_handler_for_step(Step.PRIME, cache_dir=new_dir)
+        sh = _step_handler_for_step(
+            Step.PRIME,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         result = sh.run_builtin()
 
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
     def test_run_builtin_invalid(self, new_dir):
-        sh = _step_handler_for_step(999, cache_dir=new_dir)  # type: ignore
+        sh = _step_handler_for_step(999, cache_dir=new_dir, part_info=self._part_info, part=self._part, dirs=self._dirs)  # type: ignore
         with pytest.raises(RuntimeError) as raised:
             sh.run_builtin()
         assert str(raised.value) == (
@@ -205,10 +272,13 @@ class TestStepHandlerBuiltins:
         """Test the Pull step in strict mode calls get_pull_commands()"""
         Path("parts/p1/run").mkdir(parents=True)
         mock_run = mocker.patch("subprocess.run")
+        self._project_info._strict_mode = True
         sh = _step_handler_for_step(
             Step.PULL,
             cache_dir=new_dir,
-            strict_mode=True,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
             plugin_class=StrictTestPlugin,
         )
 
@@ -225,8 +295,30 @@ class TestStepHandlerBuiltins:
 class TestStepHandlerRunScriptlet:
     """Verify the scriptlet runner."""
 
+    @pytest.fixture(autouse=True)
+    def setup(self, new_dir, partitions):
+        # pylint: disable=attribute-defined-outside-init
+        self._part = Part("p1", {"source": "."}, partitions=partitions)
+        self._dirs = ProjectDirs(partitions=partitions)
+        self._project_info = ProjectInfo(
+            project_dirs=self._dirs,
+            application_name="test",
+            cache_dir=new_dir,
+            strict_mode=False,
+            partitions=partitions,
+        )
+        self._part_info = PartInfo(project_info=self._project_info, part=self._part)
+        self._props = plugins.PluginProperties()
+        # pylint: enable=attribute-defined-outside-init
+
     def test_run_scriptlet(self, new_dir, capfd):
-        sh = _step_handler_for_step(Step.PULL, cache_dir=new_dir)
+        sh = _step_handler_for_step(
+            Step.PULL,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         sh.run_scriptlet(
             "echo hello world", scriptlet_name="name", step=Step.BUILD, work_dir=new_dir
         )

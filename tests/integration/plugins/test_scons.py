@@ -7,7 +7,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_scons_plugin(new_dir):
+def test_scons_plugin(new_dir, partitions):
     """Test builds with the scons plugin"""
     source_location = Path(__file__).parent / "test_scons"
 
@@ -24,7 +24,11 @@ def test_scons_plugin(new_dir):
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
-        parts, application_name="test_scons", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_scons",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 

@@ -1,0 +1,48 @@
+name: Bug Report
+description: File a bug report
+labels: "Bug"
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks for taking the time to fill out this bug report! Before
+        submitting your issue, make sure this has not been already
+        reported or if it works with the latest version of the library.
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: >
+        If applicable, add screenshots to help explain your
+        problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: To Reproduce
+      description: >
+        Provide a step-by-step instruction of how to reproduce the behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: part_yaml
+    attributes:
+      label: part yaml
+      description: >
+        If possible, please paste the yaml spec that causes the
+        failure. This will be automatically formatted into code, so no
+        need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: >
+        Please copy and paste any relevant log output. This will be
+        automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: true

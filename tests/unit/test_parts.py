@@ -32,7 +32,7 @@ from craft_parts.steps import Step
 class TestPartSpecs:
     """Test part specification creation."""
 
-    def test_marshal_unmarshal(self):
+    def test_marshal_unmarshal(self, partitions):
         data = {
             "plugin": "nil",
             "source": "http://example.com/hello-2.3.tar.gz",
@@ -74,7 +74,7 @@ class TestPartSpecs:
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
-    def test_unmarshal_not_dict(self):
+    def test_unmarshal_not_dict(self, partitions):
         with pytest.raises(TypeError) as raised:
             PartSpec.unmarshal(False)  # type: ignore
         assert str(raised.value) == "part data is not a dictionary"
@@ -118,11 +118,31 @@ class TestPartSpecs:
             PartSpec.unmarshal(data)
 
 
+class TestPartPartitionUsage:
+    """Test usage of partitions in parts."""
+
+    def test_part_invalid_partition_usage_no_error(self, partitions):
+        """Do not error for invalid partition usage when the feature is disabled."""
+        # if partitions were enabled, this would raise a ValueError
+        part_data = {
+            "organize": {"test": "(foo)"},
+            "stage": ["(bar)/test"],
+            "prime": ["(baz)"],
+        }
+
+        part_list = [
+            Part("a", part_data, partitions=partitions),
+            Part("b", part_data, partitions=partitions),
+        ]
+
+        assert not parts.validate_partition_usage(part_list, ["default", "kernel"])
+
+
 class TestPartData:
     """Test basic part creation and representation."""
 
-    def test_part_dirs(self, new_dir):
-        p = Part("foo", {"plugin": "nil"})
+    def test_part_dirs(self, new_dir, partitions):
+        p = Part("foo", {"plugin": "nil"}, partitions=partitions)
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.parts_dir == new_dir / "parts"
@@ -140,8 +160,13 @@ class TestPartData:
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
-    def test_part_work_dir(self, new_dir):
-        p = Part("foo", {}, project_dirs=ProjectDirs(work_dir="foobar"))
+    def test_part_work_dir(self, new_dir, partitions):
+        p = Part(
+            "foo",
+            {},
+            partitions=partitions,
+            project_dirs=ProjectDirs(work_dir="foobar", partitions=partitions),
+        )
         assert p.parts_dir == new_dir / "foobar/parts"
         assert p.part_src_dir == new_dir / "foobar/parts/foo/src"
         assert p.part_src_subdir == new_dir / "foobar/parts/foo/src"
@@ -156,80 +181,84 @@ class TestPartData:
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
-    def test_part_subdirs_default(self, new_dir):
+    def test_part_subdirs_default(self, new_dir, partitions):
         """Verify subdirectories for a part with no plugin."""
-        p = Part("foo", {"source-subdir": "foobar"})
+        p = Part("foo", {"source-subdir": "foobar"}, partitions=partitions)
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
         assert p.part_build_dir == new_dir / "parts/foo/build"
         assert p.part_build_subdir == new_dir / "parts/foo/build"
 
-    def test_part_subdirs_out_of_source_and_source_subdir(self, new_dir):
+    def test_part_subdirs_out_of_source_and_source_subdir(self, new_dir, partitions):
         """
         Verify subdirectories for a plugin that supports out-of-source builds
         and has a source subdirectory defined.
         """
-        p = Part("foo", {"plugin": "cmake", "source-subdir": "foobar"})
+        p = Part(
+            "foo", {"plugin": "cmake", "source-subdir": "foobar"}, partitions=partitions
+        )
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
         assert p.part_build_dir == new_dir / "parts/foo/build"
         assert p.part_build_subdir == new_dir / "parts/foo/build"
 
-    def test_part_subdirs_out_of_source(self, new_dir):
+    def test_part_subdirs_out_of_source(self, new_dir, partitions):
         """
         Verify subdirectories for a plugin that supports out-of-source builds
         and no source subdirectory defined.
         """
-        p = Part("foo", {"plugin": "cmake"})
+        p = Part("foo", {"plugin": "cmake"}, partitions=partitions)
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_src_subdir == new_dir / "parts/foo/src"
         assert p.part_build_dir == new_dir / "parts/foo/build"
         assert p.part_build_subdir == new_dir / "parts/foo/build"
 
-    def test_part_subdirs_source_subdir(self, new_dir):
+    def test_part_subdirs_source_subdir(self, new_dir, partitions):
         """
         Verify subdirectories for a plugin that does not support out-of-source builds
         and has a source subdirectory defined.
         """
-        p = Part("foo", {"plugin": "dump", "source-subdir": "foobar"})
+        p = Part(
+            "foo", {"plugin": "dump", "source-subdir": "foobar"}, partitions=partitions
+        )
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
         assert p.part_build_dir == new_dir / "parts/foo/build"
         assert p.part_build_subdir == new_dir / "parts/foo/build/foobar"
 
-    def test_part_source(self):
-        p = Part("foo", {})
+    def test_part_source(self, partitions):
+        p = Part("foo", {}, partitions=partitions)
         assert p.spec.source is None
 
-        p = Part("foo", {"source": "foobar"})
+        p = Part("foo", {"source": "foobar"}, partitions=partitions)
         assert p.spec.source == "foobar"
 
-    def test_part_stage_files(self):
-        p = Part("foo", {"stage": ["a", "b", "c"]})
+    def test_part_stage_files(self, partitions):
+        p = Part("foo", {"stage": ["a", "b", "c"]}, partitions=partitions)
         assert p.spec.stage_files == ["a", "b", "c"]
 
-    def test_part_prime_files(self):
-        p = Part("foo", {"prime": ["a", "b", "c"]})
+    def test_part_prime_files(self, partitions):
+        p = Part("foo", {"prime": ["a", "b", "c"]}, partitions=partitions)
         assert p.spec.prime_files == ["a", "b", "c"]
 
-    def test_part_organize_files(self):
-        p = Part("foo", {"organize": {"a": "b", "c": "d"}})
+    def test_part_organize_files(self, partitions):
+        p = Part("foo", {"organize": {"a": "b", "c": "d"}}, partitions=partitions)
         assert p.spec.organize_files == {"a": "b", "c": "d"}
 
-    def test_part_dependencies(self):
-        p = Part("foo", {"after": ["bar"]})
+    def test_part_dependencies(self, partitions):
+        p = Part("foo", {"after": ["bar"]}, partitions=partitions)
         assert p.dependencies == ["bar"]
 
-    def test_part_plugin(self):
-        p = Part("foo", {"plugin": "nil"})
+    def test_part_plugin(self, partitions):
+        p = Part("foo", {"plugin": "nil"}, partitions=partitions)
         assert p.spec.plugin == "nil"
 
-    def test_part_plugin_missing(self):
-        p = Part("foo", {})
+    def test_part_plugin_missing(self, partitions):
+        p = Part("foo", {}, partitions=partitions)
         assert p.spec.plugin is None
 
-    def test_part_build_environment(self):
-        p = Part("foo", {"build-environment": [{"BAR": "bar"}]})
+    def test_part_build_environment(self, partitions):
+        p = Part("foo", {"build-environment": [{"BAR": "bar"}]}, partitions=partitions)
         assert p.spec.build_environment == [{"BAR": "bar"}]
 
     @pytest.mark.parametrize(
@@ -240,8 +269,8 @@ class TestPartData:
             ({"stage-packages": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
-    def test_part_stage_packages(self, tc_spec, tc_result):
-        p = Part("foo", tc_spec)
+    def test_part_stage_packages(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.stage_packages == tc_result
 
     @pytest.mark.parametrize(
@@ -252,8 +281,8 @@ class TestPartData:
             ({"stage-snaps": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
-    def test_part_stage_snaps(self, tc_spec, tc_result):
-        p = Part("foo", tc_spec)
+    def test_part_stage_snaps(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.stage_snaps == tc_result
 
     @pytest.mark.parametrize(
@@ -264,8 +293,8 @@ class TestPartData:
             ({"build-packages": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
-    def test_part_build_packages(self, tc_spec, tc_result):
-        p = Part("foo", tc_spec)
+    def test_part_build_packages(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.build_packages == tc_result
 
     @pytest.mark.parametrize(
@@ -276,8 +305,8 @@ class TestPartData:
             ({"build-snaps": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
-    def test_part_build_snaps(self, tc_spec, tc_result):
-        p = Part("foo", tc_spec)
+    def test_part_build_snaps(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.build_snaps == tc_result
 
     @pytest.mark.parametrize(
@@ -289,7 +318,7 @@ class TestPartData:
             (Step.PRIME, "prime"),
         ],
     )
-    def test_part_get_scriptlet(self, tc_step, tc_content):
+    def test_part_get_scriptlet(self, partitions, tc_step, tc_content):
         p = Part(
             "foo",
             {
@@ -298,16 +327,17 @@ class TestPartData:
                 "override-stage": "stage",
                 "override-prime": "prime",
             },
+            partitions=partitions,
         )
         assert p.spec.get_scriptlet(tc_step) == tc_content
 
     @pytest.mark.parametrize("step", list(Step))
-    def test_part_get_scriptlet_none(self, step):
-        p = Part("foo", {})
+    def test_part_get_scriptlet_none(self, partitions, step):
+        p = Part("foo", {}, partitions=partitions)
         assert p.spec.get_scriptlet(step) is None
 
-    def test_part_has_overlay(self):
-        p = Part("foo", {})
+    def test_part_has_overlay(self, partitions):
+        p = Part("foo", {}, partitions=partitions)
         assert p.has_overlay is False
 
 
@@ -318,34 +348,34 @@ class TestPartOrdering:
     part name.
     """
 
-    def test_sort_parts(self):
-        p1 = Part("foo", {})
-        p2 = Part("bar", {"after": ["baz"]})
-        p3 = Part("baz", {"after": ["foo"]})
+    def test_sort_parts(self, partitions):
+        p1 = Part("foo", {}, partitions=partitions)
+        p2 = Part("bar", {"after": ["baz"]}, partitions=partitions)
+        p3 = Part("baz", {"after": ["foo"]}, partitions=partitions)
 
         x = parts.sort_parts([p1, p2, p3])
         assert x == [p1, p3, p2]
 
-    def test_sort_parts_multiple(self):
-        p1 = Part("foo", {"after": ["bar", "baz"]})
-        p2 = Part("bar", {"after": ["baz"]})
-        p3 = Part("baz", {})
+    def test_sort_parts_multiple(self, partitions):
+        p1 = Part("foo", {"after": ["bar", "baz"]}, partitions=partitions)
+        p2 = Part("bar", {"after": ["baz"]}, partitions=partitions)
+        p3 = Part("baz", {}, partitions=partitions)
 
         x = parts.sort_parts([p1, p2, p3])
         assert x == [p3, p2, p1]
 
-    def test_sort_parts_name(self):
-        p1 = Part("baz", {"after": ["foo"]})
-        p2 = Part("bar", {"after": ["foo"]})
-        p3 = Part("foo", {})
+    def test_sort_parts_name(self, partitions):
+        p1 = Part("baz", {"after": ["foo"]}, partitions=partitions)
+        p2 = Part("bar", {"after": ["foo"]}, partitions=partitions)
+        p3 = Part("foo", {}, partitions=partitions)
 
         x = parts.sort_parts([p1, p2, p3])
         assert x == [p3, p2, p1]
 
-    def test_sort_parts_cycle(self):
-        p1 = Part("foo", {})
-        p2 = Part("bar", {"after": ["baz"]})
-        p3 = Part("baz", {"after": ["bar"]})
+    def test_sort_parts_cycle(self, partitions):
+        p1 = Part("foo", {}, partitions=partitions)
+        p2 = Part("bar", {"after": ["baz"]}, partitions=partitions)
+        p3 = Part("baz", {"after": ["bar"]}, partitions=partitions)
 
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
@@ -354,36 +384,36 @@ class TestPartOrdering:
 class TestPartUnmarshal:
     """Verify data unmarshaling on part creation."""
 
-    def test_part_valid_property(self):
+    def test_part_valid_property(self, partitions):
         data = {"plugin": "nil"}
-        Part("foo", data)
+        Part("foo", data, partitions=partitions)
         assert data == {"plugin": "nil"}
 
-    def test_part_unexpected_property(self):
+    def test_part_unexpected_property(self, partitions):
         data = {"a": 2, "b": 3}
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", data)
+            Part("foo", data, partitions=partitions)
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
             "- extra field 'a' not permitted\n- extra field 'b' not permitted"
         )
 
-    def test_part_spec_not_dict(self):
+    def test_part_spec_not_dict(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False)  # type: ignore
+            Part("foo", False, partitions=partitions)  # type: ignore
         assert raised.value.part_name == "foo"
         assert raised.value.message == "part data is not a dictionary"
 
-    def test_part_unmarshal_type_error(self):
+    def test_part_unmarshal_type_error(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", {"plugin": []})
+            Part("foo", {"plugin": []}, partitions=partitions)
         assert raised.value.part_name == "foo"
         assert raised.value.message == "- str type expected in field 'plugin'"
 
     @pytest.mark.parametrize("fileset", ["stage", "prime"])
-    def test_relative_path_validation(self, fileset):
+    def test_relative_path_validation(self, partitions, fileset):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", {fileset: ["bar", "/baz", ""]})
+            Part("foo", {fileset: ["bar", "/baz", ""]}, partitions=partitions)
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
             "- '/baz' must be a relative path (cannot start with '/') "
@@ -395,10 +425,10 @@ class TestPartUnmarshal:
 class TestPartHelpers:
     """Test part-related helper functions."""
 
-    def test_part_by_name(self):
-        p1 = Part("foo", {})
-        p2 = Part("bar", {})
-        p3 = Part("baz", {})
+    def test_part_by_name(self, partitions):
+        p1 = Part("foo", {}, partitions=partitions)
+        p2 = Part("bar", {}, partitions=partitions)
+        p3 = Part("baz", {}, partitions=partitions)
 
         x = parts.part_by_name("bar", [p1, p2, p3])
         assert x == p2
@@ -407,10 +437,10 @@ class TestPartHelpers:
             parts.part_by_name("invalid", [p1, p2, p3])
         assert raised.value.part_name == "invalid"
 
-    def test_part_list_by_name(self):
-        p1 = Part("foo", {})
-        p2 = Part("bar", {})
-        p3 = Part("baz", {})
+    def test_part_list_by_name(self, partitions):
+        p1 = Part("foo", {}, partitions=partitions)
+        p2 = Part("bar", {}, partitions=partitions)
+        p3 = Part("baz", {}, partitions=partitions)
 
         x = parts.part_list_by_name(["bar", "baz"], [p1, p2, p3])
         assert x == [p2, p3]
@@ -429,11 +459,11 @@ class TestPartHelpers:
             parts.part_list_by_name(["bar", "invalid"], [p1, p2, p3])
         assert raised.value.part_name == "invalid"
 
-    def test_part_dependencies(self):
-        p1 = Part("foo", {"after": ["bar", "baz"]})
-        p2 = Part("bar", {"after": ["qux"]})
-        p3 = Part("baz", {})
-        p4 = Part("qux", {})
+    def test_part_dependencies(self, partitions):
+        p1 = Part("foo", {"after": ["bar", "baz"]}, partitions=partitions)
+        p2 = Part("bar", {"after": ["qux"]}, partitions=partitions)
+        p3 = Part("baz", {}, partitions=partitions)
+        p4 = Part("qux", {}, partitions=partitions)
 
         x = parts.part_dependencies(p1, part_list=[p1, p2, p3, p4])
         assert x == {p2, p3}
@@ -441,12 +471,12 @@ class TestPartHelpers:
         x = parts.part_dependencies(p1, part_list=[p1, p2, p3, p4], recursive=True)
         assert x == {p2, p3, p4}
 
-    def test_has_overlay_visibility(self):
-        p1 = Part("foo", {"after": ["bar", "baz"]})
-        p2 = Part("bar", {"after": ["qux"]})
-        p3 = Part("baz", {})
-        p4 = Part("qux", {})
-        p5 = Part("foobar", {"after": ["baz"]})
+    def test_has_overlay_visibility(self, partitions):
+        p1 = Part("foo", {"after": ["bar", "baz"]}, partitions=partitions)
+        p2 = Part("bar", {"after": ["qux"]}, partitions=partitions)
+        p3 = Part("baz", {}, partitions=partitions)
+        p4 = Part("qux", {}, partitions=partitions)
+        p5 = Part("foobar", {"after": ["baz"]}, partitions=partitions)
 
         part_list = [p1, p2, p3, p4, p5]
 
@@ -460,12 +490,12 @@ class TestPartHelpers:
         assert has_overlay_visibility(p4) is False
         assert has_overlay_visibility(p5) is False
 
-    def test_get_parts_with_overlay(self):
-        p1 = Part("foo", {})
-        p2 = Part("bar", {})
-        p3 = Part("baz", {})
-        p4 = Part("qux", {})
-        p5 = Part("quux", {})
+    def test_get_parts_with_overlay(self, partitions):
+        p1 = Part("foo", {}, partitions=partitions)
+        p2 = Part("bar", {}, partitions=partitions)
+        p3 = Part("baz", {}, partitions=partitions)
+        p4 = Part("qux", {}, partitions=partitions)
+        p5 = Part("quux", {}, partitions=partitions)
 
         p = parts.get_parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
         assert p == []
@@ -474,13 +504,13 @@ class TestPartHelpers:
 class TestPartValidation:
     """Part validation considering plugin-specific attributes."""
 
-    def test_part_validation_data_type(self):
+    def test_part_validation_data_type(self, partitions):
         with pytest.raises(TypeError) as raised:
             parts.validate_part("invalid data")  # type: ignore
 
         assert str(raised.value) == "value must be a dictionary"
 
-    def test_part_validation_immutable(self):
+    def test_part_validation_immutable(self, partitions):
         data = {
             "plugin": "make",
             "source": "foo",
@@ -492,7 +522,7 @@ class TestPartValidation:
 
         assert data == data_copy
 
-    def test_part_validation_extra(self):
+    def test_part_validation_extra(self, partitions):
         data = {
             "plugin": "make",
             "source": "foo",
@@ -504,7 +534,7 @@ class TestPartValidation:
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
 
-    def test_part_validation_missing(self):
+    def test_part_validation_missing(self, partitions):
         data = {
             "plugin": "make",
             "make-parameters": ["-C bar"],
