@@ -479,7 +479,7 @@ class Ubuntu(BaseRepository):
     @classmethod
     def download_packages(cls, package_names: List[str]) -> None:
         """Download the specified packages to the local package cache area."""
-        logger.info("Downloading packages: %s", " ".join(package_names))
+        logger.debug("Downloading packages: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
             {
