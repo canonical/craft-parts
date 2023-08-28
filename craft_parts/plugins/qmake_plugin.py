@@ -122,15 +122,16 @@ class QmakePlugin(Plugin):
                 'QMAKE_LFLAGS+="${LDFLAGS:-}"',
             ] + options.qmake_parameters
 
-        qmake_configure_command.append(f'"{self._part_info.part_src_dir}"')
-
         if options.qmake_project_file:
             qmake_configure_command.extend(
                 [
+                    f'"{self._part_info.part_src_dir}"',
                     "/",
                     f'"{options.qmake_project_file}"',
                 ]
             )
+        else:
+            qmake_configure_command.append(f'"{self._part_info.part_src_dir}"')
 
         return [
             " ".join(qmake_configure_command),
