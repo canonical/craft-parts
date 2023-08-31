@@ -123,15 +123,9 @@ class QmakePlugin(Plugin):
             ] + options.qmake_parameters
 
         if options.qmake_project_file:
-            qmake_configure_command.extend(
-                [
-                    f'"{self._part_info.part_src_dir}"',
-                    "/",
-                    f'"{options.qmake_project_file}"',
-                ]
-            )
+            qmake_configure_command.append(str(self._part_info.part_src_dir / options.qmake_project_file))
         else:
-            qmake_configure_command.append(f'"{self._part_info.part_src_dir}"')
+            qmake_configure_command.append(str(self._part_info.part_src_dir))
 
         return [
             " ".join(qmake_configure_command),
