@@ -931,6 +931,7 @@ class PartHandler:
 
         try:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+                logger.info("Fetching overlay-packages")
                 ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
