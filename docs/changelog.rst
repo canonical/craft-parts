@@ -2,6 +2,14 @@
 Changelog
 *********
 
+1.25.0 (2023-09-08)
+-------------------
+
+- Add rustup support to the Rust plugin
+- Add the ability to specify ``no-default-features`` for the Rust plugin
+- Add the ability to install virtual workspace crates for the Rust plugin
+- Add the option to enable LTO for the Rust plugin
+
 1.24.1 (2023-08-25)
 -------------------
 
