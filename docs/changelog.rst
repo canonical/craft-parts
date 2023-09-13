@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.25.1 (2023-09-12)
+-------------------
+
+- Remove direct dependency to python-apt tarball
+
 1.25.0 (2023-09-08)
 -------------------
 
