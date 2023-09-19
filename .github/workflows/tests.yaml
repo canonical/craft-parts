@@ -22,6 +22,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libapt-pkg-dev
+          pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
           pip install -U -e .[dev]
       - name: Run black
         run: |
