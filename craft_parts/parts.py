@@ -155,7 +155,7 @@ class PartSpec(BaseModel):
             return self.override_build
         if step == Step.STAGE:
             return self.override_stage
-        if step == step.PRIME:
+        if step == Step.PRIME:
             return self.override_prime
 
         raise RuntimeError(f"cannot get scriptlet for invalid step {step!r}")

@@ -99,7 +99,7 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     plugin_name="rust",
                     part_dependencies=part_dependencies,
                 )
-            options.rust_channel = "none"
+            options.rust_channel = "none"  # type: ignore[misc]
 
 
 class RustPlugin(Plugin):
