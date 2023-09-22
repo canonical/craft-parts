@@ -75,10 +75,11 @@ jobs:
       - name: Install apt build dependencies
         run: |
           sudo apt update
-          sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs
+          sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs python3-apt
       - name: Install general python dependencies
         run: |
-          pip install -e .[dev,${{ matrix.adjective }}-dev]
+          pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz
+          pip install -e .[dev]
       - name: Install additional test dependencies
         run: |
           sudo apt install -y ninja-build cmake scons \
