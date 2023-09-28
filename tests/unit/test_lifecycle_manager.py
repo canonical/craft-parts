@@ -87,6 +87,14 @@ class TestLifecycleManager:
             )
         assert raised.value.name == name
 
+    def test_part_dependency_name_invalid(self, new_dir):
+        self._data["parts"]["foo"]["after"] = ["trololo"]
+        with pytest.raises(errors.InvalidPartName) as raised:
+            lifecycle_manager.LifecycleManager(
+                self._data, application_name="test", cache_dir=new_dir
+            )
+        assert raised.value.part_name == "trololo"
+
     @pytest.mark.parametrize("work_dir", [".", "work_dir"])
     def test_project_info(self, new_dir, work_dir):
         lf = lifecycle_manager.LifecycleManager(
