@@ -91,7 +91,10 @@ class TestLifecycleManager:
         self._data["parts"]["foo"]["after"] = ["trololo"]
         with pytest.raises(errors.InvalidPartName) as raised:
             lifecycle_manager.LifecycleManager(
-                self._data, application_name="test", cache_dir=new_dir
+                self._data,
+                application_name="test",
+                cache_dir=new_dir,
+                **self._lcm_kwargs,
             )
         assert raised.value.part_name == "trololo"
 
