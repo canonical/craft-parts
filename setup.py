@@ -70,7 +70,7 @@ docs_require = [
 ]
 
 types_requires = [
-    "mypy[reports]==0.991",
+    "mypy[reports]>=1.4.1,<1.6.0",
     "types-colorama",
     "types-docutils",
     "types-Pillow",
@@ -91,7 +91,7 @@ test_requires = [
     "pylint",
     "pylint-fixme-info",
     "pylint-pytest",
-    "pyright==1.1.323",
+    "pyright==1.1.327",
     "pytest",
     "pytest-check",
     "pytest-cov",
