@@ -87,7 +87,7 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """
         if "rust-deps" in (part_dependencies or []):
             options = cast(RustPluginProperties, self._options)
-            if options.rust_channel:
+            if options.rust_channel and options.rust_channel != "none":
                 raise validator.errors.PluginEnvironmentValidationError(
                     part_name=self._part_name,
                     reason="rust-deps can not be used"
@@ -99,12 +99,6 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     plugin_name="rust",
                     part_dependencies=part_dependencies,
                 )
-            # The following type ignore is to make type checking pass while
-            # issue #559 is a bug:
-            # https://github.com/canonical/craft-parts/issues/559
-            # The ignore comment (and this block comment) should be removed
-            # with the fixing of #559.
-            options.rust_channel = "none"  # type: ignore[misc]
 
 
 class RustPlugin(Plugin):
