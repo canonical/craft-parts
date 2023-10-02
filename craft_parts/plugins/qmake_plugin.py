@@ -80,10 +80,12 @@ class QmakePlugin(Plugin):
 
     properties_class = QmakePluginProperties
 
+    @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
+    @override
     def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         options = cast(QmakePluginProperties, self._options)
@@ -94,6 +96,7 @@ class QmakePlugin(Plugin):
             build_packages = {"g++", "make", "qt5-qmake"}
         return build_packages
 
+    @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         options = cast(QmakePluginProperties, self._options)
@@ -103,6 +106,7 @@ class QmakePlugin(Plugin):
 
         return {"QT_SELECT": "qt5"}
 
+    @override
     def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(QmakePluginProperties, self._options)
