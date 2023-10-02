@@ -99,7 +99,12 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     plugin_name="rust",
                     part_dependencies=part_dependencies,
                 )
-            options.rust_channel = "none"
+            # The following type ignore is to make type checking pass while
+            # issue #559 is a bug:
+            # https://github.com/canonical/craft-parts/issues/559
+            # The ignore comment (and this block comment) should be removed
+            # with the fixing of #559.
+            options.rust_channel = "none"  # type: ignore[misc]
 
 
 class RustPlugin(Plugin):
