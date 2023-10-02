@@ -200,3 +200,52 @@ def test_expand_environment(new_dir, mocker):
         ctx.execute(actions)
 
     assert (lf.project_info.prime_dir / "usr/aarch64-linux-gnu/bar").is_file()
+
+
+def test_expand_environment_order(new_dir, mocker):
+    """The largest replacements should occur first.
+
+    $CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR} should be replaced before $CRAFT_ARCH_TRIPLET
+    """
+    mocker.patch("platform.machine", return_value="aarch64")
+    parts_yaml = """\
+        parts:
+          foo:
+            plugin: nil
+            override-build: |
+                cat << EOF >> $CRAFT_PART_INSTALL/part-variables.txt
+                CRAFT_ARCH_TRIPLET_1: $CRAFT_ARCH_TRIPLET
+                CRAFT_ARCH_TRIPLET_2: ${CRAFT_ARCH_TRIPLET}
+                CRAFT_ARCH_TRIPLET_BUILD_FOR_1: $CRAFT_ARCH_TRIPLET_BUILD_FOR
+                CRAFT_ARCH_TRIPLET_BUILD_FOR_2: ${CRAFT_ARCH_TRIPLET_BUILD_FOR}
+                CRAFT_ARCH_TRIPLET_BUILD_ON_1: $CRAFT_ARCH_TRIPLET_BUILD_ON
+                CRAFT_ARCH_TRIPLET_BUILD_ON_1: ${CRAFT_ARCH_TRIPLET_BUILD_ON}
+                EOF
+
+        """
+
+    parts = yaml.safe_load(parts_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_expansion",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    with open(lf.project_info.prime_dir / "part-variables.txt", "r") as file:
+        data = file.read()
+
+    assert data == textwrap.dedent(
+        """\
+        CRAFT_ARCH_TRIPLET_1: aarch64-linux-gnu
+        CRAFT_ARCH_TRIPLET_2: aarch64-linux-gnu
+        CRAFT_ARCH_TRIPLET_BUILD_FOR_1: aarch64-linux-gnu
+        CRAFT_ARCH_TRIPLET_BUILD_FOR_2: aarch64-linux-gnu
+        CRAFT_ARCH_TRIPLET_BUILD_ON_1: aarch64-linux-gnu
+        CRAFT_ARCH_TRIPLET_BUILD_ON_1: aarch64-linux-gnu
+        """
+    )

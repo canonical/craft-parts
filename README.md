@@ -1,5 +1,7 @@
 # Craft Parts
 
+[![Documentation Status](https://readthedocs.com/projects/canonical-craft-parts/badge/?version=latest)](https://canonical-craft-parts.readthedocs-hosted.com/en/latest/?badge=latest)
+
 Craft-parts provides a mechanism to obtain data from different sources,
 process it in various ways, and prepare a filesystem subtree suitable for
 deployment. The components used in its project specification are called
@@ -29,16 +31,26 @@ make help
 ## Development Environment
 
 In order to develop any `apt` related items, the `python-apt` package is needed.
-The `apt` extra will require this package in general. For development on an
-Ubuntu system, the `focal-dev`, `jammy-dev`, and `lunar-dev` extras are available
-instead, which will build a local `python-apt` package that matches the
-declared Ubuntu version.
+The `apt` extra will require this package in general.
 
 Apt package prerequisites for this development environment on an Ubuntu system can be installed with:
 
 ```bash
 sudo apt install libapt-pkg-dev intltool fuse-overlayfs
 ```
+
+On a Debian or Ubuntu system, the appropriate package can be installed by running
+
+```bash
+apt source python-apt
+pip install ./python-apt_*
+```
+
+or by downloading and installing the appropriate source tarball. On Ubuntu these are:
+
+* focal (20.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz
+* jammy (22.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
+* lunar (23.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.5.3ubuntu1/python-apt_2.5.3ubuntu1.tar.xz
 
 ## Running tests
 

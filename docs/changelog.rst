@@ -2,6 +2,25 @@
 Changelog
 *********
 
+1.25.1 (2023-09-12)
+-------------------
+
+- Remove direct dependency to python-apt tarball
+
+1.25.0 (2023-09-08)
+-------------------
+
+- Add rustup support to the Rust plugin
+- Add the ability to specify ``no-default-features`` for the Rust plugin
+- Add the ability to install virtual workspace crates for the Rust plugin
+- Add the option to enable LTO for the Rust plugin
+
+1.24.1 (2023-08-25)
+-------------------
+
+- Don't write log information in overlays (workaround for `craft-cli
+  issue #172`_)
+
 1.24.0 (2023-08-24)
 -------------------
 
@@ -390,3 +409,6 @@ Changelog
 ------------------
 
 - Initial release
+
+
+.. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172

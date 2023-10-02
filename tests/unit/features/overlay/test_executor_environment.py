@@ -340,6 +340,43 @@ def test_expand_variables(new_dir, partitions, var, value):
     }
 
 
+def test_expand_variables_order(mocker, new_dir, partitions):
+    """The largest replacements should occur first.
+
+    $CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR} should be replaced before $CRAFT_ARCH_TRIPLET
+    """
+    mocker.patch("craft_parts.infos._get_host_architecture", return_value="x86_64")
+    info = ProjectInfo(
+        project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
+        arch="aarch64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        work_dir="/work",
+        partitions=partitions,
+    )
+    info.global_environment.update({"ENVVAR": "from_app"})
+    data = {
+        "CRAFT_ARCH_TRIPLET_1": "$CRAFT_ARCH_TRIPLET",
+        "CRAFT_ARCH_TRIPLET_2": "${CRAFT_ARCH_TRIPLET}",
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR_1": "$CRAFT_ARCH_TRIPLET_BUILD_FOR",
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR_2": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON_1": "$CRAFT_ARCH_TRIPLET_BUILD_ON",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON_2": "${CRAFT_ARCH_TRIPLET_BUILD_ON}",
+    }
+
+    environment.expand_environment(data, info=info)
+
+    assert data == {
+        "CRAFT_ARCH_TRIPLET_1": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_2": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR_1": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR_2": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON_1": "x86_64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON_2": "x86_64-linux-gnu",
+    }
+
+
 def test_expand_variables_skip(new_dir, partitions):
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
