@@ -88,7 +88,7 @@ test_requires = [
     "isort",
     "hypothesis",
     "pydocstyle",
-    "pylint",
+    "pylint<3.0.0",
     "pylint-fixme-info",
     "pylint-pytest",
     "pyright==1.1.327",

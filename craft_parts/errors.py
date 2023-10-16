@@ -664,3 +664,13 @@ class PartitionWarning(PartitionError, Warning):
             partition=partition, brief=brief, details=details, resolution=resolution
         )
         Warning.__init__(self)
+
+
+class CommandNotFoundError(PartsError):
+    """A command was not found."""
+
+    def __init__(self, brief: str, resolution: Optional[str] = None) -> None:
+        brief = "Command not found."
+        resolution = "Make sure the command is installed and available."
+
+        super().__init__(brief=brief, resolution=resolution)
