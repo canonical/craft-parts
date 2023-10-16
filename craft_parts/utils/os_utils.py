@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from craft_parts import errors
+from craft_parts.utils.snap_utils import get_snap_command_path
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +244,8 @@ def mount_overlayfs(mountpoint: str, *args: str) -> None:
     :raises subprocess.CalledProcessError: on error.
     """
     logger.debug("fuse-overlayfs mountpoint=%r, args=%r", mountpoint, args)
-    subprocess.check_call(["fuse-overlayfs", *args, mountpoint])
+    overlayfs_command_path = get_snap_command_path("fuse-overlayfs")
+    subprocess.check_call([overlayfs_command_path, *args, mountpoint])
 
 
 _UMOUNT_RETRIES = 5

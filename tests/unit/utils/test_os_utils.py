@@ -369,7 +369,7 @@ class TestMount:
         mock_call = mocker.patch("subprocess.check_call")
         os_utils.mount_overlayfs("/mountpoint", "some", "args")
         mock_call.assert_called_once_with(
-            ["fuse-overlayfs", "some", "args", "/mountpoint"]
+            ["/usr/bin/fuse-overlayfs", "some", "args", "/mountpoint"]
         )
 
     def test_umount(self, mocker):
