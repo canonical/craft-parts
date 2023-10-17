@@ -23,6 +23,9 @@ exclude = [
     "venv",
     ".venv"
 ]
+plugins = [
+    "pydantic.mypy"
+]
 warn_unused_configs = true
 warn_redundant_casts = true
 strict_equality = true

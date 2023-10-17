@@ -8,16 +8,21 @@ on:
 
 jobs:
   linters:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
       - name: Install python packages and dependencies
         run: |
           sudo apt update
           sudo apt install -y libapt-pkg-dev
+          pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
           pip install -U -e .[dev]
       - name: Run black
         run: |
@@ -60,7 +65,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python
@@ -70,10 +75,11 @@ jobs:
       - name: Install apt build dependencies
         run: |
           sudo apt update
-          sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs
+          sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs python3-apt
       - name: Install general python dependencies
         run: |
-          pip install -e .[dev,${{ matrix.adjective }}-dev]
+          pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz
+          pip install -e .[dev]
       - name: Install additional test dependencies
         run: |
           sudo apt install -y ninja-build cmake scons \

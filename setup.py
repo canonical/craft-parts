@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup  # type: ignore
 
-VERSION = "1.25.0"
+VERSION = "1.25.1"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -70,7 +70,7 @@ docs_require = [
 ]
 
 types_requires = [
-    "mypy[reports]==0.991",
+    "mypy[reports]>=1.4.1,<1.6.0",
     "types-colorama",
     "types-docutils",
     "types-Pillow",
@@ -91,7 +91,7 @@ test_requires = [
     "pylint<3.0",
     "pylint-fixme-info",
     "pylint-pytest",
-    "pyright==1.1.323",
+    "pyright==1.1.327",
     "pytest",
     "pytest-check",
     "pytest-cov",
@@ -107,21 +107,8 @@ extras_requires = {
     "docs": docs_require,
     "test": test_requires + types_requires,
     "types": types_requires,
-    # Python-apt bindings for specific Ubuntu versions.
-    # Up to date package links can be found at https://launchpad.net/ubuntu/+source/python-apt
-    # Note: These extras can break requirements from other packages, so
-    # do not use them in dependencies unless you know what you're doing.
-    "focal-dev": [
-        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz"
-    ],
-    "jammy-dev": [
-        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz"
-    ],
-    "lunar-dev": [
-        "python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.5.3ubuntu1/python-apt_2.5.3ubuntu1.tar.xz"
-    ],
     # Generic "apt" extra for handling any apt-based platforms (e.g. Debian, Ubuntu)
-    "apt": ["python-apt"],
+    "apt": ["python-apt>=2.0.0"],
 }
 
 
