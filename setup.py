@@ -77,7 +77,7 @@ types_requires = [
     "types-Pygments",
     "types-pytz",
     "types-PyYAML",
-    "types-requests",
+    "types-requests<2.30",
     "types-setuptools",
 ]
 
