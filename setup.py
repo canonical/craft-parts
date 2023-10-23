@@ -70,14 +70,14 @@ docs_require = [
 ]
 
 types_requires = [
-    "mypy[reports]==0.991",
+    "mypy[reports]>=1.4.1,<1.6.0",
     "types-colorama",
     "types-docutils",
     "types-Pillow",
     "types-Pygments",
     "types-pytz",
     "types-PyYAML",
-    "types-requests",
+    "types-requests<2.30",
     "types-setuptools",
 ]
 
@@ -88,10 +88,10 @@ test_requires = [
     "isort",
     "hypothesis",
     "pydocstyle",
-    "pylint",
+    "pylint<3.0",
     "pylint-fixme-info",
     "pylint-pytest",
-    "pyright==1.1.323",
+    "pyright==1.1.327",
     "pytest",
     "pytest-check",
     "pytest-cov",
