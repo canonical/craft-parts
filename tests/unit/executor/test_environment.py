@@ -17,10 +17,8 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Set
 
 import pytest
-
 from craft_parts import plugins
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor import environment
@@ -34,21 +32,21 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PLUGIN_ENVVAR": "from_plugin"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 
 @pytest.fixture(autouse=True)
-def directories(new_dir):  # pylint: disable=unused-argument
+def directories(new_dir):
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
@@ -70,9 +68,6 @@ def directories(new_dir):  # pylint: disable=unused-argument
         "usr/share/pkgconfig",
     ]:
         Path(part_info.stage_dir / directory).mkdir(parents=True)
-
-
-# pylint: disable=line-too-long
 
 
 def test_generate_step_environment_build(new_dir):
@@ -291,7 +286,7 @@ def test_generate_step_environment_no_user_env(new_dir):
 
 
 @pytest.mark.parametrize(
-    "var,value",
+    ("var", "value"),
     [
         ("CRAFT_ARCH_TRIPLET", "aarch64-linux-gnu"),
         ("CRAFT_TARGET_ARCH", "arm64"),
@@ -379,7 +374,7 @@ def test_expand_variables_skip(new_dir, partitions):
 
 
 @pytest.mark.parametrize(
-    "name,value",
+    ("name", "value"),
     [
         ("$CRAFT_TARGET_ARCH", "arm64"),
         ("${CRAFT_TARGET_ARCH}", "arm64"),

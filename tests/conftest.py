@@ -20,12 +20,10 @@ import os
 import tempfile
 import threading
 from pathlib import Path
-from typing import Dict, Optional
 from unittest import mock
 
 import pytest
 import xdg  # type: ignore
-
 from craft_parts.features import Features
 
 from . import fake_servers
@@ -39,28 +37,28 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
     monkeypatch.chdir(tmpdir)
-    yield tmpdir
+    return tmpdir
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_chdir(monkeypatch):
     mock_fn = mock.Mock(spec=os.chdir)
     monkeypatch.setattr(os, "chdir", mock_fn)
-    yield mock_fn
+    return mock_fn
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_chroot(monkeypatch):
     mock_fn = mock.Mock(spec=os.chdir)
     monkeypatch.setattr(os, "chroot", mock_fn)
-    yield mock_fn
+    return mock_fn
 
 
-@pytest.fixture
+@pytest.fixture()
 def enable_overlay_feature():
     assert Features().enable_overlay is False
     Features.reset()
@@ -71,7 +69,7 @@ def enable_overlay_feature():
     Features.reset()
 
 
-@pytest.fixture
+@pytest.fixture()
 def enable_partitions_feature():
     assert Features().enable_partitions is False
     Features.reset()
@@ -82,14 +80,14 @@ def enable_partitions_feature():
     Features.reset()
 
 
-@pytest.fixture
+@pytest.fixture()
 def partitions():
     if Features().enable_partitions:
         return ["default", "mypart", "yourpart"]
     return None
 
 
-@pytest.fixture
+@pytest.fixture()
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False
@@ -173,7 +171,7 @@ def fake_snapd():
     socket_path_patcher.stop()
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_snap_command(mocker):
     """Mock the snap command."""
     return FakeSnapCommand(mocker)
@@ -187,7 +185,7 @@ def dependency_fixture(new_dir):
         name: str,
         broken: bool = False,
         invalid: bool = False,
-        output: Optional[str] = None,
+        output: str | None = None,
     ) -> Path:
         """Creates a mock executable dependency.
 
@@ -211,14 +209,14 @@ def dependency_fixture(new_dir):
         dependency_bin.chmod(0o755)
         return dependency_bin
 
-    yield create_dependency_fixture
+    return create_dependency_fixture
 
 
 ChmodCall = collections.namedtuple("ChmodCall", ["owner", "group", "kwargs"])
 
 
-@pytest.fixture
-def mock_chown(mocker) -> Dict[str, ChmodCall]:
+@pytest.fixture()
+def mock_chown(mocker) -> dict[str, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the

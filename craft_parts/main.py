@@ -30,7 +30,7 @@ from functools import partial
 from pathlib import Path
 
 import yaml
-from xdg import BaseDirectory  # type: ignore
+from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
 import craft_parts.errors
@@ -45,10 +45,7 @@ def main() -> None:
         print(f"craft-parts {craft_parts.__version__}")
         sys.exit()
 
-    if options.trace:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
+    log_level = logging.DEBUG if options.trace else logging.INFO
 
     logging.basicConfig(level=log_level)
 
@@ -77,7 +74,7 @@ def main() -> None:
 
 
 def _process_parts(options: argparse.Namespace) -> None:
-    with open(options.file) as opt_file:
+    with Path(options.file).open() as opt_file:
         part_data = yaml.safe_load(opt_file)
 
     cache_dir = options.cache_dir

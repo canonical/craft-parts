@@ -1,11 +1,10 @@
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.scons_plugin import SConsPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),

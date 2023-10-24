@@ -10,7 +10,8 @@ headings and main text.
 <name>
     The name of the plugin; e.g. Python
 <version>
-    The version of the library or tool that provides the plugin; e.g. Snapcraft 8.0.
+    The version of the library or tool that provides the plugin; e.g.
+    Snapcraft 8.0.
 
 Replace the instructions with suitable descriptions.
 

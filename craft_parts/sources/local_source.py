@@ -18,11 +18,11 @@
 
 import contextlib
 import functools
-import glob
 import logging
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Set, Tuple
+from typing import Any
 
 from overrides import overrides
 
@@ -42,13 +42,15 @@ class LocalSource(SourceHandler):
 
     def __init__(
         self,
-        *args: Any,
+        *args: Any,  # noqa: ANN401
         project_dirs: ProjectDirs,
         copy_function: Callable[..., None] = file_utils.link_or_copy,
-        **kwargs: Any,
-    ):
+        **kwargs: Any,  # noqa: ANN401
+    ) -> None:
         super().__init__(*args, project_dirs=project_dirs, **kwargs)
-        self.source_abspath = os.path.abspath(self.source)
+        if not isinstance(self.source, Path):
+            raise errors.InvalidSourceType(str(self.source))
+        self.source_abspath = self.source.resolve()
         self.copy_function = copy_function
 
         if self._dirs.work_dir.resolve() == Path(self.source_abspath):
@@ -66,27 +68,27 @@ class LocalSource(SourceHandler):
         logger.debug("ignore patterns: %r", self._ignore_patterns)
 
         self._ignore = functools.partial(
-            _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns
+            _ignore, str(self.source_abspath), str(Path.cwd()), self._ignore_patterns
         )
-        self._updated_files: Set[str] = set()
-        self._updated_directories: Set[str] = set()
+        self._updated_files: set[str] = set()
+        self._updated_directories: set[str] = set()
 
     @overrides
     def pull(self) -> None:
         """Retrieve the local source files."""
         if not Path(self.source_abspath).exists():
-            raise errors.SourceNotFound(self.source)
+            raise errors.SourceNotFound(str(self.source))
 
         file_utils.link_or_copy_tree(
             self.source_abspath,
-            str(self.part_src_dir),
+            self.part_src_dir,
             ignore=self._ignore,
             copy_function=self.copy_function,
         )
 
     @overrides
     def check_if_outdated(
-        self, target: str, *, ignore_files: Optional[List[str]] = None
+        self, target: str, *, ignore_files: list[str] | None = None
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -116,13 +118,13 @@ class LocalSource(SourceHandler):
                 directories[:] = [d for d in directories if d not in ignored]
 
             for file_name in set(files) - ignored:
-                path = os.path.join(root, file_name)
+                path = Path(root) / file_name
                 if os.lstat(path).st_mtime >= target_mtime:
                     self._updated_files.add(os.path.relpath(path, self.source))
 
             directories_to_remove = []
             for directory in directories:
-                path = os.path.join(root, directory)
+                path = Path(root) / directory
                 if os.lstat(path).st_mtime >= target_mtime:
                     # Don't descend into this directory-- we'll just copy it
                     # entirely.
@@ -131,7 +133,7 @@ class LocalSource(SourceHandler):
                     # os.walk will include symlinks to directories here, but we
                     # want to treat those as files
                     relpath = os.path.relpath(path, self.source)
-                    if os.path.islink(path):
+                    if path.is_symlink():
                         self._updated_files.add(relpath)
                     else:
                         self._updated_directories.add(relpath)
@@ -144,7 +146,7 @@ class LocalSource(SourceHandler):
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
     @overrides
-    def get_outdated_files(self) -> Tuple[List[str], List[str]]:
+    def get_outdated_files(self) -> tuple[list[str], list[str]]:
         """Obtain lists of outdated files and directories.
 
         :return: The lists of outdated files and directories.
@@ -161,11 +163,14 @@ class LocalSource(SourceHandler):
         Call method :meth:`check_if_outdated` before updating to populate the
         lists of files and directories to copy.
         """
+        if not isinstance(self.source, Path):
+            raise errors.InvalidSourceType(str(self.source))
+
         # First, copy the directories
         for directory in self._updated_directories:
             file_utils.link_or_copy_tree(
-                os.path.join(self.source, directory),
-                os.path.join(self.part_src_dir, directory),
+                self.source / directory,
+                self.part_src_dir / directory,
                 ignore=self._ignore,
                 copy_function=self.copy_function,
             )
@@ -173,26 +178,26 @@ class LocalSource(SourceHandler):
         # Now, copy files
         for file_path in self._updated_files:
             self.copy_function(
-                os.path.join(self.source, file_path),
-                os.path.join(self.part_src_dir, file_path),
+                self.source / file_path,
+                self.part_src_dir / file_path,
             )
 
 
 def _ignore(
     source: str,
     current_directory: str,
-    patterns: List[str],
+    patterns: list[str],
     directory: str,
-    _files: Any,
-    also_ignore: Optional[List[str]] = None,
-) -> List[str]:
+    _files: Any,  # noqa: ANN401
+    also_ignore: list[str] | None = None,
+) -> list[str]:
     """Build a list of files to ignore based on the given patterns."""
-    ignored = []
+    ignored: list[str] = []
     if directory in (source, current_directory):
         for pattern in patterns + (also_ignore or []):
-            files = glob.glob(os.path.join(directory, pattern))
-            if files:
-                files = [os.path.basename(f) for f in files]
+            matched_files = Path(directory).rglob(pattern)
+            if matched_files:
+                files = [f.name for f in matched_files]
                 ignored += files
 
     return ignored

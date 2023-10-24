@@ -17,10 +17,8 @@
 import os
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import List
 
 import pytest
-
 from craft_parts.overlays import errors, overlay_fs
 
 
@@ -28,7 +26,7 @@ class TestOverlayFS:
     """Mount and unmount an overlayfs."""
 
     @staticmethod
-    def _make_overlay_fs(lower: List[Path]) -> overlay_fs.OverlayFS:
+    def _make_overlay_fs(lower: list[Path]) -> overlay_fs.OverlayFS:
         return overlay_fs.OverlayFS(
             lower_dirs=lower,
             upper_dir=Path("/upper"),
@@ -125,7 +123,7 @@ class TestHelpers:
     """Verify overlayfs utility functions."""
 
     @pytest.mark.parametrize(
-        "is_chardev,is_symlink,rdev,result",
+        ("is_chardev", "is_symlink", "rdev", "result"),
         [
             (True, False, os.makedev(0, 0), True),
             (True, True, os.makedev(0, 0), False),
@@ -159,7 +157,7 @@ class TestHelpers:
         assert overlay_fs.is_whiteout_file(Path("missing_file")) is False
 
     @pytest.mark.parametrize(
-        "is_dir,is_symlink,attr,result",
+        ("is_dir", "is_symlink", "attr", "result"),
         [
             (True, False, b"y", True),
             (True, True, b"y", False),
@@ -175,11 +173,10 @@ class TestHelpers:
                 Path("target").touch()
 
             Path("opaque_dir").symlink_to("target")
+        elif is_dir:
+            Path("opaque_dir").mkdir()
         else:
-            if is_dir:
-                Path("opaque_dir").mkdir()
-            else:
-                Path("opaque_dir").touch()
+            Path("opaque_dir").touch()
 
         mocker.patch("os.getxattr", new=lambda x, y: attr)
 

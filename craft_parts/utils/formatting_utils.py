@@ -16,7 +16,7 @@
 
 """Text formatting utilities."""
 
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def humanize_list(
@@ -38,7 +38,7 @@ def humanize_list(
 
     humanized = ", ".join(quoted_items[:-1])
 
-    if len(quoted_items) > 2:
+    if len(quoted_items) > 2:  # noqa: PLR2004
         humanized += ","
 
     return f"{humanized} {conjunction} {quoted_items[-1]}"

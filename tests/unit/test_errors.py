@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, List
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from craft_parts import errors
 
@@ -105,7 +106,7 @@ def test_part_specification_error():
 
 
 def test_part_specification_error_from_validation_error() -> None:
-    error_list: List["ErrorDict"] = [
+    error_list: list["ErrorDict"] = [
         {"loc": ("field-1", 0), "msg": "something is wrong", "type": "value_error"},
         {"loc": ("field-2",), "msg": "field required", "type": "value_error"},
         {
@@ -144,9 +145,9 @@ def test_copy_file_not_found():
 
 
 def test_xattribute_read_error():
-    err = errors.XAttributeError(key="name", path="path")
+    err = errors.XAttributeError(key="name", path=Path("path"))
     assert err.key == "name"
-    assert err.path == "path"
+    assert err.path == Path("path")
     assert err.is_write is False
     assert err.brief == "Unable to read extended attribute."
     assert err.details == "Failed to read attribute 'name' on 'path'."
@@ -154,9 +155,9 @@ def test_xattribute_read_error():
 
 
 def test_xattribute_write_error():
-    err = errors.XAttributeError(key="name", path="path", is_write=True)
+    err = errors.XAttributeError(key="name", path=Path("path"), is_write=True)
     assert err.key == "name"
-    assert err.path == "path"
+    assert err.path == Path("path")
     assert err.is_write is True
     assert err.brief == "Unable to write extended attribute."
     assert err.details == "Failed to write attribute 'name' on 'path'."

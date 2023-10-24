@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts.state_manager.states import PrimeState
 
 
@@ -90,7 +89,7 @@ class TestPrimeStateChanges:
             "prime",
         ]
 
-        for prop in properties.keys():
+        for prop in properties:
             other = properties.copy()
             other[prop] = "new value"
 
@@ -111,7 +110,7 @@ class TestPrimeStateChanges:
 
         relevant_properties = ["override-prime", "prime", "extra-property"]
 
-        for prop in augmented_properties.keys():
+        for prop in augmented_properties:
             other = augmented_properties.copy()
             other[prop] = "new value"
 

@@ -17,25 +17,27 @@
 """The setup script."""
 
 import os
+import pathlib
 import re
 
-from setuptools import find_packages, setup  # type: ignore
+from setuptools import find_packages, setup
 
 VERSION = "1.25.1"
 
-with open("README.md") as readme_file:
+with pathlib.Path("README.md").open() as readme_file:
     readme = readme_file.read()
 
 
 def is_ubuntu() -> bool:
     """Verify if running on Ubuntu."""
     try:
-        with open("/etc/os-release") as release_file:
+        with pathlib.Path("/etc/os-release").open() as release_file:
             os_release = release_file.read()
         if re.search(r"^ID(?:_LIKE)?=.*\bubuntu\b.*$", os_release, re.MULTILINE):
             return True
-        return False
     except FileNotFoundError:
+        return False
+    else:
         return False
 
 
@@ -88,16 +90,13 @@ test_requires = [
     "isort",
     "hypothesis",
     "pydocstyle",
-    "pylint<3.0",
-    "pylint-fixme-info",
-    "pylint-pytest",
     "pyright==1.1.327",
     "pytest",
     "pytest-check",
     "pytest-cov",
     "pytest-mock",
     "requests-mock",
-    "ruff==0.0.239",
+    "ruff==0.1.1",
     "tox",
     "yamllint==1.32.0",
 ]
@@ -139,8 +138,10 @@ setup(
     },
     install_requires=install_requires,
     extras_require=extras_requires,
-    packages=find_packages(include=["craft_parts", "craft_parts.*"])
-    + ["craft_parts_docs"],
+    packages=[
+        *find_packages(include=["craft_parts", "craft_parts.*"]),
+        "craft_parts_docs",
+    ],
     # todo: can we make the docs optional?
     package_dir={"craft_parts_docs": "docs/base"},
     package_data={

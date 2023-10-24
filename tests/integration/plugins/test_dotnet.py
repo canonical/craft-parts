@@ -19,14 +19,12 @@ import textwrap
 from pathlib import Path
 
 import yaml
-from overrides import override
-
 from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
+from overrides import override
 
 
 def test_dotnet_plugin(new_dir, partitions):
-    # pylint: disable=line-too-long
     parts_yaml = textwrap.dedent(
         """
         parts:
@@ -48,7 +46,7 @@ def test_dotnet_plugin(new_dir, partitions):
               - -sdk
         """
     )
-    # pylint: enable=line-too-long
+
     parts = yaml.safe_load(parts_yaml)
 
     Path("dotnet.csproj").write_text(

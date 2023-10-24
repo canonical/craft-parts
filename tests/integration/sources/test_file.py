@@ -17,10 +17,9 @@
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, Step
 
 

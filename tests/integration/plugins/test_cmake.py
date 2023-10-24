@@ -20,12 +20,11 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts import LifecycleManager, Step
 
 
 @pytest.mark.parametrize(
-    "prefix,install_path",
+    ("prefix", "install_path"),
     [
         (None, "usr/local/bin"),
         ("", "bin"),
@@ -96,7 +95,7 @@ def test_cmake_plugin(new_dir, partitions, prefix, install_path):
 
 
 @pytest.mark.parametrize(
-    "prefix,install_path",
+    ("prefix", "install_path"),
     [
         (None, "usr/local/bin"),
         ("", "bin"),

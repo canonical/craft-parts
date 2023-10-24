@@ -17,12 +17,9 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.dump_plugin import DumpPlugin
-
-# pylint: disable=attribute-defined-outside-init
 
 
 class TestPluginDump:

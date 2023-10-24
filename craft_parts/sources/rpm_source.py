@@ -17,11 +17,9 @@
 """The RPM source handler."""
 
 import logging
-import os
 import subprocess
 import tarfile
 from pathlib import Path
-from typing import List, Optional
 
 from overrides import override
 
@@ -45,7 +43,7 @@ class RpmSource(FileSourceHandler):
     )
     _source_type = "rpm"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -55,11 +53,11 @@ class RpmSource(FileSourceHandler):
         source_tag: None = None,
         source_commit: None = None,
         source_branch: None = None,
-        source_checksum: Optional[str] = None,
+        source_checksum: str | None = None,
         source_submodules: None = None,
         source_depth: None = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ):
+        ignore_patterns: list[str] | None = None,
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -94,11 +92,13 @@ class RpmSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
-        src: Optional[Path] = None,
+        keep: bool = False,  # noqa: FBT001, FBT002
+        src: Path | None = None,
     ) -> None:
         """Extract rpm file contents to the part source dir."""
-        rpm_path = src or self.part_src_dir / os.path.basename(self.source)
+        if not isinstance(self.source, Path):
+            raise errors.InvalidSourceType(str(self.source))
+        rpm_path = src or self.part_src_dir / self.source.name
         # NOTE: rpm2archive chosen here because while it's slower, it has broader
         # compatibility than rpm2cpio.
         # --nocompression parameter excluded until all supported platforms

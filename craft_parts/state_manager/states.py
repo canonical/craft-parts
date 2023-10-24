@@ -19,7 +19,6 @@
 import contextlib
 import logging
 from pathlib import Path
-from typing import Optional, Type
 
 import yaml
 
@@ -28,7 +27,7 @@ from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 from .build_state import BuildState
-from .overlay_state import OverlayState  # noqa: F401, pylint: disable=W0611
+from .overlay_state import OverlayState
 from .prime_state import PrimeState
 from .pull_state import PullState
 from .stage_state import StageState
@@ -37,7 +36,7 @@ from .step_state import MigrationState, StepState
 logger = logging.getLogger(__name__)
 
 
-def load_step_state(part: Part, step: Step) -> Optional[StepState]:
+def load_step_state(part: Part, step: Step) -> StepState | None:
     """Retrieve the persistent state for the given part and step.
 
     :param part: The part corresponding to the state to load.
@@ -52,7 +51,7 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
         return None
 
     logger.debug("load state file: %s", filename)
-    with open(filename) as yaml_file:
+    with filename.open() as yaml_file:
         state_data = yaml.safe_load(yaml_file)
 
     # Fix project variables in loaded state data.
@@ -66,7 +65,7 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
             for key, val in pvars.items():
                 state_data["project-options"]["project_vars"][key] = ProjectVar(**val)
 
-    state_class: Type[StepState]
+    state_class: type[StepState]
 
     if step == Step.PULL:
         state_class = PullState
@@ -84,9 +83,7 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
     return state_class.unmarshal(state_data)
 
 
-def load_overlay_migration_state(
-    state_dir: Path, step: Step
-) -> Optional[MigrationState]:
+def load_overlay_migration_state(state_dir: Path, step: Step) -> MigrationState | None:
     """Retrieve the overlay migration state for the given step.
 
     :param state_dir: The path to the directory containing migration state files.
@@ -97,7 +94,7 @@ def load_overlay_migration_state(
         return None
 
     logger.debug("load overlay migration state file: %s", filename)
-    with open(filename) as yaml_file:
+    with filename.open() as yaml_file:
         state_data = yaml.safe_load(yaml_file)
 
     return MigrationState.unmarshal(state_data)

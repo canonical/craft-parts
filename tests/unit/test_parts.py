@@ -19,14 +19,11 @@ from functools import partial
 
 import pydantic
 import pytest
-
 from craft_parts import errors, parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
-
-# pylint: disable=too-many-public-methods
 
 
 class TestPartSpecs:
@@ -104,7 +101,7 @@ class TestPartSpecs:
         assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
-        "key,value",
+        ("key", "value"),
         [
             ("overlay-packages", ["overlay-pkg1", "overlay-pkg2"]),
             ("overlay", ["etc/issue"]),
@@ -262,7 +259,7 @@ class TestPartData:
         assert p.spec.build_environment == [{"BAR": "bar"}]
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"stage-packages": []}, []),
@@ -274,7 +271,7 @@ class TestPartData:
         assert p.spec.stage_packages == tc_result
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"stage-snaps": []}, []),
@@ -286,7 +283,7 @@ class TestPartData:
         assert p.spec.stage_snaps == tc_result
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"build-packages": []}, []),
@@ -298,7 +295,7 @@ class TestPartData:
         assert p.spec.build_packages == tc_result
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"build-snaps": []}, []),
@@ -310,7 +307,7 @@ class TestPartData:
         assert p.spec.build_snaps == tc_result
 
     @pytest.mark.parametrize(
-        "tc_step,tc_content",
+        ("tc_step", "tc_content"),
         [
             (Step.PULL, "pull"),
             (Step.BUILD, "build"),

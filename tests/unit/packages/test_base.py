@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from craft_parts.packages import base
 from craft_parts.packages.base import BaseRepository, DummyRepository
 
@@ -79,7 +78,7 @@ class TestPkgNameParts:
 class TestOriginStagePackage:
     """Check extended attribute setting."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def test_file(self):
         # These tests don't work on tmpfs
         file_path = Path(".tests-xattr-test-file")
@@ -119,6 +118,6 @@ class TestOriginStagePackage:
         Path(test_dir / "foo").touch()
         Path(test_dir / "bar").touch()
 
-        base.mark_origin_stage_package(str(test_dir), "package")
-        assert base.read_origin_stage_package(str(test_dir / "foo")) == "package"
-        assert base.read_origin_stage_package(str(test_dir / "bar")) == "package"
+        base.mark_origin_stage_package(test_dir, "package")
+        assert base.read_origin_stage_package(test_dir / "foo") == "package"
+        assert base.read_origin_stage_package(test_dir / "bar") == "package"

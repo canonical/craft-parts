@@ -18,7 +18,6 @@
 
 import logging
 from dataclasses import dataclass
-from typing import List, Optional
 
 from craft_parts.steps import Step
 from craft_parts.utils import formatting_utils
@@ -47,10 +46,10 @@ class OutdatedReport:
     def __init__(
         self,
         *,
-        previous_step_modified: Optional[Step] = None,
+        previous_step_modified: Step | None = None,
         source_modified: bool = False,
-        outdated_files: Optional[List[str]] = None,
-        outdated_dirs: Optional[List[str]] = None,
+        outdated_files: list[str] | None = None,
+        outdated_dirs: list[str] | None = None,
     ) -> None:
         """Create a new OutdatedReport.
 
@@ -95,9 +94,9 @@ class DirtyReport:
     def __init__(
         self,
         *,
-        dirty_properties: Optional[List[str]] = None,
-        dirty_project_options: Optional[List[str]] = None,
-        changed_dependencies: Optional[List[Dependency]] = None,
+        dirty_properties: list[str] | None = None,
+        dirty_project_options: list[str] | None = None,
+        changed_dependencies: list[Dependency] | None = None,
     ) -> None:
         """Create a new DirtyReport.
 
@@ -109,7 +108,6 @@ class DirtyReport:
         self.dirty_project_options = dirty_project_options
         self.changed_dependencies = changed_dependencies
 
-    # pylint: disable=too-many-branches
     def reason(self) -> str:
         """Get summarized report.
 
@@ -155,5 +153,3 @@ class DirtyReport:
             return ""
 
         return f'{formatting_utils.humanize_list(reasons, "and", "{}")} changed'
-
-    # pylint: enable=too-many-branches

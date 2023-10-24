@@ -1,5 +1,4 @@
 import pytest
-
 from craft_parts import errors
 from craft_parts.utils import partition_utils
 

@@ -19,7 +19,6 @@ import stat
 from pathlib import Path
 
 import pytest
-
 from craft_parts.actions import Action
 from craft_parts.executor import filesets, migration, part_handler
 from craft_parts.executor.filesets import Fileset
@@ -48,7 +47,7 @@ class TestFileMigration:
         # Place the to-be-staged file with the same name
         Path(install_dir, "foo").write_text("installed")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -72,7 +71,7 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
             dirs=dirs,
@@ -104,7 +103,7 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -134,7 +133,7 @@ class TestFileMigration:
         )
         Path("install", bin_path).symlink_to("usr/bin")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -159,7 +158,7 @@ class TestFileMigration:
         Path(install_dir, "a/bar").symlink_to("foo")
         Path(install_dir, "bar").symlink_to("a/foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -185,7 +184,7 @@ class TestFileMigration:
 
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -210,7 +209,7 @@ class TestFileMigration:
 
         Path(install_dir, "foo/xfile").write_text("installed")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -236,7 +235,7 @@ class TestFileMigration:
 
         Path(install_dir, "a/b/xfile").write_text("installed")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -264,7 +263,7 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
             dirs=dirs,
@@ -301,7 +300,7 @@ class TestFileMigration:
         filepath.chmod(new_mode)
         assert mode != new_mode
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migration.migrate_files(
             files=files,
             dirs=dirs,
@@ -331,7 +330,7 @@ class TestFileMigration:
         filepath.parent.chmod(new_mode)
         filepath.chmod(new_mode)
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(Fileset(["*"]), Path("install"))
         migration.migrate_files(
             files=files,
             dirs=dirs,

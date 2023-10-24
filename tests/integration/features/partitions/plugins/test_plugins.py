@@ -21,7 +21,6 @@ import pathlib
 import pytest
 
 # These wildcard imports make pytest run any non-overridden plugin tests here.
-# pylint: disable=wildcard-import, unused-import, function-redefined, unused-wildcard-import
 # pyright: reportGeneralTypeIssues=false
 from tests.integration.plugins.test_ant import *  # noqa: F403
 from tests.integration.plugins.test_application_plugin import *  # noqa: F403
@@ -39,10 +38,8 @@ from tests.integration.plugins.test_rust import *  # noqa: F403
 from tests.integration.plugins.test_scons import *  # noqa: F403
 from tests.integration.plugins.test_validate_environment import *  # type: ignore[assignment] # noqa: F403
 
-# pylint: enable=wildcard-import
 
-
-@pytest.fixture
+@pytest.fixture()
 def install_dir():
     """Installation directory for the standard dump plugin."""
     return pathlib.Path("parts", "foo", "install", "default")

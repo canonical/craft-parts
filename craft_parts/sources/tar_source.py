@@ -19,8 +19,8 @@
 import os
 import re
 import tarfile
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, List, Optional
 
 from overrides import overrides
 
@@ -33,22 +33,21 @@ from .base import FileSourceHandler
 class TarSource(FileSourceHandler):
     """The tar source handler."""
 
-    # pylint: disable=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
-        source: str,
+        source: Path | str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ):
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_branch: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        ignore_patterns: list[str] | None = None,
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -74,25 +73,22 @@ class TarSource(FileSourceHandler):
         if source_depth:
             raise errors.InvalidSourceOption(source_type="tar", option="source-depth")
 
-    # pylint: enable=too-many-arguments
-
     @overrides
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
-        src: Optional[Path] = None,
+        keep: bool = False,  # noqa: FBT001, FBT002
+        src: Path | None = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
-        if src:
-            tarball = src
-        else:
-            tarball = self.part_src_dir / os.path.basename(self.source)
+        if not isinstance(self.source, Path):
+            raise errors.InvalidSourceType(str(self.source))
+        tarball = src if src else self.part_src_dir / self.source.name
 
         _extract(tarball, dst)
 
         if not keep:
-            os.remove(tarball)
+            tarball.unlink()
 
 
 def _extract(tarball: Path, dst: Path) -> None:
@@ -114,7 +110,7 @@ def _extract(tarball: Path, dst: Path) -> None:
                 ):
                     # commonprefix() didn't return a dir name; go up one
                     # level
-                    common = os.path.dirname(common)
+                    common = str(Path(common).parent)
                     break
 
             for member in members:
@@ -127,7 +123,7 @@ def _extract(tarball: Path, dst: Path) -> None:
                 yield member
 
         # ignore type, members expect List but we're providing Generator
-        tar.extractall(members=filter_members(tar), path=dst)  # type: ignore
+        tar.extractall(members=filter_members(tar), path=dst)
 
 
 def _strip_prefix(common: str, member: tarfile.TarInfo) -> None:

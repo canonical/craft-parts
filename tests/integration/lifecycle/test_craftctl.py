@@ -19,17 +19,17 @@ import sys
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ActionType, Step, errors
+
 from tests import TESTS_DIR
 
 
 @pytest.fixture(autouse=True)
 def setup_feature(enable_overlay_feature):
-    yield
+    return
 
 
 @pytest.fixture(autouse=True)
@@ -392,7 +392,7 @@ def test_craftctl_set_only_once(new_dir, partitions, capfd, mocker):  # see LP #
         partitions=partitions,
     )
 
-    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+    assert not lf.project_info.get_project_var("version", raw_read=True)
 
     actions = lf.plan(Step.BUILD)
     with lf.action_executor() as ctx:
@@ -413,7 +413,7 @@ def test_craftctl_set_only_once(new_dir, partitions, capfd, mocker):  # see LP #
         partitions=partitions,
     )
 
-    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+    assert not lf.project_info.get_project_var("version", raw_read=True)
 
     # execution of actions must succeed
     actions = lf.plan(Step.BUILD, part_names=["part2"])
@@ -449,7 +449,7 @@ def test_craftctl_update_project_vars(new_dir, partitions, capfd, mocker):
         partitions=partitions,
     )
 
-    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+    assert not lf.project_info.get_project_var("version", raw_read=True)
 
     actions = lf.plan(Step.BUILD)
     with lf.action_executor() as ctx:
@@ -467,7 +467,7 @@ def test_craftctl_update_project_vars(new_dir, partitions, capfd, mocker):
         partitions=partitions,
     )
 
-    assert lf.project_info.get_project_var("version", raw_read=True) == ""
+    assert not lf.project_info.get_project_var("version", raw_read=True)
 
     actions = lf.plan(Step.BUILD)
 

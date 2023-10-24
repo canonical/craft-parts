@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts.state_manager.pull_state import PullState
 
 
@@ -100,7 +99,7 @@ class TestPullStateChanges:
             "stage-packages",
         ]
 
-        for prop in properties.keys():
+        for prop in properties:
             other = properties.copy()
             other[prop] = "new value"
 
@@ -134,7 +133,7 @@ class TestPullStateChanges:
             "extra-property",
         ]
 
-        for prop in augmented_properties.keys():
+        for prop in augmented_properties:
             other = augmented_properties.copy()
             other[prop] = "new value"
 

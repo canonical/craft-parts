@@ -20,11 +20,9 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts import Action, ActionProperties, ActionType, LifecycleManager, Step
-from tests.integration.features.partitions.lifecycle import test_lifecycle
 
-# pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
+from tests.integration.features.partitions.lifecycle import test_lifecycle
 from tests.integration.features.partitions.lifecycle.test_lifecycle import *  # noqa: F403
 
 
@@ -39,7 +37,6 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # See https://gist.github.com/sergiusens/dcae19c301eb59e091f92ab29d7d03fc
 
     # first run
-    # command: pull
     lf = LifecycleManager(
         parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
@@ -107,7 +104,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    # Modifying foo’s source marks bar as dirty
+    # Modifying foo`s source marks bar as dirty
     new_yaml = test_lifecycle.basic_parts_yaml.replace("source: a.tar.gz", "source: .")
     parts = yaml.safe_load(new_yaml)
 
@@ -157,14 +154,14 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", step=Step.OVERLAY, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
         Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -197,11 +194,11 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
 
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning(test_lifecycle.TestCleaning):
-    @pytest.fixture
+    @pytest.fixture()
     def state_files(self):
         return ["build", "layer_hash", "overlay", "prime", "pull", "stage"]
 
-    @pytest.fixture
+    @pytest.fixture()
     def foo_files(self):
         return [
             Path("parts/foo/src/foo.txt"),
@@ -210,7 +207,7 @@ class TestCleaning(test_lifecycle.TestCleaning):
             Path("prime/default/foo.txt"),
         ]
 
-    @pytest.fixture
+    @pytest.fixture()
     def bar_files(self):
         return [
             Path("parts/bar/src/bar.txt"),
@@ -220,7 +217,7 @@ class TestCleaning(test_lifecycle.TestCleaning):
         ]
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install/default", "build"),

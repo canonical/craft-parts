@@ -19,15 +19,14 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts.actions import Action
 from craft_parts.steps import Step
 
 
-@pytest.fixture
+@pytest.fixture()
 def sample_rpm(tmp_path: Path) -> Path:
     """
     Create a basic .rpm file and return its path.
@@ -47,14 +46,14 @@ def sample_rpm(tmp_path: Path) -> Path:
             Release: 0
             Summary: A sample package
             License: GPL
-            
+
             %description
             A little sample package!
-            
+
             %install
             mkdir -p %{buildroot}/etc
             bash -c "echo Sample contents > %{buildroot}/etc/sample.txt"
-            
+
             %files
             /etc/sample.txt
             """
@@ -70,7 +69,7 @@ def sample_rpm(tmp_path: Path) -> Path:
     ]
 
     subprocess.run(
-        ["rpmbuild", "-bb", "--verbose"] + rpmbuild_params + [str(spec_file)],
+        ["rpmbuild", "-bb", "--verbose", *rpmbuild_params, str(spec_file)],
         check=True,
         text=True,
         capture_output=True,

@@ -17,14 +17,10 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.autotools_plugin import AutotoolsPlugin
-
-# pylint: disable=attribute-defined-outside-init
-# pylint: disable=line-too-long
+from pydantic import ValidationError
 
 
 class TestPluginAutotools:

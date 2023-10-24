@@ -18,12 +18,11 @@ from pathlib import Path
 
 import pytest
 import requests
-
 from craft_parts.utils import url_utils
 
 
 @pytest.mark.parametrize(
-    "url,result",
+    ("url", "result"),
     [
         ("", ""),
         ("not an url", ""),
@@ -36,7 +35,7 @@ def test_get_url_scheme(url, result):
 
 
 @pytest.mark.parametrize(
-    "url,result",
+    ("url", "result"),
     [
         ("", False),
         ("not an url", False),
@@ -56,7 +55,7 @@ def test_download_request(requests_mock):
     test_file = Path("test_file")
 
     request = requests.get(source_url, stream=True, timeout=3600)
-    url_utils.download_request(request, "test_file")
+    url_utils.download_request(request, Path("test_file"))
 
     assert test_file.is_file()
     assert test_file.read_bytes() == b"content"

@@ -19,7 +19,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from craft_parts import sequencer
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import ProjectInfo
@@ -85,7 +84,7 @@ _pull_state_bar = textwrap.dedent(
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def pull_state(new_dir):
     # build current state
     Path(new_dir / "parts/foo/state").mkdir(parents=True)
@@ -100,10 +99,8 @@ class TestSequencerPlan:
 
     @pytest.fixture(autouse=True)
     def setup_project(self, partitions):
-        self._project_info = (  # pylint: disable=attribute-defined-outside-init
-            ProjectInfo(
-                application_name="test", cache_dir=Path(), partitions=partitions
-            )
+        self._project_info = ProjectInfo(
+            application_name="test", cache_dir=Path(), partitions=partitions
         )
 
     def test_plan_default_parts(self, partitions):
@@ -136,7 +133,6 @@ class TestSequencerPlan:
             project_info=self._project_info,
         )
 
-        # pylint: disable=line-too-long
         # fmt: off
         actions = seq.plan(Step.PRIME)
         assert actions == [
@@ -246,10 +242,8 @@ class TestSequencerStates:
 
     @pytest.fixture(autouse=True)
     def setup_project(self, partitions):
-        self._project_info = (  # pylint: disable=attribute-defined-outside-init
-            ProjectInfo(
-                application_name="test", cache_dir=Path(), partitions=partitions
-            )
+        self._project_info = ProjectInfo(
+            application_name="test", cache_dir=Path(), partitions=partitions
         )
 
     def test_plan_load_state(self, partitions):

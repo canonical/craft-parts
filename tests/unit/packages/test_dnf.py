@@ -18,7 +18,6 @@ from subprocess import CalledProcessError
 from unittest.mock import call
 
 import pytest
-
 from craft_parts.packages import errors
 from craft_parts.packages.dnf import DNFRepository
 
@@ -83,7 +82,7 @@ def test_refresh_packages_list(fake_dnf_run):
 
 
 @pytest.mark.parametrize(
-    "source_type, packages",
+    ("source_type", "packages"),
     [
         ("7zip", {"p7zip"}),
         ("git", {"git"}),

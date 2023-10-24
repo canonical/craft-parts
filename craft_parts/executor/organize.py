@@ -23,18 +23,15 @@ represents how the file is going to be staged.
 """
 
 import contextlib
-import os
 import shutil
-from glob import iglob
 from pathlib import Path
-from typing import Dict
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
 
 
 def organize_files(
-    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool
+    *, part_name: str, mapping: dict[str, str], base_dir: Path, overwrite: bool
 ) -> None:
     """Rearrange files for part staging.
 
@@ -45,7 +42,7 @@ def organize_files(
         it previously organized.
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
-        src = os.path.join(base_dir, path_utils.get_partitioned_path(key))
+        src = base_dir / path_utils.get_partitioned_path(key)
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
@@ -53,13 +50,13 @@ def organize_files(
             mapping[key].lstrip("/")
         )
         if partition:
-            dst = os.path.join(base_dir, partition, inner_path)
-            partition_path = os.path.join(f"({partition})", inner_path)
+            dst = base_dir / partition / inner_path
+            partition_path = Path(f"({partition})") / inner_path
         else:
-            dst = os.path.join(base_dir, inner_path)
-            partition_path = str(inner_path)
+            dst = base_dir / inner_path
+            partition_path = Path(inner_path)
 
-        sources = iglob(src, recursive=True)
+        sources = src.rglob("*")
 
         # Keep track of the number of glob expansions so we can properly error if more
         # than one tries to organize to the same file
@@ -67,15 +64,15 @@ def organize_files(
         for src in sources:
             src_count += 1
 
-            if os.path.isdir(src) and "*" not in key:
+            if src.is_dir() and "*" not in key:
                 file_utils.link_or_copy_tree(src, dst)
                 shutil.rmtree(src)
                 continue
 
-            if os.path.isfile(dst):
+            if dst.is_file():
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
-                        os.remove(dst)
+                        dst.unlink()
                 elif src_count > 1:
                     raise errors.FileOrganizeError(
                         part_name=part_name,
@@ -95,13 +92,13 @@ def organize_files(
                         ),
                     )
 
-            if os.path.isdir(dst) and overwrite:
-                real_dst = os.path.join(dst, os.path.basename(src))
-                if os.path.isdir(real_dst):
+            if dst.is_dir() and overwrite:
+                real_dst = dst / src.name
+                if real_dst.is_dir():
                     shutil.rmtree(real_dst)
                 else:
                     with contextlib.suppress(FileNotFoundError):
-                        os.remove(real_dst)
+                        real_dst.unlink()
 
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(src, dst)

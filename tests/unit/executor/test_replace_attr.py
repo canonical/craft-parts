@@ -15,12 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.executor import environment
 
 
 @pytest.mark.parametrize(
-    "subject,expected",
+    ("subject", "expected"),
     [
         # no replacement
         ("snapcraft_stage/usr/bin", "snapcraft_stage/usr/bin"),
@@ -59,7 +58,7 @@ def test_string_replacements(subject, expected):
 
 
 @pytest.mark.parametrize(
-    "subject,expected",
+    ("subject", "expected"),
     [
         # no replacement
         (
@@ -91,7 +90,7 @@ def test_lists_with_string_replacements(subject, expected):
 
 
 @pytest.mark.parametrize(
-    "subject,expected",
+    ("subject", "expected"),
     [
         # no replacement
         (
@@ -123,7 +122,7 @@ def test_tuples_with_string_replacements(subject, expected):
 
 
 @pytest.mark.parametrize(
-    "subject,expected",
+    ("subject", "expected"),
     [
         # no replacement
         (

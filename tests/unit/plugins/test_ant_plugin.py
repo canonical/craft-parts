@@ -15,13 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.ant_plugin import AntPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -137,9 +136,10 @@ def test_get_build_commands(part_info):
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
-    assert (
-        plugin.get_build_commands() == ["ant"] + plugin._get_java_post_build_commands()
-    )
+    assert plugin.get_build_commands() == [
+        "ant",
+        *plugin._get_java_post_build_commands(),
+    ]
 
 
 def test_get_build_commands_with_parameters(part_info):
@@ -154,6 +154,8 @@ def test_get_build_commands_with_parameters(part_info):
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["ant -f myfile.txt -Dprop1=1 -Dprop2=2 compile jar"]
-        + plugin._get_java_post_build_commands()
+        [
+            "ant -f myfile.txt -Dprop1=1 -Dprop2=2 compile jar",
+            *plugin._get_java_post_build_commands(),
+        ]
     )

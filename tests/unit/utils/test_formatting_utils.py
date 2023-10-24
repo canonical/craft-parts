@@ -15,12 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.utils import formatting_utils
 
 
 @pytest.mark.parametrize(
-    "items,result",
+    ("items", "result"),
     [
         [None, ""],
         [[], ""],
@@ -35,7 +34,7 @@ def test_humanize_list(items, result):
 
 
 @pytest.mark.parametrize(
-    "items,item_format,result",
+    ("items", "item_format", "result"),
     [
         [["foo"], "", ""],
         [["foo"], "{!r}", "'foo'"],

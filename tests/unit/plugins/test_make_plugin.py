@@ -17,13 +17,10 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.make_plugin import MakePlugin
-
-# pylint: disable=attribute-defined-outside-init
+from pydantic import ValidationError
 
 
 class TestPluginMake:

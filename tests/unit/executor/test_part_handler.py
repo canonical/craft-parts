@@ -22,7 +22,6 @@ from unittest.mock import call
 
 import pytest
 import pytest_check  # type: ignore[import]
-
 from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
@@ -35,8 +34,6 @@ from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
-# pylint: disable=too-many-lines
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPartHandling:
@@ -44,7 +41,6 @@ class TestPartHandling:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
         self._part = Part(
             "foo",
             {
@@ -74,7 +70,6 @@ class TestPartHandling:
             "craft_parts.utils.os_utils.mount_overlayfs"
         )
         self._mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
-        # pylint: enable=attribute-defined-outside-init
 
     def test_run_pull(self, mocker):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_pull")
@@ -242,9 +237,8 @@ class TestPartHandling:
             primed_stage_packages=set(),
         )
 
-    # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -283,10 +277,8 @@ class TestPartHandling:
         assert err == "+ echo hello\n"
         assert run_builtin_mock.mock_calls == []
 
-    # pylint: enable=too-many-arguments
-
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -321,7 +313,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == []
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -356,7 +348,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == [call()]
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -394,8 +386,8 @@ class TestPartHandling:
             )
 
         out, err = capfd.readouterr()
-        assert out == ""
-        assert err == ""
+        assert not out
+        assert not err
         assert output_path.read_text() == "hello\n"
         assert error_path.read_text() == "+ echo hello\n+ echo goodbye\ngoodbye\n"
 
@@ -406,7 +398,6 @@ class TestPartUpdateHandler:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
         self._part = Part(
             "foo",
             {
@@ -436,7 +427,6 @@ class TestPartUpdateHandler:
             part_list=[self._part],
             overlay_manager=ovmgr,
         )
-        # pylint: enable=attribute-defined-outside-init
 
     def test_update_pull(self):
         self._handler.run_action(Action("foo", Step.PULL))
@@ -561,7 +551,6 @@ class TestPartCleanHandler:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
         self._part = Part(
             "foo", {"plugin": "dump", "source": "subdir"}, partitions=partitions
         )
@@ -581,10 +570,9 @@ class TestPartCleanHandler:
             part_list=[self._part],
             overlay_manager=ovmgr,
         )
-        # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install", "build"),
@@ -594,7 +582,7 @@ class TestPartCleanHandler:
     )
     def test_clean_step(self, mocker, step, test_dir, state_file):
         self._handler._make_dirs()
-        for each_step in step.previous_steps() + [step]:
+        for each_step in [*step.previous_steps(), step]:
             self._handler.run_action(Action("foo", each_step))
 
         assert Path(test_dir, "foo.txt").is_file()
@@ -633,7 +621,7 @@ class TestRerunStep:
         mock.attach_mock(mock_callback, "run_pre_step")
 
         handler.run_action(Action("p1", step, ActionType.RERUN))
-        calls = [mocker.call.clean_step(step=x) for x in [step] + step.next_steps()]
+        calls = [mocker.call.clean_step(step=x) for x in [step, *step.next_steps()]]
         calls.append(mocker.call.run_pre_step(mocker.ANY))
         mock.assert_has_calls(calls)
 
@@ -887,7 +875,7 @@ class TestFileFilter:
 
     def test_apply_file_filter_empty(self, new_dir, partitions):
         fileset = filesets.Fileset([])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(fileset, self._destdir)
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -901,7 +889,7 @@ class TestFileFilter:
 
     def test_apply_file_filter_remove_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(fileset, self._destdir)
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -915,7 +903,7 @@ class TestFileFilter:
 
     def test_apply_file_filter_remove_dir(self, new_dir, partitions):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(fileset, self._destdir)
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -928,7 +916,7 @@ class TestFileFilter:
 
     def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file4", "-dir3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(fileset, self._destdir)
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -942,7 +930,7 @@ class TestFileFilter:
 
     def test_apply_file_filter_keep_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["dir1/file3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(fileset, self._destdir)
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )

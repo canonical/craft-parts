@@ -16,16 +16,14 @@
 
 from pathlib import Path
 from textwrap import dedent
-from typing import List
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.python_plugin import PythonPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def plugin(new_dir):
     properties = PythonPlugin.properties_class.unmarshal({"source": "."})
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
@@ -46,12 +44,9 @@ def test_get_build_environment(plugin, new_dir):
     }
 
 
-# pylint: disable=line-too-long
-
-
 def get_build_commands(
     new_dir: Path, *, should_remove_symlinks: bool = False
-) -> List[str]:
+) -> list[str]:
     if should_remove_symlinks:
         postfix = dedent(
             f"""\
@@ -122,7 +117,8 @@ def test_get_build_commands(plugin, new_dir):
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
-    ] + get_build_commands(new_dir)
+        *get_build_commands(new_dir),
+    ]
 
 
 def test_get_build_commands_with_all_properties(new_dir):
@@ -145,7 +141,8 @@ def test_get_build_commands_with_all_properties(new_dir):
         f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
         f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U -r 'requirements.txt'",
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U .",
-    ] + get_build_commands(new_dir)
+        *get_build_commands(new_dir),
+    ]
 
 
 def test_invalid_properties():
@@ -197,4 +194,5 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
-    ] + get_build_commands(new_dir, should_remove_symlinks=True)
+        *get_build_commands(new_dir, should_remove_symlinks=True),
+    ]

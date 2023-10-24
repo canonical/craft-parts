@@ -14,10 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict, List, Set
 
 import pytest
-
 from craft_parts import plugins
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
@@ -45,7 +43,7 @@ class TestGetPlugin:
     """
 
     @pytest.mark.parametrize(
-        "name,plugin_class,data",
+        ("name", "plugin_class", "data"),
         [
             ("autotools", AutotoolsPlugin, {"source": "."}),
             ("cmake", CMakePlugin, {"source": "."}),
@@ -121,16 +119,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 

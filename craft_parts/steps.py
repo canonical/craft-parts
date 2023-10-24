@@ -17,7 +17,6 @@
 """Definitions and helpers to handle lifecycle steps."""
 
 import enum
-from typing import List, Optional
 
 from craft_parts.features import Features
 
@@ -46,7 +45,7 @@ class Step(enum.IntEnum):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
 
-    def previous_steps(self) -> List["Step"]:
+    def previous_steps(self) -> list["Step"]:
         """List the steps that should happen before the current step.
 
         :returns: The list of previous steps.
@@ -64,7 +63,7 @@ class Step(enum.IntEnum):
 
         return steps
 
-    def next_steps(self) -> List["Step"]:
+    def next_steps(self) -> list["Step"]:
         """List the steps that should happen after the current step.
 
         :returns: The list of next steps.
@@ -83,7 +82,7 @@ class Step(enum.IntEnum):
         return steps
 
 
-def dependency_prerequisite_step(step: Step) -> Optional[Step]:
+def dependency_prerequisite_step(step: Step) -> Step | None:
     """Obtain the step a given step may depend on.
 
     :returns: The prerequisite step.

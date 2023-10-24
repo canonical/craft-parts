@@ -16,7 +16,7 @@
 
 """State definitions for the build step."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from overrides import override
 from pydantic import validator
@@ -27,8 +27,8 @@ from .step_state import StepState, validate_hex_string
 class BuildState(StepState):
     """Context information for the build step."""
 
-    assets: Dict[str, Any] = {}
-    overlay_hash: Optional[str] = None
+    assets: dict[str, Any] = {}
+    overlay_hash: str | None = None
 
     _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
         validate_hex_string
@@ -36,7 +36,7 @@ class BuildState(StepState):
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "BuildState":
+    def unmarshal(cls, data: dict[str, Any]) -> "BuildState":
         """Create and populate a new ``BuildState`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
@@ -56,10 +56,10 @@ class BuildState(StepState):
     @override
     def properties_of_interest(
         self,
-        part_properties: Dict[str, Any],
+        part_properties: dict[str, Any],
         *,
-        extra_properties: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        extra_properties: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
@@ -81,8 +81,8 @@ class BuildState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, project_options: dict[str, Any]
+    ) -> dict[str, Any]:
         """Return relevant project options concerning this step.
 
         :param project_options: A dictionary containing all project options.

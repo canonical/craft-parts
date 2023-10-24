@@ -20,11 +20,9 @@ import logging
 import os
 import os.path
 import shutil
-from glob import iglob
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, cast
-
-from typing_extensions import Protocol
+from typing import Any, Protocol, cast
 
 from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
@@ -45,9 +43,6 @@ from .organize import organize_files
 from .step_handler import StepContents, StepHandler, Stream
 
 logger = logging.getLogger(__name__)
-
-
-# pylint: disable=too-many-lines
 
 
 class _RunHandler(Protocol):
@@ -80,24 +75,24 @@ class PartHandler:
     :param part_list: A list containing all parts.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         part: Part,
         *,
         part_info: PartInfo,
-        part_list: List[Part],
+        part_list: list[Part],
         track_stage_packages: bool = False,
         overlay_manager: OverlayManager,
-        ignore_patterns: Optional[List[str]] = None,
-        base_layer_hash: Optional[LayerHash] = None,
-    ):
+        ignore_patterns: list[str] | None = None,
+        base_layer_hash: LayerHash | None = None,
+    ) -> None:
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
         self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
-        self._app_environment: Dict[str, str] = {}
+        self._app_environment: dict[str, str] = {}
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -149,7 +144,7 @@ class PartHandler:
             return
 
         if action.action_type == ActionType.RERUN:
-            for step in [action.step] + action.step.next_steps():
+            for step in [action.step, *action.step.next_steps()]:
                 self.clean_step(step=step)
 
         handler: _RunHandler
@@ -203,7 +198,7 @@ class PartHandler:
             stderr=stderr,
         )
 
-        state = states.PullState(
+        return states.PullState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             assets={
@@ -212,8 +207,6 @@ class PartHandler:
                 "source-details": getattr(self._source_handler, "source_details", None),
             },
         )
-
-        return state
 
     def _run_overlay(
         self,
@@ -254,7 +247,7 @@ class PartHandler:
                 self._part.spec.overlay_files, name="overlay"
             )
             destdir = self._part.part_layer_dir
-            files, dirs = filesets.migratable_filesets(overlay_fileset, str(destdir))
+            files, dirs = filesets.migratable_filesets(overlay_fileset, destdir)
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
         else:
             contents = StepContents()
@@ -343,13 +336,12 @@ class PartHandler:
         # filesystem if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
-        state = states.BuildState(
+        return states.BuildState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             assets=assets,
             overlay_hash=overlay_hash.hex(),
         )
-        return state
 
     def _run_stage(
         self,
@@ -382,14 +374,13 @@ class PartHandler:
         # parameters if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
-        state = states.StageState(
+        return states.StageState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
             overlay_hash=overlay_hash.hex(),
         )
-        return state
 
     def _run_prime(
         self,
@@ -427,14 +418,13 @@ class PartHandler:
         else:
             primed_stage_packages = set()
 
-        state = states.PrimeState(
+        return states.PrimeState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
             primed_stage_packages=primed_stage_packages,
         )
-        return state
 
     def _run_step(
         self,
@@ -690,8 +680,8 @@ class PartHandler:
             return
 
         logger.debug("staging overlay files")
-        migrated_files: Set[str] = set()
-        migrated_dirs: Set[str] = set()
+        migrated_files: set[str] = set()
+        migrated_dirs: set[str] = set()
 
         # process layers from top to bottom (reversed)
         for part in reversed(parts_with_overlay):
@@ -736,8 +726,8 @@ class PartHandler:
             return
 
         logger.debug("priming overlay files")
-        migrated_files: Set[str] = set()
-        migrated_dirs: Set[str] = set()
+        migrated_files: set[str] = set()
+        migrated_dirs: set[str] = set()
 
         # process layers from top to bottom (reversed)
         for part in reversed(parts_with_overlay):
@@ -872,7 +862,7 @@ class PartHandler:
             *self._part.prime_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)
+            Path(dir_name).mkdir(parents=True, exist_ok=True)
 
     def _organize(self, *, overwrite: bool = False) -> None:
         mapping = self._part.spec.organize_files
@@ -883,7 +873,7 @@ class PartHandler:
             overwrite=overwrite,
         )
 
-    def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:
+    def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.
 
         :raises StagePackageNotFound: If a package is not available for download.
@@ -904,11 +894,11 @@ class PartHandler:
         except packages_errors.PackageNotFound as err:
             raise errors.StagePackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
-            )
+            ) from err
 
         return fetched_packages
 
-    def _fetch_stage_snaps(self) -> Optional[Sequence[str]]:
+    def _fetch_stage_snaps(self) -> Sequence[str] | None:
         """Download snap packages to the part's snap directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
@@ -936,7 +926,7 @@ class PartHandler:
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
-            )
+            ) from err
 
     def _unpack_stage_packages(self) -> None:
         """Extract stage packages contents to the part's install directory."""
@@ -965,7 +955,7 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
+        snap_files = snaps_dir.rglob("*.snap")
         snap_sources = (
             sources.SnapSource(
                 source=s,
@@ -994,7 +984,7 @@ def _remove(filename: Path) -> None:
 
 
 def _apply_file_filter(
-    *, filter_files: Set[str], filter_dirs: Set[str], destdir: Path
+    *, filter_files: set[str], filter_dirs: set[str], destdir: Path
 ) -> None:
     """Remove files and directories from the filesystem.
 
@@ -1027,7 +1017,7 @@ def _apply_file_filter(
                 shutil.rmtree(str(path))
 
 
-def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
+def _get_build_packages(*, part: Part, plugin: Plugin) -> list[str]:
     """Obtain the consolidated list of required build packages.
 
     The list of build packages include packages defined directly in
@@ -1039,7 +1029,7 @@ def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
 
     :return: The list of build packages.
     """
-    all_packages: List[str] = []
+    all_packages: list[str] = []
 
     build_packages = part.spec.build_packages
     if build_packages:
@@ -1067,7 +1057,7 @@ def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
     return all_packages
 
 
-def _get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
+def _get_build_snaps(*, part: Part, plugin: Plugin) -> list[str]:
     """Obtain the consolidated list of required build snaps.
 
     The list of build snaps include snaps defined directly in the parts
@@ -1078,7 +1068,7 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
 
     :return: The list of build snaps.
     """
-    all_snaps: List[str] = []
+    all_snaps: list[str] = []
 
     build_snaps = part.spec.build_snaps
     if build_snaps:
@@ -1093,7 +1083,7 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
     return all_snaps
 
 
-def _get_machine_manifest() -> Dict[str, Any]:
+def _get_machine_manifest() -> dict[str, Any]:
     """Obtain information about the system OS and runtime environment."""
     return {
         "uname": os_utils.get_system_info(),
@@ -1102,7 +1092,7 @@ def _get_machine_manifest() -> Dict[str, Any]:
     }
 
 
-def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]:
+def _load_part_states(step: Step, part_list: list[Part]) -> dict[str, StepState]:
     """Return a dictionary of the state of the given step for all given parts.
 
     :param step: The step whose states should be loaded.
@@ -1110,7 +1100,7 @@ def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]
 
     :return: A dictionary mapping part names to its state for the given step.
     """
-    part_states: Dict[str, StepState] = {}
+    part_states: dict[str, StepState] = {}
     for part in part_list:
         state = states.load_step_state(part, step)
         if state:
@@ -1118,7 +1108,7 @@ def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]
     return part_states
 
 
-def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Part]:
+def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Part]:
     """Obtain a list of parts with overlay that reached the given step.
 
     :param step: The step to test for parts with overlay.
@@ -1130,10 +1120,10 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Pa
     return [p for p in oparts if states.get_step_state_path(p, step).exists()]
 
 
-def _get_primed_stage_packages(snap_files: Set[str], *, prime_dir: Path) -> Set[str]:
-    primed_stage_packages: Set[str] = set()
-    for snap_file in snap_files:
-        snap_file = str(prime_dir / snap_file)
+def _get_primed_stage_packages(snap_files: set[str], *, prime_dir: Path) -> set[str]:
+    primed_stage_packages: set[str] = set()
+    for _snap_file in snap_files:
+        snap_file = prime_dir / _snap_file
         stage_package = read_origin_stage_package(snap_file)
         if stage_package:
             primed_stage_packages.add(stage_package)

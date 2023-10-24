@@ -17,19 +17,16 @@
 import os
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_plugin import NpmPlugin
-
-# pylint: disable=too-many-public-methods
+from pydantic import ValidationError
 
 
 @pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
@@ -131,7 +128,7 @@ class TestPluginNpmPlugin:
         validator.validate_environment(part_dependencies=["npm-deps"])
 
     @pytest.mark.parametrize(
-        "satisfied_dependency,error_dependency",
+        ("satisfied_dependency", "error_dependency"),
         [
             ("node", "npm"),
             ("npm", "node"),

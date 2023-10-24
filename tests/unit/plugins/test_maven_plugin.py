@@ -22,13 +22,12 @@ from unittest import mock
 from xml.etree import ElementTree
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import MavenPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -146,7 +145,7 @@ def test_get_build_commands(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["mvn package"] + plugin._get_java_post_build_commands()
+        ["mvn package", *plugin._get_java_post_build_commands()]
     )
 
 
@@ -160,7 +159,7 @@ def test_get_build_commands_with_parameters(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["mvn package -Dprop1=1 -c"] + plugin._get_java_post_build_commands()
+        ["mvn package -Dprop1=1 -c", *plugin._get_java_post_build_commands()]
     )
 
 
@@ -171,14 +170,14 @@ def test_settings_no_proxy(part_info, new_dir):
 
     with mock.patch.dict(os.environ, {}):
         assert plugin.get_build_commands() == (
-            ["mvn package"] + plugin._get_java_post_build_commands()
+            ["mvn package", *plugin._get_java_post_build_commands()]
         )
         assert settings_path.exists() is False
 
 
 @pytest.mark.parametrize("protocol", ["http", "https"])
 @pytest.mark.parametrize(
-    "no_proxy,non_proxy_hosts",
+    ("no_proxy", "non_proxy_hosts"),
     [(None, "localhost"), ("foo", "foo"), ("foo,bar", "foo|bar")],
 )
 def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
@@ -214,8 +213,10 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
 
     with mock.patch.dict(os.environ, env_dict):
         assert plugin.get_build_commands() == (
-            [f"mvn package -s {str(settings_path.absolute())}"]
-            + plugin._get_java_post_build_commands()
+            [
+                f"mvn package -s {str(settings_path.absolute())}",
+                *plugin._get_java_post_build_commands(),
+            ]
         )
         assert settings_path.exists()
         assert _normalize_settings(settings_path.read_text()) == _normalize_settings(
@@ -225,7 +226,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
 
 def _normalize_settings(settings):
     with io.StringIO(settings) as f:
-        tree = ElementTree.parse(f)
+        tree = ElementTree.parse(f)  # noqa: S314
     for element in tree.iter():
         if element.text is not None and element.text.isspace():
             element.text = None

@@ -27,7 +27,8 @@ the Craft Parts framework can skip those that are not appropriate for their
 purposes.
 
 Tools like `Snapcraft`_ and `Charmcraft`_ that use the concepts of parts to
-describe a build process typically accept specifications of parts in YAML format. This allows each part to be described in a convenient,
+describe a build process typically accept specifications of parts in YAML
+format. This allows each part to be described in a convenient,
 mostly-declarative format. Libraries that use parts may use the underlying
 data structures to describe them.
 
@@ -97,7 +98,8 @@ Build dependencies
 The dependencies of a part are described using the :ref:`build_snaps` and
 :ref:`build_packages` properties. These specify lists of snaps and system
 packages to be installed before the part is built. If a part depends on
-other parts, the :ref:`after` property is used to specify these -- see :ref:`parts_build-order`.
+other parts, the :ref:`after` property is used to specify these -- see
+:ref:`parts_build-order`.
 
 Snaps are referred to by the names that identify them in the Snap Store and
 can also include the channel information so that specific versions of snaps
@@ -118,7 +120,8 @@ Build process
 ~~~~~~~~~~~~~
 
 Each part specifies the name of a *plugin* using the ``plugin`` property to
-describe how it should be built. The available plugins are provided by the modules in the :py:mod:`craft_parts.plugins` package.
+describe how it should be built. The available plugins are provided by the
+modules in the :py:mod:`craft_parts.plugins` package.
 
 Plugins simplify the process of building source code written in a variety of
 programming languages using appropriate build systems, libraries and
@@ -129,9 +132,10 @@ can also be used to replace or extend the build process provided by a plugin.
 
 When a plugin is used, it exposes additional properties that can be used to
 define behaviour that is specific to the type of project that the plugin
-supports. For example, the :py:mod:`cmake plugin <craft_parts.plugins.cmake_plugin>` provides the ``cmake-parameters`` and
-``cmake-generator`` properties that can be used to configure how
-:command:`cmake` is used in the build process.
+supports. For example, the
+:py:mod:`cmake plugin <craft_parts.plugins.cmake_plugin>`
+provides the ``cmake-parameters`` and ``cmake-generator`` properties that can
+be used to configure how :command:`cmake` is used in the build process.
 
 .. ifconfig:: project in ["Snapcraft"]
 

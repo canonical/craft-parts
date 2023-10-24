@@ -21,10 +21,9 @@ from pathlib import Path
 import pytest
 
 # Bring in all stage snaps tests
-# pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
 from tests.integration.lifecycle.test_stage_snaps import *  # noqa: F403
 
 
-@pytest.fixture
+@pytest.fixture()
 def foo_install_dir(new_dir):
     return Path(new_dir, "parts", "foo", "install", "default")

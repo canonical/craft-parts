@@ -24,7 +24,8 @@ directory contains a ``state`` file to manage the state of the build and a
 number of subdirectories:
 
 * ``parts`` is where individual parts for the project are prepared for build.
-  The directory for each part in the ``parts`` directory contains ``src``, ``build`` and ``install`` directories that will be used during the *build*
+  The directory for each part in the ``parts`` directory contains ``src``,
+  ``build`` and ``install`` directories that will be used during the *build*
   step.
 * ``prime`` will contain the finished build product later in the process.
 * ``project`` contains the original, unmodified project files.
@@ -37,7 +38,8 @@ The build step
 ~~~~~~~~~~~~~~
 
 When the *build* step is run, each part in the ``parts`` subdirectory is
-processed in the order described in the :ref:`build order <parts_build-order>`. The plugin for the part will use the appropriate build system
+processed in the order described in the :ref:`build order <parts_build-order>`.
+The plugin for the part will use the appropriate build system
 to build the part in its ``build`` subdirectory, using a copy of the files
 in its ``src`` subdirectory, and install the result in the part's ``install``
 subdirectory. The files in the ``install`` directory will be organized

@@ -17,9 +17,8 @@
 import textwrap
 from pathlib import Path
 
-import yaml
-
 import craft_parts
+import yaml
 from craft_parts import Step
 from craft_parts.packages import deb
 from craft_parts.packages.deb import _is_list_of_slices

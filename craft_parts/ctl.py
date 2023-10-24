@@ -19,8 +19,8 @@
 import json
 import logging
 import os
+import pathlib
 import sys
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class CraftCtl:
     """
 
     @classmethod
-    def run(cls, cmd: str, args: List[str]) -> Optional[str]:
+    def run(cls, cmd: str, args: list[str]) -> str | None:
         """Handle craftctl commands.
 
         :param cmd: The command to handle.
@@ -46,13 +46,12 @@ class CraftCtl:
             return None
 
         if cmd in "get":
-            retval = _client(cmd, args)
-            return retval
+            return _client(cmd, args)
 
         raise RuntimeError(f"invalid command {cmd!r}")
 
 
-def _client(cmd: str, args: List[str]) -> Optional[str]:
+def _client(cmd: str, args: list[str]) -> str | None:
     """Execute a command in the running step processor.
 
     The control protocol client allows a user scriptlet to execute
@@ -66,8 +65,8 @@ def _client(cmd: str, args: List[str]) -> Optional[str]:
     :raise RuntimeError: If the command is invalid.
     """
     try:
-        call_fifo = os.environ["PARTS_CALL_FIFO"]
-        feedback_fifo = os.environ["PARTS_FEEDBACK_FIFO"]
+        call_fifo = pathlib.Path(os.environ["PARTS_CALL_FIFO"])
+        feedback_fifo = pathlib.Path(os.environ["PARTS_FEEDBACK_FIFO"])
     except KeyError as err:
         raise RuntimeError(
             f"{err!s} environment variable must be defined.\nNote that this "
@@ -76,10 +75,10 @@ def _client(cmd: str, args: List[str]) -> Optional[str]:
 
     data = {"function": cmd, "args": args}
 
-    with open(call_fifo, "w") as fifo:
+    with call_fifo.open("w") as fifo:
         fifo.write(json.dumps(data))
 
-    with open(feedback_fifo, "r") as fifo:
+    with feedback_fifo.open("r") as fifo:
         feedback = fifo.readline().split(" ", 1)
 
     # response from server is in the form "<status> <message>" where
@@ -103,7 +102,7 @@ def _client(cmd: str, args: List[str]) -> Optional[str]:
 
 def main() -> None:
     """Run the ctl client cli."""
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2:  # noqa: PLR2004
         print(f"usage: {sys.argv[0]} <command> [arguments]")
         sys.exit(1)
 
@@ -112,6 +111,6 @@ def main() -> None:
         ret = CraftCtl.run(cmd, args)
         if ret:
             print(ret)
-    except RuntimeError as err:
-        logger.error("error: %s", err)
+    except RuntimeError:
+        logger.exception("error")
         sys.exit(1)

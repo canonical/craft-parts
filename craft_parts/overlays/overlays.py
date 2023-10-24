@@ -23,12 +23,11 @@ https://github.com/opencontainers/image-spec/blob/main/layer.md
 import logging
 import os
 from pathlib import Path
-from typing import Set, Tuple
 
 logger = logging.getLogger(__name__)
 
 
-def visible_in_layer(lower_dir: Path, upper_dir: Path) -> Tuple[Set[str], Set[str]]:
+def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[str]]:
     """Determine the files and directories that are visible in a layer.
 
     Given a pair of directories containing lower and upper layer entries, list the
@@ -42,8 +41,8 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> Tuple[Set[str], Set[st
 
     :returns: A tuple containing the sets of files and directories that are visible.
     """
-    visible_files: Set[str] = set()
-    visible_dirs: Set[str] = set()
+    visible_files: set[str] = set()
+    visible_dirs: set[str] = set()
 
     logger.debug("check layer visibility in %s", lower_dir)
     for root, directories, files in os.walk(lower_dir, topdown=True):
@@ -90,7 +89,7 @@ def _is_path_visible(root: Path, relpath: Path) -> bool:
     levels = len(relpath.parts)
 
     for level in range(levels):
-        path = Path(root, os.path.join(*relpath.parts[: level + 1]))
+        path = Path(root).joinpath(*relpath.parts[: level + 1])
         if oci_whiteout(path).exists() or is_oci_opaque_dir(path):
             logger.debug("is whiteout or opaque: %s", path)
             return False

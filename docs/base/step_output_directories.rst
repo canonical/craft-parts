@@ -17,7 +17,8 @@ reference:
      This directory is the expected location of ``CARGO_INSTALL_ROOT`` for `Rust
      <https://doc.rust-lang.org/cargo/commands/cargo-install.html>`_,
      ``GOBIN`` for `go
-     <https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_dependencies>`_
+     <https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_\
+     dependencies>`_
      or ``DESTDIR`` for `make
      <https://www.gnu.org/software/make/manual/make.html#DESTDIR>`_.
 - ``STAGE``:

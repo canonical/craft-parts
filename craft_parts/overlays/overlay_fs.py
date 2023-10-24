@@ -20,7 +20,6 @@ import logging
 import os
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import List, Optional
 
 from craft_parts.utils import os_utils
 
@@ -32,11 +31,13 @@ logger = logging.getLogger(__name__)
 class OverlayFS:
     """Linux overlayfs operations."""
 
-    def __init__(self, *, lower_dirs: List[Path], upper_dir: Path, work_dir: Path):
+    def __init__(
+        self, *, lower_dirs: list[Path], upper_dir: Path, work_dir: Path
+    ) -> None:
         self._lower_dirs = lower_dirs
         self._upper_dir = upper_dir
         self._work_dir = work_dir
-        self._mountpoint: Optional[Path] = None
+        self._mountpoint: Path | None = None
 
     def mount(self, mountpoint: Path) -> None:
         """Mount an overlayfs.
@@ -91,7 +92,7 @@ def is_whiteout_file(path: Path) -> bool:
     if not path.is_char_device() or path.is_symlink():
         return False
 
-    rdev = os.stat(path).st_rdev
+    rdev = path.stat().st_rdev
 
     return os.major(rdev) == 0 and os.minor(rdev) == 0
 

@@ -17,10 +17,9 @@
 """URL parsing and downloading helpers."""
 
 import logging
-import os
 import urllib.parse
 import urllib.request
-from typing import Optional
+from pathlib import Path
 
 import requests
 
@@ -36,13 +35,13 @@ def get_url_scheme(url: str) -> str:
 
 def is_url(url: str) -> bool:
     """Verify whether the given string is a valid URL."""
-    return get_url_scheme(url) != ""
+    return bool(get_url_scheme(url))
 
 
 def download_request(
     request: requests.Response,
-    destination: str,
-    message: Optional[str] = None,
+    destination: Path,
+    message: str | None = None,
     total_read: int = 0,
 ) -> None:
     """Download a request with nice progress bars.
@@ -59,7 +58,7 @@ def download_request(
         # Content-Length in the case of resuming will be
         # Content-Length - total_read so we add back up to have the feel of
         # resuming
-        if os.path.exists(destination):
+        if destination.exists():
             total_length += total_read
 
     if message:
@@ -67,12 +66,9 @@ def download_request(
     else:
         logger.debug("Downloading %r", destination)
 
-    if os.path.exists(destination):
-        mode = "ab"
-    else:
-        mode = "wb"
+    mode = "ab" if destination.exists() else "wb"
 
-    with open(destination, mode) as destination_file:
+    with destination.open(mode) as destination_file:
         for buf in request.iter_content(1024):
             destination_file.write(buf)
             if not os_utils.is_dumb_terminal():

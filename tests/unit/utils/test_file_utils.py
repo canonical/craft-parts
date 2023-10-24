@@ -19,19 +19,18 @@ import stat
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
 
 
 @pytest.fixture(autouse=True)
-def setup_module_fixture(new_dir):  # pylint: disable=unused-argument
+def setup_module_fixture(new_dir):
     pass
 
 
 @pytest.mark.parametrize(
-    "algo,digest",
+    ("algo", "digest"),
     [
         ("md5", "9a0364b9e99bb480dd25e1f0284c8555"),
         ("sha1", "040f06fd774092478d450774f5ba30c5da78acc8"),
@@ -62,17 +61,17 @@ class TestLinkOrCopyTree:
 
     def test_link_file_to_file_raises(self):
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("1", "qux")
+            file_utils.link_or_copy_tree(Path("1"), Path("qux"))
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_file_into_directory(self):
         os.mkdir("qux")
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("1", "qux")
+            file_utils.link_or_copy_tree(Path("1"), Path("qux"))
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_directory_to_directory(self):
-        file_utils.link_or_copy_tree("foo", "qux")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         assert os.path.isfile(os.path.join("qux", "2"))
         assert os.path.isfile(os.path.join("qux", "bar", "3"))
         assert os.path.isfile(os.path.join("qux", "bar", "baz", "4"))
@@ -80,25 +79,27 @@ class TestLinkOrCopyTree:
     def test_link_directory_overwrite_file_raises(self):
         open("qux", "w").close()
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("foo", "qux")
+            file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         assert raised.value.message == (
             "cannot overwrite non-directory 'qux' with directory 'foo'"
         )
 
     def test_ignore(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda x, y: ["3"])
+        file_utils.link_or_copy_tree(
+            Path("foo/bar"), Path("qux"), ignore=lambda x, y: ["3"]
+        )
         assert not os.path.isfile(os.path.join("qux", "3"))
         assert os.path.isfile(os.path.join("qux", "baz", "4"))
 
     def test_link_subtree(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux")
+        file_utils.link_or_copy_tree(Path("foo/bar"), Path("qux"))
         assert os.path.isfile(os.path.join("qux", "3"))
         assert os.path.isfile(os.path.join("qux", "baz", "4"))
 
     def test_link_symlink_to_file(self):
         # Create a symlink to a file
         os.symlink("2", os.path.join("foo", "2-link"))
-        file_utils.link_or_copy_tree("foo", "qux")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         # Verify that the symlink remains a symlink
         link = os.path.join("qux", "2-link")
         assert os.path.islink(link)
@@ -106,7 +107,7 @@ class TestLinkOrCopyTree:
 
     def test_link_symlink_to_dir(self):
         os.symlink("bar", os.path.join("foo", "bar-link"))
-        file_utils.link_or_copy_tree("foo", "qux")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
 
         # Verify that the symlink remains a symlink
         link = os.path.join("qux", "bar-link")
@@ -127,16 +128,16 @@ class TestLinkOrCopy:
     def test_link_file_ioerror(self, mocker):
         orig_link = os.link
 
-        def link_and_ioerror(a, b, **kwargs):  # pylint: disable=unused-argument
+        def link_and_ioerror(a, b, **kwargs):
             orig_link(a, b)
-            raise IOError()
+            raise OSError
 
         mocker.patch("os.link", side_effect=link_and_ioerror)
 
-        file_utils.link_or_copy("1", "foo/1")
+        file_utils.link_or_copy(Path("1"), Path("foo/1"))
 
     def test_copy_nested_file(self):
-        file_utils.link_or_copy("foo/bar/baz/4", "foo2/bar/baz/4")
+        file_utils.link_or_copy(Path("foo/bar/baz/4"), Path("foo2/bar/baz/4"))
         assert os.path.isfile("foo2/bar/baz/4")
 
     def test_destination_exists(self):
@@ -144,7 +145,7 @@ class TestLinkOrCopy:
         open(os.path.join("qux", "2"), "w").close()
         assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino
 
-        file_utils.link_or_copy("foo/2", "qux/2")
+        file_utils.link_or_copy(Path("foo/2"), Path("qux/2"))
         assert os.stat("foo/2").st_ino == os.stat("qux/2").st_ino
 
     def test_with_permissions(self, mock_chown):
@@ -156,7 +157,7 @@ class TestLinkOrCopy:
         ]
 
         os.mkdir("qux")
-        file_utils.link_or_copy("foo/2", "qux/2", permissions=permissions)
+        file_utils.link_or_copy(Path("foo/2"), Path("qux/2"), permissions=permissions)
 
         # Check that the copied file has the correct permission bits and ownership
         assert stat.S_IMODE(os.stat("qux/2").st_mode) == 0o755
@@ -176,12 +177,12 @@ class TestCopy:
         open("1", "w").close()
 
     def test_copy(self):
-        file_utils.copy("1", "3")
+        file_utils.copy(Path("1"), Path("3"))
         assert os.path.isfile("3")
 
     def test_file_not_found(self):
         with pytest.raises(errors.CopyFileNotFound) as raised:
-            file_utils.copy("2", "3")
+            file_utils.copy(Path("2"), Path("3"))
         assert raised.value.name == "2"
 
 

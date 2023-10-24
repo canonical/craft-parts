@@ -19,7 +19,6 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
-
 from craft_parts.state_manager.stage_state import StageState
 
 
@@ -97,7 +96,7 @@ class TestStageStateChanges:
             "stage",
         ]
 
-        for prop in properties.keys():
+        for prop in properties:
             other = properties.copy()
             other[prop] = "new value"
 
@@ -123,7 +122,7 @@ class TestStageStateChanges:
             "extra-property",
         ]
 
-        for prop in augmented_properties.keys():
+        for prop in augmented_properties:
             other = augmented_properties.copy()
             other[prop] = "new value"
 

@@ -20,7 +20,7 @@ import logging
 import os
 import platform
 from textwrap import dedent
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, cast
 
 from overrides import override
 from pydantic import root_validator
@@ -49,12 +49,12 @@ class NpmPluginProperties(PluginProperties, PluginModel):
 
     # part properties required by the plugin
     npm_include_node: bool = False
-    npm_node_version: Optional[str]
+    npm_node_version: str | None
     source: str
 
     @root_validator
     @classmethod
-    def node_version_defined(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def node_version_defined(cls, values: dict[str, Any]) -> dict[str, Any]:
         """If npm-include-node is true, then npm-node-version must be defined."""
         if values.get("npm_include_node") and not values.get("npm_node_version"):
             raise ValueError("npm-node-version is required if npm-include-node is true")
@@ -62,7 +62,7 @@ class NpmPluginProperties(PluginProperties, PluginModel):
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "NpmPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "NpmPluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -86,7 +86,7 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment has the dependencies to build npm applications.
 
@@ -151,30 +151,30 @@ class NpmPlugin(Plugin):
         return node_arch
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         if cast(NpmPluginProperties, self._options).npm_include_node:
             return {"curl", "gcc"}
         return {"gcc"}
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         if cast(NpmPluginProperties, self._options).npm_include_node:
             return {"PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}"}
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(NpmPluginProperties, self._options)
 
-        command: List[str] = []
+        command: list[str] = []
 
         if options.npm_include_node:
             arch = self._get_architecture()

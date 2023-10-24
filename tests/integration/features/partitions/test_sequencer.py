@@ -16,11 +16,7 @@
 import pytest
 
 from tests.integration.sequencer import test_sequencer
-
-# pylint: disable=unused-import
 from tests.integration.sequencer.test_sequencer import pull_state  # noqa: F401
-
-# pylint: enable=unused-import
 
 
 @pytest.mark.usefixtures("new_dir")

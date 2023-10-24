@@ -20,13 +20,12 @@ import dataclasses
 import functools
 import json
 import logging
-import os
 import subprocess
 import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, TextIO, Union
+from typing import TextIO
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -42,15 +41,15 @@ from .migration import migrate_files
 
 logger = logging.getLogger(__name__)
 
-Stream = Optional[Union[TextIO, int]]
+Stream = TextIO | int | None
 
 
 @dataclasses.dataclass(frozen=True)
 class StepContents:
     """Files and directories to be added to the step's state."""
 
-    files: Set[str] = dataclasses.field(default_factory=set)
-    dirs: Set[str] = dataclasses.field(default_factory=set)
+    files: set[str] = dataclasses.field(default_factory=set)
+    dirs: set[str] = dataclasses.field(default_factory=set)
 
 
 class StepHandler:
@@ -65,17 +64,17 @@ class StepHandler:
     the running instance.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         part: Part,
         *,
         step_info: StepInfo,
         plugin: Plugin,
-        source_handler: Optional[SourceHandler],
+        source_handler: SourceHandler | None,
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
-    ):
+    ) -> None:
         self._part = part
         self._step_info = step_info
         self._plugin = plugin
@@ -159,17 +158,17 @@ class StepHandler:
     def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
         files, dirs = filesets.migratable_filesets(
-            stage_fileset, str(self._part.part_base_install_dir)
+            stage_fileset, self._part.part_base_install_dir
         )
 
-        def pkgconfig_fixup(file_path: str) -> None:
-            if os.path.islink(file_path):
+        def pkgconfig_fixup(file_path: Path) -> None:
+            if file_path.is_symlink():
                 return
-            if not file_path.endswith(".pc"):
+            if not file_path.name.endswith(".pc"):
                 return
             packages.fix_pkg_config(
                 prefix_prepend=self._part.base_stage_dir,
-                pkg_config_file=Path(file_path),
+                pkg_config_file=file_path,
                 prefix_trim=self._part.part_base_install_dir,
             )
 
@@ -192,7 +191,7 @@ class StepHandler:
             prime_fileset.combine(stage_fileset)
 
         files, dirs = filesets.migratable_filesets(
-            prime_fileset, str(self._part.part_base_install_dir)
+            prime_fileset, self._part.part_base_install_dir
         )
         files, dirs = migrate_files(
             files=files,
@@ -218,11 +217,9 @@ class StepHandler:
         :param work_dir: the directory where the script will be executed.
         """
         with tempfile.TemporaryDirectory() as tempdir:
-            call_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "function_call")
-            )
+            call_fifo = file_utils.NonBlockingRWFifo(Path(tempdir) / "function_call")
             feedback_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "call_feedback")
+                Path(tempdir) / "call_feedback"
             )
 
             script = textwrap.dedent(
@@ -243,7 +240,7 @@ class StepHandler:
                 print(script, file=script_file)
                 script_file.flush()
                 script_file.seek(0)
-                process = subprocess.Popen(  # pylint: disable=consider-using-with
+                process = subprocess.Popen(
                     ["/bin/bash"],
                     stdin=script_file,
                     cwd=work_dir,
@@ -271,7 +268,7 @@ class StepHandler:
 
             except Exception as error:
                 logger.debug("scriptlet execution failed: %s", error)
-                raise error
+                raise
             finally:
                 call_fifo.close()
                 feedback_fifo.close()
@@ -309,7 +306,7 @@ class StepHandler:
         )
 
     def _process_api_commands(
-        self, cmd_name: str, cmd_args: List[str], *, step: Step, scriptlet_name: str
+        self, cmd_name: str, cmd_args: list[str], *, step: Step, scriptlet_name: str
     ) -> str:
         """Invoke API command actions."""
         retval = ""
@@ -348,7 +345,7 @@ class StepHandler:
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
                     message=str(err),
-                )
+                ) from err
         elif cmd_name == "get":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(
@@ -363,7 +360,7 @@ class StepHandler:
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
                     message=str(err),
-                )
+                ) from err
         else:
             raise invalid_control_api_call(
                 message=f"invalid command {cmd_name!r}",
@@ -384,13 +381,13 @@ class StepHandler:
             self._builtin_prime()
 
 
-def _create_and_run_script(  # noqa: PLR0913
-    commands: List[str],
+def _create_and_run_script(
+    commands: list[str],
     script_path: Path,
     cwd: Path,
     stdout: Stream,
     stderr: Stream,
-    build_environment_script_path: Optional[Path] = None,
+    build_environment_script_path: Path | None = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:

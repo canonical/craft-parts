@@ -15,14 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.state_manager import reports
 from craft_parts.state_manager.reports import Dependency
 from craft_parts.steps import Step
 
 
 @pytest.mark.parametrize(
-    "step,source_modified,result",
+    ("step", "source_modified", "result"),
     [
         (None, False, ""),
         (Step.BUILD, False, "'BUILD' step changed"),
@@ -38,7 +37,7 @@ def test_outdated_report(step, source_modified, result):
 
 
 @pytest.mark.parametrize(
-    "props,opts,deps,result",
+    ("props", "opts", "deps", "result"),
     [
         (None, None, None, ""),
         (["a"], None, None, "'a' property changed"),

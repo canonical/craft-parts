@@ -15,7 +15,7 @@ to execute the built-in handler for the step being processed::
 
   import yaml
   from craft_parts import LifecycleManager, Step
-  
+
   parts_yaml = """
   parts:
     hello:
@@ -25,9 +25,9 @@ to execute the built-in handler for the step being processed::
         echo "Running the build step"
         craftctl default
   """
-  
+
   parts = yaml.safe_load(parts_yaml)
-  
+
   lcm = LifecycleManager(parts, application_name="example", cache_dir=".")
   actions = lcm.plan(Step.PRIME)
   with lcm.action_executor() as aex:
@@ -55,13 +55,14 @@ Using application variables
 The application can define project variables that can be read and
 written during execution of user-defined scriptlets by using ``craftctl get``
 and ``craftctl set``. Valid variables and their initial values must be
-specified when creating the :class:`LifecycleManager <craft_parts.LifecycleManager>`,
+specified when creating the
+:class:`LifecycleManager <craft_parts.LifecycleManager>`,
 and the variable value must be consumed by the application after the parts
 lifecycle execution is finished::
 
   import yaml
   from craft_parts import LifecycleManager, Step
-  
+
   parts_yaml = """
   parts:
     foo:
@@ -70,9 +71,9 @@ lifecycle execution is finished::
         echo "Running the pull step"
         craftctl set version="2"
   """
-  
+
   parts = yaml.safe_load(parts_yaml)
-  
+
   lcm = LifecycleManager(
     parts,
     application_name="example",

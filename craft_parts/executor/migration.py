@@ -18,8 +18,8 @@
 
 import logging
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from craft_parts import overlays
 from craft_parts.permissions import Permissions, filter_permissions
@@ -29,18 +29,18 @@ from craft_parts.utils import file_utils
 logger = logging.getLogger(__name__)
 
 
-def migrate_files(
+def migrate_files(  # noqa: PLR0913
     *,
-    files: Set[str],
-    dirs: Set[str],
+    files: set[str],
+    dirs: set[str],
     srcdir: Path,
     destdir: Path,
     missing_ok: bool = False,
     follow_symlinks: bool = False,
     oci_translation: bool = False,
-    fixup_func: Callable[..., None] = lambda *args: None,
-    permissions: Optional[List[Permissions]] = None,
-) -> Tuple[Set[str], Set[str]]:
+    fixup_func: Callable[..., None] = lambda *_args: None,
+    permissions: list[Permissions] | None = None,
+) -> tuple[set[str], set[str]]:
     """Copy or link files from a directory to another.
 
     Files and directories are migrated from one step to the next during
@@ -60,8 +60,8 @@ def migrate_files(
 
     :returns: A tuple containing sets of migrated files and directories.
     """
-    migrated_files: Set[str] = set()
-    migrated_dirs: Set[str] = set()
+    migrated_files: set[str] = set()
+    migrated_dirs: set[str] = set()
     permissions = permissions or []
 
     for dirname in sorted(dirs):
@@ -75,7 +75,7 @@ def migrate_files(
             dst = overlays.oci_whiteout(dst)
 
         file_utils.create_similar_directory(
-            str(src), str(dst), filter_permissions(dirname, permissions)
+            src, dst, filter_permissions(dirname, permissions)
         )
         migrated_dirs.add(dirname)
 
@@ -121,12 +121,12 @@ def migrate_files(
             migrated_files.add(str(oci_whiteout))
         else:
             file_utils.link_or_copy(
-                str(src),
-                str(dst),
+                src,
+                dst,
                 follow_symlinks=follow_symlinks,
                 permissions=filter_permissions(filename, permissions),
             )
-            fixup_func(str(dst))
+            fixup_func(dst)
             migrated_files.add(str(filename))
 
     return migrated_files, migrated_dirs
@@ -144,8 +144,8 @@ def clean_shared_area(
     *,
     part_name: str,
     shared_dir: Path,
-    part_states: Dict[str, StepState],
-    overlay_migration_state: Optional[MigrationState],
+    part_states: dict[str, StepState],
+    overlay_migration_state: MigrationState | None,
 ) -> None:
     """Clean files added by a part to a shared directory.
 
@@ -185,8 +185,8 @@ def clean_shared_area(
 def clean_shared_overlay(
     *,
     shared_dir: Path,
-    part_states: Dict[str, StepState],
-    overlay_migration_state: Optional[MigrationState],
+    part_states: dict[str, StepState],
+    overlay_migration_state: MigrationState | None,
 ) -> None:
     """Remove migrated overlay files from a shared directory.
 
@@ -211,7 +211,7 @@ def clean_shared_overlay(
     _clean_migrated_files(files, directories, shared_dir)
 
 
-def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> None:
+def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> None:
     """Remove files and directories migrated from part install to a common directory.
 
     :param files: A set of files to remove.
@@ -232,10 +232,10 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
     # we'll sort them in reverse here to get subdirectories before parents.
 
     for each_dir in sorted(dirs, reverse=True):
-        migrated_directory = os.path.join(directory, each_dir)
+        migrated_directory = directory / each_dir
         try:
             if not os.listdir(migrated_directory):
-                os.rmdir(migrated_directory)
+                migrated_directory.rmdir()
         except FileNotFoundError:
             logger.warning(
                 "Attempted to remove directory '%s', but it didn't exist. "
@@ -245,8 +245,8 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
 
 
 def filter_dangling_whiteouts(
-    files: Set[str], dirs: Set[str], *, base_dir: Optional[Path]
-) -> Set[str]:
+    files: set[str], dirs: set[str], *, base_dir: Path | None
+) -> set[str]:
     """Remove dangling whiteout file and directory names.
 
     Names corresponding to dangling files and directories (i.e. without a
@@ -261,7 +261,7 @@ def filter_dangling_whiteouts(
     if not base_dir:
         return set()
 
-    whiteouts: Set[str] = set()
+    whiteouts: set[str] = set()
 
     # Remove whiteout files if no backing file exists in the base dir.
     for file in list(files):

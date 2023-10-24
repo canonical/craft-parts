@@ -42,9 +42,6 @@ jobs:
       - name: Run pydocstyle
         run: |
           make test-pydocstyle
-      - name: Run pylint
-        run: |
-          make test-pylint
       - name: Run pyright
         run: |
           sudo snap install --classic node
@@ -55,7 +52,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10"]
         include:
           - adjective: focal
           - os: ubuntu-22.04

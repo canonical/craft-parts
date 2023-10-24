@@ -18,7 +18,8 @@
 
 import filecmp
 import os
-from typing import Any, Dict, List, Optional
+import pathlib
+from typing import Any
 
 from craft_parts import errors, permissions
 from craft_parts.executor import filesets
@@ -27,13 +28,13 @@ from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
 
 
-def check_for_stage_collisions(part_list: List[Part]) -> None:
+def check_for_stage_collisions(part_list: list[Part]) -> None:
     """Verify whether parts have conflicting files to stage.
 
     :param part_list: The list of parts to be tested.
     :raises PartConflictError: If conflicts are found.
     """
-    all_parts_files: Dict[str, Dict[str, Any]] = {}
+    all_parts_files: dict[str, dict[str, Any]] = {}
     for part in part_list:
         stage_files = part.spec.stage_files
         if not stage_files:
@@ -41,9 +42,8 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
         # Gather our own files up.
         stage_fileset = Fileset(stage_files, name="stage")
-        srcdir = str(part.part_install_dir)
         part_files, part_directories = filesets.migratable_filesets(
-            stage_fileset, srcdir
+            stage_fileset, part.part_install_dir
         )
         part_contents = part_files | part_directories
 
@@ -54,8 +54,8 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
             conflict_files = []
             for file in common:
-                this = os.path.join(part.part_install_dir, file)
-                other = os.path.join(other_part_files["installdir"], file)
+                this = part.part_install_dir / file
+                other = other_part_files["installdir"] / file
 
                 permissions_this = permissions.filter_permissions(
                     file, part.spec.permissions
@@ -84,10 +84,10 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
 
 def paths_collide(
-    path1: str,
-    path2: str,
-    permissions_path1: Optional[List[Permissions]] = None,
-    permissions_path2: Optional[List[Permissions]] = None,
+    path1: pathlib.Path,
+    path2: pathlib.Path,
+    permissions_path1: list[Permissions] | None = None,
+    permissions_path2: list[Permissions] | None = None,
 ) -> bool:
     """Check whether the provided paths conflict to each other.
 
@@ -102,14 +102,14 @@ def paths_collide(
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
-    path1_is_dir = os.path.isdir(path1)
-    path2_is_dir = os.path.isdir(path2)
-    path1_is_link = os.path.islink(path1)
-    path2_is_link = os.path.islink(path2)
+    path1_is_dir = path1.is_dir()
+    path2_is_dir = path2.is_dir()
+    path1_is_link = path1.is_symlink()
+    path2_is_link = path2.is_symlink()
 
     # Paths collide if they're both symlinks, but pointing to different places.
     if path1_is_link and path2_is_link:
-        return os.readlink(path1) != os.readlink(path2)
+        return path1.readlink() != path2.readlink()
 
     # Paths collide if one is a symlink, but not the other.
     if path1_is_link or path2_is_link:
@@ -128,12 +128,12 @@ def paths_collide(
     return not permissions_are_compatible(permissions_path1, permissions_path2)
 
 
-def _file_collides(file_this: str, file_other: str) -> bool:
-    if not file_this.endswith(".pc"):
+def _file_collides(file_this: pathlib.Path, file_other: pathlib.Path) -> bool:
+    if not file_this.name.endswith(".pc"):
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     # pkgconfig files need special handling, only prefix line may be different.
-    with open(file_this) as pc_file_1, open(file_other) as pc_file_2:
+    with file_this.open() as pc_file_1, file_other.open() as pc_file_2:
         for line_pc_1, line_pc_2 in zip(pc_file_1, pc_file_2):
             if line_pc_1.startswith("prefix=") and line_pc_2.startswith("prefix="):
                 continue

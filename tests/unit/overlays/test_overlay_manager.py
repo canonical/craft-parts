@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerMount, OverlayManager, PackageCacheMount
 from craft_parts.overlays.overlay_fs import OverlayFS
@@ -29,7 +28,6 @@ class TestLayerMounting:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir):
-        # pylint: disable=attribute-defined-outside-init
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         self.p1 = Part("p1", {"plugin": "nil"})
         self.p2 = Part("p2", {"plugin": "nil"})
@@ -46,7 +44,6 @@ class TestLayerMounting:
             "craft_parts.utils.os_utils.mount_overlayfs"
         )
         self.mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
-        # pylint: enable=attribute-defined-outside-init
 
     def test_mount_layer(self, new_dir):
         self.om.mount_layer(self.p2)
@@ -142,7 +139,6 @@ class TestPackageManagement:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, mocker, new_dir):
-        # pylint: disable=attribute-defined-outside-init
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         self.p1 = Part("p1", {"plugin": "nil"})
         self.p2 = Part("p2", {"plugin": "nil"})
@@ -162,7 +158,6 @@ class TestPackageManagement:
         self.mock_refresh_packages_list = mocker.patch(
             "craft_parts.packages.Repository.refresh_packages_list"
         )
-        # pylint: enable=attribute-defined-outside-init
 
     def test_refresh_packages_list(self, new_dir):
         self.om.mkdirs()

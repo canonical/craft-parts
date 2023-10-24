@@ -15,16 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import Optional
 
 import pytest
-from overrides import overrides
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
 from craft_parts.sources.base import FileSourceHandler, SourceHandler
-
-# pylint: disable=attribute-defined-outside-init
+from overrides import overrides
 
 
 class FooSourceHandler(SourceHandler):
@@ -75,7 +71,6 @@ class TestSourceHandler:
             "abstract methods? pull$"
         )
         with pytest.raises(TypeError, match=expected):
-            # pylint: disable=abstract-class-instantiated
             FaultySource(  # type: ignore
                 source=".",
                 part_src_dir=Path(),
@@ -92,7 +87,7 @@ class BarFileSource(FileSourceHandler):
         self,
         dst: Path,
         keep: bool = False,
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Extract source payload."""
         self.provision_dst = dst
@@ -237,7 +232,6 @@ class TestFileSourceHandler:
             "abstract methods? provision$"
         )
         with pytest.raises(TypeError, match=expected):
-            # pylint: disable=abstract-class-instantiated
             FaultyFileSource(
                 source=None,  # type: ignore
                 part_src_dir=None,  # type: ignore

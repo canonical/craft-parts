@@ -146,7 +146,8 @@ While by default the ``nil`` plugin doesn't do anything during the build step,
 we're going to "build" the project by copying the script to the install
 directory, where the ``STAGE`` step will read from. The location of the install
 directory is in the ``$CRAFT_PART_INSTALL`` environment variable. During each
-step, several ``CRAFT_*`` :ref:`variables <craft_parts_step_execution_environment>`
+step, several ``CRAFT_*``
+:ref:`variables <craft_parts_step_execution_environment>`
 are added to the environment. Add an ``override-build`` step to ``parts.yaml``:
 
 .. literalinclude:: code/hello-craft-parts/parts.yaml

@@ -16,7 +16,7 @@
 
 """The make plugin implementation."""
 
-from typing import Any, Dict, List, Set, cast
+from typing import Any, cast
 
 from overrides import override
 
@@ -27,14 +27,14 @@ from .properties import PluginProperties
 class MakePluginProperties(PluginProperties, PluginModel):
     """The part properties used by the make plugin."""
 
-    make_parameters: List[str] = []
+    make_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "MakePluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "MakePluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -72,17 +72,17 @@ class MakePlugin(Plugin):
     properties_class = MakePluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"gcc", "make"}
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
@@ -98,7 +98,7 @@ class MakePlugin(Plugin):
         return " ".join(cmd)
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         return [
             self._get_make_command(),

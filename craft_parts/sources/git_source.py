@@ -21,7 +21,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import cast
 
 from overrides import overrides
 
@@ -58,7 +58,7 @@ class GitSource(SourceHandler):
         return True
 
     @classmethod
-    def generate_version(cls, *, part_src_dir: Optional[Path] = None) -> str:
+    def generate_version(cls, *, part_src_dir: Path | None = None) -> str:
         """Return the latest git tag from PWD or defined part_src_dir.
 
         The output depends on the use of annotated tags and will return
@@ -85,7 +85,7 @@ class GitSource(SourceHandler):
         except subprocess.CalledProcessError as err:
             # If we fall into this exception it is because the repo is not
             # tagged at all.
-            proc = subprocess.Popen(  # pylint: disable=consider-using-with
+            proc = subprocess.Popen(
                 ["git", "-C", str(part_src_dir), "describe", "--dirty", "--always"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -114,21 +114,21 @@ class GitSource(SourceHandler):
 
         return f"{tag}+git{revs_ahead}.{commit}"
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_branch: Optional[str] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ):
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_depth: int | None = None,
+        source_branch: str | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        ignore_patterns: list[str] | None = None,
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -181,8 +181,8 @@ class GitSource(SourceHandler):
 
     def _get_current_branch(self) -> str:
         """Get current git branch."""
-        command = [
-            self.command,
+        command: list[str] = [
+            str(self.command),
             "-C",
             str(self.part_src_dir),
             "branch",
@@ -218,26 +218,18 @@ class GitSource(SourceHandler):
             "-C",
             str(self.part_src_dir),
         ]
-        command = command_prefix + [
-            "fetch",
-            "--prune",
-        ]
+        command = [*command_prefix, "fetch", "--prune"]
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
             command.append("--recurse-submodules=yes")
         self._run(command)
 
-        command = command_prefix + ["reset", "--hard", refspec]
+        command = [*command_prefix, "reset", "--hard", refspec]
 
         self._run(command)
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
-            command = command_prefix + [
-                "submodule",
-                "update",
-                "--recursive",
-                "--force",
-            ]
+            command = [*command_prefix, "submodule", "update", "--recursive", "--force"]
             if self.source_submodules:
                 for submodule in self.source_submodules:
                     command.append(submodule)
@@ -262,7 +254,7 @@ class GitSource(SourceHandler):
         command.append(self._format_source())
 
         logger.debug("Executing: %s", " ".join([str(i) for i in command]))
-        self._run(command + [str(self.part_src_dir)])
+        self._run([*command, str(self.part_src_dir)])
 
         if self.source_commit:
             self._fetch_origin_commit()
@@ -291,10 +283,13 @@ class GitSource(SourceHandler):
         """
         protocol_pattern = re.compile(r"^[\w\-.@+]+:")
 
-        if protocol_pattern.search(self.source):
-            return self.source
+        if isinstance(self.source, Path):
+            return f"file://{self.source.resolve()}"
 
-        return f"file://{Path(self.source).resolve()}"
+        if protocol_pattern.search(str(self.source)):
+            return str(self.source)
+
+        raise errors.InvalidSourceType(str(self.source))
 
     @overrides
     def pull(self) -> None:
@@ -305,7 +300,7 @@ class GitSource(SourceHandler):
             self._clone_new()
         self.source_details = self._get_source_details()
 
-    def _get_source_details(self) -> Dict[str, Optional[str]]:
+    def _get_source_details(self) -> dict[str, str | Path | None]:
         """Return a dictionary containing current source parameters."""
         tag = self.source_tag
         commit = self.source_commit

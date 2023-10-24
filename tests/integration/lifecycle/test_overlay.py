@@ -17,21 +17,19 @@
 import sys
 import textwrap
 from pathlib import Path
-from typing import List
-
-import pytest
-import yaml
 
 import craft_parts
+import pytest
+import yaml
 from craft_parts import Action, ActionType, Step
 
 
 @pytest.fixture(autouse=True)
 def setup_feature(enable_overlay_feature):
-    yield
+    return
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")
 
@@ -50,7 +48,7 @@ def mock_overlay_support_prerequisites(mocker):
 
 
 class TestOverlayLayerOrder:
-    @pytest.fixture
+    @pytest.fixture()
     def lifecycle(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
@@ -799,5 +797,5 @@ class TestOverlaySpecScenarios:
         ]
 
 
-def _filter_skip(actions: List[Action]) -> List[Action]:
+def _filter_skip(actions: list[Action]) -> list[Action]:
     return [a for a in actions if a.action_type != ActionType.SKIP]

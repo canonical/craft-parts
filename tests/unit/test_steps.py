@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts import steps
 from craft_parts.steps import Step
 
@@ -40,7 +39,7 @@ def test_ordering():
 
 
 @pytest.mark.parametrize(
-    "tc_step,tc_result",
+    ("tc_step", "tc_result"),
     [
         (Step.PULL, []),
         (Step.BUILD, [Step.PULL]),
@@ -53,7 +52,7 @@ def test_previous_steps(tc_step, tc_result):
 
 
 @pytest.mark.parametrize(
-    "tc_step,tc_result",
+    ("tc_step", "tc_result"),
     [
         (Step.PULL, [Step.BUILD, Step.STAGE, Step.PRIME]),
         (Step.BUILD, [Step.STAGE, Step.PRIME]),
@@ -66,7 +65,7 @@ def test_next_steps(tc_step, tc_result):
 
 
 @pytest.mark.parametrize(
-    "tc_step,tc_result",
+    ("tc_step", "tc_result"),
     [
         (Step.PULL, None),
         (Step.OVERLAY, None),

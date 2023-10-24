@@ -22,12 +22,11 @@ from pathlib import Path
 from unittest.mock import call
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.utils import os_utils
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_check_output(mocker):
     return mocker.patch("subprocess.check_output")
 
@@ -220,7 +219,7 @@ class TestTerminal:
     """Tests for terminal-related utilities."""
 
     @pytest.mark.parametrize(
-        "isatty,term,result",
+        ("isatty", "term", "result"),
         [
             (False, "xterm", True),
             (False, "dumb", True),
@@ -239,9 +238,9 @@ class TestTerminal:
 class TestOsRelease:
     """Verify os-release data retrieval."""
 
-    def _write_os_release(self, contents) -> str:
-        path = "os-release"
-        with open(path, "w") as f:
+    def _write_os_release(self, contents) -> Path:
+        path = Path("os-release")
+        with path.open("w") as f:
             f.write(contents)
         return path
 
@@ -326,7 +325,7 @@ class TestEnvironment:
     """Running on snap or container must be detected."""
 
     @pytest.mark.parametrize(
-        "snap_var,app_name,result",
+        ("snap_var", "app_name", "result"),
         [
             (None, "myapp", False),
             ("", "myapp", False),
@@ -382,7 +381,7 @@ class TestMount:
     def test_umount_retry(self, mocker):
         gen = itertools.count()
 
-        def side_effect(*args):  # pylint: disable=unused-argument
+        def side_effect(*args):
             if next(gen) < 1:
                 raise subprocess.CalledProcessError(cmd="cmd", returncode=42)
 
