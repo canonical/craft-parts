@@ -244,6 +244,12 @@ def expand_environment(
         replacements[f"${key}"] = value
         replacements[f"${{{key}}}"] = value
 
+    # order is important - for example, `CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}` should be
+    # evaluated before `CRAFT_ARCH_TRIPLET` to avoid premature variable expansion
+    replacements = dict(
+        sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True)
+    )
+
     for key in data:
         if not skip or key not in skip:
             data[key] = _replace_attr(data[key], replacements)
@@ -252,7 +258,17 @@ def expand_environment(
 def _replace_attr(
     attr: Union[List[str], Dict[str, str], str], replacements: Dict[str, str]
 ) -> Union[List[str], Dict[str, str], str]:
-    """Replace environment variables according to the replacements map."""
+    """Recurse through a complex data structure and replace values.
+
+    The first matching replacement in the replacement map is used. For example,
+    _replace_attr(attr="$FOO_BAR", replacements={"$FOO": "hi", "$FOO_BAR": "hello"})
+    would evaluate to "hi_BAR".
+
+    :param attr: The data to modify, which may contain nested lists, dicts, and strings.
+    :param replacements: A mapping of replacements to make.
+
+    :returns: The data structure with replaced values.
+    """
     if isinstance(attr, str):
         for key, value in replacements.items():
             if key in attr:
