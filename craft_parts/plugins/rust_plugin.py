@@ -87,7 +87,7 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """
         if "rust-deps" in (part_dependencies or []):
             options = cast(RustPluginProperties, self._options)
-            if options.rust_channel:
+            if options.rust_channel and options.rust_channel != "none":
                 raise validator.errors.PluginEnvironmentValidationError(
                     part_name=self._part_name,
                     reason="rust-deps can not be used"
@@ -99,12 +99,6 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     plugin_name="rust",
                     part_dependencies=part_dependencies,
                 )
-            # The following type ignore is to make type checking pass while
-            # issue #559 is a bug:
-            # https://github.com/canonical/craft-parts/issues/559
-            # The ignore comment (and this block comment) should be removed
-            # with the fixing of #559.
-            options.rust_channel = "none"  # type: ignore[misc]
 
 
 class RustPlugin(Plugin):
@@ -239,8 +233,6 @@ sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}
         for crate in options.rust_path:
             logger.info("Generating build commands for %s", crate)
             config_cmd_string = " ".join(config_cmd)
-            # TODO(liushuyu): the current fallback installation method will also install
-            # compiler plugins into the final Snap, which is likely not what we want.
             # pylint: disable=line-too-long
             rust_build_cmd_single = dedent(
                 f"""\
@@ -254,9 +246,12 @@ sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}
                     pushd "{crate}"
                     cargo build --workspace --release {config_cmd_string}
                     # install the final binaries
-                    # TODO(liushuyu): this will also install proc macros in the workspace,
-                    # which the user may not want to keep in the final installation
                     find ./target/release -maxdepth 1 -executable -exec install -Dvm755 {{}} "{self._part_info.part_install_dir}" ';'
+                    # remove proc_macro objects
+                    for i in "{self._part_info.part_install_dir}"/*.so; do
+                        readelf --wide --dyn-syms "$i" | grep -q '__rustc_proc_macro_decls_[0-9a-f]*__' && \
+                        rm -fv "$i"
+                    done
                     popd
                 fi\
                 """
