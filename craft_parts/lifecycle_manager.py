@@ -148,9 +148,9 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(
-                _build_part(name, spec, project_dirs, strict_mode, partitions)
-            )
+            part = _build_part(name, spec, project_dirs, strict_mode, partitions)
+            _validate_part_dependencies(part, parts_data)
+            part_list.append(part)
 
         if partitions:
             validate_partition_usage(part_list, partitions)
@@ -347,6 +347,12 @@ def _build_part(
     )
 
     return part
+
+
+def _validate_part_dependencies(part: Part, parts_data: Dict[str, Any]) -> None:
+    for name in part.dependencies:
+        if name not in parts_data:
+            raise errors.InvalidPartName(name)
 
 
 def _validate_partition_usage_in_parts(part_list, partitions):
