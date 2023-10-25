@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup  # type: ignore
 
-VERSION = "1.25.1"
+VERSION = "1.25.2"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -77,7 +77,7 @@ types_requires = [
     "types-Pygments",
     "types-pytz",
     "types-PyYAML",
-    "types-requests",
+    "types-requests<2.30",
     "types-setuptools",
 ]
 
