@@ -51,22 +51,19 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir)
         assert plugin.get_build_snaps() == set()
 
-    def test_get_build_packages_default(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(new_dir)
-        assert plugin.get_build_packages() == {
-            "g++",
-            "make",
-            "qt5-qmake",
-        }
-
-    def test_get_build_packages_qt6(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": 6})
-
-        assert plugin.get_build_packages() == {
-            "g++",
-            "make",
-            "qmake6",
-        }
+    @pytest.mark.parametrize(
+        ("properties", "build_packages"),
+        [
+            ({}, {"g++", "make", "qt5-qmake"}),
+            ({"qmake-major-version": 5}, {"g++", "make", "qt5-qmake"}),
+            ({"qmake-major-version": 6}, {"g++", "make", "qmake6"}),
+        ],
+    )
+    def test_get_build_packages(
+        self, setup_method_fixture, new_dir, properties, build_packages
+    ):
+        plugin = setup_method_fixture(new_dir, properties=properties)
+        assert plugin.get_build_packages() == build_packages
 
     def test_get_build_environment_default(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
@@ -76,7 +73,7 @@ class TestPluginQMakePlugin:
         }
 
     def test_get_build_environment_qt6(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": 6})
+        plugin = setup_method_fixture(new_dir, properties={"qmake-major-version": 6})
 
         assert plugin.get_build_environment() == {
             "QT_SELECT": "qt6",
@@ -86,29 +83,29 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_commands() == [
-            'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" QMAKE_LFLAGS+="${LDFLAGS:-}" ',
+            f'qmake QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" {plugin._part_info.part_src_dir}',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
 
     def test_get_build_commands_qt6(self, setup_method_fixture, new_dir):
-        plugin = setup_method_fixture(new_dir, properties={"qmake_major_version": 6})
+        plugin = setup_method_fixture(new_dir, properties={"qmake-major-version": 6})
 
         assert plugin.get_build_commands() == [
-            'qmake6 QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" QMAKE_LFLAGS+="${LDFLAGS:-}" ',
+            f'qmake6 QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" {plugin._part_info.part_src_dir}',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
 
     def test_get_build_commands_qmake_project_file(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(
-            new_dir, properties={"qmake_project_file": "hello.pro"}
+            new_dir, properties={"qmake-project-file": "hello.pro"}
         )
 
         assert plugin.get_build_commands() == [
-            'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" ',
-            'QMAKE_LFLAGS+="${LDFLAGS:-}" ',
-            f'{plugin._part_info.part_src_dir}/hello.pro" ',
+            'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" '
+            'QMAKE_LFLAGS+="${LDFLAGS:-}" '
+            f"{plugin._part_info.part_src_dir}/hello.pro",
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
@@ -121,10 +118,7 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir, {"qmake-parameters": qmake_parameters})
 
         assert plugin.get_build_commands() == [
-            (
-                'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" QMAKE_LFLAGS+="${LDFLAGS:-}" ',
-                f'{"".join(qmake_parameters)}',
-            ),
+            f'qmake QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" QMAKE_LIBDIR+=/foo {plugin._part_info.part_src_dir}',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
