@@ -55,7 +55,7 @@ def mock_chdir(monkeypatch):
 
 @pytest.fixture
 def mock_chroot(monkeypatch):
-    mock_fn = mock.Mock(spec=os.chdir)
+    mock_fn = mock.Mock(spec=os.chroot)
     monkeypatch.setattr(os, "chroot", mock_fn)
     yield mock_fn
 
