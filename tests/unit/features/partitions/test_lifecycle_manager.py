@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for the lifecycle manager with the partitions feature."""
+
+
 import sys
 import textwrap
 from string import ascii_lowercase
 from textwrap import dedent
-from typing import Any
+from typing import Any, Dict
 
 import pytest
 import pytest_check  # type: ignore[import]
@@ -55,7 +57,7 @@ class TestPartitionsSupport:
         return ["default", "kernel"]
 
     @pytest.fixture()
-    def parts_data(self) -> dict[str, Any]:
+    def parts_data(self) -> Dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     @pytest.mark.parametrize("partitions", [["default"], ["default", "kernel"]])

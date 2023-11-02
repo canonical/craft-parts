@@ -23,8 +23,8 @@ import logging
 import os
 import shutil
 import sys
-from collections.abc import Callable, Generator
 from pathlib import Path
+from typing import Callable, Generator, List, Optional, Set
 
 from craft_parts import errors
 from craft_parts.permissions import Permissions, apply_permissions
@@ -77,7 +77,7 @@ def link_or_copy(
     destination: str,
     *,
     follow_symlinks: bool = False,
-    permissions: list[Permissions] | None = None,
+    permissions: Optional[List[Permissions]] = None,
 ) -> None:
     """Hard-link source and destination files. Copy if it fails to link.
 
@@ -148,7 +148,7 @@ def copy(
     destination: str,
     *,
     follow_symlinks: bool = False,
-    permissions: list[Permissions] | None = None,
+    permissions: Optional[List[Permissions]] = None,
 ) -> None:
     """Copy source and destination files.
 
@@ -188,7 +188,7 @@ def copy(
 def link_or_copy_tree(
     source_tree: str,
     destination_tree: str,
-    ignore: Callable[[str, list[str]], list[str]] | None = None,
+    ignore: Optional[Callable[[str, List[str]], List[str]]] = None,
     copy_function: Callable[..., None] = link_or_copy,
 ) -> None:
     """Copy a source tree into a destination, hard-linking if possible.
@@ -216,7 +216,7 @@ def link_or_copy_tree(
     destination_basename = os.path.basename(destination_tree)
 
     for root, directories, files in os.walk(source_tree, topdown=True):
-        ignored: set[str] = set()
+        ignored: Set[str] = set()
         if ignore is not None:
             ignored = set(ignore(root, directories + files))
 
@@ -255,7 +255,7 @@ def link_or_copy_tree(
 
 
 def create_similar_directory(
-    source: str, destination: str, permissions: list[Permissions] | None = None
+    source: str, destination: str, permissions: Optional[List[Permissions]] = None
 ) -> None:
     """Create a directory with the same permission bits and owner information.
 

@@ -17,7 +17,7 @@
 """The Ant plugin."""
 
 import logging
-from typing import Any, cast
+from typing import Any, Dict, List, Optional, Set, cast
 
 from overrides import override
 
@@ -33,15 +33,15 @@ logger = logging.getLogger(__name__)
 class AntPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the Ant plugin."""
 
-    ant_build_targets: list[str] = []
-    ant_build_file: str | None = None
-    ant_properties: dict[str, str] = {}
+    ant_build_targets: List[str] = []
+    ant_build_file: Optional[str] = None
+    ant_properties: Dict[str, str] = {}
 
     source: str
 
     @classmethod
     @override
-    def unmarshal(cls, data: dict[str, Any]) -> "AntPluginProperties":
+    def unmarshal(cls, data: Dict[str, Any]) -> "AntPluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -65,7 +65,7 @@ class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: list[str] | None = None
+        self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -130,22 +130,22 @@ class AntPlugin(JavaPlugin):
     validator_class = AntPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
     @override
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(AntPluginProperties, self._options)
 

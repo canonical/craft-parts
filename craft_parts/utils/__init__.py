@@ -16,7 +16,7 @@
 
 """Utilities and helpers."""
 
-from typing import Any
+from typing import Any, Dict
 
 
 def package_name() -> str:
@@ -27,7 +27,7 @@ def package_name() -> str:
 class Singleton(type):
     """Singleton metaclass."""
 
-    _instances: dict = {}  # type: ignore[type-arg]
+    _instances: Dict = {}  # type: ignore[type-arg]
 
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
         """Return an existing instance, or create a new instance."""

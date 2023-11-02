@@ -16,6 +16,7 @@
 
 """Source handler error definitions."""
 
+from typing import List
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -65,7 +66,7 @@ class InvalidSourceOptions(SourceError):  # noqa: N818
     :param options: The invalid source options.
     """
 
-    def __init__(self, *, source_type: str, options: list[str]) -> None:
+    def __init__(self, *, source_type: str, options: List[str]) -> None:
         self.source_type = source_type
         self.options = options
         humanized_options = formatting_utils.humanize_list(options, "and")
@@ -85,7 +86,7 @@ class IncompatibleSourceOptions(SourceError):  # noqa: N818
     :param options: The list of incompatible source options.
     """
 
-    def __init__(self, source_type: str, options: list[str]) -> None:
+    def __init__(self, source_type: str, options: List[str]) -> None:
         self.source_type = source_type
         self.options = options
         humanized_options = formatting_utils.humanize_list(options, "and")
@@ -189,7 +190,7 @@ class PullError(SourceError):
     :param exit_code: The command exit code.
     """
 
-    def __init__(self, *, command: list[str], exit_code: int) -> None:
+    def __init__(self, *, command: List[str], exit_code: int) -> None:
         self.command = command
         self.exit_code = exit_code
         brief = (

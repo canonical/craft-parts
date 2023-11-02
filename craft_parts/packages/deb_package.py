@@ -17,6 +17,7 @@
 """Debian package representation."""
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
@@ -24,8 +25,8 @@ class DebPackage:
     """Debian package representation."""
 
     name: str
-    arch: str | None = None
-    version: str | None = None
+    arch: Optional[str] = None
+    version: Optional[str] = None
 
     @classmethod
     def from_unparsed(cls, package: str) -> "DebPackage":
@@ -40,8 +41,8 @@ class DebPackage:
         :return: DebPackage with populated arch & version, if any.
         """
         parsed_name: str = package
-        parsed_arch: str | None = None
-        parsed_version: str | None = None
+        parsed_arch: Optional[str] = None
+        parsed_version: Optional[str] = None
 
         if "=" in parsed_name:
             parsed_name, parsed_version = parsed_name.split("=")

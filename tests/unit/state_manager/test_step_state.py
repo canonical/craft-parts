@@ -14,8 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 import pytest
 import yaml
@@ -56,15 +57,15 @@ class SomeStepState(step_state.StepState):
 
     def properties_of_interest(
         self,
-        part_properties: dict[str, Any],
+        part_properties: Dict[str, Any],
         *,
-        extra_properties: list[str] | None = None,  # noqa: ARG002
-    ) -> dict[str, Any]:
+        extra_properties: Optional[List[str]] = None,  # noqa: ARG002
+    ) -> Dict[str, Any]:
         return {"name": part_properties.get("name")}
 
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
-    ) -> dict[str, Any]:
+        self, project_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         return {"number": project_options.get("number")}
 
 

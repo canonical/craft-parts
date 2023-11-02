@@ -20,10 +20,9 @@ import logging
 import multiprocessing
 import os
 import sys
-from collections.abc import Callable
 from multiprocessing.connection import Connection
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from craft_parts.utils import os_utils
 
@@ -35,8 +34,8 @@ logger = logging.getLogger(__name__)
 def chroot(
     path: Path,
     target: Callable,  # type: ignore[type-arg]
-    *args: Any,  # noqa: ANN401
-    **kwargs: Any,  # noqa: ANN401
+    *args: Any,
+    **kwargs: Any,
 ) -> Any:  # noqa: ANN401
     """Execute a callable in a chroot environment.
 
@@ -71,9 +70,9 @@ def chroot(
 def _runner(
     path: Path,
     conn: Connection,
-    target: Callable,  # type: ignore[type-arg]
-    args: tuple[Any, ...],
-    kwargs: dict[str, Any],
+    target: Callable[..., Any],
+    args: Tuple[Any, ...],
+    kwargs: Dict[str, Any],
 ) -> None:
     """Chroot to the execution directory and call the target function."""
     logger.debug("[pid=%d] child process: target=%r", os.getpid(), target)
@@ -106,15 +105,15 @@ def _cleanup_chroot(path: Path) -> None:
 class _Mount(NamedTuple):
     """A mount entry."""
 
-    fstype: str | None
+    fstype: Optional[str]
     src: str
     mountpoint: str
-    options: list[str] | None
+    options: Optional[List[str]]
 
 
 # Essential filesystems to mount in order to have basic utilities and
 # name resolution working inside the chroot environment.
-_linux_mounts: list[_Mount] = [
+_linux_mounts: List[_Mount] = [
     _Mount(None, "/etc/resolv.conf", "/etc/resolv.conf", ["--bind"]),
     _Mount("proc", "proc", "/proc", None),
     _Mount("sysfs", "sysfs", "/sys", None),

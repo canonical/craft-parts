@@ -16,7 +16,7 @@
 
 """The autotools plugin implementation."""
 
-from typing import Any, cast
+from typing import Any, Dict, List, Set, cast
 
 from overrides import override
 
@@ -27,15 +27,15 @@ from .properties import PluginProperties
 class AutotoolsPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the autotools plugin."""
 
-    autotools_configure_parameters: list[str] = []
-    autotools_bootstrap_parameters: list[str] = []
+    autotools_configure_parameters: List[str] = []
+    autotools_bootstrap_parameters: List[str] = []
 
     # part properties required by the plugin
     source: str
 
     @classmethod
     @override
-    def unmarshal(cls, data: dict[str, Any]) -> "AutotoolsPluginProperties":
+    def unmarshal(cls, data: Dict[str, Any]) -> "AutotoolsPluginProperties":
         """Populate autotools properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -81,17 +81,17 @@ class AutotoolsPlugin(Plugin):
     properties_class = AutotoolsPluginProperties
 
     @override
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"autoconf", "automake", "autopoint", "gcc", "libtool"}
 
     @override
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
@@ -111,7 +111,7 @@ class AutotoolsPlugin(Plugin):
         return " ".join(cmd)
 
     @override
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         return [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",

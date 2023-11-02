@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import subprocess
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Set
 
 import craft_parts
 import pytest
@@ -56,14 +57,14 @@ class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]):  # noqa: ARG003
+    def unmarshal(cls, data: Dict[str, Any]):  # noqa: ARG003
         return cls()
 
 
 class AppPluginEnvironmentValidator(plugins.PluginEnvironmentValidator):
     """Check the execution environment for the app plugin."""
 
-    def validate_environment(self, *, part_dependencies: list[str] | None = None):
+    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
         """Ensure the environment contains dependencies needed by the plugin.
 
         If mytool is created by a part, that part must be named `mytool`.
@@ -104,7 +105,7 @@ class AppPlugin(plugins.Plugin):
     properties_class = AppPluginProperties
     validator_class = AppPluginEnvironmentValidator
 
-    def validate_environment(self, env: dict[str, str]):
+    def validate_environment(self, env: Dict[str, str]):
         try:
             subprocess.run("mytool", shell=True, check=True, env=env)
         except subprocess.CalledProcessError as err:
@@ -113,16 +114,16 @@ class AppPlugin(plugins.Plugin):
                 reason="mytool not found",
             ) from err
 
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         return set()
 
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         return set()
 
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         return []
 
 
@@ -252,7 +253,9 @@ def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):  # noqa
 
 
 def test_validate_plugin_command_error(
-    new_dir, partitions, mytool_error  # noqa: ARG001
+    new_dir,
+    partitions,
+    mytool_error,  # noqa: ARG001
 ):
     _parts_yaml = textwrap.dedent(
         f"""\

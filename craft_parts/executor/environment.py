@@ -18,8 +18,7 @@
 
 import io
 import logging
-from collections.abc import Iterable
-from typing import Any, cast
+from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 from craft_parts import errors
 from craft_parts.features import Features
@@ -82,7 +81,7 @@ def generate_step_environment(
         return run_environment.getvalue()
 
 
-def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str, str]:
+def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str, str]:
     """Return the built-in part environment.
 
     :param part: The part to get environment information from.
@@ -142,7 +141,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     return part_environment
 
 
-def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
+def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
     """Add project and part information variables to the environment.
 
     :param step_info: Information about the current step.
@@ -185,7 +184,7 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     return global_environment
 
 
-def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
+def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
     """Add project and part information variables to the environment.
 
     :param step_info: Information about the current step.
@@ -220,7 +219,7 @@ def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
 
 
 def expand_environment(
-    data: dict[str, Any], *, info: ProjectInfo, skip: list[str] | None = None
+    data: Dict[str, Any], *, info: ProjectInfo, skip: Optional[List[str]] = None
 ) -> None:
     """Replace global variables with their values.
 
@@ -238,7 +237,7 @@ def expand_environment(
     global_environment = _get_global_environment(info)
     global_environment.update(info.global_environment)
 
-    replacements: dict[str, str] = {}
+    replacements: Dict[str, str] = {}
     for key, value in global_environment.items():
         # Support both $VAR and ${VAR} syntax
         replacements[f"${key}"] = value
@@ -256,8 +255,8 @@ def expand_environment(
 
 
 def _replace_attr(
-    attr: list[str] | (dict[str, str] | str), replacements: dict[str, str]
-) -> list[str] | (dict[str, str] | str):
+    attr: Union[List[str], Dict[str, str], str], replacements: Dict[str, str]
+) -> Union[List[str], Dict[str, str], str]:
     """Recurse through a complex data structure and replace values.
 
     The first matching replacement in the replacement map is used. For example,
@@ -276,11 +275,11 @@ def _replace_attr(
                 attr = attr.replace(key, str(value))
         return attr
 
-    if isinstance(attr, list | tuple):
+    if isinstance(attr, (list, tuple)):
         return [cast(str, _replace_attr(i, replacements)) for i in attr]
 
     if isinstance(attr, dict):
-        result: dict[str, str] = {}
+        result: Dict[str, str] = {}
         for _key, _value in attr.items():
             # Run replacements on both the key and value
             key = cast(str, _replace_attr(_key, replacements))

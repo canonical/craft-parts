@@ -18,8 +18,8 @@
 
 import logging
 import os
-from collections.abc import Callable
 from pathlib import Path
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from craft_parts import overlays
 from craft_parts.permissions import Permissions, filter_permissions
@@ -31,16 +31,16 @@ logger = logging.getLogger(__name__)
 
 def migrate_files(  # noqa: PLR0913
     *,
-    files: set[str],
-    dirs: set[str],
+    files: Set[str],
+    dirs: Set[str],
     srcdir: Path,
     destdir: Path,
     missing_ok: bool = False,
     follow_symlinks: bool = False,
     oci_translation: bool = False,
     fixup_func: Callable[..., None] = lambda *_args: None,
-    permissions: list[Permissions] | None = None,
-) -> tuple[set[str], set[str]]:
+    permissions: Optional[List[Permissions]] = None,
+) -> Tuple[Set[str], Set[str]]:
     """Copy or link files from a directory to another.
 
     Files and directories are migrated from one step to the next during
@@ -60,8 +60,8 @@ def migrate_files(  # noqa: PLR0913
 
     :returns: A tuple containing sets of migrated files and directories.
     """
-    migrated_files: set[str] = set()
-    migrated_dirs: set[str] = set()
+    migrated_files: Set[str] = set()
+    migrated_dirs: Set[str] = set()
     permissions = permissions or []
 
     for dirname in sorted(dirs):
@@ -144,8 +144,8 @@ def clean_shared_area(
     *,
     part_name: str,
     shared_dir: Path,
-    part_states: dict[str, StepState],
-    overlay_migration_state: MigrationState | None,
+    part_states: Dict[str, StepState],
+    overlay_migration_state: Optional[MigrationState],
 ) -> None:
     """Clean files added by a part to a shared directory.
 
@@ -185,8 +185,8 @@ def clean_shared_area(
 def clean_shared_overlay(
     *,
     shared_dir: Path,
-    part_states: dict[str, StepState],
-    overlay_migration_state: MigrationState | None,
+    part_states: Dict[str, StepState],
+    overlay_migration_state: Optional[MigrationState],
 ) -> None:
     """Remove migrated overlay files from a shared directory.
 
@@ -211,7 +211,7 @@ def clean_shared_overlay(
     _clean_migrated_files(files, directories, shared_dir)
 
 
-def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> None:
+def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> None:
     """Remove files and directories migrated from part install to a common directory.
 
     :param files: A set of files to remove.
@@ -245,8 +245,8 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
 
 
 def filter_dangling_whiteouts(
-    files: set[str], dirs: set[str], *, base_dir: Path | None
-) -> set[str]:
+    files: Set[str], dirs: Set[str], *, base_dir: Optional[Path]
+) -> Set[str]:
     """Remove dangling whiteout file and directory names.
 
     Names corresponding to dangling files and directories (i.e. without a
@@ -261,7 +261,7 @@ def filter_dangling_whiteouts(
     if not base_dir:
         return set()
 
-    whiteouts: set[str] = set()
+    whiteouts: Set[str] = set()
 
     # Remove whiteout files if no backing file exists in the base dir.
     for file in list(files):

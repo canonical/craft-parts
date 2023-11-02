@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Operations with platform-specific package repositories."""
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 from . import errors  # noqa: F401
 from . import snaps  # noqa: F401
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from .base import BaseRepository
 
 
-def _get_repository_for_platform() -> type["BaseRepository"]:
+def _get_repository_for_platform() -> Type["BaseRepository"]:
     if is_deb_based():
         from .deb import Ubuntu
 

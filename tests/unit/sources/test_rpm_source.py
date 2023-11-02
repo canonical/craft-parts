@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import pathlib
 import subprocess
 import tarfile
@@ -158,7 +159,11 @@ def test_tar_error(rpm_source, mock_popen, mock_tarfile_open, tmp_path):  # noqa
 
 
 def test_correct_command(
-    mocker, rpm_source, tmp_path, mock_popen, mock_tarfile_open  # noqa: ARG001
+    mocker,
+    rpm_source,
+    tmp_path,
+    mock_popen,
+    mock_tarfile_open,  # noqa: ARG001
 ):
     src = tmp_path / "some-package.rpm"
     src.touch()
@@ -183,7 +188,10 @@ def test_unlinks(rpm_source, tmp_path, mock_popen, mock_tarfile_open):  # noqa: 
 
 
 def test_keep_no_unlink(
-    rpm_source, tmp_path, mock_popen, mock_tarfile_open  # noqa: ARG001
+    rpm_source,
+    tmp_path,
+    mock_popen,  # noqa: ARG001
+    mock_tarfile_open,  # noqa: ARG001
 ):
     src = tmp_path / "test.rpm"
     src.touch()

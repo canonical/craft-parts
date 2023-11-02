@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for partition utilities."""
+
+
 from pathlib import Path, PurePosixPath
 
 import pytest

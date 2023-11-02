@@ -21,8 +21,18 @@ import logging
 import os
 import subprocess
 import sys
-from collections.abc import Iterator, Sequence
-from typing import Any, cast
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 from urllib import parse
 
 import requests
@@ -77,12 +87,12 @@ class SnapPackage:
             self.channel = "latest/stable"
 
         # This store information from a local request
-        self._local_snap_info: dict[str, Any] | None = None
+        self._local_snap_info: Optional[Dict[str, Any]] = None
         # And this stores information from a remote request
-        self._store_snap_info: dict[str, Any] | None = None
+        self._store_snap_info: Optional[Dict[str, Any]] = None
 
-        self._is_installed: bool | None = None
-        self._is_in_store: bool | None = None
+        self._is_installed: Optional[bool] = None
+        self._is_in_store: Optional[bool] = None
 
     @property
     def installed(self) -> bool:
@@ -101,7 +111,7 @@ class SnapPackage:
                 self._is_in_store = False
         return self._is_in_store
 
-    def get_local_snap_info(self) -> dict[str, Any] | None:
+    def get_local_snap_info(self) -> Optional[Dict[str, Any]]:
         """Return a local payload for the snap.
 
         Validity of the results are determined by checking self.installed.
@@ -112,7 +122,7 @@ class SnapPackage:
 
         return self._local_snap_info
 
-    def get_store_snap_info(self) -> dict[str, Any] | None:
+    def get_store_snap_info(self) -> Optional[Dict[str, Any]]:
         """Return a store payload for the snap."""
         if self._is_in_store is None:
             # Some environments timeout often, like the armv7 testing
@@ -139,12 +149,12 @@ class SnapPackage:
 
         return self._store_snap_info
 
-    def _get_store_channels(self) -> dict[str, Any]:
+    def _get_store_channels(self) -> Dict[str, Any]:
         snap_store_info = self.get_store_snap_info()
         if not snap_store_info or not self.in_store:
             return {}
 
-        return cast(dict[str, Any], snap_store_info["channels"])
+        return cast(Dict[str, Any], snap_store_info["channels"])
 
     def get_current_channel(self) -> str:
         """Obtain the current channel for this snap."""
@@ -196,7 +206,7 @@ class SnapPackage:
         store_channels = self._get_store_channels()
         return self.channel in store_channels
 
-    def download(self, *, directory: str | None = None) -> None:
+    def download(self, *, directory: Optional[str] = None) -> None:
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.
@@ -278,7 +288,7 @@ def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
         snap_pkg.download(directory=directory)
 
 
-def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
+def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
     """Install snaps of the format <snap-name>/<channel>.
 
     :return: a list of "name=revision" for the snaps installed.
@@ -319,7 +329,7 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
         ) from call_error
 
 
-def _get_parsed_snap(snap: str) -> tuple[str, str]:
+def _get_parsed_snap(snap: str) -> Tuple[str, str]:
     if "/" in snap:
         sep_index = snap.find("/")
         snap_name = snap[:sep_index]
@@ -346,7 +356,7 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[by
     return snap_file.iter_content(chunk_size)
 
 
-def _get_local_snap_info(snap_name: str) -> dict[str, Any]:
+def _get_local_snap_info(snap_name: str) -> Dict[str, Any]:
     slug = f'snaps/{parse.quote(snap_name, safe="")}'
     url = get_snapd_socket_path_template().format(slug)
     try:
@@ -354,20 +364,20 @@ def _get_local_snap_info(snap_name: str) -> dict[str, Any]:
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_info.raise_for_status()
-    return cast(dict[str, Any], snap_info.json()["result"])
+    return cast(Dict[str, Any], snap_info.json()["result"])
 
 
-def _get_store_snap_info(snap_name: str) -> dict[str, Any]:
+def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
     slug = f"find?{parse.urlencode({'name': snap_name})}"
     url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()
-    return cast(dict[str, Any], snap_info.json()["result"][0])
+    return cast(Dict[str, Any], snap_info.json()["result"][0])
 
 
-def get_installed_snaps() -> list[str]:
+def get_installed_snaps() -> List[str]:
     """Return all the snaps installed in the system.
 
     :return: a list of "name=revision" for the snaps installed.

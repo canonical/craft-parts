@@ -13,7 +13,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 from pathlib import Path
+from typing import List
 
 import pytest
 from craft_parts import errors
@@ -183,9 +186,9 @@ class TestCollisions:
     def create_part_with_permissions(
         self,
         part_name: str,
-        permissions: list[Permissions],
+        permissions: List[Permissions],
         tmpdir: Path,
-        partitions: list[str],
+        partitions: List[str],
     ) -> Part:
         part = Part(
             part_name,

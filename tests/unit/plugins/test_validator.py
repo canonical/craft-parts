@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Set
 
 import pytest
 from craft_parts import errors
@@ -57,14 +58,14 @@ class FooPluginProperties(PluginProperties):
     """Test plugin properties."""
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]):  # noqa: ARG003
+    def unmarshal(cls, data: Dict[str, Any]):  # noqa: ARG003
         return cls()
 
 
 class FooPluginEnvironmentValidator(PluginEnvironmentValidator):
     """Check the execution environment for the test plugin."""
 
-    def validate_environment(self, *, part_dependencies: list[str] | None = None):
+    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
         """Ensure the environment contains dependencies needed by the plugin.
 
         If the foo executable is created in a part, that part must be named
@@ -100,16 +101,16 @@ class FooPlugin(Plugin):
     properties_class = FooPluginProperties
     validator_class = FooPluginEnvironmentValidator
 
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         return set()
 
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         return set()
 
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         return ["foo"]
 
 

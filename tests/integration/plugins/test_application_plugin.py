@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Set
 
 import craft_parts
 import pytest
@@ -27,11 +28,11 @@ from craft_parts import Action, ActionType, Step, errors, plugins
 class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
-    app_stuff: list[str]
+    app_stuff: List[str]
     source: str
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]):
         plugin_data = plugins.extract_plugin_properties(
             data, plugin_name="app", required=["source"]
         )
@@ -43,16 +44,16 @@ class AppPlugin(plugins.Plugin):
 
     properties_class = AppPluginProperties
 
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         return {"build_snap"}
 
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         return {"build_package"}
 
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         return {"PARTS_TEST_VAR": "application plugin"}
 
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         return ["echo hello ${PARTS_TEST_VAR}"]
 
 

@@ -17,6 +17,7 @@
 """Implement the plain file source handler."""
 
 from pathlib import Path
+from typing import List, Optional
 
 from overrides import overrides
 
@@ -36,13 +37,13 @@ class FileSource(FileSourceHandler):
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: str | None = None,
-        source_commit: str | None = None,
-        source_branch: str | None = None,
-        source_depth: int | None = None,
-        source_submodules: list[str] | None = None,
-        source_checksum: str | None = None,
-        ignore_patterns: list[str] | None = None,
+        source_tag: Optional[str] = None,
+        source_commit: Optional[str] = None,
+        source_branch: Optional[str] = None,
+        source_depth: Optional[int] = None,
+        source_submodules: Optional[List[str]] = None,
+        source_checksum: Optional[str] = None,
+        ignore_patterns: Optional[List[str]] = None,
     ) -> None:
         super().__init__(
             source,
@@ -74,8 +75,9 @@ class FileSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
-        src: Path | None = None,
+        *,
+        keep: bool = False,
+        src: Optional[Path] = None,
     ) -> None:
         """Process the source file to extract its payload."""
         # No payload to extract

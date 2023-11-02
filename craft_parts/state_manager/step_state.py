@@ -19,7 +19,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Set
 
 from pydantic_yaml import YamlModel
 
@@ -36,11 +36,11 @@ class MigrationState(YamlModel):
     files from shared areas on step cleanup.
     """
 
-    files: set[str] = set()
-    directories: set[str] = set()
+    files: Set[str] = set()
+    directories: Set[str] = set()
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "MigrationState":
+    def unmarshal(cls, data: Dict[str, Any]) -> "MigrationState":
         """Create and populate a new state object from dictionary data.
 
         :param data: A dictionary containing the data to unmarshal.
@@ -49,7 +49,7 @@ class MigrationState(YamlModel):
         """
         return cls(**data)
 
-    def marshal(self) -> dict[str, Any]:
+    def marshal(self) -> Dict[str, Any]:
         """Create a dictionary containing the part state data.
 
         :return: The newly created dictionary.
@@ -74,8 +74,8 @@ class StepState(MigrationState, ABC):
     the step should run again on a new lifecycle execution.
     """
 
-    part_properties: dict[str, Any] = {}
-    project_options: dict[str, Any] = {}
+    part_properties: Dict[str, Any] = {}
+    project_options: Dict[str, Any] = {}
 
     class Config:
         """Pydantic model configuration."""
@@ -89,21 +89,21 @@ class StepState(MigrationState, ABC):
     @abstractmethod
     def properties_of_interest(
         self,
-        part_properties: dict[str, Any],
+        part_properties: Dict[str, Any],
         *,
-        extra_properties: list[str] | None = None,
-    ) -> dict[str, Any]:
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step."""
 
     @abstractmethod
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
-    ) -> dict[str, Any]:
+        self, project_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Return relevant project options concerning this step."""
 
     def diff_properties_of_interest(
-        self, other_properties: dict[str, Any], also_compare: list[str] | None = None
-    ) -> set[str]:
+        self, other_properties: Dict[str, Any], also_compare: Optional[List[str]] = None
+    ) -> Set[str]:
         """Return properties of interest that differ.
 
         Take a dictionary of properties and compare to our own, returning
@@ -124,8 +124,8 @@ class StepState(MigrationState, ABC):
         )
 
     def diff_project_options_of_interest(
-        self, other_project_options: dict[str, Any]
-    ) -> set[str]:
+        self, other_project_options: Dict[str, Any]
+    ) -> Set[str]:
         """Return project options that differ.
 
         Take a dictionary of project_options and compare to our own,
@@ -142,12 +142,12 @@ class StepState(MigrationState, ABC):
         )
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
+    def unmarshal(cls, data: Dict[str, Any]) -> "StepState":  # noqa: ARG003
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
 
 
-def _get_differing_keys(dict1: dict[str, Any], dict2: dict[str, Any]) -> set[str]:
+def _get_differing_keys(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Set[str]:
     """Return the keys of dictionary entries with different values.
 
     Given two dictionaries, return a set containing the keys for entries

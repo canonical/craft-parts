@@ -13,9 +13,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import itertools
 import pathlib
-from collections.abc import Iterator
+from typing import Iterator
 
 import pytest
 from craft_parts import Action, Step

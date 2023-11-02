@@ -1,5 +1,5 @@
 [tool.black]
-target-version = ["py310"]
+target-version = ["py38"]
 
 [tool.codespell]
 ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
@@ -25,7 +25,7 @@ exclude_also = [
 
 [tool.pyright]
 strict = ["craft_parts"]
-pythonVersion = "3.10"
+pythonVersion = "3.8"
 pythonPlatform = "Linux"
 exclude = [
     "**/.*",
@@ -35,7 +35,7 @@ exclude = [
 ]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.8"
 exclude = [
     "build",
     "results",
@@ -65,7 +65,7 @@ strict = false
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py38"
 src = ["craft-parts"]
 extend-exclude = [
     "docs",
@@ -156,17 +156,20 @@ ignore = [
     "PTH", # Use pathlib.Path
 
 ]
+
+[tool.ruff.flake8-annotations]
+allow-star-arg-any = true
+
 [tool.ruff.pylint]
 max-args = 6
 max-branches = 16
-
 
 [tool.ruff.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
 [tool.ruff.per-file-ignores]
-"tests/**.py" = [  # Some things we want for the moin project are unnecessary in tests.
+"tests/**.py" = [  # Some things we want for the main project are unnecessary in tests.
     "D",  # Ignore docstring rules in tests
     "ANN", # Ignore type annotations in tests
     "S101",  # Allow assertions in tests

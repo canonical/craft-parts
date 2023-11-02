@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import os
 import sys
 import textwrap
 from pathlib import Path
+from typing import Optional
 
 import craft_parts.plugins.plugins
 import pytest
@@ -125,7 +127,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override  # type: ignore[misc]
-        def _get_system_python_interpreter(self) -> str | None:
+        def _get_system_python_interpreter(self) -> Optional[str]:
             return "use-this-python"
 
     plugins.register({"python": MyPythonPlugin})
@@ -155,13 +157,15 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 
 @pytest.mark.parametrize("remove_symlinks", [(True,), (False,)])
 def test_python_plugin_no_system_interpreter(
-    new_dir, partitions, remove_symlinks: bool  # noqa: FBT001
+    new_dir,
+    partitions,
+    remove_symlinks: bool,  # noqa: FBT001
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override
-        def _get_system_python_interpreter(self) -> str | None:
+        def _get_system_python_interpreter(self) -> Optional[str]:
             return None
 
         @override
@@ -300,7 +304,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override  # type: ignore[misc]
-        def _get_system_python_interpreter(self) -> str | None:
+        def _get_system_python_interpreter(self) -> Optional[str]:
             # To have the build fail after failing to find the payload interpreter
             return None
 

@@ -13,10 +13,13 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
+from typing import Dict, List, Set, Type
 
 import pytest
 from craft_parts import plugins, sources
@@ -41,16 +44,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         return set()
 
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         return set()
 
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         return ["hello"]
 
 
@@ -60,7 +63,7 @@ def _step_handler_for_step(
     part_info: PartInfo,
     part: Part,
     dirs: ProjectDirs,
-    plugin_class: type[plugins.Plugin] = FooPlugin,
+    plugin_class: Type[plugins.Plugin] = FooPlugin,
 ) -> StepHandler:
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()

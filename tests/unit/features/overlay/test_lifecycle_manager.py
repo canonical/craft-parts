@@ -16,8 +16,9 @@
 
 """Unit tests for the lifecycle manager."""
 
+
 import sys
-from typing import Any
+from typing import Any, Dict
 
 import craft_parts
 import pytest
@@ -42,7 +43,7 @@ class TestOverlaySupport:
     """Overlays only supported in linux and must run as root."""
 
     @pytest.fixture()
-    def parts_data(self) -> dict[str, Any]:
+    def parts_data(self) -> Dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
 
     def test_overlay_supported(self, mocker, new_dir, parts_data):

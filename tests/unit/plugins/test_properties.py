@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from craft_parts.plugins import PluginProperties
 
@@ -25,10 +25,10 @@ def test_properties_unmarshal():
 
 
 class FooProperties(PluginProperties):
-    foo_parameters: list[str] | None
+    foo_parameters: Optional[List[str]]
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "FooProperties":
+    def unmarshal(cls, data: Dict[str, Any]) -> "FooProperties":
         return cls(**data)
 
 

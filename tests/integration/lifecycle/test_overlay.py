@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import sys
 import textwrap
 from pathlib import Path
+from typing import List
 
 import craft_parts
 import pytest
@@ -116,7 +118,12 @@ class TestOverlayLayerOrder:
         assert actions == [
             # fmt: off
             Action("p3", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("p3", Step.OVERLAY, action_type=ActionType.RERUN, reason="requested step"),
+            Action(
+                "p3",
+                Step.OVERLAY,
+                action_type=ActionType.RERUN,
+                reason="requested step",
+            ),
             # fmt: on
         ]
 
@@ -147,8 +154,18 @@ class TestOverlayLayerOrder:
             # fmt: off
             Action("p3", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("p2", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("p2", Step.OVERLAY, action_type=ActionType.RERUN, reason="required to overlay 'p3'"),
-            Action("p3", Step.OVERLAY, action_type=ActionType.RERUN, reason="requested step"),
+            Action(
+                "p2",
+                Step.OVERLAY,
+                action_type=ActionType.RERUN,
+                reason="required to overlay 'p3'",
+            ),
+            Action(
+                "p3",
+                Step.OVERLAY,
+                action_type=ActionType.RERUN,
+                reason="requested step",
+            ),
             # fmt: on
         ]
 
@@ -187,7 +204,7 @@ class TestOverlayStageDependency:
             Action("p2", Step.OVERLAY, reason="required to overlay 'p3'"),
             Action("p3", Step.OVERLAY),
             Action("p3", Step.BUILD),
-            Action("p3", Step.STAGE)
+            Action("p3", Step.STAGE),
             # fmt: on
         ]
 
@@ -224,7 +241,7 @@ class TestOverlayStageDependency:
             Action("p3", Step.PULL, reason="required to build 'p2'"),
             Action("p3", Step.OVERLAY, reason="required to build 'p2'"),
             Action("p2", Step.BUILD),
-            Action("p2", Step.STAGE)
+            Action("p2", Step.STAGE),
             # fmt: on
         ]
 
@@ -261,7 +278,7 @@ class TestOverlayStageDependency:
             Action("p3", Step.PULL, reason="required to build 'p1'"),
             Action("p3", Step.OVERLAY, reason="required to build 'p1'"),
             Action("p1", Step.BUILD),
-            Action("p1", Step.STAGE)
+            Action("p1", Step.STAGE),
             # fmt: on
         ]
 
@@ -313,7 +330,12 @@ class TestOverlayInvalidationFlow:
         actions = lf.plan(Step.PRIME)
         assert actions == [
             # fmt: off
-            Action("p1", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
+            Action(
+                "p1",
+                Step.PULL,
+                action_type=ActionType.RERUN,
+                reason="'source' property changed",
+            ),
             Action("p1", Step.OVERLAY),
             Action("p1", Step.BUILD),
             Action("p1", Step.STAGE),
@@ -357,9 +379,16 @@ class TestOverlayInvalidationFlow:
             Action("C", Step.OVERLAY),
             Action("B", Step.BUILD),
             Action("B", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+            Action(
+                "B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+            ),
             Action("B", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-            Action("B", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'A'"),
+            Action(
+                "B",
+                Step.STAGE,
+                action_type=ActionType.RUN,
+                reason="required to build 'A'",
+            ),
             Action("A", Step.BUILD),
             Action("C", Step.BUILD),
             Action("B", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
@@ -401,18 +430,45 @@ class TestOverlayInvalidationFlow:
         actions = lf.plan(Step.PRIME)
         assert actions == [
             # fmt: off
-            Action("B", Step.PULL, action_type=ActionType.RERUN, reason="'overlay-packages' property changed"),
+            Action(
+                "B",
+                Step.PULL,
+                action_type=ActionType.RERUN,
+                reason="'overlay-packages' property changed",
+            ),
             Action("A", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("C", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("B", Step.OVERLAY),
-            Action("A", Step.OVERLAY, action_type=ActionType.REAPPLY, reason="previous layer changed"),
-            Action("C", Step.OVERLAY, action_type=ActionType.REAPPLY, reason="previous layer changed"),
+            Action(
+                "A",
+                Step.OVERLAY,
+                action_type=ActionType.REAPPLY,
+                reason="previous layer changed",
+            ),
+            Action(
+                "C",
+                Step.OVERLAY,
+                action_type=ActionType.REAPPLY,
+                reason="previous layer changed",
+            ),
             Action("B", Step.BUILD),
             Action("B", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+            Action(
+                "B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+            ),
             Action("B", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-            Action("B", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'A'"),
-            Action("A", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'B' changed"),
+            Action(
+                "B",
+                Step.STAGE,
+                action_type=ActionType.RUN,
+                reason="required to build 'A'",
+            ),
+            Action(
+                "A",
+                Step.BUILD,
+                action_type=ActionType.RERUN,
+                reason="stage for part 'B' changed",
+            ),
             Action("C", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action("B", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
             Action("A", Step.STAGE),
@@ -496,11 +552,25 @@ class TestOverlayInvalidationFlow:
             Action("A", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("B", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("C", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("A", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-            Action("B", Step.OVERLAY, action_type=ActionType.RERUN, reason="'overlay-script' property changed"),
-            Action("C", Step.OVERLAY, action_type=ActionType.REAPPLY, reason="previous layer changed"),
+            Action(
+                "A", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+            ),
+            Action(
+                "B",
+                Step.OVERLAY,
+                action_type=ActionType.RERUN,
+                reason="'overlay-script' property changed",
+            ),
+            Action(
+                "C",
+                Step.OVERLAY,
+                action_type=ActionType.REAPPLY,
+                reason="previous layer changed",
+            ),
             Action("A", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-            Action("B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"),
+            Action(
+                "B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"
+            ),
             Action("C", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action("A", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
             Action("B", Step.STAGE),
@@ -576,10 +646,24 @@ class TestOverlayInvalidationFlow:
             # fmt: off
             Action("A", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("B", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("A", Step.OVERLAY, action_type=ActionType.RERUN, reason="'overlay-script' property changed"),
-            Action("B", Step.OVERLAY, action_type=ActionType.REAPPLY, reason="previous layer changed"),
-            Action("A", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"),
-            Action("B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"),
+            Action(
+                "A",
+                Step.OVERLAY,
+                action_type=ActionType.RERUN,
+                reason="'overlay-script' property changed",
+            ),
+            Action(
+                "B",
+                Step.OVERLAY,
+                action_type=ActionType.REAPPLY,
+                reason="previous layer changed",
+            ),
+            Action(
+                "A", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"
+            ),
+            Action(
+                "B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"
+            ),
             Action("A", Step.STAGE, action_type=ActionType.RUN),
             Action("B", Step.STAGE),
             Action("A", Step.PRIME),
@@ -810,5 +894,5 @@ class TestOverlaySpecScenarios:
         ]
 
 
-def _filter_skip(actions: list[Action]) -> list[Action]:
+def _filter_skip(actions: List[Action]) -> List[Action]:
     return [a for a in actions if a.action_type != ActionType.SKIP]

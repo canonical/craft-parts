@@ -16,7 +16,7 @@
 
 """Text formatting utilities."""
 
-from collections.abc import Iterable
+from typing import Iterable
 
 
 def humanize_list(

@@ -87,6 +87,7 @@ test_requires = [
     "codespell",
     "coverage",
     "hypothesis",
+    "meson",
     "pydocstyle",
     "pyright==1.1.333",
     "pytest",

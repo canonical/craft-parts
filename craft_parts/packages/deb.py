@@ -25,10 +25,9 @@ import re
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable, Sequence
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -54,7 +53,7 @@ except ImportError as import_error:
 
 
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
-_DEFAULT_FILTERED_STAGE_PACKAGES: list[str] = [
+_DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
     "adduser",
     "apt",
     "apt-utils",
@@ -168,7 +167,7 @@ _DEFAULT_FILTERED_STAGE_PACKAGES: list[str] = [
 ]
 
 
-_IGNORE_FILTERS: dict[str, set[str]] = {
+_IGNORE_FILTERS: Dict[str, Set[str]] = {
     "core20": {
         "python3-attr",
         "python3-blinker",
@@ -289,7 +288,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
 
 
 @functools.lru_cache(maxsize=256)
-def _run_dpkg_query_list_files(package_name: str) -> set[str]:
+def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
     output = (
         subprocess.check_output(["dpkg", "-L", package_name])
         .decode(sys.getfilesystemencoding())
@@ -307,9 +306,9 @@ def _get_dpkg_list_path(base: str) -> pathlib.Path:
 def _get_filtered_stage_package_names(
     *,
     base: str,
-    package_list: list[DebPackage],
-    base_package_names: set[str] | None,
-) -> set[str]:
+    package_list: List[DebPackage],
+    base_package_names: Optional[Set[str]],
+) -> Set[str]:
     """Get filtered packages by name only - no version or architectures."""
     if base_package_names:
         filtered_packages = base_package_names
@@ -323,7 +322,7 @@ def _get_filtered_stage_package_names(
     return filtered_packages - stage_packages
 
 
-def get_packages_in_base(*, base: str) -> list[DebPackage]:
+def get_packages_in_base(*, base: str) -> List[DebPackage]:
     """Get the list of packages for the given base."""
     # We do not want to break what we already have.
     if base in ("core", "core16", "core18"):
@@ -346,7 +345,7 @@ def get_packages_in_base(*, base: str) -> list[DebPackage]:
     return package_list
 
 
-def _is_list_of_slices(names: list[str]) -> bool:
+def _is_list_of_slices(names: List[str]) -> bool:
     """Whether `names` contains Chisel slices or Deb packages.
 
     This function does not "validate" the names to see if they refer to existing slices/
@@ -371,13 +370,13 @@ class Ubuntu(BaseRepository):
         AptCache.configure_apt(application_package_name)
 
     @classmethod
-    def get_package_libraries(cls, package_name: str) -> set[str]:
+    def get_package_libraries(cls, package_name: str) -> Set[str]:
         """Return a list of libraries in package_name."""
         return _run_dpkg_query_list_files(package_name)
 
     @classmethod
     @_apt_cache_wrapper
-    def get_packages_for_source_type(cls, source_type: str) -> set[str]:
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         """Return the packages required to work with source_type."""
         if source_type == "bzr":
             packages = {"bzr"}
@@ -419,7 +418,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
-    def _check_if_all_packages_installed(cls, package_names: list[str]) -> bool:
+    def _check_if_all_packages_installed(cls, package_names: List[str]) -> bool:
         """Check if all given packages are installed.
 
         Will check versions if using <pkg_name>=<pkg_version> syntax parsed by
@@ -444,8 +443,8 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
-    def _get_installed_package_versions(cls, package_names: Sequence[str]) -> list[str]:
-        packages: list[str] = []
+    def _get_installed_package_versions(cls, package_names: Sequence[str]) -> List[str]:
+        packages: List[str] = []
 
         with AptCache() as apt_cache:
             for package_name in package_names:
@@ -467,8 +466,8 @@ class Ubuntu(BaseRepository):
     @classmethod
     @_apt_cache_wrapper
     def _get_packages_marked_for_installation(
-        cls, package_names: list[str]
-    ) -> list[tuple[str, str]]:
+        cls, package_names: List[str]
+    ) -> List[Tuple[str, str]]:
         with AptCache() as apt_cache:
             try:
                 apt_cache.mark_packages(set(package_names))
@@ -478,7 +477,7 @@ class Ubuntu(BaseRepository):
             return apt_cache.get_packages_marked_for_installation()
 
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(cls, package_names: List[str]) -> None:
         """Download the specified packages to the local package cache area."""
         logger.debug("Downloading packages: %s", " ".join(package_names))
         env = os.environ.copy()
@@ -508,11 +507,11 @@ class Ubuntu(BaseRepository):
     @classmethod
     def install_packages(
         cls,
-        package_names: list[str],
+        package_names: List[str],
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
-    ) -> list[str]:
+    ) -> List[str]:
         """Install packages on the host system."""
         if not package_names:
             return []
@@ -549,7 +548,7 @@ class Ubuntu(BaseRepository):
         )
 
     @classmethod
-    def _install_packages(cls, package_names: list[str]) -> None:
+    def _install_packages(cls, package_names: List[str]) -> None:
         logger.debug("Installing packages: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
@@ -582,13 +581,13 @@ class Ubuntu(BaseRepository):
         cls,
         *,
         cache_dir: Path,
-        package_names: list[str],
+        package_names: List[str],
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
         list_only: bool = False,
-        packages_filters: set[str] | None = None,
-    ) -> list[str]:
+        packages_filters: Optional[Set[str]] = None,
+    ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         logger.debug("Requested stage-packages: %s", sorted(package_names))
 
@@ -616,13 +615,13 @@ class Ubuntu(BaseRepository):
         cls,
         *,
         cache_dir: Path,
-        package_names: list[str],
+        package_names: List[str],
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
         list_only: bool = False,
-        packages_filters: set[str] | None = None,
-    ) -> list[str]:
+        packages_filters: Optional[Set[str]] = None,
+    ) -> List[str]:
         """Fetch .deb stage packages to stage_packages_path."""
         filtered_names = _get_filtered_stage_package_names(
             base=base,
@@ -639,7 +638,7 @@ class Ubuntu(BaseRepository):
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
 
-        installed: set[str] = set()
+        installed: Set[str] = set()
 
         # Update the package cache
         cls.refresh_packages_list()
@@ -671,7 +670,7 @@ class Ubuntu(BaseRepository):
         *,
         stage_packages_path: pathlib.Path,
         install_path: pathlib.Path,
-        stage_packages: list[str] | None = None,
+        stage_packages: Optional[List[str]] = None,
         track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages to install_path."""
@@ -718,7 +717,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def _unpack_stage_slices(
-        cls, *, stage_packages: list[str], install_path: pathlib.Path
+        cls, *, stage_packages: List[str], install_path: pathlib.Path
     ) -> None:
         """Cut Chisel slices into a destination path.
 
@@ -747,7 +746,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
-    def get_installed_packages(cls) -> list[str]:
+    def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions."""
         with AptCache() as apt_cache:
             return [
@@ -767,7 +766,7 @@ class Ubuntu(BaseRepository):
         return output.decode().strip()
 
 
-def get_cache_dirs(cache_dir: Path) -> tuple[Path, Path]:
+def get_cache_dirs(cache_dir: Path) -> Tuple[Path, Path]:
     """Return the paths to the stage and deb cache directories."""
     stage_cache_dir = cache_dir / "stage-packages"
     deb_cache_dir = cache_dir / "download"
@@ -775,7 +774,7 @@ def get_cache_dirs(cache_dir: Path) -> tuple[Path, Path]:
     return (stage_cache_dir, deb_cache_dir)
 
 
-def process_run(command: list[str], **kwargs: Any) -> None:  # noqa: ANN401
+def process_run(command: List[str], **kwargs: Any) -> None:
     """Run a command and log its output."""
     # Pass logger so messages can be logged as originating from this package.
     os_utils.process_run(command, logger.debug, **kwargs)

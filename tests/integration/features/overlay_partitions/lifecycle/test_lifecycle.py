@@ -16,6 +16,8 @@
 
 # Allow redefinition in order to include parent tests below.
 # mypy: disable-error-code="no-redef"
+
+
 from pathlib import Path
 
 import pytest
@@ -60,9 +62,19 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         # fmt: off
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.RUN, reason="required to overlay 'foobar'"),
+        Action(
+            "foo",
+            Step.OVERLAY,
+            action_type=ActionType.RUN,
+            reason="required to overlay 'foobar'",
+        ),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.OVERLAY, action_type=ActionType.RUN, reason="required to overlay 'foobar'"),
+        Action(
+            "bar",
+            Step.OVERLAY,
+            action_type=ActionType.RUN,
+            reason="required to overlay 'foobar'",
+        ),
         Action("foobar", Step.OVERLAY),
         Action("foobar", Step.BUILD),
         Action("foobar", Step.STAGE),
@@ -99,7 +111,9 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action(
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+        ),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -117,11 +131,33 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.RERUN,
+            reason="'source' property changed",
+        ),
+        Action(
+            "foo",
+            Step.OVERLAY,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+        ),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -139,7 +175,9 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+        Action(
+            "foobar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -154,20 +192,52 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         # fmt: off
-        Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.UPDATE,
+            reason="source changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", step=Step.OVERLAY, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
-        Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            step=Step.OVERLAY,
+            action_type=ActionType.UPDATE,
+            reason="'PULL' step changed",
+        ),
+        Action(
+            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
+        Action(
+            "foobar",
+            step=Step.OVERLAY,
+            action_type=ActionType.SKIP,
+            reason="already ran",
+        ),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.UPDATE,
+            reason="'PULL' step changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RERUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
@@ -181,9 +251,18 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+        Action(
+            "foo", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
+        Action(
+            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
+        Action(
+            "foobar",
+            step=Step.OVERLAY,
+            action_type=ActionType.SKIP,
+            reason="already ran",
+        ),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),

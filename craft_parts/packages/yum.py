@@ -16,6 +16,7 @@
 
 import logging
 import subprocess
+from typing import List, Set
 
 from craft_parts.utils import os_utils
 
@@ -41,7 +42,7 @@ class YUMRepository(BaseRepository):
         )
 
     @classmethod
-    def get_package_libraries(cls, package_name: str) -> set[str]:
+    def get_package_libraries(cls, package_name: str) -> Set[str]:
         """Return a list of libraries in package_name.
 
         XXX: method left out of YUMRepository's MVP; cannot return a sane default so
@@ -50,7 +51,7 @@ class YUMRepository(BaseRepository):
         raise NotImplementedError("Functionality not yet provided by YUMRepository.")
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type: str) -> set[str]:
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         """Return a list of packages required to work with source_type."""
         if source_type == "bzr":
             packages = {"bzr"}
@@ -83,7 +84,7 @@ class YUMRepository(BaseRepository):
         """
 
     @classmethod
-    def _check_if_all_packages_installed(cls, package_names: list[str]) -> bool:
+    def _check_if_all_packages_installed(cls, package_names: List[str]) -> bool:
         """Check if all given packages are installed.
 
         Will check versions if using <pkg_name>=<pkg_version> syntax parsed by
@@ -104,7 +105,7 @@ class YUMRepository(BaseRepository):
         return False
 
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(cls, package_names: List[str]) -> None:
         """Download the specified packages to the local package cache area.
 
         XXX: method left out of YUMRepository's MVP; nothing will be
@@ -115,11 +116,11 @@ class YUMRepository(BaseRepository):
     @classmethod
     def install_packages(
         cls,
-        package_names: list[str],
+        package_names: List[str],
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
-    ) -> list[str]:
+    ) -> List[str]:
         """Install packages on the host system."""
         if not package_names:
             return []
@@ -146,7 +147,7 @@ class YUMRepository(BaseRepository):
         return []
 
     @classmethod
-    def _install_packages(cls, package_names: list[str]) -> None:
+    def _install_packages(cls, package_names: List[str]) -> None:
         """Really install the packages."""
         logger.debug("Installing packages: %s", " ".join(package_names))
         yum_command = ["yum", "install", "-y"]
@@ -170,7 +171,7 @@ class YUMRepository(BaseRepository):
         return False
 
     @classmethod
-    def get_installed_packages(cls) -> list[str]:
+    def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions.
 
         XXX: method left out of YUMRepository's MVP; returning an empty list
@@ -182,7 +183,7 @@ class YUMRepository(BaseRepository):
         return []
 
 
-def process_run(command: list[str]) -> None:
+def process_run(command: List[str]) -> None:
     """Run a command and log its output."""
     # Pass logger so messages can be logged as originating from this package.
     os_utils.process_run(command, logger.debug)

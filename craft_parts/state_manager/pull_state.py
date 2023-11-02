@@ -16,7 +16,7 @@
 
 """State definitions for the pull step."""
 
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from overrides import override
 
@@ -26,13 +26,13 @@ from .step_state import StepState
 class PullState(StepState):
     """Context information for the pull step."""
 
-    assets: dict[str, Any] = {}
-    outdated_files: list[str] | None = None
-    outdated_dirs: list[str] | None = None
+    assets: Dict[str, Any] = {}
+    outdated_files: Optional[List[str]] = None
+    outdated_dirs: Optional[List[str]] = None
 
     @classmethod
     @override
-    def unmarshal(cls, data: dict[str, Any]) -> "PullState":
+    def unmarshal(cls, data: Dict[str, Any]) -> "PullState":
         """Create and populate a new ``PullState`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
@@ -52,10 +52,10 @@ class PullState(StepState):
     @override
     def properties_of_interest(
         self,
-        part_properties: dict[str, Any],
+        part_properties: Dict[str, Any],
         *,
-        extra_properties: list[str] | None = None,
-    ) -> dict[str, Any]:
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
@@ -83,8 +83,8 @@ class PullState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
-    ) -> dict[str, Any]:
+        self, project_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Return relevant project options concerning this step.
 
         :param project_options: A dictionary containing all project options.

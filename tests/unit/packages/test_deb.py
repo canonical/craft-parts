@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import contextlib
 import subprocess
 import textwrap
-from collections.abc import Generator
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import Generator
 from unittest import mock
 from unittest.mock import call
 
@@ -68,7 +69,9 @@ def _cache_dirs(mocker, tmpdir):
 
     @contextlib.contextmanager  # type: ignore[misc]
     def fake_tempdir(
-        *, suffix: str, **kwargs  # noqa: ARG001
+        *,
+        suffix: str,
+        **kwargs,  # noqa: ARG001
     ) -> Generator[str, None, None]:
         temp_dir = Path(tmpdir, suffix)
         temp_dir.mkdir(exist_ok=True, parents=True)

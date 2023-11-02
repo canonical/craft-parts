@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any
+from typing import Any, Dict
 
 import pytest
 
 
 @pytest.fixture()
-def properties() -> dict[str, Any]:
+def properties() -> Dict[str, Any]:
     return {
         "plugin": "nil",
         "source": "http://example.com/hello-2.3.tar.gz",
@@ -50,7 +50,7 @@ def properties() -> dict[str, Any]:
 
 
 @pytest.fixture()
-def project_options() -> dict[str, Any]:
+def project_options() -> Dict[str, Any]:
     return {
         "application-name": "test",
         "target-arch": "amd64",

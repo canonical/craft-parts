@@ -17,8 +17,7 @@
 import json
 import socketserver
 import threading
-from collections.abc import Callable
-from typing import Any
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib import parse
 
 from tests import fake_servers
@@ -48,7 +47,7 @@ class FakeSnapd:
     @property
     def snap_details_func(
         self,
-    ) -> Callable[[str], tuple[int, dict[str, Any]]] | None:
+    ) -> Optional[Callable[[str], Tuple[int, Dict[str, Any]]]]:
         return self.request_handler.snap_details_func  # type: ignore[no-any-return]
 
     @snap_details_func.setter
@@ -84,9 +83,9 @@ class FakeSnapd:
 
 
 class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
-    snaps_result: list[dict[str, Any]] = []
-    snap_details_func: Callable | None = None  # type: ignore[type-arg]
-    find_result: list[dict[str, Any]] = []
+    snaps_result: List[Dict[str, Any]] = []
+    snap_details_func: Optional[Callable] = None  # type: ignore[type-arg]
+    find_result: List[Dict[str, Any]] = []
     find_exit_code: int = 200
     _private_data = {"new_fake_snap_installed": False}
 

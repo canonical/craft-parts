@@ -26,7 +26,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import TextIO
+from typing import List, Optional, Set, TextIO, Union
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -42,15 +42,15 @@ from .migration import migrate_files
 
 logger = logging.getLogger(__name__)
 
-Stream = TextIO | int | None
+Stream = Union[TextIO, int, None]
 
 
 @dataclasses.dataclass(frozen=True)
 class StepContents:
     """Files and directories to be added to the step's state."""
 
-    files: set[str] = dataclasses.field(default_factory=set)
-    dirs: set[str] = dataclasses.field(default_factory=set)
+    files: Set[str] = dataclasses.field(default_factory=set)
+    dirs: Set[str] = dataclasses.field(default_factory=set)
 
 
 class StepHandler:
@@ -71,7 +71,7 @@ class StepHandler:
         *,
         step_info: StepInfo,
         plugin: Plugin,
-        source_handler: SourceHandler | None,
+        source_handler: Optional[SourceHandler],
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
@@ -309,7 +309,7 @@ class StepHandler:
         )
 
     def _process_api_commands(
-        self, cmd_name: str, cmd_args: list[str], *, step: Step, scriptlet_name: str
+        self, cmd_name: str, cmd_args: List[str], *, step: Step, scriptlet_name: str
     ) -> str:
         """Invoke API command actions."""
         retval = ""
@@ -385,12 +385,12 @@ class StepHandler:
 
 
 def _create_and_run_script(
-    commands: list[str],
+    commands: List[str],
     script_path: Path,
     cwd: Path,
     stdout: Stream,
     stderr: Stream,
-    build_environment_script_path: Path | None = None,
+    build_environment_script_path: Optional[Path] = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:

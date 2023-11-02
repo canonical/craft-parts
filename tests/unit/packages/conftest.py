@@ -14,13 +14,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import pytest
 
 
 @pytest.fixture()
 def fake_apt_cache(mocker):
     def get_installed_version(
-        package_name, resolve_virtual_packages=False  # noqa: ARG001, FBT002
+        package_name,
+        resolve_virtual_packages=False,  # noqa: ARG001, FBT002
     ):
         if "installed" in package_name:
             return "1.0"

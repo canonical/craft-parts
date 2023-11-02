@@ -18,7 +18,7 @@
 
 import hashlib
 import logging
-from typing import Optional
+from typing import Dict, List, Optional
 
 from craft_parts.parts import Part
 
@@ -111,20 +111,20 @@ class LayerStateManager:
     """
 
     def __init__(
-        self, part_list: list[Part], base_layer_hash: LayerHash | None
+        self, part_list: List[Part], base_layer_hash: Optional[LayerHash]
     ) -> None:
         self._part_list = part_list
         self._base_layer_hash = base_layer_hash
 
-        self._layer_hash: dict[str, LayerHash | None] = {}
+        self._layer_hash: Dict[str, Optional[LayerHash]] = {}
         for part in part_list:
             self.set_layer_hash(part, LayerHash.load(part))
 
-    def get_layer_hash(self, part: Part) -> LayerHash | None:
+    def get_layer_hash(self, part: Part) -> Optional[LayerHash]:
         """Obtain the layer hash for the given part."""
         return self._layer_hash.get(part.name)
 
-    def set_layer_hash(self, part: Part, layer_hash: LayerHash | None) -> None:
+    def set_layer_hash(self, part: Part, layer_hash: Optional[LayerHash]) -> None:
         """Store the value of the layer hash for the given part."""
         self._layer_hash[part.name] = layer_hash
 

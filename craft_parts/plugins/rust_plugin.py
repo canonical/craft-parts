@@ -19,7 +19,7 @@
 import logging
 import subprocess
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
 
 from overrides import override
 from pydantic import conlist
@@ -38,7 +38,10 @@ logger = logging.getLogger(__name__)
 # A workaround for mypy false positives
 # see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
 # The proper fix requires Python 3.9+ (needs `typing.Annotated`)
-UniqueStrList = list[str] if TYPE_CHECKING else conlist(str, unique_items=True)  # type: ignore[valid-type]
+if TYPE_CHECKING:
+    UniqueStrList = List[str]  # type: ignore[misc]
+else:
+    UniqueStrList = conlist(str, unique_items=True)  # type: ignore[valid-type]
 
 
 class RustPluginProperties(PluginProperties, PluginModel):
@@ -47,15 +50,15 @@ class RustPluginProperties(PluginProperties, PluginModel):
     # part properties required by the plugin
     rust_features: UniqueStrList = []  # type: ignore[valid-type]
     rust_path: UniqueStrList = ["."]  # type: ignore[valid-type]
-    rust_channel: str | None = None
+    rust_channel: Optional[str] = None
     rust_use_global_lto: bool = False
     rust_no_default_features: bool = False
     source: str
-    after: UniqueStrList | None = None  # type: ignore[valid-type]
+    after: Optional[UniqueStrList] = None
 
     @classmethod
     @override
-    def unmarshal(cls, data: dict[str, Any]) -> "RustPluginProperties":
+    def unmarshal(cls, data: Dict[str, Any]) -> "RustPluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -81,7 +84,7 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: list[str] | None = None
+        self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
         """Ensure the environment has the dependencies to build Rust applications.
 
@@ -148,12 +151,12 @@ class RustPlugin(Plugin):
     validator_class = RustPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"curl", "gcc", "git", "pkg-config", "findutils"}
 
@@ -178,14 +181,14 @@ class RustPlugin(Plugin):
         return [GET_RUSTUP_COMMAND_TEMPLATE.format(channel=channel)]
 
     @override
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
             "PATH": "${HOME}/.cargo/bin:${PATH}",
         }
 
     @override
-    def get_pull_commands(self) -> list[str]:
+    def get_pull_commands(self) -> List[str]:
         """Return a list of commands to run during the pull step."""
         options = cast(RustPluginProperties, self._options)
         if not options.rust_channel and self._check_system_rust():
@@ -205,12 +208,12 @@ class RustPlugin(Plugin):
         ]
 
     @override
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         """Return a list of commands to run during the build step."""
         options = cast(RustPluginProperties, self._options)
 
-        rust_build_cmd: list[str] = []
-        config_cmd: list[str] = []
+        rust_build_cmd: List[str] = []
+        config_cmd: List[str] = []
 
         if options.rust_features:
             features_string = " ".join(options.rust_features)

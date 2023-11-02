@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utility functions for paths."""
+
 import re
 from pathlib import PurePath, PurePosixPath
-from typing import NamedTuple, TypeVar, cast
+from typing import NamedTuple, Optional, TypeVar, Union, cast
 
 from craft_parts.features import Features
 
@@ -29,11 +30,11 @@ HAS_PARTITION_REGEX = re.compile(r"^\([a-z]+\)(/.*)?$")
 class PartitionPathPair(NamedTuple):
     """A pair containing a partition name and a path."""
 
-    partition: str | None
-    path: PurePath | str
+    partition: Optional[str]
+    path: Union[PurePath, str]
 
 
-def _has_partition(path: PurePath | str) -> bool:
+def _has_partition(path: Union[PurePath, str]) -> bool:
     """Check whether a path has an explicit partition."""
     return bool(HAS_PARTITION_REGEX.match(str(path)))
 

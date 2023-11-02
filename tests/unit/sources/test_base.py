@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from craft_parts import ProjectDirs
@@ -86,8 +88,9 @@ class BarFileSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
-        src: Path | None = None,
+        *,
+        keep: bool = False,
+        src: Optional[Path] = None,
     ) -> None:
         """Extract source payload."""
         self.provision_dst = dst

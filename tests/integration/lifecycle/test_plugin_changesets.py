@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Set
 
 import craft_parts
 import yaml
@@ -35,7 +36,7 @@ class ExamplePluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]):  # noqa: ARG003
+    def unmarshal(cls, data: Dict[str, Any]):  # noqa: ARG003
         return cls()
 
 
@@ -44,16 +45,16 @@ class ExamplePlugin(plugins.Plugin):
 
     properties_class = ExamplePluginProperties
 
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         return set()
 
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         return set()
 
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         if self._action_properties.changed_files:
             return [f"echo Changed files: {self._action_properties.changed_files}"]
 

@@ -19,13 +19,14 @@
 import logging
 import os
 import sys
+from typing import Optional
 
 from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
 
-def read_xattr(path: str, key: str) -> str | None:
+def read_xattr(path: str, key: str) -> Optional[str]:
     """Get extended attribute metadata from a file.
 
     :param path: The file to get metadata from.

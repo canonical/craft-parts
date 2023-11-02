@@ -81,9 +81,10 @@ cases you want to refer to the documentation for the specific plugin.
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Dict, List, Optional, Type
 
 from craft_parts.dirs import ProjectDirs
+from craft_parts.parts import Part
 
 from . import errors
 from .base import SourceHandler
@@ -96,13 +97,10 @@ from .snap_source import SnapSource
 from .tar_source import TarSource
 from .zip_source import ZipSource
 
-if TYPE_CHECKING:
-    from craft_parts.parts import Part
-
-SourceHandlerType = type[SourceHandler]
+SourceHandlerType = Type[SourceHandler]
 
 
-_source_handler: dict[str, SourceHandlerType] = {
+_source_handler: Dict[str, SourceHandlerType] = {
     "local": LocalSource,
     "tar": TarSource,
     "git": GitSource,
@@ -116,10 +114,10 @@ _source_handler: dict[str, SourceHandlerType] = {
 
 def get_source_handler(
     cache_dir: Path,
-    part: "Part",
+    part: Part,
     project_dirs: ProjectDirs,
-    ignore_patterns: list[str] | None = None,
-) -> SourceHandler | None:
+    ignore_patterns: Optional[List[str]] = None,
+) -> Optional[SourceHandler]:
     """Return the appropriate handler for the given source.
 
     :param application_name: The name of the application using Craft Parts.
@@ -171,7 +169,8 @@ _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 
 def get_source_type_from_uri(
-    source: str, ignore_errors: bool = False  # noqa: FBT001, FBT002
+    source: str,
+    ignore_errors: bool = False,  # noqa: FBT001, FBT002
 ) -> str:
     """Return the source type based on the given source URI.
 

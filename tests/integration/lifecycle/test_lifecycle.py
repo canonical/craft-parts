@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import textwrap
 from pathlib import Path
 
@@ -104,7 +105,9 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action(
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+        ),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -121,10 +124,27 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
-        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.RERUN,
+            reason="'source' property changed",
+        ),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+        ),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -154,16 +174,36 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         # fmt: off
-        Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.UPDATE,
+            reason="source changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.UPDATE,
+            reason="'PULL' step changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RERUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]

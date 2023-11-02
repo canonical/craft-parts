@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Plugins used in unit tests."""
+from typing import Dict, List, Set
 
 from craft_parts.plugins import Plugin, PluginProperties
 
@@ -25,19 +26,19 @@ class StrictTestPlugin(Plugin):
 
     supports_strict_mode = True
 
-    def get_pull_commands(self) -> list[str]:
+    def get_pull_commands(self) -> List[str]:
         return [f"strict mode: {self._part_info.strict_mode}"]
 
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         return set()
 
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         return set()
 
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         return []
 
 
@@ -46,14 +47,14 @@ class NonStrictTestPlugin(Plugin):
 
     properties_class = PluginProperties
 
-    def get_build_snaps(self) -> set[str]:
+    def get_build_snaps(self) -> Set[str]:
         return set()
 
-    def get_build_packages(self) -> set[str]:
+    def get_build_packages(self) -> Set[str]:
         return set()
 
-    def get_build_environment(self) -> dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> list[str]:
+    def get_build_commands(self) -> List[str]:
         return []

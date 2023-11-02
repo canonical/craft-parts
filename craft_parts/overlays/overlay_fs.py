@@ -20,6 +20,7 @@ import logging
 import os
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import List, Optional
 
 from craft_parts.utils import os_utils
 
@@ -32,12 +33,12 @@ class OverlayFS:
     """Linux overlayfs operations."""
 
     def __init__(
-        self, *, lower_dirs: list[Path], upper_dir: Path, work_dir: Path
+        self, *, lower_dirs: List[Path], upper_dir: Path, work_dir: Path
     ) -> None:
         self._lower_dirs = lower_dirs
         self._upper_dir = upper_dir
         self._work_dir = work_dir
-        self._mountpoint: Path | None = None
+        self._mountpoint: Optional[Path] = None
 
     def mount(self, mountpoint: Path) -> None:
         """Mount an overlayfs.

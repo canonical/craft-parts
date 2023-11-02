@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import http.server
 import os
-import subprocess
 import tempfile
 import threading
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, Dict, NamedTuple, Optional
 from unittest import mock
 
 import pytest
@@ -186,7 +186,7 @@ def dependency_fixture(new_dir):
         name: str,
         broken: bool = False,  # noqa: FBT001, FBT002
         invalid: bool = False,  # noqa: FBT001, FBT002
-        output: str | None = None,
+        output: Optional[str] = None,
     ) -> Path:
         """Creates a mock executable dependency.
 
@@ -216,11 +216,11 @@ def dependency_fixture(new_dir):
 class ChmodCall(NamedTuple):
     owner: int
     group: int
-    kwargs: dict[str, Any]
+    kwargs: Dict[str, Any]
 
 
 @pytest.fixture()
-def mock_chown(mocker) -> dict[str, ChmodCall]:
+def mock_chown(mocker) -> Dict[str, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the
@@ -234,10 +234,3 @@ def mock_chown(mocker) -> dict[str, ChmodCall]:
     mocker.patch.object(os, "chown", side_effect=fake_chown)
 
     return calls
-
-
-@pytest.fixture()
-def _meson():
-    subprocess.run(["pip", "install", "meson"], check=True)
-    yield
-    subprocess.run(["pip", "uninstall", "meson", "--yes"], check=True)

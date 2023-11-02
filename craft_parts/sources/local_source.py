@@ -21,9 +21,8 @@ import functools
 import glob
 import logging
 import os
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, List, Optional, Set, Tuple
 
 from overrides import overrides
 
@@ -43,10 +42,10 @@ class LocalSource(SourceHandler):
 
     def __init__(
         self,
-        *args: Any,  # noqa: ANN401
+        *args: Any,
         project_dirs: ProjectDirs,
         copy_function: Callable[..., None] = file_utils.link_or_copy,
-        **kwargs: Any,  # noqa: ANN401
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, project_dirs=project_dirs, **kwargs)
         self.source_abspath = os.path.abspath(self.source)
@@ -69,8 +68,8 @@ class LocalSource(SourceHandler):
         self._ignore = functools.partial(
             _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns
         )
-        self._updated_files: set[str] = set()
-        self._updated_directories: set[str] = set()
+        self._updated_files: Set[str] = set()
+        self._updated_directories: Set[str] = set()
 
     @overrides
     def pull(self) -> None:
@@ -87,7 +86,7 @@ class LocalSource(SourceHandler):
 
     @overrides
     def check_if_outdated(
-        self, target: str, *, ignore_files: list[str] | None = None
+        self, target: str, *, ignore_files: Optional[List[str]] = None
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -145,7 +144,7 @@ class LocalSource(SourceHandler):
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
     @overrides
-    def get_outdated_files(self) -> tuple[list[str], list[str]]:
+    def get_outdated_files(self) -> Tuple[List[str], List[str]]:
         """Obtain lists of outdated files and directories.
 
         :return: The lists of outdated files and directories.
@@ -182,11 +181,11 @@ class LocalSource(SourceHandler):
 def _ignore(
     source: str,
     current_directory: str,
-    patterns: list[str],
+    patterns: List[str],
     directory: str,
     _files: Any,  # noqa: ANN401
-    also_ignore: list[str] | None = None,
-) -> list[str]:
+    also_ignore: Optional[List[str]] = None,
+) -> List[str]:
     """Build a list of files to ignore based on the given patterns."""
     ignored = []
     if directory in (source, current_directory):

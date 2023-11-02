@@ -16,7 +16,7 @@
 
 """State definitions for the overlay step."""
 
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from overrides import override
 
@@ -28,7 +28,7 @@ class OverlayState(StepState):
 
     @classmethod
     @override
-    def unmarshal(cls, data: dict[str, Any]) -> "OverlayState":
+    def unmarshal(cls, data: Dict[str, Any]) -> "OverlayState":
         """Create and populate a new ``OverlayState`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
@@ -48,10 +48,10 @@ class OverlayState(StepState):
     @override
     def properties_of_interest(
         self,
-        part_properties: dict[str, Any],
+        part_properties: Dict[str, Any],
         *,
-        extra_properties: list[str] | None = None,
-    ) -> dict[str, Any]:
+        extra_properties: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
@@ -69,8 +69,8 @@ class OverlayState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
-    ) -> dict[str, Any]:
+        self, project_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Return relevant project options concerning this step.
 
         :param project_options: A dictionary containing all project options.

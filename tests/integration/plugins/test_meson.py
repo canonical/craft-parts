@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import subprocess
 import textwrap
 from pathlib import Path
@@ -24,7 +25,6 @@ from craft_parts import LifecycleManager, Step
 
 
 @pytest.mark.usefixtures("mocker")
-@pytest.mark.usefixtures("_meson")
 def test_meson_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
@@ -77,7 +77,6 @@ def test_meson_plugin(new_dir, partitions):
 
 
 @pytest.mark.usefixtures("mocker")
-@pytest.mark.usefixtures("_meson")
 def test_meson_plugin_with_subdir(new_dir, partitions):
     """Verify meson builds with a source subdirectory."""
     parts_yaml = textwrap.dedent(

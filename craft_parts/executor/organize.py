@@ -27,13 +27,14 @@ import os
 import shutil
 from glob import iglob
 from pathlib import Path
+from typing import Dict
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
 
 
 def organize_files(
-    *, part_name: str, mapping: dict[str, str], base_dir: Path, overwrite: bool
+    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool
 ) -> None:
     """Rearrange files for part staging.
 

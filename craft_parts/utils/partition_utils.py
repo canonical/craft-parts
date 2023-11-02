@@ -16,12 +16,12 @@
 """Unit tests for partition utilities."""
 
 import re
-from collections.abc import Sequence
+from typing import Optional, Sequence
 
 from craft_parts import errors, features
 
 
-def validate_partition_names(partitions: Sequence[str] | None) -> None:
+def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     """Validate the partition feature set.
 
     If the partition feature is enabled, then:

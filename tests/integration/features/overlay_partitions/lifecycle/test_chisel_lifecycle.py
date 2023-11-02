@@ -16,5 +16,4 @@
 
 # Make pytest run any non-overridden chisel tests here with partitions enabled.
 
-
 from tests.integration.lifecycle.test_chisel_lifecycle import *  # noqa: F403

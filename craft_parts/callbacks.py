@@ -18,9 +18,8 @@
 
 import itertools
 import logging
-from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import NamedTuple
+from typing import Callable, Iterable, List, NamedTuple, Optional, Set, Union
 
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
@@ -31,21 +30,23 @@ class CallbackHook(NamedTuple):
     """A callback function and a list of steps to run it for."""
 
     function: Callable  # type: ignore[type-arg]
-    step_list: list[Step] | None
+    step_list: Optional[List[Step]]
 
 
 FilterCallback = Callable[[ProjectInfo], Iterable[str]]
 ExecutionCallback = Callable[[ProjectInfo], None]
 StepCallback = Callable[[StepInfo], bool]
 ConfigureOverlayCallback = Callable[[Path, ProjectInfo], None]
-Callback = FilterCallback | ExecutionCallback | StepCallback | ConfigureOverlayCallback
+Callback = Union[
+    FilterCallback, ExecutionCallback, StepCallback, ConfigureOverlayCallback
+]
 
-_STAGE_PACKAGE_FILTERS: list[CallbackHook] = []
-_OVERLAY_HOOKS: list[CallbackHook] = []
-_PROLOGUE_HOOKS: list[CallbackHook] = []
-_EPILOGUE_HOOKS: list[CallbackHook] = []
-_PRE_STEP_HOOKS: list[CallbackHook] = []
-_POST_STEP_HOOKS: list[CallbackHook] = []
+_STAGE_PACKAGE_FILTERS: List[CallbackHook] = []
+_OVERLAY_HOOKS: List[CallbackHook] = []
+_PROLOGUE_HOOKS: List[CallbackHook] = []
+_EPILOGUE_HOOKS: List[CallbackHook] = []
+_PRE_STEP_HOOKS: List[CallbackHook] = []
+_POST_STEP_HOOKS: List[CallbackHook] = []
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ def register_epilogue(func: ExecutionCallback) -> None:
 
 
 def register_pre_step(
-    func: StepCallback, *, step_list: list[Step] | None = None
+    func: StepCallback, *, step_list: Optional[List[Step]] = None
 ) -> None:
     """Register a pre-step callback function.
 
@@ -111,7 +112,7 @@ def register_pre_step(
 
 
 def register_post_step(
-    func: StepCallback, *, step_list: list[Step] | None = None
+    func: StepCallback, *, step_list: Optional[List[Step]] = None
 ) -> None:
     """Register a post-step callback function.
 
@@ -133,7 +134,7 @@ def unregister_all() -> None:
     _POST_STEP_HOOKS[:] = []
 
 
-def get_stage_packages_filters(project_info: ProjectInfo) -> set[str] | None:
+def get_stage_packages_filters(project_info: ProjectInfo) -> Optional[Set[str]]:
     """Obtain the list of stage packages to be filtered out.
 
     :param project_info: The project information to be sent to callback functions.
@@ -192,13 +193,13 @@ def run_post_step(step_info: StepInfo) -> None:
     return _run_step(hook_list=_POST_STEP_HOOKS, step_info=step_info)
 
 
-def _run_step(*, hook_list: list[CallbackHook], step_info: StepInfo) -> None:
+def _run_step(*, hook_list: List[CallbackHook], step_info: StepInfo) -> None:
     for hook in hook_list:
         if not hook.step_list or step_info.step in hook.step_list:
             hook.function(step_info)
 
 
-def _ensure_not_defined(func: Callback, hook_list: list[CallbackHook]) -> None:
+def _ensure_not_defined(func: Callback, hook_list: List[CallbackHook]) -> None:
     for hook in hook_list:
         if func == hook.function:
             raise errors.CallbackRegistrationError(

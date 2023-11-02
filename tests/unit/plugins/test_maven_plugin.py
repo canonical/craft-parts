@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import io
 import os
 from pathlib import Path
@@ -210,7 +211,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
 
     env_dict = {f"{protocol}_proxy": "http://my-proxy-host:3128"}
     if no_proxy:
-        env_dict["NO_PROXY"] = no_proxy
+        env_dict["no_proxy"] = no_proxy
 
     with mock.patch.dict(os.environ, env_dict):
         assert plugin.get_build_commands() == (

@@ -18,8 +18,7 @@
 
 import dataclasses
 import pathlib
-from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Union
 
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
@@ -35,8 +34,8 @@ class PartsError(Exception):
     """
 
     brief: str
-    details: str | None = None
-    resolution: str | None = None
+    details: Optional[str] = None
+    resolution: Optional[str] = None
 
     def __str__(self) -> str:
         components = [self.brief]
@@ -134,14 +133,14 @@ class PartSpecificationError(PartsError):
 
     @classmethod
     def from_validation_error(
-        cls, *, part_name: str, error_list: list["ErrorDict"]
+        cls, *, part_name: str, error_list: List["ErrorDict"]
     ) -> "PartSpecificationError":
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
         :param error_list: A list of dictionaries containing pydantic error definitions.
         """
-        formatted_errors: list[str] = []
+        formatted_errors: List[str] = []
 
         for error in error_list:
             loc = error.get("loc")
@@ -218,7 +217,10 @@ class XAttributeError(PartsError):
     """
 
     def __init__(
-        self, key: str, path: str, is_write: bool = False  # noqa: FBT001, FBT002
+        self,
+        key: str,
+        path: str,
+        is_write: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         self.key = key
         self.path = path
@@ -355,7 +357,7 @@ class FilesetConflict(PartsError):  # noqa: N818
     :param conflicting_files: A set containing the conflicting file names.
     """
 
-    def __init__(self, conflicting_files: set[str]) -> None:
+    def __init__(self, conflicting_files: Set[str]) -> None:
         self.conflicting_files = conflicting_files
         brief = "Failed to filter files: inconsistent 'stage' and 'prime' filesets."
         details = (
@@ -393,7 +395,7 @@ class PartFilesConflict(PartsError):  # noqa: N818
     """
 
     def __init__(
-        self, *, part_name: str, other_part_name: str, conflicting_files: list[str]
+        self, *, part_name: str, other_part_name: str, conflicting_files: List[str]
     ) -> None:
         self.part_name = part_name
         self.other_part_name = other_part_name
@@ -420,7 +422,7 @@ class StageFilesConflict(PartsError):  # noqa: N818
     :param conflicting_files: The list of confictling files.
     """
 
-    def __init__(self, *, part_name: str, conflicting_files: list[str]) -> None:
+    def __init__(self, *, part_name: str, conflicting_files: List[str]) -> None:
         self.part_name = part_name
         self.conflicting_files = conflicting_files
         indented_conflicting_files = (f"    {i}" for i in conflicting_files)
@@ -607,7 +609,7 @@ class DebError(PartsError):
     """A "deb"-related command failed."""
 
     def __init__(
-        self, deb_path: pathlib.Path, command: list[str], exit_code: int
+        self, deb_path: pathlib.Path, command: List[str], exit_code: int
     ) -> None:
         brief = (
             f"Failed when handling {deb_path}: "
@@ -626,8 +628,8 @@ class PartitionError(PartsError):
         partition: str,
         brief: str,
         *,
-        details: str | None = None,
-        resolution: str | None = None,
+        details: Optional[str] = None,
+        resolution: Optional[str] = None,
     ) -> None:
         self.partition = partition
         super().__init__(brief=brief, details=details, resolution=resolution)
@@ -639,7 +641,7 @@ class InvalidPartitionError(PartitionError):
     def __init__(
         self,
         partition: str,
-        path: str | pathlib.Path,
+        path: Union[str, pathlib.Path],
         valid_partitions: Iterable[str],
     ) -> None:
         self.valid_partitions = valid_partitions
@@ -659,8 +661,8 @@ class PartitionWarning(PartitionError, Warning):  # noqa: N818
         partition: str,
         brief: str,
         *,
-        details: str | None = None,
-        resolution: str | None = None,
+        details: Optional[str] = None,
+        resolution: Optional[str] = None,
     ) -> None:
         super().__init__(
             partition=partition, brief=brief, details=details, resolution=resolution

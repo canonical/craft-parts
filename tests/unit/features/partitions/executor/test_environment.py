@@ -13,6 +13,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+from typing import Set
+
 import pytest
 from craft_parts import ProjectDirs, ProjectInfo
 from craft_parts.executor import environment
@@ -33,7 +37,7 @@ from craft_parts.executor import environment
         ),
     ],
 )
-def test_get_global_environment(new_dir, partitions, variables: set[str]):
+def test_get_global_environment(new_dir, partitions, variables: Set[str]):
     """Test that expand_environment behaves correctly with partitions enabled."""
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
@@ -41,7 +45,6 @@ def test_get_global_environment(new_dir, partitions, variables: set[str]):
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
-        work_dir="/work",
         partitions=partitions,
     )
 

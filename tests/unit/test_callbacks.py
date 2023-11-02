@@ -14,8 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections.abc import Generator
+
 from pathlib import Path
+from typing import Generator, List
 
 import pytest
 from craft_parts import callbacks, errors
@@ -46,7 +47,7 @@ def _callback_4(info: ProjectInfo) -> None:
     print(f"{greet} callback 4")
 
 
-def _callback_filter_1(info: ProjectInfo) -> list[str]:
+def _callback_filter_1(info: ProjectInfo) -> List[str]:
     greet = info.greet
     print(f"{greet} filter 1")
     return ["a", "b", "c"]

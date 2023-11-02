@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Helpers to determine the repository for the platform."""
+from typing import List, Optional
 
 from craft_parts import errors
 from craft_parts.utils import os_utils
@@ -24,7 +25,7 @@ _YUM_BASED_PLATFORM = ["centos"]
 _DNF_BASED_PLATFORM = ["almalinux"]
 
 
-def _check(distro: str | None, platform_distros: list[str]) -> bool:
+def _check(distro: Optional[str], platform_distros: List[str]) -> bool:
     """Check if `distro` is included in the specified platform distros.
 
     If the indicated `distro` is None it will be retrieved from OsRelease or
@@ -38,7 +39,7 @@ def _check(distro: str | None, platform_distros: list[str]) -> bool:
     return distro in platform_distros
 
 
-def is_deb_based(distro: str | None = None) -> bool:
+def is_deb_based(distro: Optional[str] = None) -> bool:
     """Verify the distribution packaging system.
 
     :param distro: The distribution name.
@@ -48,7 +49,7 @@ def is_deb_based(distro: str | None = None) -> bool:
     return _check(distro, _DEB_BASED_PLATFORM)
 
 
-def is_yum_based(distro: str | None = None) -> bool:
+def is_yum_based(distro: Optional[str] = None) -> bool:
     """Verify the distribution packaging system.
 
     :param distro: The distribution name.
@@ -58,7 +59,7 @@ def is_yum_based(distro: str | None = None) -> bool:
     return _check(distro, _YUM_BASED_PLATFORM)
 
 
-def is_dnf_based(distro: str | None = None) -> bool:
+def is_dnf_based(distro: Optional[str] = None) -> bool:
     """Verify the distribution packaging system.
 
     :param distro: The distribution name.

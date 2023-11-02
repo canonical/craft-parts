@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from pathlib import Path
 from textwrap import dedent
+from typing import List
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
@@ -46,7 +48,7 @@ def test_get_build_environment(plugin, new_dir):
 
 def get_build_commands(
     new_dir: Path, *, should_remove_symlinks: bool = False
-) -> list[str]:
+) -> List[str]:
     if should_remove_symlinks:
         postfix = dedent(
             f"""\

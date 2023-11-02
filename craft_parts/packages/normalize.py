@@ -25,8 +25,7 @@ import re
 import shutil
 import stat
 from pathlib import Path
-from re import Pattern
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Pattern
 
 if TYPE_CHECKING:
     from .base import RepositoryType
@@ -158,7 +157,7 @@ def _try_copy_local(path: Path, target: Path) -> bool:
 
 
 def fix_pkg_config(
-    prefix_prepend: Path, pkg_config_file: Path, prefix_trim: Path | None = None
+    prefix_prepend: Path, pkg_config_file: Path, prefix_trim: Optional[Path] = None
 ) -> None:
     """Fix the prefix parameter in pkg-config files.
 

@@ -16,7 +16,7 @@
 
 """Exceptions raised by the packages handling subsystem."""
 
-from collections.abc import Sequence
+from typing import List, Sequence
 
 from craft_parts.errors import PartsError
 from craft_parts.utils import formatting_utils
@@ -278,7 +278,7 @@ class SnapdConnectionError(PackagesError):
 class ChiselError(PackagesError):
     """A "chisel"-related command failed."""
 
-    def __init__(self, *, slices: list[str], output: str) -> None:
+    def __init__(self, *, slices: List[str], output: str) -> None:
         """Create a ChiselError from a list of slices and the command output.
 
         :param slices: The Chisel slices that were requested.

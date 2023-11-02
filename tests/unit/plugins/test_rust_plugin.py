@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import subprocess
 
+
 import pytest
 import pytest_subprocess
 from craft_parts.errors import PluginEnvironmentValidationError

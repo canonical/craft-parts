@@ -19,6 +19,7 @@
 import logging
 import subprocess
 import tempfile
+from typing import List, Optional
 
 from craft_parts import errors
 
@@ -53,7 +54,7 @@ class PluginEnvironmentValidator:
         self._options = properties
 
     def validate_environment(
-        self, *, part_dependencies: list[str] | None = None
+        self, *, part_dependencies: Optional[List[str]] = None
     ) -> None:
         """Ensure the plugin execution environment is valid.
 
@@ -79,7 +80,7 @@ class PluginEnvironmentValidator:
         self,
         dependency: str,
         plugin_name: str,
-        part_dependencies: list[str] | None,
+        part_dependencies: Optional[List[str]],
         argument: str = "--version",
     ) -> str:
         """Validate that the environment has a required dependency.
