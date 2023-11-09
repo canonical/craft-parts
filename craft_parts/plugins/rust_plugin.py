@@ -18,7 +18,6 @@
 
 import logging
 import subprocess
-import textwrap
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
 
@@ -30,7 +29,7 @@ from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
 GET_RUSTUP_COMMAND_TEMPLATE = (
-    "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | " 
+    "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
     "sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}"
 )
 
