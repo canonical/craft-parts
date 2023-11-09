@@ -218,7 +218,7 @@ def test_get_pull_commands_compat_no_exceptions(
         {"source": ".", "after": ["rust-deps"]}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = lambda: False
+    plugin._check_rustup = lambda: False  # type: ignore[method-assign]
 
     commands = plugin.get_build_commands()
     assert plugin.get_pull_commands() == pull_commands
