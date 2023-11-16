@@ -16,7 +16,7 @@
 
 """Definitions and helpers for plugin options."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -44,8 +44,7 @@ class PluginProperties(PluginPropertiesModel):
     """
 
     @classmethod
-    # pylint: disable-next=unused-argument
-    def unmarshal(cls, data: Dict[str, Any]) -> "PluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "PluginProperties":  # noqa: ARG003
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -54,17 +53,17 @@ class PluginProperties(PluginPropertiesModel):
         """
         return cls()
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Obtain a dictionary containing the plugin properties."""
         return self.dict(by_alias=True)
 
     @classmethod
-    def get_pull_properties(cls) -> List[str]:
+    def get_pull_properties(cls) -> list[str]:
         """Obtain the list of properties affecting the pull stage."""
         return []
 
     @classmethod
-    def get_build_properties(cls) -> List[str]:
+    def get_build_properties(cls) -> list[str]:
         """Obtain the list of properties affecting the build stage."""
         properties = cls.schema(by_alias=True).get("properties")
         return list(properties.keys()) if properties else []

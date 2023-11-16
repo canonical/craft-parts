@@ -19,7 +19,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.overlays.layers import LayerHash, LayerStateManager
 from craft_parts.parts import Part
 
@@ -45,7 +44,7 @@ class TestLayerHash:
         assert h.hex() == "0a141e28323c46505a64"
 
     @pytest.mark.parametrize(
-        "pkgs,files,script,result",
+        ("pkgs", "files", "script", "result"),
         [
             ([], [], None, "80324ed2458e5d51e851972d092a0996dc038e8b"),
             ([], ["*"], None, "6554e32fa718d54160d0511b36f81458e4cb2357"),
@@ -74,7 +73,8 @@ class TestLayerHash:
         h2 = LayerHash.for_part(p1, previous_layer_hash=h1)
         assert h2.hex() == "bb6d57381ec9fb85207c85b865ef6d709930f291"
 
-    def test_load(self, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_load(self):
         hash_file = Path("parts/p1/state/layer_hash")
         hash_file.parent.mkdir(parents=True)
         hash_file.write_text(b"some value".hex())
@@ -84,12 +84,14 @@ class TestLayerHash:
         assert h is not None
         assert h.hex() == "736f6d652076616c7565"
 
-    def test_load_missing_file(self, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_load_missing_file(self):
         p1 = Part("p1", {})
         h = LayerHash.load(p1)
         assert h is None
 
-    def test_save(self, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_save(self):
         Path("parts/p1/state").mkdir(parents=True)
         p1 = Part("p1", {})
         h = LayerHash(b"some value")
@@ -137,7 +139,7 @@ class TestLayerStateManager:
         assert p1_layer_hash.hex() == "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"
 
     @pytest.mark.parametrize(
-        "params,digest",
+        ("params", "digest"),
         [
             ({}, "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"),
             ({"overlay-script": "true"}, "fa8a0be828daebe4fd503d14fa9d6307ae0b01ae"),
@@ -153,7 +155,7 @@ class TestLayerStateManager:
         assert lsm.compute_layer_hash(p1).hex() == digest
 
     @pytest.mark.parametrize(
-        "params,digest",
+        ("params", "digest"),
         [
             ({}, "a15e326327c3456bc5547a69fe2996bcf8088cba"),
             ({"overlay-script": "true"}, "a992882dc823bde22d93b0fe4ea6282926b5cfa9"),

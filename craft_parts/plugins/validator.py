@@ -19,7 +19,6 @@
 import logging
 import subprocess
 import tempfile
-from typing import List, Optional
 
 from craft_parts import errors
 
@@ -46,13 +45,15 @@ class PluginEnvironmentValidator:
     :param env: A string containing the build step environment setup.
     """
 
-    def __init__(self, *, part_name: str, env: str, properties: PluginProperties):
+    def __init__(
+        self, *, part_name: str, env: str, properties: PluginProperties
+    ) -> None:
         self._part_name = part_name
         self._env = env
         self._options = properties
 
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the plugin execution environment is valid.
 
@@ -78,7 +79,7 @@ class PluginEnvironmentValidator:
         self,
         dependency: str,
         plugin_name: str,
-        part_dependencies: Optional[List[str]],
+        part_dependencies: list[str] | None,
         argument: str = "--version",
     ) -> str:
         """Validate that the environment has a required dependency.
@@ -99,7 +100,6 @@ class PluginEnvironmentValidator:
             command = f"{dependency} {argument}"
             output = self._execute(command).strip()
             logger.debug("executed %s with output %s", command, output)
-            return output
         except subprocess.CalledProcessError as err:
             if err.returncode != COMMAND_NOT_FOUND:
                 raise errors.PluginEnvironmentValidationError(
@@ -123,6 +123,8 @@ class PluginEnvironmentValidator:
                         "that would satisfy the dependency"
                     ),
                 ) from err
+        else:
+            return output
         return ""
 
     def _execute(self, cmd: str) -> str:
@@ -144,7 +146,7 @@ class PluginEnvironmentValidator:
                 ["/bin/bash", env_file.name],
                 check=True,
                 capture_output=True,
-                universal_newlines=True,
+                text=True,
             )
 
         return proc.stderr if proc.stderr else proc.stdout

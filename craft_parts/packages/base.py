@@ -21,7 +21,7 @@ import contextlib
 import logging
 import os
 from pathlib import Path
-from typing import Any, List, Optional, Set, Tuple, Type
+from typing import Any
 
 from craft_parts import xattrs
 
@@ -34,7 +34,7 @@ _STAGE_PACKAGE_KEY = "origin_stage_package"
 class BaseRepository(abc.ABC):
     """Base implementation for a platform specific repository handler."""
 
-    stage_packages_filters: Optional[Set[str]] = None
+    stage_packages_filters: set[str] | None = None
 
     @classmethod
     @abc.abstractmethod
@@ -43,7 +43,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_package_libraries(cls, package_name: str) -> Set[str]:
+    def get_package_libraries(cls, package_name: str) -> set[str]:
         """Return a list of libraries in package_name.
 
         Given the contents of package_name, return the subset of what are
@@ -55,7 +55,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+    def get_packages_for_source_type(cls, source_type: str) -> set[str]:
         """Return a list of packages required to to work with source_type.
 
         :param source_type: A source type to handle.
@@ -74,7 +74,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def download_packages(cls, package_names: List[str]) -> None:
+    def download_packages(cls, package_names: list[str]) -> None:
         """Download the specified packages to the local package cache.
 
         :param package_names: A list with the names of the packages to download.
@@ -86,11 +86,11 @@ class BaseRepository(abc.ABC):
     @abc.abstractmethod
     def install_packages(
         cls,
-        package_names: List[str],
+        package_names: list[str],
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
-    ) -> List[str]:
+    ) -> list[str]:
         """Install packages on the host system.
 
         This method needs to be implemented by using the appropriate mechanism
@@ -123,7 +123,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_installed_packages(cls) -> List[str]:
+    def get_installed_packages(cls) -> list[str]:
         """Obtain a list of the installed packages and their versions.
 
         :return: A list of installed packages in the form package=version.
@@ -131,16 +131,16 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def fetch_stage_packages(
+    def fetch_stage_packages(  # noqa: PLR0913
         cls,
         *,
         cache_dir: Path,
-        package_names: List[str],
+        package_names: list[str],
         stage_packages_path: Path,
         base: str,
         arch: str,
         list_only: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """Fetch stage packages to stage_packages_path.
 
         :param application_name: A unique identifier for the application
@@ -162,7 +162,7 @@ class BaseRepository(abc.ABC):
         *,
         stage_packages_path: Path,
         install_path: Path,
-        stage_packages: Optional[List[str]] = None,
+        stage_packages: list[str] | None = None,
         track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages.
@@ -175,7 +175,7 @@ class BaseRepository(abc.ABC):
         """
 
 
-RepositoryType = Type[BaseRepository]
+RepositoryType = type[BaseRepository]
 
 
 class DummyRepository(BaseRepository):
@@ -186,12 +186,12 @@ class DummyRepository(BaseRepository):
         """Set up the repository."""
 
     @classmethod
-    def get_package_libraries(cls, package_name: str) -> Set[str]:
+    def get_package_libraries(cls, package_name: str) -> set[str]:  # noqa: ARG003
         """Return a list of libraries in package_name."""
         return set()
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+    def get_packages_for_source_type(cls, source_type: str) -> set[str]:  # noqa: ARG003
         """Return a list of packages required to to work with source_type."""
         return set()
 
@@ -200,35 +200,35 @@ class DummyRepository(BaseRepository):
         """Refresh the build packages cache."""
 
     @classmethod
-    def download_packages(cls, package_names: List[str]) -> None:
+    def download_packages(cls, package_names: list[str]) -> None:
         """Download the specified packages to the local package cache."""
 
     @classmethod
     def install_packages(
         cls,
-        package_names: List[str],
+        package_names: list[str],  # noqa: ARG003
         *,
-        list_only: bool = False,  # pylint: disable=unused-argument
-        refresh_package_cache: bool = True,  # pylint: disable=unused-argument
-    ) -> List[str]:
+        list_only: bool = False,  # noqa: ARG003
+        refresh_package_cache: bool = True,  # noqa: ARG003
+    ) -> list[str]:
         """Install packages on the host system."""
         return []
 
     @classmethod
-    def is_package_installed(cls, package_name: str) -> bool:
+    def is_package_installed(cls, package_name: str) -> bool:  # noqa: ARG003
         """Inform if a packahe is installed on the host system."""
         return False
 
     @classmethod
-    def get_installed_packages(cls) -> List[str]:
+    def get_installed_packages(cls) -> list[str]:
         """Obtain a list of the installed packages and their versions."""
         return []
 
     @classmethod
     def fetch_stage_packages(
-        cls,  # pylint: disable=unused-argument
-        **kwargs: Any,
-    ) -> List[str]:
+        cls,
+        **kwargs: Any,  # noqa: ANN401, ARG003
+    ) -> list[str]:
         """Fetch stage packages to stage_packages_path."""
         return []
 
@@ -238,13 +238,13 @@ class DummyRepository(BaseRepository):
         *,
         stage_packages_path: Path,
         install_path: Path,
-        stage_packages: Optional[List[str]] = None,
+        stage_packages: list[str] | None = None,
         track_stage_packages: bool = False,
     ) -> None:
         """Unpack stage packages to install_path."""
 
 
-def get_pkg_name_parts(pkg_name: str) -> Tuple[str, Optional[str]]:
+def get_pkg_name_parts(pkg_name: str) -> tuple[str, str | None]:
     """Break package name into base parts."""
     name = pkg_name
     version = None
@@ -254,7 +254,7 @@ def get_pkg_name_parts(pkg_name: str) -> Tuple[str, Optional[str]]:
     return name, version
 
 
-def read_origin_stage_package(path: str) -> Optional[str]:
+def read_origin_stage_package(path: str) -> str | None:
     """Read origin stage package."""
     return xattrs.read_xattr(path, _STAGE_PACKAGE_KEY)
 

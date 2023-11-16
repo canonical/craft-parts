@@ -21,11 +21,8 @@ from unittest.mock import call
 
 import apt.package
 import pytest
-
 from craft_parts.packages import apt_cache, errors
 from craft_parts.packages.apt_cache import AptCache
-
-# xpylint: disable=too-few-public-methods
 
 
 class TestAptStageCache:
@@ -104,7 +101,8 @@ class TestAptStageCache:
 
         assert raised.value.packages == ["mock"]
 
-    def test_marked_install_without_candidate(self, tmpdir, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_marked_install_without_candidate(self):
         class MockPackage:
             def __init__(self):
                 self.name = "mock"

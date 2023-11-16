@@ -17,7 +17,6 @@
 from pathlib import Path, PurePosixPath
 
 import pytest
-
 from craft_parts.utils.path_utils import _has_partition, get_partitioned_path
 
 PATH_CLASSES = [Path, PurePosixPath, str]
@@ -79,7 +78,7 @@ def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class
 
 @pytest.mark.parametrize("path", ["*"])
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("_enable_partitions_feature")
 def test_get_partition_compatible_filepath_glob(path, path_class):
     expected = path_class(path)
     actual = get_partitioned_path(expected)
@@ -89,7 +88,7 @@ def test_get_partition_compatible_filepath_glob(path, path_class):
 
 @pytest.mark.parametrize("path", NON_PARTITION_PATHS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("_enable_partitions_feature")
 def test_get_partition_compatible_filepath_non_partition(path, path_class):
     """Non-partitioned paths get a default partition."""
     actual = get_partitioned_path(path_class(path))
@@ -103,7 +102,7 @@ def test_get_partition_compatible_filepath_non_partition(path, path_class):
     zip(PARTITION_PATHS, PARTITION_EXPECTED_PATHS),
 )
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("_enable_partitions_feature")
 def test_get_partition_compatible_filepath_partition(path, expected, path_class):
     """Non-partitioned paths match their given partition."""
     actual = get_partitioned_path(path_class(path))

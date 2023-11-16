@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
 import pathlib
-from typing import Iterator
+from collections.abc import Iterator
 
 import pytest
-
 from craft_parts import Action, Step
 from craft_parts.executor import filesets, part_handler
+
 from tests.unit.executor import test_part_handler
 
 PARTITIONS = ["default", "mypart", "yourpart"]
@@ -44,7 +44,7 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
     """Verify step update processing."""
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install/default", "build"),
@@ -52,9 +52,9 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
             (Step.PRIME, "prime/default", "prime"),
         ],
     )
-    def test_clean_step(self, mocker, step, test_dir, state_file):
+    def test_clean_step(self, step, test_dir, state_file):
         self._handler._make_dirs()
-        for each_step in step.previous_steps() + [step]:
+        for each_step in [*step.previous_steps(), step]:
             self._handler.run_action(Action("foo", each_step))
 
         assert pathlib.Path(test_dir, "foo.txt").is_file()
@@ -89,10 +89,9 @@ class TestFileFilter(test_part_handler.TestFileFilter):
         for partition, file in itertools.product(PARTITIONS, TEST_FILES):
             yield f"{partition}/{file}"
 
-    @pytest.fixture
-    def make_files(
+    @pytest.fixture()
+    def _make_files(
         self,
-        new_dir,
     ):
         for file in self._iter_files():
             path = self._destdir / file
@@ -140,9 +139,9 @@ class TestFileFilter(test_part_handler.TestFileFilter):
             (["-(default)", "-(mypart)", "(yourpart)/filea"], {"yourpart/filea"}),
         ],
     )
-    def test_apply_partition_aware_filter(
-        self, make_files, new_dir, survivors, filters
-    ):
+    @pytest.mark.usefixtures("_make_files")
+    @pytest.mark.usefixtures("new_dir")
+    def test_apply_partition_aware_filter(self, survivors, filters):
         fileset = filesets.Fileset(filters)
 
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))

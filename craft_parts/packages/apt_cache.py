@@ -22,9 +22,11 @@ import logging
 import os
 import re
 import shutil
+from collections.abc import Iterable
 from contextlib import ContextDecorator
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+
+from typing_extensions import Self
 
 try:
     import apt
@@ -86,15 +88,14 @@ class AptCache(ContextDecorator):
     def __init__(
         self,
         *,
-        stage_cache: Optional[Path] = None,
-        stage_cache_arch: Optional[str] = None,
+        stage_cache: Path | None = None,
+        stage_cache_arch: str | None = None,
     ) -> None:
         self.stage_cache = stage_cache
         self.stage_cache_arch = stage_cache_arch
-        self.progress: Optional[LogProgress] = None
+        self.progress: LogProgress | None = None
 
-    # pylint: disable=attribute-defined-outside-init
-    def __enter__(self) -> AptCache:
+    def __enter__(self) -> Self:
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()
@@ -105,9 +106,7 @@ class AptCache(ContextDecorator):
             self.cache = apt.cache.Cache(rootdir="/")
         return self
 
-    # pylint: enable=attribute-defined-outside-init
-
-    def __exit__(self, *exc: Any) -> None:
+    def __exit__(self, *exc: object) -> None:
         self.cache.close()
 
     @classmethod
@@ -208,7 +207,7 @@ class AptCache(ContextDecorator):
 
     def get_installed_version(
         self, package_name: str, *, resolve_virtual_packages: bool = False
-    ) -> Optional[str]:
+    ) -> str | None:
         """Obtain the version of the package currently installed on the system.
 
         :param package_name: The package installed on the system.
@@ -235,7 +234,7 @@ class AptCache(ContextDecorator):
                 return installed.version
         return None
 
-    def fetch_archives(self, download_path: Path) -> List[Tuple[str, str, Path]]:
+    def fetch_archives(self, download_path: Path) -> list[tuple[str, str, Path]]:
         """Retrieve packages marked to be fetched.
 
         :param download_path: The directory to download files to.
@@ -252,7 +251,7 @@ class AptCache(ContextDecorator):
                     str(download_path), progress=self.progress
                 )
             except apt.package.FetchError as err:
-                raise errors.PackageFetchError(str(err))
+                raise errors.PackageFetchError(str(err)) from err
 
             if package.candidate is None:
                 raise errors.PackageNotFound(package.name)
@@ -260,19 +259,19 @@ class AptCache(ContextDecorator):
             downloaded.append((package.name, package.candidate.version, Path(dl_path)))
         return downloaded
 
-    def get_installed_packages(self) -> Dict[str, str]:
+    def get_installed_packages(self) -> dict[str, str]:
         """Obtain a list of all packages and versions installed on the system.
 
         :return: A dictionary of files and installed versions.
         """
-        installed: Dict[str, str] = {}
+        installed: dict[str, str] = {}
         for package in self.cache:
             if package.installed is not None:
                 installed[package.name] = str(package.installed.version)
 
         return installed
 
-    def get_packages_marked_for_installation(self) -> List[Tuple[str, str]]:
+    def get_packages_marked_for_installation(self) -> list[tuple[str, str]]:
         """Obtain a list of packages and versions to be installed on the system.
 
         :return: A list of (<package-name>, <package-version>) tuples.
@@ -287,17 +286,17 @@ class AptCache(ContextDecorator):
             raise errors.PackagesNotFound(missing_installation_candidate)
 
         return [
-            (p.name, p.candidate.version) for p in marked_install_pkgs  # type: ignore
+            (p.name, (p.candidate.version if p.candidate else "none"))
+            for p in marked_install_pkgs
         ]
 
-    def mark_packages(self, package_names: Set[str]) -> None:
+    def mark_packages(self, package_names: set[str]) -> None:
         """Mark the given package names to be fetched from the repository.
 
         :param package_names: The set of package names to be marked.
         """
-        for name in package_names:
-            if name.endswith(":any"):
-                name = name[:-4]
+        for _name in package_names:
+            name = _name[:-4] if _name.endswith(":any") else _name
 
             if self.cache.is_virtual_package(name):
                 name = self.cache.get_providing_packages(name)[0].name
@@ -325,11 +324,11 @@ class AptCache(ContextDecorator):
             # Now mark this package as NOT automatically installed, which
             # will leave its dependencies marked as auto-installed, which
             # allows us to clean them up if necessary.
-            package.mark_auto(False)
+            package.mark_auto(auto=False)
 
             _verify_marked_install(package)
 
-    def unmark_packages(self, unmark_names: Set[str]) -> None:
+    def unmark_packages(self, unmark_names: set[str]) -> None:
         """Unmark packages and dependencies that are no longer required.
 
         :param unmark_names: The names of the packages to unmark.
@@ -376,7 +375,7 @@ def _verify_marked_install(package: apt.package.Package) -> None:
     if package.candidate is None:
         raise errors.PackageNotFound(package.name)
 
-    broken_deps: List[str] = []
+    broken_deps: list[str] = []
     for package_dependencies in package.candidate.dependencies:
         for dep in package_dependencies:
             if not dep.target_versions:
@@ -394,8 +393,8 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
 
 
 def _ignore_unreadable_files(
-    path: Union[str, os.PathLike[str]], names: Iterable[str]
-) -> List[str]:
+    path: str | os.PathLike[str], names: Iterable[str]
+) -> list[str]:
     """Ignore unreadable files for copytree.
 
     Pass this function as the ignore parameter for shutil.copytree to not

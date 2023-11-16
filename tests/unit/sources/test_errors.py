@@ -96,7 +96,7 @@ def test_invalid_snap_package():
 def test_pull_error():
     err = errors.PullError(command=["ls", "-l"], exit_code=66)
     assert err.command == ["ls", "-l"]
-    assert err.exit_code == 66
+    assert err.exit_code == 66  # noqa: PLR2004
     assert (
         err.brief == "Failed to pull source: command ['ls', '-l'] exited with code 66."
     )

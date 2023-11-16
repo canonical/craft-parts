@@ -22,7 +22,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 import requests
 from overrides import overrides
@@ -45,24 +45,22 @@ class SourceHandler(abc.ABC):
     source files.
     """
 
-    # pylint: disable=too-many-arguments
-
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        command: Optional[str] = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ):
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_branch: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        command: str | None = None,
+        ignore_patterns: list[str] | None = None,
+    ) -> None:
         if not ignore_patterns:
             ignore_patterns = []
 
@@ -74,24 +72,22 @@ class SourceHandler(abc.ABC):
         self.source_branch = source_branch
         self.source_depth = source_depth
         self.source_checksum = source_checksum
-        self.source_details: Optional[Dict[str, Optional[str]]] = None
+        self.source_details: dict[str, str | None] | None = None
         self.source_submodules = source_submodules
         self.command = command
         self._dirs = project_dirs
         self._checked = False
         self._ignore_patterns = ignore_patterns.copy()
 
-        self.outdated_files: Optional[List[str]] = None
-        self.outdated_dirs: Optional[List[str]] = None
-
-    # pylint: enable=too-many-arguments
+        self.outdated_files: list[str] | None = None
+        self.outdated_dirs: list[str] | None = None
 
     @abc.abstractmethod
     def pull(self) -> None:
         """Retrieve the source file."""
 
     def check_if_outdated(
-        self, target: str, *, ignore_files: Optional[List[str]] = None
+        self, target: str, *, ignore_files: list[str] | None = None  # noqa: ARG002
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -105,7 +101,7 @@ class SourceHandler(abc.ABC):
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
-    def get_outdated_files(self) -> Tuple[List[str], List[str]]:
+    def get_outdated_files(self) -> tuple[list[str], list[str]]:
         """Obtain lists of outdated files and directories.
 
         :return: The lists of outdated files and directories.
@@ -123,40 +119,39 @@ class SourceHandler(abc.ABC):
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
     @classmethod
-    def _run(cls, command: List[str], **kwargs: Any) -> None:
+    def _run(cls, command: list[str], **kwargs: Any) -> None:  # noqa: ANN401
         try:
             os_utils.process_run(command, logger.debug, **kwargs)
         except subprocess.CalledProcessError as err:
-            raise errors.PullError(command=command, exit_code=err.returncode)
+            raise errors.PullError(command=command, exit_code=err.returncode) from err
 
     @classmethod
-    def _run_output(cls, command: Sequence) -> str:
+    def _run_output(cls, command: list[str]) -> str:
         try:
             return subprocess.check_output(command, text=True).strip()
         except subprocess.CalledProcessError as err:
-            raise errors.PullError(command=command, exit_code=err.returncode)
+            raise errors.PullError(command=command, exit_code=err.returncode) from err
 
 
 class FileSourceHandler(SourceHandler):
     """Base class for file source types."""
 
-    # pylint: disable=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        command: Optional[str] = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ):
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_branch: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        command: str | None = None,
+        ignore_patterns: list[str] | None = None,
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -173,14 +168,12 @@ class FileSourceHandler(SourceHandler):
         )
         self._file = Path()
 
-    # pylint: enable=too-many-arguments
-
     @abc.abstractmethod
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
-        src: Optional[Path] = None,
+        keep: bool = False,  # noqa: FBT001, FBT002
+        src: Path | None = None,
     ) -> None:
         """Process the source file to extract its payload."""
 
@@ -210,7 +203,7 @@ class FileSourceHandler(SourceHandler):
 
         self.provision(self.part_src_dir, src=source_file)
 
-    def download(self, filepath: Optional[Path] = None) -> Path:
+    def download(self, filepath: Path | None = None) -> Path:
         """Download the URL from a remote location.
 
         :param filepath: the destination file to download to.
@@ -243,7 +236,7 @@ class FileSourceHandler(SourceHandler):
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
                 f"response={err.response!r})"
-            )
+            ) from err
 
         url_utils.download_request(request, str(self._file))
 

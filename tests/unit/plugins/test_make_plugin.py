@@ -17,20 +17,17 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.make_plugin import MakePlugin
-
-# pylint: disable=attribute-defined-outside-init
+from pydantic import ValidationError
 
 
 class TestPluginMake:
     """Make plugin tests."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def _setup_method_fixture(self, new_dir):
         properties = MakePlugin.properties_class.unmarshal({"source": "."})
         part = Part("foo", {})
 

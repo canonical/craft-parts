@@ -15,14 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.executor import filesets
 from craft_parts.executor.filesets import Fileset
 
 
 @pytest.mark.parametrize(
-    "tc_data,tc_entries,tc_includes,tc_excludes",
+    ("tc_data", "tc_entries", "tc_includes", "tc_excludes"),
     [
         ([], [], [], []),
         (["a", "b"], ["a", "b"], ["a", "b"], []),
@@ -54,7 +53,7 @@ def test_remove():
 
 
 @pytest.mark.parametrize(
-    "tc_fs1,tc_fs2,tc_result",
+    ("tc_fs1", "tc_fs2", "tc_result"),
     [
         ([], [], []),
         (["foo"], ["bar"], ["bar"]),

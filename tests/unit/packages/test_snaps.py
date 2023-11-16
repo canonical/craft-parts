@@ -15,10 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.packages import errors, snaps
-
-# pylint: disable=missing-class-docstring
 
 
 class TestSnapPackageCurrentChannel:
@@ -322,7 +319,8 @@ class TestSnapPackageLifecycle:
             ["snap", "install", "fake-snap", "--channel", "strict/stable"],
         ]
 
-    def test_install_fails(self, fake_snapd, fake_snap_command):
+    @pytest.mark.usefixtures("fake_snapd")
+    def test_install_fails(self, fake_snap_command):
         fake_snap_command.install_success = False
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         with pytest.raises(errors.SnapInstallError):
@@ -473,7 +471,8 @@ class TestSnapPackageLifecycle:
             ["snap", "refresh", "fake-snap", "--channel", "strict/stable"],
         ]
 
-    def test_refresh_fails(self, fake_snapd, fake_snap_command):
+    @pytest.mark.usefixtures("fake_snapd")
+    def test_refresh_fails(self, fake_snap_command):
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         fake_snap_command.refresh_success = False
         with pytest.raises(errors.SnapRefreshError):

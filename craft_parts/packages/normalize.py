@@ -25,7 +25,8 @@ import re
 import shutil
 import stat
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Pattern
+from re import Pattern
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .base import RepositoryType
@@ -157,7 +158,7 @@ def _try_copy_local(path: Path, target: Path) -> bool:
 
 
 def fix_pkg_config(
-    prefix_prepend: Path, pkg_config_file: Path, prefix_trim: Optional[Path] = None
+    prefix_prepend: Path, pkg_config_file: Path, prefix_trim: Path | None = None
 ) -> None:
     """Fix the prefix parameter in pkg-config files.
 
@@ -251,7 +252,10 @@ def _rewrite_python_shebangs(root_dir: Path) -> None:
 
 
 def _replace_in_file(
-    directory: Path, file_pattern: Pattern, search_pattern: Pattern, replacement: str
+    directory: Path,
+    file_pattern: Pattern[str],
+    search_pattern: Pattern[str],
+    replacement: str,
 ) -> None:
     """Search and replaces patterns that match a file pattern.
 
@@ -271,7 +275,7 @@ def _replace_in_file(
 
 
 def _search_and_replace_contents(
-    file_path: Path, search_pattern: Pattern, replacement: str
+    file_path: Path, search_pattern: Pattern[str], replacement: str
 ) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 

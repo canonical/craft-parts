@@ -28,13 +28,13 @@ parts_yaml = textwrap.dedent(
         build-packages: [libc6]
         # Note that this will fail if core20 is not already installed and the
         # test is executed as a regular user
-        build-snaps: [core20] 
+        build-snaps: [core20]
         stage-packages: [hello]
     """
 )
 
 
-def test_logging_info(new_dir, caplog, monkeypatch):
+def test_logging_info(new_dir, caplog, monkeypatch):  # noqa: ARG001
     """Test some expected INFO-level log messages from whole-program execution."""
     caplog.set_level(logging.INFO, logger="craft_parts")
     Path("parts.yaml").write_text(parts_yaml)

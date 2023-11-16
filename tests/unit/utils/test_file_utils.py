@@ -19,19 +19,18 @@ import stat
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
 
 
 @pytest.fixture(autouse=True)
-def setup_module_fixture(new_dir):  # pylint: disable=unused-argument
+def _setup_module_fixture(new_dir):  # noqa: ARG001
     pass
 
 
 @pytest.mark.parametrize(
-    "algo,digest",
+    ("algo", "digest"),
     [
         ("md5", "9a0364b9e99bb480dd25e1f0284c8555"),
         ("sha1", "040f06fd774092478d450774f5ba30c5da78acc8"),
@@ -86,7 +85,7 @@ class TestLinkOrCopyTree:
         )
 
     def test_ignore(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda x, y: ["3"])
+        file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda _x, _y: ["3"])
         assert not os.path.isfile(os.path.join("qux", "3"))
         assert os.path.isfile(os.path.join("qux", "baz", "4"))
 
@@ -127,9 +126,9 @@ class TestLinkOrCopy:
     def test_link_file_ioerror(self, mocker):
         orig_link = os.link
 
-        def link_and_ioerror(a, b, **kwargs):  # pylint: disable=unused-argument
+        def link_and_ioerror(a, b, **kwargs):  # noqa: ARG001
             orig_link(a, b)
-            raise IOError()
+            raise OSError
 
         mocker.patch("os.link", side_effect=link_and_ioerror)
 
@@ -159,10 +158,10 @@ class TestLinkOrCopy:
         file_utils.link_or_copy("foo/2", "qux/2", permissions=permissions)
 
         # Check that the copied file has the correct permission bits and ownership
-        assert stat.S_IMODE(os.stat("qux/2").st_mode) == 0o755
+        assert stat.S_IMODE(os.stat("qux/2").st_mode) == 0o755  # noqa: PLR2004
         mock_call = mock_chown["qux/2"]
-        assert mock_call.owner == 1111
-        assert mock_call.group == 2222
+        assert mock_call.owner == 1111  # noqa: PLR2004
+        assert mock_call.group == 2222  # noqa: PLR2004
 
         # Check that the copied file is *not* a link
         assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino
@@ -198,7 +197,7 @@ def test_create_similar_directory_permissions(tmp_path, mock_chown):
 
     file_utils.create_similar_directory(source, target, permissions=permissions)
 
-    assert stat.S_IMODE(os.stat(target).st_mode) == 0o755
+    assert stat.S_IMODE(os.stat(target).st_mode) == 0o755  # noqa: PLR2004
     mock_call = mock_chown[target]
-    assert mock_call.owner == 1111
-    assert mock_call.group == 2222
+    assert mock_call.owner == 1111  # noqa: PLR2004
+    assert mock_call.group == 2222  # noqa: PLR2004

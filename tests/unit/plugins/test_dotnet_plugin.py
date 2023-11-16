@@ -16,17 +16,16 @@
 
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.dotnet_plugin import DotnetPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
@@ -110,7 +109,7 @@ def test_get_build_packages(part_info):
     assert plugin.get_build_packages() == set()
 
 
-def test_get_build_environment(new_dir, part_info):
+def test_get_build_environment(new_dir, part_info):  # noqa: ARG001
     properties = DotnetPlugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 
@@ -158,7 +157,7 @@ def test_missing_parameters():
     assert err[0]["type"] == "value_error.missing"
 
 
-def test_get_out_of_source_build(new_dir, part_info):
+def test_get_out_of_source_build(new_dir, part_info):  # noqa: ARG001
     properties = DotnetPlugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 

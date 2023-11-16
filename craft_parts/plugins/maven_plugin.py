@@ -19,7 +19,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, cast
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -35,14 +35,14 @@ from .properties import PluginProperties
 class MavenPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the maven plugin."""
 
-    maven_parameters: List[str] = []
+    maven_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "MavenPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "MavenPluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -66,7 +66,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -111,22 +111,22 @@ class MavenPlugin(JavaPlugin):
     validator_class = MavenPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 
@@ -137,8 +137,9 @@ class MavenPlugin(JavaPlugin):
             mvn_cmd += ["-s", str(settings_path)]
 
         return [
-            " ".join(mvn_cmd + options.maven_parameters)
-        ] + self._get_java_post_build_commands()
+            " ".join(mvn_cmd + options.maven_parameters),
+            *self._get_java_post_build_commands(),
+        ]
 
     def _use_proxy(self) -> bool:
         return any(k in os.environ for k in ("http_proxy", "https_proxy"))
@@ -205,5 +206,5 @@ def _create_settings(settings_path: Path) -> None:
 
 
 def _get_no_proxy_string() -> str:
-    no_proxy = [k.strip() for k in os.environ.get("no_proxy", "localhost").split(",")]
+    no_proxy = [k.strip() for k in os.environ.get("NO_PROXY", "localhost").split(",")]
     return "|".join(no_proxy)

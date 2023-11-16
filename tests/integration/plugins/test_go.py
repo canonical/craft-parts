@@ -19,11 +19,10 @@ import textwrap
 from pathlib import Path
 
 import yaml
-
 from craft_parts import LifecycleManager, Step
 
 
-def test_go_plugin(new_dir, partitions, mocker):
+def test_go_plugin(new_dir, partitions, mocker):  # noqa: ARG001
     parts_yaml = textwrap.dedent(
         """
         parts:

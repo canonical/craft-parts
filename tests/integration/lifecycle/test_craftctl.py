@@ -19,21 +19,21 @@ import sys
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ActionType, Step, errors
+
 from tests import TESTS_DIR
 
 
 @pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_feature):
-    yield
+def _setup_feature(_enable_overlay_feature):
+    return
 
 
 @pytest.fixture(autouse=True)
-def setup_fixture(new_dir, mocker):
+def _setup_fixture(new_dir, mocker):
     craftctl = Path("craftctl")
     craftctl.write_text(f"#!{sys.executable}\nfrom craft_parts import ctl\nctl.main()")
     craftctl.chmod(0o755)
@@ -337,7 +337,7 @@ def test_craftctl_set_multiple_parts(new_dir, partitions, capfd):
     assert "variable 'myvar2' can only be set in part 'foo'" in captured.err
 
 
-def test_craftctl_set_error(new_dir, partitions, capfd, mocker):
+def test_craftctl_set_error(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -366,7 +366,7 @@ def test_craftctl_set_error(new_dir, partitions, capfd, mocker):
     assert "'myvar' not in project variables" in captured.err
 
 
-def test_craftctl_set_only_once(new_dir, partitions, capfd, mocker):  # see LP #1831135
+def test_craftctl_set_only_once(new_dir, partitions):  # see LP #1831135
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -423,7 +423,7 @@ def test_craftctl_set_only_once(new_dir, partitions, capfd, mocker):  # see LP #
     assert lf.project_info.get_project_var("version") == "xx"
 
 
-def test_craftctl_update_project_vars(new_dir, partitions, capfd, mocker):
+def test_craftctl_update_project_vars(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -481,7 +481,7 @@ def test_craftctl_update_project_vars(new_dir, partitions, capfd, mocker):
     assert lf.project_info.get_project_var("version") == "xx"
 
 
-def test_craftctl_get_error(new_dir, partitions, capfd, mocker):
+def test_craftctl_get_error(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -506,7 +506,7 @@ def test_craftctl_get_error(new_dir, partitions, capfd, mocker):
     assert "'myvar' not in project variables" in captured.err
 
 
-def test_craftctl_set_argument_error(new_dir, partitions, capfd, mocker):
+def test_craftctl_set_argument_error(new_dir, partitions, capfd):
     parts_yaml = textwrap.dedent(
         """\
         parts:

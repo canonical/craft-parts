@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts.state_manager.states import PrimeState
 
 
@@ -51,7 +50,9 @@ class TestPrimeState:
 
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError) as raised:
-            PrimeState.unmarshal(False)  # type: ignore
+            PrimeState.unmarshal(
+                False  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
+            )
         assert str(raised.value) == "state data is not a dictionary"
 
 
@@ -90,7 +91,7 @@ class TestPrimeStateChanges:
             "prime",
         ]
 
-        for prop in properties.keys():
+        for prop in properties:
             other = properties.copy()
             other[prop] = "new value"
 
@@ -111,7 +112,7 @@ class TestPrimeStateChanges:
 
         relevant_properties = ["override-prime", "prime", "extra-property"]
 
-        for prop in augmented_properties.keys():
+        for prop in augmented_properties:
             other = augmented_properties.copy()
             other[prop] = "new value"
 

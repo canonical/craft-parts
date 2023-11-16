@@ -16,7 +16,7 @@
 
 """The SCons plugin."""
 
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, cast
 
 from overrides import override
 
@@ -29,14 +29,14 @@ from .properties import PluginProperties
 class SConsPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the SCons plugin."""
 
-    scons_parameters: List[str] = []
+    scons_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "SConsPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "SConsPluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -60,7 +60,7 @@ class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -115,28 +115,28 @@ class SConsPlugin(Plugin):
     validator_class = SConsPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
             "DESTDIR": f"{self._part_info.part_install_dir}",
         }
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(SConsPluginProperties, self._options)
 
         return [
-            " ".join(["scons"] + options.scons_parameters),
-            " ".join(["scons", "install"] + options.scons_parameters),
+            " ".join(["scons", *options.scons_parameters]),
+            " ".join(["scons", "install", *options.scons_parameters]),
         ]

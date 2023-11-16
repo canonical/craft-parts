@@ -20,9 +20,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, List, Optional
-
-from typing_extensions import Literal
+from typing import Literal
 
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
@@ -47,17 +45,17 @@ class OverlayManager:
         self,
         *,
         project_info: ProjectInfo,
-        part_list: List[Part],
-        base_layer_dir: Optional[Path],
-    ):
+        part_list: list[Part],
+        base_layer_dir: Path | None,
+    ) -> None:
         self._project_info = project_info
         self._part_list = part_list
         self._layer_dirs = [p.part_layer_dir for p in part_list]
-        self._overlay_fs: Optional[OverlayFS] = None
+        self._overlay_fs: OverlayFS | None = None
         self._base_layer_dir = base_layer_dir
 
     @property
-    def base_layer_dir(self) -> Optional[Path]:
+    def base_layer_dir(self) -> Path | None:
         """Return the path to the base layer, if any."""
         return self._base_layer_dir
 
@@ -129,10 +127,10 @@ class OverlayManager:
 
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
-        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore
+        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
-    def download_packages(self, package_names: List[str]) -> None:
+    def download_packages(self, package_names: list[str]) -> None:
         """Download packages and populate the overlay package cache.
 
         :param package_names: The list of packages to download.
@@ -143,7 +141,7 @@ class OverlayManager:
         mount_dir = self._project_info.overlay_mount_dir
         chroot.chroot(mount_dir, packages.Repository.download_packages, package_names)
 
-    def install_packages(self, package_names: List[str]) -> None:
+    def install_packages(self, package_names: list[str]) -> None:
         """Install packages on the overlay area using chroot.
 
         :param package_names: The list of packages to install.
@@ -172,8 +170,8 @@ class LayerMount:
         self,
         overlay_manager: OverlayManager,
         top_part: Part,
-        pkg_cache: bool = True,
-    ):
+        pkg_cache: bool = True,  # noqa: FBT001, FBT002
+    ) -> None:
         self._overlay_manager = overlay_manager
         self._overlay_manager.mkdirs()
         self._top_part = top_part
@@ -187,14 +185,14 @@ class LayerMount:
         )
         return self
 
-    def __exit__(self, *exc: Any) -> Literal[False]:
+    def __exit__(self, *exc: object) -> Literal[False]:
         # prevent pychroot process leak
         if os.getpid() != self._pid:
             sys.exit()
         self._overlay_manager.unmount()
         return False
 
-    def install_packages(self, package_names: List[str]) -> None:
+    def install_packages(self, package_names: list[str]) -> None:
         """Install the specified packages on the local system.
 
         :param package_names: The list of packages to install.
@@ -208,7 +206,7 @@ class PackageCacheMount:
     :param overlay_manager: The overlay manager.
     """
 
-    def __init__(self, overlay_manager: OverlayManager):
+    def __init__(self, overlay_manager: OverlayManager) -> None:
         self._overlay_manager = overlay_manager
         self._overlay_manager.mkdirs()
         self._pid = os.getpid()
@@ -217,7 +215,7 @@ class PackageCacheMount:
         self._overlay_manager.mount_pkg_cache()
         return self
 
-    def __exit__(self, *exc: Any) -> Literal[False]:
+    def __exit__(self, *exc: object) -> Literal[False]:
         # prevent pychroot process leak
         if os.getpid() != self._pid:
             sys.exit()
@@ -228,7 +226,7 @@ class PackageCacheMount:
         """Update the list of available packages in the overlay system."""
         self._overlay_manager.refresh_packages_list()
 
-    def download_packages(self, package_names: List[str]) -> None:
+    def download_packages(self, package_names: list[str]) -> None:
         """Download the specified packages to the local system.
 
         :param package_names: The list of packages to download.

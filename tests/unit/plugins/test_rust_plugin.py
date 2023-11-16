@@ -17,17 +17,16 @@ import subprocess
 
 import pytest
 import pytest_subprocess
-from pydantic import ValidationError
-
 from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.rust_plugin import GET_RUSTUP_COMMAND_TEMPLATE, RustPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
@@ -110,7 +109,7 @@ def test_get_build_commands_multiple_crates(part_info):
     plugin._check_rustup = lambda: True
 
     commands = plugin.get_build_commands()
-    assert len(commands) == 3
+    assert len(commands) == 3  # noqa: PLR2004
     assert "curl" not in plugin.get_pull_commands()[0]
     assert 'cargo install -f --locked --path "a"' in commands[0]
     assert 'cargo install -f --locked --path "b"' in commands[1]
@@ -159,7 +158,7 @@ def test_get_build_commands_different_channels(part_info, value):
     "rust_path",
     [None, "i am a string", {"i am": "a dictionary"}, ["duplicate", "duplicate"]],
 )
-def test_get_build_commands_rust_path_invalid(rust_path, part_info):
+def test_get_build_commands_rust_path_invalid(rust_path, part_info):  # noqa: ARG001
     with pytest.raises(ValidationError):
         RustPlugin.properties_class.unmarshal({"source": ".", "rust-path": rust_path})
 
@@ -237,7 +236,7 @@ def test_get_pull_commands_compat_with_exceptions(
     fake_process.register(["rustup", "--version"])
 
     def callback_fail():
-        raise exc_class()
+        raise exc_class
 
     fake_process.register([failed_command, "--version"], callback=callback_fail)
 

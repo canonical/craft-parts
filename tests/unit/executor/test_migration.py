@@ -19,7 +19,6 @@ import stat
 from pathlib import Path
 
 import pytest
-
 from craft_parts.actions import Action
 from craft_parts.executor import filesets, migration, part_handler
 from craft_parts.executor.filesets import Fileset
@@ -375,8 +374,11 @@ class TestFileMigration:
             permissions=permissions,
         )
 
-        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755
-        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444
+        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755  # noqa: PLR2004
+        assert (
+            stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode)
+            == 0o444  # noqa: PLR2004
+        )
 
         paths_with_chown = [
             "target/baz/3.txt",
@@ -385,8 +387,8 @@ class TestFileMigration:
         ]
         for p in paths_with_chown:
             call = mock_chown[p]
-            assert call.owner == 1111
-            assert call.group == 2222
+            assert call.owner == 1111  # noqa: PLR2004
+            assert call.group == 2222  # noqa: PLR2004
 
 
 @pytest.mark.usefixtures("new_dir")

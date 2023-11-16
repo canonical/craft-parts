@@ -18,14 +18,12 @@ import os
 import sys
 import textwrap
 from pathlib import Path
-from typing import Optional
-
-import pytest
-import yaml
-from overrides import override
 
 import craft_parts.plugins.plugins
+import pytest
+import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
+from overrides import override
 
 
 def setup_function():
@@ -126,8 +124,8 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     """Override the system interpreter, link should use it."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
-        @override
-        def _get_system_python_interpreter(self) -> Optional[str]:
+        @override  # type: ignore[misc]
+        def _get_system_python_interpreter(self) -> str | None:
             return "use-this-python"
 
     plugins.register({"python": MyPythonPlugin})
@@ -155,15 +153,15 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     assert os.readlink(python_link) == "use-this-python"
 
 
-@pytest.mark.parametrize("remove_symlinks", (True, False))
+@pytest.mark.parametrize("remove_symlinks", [(True,), (False,)])
 def test_python_plugin_no_system_interpreter(
-    new_dir, partitions, remove_symlinks: bool
+    new_dir, partitions, remove_symlinks: bool  # noqa: FBT001
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override
-        def _get_system_python_interpreter(self) -> Optional[str]:
+        def _get_system_python_interpreter(self) -> str | None:
             return None
 
         @override
@@ -197,7 +195,7 @@ def test_python_plugin_remove_symlinks(new_dir, partitions):
     """Override symlink removal."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
-        @override
+        @override  # type: ignore[misc]
         def _should_remove_symlinks(self) -> bool:
             return True
 
@@ -253,7 +251,7 @@ def test_python_plugin_override_shebangs(new_dir, partitions):
     """Override what we want in script shebang lines."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
-        @override
+        @override  # type: ignore[misc]
         def _get_script_interpreter(self) -> str:
             return "#!/my/script/interpreter"
 
@@ -292,7 +290,7 @@ parts:
       # Put a binary called "{payload_python}" in the payload
       mkdir -p ${{CRAFT_PART_INSTALL}}/usr/bin
       cp {real_python} ${{CRAFT_PART_INSTALL}}/usr/bin/{payload_python}
-      craftctl default 
+      craftctl default
 """
 
 
@@ -301,8 +299,8 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     wrong Python version."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
-        @override
-        def _get_system_python_interpreter(self) -> Optional[str]:
+        @override  # type: ignore[misc]
+        def _get_system_python_interpreter(self) -> str | None:
             # To have the build fail after failing to find the payload interpreter
             return None
 

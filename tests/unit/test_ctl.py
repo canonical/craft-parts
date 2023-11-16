@@ -18,14 +18,14 @@ import os
 from pathlib import Path
 
 import pytest
-
 from craft_parts.ctl import CraftCtl
 
 
 class TestClient:
     """Verify the ctl client."""
 
-    def test_call_command(self, new_dir, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_call_command(self, mocker):
         call_fifo = Path("call_fifo")
         feedback_fifo = Path("feedback_fifo")
 
@@ -41,7 +41,8 @@ class TestClient:
         msg = call_fifo.read_text()
         assert msg == '{"function": "default", "args": ["whatever"]}'
 
-    def test_call_command_with_ok_feedback(self, new_dir, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_call_command_with_ok_feedback(self, mocker):
         call_fifo = Path("call_fifo")
         feedback_fifo = Path("feedback_fifo")
 
@@ -56,7 +57,8 @@ class TestClient:
 
         assert retval == "hello there!"
 
-    def test_call_command_with_error_feedback(self, new_dir, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_call_command_with_error_feedback(self, mocker):
         call_fifo = Path("call_fifo")
         feedback_fifo = Path("feedback_fifo")
 
@@ -72,7 +74,8 @@ class TestClient:
 
         assert str(raised.value) == "hello there!"
 
-    def test_call_command_without_call_fifo(self, new_dir, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_call_command_without_call_fifo(self, mocker):
         call_fifo = Path("call_fifo")
         feedback_fifo = Path("feedback_fifo")
 
@@ -88,7 +91,8 @@ class TestClient:
             "Note that this utility is designed for use only in part scriptlets."
         )
 
-    def test_call_command_without_feedback_fifo(self, new_dir, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_call_command_without_feedback_fifo(self, mocker):
         call_fifo = Path("call_fifo")
         feedback_fifo = Path("feedback_fifo")
 
@@ -104,7 +108,8 @@ class TestClient:
             "Note that this utility is designed for use only in part scriptlets."
         )
 
-    def test_call_invalid_command(self, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_call_invalid_command(self):
         with pytest.raises(RuntimeError) as raised:
             CraftCtl.run("grok", ["whatever"])
 

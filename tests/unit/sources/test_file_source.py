@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import requests
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import sources
 
@@ -28,7 +27,7 @@ class TestFileSource:
     """Tests for the plain file source handler."""
 
     def test_pull_file_must_download_to_sourcedir(
-        self, new_dir, mocker, http_server, partitions
+        self, new_dir, http_server, partitions
     ):
         dest_dir = Path("parts/foo/src")
         dest_dir.mkdir(parents=True)

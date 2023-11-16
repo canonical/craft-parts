@@ -17,13 +17,12 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.cmake_plugin import CMakePlugin
 
 
-@pytest.fixture
+@pytest.fixture()
 def setup_method_fixture():
     def _setup_method_fixture(new_dir, properties=None):
         if properties is None:
@@ -40,7 +39,7 @@ def setup_method_fixture():
 
         return CMakePlugin(properties=plugin_properties, part_info=part_info)
 
-    yield _setup_method_fixture
+    return _setup_method_fixture
 
 
 class TestPluginCMakePlugin:

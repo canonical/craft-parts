@@ -17,16 +17,15 @@
 import os
 import textwrap
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ProjectInfo, Step, StepInfo, callbacks
 
 
 @pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_feature):
-    yield
+def _setup_feature(_enable_overlay_feature):
+    return
 
 
 def setup_function():
@@ -38,14 +37,14 @@ def teardown_module():
 
 
 @pytest.fixture(autouse=True)
-def mock_mount_unmount(mocker):
+def _mock_mount_unmount(mocker):
     mocker.patch("craft_parts.utils.os_utils.mount")
     mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
     mocker.patch("craft_parts.utils.os_utils.umount")
 
 
 @pytest.fixture(autouse=True)
-def mock_prerequisites_for_overlay(mocker):
+def _mock_prerequisites_for_overlay(mocker):
     mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
     mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
 
@@ -236,7 +235,7 @@ def test_expand_environment_order(new_dir, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    with open(lf.project_info.prime_dir / "part-variables.txt", "r") as file:
+    with open(lf.project_info.prime_dir / "part-variables.txt") as file:
         data = file.read()
 
     assert data == textwrap.dedent(

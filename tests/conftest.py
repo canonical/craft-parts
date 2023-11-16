@@ -14,18 +14,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import collections
 import http.server
 import os
+import subprocess
 import tempfile
 import threading
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, NamedTuple
 from unittest import mock
 
 import pytest
-import xdg  # type: ignore
-
+import xdg  # type: ignore[import]
 from craft_parts.features import Features
 
 from . import fake_servers
@@ -39,29 +38,29 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
     monkeypatch.chdir(tmpdir)
-    yield tmpdir
+    return tmpdir
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_chdir(monkeypatch):
     mock_fn = mock.Mock(spec=os.chdir)
     monkeypatch.setattr(os, "chdir", mock_fn)
-    yield mock_fn
+    return mock_fn
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_chroot(monkeypatch):
     mock_fn = mock.Mock(spec=os.chroot)
     monkeypatch.setattr(os, "chroot", mock_fn)
-    yield mock_fn
+    return mock_fn
 
 
-@pytest.fixture
-def enable_overlay_feature():
+@pytest.fixture()
+def _enable_overlay_feature():
     assert Features().enable_overlay is False
     Features.reset()
     Features(enable_overlay=True)
@@ -71,8 +70,8 @@ def enable_overlay_feature():
     Features.reset()
 
 
-@pytest.fixture
-def enable_partitions_feature():
+@pytest.fixture()
+def _enable_partitions_feature():
     assert Features().enable_partitions is False
     Features.reset()
     Features(enable_partitions=True)
@@ -82,15 +81,15 @@ def enable_partitions_feature():
     Features.reset()
 
 
-@pytest.fixture
+@pytest.fixture()
 def partitions():
     if Features().enable_partitions:
         return ["default", "mypart", "yourpart"]
     return None
 
 
-@pytest.fixture
-def enable_all_features():
+@pytest.fixture()
+def _enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False
     Features.reset()
@@ -102,7 +101,7 @@ def enable_all_features():
 
 
 @pytest.fixture(autouse=True)
-def temp_xdg(tmpdir, mocker):
+def _temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
 
     mocker.patch(
@@ -173,7 +172,7 @@ def fake_snapd():
     socket_path_patcher.stop()
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_snap_command(mocker):
     """Mock the snap command."""
     return FakeSnapCommand(mocker)
@@ -185,9 +184,9 @@ def dependency_fixture(new_dir):
 
     def create_dependency_fixture(
         name: str,
-        broken: bool = False,
-        invalid: bool = False,
-        output: Optional[str] = None,
+        broken: bool = False,  # noqa: FBT001, FBT002
+        invalid: bool = False,  # noqa: FBT001, FBT002
+        output: str | None = None,
     ) -> Path:
         """Creates a mock executable dependency.
 
@@ -211,14 +210,17 @@ def dependency_fixture(new_dir):
         dependency_bin.chmod(0o755)
         return dependency_bin
 
-    yield create_dependency_fixture
+    return create_dependency_fixture
 
 
-ChmodCall = collections.namedtuple("ChmodCall", ["owner", "group", "kwargs"])
+class ChmodCall(NamedTuple):
+    owner: int
+    group: int
+    kwargs: dict[str, Any]
 
 
-@pytest.fixture
-def mock_chown(mocker) -> Dict[str, ChmodCall]:
+@pytest.fixture()
+def mock_chown(mocker) -> dict[str, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the
@@ -232,3 +234,10 @@ def mock_chown(mocker) -> Dict[str, ChmodCall]:
     mocker.patch.object(os, "chown", side_effect=fake_chown)
 
     return calls
+
+
+@pytest.fixture()
+def _meson():
+    subprocess.run(["pip", "install", "meson"], check=True)
+    yield
+    subprocess.run(["pip", "uninstall", "meson", "--yes"], check=True)

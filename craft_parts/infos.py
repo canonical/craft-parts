@@ -20,7 +20,7 @@ import logging
 import platform
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic_yaml import YamlModel
 
@@ -46,7 +46,6 @@ class ProjectVar(YamlModel):
     updated: bool = False
 
 
-# pylint: disable-next=too-many-instance-attributes,too-many-public-methods
 class ProjectInfo:
     """Project-level information containing project-specific fields.
 
@@ -71,7 +70,7 @@ class ProjectInfo:
     :param partitions: A list of partitions.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         application_name: str,
@@ -80,13 +79,13 @@ class ProjectInfo:
         base: str = "",
         parallel_build_count: int = 1,
         strict_mode: bool = False,
-        project_dirs: Optional[ProjectDirs] = None,
-        project_name: Optional[str] = None,
-        project_vars_part_name: Optional[str] = None,
-        project_vars: Optional[Dict[str, str]] = None,
-        partitions: Optional[List[str]] = None,
-        **custom_args: Any,  # custom passthrough args
-    ):
+        project_dirs: ProjectDirs | None = None,
+        project_name: str | None = None,
+        project_vars_part_name: str | None = None,
+        project_vars: dict[str, str] | None = None,
+        partitions: list[str] | None = None,
+        **custom_args: Any,  # custom passthrough args # noqa: ANN401
+    ) -> None:
         if not project_dirs:
             project_dirs = ProjectDirs(partitions=partitions)
 
@@ -104,11 +103,11 @@ class ProjectInfo:
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
         self._partitions = partitions
         self._custom_args = custom_args
-        self.global_environment: Dict[str, str] = {}
+        self.global_environment: dict[str, str] = {}
 
         self.execution_finished = False
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._dirs, name):
             return getattr(self._dirs, name)
 
@@ -118,7 +117,7 @@ class ProjectInfo:
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
     @property
-    def custom_args(self) -> List[str]:
+    def custom_args(self) -> list[str]:
         """Return the list of custom argument names."""
         return list(self._custom_args.keys())
 
@@ -193,17 +192,17 @@ class ProjectInfo:
         return self._dirs
 
     @property
-    def project_name(self) -> Optional[str]:
+    def project_name(self) -> str | None:
         """Return the name of the project using craft-parts."""
         return self._project_name
 
     @property
-    def project_vars_part_name(self) -> Optional[str]:
+    def project_vars_part_name(self) -> str | None:
         """Return the name of the part that can set project vars."""
         return self._project_vars_part_name
 
     @property
-    def project_options(self) -> Dict[str, Any]:
+    def project_options(self) -> dict[str, Any]:
         """Obtain a project-wide options dictionary."""
         return {
             "application_name": self.application_name,
@@ -214,7 +213,7 @@ class ProjectInfo:
         }
 
     @property
-    def partitions(self) -> Optional[List[str]]:
+    def partitions(self) -> list[str] | None:
         """Return the project's partitions."""
         return self._partitions
 
@@ -222,9 +221,9 @@ class ProjectInfo:
         self,
         name: str,
         value: str,
-        raw_write: bool = False,
+        raw_write: bool = False,  # noqa: FBT001, FBT002
         *,
-        part_name: Optional[str] = None,
+        part_name: str | None = None,
     ) -> None:
         """Set the value of a project variable.
 
@@ -297,7 +296,7 @@ class ProjectInfo:
         if name not in self._project_vars:
             raise ValueError(f"{name!r} not in project variables")
 
-    def _set_machine(self, arch: Optional[str]) -> None:
+    def _set_machine(self, arch: str | None) -> None:
         """Initialize host and target machine information based on the architecture.
 
         :param arch: The architecture to use. If empty, assume the
@@ -333,7 +332,7 @@ class PartInfo:
         self,
         project_info: ProjectInfo,
         part: Part,
-    ):
+    ) -> None:
         self._project_info = project_info
         self._part_name = part.name
         self._part_src_dir = part.part_src_dir
@@ -345,7 +344,7 @@ class PartInfo:
         self._part_cache_dir = part.part_cache_dir
         self.build_attributes = part.spec.build_attributes.copy()
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         # Use composition and attribute cascading to avoid setting attributes
         # cumulatively in the init method.
         if hasattr(self._project_info, name):
@@ -446,13 +445,13 @@ class StepInfo:
         self,
         part_info: PartInfo,
         step: Step,
-    ):
+    ) -> None:
         self._part_info = part_info
         self.step = step
-        self.step_environment: Dict[str, str] = {}
-        self.state: "Optional[states.StepState]" = None
+        self.step_environment: dict[str, str] = {}
+        self.state: "states.StepState | None" = None
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._part_info, name):
             return getattr(self._part_info, name)
 
@@ -465,7 +464,7 @@ def _get_host_architecture() -> str:
     return _PLATFORM_MACHINE_TRANSLATIONS.get(machine.lower(), machine)
 
 
-_PLATFORM_MACHINE_TRANSLATIONS: Dict[str, str] = {
+_PLATFORM_MACHINE_TRANSLATIONS: dict[str, str] = {
     # Maps other possible ``platform.machine()`` values to the arch translations below.
     "arm64": "aarch64",
     "armv7hl": "armv7l",
@@ -474,7 +473,7 @@ _PLATFORM_MACHINE_TRANSLATIONS: Dict[str, str] = {
     "x64": "x86_64",
 }
 
-_ARCH_TRANSLATIONS: Dict[str, Dict[str, str]] = {
+_ARCH_TRANSLATIONS: dict[str, dict[str, str]] = {
     "aarch64": {
         "kernel": "arm64",
         "deb": "arm64",

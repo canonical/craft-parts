@@ -8,7 +8,6 @@ help: ## Show this help.
 
 .PHONY: autoformat
 autoformat: ## Run automatic code formatters.
-	isort $(SOURCES)
 	autoflake --remove-all-unused-imports --ignore-init-module-imports -ri $(SOURCES)
 	black $(SOURCES)
 
@@ -56,7 +55,7 @@ install: clean ## Install python package.
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-codespell test-ruff test-isort test-mypy test-pydocstyle test-pylint test-pyright ## Run all linting tests
+lint: test-black test-codespell test-ruff test-mypy test-pydocstyle test-pyright ## Run all linting tests
 
 .PHONY: release
 release: dist ## Release with twine.
@@ -83,10 +82,6 @@ test-ruff:
 test-integrations: ## Run integration tests.
 	pytest tests/integration
 
-.PHONY: test-isort
-test-isort:
-	isort --check $(SOURCES)
-
 .PHONY: test-mypy
 test-mypy:
 	mypy $(SOURCES)
@@ -94,11 +89,6 @@ test-mypy:
 .PHONY: test-pydocstyle
 test-pydocstyle:
 	pydocstyle craft_parts
-
-.PHONY: test-pylint
-test-pylint:
-	pylint craft_parts
-	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,duplicate-code,protected-access,consider-using-with,missing-class-docstring,line-too-long
 
 .PHONY: test-pyright
 test-pyright:

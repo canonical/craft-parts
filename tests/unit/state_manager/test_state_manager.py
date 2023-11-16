@@ -18,7 +18,6 @@ import dataclasses
 from pathlib import Path
 
 import pytest
-
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.state_manager import StateManager, state_manager, states
@@ -33,18 +32,18 @@ class TestStateWrapper:
         state = states.PullState(part_properties=properties)
         stw = state_manager._StateWrapper(state=state, serial=500)
         assert stw.state == state
-        assert stw.serial == 500
+        assert stw.serial == 500  # noqa: PLR2004
         assert stw.step_updated is False
 
     def test_step_updated(self, properties):
         state = states.PullState(part_properties=properties)
         stw = state_manager._StateWrapper(state=state, serial=42, step_updated=True)
         assert stw.state == state
-        assert stw.serial == 42
+        assert stw.serial == 42  # noqa: PLR2004
         assert stw.step_updated is True
 
     @pytest.mark.parametrize(
-        "s1,s2,result",
+        ("s1", "s2", "result"),
         [
             (0, 0, False),
             (0, 1, False),
@@ -62,13 +61,13 @@ class TestStateWrapper:
         stw = state_manager._StateWrapper(state=state, serial=500)
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.state = states.PullState()  # type: ignore
+            stw.state = states.PullState()  # type: ignore[reportGeneralTypeIssues]
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.serial = 5  # type: ignore
+            stw.serial = 5  # type: ignore[reportGeneralTypeIssues]
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.step_updated = True  # type: ignore
+            stw.step_updated = True  # type: ignore[reportGeneralTypeIssues]
 
 
 class TestStateDB:
@@ -84,7 +83,7 @@ class TestStateDB:
         assert stw.step_updated is False
 
         other = sdb.wrap_state(state, step_updated=True)
-        assert other.serial == 2
+        assert other.serial == 2  # noqa: PLR2004
         assert other.step_updated is True
 
     def test_state_access(self):
@@ -146,7 +145,7 @@ class TestStateDB:
 
         # a new state is created
         new_stw = sdb.wrap_state(state)
-        assert new_stw.serial == 2
+        assert new_stw.serial == 2  # noqa: PLR2004
 
         # insert and rewrap the existing state
         sdb.set(part_name="foo", step=Step.PULL, state=stw)
@@ -155,7 +154,7 @@ class TestStateDB:
 
         rewrapped_stw = sdb.get(part_name="foo", step=Step.PULL)
         assert rewrapped_stw is not None
-        assert rewrapped_stw.serial == 3
+        assert rewrapped_stw.serial == 3  # noqa: PLR2004
 
     def test_set_step_updated(self):
         state = states.PullState()
@@ -177,7 +176,7 @@ class TestStateDB:
 
         rewrapped_stw = sdb.get(part_name="foo", step=Step.PULL)
         assert rewrapped_stw is not None
-        assert rewrapped_stw.serial == 2
+        assert rewrapped_stw.serial == 2  # noqa: PLR2004
 
 
 class TestStateManager:
@@ -270,7 +269,8 @@ class TestStateManager:
         for step in list(Step):
             assert sm._state_db.get(part_name="p1", step=step) is None
 
-    def test_clean_part_overlay_enabled(self, enable_overlay_feature, new_dir):
+    @pytest.mark.usefixtures("_enable_overlay_feature")
+    def test_clean_part_overlay_enabled(self, new_dir):
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {})
 

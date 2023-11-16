@@ -22,7 +22,6 @@ from unittest.mock import call
 
 import pytest
 import pytest_check  # type: ignore[import]
-
 from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
@@ -35,16 +34,13 @@ from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
-# pylint: disable=too-many-lines
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPartHandling:
     """Verify the part handler step processing."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, mocker, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup_method_fixture(self, mocker, new_dir, partitions):
         self._part = Part(
             "foo",
             {
@@ -74,7 +70,6 @@ class TestPartHandling:
             "craft_parts.utils.os_utils.mount_overlayfs"
         )
         self._mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
-        # pylint: enable=attribute-defined-outside-init
 
     def test_run_pull(self, mocker):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_pull")
@@ -163,7 +158,8 @@ class TestPartHandling:
             (self._part_info.part_build_dir / "source.c").exists(), out_of_source
         )
 
-    def test_run_build_without_overlay_visibility(self, mocker, new_dir, partitions):
+    @pytest.mark.usefixtures("new_dir")
+    def test_run_build_without_overlay_visibility(self, mocker, partitions):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
 
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
@@ -195,12 +191,13 @@ class TestPartHandling:
             overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
-    def test_run_prime(self, new_dir, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_run_prime(self, mocker):
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
         )
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+        mocker.patch("os.getxattr").return_value = b"pkg"
 
         ovmgr = OverlayManager(
             project_info=self._project_info, part_list=[self._part], base_layer_dir=None
@@ -229,7 +226,7 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
         )
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+        mocker.patch("os.getxattr").return_value = b"pkg"
 
         state = self._handler._run_prime(
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
@@ -242,9 +239,8 @@ class TestPartHandling:
             primed_stage_packages=set(),
         )
 
-    # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -252,9 +248,8 @@ class TestPartHandling:
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_scriptlet(
-        self, new_dir, partitions, mocker, capfd, step, scriptlet
-    ):
+    @pytest.mark.usefixtures("new_dir")
+    def test_run_step_scriptlet(self, partitions, mocker, capfd, step, scriptlet):
         """If defined, scriptlets are executed instead of the built-in handler."""
         run_builtin_mock = mocker.patch(
             "craft_parts.executor.step_handler.StepHandler.run_builtin"
@@ -283,10 +278,8 @@ class TestPartHandling:
         assert err == "+ echo hello\n"
         assert run_builtin_mock.mock_calls == []
 
-    # pylint: enable=too-many-arguments
-
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -294,9 +287,8 @@ class TestPartHandling:
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_empty_scriptlet(
-        self, new_dir, partitions, mocker, step, scriptlet
-    ):
+    @pytest.mark.usefixtures("new_dir")
+    def test_run_step_empty_scriptlet(self, partitions, mocker, step, scriptlet):
         """Even empty scriptlets are executed instead of the built-in handler."""
         run_builtin_mock = mocker.patch(
             "craft_parts.executor.step_handler.StepHandler.run_builtin"
@@ -321,7 +313,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == []
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -329,9 +321,8 @@ class TestPartHandling:
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_undefined_scriptlet(
-        self, new_dir, partitions, mocker, step, scriptlet
-    ):
+    @pytest.mark.usefixtures("new_dir")
+    def test_run_step_undefined_scriptlet(self, partitions, mocker, step, scriptlet):
         """If scriptlets are not defined, execute the built-in handler."""
         run_builtin_mock = mocker.patch(
             "craft_parts.executor.step_handler.StepHandler.run_builtin"
@@ -356,7 +347,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == [call()]
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -364,9 +355,8 @@ class TestPartHandling:
             (Step.PRIME, "override-prime"),
         ],
     )
-    def test_run_step_scriptlet_streams(
-        self, new_dir, partitions, capfd, step, scriptlet
-    ):
+    @pytest.mark.usefixtures("new_dir")
+    def test_run_step_scriptlet_streams(self, partitions, capfd, step, scriptlet):
         p1 = Part(
             "p1",
             {"plugin": "nil", scriptlet: "echo hello; echo goodbye >&2"},
@@ -405,8 +395,7 @@ class TestPartUpdateHandler:
     """Verify step update processing."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, mocker, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup_method_fixture(self, new_dir, partitions):
         self._part = Part(
             "foo",
             {
@@ -436,7 +425,6 @@ class TestPartUpdateHandler:
             part_list=[self._part],
             overlay_manager=ovmgr,
         )
-        # pylint: enable=attribute-defined-outside-init
 
     def test_update_pull(self):
         self._handler.run_action(Action("foo", Step.PULL))
@@ -450,7 +438,8 @@ class TestPartUpdateHandler:
         assert Path("parts/foo/src/foo.txt").read_text() == "change"
         assert Path("parts/foo/src/bar.txt").exists()
 
-    def test_update_pull_no_source(self, new_dir, partitions, caplog):
+    @pytest.mark.usefixtures("new_dir")
+    def test_update_pull_no_source(self, partitions, caplog):
         caplog.set_level(logging.WARNING)
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         part_info = PartInfo(self._project_info, part=p1)
@@ -470,7 +459,8 @@ class TestPartUpdateHandler:
             "Update requested on part 'p1' without a source handler."
         )
 
-    def test_update_pull_with_scriptlet(self, new_dir, partitions, capfd):
+    @pytest.mark.usefixtures("new_dir")
+    def test_update_pull_with_scriptlet(self, partitions, capfd):
         p1 = Part(
             "p1",
             {"plugin": "nil", "override-pull": "echo hello"},
@@ -505,7 +495,8 @@ class TestPartUpdateHandler:
 
         assert self._update_build_path.read_text() == "change"
 
-    def test_update_build_stage_packages(self, new_dir, partitions, mocker):
+    @pytest.mark.usefixtures("new_dir")
+    def test_update_build_stage_packages(self, partitions, mocker):
         def fake_unpack(**_):
             Path("parts/foo/install/hello").touch()
 
@@ -560,8 +551,7 @@ class TestPartCleanHandler:
     """Verify step update processing."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, mocker, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup_method_fixture(self, new_dir, partitions):
         self._part = Part(
             "foo", {"plugin": "dump", "source": "subdir"}, partitions=partitions
         )
@@ -581,10 +571,9 @@ class TestPartCleanHandler:
             part_list=[self._part],
             overlay_manager=ovmgr,
         )
-        # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install", "build"),
@@ -592,9 +581,9 @@ class TestPartCleanHandler:
             (Step.PRIME, "prime", "prime"),
         ],
     )
-    def test_clean_step(self, mocker, step, test_dir, state_file):
+    def test_clean_step(self, step, test_dir, state_file):
         self._handler._make_dirs()
-        for each_step in step.previous_steps() + [step]:
+        for each_step in [*step.previous_steps(), step]:
             self._handler.run_action(Action("foo", each_step))
 
         assert Path(test_dir, "foo.txt").is_file()
@@ -633,7 +622,7 @@ class TestRerunStep:
         mock.attach_mock(mock_callback, "run_pre_step")
 
         handler.run_action(Action("p1", step, ActionType.RERUN))
-        calls = [mocker.call.clean_step(step=x) for x in [step] + step.next_steps()]
+        calls = [mocker.call.clean_step(step=x) for x in [step, *step.next_steps()]]
         calls.append(mocker.call.run_pre_step(mocker.ANY))
         mock.assert_has_calls(calls)
 
@@ -662,7 +651,7 @@ class TestPackages:
         result = handler._fetch_stage_packages(step_info=step_info)
         assert result == ["pkg1", "pkg2"]
 
-    def test_fetch_stage_packages_none(self, mocker, new_dir, partitions):
+    def test_fetch_stage_packages_none(self, new_dir, partitions):
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
@@ -747,7 +736,7 @@ class TestPackages:
             directory=os.path.join(new_dir, "parts/p1/stage_snaps"),
         )
 
-    def test_fetch_stage_snaps_none(self, mocker, new_dir, partitions):
+    def test_fetch_stage_snaps_none(self, new_dir, partitions):
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
@@ -876,16 +865,19 @@ class TestFileFilter:
     _default_destdir = Path("destdir")  # Overridden if partitions are enabled.
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
-        (self._default_destdir / "dir1").mkdir(parents=True)
-        (self._default_destdir / "dir1/dir2").mkdir(parents=True)
-        (self._default_destdir / "file1").touch()
-        (self._default_destdir / "file2").touch()
-        (self._default_destdir / "dir1/file3").touch()
-        (self._default_destdir / "file4").symlink_to("file2")
-        (self._default_destdir / "dir3").symlink_to("dir1")
+    def _setup_method_fixture(self, new_dir):
+        tmpdir = Path(new_dir)
+        (tmpdir / self._default_destdir / "dir1").mkdir(parents=True)
+        (tmpdir / self._default_destdir / "dir1/dir2").mkdir(parents=True)
+        (tmpdir / self._default_destdir / "file1").touch()
+        (tmpdir / self._default_destdir / "file2").touch()
+        (tmpdir / self._default_destdir / "dir1/file3").touch()
+        (tmpdir / self._default_destdir / "file4").symlink_to("file2")
+        (tmpdir / self._default_destdir / "dir3").symlink_to("dir1")
 
-    def test_apply_file_filter_empty(self, new_dir, partitions):
+    @pytest.mark.usefixtures("new_dir")
+    @pytest.mark.usefixtures("partitions")
+    def test_apply_file_filter_empty(self):
         fileset = filesets.Fileset([])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
@@ -899,7 +891,9 @@ class TestFileFilter:
         pytest_check.is_true((self._default_destdir / "file4").is_symlink())
         pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
 
-    def test_apply_file_filter_remove_file(self, new_dir, partitions):
+    @pytest.mark.usefixtures("new_dir")
+    @pytest.mark.usefixtures("partitions")
+    def test_apply_file_filter_remove_file(self):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
@@ -913,7 +907,9 @@ class TestFileFilter:
         pytest_check.is_true((self._default_destdir / "file4").is_symlink())
         pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
 
-    def test_apply_file_filter_remove_dir(self, new_dir, partitions):
+    @pytest.mark.usefixtures("new_dir")
+    @pytest.mark.usefixtures("partitions")
+    def test_apply_file_filter_remove_dir(self):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
@@ -926,7 +922,9 @@ class TestFileFilter:
         pytest_check.is_true((self._default_destdir / "file4").is_symlink())
         pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
 
-    def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
+    @pytest.mark.usefixtures("new_dir")
+    @pytest.mark.usefixtures("partitions")
+    def test_apply_file_filter_remove_symlink(self):
         fileset = filesets.Fileset(["-file4", "-dir3"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
@@ -940,7 +938,9 @@ class TestFileFilter:
         pytest_check.is_false((self._default_destdir / "file4").exists())
         pytest_check.is_false((self._default_destdir / "dir3").exists())
 
-    def test_apply_file_filter_keep_file(self, new_dir, partitions):
+    @pytest.mark.usefixtures("new_dir")
+    @pytest.mark.usefixtures("partitions")
+    def test_apply_file_filter_keep_file(self):
         fileset = filesets.Fileset(["dir1/file3"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(

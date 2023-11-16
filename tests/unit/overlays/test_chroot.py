@@ -19,7 +19,6 @@ from pathlib import Path
 from unittest.mock import ANY, call
 
 import pytest
-
 from craft_parts.overlays import chroot
 
 
@@ -28,7 +27,7 @@ def target_func(content: str) -> int:
     return 1337
 
 
-def target_func_error(content: str) -> int:
+def target_func_error(content: str) -> int:  # noqa: ARG001
     raise RuntimeError("bummer")
 
 
@@ -42,7 +41,7 @@ class FakeConn:
         self.sent = data
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_conn():
     return FakeConn()
 
@@ -50,7 +49,8 @@ def fake_conn():
 class TestChroot:
     """Fork process and execute in chroot."""
 
-    def test_chroot(self, mocker, new_dir, mock_chroot):
+    @pytest.mark.usefixtures("mock_chroot")
+    def test_chroot(self, mocker, new_dir):
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
@@ -172,7 +172,8 @@ class TestChroot:
         assert mock_chroot.mock_calls == [call(Path("/some/path"))]
         assert fake_conn.sent == (1337, None)
 
-    def test_runner_error(self, new_dir, fake_conn, mock_chdir, mock_chroot):
+    @pytest.mark.usefixtures("new_dir")
+    def test_runner_error(self, fake_conn, mock_chdir, mock_chroot):
         chroot._runner(
             Path("/some/path"), fake_conn, target_func_error, ("func arg",), {}
         )

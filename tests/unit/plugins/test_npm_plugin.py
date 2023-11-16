@@ -17,19 +17,16 @@
 import os
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_plugin import NpmPlugin
-
-# pylint: disable=too-many-public-methods
+from pydantic import ValidationError
 
 
 @pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
@@ -58,8 +55,9 @@ class TestPluginNpmPlugin:
             ("npm", ["node"]),
         ],
     )
+    @pytest.mark.usefixtures("new_dir")
     def test_validate_environment_missing_dependencies(
-        self, dependencies, dependency_fixture, new_dir, part_info
+        self, dependencies, dependency_fixture, part_info
     ):
         """Validate that missing dependencies raise an exception.
 
@@ -91,8 +89,9 @@ class TestPluginNpmPlugin:
             ("npm", ["node"]),
         ],
     )
+    @pytest.mark.usefixtures("new_dir")
     def test_validate_environment_broken_dependencies(
-        self, dependencies, dependency_fixture, new_dir, part_info
+        self, dependencies, dependency_fixture, part_info
     ):
         """Validate that broken dependencies raise an exception.
 
@@ -121,7 +120,8 @@ class TestPluginNpmPlugin:
             == f"'{broken_dependency_name}' failed with error code 33"
         )
 
-    def test_validate_environment_part_dependencies(self, new_dir, part_info):
+    @pytest.mark.usefixtures("new_dir")
+    def test_validate_environment_part_dependencies(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
         validator = plugin.validator_class(
@@ -131,18 +131,18 @@ class TestPluginNpmPlugin:
         validator.validate_environment(part_dependencies=["npm-deps"])
 
     @pytest.mark.parametrize(
-        "satisfied_dependency,error_dependency",
+        ("satisfied_dependency", "error_dependency"),
         [
             ("node", "npm"),
             ("npm", "node"),
         ],
     )
+    @pytest.mark.usefixtures("new_dir")
     def test_validate_environment_missing_part_dependencies(
         self,
         satisfied_dependency,
         error_dependency,
         dependency_fixture,
-        new_dir,
         part_info,
     ):
         """Validate that missing part dependencies raise an exception."""
@@ -165,19 +165,22 @@ class TestPluginNpmPlugin:
             "would satisfy the dependency"
         )
 
-    def test_get_build_snaps(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_snaps(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_snaps() == set()
 
-    def test_get_build_packages(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_packages(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_packages() == {"gcc"}
 
-    def test_get_build_packages_include_node_false(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_packages_include_node_false(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal(
             {
                 "source": ".",
@@ -188,7 +191,8 @@ class TestPluginNpmPlugin:
 
         assert plugin.get_build_packages() == {"gcc"}
 
-    def test_get_build_packages_include_node_true(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_packages_include_node_true(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal(
             {"source": ".", "npm-include-node": True, "npm-node-version": "1.0.0"}
         )
@@ -196,13 +200,15 @@ class TestPluginNpmPlugin:
 
         assert plugin.get_build_packages() == {"curl", "gcc"}
 
-    def test_get_build_environment(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_environment(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_environment() == {}
 
-    def test_get_build_environment_include_node_false(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_environment_include_node_false(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal(
             {
                 "source": ".",
@@ -213,7 +219,8 @@ class TestPluginNpmPlugin:
 
         assert plugin.get_build_environment() == {}
 
-    def test_get_build_environment_include_node_true(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_environment_include_node_true(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal(
             {
                 "source": ".",
@@ -227,7 +234,8 @@ class TestPluginNpmPlugin:
             "PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}",
         }
 
-    def test_get_build_commands(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_commands(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -235,7 +243,8 @@ class TestPluginNpmPlugin:
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
 
-    def test_get_build_commands_false(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_commands_false(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal(
             {"source": ".", "npm-include-node": False}
         )
@@ -245,7 +254,8 @@ class TestPluginNpmPlugin:
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
 
-    def test_get_build_commands_include_node_true(self, part_info, mocker, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_build_commands_include_node_true(self, part_info, mocker):
         mocker.patch.dict(os.environ, {"SNAP_ARCH": "amd64"})
         properties = NpmPlugin.properties_class.unmarshal(
             {
@@ -266,9 +276,9 @@ class TestPluginNpmPlugin:
             'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
 
-    def test_get_build_commands_include_node_true_no_node_version(
-        self, part_info, new_dir
-    ):
+    @pytest.mark.usefixtures("new_dir")
+    @pytest.mark.usefixtures("part_info")
+    def test_get_build_commands_include_node_true_no_node_version(self):
         with pytest.raises(ValidationError) as raised:
             NpmPlugin.properties_class.unmarshal(
                 {
@@ -328,7 +338,8 @@ class TestPluginNpmPlugin:
             == """Architecture "System/360 ('32bit', 'OS/360')" is not supported."""
         )
 
-    def test_get_out_of_source_build(self, part_info, new_dir):
+    @pytest.mark.usefixtures("new_dir")
+    def test_get_out_of_source_build(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 

@@ -17,7 +17,7 @@
 """The Dotnet plugin."""
 
 import logging
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, cast
 
 from overrides import override
 
@@ -32,14 +32,14 @@ class DotnetPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the Dotnet plugin."""
 
     dotnet_build_configuration: str = "Release"
-    dotnet_self_contained_runtime_identifier: Optional[str]
+    dotnet_self_contained_runtime_identifier: str | None
 
     # part properties required by the plugin
     source: str
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "DotnetPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "DotnetPluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -63,7 +63,7 @@ class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -100,22 +100,22 @@ class DotnetPlugin(Plugin):
     validator_class = DotPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(DotnetPluginProperties, self._options)
 

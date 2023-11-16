@@ -18,7 +18,7 @@
 
 import hashlib
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from craft_parts.parts import Part
 
@@ -28,13 +28,13 @@ logger = logging.getLogger(__name__)
 class LayerHash:
     """The layer validation hash for a part."""
 
-    def __init__(self, layer_hash: bytes):
+    def __init__(self, layer_hash: bytes) -> None:
         self.digest = layer_hash
 
     def __repr__(self) -> str:
         return self.hex()
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, LayerHash):
             return False
 
@@ -110,19 +110,21 @@ class LayerStateManager:
     :param base_layer_hash: The verification hash of the overlay base layer.
     """
 
-    def __init__(self, part_list: List[Part], base_layer_hash: Optional[LayerHash]):
+    def __init__(
+        self, part_list: list[Part], base_layer_hash: LayerHash | None
+    ) -> None:
         self._part_list = part_list
         self._base_layer_hash = base_layer_hash
 
-        self._layer_hash: Dict[str, Optional[LayerHash]] = {}
+        self._layer_hash: dict[str, LayerHash | None] = {}
         for part in part_list:
             self.set_layer_hash(part, LayerHash.load(part))
 
-    def get_layer_hash(self, part: Part) -> Optional[LayerHash]:
+    def get_layer_hash(self, part: Part) -> LayerHash | None:
         """Obtain the layer hash for the given part."""
         return self._layer_hash.get(part.name)
 
-    def set_layer_hash(self, part: Part, layer_hash: Optional[LayerHash]) -> None:
+    def set_layer_hash(self, part: Part, layer_hash: LayerHash | None) -> None:
         """Store the value of the layer hash for the given part."""
         self._layer_hash[part.name] = layer_hash
 

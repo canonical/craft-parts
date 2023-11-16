@@ -20,19 +20,11 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts import LifecycleManager, Step
 
 
-@pytest.fixture
-def meson():
-    subprocess.run(["pip", "install", "meson"], check=True)
-    yield
-    subprocess.run(["pip", "uninstall", "meson", "--yes"], check=True)
-
-
 @pytest.mark.usefixtures("mocker")
-@pytest.mark.usefixtures("meson")
+@pytest.mark.usefixtures("_meson")
 def test_meson_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
@@ -85,7 +77,7 @@ def test_meson_plugin(new_dir, partitions):
 
 
 @pytest.mark.usefixtures("mocker")
-@pytest.mark.usefixtures("meson")
+@pytest.mark.usefixtures("_meson")
 def test_meson_plugin_with_subdir(new_dir, partitions):
     """Verify meson builds with a source subdirectory."""
     parts_yaml = textwrap.dedent(

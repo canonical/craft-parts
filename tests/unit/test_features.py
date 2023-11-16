@@ -15,12 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts import Features
 
 
 @pytest.fixture(autouse=True)
-def setup_features():
+def _setup_features():
     Features.reset()
     yield
     Features.reset()

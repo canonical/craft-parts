@@ -17,19 +17,16 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.dump_plugin import DumpPlugin
-
-# pylint: disable=attribute-defined-outside-init
 
 
 class TestPluginDump:
     """Check dump plugin methods and properties."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def _setup_method_fixture(self, new_dir):
         properties = DumpPlugin.properties_class.unmarshal({"source": "something"})
 
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
@@ -41,7 +38,7 @@ class TestPluginDump:
         self._plugin = DumpPlugin(properties=properties, part_info=part_info)
 
     def test_unmarshal_error(self):
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(ValueError) as raised:  # noqa: PT011
             DumpPlugin.properties_class.unmarshal({})
         assert str(raised.value) == "'source' is required by the dump plugin"
 

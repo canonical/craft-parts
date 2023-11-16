@@ -15,5 +15,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Make pytest run any non-overridden chisel tests here with partitions enabled.
-# pylint: disable=wildcard-import,unused-import,unused-wildcard-import
+
 from tests.integration.lifecycle.test_chisel_lifecycle import *  # noqa: F403

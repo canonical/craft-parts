@@ -19,7 +19,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from craft_parts import sequencer
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import ProjectInfo
@@ -28,8 +27,8 @@ from craft_parts.steps import Step
 
 
 @pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_feature):
-    yield
+def _setup_feature(_enable_overlay_feature):
+    return
 
 
 _pull_state_foo = textwrap.dedent(
@@ -91,8 +90,8 @@ _pull_state_bar = textwrap.dedent(
 )
 
 
-@pytest.fixture
-def pull_state(new_dir):
+@pytest.fixture()
+def _pull_state(new_dir):
     # build current state
     Path(new_dir / "parts/foo/state").mkdir(parents=True)
     Path(new_dir / "parts/bar/state").mkdir(parents=True)
@@ -136,7 +135,6 @@ class TestSequencerPlan:
             project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
-        # pylint: disable=line-too-long
         # fmt: off
         actions = seq.plan(Step.PRIME)
         assert actions == [
@@ -175,7 +173,7 @@ class TestSequencerPlan:
             Action("bar", Step.PRIME, action_type=ActionType.RUN),
         ]
 
-    @pytest.mark.usefixtures("pull_state")
+    @pytest.mark.usefixtures("_pull_state")
     def test_plan_requested_part_step(self):
         p1 = Part("foo", {"plugin": "nil"})
 
@@ -192,7 +190,7 @@ class TestSequencerPlan:
             ),
         ]
 
-    @pytest.mark.usefixtures("pull_state")
+    @pytest.mark.usefixtures("_pull_state")
     def test_plan_dirty_step(self):
         p1 = Part("foo", {"plugin": "dump"})
 
@@ -212,7 +210,7 @@ class TestSequencerPlan:
             ),
         ]
 
-    @pytest.mark.usefixtures("pull_state")
+    @pytest.mark.usefixtures("_pull_state")
     def test_plan_outdated_step(self):
         p1 = Part("foo", {"plugin": "nil"})
 
@@ -245,7 +243,7 @@ class TestSequencerPlan:
         ]
 
 
-@pytest.mark.usefixtures("new_dir", "pull_state")
+@pytest.mark.usefixtures("new_dir", "_pull_state")
 class TestSequencerStates:
     """Check existing state loading."""
 

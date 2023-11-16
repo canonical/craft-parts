@@ -19,14 +19,12 @@ import textwrap
 from pathlib import Path
 
 import yaml
-from overrides import override
-
 from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
+from overrides import override
 
 
 def test_dotnet_plugin(new_dir, partitions):
-    # pylint: disable=line-too-long
     parts_yaml = textwrap.dedent(
         """
         parts:
@@ -48,7 +46,7 @@ def test_dotnet_plugin(new_dir, partitions):
               - -sdk
         """
     )
-    # pylint: enable=line-too-long
+
     parts = yaml.safe_load(parts_yaml)
 
     Path("dotnet.csproj").write_text(
@@ -93,7 +91,7 @@ def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
 
         __already_run = False
 
-        @override
+        @override  # type: ignore[misc]
         def _execute(self, cmd: str) -> str:
             if cmd == "dotnet --version" and not self.__already_run:
                 self.__class__.__already_run = True
@@ -115,7 +113,7 @@ def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
 
         __already_run = False
 
-        @override
+        @override  # type: ignore[misc]
         def _execute(self, cmd: str) -> str:
             if cmd != "dotnet --version":
                 return super()._execute(cmd)

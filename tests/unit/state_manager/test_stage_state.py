@@ -19,7 +19,6 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
-
 from craft_parts.state_manager.stage_state import StageState
 
 
@@ -59,7 +58,9 @@ class TestStageState:
 
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError) as raised:
-            StageState.unmarshal(False)  # type: ignore
+            StageState.unmarshal(
+                False  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
+            )
         assert str(raised.value) == "state data is not a dictionary"
 
 
@@ -97,7 +98,7 @@ class TestStageStateChanges:
             "stage",
         ]
 
-        for prop in properties.keys():
+        for prop in properties:
             other = properties.copy()
             other[prop] = "new value"
 
@@ -123,7 +124,7 @@ class TestStageStateChanges:
             "extra-property",
         ]
 
-        for prop in augmented_properties.keys():
+        for prop in augmented_properties:
             other = augmented_properties.copy()
             other[prop] = "new value"
 

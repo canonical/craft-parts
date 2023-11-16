@@ -17,27 +17,25 @@
 import sys
 import textwrap
 from pathlib import Path
-from typing import List
-
-import pytest
-import yaml
 
 import craft_parts
+import pytest
+import yaml
 from craft_parts import Action, ActionType, Step
 
 
 @pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_feature):
-    yield
+def _setup_feature(_enable_overlay_feature):
+    return
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")
 
 
 @pytest.fixture(autouse=True)
-def mock_overlay_support_prerequisites(mocker):
+def _mock_overlay_support_prerequisites(mocker):
     mocker.patch.object(sys, "platform", "linux")
     mocker.patch("os.geteuid", return_value=0)
     mock_refresh = mocker.patch(
@@ -50,7 +48,7 @@ def mock_overlay_support_prerequisites(mocker):
 
 
 class TestOverlayLayerOrder:
-    @pytest.fixture
+    @pytest.fixture()
     def lifecycle(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
@@ -99,7 +97,8 @@ class TestOverlayLayerOrder:
             Action("p3", Step.PRIME),
         ]
 
-    def test_layer_parameter_change(self, lifecycle, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_layer_parameter_change(self, lifecycle, new_dir):
         actions = lifecycle.plan(Step.OVERLAY, ["p3"])
         assert actions == [
             Action("p3", Step.PULL),
@@ -155,7 +154,8 @@ class TestOverlayLayerOrder:
 
 
 class TestOverlayStageDependency:
-    def test_part_overlay_stage_dependency_top(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_part_overlay_stage_dependency_top(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -191,7 +191,8 @@ class TestOverlayStageDependency:
             # fmt: on
         ]
 
-    def test_part_overlay_stage_dependency_middle(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_part_overlay_stage_dependency_middle(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -227,7 +228,8 @@ class TestOverlayStageDependency:
             # fmt: on
         ]
 
-    def test_part_overlay_stage_dependency_bottom(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_part_overlay_stage_dependency_bottom(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -320,7 +322,8 @@ class TestOverlayInvalidationFlow:
         ]
 
     # invalidation example 2
-    def test_pull_dirty_multipart(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_pull_dirty_multipart(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -420,7 +423,8 @@ class TestOverlayInvalidationFlow:
             # fmt: on
         ]
 
-    def test_overlay_clean(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_clean(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -507,7 +511,8 @@ class TestOverlayInvalidationFlow:
             # fmt: on
         ]
 
-    def test_overlay_invalidation_facundos_scenario(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_invalidation_facundos_scenario(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -612,7 +617,8 @@ class TestOverlaySpecScenarios:
             Action("A", Step.STAGE),
         ]
 
-    def test_overlay_spec_scenario_2_stage_all(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_spec_scenario_2_stage_all(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -645,7 +651,8 @@ class TestOverlaySpecScenarios:
             Action("B", Step.STAGE),
         ]
 
-    def test_overlay_spec_scenario_2_stage_a(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_spec_scenario_2_stage_a(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -676,7 +683,8 @@ class TestOverlaySpecScenarios:
             Action("A", Step.STAGE),
         ]
 
-    def test_overlay_spec_scenario_3_stage_a(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_spec_scenario_3_stage_a(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -709,7 +717,8 @@ class TestOverlaySpecScenarios:
             Action("A", Step.STAGE),
         ]
 
-    def test_overlay_spec_scenario_3_stage_b(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_spec_scenario_3_stage_b(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -740,7 +749,8 @@ class TestOverlaySpecScenarios:
             Action("B", Step.STAGE),
         ]
 
-    def test_overlay_spec_scenario_4_stage_a(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_spec_scenario_4_stage_a(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -768,7 +778,8 @@ class TestOverlaySpecScenarios:
             Action("A", Step.STAGE),
         ]
 
-    def test_overlay_spec_scenario_4_stage_b(self, fake_call, new_dir):
+    @pytest.mark.usefixtures("fake_call")
+    def test_overlay_spec_scenario_4_stage_b(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -799,5 +810,5 @@ class TestOverlaySpecScenarios:
         ]
 
 
-def _filter_skip(actions: List[Action]) -> List[Action]:
+def _filter_skip(actions: list[Action]) -> list[Action]:
     return [a for a in actions if a.action_type != ActionType.SKIP]

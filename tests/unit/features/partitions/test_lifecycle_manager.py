@@ -18,17 +18,17 @@ import sys
 import textwrap
 from string import ascii_lowercase
 from textwrap import dedent
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 import pytest_check  # type: ignore[import]
 import yaml
+from craft_parts import errors, lifecycle_manager
 from hypothesis import HealthCheck, given, settings, strategies
 
-from craft_parts import errors, lifecycle_manager
 from tests.unit import test_lifecycle_manager
 
-mock_available_plugins = test_lifecycle_manager.mock_available_plugins
+_mock_available_plugins = test_lifecycle_manager._mock_available_plugins
 
 
 def valid_partitions_strategy():
@@ -40,7 +40,7 @@ def valid_partitions_strategy():
         strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1),
         min_size=1,
         unique=True,
-    ).map(lambda lst: ["default"] + lst)
+    ).map(lambda lst: ["default", *lst])
 
     # ensure "default" is not repeated in the list
     return strategy.filter(lambda partitions: "default" not in partitions[1:])
@@ -49,13 +49,13 @@ def valid_partitions_strategy():
 class TestPartitionsSupport:
     """Verify LifecycleManager supports partitions."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
         return ["default", "kernel"]
 
-    @pytest.fixture
-    def parts_data(self) -> Dict[str, Any]:
+    @pytest.fixture()
+    def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     @pytest.mark.parametrize("partitions", [["default"], ["default", "kernel"]])
@@ -234,8 +234,7 @@ class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
     """Lifecycle manager tests with partitions enabled."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup_method_fixture(self):
         yaml_data = textwrap.dedent(
             """
             parts:
@@ -245,7 +244,6 @@ class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
         )
         self._data = yaml.safe_load(yaml_data)
         self._lcm_kwargs = {"partitions": ["default", "mypart", "yourpart"]}
-        # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize("work_dir", [".", "work_dir"])
     def test_project_info(self, new_dir, work_dir):

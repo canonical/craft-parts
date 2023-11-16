@@ -17,10 +17,8 @@ import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Set, Type
 
 import pytest
-
 from craft_parts import plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
@@ -34,6 +32,7 @@ from craft_parts.infos import (
 )
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+
 from tests.unit.common_plugins import StrictTestPlugin
 
 
@@ -42,16 +41,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return ["hello"]
 
 
@@ -61,7 +60,7 @@ def _step_handler_for_step(
     part_info: PartInfo,
     part: Part,
     dirs: ProjectDirs,
-    plugin_class: Type[plugins.Plugin] = FooPlugin,
+    plugin_class: type[plugins.Plugin] = FooPlugin,
 ) -> StepHandler:
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
@@ -91,8 +90,7 @@ class TestStepHandlerBuiltins:
     """Verify the built-in handlers."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup(self, new_dir, partitions):
         self._partitions = partitions
         self._part = Part("p1", {"source": "."}, partitions=partitions)
         self._dirs = ProjectDirs(partitions=partitions)
@@ -105,7 +103,6 @@ class TestStepHandlerBuiltins:
         )
         self._part_info = PartInfo(project_info=self._project_info, part=self._part)
         self._props = plugins.PluginProperties()
-        # pylint: enable=attribute-defined-outside-init
 
     def test_run_builtin_pull(self, new_dir, mocker):
         mock_source_pull = mocker.patch(
@@ -124,7 +121,7 @@ class TestStepHandlerBuiltins:
         mock_source_pull.assert_called_once_with()
         assert result == StepContents()
 
-    def test_run_builtin_overlay(self, new_dir, mocker):
+    def test_run_builtin_overlay(self, new_dir):
         sh = _step_handler_for_step(
             Step.OVERLAY,
             cache_dir=new_dir,
@@ -199,12 +196,12 @@ class TestStepHandlerBuiltins:
             )
         )
 
-        assert get_mode(environment_script_path) == 0o644
-        with open(environment_script_path, "r") as file:
+        assert get_mode(environment_script_path) == 0o644  # noqa: PLR2004
+        with open(environment_script_path) as file:
             assert file.read() == expected_script
 
-        assert get_mode(build_script_path) == 0o755
-        with open(build_script_path, "r") as file:
+        assert get_mode(build_script_path) == 0o755  # noqa: PLR2004
+        with open(build_script_path) as file:
             assert file.read() == dedent(
                 f"""\
                 #!/bin/bash
@@ -224,7 +221,7 @@ class TestStepHandlerBuiltins:
         )
         assert result == StepContents()
 
-    def test_run_builtin_stage(self, new_dir, mocker):
+    def test_run_builtin_stage(self, new_dir):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
@@ -241,7 +238,7 @@ class TestStepHandlerBuiltins:
 
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
-    def test_run_builtin_prime(self, new_dir, mocker):
+    def test_run_builtin_prime(self, new_dir):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
@@ -261,7 +258,13 @@ class TestStepHandlerBuiltins:
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
     def test_run_builtin_invalid(self, new_dir):
-        sh = _step_handler_for_step(999, cache_dir=new_dir, part_info=self._part_info, part=self._part, dirs=self._dirs)  # type: ignore
+        sh = _step_handler_for_step(
+            999,  # type: ignore[reportGeneralTypeIssues]
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         with pytest.raises(RuntimeError) as raised:
             sh.run_builtin()
         assert str(raised.value) == (
@@ -296,8 +299,7 @@ class TestStepHandlerRunScriptlet:
     """Verify the scriptlet runner."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup(self, new_dir, partitions):
         self._part = Part("p1", {"source": "."}, partitions=partitions)
         self._dirs = ProjectDirs(partitions=partitions)
         self._project_info = ProjectInfo(
@@ -309,7 +311,6 @@ class TestStepHandlerRunScriptlet:
         )
         self._part_info = PartInfo(project_info=self._project_info, part=self._part)
         self._props = plugins.PluginProperties()
-        # pylint: enable=attribute-defined-outside-init
 
     def test_run_scriptlet(self, new_dir, capfd):
         sh = _step_handler_for_step(

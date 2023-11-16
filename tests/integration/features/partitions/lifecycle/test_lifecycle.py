@@ -20,12 +20,11 @@ import pathlib
 import textwrap
 
 import pytest
-
 from craft_parts import Step
+
 from tests.integration.lifecycle import test_lifecycle
 
 # This wildcard import has pytest run any non-overridden lifecycle tests here.
-# pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
 from tests.integration.lifecycle.test_lifecycle import *  # noqa: F403  # pyright: ignore[reportGeneralTypeIssues]
 
 basic_parts_yaml = textwrap.dedent(
@@ -46,7 +45,7 @@ basic_parts_yaml = textwrap.dedent(
 
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning(test_lifecycle.TestCleaning):
-    @pytest.fixture
+    @pytest.fixture()
     def foo_files(self):
         return [
             pathlib.Path("parts/foo/src/foo.txt"),
@@ -55,7 +54,7 @@ class TestCleaning(test_lifecycle.TestCleaning):
             pathlib.Path("prime/default/foo.txt"),
         ]
 
-    @pytest.fixture
+    @pytest.fixture()
     def bar_files(self):
         return [
             pathlib.Path("parts/bar/src/bar.txt"),
@@ -65,7 +64,7 @@ class TestCleaning(test_lifecycle.TestCleaning):
         ]
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install/default", "build"),

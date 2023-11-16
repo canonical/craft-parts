@@ -17,8 +17,9 @@
 """Definitions and helpers to handle parts."""
 
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
+from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
@@ -35,35 +36,35 @@ from craft_parts.utils.formatting_utils import humanize_list
 class PartSpec(BaseModel):
     """The part specification data."""
 
-    plugin: Optional[str] = None
-    source: Optional[str] = None
+    plugin: str | None = None
+    source: str | None = None
     source_checksum: str = ""
     source_branch: str = ""
     source_commit: str = ""
     source_depth: int = 0
     source_subdir: str = ""
-    source_submodules: Optional[List[str]] = None
+    source_submodules: list[str] | None = None
     source_tag: str = ""
     source_type: str = ""
     disable_parallel: bool = False
-    after: List[str] = []
-    overlay_packages: List[str] = []
-    stage_snaps: List[str] = []
-    stage_packages: List[str] = []
-    build_snaps: List[str] = []
-    build_packages: List[str] = []
-    build_environment: List[Dict[str, str]] = []
-    build_attributes: List[str] = []
-    organize_files: Dict[str, str] = Field({}, alias="organize")
-    overlay_files: List[str] = Field(["*"], alias="overlay")
-    stage_files: List[str] = Field(["*"], alias="stage")
-    prime_files: List[str] = Field(["*"], alias="prime")
-    override_pull: Optional[str] = None
-    overlay_script: Optional[str] = None
-    override_build: Optional[str] = None
-    override_stage: Optional[str] = None
-    override_prime: Optional[str] = None
-    permissions: List[Permissions] = []
+    after: list[str] = []
+    overlay_packages: list[str] = []
+    stage_snaps: list[str] = []
+    stage_packages: list[str] = []
+    build_snaps: list[str] = []
+    build_packages: list[str] = []
+    build_environment: list[dict[str, str]] = []
+    build_attributes: list[str] = []
+    organize_files: dict[str, str] = Field({}, alias="organize")
+    overlay_files: list[str] = Field(["*"], alias="overlay")
+    stage_files: list[str] = Field(["*"], alias="stage")
+    prime_files: list[str] = Field(["*"], alias="prime")
+    override_pull: str | None = None
+    overlay_script: str | None = None
+    override_build: str | None = None
+    override_stage: str | None = None
+    override_prime: str | None = None
+    permissions: list[Permissions] = []
 
     class Config:
         """Pydantic model configuration."""
@@ -73,24 +74,26 @@ class PartSpec(BaseModel):
         allow_mutation = False
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
-    # pylint: disable=no-self-argument
     @validator("stage_files", "prime_files", each_item=True)
     def validate_relative_path_list(cls, item: str) -> str:
         """Verify list is not empty and does not contain any absolute paths."""
-        assert item != "", "path cannot be empty"
-        assert (
-            item[0] != "/"
-        ), f"{item!r} must be a relative path (cannot start with '/')"
+        if not item:
+            raise ValueError("path cannot be empty")
+        if item[0] == "/":
+            raise ValueError(
+                f"{item!r} must be a relative path (cannot start with '/')"
+            )
         return item
 
     @validator("overlay_packages", "overlay_files", "overlay_script")
-    def validate_overlay_feature(cls, item: Any) -> Any:
+    def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
         """Check if overlay attributes specified when feature is disabled."""
-        assert Features().enable_overlay, "overlays not supported"
+        if not Features().enable_overlay:
+            raise ValueError("overlays not supported")
         return item
 
     @root_validator(pre=True)
-    def validate_root(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_root(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.
@@ -104,16 +107,13 @@ class PartSpec(BaseModel):
         has_slices = any(name for name in stage_packages if is_slice(name))
         has_packages = any(name for name in stage_packages if not is_slice(name))
 
-        assert not (
-            has_slices and has_packages
-        ), "Cannot mix packages and slices in stage-packages"
+        if has_slices and has_packages:
+            raise ValueError("Cannot mix packages and slices in stage-packages")
 
         return values
 
-    # pylint: enable=no-self-argument
-
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "PartSpec":
+    def unmarshal(cls, data: dict[str, Any]) -> "PartSpec":
         """Create and populate a new ``PartSpec`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
@@ -128,11 +128,9 @@ class PartSpec(BaseModel):
         if not isinstance(data, dict):
             raise TypeError("part data is not a dictionary")
 
-        spec = PartSpec(**data)
+        return PartSpec(**data)
 
-        return spec
-
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the part specification data.
 
         :return: The newly created dictionary.
@@ -140,7 +138,7 @@ class PartSpec(BaseModel):
         """
         return self.dict(by_alias=True)
 
-    def get_scriptlet(self, step: Step) -> Optional[str]:
+    def get_scriptlet(self, step: Step) -> str | None:
         """Return the scriptlet contents, if any, for the given step.
 
         :param step: the step corresponding to the scriptlet to be retrieved.
@@ -170,7 +168,6 @@ class PartSpec(BaseModel):
         )
 
 
-# pylint: disable=too-many-public-methods
 class Part:
     """Each of the components used in the project specification.
 
@@ -191,12 +188,12 @@ class Part:
     def __init__(
         self,
         name: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         *,
-        project_dirs: Optional[ProjectDirs] = None,
-        plugin_properties: "Optional[PluginProperties]" = None,
-        partitions: Optional[Sequence[str]] = None,
-    ):
+        project_dirs: ProjectDirs | None = None,
+        plugin_properties: "PluginProperties | None" = None,
+        partitions: Sequence[str] | None = None,
+    ) -> None:
         self._partitions = partitions
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(
@@ -223,7 +220,7 @@ class Part:
         except ValidationError as err:
             raise errors.PartSpecificationError.from_validation_error(
                 part_name=name, error_list=err.errors()
-            )
+            ) from err
 
     def __repr__(self) -> str:
         return f"Part({self.name!r})"
@@ -290,7 +287,7 @@ class Part:
         return self.part_base_install_dir / "default"
 
     @property
-    def part_install_dirs(self) -> Mapping[Optional[str], Path]:
+    def part_install_dirs(self) -> Mapping[str | None, Path]:
         """Return a mapping of partition names to install directories.
 
         With partitions disabled, the only partition name is ``None``
@@ -354,7 +351,7 @@ class Part:
         return self.dirs.stage_dir
 
     @property
-    def stage_dirs(self) -> Mapping[Optional[str], Path]:
+    def stage_dirs(self) -> Mapping[str | None, Path]:
         """A mapping of partition name to partition staging directory.
 
         If partitions are disabled, the only key is ``None``.
@@ -378,7 +375,7 @@ class Part:
         return self.dirs.prime_dir
 
     @property
-    def prime_dirs(self) -> Mapping[Optional[str], Path]:
+    def prime_dirs(self) -> Mapping[str | None, Path]:
         """A mapping of partition name to partition prime directory.
 
         If partitions are disabled, the only key is ``None``.
@@ -386,7 +383,7 @@ class Part:
         return self.dirs.prime_dirs
 
     @property
-    def dependencies(self) -> List[str]:
+    def dependencies(self) -> list[str]:
         """Return the list of parts this part depends on."""
         if not self.spec.after:
             return []
@@ -397,14 +394,14 @@ class Part:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
 
-    def check_partition_usage(self, partitions: List[str]) -> List[str]:
+    def check_partition_usage(self, partitions: list[str]) -> list[str]:
         """Check if partitions are properly used in a part.
 
         :param partitions: The list of valid partitions.
 
         :returns: A list of invalid uses of partitions in the part.
         """
-        error_list: List[str] = []
+        error_list: list[str] = []
 
         if not Features().enable_partitions:
             return error_list
@@ -423,8 +420,8 @@ class Part:
         return error_list
 
     def _check_partitions_in_filepaths(
-        self, fileset_name: str, fileset: Iterable[str], partitions: List[str]
-    ) -> List[str]:
+        self, fileset_name: str, fileset: Iterable[str], partitions: list[str]
+    ) -> list[str]:
         """Check if partitions are properly used in a fileset.
 
         If a filepath begins with a parentheses, then the text inside the parentheses
@@ -454,10 +451,7 @@ class Part:
         return error_list
 
 
-# pylint: enable=too-many-public-methods
-
-
-def part_by_name(name: str, part_list: List[Part]) -> Part:
+def part_by_name(name: str, part_list: list[Part]) -> Part:
     """Obtain the part with the given name from the part list.
 
     :param name: The name of the part to return.
@@ -472,9 +466,7 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
     raise errors.InvalidPartName(name)
 
 
-def part_list_by_name(
-    names: Optional[Sequence[str]], part_list: List[Part]
-) -> List[Part]:
+def part_list_by_name(names: Sequence[str] | None, part_list: list[Part]) -> list[Part]:
     """Return a list of parts from part_list that are named in names.
 
     :param names: The list of part names. If the list is empty or not
@@ -499,7 +491,7 @@ def part_list_by_name(
     return selected_parts
 
 
-def sort_parts(part_list: List[Part]) -> List[Part]:
+def sort_parts(part_list: list[Part]) -> list[Part]:
     """Perform an inefficient but easy to follow sorting of parts.
 
     :param part_list: The list of parts to sort.
@@ -508,7 +500,7 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
 
     :raises PartDependencyCycle: if there are circular dependencies.
     """
-    sorted_parts = []  # type: List[Part]
+    sorted_parts: list[Part] = []
 
     # We want to process parts in a consistent order between runs. The
     # simplest way to do this is to sort them by name.
@@ -527,17 +519,17 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
                 top_part = part
                 break
         if not top_part:
-            raise errors.PartDependencyCycle()
+            raise errors.PartDependencyCycle
 
-        sorted_parts = [top_part] + sorted_parts
+        sorted_parts = [top_part, *sorted_parts]
         all_parts.remove(top_part)
 
     return sorted_parts
 
 
 def part_dependencies(
-    part: Part, *, part_list: List[Part], recursive: bool = False
-) -> Set[Part]:
+    part: Part, *, part_list: list[Part], recursive: bool = False
+) -> set[Part]:
     """Return a set of all the parts upon which the named part depends.
 
     :param part: The dependent part.
@@ -560,7 +552,7 @@ def part_dependencies(
 
 
 def has_overlay_visibility(
-    part: Part, *, part_list: List[Part], viewers: Optional[Set[Part]] = None
+    part: Part, *, part_list: list[Part], viewers: set[Part] | None = None
 ) -> bool:
     """Check if a part can see the overlay filesystem.
 
@@ -587,7 +579,7 @@ def has_overlay_visibility(
     return False
 
 
-def get_parts_with_overlay(*, part_list: List[Part]) -> List[Part]:
+def get_parts_with_overlay(*, part_list: list[Part]) -> list[Part]:
     """Obtain a list of parts that declare overlay parameters.
 
     :param part_list: A list of all parts in the project.
@@ -597,7 +589,7 @@ def get_parts_with_overlay(*, part_list: List[Part]) -> List[Part]:
     return [p for p in part_list if p.has_overlay]
 
 
-def validate_part(data: Dict[str, Any]) -> None:
+def validate_part(data: dict[str, Any]) -> None:
     """Validate the given part data against common and plugin models.
 
     :param data: The part data to validate.
@@ -605,7 +597,7 @@ def validate_part(data: Dict[str, Any]) -> None:
     _get_part_spec(data)
 
 
-def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> None:
+def validate_partition_usage(part_list: list[Part], partitions: list[str]) -> None:
     """Validate usage of partitions in a list of parts.
 
     For each part, the use of partitions in filepaths in overlay, stage, prime, and
@@ -632,7 +624,7 @@ def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> No
         )
 
 
-def part_has_overlay(data: Dict[str, Any]) -> bool:
+def part_has_overlay(data: dict[str, Any]) -> bool:
     """Whether the part described by ``data`` employs the Overlay step.
 
     :param data: The part data to query for overlay use.
@@ -642,7 +634,7 @@ def part_has_overlay(data: Dict[str, Any]) -> bool:
     return spec.has_overlay
 
 
-def _get_part_spec(data: Dict[str, Any]) -> PartSpec:
+def _get_part_spec(data: dict[str, Any]) -> PartSpec:
     if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
 

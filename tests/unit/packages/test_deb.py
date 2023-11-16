@@ -17,20 +17,16 @@
 import contextlib
 import subprocess
 import textwrap
+from collections.abc import Generator
 from pathlib import Path
 from subprocess import CalledProcessError
 from unittest import mock
 from unittest.mock import call
 
 import pytest
-
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
 from craft_parts.packages.deb_package import DebPackage
-
-# pylint: disable=line-too-long
-# pylint: disable=missing-class-docstring
-# pylint: disable=unused-argument
 
 
 @pytest.fixture(autouse=True)
@@ -39,15 +35,15 @@ def mock_env_copy():
         yield m
 
 
-@pytest.fixture
-def fake_all_packages_installed(mocker):
+@pytest.fixture()
+def _fake_all_packages_installed(mocker):
     mocker.patch(
         "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
         return_value=False,
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_dumb_terminal(mocker):
     return mocker.patch(
         "craft_parts.utils.os_utils.is_dumb_terminal", return_value=True
@@ -55,12 +51,12 @@ def fake_dumb_terminal(mocker):
 
 
 @pytest.fixture(autouse=True)
-def apt_update_cache():
+def _apt_update_cache():
     deb.Ubuntu.refresh_packages_list.cache_clear()
 
 
 @pytest.fixture(autouse=True)
-def cache_dirs(mocker, tmpdir):
+def _cache_dirs(mocker, tmpdir):
     stage_cache_path = Path(tmpdir, "stage-cache")
     debs_path = Path(tmpdir, "debs")
     debs_path.mkdir(parents=True, exist_ok=False)
@@ -70,8 +66,10 @@ def cache_dirs(mocker, tmpdir):
         return_value=(stage_cache_path, debs_path),
     )
 
-    @contextlib.contextmanager
-    def fake_tempdir(*, suffix: str, **kwargs):
+    @contextlib.contextmanager  # type: ignore[misc]
+    def fake_tempdir(
+        *, suffix: str, **kwargs  # noqa: ARG001
+    ) -> Generator[str, None, None]:
         temp_dir = Path(tmpdir, suffix)
         temp_dir.mkdir(exist_ok=True, parents=True)
         yield str(temp_dir)
@@ -112,7 +110,6 @@ def test_fake_wrapper_apt_unavailable(monkeypatch):
 
 class TestPackages:
     def test_fetch_stage_packages(self, mocker, tmpdir, fake_apt_cache, fake_deb_run):
-        # pylint: disable=unnecessary-dunder-call
         mocker.patch(
             "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
             {"filtered-pkg-1", "filtered-pkg-2"},
@@ -191,7 +188,6 @@ class TestPackages:
     def test_fetch_stage_package_with_deps_with_package_filters(
         self, mocker, tmpdir, fake_apt_cache, fake_deb_run
     ):
-        # pylint: disable=unnecessary-dunder-call
         mocker.patch(
             "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
             {"filtered-pkg-1"},
@@ -282,7 +278,8 @@ class TestPackages:
 
         assert mock_normalize.mock_calls == []
 
-    def test_download_packages(self, fake_apt_cache, fake_deb_run):
+    @pytest.mark.usefixtures("fake_apt_cache")
+    def test_download_packages(self, fake_deb_run):
         deb.Ubuntu.refresh_packages_list()
         deb.Ubuntu.download_packages(["package", "versioned-package=2.0"])
 
@@ -310,7 +307,7 @@ class TestPackages:
 
 
 class TestBuildPackages:
-    @pytest.mark.usefixtures("fake_all_packages_installed")
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
     def test_install_build_packages(self, fake_apt_cache, fake_deb_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0"),
@@ -364,7 +361,7 @@ class TestBuildPackages:
         assert build_packages == []
         assert fake_deb_run.mock_calls == []
 
-    @pytest.mark.usefixtures("fake_all_packages_installed")
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
     def test_already_installed_no_specified_version(self, fake_apt_cache, fake_deb_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
@@ -394,7 +391,7 @@ class TestBuildPackages:
             ),
         ]
 
-    @pytest.mark.usefixtures("fake_all_packages_installed")
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
     def test_already_installed_with_specified_version(
         self, fake_apt_cache, fake_deb_run
     ):
@@ -426,7 +423,7 @@ class TestBuildPackages:
             ),
         ]
 
-    @pytest.mark.usefixtures("fake_all_packages_installed")
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
     def test_already_installed_with_different_version(
         self, fake_apt_cache, fake_deb_run
     ):
@@ -460,7 +457,7 @@ class TestBuildPackages:
             ),
         ]
 
-    @pytest.mark.usefixtures("fake_all_packages_installed")
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
     def test_install_virtual_build_package(self, fake_apt_cache, fake_deb_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("resolved-virtual-package", "1.0")
@@ -492,7 +489,7 @@ class TestBuildPackages:
             ),
         ]
 
-    @pytest.mark.usefixtures("fake_all_packages_installed")
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
     def test_smart_terminal(self, fake_apt_cache, fake_deb_run, fake_dumb_terminal):
         fake_dumb_terminal.return_value = False
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
@@ -524,8 +521,9 @@ class TestBuildPackages:
             ),
         ]
 
-    @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_invalid_package_requested(self, fake_apt_cache, fake_deb_run):
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
+    @pytest.mark.usefixtures("fake_deb_run")
+    def test_invalid_package_requested(self, fake_apt_cache):
         fake_apt_cache.return_value.__enter__.return_value.mark_packages.side_effect = (
             errors.PackageNotFound("package-invalid")
         )
@@ -533,7 +531,7 @@ class TestBuildPackages:
         with pytest.raises(errors.BuildPackageNotFound):
             deb.Ubuntu.install_packages(["package-invalid"])
 
-    @pytest.mark.usefixtures("fake_all_packages_installed")
+    @pytest.mark.usefixtures("_fake_all_packages_installed")
     def test_broken_package_apt_install(self, fake_apt_cache, fake_deb_run, mocker):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
@@ -562,7 +560,7 @@ class TestBuildPackages:
 
 
 @pytest.mark.parametrize(
-    "source_type, pkgs",
+    ("source_type", "pkgs"),
     [
         ("7zip", {"p7zip-full"}),
         ("bzr", {"bzr"}),
@@ -582,19 +580,19 @@ def test_packages_for_source_type(source_type, pkgs):
     assert deb.Ubuntu.get_packages_for_source_type(source_type) == pkgs
 
 
-@pytest.fixture
-def fake_dpkg_query(mocker):
-    def dpkg_query(*args, **kwargs):
+@pytest.fixture()
+def _fake_dpkg_query(mocker):
+    def dpkg_query(*args, **kwargs):  # noqa: ARG001
         # dpkg-query -S file_path
         if args[0][2] == "/bin/bash":
-            return "bash: /bin/bash\n".encode()
+            return b"bash: /bin/bash\n"
 
         if args[0][2] == "/bin/sh":
             return (
-                "diversion by dash from: /bin/sh\n"
-                "diversion by dash to: /bin/sh.distrib\n"
-                "dash: /bin/sh\n"
-            ).encode()
+                b"diversion by dash from: /bin/sh\n"
+                b"diversion by dash to: /bin/sh.distrib\n"
+                b"dash: /bin/sh\n"
+            )
 
         raise CalledProcessError(
             1,
@@ -666,10 +664,12 @@ class TestStagePackagesFilters:
         packages.Repository.stage_packages_filters = None
 
     def test_fetch_stage_packages_with_filtering(
-        self, mocker, tmpdir, fake_apt_cache, fake_deb_run
+        self, tmpdir, fake_apt_cache, fake_deb_run
     ):
-        callbacks.register_stage_packages_filter(lambda x: ["base-pkg-1"])
-        callbacks.register_stage_packages_filter(lambda x: ["base-pkg-2", "base-pkg-3"])
+        callbacks.register_stage_packages_filter(lambda _x: ["base-pkg-1"])
+        callbacks.register_stage_packages_filter(
+            lambda _x: ["base-pkg-2", "base-pkg-3"]
+        )
 
         # this is set in the execution prologue
         project_info = ProjectInfo(application_name="test", cache_dir=tmpdir)
@@ -692,8 +692,6 @@ class TestStagePackagesFilters:
             arch="amd64",
         )
 
-        # pylint: disable=unnecessary-dunder-call
-
         assert fake_deb_run.mock_calls == [call(["apt-get", "update"])]
         assert fake_apt_cache.mock_calls == [
             call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
@@ -705,8 +703,6 @@ class TestStagePackagesFilters:
             call().__enter__().fetch_archives(debs_path),
             call().__exit__(None, None, None),
         ]
-
-        # pylint: enable=unnecessary-dunder-call
 
         assert fetched_packages == ["fake-package=1.0"]
 

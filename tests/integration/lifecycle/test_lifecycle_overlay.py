@@ -17,10 +17,9 @@
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ActionProperties, ActionType, Step
 
 basic_parts_yaml = textwrap.dedent(
@@ -40,8 +39,8 @@ basic_parts_yaml = textwrap.dedent(
 
 
 @pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_feature):
-    yield
+def _setup_feature(_enable_overlay_feature):
+    return
 
 
 def test_basic_lifecycle_actions(new_dir, mocker):
@@ -55,7 +54,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     # See https://gist.github.com/sergiusens/dcae19c301eb59e091f92ab29d7d03fc
 
     # first run
-    # command: pull
+    # command pull
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_demo", cache_dir=new_dir
     )
@@ -69,7 +68,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         ctx.execute(actions)
 
     # foobar part depends on nothing
-    # command: prime foobar
+    # command prime foobar
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_demo", cache_dir=new_dir
     )
@@ -123,7 +122,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    # Modifying foo’s source marks bar as dirty
+    # Modifying foo's source marks bar as dirty
     new_yaml = basic_parts_yaml.replace("source: a.tar.gz", "source: .")
     parts = yaml.safe_load(new_yaml)
 
@@ -173,14 +172,14 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     assert actions == [
         # fmt: off
         Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", step=Step.OVERLAY, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
         Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -214,8 +213,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning:
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup_method_fixture(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -238,10 +236,8 @@ class TestCleaning:
             parts, application_name="test_clean", cache_dir=new_dir
         )
 
-        # pylint: enable=attribute-defined-outside-init
-
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install", "build"),

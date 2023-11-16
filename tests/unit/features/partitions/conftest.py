@@ -14,12 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pytest
-
 from craft_parts import Features
 
 
 @pytest.fixture(scope="module", autouse=True)
-def setup():
+def _setup():
     Features.reset()
     Features(enable_partitions=True)
     yield
@@ -27,7 +26,7 @@ def setup():
 
 
 @pytest.fixture(params=[["default"], ["default", "mypart", "yourpart"]])
-def partitions(request, setup):
+def partitions(request, _setup):
     """Parametrized fixture to get various partition names.
 
     Overrides the main partitions fixture for parametrized partition sets.

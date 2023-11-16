@@ -17,10 +17,9 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, List, Tuple, cast
+from typing import Any, cast
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.executor.organize import organize_files
 
@@ -186,7 +185,7 @@ def organize_and_assert(
     setup_dirs,
     setup_files,
     organize_map,
-    expected: List[Any],
+    expected: list[Any],
     expected_message,
     expected_overwrite,
     overwrite,
@@ -204,7 +203,7 @@ def organize_and_assert(
         expected = expected_overwrite
 
     if isinstance(expected, type) and issubclass(expected, Exception):
-        with pytest.raises(expected) as raised:  # type: ignore
+        with pytest.raises(expected) as raised:  # type: ignore[var-annotated]
             organize_files(
                 part_name="part-name",
                 mapping=organize_map,
@@ -220,7 +219,7 @@ def organize_and_assert(
             base_dir=base_dir,
             overwrite=overwrite,
         )
-        expected = cast(List[Tuple[List[str], str]], expected)
+        expected = cast(list[tuple[list[str], str]], expected)
         for expect in expected:
             dir_path = (base_dir / expect[1]).as_posix()
             dir_contents = os.listdir(dir_path)

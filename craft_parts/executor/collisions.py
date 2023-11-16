@@ -18,7 +18,7 @@
 
 import filecmp
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from craft_parts import errors, permissions
 from craft_parts.executor import filesets
@@ -27,13 +27,13 @@ from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
 
 
-def check_for_stage_collisions(part_list: List[Part]) -> None:
+def check_for_stage_collisions(part_list: list[Part]) -> None:
     """Verify whether parts have conflicting files to stage.
 
     :param part_list: The list of parts to be tested.
     :raises PartConflictError: If conflicts are found.
     """
-    all_parts_files: Dict[str, Dict[str, Any]] = {}
+    all_parts_files: dict[str, dict[str, Any]] = {}
     for part in part_list:
         stage_files = part.spec.stage_files
         if not stage_files:
@@ -86,8 +86,8 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 def paths_collide(
     path1: str,
     path2: str,
-    permissions_path1: Optional[List[Permissions]] = None,
-    permissions_path2: Optional[List[Permissions]] = None,
+    permissions_path1: list[Permissions] | None = None,
+    permissions_path2: list[Permissions] | None = None,
 ) -> bool:
     """Check whether the provided paths conflict to each other.
 

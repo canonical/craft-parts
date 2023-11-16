@@ -20,7 +20,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-
 from craft_parts.packages.base import DummyRepository
 from craft_parts.packages.normalize import fix_pkg_config, normalize
 
@@ -54,7 +53,7 @@ def pkg_config_file():
                 )
             )
 
-    yield _pkg_config_file
+    return _pkg_config_file
 
 
 @pytest.fixture()
@@ -82,7 +81,7 @@ def expected_pkg_config_content():
             """
         )
 
-    yield _expected_pkg_config_content
+    return _expected_pkg_config_content
 
 
 @pytest.mark.parametrize(
@@ -156,7 +155,7 @@ class TestFixXmlTools:
         normalize(Path("root"), repository=DummyRepository)
 
         for test_file in tc:
-            with open(test_file["path"], "r") as f:
+            with open(test_file["path"]) as f:
                 assert f.read() == test_file["expected"]
 
 
@@ -224,7 +223,7 @@ class TestFixShebang:
         normalize(Path("root"), repository=DummyRepository)
 
         for _, data in self.scenarios:
-            with open(data["file_path"], "r") as fd:
+            with open(data["file_path"]) as fd:
                 assert fd.read() == data["expected"]
 
 
@@ -264,7 +263,7 @@ class TestFixPkgConfig:
     """Check the normalization of pkg-config files."""
 
     @pytest.mark.parametrize(
-        "prefix,fixed_prefix",
+        ("prefix", "fixed_prefix"),
         [
             # possible prefixes from snaps built via launchpad
             ("/build/mir-core20/stage", ""),
@@ -298,7 +297,7 @@ class TestFixPkgConfig:
         )
 
     @pytest.mark.parametrize(
-        "prefix,prefix_trim,fixed_prefix",
+        ("prefix", "prefix_trim", "fixed_prefix"),
         [
             ("/test/build/dir/stage", "/test/build/dir/stage", ""),
             ("/test/build/dir/stage/usr", "/test/build/dir/stage", "/usr"),
@@ -313,7 +312,7 @@ class TestFixPkgConfig:
         fixed_prefix,
         pkg_config_file,
         expected_pkg_config_content,
-    ):  # pylint: disable=too-many-arguments
+    ):
         """Verify prefixes from the `prefix_trim` argument are trimmed."""
         pc_file = tmpdir / "my-file.pc"
         pkg_config_file(pc_file, prefix)
@@ -400,7 +399,7 @@ class TestFixSUID:
     """Check the normalization of suid bits in file mode."""
 
     @pytest.mark.parametrize(
-        "key,test_mod,expected_mod",
+        ("key", "test_mod", "expected_mod"),
         [
             ("suid_file", 0o4765, 0o0765),
             ("guid_file", 0o2777, 0o0777),

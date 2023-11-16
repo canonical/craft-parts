@@ -1,5 +1,4 @@
 import pytest
-
 from craft_parts import errors
 from craft_parts.utils import partition_utils
 
@@ -25,13 +24,13 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
     assert exc_info.value.message == message
 
 
-@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("_enable_partitions_feature")
 @pytest.mark.parametrize("partitions", [["default"], ["default", "mypart"]])
 def test_validate_partitions_success_feature_enabled(partitions):
     partition_utils.validate_partition_names(partitions)
 
 
-@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("_enable_partitions_feature")
 @pytest.mark.parametrize(
     ("partitions", "message"),
     [

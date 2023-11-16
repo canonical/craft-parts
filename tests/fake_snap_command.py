@@ -17,12 +17,8 @@
 import os
 import shutil
 import subprocess
-from typing import List, Tuple
 
 import craft_parts.packages.snaps
-
-# pylint: disable=too-few-public-methods
-# pylint: disable=unused-argument
 
 
 class FakeSnapCommand:
@@ -65,7 +61,7 @@ class FakeSnapCommand:
     def login(self, email):
         self._email = email
 
-    def _get_snap_cmd(self, cmd) -> Tuple[str, List[str]]:
+    def _get_snap_cmd(self, cmd) -> tuple[str, list[str]]:
         try:
             snap_cmd_index = cmd.index("snap")
         except ValueError:
@@ -80,7 +76,7 @@ class FakeSnapCommand:
         snap_cmd, _ = self._get_snap_cmd(cmd)
         return snap_cmd in ["install", "refresh", "whoami", "download"]
 
-    def _fake_snap_command(self, cmd, *args, **kwargs):
+    def _fake_snap_command(self, cmd, *args, **kwargs):  # noqa: ARG002
         cmd, params = self._get_snap_cmd(cmd)
 
         if cmd == "install" and not self.install_success:
@@ -103,6 +99,6 @@ class FakeSnapCommand:
             if self.fake_download:
                 dest = os.path.join(kwargs["cwd"], params[0] + ".snap")
                 shutil.copyfile(self.fake_download, dest)
-            return "Downloaded  ".encode()
+            return b"Downloaded  "
 
         return None

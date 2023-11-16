@@ -18,7 +18,6 @@
 
 import os
 from glob import iglob
-from typing import List, Set, Tuple
 
 from craft_parts import errors
 from craft_parts.utils import path_utils
@@ -27,7 +26,7 @@ from craft_parts.utils import path_utils
 class Fileset:
     """Helper class to process string lists."""
 
-    def __init__(self, entries: List[str], *, name: str = ""):
+    def __init__(self, entries: list[str], *, name: str = "") -> None:
         self._name = name
         self._list = entries
 
@@ -40,17 +39,17 @@ class Fileset:
         return self._name
 
     @property
-    def entries(self) -> List[str]:
+    def entries(self) -> list[str]:
         """Return the list of entries in this fileset."""
         return self._list.copy()
 
     @property
-    def includes(self) -> List[str]:
+    def includes(self) -> list[str]:
         """Return the list of files to be included."""
         return [path_utils.get_partitioned_path(x) for x in self._list if x[0] != "-"]
 
     @property
-    def excludes(self) -> List[str]:
+    def excludes(self) -> list[str]:
         """Return the list of files to be excluded."""
         return [
             path_utils.get_partitioned_path(x[1:]) for x in self._list if x[0] == "-"
@@ -89,7 +88,7 @@ class Fileset:
             self._list = list(set(self._list + other.entries))
 
 
-def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[str]]:
+def migratable_filesets(fileset: Fileset, srcdir: str) -> tuple[set[str], set[str]]:
     """Return the files and directories that can be migrated.
 
     :param fileset: The fileset to migrate.
@@ -118,8 +117,8 @@ def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[st
     files = files - dirs
 
     # Include (resolved) parent directories for each selected file.
-    for filename in files:
-        filename = _get_resolved_relative_path(filename, srcdir)
+    for _filename in files:
+        filename = _get_resolved_relative_path(_filename, srcdir)
         dirname = os.path.dirname(filename)
         while dirname:
             dirs.add(dirname)
@@ -137,15 +136,15 @@ def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[st
     return resolved_files, resolved_dirs
 
 
-def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
+def _get_file_list(fileset: Fileset) -> tuple[list[str], list[str]]:
     """Split a fileset to obtain include and exclude file filters.
 
     :param fileset: The fileset to split.
 
     :return: A tuple containing the include and exclude lists.
     """
-    includes: List[str] = []
-    excludes: List[str] = []
+    includes: list[str] = []
+    excludes: list[str] = []
 
     for item in fileset.entries:
         if item.startswith("-"):
@@ -164,8 +163,8 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
 
     includes = includes or ["*"]
 
-    processed_includes: List[str] = []
-    processed_excludes: List[str] = []
+    processed_includes: list[str] = []
+    processed_excludes: list[str] = []
     for file in includes:
         processed_includes.append(path_utils.get_partitioned_path(file))
     for file in excludes:
@@ -173,7 +172,7 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
     return processed_includes, processed_excludes
 
 
-def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:
+def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
     """Obtain the list of files to include based on include file filter.
 
     :param directory: The path to the tree containing the files to filter.
@@ -188,7 +187,7 @@ def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:
             matches = iglob(pattern, recursive=True)
             include_files |= set(matches)
         else:
-            include_files |= set([os.path.join(directory, include)])
+            include_files |= {os.path.join(directory, include)}
 
     include_dirs = [
         x for x in include_files if os.path.isdir(x) and not os.path.islink(x)
@@ -210,8 +209,8 @@ def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:
 
 
 def _generate_exclude_set(
-    directory: str, excludes: List[str]
-) -> Tuple[Set[str], Set[str]]:
+    directory: str, excludes: list[str]
+) -> tuple[set[str], set[str]]:
     """Obtain the list of files to exclude based on exclude file filter.
 
     :param directory: The path to the tree containing the files to filter.
@@ -249,6 +248,4 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))
 
     filename_abspath = os.path.join(parent_abspath, filename)
-    filename_relpath = os.path.relpath(filename_abspath, base_directory)
-
-    return filename_relpath
+    return os.path.relpath(filename_abspath, base_directory)

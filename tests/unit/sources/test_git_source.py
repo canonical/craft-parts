@@ -18,70 +18,58 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List
 from unittest import mock
 
 import pytest
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import errors, sources
 from craft_parts.sources.git_source import GitSource
 
-# pylint: disable=too-many-lines
 
-
-def _call(cmd: List[str]) -> None:
+def _call(cmd: list[str]) -> None:
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def _call_with_output(cmd: List[str]) -> str:
+def _call_with_output(cmd: list[str]) -> str:
     return subprocess.check_output(cmd).decode("utf-8").strip()
 
 
-def _fake_git_command_error(*args, **kwargs):
+def _fake_git_command_error(*args, **kwargs):  # noqa: ARG001
     raise subprocess.CalledProcessError(44, ["git"], output=b"git: some error")
 
 
-@pytest.fixture
-def mock_get_source_details(mocker) -> None:
+@pytest.fixture()
+def _mock_get_source_details(mocker) -> None:
     mocker.patch(
         "craft_parts.sources.git_source.GitSource._get_source_details", return_value=""
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_check_output(mocker):
     return mocker.patch("subprocess.check_output")
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_run(mocker):
     return mocker.patch("craft_parts.sources.base.SourceHandler._run")
 
 
-@pytest.fixture
-def fake_get_current_branch(mocker):
+@pytest.fixture()
+def _fake_get_current_branch(mocker):
     mocker.patch(
         "craft_parts.sources.git_source.GitSource._get_current_branch",
         return_value="test-branch",
     )
 
 
-# pylint: disable=missing-class-docstring
-# pylint: disable=redefined-outer-name
-# pylint: disable=too-many-public-methods
-
-
 @pytest.mark.usefixtures("new_dir")
 class GitBaseTestCase:
     """Helper functions for git tests."""
 
-    # pylint: disable=attribute-defined-outside-init
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
+    def _setup_method_fixture(self, partitions):
         self._dirs = ProjectDirs(partitions=partitions)
-
-    # pylint: enable=attribute-defined-outside-init
 
     def rm_dir(self, dir_name):
         if os.path.exists(dir_name):
@@ -113,7 +101,7 @@ class GitBaseTestCase:
 
 
 # LP: #1733584
-@pytest.mark.usefixtures("mock_get_source_details")
+@pytest.mark.usefixtures("_mock_get_source_details")
 class TestGitSource(GitBaseTestCase):
     def test_get_current_branch(self, mocker, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
@@ -354,7 +342,8 @@ class TestGitSource(GitBaseTestCase):
             ]
         )
 
-    def test_pull_existing(self, mocker, fake_run, fake_get_current_branch, new_dir):
+    @pytest.mark.usefixtures("_fake_get_current_branch")
+    def test_pull_existing(self, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -401,7 +390,7 @@ class TestGitSource(GitBaseTestCase):
             ]
         )
 
-    def test_pull_existing_with_tag(self, mocker, fake_run, new_dir):
+    def test_pull_existing_with_tag(self, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -449,7 +438,7 @@ class TestGitSource(GitBaseTestCase):
             ]
         )
 
-    def test_pull_existing_with_commit(self, mocker, fake_run, new_dir):
+    def test_pull_existing_with_commit(self, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -497,7 +486,7 @@ class TestGitSource(GitBaseTestCase):
             ]
         )
 
-    def test_pull_existing_with_branch(self, mocker, fake_run, new_dir):
+    def test_pull_existing_with_branch(self, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -627,9 +616,8 @@ class TestGitSource(GitBaseTestCase):
         with open(Path(working_tree / "test.txt")) as file:
             assert file.read() == "Howdy, Partner!"
 
-    def test_pull_existing_with_submodules_default(
-        self, mocker, fake_run, fake_get_current_branch, new_dir
-    ):
+    @pytest.mark.usefixtures("_fake_get_current_branch")
+    def test_pull_existing_with_submodules_default(self, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -676,9 +664,8 @@ class TestGitSource(GitBaseTestCase):
             ]
         )
 
-    def test_pull_existing_with_submodules_empty(
-        self, mocker, fake_run, fake_get_current_branch, new_dir
-    ):
+    @pytest.mark.usefixtures("_fake_get_current_branch")
+    def test_pull_existing_with_submodules_empty(self, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -714,9 +701,8 @@ class TestGitSource(GitBaseTestCase):
             ]
         )
 
-    def test_pull_existing_with_submodules(
-        self, mocker, fake_run, fake_get_current_branch, new_dir
-    ):
+    @pytest.mark.usefixtures("_fake_get_current_branch")
+    def test_pull_existing_with_submodules(self, fake_run, new_dir):
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
@@ -964,12 +950,9 @@ class TestGitConflicts(GitBaseTestCase):
         )
 
 
-# pylint: disable=attribute-defined-outside-init
-
-
 class TestGitDetails(GitBaseTestCase):
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
+    def _setup_method_fixture(self, new_dir, partitions):
         def _add_and_commit_file(filename, content=None, message=None):
             if not content:
                 content = filename
@@ -1047,12 +1030,9 @@ class TestGitDetails(GitBaseTestCase):
         assert self.source_details["source-tag"] == self.expected_tag
 
 
-# pylint: enable=attribute-defined-outside-init
-
-
 class TestGitGenerateVersion:
     @pytest.mark.parametrize(
-        "return_value,expected",
+        ("return_value", "expected"),
         [
             ("2.28", "2.28"),  # only_tag
             ("2.28-28-gabcdef1", "2.28+git28.abcdef1"),  # tag+commits

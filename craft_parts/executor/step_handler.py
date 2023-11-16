@@ -26,7 +26,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, TextIO, Union
+from typing import TextIO
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -42,15 +42,15 @@ from .migration import migrate_files
 
 logger = logging.getLogger(__name__)
 
-Stream = Optional[Union[TextIO, int]]
+Stream = TextIO | int | None
 
 
 @dataclasses.dataclass(frozen=True)
 class StepContents:
     """Files and directories to be added to the step's state."""
 
-    files: Set[str] = dataclasses.field(default_factory=set)
-    dirs: Set[str] = dataclasses.field(default_factory=set)
+    files: set[str] = dataclasses.field(default_factory=set)
+    dirs: set[str] = dataclasses.field(default_factory=set)
 
 
 class StepHandler:
@@ -65,17 +65,17 @@ class StepHandler:
     the running instance.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         part: Part,
         *,
         step_info: StepInfo,
         plugin: Plugin,
-        source_handler: Optional[SourceHandler],
+        source_handler: SourceHandler | None,
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
-    ):
+    ) -> None:
         self._part = part
         self._step_info = step_info
         self._plugin = plugin
@@ -243,7 +243,7 @@ class StepHandler:
                 print(script, file=script_file)
                 script_file.flush()
                 script_file.seek(0)
-                process = subprocess.Popen(  # pylint: disable=consider-using-with
+                process = subprocess.Popen(
                     ["/bin/bash"],
                     stdin=script_file,
                     cwd=work_dir,
@@ -271,7 +271,7 @@ class StepHandler:
 
             except Exception as error:
                 logger.debug("scriptlet execution failed: %s", error)
-                raise error
+                raise
             finally:
                 call_fifo.close()
                 feedback_fifo.close()
@@ -309,7 +309,7 @@ class StepHandler:
         )
 
     def _process_api_commands(
-        self, cmd_name: str, cmd_args: List[str], *, step: Step, scriptlet_name: str
+        self, cmd_name: str, cmd_args: list[str], *, step: Step, scriptlet_name: str
     ) -> str:
         """Invoke API command actions."""
         retval = ""
@@ -348,7 +348,7 @@ class StepHandler:
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
                     message=str(err),
-                )
+                ) from err
         elif cmd_name == "get":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(
@@ -363,7 +363,7 @@ class StepHandler:
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
                     message=str(err),
-                )
+                ) from err
         else:
             raise invalid_control_api_call(
                 message=f"invalid command {cmd_name!r}",
@@ -384,13 +384,13 @@ class StepHandler:
             self._builtin_prime()
 
 
-def _create_and_run_script(  # noqa: PLR0913
-    commands: List[str],
+def _create_and_run_script(
+    commands: list[str],
     script_path: Path,
     cwd: Path,
     stdout: Stream,
     stderr: Stream,
-    build_environment_script_path: Optional[Path] = None,
+    build_environment_script_path: Path | None = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:

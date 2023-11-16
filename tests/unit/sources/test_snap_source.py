@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import errors, snap_source, sources
 
@@ -32,14 +31,12 @@ class TestSnapSource:
     """Snap source pull tests."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
-        # pylint: disable=attribute-defined-outside-init
+    def _setup_method_fixture(self, new_dir, partitions):
         self._path = new_dir
         self._test_file = _LOCAL_DIR / "data" / "test-snap.snap"
         self._dest_dir = new_dir / "dest_dir"
         self._dest_dir.mkdir()
         self._dirs = ProjectDirs(partitions=partitions)
-        # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
         ("param", "value"),
@@ -52,13 +49,12 @@ class TestSnapSource:
     )
     def test_invalid_parameter(self, new_dir, param, value):
         with pytest.raises(errors.InvalidSourceOption) as raised:
-            kwargs = {param: value}
             sources.SnapSource(
                 source="test.snap",
                 part_src_dir=Path(),
                 cache_dir=new_dir,
                 project_dirs=self._dirs,
-                **kwargs,
+                **{param: value},
             )
         assert raised.value.option == param.replace("_", "-")
 

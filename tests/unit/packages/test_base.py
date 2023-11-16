@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from craft_parts.packages import base
 from craft_parts.packages.base import BaseRepository, DummyRepository
 
@@ -28,7 +27,7 @@ class TestBaseRepository:
     """Verify the base repository class."""
 
     def test_abstract_methods(self):
-        assert BaseRepository.__abstractmethods__ == {  # type: ignore
+        assert BaseRepository.__abstractmethods__ == {
             "configure",
             "get_installed_packages",
             "get_package_libraries",
@@ -79,7 +78,7 @@ class TestPkgNameParts:
 class TestOriginStagePackage:
     """Check extended attribute setting."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def test_file(self):
         # These tests don't work on tmpfs
         file_path = Path(".tests-xattr-test-file")

@@ -18,7 +18,6 @@ from subprocess import CalledProcessError
 from unittest.mock import call
 
 import pytest
-
 from craft_parts.packages import errors
 from craft_parts.packages.yum import YUMRepository
 
@@ -57,7 +56,7 @@ def test_install_packages_already_installed(fake_yum_run, mocker):
     fake_yum_run.assert_not_called()
 
 
-def test_install_packages_refresh_not_requested(fake_yum_run, mocker):
+def test_install_packages_refresh_not_requested(fake_yum_run, mocker):  # noqa: ARG001
     """Packages installed but the yum cache was not refreshed."""
     YUMRepository.install_packages(
         ["package-installed", "package"], refresh_package_cache=False
@@ -83,7 +82,7 @@ def test_refresh_packages_list(fake_yum_run):
 
 
 @pytest.mark.parametrize(
-    "source_type, packages",
+    ("source_type", "packages"),
     [
         ("7zip", {"p7zip"}),
         ("bzr", {"bzr"}),

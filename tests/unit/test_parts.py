@@ -19,20 +19,18 @@ from functools import partial
 
 import pydantic
 import pytest
-
 from craft_parts import errors, parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
 
-# pylint: disable=too-many-public-methods
-
 
 class TestPartSpecs:
     """Test part specification creation."""
 
-    def test_marshal_unmarshal(self, partitions):
+    @pytest.mark.usefixtures("partitions")
+    def test_marshal_unmarshal(self):
         data = {
             "plugin": "nil",
             "source": "http://example.com/hello-2.3.tar.gz",
@@ -74,9 +72,12 @@ class TestPartSpecs:
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
-    def test_unmarshal_not_dict(self, partitions):
+    @pytest.mark.usefixtures("partitions")
+    def test_unmarshal_not_dict(self):
         with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore
+            PartSpec.unmarshal(
+                False  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
+            )
         assert str(raised.value) == "part data is not a dictionary"
 
     def test_unmarshal_mix_packages_slices(self, mocker):
@@ -104,7 +105,7 @@ class TestPartSpecs:
         assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
-        "key,value",
+        ("key", "value"),
         [
             ("overlay-packages", ["overlay-pkg1", "overlay-pkg2"]),
             ("overlay", ["etc/issue"]),
@@ -262,7 +263,7 @@ class TestPartData:
         assert p.spec.build_environment == [{"BAR": "bar"}]
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"stage-packages": []}, []),
@@ -274,7 +275,7 @@ class TestPartData:
         assert p.spec.stage_packages == tc_result
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"stage-snaps": []}, []),
@@ -286,7 +287,7 @@ class TestPartData:
         assert p.spec.stage_snaps == tc_result
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"build-packages": []}, []),
@@ -298,7 +299,7 @@ class TestPartData:
         assert p.spec.build_packages == tc_result
 
     @pytest.mark.parametrize(
-        "tc_spec,tc_result",
+        ("tc_spec", "tc_result"),
         [
             ({}, []),
             ({"build-snaps": []}, []),
@@ -310,7 +311,7 @@ class TestPartData:
         assert p.spec.build_snaps == tc_result
 
     @pytest.mark.parametrize(
-        "tc_step,tc_content",
+        ("tc_step", "tc_content"),
         [
             (Step.PULL, "pull"),
             (Step.BUILD, "build"),
@@ -400,7 +401,11 @@ class TestPartUnmarshal:
 
     def test_part_spec_not_dict(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False, partitions=partitions)  # type: ignore
+            Part(
+                "foo",
+                False,  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
+                partitions=partitions,
+            )
         assert raised.value.part_name == "foo"
         assert raised.value.message == "part data is not a dictionary"
 
@@ -504,13 +509,15 @@ class TestPartHelpers:
 class TestPartValidation:
     """Part validation considering plugin-specific attributes."""
 
-    def test_part_validation_data_type(self, partitions):
+    @pytest.mark.usefixtures("partitions")
+    def test_part_validation_data_type(self):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore
+            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]
 
         assert str(raised.value) == "value must be a dictionary"
 
-    def test_part_validation_immutable(self, partitions):
+    @pytest.mark.usefixtures("partitions")
+    def test_part_validation_immutable(self):
         data = {
             "plugin": "make",
             "source": "foo",
@@ -522,7 +529,8 @@ class TestPartValidation:
 
         assert data == data_copy
 
-    def test_part_validation_extra(self, partitions):
+    @pytest.mark.usefixtures("partitions")
+    def test_part_validation_extra(self):
         data = {
             "plugin": "make",
             "source": "foo",
@@ -534,7 +542,8 @@ class TestPartValidation:
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
 
-    def test_part_validation_missing(self, partitions):
+    @pytest.mark.usefixtures("partitions")
+    def test_part_validation_missing(self):
         data = {
             "plugin": "make",
             "make-parameters": ["-C bar"],

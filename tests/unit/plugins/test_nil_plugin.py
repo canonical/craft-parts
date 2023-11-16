@@ -15,19 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.nil_plugin import NilPlugin
-
-# pylint: disable=attribute-defined-outside-init
 
 
 class TestPluginNil:
     """Check nil plugin methods and properties."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def _setup_method_fixture(self, new_dir):
         properties = NilPlugin.properties_class.unmarshal({})
         part = Part("foo", {})
 

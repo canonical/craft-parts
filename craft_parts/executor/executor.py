@@ -19,7 +19,6 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
@@ -54,25 +53,25 @@ class Executor:
     :param ignore_patterns: File patterns to ignore when pulling local sources.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
-        part_list: List[Part],
+        part_list: list[Part],
         project_info: ProjectInfo,
-        extra_build_packages: Optional[List[str]] = None,
-        extra_build_snaps: Optional[List[str]] = None,
+        extra_build_packages: list[str] | None = None,
+        extra_build_snaps: list[str] | None = None,
         track_stage_packages: bool = False,
-        ignore_patterns: Optional[List[str]] = None,
-        base_layer_dir: Optional[Path] = None,
-        base_layer_hash: Optional[LayerHash] = None,
-    ):
+        ignore_patterns: list[str] | None = None,
+        base_layer_dir: Path | None = None,
+        base_layer_hash: LayerHash | None = None,
+    ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
         self._track_stage_packages = track_stage_packages
         self._base_layer_hash = base_layer_hash
-        self._handler: Dict[str, PartHandler] = {}
+        self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
 
         self._overlay_manager = OverlayManager(
@@ -118,7 +117,7 @@ class Executor:
 
     def execute(
         self,
-        actions: Union[Action, List[Action]],
+        actions: Action | list[Action],
         *,
         stdout: Stream = None,
         stderr: Stream = None,
@@ -136,9 +135,7 @@ class Executor:
         for act in actions:
             self._run_action(act, stdout=stdout, stderr=stderr)
 
-    def clean(
-        self, initial_step: Step, *, part_names: Optional[List[str]] = None
-    ) -> None:
+    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:
         """Clean the given parts, or all parts if none is specified.
 
         :param initial_step: The step to clean. More steps may be cleaned
@@ -149,7 +146,7 @@ class Executor:
         """
         selected_parts = parts.part_list_by_name(part_names, self._part_list)
 
-        selected_steps = [initial_step] + initial_step.next_steps()
+        selected_steps = [initial_step, *initial_step.next_steps()]
         selected_steps.reverse()
 
         for part in selected_parts:
@@ -291,19 +288,19 @@ class ExecutionContext:
         self,
         *,
         executor: Executor,
-    ):
+    ) -> None:
         self._executor = executor
 
     def __enter__(self) -> "ExecutionContext":
         self._executor.prologue()
         return self
 
-    def __exit__(self, *exc: Any) -> None:
+    def __exit__(self, *exc: object) -> None:
         self._executor.epilogue()
 
     def execute(
         self,
-        actions: Union[Action, List[Action]],
+        actions: Action | list[Action],
         *,
         stdout: Stream = None,
         stderr: Stream = None,

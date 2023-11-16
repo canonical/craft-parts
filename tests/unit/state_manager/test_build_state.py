@@ -19,7 +19,6 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
-
 from craft_parts.state_manager.build_state import BuildState
 
 
@@ -61,7 +60,9 @@ class TestBuildState:
 
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError) as raised:
-            BuildState.unmarshal(False)  # type: ignore
+            BuildState.unmarshal(
+                False  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
+            )
         assert str(raised.value) == "state data is not a dictionary"
 
 
@@ -103,7 +104,7 @@ class TestBuildStateChanges:
             "override-build",
         ]
 
-        for prop in properties.keys():
+        for prop in properties:
             other = properties.copy()
             other[prop] = "new value"
 
@@ -132,7 +133,7 @@ class TestBuildStateChanges:
             "extra-property",
         ]
 
-        for prop in augmented_properties.keys():
+        for prop in augmented_properties:
             other = augmented_properties.copy()
             other[prop] = "new value"
 

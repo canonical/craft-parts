@@ -19,10 +19,9 @@
 import pytest
 
 # Make pytest run any non-overridden chisel tests here with partitions enabled.
-# pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
 from tests.integration.lifecycle.test_craftctl import *  # noqa: F403
 
 
 @pytest.fixture(autouse=True)
-def setup_feature(setup):
-    yield
+def _setup_feature(_setup):
+    return

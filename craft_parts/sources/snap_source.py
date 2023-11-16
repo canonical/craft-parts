@@ -20,7 +20,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional, cast
+from typing import Any, cast
 
 import yaml
 from overrides import overrides
@@ -40,19 +40,19 @@ class SnapSource(FileSourceHandler):
     snap.<snap-name>.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        **kwargs,
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_branch: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(
             source,
@@ -84,8 +84,8 @@ class SnapSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
-        src: Optional[Path] = None,
+        keep: bool = False,  # noqa: FBT001, FBT002
+        src: Path | None = None,
     ) -> None:
         """Provision the snap source.
 
@@ -95,10 +95,7 @@ class SnapSource(FileSourceHandler):
 
         raises errors.InvalidSnap: If trying to provision an invalid snap.
         """
-        if src:
-            snap_file = src
-        else:
-            snap_file = self.part_src_dir / os.path.basename(self.source)
+        snap_file = src if src else self.part_src_dir / os.path.basename(self.source)
         snap_file = snap_file.resolve()
 
         # unsquashfs [options] filesystem [directories or files to extract]
@@ -110,8 +107,8 @@ class SnapSource(FileSourceHandler):
                 "unsquashfs",
                 "-force",
                 "-dest",
-                temp_dir,
-                snap_file,
+                str(temp_dir),
+                str(snap_file),
             ]
             self._run_output(extract_command)
             snap_name = _get_snap_name(snap_file.name, temp_dir)

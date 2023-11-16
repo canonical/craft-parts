@@ -18,7 +18,6 @@ from subprocess import CalledProcessError
 from unittest.mock import call
 
 import pytest
-
 from craft_parts.packages import errors
 from craft_parts.packages.dnf import DNFRepository
 
@@ -57,7 +56,7 @@ def test_install_packages_already_installed(fake_dnf_run, mocker):
     fake_dnf_run.assert_not_called()
 
 
-def test_install_packages_refresh_not_requested(fake_dnf_run, mocker):
+def test_install_packages_refresh_not_requested(fake_dnf_run, mocker):  # noqa: ARG001
     """Packages installed but the dnf cache was not refreshed."""
     DNFRepository.install_packages(
         ["package-installed", "package"], refresh_package_cache=False
@@ -83,7 +82,7 @@ def test_refresh_packages_list(fake_dnf_run):
 
 
 @pytest.mark.parametrize(
-    "source_type, packages",
+    ("source_type", "packages"),
     [
         ("7zip", {"p7zip"}),
         ("git", {"git"}),

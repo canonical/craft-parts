@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts import errors, packages
 from craft_parts.packages import platform
 from craft_parts.packages.base import DummyRepository
@@ -44,7 +43,7 @@ def test_deb_based_platforms():
 
 
 def test_is_deb_based():
-    for distro in _all_distros + ["other"]:
+    for distro in [*_all_distros, "other"]:
         assert platform.is_deb_based(distro) == (distro in _deb_distros)
 
 
@@ -66,7 +65,7 @@ def test_yum_based_platforms():
 
 
 def test_is_yum_based():
-    for distro in _all_distros + ["other"]:
+    for distro in [*_all_distros, "other"]:
         assert platform.is_yum_based(distro) == (distro in _yum_distros)
 
 
@@ -88,7 +87,7 @@ def test_dnf_based_platforms():
 
 
 def test_is_dnf_based():
-    for distro in _all_distros + ["other"]:
+    for distro in [*_all_distros, "other"]:
         assert platform.is_dnf_based(distro) == (distro in _dnf_distros)
 
 
@@ -106,7 +105,7 @@ def test_is_dnf_based_error(mocker):
 
 
 @pytest.mark.parametrize(
-    "distro,repo",
+    ("distro", "repo"),
     [
         ("ubuntu", Ubuntu),
         ("almalinux", DNFRepository),

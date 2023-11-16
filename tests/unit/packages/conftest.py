@@ -17,11 +17,11 @@
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_apt_cache(mocker):
     def get_installed_version(
-        package_name, resolve_virtual_packages=False
-    ):  # pylint: disable=unused-argument
+        package_name, resolve_virtual_packages=False  # noqa: ARG001, FBT002
+    ):
         if "installed" in package_name:
             return "1.0"
         if "new-version" in package_name:
@@ -41,16 +41,16 @@ def fake_apt_cache(mocker):
     return fake
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_deb_run(mocker):
     return mocker.patch("craft_parts.packages.deb.process_run")
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_yum_run(mocker):
     return mocker.patch("craft_parts.packages.yum.process_run")
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_dnf_run(mocker):
     return mocker.patch("craft_parts.packages.dnf.process_run")

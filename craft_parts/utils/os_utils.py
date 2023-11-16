@@ -22,8 +22,9 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from craft_parts import errors
 
@@ -47,8 +48,8 @@ class TimedWriter:
         cls,
         filepath: Path,
         text: str,
-        encoding: Optional[str] = None,
-        errors: Optional[str] = None,  # pylint: disable=redefined-outer-name
+        encoding: str | None = None,
+        errors: str | None = None,
     ) -> None:
         """Write text to the specified file.
 
@@ -69,7 +70,7 @@ class TimedWriter:
         cls._last_write_time = time.time()
 
 
-def get_bin_paths(*, root: Path, existing_only: bool = True) -> List[str]:
+def get_bin_paths(*, root: Path, existing_only: bool = True) -> list[str]:
     """List common system executable paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -87,7 +88,7 @@ def get_bin_paths(*, root: Path, existing_only: bool = True) -> List[str]:
     return [str(p) for p in paths if not existing_only or p.exists()]
 
 
-def get_include_paths(*, root: Path, arch_triplet: str) -> List[str]:
+def get_include_paths(*, root: Path, arch_triplet: str) -> list[str]:
     """List common include paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -107,7 +108,7 @@ def get_include_paths(*, root: Path, arch_triplet: str) -> List[str]:
 
 def get_library_paths(
     *, root: Path, arch_triplet: str, existing_only: bool = True
-) -> List[str]:
+) -> list[str]:
     """List common library paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -126,7 +127,7 @@ def get_library_paths(
     return [str(p) for p in paths if not existing_only or p.exists()]
 
 
-def get_pkg_config_paths(*, root: Path, arch_triplet: str) -> List[str]:
+def get_pkg_config_paths(*, root: Path, arch_triplet: str) -> list[str]:
     """List common pkg-config paths.
 
     :param root: A path to prepend to each entry in the list.
@@ -262,10 +263,10 @@ def umount(mountpoint: str, *args: str) -> None:
         try:
             subprocess.check_call(["/bin/umount", *args, mountpoint])
             break
-        except subprocess.CalledProcessError as err:
+        except subprocess.CalledProcessError:
             attempt += 1
             if attempt > _UMOUNT_RETRIES:
-                raise err
+                raise
 
             time.sleep(1)
             logger.debug(
@@ -284,12 +285,12 @@ class OsRelease:
 
         :param os_release_file: Path to os-release file to be parsed.
         """
-        self._os_release: Dict[str, str] = {}
+        self._os_release: dict[str, str] = {}
         with contextlib.suppress(FileNotFoundError):
             with open(os_release_file) as file:
                 for line in file:
                     entry = line.rstrip().split("=")
-                    if len(entry) == 2:
+                    if len(entry) == 2:  # noqa: PLR2004
                         self._os_release[entry[0]] = entry[1].strip('"')
 
     def id(self) -> str:
@@ -300,7 +301,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["ID"]
 
-        raise errors.OsReleaseIdError()
+        raise errors.OsReleaseIdError
 
     def name(self) -> str:
         """Return the OS name.
@@ -310,7 +311,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["NAME"]
 
-        raise errors.OsReleaseNameError()
+        raise errors.OsReleaseNameError
 
     def version_id(self) -> str:
         """Return the OS version ID.
@@ -320,11 +321,11 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["VERSION_ID"]
 
-        raise errors.OsReleaseVersionIdError()
+        raise errors.OsReleaseVersionIdError
 
 
 def process_run(
-    command: List[str], log_func: Callable[[str], None], **kwargs: Any
+    command: list[str], log_func: Callable[[str], None], **kwargs: Any  # noqa: ANN401
 ) -> None:
     """Run a command and handle its output."""
     with subprocess.Popen(

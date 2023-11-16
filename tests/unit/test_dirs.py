@@ -17,9 +17,8 @@ import string
 from pathlib import Path
 
 import pytest
-from hypothesis import given, strategies
-
 from craft_parts.dirs import ProjectDirs
+from hypothesis import given, strategies
 
 
 def test_dirs(new_dir, partitions):
@@ -61,7 +60,7 @@ def test_dirs_work_dir_resolving(partitions):
     assert dirs.work_dir == Path.home() / "y"
 
 
-@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("_enable_partitions_feature")
 @given(
     partitions=strategies.lists(
         strategies.text(strategies.sampled_from(string.ascii_lowercase), min_size=1),
@@ -78,7 +77,7 @@ def test_get_stage_dir_with_partitions(partitions):
     assert dirs.get_stage_dir(partition="default") == dirs.stage_dirs["default"]
 
 
-@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.usefixtures("_enable_partitions_feature")
 @given(
     partitions=strategies.lists(
         strategies.text(strategies.sampled_from(string.ascii_lowercase), min_size=1),

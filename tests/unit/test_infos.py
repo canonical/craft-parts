@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors, infos
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import PartInfo, ProjectInfo, ProjectVar, StepInfo
@@ -38,7 +37,9 @@ LINUX_ARCHS = [
 ]
 
 
-@pytest.mark.parametrize("tc_arch,tc_target_arch,tc_triplet,tc_cross", LINUX_ARCHS)
+@pytest.mark.parametrize(
+    ("tc_arch", "tc_target_arch", "tc_triplet", "tc_cross"), LINUX_ARCHS
+)
 def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
@@ -58,7 +59,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     assert x.cache_dir == new_dir
     assert x.arch_triplet == tc_triplet
     assert x.is_cross_compiling == tc_cross
-    assert x.parallel_build_count == 16
+    assert x.parallel_build_count == 16  # noqa: PLR2004
     assert x.target_arch == tc_target_arch
     assert x.project_name == "project"
     assert x.project_options == {
@@ -77,7 +78,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
 
 
 @pytest.mark.parametrize(
-    "machine_arch,expected_arch",
+    ("machine_arch", "expected_arch"),
     [
         ("ARM64", "aarch64"),
         ("armv7hl", "armv7l"),
@@ -88,15 +89,15 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     ],
 )
 @pytest.mark.parametrize(
-    "tc_arch,tc_target_arch,tc_triplet,unused_tc_cross", LINUX_ARCHS
+    ("tc_arch", "tc_target_arch", "tc_triplet", "unused_tc_cross"), LINUX_ARCHS
 )
-def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
+def test_project_info_translated_arch(
     mocker,
     new_dir,
     tc_arch,
     tc_target_arch,
     tc_triplet,
-    unused_tc_cross,
+    unused_tc_cross,  # noqa: ARG001
     machine_arch,
     expected_arch,
 ):
@@ -118,7 +119,7 @@ def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
     assert x.cache_dir == new_dir
     assert x.arch_triplet == tc_triplet
     assert x.is_cross_compiling == (expected_arch != tc_arch)
-    assert x.parallel_build_count == 16
+    assert x.parallel_build_count == 16  # noqa: PLR2004
     assert x.target_arch == tc_target_arch
     assert x.project_name == "project"
     assert x.project_options == {
@@ -201,7 +202,7 @@ def test_project_info_set_project_raw_write():
 def test_project_info_set_project_var_bad_name():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         info.set_project_var("bad-name", "foo")
     assert str(raised.value) == "'bad-name' is not a valid variable name"
 
@@ -273,7 +274,7 @@ def test_project_info_set_project_var_other_part_name_raw():
 def test_project_info_set_invalid_project_vars():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         info.set_project_var("var", "bar")
     assert str(raised.value) == "'var' not in project variables"
 
@@ -281,7 +282,7 @@ def test_project_info_set_invalid_project_vars():
 def test_project_info_get_project_var_bad_name():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         info.get_project_var("bad-name")
     assert str(raised.value) == "'bad-name' is not a valid variable name"
 
@@ -459,7 +460,7 @@ def test_part_info_set_invalid_project_vars():
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         x.set_project_var("var", "bar")
     assert str(raised.value) == "'var' not in project variables"
 
@@ -621,7 +622,7 @@ def test_step_info_set_invalid_project_vars():
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         x.set_project_var("var", "bar")
     assert str(raised.value) == "'var' not in project variables"
 
@@ -648,7 +649,7 @@ def test_step_info_get_project_var():
 
 
 @pytest.mark.parametrize(
-    "machine,translated_machine",
+    ("machine", "translated_machine"),
     [
         ("arm64", "aarch64"),
         ("armv7hl", "armv7l"),

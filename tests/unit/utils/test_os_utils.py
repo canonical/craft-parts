@@ -22,12 +22,11 @@ from pathlib import Path
 from unittest.mock import call
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.utils import os_utils
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_check_output(mocker):
     return mocker.patch("subprocess.check_output")
 
@@ -220,7 +219,7 @@ class TestTerminal:
     """Tests for terminal-related utilities."""
 
     @pytest.mark.parametrize(
-        "isatty,term,result",
+        ("isatty", "term", "result"),
         [
             (False, "xterm", True),
             (False, "dumb", True),
@@ -326,7 +325,7 @@ class TestEnvironment:
     """Running on snap or container must be detected."""
 
     @pytest.mark.parametrize(
-        "snap_var,app_name,result",
+        ("snap_var", "app_name", "result"),
         [
             (None, "myapp", False),
             ("", "myapp", False),
@@ -351,7 +350,7 @@ class TestEnvironment:
         assert os_utils.is_inside_container()
 
     def test_is_inside_container_no_files(self, mocker):
-        mocker.patch("os.path.exists", new=lambda x: False)
+        mocker.patch("os.path.exists").return_value = False
         assert os_utils.is_inside_container() is False
 
 
@@ -382,7 +381,7 @@ class TestMount:
     def test_umount_retry(self, mocker):
         gen = itertools.count()
 
-        def side_effect(*args):  # pylint: disable=unused-argument
+        def side_effect(*args):  # noqa: ARG001
             if next(gen) < 1:
                 raise subprocess.CalledProcessError(cmd="cmd", returncode=42)
 

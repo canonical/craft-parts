@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from craft_parts import errors
 
@@ -105,7 +105,7 @@ def test_part_specification_error():
 
 
 def test_part_specification_error_from_validation_error() -> None:
-    error_list: List["ErrorDict"] = [
+    error_list: list["ErrorDict"] = [
         {"loc": ("field-1", 0), "msg": "something is wrong", "type": "value_error"},
         {"loc": ("field-2",), "msg": "field required", "type": "value_error"},
         {
@@ -320,7 +320,7 @@ def test_scriptlet_run_error():
     )
     assert err.part_name == "foo"
     assert err.scriptlet_name == "override-build"
-    assert err.exit_code == 42
+    assert err.exit_code == 42  # noqa: PLR2004
     assert err.brief == "'override-build' in part 'foo' failed with code 42."
     assert err.details is None
     assert err.resolution == "Review the scriptlet and make sure it's correct."

@@ -17,14 +17,13 @@
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, Step
 
 
-@pytest.fixture
+@pytest.fixture()
 def install_dir():
     """Installation directory for the standard dump plugin."""
     return Path("parts", "foo", "install")

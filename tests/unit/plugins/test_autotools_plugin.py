@@ -17,21 +17,17 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.autotools_plugin import AutotoolsPlugin
-
-# pylint: disable=attribute-defined-outside-init
-# pylint: disable=line-too-long
+from pydantic import ValidationError
 
 
 class TestPluginAutotools:
     """Autotools plugin tests."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def _setup_method_fixture(self, new_dir):
         properties = AutotoolsPlugin.properties_class.unmarshal({"source": "."})
         part = Part("foo", {})
 

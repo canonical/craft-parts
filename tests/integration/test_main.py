@@ -20,9 +20,8 @@ import sys
 import textwrap
 from pathlib import Path
 
-import pytest
-
 import craft_parts
+import pytest
 from craft_parts import main
 
 parts_yaml = textwrap.dedent(
@@ -47,8 +46,6 @@ plan_steps = [
 plan_result = ["".join(plan_steps[0:n]) for n in range(1, len(plan_steps) + 1)]
 
 
-# pylint: disable=line-too-long
-
 execute_steps = [
     "Execute: Pull foo\nExecute: Pull bar\n",
     "Execute: Overlay foo\nExecute: Overlay bar\n",
@@ -71,7 +68,7 @@ skip_result = ["".join(skip_steps[0:n]) for n in range(1, len(skip_steps) + 1)]
 
 
 @pytest.fixture(autouse=True)
-def setup_new_dir(new_dir):  # pylint: disable=unused-argument
+def _setup_new_dir(new_dir):  # noqa: ARG001
     pass
 
 
@@ -130,7 +127,7 @@ def test_main_invalid_parts_file(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 4
+    assert raised.value.code == 4  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == "Error: parts definition must be a dictionary\n"
@@ -143,7 +140,7 @@ def test_main_missing_parts_entry(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 4
+    assert raised.value.code == 4  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == "Error: parts definition is missing\n"
@@ -186,7 +183,7 @@ def test_main_invalid_application_name(mocker):
     )
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 3
+    assert raised.value.code == 3  # noqa: PLR2004
 
 
 def test_main_alternative_work_dir(mocker, capfd):
@@ -237,7 +234,7 @@ def test_main_alternative_parts_invalid_file(mocker, capfd):
 
 
 @pytest.mark.parametrize(
-    "step,result",
+    ("step", "result"),
     [
         ("pull", execute_result[0]),
         ("overlay", execute_result[1]),
@@ -259,7 +256,7 @@ def test_main_step(mocker, capfd, step, result):
 
 
 @pytest.mark.parametrize(
-    "step,result",
+    ("step", "result"),
     [
         ("pull", plan_result[0]),
         ("overlay", plan_result[1]),
@@ -356,7 +353,7 @@ def test_main_step_specify_part_dry_run(mocker, capfd):
 
 
 @pytest.mark.parametrize(
-    "step,result",
+    ("step", "result"),
     [
         ("pull", plan_result[0]),
         ("overlay", plan_result[1]),
@@ -398,7 +395,7 @@ def test_main_step_invalid_part(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "pull", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 3
+    assert raised.value.code == 3  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == (
@@ -414,7 +411,7 @@ def test_main_step_invalid_multiple_parts(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "pull", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 3
+    assert raised.value.code == 3  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == (
@@ -431,7 +428,7 @@ def test_main_step_invalid_part_dry_run(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "pull", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 3
+    assert raised.value.code == 3  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == (
@@ -448,7 +445,7 @@ def test_main_step_invalid_multiple_parts_dry_run(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "--dry-run", "pull", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 3
+    assert raised.value.code == 3  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == (
@@ -529,7 +526,7 @@ def test_main_clean_workdir(mocker, capfd):
     assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
 
 
-def test_main_clean_dry_run(mocker, capfd):
+def test_main_clean_dry_run(mocker, capfd):  # noqa: ARG001
     Path("parts.yaml").write_text(parts_yaml)
 
     Path("parts").mkdir()
@@ -629,7 +626,7 @@ def test_main_clean_invalid_part(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "clean", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 3
+    assert raised.value.code == 3  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == (
@@ -646,7 +643,7 @@ def test_main_clean_invalid_multiple_part(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 3
+    assert raised.value.code == 3  # noqa: PLR2004
 
     out, err = capfd.readouterr()
     assert err == (

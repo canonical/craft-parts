@@ -19,7 +19,6 @@
 import os
 import zipfile
 from pathlib import Path
-from typing import List, Optional
 
 from craft_parts.dirs import ProjectDirs
 
@@ -30,22 +29,21 @@ from .base import FileSourceHandler
 class ZipSource(FileSourceHandler):
     """The zip file source handler."""
 
-    # pylint: disable=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ):
+        source_tag: str | None = None,
+        source_branch: str | None = None,
+        source_commit: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        ignore_patterns: list[str] | None = None,
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -71,19 +69,14 @@ class ZipSource(FileSourceHandler):
         if source_depth:
             raise errors.InvalidSourceOption(source_type="zip", option="source-depth")
 
-    # pylint: enable=too-many-arguments
-
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
-        src: Optional[Path] = None,
+        keep: bool = False,  # noqa: FBT001, FBT002
+        src: Path | None = None,
     ) -> None:
         """Extract zip file contents to the part source dir."""
-        if src:
-            zip_file = src
-        else:
-            zip_file = self.part_src_dir / os.path.basename(self.source)
+        zip_file = src if src else self.part_src_dir / os.path.basename(self.source)
 
         # Workaround for: https://bugs.python.org/issue15795
         with zipfile.ZipFile(zip_file, "r") as zipf:

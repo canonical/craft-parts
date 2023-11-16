@@ -17,54 +17,53 @@
 import subprocess
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
-
-import pytest
-import yaml
+from typing import Any
 
 import craft_parts
+import pytest
+import yaml
 from craft_parts import Step, errors, plugins
 
 
-@pytest.fixture
+@pytest.fixture()
 def mytool(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
     tool.write_text("echo ok")
     tool.chmod(0o755)
-    yield tool
+    return tool
 
 
-@pytest.fixture
+@pytest.fixture()
 def mytool_not_ok(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
     tool.write_text("echo not ok")
     tool.chmod(0o755)
-    yield tool
+    return tool
 
 
-@pytest.fixture
+@pytest.fixture()
 def mytool_error(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
     tool.write_text("exit 22")
     tool.chmod(0o755)
-    yield tool
+    return tool
 
 
 class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: dict[str, Any]):  # noqa: ARG003
         return cls()
 
 
 class AppPluginEnvironmentValidator(plugins.PluginEnvironmentValidator):
     """Check the execution environment for the app plugin."""
 
-    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
+    def validate_environment(self, *, part_dependencies: list[str] | None = None):
         """Ensure the environment contains dependencies needed by the plugin.
 
         If mytool is created by a part, that part must be named `mytool`.
@@ -105,7 +104,7 @@ class AppPlugin(plugins.Plugin):
     properties_class = AppPluginProperties
     validator_class = AppPluginEnvironmentValidator
 
-    def validate_environment(self, env: Dict[str, str]):
+    def validate_environment(self, env: dict[str, str]):
         try:
             subprocess.run("mytool", shell=True, check=True, env=env)
         except subprocess.CalledProcessError as err:
@@ -114,16 +113,16 @@ class AppPlugin(plugins.Plugin):
                 reason="mytool not found",
             ) from err
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 
@@ -135,7 +134,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_validate_plugin(new_dir, partitions, mytool):
+def test_validate_plugin(new_dir, partitions, mytool):  # noqa: ARG001
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:
@@ -223,7 +222,7 @@ def test_validate_plugin_early_error(new_dir, partitions):
     )
 
 
-def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):
+def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):  # noqa: ARG001
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:
@@ -252,7 +251,9 @@ def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):
     assert raised.value.reason == "mytool is expected to print ok"
 
 
-def test_validate_plugin_command_error(new_dir, partitions, mytool_error):
+def test_validate_plugin_command_error(
+    new_dir, partitions, mytool_error  # noqa: ARG001
+):
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:

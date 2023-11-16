@@ -16,10 +16,9 @@
 
 import textwrap
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import (
     Action,
     ActionType,
@@ -33,8 +32,8 @@ from craft_parts.state_manager import StepState
 
 
 @pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_feature):
-    yield
+def _setup_feature(_enable_overlay_feature):
+    return
 
 
 def setup_function():
@@ -46,14 +45,14 @@ def teardown_module():
 
 
 @pytest.fixture(autouse=True)
-def mock_mount_unmount(mocker):
+def _mock_mount_unmount(mocker):
     mocker.patch("craft_parts.utils.os_utils.mount")
     mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
     mocker.patch("craft_parts.utils.os_utils.umount")
 
 
 @pytest.fixture(autouse=True)
-def mock_prerequisites_for_overlay(mocker):
+def _mock_prerequisites_for_overlay(mocker):
     mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
     mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
 
@@ -132,7 +131,7 @@ def test_prologue_callback(tmpdir, capfd):
 
 
 def _my_step_callback(info: StepInfo) -> bool:
-    msg = getattr(info, "message")
+    msg = info.message
     print(msg)
     return True
 
@@ -330,7 +329,7 @@ def test_invalid_update_callback_post(tmpdir, step):
 
 
 def _my_exec_callback(info: ProjectInfo) -> None:
-    print(f"{getattr(info, 'message')}")
+    print(f"{info.message}")
 
 
 _exec_yaml = textwrap.dedent(

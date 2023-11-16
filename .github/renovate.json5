@@ -40,10 +40,8 @@
         "black",
         "codespell",
         "coverage",
-        "isort",
         "mypy",
         "pydocstyle",
-        "pylint",
         "pytest",
         "tox",
       ],
@@ -52,7 +50,6 @@
       ],
       matchPackagePrefixes: [
         "pytest-",
-        "pylint-",
         "types-",
       ],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],

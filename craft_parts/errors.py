@@ -18,7 +18,8 @@
 
 import dataclasses
 import pathlib
-from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Union
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
@@ -34,8 +35,8 @@ class PartsError(Exception):
     """
 
     brief: str
-    details: Optional[str] = None
-    resolution: Optional[str] = None
+    details: str | None = None
+    resolution: str | None = None
 
     def __str__(self) -> str:
         components = [self.brief]
@@ -60,7 +61,7 @@ class FeatureError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class PartDependencyCycle(PartsError):
+class PartDependencyCycle(PartsError):  # noqa: N818
     """A dependency cycle has been detected in the parts definition."""
 
     def __init__(self) -> None:
@@ -70,13 +71,13 @@ class PartDependencyCycle(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidApplicationName(PartsError):
+class InvalidApplicationName(PartsError):  # noqa: N818
     """The application name contains invalid characters.
 
     :param name: The invalid application name.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         brief = f"Application name {name!r} is invalid."
         resolution = (
@@ -87,13 +88,13 @@ class InvalidApplicationName(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidPartName(PartsError):
+class InvalidPartName(PartsError):  # noqa: N818
     """An operation was requested on a part that's not in the parts specification.
 
     :param part_name: The invalid part name.
     """
 
-    def __init__(self, part_name: str):
+    def __init__(self, part_name: str) -> None:
         self.part_name = part_name
         brief = f"A part named {part_name!r} is not defined in the parts list."
         resolution = "Review the parts definition and make sure it's correct."
@@ -101,13 +102,13 @@ class InvalidPartName(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidArchitecture(PartsError):
+class InvalidArchitecture(PartsError):  # noqa: N818
     """The machine architecture is not supported.
 
     :param arch_name: The unsupported architecture name.
     """
 
-    def __init__(self, arch_name: str):
+    def __init__(self, arch_name: str) -> None:
         self.arch_name = arch_name
         brief = f"Architecture {arch_name!r} is not supported."
         resolution = "Make sure the architecture name is correct."
@@ -122,7 +123,7 @@ class PartSpecificationError(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, *, part_name: str, message: str):
+    def __init__(self, *, part_name: str, message: str) -> None:
         self.part_name = part_name
         self.message = message
         brief = f"Part {part_name!r} validation failed."
@@ -133,14 +134,14 @@ class PartSpecificationError(PartsError):
 
     @classmethod
     def from_validation_error(
-        cls, *, part_name: str, error_list: List["ErrorDict"]
+        cls, *, part_name: str, error_list: list["ErrorDict"]
     ) -> "PartSpecificationError":
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
         :param error_list: A list of dictionaries containing pydantic error definitions.
         """
-        formatted_errors: List[str] = []
+        formatted_errors: list[str] = []
 
         for error in error_list:
             loc = error.get("loc")
@@ -172,13 +173,12 @@ class PartSpecificationError(PartsError):
                 previous_part += f"[{loc_part}]"
                 loc_parts.append(previous_part)
             else:
-                raise RuntimeError(f"unhandled loc: {loc_part}")
+                raise TypeError(f"unhandled loc: {loc_part}")
 
         loc_str = ".".join(loc_parts)
 
         # Filter out internal __root__ detail.
-        loc_str = loc_str.replace(".__root__", "")
-        return loc_str
+        return loc_str.replace(".__root__", "")
 
 
 class CopyTreeError(PartsError):
@@ -187,7 +187,7 @@ class CopyTreeError(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Failed to copy or link file tree: {message}."
         resolution = "Make sure paths and permissions are correct."
@@ -195,13 +195,13 @@ class CopyTreeError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class CopyFileNotFound(PartsError):
+class CopyFileNotFound(PartsError):  # noqa: N818
     """An attempt was made to copy a file that doesn't exist.
 
     :param name: The file name.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         brief = f"Failed to copy {name!r}: no such file or directory."
 
@@ -217,7 +217,9 @@ class XAttributeError(PartsError):
     :param is_write: Whether this is an attribute write operation.
     """
 
-    def __init__(self, key: str, path: str, is_write: bool = False):
+    def __init__(
+        self, key: str, path: str, is_write: bool = False  # noqa: FBT001, FBT002
+    ) -> None:
         self.key = key
         self.path = path
         self.is_write = is_write
@@ -229,7 +231,7 @@ class XAttributeError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
 
-class XAttributeTooLong(PartsError):
+class XAttributeTooLong(PartsError):  # noqa: N818
     """Failed to write an extended attribute because key and/or value is too long.
 
     :param key: The extended attribute key.
@@ -237,7 +239,7 @@ class XAttributeTooLong(PartsError):
     :param path: The file path.
     """
 
-    def __init__(self, key: str, value: str, path: str):
+    def __init__(self, key: str, value: str, path: str) -> None:
         self.key = key
         self.value = value
         self.path = path
@@ -247,13 +249,13 @@ class XAttributeTooLong(PartsError):
         super().__init__(brief=brief, details=details)
 
 
-class UndefinedPlugin(PartsError):
+class UndefinedPlugin(PartsError):  # noqa: N818
     """The part didn't define a plugin and the part name is not a valid plugin name.
 
     :param part_name: The name of the part with no plugin definition.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Plugin not defined for part {part_name!r}."
         resolution = f"Review part {part_name!r} and make sure it's correct."
@@ -261,14 +263,14 @@ class UndefinedPlugin(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidPlugin(PartsError):
+class InvalidPlugin(PartsError):  # noqa: N818
     """A request was made to use a plugin that's not registered.
 
     :param plugin_name: The invalid plugin name."
     :param part_name: The name of the part defining the invalid plugin.
     """
 
-    def __init__(self, plugin_name: str, *, part_name: str):
+    def __init__(self, plugin_name: str, *, part_name: str) -> None:
         self.plugin_name = plugin_name
         self.part_name = part_name
         brief = f"Plugin {plugin_name!r} in part {part_name!r} is not registered."
@@ -277,14 +279,14 @@ class InvalidPlugin(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class PluginNotStrict(PartsError):
+class PluginNotStrict(PartsError):  # noqa: N818
     """A request was made to use a plugin that's not strict.
 
     :param plugin_name: The plugin name.
     :param part_name: The name of the part defining the plugin.
     """
 
-    def __init__(self, plugin_name: str, *, part_name: str):
+    def __init__(self, plugin_name: str, *, part_name: str) -> None:
         self.plugin_name = plugin_name
         self.part_name = part_name
         brief = f"Plugin {plugin_name!r} in part {part_name!r} cannot be used."
@@ -347,13 +349,13 @@ class FilesetError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class FilesetConflict(PartsError):
+class FilesetConflict(PartsError):  # noqa: N818
     """Inconsistent stage to prime filtering.
 
     :param conflicting_files: A set containing the conflicting file names.
     """
 
-    def __init__(self, conflicting_files: Set[str]) -> None:
+    def __init__(self, conflicting_files: set[str]) -> None:
         self.conflicting_files = conflicting_files
         brief = "Failed to filter files: inconsistent 'stage' and 'prime' filesets."
         details = (
@@ -382,7 +384,7 @@ class FileOrganizeError(PartsError):
         super().__init__(brief=brief)
 
 
-class PartFilesConflict(PartsError):
+class PartFilesConflict(PartsError):  # noqa: N818
     """Different parts list the same files with different contents.
 
     :param part_name: The name of the part being processed.
@@ -391,7 +393,7 @@ class PartFilesConflict(PartsError):
     """
 
     def __init__(
-        self, *, part_name: str, other_part_name: str, conflicting_files: List[str]
+        self, *, part_name: str, other_part_name: str, conflicting_files: list[str]
     ) -> None:
         self.part_name = part_name
         self.other_part_name = other_part_name
@@ -411,14 +413,14 @@ class PartFilesConflict(PartsError):
         super().__init__(brief=brief, details=details)
 
 
-class StageFilesConflict(PartsError):
+class StageFilesConflict(PartsError):  # noqa: N818
     """Files from a part conflict with files already being staged.
 
     :param part_name: The name of the part being processed.
     :param conflicting_files: The list of confictling files.
     """
 
-    def __init__(self, *, part_name: str, conflicting_files: List[str]) -> None:
+    def __init__(self, *, part_name: str, conflicting_files: list[str]) -> None:
         self.part_name = part_name
         self.conflicting_files = conflicting_files
         indented_conflicting_files = (f"    {i}" for i in conflicting_files)
@@ -439,7 +441,7 @@ class PluginEnvironmentValidationError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str, reason: str):
+    def __init__(self, *, part_name: str, reason: str) -> None:
         self.part_name = part_name
         self.reason = reason
         brief = f"Environment validation failed for part {part_name!r}: {reason}."
@@ -453,7 +455,7 @@ class PluginPullError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Failed to run the pull script for part {part_name!r}."
 
@@ -466,7 +468,7 @@ class PluginBuildError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Failed to run the build script for part {part_name!r}."
 
@@ -479,14 +481,14 @@ class PluginCleanError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Failed to run the clean script for part {part_name!r}."
 
         super().__init__(brief=brief)
 
 
-class InvalidControlAPICall(PartsError):
+class InvalidControlAPICall(PartsError):  # noqa: N818
     """A control API call was made with invalid parameters.
 
     :param part_name: The name of the part being processed.
@@ -494,7 +496,7 @@ class InvalidControlAPICall(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, *, part_name: str, scriptlet_name: str, message: str):
+    def __init__(self, *, part_name: str, scriptlet_name: str, message: str) -> None:
         self.part_name = part_name
         self.scriptlet_name = scriptlet_name
         self.message = message
@@ -515,7 +517,7 @@ class ScriptletRunError(PartsError):
     :param exit_code: The execution error code.
     """
 
-    def __init__(self, *, part_name: str, scriptlet_name: str, exit_code: int):
+    def __init__(self, *, part_name: str, scriptlet_name: str, exit_code: int) -> None:
         self.part_name = part_name
         self.scriptlet_name = scriptlet_name
         self.exit_code = exit_code
@@ -533,21 +535,21 @@ class CallbackRegistrationError(PartsError):
     :param message: the error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Callback registration error: {message}."
 
         super().__init__(brief=brief)
 
 
-class StagePackageNotFound(PartsError):
+class StagePackageNotFound(PartsError):  # noqa: N818
     """Failed to install a stage package.
 
     :param part_name: The name of the part being processed.
     :param package_name: The name of the package.
     """
 
-    def __init__(self, *, part_name: str, package_name: str):
+    def __init__(self, *, part_name: str, package_name: str) -> None:
         self.part_name = part_name
         self.package_name = package_name
         brief = f"Stage package not found in part {part_name!r}: {package_name}."
@@ -555,14 +557,14 @@ class StagePackageNotFound(PartsError):
         super().__init__(brief=brief)
 
 
-class OverlayPackageNotFound(PartsError):
+class OverlayPackageNotFound(PartsError):  # noqa: N818
     """Failed to install an overlay package.
 
     :param part_name: The name of the part being processed.
     :param message: the error message.
     """
 
-    def __init__(self, *, part_name: str, package_name: str):
+    def __init__(self, *, part_name: str, package_name: str) -> None:
         self.part_name = part_name
         self.package_name = package_name
         brief = f"Overlay package not found in part {part_name!r}: {package_name}."
@@ -570,13 +572,13 @@ class OverlayPackageNotFound(PartsError):
         super().__init__(brief=brief)
 
 
-class InvalidAction(PartsError):
+class InvalidAction(PartsError):  # noqa: N818
     """An attempt was made to execute an action with invalid parameters.
 
     :param message: The error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Action is invalid: {message}."
 
@@ -605,7 +607,7 @@ class DebError(PartsError):
     """A "deb"-related command failed."""
 
     def __init__(
-        self, deb_path: pathlib.Path, command: List[str], exit_code: int
+        self, deb_path: pathlib.Path, command: list[str], exit_code: int
     ) -> None:
         brief = (
             f"Failed when handling {deb_path}: "
@@ -624,8 +626,8 @@ class PartitionError(PartsError):
         partition: str,
         brief: str,
         *,
-        details: Optional[str] = None,
-        resolution: Optional[str] = None,
+        details: str | None = None,
+        resolution: str | None = None,
     ) -> None:
         self.partition = partition
         super().__init__(brief=brief, details=details, resolution=resolution)
@@ -637,7 +639,7 @@ class InvalidPartitionError(PartitionError):
     def __init__(
         self,
         partition: str,
-        path: Union[str, pathlib.Path],
+        path: str | pathlib.Path,
         valid_partitions: Iterable[str],
     ) -> None:
         self.valid_partitions = valid_partitions
@@ -649,7 +651,7 @@ class InvalidPartitionError(PartitionError):
         )
 
 
-class PartitionWarning(PartitionError, Warning):
+class PartitionWarning(PartitionError, Warning):  # noqa: N818
     """Warnings for partition-related items."""
 
     def __init__(
@@ -657,8 +659,8 @@ class PartitionWarning(PartitionError, Warning):
         partition: str,
         brief: str,
         *,
-        details: Optional[str] = None,
-        resolution: Optional[str] = None,
+        details: str | None = None,
+        resolution: str | None = None,
     ) -> None:
         super().__init__(
             partition=partition, brief=brief, details=details, resolution=resolution

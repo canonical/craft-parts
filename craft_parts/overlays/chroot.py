@@ -20,10 +20,10 @@ import logging
 import multiprocessing
 import os
 import sys
-from collections import namedtuple
+from collections.abc import Callable
 from multiprocessing.connection import Connection
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, NamedTuple
 
 from craft_parts.utils import os_utils
 
@@ -32,7 +32,12 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 
-def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:
+def chroot(
+    path: Path,
+    target: Callable,  # type: ignore[type-arg]
+    *args: Any,  # noqa: ANN401
+    **kwargs: Any,  # noqa: ANN401
+) -> Any:  # noqa: ANN401
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.
@@ -66,9 +71,9 @@ def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:
 def _runner(
     path: Path,
     conn: Connection,
-    target: Callable,
-    args: Tuple,
-    kwargs: Dict,
+    target: Callable,  # type: ignore[type-arg]
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
 ) -> None:
     """Chroot to the execution directory and call the target function."""
     logger.debug("[pid=%d] child process: target=%r", os.getpid(), target)
@@ -77,7 +82,7 @@ def _runner(
         os.chdir(path)
         os.chroot(path)
         res = target(*args, **kwargs)
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception as exc:  # noqa: BLE001
         conn.send((None, str(exc)))
         return
 
@@ -98,11 +103,18 @@ def _cleanup_chroot(path: Path) -> None:
         _cleanup_chroot_linux(path)
 
 
-_Mount = namedtuple("_Mount", ["fstype", "src", "mountpoint", "options"])
+class _Mount(NamedTuple):
+    """A mount entry."""
+
+    fstype: str | None
+    src: str
+    mountpoint: str
+    options: list[str] | None
+
 
 # Essential filesystems to mount in order to have basic utilities and
 # name resolution working inside the chroot environment.
-_linux_mounts: List[_Mount] = [
+_linux_mounts: list[_Mount] = [
     _Mount(None, "/etc/resolv.conf", "/etc/resolv.conf", ["--bind"]),
     _Mount("proc", "proc", "/proc", None),
     _Mount("sysfs", "sysfs", "/sys", None),

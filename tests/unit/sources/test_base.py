@@ -15,16 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import Optional
 
 import pytest
-from overrides import overrides
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
 from craft_parts.sources.base import FileSourceHandler, SourceHandler
-
-# pylint: disable=attribute-defined-outside-init
+from overrides import overrides
 
 
 class FooSourceHandler(SourceHandler):
@@ -38,7 +34,7 @@ class TestSourceHandler:
     """Verify SourceHandler methods and attributes."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
+    def _setup_method_fixture(self, new_dir, partitions):
         self._dirs = ProjectDirs(partitions=partitions)
         self.source = FooSourceHandler(
             source="source",
@@ -75,8 +71,7 @@ class TestSourceHandler:
             "abstract methods? pull$"
         )
         with pytest.raises(TypeError, match=expected):
-            # pylint: disable=abstract-class-instantiated
-            FaultySource(  # type: ignore
+            FaultySource(  # type: ignore[reportGeneralTypeIssues]
                 source=".",
                 part_src_dir=Path(),
                 cache_dir=Path(),
@@ -91,8 +86,8 @@ class BarFileSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
-        src: Optional[Path] = None,
+        keep: bool = False,  # noqa: FBT001, FBT002
+        src: Path | None = None,
     ) -> None:
         """Extract source payload."""
         self.provision_dst = dst
@@ -104,7 +99,7 @@ class TestFileSourceHandler:
     """Verify FileSourceHandler methods and attributes."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
+    def _setup_method_fixture(self, new_dir, partitions):
         self._dirs = ProjectDirs(partitions=partitions)
         self.source = BarFileSource(
             source="source",
@@ -237,10 +232,9 @@ class TestFileSourceHandler:
             "abstract methods? provision$"
         )
         with pytest.raises(TypeError, match=expected):
-            # pylint: disable=abstract-class-instantiated
-            FaultyFileSource(
-                source=None,  # type: ignore
-                part_src_dir=None,  # type: ignore
+            FaultyFileSource(  # type: ignore[reportGeneralTypeIssues]
+                source=None,  # type: ignore[reportGeneralTypeIssues]
+                part_src_dir=None,  # type: ignore[reportGeneralTypeIssues]
                 cache_dir=Path(),
                 project_dirs=self._dirs,
             )

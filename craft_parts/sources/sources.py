@@ -81,7 +81,7 @@ cases you want to refer to the documentation for the specific plugin.
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Type
+from typing import TYPE_CHECKING
 
 from craft_parts.dirs import ProjectDirs
 
@@ -99,10 +99,10 @@ from .zip_source import ZipSource
 if TYPE_CHECKING:
     from craft_parts.parts import Part
 
-SourceHandlerType = Type[SourceHandler]
+SourceHandlerType = type[SourceHandler]
 
 
-_source_handler: Dict[str, SourceHandlerType] = {
+_source_handler: dict[str, SourceHandlerType] = {
     "local": LocalSource,
     "tar": TarSource,
     "git": GitSource,
@@ -118,8 +118,8 @@ def get_source_handler(
     cache_dir: Path,
     part: "Part",
     project_dirs: ProjectDirs,
-    ignore_patterns: Optional[List[str]] = None,
-) -> Optional[SourceHandler]:
+    ignore_patterns: list[str] | None = None,
+) -> SourceHandler | None:
     """Return the appropriate handler for the given source.
 
     :param application_name: The name of the application using Craft Parts.
@@ -171,8 +171,8 @@ _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 
 def get_source_type_from_uri(
-    source: str, ignore_errors: bool = False
-) -> str:  # noqa: C901
+    source: str, ignore_errors: bool = False  # noqa: FBT001, FBT002
+) -> str:
     """Return the source type based on the given source URI.
 
     :param source: The source specification.

@@ -16,7 +16,7 @@
 
 """Exceptions raised by the packages handling subsystem."""
 
-from typing import List, Sequence
+from collections.abc import Sequence
 
 from craft_parts.errors import PartsError
 from craft_parts.utils import formatting_utils
@@ -26,7 +26,7 @@ class PackagesError(PartsError):
     """Base class for package handler errors."""
 
 
-class PackageBackendNotSupported(PartsError):
+class PackageBackendNotSupported(PartsError):  # noqa: N818
     """Requested package resolved not supported on this host."""
 
     def __init__(self, backend: str) -> None:
@@ -36,26 +36,26 @@ class PackageBackendNotSupported(PartsError):
         )
 
 
-class PackageNotFound(PackagesError):
+class PackageNotFound(PackagesError):  # noqa: N818
     """Requested package doesn't exist in the remote repository.
 
     :param package_name: The name of the missing package.
     """
 
-    def __init__(self, package_name: str):
+    def __init__(self, package_name: str) -> None:
         self.package_name = package_name
         brief = f"Package not found: {package_name}."
 
         super().__init__(brief=brief)
 
 
-class PackagesNotFound(PackagesError):
+class PackagesNotFound(PackagesError):  # noqa: N818
     """Requested package doesn't exist in the remote repository.
 
     :param package_name: The names of the missing packages.
     """
 
-    def __init__(self, packages: Sequence[str]):
+    def __init__(self, packages: Sequence[str]) -> None:
         self.packages = packages
         missing_pkgs = formatting_utils.humanize_list(packages, "and")
         brief = f"Failed to find installation candidate for packages: {missing_pkgs}."
@@ -72,7 +72,7 @@ class PackageFetchError(PackagesError):
     :param message: The error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Failed to fetch package: {message}."
 
@@ -85,21 +85,21 @@ class PackageListRefreshError(PackagesError):
     :param message: The error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Failed to refresh package list: {message}."
 
         super().__init__(brief=brief)
 
 
-class PackageBroken(PackagesError):
+class PackageBroken(PackagesError):  # noqa: N818
     """Package has unmet dependencies.
 
     :param package_name: The name of the package with unmet dependencies.
     :param deps: The list of unmet dependencies.
     """
 
-    def __init__(self, package_name: str, *, deps: Sequence[str]):
+    def __init__(self, package_name: str, *, deps: Sequence[str]) -> None:
         self.package_name = package_name
         self.deps = deps
         brief = f"Package {package_name!r} has unmet dependencies: {', '.join(deps)}."
@@ -107,33 +107,33 @@ class PackageBroken(PackagesError):
         super().__init__(brief=brief)
 
 
-class FileProviderNotFound(PackagesError):
+class FileProviderNotFound(PackagesError):  # noqa: N818
     """A file is not provided by any package.
 
     :param file_path: The file path.
     """
 
-    def __init__(self, *, file_path: str):
+    def __init__(self, *, file_path: str) -> None:
         self.file_path = file_path
         brief = f"{file_path} is not provided by any package."
 
         super().__init__(brief=brief)
 
 
-class BuildPackageNotFound(PackagesError):
+class BuildPackageNotFound(PackagesError):  # noqa: N818
     """A package listed in 'build-packages' was not found.
 
     :param package: The name of the missing package.
     """
 
-    def __init__(self, package: str):
+    def __init__(self, package: str) -> None:
         self.package = package
         brief = f"Cannot find package listed in 'build-packages': {package}"
 
         super().__init__(brief=brief)
 
 
-class BuildPackagesNotInstalled(PackagesError):
+class BuildPackagesNotInstalled(PackagesError):  # noqa: N818
     """Could not install all requested build packages.
 
     :param packages: The packages to install.
@@ -168,21 +168,21 @@ class UnpackError(PackagesError):
     :param package: The package that failed to unpack.
     """
 
-    def __init__(self, package: str):
+    def __init__(self, package: str) -> None:
         self.package = package
         brief = f"Error unpacking {package!r}"
 
         super().__init__(brief=brief)
 
 
-class SnapUnavailable(PackagesError):
+class SnapUnavailable(PackagesError):  # noqa: N818
     """Failed to install or refresh a snap.
 
     :param snap_name: The snap name.
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str):
+    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Failed to install or refresh snap {snap_name!r}."
@@ -205,7 +205,7 @@ class SnapInstallError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str):
+    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error installing snap {snap_name!r} from channel {snap_channel!r}."
@@ -220,7 +220,7 @@ class SnapDownloadError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str):
+    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error downloading snap {snap_name!r} from channel {snap_channel!r}."
@@ -235,7 +235,7 @@ class SnapRefreshError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str):
+    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
         brief = f"Error refreshing snap {snap_name!r} to channel {snap_channel!r}."
@@ -278,7 +278,7 @@ class SnapdConnectionError(PackagesError):
 class ChiselError(PackagesError):
     """A "chisel"-related command failed."""
 
-    def __init__(self, *, slices: List[str], output: str):
+    def __init__(self, *, slices: list[str], output: str) -> None:
         """Create a ChiselError from a list of slices and the command output.
 
         :param slices: The Chisel slices that were requested.

@@ -19,28 +19,27 @@ import subprocess
 import tarfile
 
 import pytest
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import errors, sources
 
 
 # region Fixtures
-@pytest.fixture
+@pytest.fixture()
 def rpm_source(tmp_path: pathlib.Path, partitions):
     dest_dir = tmp_path / "src"
     dest_dir.mkdir()
     dirs = ProjectDirs(partitions=partitions)
-    yield sources.RpmSource(
+    return sources.RpmSource(
         str(dest_dir / "test.rpm"), dest_dir, cache_dir=tmp_path, project_dirs=dirs
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_popen(mocker):
     return mocker.patch.object(subprocess, "Popen", autospec=True)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_tarfile_open(mocker):
     return mocker.patch.object(tarfile, "open", autospec=True)
 
@@ -64,7 +63,6 @@ def test_valid_options(partitions):
     )
 
 
-# pylint: disable=too-many-arguments
 @pytest.mark.parametrize(
     (
         "source_tag",
@@ -131,9 +129,6 @@ def test_invalid_options(
     )
 
 
-# pylint: enable=too-many-arguments
-
-
 # endregion
 
 
@@ -151,7 +146,7 @@ def test_popen_process_error(rpm_source, mock_popen, tmp_path):
     assert exc_info.value.__cause__ == inner_error
 
 
-def test_tar_error(rpm_source, mock_popen, mock_tarfile_open, tmp_path):
+def test_tar_error(rpm_source, mock_popen, mock_tarfile_open, tmp_path):  # noqa: ARG001
     mock_tarfile_open.side_effect = inner_error = tarfile.TarError()
     src = tmp_path / "test.rpm"
     src.touch()
@@ -162,7 +157,9 @@ def test_tar_error(rpm_source, mock_popen, mock_tarfile_open, tmp_path):
     assert exc_info.value.__cause__ == inner_error
 
 
-def test_correct_command(mocker, rpm_source, tmp_path, mock_popen, mock_tarfile_open):
+def test_correct_command(
+    mocker, rpm_source, tmp_path, mock_popen, mock_tarfile_open  # noqa: ARG001
+):
     src = tmp_path / "some-package.rpm"
     src.touch()
 
@@ -176,7 +173,7 @@ def test_correct_command(mocker, rpm_source, tmp_path, mock_popen, mock_tarfile_
     )
 
 
-def test_unlinks(rpm_source, tmp_path, mock_popen, mock_tarfile_open):
+def test_unlinks(rpm_source, tmp_path, mock_popen, mock_tarfile_open):  # noqa: ARG001
     src = tmp_path / "test.rpm"
     src.touch()
 
@@ -185,7 +182,9 @@ def test_unlinks(rpm_source, tmp_path, mock_popen, mock_tarfile_open):
     assert not src.exists()
 
 
-def test_keep_no_unlink(rpm_source, tmp_path, mock_popen, mock_tarfile_open):
+def test_keep_no_unlink(
+    rpm_source, tmp_path, mock_popen, mock_tarfile_open  # noqa: ARG001
+):
     src = tmp_path / "test.rpm"
     src.touch()
 

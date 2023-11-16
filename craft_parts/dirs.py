@@ -16,9 +16,9 @@
 
 """Definitions for project directories."""
 
+from collections.abc import Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Dict, Optional, Sequence, Union
 
 from craft_parts.utils import partition_utils
 
@@ -43,9 +43,9 @@ class ProjectDirs:
     def __init__(
         self,
         *,
-        partitions: Optional[Sequence[str]] = None,
-        work_dir: Union[Path, str] = ".",
-    ):
+        partitions: Sequence[str] | None = None,
+        work_dir: Path | str = ".",
+    ) -> None:
         partition_utils.validate_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
@@ -57,13 +57,13 @@ class ProjectDirs:
         self.base_stage_dir = self.work_dir / "stage"
         self.base_prime_dir = self.work_dir / "prime"
         if partitions:
-            self._partitions: Sequence[Optional[str]] = partitions
+            self._partitions: Sequence[str | None] = partitions
             self.stage_dir = self.base_stage_dir / "default"
             self.prime_dir = self.base_prime_dir / "default"
-            stage_dirs: Dict[Optional[str], Path] = {
+            stage_dirs: dict[str | None, Path] = {
                 part: self.base_stage_dir / part for part in partitions
             }
-            prime_dirs: Dict[Optional[str], Path] = {
+            prime_dirs: dict[str | None, Path] = {
                 part: self.base_prime_dir / part for part in partitions
             }
         else:
@@ -75,13 +75,13 @@ class ProjectDirs:
         self.stage_dirs = MappingProxyType(stage_dirs)
         self.prime_dirs = MappingProxyType(prime_dirs)
 
-    def get_stage_dir(self, partition: Optional[str] = None) -> Path:
+    def get_stage_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
         if partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")
         return self.stage_dirs[partition]
 
-    def get_prime_dir(self, partition: Optional[str] = None) -> Path:
+    def get_prime_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
         if partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")

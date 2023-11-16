@@ -18,7 +18,6 @@ import os
 
 import pydantic
 import pytest
-
 from craft_parts.permissions import (
     Permissions,
     apply_permissions,
@@ -52,7 +51,7 @@ def test_apply_permissions_mode(tmp_path):
 
     perm = Permissions(mode="644")
     perm.apply_permissions(target)
-    assert get_mode(target) == 0o644
+    assert get_mode(target) == 0o644  # noqa: PLR2004
 
 
 def test_apply_permissions_owner_group(tmp_path, mock_chown):
@@ -67,8 +66,8 @@ def test_apply_permissions_owner_group(tmp_path, mock_chown):
     perm.apply_permissions(target)
 
     chown_call = mock_chown[target]
-    assert chown_call.owner == 1111
-    assert chown_call.group == 2222
+    assert chown_call.owner == 1111  # noqa: PLR2004
+    assert chown_call.group == 2222  # noqa: PLR2004
 
 
 def test_applies_to():
@@ -108,10 +107,10 @@ def test_apply_permissions(tmp_path, mock_chown):
     permissions = [p1, p2, p3]
     apply_permissions(target, permissions)
 
-    assert get_mode(target) == 0o755
+    assert get_mode(target) == 0o755  # noqa: PLR2004
     chown_call = mock_chown[target]
-    assert chown_call.owner == 3333
-    assert chown_call.group == 4444
+    assert chown_call.owner == 3333  # noqa: PLR2004
+    assert chown_call.group == 4444  # noqa: PLR2004
 
 
 def test_permissions_are_compatible():

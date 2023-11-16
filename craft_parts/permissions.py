@@ -19,7 +19,7 @@
 import os
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel, root_validator
 
@@ -43,24 +43,22 @@ class Permissions(BaseModel):
     """
 
     path: str = "*"
-    owner: Optional[int] = None
-    group: Optional[int] = None
-    mode: Optional[str] = None
+    owner: int | None = None
+    group: int | None = None
+    mode: str | None = None
 
-    # pylint: disable=no-self-argument
     @root_validator(pre=True)
-    def validate_root(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:
+    def validate_root(cls, values: dict[Any, Any]) -> dict[Any, Any]:
         """Validate that "owner" and "group" are correctly specified."""
         has_owner = "owner" in values
         has_group = "group" in values
 
-        assert (
-            has_group == has_owner
-        ), 'If either "owner" or "group" is defined, both must be'
+        if has_group != has_owner:
+            raise ValueError(
+                'If either "owner" or "group" is defined, both must be the same.'
+            )
 
         return values
-
-    # pylint: enable=no-self-argument
 
     @property
     def mode_octal(self) -> int:
@@ -69,14 +67,14 @@ class Permissions(BaseModel):
             raise TypeError("'mode' is not set!")
         return int(self.mode, base=8)
 
-    def applies_to(self, path: Union[Path, str]) -> bool:
+    def applies_to(self, path: Path | str) -> bool:
         """Whether this Permissions' path pattern applies to ``path``."""
         if self.path == "*":
             return True
 
         return fnmatch(str(path), self.path)
 
-    def apply_permissions(self, target: Union[Path, str]) -> None:
+    def apply_permissions(self, target: Path | str) -> None:
         """Apply the permissions configuration to ``target``.
 
         Note that this method doesn't check if this ``Permissions``'s path
@@ -90,20 +88,20 @@ class Permissions(BaseModel):
 
 
 def filter_permissions(
-    target: Union[Path, str], permissions: List[Permissions]
-) -> List[Permissions]:
+    target: Path | str, permissions: list[Permissions]
+) -> list[Permissions]:
     """Get the subset of ``permissions`` whose path patterns apply to ``target``."""
     return [p for p in permissions if p.applies_to(target)]
 
 
-def apply_permissions(target: Union[Path, str], permissions: List[Permissions]) -> None:
+def apply_permissions(target: Path | str, permissions: list[Permissions]) -> None:
     """Apply all permissions configurations in ``permissions`` to ``target``."""
     for permission in permissions:
         permission.apply_permissions(target)
 
 
 def permissions_are_compatible(
-    left: Optional[List[Permissions]], right: Optional[List[Permissions]]
+    left: list[Permissions] | None, right: list[Permissions] | None
 ) -> bool:
     """Whether two sets of permissions definitions are not in conflict with each other.
 
@@ -151,7 +149,7 @@ def permissions_are_compatible(
     return squashed_left.mode_octal == squashed_right.mode_octal
 
 
-def _squash_permissions(permissions: List[Permissions]) -> Permissions:
+def _squash_permissions(permissions: list[Permissions]) -> Permissions:
     """Compress a sequence of Permissions into a single one.
 
     This function produces a single ``Permissions`` object whose application to a path

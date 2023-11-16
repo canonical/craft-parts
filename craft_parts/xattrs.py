@@ -19,14 +19,13 @@
 import logging
 import os
 import sys
-from typing import Optional
 
 from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
 
-def read_xattr(path: str, key: str) -> Optional[str]:
+def read_xattr(path: str, key: str) -> str | None:
     """Get extended attribute metadata from a file.
 
     :param path: The file to get metadata from.
@@ -48,7 +47,7 @@ def read_xattr(path: str, key: str) -> Optional[str]:
     except OSError as error:
         # No label present with:
         # OSError: [Errno 61] No data available: b'<path>'
-        if error.errno == 61:
+        if error.errno == 61:  # noqa: PLR2004
             return None
 
         # Chain unknown variants of OSError.
@@ -78,8 +77,8 @@ def write_xattr(path: str, key: str, value: str) -> None:
     except OSError as error:
         # Label is too long for filesystem:
         # OSError: [Errno 7] Argument list too long: b'<path>'
-        if error.errno == 7:
-            raise errors.XAttributeTooLong(path=path, key=key, value=value)
+        if error.errno == 7:  # noqa: PLR2004
+            raise errors.XAttributeTooLong(path=path, key=key, value=value) from error
 
         # Chain unknown variants of OSError.
         raise errors.XAttributeError(key=key, path=path, is_write=True) from error

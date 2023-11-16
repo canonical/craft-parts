@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.sources import LocalSource, errors, sources
@@ -23,9 +22,8 @@ from craft_parts.sources.tar_source import TarSource
 
 
 @pytest.mark.parametrize(
-    "tc_url,tc_handler",
+    ("tc_url", "tc_handler"),
     [
-        (".", LocalSource),
         (".", LocalSource),
         (".tar.gz", TarSource),
         (".tar.bz2", TarSource),
@@ -45,7 +43,7 @@ def test_get_source_handler_class_with_invalid_type():
 
 
 @pytest.mark.parametrize(
-    "source,result",
+    ("source", "result"),
     [
         (".tar.gz", "tar"),
         (".tar.bz2", "tar"),
@@ -64,9 +62,8 @@ def test_type_from_uri(source, result):
     assert sources.get_source_type_from_uri(source) == result
 
 
-# pylint: disable=too-many-arguments
 @pytest.mark.parametrize(
-    "source_type,source_branch,source_tag,source_commit,error",
+    ("source_type", "source_branch", "source_tag", "source_commit", "error"),
     [
         ("tar", "test_branch", None, None, "source-branch"),  # tar with source branch
         ("tar", None, "test_tag", None, "source-tag"),  # tar with source tag
@@ -100,6 +97,3 @@ def test_sources_with_branch_errors(
         )
     assert err.value.source_type == source_type
     assert err.value.option == error
-
-
-# pylint: enable=too-many-arguments

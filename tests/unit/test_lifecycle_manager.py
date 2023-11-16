@@ -19,27 +19,27 @@
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import ANY, call
-
-import pytest
-import yaml
 
 import craft_parts
 import craft_parts.utils.partition_utils
+import pytest
+import yaml
 from craft_parts import errors, lifecycle_manager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
+
 from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 
 
-@pytest.fixture
-def mock_available_plugins(monkeypatch):
+@pytest.fixture()
+def _mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
     monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
 
 
-def create_data(part_name: str, plugin_name: str) -> Dict[str, Any]:
+def create_data(part_name: str, plugin_name: str) -> dict[str, Any]:
     return {"parts": {part_name: {"plugin": plugin_name}}}
 
 
@@ -47,8 +47,7 @@ class TestLifecycleManager:
     """Verify lifecycle manager initialization."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self) -> None:
-        # pylint: disable=attribute-defined-outside-init
+    def _setup_method_fixture(self) -> None:
         yaml_data = textwrap.dedent(
             """
             parts:
@@ -57,8 +56,7 @@ class TestLifecycleManager:
             """
         )
         self._data = yaml.safe_load(yaml_data)
-        self._lcm_kwargs: Dict[str, Any] = {}
-        # pylint: enable=attribute-defined-outside-init
+        self._lcm_kwargs: dict[str, Any] = {}
 
     def test_invalid_arch(self, new_dir):
         with pytest.raises(errors.InvalidArchitecture) as raised:
@@ -117,7 +115,7 @@ class TestLifecycleManager:
         assert info.project_name == "project"
         assert info.target_arch == "arm64"
         assert info.arch_triplet == "aarch64-linux-gnu"
-        assert info.parallel_build_count == 16
+        assert info.parallel_build_count == 16  # noqa: PLR2004
         assert info.dirs.parts_dir == new_dir / work_dir / "parts"
         assert info.dirs.stage_dir == new_dir / work_dir / "stage"
         assert info.dirs.prime_dir == new_dir / work_dir / "prime"
@@ -245,7 +243,8 @@ class TestLifecycleManager:
         )
         assert lf.get_pull_assets(part_name="foo") is None
 
-    def test_strict_plugins(self, new_dir, mock_available_plugins):
+    @pytest.mark.usefixtures("_mock_available_plugins")
+    def test_strict_plugins(self, new_dir):
         """Test using a strict plugin in strict mode."""
         data = create_data("p1", "strict")
         lf = lifecycle_manager.LifecycleManager(
@@ -257,7 +256,8 @@ class TestLifecycleManager:
         )
         assert lf.get_pull_assets(part_name="p1") is None
 
-    def test_strict_plugins_error(self, new_dir, mock_available_plugins):
+    @pytest.mark.usefixtures("_mock_available_plugins")
+    def test_strict_plugins_error(self, new_dir):
         """Test that using a non-strict plugin in strict mode is an error."""
         data = create_data("p1", "nonstrict")
         with pytest.raises(errors.PluginNotStrict) as exc:
@@ -274,8 +274,8 @@ class TestLifecycleManager:
 class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
 
-    @pytest.fixture
-    def parts_data(self) -> Dict[str, Any]:
+    @pytest.fixture()
+    def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
 
     def test_overlay_supported(self, mocker, new_dir, parts_data):
@@ -298,8 +298,8 @@ class TestOverlayDisabled:
 class TestPartitionsDisabled:
     """Partition feature must be enabled when partition are defined."""
 
-    @pytest.fixture
-    def parts_data(self) -> Dict[str, Any]:
+    @pytest.fixture()
+    def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     def test_partitions_disabled(self, new_dir, parts_data):
