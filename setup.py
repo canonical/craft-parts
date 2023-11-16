@@ -96,6 +96,7 @@ test_requires = [
     "pytest-check",
     "pytest-cov",
     "pytest-mock",
+    "pytest-subprocess",
     "requests-mock",
     "ruff==0.0.239",
     "tox",

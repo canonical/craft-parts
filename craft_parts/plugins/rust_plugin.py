@@ -28,6 +28,11 @@ from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
+GET_RUSTUP_COMMAND_TEMPLATE = (
+    "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
+    "sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}"
+)
+
 logger = logging.getLogger(__name__)
 
 # A workaround for mypy false positives
@@ -172,12 +177,7 @@ class RustPlugin(Plugin):
             return False
 
     def _get_setup_rustup(self, channel: str) -> List[str]:
-        return [
-            f"""\
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
-sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}
-"""
-        ]
+        return [GET_RUSTUP_COMMAND_TEMPLATE.format(channel=channel)]
 
     @override
     def get_build_environment(self) -> Dict[str, str]:
