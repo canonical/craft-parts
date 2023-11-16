@@ -35,7 +35,7 @@ class DNFRepository(YUMRepository):
         """Return a list of packages required to work with source_type."""
         if source_type == "bzr":
             raise NotImplementedError(
-                "bzr version control system is not yet supported on this base."
+                "bzr version control system is not yet supported on this base.",
             )
         if source_type == "deb":
             raise NotImplementedError("Deb files not yet supported on this base.")

@@ -19,7 +19,7 @@ def test_scons_plugin(new_dir, partitions):
             scons-parameters:
               - greeting=Hello
               - person-name=craft-parts
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(

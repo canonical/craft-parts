@@ -49,7 +49,9 @@ class FooPlugin(plugins.Plugin):
 @pytest.fixture(autouse=True)
 def _directories(new_dir, partitions):
     info = ProjectInfo(
-        application_name="test", cache_dir=new_dir, partitions=partitions
+        application_name="test",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
@@ -93,7 +95,9 @@ def test_generate_step_environment_build(new_dir, partitions):
     step_info.step_environment["APP_STEP_ENVVAR"] = "from_app"
 
     env = environment.generate_step_environment(
-        part=p1, plugin=plugin, step_info=step_info
+        part=p1,
+        plugin=plugin,
+        step_info=step_info,
     )
 
     assert env == textwrap.dedent(
@@ -131,7 +135,7 @@ def test_generate_step_environment_build(new_dir, partitions):
         ## Plugin environment
         ## User environment
         export PART_ENVVAR="from_part"
-        """
+        """,
     )
 
 
@@ -152,7 +156,9 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
     plugin = FooPlugin(properties=props, part_info=part_info)
 
     env = environment.generate_step_environment(
-        part=p1, plugin=plugin, step_info=step_info
+        part=p1,
+        plugin=plugin,
+        step_info=step_info,
     )
 
     assert env == textwrap.dedent(
@@ -188,7 +194,7 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
         export PLUGIN_ENVVAR="from_plugin"
         ## User environment
         export PART_ENVVAR="from_part"
-        """
+        """,
     )
 
 
@@ -211,7 +217,9 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
     plugin = FooPlugin(properties=props, part_info=part_info)
 
     env = environment.generate_step_environment(
-        part=p1, plugin=plugin, step_info=step_info
+        part=p1,
+        plugin=plugin,
+        step_info=step_info,
     )
 
     assert env == textwrap.dedent(
@@ -247,7 +255,7 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
         ## Plugin environment
         ## User environment
         export PART_ENVVAR="from_part"
-        """
+        """,
     )
 
 
@@ -266,7 +274,9 @@ def test_generate_step_environment_no_user_env(new_dir, partitions):
     plugin = FooPlugin(properties=props, part_info=part_info)
 
     env = environment.generate_step_environment(
-        part=p1, plugin=plugin, step_info=step_info
+        part=p1,
+        plugin=plugin,
+        step_info=step_info,
     )
 
     assert env == textwrap.dedent(
@@ -301,7 +311,7 @@ def test_generate_step_environment_no_user_env(new_dir, partitions):
         export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         ## User environment
-        """
+        """,
     )
 
 

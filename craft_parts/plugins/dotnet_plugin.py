@@ -49,7 +49,9 @@ class DotnetPluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="dotnet", required=["source"]
+            data,
+            plugin_name="dotnet",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -63,7 +65,9 @@ class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self,
+        *,
+        part_dependencies: Optional[List[str]] = None,
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 

@@ -31,7 +31,11 @@ class TestTarSource:
     """Tests for the tar source handler."""
 
     def test_pull_tarball_must_download_to_sourcedir(
-        self, new_dir, mocker, http_server, partitions
+        self,
+        new_dir,
+        mocker,
+        http_server,
+        partitions,
     ):
         mock_prov = mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
 
@@ -45,7 +49,10 @@ class TestTarSource:
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            source, dest_dir, cache_dir=new_dir, project_dirs=dirs
+            source,
+            dest_dir,
+            cache_dir=new_dir,
+            project_dirs=dirs,
         )
         tar_source.pull()
 
@@ -120,7 +127,7 @@ class TestTarSource:
             assert tarinfo.issym()
             assert file_to_link == tarinfo.name
             assert file_to_tar == os.path.normpath(
-                os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname)
+                os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname),
             )
             return tarinfo
 

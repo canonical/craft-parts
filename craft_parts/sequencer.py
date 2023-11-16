@@ -66,12 +66,16 @@ class Sequencer:
         self._overlay_viewers: Set[Part] = set()
         for part in part_list:
             if parts.has_overlay_visibility(
-                part, viewers=self._overlay_viewers, part_list=part_list
+                part,
+                viewers=self._overlay_viewers,
+                part_list=part_list,
             ):
                 self._overlay_viewers.add(part)
 
     def plan(
-        self, target_step: Step, part_names: Optional[Sequence[str]] = None
+        self,
+        target_step: Step,
+        part_names: Optional[Sequence[str]] = None,
     ) -> List[Action]:
         """Determine the list of steps to execute for each part.
 
@@ -90,7 +94,8 @@ class Sequencer:
     def reload_state(self) -> None:
         """Reload state from persistent storage."""
         self._sm = StateManager(
-            project_info=self._project_info, part_list=self._part_list
+            project_info=self._project_info,
+            part_list=self._part_list,
         )
 
     def _add_all_actions(
@@ -127,7 +132,7 @@ class Sequencer:
         # if overlays disabled, don't generate overlay actions
         if not Features().enable_overlay and current_step == Step.OVERLAY:
             logger.debug(
-                "Overlay feature disabled: skipping generation of overlay action"
+                "Overlay feature disabled: skipping generation of overlay action",
             )
             return
 
@@ -204,7 +209,9 @@ class Sequencer:
         )
 
     def _get_project_vars(
-        self, part: Part, step: Step
+        self,
+        part: Part,
+        step: Step,
     ) -> Optional[Dict[str, ProjectVar]]:
         if part.name == self._project_info.project_vars_part_name:
             return self._sm.project_vars(part, step)
@@ -305,7 +312,11 @@ class Sequencer:
         self._sm.set_state(part, step, state=state)
 
     def _rerun_step(
-        self, part: Part, step: Step, *, reason: Optional[str] = None
+        self,
+        part: Part,
+        step: Step,
+        *,
+        reason: Optional[str] = None,
     ) -> None:
         """Clean existing state and reexecute the step."""
         logger.debug("rerun step %s:%s", part.name, step)
@@ -328,7 +339,8 @@ class Sequencer:
         """Set the step state as reexecuted by updating its timestamp."""
         logger.debug("update step %s:%s", part.name, step)
         properties = ActionProperties(
-            changed_files=outdated_files, changed_dirs=outdated_dirs
+            changed_files=outdated_files,
+            changed_dirs=outdated_dirs,
         )
         self._add_action(
             part,
@@ -349,16 +361,23 @@ class Sequencer:
             self._sm.set_state(part, step, state=state)
 
     def _reapply_layer(
-        self, part: Part, layer_hash: LayerHash, *, reason: Optional[str] = None
+        self,
+        part: Part,
+        layer_hash: LayerHash,
+        *,
+        reason: Optional[str] = None,
     ) -> None:
         """Update the layer hash without changing the step state."""
         logger.debug("reapply layer %s: hash=%s", part.name, layer_hash)
         self._layer_state.set_layer_hash(part, layer_hash)
         self._add_action(
-            part, Step.OVERLAY, action_type=ActionType.REAPPLY, reason=reason
+            part,
+            Step.OVERLAY,
+            action_type=ActionType.REAPPLY,
+            reason=reason,
         )
 
-    def _add_action(  # noqa: PLR0913
+    def _add_action(
         self,
         part: Part,
         step: Step,
@@ -380,7 +399,7 @@ class Sequencer:
                 reason=reason,
                 project_vars=project_vars,
                 properties=properties,
-            )
+            ),
         )
 
     def _ensure_overlay_consistency(
@@ -436,7 +455,9 @@ class Sequencer:
             if current_layer_hash != state_layer_hash:
                 logger.debug("%s:%s changed layer hash", part.name, step)
                 self._reapply_layer(
-                    part, current_layer_hash, reason="previous layer changed"
+                    part,
+                    current_layer_hash,
+                    reason="previous layer changed",
                 )
                 return True
 

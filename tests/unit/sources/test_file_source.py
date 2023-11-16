@@ -28,7 +28,10 @@ class TestFileSource:
     """Tests for the plain file source handler."""
 
     def test_pull_file_must_download_to_sourcedir(
-        self, new_dir, http_server, partitions
+        self,
+        new_dir,
+        http_server,
+        partitions,
     ):
         dest_dir = Path("parts/foo/src")
         dest_dir.mkdir(parents=True)
@@ -40,7 +43,10 @@ class TestFileSource:
 
         dirs = ProjectDirs(partitions=partitions)
         file_source = sources.FileSource(
-            source, dest_dir, cache_dir=new_dir, project_dirs=dirs
+            source,
+            dest_dir,
+            cache_dir=new_dir,
+            project_dirs=dirs,
         )
         file_source.pull()
 

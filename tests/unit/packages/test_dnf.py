@@ -26,7 +26,7 @@ from craft_parts.packages.dnf import DNFRepository
 def test_install_packages_simple(fake_dnf_run):
     """Simple and complete procedure when installing packages."""
     DNFRepository.install_packages(
-        ["package-installed", "package", "versioned-package=2.0"]
+        ["package-installed", "package", "versioned-package=2.0"],
     )
     assert fake_dnf_run.mock_calls == [
         call(
@@ -37,7 +37,7 @@ def test_install_packages_simple(fake_dnf_run):
                 "package",
                 "package-installed",
                 "versioned-package=2.0",
-            ]
+            ],
         ),
     ]
 
@@ -51,16 +51,19 @@ def test_install_packages_empty_list(fake_dnf_run):
 def test_install_packages_already_installed(fake_dnf_run, mocker):
     """Packages already installed, skipping actual installation."""
     mocker.patch.object(
-        DNFRepository, "_check_if_all_packages_installed", return_value=True
+        DNFRepository,
+        "_check_if_all_packages_installed",
+        return_value=True,
     )
     DNFRepository.install_packages(["package-installed"])
     fake_dnf_run.assert_not_called()
 
 
-def test_install_packages_refresh_not_requested(fake_dnf_run, mocker):  # noqa: ARG001
+def test_install_packages_refresh_not_requested(fake_dnf_run, mocker):
     """Packages installed but the dnf cache was not refreshed."""
     DNFRepository.install_packages(
-        ["package-installed", "package"], refresh_package_cache=False
+        ["package-installed", "package"],
+        refresh_package_cache=False,
     )
     assert fake_dnf_run.mock_calls == [
         call(["dnf", "install", "-y", "package", "package-installed"]),

@@ -41,7 +41,8 @@ def test_invalid_source_option():
 
 def test_incompatible_source_options():
     err = errors.IncompatibleSourceOptions(
-        source_type="dms", options=["source-tag", "source-branch"]
+        source_type="dms",
+        options=["source-tag", "source-branch"],
     )
     assert err.source_type == "dms"
     assert err.options == ["source-tag", "source-branch"]

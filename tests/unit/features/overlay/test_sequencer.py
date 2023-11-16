@@ -71,7 +71,7 @@ def test_sequencer_run_step(step, state_class, new_dir):
 
     # check if action was created
     assert seq._actions == [
-        Action(part_name="p1", action_type=ActionType.RUN, step=step)
+        Action(part_name="p1", action_type=ActionType.RUN, step=step),
     ]
 
     # check if states were updated
@@ -129,7 +129,7 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
 
     # check if action was created
     assert seq._actions == [
-        Action(part_name="p1", action_type=ActionType.RERUN, step=step)
+        Action(part_name="p1", action_type=ActionType.RERUN, step=step),
     ]
 
     # check if states were updated
@@ -178,7 +178,7 @@ def test_sequencer_update_step(step, state_class, new_dir):
             action_type=ActionType.UPDATE,
             step=step,
             properties=ActionProperties(),
-        )
+        ),
     ]
 
     # check if serial updated
@@ -197,7 +197,9 @@ def test_sequencer_process_dependencies(mocker, new_dir):
     # process p1 dependencies
     seq._process_dependencies(p1, Step.BUILD)
     mock_add_all_actions.assert_called_once_with(
-        target_step=Step.STAGE, part_names=["p2"], reason="required to build 'p1'"
+        target_step=Step.STAGE,
+        part_names=["p2"],
+        reason="required to build 'p1'",
     )
 
 
@@ -225,7 +227,7 @@ def test_sequencer_ensure_overlay_consistency(mocker, new_dir):
                 part_names=["p2"],
                 reason="another test",
             ),
-        ]
+        ],
     )
     assert value.hex() == "8d9f437db97f7276a2d68fc44683b6761035f73c"
 
@@ -278,7 +280,7 @@ def test_sequencer_ensure_overlay_consistency_rerun(mocker, new_dir):
     Path("parts/p1/state").mkdir(parents=True)
     layer_hash = LayerHash(
         # echo "some-hash-value" | sha1sum
-        bytes.fromhex("4fc928c87171c54a4687d55899ca212d1b1c46e5")
+        bytes.fromhex("4fc928c87171c54a4687d55899ca212d1b1c46e5"),
     )
     layer_hash.save(p1)
 
@@ -301,7 +303,7 @@ def test_overlay_dependencies_not_dirty(mocker, new_dir):
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
     Path("parts/p1/state/layer_hash").write_text(
-        "6554e32fa718d54160d0511b36f81458e4cb2357"
+        "6554e32fa718d54160d0511b36f81458e4cb2357",
     )
 
     info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
@@ -321,7 +323,7 @@ def test_overlay_dependencies_layer_not_dirty(mocker, new_dir):
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
     Path("parts/p1/state/layer_hash").write_text(
-        "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b"
+        "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b",
     )
 
     info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)

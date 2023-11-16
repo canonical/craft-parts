@@ -69,7 +69,8 @@ class OverlayState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: Dict[str, Any]
+        self,
+        project_options: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Return relevant project options concerning this step.
 

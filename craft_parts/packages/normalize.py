@@ -56,7 +56,7 @@ def _remove_useless_files(unpack_dir: Path) -> None:
     :param unpack_dir: Directory containing unpacked files to normalize.
     """
     sitecustomize_files = Path(unpack_dir, "usr", "lib").glob(
-        "python*/sitecustomize.py"
+        "python*/sitecustomize.py",
     )
 
     for sitecustomize_file in sitecustomize_files:
@@ -114,7 +114,10 @@ def _fix_xml_tools(unpack_dir: Path) -> None:
 
 
 def _fix_symlink(
-    path: Path, unpack_dir: Path, root: Path, repository: "RepositoryType"
+    path: Path,
+    unpack_dir: Path,
+    root: Path,
+    repository: "RepositoryType",
 ) -> None:
     logger.debug(
         "fix symlink: path=%r, unpack_dir=%r, root=%r",
@@ -157,7 +160,9 @@ def _try_copy_local(path: Path, target: Path) -> bool:
 
 
 def fix_pkg_config(
-    prefix_prepend: Path, pkg_config_file: Path, prefix_trim: Optional[Path] = None
+    prefix_prepend: Path,
+    pkg_config_file: Path,
+    prefix_trim: Optional[Path] = None,
 ) -> None:
     """Fix the prefix parameter in pkg-config files.
 
@@ -181,7 +186,7 @@ def fix_pkg_config(
     if prefix_trim:
         prefixes_to_trim.append(prefix_trim.as_posix())
     pattern_trim = re.compile(
-        f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)"
+        f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)",
     )
     pattern = re.compile("^prefix=(?P<prefix>.*)")
 
@@ -226,11 +231,15 @@ def _rewrite_python_shebangs(root_dir: Path) -> None:
     file_pattern = re.compile(r"")
     argless_shebang_pattern = re.compile(r"\A#!.*(python\S*)$", re.MULTILINE)
     shebang_pattern_with_args = re.compile(
-        r"\A#!.*(python\S*)[ \t\f\v]+(\S+)$", re.MULTILINE
+        r"\A#!.*(python\S*)[ \t\f\v]+(\S+)$",
+        re.MULTILINE,
     )
 
     _replace_in_file(
-        root_dir, file_pattern, argless_shebang_pattern, r"#!/usr/bin/env \1"
+        root_dir,
+        file_pattern,
+        argless_shebang_pattern,
+        r"#!/usr/bin/env \1",
     )
 
     # The above rewrite will barf if the shebang includes any args to python.
@@ -274,7 +283,9 @@ def _replace_in_file(
 
 
 def _search_and_replace_contents(
-    file_path: Path, search_pattern: Pattern[str], replacement: str
+    file_path: Path,
+    search_pattern: Pattern[str],
+    replacement: str,
 ) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 

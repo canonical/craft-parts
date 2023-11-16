@@ -58,7 +58,8 @@ class TestLayerHash:
     )
     def test_compute(self, pkgs, files, script, result):
         p1 = Part(
-            "p1", {"overlay-packages": pkgs, "overlay": files, "overlay-script": script}
+            "p1",
+            {"overlay-packages": pkgs, "overlay": files, "overlay-script": script},
         )
         h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash(b""))
         assert h1.hex() == result
@@ -111,7 +112,7 @@ class TestLayerStateManager:
 
         Path("parts/p1/state").mkdir(parents=True)
         layer_hash = LayerHash(
-            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"),
         )
         layer_hash.save(p1)
 
@@ -131,7 +132,7 @@ class TestLayerStateManager:
         assert lsm.get_layer_hash(p1) is None
 
         layer_hash = LayerHash(
-            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"),
         )
         lsm.set_layer_hash(p1, layer_hash)
 
@@ -177,7 +178,7 @@ class TestLayerStateManager:
         base_layer_hash = LayerHash(b"base hash value")
 
         layer_hash = LayerHash(
-            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"),
         )
 
         lsm = LayerStateManager([p1, p2], base_layer_hash)
@@ -192,7 +193,7 @@ class TestLayerStateManager:
         base_layer_hash = LayerHash(b"other base hash value")
 
         layer_hash = LayerHash(
-            bytes.fromhex("a15e326327c3456bc5547a69fe2996bcf8088cba")
+            bytes.fromhex("a15e326327c3456bc5547a69fe2996bcf8088cba"),
         )
 
         lsm = LayerStateManager([p1, p2], base_layer_hash)
@@ -207,10 +208,10 @@ class TestLayerStateManager:
         base_layer_hash = LayerHash(b"base hash value")
 
         p1_layer_hash = LayerHash(
-            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f")
+            bytes.fromhex("a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"),
         )
         p2_layer_hash = LayerHash(
-            bytes.fromhex("c6e659c5a430c093a120bb17868ade39e91e00b8")
+            bytes.fromhex("c6e659c5a430c093a120bb17868ade39e91e00b8"),
         )
 
         lsm = LayerStateManager([p1, p2], base_layer_hash)

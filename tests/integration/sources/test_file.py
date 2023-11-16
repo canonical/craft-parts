@@ -32,14 +32,16 @@ def test_source_file(new_dir):
             plugin: make
             source: foobar
             source-type: file
-        """
+        """,
     )
 
     Path("foobar").write_text("content")
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_file", cache_dir=new_dir
+        parts,
+        application_name="test_file",
+        cache_dir=new_dir,
     )
 
     with lf.action_executor() as ctx:
@@ -57,13 +59,15 @@ def test_source_file_error(new_dir):
             plugin: make
             source: foobar
             source-type: file
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
     Path("foobar").mkdir()  # not a file
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_file", cache_dir=new_dir
+        parts,
+        application_name="test_file",
+        cache_dir=new_dir,
     )
 
     with pytest.raises(IsADirectoryError), lf.action_executor() as ctx:

@@ -46,12 +46,15 @@ def test_python_plugin(new_dir, partitions):
           foo:
             plugin: python
             source: {source_location}
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -73,7 +76,7 @@ def test_python_plugin_with_pyproject_toml(new_dir, partitions):
           foo:
             plugin: python
             source: {source_location}
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -101,12 +104,15 @@ def test_python_plugin_symlink(new_dir, partitions):
           foo:
             plugin: python
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -138,12 +144,15 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
           foo:
             plugin: python
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -182,12 +191,15 @@ def test_python_plugin_no_system_interpreter(
           foo:
             plugin: python
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -211,12 +223,15 @@ def test_python_plugin_remove_symlinks(new_dir, partitions):
           foo:
             plugin: python
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -235,12 +250,15 @@ def test_python_plugin_fix_shebangs(new_dir, partitions):
           foo:
             plugin: python
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -267,12 +285,15 @@ def test_python_plugin_override_shebangs(new_dir, partitions):
           foo:
             plugin: python
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -316,12 +337,16 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     # Copy the "real" binary into the payload before calling the plugin's build,
     # but name it "python3.3".
     parts_yaml = PART_WITH_PAYLOAD_PYTHON.format(
-        real_python=real_python, payload_python="python3.3"
+        real_python=real_python,
+        payload_python="python3.3",
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -336,7 +361,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
         Looking for a Python interpreter called "{real_basename}" in the payload...
         Python interpreter not found in payload.
         No suitable Python interpreter found, giving up.
-        """
+        """,
     )
     assert expected_text in output
 
@@ -351,12 +376,16 @@ def test_find_payload_python_good_version(new_dir, partitions):
 
     # Copy the "real" binary into the payload before calling the plugin's build.
     parts_yaml = PART_WITH_PAYLOAD_PYTHON.format(
-        real_python=real_python, payload_python=real_basename
+        real_python=real_python,
+        payload_python=real_basename,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -371,6 +400,6 @@ def test_find_payload_python_good_version(new_dir, partitions):
         f"""\
         Looking for a Python interpreter called "{real_basename}" in the payload...
         Found interpreter in payload: "{payload_python}"
-        """
+        """,
     )
     assert expected_text in output

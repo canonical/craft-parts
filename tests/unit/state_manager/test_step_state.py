@@ -59,12 +59,13 @@ class SomeStepState(step_state.StepState):
         self,
         part_properties: Dict[str, Any],
         *,
-        extra_properties: Optional[List[str]] = None,  # noqa: ARG002
+        extra_properties: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         return {"name": part_properties.get("name")}
 
     def project_options_of_interest(
-        self, project_options: Dict[str, Any]
+        self,
+        project_options: Dict[str, Any],
     ) -> Dict[str, Any]:
         return {"number": project_options.get("number")}
 

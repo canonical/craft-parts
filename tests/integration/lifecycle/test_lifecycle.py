@@ -36,7 +36,7 @@ basic_parts_yaml = textwrap.dedent(
         source: a.tar.gz
 
       foobar:
-        plugin: nil"""
+        plugin: nil""",
 )
 
 
@@ -53,7 +53,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # first run
     # command pull
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PULL)
     assert actions == [
@@ -67,7 +70,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # foobar part depends on nothing
     # command prime foobar
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME, ["foobar"])
     assert actions == [
@@ -84,7 +90,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # Then running build for bar that depends on foo
     # command: build bar
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -99,14 +108,17 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
 
     # Building bar again rebuilds it (explicit request)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action(
-            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step",
         ),
         # fmt: on
     ]
@@ -118,7 +130,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     parts = yaml.safe_load(new_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -143,7 +158,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
             reason="required to build 'bar'",
         ),
         Action(
-            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step",
         ),
         # fmt: on
     ]
@@ -152,7 +167,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
 
     # A request to build all parts skips everything
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD)
     assert actions == [
@@ -169,7 +187,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # Touching a source file triggers an update
     Path("a.tar.gz").touch()
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD)
     assert actions == [
@@ -239,7 +260,7 @@ class TestCleaning:
               bar:
                 plugin: dump
                 source: bar
-            """
+            """,
         )
         Path("foo").mkdir()
         Path("foo/foo.txt").touch()
@@ -405,7 +426,7 @@ class TestUpdating:
             parts:
               foo:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         self._lifecycle = craft_parts.LifecycleManager(
@@ -418,7 +439,7 @@ class TestUpdating:
 
     def test_refresh_system_packages_list(self, mocker):
         mock_refresh_packages_list = mocker.patch(
-            "craft_parts.packages.Repository.refresh_packages_list"
+            "craft_parts.packages.Repository.refresh_packages_list",
         )
 
         self._lifecycle.refresh_packages_list()

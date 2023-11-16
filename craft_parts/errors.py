@@ -133,7 +133,10 @@ class PartSpecificationError(PartsError):
 
     @classmethod
     def from_validation_error(
-        cls, *, part_name: str, error_list: List["ErrorDict"]
+        cls,
+        *,
+        part_name: str,
+        error_list: List["ErrorDict"],
     ) -> "PartSpecificationError":
         """Create a PartSpecificationError from a pydantic error list.
 
@@ -395,7 +398,11 @@ class PartFilesConflict(PartsError):  # noqa: N818
     """
 
     def __init__(
-        self, *, part_name: str, other_part_name: str, conflicting_files: List[str]
+        self,
+        *,
+        part_name: str,
+        other_part_name: str,
+        conflicting_files: List[str],
     ) -> None:
         self.part_name = part_name
         self.other_part_name = other_part_name
@@ -609,7 +616,10 @@ class DebError(PartsError):
     """A "deb"-related command failed."""
 
     def __init__(
-        self, deb_path: pathlib.Path, command: List[str], exit_code: int
+        self,
+        deb_path: pathlib.Path,
+        command: List[str],
+        exit_code: int,
     ) -> None:
         brief = (
             f"Failed when handling {deb_path}: "
@@ -665,6 +675,9 @@ class PartitionWarning(PartitionError, Warning):  # noqa: N818
         resolution: Optional[str] = None,
     ) -> None:
         super().__init__(
-            partition=partition, brief=brief, details=details, resolution=resolution
+            partition=partition,
+            brief=brief,
+            details=details,
+            resolution=resolution,
         )
         Warning.__init__(self)

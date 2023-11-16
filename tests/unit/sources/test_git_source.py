@@ -36,14 +36,15 @@ def _call_with_output(cmd: List[str]) -> str:
     return subprocess.check_output(cmd).decode("utf-8").strip()
 
 
-def _fake_git_command_error(*args, **kwargs):  # noqa: ARG001
+def _fake_git_command_error(*args, **kwargs):
     raise subprocess.CalledProcessError(44, ["git"], output=b"git: some error")
 
 
 @pytest.fixture()
 def _mock_get_source_details(mocker) -> None:
     mocker.patch(
-        "craft_parts.sources.git_source.GitSource._get_source_details", return_value=""
+        "craft_parts.sources.git_source.GitSource._get_source_details",
+        return_value="",
     )
 
 
@@ -130,7 +131,7 @@ class TestGitSource(GitBaseTestCase):
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+            ["git", "clone", "--recursive", "git://my-source", "source_dir"],
         )
 
     def test_pull_with_depth(self, fake_run, new_dir):
@@ -153,7 +154,7 @@ class TestGitSource(GitBaseTestCase):
                 "2",
                 "git://my-source",
                 "source_dir",
-            ]
+            ],
         )
 
     def test_pull_branch(self, fake_run, new_dir):
@@ -175,7 +176,7 @@ class TestGitSource(GitBaseTestCase):
                 "my-branch",
                 "git://my-source",
                 "source_dir",
-            ]
+            ],
         )
 
     def test_pull_tag(self, fake_run, new_dir):
@@ -197,7 +198,7 @@ class TestGitSource(GitBaseTestCase):
                 "tag",
                 "git://my-source",
                 "source_dir",
-            ]
+            ],
         )
 
     def test_pull_commit(self, fake_run, new_dir):
@@ -219,7 +220,7 @@ class TestGitSource(GitBaseTestCase):
                         "--recursive",
                         "git://my-source",
                         "source_dir",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -229,7 +230,7 @@ class TestGitSource(GitBaseTestCase):
                         "fetch",
                         "origin",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -238,9 +239,9 @@ class TestGitSource(GitBaseTestCase):
                         "source_dir",
                         "checkout",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     def test_pull_with_submodules_default(self, fake_run, new_dir):
@@ -253,7 +254,7 @@ class TestGitSource(GitBaseTestCase):
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+            ["git", "clone", "--recursive", "git://my-source", "source_dir"],
         )
 
     def test_pull_with_submodules_empty(self, fake_run, new_dir):
@@ -267,7 +268,7 @@ class TestGitSource(GitBaseTestCase):
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "git://my-source", "source_dir"]
+            ["git", "clone", "git://my-source", "source_dir"],
         )
 
     def test_pull_with_submodules(self, fake_run, new_dir):
@@ -288,7 +289,7 @@ class TestGitSource(GitBaseTestCase):
                 "--recursive=dir/submodule_2",
                 "git://my-source",
                 "source_dir",
-            ]
+            ],
         )
 
     def test_pull_local(self, fake_run, new_dir):
@@ -309,7 +310,7 @@ class TestGitSource(GitBaseTestCase):
                 "--recursive",
                 f"file://{new_dir}/path/to/repo.git",
                 "source_dir",
-            ]
+            ],
         )
 
     @pytest.mark.parametrize(
@@ -329,7 +330,10 @@ class TestGitSource(GitBaseTestCase):
         This test should capture regressions in the reformatting of local filepaths.
         """
         git = GitSource(
-            repository, Path("source_dir"), cache_dir=new_dir, project_dirs=self._dirs
+            repository,
+            Path("source_dir"),
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
         )
 
         git.pull()
@@ -341,7 +345,7 @@ class TestGitSource(GitBaseTestCase):
                 "--recursive",
                 repository,
                 "source_dir",
-            ]
+            ],
         )
 
     @pytest.mark.usefixtures("_fake_get_current_branch")
@@ -366,7 +370,7 @@ class TestGitSource(GitBaseTestCase):
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -376,7 +380,7 @@ class TestGitSource(GitBaseTestCase):
                         "reset",
                         "--hard",
                         "refs/remotes/origin/test-branch",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -387,9 +391,9 @@ class TestGitSource(GitBaseTestCase):
                         "update",
                         "--recursive",
                         "--force",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     def test_pull_existing_with_tag(self, fake_run, new_dir):
@@ -414,7 +418,7 @@ class TestGitSource(GitBaseTestCase):
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -424,7 +428,7 @@ class TestGitSource(GitBaseTestCase):
                         "reset",
                         "--hard",
                         "refs/tags/tag",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -435,9 +439,9 @@ class TestGitSource(GitBaseTestCase):
                         "update",
                         "--recursive",
                         "--force",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     def test_pull_existing_with_commit(self, fake_run, new_dir):
@@ -462,7 +466,7 @@ class TestGitSource(GitBaseTestCase):
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -472,7 +476,7 @@ class TestGitSource(GitBaseTestCase):
                         "reset",
                         "--hard",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -483,9 +487,9 @@ class TestGitSource(GitBaseTestCase):
                         "update",
                         "--recursive",
                         "--force",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     def test_pull_existing_with_branch(self, fake_run, new_dir):
@@ -510,7 +514,7 @@ class TestGitSource(GitBaseTestCase):
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -520,7 +524,7 @@ class TestGitSource(GitBaseTestCase):
                         "reset",
                         "--hard",
                         "refs/remotes/origin/my-branch",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -531,9 +535,9 @@ class TestGitSource(GitBaseTestCase):
                         "update",
                         "--recursive",
                         "--force",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     def test_pull_existing_after_update(self, new_dir):
@@ -544,7 +548,10 @@ class TestGitSource(GitBaseTestCase):
         other_tree = Path("helper-tree").absolute()
 
         git = GitSource(
-            str(remote), working_tree, cache_dir=new_dir, project_dirs=self._dirs
+            str(remote),
+            working_tree,
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
         )
 
         self.clean_dir(remote)
@@ -640,7 +647,7 @@ class TestGitSource(GitBaseTestCase):
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -650,7 +657,7 @@ class TestGitSource(GitBaseTestCase):
                         "reset",
                         "--hard",
                         "refs/remotes/origin/test-branch",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -661,9 +668,9 @@ class TestGitSource(GitBaseTestCase):
                         "update",
                         "--recursive",
                         "--force",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     @pytest.mark.usefixtures("_fake_get_current_branch")
@@ -688,7 +695,7 @@ class TestGitSource(GitBaseTestCase):
                         "source_dir",
                         "fetch",
                         "--prune",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -698,9 +705,9 @@ class TestGitSource(GitBaseTestCase):
                         "reset",
                         "--hard",
                         "refs/remotes/origin/test-branch",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     @pytest.mark.usefixtures("_fake_get_current_branch")
@@ -726,7 +733,7 @@ class TestGitSource(GitBaseTestCase):
                         "fetch",
                         "--prune",
                         "--recurse-submodules=yes",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -736,7 +743,7 @@ class TestGitSource(GitBaseTestCase):
                         "reset",
                         "--hard",
                         "refs/remotes/origin/test-branch",
-                    ]
+                    ],
                 ),
                 mock.call(
                     [
@@ -749,9 +756,9 @@ class TestGitSource(GitBaseTestCase):
                         "--force",
                         "submodule_1",
                         "dir/submodule_2",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
     def test_init_with_source_branch_and_tag_raises_exception(self, new_dir):
@@ -905,7 +912,8 @@ class TestGitConflicts(GitBaseTestCase):
         git.pull()
 
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"
+            os.path.join(working_tree, "subrepo", "sub-file"),
+            "sub-file",
         )
 
         # add a file to the repo
@@ -918,7 +926,8 @@ class TestGitConflicts(GitBaseTestCase):
 
         # this shouldn't cause any change
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"
+            os.path.join(working_tree, "subrepo", "sub-file"),
+            "sub-file",
         )
         assert os.path.exists(os.path.join(working_tree, "subrepo", "fake")) is False
 
@@ -934,7 +943,7 @@ class TestGitConflicts(GitBaseTestCase):
                 "--init",
                 "--recursive",
                 "--remote",
-            ]
+            ],
         )
         _call(["git", "add", "subrepo"])
         _call(["git", "commit", "-am", "updated submodule"])
@@ -945,10 +954,12 @@ class TestGitConflicts(GitBaseTestCase):
 
         # new file should be there now
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"
+            os.path.join(working_tree, "subrepo", "sub-file"),
+            "sub-file",
         )
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "fake"), "fake 1"
+            os.path.join(working_tree, "subrepo", "fake"),
+            "fake 1",
         )
 
 

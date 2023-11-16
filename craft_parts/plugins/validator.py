@@ -47,14 +47,20 @@ class PluginEnvironmentValidator:
     """
 
     def __init__(
-        self, *, part_name: str, env: str, properties: PluginProperties
+        self,
+        *,
+        part_name: str,
+        env: str,
+        properties: PluginProperties,
     ) -> None:
         self._part_name = part_name
         self._env = env
         self._options = properties
 
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self,
+        *,
+        part_dependencies: Optional[List[str]] = None,
     ) -> None:
         """Ensure the plugin execution environment is valid.
 

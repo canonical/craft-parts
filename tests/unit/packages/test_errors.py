@@ -156,7 +156,7 @@ def test_snap_refresh_error():
 
 def test_snap_get_assertion_error():
     err = errors.SnapGetAssertionError(
-        assertion_params=["snap-revision=42", "snap-name=foo"]
+        assertion_params=["snap-revision=42", "snap-name=foo"],
     )
     assert err.assertion_params == ["snap-revision=42", "snap-name=foo"]
     assert err.brief == (
@@ -169,7 +169,8 @@ def test_snap_get_assertion_error():
 
 def test_snapd_connection_error():
     err = errors.SnapdConnectionError(
-        snap_name="word-salad", url="http+unix://%2Frun%2Fsnapd.socket/v2/whatever"
+        snap_name="word-salad",
+        url="http+unix://%2Frun%2Fsnapd.socket/v2/whatever",
     )
     assert err.snap_name == "word-salad"
     assert err.url == "http+unix://%2Frun%2Fsnapd.socket/v2/whatever"

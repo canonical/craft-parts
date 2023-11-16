@@ -60,7 +60,7 @@ class TestStageState:
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError) as raised:
             StageState.unmarshal(
-                False  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
+                False,  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
             )
         assert str(raised.value) == "state data is not a dictionary"
 
@@ -130,7 +130,8 @@ class TestStageStateChanges:
             other[prop] = "new value"
 
             diff = state.diff_properties_of_interest(
-                other, also_compare=["extra-property"]
+                other,
+                also_compare=["extra-property"],
             )
             if prop in relevant_properties:
                 # relevant project options changed

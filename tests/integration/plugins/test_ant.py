@@ -39,7 +39,7 @@ def test_ant_plugin(new_dir, partitions, monkeypatch):
             ant-properties:
               # The build will fail unless this property is propagated to Ant.
               EnableBuild: "yes"
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
@@ -59,6 +59,7 @@ def test_ant_plugin(new_dir, partitions, monkeypatch):
     assert java_binary.is_file()
 
     output = subprocess.check_output(
-        [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld.jar"], text=True
+        [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld.jar"],
+        text=True,
     )
     assert output.strip() == "Hello from Ant-built Java"

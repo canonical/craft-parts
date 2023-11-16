@@ -79,7 +79,7 @@ _parts_yaml = textwrap.dedent(
         override-build: echo "step Step.BUILD"
         override-stage: echo "step Step.STAGE"
         override-prime: echo "step Step.PRIME"
-    """
+    """,
 )
 
 
@@ -142,7 +142,8 @@ def _my_step_callback(info: StepInfo) -> bool:
 
 @pytest.mark.parametrize("step", list(Step))
 @pytest.mark.parametrize(
-    "action_type", list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY})
+    "action_type",
+    list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY}),
 )
 def test_callback_pre(tmpdir, capfd, step, action_type):
     callbacks.register_pre_step(_my_step_callback, step_list=[step])
@@ -170,7 +171,8 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
 
 @pytest.mark.parametrize("step", list(Step))
 @pytest.mark.parametrize(
-    "action_type", list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY})
+    "action_type",
+    list(set(ActionType) - {ActionType.UPDATE, ActionType.REAPPLY}),
 )
 def test_callback_post(tmpdir, capfd, step, action_type):
     callbacks.register_post_step(_my_step_callback, step_list=[step])
@@ -236,7 +238,7 @@ _update_yaml = textwrap.dedent(
         override-build: echo "step Step.BUILD"
         override-stage: echo "step Step.STAGE"
         override-prime: echo "step Step.PRIME"
-    """
+    """,
 )
 
 
@@ -349,7 +351,7 @@ _exec_yaml = textwrap.dedent(
         override-build: echo "bar Step.BUILD"
         override-stage: echo "bar Step.STAGE"
         override-prime: echo "bar Step.PRIME"
-    """
+    """,
 )
 
 

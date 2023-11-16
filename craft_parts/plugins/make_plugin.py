@@ -44,7 +44,9 @@ class MakePluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="make", required=["source"]
+            data,
+            plugin_name="make",
+            required=["source"],
         )
         return cls(**plugin_data)
 

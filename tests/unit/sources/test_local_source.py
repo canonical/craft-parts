@@ -31,7 +31,9 @@ class TestLocal:
     """Various tests for the local source handler."""
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(
-        self, new_dir, partitions
+        self,
+        new_dir,
+        partitions,
     ):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
@@ -49,7 +51,9 @@ class TestLocal:
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1
 
     def test_pull_with_existing_source_tree_creates_hardlinks(
-        self, new_dir, partitions
+        self,
+        new_dir,
+        partitions,
     ):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()
@@ -95,7 +99,9 @@ class TestLocal:
             local.pull()
 
     def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(
-        self, new_dir, partitions
+        self,
+        new_dir,
+        partitions,
     ):
         os.makedirs(os.path.join("src", "dir"))
         open(os.path.join("src", "dir", "file"), "w").close()

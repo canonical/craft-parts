@@ -53,7 +53,7 @@ def test_fetch_stage_slices(tmp_path, fake_apt_cache):
     assert not fake_apt_cache.called
 
 
-def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):  # noqa: ARG001
+def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):
     stage_dir = tmp_path / "stage"
     stage_dir.mkdir()
 
@@ -62,7 +62,9 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):  # noqa: A
 
     slices = ["package1_slice1", "package2_slice2"]
     deb.Ubuntu.unpack_stage_packages(
-        stage_packages_path=stage_dir, install_path=install_dir, stage_packages=slices
+        stage_packages_path=stage_dir,
+        install_path=install_dir,
+        stage_packages=slices,
     )
 
     fake_deb_run.assert_called_once_with(
@@ -73,11 +75,11 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):  # noqa: A
             str(install_dir),
             "package1_slice1",
             "package2_slice2",
-        ]
+        ],
     )
 
 
-def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):  # noqa: ARG001
+def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):
     """Test the combination of 'pulling' and 'building' chisel slices."""
     _parts_yaml = textwrap.dedent(
         """\
@@ -85,13 +87,16 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):  # noqa: ARG0
           foo:
             plugin: nil
             stage-packages: [package1_slice1, package2_slice2]
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_slice", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_slice",
+        cache_dir=new_dir,
+        work_dir=new_dir,
     )
 
     actions = lf.plan(Step.BUILD)
@@ -109,5 +114,5 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):  # noqa: ARG0
             str(install_dir),
             "package1_slice1",
             "package2_slice2",
-        ]
+        ],
     )

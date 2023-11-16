@@ -45,7 +45,7 @@ PARTITION_EXPECTED_PATHS = [
 
 # Prevent us from adding nonmatching paths for tests below.
 assert len(PARTITION_PATHS) == len(
-    PARTITION_EXPECTED_PATHS
+    PARTITION_EXPECTED_PATHS,
 ), "Expected partition paths and input partition paths need to match 1:1"
 
 

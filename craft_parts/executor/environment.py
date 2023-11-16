@@ -32,7 +32,10 @@ logger = logging.getLogger(__name__)
 
 
 def generate_step_environment(
-    *, part: Part, plugin: Plugin, step_info: StepInfo
+    *,
+    part: Part,
+    plugin: Plugin,
+    step_info: StepInfo,
 ) -> str:
     """Generate an environment to use during step execution.
 
@@ -99,43 +102,52 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
     if bin_paths:
         bin_paths.append("$PATH")
         part_environment["PATH"] = _combine_paths(
-            paths=bin_paths, prepend="", separator=":"
+            paths=bin_paths,
+            prepend="",
+            separator=":",
         )
 
     include_paths = []
     for path in paths:
         include_paths.extend(
-            os_utils.get_include_paths(root=path, arch_triplet=step_info.arch_triplet)
+            os_utils.get_include_paths(root=path, arch_triplet=step_info.arch_triplet),
         )
 
     if include_paths:
         for envvar in ["CPPFLAGS", "CFLAGS", "CXXFLAGS"]:
             part_environment[envvar] = _combine_paths(
-                paths=include_paths, prepend="-isystem ", separator=" "
+                paths=include_paths,
+                prepend="-isystem ",
+                separator=" ",
             )
 
     library_paths = []
     for path in paths:
         library_paths.extend(
-            os_utils.get_library_paths(root=path, arch_triplet=step_info.arch_triplet)
+            os_utils.get_library_paths(root=path, arch_triplet=step_info.arch_triplet),
         )
 
     if library_paths:
         part_environment["LDFLAGS"] = _combine_paths(
-            paths=library_paths, prepend="-L", separator=" "
+            paths=library_paths,
+            prepend="-L",
+            separator=" ",
         )
 
     pkg_config_paths = []
     for path in paths:
         pkg_config_paths.extend(
             os_utils.get_pkg_config_paths(
-                root=path, arch_triplet=step_info.arch_triplet
-            )
+                root=path,
+                arch_triplet=step_info.arch_triplet,
+            ),
         )
 
     if pkg_config_paths:
         part_environment["PKG_CONFIG_PATH"] = _combine_paths(
-            pkg_config_paths, prepend="", separator=":"
+            pkg_config_paths,
+            prepend="",
+            separator=":",
         )
 
     return part_environment
@@ -169,10 +181,10 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
             raise errors.FeatureError("Partitions enabled but no partitions specified.")
         for partition in info.partitions:
             global_environment[f"CRAFT_{partition.upper()}_STAGE"] = str(
-                info.get_stage_dir(partition=partition)
+                info.get_stage_dir(partition=partition),
             )
             global_environment[f"CRAFT_{partition.upper()}_PRIME"] = str(
-                info.get_prime_dir(partition=partition)
+                info.get_prime_dir(partition=partition),
             )
 
     global_environment["CRAFT_STAGE"] = str(info.stage_dir)
@@ -219,7 +231,10 @@ def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
 
 
 def expand_environment(
-    data: Dict[str, Any], *, info: ProjectInfo, skip: Optional[List[str]] = None
+    data: Dict[str, Any],
+    *,
+    info: ProjectInfo,
+    skip: Optional[List[str]] = None,
 ) -> None:
     """Replace global variables with their values.
 
@@ -246,7 +261,7 @@ def expand_environment(
     # order is important - for example, `CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}` should be
     # evaluated before `CRAFT_ARCH_TRIPLET` to avoid premature variable expansion
     replacements = dict(
-        sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True)
+        sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True),
     )
 
     for key in data:
@@ -255,7 +270,8 @@ def expand_environment(
 
 
 def _replace_attr(
-    attr: Union[List[str], Dict[str, str], str], replacements: Dict[str, str]
+    attr: Union[List[str], Dict[str, str], str],
+    replacements: Dict[str, str],
 ) -> Union[List[str], Dict[str, str], str]:
     """Recurse through a complex data structure and replace values.
 
@@ -295,5 +311,5 @@ def _warn_if_deprecated_key(key: str) -> None:
         logger.info("CRAFT_TARGET_ARCH is deprecated, use CRAFT_ARCH_BUILD_FOR")
     elif key in ("$CRAFT_ARCH_TRIPLET", "${CRAFT_ARCH_TRIPLET}"):
         logger.info(
-            "CRAFT_ARCH_TRIPLET is deprecated, use CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}"
+            "CRAFT_ARCH_TRIPLET is deprecated, use CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR}",
         )

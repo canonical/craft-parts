@@ -97,12 +97,15 @@ class StepState(MigrationState, ABC):
 
     @abstractmethod
     def project_options_of_interest(
-        self, project_options: Dict[str, Any]
+        self,
+        project_options: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Return relevant project options concerning this step."""
 
     def diff_properties_of_interest(
-        self, other_properties: Dict[str, Any], also_compare: Optional[List[str]] = None
+        self,
+        other_properties: Dict[str, Any],
+        also_compare: Optional[List[str]] = None,
     ) -> Set[str]:
         """Return properties of interest that differ.
 
@@ -116,15 +119,18 @@ class StepState(MigrationState, ABC):
         """
         return _get_differing_keys(
             self.properties_of_interest(
-                self.part_properties, extra_properties=also_compare
+                self.part_properties,
+                extra_properties=also_compare,
             ),
             self.properties_of_interest(
-                other_properties, extra_properties=also_compare
+                other_properties,
+                extra_properties=also_compare,
             ),
         )
 
     def diff_project_options_of_interest(
-        self, other_project_options: Dict[str, Any]
+        self,
+        other_project_options: Dict[str, Any],
     ) -> Set[str]:
         """Return project options that differ.
 

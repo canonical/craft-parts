@@ -40,7 +40,7 @@ def test_cmake_plugin(new_dir, partitions, prefix, install_path):
           foo:
             plugin: cmake
             source: .
-        """
+        """,
     )
     if prefix is not None:
         parts_yaml += f"    cmake-parameters: [-DCMAKE_INSTALL_PREFIX={prefix}]"
@@ -52,8 +52,8 @@ def test_cmake_plugin(new_dir, partitions, prefix, install_path):
             """\
             project('cmake-hello', 'c')
             executable('hello', 'hello.c', install : true)
-            """
-        )
+            """,
+        ),
     )
 
     Path("hello.c").write_text(
@@ -66,8 +66,8 @@ def test_cmake_plugin(new_dir, partitions, prefix, install_path):
                 printf(\"hello world\\n\");
                 return 0;
             }
-            """
-        )
+            """,
+        ),
     )
 
     Path("CMakeLists.txt").write_text(
@@ -77,12 +77,15 @@ def test_cmake_plugin(new_dir, partitions, prefix, install_path):
             project(cmake-hello C)
             add_executable(cmake-hello hello.c)
             install(TARGETS cmake-hello RUNTIME DESTINATION bin)
-            """
-        )
+            """,
+        ),
     )
 
     lf = LifecycleManager(
-        parts, application_name="test_cmake", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_cmake",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -113,7 +116,7 @@ def test_cmake_plugin_subdir(new_dir, partitions, prefix, install_path):
             plugin: cmake
             source: .
             source-subdir: test-subdir
-        """
+        """,
     )
     if prefix is not None:
         parts_yaml += f"    cmake-parameters: [-DCMAKE_INSTALL_PREFIX={prefix}]"
@@ -133,8 +136,8 @@ def test_cmake_plugin_subdir(new_dir, partitions, prefix, install_path):
                 printf(\"hello world\\n\");
                 return 0;
             }
-            """
-        )
+            """,
+        ),
     )
 
     (source_subdir / "CMakeLists.txt").write_text(
@@ -144,12 +147,15 @@ def test_cmake_plugin_subdir(new_dir, partitions, prefix, install_path):
             project(cmake-hello C)
             add_executable(cmake-hello hello.c)
             install(TARGETS cmake-hello RUNTIME DESTINATION bin)
-            """
-        )
+            """,
+        ),
     )
 
     lf = LifecycleManager(
-        parts, application_name="test_cmake", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_cmake",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 

@@ -29,7 +29,9 @@ from craft_parts.permissions import Permissions
 @pytest.fixture()
 def part0(tmpdir, partitions) -> Part:
     part = Part(
-        "part0", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        "part0",
+        {},
+        project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
     )
     p = part.part_install_dir
     p.mkdir(parents=True)
@@ -40,7 +42,9 @@ def part0(tmpdir, partitions) -> Part:
 @pytest.fixture()
 def part1(tmpdir, partitions) -> Part:
     part = Part(
-        "part1", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        "part1",
+        {},
+        project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
     )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
@@ -52,7 +56,9 @@ def part1(tmpdir, partitions) -> Part:
 @pytest.fixture()
 def part2(tmpdir, partitions) -> Part:
     part = Part(
-        "part2", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        "part2",
+        {},
+        project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
     )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
@@ -66,7 +72,9 @@ def part2(tmpdir, partitions) -> Part:
 @pytest.fixture()
 def part3(tmpdir, partitions) -> Part:
     part = Part(
-        "part3", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        "part3",
+        {},
+        project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
     )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
@@ -79,7 +87,9 @@ def part3(tmpdir, partitions) -> Part:
 @pytest.fixture()
 def part4(tmpdir, partitions) -> Part:
     part = Part(
-        "part4", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        "part4",
+        {},
+        project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
     )
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
@@ -93,7 +103,9 @@ def part5(tmpdir, partitions) -> Part:
     # Create a new part with a symlink that collides with part1's
     # non-symlink.
     part = Part(
-        "part5", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        "part5",
+        {},
+        project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
     )
     p = part.part_install_dir
     p.mkdir(parents=True)
@@ -107,7 +119,9 @@ def part6(tmpdir, partitions) -> Part:
     # Create a new part with a symlink that points to a different place
     # than part5's symlink.
     part = Part(
-        "part6", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        "part6",
+        {},
+        project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
     )
     p = part.part_install_dir
     p.mkdir(parents=True)
@@ -218,10 +232,16 @@ class TestCollisions:
             Permissions(path="2", mode="755"),
         ]
         p1 = self.create_part_with_permissions(
-            "part1", part1_permissions, tmpdir, partitions
+            "part1",
+            part1_permissions,
+            tmpdir,
+            partitions,
         )
         p2 = self.create_part_with_permissions(
-            "part2", part2_permissions, tmpdir, partitions
+            "part2",
+            part2_permissions,
+            tmpdir,
+            partitions,
         )
 
         with pytest.raises(errors.PartFilesConflict) as raised:

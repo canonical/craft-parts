@@ -131,7 +131,8 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
 
     if not os.path.exists(os.path.dirname(destination)):
         create_similar_directory(
-            os.path.dirname(source_path), os.path.dirname(destination)
+            os.path.dirname(source_path),
+            os.path.dirname(destination),
         )
 
     # Setting follow_symlinks=False in case this bug is ever fixed
@@ -208,7 +209,7 @@ def link_or_copy_tree(
     ):
         raise errors.CopyTreeError(
             f"cannot overwrite non-directory {destination_tree!r} with "
-            f"directory {source_tree!r}"
+            f"directory {source_tree!r}",
         )
 
     create_similar_directory(source_tree, destination_tree)
@@ -240,7 +241,8 @@ def link_or_copy_tree(
                 continue
 
             destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree)
+                destination_tree,
+                os.path.relpath(source, source_tree),
             )
 
             create_similar_directory(source, destination)
@@ -248,14 +250,17 @@ def link_or_copy_tree(
         for file_name in set(files) - ignored:
             source = os.path.join(root, file_name)
             destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree)
+                destination_tree,
+                os.path.relpath(source, source_tree),
             )
 
             copy_function(source, destination)
 
 
 def create_similar_directory(
-    source: str, destination: str, permissions: Optional[List[Permissions]] = None
+    source: str,
+    destination: str,
+    permissions: Optional[List[Permissions]] = None,
 ) -> None:
     """Create a directory with the same permission bits and owner information.
 
@@ -309,7 +314,8 @@ def calculate_hash(filename: Path, *, algorithm: str) -> str:
 
 
 def _file_reader_iter(
-    path: Path, block_size: int = 2**20
+    path: Path,
+    block_size: int = 2**20,
 ) -> Generator[bytes, None, None]:
     """Read a file in blocks.
 

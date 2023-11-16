@@ -106,7 +106,10 @@ def get_include_paths(*, root: Path, arch_triplet: str) -> List[str]:
 
 
 def get_library_paths(
-    *, root: Path, arch_triplet: str, existing_only: bool = True
+    *,
+    root: Path,
+    arch_triplet: str,
+    existing_only: bool = True,
 ) -> List[str]:
     """List common library paths.
 
@@ -269,7 +272,10 @@ def umount(mountpoint: str, *args: str) -> None:
 
             time.sleep(1)
             logger.debug(
-                "retry umount %r (%d/%d)", mountpoint, attempt, _UMOUNT_RETRIES
+                "retry umount %r (%d/%d)",
+                mountpoint,
+                attempt,
+                _UMOUNT_RETRIES,
             )
 
 
@@ -324,7 +330,9 @@ class OsRelease:
 
 
 def process_run(
-    command: List[str], log_func: Callable[[str], None], **kwargs: Any
+    command: List[str],
+    log_func: Callable[[str], None],
+    **kwargs: Any,
 ) -> None:
     """Run a command and handle its output."""
     with subprocess.Popen(

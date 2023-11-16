@@ -30,7 +30,7 @@ def test_rust_plugin(new_dir, partitions):
           foo:
             plugin: rust
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -41,8 +41,8 @@ def test_rust_plugin(new_dir, partitions):
             name = "rust-hello"
             version = "1.0.0"
             edition = "2021"
-            """
-        )
+            """,
+        ),
     )
 
     Path("src").mkdir()
@@ -52,8 +52,8 @@ def test_rust_plugin(new_dir, partitions):
             fn main() {
                 println!("hello world");
             }
-            """
-        )
+            """,
+        ),
     )
 
     lifecycle = LifecycleManager(
@@ -81,7 +81,7 @@ def test_rust_plugin_features(new_dir, partitions):
             plugin: rust
             source: .
             rust-features: [conditional-feature-present]
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -99,8 +99,8 @@ def test_rust_plugin_features(new_dir, partitions):
 
             [dependencies]
             log = "*"
-            """
-        )
+            """,
+        ),
     )
 
     Path("src").mkdir()
@@ -112,8 +112,8 @@ def test_rust_plugin_features(new_dir, partitions):
                 #[cfg(feature="conditional-feature-present")]
                 println!("hello world");
             }
-            """
-        )
+            """,
+        ),
     )
 
     lifecycle = LifecycleManager(
@@ -141,7 +141,7 @@ def test_rust_plugin_workspace(new_dir, partitions):
             plugin: rust
             source: .
             rust-path: ["hello"]
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -153,8 +153,8 @@ def test_rust_plugin_workspace(new_dir, partitions):
                 "hello",
                 "say",
             ]
-            """
-        )
+            """,
+        ),
     )
 
     Path("hello").mkdir()
@@ -168,8 +168,8 @@ def test_rust_plugin_workspace(new_dir, partitions):
 
             [dependencies]
             say = { path = "../say" }
-            """
-        )
+            """,
+        ),
     )
 
     Path("hello/src").mkdir()
@@ -180,8 +180,8 @@ def test_rust_plugin_workspace(new_dir, partitions):
             fn main() {
                 say::hello();
             }
-            """
-        )
+            """,
+        ),
     )
 
     Path("say").mkdir()
@@ -192,8 +192,8 @@ def test_rust_plugin_workspace(new_dir, partitions):
             name = "say"
             version = "0.1.0"
             edition = "2021"
-            """
-        )
+            """,
+        ),
     )
 
     Path("say/src").mkdir()
@@ -203,8 +203,8 @@ def test_rust_plugin_workspace(new_dir, partitions):
             pub fn hello() {
                 println!("hello world");
             }
-            """
-        )
+            """,
+        ),
     )
 
     lifecycle = LifecycleManager(

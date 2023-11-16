@@ -47,7 +47,10 @@ class Plugin(abc.ABC):
     """Plugins that can run in 'strict' mode must set this classvar to True."""
 
     def __init__(
-        self, *, properties: PluginProperties, part_info: "infos.PartInfo"
+        self,
+        *,
+        properties: PluginProperties,
+        part_info: "infos.PartInfo",
     ) -> None:
         self._options = properties
         self._part_info = part_info
@@ -130,7 +133,10 @@ class PluginModel(PluginPropertiesModel):
 
 
 def extract_plugin_properties(
-    data: Dict[str, Any], *, plugin_name: str, required: Optional[List[str]] = None
+    data: Dict[str, Any],
+    *,
+    plugin_name: str,
+    required: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Obtain plugin-specifc entries from part properties.
 

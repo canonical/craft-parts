@@ -34,7 +34,7 @@ def test_meson_plugin(new_dir, partitions):
             source: .
             meson-parameters:
               - --prefix=/
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -43,8 +43,8 @@ def test_meson_plugin(new_dir, partitions):
             """\
             project('meson-hello', 'c')
             executable('hello', 'hello.c', install : true)
-            """
-        )
+            """,
+        ),
     )
 
     Path("hello.c").write_text(
@@ -57,13 +57,16 @@ def test_meson_plugin(new_dir, partitions):
                 printf(\"hello world\\n\");
                 return 0;
             }
-            """
-        )
+            """,
+        ),
     )
 
     # ninja is installed in the ci test setup
     lf = LifecycleManager(
-        parts, application_name="test_go", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -88,7 +91,7 @@ def test_meson_plugin_with_subdir(new_dir, partitions):
             source-subdir: test-subdir
             meson-parameters:
               - --prefix=/
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -100,8 +103,8 @@ def test_meson_plugin_with_subdir(new_dir, partitions):
             """\
             project('meson-hello', 'c')
             executable('hello', 'hello.c', install : true)
-            """
-        )
+            """,
+        ),
     )
 
     (source_subdir / "hello.c").write_text(
@@ -114,13 +117,16 @@ def test_meson_plugin_with_subdir(new_dir, partitions):
                 printf(\"hello world\\n\");
                 return 0;
             }
-            """
-        )
+            """,
+        ),
     )
 
     # ninja is installed in the ci test setup
     lf = LifecycleManager(
-        parts, application_name="test_go", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 

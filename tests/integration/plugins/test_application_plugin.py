@@ -34,7 +34,9 @@ class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
         plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="app", required=["source"]
+            data,
+            plugin_name="app",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -76,7 +78,7 @@ def test_application_plugin_happy(new_dir, partitions, mocker):
             - first
             - second
             - third
-        """
+        """,
     )
 
     # register our application plugin
@@ -100,7 +102,7 @@ def test_application_plugin_happy(new_dir, partitions, mocker):
     ]
 
     mock_install_packages = mocker.patch(
-        "craft_parts.packages.Repository.install_packages"
+        "craft_parts.packages.Repository.install_packages",
     )
 
     mock_install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
@@ -129,7 +131,7 @@ def test_application_plugin_missing_stuff(new_dir, partitions):
           foo:
             plugin: app
             source: .
-        """
+        """,
     )
 
     # register our application plugin
@@ -157,7 +159,7 @@ def test_application_plugin_type_error(new_dir, partitions):
             plugin: app
             source: .
             app-stuff: "some stuff"
-        """
+        """,
     )
 
     # register our application plugin
@@ -186,7 +188,7 @@ def test_application_plugin_extra_property(new_dir, partitions):
             source: .
             app-stuff: ["value"]
             app-other: True
-        """
+        """,
     )
 
     # register our application plugin
@@ -213,7 +215,7 @@ def test_application_plugin_not_registered(new_dir, partitions):
           foo:
             plugin: app
             source: .
-        """
+        """,
     )
 
     # don't register our application plugin

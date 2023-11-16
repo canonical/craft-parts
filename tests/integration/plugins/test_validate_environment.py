@@ -57,7 +57,7 @@ class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):  # noqa: ARG003
+    def unmarshal(cls, data: Dict[str, Any]):
         return cls()
 
 
@@ -107,7 +107,7 @@ class AppPlugin(plugins.Plugin):
 
     def validate_environment(self, env: Dict[str, str]):
         try:
-            subprocess.run("mytool", shell=True, check=True, env=env)
+            subprocess.run("mytool", check=True, env=env)
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_info.part_name,
@@ -135,7 +135,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_validate_plugin(new_dir, partitions, mytool):  # noqa: ARG001
+def test_validate_plugin(new_dir, partitions, mytool):
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:
@@ -143,7 +143,7 @@ def test_validate_plugin(new_dir, partitions, mytool):  # noqa: ARG001
             plugin: app
             build-environment:
               - PATH: "$PATH:{new_dir}/mock_bin"
-        """
+        """,
     )
 
     # register our application plugin
@@ -152,7 +152,10 @@ def test_validate_plugin(new_dir, partitions, mytool):  # noqa: ARG001
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="mytest",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     # plugins act on the build step
@@ -175,7 +178,7 @@ def test_validate_plugin_satisfied_with_part(new_dir, partitions):
               mkdir "$CRAFT_PART_INSTALL"/bin
               echo "echo ok" > "$CRAFT_PART_INSTALL"/bin/mytool
               chmod +x "$CRAFT_PART_INSTALL"/bin/mytool
-        """
+        """,
     )
 
     # register our application plugin
@@ -184,7 +187,10 @@ def test_validate_plugin_satisfied_with_part(new_dir, partitions):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="mytest",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     # plugins act on the build step
@@ -200,7 +206,7 @@ def test_validate_plugin_early_error(new_dir, partitions):
         parts:
           foo:
             plugin: app
-        """
+        """,
     )
 
     # register our application plugin
@@ -209,7 +215,10 @@ def test_validate_plugin_early_error(new_dir, partitions):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="mytest",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     # plugins act on the build step
@@ -223,7 +232,7 @@ def test_validate_plugin_early_error(new_dir, partitions):
     )
 
 
-def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):  # noqa: ARG001
+def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):
     _parts_yaml = textwrap.dedent(
         f"""\
         parts:
@@ -231,7 +240,7 @@ def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):  # noqa
             plugin: app
             build-environment:
               - PATH: "$PATH:{new_dir}/mock_bin"
-        """
+        """,
     )
 
     # register our application plugin
@@ -240,7 +249,10 @@ def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):  # noqa
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="mytest",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     # plugins act on the build step
@@ -255,7 +267,7 @@ def test_validate_plugin_bad_output(new_dir, partitions, mytool_not_ok):  # noqa
 def test_validate_plugin_command_error(
     new_dir,
     partitions,
-    mytool_error,  # noqa: ARG001
+    mytool_error,
 ):
     _parts_yaml = textwrap.dedent(
         f"""\
@@ -264,7 +276,7 @@ def test_validate_plugin_command_error(
             plugin: app
             build-environment:
               - PATH: "$PATH:{new_dir}/mock_bin"
-        """
+        """,
     )
 
     # register our application plugin
@@ -273,7 +285,10 @@ def test_validate_plugin_command_error(
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="mytest", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="mytest",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     # plugins act on the build step

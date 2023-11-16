@@ -77,7 +77,7 @@ class FakeSnapCommand:
         snap_cmd, _ = self._get_snap_cmd(cmd)
         return snap_cmd in ["install", "refresh", "whoami", "download"]
 
-    def _fake_snap_command(self, cmd, *args, **kwargs):  # noqa: ARG002
+    def _fake_snap_command(self, cmd, *args, **kwargs):
         cmd, params = self._get_snap_cmd(cmd)
 
         if cmd == "install" and not self.install_success:

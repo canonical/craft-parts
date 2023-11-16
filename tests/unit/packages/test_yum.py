@@ -26,7 +26,7 @@ from craft_parts.packages.yum import YUMRepository
 def test_install_packages_simple(fake_yum_run):
     """Simple and complete procedure when installing packages."""
     YUMRepository.install_packages(
-        ["package-installed", "package", "versioned-package=2.0"]
+        ["package-installed", "package", "versioned-package=2.0"],
     )
     assert fake_yum_run.mock_calls == [
         call(
@@ -37,7 +37,7 @@ def test_install_packages_simple(fake_yum_run):
                 "package",
                 "package-installed",
                 "versioned-package=2.0",
-            ]
+            ],
         ),
     ]
 
@@ -51,16 +51,19 @@ def test_install_packages_empty_list(fake_yum_run):
 def test_install_packages_already_installed(fake_yum_run, mocker):
     """Packages already installed, skipping actual installation."""
     mocker.patch.object(
-        YUMRepository, "_check_if_all_packages_installed", return_value=True
+        YUMRepository,
+        "_check_if_all_packages_installed",
+        return_value=True,
     )
     YUMRepository.install_packages(["package-installed"])
     fake_yum_run.assert_not_called()
 
 
-def test_install_packages_refresh_not_requested(fake_yum_run, mocker):  # noqa: ARG001
+def test_install_packages_refresh_not_requested(fake_yum_run, mocker):
     """Packages installed but the yum cache was not refreshed."""
     YUMRepository.install_packages(
-        ["package-installed", "package"], refresh_package_cache=False
+        ["package-installed", "package"],
+        refresh_package_cache=False,
     )
     assert fake_yum_run.mock_calls == [
         call(["yum", "install", "-y", "package", "package-installed"]),

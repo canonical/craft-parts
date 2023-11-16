@@ -72,7 +72,9 @@ class NpmPluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="npm", required=["source"]
+            data,
+            plugin_name="npm",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -86,7 +88,9 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self,
+        *,
+        part_dependencies: Optional[List[str]] = None,
     ) -> None:
         """Ensure the environment has the dependencies to build npm applications.
 
@@ -145,7 +149,7 @@ class NpmPlugin(Plugin):
                 node_arch = _NODE_ARCH_FROM_PLATFORM[machine_type][architecture_type[0]]
             except KeyError as error:
                 raise InvalidArchitecture(
-                    arch_name=f"{machine_type} {architecture_type}"
+                    arch_name=f"{machine_type} {architecture_type}",
                 ) from error
 
         return node_arch
@@ -192,10 +196,10 @@ class NpmPlugin(Plugin):
                         tar xzf - -C "${{CRAFT_PART_INSTALL}}/" \
                         --no-same-owner --strip-components=1
                     fi
-                    """
-                )
+                    """,
+                ),
             )
         command.append(
-            'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)'
+            'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         )
         return command

@@ -76,14 +76,17 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.part_build_dir, new_dir / work_dir / "parts/foo/build")
         pytest_check.equal(p.part_build_subdir, new_dir / work_dir / "parts/foo/build")
         pytest_check.equal(
-            p.part_install_dir, new_dir / work_dir / "parts/foo/install/default"
+            p.part_install_dir,
+            new_dir / work_dir / "parts/foo/install/default",
         )
         pytest_check.equal(p.part_state_dir, new_dir / work_dir / "parts/foo/state")
         pytest_check.equal(
-            p.part_packages_dir, new_dir / work_dir / "parts/foo/stage_packages"
+            p.part_packages_dir,
+            new_dir / work_dir / "parts/foo/stage_packages",
         )
         pytest_check.equal(
-            p.part_snaps_dir, new_dir / work_dir / "parts/foo/stage_snaps"
+            p.part_snaps_dir,
+            new_dir / work_dir / "parts/foo/stage_snaps",
         )
         pytest_check.equal(p.part_run_dir, new_dir / work_dir / "parts/foo/run")
         pytest_check.equal(p.part_layer_dir, new_dir / work_dir / "parts/foo/layer")
@@ -193,7 +196,8 @@ class TestPartPartitionUsage:
 
         with pytest.raises(errors.FeatureError) as raised:
             parts.validate_partition_usage(
-                [Part("part-a", part_data, partitions=partition_list)], partition_list
+                [Part("part-a", part_data, partitions=partition_list)],
+                partition_list,
             )
 
         assert raised.value.brief == dedent(
@@ -205,11 +209,14 @@ class TestPartPartitionUsage:
                 unknown partition 'bar' in '(bar)/test'
               parts.part-a.prime
                 unknown partition 'baz' in '(baz)'
-            Valid partitions are 'default' and 'kernel'."""
+            Valid partitions are 'default' and 'kernel'.""",
         )
 
     def test_part_invalid_partition_usage_complex(
-        self, valid_filesets, invalid_filesets, partition_list
+        self,
+        valid_filesets,
+        invalid_filesets,
+        partition_list,
     ):
         """Raise an error if partitions are improperly used in parts."""
         part_data = {
@@ -286,5 +293,5 @@ class TestPartPartitionUsage:
                 unknown partition '123' in '(123)/test/(456)'
                 unknown partition '123' in '(123)/test/(default)'
                 unknown partition '123' in '(123)/test/(kernel)'
-            Valid partitions are 'default' and 'kernel'."""
+            Valid partitions are 'default' and 'kernel'.""",
         )

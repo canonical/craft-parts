@@ -32,7 +32,7 @@ def test_source_zip(new_dir):
           foo:
             plugin: make
             source: foobar.zip
-        """
+        """,
     )
 
     Path("foobar.txt").write_text("content")
@@ -41,7 +41,9 @@ def test_source_zip(new_dir):
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_zip", cache_dir=new_dir
+        parts,
+        application_name="test_zip",
+        cache_dir=new_dir,
     )
 
     with lf.action_executor() as ctx:
@@ -59,13 +61,15 @@ def test_source_zip_error(new_dir):
           foo:
             plugin: make
             source: foobar.zip
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
     Path("foobar.zip").write_text("not a zip file")
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_zip", cache_dir=new_dir
+        parts,
+        application_name="test_zip",
+        cache_dir=new_dir,
     )
 
     with pytest.raises(zipfile.BadZipFile) as raised, lf.action_executor() as ctx:

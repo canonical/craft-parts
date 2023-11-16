@@ -131,7 +131,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def fetch_stage_packages(  # noqa: PLR0913
+    def fetch_stage_packages(
         cls,
         *,
         cache_dir: Path,

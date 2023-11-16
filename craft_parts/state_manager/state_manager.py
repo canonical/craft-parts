@@ -64,7 +64,10 @@ class _StateDB:
         self._serial_gen = itertools.count(1)
 
     def wrap_state(
-        self, state: StepState, *, step_updated: bool = False
+        self,
+        state: StepState,
+        *,
+        step_updated: bool = False,
     ) -> _StateWrapper:
         """Add metadata to step state.
 
@@ -75,11 +78,17 @@ class _StateDB:
         :return: The wrapped state with additional metadata.
         """
         return _StateWrapper(
-            state, serial=next(self._serial_gen), step_updated=step_updated
+            state,
+            serial=next(self._serial_gen),
+            step_updated=step_updated,
         )
 
     def set(
-        self, *, part_name: str, step: Step, state: Optional[_StateWrapper]
+        self,
+        *,
+        part_name: str,
+        step: Step,
+        state: Optional[_StateWrapper],
     ) -> None:
         """Set a state for a given part and step.
 
@@ -337,7 +346,8 @@ class StateManager:
                 # Has a previous step run since this one ran? Then this
                 # step needs to be updated.
                 previous_stw = self._state_db.get(
-                    part_name=part.name, step=previous_step
+                    part_name=part.name,
+                    step=previous_step,
                 )
 
                 if previous_stw and previous_stw.is_newer_than(stw):
@@ -380,10 +390,11 @@ class StateManager:
         part_properties = {**part.spec.marshal(), **part.plugin_properties.marshal()}
         plugin_properties_to_check = _get_relevant_plugin_properties(part, step)
         properties = state.diff_properties_of_interest(
-            part_properties, also_compare=plugin_properties_to_check
+            part_properties,
+            also_compare=plugin_properties_to_check,
         )
         options = state.diff_project_options_of_interest(
-            self._project_info.project_options
+            self._project_info.project_options,
         )
 
         if properties or options:
@@ -402,13 +413,16 @@ class StateManager:
         # The part is clean, check its dependencies
 
         dependencies = parts.part_dependencies(
-            part, part_list=self._part_list, recursive=True
+            part,
+            part_list=self._part_list,
+            recursive=True,
         )
 
         changed_dependencies: List[Dependency] = []
         for dependency in dependencies:
             prerequisite_stw = self._state_db.get(
-                part_name=dependency.name, step=prerequisite_step
+                part_name=dependency.name,
+                step=prerequisite_step,
             )
             if prerequisite_stw:
                 dependency_changed = prerequisite_stw.is_newer_than(stw)
@@ -416,10 +430,11 @@ class StateManager:
                 dependency_changed = True
 
             if dependency_changed or self.should_step_run(
-                dependency, prerequisite_step
+                dependency,
+                prerequisite_step,
             ):
                 changed_dependencies.append(
-                    Dependency(part_name=dependency.name, step=prerequisite_step)
+                    Dependency(part_name=dependency.name, step=prerequisite_step),
                 )
 
         if changed_dependencies:

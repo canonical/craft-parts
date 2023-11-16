@@ -302,7 +302,9 @@ def _parse_arguments() -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command")
 
     add_subparser = partial(
-        subparsers.add_parser, add_help=False, parents=[help_parser]
+        subparsers.add_parser,
+        add_help=False,
+        parents=[help_parser],
     )
 
     pull_parser = add_subparser("pull", help="Retrieve artifacts defined for a part.")
@@ -334,7 +336,8 @@ def _parse_arguments() -> argparse.Namespace:
     )
 
     prime_parser = add_subparser(
-        "prime", help="Refine stage and prepare final payload."
+        "prime",
+        help="Refine stage and prepare final payload.",
     )
     prime_parser.add_argument(
         "parts",

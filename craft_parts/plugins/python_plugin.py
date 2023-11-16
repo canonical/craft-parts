@@ -48,7 +48,9 @@ class PythonPluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="python", required=["source"]
+            data,
+            plugin_name="python",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -99,7 +101,7 @@ class PythonPlugin(Plugin):
 
         if options.python_packages:
             python_packages = " ".join(
-                [shlex.quote(pkg) for pkg in options.python_packages]
+                [shlex.quote(pkg) for pkg in options.python_packages],
             )
             python_packages_cmd = f"{pip} install {constraints} -U {python_packages}"
             build_commands.append(python_packages_cmd)
@@ -110,7 +112,7 @@ class PythonPlugin(Plugin):
             build_commands.append(requirements_cmd)
 
         build_commands.append(
-            f"[ -f setup.py ] || [ -f pyproject.toml ] && {pip} install {constraints} -U ."
+            f"[ -f setup.py ] || [ -f pyproject.toml ] && {pip} install {constraints} -U .",
         )
 
         # Now fix shebangs.
@@ -120,8 +122,8 @@ class PythonPlugin(Plugin):
                 f"""\
                 find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \\
                     sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"
-                """
-            )
+                """,
+            ),
         )
         # Find the "real" python3 interpreter.
         python_interpreter = self._get_system_python_interpreter() or ""
@@ -163,8 +165,8 @@ class PythonPlugin(Plugin):
                 fi
 
                 eval "${{opts_state}}"
-                """
-            )
+                """,
+            ),
         )
 
         # Handle the venv symlink (either remove it or set the final correct target)
@@ -174,16 +176,16 @@ class PythonPlugin(Plugin):
                     f"""\
                     echo Removing python symlinks in {self._part_info.part_install_dir}/bin
                     rm "{self._part_info.part_install_dir}"/bin/python*
-                    """
-                )
+                    """,
+                ),
             )
         else:
             build_commands.append(
                 dedent(
                     """\
                     ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
-                    """
-                )
+                    """,
+                ),
             )
 
         return build_commands

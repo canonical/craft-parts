@@ -45,7 +45,9 @@ class GitSource(SourceHandler):
     def version(cls) -> str:
         """Get git version information."""
         return subprocess.check_output(
-            ["git", "version"], universal_newlines=True, stderr=subprocess.DEVNULL
+            ["git", "version"],
+            universal_newlines=True,
+            stderr=subprocess.DEVNULL,
         ).strip()
 
     @classmethod
@@ -149,19 +151,23 @@ class GitSource(SourceHandler):
 
         if source_tag and source_branch:
             raise errors.IncompatibleSourceOptions(
-                "git", ["source-tag", "source-branch"]
+                "git",
+                ["source-tag", "source-branch"],
             )
         if source_tag and source_commit:
             raise errors.IncompatibleSourceOptions(
-                "git", ["source-tag", "source-commit"]
+                "git",
+                ["source-tag", "source-commit"],
             )
         if source_branch and source_commit:
             raise errors.IncompatibleSourceOptions(
-                "git", ["source-branch", "source-commit"]
+                "git",
+                ["source-branch", "source-commit"],
             )
         if source_checksum:
             raise errors.InvalidSourceOption(
-                source_type="git", option="source-checksum"
+                source_type="git",
+                option="source-checksum",
             )
 
     def _fetch_origin_commit(self) -> None:
@@ -241,11 +247,12 @@ class GitSource(SourceHandler):
         if self.source_submodules is None:
             command.append("--recursive")
         else:
-            for submodule in self.source_submodules:
-                command.append("--recursive=" + submodule)
+            command.extend(
+                [f"--recursive={submodule}" for submodule in self.source_submodules],
+            )
         if self.source_tag or self.source_branch:
             command.extend(
-                ["--branch", cast(str, self.source_tag or self.source_branch)]
+                ["--branch", cast(str, self.source_tag or self.source_branch)],
             )
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
@@ -307,7 +314,7 @@ class GitSource(SourceHandler):
 
         if not tag and not branch and not commit:
             commit = self._run_output(
-                ["git", "-C", str(self.part_src_dir), "rev-parse", "HEAD"]
+                ["git", "-C", str(self.part_src_dir), "rev-parse", "HEAD"],
             )
 
         return {

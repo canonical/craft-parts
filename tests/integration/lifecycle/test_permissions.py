@@ -45,13 +45,15 @@ def test_part_permissions(new_dir, mock_chown):
               - path: bar/*
                 owner: 1111
                 group: 2222
-        """
+        """,
     )
 
     parts = yaml.safe_load(parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
     )
     actions = lf.plan(Step.PRIME)
     with lf.action_executor() as ctx:

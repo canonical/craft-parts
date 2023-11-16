@@ -50,8 +50,8 @@ def pkg_config_file():
                     Libs: -L${{libdir}} -lgranite
                     Cflags: -I${{includedir}}/granite
                     Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-                    """
-                )
+                    """,
+                ),
             )
 
     return _pkg_config_file
@@ -79,7 +79,7 @@ def expected_pkg_config_content():
             Libs: -L${{libdir}} -lgranite
             Cflags: -I${{includedir}}/granite
             Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-            """
+            """,
         )
 
     return _expected_pkg_config_content
@@ -93,28 +93,28 @@ def expected_pkg_config_content():
                 "path": os.path.join("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
-            }
+            },
         ],
         [  # no_fix_xml2_config
             {
                 "path": os.path.join("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
-            }
+            },
         ],
         [  # fix_xslt_config
             {
                 "path": os.path.join("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
-            }
+            },
         ],
         [  # no_fix_xslt_config
             {
                 "path": os.path.join("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
-            }
+            },
         ],
         [  # fix_xml2_xslt_config
             {
@@ -294,7 +294,7 @@ class TestFixPkgConfig:
         fix_pkg_config(tmpdir, pc_file)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}{fixed_prefix}"
+            f"{tmpdir}{fixed_prefix}",
         )
 
     @pytest.mark.parametrize(
@@ -321,7 +321,7 @@ class TestFixPkgConfig:
         fix_pkg_config(tmpdir, pc_file, Path(prefix_trim))
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}{fixed_prefix}"
+            f"{tmpdir}{fixed_prefix}",
         )
 
     @pytest.mark.parametrize(
@@ -351,11 +351,14 @@ class TestFixPkgConfig:
         fix_pkg_config(tmpdir, pc_file)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}{prefix}"
+            f"{tmpdir}{prefix}",
         )
 
     def test_normalize_fix_pkg_config(
-        self, tmpdir, pkg_config_file, expected_pkg_config_content
+        self,
+        tmpdir,
+        pkg_config_file,
+        expected_pkg_config_content,
     ):
         """Verify normalization fixes pkg-config files."""
         pc_file = tmpdir / "my-file.pc"
@@ -363,7 +366,7 @@ class TestFixPkgConfig:
         normalize(tmpdir, repository=DummyRepository)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}/usr"
+            f"{tmpdir}/usr",
         )
 
     def test_fix_pkg_config_is_dir(self, tmpdir):

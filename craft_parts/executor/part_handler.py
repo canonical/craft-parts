@@ -77,7 +77,7 @@ class PartHandler:
     :param part_list: A list containing all parts.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         part: Part,
         *,
@@ -141,7 +141,10 @@ class PartHandler:
 
         if action.action_type == ActionType.REAPPLY:
             self._reapply_action(
-                action, step_info=step_info, stdout=stdout, stderr=stderr
+                action,
+                step_info=step_info,
+                stdout=stdout,
+                stderr=stderr,
             )
             return
 
@@ -231,7 +234,8 @@ class PartHandler:
             overlay_packages = self._part.spec.overlay_packages
             if overlay_packages:
                 with overlays.LayerMount(
-                    self._overlay_manager, top_part=self._part
+                    self._overlay_manager,
+                    top_part=self._part,
                 ) as ctx:
                     ctx.install_packages(overlay_packages)
 
@@ -247,7 +251,8 @@ class PartHandler:
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
-                self._part.spec.overlay_files, name="overlay"
+                self._part.spec.overlay_files,
+                name="overlay",
             )
             destdir = self._part.part_layer_dir
             files, dirs = filesets.migratable_filesets(overlay_fileset, str(destdir))
@@ -286,7 +291,9 @@ class PartHandler:
 
             # Copy source from the part source dir to the part build dir
             shutil.copytree(
-                self._part.part_src_dir, self._part.part_build_dir, symlinks=True
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                symlinks=True,
             )
 
         # Perform the build step
@@ -414,7 +421,8 @@ class PartHandler:
             and is_deb_based()
         ):
             primed_stage_packages = _get_primed_stage_packages(
-                contents.files, prime_dir=self._part.prime_dir
+                contents.files,
+                prime_dir=self._part.prime_dir,
             )
         else:
             primed_stage_packages = set()
@@ -446,7 +454,9 @@ class PartHandler:
             the step's file and directory artifacts.
         """
         step_env = generate_step_environment(
-            part=self._part, plugin=self._plugin, step_info=step_info
+            part=self._part,
+            plugin=self._plugin,
+            step_info=step_info,
         )
 
         if step_info.step == Step.BUILD:
@@ -530,7 +540,7 @@ class PartHandler:
         else:
             step_name = action.step.name.lower()
             raise errors.InvalidAction(
-                f"cannot update step {step_name!r} of {self._part.name!r}"
+                f"cannot update step {step_name!r} of {self._part.name!r}",
             )
 
         callbacks.run_pre_step(step_info)
@@ -555,7 +565,11 @@ class PartHandler:
         callbacks.run_post_step(step_info)
 
     def _update_pull(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
     ) -> None:
         """Handle update action for the pull step.
 
@@ -593,7 +607,11 @@ class PartHandler:
         self._source_handler.update()
 
     def _update_overlay(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
     ) -> None:
         """Handle update action for the overlay step.
 
@@ -605,7 +623,11 @@ class PartHandler:
         """
 
     def _update_build(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
     ) -> None:
         """Handle update action for the build step.
 
@@ -647,11 +669,15 @@ class PartHandler:
         else:
             step_name = action.step.name.lower()
             raise errors.InvalidAction(
-                f"cannot reapply step {step_name!r} of {self._part.name!r}"
+                f"cannot reapply step {step_name!r} of {self._part.name!r}",
             )
 
     def _reapply_overlay(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
     ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         shutil.rmtree(self._part.part_layer_dir)
@@ -665,14 +691,15 @@ class PartHandler:
         and opaque dirs to OCI.
         """
         stage_overlay_state_path = states.get_overlay_migration_state_path(
-            self._part.overlay_dir, Step.STAGE
+            self._part.overlay_dir,
+            Step.STAGE,
         )
 
         # Overlay data is migrated to stage only when the first part declaring overlay
         # parameters is migrated.
         if stage_overlay_state_path.exists():
             logger.debug(
-                "stage overlay migration state exists, not migrating overlay data"
+                "stage overlay migration state exists, not migrating overlay data",
             )
             return
 
@@ -688,7 +715,8 @@ class PartHandler:
         for part in reversed(parts_with_overlay):
             logger.debug("migrate part %r layer to stage", part.name)
             visible_files, visible_dirs = overlays.visible_in_layer(
-                part.part_layer_dir, part.stage_dir
+                part.part_layer_dir,
+                part.stage_dir,
             )
             layer_files, layer_dirs = migration.migrate_files(
                 files=visible_files,
@@ -711,14 +739,15 @@ class PartHandler:
         opaque directories.
         """
         prime_overlay_state_path = states.get_overlay_migration_state_path(
-            self._part.overlay_dir, Step.PRIME
+            self._part.overlay_dir,
+            Step.PRIME,
         )
 
         # Overlay data is migrated to prime only when the first part declaring overlay
         # parameters is migrated.
         if prime_overlay_state_path.exists():
             logger.debug(
-                "prime overlay migration state exists, not migrating overlay data"
+                "prime overlay migration state exists, not migrating overlay data",
             )
             return
 
@@ -734,7 +763,8 @@ class PartHandler:
         for part in reversed(parts_with_overlay):
             logger.debug("migrate part %r layer to prime", part.name)
             visible_files, visible_dirs = overlays.visible_in_layer(
-                part.part_layer_dir, part.prime_dir
+                part.part_layer_dir,
+                part.prime_dir,
             )
             layer_files, layer_dirs = migration.migrate_files(
                 files=visible_files,
@@ -749,7 +779,9 @@ class PartHandler:
 
         # Clean up dangling whiteout files with no backing files to white out
         dangling_whiteouts = migration.filter_dangling_whiteouts(
-            migrated_files, migrated_dirs, base_dir=self._overlay_manager.base_layer_dir
+            migrated_files,
+            migrated_dirs,
+            base_dir=self._overlay_manager.base_layer_dir,
         )
         for whiteout in dangling_whiteouts:
             primed_whiteout = self._part_info.prime_dir / whiteout
@@ -785,7 +817,7 @@ class PartHandler:
             handler = self._clean_prime
         else:
             raise RuntimeError(
-                f"Attempt to clean invalid step {step!r} in part {self._part!r}."
+                f"Attempt to clean invalid step {step!r} in part {self._part!r}.",
             )
 
         handler()
@@ -826,7 +858,8 @@ class PartHandler:
         """
         part_states = _load_part_states(step, self._part_list)
         overlay_migration_state = states.load_overlay_migration_state(
-            self._part.overlay_dir, step
+            self._part.overlay_dir,
+            step,
         )
 
         migration.clean_shared_area(
@@ -847,7 +880,8 @@ class PartHandler:
                 overlay_migration_state=overlay_migration_state,
             )
             overlay_migration_state_path = states.get_overlay_migration_state_path(
-                self._part.overlay_dir, step
+                self._part.overlay_dir,
+                step,
             )
             overlay_migration_state_path.unlink()
 
@@ -894,7 +928,8 @@ class PartHandler:
             )
         except packages_errors.PackageNotFound as err:
             raise errors.StagePackageNotFound(
-                part_name=self._part.name, package_name=err.package_name
+                part_name=self._part.name,
+                package_name=err.package_name,
             ) from err
 
         return fetched_packages
@@ -906,7 +941,8 @@ class PartHandler:
             return None
 
         packages.snaps.download_snaps(
-            snaps_list=stage_snaps, directory=str(self._part.part_snaps_dir)
+            snaps_list=stage_snaps,
+            directory=str(self._part.part_snaps_dir),
         )
 
         return stage_snaps
@@ -926,7 +962,8 @@ class PartHandler:
                 ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
-                part_name=self._part.name, package_name=err.package_name
+                part_name=self._part.name,
+                package_name=err.package_name,
             ) from err
 
     def _unpack_stage_packages(self) -> None:
@@ -985,7 +1022,10 @@ def _remove(filename: Path) -> None:
 
 
 def _apply_file_filter(
-    *, filter_files: Set[str], filter_dirs: Set[str], destdir: Path
+    *,
+    filter_files: Set[str],
+    filter_dirs: Set[str],
+    destdir: Path,
 ) -> None:
     """Remove files and directories from the filesystem.
 

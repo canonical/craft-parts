@@ -30,11 +30,11 @@ parts_yaml = textwrap.dedent(
         # test is executed as a regular user
         build-snaps: [core20]
         stage-packages: [hello]
-    """
+    """,
 )
 
 
-def test_logging_info(new_dir, caplog, monkeypatch):  # noqa: ARG001
+def test_logging_info(new_dir, caplog, monkeypatch):
     """Test some expected INFO-level log messages from whole-program execution."""
     caplog.set_level(logging.INFO, logger="craft_parts")
     Path("parts.yaml").write_text(parts_yaml)

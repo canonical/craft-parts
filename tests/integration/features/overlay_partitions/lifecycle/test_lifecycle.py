@@ -41,7 +41,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # first run
     # command pull
     lf = LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PULL)
     assert actions == [
@@ -55,7 +58,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # foobar part depends on nothing
     # command prime foobar
     lf = LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME, ["foobar"])
     assert actions == [
@@ -87,7 +93,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # Then running build for bar that depends on foo
     # command: build bar
     lf = LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -104,7 +113,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
 
     # Building bar again rebuilds it (explicit request)
     lf = LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -112,7 +124,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action(
-            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step",
         ),
         # fmt: on
     ]
@@ -124,7 +136,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     parts = yaml.safe_load(new_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
@@ -156,7 +171,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
             reason="required to build 'bar'",
         ),
         Action(
-            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step",
         ),
         # fmt: on
     ]
@@ -165,7 +180,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
 
     # A request to build all parts skips everything
     lf = LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD)
     assert actions == [
@@ -176,7 +194,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action(
-            "foobar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+            "foobar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran",
         ),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -187,7 +205,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # Touching a source file triggers an update
     Path("a.tar.gz").touch()
     lf = LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.BUILD)
     assert actions == [
@@ -208,7 +229,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
             reason="'PULL' step changed",
         ),
         Action(
-            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran",
         ),
         Action(
             "foobar",
@@ -252,10 +273,10 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action(
-            "foo", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+            "foo", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran",
         ),
         Action(
-            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran",
         ),
         Action(
             "foobar",

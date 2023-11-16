@@ -80,7 +80,7 @@ class PartSpec(BaseModel):
             raise ValueError("path cannot be empty")
         if item[0] == "/":
             raise ValueError(
-                f"{item!r} must be a relative path (cannot start with '/')"
+                f"{item!r} must be a relative path (cannot start with '/')",
             )
         return item
 
@@ -163,7 +163,7 @@ class PartSpec(BaseModel):
         return bool(
             self.overlay_packages
             or self.overlay_script is not None
-            or self.overlay_files != ["*"]
+            or self.overlay_files != ["*"],
         )
 
 
@@ -196,7 +196,8 @@ class Part:
         self._partitions = partitions
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(
-                part_name=name, message="part data is not a dictionary"
+                part_name=name,
+                message="part data is not a dictionary",
             )
 
         if not project_dirs:
@@ -218,7 +219,8 @@ class Part:
             self.spec = PartSpec.unmarshal(data)
         except ValidationError as err:
             raise errors.PartSpecificationError.from_validation_error(
-                part_name=name, error_list=err.errors()
+                part_name=name,
+                error_list=err.errors(),
             ) from err
 
     def __repr__(self) -> str:
@@ -413,13 +415,16 @@ class Part:
             ("prime", self.spec.prime_files),
         ]:
             error_list.extend(
-                self._check_partitions_in_filepaths(fileset_name, fileset, partitions)
+                self._check_partitions_in_filepaths(fileset_name, fileset, partitions),
             )
 
         return error_list
 
     def _check_partitions_in_filepaths(
-        self, fileset_name: str, fileset: Iterable[str], partitions: List[str]
+        self,
+        fileset_name: str,
+        fileset: Iterable[str],
+        partitions: List[str],
     ) -> List[str]:
         """Check if partitions are properly used in a fileset.
 
@@ -441,7 +446,7 @@ class Part:
                 partition = match.group("partition")
                 if partition not in partitions:
                     error_list.append(
-                        f"    unknown partition {partition!r} in {filepath!r}"
+                        f"    unknown partition {partition!r} in {filepath!r}",
                     )
 
         if error_list:
@@ -466,7 +471,8 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
 
 
 def part_list_by_name(
-    names: Optional[Sequence[str]], part_list: List[Part]
+    names: Optional[Sequence[str]],
+    part_list: List[Part],
 ) -> List[Part]:
     """Return a list of parts from part_list that are named in names.
 
@@ -529,7 +535,10 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
 
 
 def part_dependencies(
-    part: Part, *, part_list: List[Part], recursive: bool = False
+    part: Part,
+    *,
+    part_list: List[Part],
+    recursive: bool = False,
 ) -> Set[Part]:
     """Return a set of all the parts upon which the named part depends.
 
@@ -546,14 +555,19 @@ def part_dependencies(
         for dependency_name in dependency_names:
             dep = part_by_name(dependency_name, part_list=part_list)
             dependencies |= part_dependencies(
-                dep, part_list=part_list, recursive=recursive
+                dep,
+                part_list=part_list,
+                recursive=recursive,
             )
 
     return dependencies
 
 
 def has_overlay_visibility(
-    part: Part, *, part_list: List[Part], viewers: Optional[Set[Part]] = None
+    part: Part,
+    *,
+    part_list: List[Part],
+    viewers: Optional[Set[Part]] = None,
 ) -> bool:
     """Check if a part can see the overlay filesystem.
 
@@ -621,7 +635,7 @@ def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> No
         raise errors.FeatureError(
             "Error: Invalid usage of partitions:\n"
             + "\n".join(error_list)
-            + f"\nValid partitions are {humanize_list(partitions, 'and')}."
+            + f"\nValid partitions are {humanize_list(partitions, 'and')}.",
         )
 
 

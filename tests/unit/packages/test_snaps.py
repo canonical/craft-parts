@@ -45,7 +45,7 @@ class TestSnapPackageCurrentChannel:
         self.assert_channels(
             snap="fake-snap-branch/candidate/branch",
             installed_snaps=[
-                {"name": "fake-snap-branch", "channel": "candidate/branch"}
+                {"name": "fake-snap-branch", "channel": "candidate/branch"},
             ],
             expected="latest/candidate/branch",
             fake_snapd=fake_snapd,
@@ -116,7 +116,10 @@ class TestPackageIsInStore:
 
     def test_default_not_in_store(self, fake_snapd):
         self.assert_in_store(
-            snap="missing-snap", find_result=[], expected=False, fake_snapd=fake_snapd
+            snap="missing-snap",
+            find_result=[],
+            expected=False,
+            fake_snapd=fake_snapd,
         )
 
     def test_track_risk_not_in_store(self, fake_snapd):
@@ -140,9 +143,9 @@ class TestSnapPackageIsClassic:
             find_result=[
                 {
                     "fake-snap": {
-                        "channels": {"classic/stable": {"confinement": "classic"}}
-                    }
-                }
+                        "channels": {"classic/stable": {"confinement": "classic"}},
+                    },
+                },
             ],
             expected=True,
             fake_snapd=fake_snapd,
@@ -154,9 +157,9 @@ class TestSnapPackageIsClassic:
             find_result=[
                 {
                     "fake-snap": {
-                        "channels": {"strict/stable": {"confinement": "strict"}}
-                    }
-                }
+                        "channels": {"strict/stable": {"confinement": "strict"}},
+                    },
+                },
             ],
             expected=False,
             fake_snapd=fake_snapd,
@@ -168,9 +171,9 @@ class TestSnapPackageIsClassic:
             find_result=[
                 {
                     "fake-snap": {
-                        "channels": {"devmode/stable": {"confinement": "devmode"}}
-                    }
-                }
+                        "channels": {"devmode/stable": {"confinement": "devmode"}},
+                    },
+                },
             ],
             expected=False,
             fake_snapd=fake_snapd,
@@ -190,9 +193,9 @@ class TestSnapPackageIsValid:
             find_result=[
                 {
                     "fake-snap": {
-                        "channels": {"latest/stable": {"confinement": "strict"}}
-                    }
-                }
+                        "channels": {"latest/stable": {"confinement": "strict"}},
+                    },
+                },
             ],
             expected=True,
             fake_snapd=fake_snapd,
@@ -204,9 +207,9 @@ class TestSnapPackageIsValid:
             find_result=[
                 {
                     "fake-snap": {
-                        "channels": {"strict/stable": {"confinement": "strict"}}
-                    }
-                }
+                        "channels": {"strict/stable": {"confinement": "strict"}},
+                    },
+                },
             ],
             expected=True,
             fake_snapd=fake_snapd,
@@ -218,9 +221,9 @@ class TestSnapPackageIsValid:
             find_result=[
                 {
                     "fake-snap": {
-                        "channels": {"strict/stable": {"confinement": "strict"}}
-                    }
-                }
+                        "channels": {"strict/stable": {"confinement": "strict"}},
+                    },
+                },
             ],
             expected=False,
             fake_snapd=fake_snapd,
@@ -228,7 +231,10 @@ class TestSnapPackageIsValid:
 
     def test_missing_snap(self, fake_snapd):
         self.assert_valid(
-            snap="missing-snap", find_result=[], expected=False, fake_snapd=fake_snapd
+            snap="missing-snap",
+            find_result=[],
+            expected=False,
+            fake_snapd=fake_snapd,
         )
 
     def test_installed(self):
@@ -239,7 +245,10 @@ class TestSnapPackageIsValid:
     def test_404(self, fake_snapd):
         fake_snapd.find_code = 404
         self.assert_valid(
-            snap="missing-snap", find_result=[], expected=False, fake_snapd=fake_snapd
+            snap="missing-snap",
+            find_result=[],
+            expected=False,
+            fake_snapd=fake_snapd,
         )
 
 
@@ -247,7 +256,7 @@ class TestSnapPackageIsValid:
 class TestSnapPackageLifecycle:
     def test_install_classic(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}},
         ]
 
         snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
@@ -265,7 +274,7 @@ class TestSnapPackageLifecycle:
 
     def test_install_non_classic(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}},
         ]
 
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
@@ -310,7 +319,7 @@ class TestSnapPackageLifecycle:
 
     def test_install_logged_in(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}},
         ]
 
         fake_snap_command.login("user@email.com")
@@ -329,7 +338,7 @@ class TestSnapPackageLifecycle:
 
     def test_refresh(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}},
         ]
 
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
@@ -359,7 +368,7 @@ class TestSnapPackageLifecycle:
 
     def test_download(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}},
         ]
 
         snap_pkg = snaps.SnapPackage("fake-snap")
@@ -368,18 +377,18 @@ class TestSnapPackageLifecycle:
 
     def test_download_channel(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}}
+            {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}},
         ]
 
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.download()
         assert fake_snap_command.calls == [
-            ["snap", "download", "fake-snap", "--channel", "strict/stable"]
+            ["snap", "download", "fake-snap", "--channel", "strict/stable"],
         ]
 
     def test_download_classic(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}},
         ]
 
         snap_pkg = snaps.SnapPackage("fake-snap")
@@ -391,8 +400,8 @@ class TestSnapPackageLifecycle:
             {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}},
             {
                 "other-fake-snap": {
-                    "channels": {"latest/stable": {"confinement": "strict"}}
-                }
+                    "channels": {"latest/stable": {"confinement": "strict"}},
+                },
             },
         ]
 
@@ -419,7 +428,8 @@ class TestSnapPackageLifecycle:
 
         with pytest.raises(errors.SnapDownloadError):
             snaps.download_snaps(
-                snaps_list=["fake-snap", "other-invalid"], directory="fakedir"
+                snaps_list=["fake-snap", "other-invalid"],
+                directory="fakedir",
             )
 
         assert fake_snap_command.calls == [
@@ -429,7 +439,7 @@ class TestSnapPackageLifecycle:
 
     def test_refresh_to_classic(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}},
         ]
 
         snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
@@ -462,7 +472,7 @@ class TestSnapPackageLifecycle:
 
     def test_refresh_logged_in(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}},
         ]
 
         fake_snap_command.login("user@email.com")
@@ -486,15 +496,15 @@ class TestSnapPackageLifecycle:
                     "channel": "stable",
                     "type": "app",
                     "channels": {"latest/stable": {"confinement": "strict"}},
-                }
-            }
+                },
+            },
         ]
         fake_snapd.snaps_result = [
             {
                 "name": "fake-snap",
                 "channel": "stable",
                 "revision": "test-fake-snap-revision",
-            }
+            },
         ]
 
         installed_snaps = snaps.install_snaps(["fake-snap"])
@@ -507,15 +517,15 @@ class TestSnapPackageLifecycle:
                     "channel": "beta",
                     "type": "base",
                     "channels": {"latest/beta": {"confinement": "strict"}},
-                }
-            }
+                },
+            },
         ]
         fake_snapd.snaps_result = [
             {
                 "name": "fake-base-snap",
                 "channel": "beta",
                 "revision": "test-fake-base-snap-revision",
-            }
+            },
         ]
 
         installed_snaps = snaps.install_snaps(["fake-base-snap"])

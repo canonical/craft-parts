@@ -199,7 +199,10 @@ class LifecycleManager:
         return self._project_info
 
     def clean(
-        self, step: Step = Step.PULL, *, part_names: Optional[List[str]] = None
+        self,
+        step: Step = Step.PULL,
+        *,
+        part_names: Optional[List[str]] = None,
     ) -> None:
         """Clean the specified step and parts.
 
@@ -223,7 +226,9 @@ class LifecycleManager:
         packages.Repository.refresh_packages_list()
 
     def plan(
-        self, target_step: Step, part_names: Optional[Sequence[str]] = None
+        self,
+        target_step: Step,
+        part_names: Optional[Sequence[str]] = None,
     ) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
@@ -298,7 +303,8 @@ def _build_part(
     """
     if not isinstance(spec, dict):
         raise errors.PartSpecificationError(
-            part_name=name, message="part definition is malformed"
+            part_name=name,
+            message="part definition is malformed",
         )
 
     plugin_name = spec.get("plugin", "")
@@ -325,7 +331,8 @@ def _build_part(
         properties = plugin_class.properties_class.unmarshal(spec)
     except ValidationError as err:
         raise errors.PartSpecificationError.from_validation_error(
-            part_name=name, error_list=err.errors()
+            part_name=name,
+            error_list=err.errors(),
         ) from err
     except ValueError as err:
         raise errors.PartSpecificationError(part_name=name, message=str(err)) from err
@@ -349,7 +356,8 @@ def _validate_part_dependencies(part: Part, parts_data: Dict[str, Any]) -> None:
 
 
 def _validate_partition_usage_in_parts(
-    part_list: List[Part], partitions: List[str]
+    part_list: List[Part],
+    partitions: List[str],
 ) -> None:
     # skip validation if partitions are not enabled
     if not Features().enable_partitions:
@@ -366,7 +374,8 @@ def _validate_partition_usage_in_parts(
 
 
 def _validate_partitions_in_paths(
-    paths: List[str], valid_partitions: List[str]
+    paths: List[str],
+    valid_partitions: List[str],
 ) -> None:
     """Validate a list of paths to ensure that any partitions are unambiguous.
 
@@ -388,7 +397,9 @@ def _validate_partitions_in_paths(
             partition = match.group("partition")
             if partition not in valid_partitions:
                 raise errors.InvalidPartitionError(
-                    partition, filepath, valid_partitions
+                    partition,
+                    filepath,
+                    valid_partitions,
                 )
         match = re.match("^-?(?P<possible_partition>[a-z]+)/?", filepath)
         if match:

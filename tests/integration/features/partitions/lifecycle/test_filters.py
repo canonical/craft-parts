@@ -35,13 +35,16 @@ def test_stage_prime_filtering(new_dir, partitions):
               - testfile
             prime:
               - -*
-        """
+        """,
     )
 
     parts = yaml.safe_load(parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
     assert actions == [

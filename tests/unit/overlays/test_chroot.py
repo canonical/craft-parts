@@ -28,7 +28,7 @@ def target_func(content: str) -> int:
     return 1337
 
 
-def target_func_error(content: str) -> int:  # noqa: ARG001
+def target_func_error(content: str) -> int:
     raise RuntimeError("bummer")
 
 
@@ -70,7 +70,7 @@ class TestChroot:
             call(
                 target=chroot._runner,
                 args=(new_root, ANY, target_func, ("content",), {}),
-            )
+            ),
         ]
         assert mock_mount.mock_calls == [
             call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
@@ -103,7 +103,7 @@ class TestChroot:
             call(
                 target=chroot._runner,
                 args=(new_root, ANY, target_func, ("content",), {}),
-            )
+            ),
         ]
         assert mock_mount.mock_calls == []
         assert mock_umount.mock_calls == []
@@ -128,7 +128,7 @@ class TestChroot:
             call(
                 target=chroot._runner,
                 args=(new_root, ANY, target_func, ("content",), {}),
-            )
+            ),
         ]
         assert mock_mount.mock_calls == [
             call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
@@ -156,7 +156,7 @@ class TestChroot:
             call(
                 target=chroot._runner,
                 args=(new_root, ANY, target_func, ("content",), {}),
-            )
+            ),
         ]
         assert mock_mount.mock_calls == [
             call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
@@ -176,7 +176,11 @@ class TestChroot:
     @pytest.mark.usefixtures("new_dir")
     def test_runner_error(self, fake_conn, mock_chdir, mock_chroot):
         chroot._runner(
-            Path("/some/path"), fake_conn, target_func_error, ("func arg",), {}
+            Path("/some/path"),
+            fake_conn,
+            target_func_error,
+            ("func arg",),
+            {},
         )
 
         assert mock_chdir.mock_calls == [call(Path("/some/path"))]

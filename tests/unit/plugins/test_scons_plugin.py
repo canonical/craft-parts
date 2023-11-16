@@ -18,7 +18,9 @@ def test_validate_environment(dependency_fixture, part_info):
     scons = dependency_fixture("scons", output="SCons by Steven Knight et al.")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(scons.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(scons.parent)}",
+        properties=properties,
     )
     validator.validate_environment()
 
@@ -28,7 +30,9 @@ def test_validate_environment_missing_scons(part_info):
     plugin = SConsPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -42,7 +46,9 @@ def test_validate_environment_broken_scons(dependency_fixture, part_info):
     scons = dependency_fixture("scons", broken=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(scons.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(scons.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -56,7 +62,9 @@ def test_validate_environment_invalid_scons(dependency_fixture, part_info):
     scons = dependency_fixture("scons", invalid=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(scons.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(scons.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -69,7 +77,9 @@ def test_validate_environment_with_scons_part(part_info):
     plugin = SConsPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     validator.validate_environment(part_dependencies=["scons-deps"])
 
@@ -79,7 +89,9 @@ def test_validate_environment_without_scons_part(part_info):
     plugin = SConsPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=[])
@@ -103,7 +115,7 @@ def test_get_build_environment(part_info):
     plugin = SConsPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {
-        "DESTDIR": str(part_info.part_install_dir)
+        "DESTDIR": str(part_info.part_install_dir),
     }
 
 
@@ -125,7 +137,7 @@ def test_get_build_commands(part_info):
 
 def test_get_build_commands_with_parameters(part_info):
     properties = SConsPlugin.properties_class.unmarshal(
-        {"source": ".", "scons-parameters": ["a=1", "b=2"]}
+        {"source": ".", "scons-parameters": ["a=1", "b=2"]},
     )
     plugin = SConsPlugin(properties=properties, part_info=part_info)
 

@@ -40,7 +40,7 @@ def test_stage_snap(new_dir, partitions, fake_snap_command, foo_install_dir):
           foo:
             plugin: nil
             stage-snaps: [basic]
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
@@ -80,7 +80,7 @@ def test_stage_snap_download_error(new_dir, partitions, fake_snap_command):
           foo:
             plugin: nil
             stage-snaps: [basic]
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
@@ -115,7 +115,7 @@ def test_stage_snap_unpack_error(new_dir, partitions, fake_snap_command):
           foo:
             plugin: nil
             stage-snaps: [bad-snap]
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)

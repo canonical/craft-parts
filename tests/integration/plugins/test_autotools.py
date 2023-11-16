@@ -41,7 +41,7 @@ def test_autotools_plugin(new_dir, partitions, monkeypatch):
               - gperf
               - help2man
               - texinfo
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(

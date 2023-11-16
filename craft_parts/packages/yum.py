@@ -178,7 +178,7 @@ class YUMRepository(BaseRepository):
         would lead to an inefficiency, this should be implemented in the future.
         """
         logger.debug(
-            "Called not implemented method 'YUMRepository.get_installed_packages'"
+            "Called not implemented method 'YUMRepository.get_installed_packages'",
         )
         return []
 

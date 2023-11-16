@@ -30,7 +30,7 @@ def test_npm_plugin(new_dir, partitions):
           foo:
             plugin: npm
             source: .
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -40,8 +40,8 @@ def test_npm_plugin(new_dir, partitions):
             #!/usr/bin/env node
 
             console.log('hello world');
-            """
-        )
+            """,
+        ),
     )
 
     Path("package.json").write_text(
@@ -60,8 +60,8 @@ def test_npm_plugin(new_dir, partitions):
               "author": "",
               "license": "GPL-3.0"
             }
-            """
-        )
+            """,
+        ),
     )
 
     Path("package-lock.json").write_text(
@@ -72,8 +72,8 @@ def test_npm_plugin(new_dir, partitions):
               "version": "1.0.0",
               "lockfileVersion": 1
             }
-            """
-        )
+            """,
+        ),
     )
 
     lifecycle = LifecycleManager(
@@ -104,7 +104,7 @@ def test_npm_plugin_include_node(new_dir, partitions):
             source: .
             npm-include-node: True
             npm-node-version: "16.14.2"
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -114,8 +114,8 @@ def test_npm_plugin_include_node(new_dir, partitions):
             #!/usr/bin/env node
 
             console.log('hello world');
-            """
-        )
+            """,
+        ),
     )
 
     Path("package.json").write_text(
@@ -134,8 +134,8 @@ def test_npm_plugin_include_node(new_dir, partitions):
               "author": "",
               "license": "GPL-3.0"
             }
-            """
-        )
+            """,
+        ),
     )
 
     Path("package-lock.json").write_text(
@@ -146,8 +146,8 @@ def test_npm_plugin_include_node(new_dir, partitions):
               "version": "1.0.0",
               "lockfileVersion": 1
             }
-            """
-        )
+            """,
+        ),
     )
 
     lifecycle = LifecycleManager(

@@ -61,7 +61,7 @@ class TestPartSpecs:
             "override-stage": "override-stage",
             "override-prime": "override-prime",
             "permissions": [
-                {"path": "etc/*", "owner": 1111, "group": 1111, "mode": "755"}
+                {"path": "etc/*", "owner": 1111, "group": 1111, "mode": "755"},
             ],
         }
 
@@ -76,7 +76,7 @@ class TestPartSpecs:
     def test_unmarshal_not_dict(self):
         with pytest.raises(TypeError) as raised:
             PartSpec.unmarshal(
-                False  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
+                False,  # noqa: FBT003 # type: ignore[reportGeneralTypeIssues]
             )
         assert str(raised.value) == "part data is not a dictionary"
 
@@ -481,7 +481,9 @@ class TestPartHelpers:
         part_list = [p1, p2, p3, p4, p5]
 
         has_overlay_visibility = partial(
-            parts.has_overlay_visibility, viewers=set(), part_list=part_list
+            parts.has_overlay_visibility,
+            viewers=set(),
+            part_list=part_list,
         )
 
         assert has_overlay_visibility(p1) is True

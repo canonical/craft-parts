@@ -37,7 +37,7 @@ def test_dump_source(new_dir, partitions, install_dir):
           foo:
             plugin: dump
             source: subdir
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
@@ -45,7 +45,10 @@ def test_dump_source(new_dir, partitions, install_dir):
     source_dir.mkdir()
     Path(source_dir / "foobar.txt").touch()
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_dump", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_dump",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     with lf.action_executor() as ctx:
@@ -63,7 +66,7 @@ def test_dump_ignore_dirs(new_dir, partitions, install_dir):
           foo:
             plugin: dump
             source: src
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
@@ -71,7 +74,10 @@ def test_dump_ignore_dirs(new_dir, partitions, install_dir):
     Path("src/foobar.txt").touch()
     Path("src/subdir").mkdir()
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_dump", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_dump",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     with lf.action_executor() as ctx:

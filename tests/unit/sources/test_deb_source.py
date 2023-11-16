@@ -28,7 +28,11 @@ def mock_process_run(mocker):
 
 @pytest.mark.http_request_handler("FakeFileHTTPRequestHandler")
 def test_pull_debfile_must_download_and_extract(
-    tmp_path, http_server, mocker, mock_process_run, partitions
+    tmp_path,
+    http_server,
+    mocker,
+    mock_process_run,
+    partitions,
 ):
     dest_dir = tmp_path / "src"
     dest_dir.mkdir()
@@ -39,7 +43,10 @@ def test_pull_debfile_must_download_and_extract(
     )
     dirs = ProjectDirs(partitions=partitions)
     deb_source = sources.DebSource(
-        source, dest_dir, cache_dir=tmp_path, project_dirs=dirs
+        source,
+        dest_dir,
+        cache_dir=tmp_path,
+        project_dirs=dirs,
     )
     deb_source.pull()
 

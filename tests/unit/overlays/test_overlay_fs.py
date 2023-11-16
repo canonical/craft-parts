@@ -37,7 +37,7 @@ class TestOverlayFS:
 
     def test_mount_single_lower(self, mocker):
         mock_mount_overlayfs = mocker.patch(
-            "craft_parts.utils.os_utils.mount_overlayfs"
+            "craft_parts.utils.os_utils.mount_overlayfs",
         )
 
         ovfs = self._make_overlay_fs([Path("/lower")])
@@ -49,7 +49,7 @@ class TestOverlayFS:
 
     def test_mount_multiple_lower(self, mocker):
         mock_mount_overlayfs = mocker.patch(
-            "craft_parts.utils.os_utils.mount_overlayfs"
+            "craft_parts.utils.os_utils.mount_overlayfs",
         )
 
         ovfs = self._make_overlay_fs([Path("/lower1"), Path("/lower2")])

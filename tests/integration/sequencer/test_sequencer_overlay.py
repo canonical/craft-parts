@@ -50,7 +50,7 @@ _pull_state_foo = textwrap.dedent(
     assets:
       stage-packages:
       - fake-package-foo=1
-    """
+    """,
 )
 
 _build_state_foo = textwrap.dedent(
@@ -66,7 +66,7 @@ _build_state_foo = textwrap.dedent(
     project_options:
       target_arch: amd64
     assets: {}
-    """
+    """,
 )
 
 _pull_state_bar = textwrap.dedent(
@@ -87,7 +87,7 @@ _pull_state_bar = textwrap.dedent(
     assets:
       stage-packages:
       - fake-package-bar=2
-    """
+    """,
 )
 
 
@@ -187,7 +187,10 @@ class TestSequencerPlan:
 
         assert actions == [
             Action(
-                "foo", Step.PULL, action_type=ActionType.RERUN, reason="requested step"
+                "foo",
+                Step.PULL,
+                action_type=ActionType.RERUN,
+                reason="requested step",
             ),
         ]
 

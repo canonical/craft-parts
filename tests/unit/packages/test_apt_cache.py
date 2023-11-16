@@ -160,7 +160,8 @@ class TestMockedApt:
 
         snap_dir = str(tmpdir)
         mocker.patch.dict(
-            os.environ, {"SNAP_NAME": "test_configure_in_snap", "SNAP": snap_dir}
+            os.environ,
+            {"SNAP_NAME": "test_configure_in_snap", "SNAP": snap_dir},
         )
         AptCache().configure_apt("test_configure_in_snap")
         # fmt: off

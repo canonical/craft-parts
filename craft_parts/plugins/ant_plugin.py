@@ -51,7 +51,9 @@ class AntPluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="ant", required=["source"]
+            data,
+            plugin_name="ant",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -65,7 +67,9 @@ class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self,
+        *,
+        part_dependencies: Optional[List[str]] = None,
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 

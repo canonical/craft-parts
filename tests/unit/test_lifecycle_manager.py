@@ -54,7 +54,7 @@ class TestLifecycleManager:
             parts:
               foo:
                 plugin: nil
-            """
+            """,
         )
         self._data = yaml.safe_load(yaml_data)
         self._lcm_kwargs: Dict[str, Any] = {}
@@ -73,7 +73,10 @@ class TestLifecycleManager:
     @pytest.mark.parametrize("name", ["myapp", "Myapp_2", "MYAPP", "x"])
     def test_application_name(self, new_dir, name):
         lf = lifecycle_manager.LifecycleManager(
-            self._data, application_name=name, cache_dir=new_dir, **self._lcm_kwargs
+            self._data,
+            application_name=name,
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
         )
         info = lf.project_info
         assert info.application_name == name
@@ -82,7 +85,9 @@ class TestLifecycleManager:
     def test_application_name_invalid(self, new_dir, name):
         with pytest.raises(errors.InvalidApplicationName) as raised:
             lifecycle_manager.LifecycleManager(
-                self._data, application_name=name, cache_dir=new_dir
+                self._data,
+                application_name=name,
+                cache_dir=new_dir,
             )
         assert raised.value.name == name
 
@@ -166,7 +171,7 @@ class TestLifecycleManager:
                 project_info=ANY,
                 ignore_outdated=["ign1", "ign2"],
                 base_layer_hash=None,
-            )
+            ),
         ]
 
     def test_executor_creation(self, new_dir, mocker):
@@ -194,7 +199,7 @@ class TestLifecycleManager:
                 track_stage_packages=False,
                 base_layer_dir=None,
                 base_layer_hash=None,
-            )
+            ),
         ]
 
     def test_get_primed_stage_packages(self, new_dir):
@@ -339,8 +344,8 @@ class TestPluginProperties:
                         "source": ".",
                         "plugin": "make",
                         "make-parameters": ["-DTEST_PARAMETER"],
-                    }
-                }
+                    },
+                },
             },
         )
 
@@ -358,8 +363,8 @@ class TestPluginProperties:
                     "make": {
                         "source": ".",
                         "make-parameters": ["-DTEST_PARAMETER"],
-                    }
-                }
+                    },
+                },
             },
         )
 
@@ -376,8 +381,8 @@ class TestPluginProperties:
                         "bar": {
                             "plugin": "invalid",
                             "make-parameters": ["-DTEST_PARAMETER"],
-                        }
-                    }
+                        },
+                    },
                 },
                 application_name="test_manager",
                 cache_dir=new_dir,
@@ -393,8 +398,8 @@ class TestPluginProperties:
                     "parts": {
                         "bar": {
                             "make-parameters": ["-DTEST_PARAMETER"],
-                        }
-                    }
+                        },
+                    },
                 },
             )
         assert raised.value.part_name == "bar"
@@ -436,7 +441,8 @@ class TestValidatePartitions:
     def test_validate_partitions_in_keywords_failure(self, filepaths, message):
         with pytest.raises(errors.PartitionError) as exc_info:
             lifecycle_manager._validate_partitions_in_paths(
-                filepaths, ["default", "other"]
+                filepaths,
+                ["default", "other"],
             )
 
         assert exc_info.value.brief == message

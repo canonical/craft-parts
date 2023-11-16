@@ -115,7 +115,8 @@ def test_part_specification_error_from_validation_error() -> None:
         },
     ]
     err = errors.PartSpecificationError.from_validation_error(
-        part_name="foo", error_list=error_list
+        part_name="foo",
+        error_list=error_list,
     )
     assert err.part_name == "foo"
     assert err.brief == "Part 'foo' validation failed."
@@ -243,7 +244,9 @@ def test_file_organize_error():
 
 def test_part_files_conflict():
     err = errors.PartFilesConflict(
-        part_name="foo", other_part_name="bar", conflicting_files=["file1", "file2"]
+        part_name="foo",
+        other_part_name="bar",
+        conflicting_files=["file1", "file2"],
     )
     assert err.part_name == "foo"
     assert err.other_part_name == "bar"
@@ -262,7 +265,8 @@ def test_part_files_conflict():
 
 def test_stage_files_conflict():
     err = errors.StageFilesConflict(
-        part_name="foo", conflicting_files=["file1", "file2"]
+        part_name="foo",
+        conflicting_files=["file1", "file2"],
     )
     assert err.part_name == "foo"
     assert err.conflicting_files == ["file1", "file2"]
@@ -280,7 +284,8 @@ def test_stage_files_conflict():
 
 def test_plugin_environment_validation_error():
     err = errors.PluginEnvironmentValidationError(
-        part_name="foo", reason="compiler not found"
+        part_name="foo",
+        reason="compiler not found",
     )
     assert err.part_name == "foo"
     assert err.reason == "compiler not found"
@@ -301,7 +306,9 @@ def test_plugin_build_error():
 
 def test_invalid_control_api_call():
     err = errors.InvalidControlAPICall(
-        part_name="foo", scriptlet_name="override-build", message="everything is broken"
+        part_name="foo",
+        scriptlet_name="override-build",
+        message="everything is broken",
     )
     assert err.part_name == "foo"
     assert err.scriptlet_name == "override-build"
@@ -316,7 +323,9 @@ def test_invalid_control_api_call():
 
 def test_scriptlet_run_error():
     err = errors.ScriptletRunError(
-        part_name="foo", scriptlet_name="override-build", exit_code=42
+        part_name="foo",
+        scriptlet_name="override-build",
+        exit_code=42,
     )
     assert err.part_name == "foo"
     assert err.scriptlet_name == "override-build"

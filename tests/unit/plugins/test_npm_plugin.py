@@ -58,7 +58,10 @@ class TestPluginNpmPlugin:
     )
     @pytest.mark.usefixtures("new_dir")
     def test_validate_environment_missing_dependencies(
-        self, dependencies, dependency_fixture, part_info
+        self,
+        dependencies,
+        dependency_fixture,
+        part_info,
     ):
         """Validate that missing dependencies raise an exception.
 
@@ -75,7 +78,9 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
         validator = plugin.validator_class(
-            part_name="my-part", env=path, properties=properties
+            part_name="my-part",
+            env=path,
+            properties=properties,
         )
 
         with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
@@ -92,7 +97,10 @@ class TestPluginNpmPlugin:
     )
     @pytest.mark.usefixtures("new_dir")
     def test_validate_environment_broken_dependencies(
-        self, dependencies, dependency_fixture, part_info
+        self,
+        dependencies,
+        dependency_fixture,
+        part_info,
     ):
         """Validate that broken dependencies raise an exception.
 
@@ -110,7 +118,9 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
         validator = plugin.validator_class(
-            part_name="my-part", env=path, properties=properties
+            part_name="my-part",
+            env=path,
+            properties=properties,
         )
 
         with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
@@ -126,7 +136,9 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
         validator = plugin.validator_class(
-            part_name="my-part", env="PATH=/foo", properties=properties
+            part_name="my-part",
+            env="PATH=/foo",
+            properties=properties,
         )
 
         validator.validate_environment(part_dependencies=["npm-deps"])
@@ -186,7 +198,7 @@ class TestPluginNpmPlugin:
             {
                 "source": ".",
                 "npm-include-node": False,
-            }
+            },
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -195,7 +207,7 @@ class TestPluginNpmPlugin:
     @pytest.mark.usefixtures("new_dir")
     def test_get_build_packages_include_node_true(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal(
-            {"source": ".", "npm-include-node": True, "npm-node-version": "1.0.0"}
+            {"source": ".", "npm-include-node": True, "npm-node-version": "1.0.0"},
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -214,7 +226,7 @@ class TestPluginNpmPlugin:
             {
                 "source": ".",
                 "npm-include-node": False,
-            }
+            },
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -227,7 +239,7 @@ class TestPluginNpmPlugin:
                 "source": ".",
                 "npm-include-node": True,
                 "npm-node-version": "1.0.0",
-            }
+            },
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -247,7 +259,7 @@ class TestPluginNpmPlugin:
     @pytest.mark.usefixtures("new_dir")
     def test_get_build_commands_false(self, part_info):
         properties = NpmPlugin.properties_class.unmarshal(
-            {"source": ".", "npm-include-node": False}
+            {"source": ".", "npm-include-node": False},
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -263,7 +275,7 @@ class TestPluginNpmPlugin:
                 "source": ".",
                 "npm-include-node": True,
                 "npm-node-version": "16.14.2",
-            }
+            },
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -285,7 +297,7 @@ class TestPluginNpmPlugin:
                 {
                     "source": ".",
                     "npm-include-node": True,
-                }
+                },
             )
 
         assert raised.value.errors()[0]["msg"] == (

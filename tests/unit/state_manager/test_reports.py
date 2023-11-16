@@ -32,7 +32,8 @@ from craft_parts.steps import Step
 )
 def test_outdated_report(step, source_modified, result):
     report = reports.OutdatedReport(
-        previous_step_modified=step, source_modified=source_modified
+        previous_step_modified=step,
+        source_modified=source_modified,
     )
     assert report.reason() == result
 
@@ -75,6 +76,8 @@ def test_outdated_report(step, source_modified, result):
 )
 def test_dirty_report(props, opts, deps, result):
     report = reports.DirtyReport(
-        dirty_properties=props, dirty_project_options=opts, changed_dependencies=deps
+        dirty_properties=props,
+        dirty_project_options=opts,
+        changed_dependencies=deps,
     )
     assert report.reason() == result

@@ -52,7 +52,8 @@ class TestHelpers:
         assert overlays.is_oci_opaque_dir(dir2) is False
 
     @pytest.mark.parametrize(
-        ("name", "oci_name"), [("foo", ".wh.foo"), ("/path/foo", "/path/.wh.foo")]
+        ("name", "oci_name"),
+        [("foo", ".wh.foo"), ("/path/foo", "/path/.wh.foo")],
     )
     def test_oci_whiteout(self, name, oci_name):
         assert overlays.oci_whiteout(Path(name)) == Path(oci_name)

@@ -17,7 +17,7 @@
 import json
 import socketserver
 import threading
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
 from urllib import parse
 
 from tests import fake_servers
@@ -83,18 +83,18 @@ class FakeSnapd:
 
 
 class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
-    snaps_result: List[Dict[str, Any]] = []
-    snap_details_func: Optional[Callable] = None  # type: ignore[type-arg]
-    find_result: List[Dict[str, Any]] = []
-    find_exit_code: int = 200
-    _private_data = {"new_fake_snap_installed": False}
+    snaps_result: ClassVar[List[Dict[str, Any]]] = []
+    snap_details_func: ClassVar[Optional[Callable]] = None  # type: ignore[type-arg]
+    find_result: ClassVar[List[Dict[str, Any]]] = []
+    find_exit_code: ClassVar[int] = 200
+    _private_data: ClassVar[Dict[str, Any]] = {"new_fake_snap_installed": False}
 
     def do_GET(self):  # noqa: N802
         parsed_url = parse.urlparse(self.path)
         if parsed_url.path == "/v2/snaps":
             self._handle_snaps()
         elif parsed_url.path.startswith("/v2/snaps/") and parsed_url.path.endswith(
-            "file"
+            "file",
         ):
             self._handle_snap_file(parsed_url)
         elif parsed_url.path.startswith("/v2/snaps/"):
@@ -169,8 +169,8 @@ class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
             status_code = 200
             params = {
                 "channels": {
-                    "latest/stable": {"confinement": "strict", "revision": "10"}
-                }
+                    "latest/stable": {"confinement": "strict", "revision": "10"},
+                },
             }
 
         self.send_response(status_code)

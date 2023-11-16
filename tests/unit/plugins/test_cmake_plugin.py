@@ -68,7 +68,8 @@ class TestPluginCMakePlugin:
 
     def test_get_build_packages_unix_makefiles(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(
-            new_dir, properties={"cmake-generator": "Unix Makefiles"}
+            new_dir,
+            properties={"cmake-generator": "Unix Makefiles"},
         )
 
         assert plugin.get_build_packages() == {
@@ -80,7 +81,7 @@ class TestPluginCMakePlugin:
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_environment() == {
-            "CMAKE_PREFIX_PATH": f"{str(new_dir)}/stage"
+            "CMAKE_PREFIX_PATH": f"{str(new_dir)}/stage",
         }
 
     def test_get_build_commands_default(self, setup_method_fixture, new_dir):
@@ -109,7 +110,8 @@ class TestPluginCMakePlugin:
 
     def test_get_build_commands_unix_makefiles(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(
-            new_dir, properties={"cmake-generator": "Unix Makefiles"}
+            new_dir,
+            properties={"cmake-generator": "Unix Makefiles"},
         )
 
         assert plugin.get_build_commands() == [

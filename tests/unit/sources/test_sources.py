@@ -72,7 +72,13 @@ def test_type_from_uri(source, result):
     ],
 )
 def test_sources_with_branch_errors(
-    new_dir, partitions, source_type, source_branch, source_tag, source_commit, error
+    new_dir,
+    partitions,
+    source_type,
+    source_branch,
+    source_tag,
+    source_commit,
+    error,
 ):
     part_data = {
         "source": "https://source.com",

@@ -90,7 +90,7 @@ class TestSystemInfo:
                 "--processor",
                 "--hardware-platform",
                 "--operating-system",
-            ]
+            ],
         )
 
 
@@ -125,7 +125,8 @@ class TestGetPaths:
 
     def test_get_include_paths_null(self):
         x = os_utils.get_include_paths(
-            root=Path("/invalid"), arch_triplet="my-arch-triplet"
+            root=Path("/invalid"),
+            arch_triplet="my-arch-triplet",
         )
         assert x == []
 
@@ -149,7 +150,8 @@ class TestGetPaths:
 
     def test_get_library_paths_null(self):
         x = os_utils.get_library_paths(
-            root=Path("/invalid"), arch_triplet="my-arch-triplet"
+            root=Path("/invalid"),
+            arch_triplet="my-arch-triplet",
         )
         assert x == []
 
@@ -174,7 +176,9 @@ class TestGetPaths:
 
     def test_get_library_paths_not_exist(self):
         x = os_utils.get_library_paths(
-            root=Path("/invalid"), arch_triplet="my-arch-triplet", existing_only=False
+            root=Path("/invalid"),
+            arch_triplet="my-arch-triplet",
+            existing_only=False,
         )
         assert x == [
             "/invalid/lib",
@@ -185,7 +189,8 @@ class TestGetPaths:
 
     def test_get_pkg_config_paths_null(self):
         x = os_utils.get_pkg_config_paths(
-            root=Path("/invalid"), arch_triplet="my-arch-triplet"
+            root=Path("/invalid"),
+            arch_triplet="my-arch-triplet",
         )
         assert x == []
 
@@ -258,9 +263,9 @@ class TestOsRelease:
                 VERSION_ID="foo"
                 VERSION_CODENAME="bar"
 
-            """
-                )
-            )
+            """,
+                ),
+            ),
         )
 
         assert release.id() == "arch"
@@ -277,9 +282,9 @@ class TestOsRelease:
                 ID_LIKE=archlinux
                 VERSION_ID="foo"
                 VERSION_CODENAME="bar"
-            """
-                )
-            )
+            """,
+                ),
+            ),
         )
 
         with pytest.raises(errors.OsReleaseIdError):
@@ -295,9 +300,9 @@ class TestOsRelease:
                 ID_LIKE=archlinux
                 VERSION_ID="foo"
                 VERSION_CODENAME="bar"
-            """
-                )
-            )
+            """,
+                ),
+            ),
         )
 
         with pytest.raises(errors.OsReleaseNameError):
@@ -313,9 +318,9 @@ class TestOsRelease:
                 PRETTY_NAME="Arch Linux"
                 ID_LIKE=archlinux
                 VERSION_CODENAME="bar"
-            """
-                )
-            )
+            """,
+                ),
+            ),
         )
 
         with pytest.raises(errors.OsReleaseVersionIdError):
@@ -362,27 +367,27 @@ class TestMount:
         mock_call = mocker.patch("subprocess.check_call")
         os_utils.mount("/dev/node", "/mountpoint", "some", "args")
         mock_call.assert_called_once_with(
-            ["/bin/mount", "some", "args", "/dev/node", "/mountpoint"]
+            ["/bin/mount", "some", "args", "/dev/node", "/mountpoint"],
         )
 
     def test_mount_overlayfs(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
         os_utils.mount_overlayfs("/mountpoint", "some", "args")
         mock_call.assert_called_once_with(
-            ["fuse-overlayfs", "some", "args", "/mountpoint"]
+            ["fuse-overlayfs", "some", "args", "/mountpoint"],
         )
 
     def test_umount(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
         os_utils.umount("/mountpoint", "some", "args")
         mock_call.assert_called_once_with(
-            ["/bin/umount", "some", "args", "/mountpoint"]
+            ["/bin/umount", "some", "args", "/mountpoint"],
         )
 
     def test_umount_retry(self, mocker):
         gen = itertools.count()
 
-        def side_effect(*args):  # noqa: ARG001
+        def side_effect(*args):
             if next(gen) < 1:
                 raise subprocess.CalledProcessError(cmd="cmd", returncode=42)
 

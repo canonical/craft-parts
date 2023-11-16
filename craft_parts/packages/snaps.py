@@ -143,7 +143,8 @@ class SnapPackage:
                     )
                     if http_error.response.status_code == 404:  # noqa: PLR2004
                         raise errors.SnapUnavailable(
-                            snap_name=self.name, snap_channel=self.channel
+                            snap_name=self.name,
+                            snap_channel=self.channel,
                         ) from http_error
                     retry_count -= 1
 
@@ -224,7 +225,8 @@ class SnapPackage:
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapDownloadError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
             ) from err
 
     def install(self) -> None:
@@ -246,7 +248,8 @@ class SnapPackage:
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapInstallError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
             ) from err
 
         # Now that the snap is installed, invalidate the data we had on it.
@@ -269,7 +272,8 @@ class SnapPackage:
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapRefreshError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
             ) from err
 
         # Now that the snap is refreshed, invalidate the data we had on it.
@@ -325,7 +329,7 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
         return subprocess.check_output(["snap", "known", *assertion_params])
     except subprocess.CalledProcessError as call_error:
         raise errors.SnapGetAssertionError(
-            assertion_params=assertion_params
+            assertion_params=assertion_params,
         ) from call_error
 
 

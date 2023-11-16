@@ -41,7 +41,7 @@ def _mock_overlay_support_prerequisites(mocker):
     mocker.patch.object(sys, "platform", "linux")
     mocker.patch("os.geteuid", return_value=0)
     mock_refresh = mocker.patch(
-        "craft_parts.overlays.OverlayManager.refresh_packages_list"
+        "craft_parts.overlays.OverlayManager.refresh_packages_list",
     )
     yield
     # Make sure that refresh_packages_list() was *not* called, as it's an expensive call that
@@ -61,7 +61,7 @@ class TestOverlayLayerOrder:
                 plugin: nil
               p3:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
 
@@ -138,7 +138,7 @@ class TestOverlayLayerOrder:
                 overlay-script: echo
               p3:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
 
@@ -183,7 +183,7 @@ class TestOverlayStageDependency:
               p3:
                 plugin: nil
                 overlay-script: echo overlay
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -220,7 +220,7 @@ class TestOverlayStageDependency:
                 overlay-script: echo overlay
               p3:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -257,7 +257,7 @@ class TestOverlayStageDependency:
                 plugin: nil
               p3:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -290,11 +290,13 @@ class TestOverlayInvalidationFlow:
             parts:
               p1:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
-            parts, application_name="test_layers", cache_dir=new_dir
+            parts,
+            application_name="test_layers",
+            cache_dir=new_dir,
         )
 
         actions = lf.plan(Step.PRIME)
@@ -316,7 +318,7 @@ class TestOverlayInvalidationFlow:
               p1:
                 plugin: nil
                 source: .
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -357,7 +359,7 @@ class TestOverlayInvalidationFlow:
                 overlay-script: echo overlay
               C:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -380,7 +382,7 @@ class TestOverlayInvalidationFlow:
             Action("B", Step.BUILD),
             Action("B", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action(
-                "B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+                "B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran",
             ),
             Action("B", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action(
@@ -416,7 +418,7 @@ class TestOverlayInvalidationFlow:
                 overlay-script: echo overlay
               C:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -454,7 +456,7 @@ class TestOverlayInvalidationFlow:
             Action("B", Step.BUILD),
             Action("B", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action(
-                "B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+                "B", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran",
             ),
             Action("B", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action(
@@ -491,7 +493,7 @@ class TestOverlayInvalidationFlow:
                 overlay-script: echo overlay
               C:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -535,7 +537,7 @@ class TestOverlayInvalidationFlow:
                 overlay-script: echo changed
               C:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -553,7 +555,7 @@ class TestOverlayInvalidationFlow:
             Action("B", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action("C", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
             Action(
-                "A", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+                "A", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran",
             ),
             Action(
                 "B",
@@ -569,7 +571,7 @@ class TestOverlayInvalidationFlow:
             ),
             Action("A", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action(
-                "B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"
+                "B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed",
             ),
             Action("C", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
             Action("A", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
@@ -592,7 +594,7 @@ class TestOverlayInvalidationFlow:
               B:
                 plugin: nil
                 overlay-script: echo "overlay B"
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -630,7 +632,7 @@ class TestOverlayInvalidationFlow:
               B:
                 plugin: nil
                 overlay-script: echo "overlay B"
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -659,10 +661,10 @@ class TestOverlayInvalidationFlow:
                 reason="previous layer changed",
             ),
             Action(
-                "A", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"
+                "A", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed",
             ),
             Action(
-                "B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed"
+                "B", Step.BUILD, action_type=ActionType.RERUN, reason="overlay changed",
             ),
             Action("A", Step.STAGE, action_type=ActionType.RUN),
             Action("B", Step.STAGE),
@@ -682,11 +684,13 @@ class TestOverlaySpecScenarios:
                 after: [B]
               B:
                 plugin: nil
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
-            parts, application_name="test_layers", cache_dir=new_dir
+            parts,
+            application_name="test_layers",
+            cache_dir=new_dir,
         )
 
         actions = _filter_skip(lf.plan(Step.STAGE))
@@ -712,7 +716,7 @@ class TestOverlaySpecScenarios:
               B:
                 plugin: nil
                 overlay-script: echo B
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -746,7 +750,7 @@ class TestOverlaySpecScenarios:
               B:
                 plugin: nil
                 overlay-script: echo B
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -778,7 +782,7 @@ class TestOverlaySpecScenarios:
               B:
                 plugin: nil
                 overlay-script: echo B
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -812,7 +816,7 @@ class TestOverlaySpecScenarios:
               B:
                 plugin: nil
                 overlay-script: echo B
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -843,7 +847,7 @@ class TestOverlaySpecScenarios:
               B:
                 plugin: nil
                 overlay-script: echo B
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(
@@ -872,7 +876,7 @@ class TestOverlaySpecScenarios:
               B:
                 plugin: nil
                 overlay-script: echo B
-            """
+            """,
         )
         parts = yaml.safe_load(parts_yaml)
         lf = craft_parts.LifecycleManager(

@@ -52,7 +52,7 @@ class TestPluginDump:
 
     def test_get_build_commands(self):
         assert self._plugin.get_build_commands() == [
-            'cp --archive --link --no-dereference . "install/dir"'
+            'cp --archive --link --no-dereference . "install/dir"',
         ]
 
     def test_get_out_of_source_build(self):

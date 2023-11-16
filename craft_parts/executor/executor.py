@@ -99,7 +99,8 @@ class Executor:
             logger.info("Updating base overlay system")
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 callbacks.run_configure_overlay(
-                    self._project_info.overlay_mount_dir, self._project_info
+                    self._project_info.overlay_mount_dir,
+                    self._project_info,
                 )
                 ctx.refresh_packages_list()
 
@@ -139,7 +140,10 @@ class Executor:
             self._run_action(act, stdout=stdout, stderr=stderr)
 
     def clean(
-        self, initial_step: Step, *, part_names: Optional[List[str]] = None
+        self,
+        initial_step: Step,
+        *,
+        part_names: Optional[List[str]] = None,
     ) -> None:
         """Clean the given parts, or all parts if none is specified.
 
@@ -196,7 +200,10 @@ class Executor:
                 for var, pvar in action.project_vars.items():
                     if pvar.updated:
                         self._project_info.set_project_var(
-                            var, pvar.value, raw_write=True, part_name=action.part_name
+                            var,
+                            pvar.value,
+                            raw_write=True,
+                            part_name=action.part_name,
                         )
             return
 
@@ -281,7 +288,9 @@ class Executor:
                 step_info=StepInfo(part_info, Step.BUILD),
             )
             validator = plugin_class.validator_class(
-                part_name=part.name, env=env, properties=part.plugin_properties
+                part_name=part.name,
+                env=env,
+                properties=part.plugin_properties,
             )
             validator.validate_environment(part_dependencies=part.dependencies)
 

@@ -45,7 +45,9 @@ class AutotoolsPluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="autotools", required=["source"]
+            data,
+            plugin_name="autotools",
+            required=["source"],
         )
         return cls(**plugin_data)
 

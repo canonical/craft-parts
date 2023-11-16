@@ -58,7 +58,7 @@ def test_sequencer_add_actions(new_dir):
 def test_sequencer_run_step(step, state_class, new_dir):
     info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
     plugin_props = MakePluginProperties.unmarshal(
-        {"source": "src", "make-parameters": ["-Dfoo=bar"]}
+        {"source": "src", "make-parameters": ["-Dfoo=bar"]},
     )
     p1 = Part(
         "p1",
@@ -77,7 +77,7 @@ def test_sequencer_run_step(step, state_class, new_dir):
 
     # check if action was created
     assert seq._actions == [
-        Action(part_name="p1", action_type=ActionType.RUN, step=step)
+        Action(part_name="p1", action_type=ActionType.RUN, step=step),
     ]
 
     # check if states were updated
@@ -135,7 +135,7 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
 
     # check if action was created
     assert seq._actions == [
-        Action(part_name="p1", action_type=ActionType.RERUN, step=step)
+        Action(part_name="p1", action_type=ActionType.RERUN, step=step),
     ]
 
     # check if states were updated
@@ -183,7 +183,7 @@ def test_sequencer_update_step(step, state_class, new_dir):
             action_type=ActionType.UPDATE,
             step=step,
             properties=ActionProperties(),
-        )
+        ),
     ]
 
     # check if serial updated
@@ -202,5 +202,7 @@ def test_sequencer_process_dependencies(mocker, new_dir):
     # process p1 dependencies
     seq._process_dependencies(p1, Step.BUILD)
     mock_add_all_actions.assert_called_once_with(
-        target_step=Step.STAGE, part_names=["p2"], reason="required to build 'p1'"
+        target_step=Step.STAGE,
+        part_names=["p2"],
+        reason="required to build 'p1'",
     )

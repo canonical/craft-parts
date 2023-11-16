@@ -118,7 +118,7 @@ class TestPluginAutotools:
     def test_invalid_properties(self):
         with pytest.raises(ValidationError) as raised:
             AutotoolsPlugin.properties_class.unmarshal(
-                {"source": ".", "autotools-invalid": True}
+                {"source": ".", "autotools-invalid": True},
             )
         err = raised.value.errors()
         assert len(err) == 1

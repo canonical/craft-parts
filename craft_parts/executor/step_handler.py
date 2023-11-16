@@ -65,7 +65,7 @@ class StepHandler:
     the running instance.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         part: Part,
         *,
@@ -100,7 +100,7 @@ class StepHandler:
             handler = self._builtin_prime
         else:
             raise RuntimeError(
-                "Request to run the built-in handler for an invalid step."
+                "Request to run the built-in handler for an invalid step.",
             )
 
         return handler()
@@ -122,7 +122,7 @@ class StepHandler:
                 )
             except subprocess.CalledProcessError as process_error:
                 raise errors.PluginPullError(
-                    part_name=self._part.name
+                    part_name=self._part.name,
                 ) from process_error
 
         return StepContents()
@@ -159,7 +159,8 @@ class StepHandler:
     def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
         files, dirs = filesets.migratable_filesets(
-            stage_fileset, str(self._part.part_base_install_dir)
+            stage_fileset,
+            str(self._part.part_base_install_dir),
         )
 
         def pkgconfig_fixup(file_path: str) -> None:
@@ -192,7 +193,8 @@ class StepHandler:
             prime_fileset.combine(stage_fileset)
 
         files, dirs = filesets.migratable_filesets(
-            prime_fileset, str(self._part.part_base_install_dir)
+            prime_fileset,
+            str(self._part.part_base_install_dir),
         )
         files, dirs = migrate_files(
             files=files,
@@ -219,10 +221,10 @@ class StepHandler:
         """
         with tempfile.TemporaryDirectory() as tempdir:
             call_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "function_call")
+                os.path.join(tempdir, "function_call"),
             )
             feedback_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "call_feedback")
+                os.path.join(tempdir, "call_feedback"),
             )
 
             script = textwrap.dedent(
@@ -234,7 +236,7 @@ class StepHandler:
                 {self._env}
 
                 set -x
-                {scriptlet}"""
+                {scriptlet}""",
             )
 
             # FIXME: refactor ctl protocol server
@@ -263,7 +265,9 @@ class StepHandler:
                     # Handle the function and send feedback to caller.
                     try:
                         retval = self._handle_control_api(
-                            step, scriptlet_name, function_call.strip()
+                            step,
+                            scriptlet_name,
+                            function_call.strip(),
                         )
                         feedback_fifo.write(f"OK {retval!s}\n" if retval else "OK\n")
                     except errors.PartsError as error:
@@ -284,7 +288,10 @@ class StepHandler:
                 )
 
     def _handle_control_api(
-        self, step: Step, scriptlet_name: str, function_call: str
+        self,
+        step: Step,
+        scriptlet_name: str,
+        function_call: str,
     ) -> str:
         """Parse the command message received from the client."""
         try:
@@ -292,24 +299,32 @@ class StepHandler:
         except json.decoder.JSONDecodeError as err:
             raise RuntimeError(
                 f"{scriptlet_name!r} scriptlet called a function with invalid json: "
-                f"{function_call}"
+                f"{function_call}",
             ) from err
 
         for attr in ["function", "args"]:
             if attr not in function_json:
                 raise RuntimeError(
-                    f"{scriptlet_name!r} control call missing attribute {attr!r}"
+                    f"{scriptlet_name!r} control call missing attribute {attr!r}",
                 )
 
         cmd_name = function_json["function"]
         cmd_args = function_json["args"]
 
         return self._process_api_commands(
-            cmd_name, cmd_args, step=step, scriptlet_name=scriptlet_name
+            cmd_name,
+            cmd_args,
+            step=step,
+            scriptlet_name=scriptlet_name,
         )
 
     def _process_api_commands(
-        self, cmd_name: str, cmd_args: List[str], *, step: Step, scriptlet_name: str
+        self,
+        cmd_name: str,
+        cmd_args: List[str],
+        *,
+        step: Step,
+        scriptlet_name: str,
     ) -> str:
         """Invoke API command actions."""
         retval = ""

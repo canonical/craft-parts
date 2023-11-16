@@ -45,7 +45,7 @@ def test_dotnet_plugin(new_dir, partitions):
               cp --archive --link --no-dereference . $CRAFT_PART_INSTALL/sdk
             prime:
               - -sdk
-        """
+        """,
     )
 
     parts = yaml.safe_load(parts_yaml)
@@ -64,14 +64,17 @@ def test_dotnet_plugin(new_dir, partitions):
               </PropertyGroup>
 
             </Project>
-            """
-        )
+            """,
+        ),
     )
 
     Path("hello.cs").write_text('Console.WriteLine("Hello, World!");')
 
     lf = LifecycleManager(
-        parts, application_name="test_dotnet", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_dotnet",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -100,7 +103,9 @@ def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
             return super()._execute(cmd)
 
     mocker.patch.object(
-        dotnet_plugin.DotnetPlugin, "validator_class", FailSpecificCmdValidator
+        dotnet_plugin.DotnetPlugin,
+        "validator_class",
+        FailSpecificCmdValidator,
     )
 
     test_dotnet_plugin(new_dir, partitions)
@@ -128,7 +133,9 @@ def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
                 self.__class__.__already_run = True
 
     mocker.patch.object(
-        dotnet_plugin.DotnetPlugin, "validator_class", AlwaysFindDotnetValidator
+        dotnet_plugin.DotnetPlugin,
+        "validator_class",
+        AlwaysFindDotnetValidator,
     )
 
     test_dotnet_plugin(new_dir, partitions)

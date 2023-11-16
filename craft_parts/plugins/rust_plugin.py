@@ -84,7 +84,9 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self,
+        *,
+        part_dependencies: Optional[List[str]] = None,
     ) -> None:
         """Ensure the environment has the dependencies to build Rust applications.
 
@@ -177,7 +179,7 @@ class RustPlugin(Plugin):
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
 
-    def _get_setup_rustup(self, channel: str) -> list[str]:
+    def _get_setup_rustup(self, channel: str) -> List[str]:
         return [GET_RUSTUP_COMMAND_TEMPLATE.format(channel=channel)]
 
     @override
@@ -225,7 +227,7 @@ class RustPlugin(Plugin):
                 [
                     "--config 'profile.release.lto = true'",
                     "--config 'profile.release.codegen-units = 1'",
-                ]
+                ],
             )
 
         if options.rust_no_default_features:
@@ -255,7 +257,7 @@ class RustPlugin(Plugin):
                     done
                     popd
                 fi\
-                """
+                """,
             )
             rust_build_cmd.append(rust_build_cmd_single)
         return rust_build_cmd

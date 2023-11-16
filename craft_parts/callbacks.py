@@ -38,7 +38,10 @@ ExecutionCallback = Callable[[ProjectInfo], None]
 StepCallback = Callable[[StepInfo], bool]
 ConfigureOverlayCallback = Callable[[Path, ProjectInfo], None]
 Callback = Union[
-    FilterCallback, ExecutionCallback, StepCallback, ConfigureOverlayCallback
+    FilterCallback,
+    ExecutionCallback,
+    StepCallback,
+    ConfigureOverlayCallback,
 ]
 
 _STAGE_PACKAGE_FILTERS: List[CallbackHook] = []
@@ -99,7 +102,9 @@ def register_epilogue(func: ExecutionCallback) -> None:
 
 
 def register_pre_step(
-    func: StepCallback, *, step_list: Optional[List[Step]] = None
+    func: StepCallback,
+    *,
+    step_list: Optional[List[Step]] = None,
 ) -> None:
     """Register a pre-step callback function.
 
@@ -112,7 +117,9 @@ def register_pre_step(
 
 
 def register_post_step(
-    func: StepCallback, *, step_list: Optional[List[Step]] = None
+    func: StepCallback,
+    *,
+    step_list: Optional[List[Step]] = None,
 ) -> None:
     """Register a post-step callback function.
 
@@ -145,7 +152,7 @@ def get_stage_packages_filters(project_info: ProjectInfo) -> Optional[Set[str]]:
         return None
 
     return set(
-        itertools.chain(*[f.function(project_info) for f in _STAGE_PACKAGE_FILTERS])
+        itertools.chain(*[f.function(project_info) for f in _STAGE_PACKAGE_FILTERS]),
     )
 
 
@@ -204,5 +211,5 @@ def _ensure_not_defined(func: Callback, hook_list: List[CallbackHook]) -> None:
         if func == hook.function:
             raise errors.CallbackRegistrationError(
                 f"callback function {hook.function.__name__!r} "
-                f"is already registered."
+                f"is already registered.",
             )

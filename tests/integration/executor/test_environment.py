@@ -40,7 +40,7 @@ def _step_callback(info: StepInfo) -> bool:
         {
             "TEST_OVERRIDE": "foo",
             "TEST_STEP": str(info.step),
-        }
+        },
     )
     return True
 
@@ -56,7 +56,7 @@ _parts_yaml = textwrap.dedent(
         override-prime: env | egrep "^(TEST|CRAFT)_" | sort
         build-environment:
           - TEST_OVERRIDE: bar
-    """
+    """,
 )
 
 
@@ -102,7 +102,7 @@ def test_step_callback(new_dir, mocker, capfd, step):
             CRAFT_TARGET_ARCH=arm64
             TEST_OVERRIDE=bar
             TEST_STEP={step!s}
-            """
+            """,
         )
     )
 
@@ -148,7 +148,7 @@ def test_prologue_callback(new_dir, capfd, mocker):
             CRAFT_TARGET_ARCH=arm64
             TEST_GLOBAL=prologue
             TEST_OVERRIDE=bar
-            """
+            """,
         )
     )
 
@@ -225,5 +225,5 @@ def test_expand_environment_order(new_dir, mocker):
         CRAFT_ARCH_TRIPLET_BUILD_FOR_2: aarch64-linux-gnu
         CRAFT_ARCH_TRIPLET_BUILD_ON_1: aarch64-linux-gnu
         CRAFT_ARCH_TRIPLET_BUILD_ON_1: aarch64-linux-gnu
-        """
+        """,
     )

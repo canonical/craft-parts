@@ -159,17 +159,18 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
     for entry in includes + excludes:
         if os.path.isabs(entry):
             raise errors.FilesetError(
-                name=fileset.name, message=f"path {entry!r} must be relative."
+                name=fileset.name,
+                message=f"path {entry!r} must be relative.",
             )
 
     includes = includes or ["*"]
 
-    processed_includes: List[str] = []
-    processed_excludes: List[str] = []
-    for file in includes:
-        processed_includes.append(path_utils.get_partitioned_path(file))
-    for file in excludes:
-        processed_excludes.append(path_utils.get_partitioned_path(file))
+    processed_includes: List[str] = [
+        path_utils.get_partitioned_path(file) for file in includes
+    ]
+    processed_excludes: List[str] = [
+        path_utils.get_partitioned_path(file) for file in excludes
+    ]
     return processed_includes, processed_excludes
 
 
@@ -210,7 +211,8 @@ def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:
 
 
 def _generate_exclude_set(
-    directory: str, excludes: List[str]
+    directory: str,
+    excludes: List[str],
 ) -> Tuple[Set[str], Set[str]]:
     """Obtain the list of files to exclude based on exclude file filter.
 

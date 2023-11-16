@@ -26,7 +26,7 @@ from craft_parts.utils import file_utils
 
 
 @pytest.fixture(autouse=True)
-def _setup_module_fixture(new_dir):  # noqa: ARG001
+def _setup_module_fixture(new_dir):
     pass
 
 
@@ -127,7 +127,7 @@ class TestLinkOrCopy:
     def test_link_file_ioerror(self, mocker):
         orig_link = os.link
 
-        def link_and_ioerror(a, b, **kwargs):  # noqa: ARG001
+        def link_and_ioerror(a, b, **kwargs):
             orig_link(a, b)
             raise OSError
 

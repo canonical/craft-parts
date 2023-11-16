@@ -75,7 +75,9 @@ def migrate_files(  # noqa: PLR0913
             dst = overlays.oci_whiteout(dst)
 
         file_utils.create_similar_directory(
-            str(src), str(dst), filter_permissions(dirname, permissions)
+            str(src),
+            str(dst),
+            filter_permissions(dirname, permissions),
         )
         migrated_dirs.add(dirname)
 
@@ -221,7 +223,7 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
     for each_file in files:
         try:
             Path(directory, each_file).unlink()
-        except FileNotFoundError:
+        except FileNotFoundError:  # noqa: PERF203
             logger.warning(
                 "Attempted to remove file %r, but it didn't exist. Skipping...",
                 each_file,
@@ -245,7 +247,10 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
 
 
 def filter_dangling_whiteouts(
-    files: Set[str], dirs: Set[str], *, base_dir: Optional[Path]
+    files: Set[str],
+    dirs: Set[str],
+    *,
+    base_dir: Optional[Path],
 ) -> Set[str]:
     """Remove dangling whiteout file and directory names.
 

@@ -79,7 +79,8 @@ class TestSnapSource:
 
     def test_pull_failure_bad_unsquash(self, new_dir, mocker):
         mocker.patch(
-            "subprocess.check_output", side_effect=subprocess.CalledProcessError(1, [])
+            "subprocess.check_output",
+            side_effect=subprocess.CalledProcessError(1, []),
         )
         source = sources.SnapSource(
             str(self._test_file),

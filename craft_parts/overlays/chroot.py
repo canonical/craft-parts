@@ -49,7 +49,8 @@ def chroot(
     logger.debug("[pid=%d] parent process", os.getpid())
     parent_conn, child_conn = multiprocessing.Pipe()
     child = multiprocessing.Process(
-        target=_runner, args=(Path(path), child_conn, target, args, kwargs)
+        target=_runner,
+        args=(Path(path), child_conn, target, args, kwargs),
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
     _setup_chroot(path)

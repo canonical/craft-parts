@@ -58,7 +58,7 @@ class TestPluginMake:
 
     def test_get_build_commands_with_parameters(self, new_dir):
         props = MakePlugin.properties_class.unmarshal(
-            {"source": ".", "make-parameters": ["FLAVOR=gtk3"]}
+            {"source": ".", "make-parameters": ["FLAVOR=gtk3"]},
         )
         part = Part("foo", {})
 

@@ -31,7 +31,7 @@ class BuildState(StepState):
     overlay_hash: Optional[str] = None
 
     _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
-        validate_hex_string
+        validate_hex_string,
     )
 
     @classmethod
@@ -81,7 +81,8 @@ class BuildState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: Dict[str, Any]
+        self,
+        project_options: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Return relevant project options concerning this step.
 

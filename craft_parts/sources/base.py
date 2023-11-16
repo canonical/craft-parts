@@ -233,13 +233,16 @@ class FileSourceHandler(SourceHandler):
 
         try:
             request = requests.get(
-                self.source, stream=True, allow_redirects=True, timeout=3600
+                self.source,
+                stream=True,
+                allow_redirects=True,
+                timeout=3600,
             )
             request.raise_for_status()
         except requests.exceptions.RequestException as err:
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
-                f"response={err.response!r})"
+                f"response={err.response!r})",
             ) from err
 
         url_utils.download_request(request, str(self._file))

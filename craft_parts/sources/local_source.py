@@ -66,7 +66,10 @@ class LocalSource(SourceHandler):
         logger.debug("ignore patterns: %r", self._ignore_patterns)
 
         self._ignore = functools.partial(
-            _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns
+            _ignore,
+            self.source_abspath,
+            os.getcwd(),
+            self._ignore_patterns,
         )
         self._updated_files: Set[str] = set()
         self._updated_directories: Set[str] = set()
@@ -86,7 +89,10 @@ class LocalSource(SourceHandler):
 
     @overrides
     def check_if_outdated(
-        self, target: str, *, ignore_files: Optional[List[str]] = None
+        self,
+        target: str,
+        *,
+        ignore_files: Optional[List[str]] = None,
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -108,7 +114,7 @@ class LocalSource(SourceHandler):
 
         for root, directories, files in os.walk(self.source_abspath, topdown=True):
             ignored = set(
-                self._ignore(root, directories + files, also_ignore=ignore_files)
+                self._ignore(root, directories + files, also_ignore=ignore_files),
             )
             if ignored:
                 # Prune our search appropriately given an ignore list, i.e.

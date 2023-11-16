@@ -85,7 +85,8 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
 
 
 def load_overlay_migration_state(
-    state_dir: Path, step: Step
+    state_dir: Path,
+    step: Step,
 ) -> Optional[MigrationState]:
     """Retrieve the overlay migration state for the given step.
 

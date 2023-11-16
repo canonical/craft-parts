@@ -37,7 +37,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "python-apt is needed for apt operations. "
-        "Check the craft-parts README for more information."
+        "Check the craft-parts README for more information.",
     ) from e
 
 from craft_parts.utils import os_utils
@@ -205,7 +205,10 @@ class AptCache(ContextDecorator):
         return package_name in self.cache or self.cache.is_virtual_package(package_name)
 
     def get_installed_version(
-        self, package_name: str, *, resolve_virtual_packages: bool = False
+        self,
+        package_name: str,
+        *,
+        resolve_virtual_packages: bool = False,
     ) -> Optional[str]:
         """Obtain the version of the package currently installed on the system.
 
@@ -247,7 +250,8 @@ class AptCache(ContextDecorator):
 
             try:
                 dl_path = package.candidate.fetch_binary(
-                    str(download_path), progress=self.progress
+                    str(download_path),
+                    progress=self.progress,
                 )
             except apt.package.FetchError as err:
                 raise errors.PackageFetchError(str(err)) from err
@@ -378,7 +382,7 @@ def _verify_marked_install(package: apt.package.Package) -> None:
     for package_dependencies in package.candidate.dependencies:
         for dep in package_dependencies:
             if not dep.target_versions:
-                broken_deps.append(dep.name)
+                broken_deps.append(dep.name)  # noqa: PERF401
     raise errors.PackageBroken(package.name, deps=broken_deps)
 
 
@@ -392,7 +396,8 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
 
 
 def _ignore_unreadable_files(
-    path: Union[str, "os.PathLike[str]"], names: Iterable[str]
+    path: Union[str, "os.PathLike[str]"],
+    names: Iterable[str],
 ) -> List[str]:
     """Ignore unreadable files for copytree.
 

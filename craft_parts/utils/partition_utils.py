@@ -36,13 +36,13 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     if not features.Features().enable_partitions:
         if partitions:
             raise errors.FeatureError(
-                "Partitions are defined but partition feature is not enabled."
+                "Partitions are defined but partition feature is not enabled.",
             )
         return
 
     if not partitions:
         raise errors.FeatureError(
-            "Partition feature is enabled but no partitions are defined."
+            "Partition feature is enabled but no partitions are defined.",
         )
 
     if partitions[0] != "default":
@@ -54,5 +54,5 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     for partition in partitions:
         if not re.fullmatch("[a-z]+", partition):
             raise errors.FeatureError(
-                f"Partition {partition!r} must only contain lowercase letters."
+                f"Partition {partition!r} must only contain lowercase letters.",
             )

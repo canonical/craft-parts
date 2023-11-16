@@ -47,7 +47,9 @@ try:
     _APT_CACHE_AVAILABLE = True
 except ImportError as import_error:
     logger.debug(
-        "AppCache cannot be imported due to: %r: %s", import_error.name, import_error
+        "AppCache cannot be imported due to: %r: %s",
+        import_error.name,
+        import_error,
     )
     _APT_CACHE_AVAILABLE = False
 
@@ -413,7 +415,7 @@ class Ubuntu(BaseRepository):
             process_run(cmd)
         except subprocess.CalledProcessError as call_error:
             raise errors.PackageListRefreshError(
-                "failed to run apt update"
+                "failed to run apt update",
             ) from call_error
 
     @classmethod
@@ -431,7 +433,8 @@ class Ubuntu(BaseRepository):
             for package in package_names:
                 pkg_name, pkg_version = get_pkg_name_parts(package)
                 installed_version = apt_cache.get_installed_version(
-                    pkg_name, resolve_virtual_packages=True
+                    pkg_name,
+                    resolve_virtual_packages=True,
                 )
 
                 if installed_version is None or (
@@ -449,7 +452,8 @@ class Ubuntu(BaseRepository):
         with AptCache() as apt_cache:
             for package_name in package_names:
                 package_version = apt_cache.get_installed_version(
-                    package_name, resolve_virtual_packages=True
+                    package_name,
+                    resolve_virtual_packages=True,
                 )
                 if package_version is None:
                     logger.debug("Expected package %s not installed", package_name)
@@ -466,7 +470,8 @@ class Ubuntu(BaseRepository):
     @classmethod
     @_apt_cache_wrapper
     def _get_packages_marked_for_installation(
-        cls, package_names: List[str]
+        cls,
+        package_names: List[str],
     ) -> List[Tuple[str, str]]:
         with AptCache() as apt_cache:
             try:
@@ -486,7 +491,7 @@ class Ubuntu(BaseRepository):
                 "DEBIAN_FRONTEND": "noninteractive",
                 "DEBCONF_NONINTERACTIVE_SEEN": "true",
                 "DEBIAN_PRIORITY": "critical",
-            }
+            },
         )
 
         apt_command = [
@@ -537,14 +542,15 @@ class Ubuntu(BaseRepository):
                 cls._install_packages(package_names)
             else:
                 logger.debug(
-                    "Requested build-packages already installed: %s", package_names
+                    "Requested build-packages already installed: %s",
+                    package_names,
                 )
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
         # Tell static type checkers to ignore until we can use PEP 612 (Python 3.10)
         return cls._get_installed_package_versions(  # type: ignore[no-any-return]
-            marked_package_names
+            marked_package_names,
         )
 
     @classmethod
@@ -556,7 +562,7 @@ class Ubuntu(BaseRepository):
                 "DEBIAN_FRONTEND": "noninteractive",
                 "DEBCONF_NONINTERACTIVE_SEEN": "true",
                 "DEBIAN_PRIORITY": "critical",
-            }
+            },
         )
 
         apt_command = [
@@ -577,7 +583,7 @@ class Ubuntu(BaseRepository):
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
     @classmethod
-    def fetch_stage_packages(  # noqa: PLR0913
+    def fetch_stage_packages(
         cls,
         *,
         cache_dir: Path,
@@ -611,7 +617,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @_apt_cache_wrapper
-    def _fetch_stage_debs(  # noqa: PLR0913
+    def _fetch_stage_debs(
         cls,
         *,
         cache_dir: Path,
@@ -654,12 +660,13 @@ class Ubuntu(BaseRepository):
                 }
             else:
                 for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                    deb_cache_dir
+                    deb_cache_dir,
                 ):
                     logger.debug("Extracting stage package: %s", pkg_name)
                     installed.add(f"{pkg_name}={pkg_version}")
                     file_utils.link_or_copy(
-                        str(dl_path), str(stage_packages_path / dl_path.name)
+                        str(dl_path),
+                        str(stage_packages_path / dl_path.name),
                     )
 
         return sorted(installed)
@@ -678,7 +685,8 @@ class Ubuntu(BaseRepository):
             stage_packages = []
         if _is_list_of_slices(stage_packages):
             cls._unpack_stage_slices(
-                stage_packages=stage_packages, install_path=install_path
+                stage_packages=stage_packages,
+                install_path=install_path,
             )
         else:
             cls._unpack_stage_debs(
@@ -699,7 +707,8 @@ class Ubuntu(BaseRepository):
 
         for pkg_path in stage_packages_path.glob("*.deb"):
             with tempfile.TemporaryDirectory(
-                suffix="deb-extract", dir=install_path.parent
+                suffix="deb-extract",
+                dir=install_path.parent,
             ) as extract_dir:
                 # Extract deb package.
                 deb_utils.extract_deb(pkg_path, Path(extract_dir), logger.debug)
@@ -717,7 +726,10 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def _unpack_stage_slices(
-        cls, *, stage_packages: List[str], install_path: pathlib.Path
+        cls,
+        *,
+        stage_packages: List[str],
+        install_path: pathlib.Path,
     ) -> None:
         """Cut Chisel slices into a destination path.
 
@@ -732,7 +744,8 @@ class Ubuntu(BaseRepository):
         except subprocess.CalledProcessError as err:
             command_output = output_stream.getvalue()
             raise errors.ChiselError(
-                slices=stage_packages, output=command_output
+                slices=stage_packages,
+                output=command_output,
             ) from err
         finally:
             logger.removeHandler(handler)
@@ -758,7 +771,7 @@ class Ubuntu(BaseRepository):
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
         try:
             output = subprocess.check_output(
-                ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
+                ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path],
             )
         except subprocess.CalledProcessError as err:
             raise errors.UnpackError(str(deb_path)) from err

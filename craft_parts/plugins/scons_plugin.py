@@ -20,7 +20,8 @@ from typing import Any, Dict, List, Optional, Set, cast
 
 from overrides import override
 
-from .. import errors
+from craft_parts import errors
+
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
@@ -46,7 +47,9 @@ class SConsPluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="scons", required=["source"]
+            data,
+            plugin_name="scons",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -60,7 +63,9 @@ class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self,
+        *,
+        part_dependencies: Optional[List[str]] = None,
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 

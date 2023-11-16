@@ -70,7 +70,7 @@ def _client(cmd: str, args: List[str]) -> Optional[str]:
     except KeyError as err:
         raise RuntimeError(
             f"{err!s} environment variable must be defined.\nNote that this "
-            f"utility is designed for use only in part scriptlets."
+            f"utility is designed for use only in part scriptlets.",
         ) from err
 
     data = {"function": cmd, "args": args}

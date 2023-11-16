@@ -56,7 +56,8 @@ def test_is_deb_based_default(mocker):
 
 def test_is_deb_based_error(mocker):
     mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError()
+        "craft_parts.utils.os_utils.OsRelease.id",
+        side_effect=errors.OsReleaseIdError(),
     )
     assert platform.is_deb_based() is False
 
@@ -78,7 +79,8 @@ def test_is_yum_based_default(mocker):
 
 def test_is_yum_based_error(mocker):
     mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError()
+        "craft_parts.utils.os_utils.OsRelease.id",
+        side_effect=errors.OsReleaseIdError(),
     )
     assert platform.is_yum_based() is False
 
@@ -100,7 +102,8 @@ def test_is_dnf_based_default(mocker):
 
 def test_is_dnf_based_error(mocker):
     mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError()
+        "craft_parts.utils.os_utils.OsRelease.id",
+        side_effect=errors.OsReleaseIdError(),
     )
     assert platform.is_dnf_based() is False
 

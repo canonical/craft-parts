@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import subprocess
 
-
 import pytest
 import pytest_subprocess
 from craft_parts.errors import PluginEnvironmentValidationError
@@ -60,14 +59,14 @@ def test_get_build_environment(part_info):
 
 def test_get_build_commands_default(part_info):
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "rust-channel": "stable"}
+        {"source": ".", "rust-channel": "stable"},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     plugin._check_rustup = lambda: False
 
     commands = plugin.get_build_commands()
     assert plugin.get_pull_commands()[0] == GET_RUSTUP_COMMAND_TEMPLATE.format(
-        channel="stable"
+        channel="stable",
     )
     assert 'cargo install -f --locked --path "."' in commands[0]
 
@@ -77,7 +76,7 @@ def test_get_build_commands_no_install(part_info):
         raise RuntimeError("should not be called")
 
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "rust-channel": "none"}
+        {"source": ".", "rust-channel": "none"},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     plugin._check_rustup = _check_rustup
@@ -90,7 +89,7 @@ def test_get_build_commands_no_install(part_info):
 
 def test_get_build_commands_use_lto(part_info):
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "rust-use-global-lto": True, "rust-channel": "stable"}
+        {"source": ".", "rust-use-global-lto": True, "rust-channel": "stable"},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     plugin._check_rustup = lambda: True
@@ -104,7 +103,7 @@ def test_get_build_commands_use_lto(part_info):
 
 def test_get_build_commands_multiple_crates(part_info):
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "rust-path": ["a", "b", "c"], "rust-channel": "stable"}
+        {"source": ".", "rust-path": ["a", "b", "c"], "rust-channel": "stable"},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     plugin._check_rustup = lambda: True
@@ -119,7 +118,7 @@ def test_get_build_commands_multiple_crates(part_info):
 
 def test_get_build_commands_multiple_features(part_info):
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "rust-features": ["ft-a", "ft-b"], "rust-channel": "stable"}
+        {"source": ".", "rust-features": ["ft-a", "ft-b"], "rust-channel": "stable"},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     plugin._check_rustup = lambda: True
@@ -146,7 +145,7 @@ def test_get_build_commands_multiple_features(part_info):
 )
 def test_get_build_commands_different_channels(part_info, value):
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "rust-channel": value}
+        {"source": ".", "rust-channel": value},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     plugin._check_rustup = lambda: False
@@ -159,7 +158,7 @@ def test_get_build_commands_different_channels(part_info, value):
     "rust_path",
     [None, "i am a string", {"i am": "a dictionary"}, ["duplicate", "duplicate"]],
 )
-def test_get_build_commands_rust_path_invalid(rust_path, part_info):  # noqa: ARG001
+def test_get_build_commands_rust_path_invalid(rust_path, part_info):
     with pytest.raises(ValidationError):
         RustPlugin.properties_class.unmarshal({"source": ".", "rust-path": rust_path})
 
@@ -171,11 +170,13 @@ def test_error_on_conflict_config(part_info):
             "rust-path": ["a", "b", "c"],
             "after": ["rust-deps"],
             "rust-channel": "stable",
-        }
+        },
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     validator = plugin.validator_class(
-        part_name="my-part", properties=properties, env=""
+        part_name="my-part",
+        properties=properties,
+        env="",
     )
     with pytest.raises(PluginEnvironmentValidationError):
         validator.validate_environment(part_dependencies=["rust-deps"])
@@ -215,7 +216,7 @@ def test_get_pull_commands_compat_no_exceptions(
     fake_process.register(["cargo", "--version"], stdout=cargo_stdout)
 
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "after": ["rust-deps"]}
+        {"source": ".", "after": ["rust-deps"]},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
     plugin._check_rustup = lambda: False  # type: ignore[method-assign]
@@ -226,11 +227,15 @@ def test_get_pull_commands_compat_no_exceptions(
 
 
 @pytest.mark.parametrize(
-    "exc_class", [subprocess.CalledProcessError, FileNotFoundError]
+    "exc_class",
+    [subprocess.CalledProcessError, FileNotFoundError],
 )
 @pytest.mark.parametrize("failed_command", ["rustc", "cargo", "rustup"])
 def test_get_pull_commands_compat_with_exceptions(
-    fake_process: pytest_subprocess.FakeProcess, part_info, failed_command, exc_class
+    fake_process: pytest_subprocess.FakeProcess,
+    part_info,
+    failed_command,
+    exc_class,
 ):
     fake_process.register(["rustc", "--version"])
     fake_process.register(["cargo", "--version"])
@@ -242,12 +247,12 @@ def test_get_pull_commands_compat_with_exceptions(
     fake_process.register([failed_command, "--version"], callback=callback_fail)
 
     properties = RustPlugin.properties_class.unmarshal(
-        {"source": ".", "after": ["rust-deps"]}
+        {"source": ".", "after": ["rust-deps"]},
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_pull_commands() == [
-        GET_RUSTUP_COMMAND_TEMPLATE.format(channel="stable")
+        GET_RUSTUP_COMMAND_TEMPLATE.format(channel="stable"),
     ]
 
 

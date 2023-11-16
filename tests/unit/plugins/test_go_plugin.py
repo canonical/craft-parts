@@ -37,7 +37,9 @@ def test_validate_environment(dependency_fixture, part_info):
     go = dependency_fixture("go", output="go version go1.17 linux/amd64")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(go.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(go.parent)}",
+        properties=properties,
     )
     validator.validate_environment()
 
@@ -47,7 +49,9 @@ def test_validate_environment_missing_go(part_info):
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -61,7 +65,9 @@ def test_validate_environment_broken_go(dependency_fixture, part_info):
     go = dependency_fixture("go", broken=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(go.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(go.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -75,7 +81,9 @@ def test_validate_environment_invalid_go(dependency_fixture, part_info):
     go = dependency_fixture("go", invalid=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(go.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(go.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -88,7 +96,9 @@ def test_validate_environment_with_go_part(part_info):
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     validator.validate_environment(part_dependencies=["go-deps"])
 
@@ -98,7 +108,9 @@ def test_validate_environment_without_go_part(part_info):
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=[])
@@ -144,7 +156,7 @@ def test_get_build_commands(part_info):
 
 def test_get_build_commands_with_buildtags(part_info):
     properties = GoPlugin.properties_class.unmarshal(
-        {"source": ".", "go-buildtags": ["dev", "debug"]}
+        {"source": ".", "go-buildtags": ["dev", "debug"]},
     )
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
@@ -181,7 +193,7 @@ def test_get_out_of_source_build(part_info):
 
 def test_get_build_commands_go_generate(part_info):
     properties = GoPlugin.properties_class.unmarshal(
-        {"source": ".", "go-generate": ["-v a", "-x b"]}
+        {"source": ".", "go-generate": ["-v a", "-x b"]},
     )
     plugin = GoPlugin(properties=properties, part_info=part_info)
 

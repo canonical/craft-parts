@@ -34,7 +34,7 @@ def test_maven_plugin(new_dir, partitions, monkeypatch):
             plugin: maven
             source: {source_location}
             stage-packages: [default-jre-headless]
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
@@ -54,6 +54,7 @@ def test_maven_plugin(new_dir, partitions, monkeypatch):
     assert java_binary.is_file()
 
     output = subprocess.check_output(
-        [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld-1.0.jar"], text=True
+        [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld-1.0.jar"],
+        text=True,
     )
     assert output.strip() == "Hello from Maven-built Java"

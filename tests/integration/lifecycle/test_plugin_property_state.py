@@ -70,7 +70,7 @@ class ExamplePlugin(plugins.Plugin):
 
 
 @pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
-def test_plugin_property_state(new_dir, step):  # noqa: ARG001
+def test_plugin_property_state(new_dir, step):
     plugins.register({"example": ExamplePlugin})
 
     data = yaml.safe_load(
@@ -80,8 +80,8 @@ def test_plugin_property_state(new_dir, step):  # noqa: ARG001
               foo:
                 plugin: example
                 example-property: 42
-            """
-        )
+            """,
+        ),
     )
 
     lcm = craft_parts.LifecycleManager(
@@ -102,7 +102,7 @@ def test_plugin_property_state(new_dir, step):  # noqa: ARG001
     assert state.part_properties["example-property"] == 42  # noqa: PLR2004
 
 
-def test_plugin_property_build_dirty(new_dir):  # noqa: ARG001
+def test_plugin_property_build_dirty(new_dir):
     plugins.register({"example": ExamplePlugin})
 
     data = yaml.safe_load(
@@ -112,8 +112,8 @@ def test_plugin_property_build_dirty(new_dir):  # noqa: ARG001
               foo:
                 plugin: example
                 example-property: 42
-            """
-        )
+            """,
+        ),
     )
 
     # build parts
@@ -200,7 +200,7 @@ class Example2Plugin(plugins.Plugin):
         return []
 
 
-def test_plugin_property_pull_dirty(new_dir):  # noqa: ARG001
+def test_plugin_property_pull_dirty(new_dir):
     plugins.register({"example": Example2Plugin})
 
     data = yaml.safe_load(
@@ -210,8 +210,8 @@ def test_plugin_property_pull_dirty(new_dir):  # noqa: ARG001
               foo:
                 plugin: example
                 example-property: 42
-            """
-        )
+            """,
+        ),
     )
 
     # build parts

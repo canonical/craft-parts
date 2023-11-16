@@ -68,7 +68,7 @@ def test_dirs_work_dir_resolving(partitions):
         strategies.text(strategies.sampled_from(string.ascii_lowercase), min_size=1),
         min_size=1,
         unique=True,
-    )
+    ),
 )
 def test_get_stage_dir_with_partitions(partitions):
     dirs = ProjectDirs(partitions=["default", *partitions])
@@ -85,7 +85,7 @@ def test_get_stage_dir_with_partitions(partitions):
         strategies.text(strategies.sampled_from(string.ascii_lowercase), min_size=1),
         min_size=1,
         unique=True,
-    )
+    ),
 )
 def test_get_prime_dir_with_partitions(partitions):
     dirs = ProjectDirs(partitions=["default", *partitions])

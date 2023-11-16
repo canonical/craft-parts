@@ -194,7 +194,7 @@ class TestPartitionsSupport:
                     "plugin": "nil",
                     "stage": ["(default)/foo"],
                 },
-            }
+            },
         }
 
         # nothing to assert, just ensure an exception is not raised
@@ -213,7 +213,7 @@ class TestPartitionsSupport:
                     "plugin": "nil",
                     "stage": ["(test)/foo"],
                 },
-            }
+            },
         }
         with pytest.raises(errors.FeatureError) as raised:
             lifecycle_manager.LifecycleManager(
@@ -228,7 +228,7 @@ class TestPartitionsSupport:
             Error: Invalid usage of partitions:
               parts.foo.stage
                 unknown partition 'test' in '(test)/foo'
-            Valid partitions are 'default' and 'kernel'."""
+            Valid partitions are 'default' and 'kernel'.""",
         )
 
 
@@ -242,7 +242,7 @@ class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
             parts:
               foo:
                 plugin: nil
-            """
+            """,
         )
         self._data = yaml.safe_load(yaml_data)
         self._lcm_kwargs = {"partitions": ["default", "mypart", "yourpart"]}

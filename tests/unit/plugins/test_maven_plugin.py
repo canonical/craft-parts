@@ -46,7 +46,9 @@ def test_validate_environment(dependency_fixture, part_info, mvn_version):
     mvn = dependency_fixture("mvn", output=mvn_version)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(mvn.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(mvn.parent)}",
+        properties=properties,
     )
     validator.validate_environment()
 
@@ -56,7 +58,9 @@ def test_validate_environment_missing_mvn(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -70,7 +74,9 @@ def test_validate_environment_broken_mvn(dependency_fixture, part_info):
     ant = dependency_fixture("mvn", broken=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ant.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(ant.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -84,7 +90,9 @@ def test_validate_environment_invalid_mvn(dependency_fixture, part_info):
     ant = dependency_fixture("mvn", invalid=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ant.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(ant.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -97,7 +105,9 @@ def test_validate_environment_with_maven_part(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     validator.validate_environment(part_dependencies=["maven-deps"])
 
@@ -107,7 +117,9 @@ def test_validate_environment_without_maven_part(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=[])
@@ -156,7 +168,7 @@ def test_get_build_commands_with_parameters(part_info):
         {
             "source": ".",
             "maven-parameters": ["-Dprop1=1", "-c"],
-        }
+        },
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
@@ -186,7 +198,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
     settings_path = Path(
-        part_info._dirs.parts_dir / "my-part/build/.parts/.m2/settings.xml"
+        part_info._dirs.parts_dir / "my-part/build/.parts/.m2/settings.xml",
     )
 
     expected_content = dedent(
@@ -206,7 +218,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
             </proxy>
           </proxies>
         </settings>
-        """
+        """,
     )
 
     env_dict = {f"{protocol}_proxy": "http://my-proxy-host:3128"}
@@ -222,7 +234,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
         )
         assert settings_path.exists()
         assert _normalize_settings(settings_path.read_text()) == _normalize_settings(
-            expected_content
+            expected_content,
         )
 
 

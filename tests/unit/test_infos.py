@@ -39,7 +39,8 @@ LINUX_ARCHS = [
 
 
 @pytest.mark.parametrize(
-    ("tc_arch", "tc_target_arch", "tc_triplet", "tc_cross"), LINUX_ARCHS
+    ("tc_arch", "tc_target_arch", "tc_triplet", "tc_cross"),
+    LINUX_ARCHS,
 )
 def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
@@ -90,7 +91,8 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     ],
 )
 @pytest.mark.parametrize(
-    ("tc_arch", "tc_target_arch", "tc_triplet", "unused_tc_cross"), LINUX_ARCHS
+    ("tc_arch", "tc_target_arch", "tc_triplet", "unused_tc_cross"),
+    LINUX_ARCHS,
 )
 def test_project_info_translated_arch(
     mocker,
@@ -98,7 +100,7 @@ def test_project_info_translated_arch(
     tc_arch,
     tc_target_arch,
     tc_triplet,
-    unused_tc_cross,  # noqa: ARG001
+    unused_tc_cross,
     machine_arch,
     expected_arch,
 ):
@@ -162,7 +164,10 @@ def test_project_info_work_dir(new_dir, partitions):
 
 def test_project_info_custom_args():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), custom1="foobar", custom2=[1, 2]
+        application_name="test",
+        cache_dir=Path(),
+        custom1="foobar",
+        custom2=[1, 2],
     )
 
     assert info.custom_args == ["custom1", "custom2"]
@@ -180,7 +185,9 @@ def test_project_info_invalid_custom_args():
 
 def test_project_info_set_project_var():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
     )
 
     info.set_project_var("var", "bar")
@@ -189,7 +196,9 @@ def test_project_info_set_project_var():
 
 def test_project_info_set_project_raw_write():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
     )
 
     info.set_project_var("var", "bar")
@@ -300,7 +309,9 @@ def test_project_info_cache_dir_resolving():
 
 def test_project_info_get_project_var():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
     )
 
     info.set_project_var("var", "bar")
@@ -315,7 +326,9 @@ def test_project_info_get_project_var():
 
 def test_project_info_consume_project_var_during_lifecycle():
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars={"var": "foo"},
     )
 
     info.set_project_var("var", "bar")
@@ -662,7 +675,9 @@ def test_step_info_get_project_var():
     ],
 )
 def test_get_host_architecture_returns_valid_arch(
-    monkeypatch, machine, translated_machine
+    monkeypatch,
+    machine,
+    translated_machine,
 ):
     monkeypatch.setattr("platform.machine", lambda: machine)
 

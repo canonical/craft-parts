@@ -119,7 +119,8 @@ class SnapSource(FileSourceHandler):
             for rename in rename_paths:
                 shutil.move(rename, f"{rename}.{snap_name}")
             file_utils.link_or_copy_tree(
-                source_tree=temp_dir, destination_tree=str(dst)
+                source_tree=temp_dir,
+                destination_tree=str(dst),
             )
 
         if not keep:

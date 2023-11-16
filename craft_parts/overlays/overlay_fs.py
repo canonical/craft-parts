@@ -33,7 +33,11 @@ class OverlayFS:
     """Linux overlayfs operations."""
 
     def __init__(
-        self, *, lower_dirs: List[Path], upper_dir: Path, work_dir: Path
+        self,
+        *,
+        lower_dirs: List[Path],
+        upper_dir: Path,
+        work_dir: Path,
     ) -> None:
         self._lower_dirs = lower_dirs
         self._upper_dir = upper_dir
@@ -74,7 +78,8 @@ class OverlayFS:
             os_utils.umount(str(self._mountpoint))
         except CalledProcessError as err:
             raise errors.OverlayUnmountError(
-                str(self._mountpoint), message=str(err)
+                str(self._mountpoint),
+                message=str(err),
             ) from err
 
         self._mountpoint = None

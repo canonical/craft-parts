@@ -33,7 +33,7 @@ def test_run(tmpdir):
           bar:
             plugin: dump
             source: {tmpdir}/bar_dir
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
@@ -49,7 +49,10 @@ def test_run(tmpdir):
     prime_dir = Path(tmpdir / "prime")
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_steps", cache_dir=tmpdir, work_dir=tmpdir
+        parts,
+        application_name="test_steps",
+        cache_dir=tmpdir,
+        work_dir=tmpdir,
     )
 
     with lf.action_executor() as ctx:

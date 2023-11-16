@@ -47,8 +47,8 @@ def sample_deb(tmp_path: Path) -> Path:
             Description: Sample package
             Homepage: www.example.com
             Architecture: all
-            """
-        )
+            """,
+        ),
     )
 
     # Add the single text file to the package
@@ -71,7 +71,7 @@ def test_source_deb(sample_deb, tmp_path):
           foo:
             plugin: nil
             source: {sample_deb}
-        """
+        """,
     )
 
     result_dir = tmp_path / "result"
@@ -79,7 +79,10 @@ def test_source_deb(sample_deb, tmp_path):
 
     parts = yaml.safe_load(parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_deb", cache_dir=tmp_path, work_dir=result_dir
+        parts,
+        application_name="test_deb",
+        cache_dir=tmp_path,
+        work_dir=result_dir,
     )
 
     with lf.action_executor() as ctx:

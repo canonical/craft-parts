@@ -169,7 +169,7 @@ def test_string_replacement_with_complex_data():
                 "somefile",
                 "$CRAFT_STAGE/file1",
                 "CRAFT_STAGE/really",
-            ]
+            ],
         },
         "configflags": ["--with-python", "--with-swig $CRAFT_STAGE/swig"],
     }
@@ -180,7 +180,7 @@ def test_string_replacement_with_complex_data():
                 "somefile",
                 "craft_stage/file1",
                 "CRAFT_STAGE/really",
-            ]
+            ],
         },
         "configflags": [
             "--with-python",

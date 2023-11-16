@@ -55,7 +55,7 @@ class Permissions(BaseModel):
 
         if has_group != has_owner:
             raise ValueError(
-                'If either "owner" or "group" is defined, both must be defined.'
+                'If either "owner" or "group" is defined, both must be defined.',
             )
 
         return values
@@ -88,7 +88,8 @@ class Permissions(BaseModel):
 
 
 def filter_permissions(
-    target: Union[Path, str], permissions: List[Permissions]
+    target: Union[Path, str],
+    permissions: List[Permissions],
 ) -> List[Permissions]:
     """Get the subset of ``permissions`` whose path patterns apply to ``target``."""
     return [p for p in permissions if p.applies_to(target)]
@@ -101,7 +102,8 @@ def apply_permissions(target: Union[Path, str], permissions: List[Permissions]) 
 
 
 def permissions_are_compatible(
-    left: Optional[List[Permissions]], right: Optional[List[Permissions]]
+    left: Optional[List[Permissions]],
+    right: Optional[List[Permissions]],
 ) -> bool:
     """Whether two sets of permissions definitions are not in conflict with each other.
 

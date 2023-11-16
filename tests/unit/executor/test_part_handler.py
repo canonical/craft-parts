@@ -54,10 +54,14 @@ class TestPartHandling:
             partitions=partitions,
         )
         self._project_info = info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         self._part_info = PartInfo(info, self._part)
         self._handler = PartHandler(
@@ -68,7 +72,7 @@ class TestPartHandling:
         )
         self._mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         self._mock_mount_overlayfs = mocker.patch(
-            "craft_parts.utils.os_utils.mount_overlayfs"
+            "craft_parts.utils.os_utils.mount_overlayfs",
         )
         self._mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
@@ -83,7 +87,9 @@ class TestPartHandling:
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
 
         state = self._handler._run_pull(
-            StepInfo(self._part_info, Step.PULL), stdout=None, stderr=None
+            StepInfo(self._part_info, Step.PULL),
+            stdout=None,
+            stderr=None,
         )
         assert state == states.PullState(
             part_properties=self._part.spec.marshal(),
@@ -108,7 +114,9 @@ class TestPartHandling:
         mocker.patch("subprocess.check_output", return_value=b"os-info")
 
         state = self._handler._run_build(
-            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+            StepInfo(self._part_info, Step.BUILD),
+            stdout=None,
+            stderr=None,
         )
         assert state == states.BuildState(
             part_properties=self._part.spec.marshal(),
@@ -150,13 +158,16 @@ class TestPartHandling:
         source_file.write_text('printf("hello\n");', encoding="UTF-8")
 
         self._handler._run_build(
-            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+            StepInfo(self._part_info, Step.BUILD),
+            stdout=None,
+            stderr=None,
         )
 
         # Check that 'source.c' exists in the source dir but not build dir.
         pytest_check.is_true((self._part_info.part_src_dir / "source.c").exists())
         pytest_check.is_not(
-            (self._part_info.part_build_dir / "source.c").exists(), out_of_source
+            (self._part_info.part_build_dir / "source.c").exists(),
+            out_of_source,
         )
 
     @pytest.mark.usefixtures("new_dir")
@@ -165,11 +176,16 @@ class TestPartHandling:
 
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[p1], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[p1],
+            base_layer_dir=None,
         )
         part_info = PartInfo(self._project_info, p1)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
         handler._run_build(StepInfo(part_info, Step.BUILD), stdout=None, stderr=None)
 
@@ -182,7 +198,9 @@ class TestPartHandling:
         )
 
         state = self._handler._run_stage(
-            StepInfo(self._part_info, Step.STAGE), stdout=None, stderr=None
+            StepInfo(self._part_info, Step.STAGE),
+            stdout=None,
+            stderr=None,
         )
         assert state == states.StageState(
             part_properties=self._part.spec.marshal(),
@@ -201,7 +219,9 @@ class TestPartHandling:
         mocker.patch("os.getxattr").return_value = b"pkg"
 
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         handler = PartHandler(
             self._part,
@@ -212,7 +232,9 @@ class TestPartHandling:
         )
 
         state = handler._run_prime(
-            StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
+            StepInfo(self._part_info, Step.PRIME),
+            stdout=None,
+            stderr=None,
         )
         assert state == states.PrimeState(
             part_properties=self._part.spec.marshal(),
@@ -230,7 +252,9 @@ class TestPartHandling:
         mocker.patch("os.getxattr").return_value = b"pkg"
 
         state = self._handler._run_prime(
-            StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
+            StepInfo(self._part_info, Step.PRIME),
+            stdout=None,
+            stderr=None,
         )
         assert state == states.PrimeState(
             part_properties=self._part.spec.marshal(),
@@ -253,18 +277,25 @@ class TestPartHandling:
     def test_run_step_scriptlet(self, partitions, mocker, capfd, step, scriptlet):
         """If defined, scriptlets are executed instead of the built-in handler."""
         run_builtin_mock = mocker.patch(
-            "craft_parts.executor.step_handler.StepHandler.run_builtin"
+            "craft_parts.executor.step_handler.StepHandler.run_builtin",
         )
         p1 = Part(
-            "p1", {"plugin": "nil", scriptlet: "echo hello"}, partitions=partitions
+            "p1",
+            {"plugin": "nil", scriptlet: "echo hello"},
+            partitions=partitions,
         )
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         handler._run_step(
@@ -292,16 +323,21 @@ class TestPartHandling:
     def test_run_step_empty_scriptlet(self, partitions, mocker, step, scriptlet):
         """Even empty scriptlets are executed instead of the built-in handler."""
         run_builtin_mock = mocker.patch(
-            "craft_parts.executor.step_handler.StepHandler.run_builtin"
+            "craft_parts.executor.step_handler.StepHandler.run_builtin",
         )
         p1 = Part("p1", {"plugin": "nil", scriptlet: ""}, partitions=partitions)
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         handler._run_step(
@@ -326,16 +362,21 @@ class TestPartHandling:
     def test_run_step_undefined_scriptlet(self, partitions, mocker, step, scriptlet):
         """If scriptlets are not defined, execute the built-in handler."""
         run_builtin_mock = mocker.patch(
-            "craft_parts.executor.step_handler.StepHandler.run_builtin"
+            "craft_parts.executor.step_handler.StepHandler.run_builtin",
         )
         p1 = Part("p1", {"plugin": "nil", scriptlet: None}, partitions=partitions)
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         handler._run_step(
@@ -366,10 +407,15 @@ class TestPartHandling:
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         output_path = Path("output.txt")
@@ -417,7 +463,9 @@ class TestPartUpdateHandler:
             project_dirs=self._dirs,
         )
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         self._part_info = PartInfo(self._project_info, self._part)
         self._handler = PartHandler(
@@ -445,10 +493,15 @@ class TestPartUpdateHandler:
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         part_info = PartInfo(self._project_info, part=p1)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         assert handler._source_handler is None
@@ -469,10 +522,15 @@ class TestPartUpdateHandler:
         )
         part_info = PartInfo(self._project_info, p1)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         handler.run_action(Action("foo", Step.PULL, ActionType.UPDATE))
@@ -502,7 +560,8 @@ class TestPartUpdateHandler:
             Path("parts/foo/install/hello").touch()
 
         mocker.patch(
-            "craft_parts.packages.Repository.unpack_stage_packages", new=fake_unpack
+            "craft_parts.packages.Repository.unpack_stage_packages",
+            new=fake_unpack,
         )
         mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
@@ -515,7 +574,9 @@ class TestPartUpdateHandler:
             partitions=partitions,
         )
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[part],
+            base_layer_dir=None,
         )
         part_info = PartInfo(self._project_info, part)
         handler = PartHandler(
@@ -554,16 +615,22 @@ class TestPartCleanHandler:
     @pytest.fixture(autouse=True)
     def _setup_method_fixture(self, new_dir, partitions):
         self._part = Part(
-            "foo", {"plugin": "dump", "source": "subdir"}, partitions=partitions
+            "foo",
+            {"plugin": "dump", "source": "subdir"},
+            partitions=partitions,
         )
         Path("subdir/bar").mkdir(parents=True)
         Path("subdir/foo.txt").write_text("content")
 
         info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=info,
+            part_list=[self._part],
+            base_layer_dir=None,
         )
         self._part_info = PartInfo(info, self._part)
         self._handler = PartHandler(
@@ -606,16 +673,21 @@ class TestRerunStep:
     def test_rerun_action(self, mocker, new_dir, partitions, step):
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         mock_clean = mocker.patch(
-            "craft_parts.executor.part_handler.PartHandler.clean_step"
+            "craft_parts.executor.part_handler.PartHandler.clean_step",
         )
         mock_callback = mocker.patch("craft_parts.callbacks.run_pre_step")
         mock = mocker.MagicMock()
@@ -639,14 +711,19 @@ class TestPackages:
         )
 
         p1 = Part(
-            "p1", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
+            "p1",
+            {"plugin": "nil", "stage-packages": ["pkg1"]},
+            partitions=partitions,
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         result = handler._fetch_stage_packages(step_info=step_info)
@@ -659,7 +736,10 @@ class TestPackages:
         step_info = StepInfo(part_info, step=Step.PULL)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         result = handler._fetch_stage_packages(step_info=step_info)
@@ -672,14 +752,19 @@ class TestPackages:
         )
 
         p1 = Part(
-            "p1", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
+            "p1",
+            {"plugin": "nil", "stage-packages": ["pkg1"]},
+            partitions=partitions,
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         with pytest.raises(errors.StagePackageNotFound) as raised:
@@ -695,13 +780,18 @@ class TestPackages:
         )
 
         part = Part(
-            "foo", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
+            "foo",
+            {"plugin": "nil", "stage-packages": ["pkg1"]},
+            partitions=partitions,
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, part)
         ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
         handler = PartHandler(
-            part, part_info=part_info, part_list=[part], overlay_manager=ovmgr
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
         )
 
         handler._run_pull(StepInfo(part_info, Step.PULL), stdout=None, stderr=None)
@@ -727,7 +817,10 @@ class TestPackages:
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         result = handler._fetch_stage_snaps()
@@ -743,7 +836,10 @@ class TestPackages:
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         result = handler._fetch_stage_snaps()
@@ -758,17 +854,24 @@ class TestPackages:
         mocker.patch("craft_parts.executor.part_handler.PartHandler._run_step")
 
         p1 = Part(
-            "foo", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
+            "foo",
+            {"plugin": "nil", "stage-packages": ["pkg1"]},
+            partitions=partitions,
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         state = handler._run_pull(
-            StepInfo(part_info, Step.PULL), stdout=None, stderr=None
+            StepInfo(part_info, Step.PULL),
+            stdout=None,
+            stderr=None,
         )
         getpkg.assert_called_once_with(
             cache_dir=new_dir,
@@ -792,13 +895,18 @@ class TestPackages:
         )
 
         p1 = Part(
-            "p1", {"plugin": "nil", "stage-snaps": ["snap1"]}, partitions=partitions
+            "p1",
+            {"plugin": "nil", "stage-snaps": ["snap1"]},
+            partitions=partitions,
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         Path("parts/p1/stage_snaps").mkdir(parents=True)
@@ -821,7 +929,10 @@ class TestPackages:
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
         assert sorted(handler.build_packages) == ["gcc", "make", "pkg1", "tar"]
 
@@ -840,7 +951,10 @@ class TestPackages:
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
         assert sorted(handler.build_packages) == ["gcc", "git", "make", "pkg1"]
 
@@ -854,7 +968,10 @@ class TestPackages:
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
         assert handler.build_snaps == ["word-salad"]
 
@@ -882,7 +999,9 @@ class TestFileFilter:
         fileset = filesets.Fileset([])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
+            filter_files=files,
+            filter_dirs=dirs,
+            destdir=self._destdir,
         )
 
         pytest_check.is_true((self._default_destdir / "file1").is_file())
@@ -898,7 +1017,9 @@ class TestFileFilter:
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
+            filter_files=files,
+            filter_dirs=dirs,
+            destdir=self._destdir,
         )
 
         pytest_check.is_false((self._default_destdir / "file1").exists())
@@ -914,7 +1035,9 @@ class TestFileFilter:
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
+            filter_files=files,
+            filter_dirs=dirs,
+            destdir=self._destdir,
         )
 
         pytest_check.is_true((self._default_destdir / "file1").is_file())
@@ -929,7 +1052,9 @@ class TestFileFilter:
         fileset = filesets.Fileset(["-file4", "-dir3"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
+            filter_files=files,
+            filter_dirs=dirs,
+            destdir=self._destdir,
         )
 
         pytest_check.is_true((self._default_destdir / "file1").is_file())
@@ -945,7 +1070,9 @@ class TestFileFilter:
         fileset = filesets.Fileset(["dir1/file3"])
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
+            filter_files=files,
+            filter_dirs=dirs,
+            destdir=self._destdir,
         )
 
         pytest_check.is_false((self._default_destdir / "file1").exists())

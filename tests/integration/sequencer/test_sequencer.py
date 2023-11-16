@@ -44,7 +44,7 @@ _pull_state_foo = textwrap.dedent(
     assets:
       stage-packages:
       - fake-package-foo=1
-    """
+    """,
 )
 
 _build_state_foo = textwrap.dedent(
@@ -60,7 +60,7 @@ _build_state_foo = textwrap.dedent(
     project_options:
       target_arch: amd64
     assets: {}
-    """
+    """,
 )
 
 _pull_state_bar = textwrap.dedent(
@@ -81,7 +81,7 @@ _pull_state_bar = textwrap.dedent(
     assets:
       stage-packages:
       - fake-package-bar=2
-    """
+    """,
 )
 
 
@@ -101,7 +101,9 @@ class TestSequencerPlan:
     @pytest.fixture(autouse=True)
     def _setup_project(self, partitions):
         self._project_info = ProjectInfo(
-            application_name="test", cache_dir=Path(), partitions=partitions
+            application_name="test",
+            cache_dir=Path(),
+            partitions=partitions,
         )
 
     def test_plan_default_parts(self, partitions):
@@ -181,7 +183,10 @@ class TestSequencerPlan:
 
         assert actions == [
             Action(
-                "foo", Step.PULL, action_type=ActionType.RERUN, reason="requested step"
+                "foo",
+                Step.PULL,
+                action_type=ActionType.RERUN,
+                reason="requested step",
             ),
         ]
 
@@ -244,7 +249,9 @@ class TestSequencerStates:
     @pytest.fixture(autouse=True)
     def _setup_project(self, partitions):
         self._project_info = ProjectInfo(
-            application_name="test", cache_dir=Path(), partitions=partitions
+            application_name="test",
+            cache_dir=Path(),
+            partitions=partitions,
         )
 
     def test_plan_load_state(self, partitions):

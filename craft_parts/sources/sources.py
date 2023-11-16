@@ -148,7 +148,9 @@ def get_source_handler(
 
 
 def _get_source_handler_class(
-    source: str, *, source_type: str = ""
+    source: str,
+    *,
+    source_type: str = "",
 ) -> SourceHandlerType:
     """Return the appropriate handler class for the given source.
 
@@ -184,14 +186,9 @@ def get_source_type_from_uri(
         if source.endswith(f".{extension}"):
             return extension
     source_type = ""
-    if source.startswith("bzr:") or source.startswith("lp:"):
+    if source.startswith(("bzr:", "lp:")):
         source_type = "bzr"
-    elif (
-        source.startswith("git:")
-        or source.startswith("git@")
-        or source.startswith("git+ssh:")
-        or source.endswith(".git")
-    ):
+    elif source.startswith(("git:", "git@", "git+ssh:")) or source.endswith(".git"):
         source_type = "git"
     elif source.startswith("svn:"):
         source_type = "subversion"

@@ -34,7 +34,11 @@ from craft_parts.utils import file_utils, path_utils
 
 
 def organize_files(
-    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool
+    *,
+    part_name: str,
+    mapping: Dict[str, str],
+    base_dir: Path,
+    overwrite: bool,
 ) -> None:
     """Rearrange files for part staging.
 
@@ -50,7 +54,7 @@ def organize_files(
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
         partition, inner_path = path_utils.get_partition_and_path(
-            mapping[key].lstrip("/")
+            mapping[key].lstrip("/"),
         )
         if partition:
             dst = os.path.join(base_dir, partition, inner_path)

@@ -148,7 +148,9 @@ class TestFileFilter(test_part_handler.TestFileFilter):
 
         files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
         part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
+            filter_files=files,
+            filter_dirs=dirs,
+            destdir=self._destdir,
         )
 
         for file in self._iter_files():

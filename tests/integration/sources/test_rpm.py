@@ -58,8 +58,8 @@ def sample_rpm(tmp_path: Path) -> Path:
 
             %files
             /etc/sample.txt
-            """
-        )
+            """,
+        ),
     )
 
     # Define paths wo we don't litter the system with RPM stuff for this.
@@ -92,7 +92,7 @@ def test_source_rpm(sample_rpm, tmp_path):
           foo:
             plugin: nil
             source: {sample_rpm}
-        """
+        """,
     )
 
     result_dir = tmp_path / "result"
@@ -100,7 +100,10 @@ def test_source_rpm(sample_rpm, tmp_path):
 
     parts = yaml.safe_load(parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_rpm", cache_dir=tmp_path, work_dir=result_dir
+        parts,
+        application_name="test_rpm",
+        cache_dir=tmp_path,
+        work_dir=result_dir,
     )
 
     with lf.action_executor() as ctx:

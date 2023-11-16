@@ -53,7 +53,7 @@ def test_chisel_lifecycle(new_dir, partitions):
           foo:
             plugin: nil
             stage-packages: [ca-certificates_data]
-        """
+        """,
     )
 
     partition_dir = "default" if partitions else "."
@@ -86,7 +86,8 @@ def test_chisel_lifecycle(new_dir, partitions):
 
 
 @pytest.mark.skipif(
-    not _current_release_supported(), reason="Test needs Chisel support"
+    not _current_release_supported(),
+    reason="Test needs Chisel support",
 )
 def test_chisel_error(tmp_path, caplog):
     """Test that the error that is raised when Chisel fails contains the expected information."""

@@ -34,7 +34,8 @@ from .fake_snapd import FakeSnapd
 
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers", "http_request_handler(handler): set a fake HTTP request handler"
+        "markers",
+        "http_request_handler(handler): set a fake HTTP request handler",
     )
 
 
@@ -105,20 +106,21 @@ def _temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
 
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_home", new=os.path.join(tmpdir, ".config")
+        "xdg.BaseDirectory.xdg_config_home",
+        new=os.path.join(tmpdir, ".config"),
     )
     mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))
     mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
         new=[
-            xdg.BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
+            xdg.BaseDirectory.xdg_config_home,  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_data_dirs",
         new=[
-            xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
+            xdg.BaseDirectory.xdg_data_home,  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
@@ -158,7 +160,7 @@ def fake_snapd():
     os.unlink(snapd_fake_socket_path)
 
     socket_path_patcher = mock.patch(
-        "craft_parts.packages.snaps.get_snapd_socket_path_template"
+        "craft_parts.packages.snaps.get_snapd_socket_path_template",
     )
     escaped_path = snapd_fake_socket_path.replace("/", "%2F")
     mock_socket_path = socket_path_patcher.start()

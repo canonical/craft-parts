@@ -37,7 +37,9 @@ def test_validate_environment(dependency_fixture, part_info):
     dotnet = dependency_fixture("dotnet")
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(dotnet.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(dotnet.parent)}",
+        properties=properties,
     )
     validator.validate_environment()
 
@@ -47,7 +49,9 @@ def test_validate_environment_missing_dotnet(part_info):
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -61,7 +65,9 @@ def test_validate_environment_broken_dotnet(dependency_fixture, part_info):
     dotnet = dependency_fixture("dotnet", broken=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(dotnet.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(dotnet.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -74,7 +80,9 @@ def test_validate_environment_with_dotnet_part(part_info):
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     validator.validate_environment(part_dependencies=["dotnet-deps"])
 
@@ -84,7 +92,9 @@ def test_validate_environment_without_dotnet_part(part_info):
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=[])
@@ -109,7 +119,7 @@ def test_get_build_packages(part_info):
     assert plugin.get_build_packages() == set()
 
 
-def test_get_build_environment(new_dir, part_info):  # noqa: ARG001
+def test_get_build_environment(new_dir, part_info):
     properties = DotnetPlugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 
@@ -128,7 +138,7 @@ def test_get_build_commands(part_info):
 
 def test_get_build_commands_self_contained(part_info):
     properties = DotnetPlugin.properties_class.unmarshal(
-        {"source": ".", "dotnet-self-contained-runtime-identifier": "linux-x64"}
+        {"source": ".", "dotnet-self-contained-runtime-identifier": "linux-x64"},
     )
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 
@@ -157,7 +167,7 @@ def test_missing_parameters():
     assert err[0]["type"] == "value_error.missing"
 
 
-def test_get_out_of_source_build(new_dir, part_info):  # noqa: ARG001
+def test_get_out_of_source_build(new_dir, part_info):
     properties = DotnetPlugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetPlugin(properties=properties, part_info=part_info)
 

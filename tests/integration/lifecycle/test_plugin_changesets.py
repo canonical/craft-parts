@@ -36,7 +36,7 @@ class ExamplePluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):  # noqa: ARG003
+    def unmarshal(cls, data: Dict[str, Any]):
         return cls()
 
 
@@ -61,7 +61,7 @@ class ExamplePlugin(plugins.Plugin):
         return ["echo no files changed"]
 
 
-def test_changesets(new_dir, mocker, capfd):  # noqa: ARG001
+def test_changesets(new_dir, mocker, capfd):
     plugins.register({"example": ExamplePlugin})
 
     Path("dir1").mkdir()
@@ -74,8 +74,8 @@ def test_changesets(new_dir, mocker, capfd):  # noqa: ARG001
               foo:
                 plugin: example
                 source: dir1
-            """
-        )
+            """,
+        ),
     )
 
     lcm = craft_parts.LifecycleManager(
@@ -101,7 +101,7 @@ def test_changesets(new_dir, mocker, capfd):  # noqa: ARG001
 
     actions = lcm.plan(Step.PULL)
     assert actions == [
-        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran")
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
     ]
 
     with lcm.action_executor() as aex:
@@ -136,7 +136,7 @@ def test_changesets(new_dir, mocker, capfd):  # noqa: ARG001
     assert capfd.readouterr().out == "Changed files: [foo]\n"
 
 
-def test_changesets_reload_state(new_dir, mocker, capfd):  # noqa: ARG001
+def test_changesets_reload_state(new_dir, mocker, capfd):
     plugins.register({"example": ExamplePlugin})
 
     Path("dir1").mkdir()
@@ -149,8 +149,8 @@ def test_changesets_reload_state(new_dir, mocker, capfd):  # noqa: ARG001
               foo:
                 plugin: example
                 source: dir1
-            """
-        )
+            """,
+        ),
     )
 
     lcm = craft_parts.LifecycleManager(
@@ -184,7 +184,7 @@ def test_changesets_reload_state(new_dir, mocker, capfd):  # noqa: ARG001
             action_type=ActionType.UPDATE,
             reason="source changed",
             properties=ActionProperties(changed_files=["foo"], changed_dirs=[]),
-        )
+        ),
     ]
 
     with lcm.action_executor() as aex:

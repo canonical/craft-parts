@@ -32,7 +32,7 @@ parts_yaml = textwrap.dedent(
       bar:
         after: [foo]
         plugin: nil
-"""
+""",
 )
 
 plan_steps = [
@@ -68,7 +68,7 @@ skip_result = ["".join(skip_steps[0:n]) for n in range(1, len(skip_steps) + 1)]
 
 
 @pytest.fixture(autouse=True)
-def _setup_new_dir(new_dir):  # noqa: ARG001
+def _setup_new_dir(new_dir):
     pass
 
 
@@ -179,7 +179,9 @@ def test_main_invalid_application_name(mocker):
     Path("work_dir").mkdir()
 
     mocker.patch.object(
-        sys, "argv", ["cmd", "--dry-run", "--application-name", "snap-craft", "clean"]
+        sys,
+        "argv",
+        ["cmd", "--dry-run", "--application-name", "snap-craft", "clean"],
     )
     with pytest.raises(SystemExit) as raised:
         main.main()
@@ -526,7 +528,7 @@ def test_main_clean_workdir(mocker, capfd):
     assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
 
 
-def test_main_clean_dry_run(mocker, capfd):  # noqa: ARG001
+def test_main_clean_dry_run(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
     Path("parts").mkdir()

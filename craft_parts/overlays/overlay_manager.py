@@ -94,7 +94,7 @@ class OverlayManager:
         """Mount the overlay step package cache layer."""
         if not self._base_layer_dir:
             raise RuntimeError(
-                "request to mount the overlay package cache without a base layer"
+                "request to mount the overlay package cache without a base layer",
             )
 
         self._overlay_fs = OverlayFS(

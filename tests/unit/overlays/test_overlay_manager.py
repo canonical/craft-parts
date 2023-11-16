@@ -42,7 +42,7 @@ class TestLayerMounting:
 
         self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         self.mock_mount_overlayfs = mocker.patch(
-            "craft_parts.utils.os_utils.mount_overlayfs"
+            "craft_parts.utils.os_utils.mount_overlayfs",
         )
         self.mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
@@ -153,12 +153,12 @@ class TestPackageManagement:
         )
         self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         self.mock_mount_overlayfs = mocker.patch(
-            "craft_parts.utils.os_utils.mount_overlayfs"
+            "craft_parts.utils.os_utils.mount_overlayfs",
         )
         self.mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         self.mock_chroot = mocker.patch("craft_parts.overlays.chroot.chroot")
         self.mock_refresh_packages_list = mocker.patch(
-            "craft_parts.packages.Repository.refresh_packages_list"
+            "craft_parts.packages.Repository.refresh_packages_list",
         )
 
     def test_refresh_packages_list(self, new_dir):
@@ -172,13 +172,14 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", self.mock_refresh_packages_list
+            new_dir / "overlay/overlay",
+            self.mock_refresh_packages_list,
         )
         self.mock_refresh_packages_list.called_once_with()
 
     def test_download_packages(self, mocker, new_dir):
         mock_download_packages = mocker.patch(
-            "craft_parts.packages.Repository.download_packages"
+            "craft_parts.packages.Repository.download_packages",
         )
 
         self.om.mkdirs()
@@ -191,13 +192,15 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
+            new_dir / "overlay/overlay",
+            mock_download_packages,
+            ["pkg1", "pkg2"],
         )
         mock_download_packages.called_once_with(["pkg1", "pkg2"])
 
     def test_install_packages(self, mocker, new_dir):
         mock_install_packages = mocker.patch(
-            "craft_parts.packages.Repository.install_packages"
+            "craft_parts.packages.Repository.install_packages",
         )
 
         self.om.mkdirs()
@@ -235,14 +238,15 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", self.mock_refresh_packages_list
+            new_dir / "overlay/overlay",
+            self.mock_refresh_packages_list,
         )
         self.mock_refresh_packages_list.called_once_with()
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
 
     def test_package_cache_mount_download(self, mocker, new_dir):
         mock_download_packages = mocker.patch(
-            "craft_parts.packages.Repository.download_packages"
+            "craft_parts.packages.Repository.download_packages",
         )
         self.om._overlay_fs = OverlayFS(
             lower_dirs=[Path("base_dir")],
@@ -260,7 +264,9 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
+            new_dir / "overlay/overlay",
+            mock_download_packages,
+            ["pkg1", "pkg2"],
         )
         mock_download_packages.called_once_with(["pkg1", "pkg2"])
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
@@ -268,7 +274,7 @@ class TestPackageManagement:
     def test_layer_mount_install(self, mocker, new_dir):
         mocker.patch("craft_parts.packages.Repository.download_packages")
         mock_install_packages = mocker.patch(
-            "craft_parts.packages.Repository.install_packages"
+            "craft_parts.packages.Repository.install_packages",
         )
         self.om._overlay_fs = OverlayFS(
             lower_dirs=[Path("base_dir"), new_dir / "overlay/packages"],

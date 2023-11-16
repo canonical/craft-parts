@@ -84,10 +84,11 @@ class RpmSource(FileSourceHandler):
         bad_options = []
         for tag in self._invalid_tags:
             if getattr(self, tag.replace("-", "_")):
-                bad_options.append(tag)
+                bad_options.append(tag)  # noqa: PERF401
         if bad_options:
             raise errors.InvalidSourceOptions(
-                source_type=self._source_type, options=bad_options
+                source_type=self._source_type,
+                options=bad_options,
             )
 
     @override
@@ -109,7 +110,10 @@ class RpmSource(FileSourceHandler):
         with rpm_path.open("rb") as rpm:
             try:
                 with subprocess.Popen(
-                    command, stdin=rpm, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                    command,
+                    stdin=rpm,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                 ) as archive:
                     with tarfile.open(mode="r|*", fileobj=archive.stdout) as tar:
                         tar.extractall(path=dst)

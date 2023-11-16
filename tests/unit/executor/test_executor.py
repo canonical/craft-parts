@@ -134,7 +134,8 @@ class TestPackages:
 
     def test_install_build_snaps_in_container(self, mocker, new_dir):
         mocker.patch(
-            "craft_parts.utils.os_utils.is_inside_container", return_value=True
+            "craft_parts.utils.os_utils.is_inside_container",
+            return_value=True,
         )
         install = mocker.patch("craft_parts.packages.snaps.install_snaps")
 

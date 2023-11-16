@@ -50,7 +50,10 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
-            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
         )
 
         # Ensure all files were migrated
@@ -87,7 +90,8 @@ class TestFileMigration:
 
         # Verify that the symlink was preserved
         assert Path(
-            stage_dir, "bar"
+            stage_dir,
+            "bar",
         ).is_symlink(), "Expected migrated 'bar' to still be a symlink."
 
         assert (
@@ -106,7 +110,10 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
-            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
         )
 
         # Ensure all files were migrated
@@ -115,7 +122,8 @@ class TestFileMigration:
 
         # Verify that the symlinks were preserved
         assert Path(
-            stage_dir, "bar"
+            stage_dir,
+            "bar",
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
     def test_migrate_files_no_follow_symlinks(self, partitions):
@@ -125,18 +133,21 @@ class TestFileMigration:
         expected_dirs = {"default"} if partitions else set()
 
         Path(install_dir, path_utils.get_partitioned_path("usr/bin")).mkdir(
-            parents=True
+            parents=True,
         )
         stage_dir.mkdir()
 
         Path(install_dir, path_utils.get_partitioned_path("usr/bin/foo")).write_text(
-            "installed"
+            "installed",
         )
         Path("install", bin_path).symlink_to("usr/bin")
 
         files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
-            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
         )
 
         # Ensure all files were migrated
@@ -161,7 +172,10 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
-            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
         )
 
         # Ensure all files were migrated
@@ -170,10 +184,12 @@ class TestFileMigration:
 
         # Verify that the symlinks were preserved
         assert Path(
-            stage_dir, "bar"
+            stage_dir,
+            "bar",
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
         assert Path(
-            stage_dir, "a/bar"
+            stage_dir,
+            "a/bar",
         ).is_symlink(), "Expected migrated 'a/bar' to be a symlink."
 
     def test_migrate_files_preserves_symlink_empty_dir(self):
@@ -187,7 +203,10 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
-            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
         )
 
         # Ensure all files were migrated
@@ -196,7 +215,8 @@ class TestFileMigration:
 
         # Verify that the symlinks were preserved
         assert Path(
-            stage_dir, "bar"
+            stage_dir,
+            "bar",
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
     def test_migrate_files_preserves_symlink_nonempty_dir(self):
@@ -212,7 +232,10 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
-            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
         )
 
         # Ensure all files were migrated
@@ -221,7 +244,8 @@ class TestFileMigration:
 
         # Verify that the symlinks were preserved
         assert Path(
-            stage_dir, "bar"
+            stage_dir,
+            "bar",
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
     def test_migrate_files_preserves_symlink_nested_dir(self):
@@ -238,7 +262,10 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
         migrated_files, migrated_dirs = migration.migrate_files(
-            files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
         )
 
         # Ensure all files were migrated
@@ -247,11 +274,12 @@ class TestFileMigration:
 
         # Verify that the symlinks were preserved
         assert Path(
-            stage_dir, "bar"
+            stage_dir,
+            "bar",
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
         assert os.path.islink(
-            os.path.join("stage", "a", "bar")
+            os.path.join("stage", "a", "bar"),
         ), "Expected migrated 'a/bar' to be a symlink."
 
     def test_migrate_files_supports_follow_symlinks(self):
@@ -412,10 +440,14 @@ class TestHelpers:
         bar_path = stage / "bar.txt"
 
         info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[p1, p2], base_layer_dir=None
+            project_info=info,
+            part_list=[p1, p2],
+            base_layer_dir=None,
         )
 
         handler1 = part_handler.PartHandler(
@@ -473,12 +505,17 @@ class TestHelpers:
 
         p1 = Part("p1", {"plugin": "dump", "source": "subdir"}, partitions=partitions)
         info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
         part_info = PartInfo(info, part=p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = part_handler.PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         handler.run_action(Action("p1", Step.PULL))
@@ -498,12 +535,17 @@ class TestHelpers:
 
         p1 = Part("p1", {"plugin": "dump", "source": "subdir"}, partitions=partitions)
         info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
         part_info = PartInfo(info, part=p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
         handler = part_handler.PartHandler(
-            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
         )
 
         handler.run_action(Action("p1", Step.PULL))

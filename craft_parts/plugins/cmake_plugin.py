@@ -45,7 +45,9 @@ class CMakePluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="cmake", required=["source"]
+            data,
+            plugin_name="cmake",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -105,7 +107,7 @@ class CMakePlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         return {
             # Also look for staged headers and libraries.
-            "CMAKE_PREFIX_PATH": str(self._part_info.stage_dir)
+            "CMAKE_PREFIX_PATH": str(self._part_info.stage_dir),
         }
 
     @override

@@ -78,7 +78,7 @@ def test_craftctl_default(new_dir, partitions, capfd, mocker):
             override-prime: |
               echo "prime step"
               craftctl default
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -162,7 +162,7 @@ def test_craftctl_default_arguments(new_dir, partitions, capfd):
           foo:
             plugin: nil
             override-pull: craftctl default argument
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -192,7 +192,7 @@ def test_craftctl_set(new_dir, partitions):
             plugin: nil
             override-pull: |
               craftctl set myvar=myvalue
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -217,7 +217,7 @@ def test_craftctl_set_multiple(new_dir, partitions, capfd):
             plugin: nil
             override-pull: |
               craftctl set myvar=myvalue myvar2=myvalue2
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -247,7 +247,7 @@ def test_craftctl_set_bad_part_name(new_dir, partitions, capfd):
             plugin: nil
             override-pull: |
               craftctl set myvar=myvalue
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -277,7 +277,7 @@ def test_craftctl_set_no_part_name(new_dir, partitions, capfd):
             plugin: nil
             override-pull: |
               craftctl set myvar=myvalue
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -313,7 +313,7 @@ def test_craftctl_set_multiple_parts(new_dir, partitions, capfd):
             plugin: nil
             override-pull: |
               craftctl set myvar2=myvalue2
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -346,7 +346,7 @@ def test_craftctl_set_error(new_dir, partitions, capfd):
             plugin: nil
             override-pull: |
               craftctl set myvar=myvalue
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -380,7 +380,7 @@ def test_craftctl_set_only_once(new_dir, partitions):  # see LP #1831135
           part2:
             plugin: nil
             after: [part1]
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -437,7 +437,7 @@ def test_craftctl_update_project_vars(new_dir, partitions):
           part2:
             plugin: nil
             after: [part1]
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -490,12 +490,15 @@ def test_craftctl_get_error(new_dir, partitions, capfd):
             plugin: nil
             override-pull: |
               craftctl get myvar
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_set", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     expected = "override-pull' in part 'foo' failed with code 1"
@@ -515,7 +518,7 @@ def test_craftctl_set_argument_error(new_dir, partitions, capfd):
             plugin: nil
             override-pull: |
               craftctl set myvar
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -547,7 +550,7 @@ def test_craftctl_set_consume(new_dir, partitions, capfd):
             override-build: |
               craftctl get myvar
               craftctl set myvar=val2
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -580,7 +583,7 @@ def test_craftctl_project_vars_from_state(new_dir, partitions):
             plugin: nil
             override-pull: |
               craftctl set myvar=val1
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -633,7 +636,7 @@ def test_craftctl_project_vars_write_once_from_state(new_dir, partitions, capfd)
             override-prime: |
               craftctl set myvar2=val2
               craftctl set myvar=val2
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 

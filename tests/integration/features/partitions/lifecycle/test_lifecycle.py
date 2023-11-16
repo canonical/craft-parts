@@ -41,7 +41,7 @@ basic_parts_yaml = textwrap.dedent(
         source: a.tar.gz
 
       foobar:
-        plugin: nil"""
+        plugin: nil""",
 )
 
 

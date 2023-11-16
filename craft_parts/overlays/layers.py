@@ -42,7 +42,10 @@ class LayerHash:
 
     @classmethod
     def for_part(
-        cls, part: Part, *, previous_layer_hash: Optional["LayerHash"]
+        cls,
+        part: Part,
+        *,
+        previous_layer_hash: Optional["LayerHash"],
     ) -> "LayerHash":
         """Obtain the validation hash for a part.
 
@@ -111,7 +114,9 @@ class LayerStateManager:
     """
 
     def __init__(
-        self, part_list: List[Part], base_layer_hash: Optional[LayerHash]
+        self,
+        part_list: List[Part],
+        base_layer_hash: Optional[LayerHash],
     ) -> None:
         self._part_list = part_list
         self._base_layer_hash = base_layer_hash

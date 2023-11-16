@@ -32,7 +32,7 @@ def test_source_tar(new_dir):
           foo:
             plugin: make
             source: foobar.tar.gz
-        """
+        """,
     )
 
     Path("foobar.txt").write_text("content")
@@ -41,7 +41,9 @@ def test_source_tar(new_dir):
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_tar", cache_dir=new_dir
+        parts,
+        application_name="test_tar",
+        cache_dir=new_dir,
     )
 
     with lf.action_executor() as ctx:
@@ -59,13 +61,15 @@ def test_source_tar_error(new_dir):
           foo:
             plugin: make
             source: foobar.tar.gz
-        """
+        """,
     )
 
     parts = yaml.safe_load(_parts_yaml)
     Path("foobar.tar.gz").write_text("not a tar file")
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_tar", cache_dir=new_dir
+        parts,
+        application_name="test_tar",
+        cache_dir=new_dir,
     )
 
     with pytest.raises(tarfile.ReadError) as raised, lf.action_executor() as ctx:

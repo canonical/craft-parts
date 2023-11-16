@@ -118,7 +118,9 @@ def unregister_all() -> None:
 
 
 def extract_part_properties(
-    data: Dict[str, Any], *, plugin_name: str
+    data: Dict[str, Any],
+    *,
+    plugin_name: str,
 ) -> Dict[str, Any]:
     """Get common part properties without plugin-specific entries.
 

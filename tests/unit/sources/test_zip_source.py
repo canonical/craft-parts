@@ -28,7 +28,11 @@ class TestZipSource:
     """Tests for the zip source handler."""
 
     def test_pull_zipfile_must_download_and_extract(
-        self, new_dir, http_server, mocker, partitions
+        self,
+        new_dir,
+        http_server,
+        mocker,
+        partitions,
     ):
         mock_prov = mocker.patch("craft_parts.sources.zip_source.ZipSource.provision")
 
@@ -41,7 +45,10 @@ class TestZipSource:
         )
         dirs = ProjectDirs(partitions=partitions)
         zip_source = sources.ZipSource(
-            source, dest_dir, cache_dir=new_dir, project_dirs=dirs
+            source,
+            dest_dir,
+            cache_dir=new_dir,
+            project_dirs=dirs,
         )
 
         zip_source.pull()
@@ -63,7 +70,10 @@ class TestZipSource:
         dest_dir = Path().absolute()
         dirs = ProjectDirs(partitions=partitions)
         zip_source = sources.ZipSource(
-            source, dest_dir, cache_dir=new_dir, project_dirs=dirs
+            source,
+            dest_dir,
+            cache_dir=new_dir,
+            project_dirs=dirs,
         )
 
         zip_source.download()

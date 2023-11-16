@@ -47,20 +47,22 @@ def test_get_build_environment(plugin, new_dir):
 
 
 def get_build_commands(
-    new_dir: Path, *, should_remove_symlinks: bool = False
+    new_dir: Path,
+    *,
+    should_remove_symlinks: bool = False,
 ) -> List[str]:
     if should_remove_symlinks:
         postfix = dedent(
             f"""\
             echo Removing python symlinks in {new_dir}/parts/p1/install/bin
             rm "{new_dir}/parts/p1/install"/bin/python*
-            """
+            """,
         )
     else:
         postfix = dedent(
             """\
             ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
-            """
+            """,
         )
 
     return [
@@ -68,7 +70,7 @@ def get_build_commands(
             f"""\
             find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\
                 sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
-            """
+            """,
         ),
         dedent(
             f"""\
@@ -107,7 +109,7 @@ def get_build_commands(
             fi
 
             eval "${{opts_state}}"
-            """
+            """,
         ),
         postfix,
     ]
@@ -132,7 +134,7 @@ def test_get_build_commands_with_all_properties(new_dir):
             "python-constraints": ["constraints.txt"],
             "python-requirements": ["requirements.txt"],
             "python-packages": ["pip", "some-pkg; sys_platform != 'win32'"],
-        }
+        },
     )
 
     python_plugin = PythonPlugin(part_info=part_info, properties=properties)

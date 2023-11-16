@@ -109,7 +109,7 @@ class TestStepHandlerBuiltins:
 
     def test_run_builtin_pull(self, new_dir, mocker):
         mock_source_pull = mocker.patch(
-            "craft_parts.sources.local_source.LocalSource.pull"
+            "craft_parts.sources.local_source.LocalSource.pull",
         )
 
         sh = _step_handler_for_step(
@@ -164,7 +164,7 @@ class TestStepHandlerBuiltins:
                         f'export CRAFT_{p.upper()}_PRIME="{new_dir}/prime/{p}"'
                         for p in partitions
                     ),
-                )
+                ),
             )
         else:
             partition_script_lines = []
@@ -196,7 +196,7 @@ class TestStepHandlerBuiltins:
                 "## Plugin environment",
                 "## User environment",
                 "",
-            )
+            ),
         )
 
         assert get_mode(environment_script_path) == 0o644  # noqa: PLR2004
@@ -212,7 +212,7 @@ class TestStepHandlerBuiltins:
                 source {environment_script_path}
                 set -x
                 hello
-                """
+                """,
             )
 
         mock_run.assert_called_once_with(
@@ -324,7 +324,10 @@ class TestStepHandlerRunScriptlet:
             dirs=self._dirs,
         )
         sh.run_scriptlet(
-            "echo hello world", scriptlet_name="name", step=Step.BUILD, work_dir=new_dir
+            "echo hello world",
+            scriptlet_name="name",
+            step=Step.BUILD,
+            work_dir=new_dir,
         )
         captured = capfd.readouterr()
         assert captured.out == "hello world\n"

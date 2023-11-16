@@ -33,11 +33,14 @@ def test_validate_environment(dependency_fixture, part_info):
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
     ant = dependency_fixture(
-        "ant", output="Apache Ant(TM) version 1.10.12 compiled on October 13 2021"
+        "ant",
+        output="Apache Ant(TM) version 1.10.12 compiled on October 13 2021",
     )
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ant.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(ant.parent)}",
+        properties=properties,
     )
     validator.validate_environment()
 
@@ -47,7 +50,9 @@ def test_validate_environment_missing_ant(part_info):
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -61,7 +66,9 @@ def test_validate_environment_broken_ant(dependency_fixture, part_info):
     ant = dependency_fixture("ant", broken=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ant.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(ant.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -75,7 +82,9 @@ def test_validate_environment_invalid_ant(dependency_fixture, part_info):
     ant = dependency_fixture("ant", invalid=True)
 
     validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(ant.parent)}", properties=properties
+        part_name="my-part",
+        env=f"PATH={str(ant.parent)}",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
@@ -88,7 +97,9 @@ def test_validate_environment_with_ant_part(part_info):
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     validator.validate_environment(part_dependencies=["ant-deps"])
 
@@ -98,7 +109,9 @@ def test_validate_environment_without_ant_part(part_info):
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=[])
@@ -150,7 +163,7 @@ def test_get_build_commands_with_parameters(part_info):
             "ant-build-targets": ["compile", "jar"],
             "ant-build-file": "myfile.txt",
             "ant-properties": {"prop1": "1", "prop2": "2"},
-        }
+        },
     )
     plugin = AntPlugin(properties=properties, part_info=part_info)
 

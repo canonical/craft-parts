@@ -116,7 +116,9 @@ def test_validate_environment_with_meson_deps_part(part_info):
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     validator.validate_environment(part_dependencies=["meson-deps"])
 
@@ -126,7 +128,9 @@ def test_validate_environment_without_meson_part(part_info):
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=["ninja"])
@@ -142,7 +146,9 @@ def test_validate_environment_without_ninja_part(part_info):
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
+        part_name="my-part",
+        env="PATH=/foo",
+        properties=properties,
     )
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment(part_dependencies=["meson"])
@@ -174,7 +180,7 @@ def test_get_build_packages(part_info):
     assert plugin.get_build_packages() == set()
 
 
-def test_get_build_environment(new_dir, part_info):  # noqa: ARG001
+def test_get_build_environment(new_dir, part_info):
     properties = MesonPlugin.properties_class.unmarshal({"source": "."})
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
@@ -194,7 +200,7 @@ def test_get_build_commands(part_info):
 
 def test_get_build_commands_with_parameters(part_info):
     properties = MesonPlugin.properties_class.unmarshal(
-        {"source": ".", "meson-parameters": ["--debug", "--prefix=foo bar"]}
+        {"source": ".", "meson-parameters": ["--debug", "--prefix=foo bar"]},
     )
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 

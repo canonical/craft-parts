@@ -256,12 +256,12 @@ class ProjectInfo:
         elif not self._project_vars_part_name:
             raise RuntimeError(
                 f"variable {name!r} can only be set in a part that "
-                "adopts external metadata"
+                "adopts external metadata",
             )
         else:
             raise RuntimeError(
                 f"variable {name!r} can only be set "
-                f"in part {self._project_vars_part_name!r}"
+                f"in part {self._project_vars_part_name!r}",
             )
 
     def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
@@ -280,7 +280,7 @@ class ProjectInfo:
         self._ensure_valid_variable_name(name)
         if not raw_read and not self.execution_finished:
             raise RuntimeError(
-                f"cannot consume variable {name!r} during lifecycle execution"
+                f"cannot consume variable {name!r} during lifecycle execution",
             )
 
         return self._project_vars[name].value
@@ -398,7 +398,11 @@ class PartInfo:
         return self._part_cache_dir
 
     def set_project_var(
-        self, name: str, value: str, *, raw_write: bool = False
+        self,
+        name: str,
+        value: str,
+        *,
+        raw_write: bool = False,
     ) -> None:
         """Set the value of a project variable.
 
@@ -415,7 +419,10 @@ class PartInfo:
             part name is specified and the variable is set from a different part.
         """
         self._project_info.set_project_var(
-            name, value, part_name=self._part_name, raw_write=raw_write
+            name,
+            value,
+            part_name=self._part_name,
+            raw_write=raw_write,
         )
 
     def get_project_var(self, name: str, *, raw_read: bool = False) -> str:

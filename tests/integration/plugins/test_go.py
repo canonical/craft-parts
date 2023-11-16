@@ -23,7 +23,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_go_plugin(new_dir, partitions, mocker):  # noqa: ARG001
+def test_go_plugin(new_dir, partitions, mocker):
     parts_yaml = textwrap.dedent(
         """
         parts:
@@ -31,7 +31,7 @@ def test_go_plugin(new_dir, partitions, mocker):  # noqa: ARG001
             plugin: go
             source: .
             go-buildtags: [my_tag]
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
 
@@ -41,8 +41,8 @@ def test_go_plugin(new_dir, partitions, mocker):  # noqa: ARG001
             module example.com/hello
             go 1.13
             require rsc.io/quote v1.5.2
-            """
-        )
+            """,
+        ),
     )
 
     Path("hello.go").write_text(
@@ -57,13 +57,16 @@ def test_go_plugin(new_dir, partitions, mocker):  # noqa: ARG001
             func main() {
                 fmt.Printf("%s", quote.Glass())
             }
-            """
-        )
+            """,
+        ),
     )
 
     # the go compiler is installed in the ci test setup
     lf = LifecycleManager(
-        parts, application_name="test_go", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
 
@@ -94,7 +97,7 @@ def test_go_generate(new_dir, partitions):
               - gen/generator.go
             build-environment:
               - GO111MODULE: "on"
-        """
+        """,
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(

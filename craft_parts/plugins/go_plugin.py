@@ -51,7 +51,9 @@ class GoPluginProperties(PluginProperties, PluginModel):
         :raise pydantic.ValidationError: If validation fails.
         """
         plugin_data = extract_plugin_properties(
-            data, plugin_name="go", required=["source"]
+            data,
+            plugin_name="go",
+            required=["source"],
         )
         return cls(**plugin_data)
 
@@ -65,7 +67,9 @@ class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self,
+        *,
+        part_dependencies: Optional[List[str]] = None,
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -136,9 +140,7 @@ class GoPlugin(Plugin):
 
         tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
-        generate_cmds: List[str] = []
-        for cmd in options.go_generate:
-            generate_cmds.append(f"go generate {cmd}")
+        generate_cmds: List[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
         return [
             "go mod download all",

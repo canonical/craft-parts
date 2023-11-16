@@ -28,23 +28,31 @@ def test_basic():
 
 def test_parse_simple():
     assert DebPackage.from_unparsed("foo") == DebPackage(
-        name="foo", arch=None, version=None
+        name="foo",
+        arch=None,
+        version=None,
     )
 
 
 def test_parse_arch():
     assert DebPackage.from_unparsed("foo:arch") == DebPackage(
-        name="foo", arch="arch", version=None
+        name="foo",
+        arch="arch",
+        version=None,
     )
 
 
 def test_parse_arch_and_version():
     assert DebPackage.from_unparsed("foo:arch=4.5") == DebPackage(
-        name="foo", arch="arch", version="4.5"
+        name="foo",
+        arch="arch",
+        version="4.5",
     )
 
 
 def test_parse_version():
     assert DebPackage.from_unparsed("foo=4.5") == DebPackage(
-        name="foo", arch=None, version="4.5"
+        name="foo",
+        arch=None,
+        version="4.5",
     )
