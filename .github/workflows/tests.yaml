@@ -33,18 +33,12 @@ jobs:
       - name: Run ruff
         run: |
           make test-ruff
-      - name: Run isort
-        run: |
-          make test-isort
       - name: Run mypy
         run: |
           make test-mypy
       - name: Run pydocstyle
         run: |
           make test-pydocstyle
-      - name: Run pylint
-        run: |
-          make test-pylint
       - name: Run pyright
         run: |
           sudo snap install --classic node
