@@ -414,6 +414,7 @@ class Part:
         for fileset_name, fileset in [
             ("overlay", self.spec.overlay_files),
             # only the destination of organize filepaths use partitions
+            # pylint: disable-next: no-member
             ("organize", self.spec.organize_files.values()),
             ("stage", self.spec.stage_files),
             ("prime", self.spec.prime_files),

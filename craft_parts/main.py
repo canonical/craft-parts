@@ -29,7 +29,7 @@ import sys
 from functools import partial
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
@@ -75,7 +75,8 @@ def main() -> None:
 
 def _process_parts(options: argparse.Namespace) -> None:
     with open(options.file) as opt_file:
-        part_data = yaml.safe_load(opt_file)
+        yaml = YAML()
+        part_data = yaml.load(opt_file)
 
     cache_dir = options.cache_dir
     if not cache_dir:

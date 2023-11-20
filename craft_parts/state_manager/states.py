@@ -21,7 +21,7 @@ import logging
 from pathlib import Path
 from typing import Optional, Type
 
-import yaml
+from ruamel.yaml import YAML
 
 from craft_parts.infos import ProjectVar
 from craft_parts.parts import Part
@@ -53,7 +53,8 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
 
     logger.debug("load state file: %s", filename)
     with open(filename) as yaml_file:
-        state_data = yaml.safe_load(yaml_file)
+        yaml = YAML()
+        state_data = yaml.load(yaml_file)
 
     # Fix project variables in loaded state data.
     #
@@ -98,7 +99,8 @@ def load_overlay_migration_state(
 
     logger.debug("load overlay migration state file: %s", filename)
     with open(filename) as yaml_file:
-        state_data = yaml.safe_load(yaml_file)
+        yaml = YAML()
+        state_data = yaml.load(yaml_file)
 
     return MigrationState.unmarshal(state_data)
 
