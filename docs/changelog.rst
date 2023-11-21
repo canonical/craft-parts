@@ -2,6 +2,14 @@
 Changelog
 *********
 
+1.25.2 (2023-10-24)
+-------------------
+
+- Fix compiler plugin priming in Rust plugin
+- Fix redundant channel override in Rust plugin
+- Fix validation of part dependency names
+- Fix expansion of environment variables
+
 1.25.1 (2023-09-12)
 -------------------
 
