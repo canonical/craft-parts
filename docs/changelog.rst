@@ -2,6 +2,13 @@
 Changelog
 *********
 
+1.26.0 (2023-11-21)
+-------------------
+
+- Documentation updates
+- Build system, requirements and CI updates
+- Misc unit test fixes and updates
+
 1.25.2 (2023-10-24)
 -------------------
 
