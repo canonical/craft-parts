@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts import Action, ActionProperties, ActionType, LifecycleManager, Step
+
 from tests.integration.features.partitions.lifecycle import test_lifecycle
 
 # pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
@@ -157,14 +157,14 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", step=Step.OVERLAY, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
         Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -197,11 +197,11 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
 
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning(test_lifecycle.TestCleaning):
-    @pytest.fixture
+    @pytest.fixture()
     def state_files(self):
         return ["build", "layer_hash", "overlay", "prime", "pull", "stage"]
 
-    @pytest.fixture
+    @pytest.fixture()
     def foo_files(self):
         return [
             Path("parts/foo/src/foo.txt"),
@@ -210,7 +210,7 @@ class TestCleaning(test_lifecycle.TestCleaning):
             Path("prime/default/foo.txt"),
         ]
 
-    @pytest.fixture
+    @pytest.fixture()
     def bar_files(self):
         return [
             Path("parts/bar/src/bar.txt"),

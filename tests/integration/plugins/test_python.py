@@ -20,12 +20,11 @@ import textwrap
 from pathlib import Path
 from typing import Optional
 
+import craft_parts.plugins.plugins
 import pytest
 import yaml
-from overrides import override
-
-import craft_parts.plugins.plugins
 from craft_parts import LifecycleManager, Step, errors, plugins
+from overrides import override
 
 
 def setup_function():
@@ -292,7 +291,7 @@ parts:
       # Put a binary called "{payload_python}" in the payload
       mkdir -p ${{CRAFT_PART_INSTALL}}/usr/bin
       cp {real_python} ${{CRAFT_PART_INSTALL}}/usr/bin/{payload_python}
-      craftctl default 
+      craftctl default
 """
 
 

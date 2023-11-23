@@ -22,18 +22,18 @@ from pathlib import Path
 from typing import Any, Dict
 from unittest.mock import ANY, call
 
-import pytest
-import yaml
-
 import craft_parts
 import craft_parts.utils.partition_utils
+import pytest
+import yaml
 from craft_parts import errors, lifecycle_manager
 from craft_parts.plugins import nil_plugin
 from craft_parts.state_manager import states
+
 from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
     monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
@@ -274,7 +274,7 @@ class TestLifecycleManager:
 class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def parts_data(self) -> Dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
 
@@ -298,7 +298,7 @@ class TestOverlayDisabled:
 class TestPartitionsDisabled:
     """Partition feature must be enabled when partition are defined."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def parts_data(self) -> Dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 

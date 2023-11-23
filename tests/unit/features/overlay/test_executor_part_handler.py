@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import part_handler
@@ -28,6 +27,7 @@ from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
+
 from tests.unit.executor import test_part_handler
 
 # pylint: disable=too-many-lines

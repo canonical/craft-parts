@@ -79,7 +79,7 @@ def _client(cmd: str, args: List[str]) -> Optional[str]:
     with open(call_fifo, "w") as fifo:
         fifo.write(json.dumps(data))
 
-    with open(feedback_fifo, "r") as fifo:
+    with open(feedback_fifo) as fifo:
         feedback = fifo.readline().split(" ", 1)
 
     # response from server is in the form "<status> <message>" where

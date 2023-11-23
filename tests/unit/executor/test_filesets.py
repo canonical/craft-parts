@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.executor import filesets
 from craft_parts.executor.filesets import Fileset

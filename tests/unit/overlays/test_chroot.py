@@ -19,7 +19,6 @@ from pathlib import Path
 from unittest.mock import ANY, call
 
 import pytest
-
 from craft_parts.overlays import chroot
 
 
@@ -42,7 +41,7 @@ class FakeConn:
         self.sent = data
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_conn():
     return FakeConn()
 

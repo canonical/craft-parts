@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts import errors, packages
 from craft_parts.packages import platform
 from craft_parts.packages.base import DummyRepository

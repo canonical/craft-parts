@@ -20,7 +20,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-
 from craft_parts.packages.base import DummyRepository
 from craft_parts.packages.normalize import fix_pkg_config, normalize
 
@@ -54,7 +53,7 @@ def pkg_config_file():
                 )
             )
 
-    yield _pkg_config_file
+    return _pkg_config_file
 
 
 @pytest.fixture()
@@ -82,7 +81,7 @@ def expected_pkg_config_content():
             """
         )
 
-    yield _expected_pkg_config_content
+    return _expected_pkg_config_content
 
 
 @pytest.mark.parametrize(
@@ -156,7 +155,7 @@ class TestFixXmlTools:
         normalize(Path("root"), repository=DummyRepository)
 
         for test_file in tc:
-            with open(test_file["path"], "r") as f:
+            with open(test_file["path"]) as f:
                 assert f.read() == test_file["expected"]
 
 
@@ -224,7 +223,7 @@ class TestFixShebang:
         normalize(Path("root"), repository=DummyRepository)
 
         for _, data in self.scenarios:
-            with open(data["file_path"], "r") as fd:
+            with open(data["file_path"]) as fd:
                 assert fd.read() == data["expected"]
 
 

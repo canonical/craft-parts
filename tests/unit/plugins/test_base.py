@@ -17,7 +17,6 @@
 from typing import Any, Dict, List, Set, cast
 
 import pytest
-
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginProperties

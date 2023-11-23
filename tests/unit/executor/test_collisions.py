@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import List
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.collisions import check_for_stage_collisions
@@ -25,7 +24,7 @@ from craft_parts.parts import Part
 from craft_parts.permissions import Permissions
 
 
-@pytest.fixture
+@pytest.fixture()
 def part0(tmpdir, partitions) -> Part:
     part = Part(
         "part0", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
@@ -36,7 +35,7 @@ def part0(tmpdir, partitions) -> Part:
     return part
 
 
-@pytest.fixture
+@pytest.fixture()
 def part1(tmpdir, partitions) -> Part:
     part = Part(
         "part1", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
@@ -48,7 +47,7 @@ def part1(tmpdir, partitions) -> Part:
     return part
 
 
-@pytest.fixture
+@pytest.fixture()
 def part2(tmpdir, partitions) -> Part:
     part = Part(
         "part2", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
@@ -62,7 +61,7 @@ def part2(tmpdir, partitions) -> Part:
     return part
 
 
-@pytest.fixture
+@pytest.fixture()
 def part3(tmpdir, partitions) -> Part:
     part = Part(
         "part3", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
@@ -75,7 +74,7 @@ def part3(tmpdir, partitions) -> Part:
     return part
 
 
-@pytest.fixture
+@pytest.fixture()
 def part4(tmpdir, partitions) -> Part:
     part = Part(
         "part4", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
@@ -87,7 +86,7 @@ def part4(tmpdir, partitions) -> Part:
     return part
 
 
-@pytest.fixture
+@pytest.fixture()
 def part5(tmpdir, partitions) -> Part:
     # Create a new part with a symlink that collides with part1's
     # non-symlink.
@@ -101,7 +100,7 @@ def part5(tmpdir, partitions) -> Part:
     return part
 
 
-@pytest.fixture
+@pytest.fixture()
 def part6(tmpdir, partitions) -> Part:
     # Create a new part with a symlink that points to a different place
     # than part5's symlink.

@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts import callbacks, overlays
 from craft_parts.actions import Action
 from craft_parts.executor import ExecutionContext, Executor

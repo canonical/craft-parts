@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import Dict, List, Set
 
 import pytest
-
 from craft_parts import plugins
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor import environment

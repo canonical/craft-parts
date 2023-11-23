@@ -19,7 +19,6 @@ import shutil
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.sources import errors as sources_errors

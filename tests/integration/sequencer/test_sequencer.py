@@ -19,7 +19,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from craft_parts import sequencer
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import ProjectInfo
@@ -85,7 +84,7 @@ _pull_state_bar = textwrap.dedent(
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def pull_state(new_dir):
     # build current state
     Path(new_dir / "parts/foo/state").mkdir(parents=True)

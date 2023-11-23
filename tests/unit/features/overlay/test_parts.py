@@ -19,7 +19,6 @@ from functools import partial
 
 import pydantic
 import pytest
-
 from craft_parts import errors, parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform

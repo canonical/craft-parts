@@ -19,7 +19,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from craft_parts import sequencer
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import ProjectInfo
@@ -29,7 +28,7 @@ from craft_parts.steps import Step
 
 @pytest.fixture(autouse=True)
 def setup_feature(enable_overlay_feature):
-    yield
+    return
 
 
 _pull_state_foo = textwrap.dedent(
@@ -91,7 +90,7 @@ _pull_state_bar = textwrap.dedent(
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def pull_state(new_dir):
     # build current state
     Path(new_dir / "parts/foo/state").mkdir(parents=True)

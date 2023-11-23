@@ -200,9 +200,10 @@ napoleon_use_ivar = True
 
 
 def run_apidoc(_):
-    from sphinx.ext.apidoc import main
     import os
     import sys
+
+    from sphinx.ext.apidoc import main
 
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
     cur_dir = os.path.abspath(os.path.dirname(__file__))

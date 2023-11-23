@@ -17,9 +17,8 @@
 """Operations with platform-specific package repositories."""
 from typing import TYPE_CHECKING, Type
 
-from . import errors  # noqa: F401
-from . import snaps  # noqa: F401
-from .normalize import fix_pkg_config  # noqa: F401
+from . import errors, snaps
+from .normalize import fix_pkg_config
 from .platform import is_deb_based, is_dnf_based, is_yum_based
 
 if TYPE_CHECKING:

@@ -19,10 +19,9 @@ import textwrap
 from pathlib import Path
 
 import yaml
-from overrides import override
-
 from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
+from overrides import override
 
 
 def test_dotnet_plugin(new_dir, partitions):

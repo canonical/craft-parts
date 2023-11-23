@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import requests
-
 from craft_parts.utils import url_utils
 
 

@@ -18,7 +18,6 @@ import dataclasses
 from pathlib import Path
 
 import pytest
-
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.state_manager import StateManager, state_manager, states

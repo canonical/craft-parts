@@ -18,9 +18,8 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
-import yaml
-
 import craft_parts
+import yaml
 from craft_parts import Action, ActionProperties, ActionType, Step, plugins
 
 

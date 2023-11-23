@@ -22,13 +22,12 @@ from unittest import mock
 from xml.etree import ElementTree
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import MavenPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),

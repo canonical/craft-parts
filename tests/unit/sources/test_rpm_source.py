@@ -19,28 +19,27 @@ import subprocess
 import tarfile
 
 import pytest
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import errors, sources
 
 
 # region Fixtures
-@pytest.fixture
+@pytest.fixture()
 def rpm_source(tmp_path: pathlib.Path, partitions):
     dest_dir = tmp_path / "src"
     dest_dir.mkdir()
     dirs = ProjectDirs(partitions=partitions)
-    yield sources.RpmSource(
+    return sources.RpmSource(
         str(dest_dir / "test.rpm"), dest_dir, cache_dir=tmp_path, project_dirs=dirs
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_popen(mocker):
     return mocker.patch.object(subprocess, "Popen", autospec=True)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_tarfile_open(mocker):
     return mocker.patch.object(tarfile, "open", autospec=True)
 

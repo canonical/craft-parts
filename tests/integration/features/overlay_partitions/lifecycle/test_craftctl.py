@@ -25,4 +25,4 @@ from tests.integration.lifecycle.test_craftctl import *  # noqa: F403
 
 @pytest.fixture(autouse=True)
 def setup_feature(setup):
-    yield
+    return

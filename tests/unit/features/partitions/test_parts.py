@@ -18,9 +18,9 @@ from textwrap import dedent
 
 import pytest
 import pytest_check  # type: ignore[import]
-
 from craft_parts import ProjectDirs, errors, parts
 from craft_parts.parts import Part
+
 from tests.unit import test_parts
 
 
@@ -116,12 +116,12 @@ class TestPartValidation(test_parts.TestPartValidation):
 class TestPartPartitionUsage:
     """Test usage of partitions in parts."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
         return ["default", "kernel"]
 
-    @pytest.fixture
+    @pytest.fixture()
     def valid_filesets(self):
         """Return a list of valid filesets when the partition feature is enabled.
 
@@ -148,7 +148,7 @@ class TestPartPartitionUsage:
             "test(kernel)/test",
         ]
 
-    @pytest.fixture
+    @pytest.fixture()
     def invalid_filesets(self):
         """Return a list of invalid filesets when the partition feature is enabled.
 

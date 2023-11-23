@@ -16,13 +16,12 @@
 
 
 import pytest
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import sources
 from craft_parts.utils import os_utils
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_process_run(mocker):
     mock_run = mocker.patch.object(os_utils, "process_run", autospec=True)
     return mock_run

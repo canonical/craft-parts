@@ -19,7 +19,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.overlays.layers import LayerHash, LayerStateManager
 from craft_parts.parts import Part
 

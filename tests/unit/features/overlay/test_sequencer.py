@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.actions import Action, ActionProperties, ActionType
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash

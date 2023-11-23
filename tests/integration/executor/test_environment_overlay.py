@@ -17,16 +17,15 @@
 import os
 import textwrap
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ProjectInfo, Step, StepInfo, callbacks
 
 
 @pytest.fixture(autouse=True)
 def setup_feature(enable_overlay_feature):
-    yield
+    return
 
 
 def setup_function():
@@ -236,7 +235,7 @@ def test_expand_environment_order(new_dir, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    with open(lf.project_info.prime_dir / "part-variables.txt", "r") as file:
+    with open(lf.project_info.prime_dir / "part-variables.txt") as file:
         data = file.read()
 
     assert data == textwrap.dedent(

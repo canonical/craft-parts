@@ -19,7 +19,6 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
-
 from craft_parts.state_manager.stage_state import StageState
 
 

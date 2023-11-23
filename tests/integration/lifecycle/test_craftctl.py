@@ -19,17 +19,17 @@ import sys
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ActionType, Step, errors
+
 from tests import TESTS_DIR
 
 
 @pytest.fixture(autouse=True)
 def setup_feature(enable_overlay_feature):
-    yield
+    return
 
 
 @pytest.fixture(autouse=True)

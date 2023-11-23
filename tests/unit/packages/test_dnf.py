@@ -18,7 +18,6 @@ from subprocess import CalledProcessError
 from unittest.mock import call
 
 import pytest
-
 from craft_parts.packages import errors
 from craft_parts.packages.dnf import DNFRepository
 

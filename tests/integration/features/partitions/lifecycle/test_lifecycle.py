@@ -20,8 +20,8 @@ import pathlib
 import textwrap
 
 import pytest
-
 from craft_parts import Step
+
 from tests.integration.lifecycle import test_lifecycle
 
 # This wildcard import has pytest run any non-overridden lifecycle tests here.
@@ -46,7 +46,7 @@ basic_parts_yaml = textwrap.dedent(
 
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning(test_lifecycle.TestCleaning):
-    @pytest.fixture
+    @pytest.fixture()
     def foo_files(self):
         return [
             pathlib.Path("parts/foo/src/foo.txt"),
@@ -55,7 +55,7 @@ class TestCleaning(test_lifecycle.TestCleaning):
             pathlib.Path("prime/default/foo.txt"),
         ]
 
-    @pytest.fixture
+    @pytest.fixture()
     def bar_files(self):
         return [
             pathlib.Path("parts/bar/src/bar.txt"),

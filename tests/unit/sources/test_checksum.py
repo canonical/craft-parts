@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.sources import checksum, errors
 
 

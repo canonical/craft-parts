@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts.parts import Part
 from craft_parts.state_manager import states
 from craft_parts.steps import Step

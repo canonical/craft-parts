@@ -17,17 +17,16 @@ import subprocess
 
 import pytest
 import pytest_subprocess
-from pydantic import ValidationError
-
 from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.rust_plugin import GET_RUSTUP_COMMAND_TEMPLATE, RustPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )

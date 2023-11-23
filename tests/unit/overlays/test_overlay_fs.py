@@ -20,7 +20,6 @@ from subprocess import CalledProcessError
 from typing import List
 
 import pytest
-
 from craft_parts.overlays import errors, overlay_fs
 
 

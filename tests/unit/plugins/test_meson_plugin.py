@@ -16,17 +16,16 @@
 
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.meson_plugin import MesonPlugin
+from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )

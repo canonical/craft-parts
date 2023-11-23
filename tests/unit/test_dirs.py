@@ -17,9 +17,8 @@ import string
 from pathlib import Path
 
 import pytest
-from hypothesis import given, strategies
-
 from craft_parts.dirs import ProjectDirs
+from hypothesis import given, strategies
 
 
 def test_dirs(new_dir, partitions):
