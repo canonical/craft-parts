@@ -355,10 +355,15 @@ def _validate_part_dependencies(part: Part, parts_data: Dict[str, Any]) -> None:
             raise errors.InvalidPartName(name)
 
 
-def _validate_partition_usage_in_parts(part_list, partitions):
+def _validate_partition_usage_in_parts(
+    part_list: List[Part], partitions: Optional[List[str]]
+) -> None:
     # skip validation if partitions are not enabled
     if not Features().enable_partitions:
         return
+
+    if not partitions:
+        partitions = []
 
     for part in part_list:
         for filepaths in [
@@ -367,7 +372,7 @@ def _validate_partition_usage_in_parts(part_list, partitions):
             part.spec.prime_files,
             part.spec.stage_files,
         ]:
-            _validate_partitions_in_paths(filepaths, partitions)
+            _validate_partitions_in_paths(list(filepaths), partitions)
 
 
 def _validate_partitions_in_paths(
@@ -409,5 +414,6 @@ def _validate_partitions_in_paths(
                             "Specify the correct partition name, for example "
                             f"'(default)/{filepath}'"
                         ),
-                    )
+                    ),
+                    stacklevel=1,
                 )
