@@ -19,5 +19,4 @@
 from . import errors
 from .local_source import LocalSource
 from .snap_source import SnapSource
-from .sources import (SourceHandler, get_source_handler,
-                      get_source_type_from_uri)
+from .sources import SourceHandler, get_source_handler, get_source_type_from_uri

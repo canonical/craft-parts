@@ -17,9 +17,15 @@
 """Craft Parts plugins subsystem."""
 
 from .base import Plugin, PluginModel, extract_plugin_properties
-from .plugins import (PluginProperties, extract_part_properties, get_plugin,
-                      get_plugin_class, get_registered_plugins, register,
-                      unregister_all)
+from .plugins import (
+    PluginProperties,
+    extract_part_properties,
+    get_plugin,
+    get_plugin_class,
+    get_registered_plugins,
+    register,
+    unregister_all,
+)
 from .validator import PluginEnvironmentValidator
 
 __all__ = [

@@ -170,9 +170,7 @@ def _get_source_handler_class(
 _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 
-def get_source_type_from_uri(
-    source: str, ignore_errors: bool = False
-) -> str:
+def get_source_type_from_uri(source: str, ignore_errors: bool = False) -> str:
     """Return the source type based on the given source URI.
 
     :param source: The source specification.
