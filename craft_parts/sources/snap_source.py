@@ -40,7 +40,7 @@ class SnapSource(FileSourceHandler):
     snap.<snap-name>.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -84,7 +84,7 @@ class SnapSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Provision the snap source.

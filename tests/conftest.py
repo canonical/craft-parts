@@ -183,8 +183,8 @@ def dependency_fixture(new_dir):
 
     def create_dependency_fixture(
         name: str,
-        broken: bool = False,
-        invalid: bool = False,
+        broken: bool = False,  # noqa: FBT001, FBT002
+        invalid: bool = False,  # noqa: FBT001, FBT002
         output: Optional[str] = None,
     ) -> Path:
         """Creates a mock executable dependency.

@@ -128,7 +128,7 @@ class TestLinkOrCopy:
 
         def link_and_oserror(a, b, **kwargs):  # pylint: disable=unused-argument
             orig_link(a, b)
-            raise OSError()
+            raise OSError
 
         mocker.patch("os.link", side_effect=link_and_oserror)
 

@@ -74,10 +74,9 @@ class _StateDB:
 
         :return: The wrapped state with additional metadata.
         """
-        stw = _StateWrapper(
+        return _StateWrapper(
             state, serial=next(self._serial_gen), step_updated=step_updated
         )
-        return stw
 
     def set(
         self, *, part_name: str, step: Step, state: Optional[_StateWrapper]

@@ -172,7 +172,7 @@ class LayerMount:
         self,
         overlay_manager: OverlayManager,
         top_part: Part,
-        pkg_cache: bool = True,
+        pkg_cache: bool = True,  # noqa: FBT001, FBT002
     ):
         self._overlay_manager = overlay_manager
         self._overlay_manager.mkdirs()

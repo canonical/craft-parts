@@ -300,7 +300,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["ID"]
 
-        raise errors.OsReleaseIdError()
+        raise errors.OsReleaseIdError
 
     def name(self) -> str:
         """Return the OS name.
@@ -310,7 +310,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["NAME"]
 
-        raise errors.OsReleaseNameError()
+        raise errors.OsReleaseNameError
 
     def version_id(self) -> str:
         """Return the OS version ID.
@@ -320,7 +320,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["VERSION_ID"]
 
-        raise errors.OsReleaseVersionIdError()
+        raise errors.OsReleaseVersionIdError
 
 
 def process_run(

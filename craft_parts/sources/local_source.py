@@ -183,7 +183,7 @@ def _ignore(
     current_directory: str,
     patterns: List[str],
     directory: str,
-    _files: Any,
+    _files: Any,  # noqa: ANN401
     also_ignore: Optional[List[str]] = None,
 ) -> List[str]:
     """Build a list of files to ignore based on the given patterns."""

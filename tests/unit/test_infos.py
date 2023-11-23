@@ -200,7 +200,7 @@ def test_project_info_set_project_raw_write():
 def test_project_info_set_project_var_bad_name():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         info.set_project_var("bad-name", "foo")
     assert str(raised.value) == "'bad-name' is not a valid variable name"
 
@@ -272,7 +272,7 @@ def test_project_info_set_project_var_other_part_name_raw():
 def test_project_info_set_invalid_project_vars():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         info.set_project_var("var", "bar")
     assert str(raised.value) == "'var' not in project variables"
 
@@ -280,7 +280,7 @@ def test_project_info_set_invalid_project_vars():
 def test_project_info_get_project_var_bad_name():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         info.get_project_var("bad-name")
     assert str(raised.value) == "'bad-name' is not a valid variable name"
 
@@ -458,7 +458,7 @@ def test_part_info_set_invalid_project_vars():
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         x.set_project_var("var", "bar")
     assert str(raised.value) == "'var' not in project variables"
 
@@ -620,7 +620,7 @@ def test_step_info_set_invalid_project_vars():
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
 
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         x.set_project_var("var", "bar")
     assert str(raised.value) == "'var' not in project variables"
 

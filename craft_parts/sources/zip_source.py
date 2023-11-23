@@ -31,7 +31,7 @@ class ZipSource(FileSourceHandler):
     """The zip file source handler."""
 
     # pylint: disable=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -76,7 +76,7 @@ class ZipSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Extract zip file contents to the part source dir."""

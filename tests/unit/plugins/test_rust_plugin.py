@@ -236,7 +236,7 @@ def test_get_pull_commands_compat_with_exceptions(
     fake_process.register(["rustup", "--version"])
 
     def callback_fail():
-        raise exc_class()
+        raise exc_class
 
     fake_process.register([failed_command, "--version"], callback=callback_fail)
 

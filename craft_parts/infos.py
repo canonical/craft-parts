@@ -71,7 +71,7 @@ class ProjectInfo:
     :param partitions: A list of partitions.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         application_name: str,
@@ -108,7 +108,7 @@ class ProjectInfo:
 
         self.execution_finished = False
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._dirs, name):
             return getattr(self._dirs, name)
 
@@ -222,7 +222,7 @@ class ProjectInfo:
         self,
         name: str,
         value: str,
-        raw_write: bool = False,
+        raw_write: bool = False,  # noqa: FBT001, FBT002
         *,
         part_name: Optional[str] = None,
     ) -> None:
@@ -345,7 +345,7 @@ class PartInfo:
         self._part_cache_dir = part.part_cache_dir
         self.build_attributes = part.spec.build_attributes.copy()
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         # Use composition and attribute cascading to avoid setting attributes
         # cumulatively in the init method.
         if hasattr(self._project_info, name):
@@ -452,7 +452,7 @@ class StepInfo:
         self.step_environment: Dict[str, str] = {}
         self.state: "Optional[states.StepState]" = None
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._part_info, name):
             return getattr(self._part_info, name)
 

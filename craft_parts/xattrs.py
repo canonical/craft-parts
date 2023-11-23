@@ -79,7 +79,7 @@ def write_xattr(path: str, key: str, value: str) -> None:
         # Label is too long for filesystem:
         # OSError: [Errno 7] Argument list too long: b'<path>'
         if error.errno == 7:
-            raise errors.XAttributeTooLong(path=path, key=key, value=value)
+            raise errors.XAttributeTooLong(path=path, key=key, value=value) from error
 
         # Chain unknown variants of OSError.
         raise errors.XAttributeError(key=key, path=path, is_write=True) from error

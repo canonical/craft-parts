@@ -90,7 +90,7 @@ class BarFileSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Extract source payload."""

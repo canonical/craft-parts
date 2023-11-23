@@ -348,7 +348,7 @@ class StepHandler:
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
                     message=str(err),
-                )
+                ) from err
         elif cmd_name == "get":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(
@@ -363,7 +363,7 @@ class StepHandler:
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
                     message=str(err),
-                )
+                ) from err
         else:
             raise invalid_control_api_call(
                 message=f"invalid command {cmd_name!r}",

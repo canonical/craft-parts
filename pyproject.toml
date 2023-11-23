@@ -148,18 +148,6 @@ ignore = [
     "RUF005",
     "N818",
     "PGH003",
-    "PT007",
-    "FBT001",
-    "FBT002",
-    "PT011",
-    "RET504",
-    "PLR0913",
-    "TRY200",
-    "ANN401",
-    "ARG003",
-    "FBT003",
-    "SIM118",
-    "RSE102",
 ]
 
 [tool.ruff.flake8-annotations]

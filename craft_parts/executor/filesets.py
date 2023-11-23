@@ -249,6 +249,4 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))
 
     filename_abspath = os.path.join(parent_abspath, filename)
-    filename_relpath = os.path.relpath(filename_abspath, base_directory)
-
-    return filename_relpath
+    return os.path.relpath(filename_abspath, base_directory)

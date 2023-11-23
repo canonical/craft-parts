@@ -58,7 +58,7 @@ class TestStageState:
 
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError) as raised:
-            StageState.unmarshal(False)  # type: ignore
+            StageState.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
         assert str(raised.value) == "state data is not a dictionary"
 
 
@@ -96,7 +96,7 @@ class TestStageStateChanges:
             "stage",
         ]
 
-        for prop in properties.keys():
+        for prop in properties:
             other = properties.copy()
             other[prop] = "new value"
 
@@ -122,7 +122,7 @@ class TestStageStateChanges:
             "extra-property",
         ]
 
-        for prop in augmented_properties.keys():
+        for prop in augmented_properties:
             other = augmented_properties.copy()
             other[prop] = "new value"
 

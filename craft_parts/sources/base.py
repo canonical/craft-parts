@@ -47,7 +47,7 @@ class SourceHandler(abc.ABC):
 
     # pylint: disable=too-many-arguments
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -127,21 +127,21 @@ class SourceHandler(abc.ABC):
         try:
             os_utils.process_run(command, logger.debug, **kwargs)
         except subprocess.CalledProcessError as err:
-            raise errors.PullError(command=command, exit_code=err.returncode)
+            raise errors.PullError(command=command, exit_code=err.returncode) from err
 
     @classmethod
     def _run_output(cls, command: Sequence) -> str:
         try:
             return subprocess.check_output(command, text=True).strip()
         except subprocess.CalledProcessError as err:
-            raise errors.PullError(command=command, exit_code=err.returncode)
+            raise errors.PullError(command=command, exit_code=err.returncode) from err
 
 
 class FileSourceHandler(SourceHandler):
     """Base class for file source types."""
 
     # pylint: disable=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -179,7 +179,7 @@ class FileSourceHandler(SourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Process the source file to extract its payload."""
@@ -243,7 +243,7 @@ class FileSourceHandler(SourceHandler):
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
                 f"response={err.response!r})"
-            )
+            ) from err
 
         url_utils.download_request(request, str(self._file))
 

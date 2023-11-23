@@ -145,7 +145,7 @@ class SnapPackage:
                     if http_error.response.status_code == 404:
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
-                        )
+                        ) from http_error
                     retry_count -= 1
 
         return self._store_snap_info
@@ -205,7 +205,7 @@ class SnapPackage:
         if not self.in_store:
             return False
         store_channels = self._get_store_channels()
-        return self.channel in store_channels.keys()
+        return self.channel in store_channels
 
     def download(self, *, directory: Optional[str] = None) -> None:
         """Download a given snap."""

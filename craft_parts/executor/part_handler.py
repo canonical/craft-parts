@@ -203,7 +203,7 @@ class PartHandler:
             stderr=stderr,
         )
 
-        state = states.PullState(
+        return states.PullState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             assets={
@@ -212,8 +212,6 @@ class PartHandler:
                 "source-details": getattr(self._source_handler, "source_details", None),
             },
         )
-
-        return state
 
     def _run_overlay(
         self,
@@ -343,13 +341,12 @@ class PartHandler:
         # filesystem if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
-        state = states.BuildState(
+        return states.BuildState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             assets=assets,
             overlay_hash=overlay_hash.hex(),
         )
-        return state
 
     def _run_stage(
         self,
@@ -382,14 +379,13 @@ class PartHandler:
         # parameters if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
-        state = states.StageState(
+        return states.StageState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
             overlay_hash=overlay_hash.hex(),
         )
-        return state
 
     def _run_prime(
         self,
@@ -427,14 +423,13 @@ class PartHandler:
         else:
             primed_stage_packages = set()
 
-        state = states.PrimeState(
+        return states.PrimeState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
             primed_stage_packages=primed_stage_packages,
         )
-        return state
 
     def _run_step(
         self,
@@ -904,7 +899,7 @@ class PartHandler:
         except packages_errors.PackageNotFound as err:
             raise errors.StagePackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
-            )
+            ) from err
 
         return fetched_packages
 
@@ -936,7 +931,7 @@ class PartHandler:
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
-            )
+            ) from err
 
     def _unpack_stage_packages(self) -> None:
         """Extract stage packages contents to the part's install directory."""

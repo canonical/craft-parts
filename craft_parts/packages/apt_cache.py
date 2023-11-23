@@ -250,7 +250,7 @@ class AptCache(ContextDecorator):
                     str(download_path), progress=self.progress
                 )
             except apt.package.FetchError as err:
-                raise errors.PackageFetchError(str(err))
+                raise errors.PackageFetchError(str(err)) from err
 
             if package.candidate is None:
                 raise errors.PackageNotFound(package.name)
@@ -322,7 +322,7 @@ class AptCache(ContextDecorator):
             # Now mark this package as NOT automatically installed, which
             # will leave its dependencies marked as auto-installed, which
             # allows us to clean them up if necessary.
-            package.mark_auto(False)
+            package.mark_auto(auto=False)
 
             _verify_marked_install(package)
 

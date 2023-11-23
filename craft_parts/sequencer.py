@@ -384,7 +384,10 @@ class Sequencer:
         )
 
     def _ensure_overlay_consistency(
-        self, top_part: Part, reason: Optional[str] = None, skip_last: bool = False
+        self,
+        top_part: Part,
+        reason: Optional[str] = None,
+        skip_last: bool = False,  # noqa: FBT001, FBT002
     ) -> LayerHash:
         """Make sure overlay step layers are consistent.
 

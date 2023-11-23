@@ -29,7 +29,7 @@ from craft_parts.utils import file_utils
 logger = logging.getLogger(__name__)
 
 
-def migrate_files(
+def migrate_files(  # noqa: PLR0913
     *,
     files: Set[str],
     dirs: Set[str],

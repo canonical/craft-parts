@@ -193,7 +193,7 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
     """
     global_environment = _get_global_environment(step_info.project_info)
 
-    step_environment = {
+    return {
         **global_environment,
         "CRAFT_PART_NAME": step_info.part_name,
         "CRAFT_STEP_NAME": getattr(step_info.step, "name", ""),
@@ -203,7 +203,6 @@ def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:
         "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
         "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
     }
-    return step_environment
 
 
 def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:

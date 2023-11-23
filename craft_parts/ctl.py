@@ -46,8 +46,7 @@ class CraftCtl:
             return None
 
         if cmd in "get":
-            retval = _client(cmd, args)
-            return retval
+            return _client(cmd, args)
 
         raise RuntimeError(f"invalid command {cmd!r}")
 

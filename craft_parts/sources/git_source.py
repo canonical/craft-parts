@@ -114,7 +114,7 @@ class GitSource(SourceHandler):
 
         return f"{tag}+git{revs_ahead}.{commit}"
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,

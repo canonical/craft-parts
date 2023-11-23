@@ -177,8 +177,7 @@ class PartSpecificationError(PartsError):
         loc_str = ".".join(loc_parts)
 
         # Filter out internal __root__ detail.
-        loc_str = loc_str.replace(".__root__", "")
-        return loc_str
+        return loc_str.replace(".__root__", "")
 
 
 class CopyTreeError(PartsError):
@@ -217,7 +216,9 @@ class XAttributeError(PartsError):
     :param is_write: Whether this is an attribute write operation.
     """
 
-    def __init__(self, key: str, path: str, is_write: bool = False):
+    def __init__(
+        self, key: str, path: str, is_write: bool = False  # noqa: FBT001, FBT002
+    ):
         self.key = key
         self.path = path
         self.is_write = is_write
