@@ -293,9 +293,11 @@ class AptCache(ContextDecorator):
 
         :param package_names: The set of package names to be marked.
         """
-        for name in package_names:
-            if name.endswith(":any"):
-                name = name[:-4]
+        for _name in package_names:
+            if _name.endswith(":any"):
+                name = _name[:-4]
+            else:
+                name = _name
 
             if self.cache.is_virtual_package(name):
                 name = self.cache.get_providing_packages(name)[0].name
@@ -378,7 +380,7 @@ def _verify_marked_install(package: apt.package.Package) -> None:
     for package_dependencies in package.candidate.dependencies:
         for dep in package_dependencies:
             if not dep.target_versions:
-                broken_deps.append(dep.name)
+                broken_deps.append(dep.name)  # noqa: PERF401
     raise errors.PackageBroken(package.name, deps=broken_deps)
 
 

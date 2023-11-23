@@ -281,10 +281,10 @@ def _replace_attr(
 
     if isinstance(attr, dict):
         result: Dict[str, str] = {}
-        for key, value in attr.items():
+        for _key, _value in attr.items():
             # Run replacements on both the key and value
-            key = cast(str, _replace_attr(key, replacements))
-            value = cast(str, _replace_attr(value, replacements))
+            key = cast(str, _replace_attr(_key, replacements))
+            value = cast(str, _replace_attr(_value, replacements))
             result[key] = value
         return result
 

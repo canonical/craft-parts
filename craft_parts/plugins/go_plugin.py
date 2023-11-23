@@ -139,9 +139,7 @@ class GoPlugin(Plugin):
         else:
             tags = ""
 
-        generate_cmds: List[str] = []
-        for cmd in options.go_generate:
-            generate_cmds.append(f"go generate {cmd}")
+        generate_cmds: List[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
         return (
             ["go mod download all"]

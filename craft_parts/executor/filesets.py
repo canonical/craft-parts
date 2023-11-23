@@ -118,8 +118,8 @@ def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[st
     files = files - dirs
 
     # Include (resolved) parent directories for each selected file.
-    for filename in files:
-        filename = _get_resolved_relative_path(filename, srcdir)
+    for _filename in files:
+        filename = _get_resolved_relative_path(_filename, srcdir)
         dirname = os.path.dirname(filename)
         while dirname:
             dirs.add(dirname)
@@ -164,12 +164,12 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
 
     includes = includes or ["*"]
 
-    processed_includes: List[str] = []
-    processed_excludes: List[str] = []
-    for file in includes:
-        processed_includes.append(path_utils.get_partitioned_path(file))
-    for file in excludes:
-        processed_excludes.append(path_utils.get_partitioned_path(file))
+    processed_includes: List[str] = [
+        path_utils.get_partitioned_path(file) for file in includes
+    ]
+    processed_excludes: List[str] = [
+        path_utils.get_partitioned_path(file) for file in excludes
+    ]
     return processed_includes, processed_excludes
 
 

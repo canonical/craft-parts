@@ -1132,8 +1132,8 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Pa
 
 def _get_primed_stage_packages(snap_files: Set[str], *, prime_dir: Path) -> Set[str]:
     primed_stage_packages: Set[str] = set()
-    for snap_file in snap_files:
-        snap_file = str(prime_dir / snap_file)
+    for _snap_file in snap_files:
+        snap_file = str(prime_dir / _snap_file)
         stage_package = read_origin_stage_package(snap_file)
         if stage_package:
             primed_stage_packages.add(stage_package)

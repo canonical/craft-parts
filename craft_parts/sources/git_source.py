@@ -249,8 +249,9 @@ class GitSource(SourceHandler):
         if self.source_submodules is None:
             command.append("--recursive")
         else:
-            for submodule in self.source_submodules:
-                command.append("--recursive=" + submodule)
+            command.extend(
+                ["--recursive=" + submodule for submodule in self.source_submodules]
+            )
         if self.source_tag or self.source_branch:
             command.extend(
                 ["--branch", cast(str, self.source_tag or self.source_branch)]

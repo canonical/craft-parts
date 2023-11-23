@@ -161,7 +161,6 @@ ignore = [
     "SIM118",
     "RSE102",
     "SIM108",
-    "PERF401",
 ]
 
 [tool.ruff.flake8-annotations]

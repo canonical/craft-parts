@@ -81,10 +81,10 @@ class RpmSource(FileSourceHandler):
 
         :raises: InvalidSourceOptions if any bad options are used.
         """
-        bad_options = []
-        for tag in self._invalid_tags:
-            if getattr(self, tag.replace("-", "_")):
-                bad_options.append(tag)
+        bad_options = [
+            tag for tag in self._invalid_tags if getattr(self, tag.replace("-", "_"))
+        ]
+
         if bad_options:
             raise errors.InvalidSourceOptions(
                 source_type=self._source_type, options=bad_options
