@@ -17,10 +17,9 @@
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ActionProperties, ActionType, Step
 
 basic_parts_yaml = textwrap.dedent(
@@ -41,7 +40,7 @@ basic_parts_yaml = textwrap.dedent(
 
 @pytest.fixture(autouse=True)
 def setup_feature(enable_overlay_feature):
-    yield
+    return
 
 
 def test_basic_lifecycle_actions(new_dir, mocker):
@@ -173,14 +172,14 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     assert actions == [
         # fmt: off
         Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", step=Step.OVERLAY, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
         Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),

@@ -16,15 +16,13 @@
 
 """Manages the state of packages obtained using apt."""
 
-from __future__ import annotations
-
 import logging
 import os
 import re
 import shutil
 from contextlib import ContextDecorator
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 try:
     import apt
@@ -94,7 +92,7 @@ class AptCache(ContextDecorator):
         self.progress: Optional[LogProgress] = None
 
     # pylint: disable=attribute-defined-outside-init
-    def __enter__(self) -> AptCache:
+    def __enter__(self) -> "AptCache":
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()
@@ -107,7 +105,7 @@ class AptCache(ContextDecorator):
 
     # pylint: enable=attribute-defined-outside-init
 
-    def __exit__(self, *exc: Any) -> None:
+    def __exit__(self, *exc: object) -> None:
         self.cache.close()
 
     @classmethod
@@ -394,7 +392,7 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
 
 
 def _ignore_unreadable_files(
-    path: Union[str, os.PathLike[str]], names: Iterable[str]
+    path: Union[str, "os.PathLike[str]"], names: Iterable[str]
 ) -> List[str]:
     """Ignore unreadable files for copytree.
 

@@ -18,11 +18,10 @@ from pathlib import Path
 from typing import Optional
 
 import pytest
-from overrides import overrides
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
 from craft_parts.sources.base import FileSourceHandler, SourceHandler
+from overrides import overrides
 
 # pylint: disable=attribute-defined-outside-init
 

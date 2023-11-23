@@ -16,10 +16,9 @@
 
 import textwrap
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import (
     Action,
     ActionType,
@@ -34,7 +33,7 @@ from craft_parts.state_manager import StepState
 
 @pytest.fixture(autouse=True)
 def setup_feature(enable_overlay_feature):
-    yield
+    return
 
 
 def setup_function():
@@ -132,8 +131,7 @@ def test_prologue_callback(tmpdir, capfd):
 
 
 def _my_step_callback(info: StepInfo) -> bool:
-    msg = getattr(info, "message")
-    print(msg)
+    print(info.message)
     return True
 
 
@@ -330,7 +328,7 @@ def test_invalid_update_callback_post(tmpdir, step):
 
 
 def _my_exec_callback(info: ProjectInfo) -> None:
-    print(f"{getattr(info, 'message')}")
+    print(info.message)
 
 
 _exec_yaml = textwrap.dedent(

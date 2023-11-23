@@ -42,7 +42,7 @@ from tests.integration.plugins.test_validate_environment import *  # type: ignor
 # pylint: enable=wildcard-import
 
 
-@pytest.fixture
+@pytest.fixture()
 def install_dir():
     """Installation directory for the standard dump plugin."""
     return pathlib.Path("parts", "foo", "install", "default")

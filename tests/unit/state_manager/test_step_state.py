@@ -19,7 +19,6 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 import yaml
-
 from craft_parts.state_manager import step_state
 
 

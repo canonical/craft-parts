@@ -384,7 +384,7 @@ class StepHandler:
             self._builtin_prime()
 
 
-def _create_and_run_script(  # noqa: PLR0913
+def _create_and_run_script(
     commands: List[str],
     script_path: Path,
     cwd: Path,

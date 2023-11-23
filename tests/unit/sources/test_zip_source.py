@@ -18,7 +18,6 @@ from pathlib import Path
 from unittest.mock import call
 
 import pytest
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import sources
 

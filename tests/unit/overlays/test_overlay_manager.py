@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerMount, OverlayManager, PackageCacheMount
 from craft_parts.overlays.overlay_fs import OverlayFS

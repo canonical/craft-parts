@@ -17,7 +17,6 @@
 from pathlib import Path, PurePosixPath
 
 import pytest
-
 from craft_parts.utils.path_utils import _has_partition, get_partitioned_path
 
 PATH_CLASSES = [Path, PurePosixPath, str]

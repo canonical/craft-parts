@@ -20,7 +20,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from typing_extensions import Literal
 
@@ -187,7 +187,7 @@ class LayerMount:
         )
         return self
 
-    def __exit__(self, *exc: Any) -> Literal[False]:
+    def __exit__(self, *exc: object) -> Literal[False]:
         # prevent pychroot process leak
         if os.getpid() != self._pid:
             sys.exit()
@@ -217,7 +217,7 @@ class PackageCacheMount:
         self._overlay_manager.mount_pkg_cache()
         return self
 
-    def __exit__(self, *exc: Any) -> Literal[False]:
+    def __exit__(self, *exc: object) -> Literal[False]:
         # prevent pychroot process leak
         if os.getpid() != self._pid:
             sys.exit()

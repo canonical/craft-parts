@@ -23,7 +23,6 @@ from unittest import mock
 from unittest.mock import call
 
 import pytest
-
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
 from craft_parts.packages.deb_package import DebPackage
@@ -39,7 +38,7 @@ def mock_env_copy():
         yield m
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_all_packages_installed(mocker):
     mocker.patch(
         "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
@@ -47,7 +46,7 @@ def fake_all_packages_installed(mocker):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_dumb_terminal(mocker):
     return mocker.patch(
         "craft_parts.utils.os_utils.is_dumb_terminal", return_value=True
@@ -582,19 +581,19 @@ def test_packages_for_source_type(source_type, pkgs):
     assert deb.Ubuntu.get_packages_for_source_type(source_type) == pkgs
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake_dpkg_query(mocker):
     def dpkg_query(*args, **kwargs):
         # dpkg-query -S file_path
         if args[0][2] == "/bin/bash":
-            return "bash: /bin/bash\n".encode()
+            return b"bash: /bin/bash\n"
 
         if args[0][2] == "/bin/sh":
             return (
-                "diversion by dash from: /bin/sh\n"
-                "diversion by dash to: /bin/sh.distrib\n"
-                "dash: /bin/sh\n"
-            ).encode()
+                b"diversion by dash from: /bin/sh\n"
+                b"diversion by dash to: /bin/sh.distrib\n"
+                b"dash: /bin/sh\n"
+            )
 
         raise CalledProcessError(
             1,

@@ -18,7 +18,6 @@ import os
 
 import pydantic
 import pytest
-
 from craft_parts.permissions import (
     Permissions,
     apply_permissions,

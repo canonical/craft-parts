@@ -20,34 +20,33 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginEnvironmentValidator, PluginProperties
 
 
-@pytest.fixture
+@pytest.fixture()
 def foo_exe(new_dir):
     exe = Path(new_dir, "mock_bin", "foo")
     exe.parent.mkdir(exist_ok=True)
     exe.write_text("echo bar")
     exe.chmod(0o755)
-    yield exe
+    return exe
 
 
-@pytest.fixture
+@pytest.fixture()
 def empty_foo_exe(new_dir):
     exe = Path(new_dir, "mock_bin", "foo")
     exe.parent.mkdir(exist_ok=True)
     exe.touch()
     exe.chmod(0o755)
-    yield exe
+    return exe
 
 
-@pytest.fixture
+@pytest.fixture()
 def part_info(new_dir):
-    yield PartInfo(
+    return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )

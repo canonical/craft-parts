@@ -144,7 +144,7 @@ class PluginEnvironmentValidator:
                 ["/bin/bash", env_file.name],
                 check=True,
                 capture_output=True,
-                universal_newlines=True,
+                text=True,
             )
 
         return proc.stderr if proc.stderr else proc.stdout

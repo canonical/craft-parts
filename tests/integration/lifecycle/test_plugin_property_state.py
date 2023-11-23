@@ -18,13 +18,12 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+import craft_parts
 import pytest
 import yaml
-from overrides import override
-
-import craft_parts
 from craft_parts import Action, ActionType, Part, Step, plugins
 from craft_parts.state_manager import states
+from overrides import override
 
 
 def setup_function():

@@ -22,7 +22,6 @@ from unittest.mock import call
 
 import pytest
 import pytest_check  # type: ignore[import]
-
 from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler

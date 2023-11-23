@@ -17,8 +17,8 @@ import os
 import pathlib
 
 import pytest
-
 from craft_parts import errors
+
 from tests.unit.executor.test_organize import organize_and_assert
 
 

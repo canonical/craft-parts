@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors, infos
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import PartInfo, ProjectInfo, ProjectVar, StepInfo

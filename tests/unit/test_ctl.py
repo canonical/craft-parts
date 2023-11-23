@@ -18,7 +18,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from craft_parts.ctl import CraftCtl
 
 

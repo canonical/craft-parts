@@ -20,7 +20,6 @@ from textwrap import dedent
 from typing import Dict, List, Set, Type
 
 import pytest
-
 from craft_parts import plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
@@ -34,6 +33,7 @@ from craft_parts.infos import (
 )
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+
 from tests.unit.common_plugins import StrictTestPlugin
 
 
@@ -200,11 +200,11 @@ class TestStepHandlerBuiltins:
         )
 
         assert get_mode(environment_script_path) == 0o644
-        with open(environment_script_path, "r") as file:
+        with open(environment_script_path) as file:
             assert file.read() == expected_script
 
         assert get_mode(build_script_path) == 0o755
-        with open(build_script_path, "r") as file:
+        with open(build_script_path) as file:
             assert file.read() == dedent(
                 f"""\
                 #!/bin/bash

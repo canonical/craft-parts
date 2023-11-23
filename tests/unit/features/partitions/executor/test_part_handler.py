@@ -18,9 +18,9 @@ import pathlib
 from typing import Iterator
 
 import pytest
-
 from craft_parts import Action, Step
 from craft_parts.executor import filesets, part_handler
+
 from tests.unit.executor import test_part_handler
 
 PARTITIONS = ["default", "mypart", "yourpart"]
@@ -89,7 +89,7 @@ class TestFileFilter(test_part_handler.TestFileFilter):
         for partition, file in itertools.product(PARTITIONS, TEST_FILES):
             yield f"{partition}/{file}"
 
-    @pytest.fixture
+    @pytest.fixture()
     def make_files(
         self,
         new_dir,

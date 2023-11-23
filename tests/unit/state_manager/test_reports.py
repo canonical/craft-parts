@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.state_manager import reports
 from craft_parts.state_manager.reports import Dependency
 from craft_parts.steps import Step

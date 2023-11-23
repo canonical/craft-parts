@@ -23,9 +23,9 @@ from typing import Any, Dict
 import pytest
 import pytest_check  # type: ignore[import]
 import yaml
+from craft_parts import errors, lifecycle_manager
 from hypothesis import HealthCheck, given, settings, strategies
 
-from craft_parts import errors, lifecycle_manager
 from tests.unit import test_lifecycle_manager
 
 mock_available_plugins = test_lifecycle_manager.mock_available_plugins
@@ -49,12 +49,12 @@ def valid_partitions_strategy():
 class TestPartitionsSupport:
     """Verify LifecycleManager supports partitions."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
         return ["default", "kernel"]
 
-    @pytest.fixture
+    @pytest.fixture()
     def parts_data(self) -> Dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 

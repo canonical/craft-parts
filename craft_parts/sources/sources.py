@@ -172,7 +172,7 @@ _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 def get_source_type_from_uri(
     source: str, ignore_errors: bool = False
-) -> str:  # noqa: C901
+) -> str:
     """Return the source type based on the given source URI.
 
     :param source: The source specification.

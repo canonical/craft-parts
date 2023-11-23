@@ -19,15 +19,15 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors, xattrs
+
 from tests import linux_only
 
 
 class TestXattrs:
     """Extended attribute tests."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def test_file(self):
         # These tests don't work on tmpfs
         file_path = Path(".tests-xattr-test-file")

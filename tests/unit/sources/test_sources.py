@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.sources import LocalSource, errors, sources

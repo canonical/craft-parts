@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import requests
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import sources
 

@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts.state_manager.pull_state import PullState
 
 

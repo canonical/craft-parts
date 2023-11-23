@@ -18,10 +18,9 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, ActionType, Step, errors, plugins
 
 

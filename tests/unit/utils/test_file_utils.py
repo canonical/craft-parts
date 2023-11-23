@@ -19,7 +19,6 @@ import stat
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
@@ -124,14 +123,14 @@ class TestLinkOrCopy:
         open(os.path.join("foo", "bar", "3"), "w").close()
         open(os.path.join("foo", "bar", "baz", "4"), "w").close()
 
-    def test_link_file_ioerror(self, mocker):
+    def test_link_file_soerror(self, mocker):
         orig_link = os.link
 
-        def link_and_ioerror(a, b, **kwargs):  # pylint: disable=unused-argument
+        def link_and_oserror(a, b, **kwargs):  # pylint: disable=unused-argument
             orig_link(a, b)
-            raise IOError()
+            raise OSError()
 
-        mocker.patch("os.link", side_effect=link_and_ioerror)
+        mocker.patch("os.link", side_effect=link_and_oserror)
 
         file_utils.link_or_copy("1", "foo/1")
 

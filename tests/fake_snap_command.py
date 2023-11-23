@@ -103,6 +103,6 @@ class FakeSnapCommand:
             if self.fake_download:
                 dest = os.path.join(kwargs["cwd"], params[0] + ".snap")
                 shutil.copyfile(self.fake_download, dest)
-            return "Downloaded  ".encode()
+            return b"Downloaded  "
 
         return None

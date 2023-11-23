@@ -20,9 +20,8 @@ import sys
 import textwrap
 from pathlib import Path
 
-import pytest
-
 import craft_parts
+import pytest
 from craft_parts import main
 
 parts_yaml = textwrap.dedent(

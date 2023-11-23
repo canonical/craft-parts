@@ -16,9 +16,8 @@
 
 """Source handler definitions and helpers."""
 
-from . import errors  # noqa: F401
-from .local_source import LocalSource  # noqa: F401
-from .snap_source import SnapSource  # noqa: F401
-from .sources import SourceHandler  # noqa: F401
-from .sources import get_source_handler  # noqa: F401
-from .sources import get_source_type_from_uri  # noqa: F401
+from . import errors
+from .local_source import LocalSource
+from .snap_source import SnapSource
+from .sources import (SourceHandler, get_source_handler,
+                      get_source_type_from_uri)

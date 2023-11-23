@@ -17,11 +17,10 @@
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import pytest_check  # type: ignore[import]
 import yaml
-
-import craft_parts
 from craft_parts import Action, ActionProperties, ActionType, Features, Step
 
 basic_parts_yaml = textwrap.dedent(
@@ -156,11 +155,11 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=['a.tar.gz'], changed_dirs=[])),
+               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="required to build 'bar'"),
@@ -219,7 +218,7 @@ class TestCleaning:
 
         # pylint: enable=attribute-defined-outside-init
 
-    @pytest.fixture
+    @pytest.fixture()
     def foo_files(self):
         return [
             Path("parts/foo/src/foo.txt"),
@@ -228,7 +227,7 @@ class TestCleaning:
             Path("prime/foo.txt"),
         ]
 
-    @pytest.fixture
+    @pytest.fixture()
     def bar_files(self):
         return [
             Path("parts/bar/src/bar.txt"),
@@ -237,7 +236,7 @@ class TestCleaning:
             Path("prime/bar.txt"),
         ]
 
-    @pytest.fixture
+    @pytest.fixture()
     def state_files(self):
         return ["build", "prime", "pull", "stage"]
 

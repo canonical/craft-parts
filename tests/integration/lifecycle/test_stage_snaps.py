@@ -17,10 +17,9 @@
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Action, Step
 from craft_parts.packages.errors import SnapDownloadError
 from craft_parts.sources.errors import PullError
@@ -28,7 +27,7 @@ from craft_parts.sources.errors import PullError
 _LOCAL_DIR = Path(__file__).parent
 
 
-@pytest.fixture
+@pytest.fixture()
 def foo_install_dir(new_dir):
     return Path(new_dir, "parts", "foo", "install")
 

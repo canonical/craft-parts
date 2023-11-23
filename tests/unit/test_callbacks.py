@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Generator, List
 
 import pytest
-
 from craft_parts import callbacks, errors
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
@@ -26,46 +25,46 @@ from craft_parts.steps import Step
 
 
 def _callback_1(info: StepInfo) -> bool:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{greet} callback 1")
     return True
 
 
 def _callback_2(info: StepInfo) -> bool:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{greet} callback 2")
     return False
 
 
 def _callback_3(info: ProjectInfo) -> None:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{greet} callback 3")
 
 
 def _callback_4(info: ProjectInfo) -> None:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{greet} callback 4")
 
 
 def _callback_filter_1(info: ProjectInfo) -> List[str]:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{greet} filter 1")
     return ["a", "b", "c"]
 
 
 def _callback_filter_2(info: ProjectInfo) -> Generator[str, None, None]:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{greet} filter 2")
     return (i for i in ["d", "e", "f"])
 
 
 def _callback_overlay_1(overlay_dir: Path, info: ProjectInfo) -> None:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{overlay_dir} {greet} 1")
 
 
 def _callback_overlay_2(overlay_dir: Path, info: ProjectInfo) -> None:
-    greet = getattr(info, "greet")
+    greet = info.greet
     print(f"{overlay_dir} {greet} 2")
 
 

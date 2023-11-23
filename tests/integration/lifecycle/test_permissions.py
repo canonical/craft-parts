@@ -19,9 +19,8 @@ import stat
 import textwrap
 from pathlib import Path
 
-import yaml
-
 import craft_parts
+import yaml
 from craft_parts import Step
 
 

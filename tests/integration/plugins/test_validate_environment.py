@@ -19,38 +19,37 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
 from craft_parts import Step, errors, plugins
 
 
-@pytest.fixture
+@pytest.fixture()
 def mytool(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
     tool.write_text("echo ok")
     tool.chmod(0o755)
-    yield tool
+    return tool
 
 
-@pytest.fixture
+@pytest.fixture()
 def mytool_not_ok(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
     tool.write_text("echo not ok")
     tool.chmod(0o755)
-    yield tool
+    return tool
 
 
-@pytest.fixture
+@pytest.fixture()
 def mytool_error(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
     tool.write_text("exit 22")
     tool.chmod(0o755)
-    yield tool
+    return tool
 
 
 class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):

@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from craft_parts import ProjectDirs
 from craft_parts.sources import errors, snap_source, sources
 
