@@ -67,10 +67,7 @@ def download_request(
     else:
         logger.debug("Downloading %r", destination)
 
-    if os.path.exists(destination):
-        mode = "ab"
-    else:
-        mode = "wb"
+    mode = "ab" if os.path.exists(destination) else "wb"
 
     with open(destination, mode) as destination_file:
         for buf in request.iter_content(1024):

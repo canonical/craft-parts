@@ -294,10 +294,7 @@ class AptCache(ContextDecorator):
         :param package_names: The set of package names to be marked.
         """
         for _name in package_names:
-            if _name.endswith(":any"):
-                name = _name[:-4]
-            else:
-                name = _name
+            name = _name[:-4] if _name.endswith(":any") else _name
 
             if self.cache.is_virtual_package(name):
                 name = self.cache.get_providing_packages(name)[0].name

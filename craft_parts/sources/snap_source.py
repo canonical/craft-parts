@@ -95,10 +95,7 @@ class SnapSource(FileSourceHandler):
 
         raises errors.InvalidSnap: If trying to provision an invalid snap.
         """
-        if src:
-            snap_file = src
-        else:
-            snap_file = self.part_src_dir / os.path.basename(self.source)
+        snap_file = src if src else self.part_src_dir / os.path.basename(self.source)
         snap_file = snap_file.resolve()
 
         # unsquashfs [options] filesystem [directories or files to extract]

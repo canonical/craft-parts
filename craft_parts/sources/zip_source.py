@@ -80,10 +80,7 @@ class ZipSource(FileSourceHandler):
         src: Optional[Path] = None,
     ) -> None:
         """Extract zip file contents to the part source dir."""
-        if src:
-            zip_file = src
-        else:
-            zip_file = self.part_src_dir / os.path.basename(self.source)
+        zip_file = src if src else self.part_src_dir / os.path.basename(self.source)
 
         # Workaround for: https://bugs.python.org/issue15795
         with zipfile.ZipFile(zip_file, "r") as zipf:

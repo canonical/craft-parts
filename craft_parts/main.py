@@ -45,10 +45,7 @@ def main() -> None:
         print(f"craft-parts {craft_parts.__version__}")
         sys.exit()
 
-    if options.trace:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
+    log_level = logging.DEBUG if options.trace else logging.INFO
 
     logging.basicConfig(level=log_level)
 

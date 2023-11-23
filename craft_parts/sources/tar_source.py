@@ -84,10 +84,7 @@ class TarSource(FileSourceHandler):
         src: Optional[Path] = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
-        if src:
-            tarball = src
-        else:
-            tarball = self.part_src_dir / os.path.basename(self.source)
+        tarball = src if src else self.part_src_dir / os.path.basename(self.source)
 
         _extract(tarball, dst)
 

@@ -134,10 +134,7 @@ class GoPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(GoPluginProperties, self._options)
 
-        if options.go_buildtags:
-            tags = f'-tags={",".join(options.go_buildtags)}'
-        else:
-            tags = ""
+        tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
         generate_cmds: List[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
