@@ -224,7 +224,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
 
 def _normalize_settings(settings):
     with io.StringIO(settings) as f:
-        tree = ElementTree.parse(f)
+        tree = ElementTree.parse(f)  # noqa: S314
     for element in tree.iter():
         if element.text is not None and element.text.isspace():
             element.text = None

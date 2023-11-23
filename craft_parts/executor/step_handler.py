@@ -271,7 +271,7 @@ class StepHandler:
 
             except Exception as error:
                 logger.debug("scriptlet execution failed: %s", error)
-                raise error
+                raise
             finally:
                 call_fifo.close()
                 feedback_fifo.close()

@@ -172,7 +172,7 @@ class PartSpecificationError(PartsError):
                 previous_part += f"[{loc_part}]"
                 loc_parts.append(previous_part)
             else:
-                raise RuntimeError(f"unhandled loc: {loc_part}")
+                raise TypeError(f"unhandled loc: {loc_part}")
 
         loc_str = ".".join(loc_parts)
 

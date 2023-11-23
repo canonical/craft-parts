@@ -257,10 +257,12 @@ class TestLocal:
         # Verify that both the file and the directory symlinks were kept.
         assert os.path.isdir(os.path.join("destination", "dir"))
         dir_symlink = os.path.join("destination", "dir_symlink")
-        assert os.path.islink(dir_symlink) and os.readlink(dir_symlink) == "dir"
+        assert os.path.islink(dir_symlink)
+        assert os.readlink(dir_symlink) == "dir"
         assert os.path.isfile(os.path.join("destination", "dir", "file"))
         file_symlink = os.path.join("destination", "dir", "file_symlink")
-        assert os.path.islink(file_symlink) and os.readlink(file_symlink) == "file"
+        assert os.path.islink(file_symlink)
+        assert os.readlink(file_symlink) == "file"
 
     def test_has_source_handler_entry(self):
         assert sources._source_handler["local"] is LocalSource

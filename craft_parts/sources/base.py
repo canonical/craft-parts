@@ -91,7 +91,7 @@ class SourceHandler(abc.ABC):
         """Retrieve the source file."""
 
     def check_if_outdated(
-        self, target: str, *, ignore_files: Optional[List[str]] = None
+        self, target: str, *, ignore_files: Optional[List[str]] = None  # noqa: ARG002
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 

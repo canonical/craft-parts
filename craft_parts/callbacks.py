@@ -18,15 +18,20 @@
 
 import itertools
 import logging
-from collections import namedtuple
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Set, Union
+from typing import Callable, Iterable, List, NamedTuple, Optional, Set, Union
 
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.steps import Step
 
-CallbackHook = namedtuple("CallbackHook", ["function", "step_list"])
+
+class CallbackHook(NamedTuple):
+    """A callback hook."""
+
+    function: Callable
+    step_list: Optional[List[Step]]
+
 
 FilterCallback = Callable[[ProjectInfo], Iterable[str]]
 ExecutionCallback = Callable[[ProjectInfo], None]

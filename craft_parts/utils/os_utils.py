@@ -262,10 +262,10 @@ def umount(mountpoint: str, *args: str) -> None:
         try:
             subprocess.check_call(["/bin/umount", *args, mountpoint])
             break
-        except subprocess.CalledProcessError as err:
+        except subprocess.CalledProcessError:
             attempt += 1
             if attempt > _UMOUNT_RETRIES:
-                raise err
+                raise
 
             time.sleep(1)
             logger.debug(

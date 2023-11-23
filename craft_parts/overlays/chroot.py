@@ -20,10 +20,9 @@ import logging
 import multiprocessing
 import os
 import sys
-from collections import namedtuple
 from multiprocessing.connection import Connection
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from craft_parts.utils import os_utils
 
@@ -77,7 +76,7 @@ def _runner(
         os.chdir(path)
         os.chroot(path)
         res = target(*args, **kwargs)
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception as exc:  # noqa: BLE001
         conn.send((None, str(exc)))
         return
 
@@ -98,7 +97,14 @@ def _cleanup_chroot(path: Path) -> None:
         _cleanup_chroot_linux(path)
 
 
-_Mount = namedtuple("_Mount", ["fstype", "src", "mountpoint", "options"])
+class _Mount(NamedTuple):
+    """Mount entry for chroot setup."""
+
+    fstype: Optional[str]
+    src: str
+    mountpoint: str
+    options: Optional[List[str]]
+
 
 # Essential filesystems to mount in order to have basic utilities and
 # name resolution working inside the chroot environment.

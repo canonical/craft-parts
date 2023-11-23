@@ -54,9 +54,10 @@ class Permissions(BaseModel):
         has_owner = "owner" in values
         has_group = "group" in values
 
-        assert (
-            has_group == has_owner
-        ), 'If either "owner" or "group" is defined, both must be'
+        if has_owner != has_group:
+            raise ValueError(
+                'If either "owner" or "group" is defined, both must be set'
+            )
 
         return values
 

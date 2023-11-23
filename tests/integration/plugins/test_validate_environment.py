@@ -106,7 +106,7 @@ class AppPlugin(plugins.Plugin):
 
     def validate_environment(self, env: Dict[str, str]):
         try:
-            subprocess.run("mytool", shell=True, check=True, env=env)
+            subprocess.run("mytool", check=True, env=env)
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_info.part_name,

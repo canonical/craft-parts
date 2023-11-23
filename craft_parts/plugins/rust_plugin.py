@@ -165,9 +165,10 @@ class RustPlugin(Plugin):
         try:
             rust_version = subprocess.check_output(["rustc", "--version"], text=True)
             cargo_version = subprocess.check_output(["cargo", "--version"], text=True)
-            return "rustc" in rust_version and "cargo" in cargo_version
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
+        else:
+            return "rustc" in rust_version and "cargo" in cargo_version
 
     def _check_rustup(self) -> bool:
         try:

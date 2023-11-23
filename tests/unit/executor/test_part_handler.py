@@ -199,7 +199,7 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
         )
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+        mocker.patch("os.getxattr", return_value=b"pkg")
 
         ovmgr = OverlayManager(
             project_info=self._project_info, part_list=[self._part], base_layer_dir=None
@@ -228,7 +228,7 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
         )
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+        mocker.patch("os.getxattr", return_value=b"pkg")
 
         state = self._handler._run_prime(
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None

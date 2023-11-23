@@ -25,7 +25,6 @@ from craft_parts.sources.tar_source import TarSource
     "tc_url,tc_handler",
     [
         (".", LocalSource),
-        (".", LocalSource),
         (".tar.gz", TarSource),
         (".tar.bz2", TarSource),
         (".tgz", TarSource),

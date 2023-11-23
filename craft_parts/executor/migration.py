@@ -38,7 +38,7 @@ def migrate_files(
     missing_ok: bool = False,
     follow_symlinks: bool = False,
     oci_translation: bool = False,
-    fixup_func: Callable[..., None] = lambda *args: None,
+    fixup_func: Callable[..., None] = lambda *_args: None,
     permissions: Optional[List[Permissions]] = None,
 ) -> Tuple[Set[str], Set[str]]:
     """Copy or link files from a directory to another.
@@ -221,7 +221,7 @@ def _clean_migrated_files(files: Set[str], dirs: Set[str], directory: Path) -> N
     for each_file in files:
         try:
             Path(directory, each_file).unlink()
-        except FileNotFoundError:
+        except FileNotFoundError:  # noqa: PERF203
             logger.warning(
                 "Attempted to remove file %r, but it didn't exist. Skipping...",
                 each_file,

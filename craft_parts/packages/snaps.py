@@ -196,9 +196,12 @@ class SnapPackage:
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
         local_snap_info = self.get_local_snap_info()
-        if local_snap_info:
-            if self.installed and local_snap_info["channel"] == self.channel:
-                return True
+        if (
+            local_snap_info
+            and self.installed
+            and local_snap_info["channel"] == self.channel
+        ):
+            return True
         if not self.in_store:
             return False
         store_channels = self._get_store_channels()

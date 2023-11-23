@@ -89,7 +89,7 @@ class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
     find_exit_code = 200  # type: int
     _private_data = {"new_fake_snap_installed": False}
 
-    def do_GET(self):
+    def do_GET(self):  # noqa: N802
         parsed_url = parse.urlparse(self.path)
         if parsed_url.path == "/v2/snaps":
             self._handle_snaps()

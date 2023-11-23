@@ -116,7 +116,7 @@ def register(plugins: Dict[str, PluginType]) -> None:
 
 def unregister_all() -> None:
     """Unregister all user-registered plugins."""
-    global _PLUGINS  # pylint: disable=global-statement
+    global _PLUGINS  # noqa: PLW0603
     _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
 

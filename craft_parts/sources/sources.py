@@ -183,14 +183,9 @@ def get_source_type_from_uri(source: str, ignore_errors: bool = False) -> str:
         if source.endswith(f".{extension}"):
             return extension
     source_type = ""
-    if source.startswith("bzr:") or source.startswith("lp:"):
+    if source.startswith(("bzr:", "lp:")):
         source_type = "bzr"
-    elif (
-        source.startswith("git:")
-        or source.startswith("git@")
-        or source.startswith("git+ssh:")
-        or source.endswith(".git")
-    ):
+    elif source.startswith(("git:", "git@", "git+ssh:")) or source.endswith(".git"):
         source_type = "git"
     elif source.startswith("svn:"):
         source_type = "subversion"

@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import collections
 import http.server
 import os
 import tempfile
 import threading
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, NamedTuple, Optional
 from unittest import mock
 
 import pytest
@@ -213,7 +212,12 @@ def dependency_fixture(new_dir):
     return create_dependency_fixture
 
 
-ChmodCall = collections.namedtuple("ChmodCall", ["owner", "group", "kwargs"])
+class ChmodCall(NamedTuple):
+    """Record of a call to os.chmod()."""
+
+    owner: int
+    group: int
+    kwargs: Dict[str, Any]
 
 
 @pytest.fixture()

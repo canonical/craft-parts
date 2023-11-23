@@ -34,8 +34,9 @@ def is_ubuntu() -> bool:
             os_release = release_file.read()
         if re.search(r"^ID(?:_LIKE)?=.*\bubuntu\b.*$", os_release, re.MULTILINE):
             return True
-        return False
     except FileNotFoundError:
+        return False
+    else:
         return False
 
 

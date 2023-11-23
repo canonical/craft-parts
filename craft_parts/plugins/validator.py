@@ -99,7 +99,6 @@ class PluginEnvironmentValidator:
             command = f"{dependency} {argument}"
             output = self._execute(command).strip()
             logger.debug("executed %s with output %s", command, output)
-            return output
         except subprocess.CalledProcessError as err:
             if err.returncode != COMMAND_NOT_FOUND:
                 raise errors.PluginEnvironmentValidationError(
@@ -123,6 +122,8 @@ class PluginEnvironmentValidator:
                         "that would satisfy the dependency"
                     ),
                 ) from err
+        else:
+            return output
         return ""
 
     def _execute(self, cmd: str) -> str:

@@ -77,16 +77,19 @@ class PartSpec(BaseModel):
     @validator("stage_files", "prime_files", each_item=True)
     def validate_relative_path_list(cls, item: str) -> str:
         """Verify list is not empty and does not contain any absolute paths."""
-        assert item != "", "path cannot be empty"
-        assert (
-            item[0] != "/"
-        ), f"{item!r} must be a relative path (cannot start with '/')"
+        if not item:
+            raise ValueError("path cannot be empty")
+        if item.startswith("/"):
+            raise ValueError(
+                f"{item!r} must be a relative path (cannot start with '/')"
+            )
         return item
 
     @validator("overlay_packages", "overlay_files", "overlay_script")
     def validate_overlay_feature(cls, item: Any) -> Any:
         """Check if overlay attributes specified when feature is disabled."""
-        assert Features().enable_overlay, "overlays not supported"
+        if not Features().enable_overlay:
+            raise ValueError("overlays not supported")
         return item
 
     @root_validator(pre=True)
@@ -104,9 +107,8 @@ class PartSpec(BaseModel):
         has_slices = any(name for name in stage_packages if is_slice(name))
         has_packages = any(name for name in stage_packages if not is_slice(name))
 
-        assert not (
-            has_slices and has_packages
-        ), "Cannot mix packages and slices in stage-packages"
+        if has_slices and has_packages:
+            raise ValueError("Cannot mix packages and slices in stage-packages")
 
         return values
 

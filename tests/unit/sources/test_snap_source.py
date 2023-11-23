@@ -50,8 +50,8 @@ class TestSnapSource:
         ],
     )
     def test_invalid_parameter(self, new_dir, param, value):
+        kwargs = {param: value}
         with pytest.raises(errors.InvalidSourceOption) as raised:
-            kwargs = {param: value}
             sources.SnapSource(
                 source="test.snap",
                 part_src_dir=Path(),

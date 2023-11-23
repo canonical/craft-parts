@@ -39,7 +39,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     # See https://gist.github.com/sergiusens/dcae19c301eb59e091f92ab29d7d03fc
 
     # first run
-    # command: pull
+    # command pull
     lf = LifecycleManager(
         parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
     )
@@ -107,7 +107,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    # Modifying foo’s source marks bar as dirty
+    # Modifying foo's source marks bar as dirty
     new_yaml = test_lifecycle.basic_parts_yaml.replace("source: a.tar.gz", "source: .")
     parts = yaml.safe_load(new_yaml)
 

@@ -20,7 +20,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 import yaml
 from overrides import overrides
@@ -52,7 +52,7 @@ class SnapSource(FileSourceHandler):
         source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             source,

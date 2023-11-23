@@ -350,7 +350,7 @@ class TestEnvironment:
         assert os_utils.is_inside_container()
 
     def test_is_inside_container_no_files(self, mocker):
-        mocker.patch("os.path.exists", new=lambda x: False)
+        mocker.patch("os.path.exists", return_value=False)
         assert os_utils.is_inside_container() is False
 
 

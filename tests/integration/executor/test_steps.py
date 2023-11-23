@@ -61,7 +61,7 @@ def test_run(tmpdir):
         ctx.execute(Action("bar", Step.PULL))
         ctx.execute(Action("bar", Step.BUILD))
         ctx.execute(Action("bar", Step.STAGE))
-        assert sorted(list(stage_dir.rglob("*"))) == [
+        assert sorted(stage_dir.rglob("*")) == [
             stage_dir / "bar.txt",
             stage_dir / "foo.txt",
         ]
@@ -70,7 +70,7 @@ def test_run(tmpdir):
         assert list(prime_dir.rglob("*")) == [prime_dir / "foo.txt"]
 
         ctx.execute(Action("bar", Step.PRIME))
-        assert sorted(list(prime_dir.rglob("*"))) == [
+        assert sorted(prime_dir.rglob("*")) == [
             prime_dir / "bar.txt",
             prime_dir / "foo.txt",
         ]

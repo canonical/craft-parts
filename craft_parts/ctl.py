@@ -112,6 +112,6 @@ def main() -> None:
         ret = CraftCtl.run(cmd, args)
         if ret:
             print(ret)
-    except RuntimeError as err:
-        logger.error("error: %s", err)
+    except RuntimeError:
+        logger.exception("error: ")
         sys.exit(1)
