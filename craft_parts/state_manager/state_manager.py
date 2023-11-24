@@ -176,7 +176,7 @@ class StateManager:
         project_info: ProjectInfo,
         part_list: List[Part],
         ignore_outdated: Optional[List[str]] = None,
-    ):
+    ) -> None:
         self._state_db = _StateDB()
         self._project_info = project_info
         self._part_list = part_list

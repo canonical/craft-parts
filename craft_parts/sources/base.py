@@ -62,7 +62,7 @@ class SourceHandler(abc.ABC):
         source_submodules: Optional[List[str]] = None,
         command: Optional[str] = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         if not ignore_patterns:
             ignore_patterns = []
 
@@ -156,7 +156,7 @@ class FileSourceHandler(SourceHandler):
         source_submodules: Optional[List[str]] = None,
         command: Optional[str] = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,

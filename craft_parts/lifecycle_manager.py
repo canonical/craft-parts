@@ -106,7 +106,7 @@ class LifecycleManager:
         project_vars: Optional[Dict[str, str]] = None,
         partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
-    ):
+    ) -> None:
         # pylint: disable=too-many-locals
 
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):

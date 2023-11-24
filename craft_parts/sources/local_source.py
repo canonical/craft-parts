@@ -46,7 +46,7 @@ class LocalSource(SourceHandler):
         project_dirs: ProjectDirs,
         copy_function: Callable[..., None] = file_utils.link_or_copy,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(*args, project_dirs=project_dirs, **kwargs)
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function

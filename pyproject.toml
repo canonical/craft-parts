@@ -142,7 +142,6 @@ ignore = [
 
     # following ignored for enable ruff
     "PT006",
-    "ANN204",
 ]
 
 [tool.ruff.flake8-annotations]

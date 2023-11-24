@@ -45,7 +45,7 @@ class ProjectDirs:
         *,
         partitions: Optional[Sequence[str]] = None,
         work_dir: Union[Path, str] = ".",
-    ):
+    ) -> None:
         partition_utils.validate_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()

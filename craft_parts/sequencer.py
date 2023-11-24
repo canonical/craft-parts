@@ -52,7 +52,7 @@ class Sequencer:
         project_info: ProjectInfo,
         ignore_outdated: Optional[List[str]] = None,
         base_layer_hash: Optional[LayerHash] = None,
-    ):
+    ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
         self._sm = StateManager(

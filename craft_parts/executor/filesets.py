@@ -27,7 +27,7 @@ from craft_parts.utils import path_utils
 class Fileset:
     """Helper class to process string lists."""
 
-    def __init__(self, entries: List[str], *, name: str = ""):
+    def __init__(self, entries: List[str], *, name: str = "") -> None:
         self._name = name
         self._list = entries
 

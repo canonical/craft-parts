@@ -196,7 +196,7 @@ class Part:
         project_dirs: Optional[ProjectDirs] = None,
         plugin_properties: "Optional[PluginProperties]" = None,
         partitions: Optional[Sequence[str]] = None,
-    ):
+    ) -> None:
         self._partitions = partitions
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(

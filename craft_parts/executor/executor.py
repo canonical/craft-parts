@@ -65,7 +65,7 @@ class Executor:
         ignore_patterns: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[LayerHash] = None,
-    ):
+    ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
@@ -291,7 +291,7 @@ class ExecutionContext:
         self,
         *,
         executor: Executor,
-    ):
+    ) -> None:
         self._executor = executor
 
     def __enter__(self) -> "ExecutionContext":

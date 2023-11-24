@@ -32,7 +32,7 @@ class InvalidSourceType(SourceError):  # noqa: N818
     :param source: The source defined for the part.
     """
 
-    def __init__(self, source: str):
+    def __init__(self, source: str) -> None:
         self.source = source
         brief = f"Failed to pull source: unable to determine source type of {source!r}."
 
@@ -46,7 +46,7 @@ class InvalidSourceOption(SourceError):  # noqa: N818
     :param option: The invalid source option.
     """
 
-    def __init__(self, *, source_type: str, option: str):
+    def __init__(self, *, source_type: str, option: str) -> None:
         self.source_type = source_type
         self.option = option
         brief = (
@@ -66,7 +66,7 @@ class InvalidSourceOptions(SourceError):  # noqa: N818
     :param options: The invalid source options.
     """
 
-    def __init__(self, *, source_type: str, options: List[str]):
+    def __init__(self, *, source_type: str, options: List[str]) -> None:
         self.source_type = source_type
         self.options = options
         humanized_options = formatting_utils.humanize_list(options, "and")
@@ -86,7 +86,7 @@ class IncompatibleSourceOptions(SourceError):  # noqa: N818
     :param options: The list of incompatible source options.
     """
 
-    def __init__(self, source_type: str, options: List[str]):
+    def __init__(self, source_type: str, options: List[str]) -> None:
         self.source_type = source_type
         self.options = options
         humanized_options = formatting_utils.humanize_list(options, "and")
@@ -106,7 +106,7 @@ class ChecksumMismatch(SourceError):  # noqa: N818
     :param obtained: The actual checksum.
     """
 
-    def __init__(self, *, expected: str, obtained: str):
+    def __init__(self, *, expected: str, obtained: str) -> None:
         self.expected = expected
         self.obtained = obtained
         brief = f"Expected digest {expected}, obtained {obtained}."
@@ -120,7 +120,7 @@ class SourceUpdateUnsupported(SourceError):  # noqa: N818
     :param name: The source type.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         brief = f"Failed to update source: {name!r} sources don't support updating."
 
@@ -133,7 +133,7 @@ class NetworkRequestError(SourceError):
     :param message: The error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Network request error: {message}."
         resolution = "Check the network and try again."
@@ -147,7 +147,7 @@ class SourceNotFound(SourceError):  # noqa: N818
     :param source: The source defined for the part.
     """
 
-    def __init__(self, source: str):
+    def __init__(self, source: str) -> None:
         self.source = source
         brief = f"Failed to pull source: {source!r} not found."
         resolution = "Make sure the source path is correct and accessible."
@@ -161,7 +161,7 @@ class InvalidSnapPackage(SourceError):  # noqa: N818
     :param snap_file: The snap file name.
     """
 
-    def __init__(self, snap_file: str):
+    def __init__(self, snap_file: str) -> None:
         self.snap_file = snap_file
         brief = f"Snap {snap_file!r} does not contain valid data."
         resolution = "Ensure the source lists a proper snap file."
@@ -175,7 +175,7 @@ class InvalidRpmPackage(SourceError):  # noqa: N818
     :param rpm_file: The filename.
     """
 
-    def __init__(self, rpm_file: str):
+    def __init__(self, rpm_file: str) -> None:
         self.rpm_file = rpm_file
         brief = f"RPM file {rpm_file!r} could not be extracted."
         resolution = "Ensure the source lists a valid rpm file."
@@ -190,7 +190,7 @@ class PullError(SourceError):
     :param exit_code: The command exit code.
     """
 
-    def __init__(self, *, command: Sequence, exit_code: int):
+    def __init__(self, *, command: Sequence, exit_code: int) -> None:
         self.command = command
         self.exit_code = exit_code
         brief = (
@@ -204,7 +204,7 @@ class PullError(SourceError):
 class VCSError(SourceError):
     """A version control system command failed."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = message
 

@@ -90,7 +90,7 @@ class PartHandler:
         overlay_manager: OverlayManager,
         ignore_patterns: Optional[List[str]] = None,
         base_layer_hash: Optional[LayerHash] = None,
-    ):
+    ) -> None:
         self._part = part
         self._part_info = part_info
         self._part_list = part_list

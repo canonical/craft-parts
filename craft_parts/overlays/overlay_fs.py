@@ -32,7 +32,9 @@ logger = logging.getLogger(__name__)
 class OverlayFS:
     """Linux overlayfs operations."""
 
-    def __init__(self, *, lower_dirs: List[Path], upper_dir: Path, work_dir: Path):
+    def __init__(
+        self, *, lower_dirs: List[Path], upper_dir: Path, work_dir: Path
+    ) -> None:
         self._lower_dirs = lower_dirs
         self._upper_dir = upper_dir
         self._work_dir = work_dir

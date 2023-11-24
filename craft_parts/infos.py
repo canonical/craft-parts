@@ -86,7 +86,7 @@ class ProjectInfo:
         project_vars: Optional[Dict[str, str]] = None,
         partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
-    ):
+    ) -> None:
         if not project_dirs:
             project_dirs = ProjectDirs(partitions=partitions)
 
@@ -333,7 +333,7 @@ class PartInfo:
         self,
         project_info: ProjectInfo,
         part: Part,
-    ):
+    ) -> None:
         self._project_info = project_info
         self._part_name = part.name
         self._part_src_dir = part.part_src_dir
@@ -446,7 +446,7 @@ class StepInfo:
         self,
         part_info: PartInfo,
         step: Step,
-    ):
+    ) -> None:
         self._part_info = part_info
         self.step = step
         self.step_environment: Dict[str, str] = {}

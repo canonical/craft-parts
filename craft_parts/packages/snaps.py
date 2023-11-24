@@ -80,7 +80,7 @@ class SnapPackage:
             return False
         return cls(snap).installed
 
-    def __init__(self, snap: str):
+    def __init__(self, snap: str) -> None:
         """Lifecycle handler for a snap of the format <snap-name>/<channel>."""
         self.name, self.channel = _get_parsed_snap(snap)
         self._original_channel = self.channel

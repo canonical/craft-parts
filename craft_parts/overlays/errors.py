@@ -30,7 +30,7 @@ class OverlayMountError(OverlayError):
     :param message: The error message.
     """
 
-    def __init__(self, mountpoint: str, message: str):
+    def __init__(self, mountpoint: str, message: str) -> None:
         self.mountpoint = mountpoint
         self.message = message
         brief = f"Failed to mount overlay on {mountpoint}: {message}"
@@ -45,7 +45,7 @@ class OverlayUnmountError(OverlayError):
     :param message: The error message.
     """
 
-    def __init__(self, mountpoint: str, message: str):
+    def __init__(self, mountpoint: str, message: str) -> None:
         self.mountpoint = mountpoint
         self.message = message
         brief = f"Failed to unmount {mountpoint}: {message}"

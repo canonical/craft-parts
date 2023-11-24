@@ -46,7 +46,9 @@ class PluginEnvironmentValidator:
     :param env: A string containing the build step environment setup.
     """
 
-    def __init__(self, *, part_name: str, env: str, properties: PluginProperties):
+    def __init__(
+        self, *, part_name: str, env: str, properties: PluginProperties
+    ) -> None:
         self._part_name = part_name
         self._env = env
         self._options = properties

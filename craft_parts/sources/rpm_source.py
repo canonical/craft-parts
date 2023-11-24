@@ -59,7 +59,7 @@ class RpmSource(FileSourceHandler):
         source_submodules: None = None,
         source_depth: None = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,

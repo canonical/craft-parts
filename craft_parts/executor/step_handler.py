@@ -75,7 +75,7 @@ class StepHandler:
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
-    ):
+    ) -> None:
         self._part = part
         self._step_info = step_info
         self._plugin = plugin

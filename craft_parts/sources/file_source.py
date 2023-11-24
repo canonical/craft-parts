@@ -45,7 +45,7 @@ class FileSource(FileSourceHandler):
         source_submodules: Optional[List[str]] = None,
         source_checksum: Optional[str] = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
