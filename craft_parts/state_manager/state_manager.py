@@ -215,7 +215,7 @@ class StateManager:
         :param part: The part corresponding to the state to remove.
         :param step: The step corresponding to the state to remove.
         """
-        for next_step in [step] + step.next_steps():
+        for next_step in [step, *step.next_steps()]:
             self._state_db.remove(part_name=part.name, step=next_step)
 
         self._dirty_report_cache.pop((part.name, step), None)

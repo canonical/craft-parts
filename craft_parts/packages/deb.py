@@ -728,15 +728,7 @@ class Ubuntu(BaseRepository):
         handler = logging.StreamHandler(stream=output_stream)
         logger.addHandler(handler)
         try:
-            process_run(
-                [
-                    "chisel",
-                    "cut",
-                    "--root",
-                    str(install_path),
-                ]
-                + stage_packages
-            )
+            process_run(["chisel", "cut", "--root", str(install_path), *stage_packages])
         except subprocess.CalledProcessError as err:
             command_output = output_stream.getvalue()
             raise errors.ChiselError(

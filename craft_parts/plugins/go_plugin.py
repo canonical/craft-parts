@@ -138,10 +138,8 @@ class GoPlugin(Plugin):
 
         generate_cmds: List[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
-        return (
-            ["go mod download all"]
-            + generate_cmds
-            + [
-                f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
-            ]
-        )
+        return [
+            "go mod download all",
+            *generate_cmds,
+            f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
+        ]

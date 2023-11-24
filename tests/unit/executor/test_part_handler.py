@@ -593,7 +593,7 @@ class TestPartCleanHandler:
     )
     def test_clean_step(self, mocker, step, test_dir, state_file):
         self._handler._make_dirs()
-        for each_step in step.previous_steps() + [step]:
+        for each_step in [*step.previous_steps(), step]:
             self._handler.run_action(Action("foo", each_step))
 
         assert Path(test_dir, "foo.txt").is_file()
@@ -632,7 +632,7 @@ class TestRerunStep:
         mock.attach_mock(mock_callback, "run_pre_step")
 
         handler.run_action(Action("p1", step, ActionType.RERUN))
-        calls = [mocker.call.clean_step(step=x) for x in [step] + step.next_steps()]
+        calls = [mocker.call.clean_step(step=x) for x in [step, *step.next_steps()]]
         calls.append(mocker.call.run_pre_step(mocker.ANY))
         mock.assert_has_calls(calls)
 

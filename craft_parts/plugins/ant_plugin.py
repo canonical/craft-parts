@@ -159,6 +159,4 @@ class AntPlugin(JavaPlugin):
 
         command.extend(options.ant_build_targets)
 
-        return [
-            " ".join(command),
-        ] + self._get_java_post_build_commands()
+        return [" ".join(command), *self._get_java_post_build_commands()]

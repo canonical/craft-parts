@@ -145,7 +145,7 @@ def test_get_build_commands(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["mvn package"] + plugin._get_java_post_build_commands()
+        ["mvn package", *plugin._get_java_post_build_commands()]
     )
 
 
@@ -159,7 +159,7 @@ def test_get_build_commands_with_parameters(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["mvn package -Dprop1=1 -c"] + plugin._get_java_post_build_commands()
+        ["mvn package -Dprop1=1 -c", *plugin._get_java_post_build_commands()]
     )
 
 
@@ -170,7 +170,7 @@ def test_settings_no_proxy(part_info, new_dir):
 
     with mock.patch.dict(os.environ, {}):
         assert plugin.get_build_commands() == (
-            ["mvn package"] + plugin._get_java_post_build_commands()
+            ["mvn package", *plugin._get_java_post_build_commands()]
         )
         assert settings_path.exists() is False
 
@@ -213,8 +213,10 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
 
     with mock.patch.dict(os.environ, env_dict):
         assert plugin.get_build_commands() == (
-            [f"mvn package -s {str(settings_path.absolute())}"]
-            + plugin._get_java_post_build_commands()
+            [
+                f"mvn package -s {str(settings_path.absolute())}",
+                *plugin._get_java_post_build_commands(),
+            ]
         )
         assert settings_path.exists()
         assert _normalize_settings(settings_path.read_text()) == _normalize_settings(

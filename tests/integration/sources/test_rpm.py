@@ -69,7 +69,7 @@ def sample_rpm(tmp_path: Path) -> Path:
     ]
 
     subprocess.run(
-        ["rpmbuild", "-bb", "--verbose"] + rpmbuild_params + [str(spec_file)],
+        ["rpmbuild", "-bb", "--verbose", *rpmbuild_params, str(spec_file)],
         check=True,
         text=True,
         capture_output=True,

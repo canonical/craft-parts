@@ -40,7 +40,7 @@ def valid_partitions_strategy():
         strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1),
         min_size=1,
         unique=True,
-    ).map(lambda lst: ["default"] + lst)
+    ).map(lambda lst: ["default", *lst])
 
     # ensure "default" is not repeated in the list
     return strategy.filter(lambda partitions: "default" not in partitions[1:])

@@ -118,7 +118,8 @@ class CMakePlugin(Plugin):
             f'"{self._part_info.part_src_subdir}"',
             "-G",
             f'"{options.cmake_generator}"',
-        ] + options.cmake_parameters
+            *options.cmake_parameters,
+        ]
 
         return [
             " ".join(cmake_command),

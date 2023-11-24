@@ -103,7 +103,7 @@ class Sequencer:
         if not selected_parts:
             return
 
-        for current_step in target_step.previous_steps() + [target_step]:
+        for current_step in [*target_step.previous_steps(), target_step]:
             for part in selected_parts:
                 logger.debug("process %s:%s", part.name, current_step)
                 self._add_step_actions(

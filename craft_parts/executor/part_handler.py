@@ -149,7 +149,7 @@ class PartHandler:
             return
 
         if action.action_type == ActionType.RERUN:
-            for step in [action.step] + action.step.next_steps():
+            for step in [action.step, *action.step.next_steps()]:
                 self.clean_step(step=step)
 
         handler: _RunHandler

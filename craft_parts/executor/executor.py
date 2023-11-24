@@ -149,7 +149,7 @@ class Executor:
         """
         selected_parts = parts.part_list_by_name(part_names, self._part_list)
 
-        selected_steps = [initial_step] + initial_step.next_steps()
+        selected_steps = [initial_step, *initial_step.next_steps()]
         selected_steps.reverse()
 
         for part in selected_parts:

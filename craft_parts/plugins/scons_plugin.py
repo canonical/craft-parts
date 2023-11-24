@@ -138,6 +138,6 @@ class SConsPlugin(Plugin):
         options = cast(SConsPluginProperties, self._options)
 
         return [
-            " ".join(["scons"] + options.scons_parameters),
-            " ".join(["scons", "install"] + options.scons_parameters),
+            " ".join(["scons", *options.scons_parameters]),
+            " ".join(["scons", "install", *options.scons_parameters]),
         ]

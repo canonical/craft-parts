@@ -529,7 +529,7 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
         if not top_part:
             raise errors.PartDependencyCycle
 
-        sorted_parts = [top_part] + sorted_parts
+        sorted_parts = [top_part, *sorted_parts]
         all_parts.remove(top_part)
 
     return sorted_parts

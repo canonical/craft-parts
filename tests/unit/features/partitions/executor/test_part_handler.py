@@ -54,7 +54,7 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
     )
     def test_clean_step(self, mocker, step, test_dir, state_file):
         self._handler._make_dirs()
-        for each_step in step.previous_steps() + [step]:
+        for each_step in [*step.previous_steps(), step]:
             self._handler.run_action(Action("foo", each_step))
 
         assert pathlib.Path(test_dir, "foo.txt").is_file()
