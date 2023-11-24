@@ -102,7 +102,7 @@ def _client(cmd: str, args: List[str]) -> Optional[str]:
 
 def main() -> None:
     """Run the ctl client cli."""
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2:  # noqa: PLR2004
         print(f"usage: {sys.argv[0]} <command> [arguments]")
         sys.exit(1)
 

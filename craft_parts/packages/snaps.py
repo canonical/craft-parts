@@ -142,7 +142,7 @@ class SnapPackage:
                         http_error.response.status_code,
                         retry_count,
                     )
-                    if http_error.response.status_code == 404:
+                    if http_error.response.status_code == 404:  # noqa: PLR2004
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error

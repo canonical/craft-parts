@@ -289,7 +289,7 @@ class OsRelease:
             with open(os_release_file) as file:
                 for line in file:
                     entry = line.rstrip().split("=")
-                    if len(entry) == 2:
+                    if len(entry) == 2:  # noqa: PLR2004
                         self._os_release[entry[0]] = entry[1].strip('"')
 
     def id(self) -> str:
