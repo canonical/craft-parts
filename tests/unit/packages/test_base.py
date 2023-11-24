@@ -27,7 +27,7 @@ class TestBaseRepository:
     """Verify the base repository class."""
 
     def test_abstract_methods(self):
-        assert BaseRepository.__abstractmethods__ == {  # type: ignore
+        assert BaseRepository.__abstractmethods__ == {
             "configure",
             "get_installed_packages",
             "get_package_libraries",

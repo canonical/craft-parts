@@ -99,7 +99,7 @@ class TestStepState:
         }
 
     def test_ignore_additional_data(self):
-        state = SomeStepState(extra="something")  # type: ignore
+        state = SomeStepState(extra="something")  # type: ignore[reportGeneralTypeIssues]
         assert state.marshal() == {
             "part-properties": {},
             "project-options": {},

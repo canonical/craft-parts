@@ -74,8 +74,7 @@ class TestSourceHandler:
             "abstract methods? pull$"
         )
         with pytest.raises(TypeError, match=expected):
-            # pylint: disable=abstract-class-instantiated
-            FaultySource(  # type: ignore
+            FaultySource(  # type: ignore[reportGeneralTypeIssues]
                 source=".",
                 part_src_dir=Path(),
                 cache_dir=Path(),
@@ -236,10 +235,9 @@ class TestFileSourceHandler:
             "abstract methods? provision$"
         )
         with pytest.raises(TypeError, match=expected):
-            # pylint: disable=abstract-class-instantiated
-            FaultyFileSource(
-                source=None,  # type: ignore
-                part_src_dir=None,  # type: ignore
+            FaultyFileSource(  # type: ignore[reportGeneralTypeIssues]
+                source=None,  # type: ignore[reportGeneralTypeIssues]
+                part_src_dir=None,  # type: ignore[reportGeneralTypeIssues]
                 cache_dir=Path(),
                 project_dirs=self._dirs,
             )

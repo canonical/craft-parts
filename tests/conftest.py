@@ -23,7 +23,7 @@ from typing import Any, Dict, NamedTuple, Optional
 from unittest import mock
 
 import pytest
-import xdg  # type: ignore
+import xdg  # type: ignore[import]
 from craft_parts.features import Features
 
 from . import fake_servers

@@ -261,7 +261,13 @@ class TestStepHandlerBuiltins:
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
     def test_run_builtin_invalid(self, new_dir):
-        sh = _step_handler_for_step(999, cache_dir=new_dir, part_info=self._part_info, part=self._part, dirs=self._dirs)  # type: ignore
+        sh = _step_handler_for_step(
+            999,  # type: ignore[reportGeneralTypeIssues]
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
         with pytest.raises(RuntimeError) as raised:
             sh.run_builtin()
         assert str(raised.value) == (

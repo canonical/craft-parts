@@ -30,7 +30,7 @@ from functools import partial
 from pathlib import Path
 
 import yaml
-from xdg import BaseDirectory  # type: ignore
+from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
 import craft_parts.errors

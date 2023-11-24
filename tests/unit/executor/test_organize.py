@@ -203,7 +203,8 @@ def organize_and_assert(
         expected = expected_overwrite
 
     if isinstance(expected, type) and issubclass(expected, Exception):
-        with pytest.raises(expected) as raised:  # type: ignore
+        raised: pytest.ExceptionInfo
+        with pytest.raises(expected) as raised:
             organize_files(
                 part_name="part-name",
                 mapping=organize_map,

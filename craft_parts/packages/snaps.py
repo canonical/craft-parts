@@ -36,7 +36,7 @@ from typing import (
 from urllib import parse
 
 import requests
-import requests_unixsocket  # type: ignore
+import requests_unixsocket  # type: ignore[import]
 from requests import exceptions
 
 from . import errors

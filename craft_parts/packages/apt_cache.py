@@ -277,7 +277,7 @@ class AptCache(ContextDecorator):
         """
         changed_pkgs = self.cache.get_changes()
         marked_install_pkgs = [p for p in changed_pkgs if p.marked_install]
-        missing_installation_candidate = [
+        missing_installation_candidate: List[str] = [
             p.name for p in marked_install_pkgs if p.candidate is None
         ]
 
@@ -285,7 +285,7 @@ class AptCache(ContextDecorator):
             raise errors.PackagesNotFound(missing_installation_candidate)
 
         return [
-            (p.name, p.candidate.version) for p in marked_install_pkgs  # type: ignore
+            (p.name, p.candidate.version) for p in marked_install_pkgs if p.candidate
         ]
 
     def mark_packages(self, package_names: Set[str]) -> None:

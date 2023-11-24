@@ -124,7 +124,7 @@ def _extract(tarball: Path, dst: Path) -> None:
                 yield member
 
         # ignore type, members expect List but we're providing Generator
-        tar.extractall(members=filter_members(tar), path=dst)  # type: ignore
+        tar.extractall(members=filter_members(tar), path=dst)
 
 
 def _strip_prefix(common: str, member: tarfile.TarInfo) -> None:

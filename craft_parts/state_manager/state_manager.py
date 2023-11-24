@@ -455,7 +455,7 @@ class StateManager:
             # step didn't run yet
             return b""
 
-        overlay_hash = stw.state.overlay_hash  # type: ignore
+        overlay_hash = stw.state.overlay_hash  # type: ignore[reportGeneralTypeIssues, attr-defined]
         if not overlay_hash:
             return b""
 

@@ -129,7 +129,7 @@ class OverlayManager:
 
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
-        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore
+        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
     def download_packages(self, package_names: List[str]) -> None:

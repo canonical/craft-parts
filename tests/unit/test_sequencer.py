@@ -101,7 +101,7 @@ def test_sequencer_run_step_invalid(new_dir):
 
     seq = Sequencer(part_list=[p1], project_info=info)
     with pytest.raises(RuntimeError) as raised:
-        seq._run_step(p1, 999)  # type: ignore
+        seq._run_step(p1, 999)  # type: ignore[reportGeneralTypeIssues]
     assert str(raised.value) == "invalid step 999"
 
 

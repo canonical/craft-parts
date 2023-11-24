@@ -97,7 +97,7 @@ class TestGetPlugin:
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
-                properties=None,  # type: ignore
+                properties=None,  # type: ignore[reportGeneralTypeIssues]
             )
         assert str(raised.value) == "plugin not registered: 'invalid'"
 
@@ -110,7 +110,7 @@ class TestGetPlugin:
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
-                properties=None,  # type: ignore
+                properties=None,  # type: ignore[reportGeneralTypeIssues]
             )
         assert str(raised.value) == "plugin not registered: 'foo'"
 

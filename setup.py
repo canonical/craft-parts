@@ -19,7 +19,7 @@
 import os
 import re
 
-from setuptools import find_packages, setup  # type: ignore
+from setuptools import find_packages, setup
 
 VERSION = "1.26.0"
 

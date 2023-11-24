@@ -127,8 +127,7 @@ class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
         snap_name = parsed_url.path.split("/")[-1]
         details_func = self.snap_details_func
         if details_func:
-            # pylint: disable-next=not-callable
-            status_code, params = details_func(snap_name)  # type: ignore
+            status_code, params = details_func(snap_name)  # type: ignore[reportGeneralTypeIssues]
         else:
             for snap in self.snaps_result:
                 if snap["name"] == snap_name:
