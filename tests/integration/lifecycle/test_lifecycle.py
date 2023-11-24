@@ -241,7 +241,7 @@ class TestCleaning:
         return ["build", "prime", "pull", "stage"]
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install", "build"),

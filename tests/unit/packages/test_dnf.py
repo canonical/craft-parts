@@ -82,7 +82,7 @@ def test_refresh_packages_list(fake_dnf_run):
 
 
 @pytest.mark.parametrize(
-    "source_type, packages",
+    ("source_type", "packages"),
     [
         ("7zip", {"p7zip"}),
         ("git", {"git"}),

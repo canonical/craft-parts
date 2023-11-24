@@ -48,13 +48,14 @@ class TestHelpers:
         assert overlays.is_oci_opaque_dir(dir2) is False
 
     @pytest.mark.parametrize(
-        "name,oci_name", [("foo", ".wh.foo"), ("/path/foo", "/path/.wh.foo")]
+        ("name", "oci_name"), [("foo", ".wh.foo"), ("/path/foo", "/path/.wh.foo")]
     )
     def test_oci_whiteout(self, name, oci_name):
         assert overlays.oci_whiteout(Path(name)) == Path(oci_name)
 
     @pytest.mark.parametrize(
-        "name,oci_name", [("whatever", ".wh.whatever"), ("/path/foo", "/path/.wh.foo")]
+        ("name", "oci_name"),
+        [("whatever", ".wh.whatever"), ("/path/foo", "/path/.wh.foo")],
     )
     def test_oci_whited_out_file(self, name, oci_name):
         assert overlays.oci_whited_out_file(Path(oci_name)) == Path(name)
@@ -65,7 +66,7 @@ class TestHelpers:
         assert str(raised.value) == "argument is not an OCI whiteout file"
 
     @pytest.mark.parametrize(
-        "name,oci_name",
+        ("name", "oci_name"),
         [("foo", "foo/.wh..wh..opq"), ("/path/foo", "/path/foo/.wh..wh..opq")],
     )
     def test_oci_opaque_dir(self, name, oci_name):

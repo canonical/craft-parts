@@ -263,7 +263,7 @@ class TestFixPkgConfig:
     """Check the normalization of pkg-config files."""
 
     @pytest.mark.parametrize(
-        "prefix,fixed_prefix",
+        ("prefix", "fixed_prefix"),
         [
             # possible prefixes from snaps built via launchpad
             ("/build/mir-core20/stage", ""),
@@ -297,7 +297,7 @@ class TestFixPkgConfig:
         )
 
     @pytest.mark.parametrize(
-        "prefix,prefix_trim,fixed_prefix",
+        ("prefix", "prefix_trim", "fixed_prefix"),
         [
             ("/test/build/dir/stage", "/test/build/dir/stage", ""),
             ("/test/build/dir/stage/usr", "/test/build/dir/stage", "/usr"),
@@ -399,7 +399,7 @@ class TestFixSUID:
     """Check the normalization of suid bits in file mode."""
 
     @pytest.mark.parametrize(
-        "key,test_mod,expected_mod",
+        ("key", "test_mod", "expected_mod"),
         [
             ("suid_file", 0o4765, 0o0765),
             ("guid_file", 0o2777, 0o0777),

@@ -21,7 +21,7 @@ from craft_parts.executor.filesets import Fileset
 
 
 @pytest.mark.parametrize(
-    "tc_data,tc_entries,tc_includes,tc_excludes",
+    ("tc_data", "tc_entries", "tc_includes", "tc_excludes"),
     [
         ([], [], [], []),
         (["a", "b"], ["a", "b"], ["a", "b"], []),
@@ -53,7 +53,7 @@ def test_remove():
 
 
 @pytest.mark.parametrize(
-    "tc_fs1,tc_fs2,tc_result",
+    ("tc_fs1", "tc_fs2", "tc_result"),
     [
         ([], [], []),
         (["foo"], ["bar"], ["bar"]),

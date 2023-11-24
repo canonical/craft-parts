@@ -46,7 +46,7 @@ def test_sequencer_add_actions(new_dir):
 
 
 @pytest.mark.parametrize(
-    "step,state_class",
+    ("step", "state_class"),
     [
         (Step.PULL, states.PullState),
         (Step.BUILD, states.BuildState),
@@ -106,7 +106,7 @@ def test_sequencer_run_step_invalid(new_dir):
 
 
 @pytest.mark.parametrize(
-    "step,state_class",
+    ("step", "state_class"),
     [
         (Step.PULL, states.PullState),
         (Step.BUILD, states.BuildState),
@@ -151,7 +151,7 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
 
 @pytest.mark.usefixtures("new_dir")
 @pytest.mark.parametrize(
-    "step,state_class",
+    ("step", "state_class"),
     [
         (Step.PULL, states.PullState),
         (Step.BUILD, states.BuildState),

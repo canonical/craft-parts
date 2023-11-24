@@ -105,7 +105,7 @@ def test_is_dnf_based_error(mocker):
 
 
 @pytest.mark.parametrize(
-    "distro,repo",
+    ("distro", "repo"),
     [
         ("ubuntu", Ubuntu),
         ("almalinux", DNFRepository),

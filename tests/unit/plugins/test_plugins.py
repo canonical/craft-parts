@@ -44,7 +44,7 @@ class TestGetPlugin:
     """
 
     @pytest.mark.parametrize(
-        "name,plugin_class,data",
+        ("name", "plugin_class", "data"),
         [
             ("autotools", AutotoolsPlugin, {"source": "."}),
             ("cmake", CMakePlugin, {"source": "."}),

@@ -124,7 +124,7 @@ class TestHelpers:
     """Verify overlayfs utility functions."""
 
     @pytest.mark.parametrize(
-        "is_chardev,is_symlink,rdev,result",
+        ("is_chardev", "is_symlink", "rdev", "result"),
         [
             (True, False, os.makedev(0, 0), True),
             (True, True, os.makedev(0, 0), False),
@@ -158,7 +158,7 @@ class TestHelpers:
         assert overlay_fs.is_whiteout_file(Path("missing_file")) is False
 
     @pytest.mark.parametrize(
-        "is_dir,is_symlink,attr,result",
+        ("is_dir", "is_symlink", "attr", "result"),
         [
             (True, False, b"y", True),
             (True, True, b"y", False),

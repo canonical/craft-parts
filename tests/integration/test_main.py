@@ -236,7 +236,7 @@ def test_main_alternative_parts_invalid_file(mocker, capfd):
 
 
 @pytest.mark.parametrize(
-    "step,result",
+    ("step", "result"),
     [
         ("pull", execute_result[0]),
         ("overlay", execute_result[1]),
@@ -258,7 +258,7 @@ def test_main_step(mocker, capfd, step, result):
 
 
 @pytest.mark.parametrize(
-    "step,result",
+    ("step", "result"),
     [
         ("pull", plan_result[0]),
         ("overlay", plan_result[1]),
@@ -355,7 +355,7 @@ def test_main_step_specify_part_dry_run(mocker, capfd):
 
 
 @pytest.mark.parametrize(
-    "step,result",
+    ("step", "result"),
     [
         ("pull", plan_result[0]),
         ("overlay", plan_result[1]),

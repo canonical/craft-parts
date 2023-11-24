@@ -290,7 +290,7 @@ def test_generate_step_environment_no_user_env(new_dir):
 
 
 @pytest.mark.parametrize(
-    "var,value",
+    ("var", "value"),
     [
         ("CRAFT_ARCH_TRIPLET", "aarch64-linux-gnu"),
         ("CRAFT_TARGET_ARCH", "arm64"),
@@ -378,7 +378,7 @@ def test_expand_variables_skip(new_dir, partitions):
 
 
 @pytest.mark.parametrize(
-    "name,value",
+    ("name", "value"),
     [
         ("$CRAFT_TARGET_ARCH", "arm64"),
         ("${CRAFT_TARGET_ARCH}", "arm64"),

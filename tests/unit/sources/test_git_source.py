@@ -1051,7 +1051,7 @@ class TestGitDetails(GitBaseTestCase):
 
 class TestGitGenerateVersion:
     @pytest.mark.parametrize(
-        "return_value,expected",
+        ("return_value", "expected"),
         [
             ("2.28", "2.28"),  # only_tag
             ("2.28-28-gabcdef1", "2.28+git28.abcdef1"),  # tag+commits

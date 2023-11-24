@@ -219,7 +219,7 @@ class TestTerminal:
     """Tests for terminal-related utilities."""
 
     @pytest.mark.parametrize(
-        "isatty,term,result",
+        ("isatty", "term", "result"),
         [
             (False, "xterm", True),
             (False, "dumb", True),
@@ -325,7 +325,7 @@ class TestEnvironment:
     """Running on snap or container must be detected."""
 
     @pytest.mark.parametrize(
-        "snap_var,app_name,result",
+        ("snap_var", "app_name", "result"),
         [
             (None, "myapp", False),
             ("", "myapp", False),

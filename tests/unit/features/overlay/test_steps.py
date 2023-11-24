@@ -39,7 +39,7 @@ def test_ordering():
 
 
 @pytest.mark.parametrize(
-    "tc_step,tc_result",
+    ("tc_step", "tc_result"),
     [
         (Step.PULL, []),
         (Step.OVERLAY, [Step.PULL]),
@@ -53,7 +53,7 @@ def test_previous_steps(tc_step, tc_result):
 
 
 @pytest.mark.parametrize(
-    "tc_step,tc_result",
+    ("tc_step", "tc_result"),
     [
         (Step.PULL, [Step.OVERLAY, Step.BUILD, Step.STAGE, Step.PRIME]),
         (Step.OVERLAY, [Step.BUILD, Step.STAGE, Step.PRIME]),
@@ -67,7 +67,7 @@ def test_next_steps(tc_step, tc_result):
 
 
 @pytest.mark.parametrize(
-    "tc_step,tc_result",
+    ("tc_step", "tc_result"),
     [
         (Step.PULL, None),
         (Step.OVERLAY, None),

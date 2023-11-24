@@ -21,7 +21,7 @@ from craft_parts.sources import checksum, errors
 
 
 @pytest.mark.parametrize(
-    "tc_checksum,tc_algorithm,tc_digest",
+    ("tc_checksum", "tc_algorithm", "tc_digest"),
     [
         ("algorithm/digest", "algorithm", "digest"),
         ("algorithm/dig/est", "algorithm", "dig/est"),
@@ -45,7 +45,7 @@ def test_split_checksum_error(tc_checksum):
 
 
 @pytest.mark.parametrize(
-    "tc_checksum,tc_checkfile",
+    ("tc_checksum", "tc_checkfile"),
     [
         ("md5/9a0364b9e99bb480dd25e1f0284c8555", "content"),
         ("sha1/040f06fd774092478d450774f5ba30c5da78acc8", "content"),

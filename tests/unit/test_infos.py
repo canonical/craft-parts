@@ -37,7 +37,9 @@ LINUX_ARCHS = [
 ]
 
 
-@pytest.mark.parametrize("tc_arch,tc_target_arch,tc_triplet,tc_cross", LINUX_ARCHS)
+@pytest.mark.parametrize(
+    ("tc_arch", "tc_target_arch", "tc_triplet", "tc_cross"), LINUX_ARCHS
+)
 def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
@@ -76,7 +78,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
 
 
 @pytest.mark.parametrize(
-    "machine_arch,expected_arch",
+    ("machine_arch", "expected_arch"),
     [
         ("ARM64", "aarch64"),
         ("armv7hl", "armv7l"),
@@ -87,7 +89,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     ],
 )
 @pytest.mark.parametrize(
-    "tc_arch,tc_target_arch,tc_triplet,unused_tc_cross", LINUX_ARCHS
+    ("tc_arch", "tc_target_arch", "tc_triplet", "unused_tc_cross"), LINUX_ARCHS
 )
 def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
     mocker,
@@ -647,7 +649,7 @@ def test_step_info_get_project_var():
 
 
 @pytest.mark.parametrize(
-    "machine,translated_machine",
+    ("machine", "translated_machine"),
     [
         ("arm64", "aarch64"),
         ("armv7hl", "armv7l"),

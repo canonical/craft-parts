@@ -139,9 +139,6 @@ ignore = [
     "PTH", # Use pathlib.Path
 
     "COM812", # Trailing comma missing
-
-    # following ignored for enable ruff
-    "PT006",
 ]
 
 [tool.ruff.flake8-annotations]

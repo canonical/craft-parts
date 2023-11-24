@@ -243,7 +243,7 @@ class TestPartHandling:
 
     # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -285,7 +285,7 @@ class TestPartHandling:
     # pylint: enable=too-many-arguments
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -320,7 +320,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == []
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -355,7 +355,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == [call()]
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -583,7 +583,7 @@ class TestPartCleanHandler:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install", "build"),

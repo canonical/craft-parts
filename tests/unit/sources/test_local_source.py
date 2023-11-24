@@ -306,7 +306,7 @@ class TestLocalUpdate:
     """Verify that the local source can detect changes and update."""
 
     @pytest.mark.parametrize(
-        "name,ignored",
+        ("name", "ignored"),
         [
             ("file", False),
             ("file.ignore", True),

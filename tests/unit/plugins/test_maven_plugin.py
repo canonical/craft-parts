@@ -177,7 +177,7 @@ def test_settings_no_proxy(part_info, new_dir):
 
 @pytest.mark.parametrize("protocol", ["http", "https"])
 @pytest.mark.parametrize(
-    "no_proxy,non_proxy_hosts",
+    ("no_proxy", "non_proxy_hosts"),
     [(None, "localhost"), ("foo", "foo"), ("foo,bar", "foo|bar")],
 )
 def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):

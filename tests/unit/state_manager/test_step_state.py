@@ -173,7 +173,7 @@ class TestHelpers:
     """Tests for helper functions."""
 
     @pytest.mark.parametrize(
-        "d1,d2,result",
+        ("d1", "d2", "result"),
         [
             ({}, {}, set()),
             ({"a": 1}, {}, {"a"}),

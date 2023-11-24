@@ -44,7 +44,7 @@ class TestLayerHash:
         assert h.hex() == "0a141e28323c46505a64"
 
     @pytest.mark.parametrize(
-        "pkgs,files,script,result",
+        ("pkgs", "files", "script", "result"),
         [
             ([], [], None, "80324ed2458e5d51e851972d092a0996dc038e8b"),
             ([], ["*"], None, "6554e32fa718d54160d0511b36f81458e4cb2357"),
@@ -136,7 +136,7 @@ class TestLayerStateManager:
         assert p1_layer_hash.hex() == "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"
 
     @pytest.mark.parametrize(
-        "params,digest",
+        ("params", "digest"),
         [
             ({}, "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"),
             ({"overlay-script": "true"}, "fa8a0be828daebe4fd503d14fa9d6307ae0b01ae"),
@@ -152,7 +152,7 @@ class TestLayerStateManager:
         assert lsm.compute_layer_hash(p1).hex() == digest
 
     @pytest.mark.parametrize(
-        "params,digest",
+        ("params", "digest"),
         [
             ({}, "a15e326327c3456bc5547a69fe2996bcf8088cba"),
             ({"overlay-script": "true"}, "a992882dc823bde22d93b0fe4ea6282926b5cfa9"),

@@ -561,7 +561,7 @@ class TestBuildPackages:
 
 
 @pytest.mark.parametrize(
-    "source_type, pkgs",
+    ("source_type", "pkgs"),
     [
         ("7zip", {"p7zip-full"}),
         ("bzr", {"bzr"}),
