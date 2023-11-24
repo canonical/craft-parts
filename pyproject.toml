@@ -146,7 +146,6 @@ ignore = [
     "PT004",
     "PLR2004",
     "RUF005",
-    "N818",
 ]
 
 [tool.ruff.flake8-annotations]

@@ -60,7 +60,7 @@ class FeatureError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class PartDependencyCycle(PartsError):
+class PartDependencyCycle(PartsError):  # noqa: N818
     """A dependency cycle has been detected in the parts definition."""
 
     def __init__(self) -> None:
@@ -70,7 +70,7 @@ class PartDependencyCycle(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidApplicationName(PartsError):
+class InvalidApplicationName(PartsError):  # noqa: N818
     """The application name contains invalid characters.
 
     :param name: The invalid application name.
@@ -87,7 +87,7 @@ class InvalidApplicationName(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidPartName(PartsError):
+class InvalidPartName(PartsError):  # noqa: N818
     """An operation was requested on a part that's not in the parts specification.
 
     :param part_name: The invalid part name.
@@ -101,7 +101,7 @@ class InvalidPartName(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidArchitecture(PartsError):
+class InvalidArchitecture(PartsError):  # noqa: N818
     """The machine architecture is not supported.
 
     :param arch_name: The unsupported architecture name.
@@ -194,7 +194,7 @@ class CopyTreeError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class CopyFileNotFound(PartsError):
+class CopyFileNotFound(PartsError):  # noqa: N818
     """An attempt was made to copy a file that doesn't exist.
 
     :param name: The file name.
@@ -230,7 +230,7 @@ class XAttributeError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
 
-class XAttributeTooLong(PartsError):
+class XAttributeTooLong(PartsError):  # noqa: N818
     """Failed to write an extended attribute because key and/or value is too long.
 
     :param key: The extended attribute key.
@@ -248,7 +248,7 @@ class XAttributeTooLong(PartsError):
         super().__init__(brief=brief, details=details)
 
 
-class UndefinedPlugin(PartsError):
+class UndefinedPlugin(PartsError):  # noqa: N818
     """The part didn't define a plugin and the part name is not a valid plugin name.
 
     :param part_name: The name of the part with no plugin definition.
@@ -262,7 +262,7 @@ class UndefinedPlugin(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidPlugin(PartsError):
+class InvalidPlugin(PartsError):  # noqa: N818
     """A request was made to use a plugin that's not registered.
 
     :param plugin_name: The invalid plugin name."
@@ -278,7 +278,7 @@ class InvalidPlugin(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class PluginNotStrict(PartsError):
+class PluginNotStrict(PartsError):  # noqa: N818
     """A request was made to use a plugin that's not strict.
 
     :param plugin_name: The plugin name.
@@ -348,7 +348,7 @@ class FilesetError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class FilesetConflict(PartsError):
+class FilesetConflict(PartsError):  # noqa: N818
     """Inconsistent stage to prime filtering.
 
     :param conflicting_files: A set containing the conflicting file names.
@@ -383,7 +383,7 @@ class FileOrganizeError(PartsError):
         super().__init__(brief=brief)
 
 
-class PartFilesConflict(PartsError):
+class PartFilesConflict(PartsError):  # noqa: N818
     """Different parts list the same files with different contents.
 
     :param part_name: The name of the part being processed.
@@ -412,7 +412,7 @@ class PartFilesConflict(PartsError):
         super().__init__(brief=brief, details=details)
 
 
-class StageFilesConflict(PartsError):
+class StageFilesConflict(PartsError):  # noqa: N818
     """Files from a part conflict with files already being staged.
 
     :param part_name: The name of the part being processed.
@@ -487,7 +487,7 @@ class PluginCleanError(PartsError):
         super().__init__(brief=brief)
 
 
-class InvalidControlAPICall(PartsError):
+class InvalidControlAPICall(PartsError):  # noqa: N818
     """A control API call was made with invalid parameters.
 
     :param part_name: The name of the part being processed.
@@ -541,7 +541,7 @@ class CallbackRegistrationError(PartsError):
         super().__init__(brief=brief)
 
 
-class StagePackageNotFound(PartsError):
+class StagePackageNotFound(PartsError):  # noqa: N818
     """Failed to install a stage package.
 
     :param part_name: The name of the part being processed.
@@ -556,7 +556,7 @@ class StagePackageNotFound(PartsError):
         super().__init__(brief=brief)
 
 
-class OverlayPackageNotFound(PartsError):
+class OverlayPackageNotFound(PartsError):  # noqa: N818
     """Failed to install an overlay package.
 
     :param part_name: The name of the part being processed.
@@ -571,7 +571,7 @@ class OverlayPackageNotFound(PartsError):
         super().__init__(brief=brief)
 
 
-class InvalidAction(PartsError):
+class InvalidAction(PartsError):  # noqa: N818
     """An attempt was made to execute an action with invalid parameters.
 
     :param message: The error message.
@@ -650,7 +650,7 @@ class InvalidPartitionError(PartitionError):
         )
 
 
-class PartitionWarning(PartitionError, Warning):
+class PartitionWarning(PartitionError, Warning):  # noqa: N818
     """Warnings for partition-related items."""
 
     def __init__(
