@@ -143,7 +143,6 @@ ignore = [
     # following ignored for enable ruff
     "PT006",
     "ANN204",
-    "PT004",
 ]
 
 [tool.ruff.flake8-annotations]
@@ -167,6 +166,7 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
     "S108", # Allow Probable insecure usage of temporary file or directory
     "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
     "PLR2004", # Allow magic values in tests
+    "PT004", # Allow fixture no return in tests
     "SLF",  # Allow accessing private members from tests.
     "INP001", # Allow implicit namespace package
     "RUF012", # Allow mutable class attributes without `typing.ClassVar`
