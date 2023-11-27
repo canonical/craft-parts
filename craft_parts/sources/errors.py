@@ -26,7 +26,7 @@ class SourceError(errors.PartsError):
     """Base class for source handler errors."""
 
 
-class InvalidSourceType(SourceError):  # noqa: N818
+class InvalidSourceType(SourceError):
     """Failed to determine a source type.
 
     :param source: The source defined for the part.
@@ -39,7 +39,7 @@ class InvalidSourceType(SourceError):  # noqa: N818
         super().__init__(brief=brief)
 
 
-class InvalidSourceOption(SourceError):  # noqa: N818
+class InvalidSourceOption(SourceError):
     """A source option is not allowed for the given source type.
 
     :param source_type: The part's source type.
@@ -59,7 +59,7 @@ class InvalidSourceOption(SourceError):  # noqa: N818
 
 
 # TODO: Merge this with InvalidSourceOption above
-class InvalidSourceOptions(SourceError):  # noqa: N818
+class InvalidSourceOptions(SourceError):
     """A source option is not allowed for the given source type.
 
     :param source_type: The part's source type.
@@ -79,7 +79,7 @@ class InvalidSourceOptions(SourceError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
-class IncompatibleSourceOptions(SourceError):  # noqa: N818
+class IncompatibleSourceOptions(SourceError):
     """Source specified options that cannot be used at the same time.
 
     :param source_type: The part's source type.
@@ -99,7 +99,7 @@ class IncompatibleSourceOptions(SourceError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
-class ChecksumMismatch(SourceError):  # noqa: N818
+class ChecksumMismatch(SourceError):
     """A checksum doesn't match the expected value.
 
     :param expected: The expected checksum.
@@ -114,7 +114,7 @@ class ChecksumMismatch(SourceError):  # noqa: N818
         super().__init__(brief=brief)
 
 
-class SourceUpdateUnsupported(SourceError):  # noqa: N818
+class SourceUpdateUnsupported(SourceError):
     """The source handler doesn't support updating.
 
     :param name: The source type.
@@ -141,7 +141,7 @@ class NetworkRequestError(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class SourceNotFound(SourceError):  # noqa: N818
+class SourceNotFound(SourceError):
     """Failed to retrieve a source.
 
     :param source: The source defined for the part.
@@ -155,7 +155,7 @@ class SourceNotFound(SourceError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidSnapPackage(SourceError):  # noqa: N818
+class InvalidSnapPackage(SourceError):
     """A snap package is invalid.
 
     :param snap_file: The snap file name.
@@ -169,7 +169,7 @@ class InvalidSnapPackage(SourceError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidRpmPackage(SourceError):  # noqa: N818
+class InvalidRpmPackage(SourceError):
     """An rpm package is invalid.
 
     :param rpm_file: The filename.

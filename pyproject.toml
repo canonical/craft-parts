@@ -138,6 +138,8 @@ ignore = [
     # Temporary ignored due to API change
     "PTH", # Use pathlib.Path
 
+    "N818", # Allow Exception name without an Error suffix
+
     "COM812", # Trailing comma missing
 ]
 

@@ -26,7 +26,7 @@ class PackagesError(PartsError):
     """Base class for package handler errors."""
 
 
-class PackageBackendNotSupported(PartsError):  # noqa: N818
+class PackageBackendNotSupported(PartsError):
     """Requested package resolved not supported on this host."""
 
     def __init__(self, backend: str) -> None:
@@ -36,7 +36,7 @@ class PackageBackendNotSupported(PartsError):  # noqa: N818
         )
 
 
-class PackageNotFound(PackagesError):  # noqa: N818
+class PackageNotFound(PackagesError):
     """Requested package doesn't exist in the remote repository.
 
     :param package_name: The name of the missing package.
@@ -49,7 +49,7 @@ class PackageNotFound(PackagesError):  # noqa: N818
         super().__init__(brief=brief)
 
 
-class PackagesNotFound(PackagesError):  # noqa: N818
+class PackagesNotFound(PackagesError):
     """Requested package doesn't exist in the remote repository.
 
     :param package_name: The names of the missing packages.
@@ -92,7 +92,7 @@ class PackageListRefreshError(PackagesError):
         super().__init__(brief=brief)
 
 
-class PackageBroken(PackagesError):  # noqa: N818
+class PackageBroken(PackagesError):
     """Package has unmet dependencies.
 
     :param package_name: The name of the package with unmet dependencies.
@@ -107,7 +107,7 @@ class PackageBroken(PackagesError):  # noqa: N818
         super().__init__(brief=brief)
 
 
-class FileProviderNotFound(PackagesError):  # noqa: N818
+class FileProviderNotFound(PackagesError):
     """A file is not provided by any package.
 
     :param file_path: The file path.
@@ -120,7 +120,7 @@ class FileProviderNotFound(PackagesError):  # noqa: N818
         super().__init__(brief=brief)
 
 
-class BuildPackageNotFound(PackagesError):  # noqa: N818
+class BuildPackageNotFound(PackagesError):
     """A package listed in 'build-packages' was not found.
 
     :param package: The name of the missing package.
@@ -133,7 +133,7 @@ class BuildPackageNotFound(PackagesError):  # noqa: N818
         super().__init__(brief=brief)
 
 
-class BuildPackagesNotInstalled(PackagesError):  # noqa: N818
+class BuildPackagesNotInstalled(PackagesError):
     """Could not install all requested build packages.
 
     :param packages: The packages to install.
@@ -175,7 +175,7 @@ class UnpackError(PackagesError):
         super().__init__(brief=brief)
 
 
-class SnapUnavailable(PackagesError):  # noqa: N818
+class SnapUnavailable(PackagesError):
     """Failed to install or refresh a snap.
 
     :param snap_name: The snap name.
