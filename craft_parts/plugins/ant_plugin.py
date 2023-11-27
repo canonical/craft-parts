@@ -18,6 +18,7 @@
 
 import logging
 import os
+import shlex
 from typing import Any, Dict, Iterator, List, Optional, Set, cast
 from urllib.parse import urlsplit
 
@@ -152,7 +153,7 @@ class AntPlugin(JavaPlugin):
         ant_opts.extend(_get_proxy_options("http"))
         ant_opts.extend(_get_proxy_options("https"))
         if ant_opts:
-            opts = " ".join(opt.replace("'", "'\\''") for opt in ant_opts)
+            opts = shlex.join(ant_opts)
             return {"ANT_OPTS": opts}
         return {}
 

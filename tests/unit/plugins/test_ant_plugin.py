@@ -127,50 +127,49 @@ def test_get_build_environment(part_info):
 
 
 @pytest.mark.parametrize(
-    "protocol,host,port,username,password",
+    ("env", "opts"),
     [
-        ("http", "my-proxy-host", "", "", ""),
-        ("http", "my-proxy-host", "3128", "", ""),
-        ("http", "my-proxy-host", "3128", "ubuntu", ""),
-        ("http", "my-proxy-host", "3128", "ubuntu", "ubuntu"),
-        ("https", "my-proxy-host", "", "", ""),
-        ("https", "my-proxy-host", "3128", "", ""),
-        ("https", "my-proxy-host", "3128", "ubuntu", ""),
-        ("https", "my-proxy-host", "3128", "ubuntu", "ubuntu"),
+        ({"http_proxy": "http://my-host"}, "-Dhttp.proxyHost=my-host"),
+        (
+            {"http_proxy": "http://my-host:3128"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyPort=3128",
+        ),
+        (
+            {"http_proxy": "http://user@my-host:3128"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user",
+        ),
+        (
+            {"http_proxy": "http://user:pass@my-host:3128"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user -Dhttp.proxyPassword=pass",
+        ),
+        (
+            {"http_proxy": "http://user:pass@my-host"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyUser=user -Dhttp.proxyPassword=pass",
+        ),
+        ({"https_proxy": "https://my-host"}, "-Dhttps.proxyHost=my-host"),
+        (
+            {"https_proxy": "https://my-host:3128"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyPort=3128",
+        ),
+        (
+            {"https_proxy": "https://user@my-host:3128"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user",
+        ),
+        (
+            {"https_proxy": "https://user:pass@my-host:3128"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user -Dhttps.proxyPassword=pass",
+        ),
+        (
+            {"https_proxy": "https://user:pass@my-host"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyUser=user -Dhttps.proxyPassword=pass",
+        ),
     ],
 )
-def test_get_build_environment_proxy(
-    part_info, protocol, host, port, username, password
-):
+def test_get_build_environment_proxy(part_info, env, opts):
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
-    if username != "" and password != "":
-        env_dict = {
-            f"{protocol}_proxy": f"http://{username}:{password}@{host}:{port}",
-        }
-    elif username != "":
-        env_dict = {
-            f"{protocol}_proxy": f"http://{username}@{host}:{port}",
-        }
-    elif port == "":
-        env_dict = {
-            f"{protocol}_proxy".format(protocol): f"http://{host}",
-        }
-    else:
-        env_dict = {
-            f"{protocol}_proxy".format(protocol): f"http://{host}:{port}",
-        }
-    with mock.patch.dict(os.environ, env_dict):
-        ant_opts = ""
-        if host != "":
-            ant_opts = f"{ant_opts} -D{protocol}.proxyHost={host}"
-        if port != "":
-            ant_opts = f"{ant_opts} -D{protocol}.proxyPort={port}"
-        if username != "":
-            ant_opts = f"{ant_opts} -D{protocol}.proxyUser={username}"
-        if password != "":
-            ant_opts = f"{ant_opts} -D{protocol}.proxyPassword={password}"
-        assert plugin.get_build_environment() == {"ANT_OPTS": ant_opts.strip()}
+    with mock.patch.dict(os.environ, env):
+        assert plugin.get_build_environment() == {"ANT_OPTS": opts}
 
 
 def test_missing_parameters():
