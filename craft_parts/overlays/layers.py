@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class LayerHash:
     """The layer validation hash for a part."""
 
-    def __init__(self, layer_hash: bytes):
+    def __init__(self, layer_hash: bytes) -> None:
         self.digest = layer_hash
 
     def __repr__(self) -> str:
@@ -110,7 +110,9 @@ class LayerStateManager:
     :param base_layer_hash: The verification hash of the overlay base layer.
     """
 
-    def __init__(self, part_list: List[Part], base_layer_hash: Optional[LayerHash]):
+    def __init__(
+        self, part_list: List[Part], base_layer_hash: Optional[LayerHash]
+    ) -> None:
         self._part_list = part_list
         self._base_layer_hash = base_layer_hash
 

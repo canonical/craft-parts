@@ -199,7 +199,7 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
         )
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+        mocker.patch("os.getxattr", return_value=b"pkg")
 
         ovmgr = OverlayManager(
             project_info=self._project_info, part_list=[self._part], base_layer_dir=None
@@ -228,7 +228,7 @@ class TestPartHandling:
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=StepContents({"file"}, {"dir"}),
         )
-        mocker.patch("os.getxattr", new=lambda x, y: b"pkg")
+        mocker.patch("os.getxattr", return_value=b"pkg")
 
         state = self._handler._run_prime(
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
@@ -243,7 +243,7 @@ class TestPartHandling:
 
     # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -285,7 +285,7 @@ class TestPartHandling:
     # pylint: enable=too-many-arguments
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -320,7 +320,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == []
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -355,7 +355,7 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == [call()]
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.BUILD, "override-build"),
@@ -583,7 +583,7 @@ class TestPartCleanHandler:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install", "build"),
@@ -593,7 +593,7 @@ class TestPartCleanHandler:
     )
     def test_clean_step(self, mocker, step, test_dir, state_file):
         self._handler._make_dirs()
-        for each_step in step.previous_steps() + [step]:
+        for each_step in [*step.previous_steps(), step]:
             self._handler.run_action(Action("foo", each_step))
 
         assert Path(test_dir, "foo.txt").is_file()
@@ -632,7 +632,7 @@ class TestRerunStep:
         mock.attach_mock(mock_callback, "run_pre_step")
 
         handler.run_action(Action("p1", step, ActionType.RERUN))
-        calls = [mocker.call.clean_step(step=x) for x in [step] + step.next_steps()]
+        calls = [mocker.call.clean_step(step=x) for x in [step, *step.next_steps()]]
         calls.append(mocker.call.run_pre_step(mocker.ANY))
         mock.assert_has_calls(calls)
 

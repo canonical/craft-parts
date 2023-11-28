@@ -54,7 +54,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     # See https://gist.github.com/sergiusens/dcae19c301eb59e091f92ab29d7d03fc
 
     # first run
-    # command: pull
+    # command pull
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_demo", cache_dir=new_dir
     )
@@ -122,7 +122,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    # Modifying foo’s source marks bar as dirty
+    # Modifying foo's source marks bar as dirty
     new_yaml = basic_parts_yaml.replace("source: a.tar.gz", "source: .")
     parts = yaml.safe_load(new_yaml)
 
@@ -240,7 +240,7 @@ class TestCleaning:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        "step,test_dir,state_file",
+        ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
             (Step.BUILD, "parts/foo/install", "build"),

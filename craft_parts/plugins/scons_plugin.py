@@ -20,7 +20,8 @@ from typing import Any, Dict, List, Optional, Set, cast
 
 from overrides import override
 
-from .. import errors
+from craft_parts import errors
+
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
@@ -137,6 +138,6 @@ class SConsPlugin(Plugin):
         options = cast(SConsPluginProperties, self._options)
 
         return [
-            " ".join(["scons"] + options.scons_parameters),
-            " ".join(["scons", "install"] + options.scons_parameters),
+            " ".join(["scons", *options.scons_parameters]),
+            " ".join(["scons", "install", *options.scons_parameters]),
         ]

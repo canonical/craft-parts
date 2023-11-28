@@ -46,7 +46,7 @@ def test_sequencer_add_actions(new_dir):
 
 
 @pytest.mark.parametrize(
-    "step,state_class",
+    ("step", "state_class"),
     [
         (Step.PULL, states.PullState),
         (Step.BUILD, states.BuildState),
@@ -101,12 +101,12 @@ def test_sequencer_run_step_invalid(new_dir):
 
     seq = Sequencer(part_list=[p1], project_info=info)
     with pytest.raises(RuntimeError) as raised:
-        seq._run_step(p1, 999)  # type: ignore
+        seq._run_step(p1, 999)  # type: ignore[reportGeneralTypeIssues]
     assert str(raised.value) == "invalid step 999"
 
 
 @pytest.mark.parametrize(
-    "step,state_class",
+    ("step", "state_class"),
     [
         (Step.PULL, states.PullState),
         (Step.BUILD, states.BuildState),
@@ -151,7 +151,7 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
 
 @pytest.mark.usefixtures("new_dir")
 @pytest.mark.parametrize(
-    "step,state_class",
+    ("step", "state_class"),
     [
         (Step.PULL, states.PullState),
         (Step.BUILD, states.BuildState),

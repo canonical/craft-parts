@@ -97,7 +97,7 @@ class AutotoolsPlugin(Plugin):
 
     def _get_configure_command(self) -> str:
         options = cast(AutotoolsPluginProperties, self._options)
-        cmd = ["./configure"] + options.autotools_configure_parameters
+        cmd = ["./configure", *options.autotools_configure_parameters]
         return " ".join(cmd)
 
     def _get_bootstrap_command(self) -> str:
@@ -106,7 +106,8 @@ class AutotoolsPlugin(Plugin):
             "env",
             "NOCONFIGURE=1",
             "./bootstrap",
-        ] + options.autotools_bootstrap_parameters
+            *options.autotools_bootstrap_parameters,
+        ]
         return " ".join(cmd)
 
     # pylint: disable=line-too-long

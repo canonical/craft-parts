@@ -247,7 +247,7 @@ class TestCallbackExecution:
         assert out == "hello callback 3\nhello callback 4\n"
 
     @pytest.mark.parametrize(
-        "funcs,result,message",
+        ("funcs", "result", "message"),
         [
             ([_callback_filter_1], {"a", "b", "c"}, "hello filter 1\n"),
             ([_callback_filter_2], {"d", "e", "f"}, "hello filter 2\n"),

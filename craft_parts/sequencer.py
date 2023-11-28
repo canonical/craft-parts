@@ -52,7 +52,7 @@ class Sequencer:
         project_info: ProjectInfo,
         ignore_outdated: Optional[List[str]] = None,
         base_layer_hash: Optional[LayerHash] = None,
-    ):
+    ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
         self._sm = StateManager(
@@ -103,7 +103,7 @@ class Sequencer:
         if not selected_parts:
             return
 
-        for current_step in target_step.previous_steps() + [target_step]:
+        for current_step in [*target_step.previous_steps(), target_step]:
             for part in selected_parts:
                 logger.debug("process %s:%s", part.name, current_step)
                 self._add_step_actions(
@@ -384,7 +384,10 @@ class Sequencer:
         )
 
     def _ensure_overlay_consistency(
-        self, top_part: Part, reason: Optional[str] = None, skip_last: bool = False
+        self,
+        top_part: Part,
+        reason: Optional[str] = None,
+        skip_last: bool = False,  # noqa: FBT001, FBT002
     ) -> LayerHash:
         """Make sure overlay step layers are consistent.
 

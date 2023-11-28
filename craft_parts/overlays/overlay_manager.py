@@ -49,7 +49,7 @@ class OverlayManager:
         project_info: ProjectInfo,
         part_list: List[Part],
         base_layer_dir: Optional[Path],
-    ):
+    ) -> None:
         self._project_info = project_info
         self._part_list = part_list
         self._layer_dirs = [p.part_layer_dir for p in part_list]
@@ -129,7 +129,7 @@ class OverlayManager:
 
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
-        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore
+        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
     def download_packages(self, package_names: List[str]) -> None:
@@ -172,8 +172,8 @@ class LayerMount:
         self,
         overlay_manager: OverlayManager,
         top_part: Part,
-        pkg_cache: bool = True,
-    ):
+        pkg_cache: bool = True,  # noqa: FBT001, FBT002
+    ) -> None:
         self._overlay_manager = overlay_manager
         self._overlay_manager.mkdirs()
         self._top_part = top_part
@@ -208,7 +208,7 @@ class PackageCacheMount:
     :param overlay_manager: The overlay manager.
     """
 
-    def __init__(self, overlay_manager: OverlayManager):
+    def __init__(self, overlay_manager: OverlayManager) -> None:
         self._overlay_manager = overlay_manager
         self._overlay_manager.mkdirs()
         self._pid = os.getpid()

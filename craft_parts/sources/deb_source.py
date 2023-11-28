@@ -34,7 +34,7 @@ class DebSource(FileSourceHandler):
     """The "deb" file source handler."""
 
     # pylint: disable=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -48,7 +48,7 @@ class DebSource(FileSourceHandler):
         source_submodules: Optional[List[str]] = None,
         source_depth: Optional[int] = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -80,14 +80,11 @@ class DebSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Extract deb file contents to the part source dir."""
-        if src:
-            deb_file = src
-        else:
-            deb_file = self.part_src_dir / os.path.basename(self.source)
+        deb_file = src if src else self.part_src_dir / os.path.basename(self.source)
 
         deb_utils.extract_deb(deb_file, dst, logger.debug)
 

@@ -36,7 +36,7 @@ from typing import (
 from urllib import parse
 
 import requests
-import requests_unixsocket  # type: ignore
+import requests_unixsocket  # type: ignore[import]
 from requests import exceptions
 
 from . import errors
@@ -80,7 +80,7 @@ class SnapPackage:
             return False
         return cls(snap).installed
 
-    def __init__(self, snap: str):
+    def __init__(self, snap: str) -> None:
         """Lifecycle handler for a snap of the format <snap-name>/<channel>."""
         self.name, self.channel = _get_parsed_snap(snap)
         self._original_channel = self.channel
@@ -142,10 +142,10 @@ class SnapPackage:
                         http_error.response.status_code,
                         retry_count,
                     )
-                    if http_error.response.status_code == 404:
+                    if http_error.response.status_code == 404:  # noqa: PLR2004
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
-                        )
+                        ) from http_error
                     retry_count -= 1
 
         return self._store_snap_info
@@ -196,13 +196,16 @@ class SnapPackage:
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
         local_snap_info = self.get_local_snap_info()
-        if local_snap_info:
-            if self.installed and local_snap_info["channel"] == self.channel:
-                return True
+        if (
+            local_snap_info
+            and self.installed
+            and local_snap_info["channel"] == self.channel
+        ):
+            return True
         if not self.in_store:
             return False
         store_channels = self._get_store_channels()
-        return self.channel in store_channels.keys()
+        return self.channel in store_channels
 
     def download(self, *, directory: Optional[str] = None) -> None:
         """Download a given snap."""

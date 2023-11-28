@@ -44,8 +44,7 @@ class PluginProperties(PluginPropertiesModel):
     """
 
     @classmethod
-    # pylint: disable-next=unused-argument
-    def unmarshal(cls, data: Dict[str, Any]) -> "PluginProperties":
+    def unmarshal(cls, data: Dict[str, Any]) -> "PluginProperties":  # noqa: ARG003
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.

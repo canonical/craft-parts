@@ -29,7 +29,7 @@ class Singleton(type):
 
     _instances: Dict = {}
 
-    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
+    def __call__(cls, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
         """Return an existing instance, or create a new instance."""
         if cls not in cls._instances:
             instance = super().__call__(*args, **kwargs)

@@ -20,7 +20,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 import yaml
 from overrides import overrides
@@ -40,7 +40,7 @@ class SnapSource(FileSourceHandler):
     snap.<snap-name>.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -52,7 +52,7 @@ class SnapSource(FileSourceHandler):
         source_branch: Optional[str] = None,
         source_depth: Optional[int] = None,
         source_checksum: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             source,
@@ -84,7 +84,7 @@ class SnapSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Provision the snap source.
@@ -95,10 +95,7 @@ class SnapSource(FileSourceHandler):
 
         raises errors.InvalidSnap: If trying to provision an invalid snap.
         """
-        if src:
-            snap_file = src
-        else:
-            snap_file = self.part_src_dir / os.path.basename(self.source)
+        snap_file = src if src else self.part_src_dir / os.path.basename(self.source)
         snap_file = snap_file.resolve()
 
         # unsquashfs [options] filesystem [directories or files to extract]

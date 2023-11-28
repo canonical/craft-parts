@@ -114,7 +114,7 @@ class GitSource(SourceHandler):
 
         return f"{tag}+git{revs_ahead}.{commit}"
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -128,7 +128,7 @@ class GitSource(SourceHandler):
         source_checksum: Optional[str] = None,
         source_submodules: Optional[List[str]] = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -218,26 +218,18 @@ class GitSource(SourceHandler):
             "-C",
             str(self.part_src_dir),
         ]
-        command = command_prefix + [
-            "fetch",
-            "--prune",
-        ]
+        command = [*command_prefix, "fetch", "--prune"]
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
             command.append("--recurse-submodules=yes")
         self._run(command)
 
-        command = command_prefix + ["reset", "--hard", refspec]
+        command = [*command_prefix, "reset", "--hard", refspec]
 
         self._run(command)
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
-            command = command_prefix + [
-                "submodule",
-                "update",
-                "--recursive",
-                "--force",
-            ]
+            command = [*command_prefix, "submodule", "update", "--recursive", "--force"]
             if self.source_submodules:
                 for submodule in self.source_submodules:
                     command.append(submodule)
@@ -249,8 +241,9 @@ class GitSource(SourceHandler):
         if self.source_submodules is None:
             command.append("--recursive")
         else:
-            for submodule in self.source_submodules:
-                command.append("--recursive=" + submodule)
+            command.extend(
+                ["--recursive=" + submodule for submodule in self.source_submodules]
+            )
         if self.source_tag or self.source_branch:
             command.extend(
                 ["--branch", cast(str, self.source_tag or self.source_branch)]
@@ -262,7 +255,7 @@ class GitSource(SourceHandler):
         command.append(self._format_source())
 
         logger.debug("Executing: %s", " ".join([str(i) for i in command]))
-        self._run(command + [str(self.part_src_dir)])
+        self._run([*command, str(self.part_src_dir)])
 
         if self.source_commit:
             self._fetch_origin_commit()

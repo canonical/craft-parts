@@ -43,7 +43,7 @@ class TestStateWrapper:
         assert stw.step_updated is True
 
     @pytest.mark.parametrize(
-        "s1,s2,result",
+        ("s1", "s2", "result"),
         [
             (0, 0, False),
             (0, 1, False),
@@ -61,13 +61,13 @@ class TestStateWrapper:
         stw = state_manager._StateWrapper(state=state, serial=500)
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.state = states.PullState()  # type: ignore
+            stw.state = states.PullState()  # type: ignore[reportGeneralTypeIssues]
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.serial = 5  # type: ignore
+            stw.serial = 5  # type: ignore[reportGeneralTypeIssues]
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.step_updated = True  # type: ignore
+            stw.step_updated = True  # type: ignore[reportGeneralTypeIssues]
 
 
 class TestStateDB:

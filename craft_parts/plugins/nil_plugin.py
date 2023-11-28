@@ -33,7 +33,7 @@ class NilPluginProperties(PluginProperties):
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "NilPluginProperties":
+    def unmarshal(cls, data: Dict[str, Any]) -> "NilPluginProperties":  # noqa: ARG003
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.

@@ -130,7 +130,7 @@ class TestPluginNpmPlugin:
         validator.validate_environment(part_dependencies=["npm-deps"])
 
     @pytest.mark.parametrize(
-        "satisfied_dependency,error_dependency",
+        ("satisfied_dependency", "error_dependency"),
         [
             ("node", "npm"),
             ("npm", "node"),

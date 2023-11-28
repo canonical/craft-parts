@@ -186,12 +186,12 @@ class DummyRepository(BaseRepository):
         """Set up the repository."""
 
     @classmethod
-    def get_package_libraries(cls, package_name: str) -> Set[str]:
+    def get_package_libraries(cls, package_name: str) -> Set[str]:  # noqa: ARG003
         """Return a list of libraries in package_name."""
         return set()
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:  # noqa: ARG003
         """Return a list of packages required to to work with source_type."""
         return set()
 
@@ -206,16 +206,16 @@ class DummyRepository(BaseRepository):
     @classmethod
     def install_packages(
         cls,
-        package_names: List[str],
+        package_names: List[str],  # noqa: ARG003
         *,
-        list_only: bool = False,  # pylint: disable=unused-argument
-        refresh_package_cache: bool = True,  # pylint: disable=unused-argument
+        list_only: bool = False,  # noqa: ARG003
+        refresh_package_cache: bool = True,  # noqa: ARG003
     ) -> List[str]:
         """Install packages on the host system."""
         return []
 
     @classmethod
-    def is_package_installed(cls, package_name: str) -> bool:
+    def is_package_installed(cls, package_name: str) -> bool:  # noqa: ARG003
         """Inform if a packahe is installed on the host system."""
         return False
 
@@ -226,8 +226,8 @@ class DummyRepository(BaseRepository):
 
     @classmethod
     def fetch_stage_packages(
-        cls,  # pylint: disable=unused-argument
-        **kwargs: Any,
+        cls,
+        **kwargs: Any,  # noqa: ARG003
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         return []

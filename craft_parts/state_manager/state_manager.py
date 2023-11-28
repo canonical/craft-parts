@@ -74,10 +74,9 @@ class _StateDB:
 
         :return: The wrapped state with additional metadata.
         """
-        stw = _StateWrapper(
+        return _StateWrapper(
             state, serial=next(self._serial_gen), step_updated=step_updated
         )
-        return stw
 
     def set(
         self, *, part_name: str, step: Step, state: Optional[_StateWrapper]
@@ -177,7 +176,7 @@ class StateManager:
         project_info: ProjectInfo,
         part_list: List[Part],
         ignore_outdated: Optional[List[str]] = None,
-    ):
+    ) -> None:
         self._state_db = _StateDB()
         self._project_info = project_info
         self._part_list = part_list
@@ -216,7 +215,7 @@ class StateManager:
         :param part: The part corresponding to the state to remove.
         :param step: The step corresponding to the state to remove.
         """
-        for next_step in [step] + step.next_steps():
+        for next_step in [step, *step.next_steps()]:
             self._state_db.remove(part_name=part.name, step=next_step)
 
         self._dirty_report_cache.pop((part.name, step), None)
@@ -456,7 +455,7 @@ class StateManager:
             # step didn't run yet
             return b""
 
-        overlay_hash = stw.state.overlay_hash  # type: ignore
+        overlay_hash = stw.state.overlay_hash  # type: ignore[reportGeneralTypeIssues, attr-defined]
         if not overlay_hash:
             return b""
 

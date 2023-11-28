@@ -90,7 +90,7 @@ class PartHandler:
         overlay_manager: OverlayManager,
         ignore_patterns: Optional[List[str]] = None,
         base_layer_hash: Optional[LayerHash] = None,
-    ):
+    ) -> None:
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
@@ -149,7 +149,7 @@ class PartHandler:
             return
 
         if action.action_type == ActionType.RERUN:
-            for step in [action.step] + action.step.next_steps():
+            for step in [action.step, *action.step.next_steps()]:
                 self.clean_step(step=step)
 
         handler: _RunHandler
@@ -203,7 +203,7 @@ class PartHandler:
             stderr=stderr,
         )
 
-        state = states.PullState(
+        return states.PullState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             assets={
@@ -212,8 +212,6 @@ class PartHandler:
                 "source-details": getattr(self._source_handler, "source_details", None),
             },
         )
-
-        return state
 
     def _run_overlay(
         self,
@@ -343,13 +341,12 @@ class PartHandler:
         # filesystem if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
-        state = states.BuildState(
+        return states.BuildState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             assets=assets,
             overlay_hash=overlay_hash.hex(),
         )
-        return state
 
     def _run_stage(
         self,
@@ -382,14 +379,13 @@ class PartHandler:
         # parameters if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
-        state = states.StageState(
+        return states.StageState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
             overlay_hash=overlay_hash.hex(),
         )
-        return state
 
     def _run_prime(
         self,
@@ -427,14 +423,13 @@ class PartHandler:
         else:
             primed_stage_packages = set()
 
-        state = states.PrimeState(
+        return states.PrimeState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             files=contents.files,
             directories=contents.dirs,
             primed_stage_packages=primed_stage_packages,
         )
-        return state
 
     def _run_step(
         self,
@@ -904,7 +899,7 @@ class PartHandler:
         except packages_errors.PackageNotFound as err:
             raise errors.StagePackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
-            )
+            ) from err
 
         return fetched_packages
 
@@ -936,7 +931,7 @@ class PartHandler:
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
-            )
+            ) from err
 
     def _unpack_stage_packages(self) -> None:
         """Extract stage packages contents to the part's install directory."""
@@ -1132,8 +1127,8 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Pa
 
 def _get_primed_stage_packages(snap_files: Set[str], *, prime_dir: Path) -> Set[str]:
     primed_stage_packages: Set[str] = set()
-    for snap_file in snap_files:
-        snap_file = str(prime_dir / snap_file)
+    for _snap_file in snap_files:
+        snap_file = str(prime_dir / _snap_file)
         stage_package = read_origin_stage_package(snap_file)
         if stage_package:
             primed_stage_packages.add(stage_package)

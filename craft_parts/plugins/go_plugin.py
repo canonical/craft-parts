@@ -134,19 +134,12 @@ class GoPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(GoPluginProperties, self._options)
 
-        if options.go_buildtags:
-            tags = f'-tags={",".join(options.go_buildtags)}'
-        else:
-            tags = ""
+        tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
-        generate_cmds: List[str] = []
-        for cmd in options.go_generate:
-            generate_cmds.append(f"go generate {cmd}")
+        generate_cmds: List[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
-        return (
-            ["go mod download all"]
-            + generate_cmds
-            + [
-                f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
-            ]
-        )
+        return [
+            "go mod download all",
+            *generate_cmds,
+            f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
+        ]

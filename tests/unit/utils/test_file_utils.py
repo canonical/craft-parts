@@ -30,7 +30,7 @@ def setup_module_fixture(new_dir):  # pylint: disable=unused-argument
 
 
 @pytest.mark.parametrize(
-    "algo,digest",
+    ("algo", "digest"),
     [
         ("md5", "9a0364b9e99bb480dd25e1f0284c8555"),
         ("sha1", "040f06fd774092478d450774f5ba30c5da78acc8"),
@@ -128,7 +128,7 @@ class TestLinkOrCopy:
 
         def link_and_oserror(a, b, **kwargs):  # pylint: disable=unused-argument
             orig_link(a, b)
-            raise OSError()
+            raise OSError
 
         mocker.patch("os.link", side_effect=link_and_oserror)
 

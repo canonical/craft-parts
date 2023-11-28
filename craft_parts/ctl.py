@@ -46,8 +46,7 @@ class CraftCtl:
             return None
 
         if cmd in "get":
-            retval = _client(cmd, args)
-            return retval
+            return _client(cmd, args)
 
         raise RuntimeError(f"invalid command {cmd!r}")
 
@@ -103,7 +102,7 @@ def _client(cmd: str, args: List[str]) -> Optional[str]:
 
 def main() -> None:
     """Run the ctl client cli."""
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2:  # noqa: PLR2004
         print(f"usage: {sys.argv[0]} <command> [arguments]")
         sys.exit(1)
 
@@ -112,6 +111,6 @@ def main() -> None:
         ret = CraftCtl.run(cmd, args)
         if ret:
             print(ret)
-    except RuntimeError as err:
-        logger.error("error: %s", err)
+    except RuntimeError:
+        logger.exception("error: ")
         sys.exit(1)

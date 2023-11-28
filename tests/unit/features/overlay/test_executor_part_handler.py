@@ -183,7 +183,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
 
     # pylint: disable=too-many-arguments
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.OVERLAY, "overlay-script"),
@@ -227,7 +227,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
     # pylint: enable=too-many-arguments
 
     @pytest.mark.parametrize(
-        "step,scriptlet",
+        ("step", "scriptlet"),
         [
             (Step.PULL, "override-pull"),
             (Step.OVERLAY, "overlay-script"),
@@ -443,7 +443,7 @@ class TestOverlayMigration:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_migrate_overlay(self, step, step_dir):
         _run_step_migration(self._p1_handler, step)
@@ -453,7 +453,7 @@ class TestOverlayMigration:
         assert Path(f"overlay/{step_dir}_overlay").exists()
 
     @pytest.mark.parametrize(
-        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_migrate_overlay_whiteout_translation(
         self, mocker, new_dir, step, step_dir
@@ -471,7 +471,7 @@ class TestOverlayMigration:
         assert Path(f"{step_dir}/dir1/baz").exists()
 
     @pytest.mark.parametrize(
-        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_migrate_overlay_opaque_dir_translation(
         self, mocker, new_dir, step, step_dir
@@ -488,7 +488,7 @@ class TestOverlayMigration:
         assert Path(f"{step_dir}/dir1/baz").exists()
 
     @pytest.mark.parametrize(
-        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_migrated_overlay(self, mocker, new_dir, step, step_dir):
         wh = Path("parts/p2/layer/dir1/foo")
@@ -519,7 +519,7 @@ class TestOverlayMigration:
         assert Path(f"overlay/{step_dir}_overlay").exists() is False
 
     @pytest.mark.parametrize(
-        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_stage_overlay_multiple_parts(self, step, step_dir):
         _run_step_migration(self._p1_handler, step)
@@ -543,7 +543,7 @@ class TestOverlayMigration:
         assert Path(f"overlay/{step_dir}_overlay").exists() is False
 
     @pytest.mark.parametrize(
-        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_overlay_shared_file(self, mocker, step, step_dir):
         Path("parts/p1/layer/file1").write_text("content")
@@ -564,7 +564,7 @@ class TestOverlayMigration:
         assert Path(f"{step_dir}/file1").exists() is False
 
     @pytest.mark.parametrize(
-        "step,step_dir", [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
     )
     def test_clean_part_shared_file(self, mocker, step, step_dir):
         Path("parts/p1/layer/file1").write_text("content")

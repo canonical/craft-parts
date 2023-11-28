@@ -79,8 +79,7 @@ def test_abstract_methods(new_dir):
     part_info = PartInfo(project_info=project_info, part=part)
 
     with pytest.raises(TypeError) as raised:
-        # pylint: disable=abstract-class-instantiated
-        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore
+        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
     assert str(raised.value) == (
         "Can't instantiate abstract class FaultyPlugin with abstract methods "
         "get_build_commands, get_build_environment, get_build_packages, get_build_snaps"

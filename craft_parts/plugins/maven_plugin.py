@@ -137,8 +137,9 @@ class MavenPlugin(JavaPlugin):
             mvn_cmd += ["-s", str(settings_path)]
 
         return [
-            " ".join(mvn_cmd + options.maven_parameters)
-        ] + self._get_java_post_build_commands()
+            " ".join(mvn_cmd + options.maven_parameters),
+            *self._get_java_post_build_commands(),
+        ]
 
     def _use_proxy(self) -> bool:
         return any(k in os.environ for k in ("http_proxy", "https_proxy"))

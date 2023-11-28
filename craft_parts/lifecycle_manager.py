@@ -83,7 +83,7 @@ class LifecycleManager:
         to :ref:`callbacks<callbacks>`.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         all_parts: Dict[str, Any],
         *,
@@ -106,7 +106,7 @@ class LifecycleManager:
         project_vars: Optional[Dict[str, str]] = None,
         partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
-    ):
+    ) -> None:
         # pylint: disable=too-many-locals
 
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):
@@ -238,8 +238,7 @@ class LifecycleManager:
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
         """
-        actions = self._sequencer.plan(target_step, part_names)
-        return actions
+        return self._sequencer.plan(target_step, part_names)
 
     def reload_state(self) -> None:
         """Reload the ephemeral state from disk."""
@@ -281,17 +280,17 @@ def _ensure_overlay_supported() -> None:
         raise errors.FeatureError("Overlays are not supported.")
 
     if sys.platform != "linux":
-        raise errors.OverlayPlatformError()
+        raise errors.OverlayPlatformError
 
     if os.geteuid() != 0:
-        raise errors.OverlayPermissionError()
+        raise errors.OverlayPermissionError
 
 
 def _build_part(
     name: str,
     spec: Dict[str, Any],
     project_dirs: ProjectDirs,
-    strict_plugins: bool,
+    strict_plugins: bool,  # noqa: FBT001
     partitions: Optional[List[str]],
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
@@ -338,15 +337,13 @@ def _build_part(
     part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
 
     # initialize part and unmarshal part specs
-    part = Part(
+    return Part(
         name,
         part_spec,
         project_dirs=project_dirs,
         plugin_properties=properties,
         partitions=partitions,
     )
-
-    return part
 
 
 def _validate_part_dependencies(part: Part, parts_data: Dict[str, Any]) -> None:
@@ -355,10 +352,15 @@ def _validate_part_dependencies(part: Part, parts_data: Dict[str, Any]) -> None:
             raise errors.InvalidPartName(name)
 
 
-def _validate_partition_usage_in_parts(part_list, partitions):
+def _validate_partition_usage_in_parts(
+    part_list: List[Part], partitions: Optional[List[str]]
+) -> None:
     # skip validation if partitions are not enabled
     if not Features().enable_partitions:
         return
+
+    if not partitions:
+        partitions = []
 
     for part in part_list:
         for filepaths in [
@@ -367,7 +369,7 @@ def _validate_partition_usage_in_parts(part_list, partitions):
             part.spec.prime_files,
             part.spec.stage_files,
         ]:
-            _validate_partitions_in_paths(filepaths, partitions)
+            _validate_partitions_in_paths(list(filepaths), partitions)
 
 
 def _validate_partitions_in_paths(
@@ -409,5 +411,6 @@ def _validate_partitions_in_paths(
                             "Specify the correct partition name, for example "
                             f"'(default)/{filepath}'"
                         ),
-                    )
+                    ),
+                    stacklevel=1,
                 )

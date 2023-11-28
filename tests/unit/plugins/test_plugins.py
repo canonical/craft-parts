@@ -44,7 +44,7 @@ class TestGetPlugin:
     """
 
     @pytest.mark.parametrize(
-        "name,plugin_class,data",
+        ("name", "plugin_class", "data"),
         [
             ("autotools", AutotoolsPlugin, {"source": "."}),
             ("cmake", CMakePlugin, {"source": "."}),
@@ -93,11 +93,11 @@ class TestGetPlugin:
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(ValueError) as raised:  # noqa: PT011
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
-                properties=None,  # type: ignore
+                properties=None,  # type: ignore[reportGeneralTypeIssues]
             )
         assert str(raised.value) == "plugin not registered: 'invalid'"
 
@@ -106,11 +106,11 @@ class TestGetPlugin:
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
-        with pytest.raises(ValueError) as raised:
+        with pytest.raises(ValueError) as raised:  # noqa: PT011
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
-                properties=None,  # type: ignore
+                properties=None,  # type: ignore[reportGeneralTypeIssues]
             )
         assert str(raised.value) == "plugin not registered: 'foo'"
 
@@ -137,7 +137,7 @@ class TestPluginRegistry:
     """Verify plugin register/unregister functions."""
 
     def test_register_unregister(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             plugins.get_plugin_class("foo")
 
         plugins.register({"foo": FooPlugin})
@@ -149,7 +149,7 @@ class TestPluginRegistry:
         assert registered_plugins["foo"] == FooPlugin
 
         plugins.unregister_all()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             plugins.get_plugin_class("foo")
 
 

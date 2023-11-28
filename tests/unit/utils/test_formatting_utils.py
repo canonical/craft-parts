@@ -19,13 +19,13 @@ from craft_parts.utils import formatting_utils
 
 
 @pytest.mark.parametrize(
-    "items,result",
+    ("items", "result"),
     [
-        [None, ""],
-        [[], ""],
-        [["foo"], "'foo'"],
-        [["foo", "bar"], "'bar' & 'foo'"],
-        [[3, 2, 1], "1, 2, & 3"],
+        (None, ""),
+        ([], ""),
+        (["foo"], "'foo'"),
+        (["foo", "bar"], "'bar' & 'foo'"),
+        ([3, 2, 1], "1, 2, & 3"),
     ],
 )
 def test_humanize_list(items, result):
@@ -34,12 +34,12 @@ def test_humanize_list(items, result):
 
 
 @pytest.mark.parametrize(
-    "items,item_format,result",
+    ("items", "item_format", "result"),
     [
-        [["foo"], "", ""],
-        [["foo"], "{!r}", "'foo'"],
-        [[1], "{!r}", "1"],
-        [[42], "{:2x}", "2a"],
+        (["foo"], "", ""),
+        (["foo"], "{!r}", "'foo'"),
+        ([1], "{!r}", "1"),
+        ([42], "{:2x}", "2a"),
     ],
 )
 def test_humanize_list_item_format(items, item_format, result):

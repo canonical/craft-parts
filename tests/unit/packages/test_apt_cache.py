@@ -24,8 +24,6 @@ import pytest
 from craft_parts.packages import apt_cache, errors
 from craft_parts.packages.apt_cache import AptCache
 
-# xpylint: disable=too-few-public-methods
-
 
 class TestAptStageCache:
     """Make sure the stage cache is working correctly.

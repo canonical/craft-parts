@@ -54,7 +54,7 @@ class Executor:
     :param ignore_patterns: File patterns to ignore when pulling local sources.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         part_list: List[Part],
@@ -65,7 +65,7 @@ class Executor:
         ignore_patterns: Optional[List[str]] = None,
         base_layer_dir: Optional[Path] = None,
         base_layer_hash: Optional[LayerHash] = None,
-    ):
+    ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
         self._extra_build_packages = extra_build_packages
@@ -149,7 +149,7 @@ class Executor:
         """
         selected_parts = parts.part_list_by_name(part_names, self._part_list)
 
-        selected_steps = [initial_step] + initial_step.next_steps()
+        selected_steps = [initial_step, *initial_step.next_steps()]
         selected_steps.reverse()
 
         for part in selected_parts:
@@ -291,7 +291,7 @@ class ExecutionContext:
         self,
         *,
         executor: Executor,
-    ):
+    ) -> None:
         self._executor = executor
 
     def __enter__(self) -> "ExecutionContext":

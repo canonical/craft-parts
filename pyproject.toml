@@ -138,63 +138,9 @@ ignore = [
     # Temporary ignored due to API change
     "PTH", # Use pathlib.Path
 
-    "COM812", # Trailing comma missing
+    "N818", # Allow Exception name without an Error suffix
 
-    # following ignored for enable ruff
-    "PT006",
-    "ANN204",
-    "PT004",
-    "PLR2004",
-    "RUF005",
-    "N818",
-    "PGH003",
-    "PT007",
-    "FBT001",
-    "FBT002",
-    "PT011",
-    "RET504",
-    "PLR0913",
-    "TRY200",
-    "ANN401",
-    "ARG003",
-    "FBT003",
-    "SIM118",
-    "RSE102",
-    "SIM108",
-    "PERF401",
-    "PLW2901",
-    "S101",
-    "UP007",
-    "ERA001",
-    "PT008",
-    "PYI024",
-    "N802",
-    "RUF003",
-    "TRY300",
-    "ANN001",
-    "C414",
-    "PIE810",
-    "PT018",
-    "ARG002",
-    "TRY201",
-    "ANN003",
-    "ANN202",
-    "S314",
-    "S602",
-    "BLE001",
-    "B028",
-    "C405",
-    "PYI034",
-    "PT012",
-    "PT014",
-    "SIM102",
-    "TID252",
-    "ARG005",
-    "PERF203",
-    "PLR5501",
-    "PLW0603",
-    "TRY004",
-    "TRY400",
+    "COM812", # Trailing comma missing
 ]
 
 [tool.ruff.flake8-annotations]
@@ -217,6 +163,8 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
     "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
     "S108", # Allow Probable insecure usage of temporary file or directory
     "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
+    "PLR2004", # Allow magic values in tests
+    "PT004", # Allow fixture no return in tests
     "SLF",  # Allow accessing private members from tests.
     "INP001", # Allow implicit namespace package
     "RUF012", # Allow mutable class attributes without `typing.ClassVar`

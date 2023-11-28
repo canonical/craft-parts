@@ -252,11 +252,11 @@ _IGNORE_FILTERS: Dict[str, Set[str]] = {
 }
 
 
-def _apt_cache_wrapper(method: Any) -> Callable[..., Any]:
+def _apt_cache_wrapper(method: Any) -> Callable[..., Any]:  # noqa: ANN401
     """Decorate a method to handle apt availability."""
 
     @functools.wraps(method)
-    def wrapped(*args: Any, **kwargs: Any) -> Any:
+    def wrapped(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
         if not _APT_CACHE_AVAILABLE:
             raise errors.PackageBackendNotSupported("apt")
         return method(*args, **kwargs)
@@ -472,7 +472,7 @@ class Ubuntu(BaseRepository):
             try:
                 apt_cache.mark_packages(set(package_names))
             except errors.PackageNotFound as error:
-                raise errors.BuildPackageNotFound(error.package_name)
+                raise errors.BuildPackageNotFound(error.package_name) from error
 
             return apt_cache.get_packages_marked_for_installation()
 
@@ -728,15 +728,7 @@ class Ubuntu(BaseRepository):
         handler = logging.StreamHandler(stream=output_stream)
         logger.addHandler(handler)
         try:
-            process_run(
-                [
-                    "chisel",
-                    "cut",
-                    "--root",
-                    str(install_path),
-                ]
-                + stage_packages
-            )
+            process_run(["chisel", "cut", "--root", str(install_path), *stage_packages])
         except subprocess.CalledProcessError as err:
             command_output = output_stream.getvalue()
             raise errors.ChiselError(

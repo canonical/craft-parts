@@ -22,7 +22,7 @@ from craft_parts.utils import url_utils
 
 
 @pytest.mark.parametrize(
-    "url,result",
+    ("url", "result"),
     [
         ("", ""),
         ("not an url", ""),
@@ -35,7 +35,7 @@ def test_get_url_scheme(url, result):
 
 
 @pytest.mark.parametrize(
-    "url,result",
+    ("url", "result"),
     [
         ("", False),
         ("not an url", False),

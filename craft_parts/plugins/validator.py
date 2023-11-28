@@ -46,7 +46,9 @@ class PluginEnvironmentValidator:
     :param env: A string containing the build step environment setup.
     """
 
-    def __init__(self, *, part_name: str, env: str, properties: PluginProperties):
+    def __init__(
+        self, *, part_name: str, env: str, properties: PluginProperties
+    ) -> None:
         self._part_name = part_name
         self._env = env
         self._options = properties
@@ -99,7 +101,6 @@ class PluginEnvironmentValidator:
             command = f"{dependency} {argument}"
             output = self._execute(command).strip()
             logger.debug("executed %s with output %s", command, output)
-            return output
         except subprocess.CalledProcessError as err:
             if err.returncode != COMMAND_NOT_FOUND:
                 raise errors.PluginEnvironmentValidationError(
@@ -123,6 +124,8 @@ class PluginEnvironmentValidator:
                         "that would satisfy the dependency"
                     ),
                 ) from err
+        else:
+            return output
         return ""
 
     def _execute(self, cmd: str) -> str:

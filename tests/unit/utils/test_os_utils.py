@@ -219,7 +219,7 @@ class TestTerminal:
     """Tests for terminal-related utilities."""
 
     @pytest.mark.parametrize(
-        "isatty,term,result",
+        ("isatty", "term", "result"),
         [
             (False, "xterm", True),
             (False, "dumb", True),
@@ -325,7 +325,7 @@ class TestEnvironment:
     """Running on snap or container must be detected."""
 
     @pytest.mark.parametrize(
-        "snap_var,app_name,result",
+        ("snap_var", "app_name", "result"),
         [
             (None, "myapp", False),
             ("", "myapp", False),
@@ -350,7 +350,7 @@ class TestEnvironment:
         assert os_utils.is_inside_container()
 
     def test_is_inside_container_no_files(self, mocker):
-        mocker.patch("os.path.exists", new=lambda x: False)
+        mocker.patch("os.path.exists", return_value=False)
         assert os_utils.is_inside_container() is False
 
 

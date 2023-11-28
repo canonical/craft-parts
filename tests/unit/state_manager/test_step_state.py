@@ -99,7 +99,7 @@ class TestStepState:
         }
 
     def test_ignore_additional_data(self):
-        state = SomeStepState(extra="something")  # type: ignore
+        state = SomeStepState(extra="something")  # type: ignore[reportGeneralTypeIssues]
         assert state.marshal() == {
             "part-properties": {},
             "project-options": {},
@@ -173,20 +173,20 @@ class TestHelpers:
     """Tests for helper functions."""
 
     @pytest.mark.parametrize(
-        "d1,d2,result",
+        ("d1", "d2", "result"),
         [
-            [{}, {}, set()],
-            [{"a": 1}, {}, {"a"}],
-            [{}, {"b": 2}, {"b"}],
-            [{"a": 1}, {"b": 2}, {"a", "b"}],
-            [{"a": None}, {}, set()],
-            [{}, {"b": None}, set()],
-            [{"a": None}, {"b": None}, set()],
-            [{"a": 1}, {"a": 1}, set()],
-            [{"a": 1}, {"a": 2}, {"a"}],
-            [{"a": None}, {"a": 1}, {"a"}],
-            [{"a": 1}, {"a": 1, "b": 2}, {"b"}],
-            [{"a": 1, "b": 2}, {"a": 1}, {"b"}],
+            ({}, {}, set()),
+            ({"a": 1}, {}, {"a"}),
+            ({}, {"b": 2}, {"b"}),
+            ({"a": 1}, {"b": 2}, {"a", "b"}),
+            ({"a": None}, {}, set()),
+            ({}, {"b": None}, set()),
+            ({"a": None}, {"b": None}, set()),
+            ({"a": 1}, {"a": 1}, set()),
+            ({"a": 1}, {"a": 2}, {"a"}),
+            ({"a": None}, {"a": 1}, {"a"}),
+            ({"a": 1}, {"a": 1, "b": 2}, {"b"}),
+            ({"a": 1, "b": 2}, {"a": 1}, {"b"}),
         ],
     )
     def test_get_differing_keys(self, d1, d2, result):

@@ -46,7 +46,7 @@ class LocalSource(SourceHandler):
         project_dirs: ProjectDirs,
         copy_function: Callable[..., None] = file_utils.link_or_copy,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(*args, project_dirs=project_dirs, **kwargs)
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function
@@ -183,7 +183,7 @@ def _ignore(
     current_directory: str,
     patterns: List[str],
     directory: str,
-    _files: Any,
+    _files: Any,  # noqa: ANN401
     also_ignore: Optional[List[str]] = None,
 ) -> List[str]:
     """Build a list of files to ignore based on the given patterns."""

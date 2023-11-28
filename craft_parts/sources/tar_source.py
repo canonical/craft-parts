@@ -34,7 +34,7 @@ class TarSource(FileSourceHandler):
     """The tar source handler."""
 
     # pylint: disable=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -48,7 +48,7 @@ class TarSource(FileSourceHandler):
         source_checksum: Optional[str] = None,
         source_submodules: Optional[List[str]] = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -80,14 +80,11 @@ class TarSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
-        if src:
-            tarball = src
-        else:
-            tarball = self.part_src_dir / os.path.basename(self.source)
+        tarball = src if src else self.part_src_dir / os.path.basename(self.source)
 
         _extract(tarball, dst)
 
@@ -127,7 +124,7 @@ def _extract(tarball: Path, dst: Path) -> None:
                 yield member
 
         # ignore type, members expect List but we're providing Generator
-        tar.extractall(members=filter_members(tar), path=dst)  # type: ignore
+        tar.extractall(members=filter_members(tar), path=dst)
 
 
 def _strip_prefix(common: str, member: tarfile.TarInfo) -> None:

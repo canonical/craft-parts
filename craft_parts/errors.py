@@ -76,7 +76,7 @@ class InvalidApplicationName(PartsError):
     :param name: The invalid application name.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         brief = f"Application name {name!r} is invalid."
         resolution = (
@@ -93,7 +93,7 @@ class InvalidPartName(PartsError):
     :param part_name: The invalid part name.
     """
 
-    def __init__(self, part_name: str):
+    def __init__(self, part_name: str) -> None:
         self.part_name = part_name
         brief = f"A part named {part_name!r} is not defined in the parts list."
         resolution = "Review the parts definition and make sure it's correct."
@@ -107,7 +107,7 @@ class InvalidArchitecture(PartsError):
     :param arch_name: The unsupported architecture name.
     """
 
-    def __init__(self, arch_name: str):
+    def __init__(self, arch_name: str) -> None:
         self.arch_name = arch_name
         brief = f"Architecture {arch_name!r} is not supported."
         resolution = "Make sure the architecture name is correct."
@@ -122,7 +122,7 @@ class PartSpecificationError(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, *, part_name: str, message: str):
+    def __init__(self, *, part_name: str, message: str) -> None:
         self.part_name = part_name
         self.message = message
         brief = f"Part {part_name!r} validation failed."
@@ -172,13 +172,12 @@ class PartSpecificationError(PartsError):
                 previous_part += f"[{loc_part}]"
                 loc_parts.append(previous_part)
             else:
-                raise RuntimeError(f"unhandled loc: {loc_part}")
+                raise TypeError(f"unhandled loc: {loc_part}")
 
         loc_str = ".".join(loc_parts)
 
         # Filter out internal __root__ detail.
-        loc_str = loc_str.replace(".__root__", "")
-        return loc_str
+        return loc_str.replace(".__root__", "")
 
 
 class CopyTreeError(PartsError):
@@ -187,7 +186,7 @@ class CopyTreeError(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Failed to copy or link file tree: {message}."
         resolution = "Make sure paths and permissions are correct."
@@ -201,7 +200,7 @@ class CopyFileNotFound(PartsError):
     :param name: The file name.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         brief = f"Failed to copy {name!r}: no such file or directory."
 
@@ -217,7 +216,9 @@ class XAttributeError(PartsError):
     :param is_write: Whether this is an attribute write operation.
     """
 
-    def __init__(self, key: str, path: str, is_write: bool = False):
+    def __init__(
+        self, key: str, path: str, is_write: bool = False  # noqa: FBT001, FBT002
+    ) -> None:
         self.key = key
         self.path = path
         self.is_write = is_write
@@ -237,7 +238,7 @@ class XAttributeTooLong(PartsError):
     :param path: The file path.
     """
 
-    def __init__(self, key: str, value: str, path: str):
+    def __init__(self, key: str, value: str, path: str) -> None:
         self.key = key
         self.value = value
         self.path = path
@@ -253,7 +254,7 @@ class UndefinedPlugin(PartsError):
     :param part_name: The name of the part with no plugin definition.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Plugin not defined for part {part_name!r}."
         resolution = f"Review part {part_name!r} and make sure it's correct."
@@ -268,7 +269,7 @@ class InvalidPlugin(PartsError):
     :param part_name: The name of the part defining the invalid plugin.
     """
 
-    def __init__(self, plugin_name: str, *, part_name: str):
+    def __init__(self, plugin_name: str, *, part_name: str) -> None:
         self.plugin_name = plugin_name
         self.part_name = part_name
         brief = f"Plugin {plugin_name!r} in part {part_name!r} is not registered."
@@ -284,7 +285,7 @@ class PluginNotStrict(PartsError):
     :param part_name: The name of the part defining the plugin.
     """
 
-    def __init__(self, plugin_name: str, *, part_name: str):
+    def __init__(self, plugin_name: str, *, part_name: str) -> None:
         self.plugin_name = plugin_name
         self.part_name = part_name
         brief = f"Plugin {plugin_name!r} in part {part_name!r} cannot be used."
@@ -439,7 +440,7 @@ class PluginEnvironmentValidationError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str, reason: str):
+    def __init__(self, *, part_name: str, reason: str) -> None:
         self.part_name = part_name
         self.reason = reason
         brief = f"Environment validation failed for part {part_name!r}: {reason}."
@@ -453,7 +454,7 @@ class PluginPullError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Failed to run the pull script for part {part_name!r}."
 
@@ -466,7 +467,7 @@ class PluginBuildError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Failed to run the build script for part {part_name!r}."
 
@@ -479,7 +480,7 @@ class PluginCleanError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str):
+    def __init__(self, *, part_name: str) -> None:
         self.part_name = part_name
         brief = f"Failed to run the clean script for part {part_name!r}."
 
@@ -494,7 +495,7 @@ class InvalidControlAPICall(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, *, part_name: str, scriptlet_name: str, message: str):
+    def __init__(self, *, part_name: str, scriptlet_name: str, message: str) -> None:
         self.part_name = part_name
         self.scriptlet_name = scriptlet_name
         self.message = message
@@ -515,7 +516,7 @@ class ScriptletRunError(PartsError):
     :param exit_code: The execution error code.
     """
 
-    def __init__(self, *, part_name: str, scriptlet_name: str, exit_code: int):
+    def __init__(self, *, part_name: str, scriptlet_name: str, exit_code: int) -> None:
         self.part_name = part_name
         self.scriptlet_name = scriptlet_name
         self.exit_code = exit_code
@@ -533,7 +534,7 @@ class CallbackRegistrationError(PartsError):
     :param message: the error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Callback registration error: {message}."
 
@@ -547,7 +548,7 @@ class StagePackageNotFound(PartsError):
     :param package_name: The name of the package.
     """
 
-    def __init__(self, *, part_name: str, package_name: str):
+    def __init__(self, *, part_name: str, package_name: str) -> None:
         self.part_name = part_name
         self.package_name = package_name
         brief = f"Stage package not found in part {part_name!r}: {package_name}."
@@ -562,7 +563,7 @@ class OverlayPackageNotFound(PartsError):
     :param message: the error message.
     """
 
-    def __init__(self, *, part_name: str, package_name: str):
+    def __init__(self, *, part_name: str, package_name: str) -> None:
         self.part_name = part_name
         self.package_name = package_name
         brief = f"Overlay package not found in part {part_name!r}: {package_name}."
@@ -576,7 +577,7 @@ class InvalidAction(PartsError):
     :param message: The error message.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         self.message = message
         brief = f"Action is invalid: {message}."
 

@@ -19,7 +19,7 @@
 import os
 import re
 
-from setuptools import find_packages, setup  # type: ignore
+from setuptools import find_packages, setup
 
 VERSION = "1.26.0"
 
@@ -34,8 +34,9 @@ def is_ubuntu() -> bool:
             os_release = release_file.read()
         if re.search(r"^ID(?:_LIKE)?=.*\bubuntu\b.*$", os_release, re.MULTILINE):
             return True
-        return False
     except FileNotFoundError:
+        return False
+    else:
         return False
 
 
@@ -136,8 +137,10 @@ setup(
     },
     install_requires=install_requires,
     extras_require=extras_requires,
-    packages=find_packages(include=["craft_parts", "craft_parts.*"])
-    + ["craft_parts_docs"],
+    packages=[
+        *find_packages(include=["craft_parts", "craft_parts.*"]),
+        "craft_parts_docs",
+    ],
     # todo: can we make the docs optional?
     package_dir={"craft_parts_docs": "docs/base"},
     package_data={

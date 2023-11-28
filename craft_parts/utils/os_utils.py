@@ -262,10 +262,10 @@ def umount(mountpoint: str, *args: str) -> None:
         try:
             subprocess.check_call(["/bin/umount", *args, mountpoint])
             break
-        except subprocess.CalledProcessError as err:
+        except subprocess.CalledProcessError:
             attempt += 1
             if attempt > _UMOUNT_RETRIES:
-                raise err
+                raise
 
             time.sleep(1)
             logger.debug(
@@ -289,7 +289,7 @@ class OsRelease:
             with open(os_release_file) as file:
                 for line in file:
                     entry = line.rstrip().split("=")
-                    if len(entry) == 2:
+                    if len(entry) == 2:  # noqa: PLR2004
                         self._os_release[entry[0]] = entry[1].strip('"')
 
     def id(self) -> str:
@@ -300,7 +300,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["ID"]
 
-        raise errors.OsReleaseIdError()
+        raise errors.OsReleaseIdError
 
     def name(self) -> str:
         """Return the OS name.
@@ -310,7 +310,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["NAME"]
 
-        raise errors.OsReleaseNameError()
+        raise errors.OsReleaseNameError
 
     def version_id(self) -> str:
         """Return the OS version ID.
@@ -320,7 +320,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["VERSION_ID"]
 
-        raise errors.OsReleaseVersionIdError()
+        raise errors.OsReleaseVersionIdError
 
 
 def process_run(

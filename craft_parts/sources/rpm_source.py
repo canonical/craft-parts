@@ -45,7 +45,7 @@ class RpmSource(FileSourceHandler):
     )
     _source_type = "rpm"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: str,
         part_src_dir: Path,
@@ -59,7 +59,7 @@ class RpmSource(FileSourceHandler):
         source_submodules: None = None,
         source_depth: None = None,
         ignore_patterns: Optional[List[str]] = None,
-    ):
+    ) -> None:
         super().__init__(
             source,
             part_src_dir,
@@ -81,10 +81,10 @@ class RpmSource(FileSourceHandler):
 
         :raises: InvalidSourceOptions if any bad options are used.
         """
-        bad_options = []
-        for tag in self._invalid_tags:
-            if getattr(self, tag.replace("-", "_")):
-                bad_options.append(tag)
+        bad_options = [
+            tag for tag in self._invalid_tags if getattr(self, tag.replace("-", "_"))
+        ]
+
         if bad_options:
             raise errors.InvalidSourceOptions(
                 source_type=self._source_type, options=bad_options
@@ -94,7 +94,7 @@ class RpmSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,
+        keep: bool = False,  # noqa: FBT001, FBT002
         src: Optional[Path] = None,
     ) -> None:
         """Extract rpm file contents to the part source dir."""

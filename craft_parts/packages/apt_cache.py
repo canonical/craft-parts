@@ -250,7 +250,7 @@ class AptCache(ContextDecorator):
                     str(download_path), progress=self.progress
                 )
             except apt.package.FetchError as err:
-                raise errors.PackageFetchError(str(err))
+                raise errors.PackageFetchError(str(err)) from err
 
             if package.candidate is None:
                 raise errors.PackageNotFound(package.name)
@@ -277,7 +277,7 @@ class AptCache(ContextDecorator):
         """
         changed_pkgs = self.cache.get_changes()
         marked_install_pkgs = [p for p in changed_pkgs if p.marked_install]
-        missing_installation_candidate = [
+        missing_installation_candidate: List[str] = [
             p.name for p in marked_install_pkgs if p.candidate is None
         ]
 
@@ -285,7 +285,7 @@ class AptCache(ContextDecorator):
             raise errors.PackagesNotFound(missing_installation_candidate)
 
         return [
-            (p.name, p.candidate.version) for p in marked_install_pkgs  # type: ignore
+            (p.name, p.candidate.version) for p in marked_install_pkgs if p.candidate
         ]
 
     def mark_packages(self, package_names: Set[str]) -> None:
@@ -293,9 +293,8 @@ class AptCache(ContextDecorator):
 
         :param package_names: The set of package names to be marked.
         """
-        for name in package_names:
-            if name.endswith(":any"):
-                name = name[:-4]
+        for _name in package_names:
+            name = _name[:-4] if _name.endswith(":any") else _name
 
             if self.cache.is_virtual_package(name):
                 name = self.cache.get_providing_packages(name)[0].name
@@ -323,7 +322,7 @@ class AptCache(ContextDecorator):
             # Now mark this package as NOT automatically installed, which
             # will leave its dependencies marked as auto-installed, which
             # allows us to clean them up if necessary.
-            package.mark_auto(False)
+            package.mark_auto(auto=False)
 
             _verify_marked_install(package)
 
@@ -378,7 +377,7 @@ def _verify_marked_install(package: apt.package.Package) -> None:
     for package_dependencies in package.candidate.dependencies:
         for dep in package_dependencies:
             if not dep.target_versions:
-                broken_deps.append(dep.name)
+                broken_deps.append(dep.name)  # noqa: PERF401
     raise errors.PackageBroken(package.name, deps=broken_deps)
 
 

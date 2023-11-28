@@ -21,7 +21,7 @@ from craft_parts.sources import checksum, errors
 
 
 @pytest.mark.parametrize(
-    "tc_checksum,tc_algorithm,tc_digest",
+    ("tc_checksum", "tc_algorithm", "tc_digest"),
     [
         ("algorithm/digest", "algorithm", "digest"),
         ("algorithm/dig/est", "algorithm", "dig/est"),
@@ -39,13 +39,13 @@ def test_split_checksum_happy(tc_checksum, tc_algorithm, tc_digest):
 
 @pytest.mark.parametrize("tc_checksum", ["", "something"])
 def test_split_checksum_error(tc_checksum):
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         checksum.split_checksum(tc_checksum)
     assert str(raised.value) == f"invalid checksum format: '{tc_checksum}'"
 
 
 @pytest.mark.parametrize(
-    "tc_checksum,tc_checkfile",
+    ("tc_checksum", "tc_checkfile"),
     [
         ("md5/9a0364b9e99bb480dd25e1f0284c8555", "content"),
         ("sha1/040f06fd774092478d450774f5ba30c5da78acc8", "content"),
@@ -60,7 +60,7 @@ def test_verify_checksum_happy(tc_checksum, tc_checkfile):
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_invalid_algorithm():
     Path("checkfile").write_text("content")
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         checksum.verify_checksum("invalid/digest", Path("checkfile"))
     assert str(raised.value) == "unsupported algorithm 'invalid'"
 
@@ -68,7 +68,7 @@ def test_verify_checksum_invalid_algorithm():
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_value_error():
     Path("checkfile").write_text("content")
-    with pytest.raises(ValueError) as raised:
+    with pytest.raises(ValueError) as raised:  # noqa: PT011
         checksum.verify_checksum("invalid", Path("checkfile"))
     assert str(raised.value) == "invalid checksum format: 'invalid'"
 
