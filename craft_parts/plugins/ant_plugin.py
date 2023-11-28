@@ -153,8 +153,7 @@ class AntPlugin(JavaPlugin):
         ant_opts.extend(_get_proxy_options("http"))
         ant_opts.extend(_get_proxy_options("https"))
         if ant_opts:
-            opts = shlex.join(ant_opts)
-            return {"ANT_OPTS": opts}
+            return {"ANT_OPTS": _shlex_join(ant_opts)}
         return {}
 
     @override
@@ -175,7 +174,7 @@ class AntPlugin(JavaPlugin):
         return [" ".join(command), *self._get_java_post_build_commands()]
 
 
-def _get_proxy_options(scheme) -> Iterator[str]:
+def _get_proxy_options(scheme: str) -> Iterator[str]:
     proxy = os.environ.get(f"{scheme}_proxy")
     if proxy:
         parsed = urlsplit(proxy)
@@ -187,3 +186,11 @@ def _get_proxy_options(scheme) -> Iterator[str]:
             yield f"-D{scheme}.proxyUser={parsed.username}"
         if parsed.password is not None:
             yield f"-D{scheme}.proxyPassword={parsed.password}"
+
+
+def _shlex_join(elements: List[str]) -> str:
+    try:
+        return shlex.join(elements)
+    except AttributeError:
+        # Python older than 3.8 does not have shlex.join
+        return " ".join(elements)
