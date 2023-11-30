@@ -85,6 +85,8 @@ class ProjectInfo:
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
         partitions: Optional[List[str]] = None,
+        base_layer_dir: Optional[Path] = None,
+        base_layer_hash: Optional[bytes] = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         if not project_dirs:
@@ -104,6 +106,8 @@ class ProjectInfo:
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
         self._partitions = partitions
         self._custom_args = custom_args
+        self._base_layer_dir = base_layer_dir
+        self._base_layer_hash = base_layer_hash
         self.global_environment: Dict[str, str] = {}
 
         self.execution_finished = False
@@ -217,6 +221,16 @@ class ProjectInfo:
     def partitions(self) -> Optional[List[str]]:
         """Return the project's partitions."""
         return self._partitions
+
+    @property
+    def base_layer_dir(self) -> Optional[Path]:
+        """Return the directory containing the base layer (if any)."""
+        return self._base_layer_dir
+
+    @property
+    def base_layer_hash(self) -> Optional[bytes]:
+        """Return the hash of the base layer (if any)."""
+        return self._base_layer_hash
 
     def set_project_var(
         self,

@@ -124,6 +124,24 @@ class TestLifecycleManager:
         assert info.custom_args == ["custom"]
         assert info.custom == "foo"
 
+    @pytest.mark.parametrize(
+        ("base_layer_dir", "base_layer_hash"),
+        [(None, None), (Path("base"), b"deadbeef")],
+    )
+    def test_project_info_base_layer(self, new_dir, base_layer_dir, base_layer_hash):
+        lf = lifecycle_manager.LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            base_layer_dir=base_layer_dir,
+            base_layer_hash=base_layer_hash,
+            **self._lcm_kwargs,
+        )
+        info = lf.project_info
+
+        assert info.base_layer_dir == base_layer_dir
+        assert info.base_layer_hash == base_layer_hash
+
     def test_part_initialization(self, new_dir, mocker):
         mock_seq = mocker.patch("craft_parts.sequencer.Sequencer")
 
