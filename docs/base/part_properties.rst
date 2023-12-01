@@ -311,6 +311,15 @@ The packages to install in the staging area for deployment with the build
 products. These provide libraries and executables to support the deployed
 part.
 
+This keyword also support  supports
+`Chisel <https://github.com/canonical/chisel>`_ slices.
+
+To install a package slice instead of the whole package, simply follow the
+Chisel convention *<packageName>_<sliceName>*.
+
+NOTE: at the moment, it is not possible to mix packages and slices in the
+same stage-packages field.
+
 .. _stage_snaps:
 
 stage-snaps
