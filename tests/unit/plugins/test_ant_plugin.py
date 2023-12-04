@@ -129,7 +129,7 @@ def test_missing_parameters():
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
-    assert err[0]["type"] == "value_error.missing"
+    assert err[0]["type"] == "missing"
 
 
 def test_get_build_commands(part_info):

@@ -19,9 +19,9 @@
 import os
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 
 class Permissions(BaseModel):
@@ -48,11 +48,12 @@ class Permissions(BaseModel):
     mode: Optional[str] = None
 
     # pylint: disable=no-self-argument
-    @root_validator(pre=True)
-    def validate_root(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:
+    @model_validator(mode="after")
+    @classmethod
+    def validate_root(cls, values: Any) -> Any:  # noqa: ANN401
         """Validate that "owner" and "group" are correctly specified."""
-        has_owner = "owner" in values
-        has_group = "group" in values
+        has_owner = cast(Permissions, values).owner is not None
+        has_group = cast(Permissions, values).group is not None
 
         if has_owner != has_group:
             raise ValueError(

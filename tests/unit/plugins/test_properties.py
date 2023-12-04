@@ -25,7 +25,7 @@ def test_properties_unmarshal():
 
 
 class FooProperties(PluginProperties):
-    foo_parameters: Optional[List[str]]
+    foo_parameters: Optional[List[str]] = None
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "FooProperties":

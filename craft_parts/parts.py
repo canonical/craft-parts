@@ -18,9 +18,9 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, cast
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic import BaseModel, Field, ValidationError, model_validator, validator
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
@@ -70,7 +70,8 @@ class PartSpec(BaseModel):
 
         validate_assignment = True
         extra = "forbid"
-        allow_mutation = False
+        frozen = True
+        strict = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
 
     # pylint: disable=no-self-argument
@@ -92,8 +93,9 @@ class PartSpec(BaseModel):
             raise ValueError("overlays not supported")
         return item
 
-    @root_validator(pre=True)
-    def validate_root(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="after")
+    @classmethod
+    def validate_root(cls, values: Any) -> Any:  # noqa: ANN401
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.
@@ -103,7 +105,7 @@ class PartSpec(BaseModel):
             return "_" in name
 
         # Detect a mixture of .deb packages and chisel slices.
-        stage_packages = values.get("stage-packages", [])
+        stage_packages = cast(PartSpec, values).stage_packages or []
         has_slices = any(name for name in stage_packages if is_slice(name))
         has_packages = any(name for name in stage_packages if not is_slice(name))
 
