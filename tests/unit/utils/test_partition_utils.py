@@ -37,14 +37,11 @@ def test_validate_partitions_success_feature_enabled(partitions):
         ([], "Partition feature is enabled but no partitions are defined."),
         (["lol"], "First partition must be 'default'."),
         (["default", "default"], "Partitions must be unique."),
-        (
-            ["default", "!!!"],
-            "Partition '!!!' must only contain lowercase letters.",
-        ),
+        (["default", "!!!"], "Partition '!!!' is invalid."),
     ],
 )
 def test_validate_partitions_failure_feature_enabled(partitions, message):
     with pytest.raises(errors.FeatureError) as exc_info:
         partition_utils.validate_partition_names(partitions)
 
-    assert exc_info.value.args[0] == message
+    assert exc_info.value.brief == message

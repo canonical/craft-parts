@@ -52,12 +52,12 @@ class PartsError(Exception):
 class FeatureError(PartsError):
     """A feature is not configured as expected."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, details: Optional[str] = None) -> None:
         self.message = message
         brief = message
         resolution = "This operation cannot be executed."
 
-        super().__init__(brief=brief, resolution=resolution)
+        super().__init__(brief=brief, details=details, resolution=resolution)
 
 
 class PartDependencyCycle(PartsError):

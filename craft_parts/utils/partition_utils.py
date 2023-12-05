@@ -54,5 +54,6 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     for partition in partitions:
         if not re.fullmatch("[a-z]+", partition):
             raise errors.FeatureError(
-                f"Partition {partition!r} must only contain lowercase letters."
+                message=f"Partition {partition!r} is invalid.",
+                details="Partitions must only contain lowercase letters.",
             )

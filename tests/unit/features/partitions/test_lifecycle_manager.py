@@ -154,7 +154,10 @@ class TestPartitionsSupport:
         """Raise an error if partitions are not lowercase alphabetical characters."""
         with pytest.raises(
             errors.FeatureError,
-            match=r"Partition '[\w-]*' must only contain lowercase letters.*",
+            match=(
+                r"Partition '[\w-]*' is invalid.\n"
+                r"Partitions must only contain lowercase letters.*"
+            ),
         ):
             lifecycle_manager.LifecycleManager(
                 parts_data,
