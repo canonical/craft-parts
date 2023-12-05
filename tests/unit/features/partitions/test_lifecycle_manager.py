@@ -46,6 +46,33 @@ def valid_partitions_strategy():
     return strategy.filter(lambda partitions: "default" not in partitions[1:])
 
 
+def valid_namespaced_partitions_strategy():
+    """A strategy for a list of valid namespaced partitions."""
+
+    @strategies.composite
+    def _valid_namespaced_partition_strategy(draw):
+        """A strategy for a single valid namespaced partition."""
+        namespace_strategy = strategies.text(
+            strategies.sampled_from(ascii_lowercase), min_size=1
+        ).filter(lambda partition: partition != "default")
+
+        partition_strategy = strategies.text(
+            strategies.sampled_from(ascii_lowercase + "-"), min_size=1
+        ).filter(
+            lambda partition: (
+                not partition.startswith("-")
+                and not partition.endswith("-")
+                and partition != "default"
+            )
+        )
+
+        return "/".join([draw(namespace_strategy), draw(partition_strategy)])
+
+    return strategies.lists(_valid_namespaced_partition_strategy(), unique=True).map(
+        lambda lst: ["default", *lst]
+    )
+
+
 class TestPartitionsSupport:
     """Verify LifecycleManager supports partitions."""
 
@@ -119,6 +146,22 @@ class TestPartitionsSupport:
 
         pytest_check.equal(info.partitions, partitions)
 
+    # `new_dir` is function-scoped but does not affect the testing of partition names
+    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @given(partitions=valid_namespaced_partitions_strategy())
+    def test_namespaced_partitions_valid(self, new_dir, parts_data, partitions):
+        """Process valid partition names."""
+        lifecycle = lifecycle_manager.LifecycleManager(
+            parts_data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+
+        info = lifecycle.project_info
+
+        pytest_check.equal(info.partitions, partitions)
+
     @pytest.mark.parametrize(
         "partitions",
         [
@@ -169,10 +212,43 @@ class TestPartitionsSupport:
     @pytest.mark.parametrize(
         "partitions",
         [
+            ["default", "/"],
+            ["default", "/a"],
+            ["default", "a/"],
+            ["default", "a/b/"],
+            ["default", "/a/b"],
+            ["default", "a//b"],
+            ["default", "/a/"],
+            ["default", "a/Test"],
+            ["default", "a/TEST"],
+            ["default", "a/test1"],
+            ["default", "Test/a"],
+            ["default", "TEST/a"],
+            ["default", "test1/a"],
+            ["default", "te-st/a"],
+        ],
+    )
+    def test_namespaced_partitions_invalid(self, new_dir, parts_data, partitions):
+        """Raise an error if partitions are not lowercase alphabetical characters."""
+        with pytest.raises(
+            errors.FeatureError,
+            match=r"Namespaced partition '[\w/-]*' is invalid.*",
+        ):
+            lifecycle_manager.LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=partitions,
+            )
+
+    @pytest.mark.parametrize(
+        "partitions",
+        [
             ["default", "default"],
             ["default", "default", "kernel"],
             ["default", "default", "kernel", "kernel"],
             ["default", "kernel", "kernel"],
+            ["default", "kernel/kernel", "kernel/kernel"],
         ],
     )
     def test_partitions_duplicates(self, new_dir, parts_data, partitions):
@@ -186,6 +262,29 @@ class TestPartitionsSupport:
             )
 
         assert raised.value.message == "Partitions must be unique."
+
+    @pytest.mark.parametrize(
+        "partitions",
+        [
+            ["default", "default/test"],
+            ["default", "foo", "foo/bar"],
+        ],
+    )
+    def test_partitions_conflicts_with_namespace(self, new_dir, parts_data, partitions):
+        """Raise an error if a partition conflicts with a namespace."""
+        with pytest.raises(
+            errors.FeatureError,
+            match=(
+                r"Partition '[\w-]*' conflicts with the "
+                r"namespace of partition '[\w/-]*'.*"
+            ),
+        ):
+            lifecycle_manager.LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=partitions,
+            )
 
     def test_partitions_usage_valid(self, new_dir, partition_list):
         """Verify partitions can be used in parts when creating a LifecycleManager."""
