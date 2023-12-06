@@ -31,45 +31,68 @@ from tests.unit import test_lifecycle_manager
 mock_available_plugins = test_lifecycle_manager.mock_available_plugins
 
 
-def valid_partitions_strategy():
-    """A strategy for a list of valid partitions.
+def valid_non_namespaced_partition_strategy():
+    """A strategy for a list of valid non-namespaced partitions."""
+    return strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1)
 
-    The ruleset is defined in the LifecycleManager docstrings.
-    """
-    strategy = strategies.lists(
-        strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1),
+
+@strategies.composite
+def valid_namespaced_partition_strategy(draw):
+    """A strategy that generates a valid namespaced partition."""
+    namespace_strategy = valid_non_namespaced_partition_strategy().filter(
+        lambda n: n != "default"
+    )
+
+    partition_strategy = partition_strategy = strategies.text(
+        strategies.sampled_from(ascii_lowercase + "-"), min_size=1
+    ).filter(
+        lambda partition: (
+            not partition.startswith("-")
+            and not partition.endswith("-")
+            and partition != "default"
+        )
+    )
+
+    return f"{draw(namespace_strategy)}/{draw(partition_strategy)}"
+
+
+def valid_non_namedspaced_partitions_strategy():
+    """A strategy for a list of valid partitions."""
+    non_default_partition = valid_non_namespaced_partition_strategy().filter(
+        lambda part: part != "default"
+    )
+    return strategies.lists(
+        non_default_partition,
         min_size=1,
         unique=True,
     ).map(lambda lst: ["default", *lst])
 
-    # ensure "default" is not repeated in the list
-    return strategy.filter(lambda partitions: "default" not in partitions[1:])
-
 
 def valid_namespaced_partitions_strategy():
     """A strategy for a list of valid namespaced partitions."""
-
-    @strategies.composite
-    def _valid_namespaced_partition_strategy(draw):
-        """A strategy for a single valid namespaced partition."""
-        namespace_strategy = strategies.text(
-            strategies.sampled_from(ascii_lowercase), min_size=1
-        ).filter(lambda partition: partition != "default")
-
-        partition_strategy = strategies.text(
-            strategies.sampled_from(ascii_lowercase + "-"), min_size=1
-        ).filter(
-            lambda partition: (
-                not partition.startswith("-")
-                and not partition.endswith("-")
-                and partition != "default"
-            )
-        )
-
-        return "/".join([draw(namespace_strategy), draw(partition_strategy)])
-
-    return strategies.lists(_valid_namespaced_partition_strategy(), unique=True).map(
+    partition_strategy = valid_namespaced_partition_strategy()
+    return strategies.lists(partition_strategy, unique=True).map(
         lambda lst: ["default", *lst]
+    )
+
+
+def valid_partitions_strategy():
+    """A strategy that generates valid list of partitions, namespaced or not."""
+    non_namespaced = valid_non_namespaced_partition_strategy().filter(
+        lambda part: part != "default"
+    )
+    namespaced = valid_namespaced_partition_strategy()
+
+    def _check_no_duplicate_namespaces(lst):
+        """Check that simple partitions don't collide with namespaced ones."""
+        non_namespaced_set = {s for s in lst if "/" not in s}
+        namespaced_set = {s.split("/", maxsplit=1)[0] for s in lst if "/" in s}
+        return non_namespaced_set.isdisjoint(namespaced_set)
+
+    return (
+        strategies.lists(strategies.one_of(non_namespaced, namespaced), unique=True)
+        .filter(_check_no_duplicate_namespaces)
+        .map(lambda lst: ["default", *lst])
     )
 
 
@@ -134,22 +157,6 @@ class TestPartitionsSupport:
     @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     @given(partitions=valid_partitions_strategy())
     def test_partitions_valid(self, new_dir, parts_data, partitions):
-        """Process valid partition names."""
-        lifecycle = lifecycle_manager.LifecycleManager(
-            parts_data,
-            application_name="test_manager",
-            cache_dir=new_dir,
-            partitions=partitions,
-        )
-
-        info = lifecycle.project_info
-
-        pytest_check.equal(info.partitions, partitions)
-
-    # `new_dir` is function-scoped but does not affect the testing of partition names
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-    @given(partitions=valid_namespaced_partitions_strategy())
-    def test_namespaced_partitions_valid(self, new_dir, parts_data, partitions):
         """Process valid partition names."""
         lifecycle = lifecycle_manager.LifecycleManager(
             parts_data,

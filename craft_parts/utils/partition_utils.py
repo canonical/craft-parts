@@ -20,6 +20,9 @@ from typing import Optional, Sequence, Set
 
 from craft_parts import errors, features
 
+_VALID_PARTITION_REGEX = re.compile(r"[a-z]+", re.ASCII)
+_VALID_NAMESPACED_PARTITION_REGEX = re.compile(r"[a-z]+/(?!-)[a-z\-]+(?<!-)", re.ASCII)
+
 
 def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     """Validate the partition feature set.
@@ -59,40 +62,42 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     if len(partitions) != len(set(partitions)):
         raise errors.FeatureError("Partitions must be unique.")
 
-    _validate_partition_names(partitions)
+    _validate_partition_naming_convention(partitions)
 
     _validate_namespace_conflicts(partitions)
 
 
-def _is_valid_partition(partition: str) -> bool:
+def _is_valid_partition_name(partition: str) -> bool:
     """Check if a partition name is valid.
 
     :param partition: partition to check
 
     :returns: true if the namespaced partition is valid
     """
-    return bool(re.fullmatch("[a-z]+", partition))
+    return bool(re.fullmatch(_VALID_PARTITION_REGEX, partition))
 
 
-def _is_valid_namespaced_partition(partition: str) -> bool:
+def _is_valid_namespaced_partition_name(partition: str) -> bool:
     """Check if a namespaced partition name is valid.
 
     :param partition: partition to check
 
     :returns: true if the namespaced partition is valid
     """
-    return bool(re.fullmatch(r"([a-z]+)/(?!-)[a-z\-]+(?<!-)", partition))
+    return bool(re.fullmatch(_VALID_NAMESPACED_PARTITION_REGEX, partition))
 
 
-def _validate_partition_names(partitions: Sequence[str]) -> None:
-    """Validate names of partitions.
+def _validate_partition_naming_convention(partitions: Sequence[str]) -> None:
+    """Validate naming convention of a sequence of partitions.
 
     :param partitions: Sequence of partitions to validate.
 
     :raises FeatureError: if a partition name is not valid
     """
     for partition in partitions:
-        if _is_valid_partition(partition) or _is_valid_namespaced_partition(partition):
+        if _is_valid_partition_name(partition) or _is_valid_namespaced_partition_name(
+            partition
+        ):
             continue
 
         if "/" in partition:
@@ -125,7 +130,7 @@ def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
 
     # sort partitions
     for partition in partitions:
-        if _is_valid_partition(partition):
+        if _is_valid_partition_name(partition):
             regular_partitions.add(partition)
         else:
             namespaced_partitions.add(partition)
