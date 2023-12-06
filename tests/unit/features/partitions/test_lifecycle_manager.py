@@ -199,6 +199,10 @@ class TestPartitionsSupport:
             ["default", "TEST"],
             ["default", "test1"],
             ["default", "te-st"],
+            pytest.param(
+                ["default", "tеst"],  # noqa: RUF001 (ambiguous character)
+                id="test-with-cyrillic-e",
+            ),
         ],
     )
     def test_partitions_invalid(self, new_dir, parts_data, partitions):
@@ -245,6 +249,10 @@ class TestPartitionsSupport:
             ["default", "TEST/a"],
             ["default", "test1/a"],
             ["default", "te-st/a"],
+            pytest.param(
+                ["default", "test/ο"],  # noqa: RUF001 (ambiguous character)
+                id="uses-omicron",
+            ),
         ],
     )
     def test_namespaced_partitions_invalid(self, new_dir, parts_data, partitions):
