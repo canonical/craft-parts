@@ -16,7 +16,7 @@
 """Unit tests for partition utilities."""
 
 import re
-from typing import Optional, Sequence, Set, Tuple
+from typing import Optional, Sequence, Set
 
 from craft_parts import errors, features
 
@@ -59,40 +59,81 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     if len(partitions) != len(set(partitions)):
         raise errors.FeatureError("Partitions must be unique.")
 
-    namespaces: Set[Tuple[str, str]] = set()
-    regular_partitions: Set[str] = set()
+    _validate_partition_names(partitions)
 
+    _validate_namespace_conflicts(partitions)
+
+
+def _is_valid_partition(partition: str) -> bool:
+    """Check if a partition name is valid.
+
+    :param partition: partition to check
+
+    :returns: true if the namespaced partition is valid
+    """
+    return bool(re.fullmatch("[a-z]+", partition))
+
+
+def _is_valid_namespaced_partition(partition: str) -> bool:
+    """Check if a namespaced partition name is valid.
+
+    :param partition: partition to check
+
+    :returns: true if the namespaced partition is valid
+    """
+    return bool(re.fullmatch(r"([a-z]+)/(?!-)[a-z\-]+(?<!-)", partition))
+
+
+def _validate_partition_names(partitions: Sequence[str]) -> None:
+    """Validate names of partitions.
+
+    :param partitions: Sequence of partitions to validate.
+
+    :raises FeatureError: if a partition name is not valid
+    """
     for partition in partitions:
-        # validate regular partitions
-        if re.fullmatch("[a-z]+", partition):
-            regular_partitions.add(partition)
-        # validate namespaced partitions
-        elif "/" in partition:
-            match = re.fullmatch(r"([a-z]+)/(?!-)[a-z\-]+(?<!-)", partition)
-            if match:
-                # collect the namespace and the entire namespaced partition
-                namespaces.add((match.group(1), match.string))
-            else:
-                raise errors.FeatureError(
-                    message=f"Namespaced partition {partition!r} is invalid.",
-                    details=(
-                        "Namespaced partitions are formatted as `<namespace>/"
-                        "<partition>`. Namespaces must only contain lowercase letters. "
-                        "Namespaced partitions must only contain lowercase letters and "
-                        "hyphens and cannot start or end with a hyphen."
-                    ),
-                )
-        else:
+        if _is_valid_partition(partition) or _is_valid_namespaced_partition(partition):
+            continue
+
+        if "/" in partition:
             raise errors.FeatureError(
-                message=f"Partition {partition!r} is invalid.",
-                details="Partitions must only contain lowercase letters.",
+                message=f"Namespaced partition {partition!r} is invalid.",
+                details=(
+                    "Namespaced partitions are formatted as `<namespace>/"
+                    "<partition>`. Namespaces must only contain lowercase letters. "
+                    "Namespaced partitions must only contain lowercase letters and "
+                    "hyphens and cannot start or end with a hyphen."
+                ),
             )
 
-    # validate namespace conflicts (i.e. 'foo' in ['default', 'foo', 'foo/bar'])
+        raise errors.FeatureError(
+            message=f"Partition {partition!r} is invalid.",
+            details="Partitions must only contain lowercase letters.",
+        )
+
+
+def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
+    """Validate conflicts between regular partitions and namespaces.
+
+    For example, `foo` conflicts in ['default', 'foo', 'foo/bar'].
+    Assumes partition names are valid.
+
+    :raises FeatureError: for namespace conflicts
+    """
+    namespaced_partitions: Set[str] = set()
+    regular_partitions: Set[str] = set()
+
+    # sort partitions
+    for partition in partitions:
+        if _is_valid_partition(partition):
+            regular_partitions.add(partition)
+        else:
+            namespaced_partitions.add(partition)
+
     for regular_partition in regular_partitions:
-        for namespace in namespaces:
-            if regular_partition == namespace[0]:
+        for namespaced_partition in namespaced_partitions:
+            if namespaced_partition.startswith(regular_partition + "/"):
                 raise errors.FeatureError(
                     f"Partition {regular_partition!r} conflicts with the namespace of "
-                    f"partition {namespace[1]!r}"
+                    f"partition {namespaced_partition!r}"
                 )

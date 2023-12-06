@@ -45,6 +45,7 @@ def test_validate_partitions_success_feature_enabled(partitions):
         ([], "Partition feature is enabled but no partitions are defined."),
         (["lol"], "First partition must be 'default'."),
         (["default", "default"], "Partitions must be unique."),
+        (["default", "test/foo", "test/foo"], "Partitions must be unique."),
         (["default", "!!!"], "Partition '!!!' is invalid."),
         (["default", "test/!!!"], "Namespaced partition 'test/!!!' is invalid."),
         (
