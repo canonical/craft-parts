@@ -31,19 +31,69 @@ from tests.unit import test_lifecycle_manager
 mock_available_plugins = test_lifecycle_manager.mock_available_plugins
 
 
-def valid_partitions_strategy():
-    """A strategy for a list of valid partitions.
+def valid_non_namespaced_partition_strategy():
+    """A strategy for a list of valid non-namespaced partitions."""
+    return strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1)
 
-    The ruleset is defined in the LifecycleManager docstrings.
-    """
-    strategy = strategies.lists(
-        strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1),
+
+@strategies.composite
+def valid_namespaced_partition_strategy(draw):
+    """A strategy that generates a valid namespaced partition."""
+    namespace_strategy = valid_non_namespaced_partition_strategy().filter(
+        lambda n: n != "default"
+    )
+
+    partition_strategy = partition_strategy = strategies.text(
+        strategies.sampled_from(ascii_lowercase + "-"), min_size=1
+    ).filter(
+        lambda partition: (
+            not partition.startswith("-")
+            and not partition.endswith("-")
+            and partition != "default"
+        )
+    )
+
+    return f"{draw(namespace_strategy)}/{draw(partition_strategy)}"
+
+
+def valid_non_namedspaced_partitions_strategy():
+    """A strategy for a list of valid partitions."""
+    non_default_partition = valid_non_namespaced_partition_strategy().filter(
+        lambda part: part != "default"
+    )
+    return strategies.lists(
+        non_default_partition,
         min_size=1,
         unique=True,
     ).map(lambda lst: ["default", *lst])
 
-    # ensure "default" is not repeated in the list
-    return strategy.filter(lambda partitions: "default" not in partitions[1:])
+
+def valid_namespaced_partitions_strategy():
+    """A strategy for a list of valid namespaced partitions."""
+    partition_strategy = valid_namespaced_partition_strategy()
+    return strategies.lists(partition_strategy, unique=True).map(
+        lambda lst: ["default", *lst]
+    )
+
+
+def valid_partitions_strategy():
+    """A strategy that generates valid list of partitions, namespaced or not."""
+    non_namespaced = valid_non_namespaced_partition_strategy().filter(
+        lambda part: part != "default"
+    )
+    namespaced = valid_namespaced_partition_strategy()
+
+    def _check_no_duplicate_namespaces(lst):
+        """Check that simple partitions don't collide with namespaced ones."""
+        non_namespaced_set = {s for s in lst if "/" not in s}
+        namespaced_set = {s.split("/", maxsplit=1)[0] for s in lst if "/" in s}
+        return non_namespaced_set.isdisjoint(namespaced_set)
+
+    return (
+        strategies.lists(strategies.one_of(non_namespaced, namespaced), unique=True)
+        .filter(_check_no_duplicate_namespaces)
+        .map(lambda lst: ["default", *lst])
+    )
 
 
 class TestPartitionsSupport:
@@ -144,17 +194,72 @@ class TestPartitionsSupport:
         "partitions",
         [
             ["default", ""],
+            ["default", "-"],
             ["default", "Test"],
             ["default", "TEST"],
             ["default", "test1"],
             ["default", "te-st"],
+            pytest.param(
+                ["default", "tеst"],  # noqa: RUF001 (ambiguous character)
+                id="test-with-cyrillic-e",
+            ),
         ],
     )
     def test_partitions_invalid(self, new_dir, parts_data, partitions):
         """Raise an error if partitions are not lowercase alphabetical characters."""
         with pytest.raises(
             errors.FeatureError,
-            match=r"Partition '[\w-]*' must only contain lowercase letters.*",
+            match=(
+                r"Partition '[\w-]*' is invalid.\n"
+                r"Partitions must only contain lowercase letters.*"
+            ),
+        ):
+            lifecycle_manager.LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=partitions,
+            )
+
+    @pytest.mark.parametrize(
+        "partitions",
+        [
+            ["default", "/"],
+            ["default", "/a"],
+            ["default", "a/"],
+            ["default", "a/b/"],
+            ["default", "/a/b"],
+            ["default", "a//b"],
+            ["default", "/a/"],
+            ["default", "/-"],
+            ["default", "-/"],
+            ["default", "-/-"],
+            ["default", "a/-"],
+            ["default", "-/b"],
+            ["default", "a/-b"],
+            ["default", "a/b-"],
+            ["default", "a/-b-"],
+            ["default", "-a/b"],
+            ["default", "a-/b"],
+            ["default", "-a-/b"],
+            ["default", "a/Test"],
+            ["default", "a/TEST"],
+            ["default", "a/test1"],
+            ["default", "Test/a"],
+            ["default", "TEST/a"],
+            ["default", "test1/a"],
+            ["default", "te-st/a"],
+            pytest.param(
+                ["default", "test/ο"],  # noqa: RUF001 (ambiguous character)
+                id="uses-omicron",
+            ),
+        ],
+    )
+    def test_namespaced_partitions_invalid(self, new_dir, parts_data, partitions):
+        """Raise an error if partitions are not lowercase alphabetical characters."""
+        with pytest.raises(
+            errors.FeatureError,
+            match=r"Namespaced partition '[\w/-]*' is invalid.*",
         ):
             lifecycle_manager.LifecycleManager(
                 parts_data,
@@ -170,6 +275,7 @@ class TestPartitionsSupport:
             ["default", "default", "kernel"],
             ["default", "default", "kernel", "kernel"],
             ["default", "kernel", "kernel"],
+            ["default", "kernel/kernel", "kernel/kernel"],
         ],
     )
     def test_partitions_duplicates(self, new_dir, parts_data, partitions):
@@ -183,6 +289,29 @@ class TestPartitionsSupport:
             )
 
         assert raised.value.message == "Partitions must be unique."
+
+    @pytest.mark.parametrize(
+        "partitions",
+        [
+            ["default", "default/test"],
+            ["default", "foo", "foo/bar"],
+        ],
+    )
+    def test_partitions_conflicts_with_namespace(self, new_dir, parts_data, partitions):
+        """Raise an error if a partition conflicts with a namespace."""
+        with pytest.raises(
+            errors.FeatureError,
+            match=(
+                r"Partition '[\w-]*' conflicts with the "
+                r"namespace of partition '[\w/-]*'.*"
+            ),
+        ):
+            lifecycle_manager.LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=partitions,
+            )
 
     def test_partitions_usage_valid(self, new_dir, partition_list):
         """Verify partitions can be used in parts when creating a LifecycleManager."""
