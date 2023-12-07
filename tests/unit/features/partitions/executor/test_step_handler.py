@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 
 from tests.unit.executor import test_step_handler
 
@@ -23,8 +22,5 @@ class TestStepHandlerBuiltins(test_step_handler.TestStepHandlerBuiltins):
     """Test handler built-in tests with partitions enabled."""
 
 
-@pytest.mark.xfail(
-    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
-)
 class TestStepHandlerRunScriptlet(test_step_handler.TestStepHandlerRunScriptlet):
     """Step handler scriptlet tests with partitions enabled."""

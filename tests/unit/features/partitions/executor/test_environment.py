@@ -23,12 +23,14 @@ from craft_parts.executor import environment
     [
         (["default"], {"CRAFT_DEFAULT_STAGE", "CRAFT_DEFAULT_PRIME"}),
         (
-            ["default", "abc"],
+            ["default", "abc", "foo/bar-baz"],
             {
                 "CRAFT_DEFAULT_STAGE",
                 "CRAFT_DEFAULT_PRIME",
                 "CRAFT_ABC_STAGE",
                 "CRAFT_ABC_PRIME",
+                "CRAFT_FOO_BAR_BAZ_STAGE",
+                "CRAFT_FOO_BAR_BAZ_PRIME",
             },
         ),
     ],

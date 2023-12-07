@@ -430,7 +430,11 @@ class TestValidatePartitions:
             ([], []),
             (["foo"], ["default"]),
             (["(default)/foo"], ["default"]),
-            (["(mypart)/bar"], ["default", "mypart", "yourpart"]),
+            (["(mypart)/bar"], ["default", "mypart", "yourpart", "our/special-part"]),
+            (
+                ["(our/special-part)/bar"],
+                ["default", "mypart", "yourpart", "our/special-part"],
+            ),
         ],
     )
     def test_validate_partitions_in_keywords_success(self, filepaths, partitions):

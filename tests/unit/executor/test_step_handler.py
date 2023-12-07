@@ -157,11 +157,11 @@ class TestStepHandlerBuiltins:
             partition_script_lines = itertools.chain.from_iterable(
                 zip(
                     (
-                        f'export CRAFT_{p.upper()}_STAGE="{new_dir}/stage/{p}"'
+                        f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/stage/{p}"'
                         for p in partitions
                     ),
                     (
-                        f'export CRAFT_{p.upper()}_PRIME="{new_dir}/prime/{p}"'
+                        f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/prime/{p}"'
                         for p in partitions
                     ),
                 )
