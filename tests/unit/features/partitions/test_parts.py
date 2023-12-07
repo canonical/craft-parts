@@ -127,6 +127,11 @@ class TestPartPartitionUsage:
 
         Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
         the LifecycleManager.
+
+        This list contains variations of two scenarios:
+        1. A filepath beginning with a valid partition name (i.e. `(default)/test`)
+        2. A partition name occurring in a filepath but not at the beginning, which
+           is not treated as a partitioned filepath (i.e `test/(default)`)
         """
         return [
             "test",
