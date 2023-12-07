@@ -17,8 +17,8 @@
 from pathlib import Path
 
 import pytest
-import yaml
 from craft_parts.state_manager.states import PrimeState
+from ruamel.yaml import YAML
 
 
 class TestPrimeState:
@@ -74,8 +74,9 @@ class TestPrimeStatePersist:
         with open("state") as f:
             content = f.read()
 
-        new_state = yaml.safe_load(content)
-        assert new_state == state.marshal()
+        yaml = YAML()
+        new_state = yaml.load(content)
+        assert PrimeState(**new_state) == state
 
 
 class TestPrimeStateChanges:

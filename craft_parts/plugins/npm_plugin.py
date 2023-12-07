@@ -23,7 +23,7 @@ from textwrap import dedent
 from typing import Any, Dict, List, Optional, Set, cast
 
 from overrides import override
-from pydantic import root_validator
+from pydantic import model_validator
 
 from craft_parts.errors import InvalidArchitecture
 
@@ -49,14 +49,17 @@ class NpmPluginProperties(PluginProperties, PluginModel):
 
     # part properties required by the plugin
     npm_include_node: bool = False
-    npm_node_version: Optional[str]
+    npm_node_version: Optional[str] = None
     source: str
 
-    @root_validator
+    @model_validator(mode="after")
     @classmethod
-    def node_version_defined(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def node_version_defined(cls, values: Any) -> Any:  # noqa: ANN401
         """If npm-include-node is true, then npm-node-version must be defined."""
-        if values.get("npm_include_node") and not values.get("npm_node_version"):
+        if (
+            cast(NpmPluginProperties, values).npm_include_node
+            and not cast(NpmPluginProperties, values).npm_node_version
+        ):
             raise ValueError("npm-node-version is required if npm-include-node is true")
         return values
 

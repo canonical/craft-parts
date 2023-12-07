@@ -18,9 +18,27 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    cast,
+)
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+from typing_extensions import Annotated
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
@@ -56,25 +74,25 @@ class PartSpec(BaseModel):
     build_attributes: List[str] = []
     organize_files: Dict[str, str] = Field({}, alias="organize")
     overlay_files: List[str] = Field(["*"], alias="overlay")
-    stage_files: List[str] = Field(["*"], alias="stage")
-    prime_files: List[str] = Field(["*"], alias="prime")
+    stage_files: List[Annotated[str, Field(["*"], alias="stage")]]
+    prime_files: List[Annotated[str, Field(["*"], alias="prime")]]
     override_pull: Optional[str] = None
     overlay_script: Optional[str] = None
     override_build: Optional[str] = None
     override_stage: Optional[str] = None
     override_prime: Optional[str] = None
     permissions: List[Permissions] = []
-
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="ignore",
+        frozen=True,
+        strict=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+    )
 
     # pylint: disable=no-self-argument
-    @validator("stage_files", "prime_files", each_item=True)
+    @field_validator("stage_files", "prime_files")
+    @classmethod
     def validate_relative_path_list(cls, item: str) -> str:
         """Verify list is not empty and does not contain any absolute paths."""
         if not item:
@@ -85,15 +103,17 @@ class PartSpec(BaseModel):
             )
         return item
 
-    @validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @classmethod
     def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
 
-    @root_validator(pre=True)
-    def validate_root(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="after")
+    @classmethod
+    def validate_root(cls, values: Any) -> Any:  # noqa: ANN401
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.
@@ -103,7 +123,7 @@ class PartSpec(BaseModel):
             return "_" in name
 
         # Detect a mixture of .deb packages and chisel slices.
-        stage_packages = values.get("stage-packages", [])
+        stage_packages = cast(PartSpec, values).stage_packages or []
         has_slices = any(name for name in stage_packages if is_slice(name))
         has_packages = any(name for name in stage_packages if not is_slice(name))
 
@@ -412,6 +432,7 @@ class Part:
         for fileset_name, fileset in [
             ("overlay", self.spec.overlay_files),
             # only the destination of organize filepaths use partitions
+            # pylint: disable-next: no-member
             ("organize", self.spec.organize_files.values()),
             ("stage", self.spec.stage_files),
             ("prime", self.spec.prime_files),

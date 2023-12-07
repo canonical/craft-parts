@@ -21,14 +21,15 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from pydantic_yaml import YamlModel
+from pydantic import BaseModel, ConfigDict
+from pydantic_yaml import to_yaml_str
 
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
 
 
-class MigrationState(YamlModel):
+class MigrationState(BaseModel):
     """State information collected when migrating steps.
 
     The migration state contains the paths to the files and directories
@@ -54,7 +55,7 @@ class MigrationState(YamlModel):
 
         :return: The newly created dictionary.
         """
-        return self.dict(by_alias=True)
+        return self.model_dump()
 
     def write(self, filepath: Path) -> None:
         """Write state data to disk.
@@ -62,7 +63,7 @@ class MigrationState(YamlModel):
         :param filepath: The path to the file to write.
         """
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        yaml_data = self.yaml(by_alias=True)
+        yaml_data = to_yaml_str(self)
         os_utils.TimedWriter.write_text(filepath, yaml_data)
 
 
@@ -76,15 +77,14 @@ class StepState(MigrationState, ABC):
 
     part_properties: Dict[str, Any] = {}
     project_options: Dict[str, Any] = {}
-
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "ignore"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="ignore",
+        frozen=True,
+        strict=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+        populate_by_name=True,
+    )
 
     @abstractmethod
     def properties_of_interest(

@@ -18,19 +18,19 @@
 
 from typing import Any, Dict, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PluginPropertiesModel(BaseModel):
     """Model for plugins properties using pydantic validation."""
 
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="ignore",
+        frozen=True,
+        strict=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+    )
 
 
 class PluginProperties(PluginPropertiesModel):

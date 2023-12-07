@@ -129,7 +129,7 @@ class TestStepStatePersist:
             content = f.read()
 
         new_state = yaml.safe_load(content)
-        assert new_state == state.marshal()
+        assert SomeStepState(**new_state) == state
 
 
 class TestStateChanges:
