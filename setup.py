@@ -53,6 +53,8 @@ install_requires = [
     "pyxdg",
     "requests",
     "requests-unixsocket",
+    # See: https://github.com/msabramo/requests-unixsocket/pull/69
+    # When updating to urllib3 v2, also remove the constraint on types-requests.
     "urllib3<2",  # keep compatible API
 ]
 
@@ -78,7 +80,7 @@ types_requires = [
     "types-Pygments",
     "types-pytz",
     "types-PyYAML",
-    "types-requests<2.30",
+    "types-requests<2.30",  # When removing this constraint, remove from renovate's ignoreDeps
     "types-setuptools",
 ]
 
