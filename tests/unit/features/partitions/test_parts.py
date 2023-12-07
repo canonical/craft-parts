@@ -125,7 +125,8 @@ class TestPartPartitionUsage:
     def valid_filesets(self):
         """Return a list of valid filesets when the partition feature is enabled.
 
-        Assumes "default" and "partition" are valid partitions.
+        Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
+        the LifecycleManager.
         """
         return [
             "test",
@@ -191,7 +192,10 @@ class TestPartPartitionUsage:
     def invalid_filesets(self):
         """Return a list of invalid filesets when the partition feature is enabled.
 
-        Assumes "default", "a/b", "a/c-d" and "kernel" are the only valid partitions.
+        These filepaths are not necessarily violating the naming convention for
+        partitions, but the partitions here are unknown (and thus invalid) to a
+        LifecycleManager was created with the partitions "default", "a/b", "a/c-d",
+        and "kernel".
         """
         return [
             "()",
