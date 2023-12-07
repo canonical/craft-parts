@@ -17,7 +17,12 @@
 from pathlib import Path, PurePosixPath
 
 import pytest
-from craft_parts.utils.path_utils import _has_partition, get_partitioned_path
+from craft_parts.errors import FeatureError
+from craft_parts.utils.path_utils import (
+    _has_partition,
+    _split_partition_and_inner_path,
+    get_partitioned_path,
+)
 
 PATH_CLASSES = [Path, PurePosixPath, str]
 
@@ -30,15 +35,33 @@ NON_PARTITION_PATHS = [
 PARTITION_PATHS = [
     "(default)",
     "(default)/",
+    "(default)//",
     "(default)/path",
+    "(default)//path",
     "(partition)/path",
+    "(test/partition)",
+    "(test/partition)/",
+    "(test/partition)//",
+    "(test/partition)/path",
+    "(test/partition)//path",
+    "(test/parti-tion)/path",
+    "(test/parti-tion)//path",
 ]
 
 PARTITION_EXPECTED_PATHS = [
     "default",
     "default",
+    "default",
+    "default/path",
     "default/path",
     "partition/path",
+    "test/partition",
+    "test/partition",
+    "test/partition",
+    "test/partition/path",
+    "test/partition/path",
+    "test/parti-tion/path",
+    "test/parti-tion/path",
 ]
 
 # Prevent us from adding nonmatching paths for tests below.
@@ -51,14 +74,28 @@ assert len(PARTITION_PATHS) == len(
     ("full_path", "expected"),
     [
         ("some/path", False),
+        # regular partitions
         ("(default)", True),
         ("(default)/", True),
         ("(part)/some/path", True),
         ("(nota)partition", False),
-        ("(not/a)partition", False),
-        ("(not/a)/partition", False),
         ("(NOTA)/partition", False),
         ("(not1)/partition", False),
+        # namespaced partitions
+        ("(is/a)/partition", True),
+        ("(not/a)partition", False),
+        ("(NOT/a)partition", False),
+        ("(not/A)partition", False),
+        ("(not1/a)partition", False),
+        ("(not/a1)partition", False),
+        ("(-not/a)partition", False),
+        ("(not-/a)partition", False),
+        ("(-/nota)partition", False),
+        ("(not/a-)partition", False),
+        ("(not/-a)partition", False),
+        ("(nota/-)partition", False),
+        ("(is/not/a)partition", False),
+        ("(is/not/a)/partition", False),
     ],
 )
 def test_has_partition(full_path, expected):
@@ -109,3 +146,11 @@ def test_get_partition_compatible_filepath_partition(path, expected, path_class)
 
     assert actual == path_class(expected)
     assert isinstance(actual, path_class)
+
+
+def test_split_partition_and_inner_path_error():
+    """Raise an error if the filepath does not begin with a partition."""
+    with pytest.raises(FeatureError) as raised:
+        _split_partition_and_inner_path("how?")
+
+    assert raised.value.brief == "Filepath 'how?' does not begin with a partition."

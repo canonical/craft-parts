@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from textwrap import dedent
+from textwrap import dedent, indent
 
 import pytest
 import pytest_check  # type: ignore[import]
@@ -119,7 +119,7 @@ class TestPartPartitionUsage:
     @pytest.fixture()
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
-        return ["default", "kernel"]
+        return ["default", "kernel", "a/b", "a/c-d"]
 
     @pytest.fixture()
     def valid_filesets(self):
@@ -130,39 +130,94 @@ class TestPartPartitionUsage:
         return [
             "test",
             "(default)",
+            "(default)/",
+            "(default)//",
             "(default)/test",
+            "(default)//test",
             "(default)/test/(otherdir)",
             "(default)/test/(otherdir-123)",
             "(default)/test/(default)",
             "(default)/test/(kernel)",
+            "(default)/test/(a/b)",
+            "(default)/test/(a/c-d)",
             "test(default)",
             "test(default)/test",
             "test/(default)/test",
             "(kernel)",
+            "(kernel)/",
+            "(kernel)//",
             "(kernel)/test",
+            "(kernel)//test",
             "(kernel)/test/(otherdir)",
             "(kernel)/test/(otherdir-123)",
             "(kernel)/test/(default)",
             "(kernel)/test/(kernel)",
+            "(kernel)/test/(a/b)",
+            "(kernel)/test/(a/c-d)",
             "test/(kernel)",
             "test(kernel)/test",
+            "test/(kernel)/test",
+            "(a/b)",
+            "(a/b)/",
+            "(a/b)//",
+            "(a/b)/test",
+            "(a/b)//test",
+            "(a/b)/test/(otherdir)",
+            "(a/b)/test/(otherdir-123)",
+            "(a/b)/test/(default)",
+            "(a/b)/test/(kernel)",
+            "(a/b)/test/(a/b)",
+            "(a/b)/test/(a/c-d)",
+            "test/(a/b)",
+            "test(a/b)/test",
+            "test/(a/b)/test",
+            "(a/c-d)",
+            "(a/c-d)/",
+            "(a/c-d)//",
+            "(a/c-d)/test",
+            "(a/c-d)//test",
+            "(a/c-d)/test/(otherdir)",
+            "(a/c-d)/test/(otherdir-123)",
+            "(a/c-d)/test/(default)",
+            "(a/c-d)/test/(kernel)",
+            "(a/c-d)/test/(a/b)",
+            "(a/c-d)/test/(a/c-d)",
+            "test/(a/c-d)",
+            "test(a/c-d)/test",
+            "test/(a/c-d)/test",
         ]
 
     @pytest.fixture()
     def invalid_filesets(self):
         """Return a list of invalid filesets when the partition feature is enabled.
 
-        Assumes "default" and "partition" are the only valid partitions.
+        Assumes "default", "a/b", "a/c-d" and "kernel" are the only valid partitions.
         """
         return [
             "()",
             "(foo)",
             "(bar)/test",
-            "(baz)",
+            "(BAZ)",
+            "(foo)/",
+            "(foo)/test",
+            "(foo-bar)",
+            "(foo-bar)/",
+            "(foo-bar)/test",
+            "(foo/bar)",
+            "(foo/bar)/",
+            "(foo/bar)/test",
+            "(foo/bar-baz)",
+            "(foo/bar-baz)/",
+            "(foo/bar-baz)/test",
+            "(foo-bar/baz)",
+            "(foo-bar/baz)/",
+            "(foo-bar/baz)/test",
             "(123)/test",
             "(123)/test/(456)",
             "(123)/test/(default)",
             "(123)/test/(kernel)",
+            "(123)/test/(a/b)",
+            "(123)/test/(a/c-d)",
         ]
 
     def test_part_valid_partition_usage(self, valid_filesets, partition_list):
@@ -204,7 +259,7 @@ class TestPartPartitionUsage:
                 unknown partition 'bar' in '(bar)/test'
               parts.part-a.prime
                 unknown partition 'baz' in '(baz)'
-            Valid partitions are 'default' and 'kernel'."""
+            Valid partitions are 'a/b', 'a/c-d', 'default', and 'kernel'."""
         )
 
     def test_part_invalid_partition_usage_complex(
@@ -228,62 +283,47 @@ class TestPartPartitionUsage:
         with pytest.raises(errors.FeatureError) as raised:
             parts.validate_partition_usage(part_list, partition_list)
 
-        assert raised.value.message == dedent(
+        unknown_partitions = dedent(
             """\
-            Error: Invalid usage of partitions:
-              parts.part-a.organize
-                unknown partition '' in '()'
-                unknown partition 'foo' in '(foo)'
-                unknown partition 'bar' in '(bar)/test'
-                unknown partition 'baz' in '(baz)'
-                unknown partition '123' in '(123)/test'
-                unknown partition '123' in '(123)/test/(456)'
-                unknown partition '123' in '(123)/test/(default)'
-                unknown partition '123' in '(123)/test/(kernel)'
-              parts.part-a.stage
-                unknown partition '' in '()'
-                unknown partition 'foo' in '(foo)'
-                unknown partition 'bar' in '(bar)/test'
-                unknown partition 'baz' in '(baz)'
-                unknown partition '123' in '(123)/test'
-                unknown partition '123' in '(123)/test/(456)'
-                unknown partition '123' in '(123)/test/(default)'
-                unknown partition '123' in '(123)/test/(kernel)'
-              parts.part-a.prime
-                unknown partition '' in '()'
-                unknown partition 'foo' in '(foo)'
-                unknown partition 'bar' in '(bar)/test'
-                unknown partition 'baz' in '(baz)'
-                unknown partition '123' in '(123)/test'
-                unknown partition '123' in '(123)/test/(456)'
-                unknown partition '123' in '(123)/test/(default)'
-                unknown partition '123' in '(123)/test/(kernel)'
-              parts.part-b.organize
-                unknown partition '' in '()'
-                unknown partition 'foo' in '(foo)'
-                unknown partition 'bar' in '(bar)/test'
-                unknown partition 'baz' in '(baz)'
-                unknown partition '123' in '(123)/test'
-                unknown partition '123' in '(123)/test/(456)'
-                unknown partition '123' in '(123)/test/(default)'
-                unknown partition '123' in '(123)/test/(kernel)'
-              parts.part-b.stage
-                unknown partition '' in '()'
-                unknown partition 'foo' in '(foo)'
-                unknown partition 'bar' in '(bar)/test'
-                unknown partition 'baz' in '(baz)'
-                unknown partition '123' in '(123)/test'
-                unknown partition '123' in '(123)/test/(456)'
-                unknown partition '123' in '(123)/test/(default)'
-                unknown partition '123' in '(123)/test/(kernel)'
-              parts.part-b.prime
-                unknown partition '' in '()'
-                unknown partition 'foo' in '(foo)'
-                unknown partition 'bar' in '(bar)/test'
-                unknown partition 'baz' in '(baz)'
-                unknown partition '123' in '(123)/test'
-                unknown partition '123' in '(123)/test/(456)'
-                unknown partition '123' in '(123)/test/(default)'
-                unknown partition '123' in '(123)/test/(kernel)'
-            Valid partitions are 'default' and 'kernel'."""
+            unknown partition '' in '()'
+            unknown partition 'foo' in '(foo)'
+            unknown partition 'bar' in '(bar)/test'
+            unknown partition 'BAZ' in '(BAZ)'
+            unknown partition 'foo' in '(foo)/'
+            unknown partition 'foo' in '(foo)/test'
+            unknown partition 'foo-bar' in '(foo-bar)'
+            unknown partition 'foo-bar' in '(foo-bar)/'
+            unknown partition 'foo-bar' in '(foo-bar)/test'
+            unknown partition 'foo/bar' in '(foo/bar)'
+            unknown partition 'foo/bar' in '(foo/bar)/'
+            unknown partition 'foo/bar' in '(foo/bar)/test'
+            unknown partition 'foo/bar-baz' in '(foo/bar-baz)'
+            unknown partition 'foo/bar-baz' in '(foo/bar-baz)/'
+            unknown partition 'foo/bar-baz' in '(foo/bar-baz)/test'
+            unknown partition 'foo-bar/baz' in '(foo-bar/baz)'
+            unknown partition 'foo-bar/baz' in '(foo-bar/baz)/'
+            unknown partition 'foo-bar/baz' in '(foo-bar/baz)/test'
+            unknown partition '123' in '(123)/test'
+            unknown partition '123' in '(123)/test/(456)'
+            unknown partition '123' in '(123)/test/(default)'
+            unknown partition '123' in '(123)/test/(kernel)'
+            unknown partition '123' in '(123)/test/(a/b)'
+            unknown partition '123' in '(123)/test/(a/c-d)'
+            """
+        )
+        assert raised.value.message == (
+            "Error: Invalid usage of partitions:\n"
+            "  parts.part-a.organize\n"
+            + indent(unknown_partitions, "    ")
+            + "  parts.part-a.stage\n"
+            + indent(unknown_partitions, "    ")
+            + "  parts.part-a.prime\n"
+            + indent(unknown_partitions, "    ")
+            + "  parts.part-b.organize\n"
+            + indent(unknown_partitions, "    ")
+            + "  parts.part-b.stage\n"
+            + indent(unknown_partitions, "    ")
+            + "  parts.part-b.prime\n"
+            + indent(unknown_partitions, "    ")
+            + "Valid partitions are 'a/b', 'a/c-d', 'default', and 'kernel'."
         )

@@ -20,7 +20,10 @@ from typing import Optional, Sequence, Set
 
 from craft_parts import errors, features
 
+# regex for a valid partition name
 _VALID_PARTITION_REGEX = re.compile(r"[a-z]+", re.ASCII)
+
+# regex for a valid namespaced partition name
 _VALID_NAMESPACED_PARTITION_REGEX = re.compile(r"[a-z]+/(?!-)[a-z\-]+(?<!-)", re.ASCII)
 
 

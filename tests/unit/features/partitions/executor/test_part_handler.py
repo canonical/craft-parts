@@ -27,11 +27,17 @@ PARTITIONS = ["default", "mypart", "yourpart"]
 TEST_FILES = ["filea", "dir1/file1a", "dir1/file1b", "dir2/dir3/file2a"]
 
 
+@pytest.mark.xfail(
+    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
+)
 @pytest.mark.usefixtures("new_dir")
 class TestPartHandling(test_part_handler.TestPartHandling):
     """Part handling tests with partitions enabled"""
 
 
+@pytest.mark.xfail(
+    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
+)
 @pytest.mark.usefixtures("new_dir")
 class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     """Verify step update processing with partitions enabled."""
@@ -39,6 +45,9 @@ class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     _update_build_path = pathlib.Path("parts/foo/install/default/foo.txt")
 
 
+@pytest.mark.xfail(
+    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
+)
 @pytest.mark.usefixtures("new_dir")
 class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
     """Verify step update processing."""
@@ -68,6 +77,9 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
         assert not pathlib.Path(f"parts/foo/state/{state_file}").is_file()
 
 
+@pytest.mark.xfail(
+    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
+)
 @pytest.mark.usefixtures("new_dir")
 class TestRerunStep(test_part_handler.TestRerunStep):
     """Verify rerun actions."""

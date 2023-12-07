@@ -17,13 +17,18 @@
 """Utility functions for paths."""
 import re
 from pathlib import PurePath, PurePosixPath
-from typing import NamedTuple, Optional, TypeVar, Union, cast
+from typing import NamedTuple, Optional, Tuple, TypeVar, Union
 
+from craft_parts.errors import FeatureError
 from craft_parts.features import Features
 
 FlexiblePath = TypeVar("FlexiblePath", PurePath, str)
 
+# regex for a path beginning with a partition
 HAS_PARTITION_REGEX = re.compile(r"^\([a-z]+\)(/.*)?$")
+
+# regex for a path beginning with a namespaced partition
+HAS_NAMESPACED_PARTITION_REGEX = re.compile(r"^(\([a-z]+/(?!-)[a-z\-]+(?<!-)\))(/.*)?$")
 
 
 class PartitionPathPair(NamedTuple):
@@ -35,7 +40,10 @@ class PartitionPathPair(NamedTuple):
 
 def _has_partition(path: Union[PurePath, str]) -> bool:
     """Check whether a path has an explicit partition."""
-    return bool(HAS_PARTITION_REGEX.match(str(path)))
+    return bool(
+        HAS_PARTITION_REGEX.match(str(path))
+        or HAS_NAMESPACED_PARTITION_REGEX.match(str(path))
+    )
 
 
 def get_partitioned_path(path: FlexiblePath) -> FlexiblePath:
@@ -80,8 +88,40 @@ def get_partition_and_path(path: FlexiblePath) -> PartitionPathPair:
     str_path = str(path)
 
     if _has_partition(str_path):
-        if "/" not in str_path:
-            return PartitionPathPair(str_path.strip("()"), cast(FlexiblePath, ""))
-        partition, inner_path = str_path.split("/", maxsplit=1)
+        partition, inner_path = _split_partition_and_inner_path(str_path)
         return PartitionPathPair(partition.strip("()"), path.__class__(inner_path))
+
     return PartitionPathPair("default", path)
+
+
+def _split_partition_and_inner_path(str_path: str) -> Tuple[str, str]:
+    """Split a path with a partition into a partition and inner path.
+
+    :param str_path: A string of the filepath beginning with a partition to split.
+
+    :returns: A tuple containing the partition and inner path. If there is no inner
+    path, the second element will be an empty string.
+
+    :raises FeatureError: If `str_path` does not begin with a partition.
+    """
+    # split regular partitions
+    if re.match(HAS_PARTITION_REGEX, str_path):
+        if "/" in str_path:
+            # split into partition and inner_path
+            partition, inner_path = str_path.split("/", maxsplit=1)
+            # remove extra forward slashes between the partition and inner path
+            return partition, inner_path.lstrip("/")
+        return str_path, ""
+
+    # split namespaced partitions
+    match = re.match(HAS_NAMESPACED_PARTITION_REGEX, str_path)
+
+    if not match:
+        raise FeatureError(f"Filepath {str_path!r} does not begin with a partition.")
+
+    partition, inner_path = match.groups()
+
+    # remove all forward slashes between the partition and the inner path
+    inner_path = (inner_path or "").lstrip("/")
+
+    return partition, inner_path
