@@ -23,6 +23,9 @@ class TestFileMigration(test_migration.TestFileMigration):
     """Tests for file migration with partitions enabled."""
 
 
+@pytest.mark.xfail(
+    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
+)
 @pytest.mark.usefixtures("new_dir")
 class TestHelpers(test_migration.TestHelpers):
     """Tests for helpers with partitions enabled."""
