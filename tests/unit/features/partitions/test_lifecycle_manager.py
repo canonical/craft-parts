@@ -373,7 +373,9 @@ class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
             """
         )
         self._data = yaml.safe_load(yaml_data)
-        self._lcm_kwargs = {"partitions": ["default", "mypart", "yourpart"]}
+        self._lcm_kwargs = {
+            "partitions": ["default", "mypart", "yourpart", "our/special-part"]
+        }
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize("work_dir", [".", "work_dir"])
@@ -431,7 +433,7 @@ class TestPluginProperties(test_lifecycle_manager.TestPluginProperties):
         manager_kwargs = {
             "application_name": "test_manager",
             "cache_dir": new_dir,
-            "partitions": ["default", "mypart", "yourpart"],
+            "partitions": ["default", "mypart", "yourpart", "our/special-part"],
         }
         manager_kwargs.update(kwargs)
         return lifecycle_manager.LifecycleManager(**manager_kwargs)

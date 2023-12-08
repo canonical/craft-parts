@@ -23,21 +23,15 @@ from craft_parts.executor import filesets, part_handler
 
 from tests.unit.executor import test_part_handler
 
-PARTITIONS = ["default", "mypart", "yourpart"]
+PARTITIONS = ["default", "mypart", "yourpart", "our/special-part"]
 TEST_FILES = ["filea", "dir1/file1a", "dir1/file1b", "dir2/dir3/file2a"]
 
 
-@pytest.mark.xfail(
-    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
-)
 @pytest.mark.usefixtures("new_dir")
 class TestPartHandling(test_part_handler.TestPartHandling):
     """Part handling tests with partitions enabled"""
 
 
-@pytest.mark.xfail(
-    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
-)
 @pytest.mark.usefixtures("new_dir")
 class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     """Verify step update processing with partitions enabled."""
@@ -45,9 +39,6 @@ class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     _update_build_path = pathlib.Path("parts/foo/install/default/foo.txt")
 
 
-@pytest.mark.xfail(
-    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
-)
 @pytest.mark.usefixtures("new_dir")
 class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
     """Verify step update processing."""
@@ -77,9 +68,6 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
         assert not pathlib.Path(f"parts/foo/state/{state_file}").is_file()
 
 
-@pytest.mark.xfail(
-    reason="fails to create envvars for namespaced partitions, will be fixed by #597"
-)
 @pytest.mark.usefixtures("new_dir")
 class TestRerunStep(test_part_handler.TestRerunStep):
     """Verify rerun actions."""
@@ -135,6 +123,10 @@ class TestFileFilter(test_part_handler.TestFileFilter):
                     "yourpart/dir1/file1a",
                     "yourpart/dir1/file1b",
                     "yourpart/dir2/dir3/file2a",
+                    "our/special-part/filea",
+                    "our/special-part/dir1/file1a",
+                    "our/special-part/dir1/file1b",
+                    "our/special-part/dir2/dir3/file2a",
                 },
             ),
             (
@@ -149,7 +141,10 @@ class TestFileFilter(test_part_handler.TestFileFilter):
                     "yourpart/dir2/dir3/file2a",
                 },
             ),
-            (["-(default)", "-(mypart)", "(yourpart)/filea"], {"yourpart/filea"}),
+            (
+                ["-(default)", "-(mypart)", "(yourpart)/filea", "-(our/special-part)"],
+                {"yourpart/filea"},
+            ),
         ],
     )
     def test_apply_partition_aware_filter(

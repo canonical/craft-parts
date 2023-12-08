@@ -43,6 +43,19 @@ from tests.unit.executor.test_organize import organize_and_assert
             "expected_message": None,
             "expected_overwrite": None,
         },
+        # Files that should have the same name in two different partitions where one is
+        # a namespaced partition
+        {
+            "setup_dirs": [],
+            "setup_files": ["default/foo", "our/special-part/bar"],
+            "organize_map": {
+                "foo": "baz",
+                "(our/special-part)/bar": "(our/special-part)/baz",
+            },
+            "expected": [(["baz"], "default"), (["baz"], "our/special-part")],
+            "expected_message": None,
+            "expected_overwrite": None,
+        },
         # simple_dir_with_file
         {
             "setup_dirs": ["default/foodir"],
@@ -172,7 +185,7 @@ from tests.unit.executor.test_organize import organize_and_assert
 )
 def test_organize(new_dir, data):
     base_dir = pathlib.Path(new_dir, "install")
-    for partition in ["default", "mypart", "yourpart"]:
+    for partition in ["default", "mypart", "yourpart", "our/special-part"]:
         (base_dir / partition).mkdir(parents=True, exist_ok=True)
 
     organize_and_assert(

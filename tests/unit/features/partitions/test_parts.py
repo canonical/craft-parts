@@ -191,6 +191,14 @@ class TestPartPartitionUsage:
             "test/(a/c-d)",
             "test(a/c-d)/test",
             "test/(a/c-d)/test",
+            # filepaths beginning with partitions without parenthesis get organized
+            # under the default partition
+            "default",
+            "kernel",
+            "a",
+            "a/b",
+            "a/b",
+            "a/c-d",
         ]
 
     @pytest.fixture()
