@@ -418,7 +418,7 @@ class PartHandler:
             and is_deb_based()
         ):
             primed_stage_packages = _get_primed_stage_packages(
-                contents.files, prime_dir=self._part.prime_dir
+                contents.files, prime_dir=self._part.base_prime_dir
             )
         else:
             primed_stage_packages = set()
