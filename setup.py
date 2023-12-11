@@ -48,12 +48,12 @@ def is_rtd() -> bool:
 install_requires = [
     "overrides",
     "PyYAML",
-    "pydantic>=1.9.0,<2.0.0",
-    "pydantic-yaml[pyyaml]>=0.11.0,<1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-yaml[pyyaml]>=1.0.0",
     "pyxdg",
     "requests",
     "requests-unixsocket",
-    "urllib3<2",  # keep compatible API
+    "urllib3",
 ]
 
 dev_requires = [

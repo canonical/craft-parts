@@ -149,10 +149,17 @@ class PartSpecificationError(PartsError):
             if not (loc and msg) or not isinstance(loc, tuple):
                 continue
 
+            prefix = "Assertion failed, "
+            if msg.startswith(prefix):
+                msg = msg[len(prefix) :]
+
             field = cls._format_loc(loc)
             if msg == "field required":
                 formatted_errors.append(f"- field {field!r} is required")
-            elif msg == "extra fields not permitted":
+            elif msg in (
+                "extra fields not permitted",
+                "Extra inputs are not permitted",
+            ):
                 formatted_errors.append(f"- extra field {field!r} not permitted")
             else:
                 formatted_errors.append(f"- {msg} in field {field!r}")

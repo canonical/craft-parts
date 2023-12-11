@@ -18,7 +18,8 @@ from pathlib import Path
 
 import pydantic
 import pytest
-import yaml
+from ruamel.yaml import YAML
+
 from craft_parts.state_manager.build_state import BuildState
 
 
@@ -83,8 +84,9 @@ class TestBuildStatePersist:
         with open("state") as f:
             content = f.read()
 
-        new_state = yaml.safe_load(content)
-        assert new_state == state.marshal()
+        yaml = YAML()
+        new_state = yaml.load(content)
+        assert BuildState(**new_state) == state
 
 
 class TestBuildStateChanges:

@@ -16,23 +16,25 @@
 
 """State definitions for the build step."""
 
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from overrides import override
-from pydantic import validator
+from pydantic import AfterValidator
+from typing_extensions import Annotated
 
 from .step_state import StepState, validate_hex_string
+
+if TYPE_CHECKING:
+    HexString = str
+else:
+    HexString = Annotated[str, AfterValidator(validate_hex_string)]
 
 
 class BuildState(StepState):
     """Context information for the build step."""
 
     assets: Dict[str, Any] = {}
-    overlay_hash: Optional[str] = None
-
-    _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
-        validate_hex_string
-    )
+    overlay_hash: Optional[HexString] = None
 
     @classmethod
     @override

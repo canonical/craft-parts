@@ -21,14 +21,15 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from pydantic_yaml import YamlModel
+from pydantic import BaseModel
+from pydantic_yaml import to_yaml_str
 
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
 
 
-class MigrationState(YamlModel):
+class MigrationState(BaseModel):
     """State information collected when migrating steps.
 
     The migration state contains the paths to the files and directories
@@ -62,7 +63,7 @@ class MigrationState(YamlModel):
         :param filepath: The path to the file to write.
         """
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        yaml_data = self.yaml(by_alias=True)
+        yaml_data = to_yaml_str(self, by_alias=True)
         os_utils.TimedWriter.write_text(filepath, yaml_data)
 
 
@@ -82,9 +83,10 @@ class StepState(MigrationState, ABC):
 
         validate_assignment = True
         extra = "ignore"
-        allow_mutation = False
+        frozen = True
+        strict = True
         alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-        allow_population_by_field_name = True
+        populate_by_name = True
 
     @abstractmethod
     def properties_of_interest(
