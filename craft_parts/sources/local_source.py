@@ -54,8 +54,8 @@ class LocalSource(SourceHandler):
         if self._dirs.work_dir.resolve() == Path(self.source_abspath):
             # ignore parts/stage/dir if source dir matches workdir
             self._ignore_patterns.append(self._dirs.parts_dir.name)
-            self._ignore_patterns.append(self._dirs.stage_dir.name)
-            self._ignore_patterns.append(self._dirs.prime_dir.name)
+            self._ignore_patterns.append(self._dirs.base_stage_dir.name)
+            self._ignore_patterns.append(self._dirs.base_prime_dir.name)
         else:
             # otherwise check if work_dir inside source dir
             with contextlib.suppress(ValueError):
