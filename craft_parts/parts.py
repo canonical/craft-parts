@@ -73,8 +73,8 @@ class PartSpec(BaseModel):
     build_attributes: List[str] = []
     organize_files: Dict[str, str] = Field({}, alias="organize")
     overlay_files: List[str] = Field(["*"], alias="overlay")
-    stage_files: List[Annotated[str, Field(["*"], alias="stage")]]
-    prime_files: List[Annotated[str, Field(["*"], alias="prime")]]
+    stage_files: List[str] = Field(["*"], alias="stage")
+    prime_files: List[str] = Field(["*"], alias="prime")
     override_pull: Optional[str] = None
     overlay_script: Optional[str] = None
     override_build: Optional[str] = None
