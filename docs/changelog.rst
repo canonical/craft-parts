@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.26.1 (2023-12-13)
+-------------------
+
+- Fix chisel slice normalization
+- Address sphinx warnings
+
 1.26.0 (2023-11-21)
 -------------------
 
