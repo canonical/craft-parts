@@ -38,7 +38,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Annotated
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
@@ -74,8 +73,8 @@ class PartSpec(BaseModel):
     build_attributes: List[str] = []
     organize_files: Dict[str, str] = Field({}, alias="organize")
     overlay_files: List[str] = Field(["*"], alias="overlay")
-    stage_files: List[Annotated[str, Field(["*"], alias="stage")]]
-    prime_files: List[Annotated[str, Field(["*"], alias="prime")]]
+    stage_files: List[str] = Field(["*"], alias="stage")
+    prime_files: List[str] = Field(["*"], alias="prime")
     override_pull: Optional[str] = None
     overlay_script: Optional[str] = None
     override_build: Optional[str] = None
@@ -84,7 +83,7 @@ class PartSpec(BaseModel):
     permissions: List[Permissions] = []
     model_config = ConfigDict(
         validate_assignment=True,
-        extra="ignore",
+        extra="forbid",
         frozen=True,
         strict=True,
         alias_generator=lambda s: s.replace("_", "-"),
@@ -93,15 +92,16 @@ class PartSpec(BaseModel):
     # pylint: disable=no-self-argument
     @field_validator("stage_files", "prime_files")
     @classmethod
-    def validate_relative_path_list(cls, item: str) -> str:
+    def validate_relative_path_list(cls, itemlist: List[str]) -> List[str]:
         """Verify list is not empty and does not contain any absolute paths."""
-        if not item:
-            raise ValueError("path cannot be empty")
-        if item.startswith("/"):
-            raise ValueError(
-                f"{item!r} must be a relative path (cannot start with '/')"
-            )
-        return item
+        for item in itemlist:
+            if not item:
+                raise ValueError("path cannot be empty")
+            if item.startswith("/"):
+                raise ValueError(
+                    f"{item!r} must be a relative path (cannot start with '/')"
+                )
+        return itemlist
 
     @field_validator("overlay_packages", "overlay_files", "overlay_script")
     @classmethod
@@ -158,7 +158,7 @@ class PartSpec(BaseModel):
         :return: The newly created dictionary.
 
         """
-        return self.dict(by_alias=True)
+        return self.model_dump(by_alias=True)
 
     def get_scriptlet(self, step: Step) -> Optional[str]:
         """Return the scriptlet contents, if any, for the given step.

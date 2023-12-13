@@ -26,7 +26,7 @@ class PluginPropertiesModel(BaseModel):
 
     model_config = ConfigDict(
         validate_assignment=True,
-        extra="ignore",
+        extra="forbid",
         frozen=True,
         strict=True,
         alias_generator=lambda s: s.replace("_", "-"),
@@ -55,7 +55,7 @@ class PluginProperties(PluginPropertiesModel):
 
     def marshal(self) -> Dict[str, Any]:
         """Obtain a dictionary containing the plugin properties."""
-        return self.dict(by_alias=True)
+        return self.model_dump(by_alias=True)
 
     @classmethod
     def get_pull_properties(cls) -> List[str]:
@@ -65,5 +65,5 @@ class PluginProperties(PluginPropertiesModel):
     @classmethod
     def get_build_properties(cls) -> List[str]:
         """Obtain the list of properties affecting the build stage."""
-        properties = cls.schema(by_alias=True).get("properties")
+        properties = cls.model_json_schema(by_alias=True).get("properties")
         return list(properties.keys()) if properties else []

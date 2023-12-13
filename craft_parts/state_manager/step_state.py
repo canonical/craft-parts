@@ -55,7 +55,7 @@ class MigrationState(BaseModel):
 
         :return: The newly created dictionary.
         """
-        return self.model_dump()
+        return self.model_dump(by_alias=True)
 
     def write(self, filepath: Path) -> None:
         """Write state data to disk.
@@ -63,7 +63,7 @@ class MigrationState(BaseModel):
         :param filepath: The path to the file to write.
         """
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        yaml_data = to_yaml_str(self)
+        yaml_data = to_yaml_str(self, by_alias=True)
         os_utils.TimedWriter.write_text(filepath, yaml_data)
 
 

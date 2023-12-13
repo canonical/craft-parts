@@ -277,7 +277,7 @@ class TestPluginNpmPlugin:
             )
 
         assert raised.value.errors()[0]["msg"] == (
-            "npm-node-version is required if npm-include-node is true"
+            "Value error, npm-node-version is required if npm-include-node is true"
         )
 
     @pytest.mark.parametrize(
