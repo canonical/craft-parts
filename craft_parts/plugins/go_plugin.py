@@ -72,7 +72,7 @@ class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :param part_dependencies: A list of the parts this part depends on.
 
         :raises PluginEnvironmentValidationError: If go is invalid
-        and there are no parts named go.
+          and there are no parts named go.
         """
         version = self.validate_dependency(
             dependency="go",

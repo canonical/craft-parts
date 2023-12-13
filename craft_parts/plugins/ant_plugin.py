@@ -72,7 +72,7 @@ class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :param part_dependencies: A list of the parts this part depends on.
 
         :raises PluginEnvironmentValidationError: If ``ant`` is invalid
-        and there are no parts named ant.
+          and there are no parts named ant.
         """
         version = self.validate_dependency(
             dependency="ant",
