@@ -2,8 +2,10 @@
   // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
   extends: ["config:base"],
   ignoreDeps: [
-      "types-requests",  // Don't update until we can support urllib3 >= 2.0
-    ],
+    "types-requests",  // Don't update until we can support urllib3 >= 2.0
+    "pydantic",  // We'll update Pydantic for all repositories simultaneously.
+    "urllib3",  // Can't update, see setup.py
+  ],
   labels: ["dependencies"],  // For convenient searching in GitHub
   pip_requirements: {
     fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"]
