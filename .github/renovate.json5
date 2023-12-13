@@ -4,6 +4,7 @@
   ignoreDeps: [
     "mypy",  // 1.5 removed Python 3.7 support https://github.com/canonical/craft-parts/issues/603
     "pydantic",  // We'll update Pydantic for all repositories simultaneously.
+    "types-requests",  // Don't update until we can support urllib3 >= 2.0
     "urllib3",  // Can't update, see setup.py
   ],
   labels: ["dependencies"],  // For convenient searching in GitHub
