@@ -67,7 +67,7 @@ class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :param part_dependencies: A list of the parts this part depends on.
 
         :raises PluginEnvironmentValidationError: If scons is invalid
-        and there are no parts named "scons-deps".
+          and there are no parts named "scons-deps".
         """
         version = self.validate_dependency(
             dependency="scons",

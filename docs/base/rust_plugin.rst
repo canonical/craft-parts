@@ -23,6 +23,7 @@ If you don't want this plugin to install Rust toolchain for you,
 you can put ``"none"`` for this option.
 
 .. _rust-features:
+
 rust-features
 ~~~~~~~~~~~~~
 **Type:** list of strings
@@ -38,6 +39,7 @@ This is equivalent to the ``--features`` option in Cargo.
   option below.
 
 .. _rust-no-default-features:
+
 rust-no-default-features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Type:** boolean
@@ -57,6 +59,7 @@ The path to the package root (that contains the ``Cargo.toml`` file).
 This is equivalent to the ``--manifest-path`` option in Cargo.
 
 .. _rust-use-global-lto:
+
 rust-use-global-lto
 ~~~~~~~~~~~~~~~~~~~
 **Type:** boolean
@@ -89,6 +92,7 @@ If this is not desired, you can set ``rust-deps: ["rustc", "cargo"]`` and
 ``rust-channel: "none"`` in the part definition to override the default behaviour.
 
 .. _perf-tuning:
+
 Performance tuning
 -------------------
 
@@ -103,7 +107,7 @@ programming languages.
 To get even better performance, you might want to follow the tips below.
 
 * Use the :ref:`rust-use-global-lto` option to enable LTO support. This is suitable for most
-  projects. However, analyzing the whole program during the build time requires more memory and CPU time.
+  projects. However, analysing the whole program during the build time requires more memory and CPU time.
 
 * Specify ``codegen-units=1`` in ``Cargo.toml`` to reduce LLVM parallelism. This may sound counter-intuitive,
   but reducing code generator threads could improve the quality of generated machine code.
