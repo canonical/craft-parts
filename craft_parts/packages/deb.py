@@ -737,6 +737,8 @@ class Ubuntu(BaseRepository):
         finally:
             logger.removeHandler(handler)
 
+        normalize(install_path, repository=cls)
+
     @classmethod
     @_apt_cache_wrapper
     def is_package_installed(cls, package_name: str) -> bool:
