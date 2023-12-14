@@ -121,7 +121,7 @@ def test_part_specification_error_from_validation_error() -> None:
     assert err.brief == "Part 'foo' validation failed."
     assert err.details == (
         "- something is wrong in field 'field-1[0]'\n"
-        "- field 'field-2' is required\n"
+        "- Field required in field 'field-2'\n"
         "- extra field 'field-3' not permitted"
     )
     assert err.resolution == "Review part 'foo' and make sure it's correct."
