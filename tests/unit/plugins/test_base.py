@@ -78,12 +78,17 @@ def test_abstract_methods(new_dir):
     project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=project_info, part=part)
 
-    with pytest.raises(TypeError) as raised:
-        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
-    assert str(raised.value) == (
-        "Can't instantiate abstract class FaultyPlugin with abstract methods "
-        "get_build_commands, get_build_environment, get_build_packages, get_build_snaps"
+    expected = (
+        r"^Can't instantiate abstract class FaultyPlugin with(out an implementation "
+        r"for)? abstract methods '?get_build_commands'?, '?get_build_environment'?, "
+        r"'?get_build_packages'?, '?get_build_snaps'?$"
     )
+
+    with pytest.raises(
+        TypeError,
+        match=expected,
+    ):
+        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
 
 
 def test_extract_plugin_properties():
