@@ -44,7 +44,64 @@ jobs:
           sudo snap install --classic node
           sudo snap install --classic pyright
           make test-pyright
-
+  unit-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.7
+            3.8
+            3.9
+            3.10
+            3.11
+          cache: pip
+      - name: Install apt build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs python3-apt
+      - name: Install additional test dependencies
+        run: |
+          sudo apt install -y ninja-build cmake scons \
+                              autoconf automake autopoint gcc git gperf help2man libtool texinfo
+          python -m pip install tox
+          # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
+          sudo snap install --classic --channel=latest/stable go
+          git clone https://github.com/canonical/chisel.git chisel-tmp
+          cd chisel-tmp && git checkout f0bff5a30dfdcb400b # known "good" commit until Chisel has versions
+          go mod download
+          sudo go build -o /usr/bin ./...
+          chisel --help
+          # Remove newer go and install regular version for 20.04
+          sudo snap remove go
+          sudo apt install -y golang
+          # Install RPM dependencies for RPM tests
+          sudo apt install rpm
+          # Ensure we don't have dotnet installed, to properly test dotnet-deps
+          # Based on https://github.com/actions/runner-images/blob/main/images/linux/scripts/installers/dotnetcore-sdk.sh
+          sudo apt remove -y dotnet-* || true
+          # Remove manually-installed dotnet from tarballs
+          sudo rm -rf /usr/share/dotnet
+          # Remove dotnet tools
+          rm -rf $HOME/.dotnet
+      - name: specify node version
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+      - name: Setup Tox environments
+        run: tox run -m unit-tests --notest
+      - name: Unit tests
+        run: .tox/.tox/bin/tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.platform }}.json -m unit-tests
+        env:
+          PYTEST_ADDOPTS: "--no-header -vv -rN"
   tests:
     strategy:
       matrix:
