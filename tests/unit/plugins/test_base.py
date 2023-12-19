@@ -84,10 +84,7 @@ def test_abstract_methods(new_dir):
         r"'?get_build_packages'?, '?get_build_snaps'?$"
     )
 
-    with pytest.raises(
-        TypeError,
-        match=expected,
-    ):
+    with pytest.raises(TypeError, match=expected):
         FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
 
 
