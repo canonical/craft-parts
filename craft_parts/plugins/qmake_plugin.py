@@ -21,6 +21,7 @@
 from typing import Any, Dict, List, Set, cast
 
 from overrides import override
+from typing_extensions import Self
 
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
@@ -37,7 +38,7 @@ class QmakePluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: Dict[str, Any]) -> Self:
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -90,7 +91,7 @@ class QmakePlugin(Plugin):
         """Return a set of required packages to install in the build environment."""
         options = cast(QmakePluginProperties, self._options)
 
-        if options.qmake_major_version == 6:
+        if options.qmake_major_version == 6:  # noqa: PLR2004 (magic value)
             build_packages = {"g++", "make", "qmake6"}
         else:
             build_packages = {"g++", "make", "qt5-qmake"}
@@ -101,7 +102,7 @@ class QmakePlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         options = cast(QmakePluginProperties, self._options)
 
-        if options.qmake_major_version == 6:
+        if options.qmake_major_version == 6:  # noqa: PLR2004 (magic value)
             return {"QT_SELECT": "qt6"}
 
         return {"QT_SELECT": "qt5"}
@@ -111,20 +112,22 @@ class QmakePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(QmakePluginProperties, self._options)
 
-        if options.qmake_major_version == 6:
+        if options.qmake_major_version == 6:  # noqa: PLR2004 (magic value)
             qmake_configure_command = [
                 "qmake6",
                 'QMAKE_CFLAGS+="${CFLAGS:-}"',
                 'QMAKE_CXXFLAGS+="${CXXFLAGS:-}"',
                 'QMAKE_LFLAGS+="${LDFLAGS:-}"',
-            ] + options.qmake_parameters
+                *options.qmake_parameters,
+            ]
         else:
             qmake_configure_command = [
                 "qmake",
                 'QMAKE_CFLAGS+="${CFLAGS:-}"',
                 'QMAKE_CXXFLAGS+="${CXXFLAGS:-}"',
                 'QMAKE_LFLAGS+="${LDFLAGS:-}"',
-            ] + options.qmake_parameters
+                *options.qmake_parameters,
+            ]
 
         if options.qmake_project_file:
             qmake_configure_command.append(
