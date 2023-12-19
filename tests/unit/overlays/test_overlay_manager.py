@@ -159,7 +159,7 @@ class TestPackageManagement:
         self.mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         self.mock_chroot = mocker.patch(
             "craft_parts.overlays.chroot.chroot",
-            side_effect=lambda path, target, *args, **kwargs: target(*args, **kwargs)
+            side_effect=lambda path, target, *args, **kwargs: target(*args, **kwargs),
         )
         self.mock_refresh_packages_list = mocker.patch(
             "craft_parts.packages.Repository.refresh_packages_list"
