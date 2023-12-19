@@ -17,7 +17,10 @@
 """The Ant plugin."""
 
 import logging
-from typing import Any, Dict, List, Optional, Set, cast
+import os
+import shlex
+from typing import Any, Dict, Iterator, List, Optional, Set, cast
+from urllib.parse import urlsplit
 
 from overrides import override
 
@@ -142,6 +145,15 @@ class AntPlugin(JavaPlugin):
     @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
+        # Getting ant to use a proxy requires a little work; the JRE doesn't
+        # help as much as it should.  (java.net.useSystemProxies=true ought
+        # to do the trick, but it relies on desktop configuration rather
+        # than using the standard environment variables.)
+        ant_opts = []  # type: List[str]
+        ant_opts.extend(_get_proxy_options("http"))
+        ant_opts.extend(_get_proxy_options("https"))
+        if ant_opts:
+            return {"ANT_OPTS": _shlex_join(ant_opts)}
         return {}
 
     @override
@@ -160,3 +172,25 @@ class AntPlugin(JavaPlugin):
         command.extend(options.ant_build_targets)
 
         return [" ".join(command), *self._get_java_post_build_commands()]
+
+
+def _get_proxy_options(scheme: str) -> Iterator[str]:
+    proxy = os.environ.get(f"{scheme}_proxy")
+    if proxy:
+        parsed = urlsplit(proxy)
+        if parsed.hostname is not None:
+            yield f"-D{scheme}.proxyHost={parsed.hostname}"
+        if parsed.port is not None:
+            yield f"-D{scheme}.proxyPort={parsed.port}"
+        if parsed.username is not None:
+            yield f"-D{scheme}.proxyUser={parsed.username}"
+        if parsed.password is not None:
+            yield f"-D{scheme}.proxyPassword={parsed.password}"
+
+
+def _shlex_join(elements: List[str]) -> str:
+    try:
+        return shlex.join(elements)
+    except AttributeError:
+        # Python older than 3.8 does not have shlex.join
+        return " ".join(elements)
