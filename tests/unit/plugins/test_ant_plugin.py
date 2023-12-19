@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from unittest import mock
+
 import pytest
 from pydantic import ValidationError
 
@@ -122,6 +125,52 @@ def test_get_build_environment(part_info):
     plugin = AntPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {}
+
+
+@pytest.mark.parametrize(
+    ("env", "opts"),
+    [
+        ({"http_proxy": "http://my-host"}, "-Dhttp.proxyHost=my-host"),
+        (
+            {"http_proxy": "http://my-host:3128"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyPort=3128",
+        ),
+        (
+            {"http_proxy": "http://user@my-host:3128"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user",
+        ),
+        (
+            {"http_proxy": "http://user:pass@my-host:3128"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user -Dhttp.proxyPassword=pass",
+        ),
+        (
+            {"http_proxy": "http://user:pass@my-host"},
+            "-Dhttp.proxyHost=my-host -Dhttp.proxyUser=user -Dhttp.proxyPassword=pass",
+        ),
+        ({"https_proxy": "https://my-host"}, "-Dhttps.proxyHost=my-host"),
+        (
+            {"https_proxy": "https://my-host:3128"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyPort=3128",
+        ),
+        (
+            {"https_proxy": "https://user@my-host:3128"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user",
+        ),
+        (
+            {"https_proxy": "https://user:pass@my-host:3128"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user -Dhttps.proxyPassword=pass",
+        ),
+        (
+            {"https_proxy": "https://user:pass@my-host"},
+            "-Dhttps.proxyHost=my-host -Dhttps.proxyUser=user -Dhttps.proxyPassword=pass",
+        ),
+    ],
+)
+def test_get_build_environment_proxy(part_info, env, opts):
+    properties = AntPlugin.properties_class.unmarshal({"source": "."})
+    plugin = AntPlugin(properties=properties, part_info=part_info)
+    with mock.patch.dict(os.environ, env):
+        assert plugin.get_build_environment() == {"ANT_OPTS": opts}
 
 
 def test_missing_parameters():
