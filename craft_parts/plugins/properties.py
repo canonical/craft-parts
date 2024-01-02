@@ -28,7 +28,6 @@ class PluginPropertiesModel(BaseModel):
         validate_assignment=True,
         extra="forbid",
         frozen=True,
-        strict=True,
         alias_generator=lambda s: s.replace("_", "-"),
     )
 

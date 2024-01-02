@@ -47,10 +47,8 @@ class Permissions(BaseModel):
     group: Optional[int] = None
     mode: Optional[str] = None
 
-    # pylint: disable=no-self-argument
     @model_validator(mode="after")
-    @classmethod
-    def validate_root(cls, values: Any) -> Any:  # noqa: ANN401
+    def validate_root(self, values: Any) -> Any:  # noqa: ANN401, N804
         """Validate that "owner" and "group" are correctly specified."""
         has_owner = cast(Permissions, values).owner is not None
         has_group = cast(Permissions, values).group is not None

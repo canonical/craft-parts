@@ -85,7 +85,6 @@ class PartSpec(BaseModel):
         validate_assignment=True,
         extra="forbid",
         frozen=True,
-        strict=True,
         alias_generator=lambda s: s.replace("_", "-"),
     )
 
@@ -112,8 +111,7 @@ class PartSpec(BaseModel):
         return item
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_root(cls, values: Any) -> Any:  # noqa: ANN401
+    def validate_root(self, values: Any) -> Any:  # noqa: ANN401, N804
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.

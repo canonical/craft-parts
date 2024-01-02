@@ -155,7 +155,7 @@ class PartSpecificationError(PartsError):
 
             field = cls._format_loc(loc)
             if msg == "field required":
-                formatted_errors.append(f"- Field required in field {field!r}")
+                formatted_errors.append(f"- field {field!r} is required")
             elif msg in (
                 "extra fields not permitted",
                 "Extra inputs are not permitted",

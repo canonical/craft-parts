@@ -22,7 +22,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
 
 from overrides import override
-from pydantic import AfterValidator
+from pydantic import AfterValidator, Field
 from typing_extensions import Annotated
 
 from . import validator
@@ -49,7 +49,11 @@ def _unique_str_list(v: List[str]) -> List[str]:
 if TYPE_CHECKING:
     UniqueStrList = List[str]
 else:
-    UniqueStrList = Annotated[List[str], AfterValidator(_unique_str_list)]
+    UniqueStrList = Annotated[
+        List[str],
+        AfterValidator(_unique_str_list),
+        Field(json_schema_extra={"uniqueItems": True}),
+    ]
 
 
 class RustPluginProperties(PluginProperties, PluginModel):

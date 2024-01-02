@@ -53,8 +53,7 @@ class NpmPluginProperties(PluginProperties, PluginModel):
     source: str
 
     @model_validator(mode="after")
-    @classmethod
-    def node_version_defined(cls, values: Any) -> Any:  # noqa: ANN401
+    def node_version_defined(self, values: Any) -> Any:  # noqa: ANN401, N804
         """If npm-include-node is true, then npm-node-version must be defined."""
         if (
             cast(NpmPluginProperties, values).npm_include_node

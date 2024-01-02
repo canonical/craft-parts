@@ -145,7 +145,7 @@ def test_application_plugin_missing_stuff(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- Field required in field 'app-stuff'"
+    assert raised.value.message == "- field 'app-stuff' is required"
 
 
 def test_application_plugin_type_error(new_dir, partitions):

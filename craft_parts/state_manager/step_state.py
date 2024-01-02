@@ -81,7 +81,6 @@ class StepState(MigrationState, ABC):
         validate_assignment=True,
         extra="ignore",
         frozen=True,
-        strict=True,
         alias_generator=lambda s: s.replace("_", "-"),
         populate_by_name=True,
     )
