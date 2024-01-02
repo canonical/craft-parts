@@ -412,22 +412,14 @@ class TestPartUnmarshal:
         )
 
     @pytest.mark.parametrize("fileset", ["stage", "prime"])
-    def test_relative_path_validation_slash(self, partitions, fileset):
+    def test_relative_path_validation(self, partitions, fileset):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", {fileset: ["bar", "/baz", "x"]}, partitions=partitions)
+            Part("foo", {fileset: ["bar", "/baz", ""]}, partitions=partitions)
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
             "- Value error, '/baz' must be a relative path (cannot start with "
-            f"'/') in field '{fileset}'"
-        )
-
-    @pytest.mark.parametrize("fileset", ["stage", "prime"])
-    def test_relative_path_validation_empty(self, partitions, fileset):
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", {fileset: ["bar", "baz", ""]}, partitions=partitions)
-        assert raised.value.part_name == "foo"
-        assert raised.value.message == (
-            f"- Value error, path cannot be empty in field '{fileset}'"
+            f"'/') in field '{fileset}[1]'\n"
+            f"- Value error, path cannot be empty in field '{fileset}[2]'"
         )
 
 
