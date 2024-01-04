@@ -16,7 +16,7 @@
 
 """State definitions for the build step."""
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from overrides import override
 from pydantic import AfterValidator
@@ -24,10 +24,7 @@ from typing_extensions import Annotated
 
 from .step_state import StepState, validate_hex_string
 
-if TYPE_CHECKING:
-    HexString = str
-else:
-    HexString = Annotated[str, AfterValidator(validate_hex_string)]
+HexString = Annotated[str, AfterValidator(validate_hex_string)]
 
 
 class BuildState(StepState):
