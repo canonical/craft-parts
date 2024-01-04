@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - name: Install python packages and dependencies
@@ -120,7 +120,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install apt build dependencies
@@ -133,7 +133,8 @@ jobs:
           pip install -e .[dev]
       - name: Install additional test dependencies
         run: |
-          sudo apt install -y ninja-build cmake scons \
+
+          sudo apt install -y ninja-build cmake scons qt5-qmake \
                               autoconf automake autopoint gcc git gperf help2man libtool texinfo
           # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
           sudo snap install --classic --channel=latest/stable go
