@@ -11,6 +11,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import logging
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -37,7 +38,7 @@ copyright = "2023, Canonical Ltd."
 author = "Canonical Ltd."
 
 # The full version, including alpha/beta/rc tags
-release = "1.26.0"
+release = "1.26.1"
 
 # Open Graph configuration - defines what is displayed in the website preview
 ogp_site_url = "https://canonical-craft-parts.readthedocs-hosted.com"
@@ -214,5 +215,13 @@ def run_apidoc(_):
     main(["-e", "-o", output_dir, module, "--no-toc", "--force"])
 
 
+def filter_errordict_warnings(log_record: logging.LogRecord):
+    """A filter that drops warnings related to Pydantic.ErrorDict."""
+    return "name 'ErrorDict'" not in log_record.getMessage()
+
+
 def setup(app):
     app.connect("builder-inited", run_apidoc)
+
+    logger = logging.getLogger("sphinx.sphinx_autodoc_typehints")
+    logger.addFilter(filter_errordict_warnings)
