@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -38,11 +38,15 @@ def organize_files(
 ) -> None:
     """Rearrange files for part staging.
 
-    :param fileset: A fileset containing the `organize` file mapping.
-    :param base_dir: Where the installed files are located.
+    :param part_name: The name of the part to organize files for.
+    :param mapping: A mapping of source filepaths to destination filepaths.
+    :param base_dir: Directory containing files to organize.
     :param overwrite: Whether existing files should be overwritten. This is
         only used in build updates, when a part may organize over files
         it previously organized.
+
+    :raises FileOrganizeError: If the destination file already exists or multiple files
+        are organized to the same destination.
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
         src = os.path.join(base_dir, path_utils.get_partitioned_path(key))

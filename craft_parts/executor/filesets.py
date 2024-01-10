@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,9 +25,18 @@ from craft_parts.utils import path_utils
 
 
 class Fileset:
-    """Helper class to process string lists."""
+    """A class that represents a list of filepath strings to include or exclude.
+
+    Filepaths to include do not begin with a hyphen.
+    Filepaths to exclude begin with a hyphen.
+    """
 
     def __init__(self, entries: List[str], *, name: str = "") -> None:
+        """Initialize a fileset.
+
+        :param entries: List of filepaths represented as strings.
+        :param name: Name of the fileset.
+        """
         self._name = name
         self._list = entries
 
@@ -90,12 +99,12 @@ class Fileset:
 
 
 def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[str]]:
-    """Return the files and directories that can be migrated.
+    """Determine the files to migrate from a directory based on a fileset.
 
-    :param fileset: The fileset to migrate.
+    :param fileset: The fileset used to filter files in the srcdir.
+    :param srcdir: Directory containing files to migrate.
 
-    :return: A tuple containing the set of files and the set of directories
-        that can be migrated.
+    :return: A tuple containing the set of files and the set of directories to migrate.
     """
     includes, excludes = _get_file_list(fileset)
 
