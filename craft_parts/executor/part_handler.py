@@ -22,7 +22,7 @@ import os.path
 import shutil
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, cast
 
 from typing_extensions import Protocol
 
@@ -483,7 +483,8 @@ class PartHandler:
                 step=step_info.step,
                 work_dir=work_dir,
             )
-            return StepContents()
+            files, dirs = _get_files(work_dir)
+            return StepContents(files=files, dirs=dirs)
 
         return step_handler.run_builtin()
 
@@ -973,6 +974,20 @@ class PartHandler:
 
         for snap_source in snap_sources:
             snap_source.provision(install_dir, keep=True)
+
+
+def _get_files(target_dir: Path) -> Tuple[Set[str], Set[str]]:
+    """Obtain the set of files and directories in the given directory."""
+    files_set: Set[str] = set()
+    dirs_set: Set[str] = set()
+    for root, directories, files in os.walk(target_dir, topdown=True):
+        for file_name in files:
+            files_set.add(str(Path(root, file_name).absolute()))
+
+        for directory in directories:
+            dirs_set.add(str(Path(root, directory).absolute()))
+
+    return files_set, dirs_set
 
 
 def _remove(filename: Path) -> None:
