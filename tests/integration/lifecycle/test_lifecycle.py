@@ -309,7 +309,6 @@ class TestCleaning:
 
     @pytest.mark.parametrize("step", list(Step))
     def test_clean_all_parts(self, step):
-        part_dir = "default" if Features().enable_partitions else "."
         # always run all steps
         actions = self._lifecycle.plan(Step.PRIME)
 
@@ -329,16 +328,10 @@ class TestCleaning:
         assert Path("parts").exists() == step_is_overlay_or_later
         assert Path("parts/foo/src/foo.txt").exists() == step_is_overlay_or_later
         assert Path("parts/bar/src/bar.txt").exists() == step_is_overlay_or_later
-        assert (
-            Path("parts/foo/install", part_dir, "foo.txt").exists()
-            == step_is_stage_or_later
-        )
-        assert (
-            Path("parts/bar/install", part_dir, "bar.txt").exists()
-            == step_is_stage_or_later
-        )
-        assert Path("stage", part_dir, "foo.txt").exists() == step_is_prime
-        assert Path("stage", part_dir, "bar.txt").exists() == step_is_prime
+        assert Path("parts/foo/install/foo.txt").exists() == step_is_stage_or_later
+        assert Path("parts/bar/install/bar.txt").exists() == step_is_stage_or_later
+        assert Path("stage/foo.txt").exists() == step_is_prime
+        assert Path("stage/bar.txt").exists() == step_is_prime
         assert Path("prime").is_file() is False
 
         all_states = []

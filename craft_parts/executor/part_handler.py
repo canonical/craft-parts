@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2023 Canonical Ltd.
+# Copyright 2017-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -366,7 +366,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
-            work_dir=self._part.base_stage_dir,
+            work_dir=self._part.stage_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -405,7 +405,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
-            work_dir=self._part.base_prime_dir,
+            work_dir=self._part.prime_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -816,11 +816,11 @@ class PartHandler:
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
-        self._clean_shared(Step.STAGE, shared_dir=self._part.base_stage_dir)
+        self._clean_shared(Step.STAGE, shared_dir=self._part.stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
-        self._clean_shared(Step.PRIME, shared_dir=self._part.base_prime_dir)
+        self._clean_shared(Step.PRIME, shared_dir=self._part.prime_dir)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
@@ -874,7 +874,7 @@ class PartHandler:
         organize_files(
             part_name=self._part.name,
             mapping=mapping,
-            base_dir=self._part.part_base_install_dir,
+            base_dir=self._part.part_install_dir,
             overwrite=overwrite,
         )
 

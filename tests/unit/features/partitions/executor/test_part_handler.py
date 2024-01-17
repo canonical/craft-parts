@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
 class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     """Verify step update processing with partitions enabled."""
 
-    _update_build_path = pathlib.Path("parts/foo/install/default/foo.txt")
+    _update_build_path = pathlib.Path("parts/foo/install/foo.txt")
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -47,9 +47,9 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
         ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
-            (Step.BUILD, "parts/foo/install/default", "build"),
-            (Step.STAGE, "stage/default", "stage"),
-            (Step.PRIME, "prime/default", "prime"),
+            (Step.BUILD, "parts/foo/install", "build"),
+            (Step.STAGE, "stage", "stage"),
+            (Step.PRIME, "prime", "prime"),
         ],
     )
     def test_clean_step(self, mocker, step, test_dir, state_file):

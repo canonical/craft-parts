@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,12 +28,32 @@ def test_dirs_partitions(new_dir, work_dir, partitions):
     pytest_check.equal(dirs.overlay_mount_dir, dirs.overlay_dir / "overlay")
     pytest_check.equal(dirs.overlay_packages_dir, dirs.overlay_dir / "packages")
     pytest_check.equal(dirs.overlay_work_dir, dirs.overlay_dir / "work")
-    pytest_check.equal(dirs.base_stage_dir, dirs.work_dir / "stage")
-    pytest_check.equal(dirs.stage_dir, dirs.base_stage_dir / "default")
-    pytest_check.equal(dirs.base_prime_dir, dirs.work_dir / "prime")
-    pytest_check.equal(dirs.prime_dir, dirs.base_prime_dir / "default")
+    pytest_check.equal(dirs.stage_dir, dirs.work_dir / "stage")
+    pytest_check.equal(dirs.prime_dir, dirs.work_dir / "prime")
     pytest_check.equal(dirs.stage_dirs.keys(), set(partitions))
     pytest_check.equal(dirs.prime_dirs.keys(), set(partitions))
-    for partition in partitions:
-        pytest_check.equal(dirs.stage_dirs[partition], dirs.base_stage_dir / partition)
-        pytest_check.equal(dirs.prime_dirs[partition], dirs.base_prime_dir / partition)
+    pytest_check.equal(dirs.partition_dir, dirs.work_dir / "partitions")
+    pytest_check.equal(
+        dirs.stage_dirs,
+        {
+            "default": dirs.stage_dir,
+            **{
+                partition: dirs.partition_dir  # pyright: ignore [reportOptionalOperand]
+                / f"{partition}/stage"
+                for partition in partitions
+                if partition != "default"
+            },
+        },
+    )
+    pytest_check.equal(
+        dirs.prime_dirs,
+        {
+            "default": dirs.prime_dir,
+            **{
+                partition: dirs.partition_dir  # pyright: ignore [reportOptionalOperand]
+                / f"{partition}/prime"
+                for partition in partitions
+                if partition != "default"
+            },
+        },
+    )

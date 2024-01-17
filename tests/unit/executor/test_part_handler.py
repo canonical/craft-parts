@@ -872,17 +872,16 @@ class TestFileFilter:
     """File filter test cases."""
 
     _destdir = Path("destdir")
-    _default_destdir = Path("destdir")  # Overridden if partitions are enabled.
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
-        (self._default_destdir / "dir1").mkdir(parents=True)
-        (self._default_destdir / "dir1/dir2").mkdir(parents=True)
-        (self._default_destdir / "file1").touch()
-        (self._default_destdir / "file2").touch()
-        (self._default_destdir / "dir1/file3").touch()
-        (self._default_destdir / "file4").symlink_to("file2")
-        (self._default_destdir / "dir3").symlink_to("dir1")
+        (self._destdir / "dir1").mkdir(parents=True)
+        (self._destdir / "dir1/dir2").mkdir(parents=True)
+        (self._destdir / "file1").touch()
+        (self._destdir / "file2").touch()
+        (self._destdir / "dir1/file3").touch()
+        (self._destdir / "file4").symlink_to("file2")
+        (self._destdir / "dir3").symlink_to("dir1")
 
     def test_apply_file_filter_empty(self, new_dir, partitions):
         fileset = filesets.Fileset([])
@@ -891,12 +890,12 @@ class TestFileFilter:
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        pytest_check.is_true((self._default_destdir / "file1").is_file())
-        pytest_check.is_true((self._default_destdir / "file2").is_file())
-        pytest_check.is_true((self._default_destdir / "dir1/dir2").is_dir())
-        pytest_check.is_true((self._default_destdir / "dir1/file3").is_file())
-        pytest_check.is_true((self._default_destdir / "file4").is_symlink())
-        pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
+        pytest_check.is_true((self._destdir / "file1").is_file())
+        pytest_check.is_true((self._destdir / "file2").is_file())
+        pytest_check.is_true((self._destdir / "dir1/dir2").is_dir())
+        pytest_check.is_true((self._destdir / "dir1/file3").is_file())
+        pytest_check.is_true((self._destdir / "file4").is_symlink())
+        pytest_check.is_true((self._destdir / "dir3").is_symlink())
 
     def test_apply_file_filter_remove_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
@@ -905,12 +904,12 @@ class TestFileFilter:
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        pytest_check.is_false((self._default_destdir / "file1").exists())
-        pytest_check.is_true((self._default_destdir / "file2").is_file())
-        pytest_check.is_true((self._default_destdir / "dir1/dir2").is_dir())
-        pytest_check.is_false((self._default_destdir / "dir1/file3").exists())
-        pytest_check.is_true((self._default_destdir / "file4").is_symlink())
-        pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
+        pytest_check.is_false((self._destdir / "file1").exists())
+        pytest_check.is_true((self._destdir / "file2").is_file())
+        pytest_check.is_true((self._destdir / "dir1/dir2").is_dir())
+        pytest_check.is_false((self._destdir / "dir1/file3").exists())
+        pytest_check.is_true((self._destdir / "file4").is_symlink())
+        pytest_check.is_true((self._destdir / "dir3").is_symlink())
 
     def test_apply_file_filter_remove_dir(self, new_dir, partitions):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
@@ -919,11 +918,11 @@ class TestFileFilter:
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        pytest_check.is_true((self._default_destdir / "file1").is_file())
-        pytest_check.is_true((self._default_destdir / "file2").is_file())
-        pytest_check.is_false((self._default_destdir / "dir1").exists())
-        pytest_check.is_true((self._default_destdir / "file4").is_symlink())
-        pytest_check.is_true((self._default_destdir / "dir3").is_symlink())
+        pytest_check.is_true((self._destdir / "file1").is_file())
+        pytest_check.is_true((self._destdir / "file2").is_file())
+        pytest_check.is_false((self._destdir / "dir1").exists())
+        pytest_check.is_true((self._destdir / "file4").is_symlink())
+        pytest_check.is_true((self._destdir / "dir3").is_symlink())
 
     def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file4", "-dir3"])
@@ -932,12 +931,12 @@ class TestFileFilter:
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        pytest_check.is_true((self._default_destdir / "file1").is_file())
-        pytest_check.is_true((self._default_destdir / "file2").is_file())
-        pytest_check.is_true((self._default_destdir / "dir1/dir2").is_dir())
-        pytest_check.is_true((self._default_destdir / "dir1/file3").is_file())
-        pytest_check.is_false((self._default_destdir / "file4").exists())
-        pytest_check.is_false((self._default_destdir / "dir3").exists())
+        pytest_check.is_true((self._destdir / "file1").is_file())
+        pytest_check.is_true((self._destdir / "file2").is_file())
+        pytest_check.is_true((self._destdir / "dir1/dir2").is_dir())
+        pytest_check.is_true((self._destdir / "dir1/file3").is_file())
+        pytest_check.is_false((self._destdir / "file4").exists())
+        pytest_check.is_false((self._destdir / "dir3").exists())
 
     def test_apply_file_filter_keep_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["dir1/file3"])
@@ -946,12 +945,12 @@ class TestFileFilter:
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
 
-        pytest_check.is_false((self._default_destdir / "file1").exists())
-        pytest_check.is_false((self._default_destdir / "file2").exists())
-        pytest_check.is_false((self._default_destdir / "dir1/dir2").exists())
-        pytest_check.is_true((self._default_destdir / "dir1/file3").is_file())
-        pytest_check.is_false((self._default_destdir / "file4").exists())
-        pytest_check.is_false((self._default_destdir / "dir3").exists())
+        pytest_check.is_false((self._destdir / "file1").exists())
+        pytest_check.is_false((self._destdir / "file2").exists())
+        pytest_check.is_false((self._destdir / "dir1/dir2").exists())
+        pytest_check.is_true((self._destdir / "dir1/file3").is_file())
+        pytest_check.is_false((self._destdir / "file4").exists())
+        pytest_check.is_false((self._destdir / "dir3").exists())
 
 
 @pytest.mark.usefixtures("new_dir")

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -45,19 +45,23 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.part_src_subdir, new_dir / "parts/foo/src")
         pytest_check.equal(p.part_build_dir, new_dir / "parts/foo/build")
         pytest_check.equal(p.part_build_subdir, new_dir / "parts/foo/build")
-        pytest_check.equal(p.part_install_dir, new_dir / "parts/foo/install/default")
+        pytest_check.equal(p.part_install_dir, new_dir / "parts/foo/install")
         pytest_check.equal(p.part_state_dir, new_dir / "parts/foo/state")
         pytest_check.equal(p.part_packages_dir, new_dir / "parts/foo/stage_packages")
         pytest_check.equal(p.part_snaps_dir, new_dir / "parts/foo/stage_snaps")
         pytest_check.equal(p.part_run_dir, new_dir / "parts/foo/run")
         pytest_check.equal(p.part_layer_dir, new_dir / "parts/foo/layer")
-        pytest_check.equal(p.stage_dir, new_dir / "stage/default")
-        pytest_check.equal(p.prime_dir, new_dir / "prime/default")
+        pytest_check.equal(p.stage_dir, new_dir / "stage")
+        pytest_check.equal(p.prime_dir, new_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
             {
-                partition: p.part_base_install_dir / partition
-                for partition in partitions
+                "default": new_dir / "parts/foo/install",
+                **{
+                    partition: new_dir / f"partitions/{partition}/parts/foo/install"
+                    for partition in partitions
+                    if partition != "default"
+                },
             },
         )
 
@@ -74,9 +78,7 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.part_src_subdir, new_dir / work_dir / "parts/foo/src")
         pytest_check.equal(p.part_build_dir, new_dir / work_dir / "parts/foo/build")
         pytest_check.equal(p.part_build_subdir, new_dir / work_dir / "parts/foo/build")
-        pytest_check.equal(
-            p.part_install_dir, new_dir / work_dir / "parts/foo/install/default"
-        )
+        pytest_check.equal(p.part_install_dir, new_dir / work_dir / "parts/foo/install")
         pytest_check.equal(p.part_state_dir, new_dir / work_dir / "parts/foo/state")
         pytest_check.equal(
             p.part_packages_dir, new_dir / work_dir / "parts/foo/stage_packages"
@@ -86,13 +88,19 @@ class TestPartData(test_parts.TestPartData):
         )
         pytest_check.equal(p.part_run_dir, new_dir / work_dir / "parts/foo/run")
         pytest_check.equal(p.part_layer_dir, new_dir / work_dir / "parts/foo/layer")
-        pytest_check.equal(p.stage_dir, new_dir / work_dir / "stage/default")
-        pytest_check.equal(p.prime_dir, new_dir / work_dir / "prime/default")
+        pytest_check.equal(p.stage_dir, new_dir / work_dir / "stage")
+        pytest_check.equal(p.prime_dir, new_dir / work_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
             {
-                partition: p.part_base_install_dir / partition
-                for partition in partitions
+                "default": new_dir / work_dir / "parts/foo/install",
+                **{
+                    partition: new_dir
+                    / work_dir
+                    / f"partitions/{partition}/parts/foo/install"
+                    for partition in partitions
+                    if partition != "default"
+                },
             },
         )
 

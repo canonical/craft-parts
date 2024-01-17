@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -160,14 +160,11 @@ class Executor:
 
         if not part_names:
             # also remove toplevel directories if part names are not specified
-            if self._project_info.base_prime_dir.exists():
-                shutil.rmtree(self._project_info.base_prime_dir)
+            if self._project_info.prime_dir.exists():
+                shutil.rmtree(self._project_info.prime_dir)
 
-            if (
-                initial_step <= Step.STAGE
-                and self._project_info.base_stage_dir.exists()
-            ):
-                shutil.rmtree(self._project_info.base_stage_dir)
+            if initial_step <= Step.STAGE and self._project_info.stage_dir.exists():
+                shutil.rmtree(self._project_info.stage_dir)
 
             if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
                 shutil.rmtree(self._project_info.parts_dir)

@@ -16,15 +16,8 @@
 
 # Allow redefinition in order to include parent tests below.
 # mypy: disable-error-code="no-redef"
-from pathlib import Path
 
-import pytest
 
 # Bring in all stage snaps tests
 # pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
 from tests.integration.lifecycle.test_stage_snaps import *  # noqa: F403
-
-
-@pytest.fixture()
-def foo_install_dir(new_dir):
-    return Path(new_dir, "parts", "foo", "install", "default")

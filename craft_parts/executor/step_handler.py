@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -159,7 +159,7 @@ class StepHandler:
     def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
         files, dirs = filesets.migratable_filesets(
-            stage_fileset, str(self._part.part_base_install_dir)
+            stage_fileset, str(self._part.part_install_dir)
         )
 
         def pkgconfig_fixup(file_path: str) -> None:
@@ -168,16 +168,16 @@ class StepHandler:
             if not file_path.endswith(".pc"):
                 return
             packages.fix_pkg_config(
-                prefix_prepend=self._part.base_stage_dir,
+                prefix_prepend=self._part.stage_dir,
                 pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_base_install_dir,
+                prefix_trim=self._part.part_install_dir,
             )
 
         files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=self._part.part_base_install_dir,
-            destdir=self._part.base_stage_dir,
+            srcdir=self._part.part_install_dir,
+            destdir=self._part.stage_dir,
             fixup_func=pkgconfig_fixup,
         )
         return StepContents(files, dirs)
@@ -192,13 +192,13 @@ class StepHandler:
             prime_fileset.combine(stage_fileset)
 
         files, dirs = filesets.migratable_filesets(
-            prime_fileset, str(self._part.part_base_install_dir)
+            prime_fileset, str(self._part.part_install_dir)
         )
         files, dirs = migrate_files(
             files=files,
             dirs=dirs,
-            srcdir=self._part.base_stage_dir,
-            destdir=self._part.base_prime_dir,
+            srcdir=self._part.stage_dir,
+            destdir=self._part.prime_dir,
             permissions=self._part.spec.permissions,
         )
 

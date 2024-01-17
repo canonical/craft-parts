@@ -53,5 +53,5 @@ def test_stage_prime_filtering(new_dir, partitions):
         ctx.execute(actions)
 
     # testfile must be in stage but not in prime
-    assert Path("stage/default/testfile").exists()
-    assert Path("prime/default/testfile").exists() is False
+    assert Path("stage/testfile").exists()
+    assert Path("prime/testfile").exists() is False

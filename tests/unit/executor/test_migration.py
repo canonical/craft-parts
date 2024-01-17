@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2023 Canonical Ltd.
+# Copyright 2016-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -403,9 +403,8 @@ class TestHelpers:
         Path("subdir2/bar.txt").write_text("other content")
         Path("subdir2/baz.txt").write_text("yet another content")
 
-        stage = Path("stage/default" if partitions else "stage")
-        foo_path = stage / "foo.txt"
-        bar_path = stage / "bar.txt"
+        foo_path = Path("stage/foo.txt")
+        bar_path = Path("stage/bar.txt")
 
         info = ProjectInfo(
             application_name="test", cache_dir=new_dir, partitions=partitions
@@ -440,7 +439,7 @@ class TestHelpers:
 
         migration.clean_shared_area(
             part_name="p1",
-            shared_dir=p1.base_stage_dir,
+            shared_dir=p1.stage_dir,
             part_states=part_states,
             overlay_migration_state=None,
         )
@@ -450,7 +449,7 @@ class TestHelpers:
 
         migration.clean_shared_area(
             part_name="p2",
-            shared_dir=p2.base_stage_dir,
+            shared_dir=p2.stage_dir,
             part_states=part_states,
             overlay_migration_state=None,
         )
@@ -463,7 +462,7 @@ class TestHelpers:
         Path("subdir/foo.txt").touch()
         Path("subdir/bar").mkdir()
 
-        stage = Path(new_dir, "stage/default" if partitions else "stage")
+        stage = Path(new_dir / "stage")
         foo_path = stage / "foo.txt"
         bar_path = stage / "bar"
 

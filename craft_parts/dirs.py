@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -54,22 +54,30 @@ class ProjectDirs:
         self.overlay_mount_dir = self.overlay_dir / "overlay"
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
-        self.base_stage_dir = self.work_dir / "stage"
-        self.base_prime_dir = self.work_dir / "prime"
+        self.stage_dir = self.work_dir / "stage"
+        self.prime_dir = self.work_dir / "prime"
         if partitions:
             self._partitions: Sequence[Optional[str]] = partitions
-            self.stage_dir = self.base_stage_dir / "default"
-            self.prime_dir = self.base_prime_dir / "default"
-            stage_dirs: Dict[Optional[str], Path] = {
-                part: self.base_stage_dir / part for part in partitions
-            }
-            prime_dirs: Dict[Optional[str], Path] = {
-                part: self.base_prime_dir / part for part in partitions
-            }
+            self.partition_dir: Optional[Path] = self.work_dir / "partitions"
+            stage_dirs: Dict[Optional[str], Path] = {"default": self.stage_dir}
+            prime_dirs: Dict[Optional[str], Path] = {"default": self.prime_dir}
+            stage_dirs.update(
+                {
+                    partition: self.partition_dir / f"{partition}/stage"
+                    for partition in partitions
+                    if partition != "default"
+                }
+            )
+            prime_dirs.update(
+                {
+                    partition: self.partition_dir / f"{partition}/prime"
+                    for partition in partitions
+                    if partition != "default"
+                }
+            )
         else:
             self._partitions = [None]
-            self.stage_dir = self.base_stage_dir
-            self.prime_dir = self.base_prime_dir
+            self.partition_dir = None
             stage_dirs = {None: self.stage_dir}
             prime_dirs = {None: self.prime_dir}
         self.stage_dirs = MappingProxyType(stage_dirs)

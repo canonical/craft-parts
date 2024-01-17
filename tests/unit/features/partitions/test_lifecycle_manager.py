@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -131,8 +131,8 @@ class TestPartitionsSupport:
         check.equal(info.arch_triplet, "aarch64-linux-gnu")
         check.equal(info.parallel_build_count, 16)
         check.equal(info.dirs.parts_dir, new_dir / work_dir / "parts")
-        check.equal(info.dirs.stage_dir, new_dir / work_dir / "stage/default")
-        check.equal(info.dirs.prime_dir, new_dir / work_dir / "prime/default")
+        check.equal(info.dirs.stage_dir, new_dir / work_dir / "stage")
+        check.equal(info.dirs.prime_dir, new_dir / work_dir / "prime")
         check.equal(info.custom_args, ["custom"])
         check.equal(info.custom, "foo")
         check.equal(info.partitions, partitions)
@@ -399,8 +399,8 @@ class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
         pytest_check.equal(info.arch_triplet, "aarch64-linux-gnu")
         pytest_check.equal(info.parallel_build_count, 16)
         pytest_check.equal(info.dirs.parts_dir, new_dir / work_dir / "parts")
-        pytest_check.equal(info.dirs.stage_dir, new_dir / work_dir / "stage/default")
-        pytest_check.equal(info.dirs.prime_dir, new_dir / work_dir / "prime/default")
+        pytest_check.equal(info.dirs.stage_dir, new_dir / work_dir / "stage")
+        pytest_check.equal(info.dirs.prime_dir, new_dir / work_dir / "prime")
         pytest_check.equal(info.custom_args, ["custom"])
         pytest_check.equal(info.custom, "foo")
 
