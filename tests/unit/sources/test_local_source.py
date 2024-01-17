@@ -119,6 +119,8 @@ class TestLocal:
         os.makedirs("stage")
         os.makedirs("prime")
         os.makedirs("other")
+        if partitions:
+            os.makedirs("partitions")
 
         # Create an application-specific file
         open("foo.znap", "w").close()
@@ -142,6 +144,7 @@ class TestLocal:
         assert os.path.isdir(os.path.join("parts", "foo", "src", "parts")) is False
         assert os.path.isdir(os.path.join("parts", "foo", "src", "stage")) is False
         assert os.path.isdir(os.path.join("parts", "foo", "src", "prime")) is False
+        assert os.path.isdir(os.path.join("parts", "foo", "src", "partitions")) is False
         assert os.path.isdir(os.path.join("parts", "foo", "src", "other"))
         assert os.path.isfile(os.path.join("parts", "foo", "src", "foo.znap")) is False
 
@@ -156,6 +159,8 @@ class TestLocal:
         os.makedirs(os.path.join("src", "stage"))
         os.makedirs(os.path.join("src", "prime"))
         os.makedirs(os.path.join("src", "other"))
+        if partitions:
+            os.makedirs(os.path.join("src", "partitions"))
         open(os.path.join("src", "foo.znap"), "w").close()
 
         os.mkdir("destination")
@@ -179,6 +184,8 @@ class TestLocal:
         assert os.path.isdir(os.path.join("destination", "parts"))
         assert os.path.isdir(os.path.join("destination", "stage"))
         assert os.path.isdir(os.path.join("destination", "prime"))
+        if partitions:
+            assert os.path.isdir(os.path.join("destination", "partitions"))
 
     def test_pull_ignores_own_work_data_deep_work_dir(self, new_dir, partitions):
         # Make the snapcraft-specific directories
@@ -188,6 +195,8 @@ class TestLocal:
         os.makedirs(os.path.join("src", "prime"))
         os.makedirs(os.path.join("src", "other"))
         os.makedirs(os.path.join("src", "work_dir"))
+        if partitions:
+            os.makedirs(os.path.join("src", "partitions"))
         open(os.path.join("src", "foo.znap"), "w").close()
 
         os.mkdir("destination")
@@ -211,6 +220,8 @@ class TestLocal:
         assert os.path.isdir(os.path.join("destination", "parts"))
         assert os.path.isdir(os.path.join("destination", "stage"))
         assert os.path.isdir(os.path.join("destination", "prime"))
+        if partitions:
+            assert os.path.isdir(os.path.join("destination", "partitions"))
 
         # This has the same name but it's not the real work dir
         assert os.path.isdir(os.path.join("destination", "work_dir"))
@@ -222,6 +233,8 @@ class TestLocal:
         os.makedirs(os.path.join("src", "stage"))
         os.makedirs(os.path.join("src", "prime"))
         os.makedirs(os.path.join("src", "other"))
+        if partitions:
+            os.makedirs(os.path.join("src", "partitions"))
 
         os.mkdir("destination")
 
@@ -241,6 +254,8 @@ class TestLocal:
         assert os.path.isdir(os.path.join("destination", "parts"))
         assert os.path.isdir(os.path.join("destination", "stage"))
         assert os.path.isdir(os.path.join("destination", "prime"))
+        if partitions:
+            assert os.path.isdir(os.path.join("destination", "partitions"))
 
     def test_pull_keeps_symlinks(self, new_dir, partitions):
         # Create a source containing a directory, a file and symlinks to both.

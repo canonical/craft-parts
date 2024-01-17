@@ -56,6 +56,8 @@ class LocalSource(SourceHandler):
             self._ignore_patterns.append(self._dirs.parts_dir.name)
             self._ignore_patterns.append(self._dirs.stage_dir.name)
             self._ignore_patterns.append(self._dirs.prime_dir.name)
+            if self._dirs.partition_dir:
+                self._ignore_patterns.append(self._dirs.partition_dir.name)
         else:
             # otherwise check if work_dir inside source dir
             with contextlib.suppress(ValueError):
