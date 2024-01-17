@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -109,10 +108,9 @@ class TestOriginStagePackage:
             with pytest.raises(RuntimeError):
                 base.write_origin_stage_package(test_file, package)
 
+    @pytest.mark.usefixtures("new_dir")
     def test_mark_origin_stage_package(self):
         test_dir = Path(".tests-xattr-test-dir")
-        if test_dir.exists():
-            shutil.rmtree(test_dir)
         test_dir.mkdir()
 
         Path(test_dir / "foo").touch()

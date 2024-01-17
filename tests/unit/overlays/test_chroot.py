@@ -46,6 +46,7 @@ def fake_conn():
     return FakeConn()
 
 
+@pytest.mark.usefixtures("new_dir")
 class TestChroot:
     """Fork process and execute in chroot."""
 
@@ -171,7 +172,7 @@ class TestChroot:
         assert mock_chroot.mock_calls == [call(Path("/some/path"))]
         assert fake_conn.sent == (1337, None)
 
-    def test_runner_error(self, new_dir, fake_conn, mock_chdir, mock_chroot):
+    def test_runner_error(self, fake_conn, mock_chdir, mock_chroot):
         chroot._runner(
             Path("/some/path"), fake_conn, target_func_error, ("func arg",), {}
         )
