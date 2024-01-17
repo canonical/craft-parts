@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -153,22 +153,28 @@ class TestStepHandlerBuiltins:
         triplet = host_arch["triplet"]
         deb = host_arch["deb"]
         if partitions is not None:
-            default_partition_dir = "/default"
-            partition_script_lines = itertools.chain.from_iterable(
-                zip(
-                    (
-                        f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/stage/{p}"'
-                        for p in partitions
-                    ),
-                    (
-                        f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/prime/{p}"'
-                        for p in partitions
-                    ),
-                )
-            )
+            partition_script_lines = [
+                f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
+                f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
+                *list(
+                    itertools.chain.from_iterable(
+                        zip(
+                            [
+                                f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/partitions/{p}/stage"'
+                                for p in partitions
+                                if p != "default"
+                            ],
+                            [
+                                f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/partitions/{p}/prime"'
+                                for p in partitions
+                                if p != "default"
+                            ],
+                        )
+                    )
+                ),
+            ]
         else:
             partition_script_lines = []
-            default_partition_dir = ""
 
         expected_script = "\n".join(
             (
@@ -184,15 +190,15 @@ class TestStepHandlerBuiltins:
                 'export CRAFT_PARALLEL_BUILD_COUNT="1"',
                 f'export CRAFT_PROJECT_DIR="{new_dir}"',
                 *partition_script_lines,
-                f'export CRAFT_STAGE="{new_dir}/stage{default_partition_dir}"',
-                f'export CRAFT_PRIME="{new_dir}/prime{default_partition_dir}"',
+                f'export CRAFT_STAGE="{new_dir}/stage"',
+                f'export CRAFT_PRIME="{new_dir}/prime"',
                 'export CRAFT_PART_NAME="p1"',
                 'export CRAFT_STEP_NAME="BUILD"',
                 f'export CRAFT_PART_SRC="{new_dir}/parts/p1/src"',
                 f'export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"',
                 f'export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"',
                 f'export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"',
-                f'export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install{default_partition_dir}"',
+                f'export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"',
                 "## Plugin environment",
                 "## User environment",
                 "",
