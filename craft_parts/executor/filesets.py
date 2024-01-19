@@ -18,9 +18,9 @@
 
 import os
 from glob import iglob
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
-from craft_parts import errors
+from craft_parts import errors, features
 from craft_parts.utils import path_utils
 
 
@@ -34,11 +34,31 @@ class Fileset:
     def __init__(self, entries: List[str], *, name: str = "") -> None:
         """Initialize a fileset.
 
+        If the partition feature is enabled, files in the default partition are
+        normalized to begin with `(default)/`. For example, ["foo", "(default)/bar"]
+        is normalized to ["(default)/foo", "(default)/bar"].
+
         :param entries: List of filepaths represented as strings.
         :param name: Name of the fileset.
         """
         self._name = name
-        self._list = entries
+
+        normalized_entries: List[str] = []
+
+        for file in entries:
+            # split file into an optional prefix (a hyphen character) and the file
+            split_file = (file[0], file[1:]) if file[0] == "-" else ("", file)
+
+            partition, inner_path = path_utils.get_partition_and_path(split_file[1])
+
+            if split_file[1] == "*":
+                normalized_entries.append(file)
+            elif partition:
+                normalized_entries.append(f"{split_file[0]}({partition})/{inner_path}")
+            else:
+                normalized_entries.append(file)
+
+        self._list = normalized_entries
 
     def __repr__(self) -> str:
         return f"Fileset({self._list!r}, name={self._name!r})"
@@ -56,14 +76,12 @@ class Fileset:
     @property
     def includes(self) -> List[str]:
         """Return the list of files to be included."""
-        return [path_utils.get_partitioned_path(x) for x in self._list if x[0] != "-"]
+        return [x for x in self._list if x[0] != "-"]
 
     @property
     def excludes(self) -> List[str]:
         """Return the list of files to be excluded."""
-        return [
-            path_utils.get_partitioned_path(x[1:]) for x in self._list if x[0] == "-"
-        ]
+        return [x[1:] for x in self._list if x[0] == "-"]
 
     def remove(self, item: str) -> None:
         """Remove this entry from the list of files.
@@ -98,15 +116,18 @@ class Fileset:
             self._list = list(set(self._list + other.entries))
 
 
-def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[str]]:
+def migratable_filesets(
+    fileset: Fileset, srcdir: str, partition: Optional[str] = None
+) -> Tuple[Set[str], Set[str]]:
     """Determine the files to migrate from a directory based on a fileset.
 
     :param fileset: The fileset used to filter files in the srcdir.
     :param srcdir: Directory containing files to migrate.
+    :param partition: If provided, only get files to migrate to the partition.
 
     :return: A tuple containing the set of files and the set of directories to migrate.
     """
-    includes, excludes = _get_file_list(fileset)
+    includes, excludes = _get_file_list(fileset, partition)
 
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
@@ -146,13 +167,33 @@ def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[st
     return resolved_files, resolved_dirs
 
 
-def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
+def _get_file_list(
+    fileset: Fileset, partition: Optional[str]
+) -> Tuple[List[str], List[str]]:
     """Split a fileset to obtain include and exclude file filters.
 
     :param fileset: The fileset to split.
+    :param partition: If provided, only get the file list for files in the partition.
 
     :return: A tuple containing the include and exclude lists.
+
+    :raises FeatureError: If the partition feature is enabled but no partition is
+        provided or if a partition is provided but the partition feature is not enabled.
     """
+    if features.Features().enable_partitions and not partition:
+        raise errors.FeatureError(
+            message=(
+                "A partition must be provided if the partition feature is enabled."
+            )
+        )
+
+    if not features.Features().enable_partitions and partition:
+        raise errors.FeatureError(
+            message=(
+                "The partition feature must be enabled if a partition is provided."
+            )
+        )
+
     includes: List[str] = []
     excludes: List[str] = []
 
@@ -173,12 +214,18 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
 
     includes = includes or ["*"]
 
-    processed_includes: List[str] = [
-        path_utils.get_partitioned_path(file) for file in includes
-    ]
-    processed_excludes: List[str] = [
-        path_utils.get_partitioned_path(file) for file in excludes
-    ]
+    processed_includes: List[str] = []
+    for file in includes:
+        file_partition, file_inner_path = path_utils.get_partition_and_path(file)
+        if not partition or file_partition == partition or file == "*":
+            processed_includes.append(str(file_inner_path))
+
+    processed_excludes: List[str] = []
+    for file in excludes:
+        file_partition, file_inner_path = path_utils.get_partition_and_path(file)
+        if not partition or file_partition == partition:
+            processed_excludes.append(str(file_inner_path))
+
     return processed_includes, processed_excludes
 
 

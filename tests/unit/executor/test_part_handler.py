@@ -885,7 +885,9 @@ class TestFileFilter:
 
     def test_apply_file_filter_empty(self, new_dir, partitions):
         fileset = filesets.Fileset([])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(
+            fileset, str(self._destdir), "default" if partitions else None
+        )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -899,7 +901,9 @@ class TestFileFilter:
 
     def test_apply_file_filter_remove_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(
+            fileset, str(self._destdir), "default" if partitions else None
+        )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -913,7 +917,9 @@ class TestFileFilter:
 
     def test_apply_file_filter_remove_dir(self, new_dir, partitions):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(
+            fileset, str(self._destdir), "default" if partitions else None
+        )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -926,7 +932,9 @@ class TestFileFilter:
 
     def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file4", "-dir3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(
+            fileset, str(self._destdir), "default" if partitions else None
+        )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )
@@ -940,7 +948,9 @@ class TestFileFilter:
 
     def test_apply_file_filter_keep_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["dir1/file3"])
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
+        files, dirs = filesets.migratable_filesets(
+            fileset, str(self._destdir), "default" if partitions else None
+        )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
         )

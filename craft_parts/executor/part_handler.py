@@ -252,7 +252,11 @@ class PartHandler:
                 self._part.spec.overlay_files, name="overlay"
             )
             destdir = self._part.part_layer_dir
-            files, dirs = filesets.migratable_filesets(overlay_fileset, str(destdir))
+            files, dirs = filesets.migratable_filesets(
+                overlay_fileset,
+                str(destdir),
+                "default" if self._part_info.partitions else None,
+            )
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
         else:
             contents = StepContents()

@@ -21,9 +21,9 @@ from craft_parts.executor import filesets
     ("entries", "includes", "excludes"),
     [
         ([], [], []),
-        (["foo", "-bar"], ["default/foo"], ["default/bar"]),
-        (["(foo)/bar", "-baz"], ["foo/bar"], ["default/baz"]),
-        (["(foo)/file1", "-file1"], ["foo/file1"], ["default/file1"]),
+        (["foo", "-bar"], ["(default)/foo"], ["(default)/bar"]),
+        (["(foo)/bar", "-baz"], ["(foo)/bar"], ["(default)/baz"]),
+        (["(foo)/file1", "-file1"], ["(foo)/file1"], ["(default)/file1"]),
     ],
 )
 def test_partition_filesets(entries, includes, excludes):
@@ -35,19 +35,23 @@ def test_partition_filesets(entries, includes, excludes):
 
 
 @pytest.mark.parametrize(
-    ("entries", "includes", "excludes"),
+    ("partition", "entries", "includes", "excludes"),
     [
-        ([], ["*"], []),
-        (["foo", "-bar"], ["default/foo"], ["default/bar"]),
-        (["(foo)/bar", "-baz"], ["foo/bar"], ["default/baz"]),
-        (["(foo)/file1", "-file1"], ["foo/file1"], ["default/file1"]),
+        ("default", [], ["*"], []),
+        ("default", ["foo", "-bar"], ["foo"], ["bar"]),
+        ("default", ["(default)/foo", "-(default)/bar"], ["foo"], ["bar"]),
+        ("default", ["(foo)/foo", "-(foo)/bar"], [], []),
+        ("foo", [], ["*"], []),
+        ("foo", ["foo", "-bar"], [], []),
+        ("foo", ["(default)/foo", "-(default)/bar"], [], []),
+        ("foo", ["(foo)/foo", "-(foo)/bar"], ["foo"], ["bar"]),
     ],
 )
-def test_get_file_list_with_partitions(entries, includes, excludes):
+def test_get_file_list_with_partitions(partition, entries, includes, excludes):
     """Test that partitions are correctly applied to fileset include and excludes."""
     fs = filesets.Fileset(entries)
 
-    actual_includes, actual_excludes = filesets._get_file_list(fs)
+    actual_includes, actual_excludes = filesets._get_file_list(fs, partition=partition)
 
     assert includes == actual_includes
     assert excludes == actual_excludes

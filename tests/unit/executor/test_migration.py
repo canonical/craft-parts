@@ -19,6 +19,7 @@ import stat
 from pathlib import Path
 
 import pytest
+from craft_parts import errors, features
 from craft_parts.actions import Action
 from craft_parts.executor import filesets, migration, part_handler
 from craft_parts.executor.filesets import Fileset
@@ -27,14 +28,13 @@ from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions
 from craft_parts.steps import Step
-from craft_parts.utils import path_utils
 
 
 @pytest.mark.usefixtures("new_dir")
 class TestFileMigration:
     """Verify different migration scenarios."""
 
-    def test_migrate_files_already_exists(self):
+    def test_migrate_files_already_exists(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -47,7 +47,9 @@ class TestFileMigration:
         # Place the to-be-staged file with the same name
         Path(install_dir, "foo").write_text("installed")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]), "install", partition="default" if partitions else None
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -61,7 +63,7 @@ class TestFileMigration:
             Path(stage_dir, "foo").read_text() == "installed"
         ), "Expected staging to allow overwriting of already-staged files"
 
-    def test_migrate_files_supports_no_follow_symlinks(self):
+    def test_migrate_files_supports_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -71,7 +73,9 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]), "install", partition="default" if partitions else None
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
             dirs=dirs,
@@ -93,7 +97,7 @@ class TestFileMigration:
             os.readlink(os.path.join(stage_dir, "bar")) == "foo"
         ), "Expected migrated 'bar' to point to 'foo'"
 
-    def test_migrate_files_preserves_symlink_file(self):
+    def test_migrate_files_preserves_symlink_file(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -103,7 +107,9 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]), "install", partition="default" if partitions else None
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -120,20 +126,18 @@ class TestFileMigration:
     def test_migrate_files_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
-        bin_path = path_utils.get_partitioned_path("bin")
-        expected_dirs = {"default"} if partitions else set()
+        bin_path = Path("bin")
+        partition = "default" if partitions else None
 
-        Path(install_dir, path_utils.get_partitioned_path("usr/bin")).mkdir(
-            parents=True
-        )
+        Path(install_dir, "usr/bin").mkdir(parents=True)
         stage_dir.mkdir()
 
-        Path(install_dir, path_utils.get_partitioned_path("usr/bin/foo")).write_text(
-            "installed"
-        )
+        Path(install_dir, "usr/bin/foo").write_text("installed")
         Path("install", bin_path).symlink_to("usr/bin")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["-usr"]), "install", partition
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -143,11 +147,11 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert files == {path_utils.get_partitioned_path("bin")}
-        assert dirs == expected_dirs
+        assert files == {"bin"}
+        assert dirs == set()
         assert Path(stage_dir, bin_path).is_symlink()
 
-    def test_migrate_files_preserves_symlink_nested_file(self):
+    def test_migrate_files_preserves_symlink_nested_file(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -158,7 +162,11 @@ class TestFileMigration:
         Path(install_dir, "a/bar").symlink_to("foo")
         Path(install_dir, "bar").symlink_to("a/foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            "install",
+            partition="default" if partitions else None,
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -175,7 +183,7 @@ class TestFileMigration:
             stage_dir, "a/bar"
         ).is_symlink(), "Expected migrated 'a/bar' to be a symlink."
 
-    def test_migrate_files_preserves_symlink_empty_dir(self):
+    def test_migrate_files_preserves_symlink_empty_dir(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -184,7 +192,11 @@ class TestFileMigration:
 
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            "install",
+            partition="default" if partitions else None,
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -198,7 +210,7 @@ class TestFileMigration:
             stage_dir, "bar"
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
-    def test_migrate_files_preserves_symlink_nonempty_dir(self):
+    def test_migrate_files_preserves_symlink_nonempty_dir(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -209,7 +221,11 @@ class TestFileMigration:
 
         Path(install_dir, "foo/xfile").write_text("installed")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            "install",
+            partition="default" if partitions else None,
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -223,7 +239,7 @@ class TestFileMigration:
             stage_dir, "bar"
         ).is_symlink(), "Expected migrated 'bar' to be a symlink."
 
-    def test_migrate_files_preserves_symlink_nested_dir(self):
+    def test_migrate_files_preserves_symlink_nested_dir(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -235,7 +251,9 @@ class TestFileMigration:
 
         Path(install_dir, "a/b/xfile").write_text("installed")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]), "install", partition="default" if partitions else None
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
         )
@@ -253,7 +271,7 @@ class TestFileMigration:
             os.path.join("stage", "a", "bar")
         ), "Expected migrated 'a/bar' to be a symlink."
 
-    def test_migrate_files_supports_follow_symlinks(self):
+    def test_migrate_files_supports_follow_symlinks(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -263,7 +281,9 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
         Path(install_dir, "bar").symlink_to("foo")
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]), "install", partition="default" if partitions else None
+        )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
             dirs=dirs,
@@ -284,7 +304,7 @@ class TestFileMigration:
             Path(stage_dir, "bar").read_text() == "installed"
         ), "Expected migrated 'bar' to be a copy of 'foo'"
 
-    def test_migrate_files_preserves_file_mode(self):
+    def test_migrate_files_preserves_file_mode(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -300,7 +320,11 @@ class TestFileMigration:
         filepath.chmod(new_mode)
         assert mode != new_mode
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            "install",
+            partition="default" if partitions else None,
+        )
         migration.migrate_files(
             files=files,
             dirs=dirs,
@@ -313,7 +337,7 @@ class TestFileMigration:
 
     # TODO: add test_migrate_files_preserves_file_mode_chown_permissions
 
-    def test_migrate_files_preserves_directory_mode(self):
+    def test_migrate_files_preserves_directory_mode(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
 
@@ -330,7 +354,11 @@ class TestFileMigration:
         filepath.parent.chmod(new_mode)
         filepath.chmod(new_mode)
 
-        files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            "install",
+            partition="default" if partitions else None,
+        )
         migration.migrate_files(
             files=files,
             dirs=dirs,
@@ -386,6 +414,19 @@ class TestFileMigration:
             call = mock_chown[p]
             assert call.owner == 1111
             assert call.group == 2222
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestFileMigrationErrors:
+    def test_migratable_filesets_partition_defined_error(self):
+        """Error if the partition feature is disabled and a partition is provided."""
+        with pytest.raises(errors.FeatureError) as raised:
+            filesets.migratable_filesets(Fileset(["*"]), "install", partition="default")
+
+        assert features.Features().enable_partitions is False
+        assert (
+            "The partition feature must be enabled if a partition is provided."
+        ) in str(raised.value)
 
 
 @pytest.mark.usefixtures("new_dir")

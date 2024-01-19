@@ -13,7 +13,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import pytest
+from craft_parts import errors, features
+from craft_parts.executor import filesets
+from craft_parts.executor.filesets import Fileset
 
 from tests.unit.executor import test_migration
 
@@ -21,6 +25,19 @@ from tests.unit.executor import test_migration
 @pytest.mark.usefixtures("new_dir")
 class TestFileMigration(test_migration.TestFileMigration):
     """Tests for file migration with partitions enabled."""
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestFileMigrationErrors:
+    def test_migratable_filesets_partition_not_defined_error(self):
+        """Error if the partition feature is enabled and a partition is not provided."""
+        with pytest.raises(errors.FeatureError) as raised:
+            filesets.migratable_filesets(Fileset(["*"]), "install", partition=None)
+
+        assert features.Features().enable_partitions
+        assert (
+            "A partition must be provided if the partition feature is enabled."
+        ) in str(raised.value)
 
 
 @pytest.mark.usefixtures("new_dir")
