@@ -152,7 +152,9 @@ class RustPlugin(Plugin):
 
         - rust-features
           (list of strings)
-          Features used to build optional dependencies
+          Features used to build optional dependencies.
+          You can specify ["*"] for all features
+          (including all the optional ones).
 
         - rust-path
           (list of strings, default [.])
@@ -261,8 +263,15 @@ class RustPlugin(Plugin):
         config_cmd: List[str] = []
 
         if options.rust_features:
-            features_string = " ".join(options.rust_features)
-            config_cmd.extend(["--features", f"'{features_string}'"])
+            if "*" in options.rust_features:
+                if len(options.rust_features) > 1:
+                    raise ValueError(
+                        "Please specify either the wildcard feature or a list of specific features"
+                    )
+                config_cmd.append("--all-features")
+            else:
+                features_string = " ".join(options.rust_features)
+                config_cmd.extend(["--features", f"'{features_string}'"])
 
         if options.rust_use_global_lto:
             logger.info("Adding overrides for LTO support")
