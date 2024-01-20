@@ -16,6 +16,7 @@
 
 """The craft Rust plugin."""
 
+import os
 import logging
 import subprocess
 from textwrap import dedent
@@ -49,6 +50,7 @@ class RustPluginProperties(PluginProperties, PluginModel):
     rust_channel: Optional[str] = None
     rust_use_global_lto: bool = False
     rust_no_default_features: bool = False
+    rust_ignore_toolchain_file: bool = False
     source: str
     after: Optional[UniqueStrList] = None
 
@@ -121,6 +123,14 @@ class RustPlugin(Plugin):
           If you don't want this plugin to install Rust toolchain for you,
           you can put "none" for this option.
 
+        - rust-ignore-toolchain-file
+          (boolean, default False)
+          Whether to ignore the rust-toolchain.toml file.
+          The upstream project can use this file to specify which Rust
+          toolchain to use and which component to install.
+          If you don't want to follow the upstream project's specifications,
+          you can put true for this option to ignore the toolchain file.
+
         - rust-features
           (list of strings)
           Features used to build optional dependencies
@@ -170,12 +180,24 @@ class RustPlugin(Plugin):
         else:
             return "rustc" in rust_version and "cargo" in cargo_version
 
+    def _check_toolchain_file(self) -> bool:
+        """Return if the rust-toolchain.toml file exists."""
+        options = cast(RustPluginProperties, self._options)
+        if options.rust_ignore_toolchain_file:
+            return False
+        return os.path.exists("rust-toolchain.toml") or os.path.exists("rust-toolchain")
+
     @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
-        return {
+        variables = {
             "PATH": "${HOME}/.cargo/bin:${PATH}",
         }
+        options = cast(RustPluginProperties, self._options)
+        if options.rust_ignore_toolchain_file:
+            # add a forced override to ignore the toolchain file
+            variables["RUSTUP_TOOLCHAIN"] = options.rust_channel or "stable"
+        return variables
 
     @override
     def get_pull_commands(self) -> List[str]:
@@ -188,6 +210,19 @@ class RustPlugin(Plugin):
         ):
             logger.info("User does not want to use rustup, skipping")
             return []
+        if self._check_toolchain_file():
+            if options.rust_channel != "none":
+                logger.warning(
+                    "Specified rust-channel value is overridden by the rust-toolchain.toml file!"
+                )
+                logger.info(
+                    "If you don't want this behavior, you can set rust-ignore-toolchain-file to true"
+                )
+            logger.info("Using the version defined in rust-toolchain.toml file")
+            # we need to use a tool managed by rustup to trigger an install
+            # when the toolchain file is present
+            # (otherwise rustup won't install the correct version)
+            return ["cargo --version"]
         logger.info("Switch rustup channel to %s", rust_channel)
         return [
             f"rustup update {rust_channel}",
