@@ -52,6 +52,7 @@ class RustPluginProperties(PluginProperties, PluginModel):
     rust_use_global_lto: bool = False
     rust_no_default_features: bool = False
     rust_ignore_toolchain_file: bool = False
+    rust_cargo_parameters: List[str] = []
     source: str
     after: Optional[UniqueStrList] = None
 
@@ -169,6 +170,10 @@ class RustPlugin(Plugin):
           reducing the final binary size.
           This will forcibly enable LTO for all the crates you specified,
           regardless of whether you have LTO enabled in the Cargo.toml file
+
+        - rust-cargo-parameters
+          (list of strings)
+          Append additional parameters to the Cargo command line.
     """
 
     properties_class = RustPluginProperties
@@ -270,6 +275,9 @@ class RustPlugin(Plugin):
 
         if options.rust_no_default_features:
             config_cmd.append("--no-default-features")
+
+        if options.rust_cargo_parameters:
+            config_cmd.extend(options.rust_cargo_parameters)
 
         for crate in options.rust_path:
             logger.info("Generating build commands for %s", crate)
