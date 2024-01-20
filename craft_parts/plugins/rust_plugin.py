@@ -16,19 +16,20 @@
 
 """The craft Rust plugin."""
 
-import os
 import logging
+import os
+import re
 import subprocess
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
 
 from overrides import override
 from pydantic import conlist
+from pydantic import validator as pydantic_validator
 
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
-
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,23 @@ class RustPluginProperties(PluginProperties, PluginModel):
     rust_ignore_toolchain_file: bool = False
     source: str
     after: Optional[UniqueStrList] = None
+
+    @pydantic_validator("rust_channel")
+    @classmethod
+    def validate_rust_channel(cls, value: Optional[str]) -> Optional[str]:
+        """Validate the rust-channel property.
+
+        :param value: The value to validate.
+
+        :return: The validated value.
+        """
+        if value is None or value == "none":
+            return value
+        if re.match(r"^(stable|beta|nightly)(-[\w-]+)?$", value):
+            return value
+        if re.match(r"^\d+\.\d+(\.\d+)?(-[\w-]+)?$", value):
+            return value
+        raise ValueError(f"Invalid rust-channel: {value}")
 
     @classmethod
     @override
