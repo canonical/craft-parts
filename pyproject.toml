@@ -175,3 +175,8 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
     "I001",  # isort leaves init files alone by default, this makes ruff ignore them too.
     "F401",  # Allows unused imports in __init__ files.
 ]
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+skip-magic-trailing-comma = false
