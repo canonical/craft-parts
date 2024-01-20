@@ -149,6 +149,8 @@ allow-star-arg-any = true
 [tool.ruff.pylint]
 max-args = 8
 max-branches = 16
+max-locals = 18
+# max-attributes = 16
 
 [tool.ruff.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
