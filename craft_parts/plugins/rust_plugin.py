@@ -28,10 +28,6 @@ from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
-GET_RUSTUP_COMMAND_TEMPLATE = (
-    "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
-    "sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}"
-)
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +149,11 @@ class RustPlugin(Plugin):
     @override
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
-        return set()
+        options = cast(RustPluginProperties, self._options)
+        if not options.rust_channel and self._check_system_rust():
+            logger.info("Rust is installed on the system, skipping rustup")
+            return set()
+        return {"rustup"}
 
     @override
     def get_build_packages(self) -> Set[str]:
@@ -170,16 +170,6 @@ class RustPlugin(Plugin):
         else:
             return "rustc" in rust_version and "cargo" in cargo_version
 
-    def _check_rustup(self) -> bool:
-        try:
-            rustup_version = subprocess.check_output(["rustup", "--version"])
-            return "rustup" in rustup_version.decode("utf-8")
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return False
-
-    def _get_setup_rustup(self, channel: str) -> List[str]:
-        return [GET_RUSTUP_COMMAND_TEMPLATE.format(channel=channel)]
-
     @override
     def get_build_environment(self) -> Dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
@@ -191,16 +181,13 @@ class RustPlugin(Plugin):
     def get_pull_commands(self) -> List[str]:
         """Return a list of commands to run during the pull step."""
         options = cast(RustPluginProperties, self._options)
-        if not options.rust_channel and self._check_system_rust():
-            logger.info("Rust is installed on the system, skipping rustup")
-            return []
-
         rust_channel = options.rust_channel or "stable"
-        if rust_channel == "none":
+
+        if rust_channel == "none" or (
+            not options.rust_channel and self._check_system_rust()
+        ):
+            logger.info("User does not want to use rustup, skipping")
             return []
-        if not self._check_rustup():
-            logger.info("Rustup not found, installing it")
-            return self._get_setup_rustup(rust_channel)
         logger.info("Switch rustup channel to %s", rust_channel)
         return [
             f"rustup update {rust_channel}",
