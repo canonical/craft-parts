@@ -53,6 +53,7 @@ class RustPluginProperties(PluginProperties, PluginModel):
     rust_no_default_features: bool = False
     rust_ignore_toolchain_file: bool = False
     rust_cargo_parameters: List[str] = []
+    rust_inherit_ldflags: bool = False
     source: str
     after: Optional[UniqueStrList] = None
 
@@ -176,6 +177,12 @@ class RustPlugin(Plugin):
         - rust-cargo-parameters
           (list of strings)
           Append additional parameters to the Cargo command line.
+
+        - rust-inherit-ldflags
+          (boolean, default False)
+          Whether to inherit the LDFLAGS from the environment.
+          This option will add the LDFLAGS from the environment to the
+          Rust linker directives.
     """
 
     properties_class = RustPluginProperties
@@ -287,6 +294,18 @@ class RustPlugin(Plugin):
 
         if options.rust_cargo_parameters:
             config_cmd.extend(options.rust_cargo_parameters)
+
+        if options.rust_inherit_ldflags:
+            rust_build_cmd.append(
+                dedent(
+                    """\
+                    if [ -n "${LDFLAGS}" ]; then
+                        RUSTFLAGS="${RUSTFLAGS:-} -Clink-args=\"${LDFLAGS}\""
+                        export RUSTFLAGS
+                    fi\
+                    """
+                )
+            )
 
         for crate in options.rust_path:
             logger.info("Generating build commands for %s", crate)

@@ -96,6 +96,40 @@ rust-cargo-parameters
 
 Append additional parameters to the Cargo command line.
 
+rust-inherit-ldflags
+~~~~~~~~~~~~~~~~~~~~~
+**Type:** boolean
+**Default:** false
+
+Whether to inherit the LDFLAGS from the environment.
+This option will add the LDFLAGS from the environment to the
+Rust linker directives.
+
+Cargo build system and Rust compiler by default do not respect the `LDFLAGS`
+environment variable. This option will cause the craft-parts plugin to
+forcibly add the contents inside the `LDFLAGS` to the Rust linker directives
+by wrapping and appending the `LDFLAGS` value to `RUSTFLAGS`.
+
+.. note::
+  You may use this option to tune the Rust binary in a classic Snap to respect
+  the Snap linkage, so that the binary will not find the libraries in the host
+  filesystem.
+
+  Here is an example on how you might do this on core22:
+
+  .. code-block:: yaml
+
+        parts:
+          my-classic-app:
+            plugin: rust
+            source: .
+            rust-inherit-ldflags: true
+            build-environment:
+              - LDFLAGS: >
+                  -Wl,-rpath=\$ORIGIN/lib:/snap/core22/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
+                  -Wl,-dynamic-linker=$(find /snap/core22/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR -name 'ld*.so.*' -print | head -n1)
+
+
 Environment variables
 ---------------------
 
