@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
 import pathlib
-from typing import Iterator
+from typing import Iterator, Set
 
 import pytest
 from craft_parts import Action, Step
@@ -82,19 +82,15 @@ class TestFileFilter(test_part_handler.TestFileFilter):
     """File filter test cases."""
 
     _destdir = pathlib.Path("destdir")
-    _default_destdir = pathlib.Path("destdir/default")
 
-    def _iter_files(self) -> Iterator[str]:
+    def _iter_files(self, partitions: Set[str]) -> Iterator[str]:
         """Iterate over the partitions and files to test."""
-        for partition, file in itertools.product(PARTITIONS, TEST_FILES):
+        for partition, file in itertools.product(partitions, TEST_FILES):
             yield f"{partition}/{file}"
 
     @pytest.fixture()
-    def make_files(
-        self,
-        new_dir,
-    ):
-        for file in self._iter_files():
+    def make_files(self, new_dir, partitions):
+        for file in self._iter_files(partitions):
             path = self._destdir / file
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
@@ -148,16 +144,19 @@ class TestFileFilter(test_part_handler.TestFileFilter):
         ],
     )
     def test_apply_partition_aware_filter(
-        self, make_files, new_dir, survivors, filters
+        self, make_files, new_dir, survivors, filters, partitions
     ):
         fileset = filesets.Fileset(filters)
 
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
-        part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
-        )
+        for partition in partitions:
+            files, dirs = filesets.migratable_filesets(
+                fileset, str(self._destdir / partition), partition
+            )
+            part_handler._apply_file_filter(
+                filter_files=files, filter_dirs=dirs, destdir=self._destdir / partition
+            )
 
-        for file in self._iter_files():
+        for file in self._iter_files(partitions):
             assert (self._destdir / file).exists() == (file in survivors)
 
 

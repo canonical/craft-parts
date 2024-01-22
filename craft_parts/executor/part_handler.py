@@ -477,6 +477,7 @@ class PartHandler:
             env=step_env,
             stdout=stdout,
             stderr=stderr,
+            partitions=self._part_info.partitions,
         )
 
         scriptlet = self._part.spec.get_scriptlet(step_info.step)

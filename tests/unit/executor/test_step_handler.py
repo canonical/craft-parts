@@ -17,7 +17,7 @@ import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Set, Type
+from typing import Dict, List, Optional, Set, Type
 
 import pytest
 from craft_parts import plugins, sources
@@ -62,6 +62,7 @@ def _step_handler_for_step(
     part: Part,
     dirs: ProjectDirs,
     plugin_class: Type[plugins.Plugin] = FooPlugin,
+    partitions: Optional[Set[str]] = None,
 ) -> StepHandler:
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
@@ -79,6 +80,7 @@ def _step_handler_for_step(
         plugin=plugin,
         source_handler=source_handler,
         env=step_env,
+        partitions=partitions,
     )
 
 
@@ -230,7 +232,7 @@ class TestStepHandlerBuiltins:
         )
         assert result == StepContents()
 
-    def test_run_builtin_stage(self, new_dir, mocker):
+    def test_run_builtin_stage(self, new_dir, partitions):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
@@ -242,12 +244,13 @@ class TestStepHandlerBuiltins:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=partitions,
         )
         result = sh.run_builtin()
 
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
-    def test_run_builtin_prime(self, new_dir, mocker):
+    def test_run_builtin_prime(self, new_dir, partitions):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
@@ -261,6 +264,7 @@ class TestStepHandlerBuiltins:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=partitions,
         )
         result = sh.run_builtin()
 
