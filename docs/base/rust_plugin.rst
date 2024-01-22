@@ -31,6 +31,8 @@ rust-features
 Features used to build optional dependencies.
 This is equivalent to the ``--features`` option in Cargo.
 
+You can also use ``["*"]`` to select all the feautures available in the project.
+
 .. note::
   This option does not override any default features
   specified by the project itself.
@@ -75,6 +77,24 @@ in the Cargo.toml file.
 This is equivalent to the ``lto = "fat"`` option in the Cargo.toml file.
 
 If you want better runtime performance, see the :ref:`Performance tuning<perf-tuning>` section below.
+
+rust-ignore-toolchain-file
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Type:** boolean
+**Default:** false
+
+Whether to ignore the ``rust-toolchain.toml`` and ``rust-toolchain`` file.
+The upstream project can use this file to specify which Rust
+toolchain to use and which component to install.
+If you don't want to follow the upstream project's specifications,
+you can put true for this option to ignore the toolchain file.
+
+rust-cargo-parameters
+~~~~~~~~~~~~~~~~~~~~~
+**Type:** list of strings
+**Default:** []
+
+Append additional parameters to the Cargo command line.
 
 Environment variables
 ---------------------
