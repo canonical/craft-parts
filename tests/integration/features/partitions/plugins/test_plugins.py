@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,9 +16,7 @@
 """Tests that plugin behaviour is unchanged with partitions enabled."""
 # Allow redefinition in order to include parent tests below.
 # mypy: disable-error-code="no-redef"
-import pathlib
 
-import pytest
 
 # These wildcard imports make pytest run any non-overridden plugin tests here.
 # pylint: disable=wildcard-import, unused-import, function-redefined, unused-wildcard-import
@@ -40,9 +38,3 @@ from tests.integration.plugins.test_scons import *  # noqa: F403
 from tests.integration.plugins.test_validate_environment import *  # type: ignore[assignment] # noqa: F403
 
 # pylint: enable=wildcard-import
-
-
-@pytest.fixture()
-def install_dir():
-    """Installation directory for the standard dump plugin."""
-    return pathlib.Path("parts", "foo", "install", "default")
