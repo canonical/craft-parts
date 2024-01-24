@@ -173,7 +173,7 @@ def test_application_plugin_type_error(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- value is not a valid list in field 'app-stuff'"
+    assert raised.value.message == "- Input should be a valid list in field 'app-stuff'"
 
 
 def test_application_plugin_extra_property(new_dir, partitions):

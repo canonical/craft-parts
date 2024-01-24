@@ -32,7 +32,7 @@ class DotnetPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the Dotnet plugin."""
 
     dotnet_build_configuration: str = "Release"
-    dotnet_self_contained_runtime_identifier: Optional[str]
+    dotnet_self_contained_runtime_identifier: Optional[str] = None
 
     # part properties required by the plugin
     source: str
