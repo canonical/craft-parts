@@ -18,7 +18,7 @@
 
 from pathlib import Path
 from types import MappingProxyType
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Mapping, Optional, Sequence, Union
 
 from craft_parts.utils import partition_utils
 
@@ -59,29 +59,17 @@ class ProjectDirs:
         if partitions:
             self._partitions: Optional[Sequence[str]] = partitions
             self.partition_dir: Optional[Path] = self.work_dir / "partitions"
-            stage_dirs: Dict[Optional[str], Path] = {"default": self.stage_dir}
-            prime_dirs: Dict[Optional[str], Path] = {"default": self.prime_dir}
-            stage_dirs.update(
-                {
-                    partition: self.partition_dir / f"{partition}/stage"
-                    for partition in partitions
-                    if partition != "default"
-                }
+            self.stage_dirs: Mapping[Optional[str], Path] = self._get_partition_dirs(
+                default_dir=self.stage_dir, partition_subdir="stage"
             )
-            prime_dirs.update(
-                {
-                    partition: self.partition_dir / f"{partition}/prime"
-                    for partition in partitions
-                    if partition != "default"
-                }
+            self.prime_dirs: Mapping[Optional[str], Path] = self._get_partition_dirs(
+                default_dir=self.prime_dir, partition_subdir="prime"
             )
         else:
             self._partitions = None
             self.partition_dir = None
-            stage_dirs = {None: self.stage_dir}
-            prime_dirs = {None: self.prime_dir}
-        self.stage_dirs = MappingProxyType(stage_dirs)
-        self.prime_dirs = MappingProxyType(prime_dirs)
+            self.stage_dirs = MappingProxyType({None: self.stage_dir})
+            self.prime_dirs = MappingProxyType({None: self.prime_dir})
 
     def get_stage_dir(self, partition: Optional[str] = None) -> Path:
         """Get the stage directory for the given partition."""
@@ -94,3 +82,30 @@ class ProjectDirs:
         if self._partitions and partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")
         return self.prime_dirs[partition]
+
+    def _get_partition_dirs(
+        self, default_dir: Path, partition_subdir: str
+    ) -> Mapping[Optional[str], Path]:
+        """Get a mapping of partition names to partition subdirectories.
+
+        :param default_dir: Directory for default partition.
+        :param partition_subdir: Subdirectory for each partition.
+
+        :returns: A dictionary of partition subdirectories.
+
+        :raises ValueError: If no partitions are defined.
+        """
+        partition_dirs: Dict[Optional[str], Path] = {"default": default_dir}
+
+        if not self.partition_dir or not self._partitions:
+            raise ValueError("No partitions defined.")
+
+        partition_dirs.update(
+            {
+                partition: self.partition_dir / f"{partition}/{partition_subdir}"
+                for partition in self._partitions
+                if partition != "default"
+            }
+        )
+
+        return MappingProxyType(partition_dirs)
