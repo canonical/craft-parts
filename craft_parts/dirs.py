@@ -76,7 +76,7 @@ class ProjectDirs:
                 }
             )
         else:
-            self._partitions = [None]
+            self._partitions = None
             self.partition_dir = None
             stage_dirs = {None: self.stage_dir}
             prime_dirs = {None: self.prime_dir}
@@ -85,12 +85,12 @@ class ProjectDirs:
 
     def get_stage_dir(self, partition: Optional[str] = None) -> Path:
         """Get the stage directory for the given partition."""
-        if partition not in self._partitions:
+        if self._partitions and partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")
         return self.stage_dirs[partition]
 
     def get_prime_dir(self, partition: Optional[str] = None) -> Path:
         """Get the stage directory for the given partition."""
-        if partition not in self._partitions:
+        if self._partitions and partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")
         return self.prime_dirs[partition]
