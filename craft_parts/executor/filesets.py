@@ -42,19 +42,7 @@ class Fileset:
         :param name: Name of the fileset.
         """
         self._name = name
-
-        self._list: List[str] = []
-
-        for file in entries:
-            # split file into an optional prefix (a hyphen character) and the file
-            split_file = (file[0], file[1:]) if file[0] == "-" else ("", file)
-
-            partition, inner_path = path_utils.get_partition_and_path(split_file[1])
-
-            if partition:
-                self._list.append(f"{split_file[0]}({partition})/{inner_path}")
-            else:
-                self._list.append(file)
+        self._list: List[str] = [_normalize_entry(entry) for entry in entries]
 
     def __repr__(self) -> str:
         return f"Fileset({self._list!r}, name={self._name!r})"
@@ -302,3 +290,24 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
 
     filename_abspath = os.path.join(parent_abspath, filename)
     return os.path.relpath(filename_abspath, base_directory)
+
+
+def _normalize_entry(entry: str) -> str:
+    """Normalize an entry to begin with a partition, if partitions are enabled.
+
+    If partitions are enabled, `foo` will be normalized to `(default)/foo`.
+    If partitions are not enabled, `foo` will be left as `foo`.
+
+    :param entry: Entry to normalize.
+
+    :returns: Normalized entry.
+    """
+    # split file into an optional prefix (a hyphen character) and the file
+    split_file = (entry[0], entry[1:]) if entry[0] == "-" else ("", entry)
+
+    partition, inner_path = path_utils.get_partition_and_path(split_file[1])
+
+    if partition:
+        return f"{split_file[0]}({partition})/{inner_path}"
+
+    return entry
