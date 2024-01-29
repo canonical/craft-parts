@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pytest
+from craft_parts.errors import FilesetError
 from craft_parts.executor import filesets
 
 
@@ -102,6 +103,21 @@ def test_fileset_only_excludes(partition, expected_excludes):
     expected_includes = ["*"] if partition == "default" else []
     assert includes == expected_includes
     assert excludes == expected_excludes
+
+@pytest.mark.parametrize(
+    ("abs_entry", "abs_filepath"),
+    [
+        ("/abs/include", "/abs/include"),
+        ("-/abs/exclude", "/abs/exclude"),
+    ]
+)
+def test_filesets_excludes_without_relative_paths(abs_entry, abs_filepath):
+    with pytest.raises(FilesetError) as raised:
+        filesets._get_file_list(
+            filesets.Fileset(["rel", abs_entry], name="test"), partition="default"
+        )
+    assert raised.value.name == "test"
+    assert raised.value.message == f"path {abs_filepath!r} must be relative."
 
 
 @pytest.mark.parametrize(

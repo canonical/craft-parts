@@ -40,8 +40,11 @@ class Fileset:
 
         :param entries: List of filepaths represented as strings.
         :param name: Name of the fileset.
+
+        :raises FilesetError: If any entry is an absolute filepath.
         """
         self._name = name
+        self._validate_entries(entries)
         self._list: List[str] = [_normalize_entry(entry) for entry in entries]
 
     def __repr__(self) -> str:
@@ -98,6 +101,20 @@ class Fileset:
 
         if to_combine:
             self._list = list(set(self._list + other.entries))
+
+    def _validate_entries(self, entries: List[str]) -> None:
+        """Validate that entries are not absolute filepaths.
+
+        :param entries: List of entries to validate.
+
+        :raises FilesetError: If `entries` contains an absolute filepath.
+        """
+        for entry in entries:
+            filepath = entry[1:] if entry[0] == "-" else entry
+            if os.path.isabs(filepath):
+                raise errors.FilesetError(
+                    name=self.name, message=f"path {filepath!r} must be relative."
+                )
 
 
 def migratable_filesets(
@@ -188,13 +205,6 @@ def _get_file_list(
             includes.append(item[1:])
         else:
             includes.append(item)
-
-    # paths must be relative
-    for entry in includes + excludes:
-        if os.path.isabs(entry):
-            raise errors.FilesetError(
-                name=fileset.name, message=f"path {entry!r} must be relative."
-            )
 
     includes = includes or ["*"]
 
