@@ -18,19 +18,90 @@ from craft_parts.executor import filesets
 
 
 @pytest.mark.parametrize(
+    ("data", "entries", "includes", "excludes"),
+    [
+        ([], [], [], []),
+        (
+            ["a", "(default)/b", "(foo)/c"],
+            ["(default)/a", "(default)/b", "(foo)/c"],
+            ["(default)/a", "(default)/b", "(foo)/c"],
+            [],
+        ),
+        (
+            ["a", "-(default)/b", "-(foo)/c"],
+            ["(default)/a", "-(default)/b", "-(foo)/c"],
+            ["(default)/a"],
+            ["(default)/b", "(foo)/c"],
+        ),
+    ],
+)
+def test_fileset(data, entries, includes, excludes):
+    fs = filesets.Fileset(data)
+    assert fs.entries == entries
+    assert fs.includes == includes
+    assert fs.excludes == excludes
+
+
+def test_representation():
+    fs = filesets.Fileset(["foo", "bar"], name="foobar")
+    assert f"{fs!r}" == "Fileset(['(default)/foo', '(default)/bar'], name='foobar')"
+
+
+def test_entries():
+    """`entries` is a read-only property."""
+    fs = filesets.Fileset(["foo", "bar"])
+    fs.entries.append("baz")
+    assert fs.entries == ["(default)/foo", "(default)/bar"]
+
+
+@pytest.mark.parametrize(
     ("entries", "remove", "expected"),
     [
         (["foo", "bar"], "bar", ["(default)/foo"]),
         (["(default)/foo", "(default)/bar"], "bar", ["(default)/foo"]),
         (["foo", "(default)/bar"], "(default)/bar", ["(default)/foo"]),
         (["foo", "(mypart)/foo"], "(mypart)/foo", ["(default)/foo"]),
-    ]
+    ],
 )
 def test_remove(entries, remove, expected):
     """Remove an entry from a fileset."""
     fs = filesets.Fileset(entries)
     fs.remove(remove)
     assert fs.entries == expected
+
+
+@pytest.mark.parametrize(
+    ("partition", "expected_includes"),
+    [
+        ("default", ["a", "b"]),
+        ("foo", ["c"]),
+    ],
+)
+def test_fileset_only_includes(partition, expected_includes):
+    stage_set = filesets.Fileset(["a", "(default)/b", "(foo)/c"])
+
+    includes, excludes = filesets._get_file_list(stage_set, partition=partition)
+
+    assert includes == expected_includes
+    assert excludes == []
+
+
+@pytest.mark.parametrize(
+    ("partition", "expected_excludes"),
+    [
+        ("default", ["a", "b"]),
+        ("foo", ["c"]),
+    ],
+)
+def test_fileset_only_excludes(partition, expected_excludes):
+    stage_set = filesets.Fileset(["-a", "-(default)/b", "-(foo)/c"])
+
+    includes, excludes = filesets._get_file_list(stage_set, partition=partition)
+
+    # only the default partition should implicitly include files
+    expected_includes = ["*"] if partition == "default" else []
+    assert includes == expected_includes
+    assert excludes == expected_excludes
 
 
 @pytest.mark.parametrize(
