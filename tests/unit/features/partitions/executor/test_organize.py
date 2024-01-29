@@ -26,7 +26,6 @@ from tests.unit.executor.test_organize import organize_and_assert
     [
         # Files in the default partition
         {
-            "setup_dirs": [],
             "setup_files": ["foo", "bar", "baz", "qux1"],
             "organize_map": {
                 "foo": "foo1",
@@ -35,13 +34,9 @@ from tests.unit.executor.test_organize import organize_and_assert
                 "(default)/baz": "(default)/baz1",
             },
             "expected": [(["bar1", "baz1", "foo1", "qux1"], "")],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # Raise an error for files sourced from a non-default partition
         {
-            "setup_dirs": [],
-            "setup_files": [],
             "organize_map": {
                 "(mypart)/foo": "(our/special-part)/foo1",
             },
@@ -50,11 +45,9 @@ from tests.unit.executor.test_organize import organize_and_assert
                 r".*Cannot organize files from 'mypart' partition. "
                 r"Files can only be organized from the 'default' partition.*"
             ),
-            "expected_overwrite": None,
         },
         # Files that should have the same name in two different partitions
         {
-            "setup_dirs": [],
             "setup_files": ["foo", "bar"],
             "organize_map": {"foo": "baz", "bar": "(mypart)/baz"},
             "expected": [
@@ -67,7 +60,6 @@ from tests.unit.executor.test_organize import organize_and_assert
         # Files that should have the same name in two different partitions where one is
         # a namespaced partition
         {
-            "setup_dirs": [],
             "setup_files": ["foo", "bar"],
             "organize_map": {
                 "foo": "baz",
@@ -77,17 +69,13 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["baz"], ""),
                 (["baz"], "../partitions/our/special-part/parts/part-name/install"),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
-        ## simple_dir_with_file
+        # simple_dir_with_file
         {
             "setup_dirs": ["foodir"],
             "setup_files": [os.path.join("foodir", "foo")],
             "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # organize_to_the_same_directory
         {
@@ -106,21 +94,15 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["bin"], ""),
                 (["bar", "basefoo", "foo"], "bin"),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # leading_slash_in_value
         {
-            "setup_dirs": [],
             "setup_files": ["foo"],
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # overwrite_existing_file
         {
-            "setup_dirs": [],
             "setup_files": ["foo", "bar"],
             "organize_map": {"foo": "bar"},
             "expected": errors.FileOrganizeError,
@@ -131,7 +113,6 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # overwrite_existing_file with partitions
         {
-            "setup_dirs": [],
             "setup_files": ["foo", "bar"],
             "organize_map": {
                 "(default)/foo": "(our/special-part)/bar",
@@ -148,28 +129,22 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # *_for_files
         {
-            "setup_dirs": [],
             "setup_files": ["foo.conf", "bar.conf"],
             "organize_map": {"*.conf": "dir/"},
             "expected": [
                 (["dir"], ""),
                 (["bar.conf", "foo.conf"], "dir"),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # *_for_files_with_non_dir_dst
         {
-            "setup_dirs": [],
             "setup_files": ["foo.conf", "bar.conf"],
             "organize_map": {"*.conf": "dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": r".*multiple files to be organized into 'dir'.*",
-            "expected_overwrite": None,
         },
         # *_for_files_with_non_dir_dst with partitions
         {
-            "setup_dirs": [],
             "setup_files": ["foo.conf", "bar.conf"],
             "organize_map": {"*.conf": "(our/special-part)/dir"},
             "expected": errors.FileOrganizeError,
@@ -177,7 +152,6 @@ from tests.unit.executor.test_organize import organize_and_assert
                 r".*multiple files to be organized into "
                 r"'partitions/our/special-part/parts/part-name/install/dir'.*"
             ),
-            "expected_overwrite": None,
         },
         # *_for_directories
         {
@@ -193,8 +167,6 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["foo"], os.path.join("dir", "dir1")),
                 (["bar"], os.path.join("dir", "dir2")),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # combined_*_with_file
         {
@@ -211,8 +183,6 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["foo"], os.path.join("dir", "dir1")),
                 (["bar"], os.path.join("dir", "dir2")),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # *_into_dir
         {
@@ -228,31 +198,29 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["dir"], "nested"),
                 (["foo"], os.path.join("nested", "dir")),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
     ],
 )
 def test_organize(new_dir, data):
     organize_and_assert(
         tmp_path=new_dir,
-        setup_dirs=data["setup_dirs"],
-        setup_files=data["setup_files"],
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
-        expected_message=data["expected_message"],
-        expected_overwrite=data["expected_overwrite"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
     )
 
     # Verify that it can be organized again by overwriting
     organize_and_assert(
         tmp_path=new_dir,
-        setup_dirs=data["setup_dirs"],
-        setup_files=data["setup_files"],
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
-        expected_message=data["expected_message"],
-        expected_overwrite=data["expected_overwrite"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
         overwrite=True,
     )
