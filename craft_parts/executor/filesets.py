@@ -43,7 +43,7 @@ class Fileset:
         """
         self._name = name
 
-        normalized_entries: List[str] = []
+        self._list: List[str] = []
 
         for file in entries:
             # split file into an optional prefix (a hyphen character) and the file
@@ -51,14 +51,10 @@ class Fileset:
 
             partition, inner_path = path_utils.get_partition_and_path(split_file[1])
 
-            if split_file[1] == "*":
-                normalized_entries.append(file)
-            elif partition:
-                normalized_entries.append(f"{split_file[0]}({partition})/{inner_path}")
+            if partition:
+                self._list.append(f"{split_file[0]}({partition})/{inner_path}")
             else:
-                normalized_entries.append(file)
-
-        self._list = normalized_entries
+                self._list.append(file)
 
     def __repr__(self) -> str:
         return f"Fileset({self._list!r}, name={self._name!r})"
@@ -217,7 +213,7 @@ def _get_file_list(
     processed_includes: List[str] = []
     for file in includes:
         file_partition, file_inner_path = path_utils.get_partition_and_path(file)
-        if not partition or file_partition == partition or file == "*":
+        if not partition or file_partition == partition:
             processed_includes.append(str(file_inner_path))
 
     processed_excludes: List[str] = []

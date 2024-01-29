@@ -21,6 +21,7 @@ from craft_parts.executor import filesets
     ("entries", "includes", "excludes"),
     [
         ([], [], []),
+        (["*"], ["(default)/*"], []),
         (["foo", "-bar"], ["(default)/foo"], ["(default)/bar"]),
         (["(foo)/bar", "-baz"], ["(foo)/bar"], ["(default)/baz"]),
         (["(foo)/file1", "-file1"], ["(foo)/file1"], ["(default)/file1"]),
@@ -38,10 +39,14 @@ def test_partition_filesets(entries, includes, excludes):
     ("partition", "entries", "includes", "excludes"),
     [
         ("default", [], ["*"], []),
+        ("default", ["*"], ["*"], []),
+        ("default", ["(default)/*"], ["*"], []),
         ("default", ["foo", "-bar"], ["foo"], ["bar"]),
         ("default", ["(default)/foo", "-(default)/bar"], ["foo"], ["bar"]),
         ("default", ["(foo)/foo", "-(foo)/bar"], [], []),
-        ("foo", [], ["*"], []),
+        ("foo", [], [], []),
+        ("foo", ["*"], [], []),
+        ("foo", ["(foo)/*"], ["*"], []),
         ("foo", ["foo", "-bar"], [], []),
         ("foo", ["(default)/foo", "-(default)/bar"], [], []),
         ("foo", ["(foo)/foo", "-(foo)/bar"], ["foo"], ["bar"]),

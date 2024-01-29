@@ -100,10 +100,15 @@ class TestFileFilter(test_part_handler.TestFileFilter):
         [
             (
                 [],
-                {
-                    f"{partition}/{file}"
-                    for partition, file in itertools.product(PARTITIONS, TEST_FILES)
-                },
+                {f"default/{file}" for file in TEST_FILES},
+            ),
+            (
+                ["*"],
+                {f"default/{file}" for file in TEST_FILES},
+            ),
+            (
+                ["(default)/*"],
+                {f"default/{file}" for file in TEST_FILES},
             ),
             (
                 ["-filea"],
@@ -111,18 +116,6 @@ class TestFileFilter(test_part_handler.TestFileFilter):
                     "default/dir1/file1a",
                     "default/dir1/file1b",
                     "default/dir2/dir3/file2a",
-                    "mypart/filea",
-                    "mypart/dir1/file1a",
-                    "mypart/dir1/file1b",
-                    "mypart/dir2/dir3/file2a",
-                    "yourpart/filea",
-                    "yourpart/dir1/file1a",
-                    "yourpart/dir1/file1b",
-                    "yourpart/dir2/dir3/file2a",
-                    "our/special-part/filea",
-                    "our/special-part/dir1/file1a",
-                    "our/special-part/dir1/file1b",
-                    "our/special-part/dir2/dir3/file2a",
                 },
             ),
             (
