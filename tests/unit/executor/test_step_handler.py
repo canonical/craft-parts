@@ -158,20 +158,18 @@ class TestStepHandlerBuiltins:
             partition_script_lines = [
                 f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
                 f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
-                *list(
-                    itertools.chain.from_iterable(
-                        zip(
-                            [
-                                f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/partitions/{p}/stage"'
-                                for p in partitions
-                                if p != "default"
-                            ],
-                            [
-                                f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/partitions/{p}/prime"'
-                                for p in partitions
-                                if p != "default"
-                            ],
-                        )
+                *itertools.chain.from_iterable(
+                    zip(
+                        [
+                            f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/partitions/{p}/stage"'
+                            for p in partitions
+                            if p != "default"
+                        ],
+                        [
+                            f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/partitions/{p}/prime"'
+                            for p in partitions
+                            if p != "default"
+                        ],
                     )
                 ),
             ]
