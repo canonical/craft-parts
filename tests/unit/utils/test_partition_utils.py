@@ -1,3 +1,21 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2024 Canonical Ltd.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from pathlib import Path
+
 import pytest
 from craft_parts import errors
 from craft_parts.utils import partition_utils
@@ -59,3 +77,37 @@ def test_validate_partitions_failure_feature_enabled(partitions, message):
         partition_utils.validate_partition_names(partitions)
 
     assert exc_info.value.brief == message
+
+
+@pytest.mark.parametrize("suffix", ["", "sub/sub/dir"])
+def test_get_partitions_dir_map(new_dir, suffix):
+    """Get a map of partitions directories."""
+    dir_map = partition_utils.get_partition_dir_map(
+        base_dir=new_dir, partitions=["default", "a", "b/c-d"], suffix=suffix
+    )
+
+    assert dir_map == {
+        "default": Path(new_dir) / suffix,
+        "a": Path(new_dir) / "partitions/a" / suffix,
+        "b/c-d": Path(new_dir) / "partitions/b/c-d" / suffix,
+    }
+
+
+@pytest.mark.parametrize("suffix", ["", "sub/sub/dir"])
+def test_get_partitions_dir_map_default_only(new_dir, suffix):
+    """Get a partition map for only the default partition."""
+    dir_map = partition_utils.get_partition_dir_map(
+        base_dir=new_dir, partitions=["default"], suffix=suffix
+    )
+
+    assert dir_map == {"default": Path(new_dir) / suffix}
+
+
+@pytest.mark.parametrize("suffix", ["", "sub/sub/dir"])
+def test_get_partitions_dir_map_no_partitions(new_dir, suffix):
+    """Get simple map when no partitions are provided."""
+    dir_map = partition_utils.get_partition_dir_map(
+        base_dir=new_dir, partitions=None, suffix=suffix
+    )
+
+    assert dir_map == {None: Path(new_dir) / suffix}

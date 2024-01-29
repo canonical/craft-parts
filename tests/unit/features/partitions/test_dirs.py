@@ -16,6 +16,7 @@
 import pytest
 import pytest_check  # type: ignore[import]
 from craft_parts import ProjectDirs
+from craft_parts.utils.partition_utils import get_partition_dir_map
 
 
 @pytest.mark.parametrize("work_dir", [".", "my_work_dir"])
@@ -35,25 +36,13 @@ def test_dirs_partitions(new_dir, work_dir, partitions):
     pytest_check.equal(dirs.partition_dir, dirs.work_dir / "partitions")
     pytest_check.equal(
         dirs.stage_dirs,
-        {
-            "default": dirs.stage_dir,
-            **{
-                partition: dirs.partition_dir  # pyright: ignore [reportOptionalOperand]
-                / f"{partition}/stage"
-                for partition in partitions
-                if partition != "default"
-            },
-        },
+        get_partition_dir_map(
+            base_dir=dirs.work_dir, partitions=partitions, suffix="stage"
+        ),
     )
     pytest_check.equal(
         dirs.prime_dirs,
-        {
-            "default": dirs.prime_dir,
-            **{
-                partition: dirs.partition_dir  # pyright: ignore [reportOptionalOperand]
-                / f"{partition}/prime"
-                for partition in partitions
-                if partition != "default"
-            },
-        },
+        get_partition_dir_map(
+            base_dir=dirs.work_dir, partitions=partitions, suffix="prime"
+        ),
     )

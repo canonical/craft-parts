@@ -20,6 +20,7 @@ import pytest
 import pytest_check  # type: ignore[import]
 from craft_parts import ProjectDirs, errors, parts
 from craft_parts.parts import Part
+from craft_parts.utils.partition_utils import get_partition_dir_map
 
 from tests.unit import test_parts
 
@@ -55,14 +56,9 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.prime_dir, new_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
-            {
-                "default": new_dir / "parts/foo/install",
-                **{
-                    partition: new_dir / f"partitions/{partition}/parts/foo/install"
-                    for partition in partitions
-                    if partition != "default"
-                },
-            },
+            get_partition_dir_map(
+                base_dir=new_dir, partitions=partitions, suffix="parts/foo/install"
+            ),
         )
 
     def test_part_work_dir(self, new_dir, partitions):
@@ -92,16 +88,11 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.prime_dir, new_dir / work_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
-            {
-                "default": new_dir / work_dir / "parts/foo/install",
-                **{
-                    partition: new_dir
-                    / work_dir
-                    / f"partitions/{partition}/parts/foo/install"
-                    for partition in partitions
-                    if partition != "default"
-                },
-            },
+            get_partition_dir_map(
+                base_dir=new_dir / work_dir,
+                partitions=partitions,
+                suffix="parts/foo/install",
+            ),
         )
 
 

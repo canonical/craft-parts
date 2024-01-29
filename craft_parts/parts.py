@@ -31,6 +31,7 @@ from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 from craft_parts.utils.formatting_utils import humanize_list
+from craft_parts.utils.partition_utils import get_partition_dir_map
 
 
 class PartSpec(BaseModel):
@@ -277,20 +278,13 @@ class Part:
 
         With partitions disabled, the only partition name is ``None``
         """
-        if self._partitions and self.dirs.partition_dir:
-            install_dirs: Dict[Optional[str], Path] = {"default": self.part_install_dir}
-            install_dirs.update(
-                {
-                    partition: self.dirs.partition_dir
-                    / f"{partition}/parts/{self.name}/install"
-                    for partition in self._partitions
-                    if partition != "default"
-                }
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"parts/{self.name}/install",
             )
-        else:
-            install_dirs = {None: self.part_install_dir}
-
-        return MappingProxyType(install_dirs)
+        )
 
     @property
     def part_state_dir(self) -> Path:
