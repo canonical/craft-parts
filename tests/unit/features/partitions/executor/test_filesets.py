@@ -118,12 +118,13 @@ def test_fileset_only_excludes(partition, expected_excludes):
     assert includes == expected_includes
     assert excludes == expected_excludes
 
+
 @pytest.mark.parametrize(
     ("abs_entry", "abs_filepath"),
     [
         ("/abs/include", "/abs/include"),
         ("-/abs/exclude", "/abs/exclude"),
-    ]
+    ],
 )
 def test_filesets_excludes_without_relative_paths(abs_entry, abs_filepath):
     with pytest.raises(FilesetError) as raised:
