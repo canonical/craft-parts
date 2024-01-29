@@ -71,6 +71,20 @@ def test_remove(entries, remove, expected):
     assert fs.entries == expected
 
 
+@pytest.mark.xfail(strict=True, reason="combine function is not partition-aware")
+@pytest.mark.parametrize(
+    ("fs1", "fs2", "result"),
+    [
+        (["foo"], ["bar", "*"], ["foo", "bar"]),
+    ],
+)
+def test_combine(fs1, fs2, result):
+    stage_set = filesets.Fileset(fs1)
+    prime_set = filesets.Fileset(fs2)
+    prime_set.combine(stage_set)
+    assert sorted(prime_set.entries) == sorted(result)
+
+
 @pytest.mark.parametrize(
     ("partition", "expected_includes"),
     [
