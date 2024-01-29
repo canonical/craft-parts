@@ -18,6 +18,22 @@ from craft_parts.executor import filesets
 
 
 @pytest.mark.parametrize(
+    ("entries", "remove", "expected"),
+    [
+        (["foo", "bar"], "bar", ["(default)/foo"]),
+        (["(default)/foo", "(default)/bar"], "bar", ["(default)/foo"]),
+        (["foo", "(default)/bar"], "(default)/bar", ["(default)/foo"]),
+        (["foo", "(mypart)/foo"], "(mypart)/foo", ["(default)/foo"]),
+    ]
+)
+def test_remove(entries, remove, expected):
+    """Remove an entry from a fileset."""
+    fs = filesets.Fileset(entries)
+    fs.remove(remove)
+    assert fs.entries == expected
+
+
+@pytest.mark.parametrize(
     ("entries", "includes", "excludes"),
     [
         ([], [], []),

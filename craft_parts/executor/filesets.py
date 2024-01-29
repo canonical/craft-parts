@@ -72,7 +72,7 @@ class Fileset:
 
         :param item: The item to remove.
         """
-        self._list.remove(item)
+        self._list.remove(_normalize_entry(item))
 
     def combine(self, other: "Fileset") -> None:
         """Combine the entries in this fileset with entries from another fileset.
