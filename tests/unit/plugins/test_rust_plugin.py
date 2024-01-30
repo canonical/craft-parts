@@ -20,7 +20,7 @@ import pytest_subprocess
 from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.rust_plugin import GET_RUSTUP_COMMAND_TEMPLATE, RustPlugin
+from craft_parts.plugins.rust_plugin import RustPlugin
 from pydantic import ValidationError
 
 
@@ -32,10 +32,13 @@ def part_info(new_dir):
     )
 
 
-def test_get_build_snaps(part_info):
+def test_get_build_snaps(fake_process: pytest_subprocess.FakeProcess, part_info):
+    fake_process.register(["rustc", "--version"], stdout="Not installed")
+    fake_process.register(["cargo", "--version"], stdout="Not installed")
+
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    assert plugin.get_build_snaps() == set()
+    assert plugin.get_build_snaps() == {"rustup"}
 
 
 def test_get_build_packages(part_info):
@@ -62,12 +65,9 @@ def test_get_build_commands_default(part_info):
         {"source": ".", "rust-channel": "stable"}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = lambda: False
 
     commands = plugin.get_build_commands()
-    assert plugin.get_pull_commands()[0] == GET_RUSTUP_COMMAND_TEMPLATE.format(
-        channel="stable"
-    )
+    assert plugin.get_pull_commands()[0] == "rustup update stable"
     assert 'cargo install -f --locked --path "."' in commands[0]
 
 
@@ -79,7 +79,6 @@ def test_get_build_commands_no_install(part_info):
         {"source": ".", "rust-channel": "none"}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = _check_rustup
 
     commands = plugin.get_build_commands()
     assert len(commands) == 1
@@ -92,7 +91,6 @@ def test_get_build_commands_use_lto(part_info):
         {"source": ".", "rust-use-global-lto": True, "rust-channel": "stable"}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = lambda: True
 
     commands = plugin.get_build_commands()
     assert len(commands) == 1
@@ -106,7 +104,6 @@ def test_get_build_commands_multiple_crates(part_info):
         {"source": ".", "rust-path": ["a", "b", "c"], "rust-channel": "stable"}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = lambda: True
 
     commands = plugin.get_build_commands()
     assert len(commands) == 3
@@ -121,7 +118,6 @@ def test_get_build_commands_multiple_features(part_info):
         {"source": ".", "rust-features": ["ft-a", "ft-b"], "rust-channel": "stable"}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = lambda: True
 
     commands = plugin.get_build_commands()
     assert len(commands) == 1
@@ -148,10 +144,9 @@ def test_get_build_commands_different_channels(part_info, value):
         {"source": ".", "rust-channel": value}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = lambda: False
     commands = plugin.get_build_commands()
     assert len(commands) == 1
-    assert f"--default-toolchain {value}" in plugin.get_pull_commands()[0]
+    assert value in plugin.get_pull_commands()[0]
 
 
 @pytest.mark.parametrize(
@@ -198,7 +193,7 @@ def test_error_on_conflict_config(part_info):
         pytest.param(
             "You don't have rust installed!",
             "You don't have rust installed!",
-            [GET_RUSTUP_COMMAND_TEMPLATE.format(channel="stable")],
+            ["rustup update stable", "rustup default stable"],
             id="not-installed",
         ),
     ],
@@ -217,7 +212,6 @@ def test_get_pull_commands_compat_no_exceptions(
         {"source": ".", "after": ["rust-deps"]}
     )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    plugin._check_rustup = lambda: False  # type: ignore[method-assign]
 
     commands = plugin.get_build_commands()
     assert plugin.get_pull_commands() == pull_commands
@@ -246,7 +240,8 @@ def test_get_pull_commands_compat_with_exceptions(
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_pull_commands() == [
-        GET_RUSTUP_COMMAND_TEMPLATE.format(channel="stable")
+        "rustup update stable",
+        "rustup default stable",
     ]
 
 
