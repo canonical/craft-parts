@@ -54,10 +54,10 @@ class PartSpec(BaseModel):
     build_packages: List[str] = []
     build_environment: List[Dict[str, str]] = []
     build_attributes: List[str] = []
-    organize_files: Dict[str, str] = Field({}, alias="organize")
-    overlay_files: List[str] = Field(["*"], alias="overlay")
-    stage_files: List[str] = Field(["*"], alias="stage")
-    prime_files: List[str] = Field(["*"], alias="prime")
+    organize_files: Dict[str, str] = Field(default_factory=lambda: {}, alias="organize")
+    overlay_files: List[str] = Field(default_factory=lambda: ["*"], alias="overlay")
+    stage_files: List[str] = Field(default_factory=lambda: ["*"], alias="stage")
+    prime_files: List[str] = Field(default_factory=lambda: ["*"], alias="prime")
     override_pull: Optional[str] = None
     overlay_script: Optional[str] = None
     override_build: Optional[str] = None
