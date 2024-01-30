@@ -367,7 +367,9 @@ class Ubuntu(BaseRepository):
     @_apt_cache_wrapper
     def configure(cls, application_package_name: str) -> None:
         """Set up apt options and directories."""
-        AptCache.configure_apt(application_package_name)
+        AptCache.configure_apt(  # pyright: ignore[reportPossiblyUnboundVariable]
+            application_package_name
+        )
 
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
@@ -401,7 +403,9 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @functools.lru_cache(maxsize=1)
-    def refresh_packages_list(cls) -> None:
+    def refresh_packages_list(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls,
+    ) -> None:
         """Refresh the list of packages available in the repository."""
         # Return early when testing.
         if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
@@ -427,7 +431,7 @@ class Ubuntu(BaseRepository):
 
         :return True if _all_ packages are installed (with correct versions).
         """
-        with AptCache() as apt_cache:
+        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             for package in package_names:
                 pkg_name, pkg_version = get_pkg_name_parts(package)
                 installed_version = apt_cache.get_installed_version(
@@ -446,7 +450,7 @@ class Ubuntu(BaseRepository):
     def _get_installed_package_versions(cls, package_names: Sequence[str]) -> List[str]:
         packages: List[str] = []
 
-        with AptCache() as apt_cache:
+        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             for package_name in package_names:
                 package_version = apt_cache.get_installed_version(
                     package_name, resolve_virtual_packages=True
@@ -468,7 +472,7 @@ class Ubuntu(BaseRepository):
     def _get_packages_marked_for_installation(
         cls, package_names: List[str]
     ) -> List[Tuple[str, str]]:
-        with AptCache() as apt_cache:
+        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             try:
                 apt_cache.mark_packages(set(package_names))
             except errors.PackageNotFound as error:
@@ -643,7 +647,9 @@ class Ubuntu(BaseRepository):
         # Update the package cache
         cls.refresh_packages_list()
 
-        with AptCache(stage_cache=stage_cache_dir, stage_cache_arch=arch) as apt_cache:
+        with AptCache(  # pyright: ignore[reportPossiblyUnboundVariable]
+            stage_cache=stage_cache_dir, stage_cache_arch=arch
+        ) as apt_cache:
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
 
@@ -743,14 +749,14 @@ class Ubuntu(BaseRepository):
     @_apt_cache_wrapper
     def is_package_installed(cls, package_name: str) -> bool:
         """Inform if a package is installed on the host system."""
-        with AptCache() as apt_cache:
+        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             return apt_cache.get_installed_version(package_name) is not None
 
     @classmethod
     @_apt_cache_wrapper
     def get_installed_packages(cls) -> List[str]:
         """Obtain a list of the installed packages and their versions."""
-        with AptCache() as apt_cache:
+        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             return [
                 f"{pkg_name}={pkg_version}"
                 for pkg_name, pkg_version in apt_cache.get_installed_packages().items()
