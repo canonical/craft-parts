@@ -98,7 +98,7 @@ test_requires = [
     "pytest-mock",
     "pytest-subprocess",
     "requests-mock",
-    "ruff==0.1.6",
+    "ruff==0.1.14",
     "tox",
     "yamllint==1.32.0",
 ]
