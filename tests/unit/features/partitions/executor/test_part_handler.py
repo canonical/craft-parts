@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
 import pathlib
-from typing import Iterator
+from typing import Iterator, Set
 
 import pytest
 from craft_parts import Action, Step
@@ -36,7 +36,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
 class TestPartUpdateHandler(test_part_handler.TestPartUpdateHandler):
     """Verify step update processing with partitions enabled."""
 
-    _update_build_path = pathlib.Path("parts/foo/install/default/foo.txt")
+    _update_build_path = pathlib.Path("parts/foo/install/foo.txt")
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -47,9 +47,9 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
         ("step", "test_dir", "state_file"),
         [
             (Step.PULL, "parts/foo/src", "pull"),
-            (Step.BUILD, "parts/foo/install/default", "build"),
-            (Step.STAGE, "stage/default", "stage"),
-            (Step.PRIME, "prime/default", "prime"),
+            (Step.BUILD, "parts/foo/install", "build"),
+            (Step.STAGE, "stage", "stage"),
+            (Step.PRIME, "prime", "prime"),
         ],
     )
     def test_clean_step(self, mocker, step, test_dir, state_file):
@@ -82,19 +82,15 @@ class TestFileFilter(test_part_handler.TestFileFilter):
     """File filter test cases."""
 
     _destdir = pathlib.Path("destdir")
-    _default_destdir = pathlib.Path("destdir/default")
 
-    def _iter_files(self) -> Iterator[str]:
+    def _iter_files(self, partitions: Set[str]) -> Iterator[str]:
         """Iterate over the partitions and files to test."""
-        for partition, file in itertools.product(PARTITIONS, TEST_FILES):
+        for partition, file in itertools.product(partitions, TEST_FILES):
             yield f"{partition}/{file}"
 
     @pytest.fixture()
-    def make_files(
-        self,
-        new_dir,
-    ):
-        for file in self._iter_files():
+    def make_files(self, new_dir, partitions):
+        for file in self._iter_files(partitions):
             path = self._destdir / file
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
@@ -104,10 +100,15 @@ class TestFileFilter(test_part_handler.TestFileFilter):
         [
             (
                 [],
-                {
-                    f"{partition}/{file}"
-                    for partition, file in itertools.product(PARTITIONS, TEST_FILES)
-                },
+                {f"default/{file}" for file in TEST_FILES},
+            ),
+            (
+                ["*"],
+                {f"default/{file}" for file in TEST_FILES},
+            ),
+            (
+                ["(default)/*"],
+                {f"default/{file}" for file in TEST_FILES},
             ),
             (
                 ["-filea"],
@@ -115,18 +116,6 @@ class TestFileFilter(test_part_handler.TestFileFilter):
                     "default/dir1/file1a",
                     "default/dir1/file1b",
                     "default/dir2/dir3/file2a",
-                    "mypart/filea",
-                    "mypart/dir1/file1a",
-                    "mypart/dir1/file1b",
-                    "mypart/dir2/dir3/file2a",
-                    "yourpart/filea",
-                    "yourpart/dir1/file1a",
-                    "yourpart/dir1/file1b",
-                    "yourpart/dir2/dir3/file2a",
-                    "our/special-part/filea",
-                    "our/special-part/dir1/file1a",
-                    "our/special-part/dir1/file1b",
-                    "our/special-part/dir2/dir3/file2a",
                 },
             ),
             (
@@ -148,16 +137,19 @@ class TestFileFilter(test_part_handler.TestFileFilter):
         ],
     )
     def test_apply_partition_aware_filter(
-        self, make_files, new_dir, survivors, filters
+        self, make_files, new_dir, survivors, filters, partitions
     ):
         fileset = filesets.Fileset(filters)
 
-        files, dirs = filesets.migratable_filesets(fileset, str(self._destdir))
-        part_handler._apply_file_filter(
-            filter_files=files, filter_dirs=dirs, destdir=self._destdir
-        )
+        for partition in partitions:
+            files, dirs = filesets.migratable_filesets(
+                fileset, str(self._destdir / partition), partition
+            )
+            part_handler._apply_file_filter(
+                filter_files=files, filter_dirs=dirs, destdir=self._destdir / partition
+            )
 
-        for file in self._iter_files():
+        for file in self._iter_files(partitions):
             assert (self._destdir / file).exists() == (file in survivors)
 
 

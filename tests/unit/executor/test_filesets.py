@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -98,7 +98,7 @@ def test_fileset_combine_conflicts():
 def test_fileset_only_includes():
     stage_set = Fileset(["opt/something", "usr/bin"])
 
-    include, exclude = filesets._get_file_list(stage_set)
+    include, exclude = filesets._get_file_list(stage_set, partition=None)
 
     assert include == ["opt/something", "usr/bin"]
     assert exclude == []
@@ -107,7 +107,7 @@ def test_fileset_only_includes():
 def test_fileset_only_excludes():
     stage_set = Fileset(["-etc", "-usr/lib/*.a"])
 
-    include, exclude = filesets._get_file_list(stage_set)
+    include, exclude = filesets._get_file_list(stage_set, partition=None)
 
     assert include == ["*"]
     assert exclude == ["etc", "usr/lib/*.a"]
@@ -115,14 +115,18 @@ def test_fileset_only_excludes():
 
 def test_filesets_includes_without_relative_paths():
     with pytest.raises(errors.FilesetError) as raised:
-        filesets._get_file_list(Fileset(["rel", "/abs/include"], name="test"))
+        filesets._get_file_list(
+            Fileset(["rel", "/abs/include"], name="test"), partition=None
+        )
     assert raised.value.name == "test"
     assert raised.value.message == "path '/abs/include' must be relative."
 
 
 def test_filesets_excludes_without_relative_paths():
     with pytest.raises(errors.FilesetError) as raised:
-        filesets._get_file_list(Fileset(["rel", "-/abs/exclude"], name="test"))
+        filesets._get_file_list(
+            Fileset(["rel", "-/abs/exclude"], name="test"), partition=None
+        )
     assert raised.value.name == "test"
     assert raised.value.message == "path '/abs/exclude' must be relative."
 

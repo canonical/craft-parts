@@ -38,6 +38,8 @@ def organize_files(
 ) -> None:
     """Rearrange files for part staging.
 
+    If partitions are enabled, source filepaths must be in the default partition.
+
     :param part_name: The name of the part to organize files for.
     :param mapping: A mapping of source filepaths to destination filepaths.
     :param base_dir: Directory containing files to organize.
@@ -47,21 +49,42 @@ def organize_files(
 
     :raises FileOrganizeError: If the destination file already exists or multiple files
         are organized to the same destination.
+    :raises FileOrganizeError: If partitions are enabled and the source file is not from
+        the default partition.
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
-        src = os.path.join(base_dir, path_utils.get_partitioned_path(key))
+        src_partition, src_inner_path = path_utils.get_partition_and_path(key)
+
+        if src_partition and src_partition != "default":
+            raise errors.FileOrganizeError(
+                part_name=part_name,
+                message=(
+                    f"Cannot organize files from {src_partition!r} partition. "
+                    "Files can only be organized from the 'default' partition"
+                ),
+            )
+
+        src = os.path.join(base_dir, src_inner_path)
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        partition, inner_path = path_utils.get_partition_and_path(
+        dst_partition, dst_inner_path = path_utils.get_partition_and_path(
             mapping[key].lstrip("/")
         )
-        if partition:
-            dst = os.path.join(base_dir, partition, inner_path)
-            partition_path = os.path.join(f"({partition})", inner_path)
+
+        if dst_partition and dst_partition != "default":
+            dst = os.path.join(
+                "partitions",
+                dst_partition,
+                "parts",
+                part_name,
+                "install",
+                dst_inner_path,
+            )
+            partition_path = dst
         else:
-            dst = os.path.join(base_dir, inner_path)
-            partition_path = str(inner_path)
+            dst = os.path.join(base_dir, dst_inner_path)
+            partition_path = str(dst_inner_path)
 
         sources = iglob(src, recursive=True)
 

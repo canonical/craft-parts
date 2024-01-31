@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -197,36 +197,8 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
 
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning(test_lifecycle.TestCleaning):
+    """Run all cleaning tests with partitions and overlays enabled."""
+
     @pytest.fixture()
     def state_files(self):
         return ["build", "layer_hash", "overlay", "prime", "pull", "stage"]
-
-    @pytest.fixture()
-    def foo_files(self):
-        return [
-            Path("parts/foo/src/foo.txt"),
-            Path("parts/foo/install/default/foo.txt"),
-            Path("stage/default/foo.txt"),
-            Path("prime/default/foo.txt"),
-        ]
-
-    @pytest.fixture()
-    def bar_files(self):
-        return [
-            Path("parts/bar/src/bar.txt"),
-            Path("parts/bar/install/default/bar.txt"),
-            Path("stage/default/bar.txt"),
-            Path("prime/default/bar.txt"),
-        ]
-
-    @pytest.mark.parametrize(
-        ("step", "test_dir", "state_file"),
-        [
-            (Step.PULL, "parts/foo/src", "pull"),
-            (Step.BUILD, "parts/foo/install/default", "build"),
-            (Step.STAGE, "stage/default", "stage"),
-            (Step.PRIME, "prime/default", "prime"),
-        ],
-    )
-    def test_clean_step(self, step, test_dir, state_file):
-        super().test_clean_step(step, test_dir, state_file)

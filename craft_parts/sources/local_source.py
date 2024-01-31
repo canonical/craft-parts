@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -56,6 +56,8 @@ class LocalSource(SourceHandler):
             self._ignore_patterns.append(self._dirs.parts_dir.name)
             self._ignore_patterns.append(self._dirs.stage_dir.name)
             self._ignore_patterns.append(self._dirs.prime_dir.name)
+            if self._dirs.partition_dir:
+                self._ignore_patterns.append(self._dirs.partition_dir.name)
         else:
             # otherwise check if work_dir inside source dir
             with contextlib.suppress(ValueError):

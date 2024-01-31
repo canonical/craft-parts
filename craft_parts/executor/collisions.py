@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional
 from craft_parts import errors, permissions
 from craft_parts.executor import filesets
 from craft_parts.executor.filesets import Fileset
+from craft_parts.features import Features
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
 
@@ -34,6 +35,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
     :raises PartConflictError: If conflicts are found.
     """
     all_parts_files: Dict[str, Dict[str, Any]] = {}
+    partition = "default" if Features().enable_partitions else None
     for part in part_list:
         stage_files = part.spec.stage_files
         if not stage_files:
@@ -43,7 +45,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         stage_fileset = Fileset(stage_files, name="stage")
         srcdir = str(part.part_install_dir)
         part_files, part_directories = filesets.migratable_filesets(
-            stage_fileset, srcdir
+            stage_fileset, srcdir, partition
         )
         part_contents = part_files | part_directories
 

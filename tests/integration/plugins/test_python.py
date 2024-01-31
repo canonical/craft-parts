@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -344,7 +344,7 @@ def test_find_payload_python_good_version(new_dir, partitions):
 
     real_python = Path(sys.executable).resolve()
     real_basename = real_python.name
-    install_dir = Path("parts/foo/install", "default" if partitions else ".")
+    install_dir = Path("parts/foo/install")
 
     # Copy the "real" binary into the payload before calling the plugin's build.
     parts_yaml = PART_WITH_PAYLOAD_PYTHON.format(

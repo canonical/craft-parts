@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,7 @@
 
 """Utility functions for paths."""
 import re
-from pathlib import PurePath, PurePosixPath
+from pathlib import PurePath
 from typing import NamedTuple, Optional, Tuple, TypeVar, Union
 
 from craft_parts.errors import FeatureError
@@ -44,31 +44,6 @@ def _has_partition(path: Union[PurePath, str]) -> bool:
         HAS_PARTITION_REGEX.match(str(path))
         or HAS_NAMESPACED_PARTITION_REGEX.match(str(path))
     )
-
-
-def get_partitioned_path(path: FlexiblePath) -> FlexiblePath:
-    """Get a filepath compatible with the partitions feature.
-
-    If the filepath begins with a partition, then the parentheses are stripped from the
-    the partition. For example, `(default)/file` is converted to `default/file`.
-
-    If the filepath does not begin with a partition, the `default` partition is
-    prepended. For example, `file` is converted to `default/file`.
-
-    :param path: The filepath to modify.
-
-    :returns: A filepath that is compatible with the partitions feature.
-    """
-    if not Features().enable_partitions:
-        return path
-
-    if str(path) == "*":
-        return path
-
-    partition, inner_path = get_partition_and_path(path)
-
-    new_filepath = PurePosixPath(partition or ".", str(inner_path))
-    return path.__class__(new_filepath)
 
 
 def get_partition_and_path(path: FlexiblePath) -> PartitionPathPair:

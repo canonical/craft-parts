@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
 
 import re
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
@@ -30,6 +31,7 @@ from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 from craft_parts.utils.formatting_utils import humanize_list
+from craft_parts.utils.partition_utils import get_partition_dir_map
 
 
 class PartSpec(BaseModel):
@@ -266,28 +268,9 @@ class Part:
         return self.part_build_dir
 
     @property
-    def part_base_install_dir(self) -> Path:
-        """The base of the part's install directories.
-
-        With partitions disabled, this is the install directory.
-        With partitions enabled, this is the directory containing the partitions.
-
-        A full path to an install location can always be found with:
-        ``part.part_base_install_dir / get_partition_compatible_filepath(location)``
-        """
-        return self._part_dir / "install"
-
-    @property
     def part_install_dir(self) -> Path:
-        """Return the subdirectory to install the part build artifacts.
-
-        With partitions disabled, this is the install directory and is the same
-        as ``part_base_install_dir``
-        With partitions enabled, this is the install directory for the default partition
-        """
-        if self._partitions is None:
-            return self.part_base_install_dir
-        return self.part_base_install_dir / "default"
+        """Return the subdirectory to install the part build artifacts."""
+        return self._part_dir / "install"
 
     @property
     def part_install_dirs(self) -> Mapping[Optional[str], Path]:
@@ -295,12 +278,13 @@ class Part:
 
         With partitions disabled, the only partition name is ``None``
         """
-        if self._partitions is None:
-            return {None: self.part_base_install_dir}
-        return {
-            partition: self.part_base_install_dir / partition
-            for partition in self._partitions
-        }
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"parts/{self.name}/install",
+            )
+        )
 
     @property
     def part_state_dir(self) -> Path:
@@ -338,14 +322,6 @@ class Part:
         return self.dirs.overlay_dir
 
     @property
-    def base_stage_dir(self) -> Path:
-        """Return the base staging area.
-
-        If partitions are enabled, this is the directory containing those partitions.
-        """
-        return self.dirs.base_stage_dir
-
-    @property
     def stage_dir(self) -> Path:
         """Return the staging area containing the installed files from all parts.
 
@@ -360,14 +336,6 @@ class Part:
         If partitions are disabled, the only key is ``None``.
         """
         return self.dirs.stage_dirs
-
-    @property
-    def base_prime_dir(self) -> Path:
-        """Return the primed tree containing the artifacts to deploy.
-
-        If partitions are enabled, this is the directory containing those partitions.
-        """
-        return self.dirs.base_prime_dir
 
     @property
     def prime_dir(self) -> Path:
