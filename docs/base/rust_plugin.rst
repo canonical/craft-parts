@@ -31,7 +31,7 @@ rust-features
 Features used to build optional dependencies.
 This is equivalent to the ``--features`` option in Cargo.
 
-You can also use ``["*"]`` to select all the feautures available in the project.
+You can also use ``["*"]`` to select all the features available in the project.
 
 .. note::
   This option does not override any default features
