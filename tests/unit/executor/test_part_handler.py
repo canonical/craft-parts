@@ -398,6 +398,59 @@ class TestPartHandling:
         assert output_path.read_text() == "hello\n"
         assert error_path.read_text() == "+ echo hello\n+ echo goodbye\ngoodbye\n"
 
+    # pylint: disable=too-many-arguments
+    @pytest.mark.parametrize(
+        ("step", "scriptlet"),
+        [
+            (Step.PULL, "override-pull"),
+            (Step.BUILD, "override-build"),
+            (Step.STAGE, "override-stage"),
+            (Step.PRIME, "override-prime"),
+        ],
+    )
+    def test_run_step_override_return_contents(
+        self, new_dir, partitions, mocker, capfd, step, scriptlet
+    ):
+        """Override scriptlets should still return all files list."""
+        root = Path().absolute()
+        dir1 = root / "dir1"
+        dir1.mkdir()
+        dir2 = root / "dir2"
+        dir2.mkdir()
+        file1 = root / "file1"
+        file1.touch()
+        file2 = dir1 / "file2"
+        file2.touch()
+        file3 = dir2 / "file3"
+        file3.touch()
+
+        run_builtin_mock = mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler.run_builtin"
+        )
+        p1 = Part(
+            "p1", {"plugin": "nil", scriptlet: "echo hello"}, partitions=partitions
+        )
+        part_info = PartInfo(self._project_info, p1)
+        step_info = StepInfo(part_info, step=step)
+        ovmgr = OverlayManager(
+            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        contents = handler._run_step(
+            step_info=step_info,
+            scriptlet_name=scriptlet,
+            work_dir=Path(),
+            stdout=None,
+            stderr=None,
+        )
+
+        assert contents.files == {str(file1), str(file2), str(file3)}
+        assert contents.dirs == {str(dir1), str(dir2)}
+        assert run_builtin_mock.mock_calls == []
+
 
 @pytest.mark.usefixtures("new_dir")
 class TestPartUpdateHandler:
