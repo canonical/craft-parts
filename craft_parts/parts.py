@@ -101,7 +101,7 @@ class PartSpec(BaseModel):
 
         # Detect a mixture of .deb packages and chisel slices.
         stage_packages = values.get("stage-packages", [])
-        has_slices = part_has_slices(values)
+        has_slices = any(name for name in stage_packages if is_slice(name))
         has_packages = any(name for name in stage_packages if not is_slice(name))
 
         if has_slices and has_packages:
@@ -165,6 +165,15 @@ class PartSpec(BaseModel):
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
         )
+
+    @property
+    def has_slices(self) -> bool:
+        """Whether the part has slices in its stage-packages.
+
+        :param data: The part data to query.
+        """
+        stage_packages = self.stage_packages or []
+        return any(name for name in stage_packages if is_slice(name))
 
 
 # pylint: disable=too-many-public-methods
@@ -637,15 +646,6 @@ def part_has_overlay(data: Dict[str, Any]) -> bool:
     spec = _get_part_spec(data)
 
     return spec.has_overlay
-
-
-def part_has_slices(data: Dict[str, Any]) -> bool:
-    """Whether the part described by ``data`` has slices in its stage-packages.
-
-    :param data: The part data to query.
-    """
-    stage_packages = data.get("stage-packages", [])
-    return any(name for name in stage_packages if is_slice(name))
 
 
 def is_slice(name: str) -> bool:

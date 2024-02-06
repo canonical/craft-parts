@@ -339,6 +339,18 @@ class TestPartData:
         p = Part("foo", {}, partitions=partitions)
         assert p.has_overlay is False
 
+    @pytest.mark.parametrize(
+        ("tc_spec", "tc_result"),
+        [
+            ({}, False),
+            ({"stage-packages": ["libc6_libs"]}, True),
+            ({"stage-packages": ["python3"]}, False),
+        ],
+    )
+    def test_part_has_slices(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
+        assert p.spec.has_slices == tc_result
+
 
 class TestPartOrdering:
     """Test part ordering.
