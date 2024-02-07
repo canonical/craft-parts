@@ -815,15 +815,18 @@ class PartHandler:
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
         _remove(self._part.part_build_dir)
-        _remove(self._part.part_install_dir)
+        for install_dir in self._part.part_install_dirs.values():
+            _remove(install_dir)
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
-        self._clean_shared(Step.STAGE, shared_dir=self._part.stage_dir)
+        for stage_dir in self._part.stage_dirs.values():
+            self._clean_shared(Step.STAGE, shared_dir=stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
-        self._clean_shared(Step.PRIME, shared_dir=self._part.prime_dir)
+        for prime_dir in self._part.prime_dirs.values():
+            self._clean_shared(Step.PRIME, shared_dir=prime_dir)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
