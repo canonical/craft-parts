@@ -57,7 +57,8 @@ class _RunHandler(Protocol):
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> StepState: ...
+    ) -> StepState:
+        ...
 
 
 class _UpdateHandler(Protocol):
@@ -67,7 +68,8 @@ class _UpdateHandler(Protocol):
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> None: ...
+    ) -> None:
+        ...
 
 
 class PartHandler:

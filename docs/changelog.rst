@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.26.2 (2024-02-07)
+-------------------
+
+- Fix default setting in aliased part fields
+- Fix proxy setting in ant plugin
+
 1.26.1 (2023-12-13)
 -------------------
 
