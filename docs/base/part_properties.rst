@@ -186,7 +186,8 @@ prime
 
 **Step:** prime
 
-The files to copy from the staging area to the priming area.
+The files to copy from the staging area to the priming area,
+see :ref:`filesets_specifying_paths`.
 
 .. _part-properties-sources:
 .. _source:
@@ -293,11 +294,12 @@ found in the :mod:`craft_parts.sources` file.
 
 stage
 -----
-**Type:** array of unique strings with at least item
+**Type:** array of unique strings with at least 1 item
 
 **Step:** stage
 
-The files to copy from the building area to the staging area.
+The files to copy from the building area to the staging area,
+see :ref:`filesets_specifying_paths`.
 
 .. _stage_packages:
 
