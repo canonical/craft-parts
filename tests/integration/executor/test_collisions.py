@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-import pytest
 from typing import Any, Dict
 
+import pytest
 from craft_parts import LifecycleManager, Step
 from craft_parts.errors import PartFilesConflict
 

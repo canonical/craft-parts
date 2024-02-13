@@ -28,14 +28,52 @@ from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
 
 
-def check_for_stage_collisions(part_list: List[Part]) -> None:
+def check_for_stage_collisions(
+    part_list: List[Part], partitions: Optional[List[str]]
+) -> None:
     """Verify whether parts have conflicting files to stage.
 
-    :param part_list: The list of parts to be tested.
+    If the partitions feature is enabled, then check if parts have conflicting files to
+        stage for each partition.
+    If the partitions feature is disabled, only check for conflicts in the default
+        stage directory.
+
+    :param part_list: The list of parts to check.
+    :param partitions: An optional list of partition names.
+
+    :raises PartConflictError: If conflicts are found.
+    :raises FeatureError: If partitions are specified but the feature is not enabled or
+        if partitions are not specified and the feature is enabled.
+    """
+    if partitions and not Features().enable_partitions:
+        raise errors.FeatureError(
+            "Partitions specified but partitions feature is not enabled."
+        )
+
+    if partitions is None and Features().enable_partitions:
+        raise errors.FeatureError(
+            "Partitions feature is enabled but no partitions specified."
+        )
+
+    if partitions:
+        for partition in partitions:
+            _check_for_stage_collisions_per_stage_directory(part_list, partition)
+    else:
+        _check_for_stage_collisions_per_stage_directory(part_list, None)
+
+
+def _check_for_stage_collisions_per_stage_directory(
+    part_list: List[Part], partition: Optional[str]
+) -> None:
+    """Verify whether parts have conflicting files for a single stage directory.
+
+    :param part_list: The list of parts to check.
+    :param partition: If the partitions feature is enabled, then the name of the
+        partition containing the stage directory to check.
+
     :raises PartConflictError: If conflicts are found.
     """
     all_parts_files: Dict[str, Dict[str, Any]] = {}
-    partition = "default" if Features().enable_partitions else None
     for part in part_list:
         stage_files = part.spec.stage_files
         if not stage_files:
@@ -43,7 +81,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
         # Gather our own files up.
         stage_fileset = Fileset(stage_files, name="stage")
-        srcdir = str(part.part_install_dir)
+        srcdir = str(part.part_install_dirs[partition])
         part_files, part_directories = filesets.migratable_filesets(
             stage_fileset, srcdir, partition
         )
@@ -56,7 +94,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
             conflict_files = []
             for file in common:
-                this = os.path.join(part.part_install_dir, file)
+                this = os.path.join(part.part_install_dirs[partition], file)
                 other = os.path.join(other_part_files["installdir"], file)
 
                 permissions_this = permissions.filter_permissions(
@@ -80,7 +118,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         # And add our files to the list.
         all_parts_files[part.name] = {
             "files": part_contents,
-            "installdir": part.part_install_dir,
+            "installdir": part.part_install_dirs[partition],
             "part": part,
         }
 

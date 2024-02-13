@@ -133,45 +133,45 @@ class TestCollisions:
             (install_dir / "a").symlink_to("bar")
         return part
 
-    def test_no_collisions(self, part1, part2):
+    def test_no_collisions(self, part1, part2, partitions):
         """No exception is expected as there are no collisions."""
-        check_for_stage_collisions([part1, part2])
+        check_for_stage_collisions([part1, part2], partitions)
 
-    def test_no_collisions_between_two_parts_pc_files(self, part0, part1):
+    def test_no_collisions_between_two_parts_pc_files(self, part0, part1, partitions):
         """Pkg-config files have different prefixes (this is ok)."""
-        check_for_stage_collisions([part0, part1])
+        check_for_stage_collisions([part0, part1], partitions)
 
-    def test_collisions_between_two_parts(self, part1, part2, part3):
+    def test_collisions_between_two_parts(self, part1, part2, part3, partitions):
         """Files have different contents."""
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([part1, part2, part3])
+            check_for_stage_collisions([part1, part2, part3], partitions)
 
         assert raised.value.other_part_name == "part2"
         assert raised.value.part_name == "part3"
         assert sorted(raised.value.conflicting_files) == ["1", "a/2"]
 
-    def test_collisions_checks_symlinks(self, part5, part6):
+    def test_collisions_checks_symlinks(self, part5, part6, partitions):
         """Symlinks point to different targets."""
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([part5, part6])
+            check_for_stage_collisions([part5, part6], partitions)
 
         assert raised.value.other_part_name == "part5"
         assert raised.value.part_name == "part6"
         assert raised.value.conflicting_files == ["a"]
 
-    def test_collisions_not_both_symlinks(self, part1, part5):
+    def test_collisions_not_both_symlinks(self, part1, part5, partitions):
         """Same name for directory and symlink."""
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([part1, part5])
+            check_for_stage_collisions([part1, part5], partitions)
 
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part5"
         assert raised.value.conflicting_files == ["a"]
 
-    def test_collisions_between_two_parts_pc_files(self, part1, part4):
+    def test_collisions_between_two_parts_pc_files(self, part1, part4, partitions):
         """Pkg-config files have different entries that are not prefix."""
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([part1, part4])
+            check_for_stage_collisions([part1, part4], partitions)
 
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part4"
@@ -197,7 +197,7 @@ class TestCollisions:
         )
 
         # a part not built doesn't have the stage file in the installdir.
-        check_for_stage_collisions([part_built, part_not_built])
+        check_for_stage_collisions([part_built, part_not_built], partitions)
 
     def create_part_with_permissions(
         self,
@@ -242,10 +242,27 @@ class TestCollisions:
         )
 
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([p1, p2])
+            check_for_stage_collisions([p1, p2], partitions)
 
         # Even though both parts define Permissions for file "1", they are compatible.
         # Therefore, only "2" should be marked as conflicting.
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part2"
         assert raised.value.conflicting_files == ["2"]
+
+
+class TestCollisionsPartitionError:
+    def test_partitions_defined_but_not_enabled(self, tmpdir):
+        """Raise an error if partitions are defined but not enabled."""
+        part = Part(
+            name="part",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir),
+        )
+
+        with pytest.raises(errors.FeatureError) as raised:
+            check_for_stage_collisions(part_list=[part], partitions=["default"])
+
+        assert raised.value.brief == (
+            "Partitions specified but partitions feature is not enabled."
+        )
