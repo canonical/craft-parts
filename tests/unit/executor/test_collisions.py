@@ -26,93 +26,111 @@ from craft_parts.permissions import Permissions
 
 class TestCollisions:
     """Check collision scenarios."""
+
     @pytest.fixture()
     def part0(self, tmpdir, partitions) -> Part:
         part = Part(
-            "part0", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            name="part0",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
-        p = part.part_install_dir
-        p.mkdir(parents=True)
-        (p / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: File")
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "file.pc").write_text(f"prefix={install_dir}\nName: File")
         return part
-
 
     @pytest.fixture()
     def part1(self, tmpdir, partitions) -> Part:
         part = Part(
-            "part1", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            name="part1",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
-        p = part.part_install_dir
-        (p / "a").mkdir(parents=True)
-        (p / "a" / "1").write_text("")
-        (p / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: File")
+        for install_dir in part.part_install_dirs.values():
+            (install_dir / "a").mkdir(parents=True)
+            (install_dir / "a" / "1").write_text("")
+            (install_dir / "file.pc").write_text(f"prefix={install_dir}\nName: File")
         return part
-
 
     @pytest.fixture()
     def part2(self, tmpdir, partitions) -> Part:
         part = Part(
-            "part2", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            name="part2",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
-        p = part.part_install_dir
-        (p / "a").mkdir(parents=True)
-        (p / "1").write_text("1")
-        (p / "2").write_text("")
-        (p / "a" / "2").write_text("a/2")
-        (p / "a" / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: File")
+        for install_dir in part.part_install_dirs.values():
+            (install_dir / "a").mkdir(parents=True)
+            (install_dir / "1").write_text("1")
+            (install_dir / "2").write_text("")
+            (install_dir / "a" / "2").write_text("a/2")
+            (install_dir / "a" / "file.pc").write_text(
+                f"prefix={install_dir}\nName: File"
+            )
         return part
-
 
     @pytest.fixture()
     def part3(self, tmpdir, partitions) -> Part:
         part = Part(
-            "part3", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            name="part3",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
-        p = part.part_install_dir
-        (p / "a").mkdir(parents=True)
-        (p / "b").mkdir()
-        (p / "1").write_text("2")
-        (p / "a" / "2").write_text("")
+        for install_dir in part.part_install_dirs.values():
+            (install_dir / "a").mkdir(parents=True)
+            (install_dir / "b").mkdir()
+            (install_dir / "1").write_text("2")
+            (install_dir / "a" / "2").write_text("")
         return part
-
 
     @pytest.fixture()
     def part4(self, tmpdir, partitions) -> Part:
         part = Part(
-            "part4", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            name="part4",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
-        p = part.part_install_dir
-        (p / "a").mkdir(parents=True)
-        (p / "a" / "2").write_text("")
-        (p / "file.pc").write_text(f"prefix={part.part_install_dir}\nName: ConflictFile")
+        for install_dir in part.part_install_dirs.values():
+            (install_dir / "a").mkdir(parents=True)
+            (install_dir / "a" / "2").write_text("")
+            (install_dir / "file.pc").write_text(
+                f"prefix={install_dir}\nName: ConflictFile"
+            )
         return part
-
 
     @pytest.fixture()
     def part5(self, tmpdir, partitions) -> Part:
         # Create a new part with a symlink that collides with part1's
         # non-symlink.
         part = Part(
-            "part5", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            name="part5",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
-        p = part.part_install_dir
-        p.mkdir(parents=True)
-        (p / "a").symlink_to("foo")
-
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "a").symlink_to("foo")
         return part
-
 
     @pytest.fixture()
     def part6(self, tmpdir, partitions) -> Part:
         # Create a new part with a symlink that points to a different place
         # than part5's symlink.
         part = Part(
-            "part6", {}, project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            name="part6",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
-        p = part.part_install_dir
-        p.mkdir(parents=True)
-        (p / "a").symlink_to("bar")
-
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "a").symlink_to("bar")
         return part
 
     def test_no_collisions(self, part1, part2):
@@ -164,6 +182,7 @@ class TestCollisions:
             "part_built",
             {"stage": ["collision"]},
             project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
 
         # a part built has the stage file in the installdir.
@@ -174,6 +193,7 @@ class TestCollisions:
             "part_not_built",
             {"stage": ["collision"]},
             project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
 
         # a part not built doesn't have the stage file in the installdir.
@@ -190,6 +210,7 @@ class TestCollisions:
             part_name,
             {"permissions": permissions},
             project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
         )
         p = part.part_install_dir
         p.mkdir(parents=True)
