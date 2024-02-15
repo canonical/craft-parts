@@ -162,6 +162,6 @@ class TestCollisionsInPartitions:
 
         assert str(raised.value) == (
             "Failed to stage: parts list the same file with different contents or permissions.\n"
-            "Parts 'part2' and 'part1' list the following files, but with different contents or permissions:\n"
+            "Parts 'part2' and 'part1' list the following files for the 'mypart' partition, but with different contents or permissions:\n"
             "    file"
         )

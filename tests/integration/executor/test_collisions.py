@@ -79,8 +79,15 @@ class TestCollisions:
             with lcm.action_executor() as aex:
                 aex.execute(lcm.plan(Step.STAGE))
 
-        assert str(raised.value) == (
-            "Failed to stage: parts list the same file with different contents or permissions.\n"
-            "Parts 'part2' and 'part1' list the following files, but with different contents or permissions:\n"
-            "    file"
-        )
+        if partitions:
+            assert str(raised.value) == (
+                "Failed to stage: parts list the same file with different contents or permissions.\n"
+                "Parts 'part2' and 'part1' list the following files for the 'default' partition, but with different contents or permissions:\n"
+                "    file"
+            )
+        else:
+            assert str(raised.value) == (
+                "Failed to stage: parts list the same file with different contents or permissions.\n"
+                "Parts 'part2' and 'part1' list the following files, but with different contents or permissions:\n"
+                "    file"
+            )

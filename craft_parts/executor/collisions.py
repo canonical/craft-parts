@@ -113,6 +113,7 @@ def _check_for_stage_collisions_per_stage_directory(
                     part_name=part.name,
                     other_part_name=other_part_name,
                     conflicting_files=conflict_files,
+                    partition=partition,
                 )
 
         # And add our files to the list.

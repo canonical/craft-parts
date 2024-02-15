@@ -27,7 +27,7 @@ class TestCollisions(test_collisions.TestCollisions):
 
 class TestCollisionsPartitionError:
     def test_partitions_enabled_but_not_defined(self, partitions, tmpdir):
-        """Raise an error if partitions are defined but not enabled."""
+        """Raise an error if partitions are enabled but not defined."""
         part = Part(
             name="part",
             data={},

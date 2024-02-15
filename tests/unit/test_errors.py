@@ -260,6 +260,30 @@ def test_part_files_conflict():
     assert err.resolution is None
 
 
+def test_part_files_conflict_with_partitions():
+    """Test PartsFilesConflict with a partition."""
+    err = errors.PartFilesConflict(
+        part_name="foo",
+        other_part_name="bar",
+        conflicting_files=["file1", "file2"],
+        partition="test",
+    )
+    assert err.part_name == "foo"
+    assert err.other_part_name == "bar"
+    assert err.conflicting_files == ["file1", "file2"]
+    assert err.partition == "test"
+    assert err.brief == (
+        "Failed to stage: parts list the same file with different contents or permissions."
+    )
+    assert err.details == (
+        "Parts 'foo' and 'bar' list the following files for the 'test' partition, "
+        "but with different contents or permissions:\n"
+        "    file1\n"
+        "    file2"
+    )
+    assert err.resolution is None
+
+
 def test_stage_files_conflict():
     err = errors.StageFilesConflict(
         part_name="foo", conflicting_files=["file1", "file2"]
