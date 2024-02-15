@@ -55,17 +55,16 @@ def check_for_stage_collisions(
             "Partitions feature is enabled but no partitions specified."
         )
 
-    if partitions:
-        for partition in partitions:
-            _check_for_stage_collisions_per_stage_directory(part_list, partition)
-    else:
-        _check_for_stage_collisions_per_stage_directory(part_list, None)
+    for partition in partitions or [None]:  # type: ignore[list-item]
+        _check_for_stage_collisions_per_partition(part_list, partition)
 
 
-def _check_for_stage_collisions_per_stage_directory(
+def _check_for_stage_collisions_per_partition(
     part_list: List[Part], partition: Optional[str]
 ) -> None:
-    """Verify whether parts have conflicting files for a single stage directory.
+    """Verify whether parts have conflicting files for a stage directory in a partition.
+
+    If no partition is provided, then the default stage directory is checked.
 
     :param part_list: The list of parts to check.
     :param partition: If the partitions feature is enabled, then the name of the
