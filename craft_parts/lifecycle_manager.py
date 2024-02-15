@@ -35,6 +35,7 @@ from craft_parts.parts import Part, part_by_name, validate_partition_usage
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import validate_partition_names
+from craft_parts.utils.path_utils import get_partition_and_path
 
 
 class LifecycleManager:
@@ -160,6 +161,7 @@ class LifecycleManager:
         self._has_overlay = any(p.has_overlay for p in part_list)
 
         _validate_partition_usage_in_parts(part_list, partitions)
+        _include_undefined_partitions_in_filters(part_list, partitions)
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
@@ -416,3 +418,33 @@ def _validate_partitions_in_paths(
                     ),
                     stacklevel=1,
                 )
+
+
+def _include_undefined_partitions_in_filters(
+    part_list: List[Part], partitions: Optional[List[str]]
+) -> None:
+    """Add a wildcard for partitions missing from each part's stage and prime filters.
+
+    If a fileset does not define a filter for a partition, a wildcard is added
+    for that partition.
+
+    No-op if no partitions are defined.
+
+    :param part_list: List of parts to add missing partition wildcards to.
+    :param partitions: List of partitions to add.
+    """
+    if not partitions:
+        return
+
+    for part in part_list:
+        for fileset in [part.spec.stage_files, part.spec.prime_files]:
+            # do not append wildcards if the fileset is purposefully empty
+            if not fileset:
+                break
+
+            provided_partitions = [
+                get_partition_and_path(entry.lstrip("-"))[0] for entry in fileset
+            ]
+            for partition in partitions:
+                if partition not in provided_partitions:
+                    fileset.append(f"({partition})/*")

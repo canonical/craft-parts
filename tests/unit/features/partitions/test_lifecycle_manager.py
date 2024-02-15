@@ -437,3 +437,137 @@ class TestPluginProperties(test_lifecycle_manager.TestPluginProperties):
         }
         manager_kwargs.update(kwargs)
         return lifecycle_manager.LifecycleManager(**manager_kwargs)
+
+
+class TestFilterKeywords:
+    """Test filter keywords with partitions enabled."""
+
+    @pytest.fixture(params={})
+    def stub_part_data(self, request) -> Dict[str, Any]:
+        """Return a part dictionary containing a single part."""
+        return {
+            "parts": {
+                "part1": {
+                    "plugin": "dump",
+                    "source": "part1",
+                    "stage": request.param,
+                    "prime": request.param,
+                },
+            }
+        }
+
+    @pytest.mark.parametrize(
+        ("stub_part_data", "expected"),
+        [
+            # implicit default partition
+            (
+                ["*"],
+                ["*", "(mypart)/*"],
+            ),
+            (
+                ["-*"],
+                ["-*", "(mypart)/*"],
+            ),
+            # explicit default partition
+            (
+                ["(default)/*"],
+                ["(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["-(default)/*"],
+                ["-(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["(default)/foo"],
+                ["(default)/foo", "(mypart)/*"],
+            ),
+            (
+                ["-(default)/foo"],
+                ["-(default)/foo", "(mypart)/*"],
+            ),
+            # no default partition
+            (
+                ["(mypart)/*"],
+                ["(mypart)/*", "(default)/*"],
+            ),
+            (
+                ["-(mypart)/*"],
+                ["-(mypart)/*", "(default)/*"],
+            ),
+            (
+                ["(mypart)/foo"],
+                ["(mypart)/foo", "(default)/*"],
+            ),
+            (
+                ["-(mypart)/foo"],
+                ["-(mypart)/foo", "(default)/*"],
+            ),
+            # no partitions
+            (
+                [],
+                [],
+            ),
+        ],
+        indirect=["stub_part_data"],
+    )
+    def test_filter_keywords_partially_defined(self, new_dir, stub_part_data, expected):
+        """Add a wildcard for all partitions not defined in a fileset."""
+        lf = lifecycle_manager.LifecycleManager(
+            all_parts=stub_part_data,
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=["default", "mypart"],
+        )
+        assert lf._part_list[0].spec.stage_files == expected
+        assert lf._part_list[0].spec.prime_files == expected
+
+    @pytest.mark.parametrize(
+        ("stub_part_data", "expected"),
+        [
+            # implicit default partition
+            (["*", "(mypart)/*"],) * 2,
+            (["*", "-(mypart)/*"],) * 2,
+            (["-*", "(mypart)/*"],) * 2,
+            (["-*", "-(mypart)/*"],) * 2,
+            (["foo", "(mypart)/foo"],) * 2,
+            (["foo", "-(mypart)/foo"],) * 2,
+            (["-foo", "(mypart)/foo"],) * 2,
+            (["-foo", "-(mypart)/foo"],) * 2,
+            # explicit default partition
+            (["-(default)/*", "-(mypart)/*"],) * 2,
+            (["-(default)/foo", "-(mypart)/bar"],) * 2,
+            (["-(default)/*", "(mypart)/bar"],) * 2,
+        ],
+        indirect=["stub_part_data"],
+    )
+    def test_filter_keywords_all_partitions_defined(
+        self, new_dir, stub_part_data, expected
+    ):
+        """Filesets should not be changed when all partitions are defined."""
+        lf = lifecycle_manager.LifecycleManager(
+            all_parts=stub_part_data,
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=["default", "mypart"],
+        )
+
+        assert lf._part_list[0].spec.stage_files == expected
+        assert lf._part_list[0].spec.prime_files == expected
+
+    @pytest.mark.parametrize(
+        ("partitions", "expected"),
+        [
+            (["default"], ["*"]),
+            (["default", "mypart", "ourpart"], ["*", "(mypart)/*", "(ourpart)/*"]),
+        ],
+    )
+    def test_filter_keywords_default(self, partitions, expected, new_dir):
+        """Test default values of filter keywords."""
+        lf = lifecycle_manager.LifecycleManager(
+            all_parts={"parts": {"part1": {"plugin": "nil"}}},
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        assert lf._part_list[0].spec.stage_files == expected
+        assert lf._part_list[0].spec.prime_files == expected

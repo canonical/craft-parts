@@ -461,3 +461,52 @@ class TestValidatePartitions:
             )
 
         assert exc_info.value.brief == message
+
+
+class TestFilterKeywords:
+    """Test filter keywords."""
+
+    @pytest.fixture(params={})
+    def stub_part_data(self, request) -> Dict[str, Any]:
+        """Return a part dictionary containing a single part."""
+        return {
+            "parts": {
+                "part1": {
+                    "plugin": "dump",
+                    "source": "part1",
+                    "stage": request.param,
+                    "prime": request.param,
+                },
+            }
+        }
+
+    @pytest.mark.parametrize(
+        ("stub_part_data", "expected"),
+        [
+            ([], []),
+            (["*"], ["*"]),
+            (["foo"], ["foo"]),
+            (["-foo"], ["-foo"]),
+            (["-foo", "bar"], ["-foo", "bar"]),
+        ],
+        indirect=["stub_part_data"],
+    )
+    def test_filter_keywords(self, new_dir, stub_part_data, expected):
+        """Test filter keywords."""
+        lf = lifecycle_manager.LifecycleManager(
+            all_parts=stub_part_data,
+            application_name="test",
+            cache_dir=new_dir,
+        )
+        assert lf._part_list[0].spec.stage_files == expected
+        assert lf._part_list[0].spec.prime_files == expected
+
+    def test_filter_keywords_default(self, new_dir):
+        """Test default values of filter keywords."""
+        lf = lifecycle_manager.LifecycleManager(
+            all_parts={"parts": {"part1": {"plugin": "nil"}}},
+            application_name="test",
+            cache_dir=new_dir,
+        )
+        assert lf._part_list[0].spec.stage_files == ["*"]
+        assert lf._part_list[0].spec.prime_files == ["*"]
