@@ -18,7 +18,7 @@ from textwrap import dedent, indent
 
 import pytest
 import pytest_check  # type: ignore[import]
-from craft_parts import ProjectDirs, errors, parts
+from craft_parts import ProjectDirs, errors
 from craft_parts.parts import Part
 from craft_parts.utils.partition_utils import get_partition_dir_map
 
@@ -121,8 +121,8 @@ class TestPartPartitionUsage:
         return ["default", "kernel", "a/b", "a/c-d"]
 
     @pytest.fixture()
-    def valid_filesets(self):
-        """Return a list of valid filesets when the partition feature is enabled.
+    def valid_fileset(self):
+        """Return a fileset of that properly uses partition names.
 
         Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
         the LifecycleManager.
@@ -190,19 +190,45 @@ class TestPartPartitionUsage:
             "test/(a/c-d)",
             "test(a/c-d)/test",
             "test/(a/c-d)/test",
-            # filepaths beginning with partitions without parenthesis get organized
-            # under the default partition
-            "default",
-            "kernel",
-            "a",
-            "a/b",
-            "a/b",
-            "a/c-d",
         ]
 
     @pytest.fixture()
-    def invalid_filesets(self):
-        """Return a list of invalid filesets when the partition feature is enabled.
+    def misused_fileset(self):
+        """Return a fileset that misuses partition names.
+
+        Partition names are misused when an entry begins with a partition name
+        but is not wrapped in parentheses.
+
+        Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
+        the LifecycleManager.
+        """
+        return [
+            "default",
+            "default/foo",
+            "kernel",
+            "kernel/foo",
+        ]
+
+    @pytest.fixture()
+    def misused_namespaced_fileset(self):
+        """Return a fileset that misuses namespaced partitions.
+
+        Partition names are misused when an entry begins with a partition name
+        but is not wrapped in parentheses.
+
+        Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
+        the LifecycleManager.
+        """
+        return [
+            "a/b",
+            "a/b/foo",
+            "a/c-d",
+            "a/c-d/foo",
+        ]
+
+    @pytest.fixture()
+    def invalid_fileset(self):
+        """Return a fileset of invalid uses of partition names.
 
         These filepaths are not necessarily violating the naming convention for
         partitions, but the partitions here are unknown (and thus invalid) to a
@@ -236,22 +262,92 @@ class TestPartPartitionUsage:
             "(123)/test/(a/c-d)",
         ]
 
-    def test_part_valid_partition_usage(self, valid_filesets, partition_list):
+    def test_part_valid_partition_usage(self, valid_fileset, partition_list):
         """Proper use of partitions in parts should not raise an error."""
         part_data = {
             "organize": {
-                f"test-{index}": item for index, item in enumerate(valid_filesets)
+                f"test-{index}": item for index, item in enumerate(valid_fileset)
             },
-            "stage": valid_filesets,
-            "prime": valid_filesets,
+            "stage": valid_fileset,
+            "prime": valid_fileset,
         }
 
-        part_list = [
-            Part("a", part_data, partitions=partition_list),
-            Part("b", part_data, partitions=partition_list),
-        ]
+        Part("a", part_data, partitions=partition_list)
 
-        assert parts.validate_partition_usage(part_list, partition_list) is None
+    def test_part_partition_misuse(self, misused_fileset, partition_list):
+        """Warn if partitions are misused."""
+        part_data = {
+            "organize": {
+                f"test-{index}": item for index, item in enumerate(misused_fileset)
+            },
+            "stage": misused_fileset,
+            "prime": misused_fileset,
+        }
+
+        with pytest.warns(Warning) as warning:
+            Part("a", part_data, partitions=partition_list)
+
+        partition_warning = warning.list[0].message
+        assert isinstance(partition_warning, errors.PartitionUsagesWarning)
+        assert partition_warning.brief == "Possible misuse of partitions"
+        assert partition_warning.details == dedent(
+            """\
+            The following entries begin with a valid partition name but are not wrapped in parentheses. These entries will go into the default partition.
+              parts.a.organize
+                misused partition 'default' in 'default'
+                misused partition 'default' in 'default/foo'
+                misused partition 'kernel' in 'kernel'
+                misused partition 'kernel' in 'kernel/foo'
+              parts.a.stage
+                misused partition 'default' in 'default'
+                misused partition 'default' in 'default/foo'
+                misused partition 'kernel' in 'kernel'
+                misused partition 'kernel' in 'kernel/foo'
+              parts.a.prime
+                misused partition 'default' in 'default'
+                misused partition 'default' in 'default/foo'
+                misused partition 'kernel' in 'kernel'
+                misused partition 'kernel' in 'kernel/foo'"""
+        )
+
+    @pytest.mark.xfail(
+        reason="Namespaced partitions are not checked for misuse", strict=True
+    )
+    def test_part_namespaced_partition_misuse(self, misused_fileset, partition_list):
+        """Warn if namespaced partitions are misused."""
+        part_data = {
+            "organize": {
+                f"test-{index}": item for index, item in enumerate(misused_fileset)
+            },
+            "stage": misused_fileset,
+            "prime": misused_fileset,
+        }
+
+        with pytest.warns(Warning) as warning:
+            Part("a", part_data, partitions=partition_list)
+
+        partition_warning = warning.list[0].message
+        assert isinstance(partition_warning, errors.PartitionUsagesWarning)
+        assert partition_warning.brief == "Possible misuse of partitions"
+        assert partition_warning.details == dedent(
+            """\
+            The following entries begin with a valid partition name but are not wrapped in parentheses. These entries will go into the default partition.
+              parts.a.organize
+                misused partition 'a/b' in 'a/b'
+                misused partition 'a/b' in 'a/b/foo'
+                misused partition 'a/c-d' in 'a/c-d'
+                misused partition 'a/c-d' in 'a/c-d/foo'
+              parts.a.stage
+                misused partition 'a/b' in 'a/b'
+                misused partition 'a/b' in 'a/b/foo'
+                misused partition 'a/c-d' in 'a/c-d'
+                misused partition 'a/c-d' in 'a/c-d/foo'
+              parts.a.prime
+                misused partition 'a/b' in 'a/b'
+                misused partition 'a/b' in 'a/b/foo'
+                misused partition 'a/c-d' in 'a/c-d'
+                misused partition 'a/c-d' in 'a/c-d/foo'"""
+        )
 
     def test_part_invalid_partition_usage_simple(self, partition_list):
         """Raise an error if partitions are improperly used in parts."""
@@ -261,43 +357,36 @@ class TestPartPartitionUsage:
             "prime": ["(baz)"],
         }
 
-        with pytest.raises(errors.FeatureError) as raised:
-            parts.validate_partition_usage(
-                [Part("part-a", part_data, partitions=partition_list)], partition_list
-            )
+        with pytest.raises(errors.InvalidPartitionUsagesError) as raised:
+            Part("part-a", part_data, partitions=partition_list)
 
-        assert raised.value.brief == dedent(
+        assert raised.value.brief == "Invalid usage of partitions"
+        assert raised.value.details == dedent(
             """\
-            Error: Invalid usage of partitions:
               parts.part-a.organize
                 unknown partition 'foo' in '(foo)'
               parts.part-a.stage
                 unknown partition 'bar' in '(bar)/test'
               parts.part-a.prime
                 unknown partition 'baz' in '(baz)'
-            Valid partitions are 'a/b', 'a/c-d', 'default', and 'kernel'."""
+            Valid partitions: default, kernel, a/b, a/c-d"""
         )
 
     def test_part_invalid_partition_usage_complex(
-        self, valid_filesets, invalid_filesets, partition_list
+        self, valid_fileset, invalid_fileset, partition_list
     ):
         """Raise an error if partitions are improperly used in parts."""
         part_data = {
             "organize": {
                 f"test-{index}": item
-                for index, item in enumerate(valid_filesets + invalid_filesets)
+                for index, item in enumerate(valid_fileset + invalid_fileset)
             },
-            "stage": valid_filesets + invalid_filesets,
-            "prime": valid_filesets + invalid_filesets,
+            "stage": valid_fileset + invalid_fileset,
+            "prime": valid_fileset + invalid_fileset,
         }
 
-        part_list = [
-            Part("part-a", part_data, partitions=partition_list),
-            Part("part-b", part_data, partitions=partition_list),
-        ]
-
-        with pytest.raises(errors.FeatureError) as raised:
-            parts.validate_partition_usage(part_list, partition_list)
+        with pytest.raises(errors.InvalidPartitionUsagesError) as raised:
+            Part("part-a", part_data, partitions=partition_list)
 
         unknown_partitions = dedent(
             """\
@@ -327,19 +416,14 @@ class TestPartPartitionUsage:
             unknown partition '123' in '(123)/test/(a/c-d)'
             """
         )
-        assert raised.value.message == (
-            "Error: Invalid usage of partitions:\n"
+
+        assert raised.value.brief == "Invalid usage of partitions"
+        assert raised.value.details == (
             "  parts.part-a.organize\n"
             + indent(unknown_partitions, "    ")
             + "  parts.part-a.stage\n"
             + indent(unknown_partitions, "    ")
             + "  parts.part-a.prime\n"
             + indent(unknown_partitions, "    ")
-            + "  parts.part-b.organize\n"
-            + indent(unknown_partitions, "    ")
-            + "  parts.part-b.stage\n"
-            + indent(unknown_partitions, "    ")
-            + "  parts.part-b.prime\n"
-            + indent(unknown_partitions, "    ")
-            + "Valid partitions are 'a/b', 'a/c-d', 'default', and 'kernel'."
+            + "Valid partitions: default, kernel, a/b, a/c-d"
         )

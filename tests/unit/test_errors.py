@@ -396,3 +396,6 @@ def test_overlay_permission_error():
     assert err.brief == "Using the overlay step requires superuser privileges."
     assert err.details is None
     assert err.resolution is None
+
+
+# TODO: test PartitionErrors (#650)

@@ -18,7 +18,7 @@
 
 import dataclasses
 import pathlib
-from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Set
 
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
@@ -631,46 +631,51 @@ class PartitionError(PartsError):
 
     def __init__(
         self,
-        partition: str,
         brief: str,
         *,
         details: Optional[str] = None,
         resolution: Optional[str] = None,
     ) -> None:
-        self.partition = partition
         super().__init__(brief=brief, details=details, resolution=resolution)
 
 
-class InvalidPartitionError(PartitionError):
-    """Partition is not valid for this application."""
+class InvalidPartitionUsagesError(PartitionError):
+    """Error for a list of invalid partition usages.
+
+    :param error_list: Iterable of strings describing the invalid usages.
+    """
 
     def __init__(
-        self,
-        partition: str,
-        path: Union[str, pathlib.Path],
-        valid_partitions: Iterable[str],
+        self, error_list: Iterable[str], partitions: Optional[Iterable[str]]
     ) -> None:
-        self.valid_partitions = valid_partitions
+        valid_partitions = (
+            f"\nValid partitions: {', '.join(partitions)}" if partitions else ""
+        )
+
         super().__init__(
-            partition,
-            brief=f"Invalid partition {partition!r} in path {str(path)!r}",
-            details="Valid partitions: " + ", ".join(valid_partitions),
-            resolution="Correct the invalid partition name and try again.",
+            brief="Invalid usage of partitions",
+            details="\n".join(error_list) + valid_partitions,
+            resolution="Correct the invalid partition name(s) and try again.",
         )
 
 
-class PartitionWarning(PartitionError, Warning):
-    """Warnings for partition-related items."""
+class PartitionUsagesWarning(PartitionError, Warning):
+    """Warnings for partition-related items.
 
-    def __init__(
-        self,
-        partition: str,
-        brief: str,
-        *,
-        details: Optional[str] = None,
-        resolution: Optional[str] = None,
-    ) -> None:
+    :param warning_list: Iterable of strings describing the misuses.
+    """
+
+    def __init__(self, warning_list: Iterable[str]) -> None:
         super().__init__(
-            partition=partition, brief=brief, details=details, resolution=resolution
+            brief="Possible misuse of partitions",
+            details=(
+                "The following entries begin with a valid partition name but are "
+                "not wrapped in parentheses. These entries will go into the "
+                "default partition.\n" + "\n".join(warning_list)
+            ),
+            resolution=(
+                "Wrap the partition name in parentheses, for example "
+                "'default/file' should be written as '(default)/file'"
+            ),
         )
         Warning.__init__(self)

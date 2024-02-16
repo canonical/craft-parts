@@ -342,7 +342,7 @@ class TestPartitionsSupport:
                 },
             }
         }
-        with pytest.raises(errors.FeatureError) as raised:
+        with pytest.raises(errors.InvalidPartitionUsagesError) as raised:
             lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
@@ -350,12 +350,12 @@ class TestPartitionsSupport:
                 partitions=partition_list,
             )
 
-        assert raised.value.message == dedent(
+        assert raised.value.brief == "Invalid usage of partitions"
+        assert raised.value.details == dedent(
             """\
-            Error: Invalid usage of partitions:
               parts.foo.stage
                 unknown partition 'test' in '(test)/foo'
-            Valid partitions are 'default' and 'kernel'."""
+            Valid partitions: default, kernel"""
         )
 
 
