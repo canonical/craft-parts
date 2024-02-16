@@ -389,23 +389,32 @@ class PartFilesConflict(PartsError):
     :param part_name: The name of the part being processed.
     :param other_part_name: The name of the conflicting part.
     :param conflicting_files: The list of conflicting files.
+    :param partition: Optional name of the partition where the conflict occurred.
     """
 
     def __init__(
-        self, *, part_name: str, other_part_name: str, conflicting_files: List[str]
+        self,
+        *,
+        part_name: str,
+        other_part_name: str,
+        conflicting_files: List[str],
+        partition: Optional[str] = None,
     ) -> None:
         self.part_name = part_name
         self.other_part_name = other_part_name
         self.conflicting_files = conflicting_files
+        self.partition = partition
+
         indented_conflicting_files = (f"    {i}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
+        partition_info = f" for the {partition!r} partition" if partition else ""
         brief = (
             "Failed to stage: parts list the same file "
             "with different contents or permissions."
         )
         details = (
             f"Parts {part_name!r} and {other_part_name!r} list the following "
-            f"files, but with different contents or permissions:\n"
+            f"files{partition_info}, but with different contents or permissions:\n"
             f"{file_paths}"
         )
 
