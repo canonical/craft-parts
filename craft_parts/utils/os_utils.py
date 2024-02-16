@@ -23,13 +23,26 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union, TextIO
 
 from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
 _WRITE_TIME_INTERVAL = 0.02
+
+Stream = Optional[Union[TextIO, int]]
+
+_STDOUT = subprocess.PIPE
+_STDERR = subprocess.STDOUT
+
+
+def set_streams(stdout: Stream, stderr: Stream):
+    global _STDOUT, _STDERR
+    if stdout:
+        _STDOUT = stdout
+    if stderr:
+        _STDERR = stderr
 
 
 class TimedWriter:
@@ -329,8 +342,8 @@ def process_run(
     """Run a command and handle its output."""
     with subprocess.Popen(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stdout=_STDOUT,
+        stderr=_STDERR,
         universal_newlines=True,
         **kwargs,
     ) as proc:

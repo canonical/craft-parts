@@ -133,6 +133,8 @@ class Executor:
         if isinstance(actions, Action):
             actions = [actions]
 
+        os_utils.set_streams(stdout, stderr)
+
         for act in actions:
             self._run_action(act, stdout=stdout, stderr=stderr)
 
