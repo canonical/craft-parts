@@ -38,14 +38,10 @@ class TestCollisionsInPartitions:
                 "part1": {
                     "plugin": "dump",
                     "source": "part1",
-                    # stage keyword can be removed after #650 is resolved
-                    "stage": ["(default)/*", "(mypart)/*"],
                 },
                 "part2": {
                     "plugin": "dump",
                     "source": "part2",
-                    # stage keyword can be removed after #650 is resolved
-                    "stage": ["(default)/*", "(mypart)/*"],
                 },
             }
         }

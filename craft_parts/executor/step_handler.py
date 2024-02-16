@@ -159,7 +159,7 @@ class StepHandler:
         return StepContents()
 
     def _builtin_stage(self) -> StepContents:
-        stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
+        stage_fileset = Fileset(self._part.stage_files, name="stage")
 
         def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
@@ -206,12 +206,12 @@ class StepHandler:
         return StepContents(files, dirs)
 
     def _builtin_prime(self) -> StepContents:
-        prime_fileset = Fileset(self._part.spec.prime_files, name="prime")
+        prime_fileset = Fileset(self._part.prime_files, name="prime")
 
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
         if prime_fileset.entries == ["*"] or len(prime_fileset.includes) == 0:
-            stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
+            stage_fileset = Fileset(self._part.stage_files, name="stage")
             prime_fileset.combine(stage_fileset)
 
         if self._partitions:

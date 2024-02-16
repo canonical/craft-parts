@@ -16,6 +16,7 @@
 
 """Definitions and helpers to handle parts."""
 
+import itertools
 import re
 import warnings
 from pathlib import Path
@@ -230,6 +231,8 @@ class Part:
 
         self._check_partition_feature()
         self._check_partition_usage()
+        self._stage_files_mapping = self._get_fileset_mapping(self.spec.stage_files)
+        self._prime_files_mapping = self._get_fileset_mapping(self.spec.prime_files)
 
     def __repr__(self) -> str:
         return f"Part({self.name!r})"
@@ -369,6 +372,27 @@ class Part:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
 
+    @property
+    def stage_files(self) -> List[str]:
+        """Get stage files for a part after setting defaults for all partitions.
+
+        TODOs:
+          - self.stage_files conflicts with self.spec.stage_files
+          - should this return a flattened data structure or a dictionary?
+            - the latter would simplify the codebase but require refactoring
+        """
+        return list(itertools.chain.from_iterable(self._stage_files_mapping.values()))
+
+    @property
+    def prime_files(self) -> List[str]:
+        """Get prime files for a part after setting defaults for all partitions.
+
+        TODOs:
+          - self.prime_files conflicts with self.spec.prime_files
+          - should this return a flattened data structure or a dictionary?
+        """
+        return list(itertools.chain.from_iterable(self._prime_files_mapping.values()))
+
     def _check_partition_feature(self) -> None:
         """Check if the partitions feature is properly used.
 
@@ -440,8 +464,8 @@ class Part:
             - A list of warnings of possible misuses of partitions in the fileset
             - A list of invalid uses of partitions in the fileset
         """
-        error_list = []
-        warning_list = []
+        error_list: List[str] = []
+        warning_list: List[str] = []
 
         if not self._partitions:
             return (warning_list, error_list)
@@ -472,6 +496,43 @@ class Part:
             warning_list.insert(0, f"  parts.{self.name}.{fileset_name}")
 
         return warning_list, error_list
+
+    def _get_fileset_mapping(
+        self, fileset: List[str]
+    ) -> Dict[Optional[str], List[str]]:
+        """Get a mapping of partitions to filesets with default values.
+
+        If no fileset is specified for a partition, a default wildcard is added for
+        that partition.
+        """
+        # short circuit if partitions are not enabled
+        if not self._partitions:
+            return {None: fileset}
+
+        fileset_mapping: Dict[Optional[str], List[str]] = {
+            partition: [] for partition in self._partitions
+        }
+
+        # short circuit if fileset is empty (instead of the default "*")
+        if not fileset:
+            return fileset_mapping
+
+        # sort fileset entries into partitions
+        for entry in fileset:
+            # split file into an optional prefix (a hyphen character) and the file
+            split_entry = (entry[0], entry[1:]) if entry[0] == "-" else ("", entry)
+
+            partition, inner_path = get_partition_and_path(split_entry[1])
+            fileset_mapping[partition].append(
+                f"{split_entry[0]}({partition})/{inner_path}"
+            )
+
+        # fill in empty filesets with a wildcard
+        for partition, entries in fileset_mapping.items():
+            if not entries:
+                fileset_mapping[partition] = [f"({partition})/*"]
+
+        return fileset_mapping
 
 
 # pylint: enable=too-many-public-methods

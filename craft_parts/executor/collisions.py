@@ -74,7 +74,7 @@ def _check_for_stage_collisions_per_partition(
     """
     all_parts_files: Dict[str, Dict[str, Any]] = {}
     for part in part_list:
-        stage_files = part.spec.stage_files
+        stage_files = part.stage_files
         if not stage_files:
             continue
 

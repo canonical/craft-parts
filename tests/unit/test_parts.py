@@ -231,10 +231,37 @@ class TestPartData:
     def test_part_stage_files(self, partitions):
         p = Part("foo", {"stage": ["a", "b", "c"]}, partitions=partitions)
         assert p.spec.stage_files == ["a", "b", "c"]
+        if partitions:
+            assert p.stage_files == [
+                "(default)/a",
+                "(default)/b",
+                "(default)/c",
+                *[
+                    f"({partition})/*"
+                    for partition in partitions
+                    if partition != "default"
+                ],
+            ]
+        else:
+            assert p.stage_files == ["a", "b", "c"]
 
     def test_part_prime_files(self, partitions):
         p = Part("foo", {"prime": ["a", "b", "c"]}, partitions=partitions)
         assert p.spec.prime_files == ["a", "b", "c"]
+
+        if partitions:
+            assert p.prime_files == [
+                "(default)/a",
+                "(default)/b",
+                "(default)/c",
+                *[
+                    f"({partition})/*"
+                    for partition in partitions
+                    if partition != "default"
+                ],
+            ]
+        else:
+            assert p.prime_files == ["a", "b", "c"]
 
     def test_part_organize_files(self, partitions):
         p = Part("foo", {"organize": {"a": "b", "c": "d"}}, partitions=partitions)

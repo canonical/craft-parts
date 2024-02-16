@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from textwrap import dedent, indent
+from typing import Any, Dict
 
 import pytest
 import pytest_check  # type: ignore[import]
@@ -29,6 +30,163 @@ from tests.unit import test_parts
 # the functionality of Parts exercised by these tests
 class TestPartSpecs(test_parts.TestPartSpecs):
     """Test part specification creation."""
+
+    @pytest.fixture(params={})
+    def stub_part_data(self, request) -> Dict[str, Any]:
+        """Return a dictionary of data for a part."""
+        return {
+            "plugin": "dump",
+            "source": "part1",
+            "stage": request.param,
+            "prime": request.param,
+        }
+
+    @pytest.mark.parametrize(
+        ("stub_part_data", "expected"),
+        [
+            # implicit default partition
+            (
+                ["*"],
+                ["(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["-*"],
+                ["-(default)/*", "(mypart)/*"],
+            ),
+            # explicit default partition
+            (
+                ["(default)/*"],
+                ["(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["-(default)/*"],
+                ["-(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["(default)/foo"],
+                ["(default)/foo", "(mypart)/*"],
+            ),
+            (
+                ["-(default)/foo"],
+                ["-(default)/foo", "(mypart)/*"],
+            ),
+            # no default partition
+            (
+                ["(mypart)/*"],
+                ["(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["-(mypart)/*"],
+                ["(default)/*", "-(mypart)/*"],
+            ),
+            (
+                ["(mypart)/foo"],
+                ["(default)/*", "(mypart)/foo"],
+            ),
+            (
+                ["-(mypart)/foo"],
+                ["(default)/*", "-(mypart)/foo"],
+            ),
+            # no partitions
+            (
+                [],
+                [],
+            ),
+        ],
+        indirect=["stub_part_data"],
+    )
+    def test_filter_keywords_partially_defined(self, stub_part_data, expected):
+        """Add a wildcard for all partitions not defined in a fileset."""
+        part = Part(
+            name="test-part", data=stub_part_data, partitions=["default", "mypart"]
+        )
+
+        assert part.stage_files == expected
+        assert part.prime_files == expected
+
+    @pytest.mark.parametrize(
+        ("stub_part_data", "expected"),
+        [
+            # implicit default partition
+            (
+                ["*", "(mypart)/*"],
+                ["(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["*", "-(mypart)/*"],
+                ["(default)/*", "-(mypart)/*"],
+            ),
+            (
+                ["-*", "(mypart)/*"],
+                ["-(default)/*", "(mypart)/*"],
+            ),
+            (
+                ["-*", "-(mypart)/*"],
+                ["-(default)/*", "-(mypart)/*"],
+            ),
+            (
+                ["foo", "(mypart)/foo"],
+                ["(default)/foo", "(mypart)/foo"],
+            ),
+            (
+                ["foo", "-(mypart)/foo"],
+                ["(default)/foo", "-(mypart)/foo"],
+            ),
+            (
+                ["-foo", "(mypart)/foo"],
+                ["-(default)/foo", "(mypart)/foo"],
+            ),
+            (
+                ["-foo", "-(mypart)/foo"],
+                ["-(default)/foo", "-(mypart)/foo"],
+            ),
+            # explicit default partition
+            (
+                ["-(default)/*", "-(mypart)/*"],
+                ["-(default)/*", "-(mypart)/*"],
+            ),
+            (
+                ["-(default)/foo", "-(mypart)/bar"],
+                ["-(default)/foo", "-(mypart)/bar"],
+            ),
+            (
+                ["-(default)/*", "(mypart)/bar"],
+                ["-(default)/*", "(mypart)/bar"],
+            ),
+        ],
+        indirect=["stub_part_data"],
+    )
+    def test_filter_keywords_all_partitions_defined(self, stub_part_data, expected):
+        """Filesets should not be changed when all partitions are defined.
+
+        Exception: The default partition will be prepended when implicitly defined.
+        """
+        part = Part(
+            name="test-part", data=stub_part_data, partitions=["default", "mypart"]
+        )
+
+        assert part.stage_files == expected
+        assert part.prime_files == expected
+
+    @pytest.mark.parametrize(
+        ("partitions", "expected"),
+        [
+            (
+                ["default"],
+                ["(default)/*"],
+            ),
+            (
+                ["default", "mypart", "ourpart"],
+                ["(default)/*", "(mypart)/*", "(ourpart)/*"],
+            ),
+        ],
+    )
+    def test_filter_keywords_default(self, partitions, expected):
+        """Test default values of filter keywords."""
+        part = Part(name="test-part", data={"plugin": "nil"}, partitions=partitions)
+
+        assert part.stage_files == expected
+        assert part.prime_files == expected
 
 
 class TestPartData(test_parts.TestPartData):
