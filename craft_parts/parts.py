@@ -17,9 +17,10 @@
 """Definitions and helpers to handle parts."""
 
 import re
+import warnings
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
@@ -30,7 +31,6 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.formatting_utils import humanize_list
 from craft_parts.utils.partition_utils import get_partition_dir_map
 
 
@@ -227,6 +227,9 @@ class Part:
                 part_name=name, error_list=err.errors()
             ) from err
 
+        self._check_partition_feature()
+        self._check_partition_usage()
+
     def __repr__(self) -> str:
         return f"Part({self.name!r})"
 
@@ -365,17 +368,34 @@ class Part:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
 
-    def check_partition_usage(self, partitions: List[str]) -> List[str]:
+    def _check_partition_feature(self) -> None:
+        """Check if the partitions feature is properly used.
+
+        :raises FeatureError: If partitions are defined but the feature is not enabled.
+        """
+        if self._partitions and not Features().enable_partitions:
+            raise errors.FeatureError(
+                "Partitions specified but partitions feature is not enabled."
+            )
+
+        if self._partitions is None and Features().enable_partitions:
+            raise errors.FeatureError(
+                "Partitions feature is enabled but no partitions specified."
+            )
+
+    def _check_partition_usage(self) -> None:
         """Check if partitions are properly used in a part.
 
-        :param partitions: The list of valid partitions.
+        Assumes the partition feature is enabled.
 
-        :returns: A list of invalid uses of partitions in the part.
+        :raises PartitionError: If partitions are not used properly in a fileset.
+        :raises PartitionWarning: If a fileset entry is misusing a partition.
         """
-        error_list: List[str] = []
+        if not self._partitions:
+            return
 
-        if not Features().enable_partitions:
-            return error_list
+        error_list: List[str] = []
+        warning_list: List[str] = []
 
         for fileset_name, fileset in [
             # only the destination of organize filepaths use partitions
@@ -383,42 +403,73 @@ class Part:
             ("stage", self.spec.stage_files),
             ("prime", self.spec.prime_files),
         ]:
-            error_list.extend(
-                self._check_partitions_in_filepaths(fileset_name, fileset, partitions)
+            partition_warnings, partition_errors = self._check_partitions_in_filepaths(
+                fileset_name, fileset
+            )
+            warning_list.extend(partition_warnings)
+            error_list.extend(partition_errors)
+
+        if warning_list:
+            warnings.warn(
+                errors.PartitionUsageWarning(warning_list=warning_list), stacklevel=1
             )
 
-        return error_list
+        if error_list:
+            raise errors.PartitionUsageError(
+                error_list=error_list,
+                partitions=self._partitions,
+            )
 
     def _check_partitions_in_filepaths(
-        self, fileset_name: str, fileset: Iterable[str], partitions: List[str]
-    ) -> List[str]:
+        self, fileset_name: str, fileset: Iterable[str]
+    ) -> Tuple[List[str], List[str]]:
         """Check if partitions are properly used in a fileset.
 
         If a filepath begins with a parentheses, then the text inside the parentheses
         must be a valid partition.
 
+        If a path begins with a partition name but is not encapsulated in parentheses,
+        a warning is generated. This will not warn for misuses of namespaced partitions.
+
         :param fileset_name: The name of the fileset being checked.
         :param fileset: The list of filepaths to check.
-        :param partitions: The list of valid partitions.
 
-        :returns: A list of invalid uses of partitions in the fileset.
+        :returns: A tuple containing two lists:
+            - A list of warnings of possible misuses of partitions in the fileset
+            - A list of invalid uses of partitions in the fileset
         """
         error_list = []
-        pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
+        warning_list = []
+
+        if not self._partitions:
+            return (warning_list, error_list)
+
+        partition_pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
+        possible_partition_pattern = re.compile("^-?(?P<possible_partition>[a-z]+)/?")
 
         for filepath in fileset:
-            match = re.match(pattern, filepath)
+            match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if partition not in partitions:
+                if str(partition) not in self._partitions:
                     error_list.append(
                         f"    unknown partition {partition!r} in {filepath!r}"
                     )
+            else:
+                match = re.match(possible_partition_pattern, filepath)
+                if match:
+                    partition = match.group("possible_partition")
+                    if partition in self._partitions:
+                        warning_list.append(
+                            f"    misused partition {partition!r} in {filepath!r}"
+                        )
 
         if error_list:
             error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
+        if warning_list:
+            warning_list.insert(0, f"  parts.{self.name}.{fileset_name}")
 
-        return error_list
+        return warning_list, error_list
 
 
 # pylint: enable=too-many-public-methods
@@ -570,33 +621,6 @@ def validate_part(data: Dict[str, Any]) -> None:
     :param data: The part data to validate.
     """
     _get_part_spec(data)
-
-
-def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> None:
-    """Validate usage of partitions in a list of parts.
-
-    For each part, the use of partitions in filepaths in overlay, stage, prime, and
-    organize keywords are validated.
-
-    :param part_list: The list of parts to validate.
-    :param partitions: The list of valid partitions.
-
-    :raises ValueError: If partitions are not used properly in the list of parts.
-    """
-    if not Features().enable_partitions:
-        return
-
-    error_list = []
-
-    for part in part_list:
-        error_list.extend(part.check_partition_usage(partitions))
-
-    if error_list:
-        raise errors.FeatureError(
-            "Error: Invalid usage of partitions:\n"
-            + "\n".join(error_list)
-            + f"\nValid partitions are {humanize_list(partitions, 'and')}."
-        )
 
 
 def part_has_overlay(data: Dict[str, Any]) -> bool:
