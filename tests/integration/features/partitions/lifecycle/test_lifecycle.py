@@ -55,6 +55,14 @@ class TestCleaning:
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
+        """Set up a source tree and a LifecycleManager.
+
+        Includes parts with the same name across multiple partitions:
+          - Part 'foo' creates the 'duplicate' file in 'default' and 'mypart'
+          - Part 'bar' creates the 'duplicate' file in 'yourpart'
+        This is to test that a cleaning a part only remove that part's files from shared
+        directories (stage and prime) for each partition.
+        """
         parts_yaml = textwrap.dedent(
             """
             parts:
@@ -63,6 +71,7 @@ class TestCleaning:
                 source: foo
                 organize:
                   (default)/file2: (mypart)/file2
+                  (default)/duplicate1: (mypart)/duplicate
                 # stage and prime keywords can be removed after #650 is resolved
                 stage:
                  - (default)/*
@@ -75,6 +84,7 @@ class TestCleaning:
                 source: bar
                 organize:
                   (default)/file4: (yourpart)/file4
+                  (default)/duplicate: (yourpart)/duplicate
                 stage:
                  - (default)/*
                  - (yourpart)/*
@@ -86,9 +96,12 @@ class TestCleaning:
         Path("foo").mkdir()
         Path("foo/file1").touch()
         Path("foo/file2").touch()
+        Path("foo/duplicate").touch()
+        Path("foo/duplicate1").touch()
         Path("bar").mkdir()
         Path("bar/file3").touch()
         Path("bar/file4").touch()
+        Path("bar/duplicate").touch()
 
         parts = yaml.safe_load(parts_yaml)
 
@@ -107,18 +120,26 @@ class TestCleaning:
             Step.PULL: [
                 Path("parts/foo/src/file1"),
                 Path("parts/foo/src/file2"),
+                Path("parts/foo/src/duplicate"),
+                Path("parts/foo/src/duplicate1"),
             ],
             Step.BUILD: [
                 Path("parts/foo/install/file1"),
+                Path("parts/foo/install/duplicate"),
                 Path("partitions/mypart/parts/foo/install/file2"),
+                Path("partitions/mypart/parts/foo/install/duplicate"),
             ],
             Step.STAGE: [
                 Path("stage/file1"),
+                Path("stage/duplicate"),
                 Path("partitions/mypart/stage/file2"),
+                Path("partitions/mypart/stage/duplicate"),
             ],
             Step.PRIME: [
                 Path("prime/file1"),
+                Path("prime/duplicate"),
                 Path("partitions/mypart/prime/file2"),
+                Path("partitions/mypart/prime/duplicate"),
             ],
         }
 
@@ -129,18 +150,22 @@ class TestCleaning:
             Step.PULL: [
                 Path("parts/bar/src/file3"),
                 Path("parts/bar/src/file4"),
+                Path("parts/bar/src/duplicate"),
             ],
             Step.BUILD: [
                 Path("parts/bar/install/file3"),
                 Path("partitions/yourpart/parts/bar/install/file4"),
+                Path("partitions/yourpart/parts/bar/install/duplicate"),
             ],
             Step.STAGE: [
                 Path("stage/file3"),
                 Path("partitions/yourpart/stage/file4"),
+                Path("partitions/yourpart/stage/duplicate"),
             ],
             Step.PRIME: [
                 Path("prime/file3"),
                 Path("partitions/yourpart/prime/file4"),
+                Path("partitions/yourpart/prime/duplicate"),
             ],
         }
 
@@ -149,7 +174,31 @@ class TestCleaning:
         return ["build", "prime", "pull", "stage"]
 
     @pytest.mark.parametrize(
-        "step", [step for step in list(Step) if step != Step.OVERLAY]
+        "step",
+        [
+            Step.PULL,
+            Step.BUILD,
+            pytest.param(
+                Step.STAGE,
+                marks=pytest.mark.xfail(
+                    reason=(
+                        "Cleaning shared directories with the same file in multiple "
+                        "partitions is not working."
+                    ),
+                    strict=True,
+                ),
+            ),
+            pytest.param(
+                Step.PRIME,
+                marks=pytest.mark.xfail(
+                    reason=(
+                        "Cleaning shared directories with the same file in multiple "
+                        "partitions is not working."
+                    ),
+                    strict=True,
+                ),
+            ),
+        ],
     )
     def test_clean_step(self, step, foo_files):
         """Clean each step for a part."""
@@ -191,6 +240,10 @@ class TestCleaning:
 
         assert list(state_dir.rglob("*")) == []
 
+    @pytest.mark.xfail(
+        reason="Cleaning shared directories with the same file in multiple partitions is not working.",
+        strict=True,
+    )
     def test_clean_part(self, foo_files, bar_files, state_files):
         """Clean a part."""
         actions = self._lifecycle.plan(Step.PRIME)
