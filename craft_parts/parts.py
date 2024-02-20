@@ -378,7 +378,6 @@ class Part:
             return error_list
 
         for fileset_name, fileset in [
-            ("overlay", self.spec.overlay_files),
             # only the destination of organize filepaths use partitions
             ("organize", self.spec.organize_files.values()),
             ("stage", self.spec.stage_files),
