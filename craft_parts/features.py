@@ -37,23 +37,16 @@ class Features(metaclass=Singleton):
     enable_overlay: bool = False
     enable_partitions: bool = False
 
-    def __init__(
-        self, *, enable_overlay: bool = False, enable_partitions: bool = False
-    ) -> None:
-        """Initialize craft-parts features.
-
-        :param enable_overlay: Enables the overlay step.
-        :param enable_partitions: Enables the usage of partitions.
+    def __post_init__(self) -> None:
+        """Validate feature set.
 
         :raises FeatureError: If mutually exclusive features are enabled.
         """
-        if enable_overlay and enable_partitions:
+        if self.enable_overlay and self.enable_partitions:
             raise FeatureError(
                 message="Cannot enable overlay and partition features.",
-                details=("Overlay and partition features are mutually exclusive."),
+                details="Overlay and partition features are mutually exclusive.",
             )
-        object.__setattr__(self, "enable_overlay", enable_overlay)
-        object.__setattr__(self, "enable_partitions", enable_partitions)
 
     @classmethod
     def reset(cls) -> None:
