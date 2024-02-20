@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,21 +25,42 @@ def setup_features():
     Features.reset()
 
 
-def test_features():
+def test_features_default():
+    """Features are disabled by default."""
     features = Features()
+
     assert features.enable_overlay is False
+    assert features.enable_partitions is False
 
 
-def test_features_set():
-    features = Features(enable_overlay=False)
-    assert features.enable_overlay is False
+@pytest.mark.parametrize("enabled", [True, False])
+def test_features_set_overlay(enabled):
+    """Set the overlay feature."""
+    features = Features(enable_overlay=enabled)
+
+    assert features.enable_overlay is enabled
 
     # A different instance should have the previously set value
     f2 = Features()
-    assert f2.enable_overlay is False
+
+    assert f2.enable_overlay is enabled
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_features_set_partitions(enabled):
+    """Set the partitions feature."""
+    features = Features(enable_partitions=enabled)
+
+    assert features.enable_partitions is enabled
+
+    # A different instance should have the previously set value
+    f2 = Features()
+
+    assert f2.enable_partitions is enabled
 
 
 def test_features_set_twice():
+    """Features are a frozen singleton and can only be configured once."""
     Features(enable_overlay=False)
 
     with pytest.raises(RuntimeError) as raised:
