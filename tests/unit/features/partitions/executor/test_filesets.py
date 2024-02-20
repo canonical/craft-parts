@@ -156,18 +156,39 @@ def test_partition_filesets(entries, includes, excludes):
 @pytest.mark.parametrize(
     ("partition", "entries", "includes", "excludes"),
     [
-        ("default", [], ["*"], []),
+        # implicit default partition, inclusive
         ("default", ["*"], ["*"], []),
+        ("default", ["foo"], ["foo"], []),
+        ("mypart", ["*"], [], []),
+        ("mypart", ["foo"], [], []),
+        # implicit default partition, exclusive
+        ("default", ["-*"], ["*"], ["*"]),
+        ("default", ["-foo"], ["*"], ["foo"]),
+        ("mypart", ["-*"], [], []),
+        ("mypart", ["-foo"], [], []),
+        # explicit default partition, inclusive
         ("default", ["(default)/*"], ["*"], []),
-        ("default", ["foo", "-bar"], ["foo"], ["bar"]),
-        ("default", ["(default)/foo", "-(default)/bar"], ["foo"], ["bar"]),
-        ("default", ["(foo)/foo", "-(foo)/bar"], [], []),
-        ("foo", [], [], []),
-        ("foo", ["*"], [], []),
-        ("foo", ["(foo)/*"], ["*"], []),
-        ("foo", ["foo", "-bar"], [], []),
-        ("foo", ["(default)/foo", "-(default)/bar"], [], []),
-        ("foo", ["(foo)/foo", "-(foo)/bar"], ["foo"], ["bar"]),
+        ("default", ["(default)/foo"], ["foo"], []),
+        ("mypart", ["(default)/*"], [], []),
+        ("mypart", ["(default)/foo"], [], []),
+        # explicit default partition, exclusive
+        ("default", ["-(default)/*"], ["*"], ["*"]),
+        ("default", ["-(default)/foo"], ["*"], ["foo"]),
+        ("mypart", ["-(default)/*"], [], []),
+        ("mypart", ["-(default)/foo"], [], []),
+        # non-default partition, inclusive
+        ("default", ["(mypart)/*"], [], []),
+        ("default", ["(mypart)/foo"], [], []),
+        ("mypart", ["(mypart)/*"], ["*"], []),
+        ("mypart", ["(mypart)/foo"], ["foo"], []),
+        # non-default partition, exclusive
+        ("default", ["-(mypart)/*"], ["*"], []),
+        ("default", ["-(mypart)/foo"], ["*"], []),
+        ("mypart", ["-(mypart)/*"], [], ["*"]),
+        ("mypart", ["-(mypart)/foo"], [], ["foo"]),
+        # no partitions
+        ("default", [], ["*"], []),
+        ("mypart", [], [], []),
     ],
 )
 def test_get_file_list_with_partitions(partition, entries, includes, excludes):
