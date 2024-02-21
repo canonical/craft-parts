@@ -438,8 +438,8 @@ class Part:
             - A list of warnings of possible misuses of partitions in the fileset
             - A list of invalid uses of partitions in the fileset
         """
-        error_list = []
-        warning_list = []
+        error_list: List[str] = []
+        warning_list: List[str] = []
 
         if not self._partitions:
             return (warning_list, error_list)
