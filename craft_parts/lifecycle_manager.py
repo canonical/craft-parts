@@ -367,7 +367,6 @@ def _validate_partition_usage_in_parts(
     for part in part_list:
         for filepaths in [
             part.spec.organize_files,
-            part.spec.overlay_files,
             part.spec.prime_files,
             part.spec.stage_files,
         ]:
