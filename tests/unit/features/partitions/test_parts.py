@@ -134,9 +134,6 @@ class TestPartPartitionUsage:
         """
         return [
             "test",
-            "(default)",
-            "(default)/",
-            "(default)//",
             "(default)/test",
             "(default)//test",
             "(default)/test/(otherdir)",
@@ -148,9 +145,6 @@ class TestPartPartitionUsage:
             "test(default)",
             "test(default)/test",
             "test/(default)/test",
-            "(kernel)",
-            "(kernel)/",
-            "(kernel)//",
             "(kernel)/test",
             "(kernel)//test",
             "(kernel)/test/(otherdir)",
@@ -162,9 +156,6 @@ class TestPartPartitionUsage:
             "test/(kernel)",
             "test(kernel)/test",
             "test/(kernel)/test",
-            "(a/b)",
-            "(a/b)/",
-            "(a/b)//",
             "(a/b)/test",
             "(a/b)//test",
             "(a/b)/test/(otherdir)",
@@ -176,9 +167,6 @@ class TestPartPartitionUsage:
             "test/(a/b)",
             "test(a/b)/test",
             "test/(a/b)/test",
-            "(a/c-d)",
-            "(a/c-d)/",
-            "(a/c-d)//",
             "(a/c-d)/test",
             "(a/c-d)//test",
             "(a/c-d)/test/(otherdir)",
@@ -236,6 +224,7 @@ class TestPartPartitionUsage:
         and "kernel".
         """
         return [
+            # unknown partition names
             "()",
             "(foo)",
             "(bar)/test",
@@ -260,6 +249,18 @@ class TestPartPartitionUsage:
             "(123)/test/(kernel)",
             "(123)/test/(a/b)",
             "(123)/test/(a/c-d)",
+            # no inner paths
+            "(default)",
+            "(default)/",
+            "(a/b)",
+            "(a/b)/",
+            "(a/b)//",
+            "(a/c-d)",
+            "(a/c-d)/",
+            "(a/c-d)//",
+            "(kernel)",
+            "(kernel)/",
+            "(kernel)//",
         ]
 
     def test_part_valid_partition_usage(self, valid_fileset, partition_list):
@@ -369,6 +370,7 @@ class TestPartPartitionUsage:
                 unknown partition 'bar' in '(bar)/test'
               parts.part-a.prime
                 unknown partition 'baz' in '(baz)'
+                no path specified after partition in '(baz)'
             Valid partitions: default, kernel, a/b, a/c-d"""
         )
 
@@ -388,7 +390,7 @@ class TestPartPartitionUsage:
         with pytest.raises(errors.PartitionUsageError) as raised:
             Part("part-a", part_data, partitions=partition_list)
 
-        unknown_partitions = dedent(
+        unknown_partitions_organize = dedent(
             """\
             unknown partition '' in '()'
             unknown partition 'foo' in '(foo)'
@@ -416,14 +418,59 @@ class TestPartPartitionUsage:
             unknown partition '123' in '(123)/test/(a/c-d)'
             """
         )
+        unknown_partitions_stage_and_prime = dedent(
+            """\
+            unknown partition '' in '()'
+            unknown partition 'foo' in '(foo)'
+            no path specified after partition in '(foo)'
+            unknown partition 'bar' in '(bar)/test'
+            unknown partition 'BAZ' in '(BAZ)'
+            unknown partition 'foo' in '(foo)/'
+            no path specified after partition in '(foo)/'
+            unknown partition 'foo' in '(foo)/test'
+            unknown partition 'foo-bar' in '(foo-bar)'
+            unknown partition 'foo-bar' in '(foo-bar)/'
+            unknown partition 'foo-bar' in '(foo-bar)/test'
+            unknown partition 'foo/bar' in '(foo/bar)'
+            no path specified after partition in '(foo/bar)'
+            unknown partition 'foo/bar' in '(foo/bar)/'
+            no path specified after partition in '(foo/bar)/'
+            unknown partition 'foo/bar' in '(foo/bar)/test'
+            unknown partition 'foo/bar-baz' in '(foo/bar-baz)'
+            no path specified after partition in '(foo/bar-baz)'
+            unknown partition 'foo/bar-baz' in '(foo/bar-baz)/'
+            no path specified after partition in '(foo/bar-baz)/'
+            unknown partition 'foo/bar-baz' in '(foo/bar-baz)/test'
+            unknown partition 'foo-bar/baz' in '(foo-bar/baz)'
+            unknown partition 'foo-bar/baz' in '(foo-bar/baz)/'
+            unknown partition 'foo-bar/baz' in '(foo-bar/baz)/test'
+            unknown partition '123' in '(123)/test'
+            unknown partition '123' in '(123)/test/(456)'
+            unknown partition '123' in '(123)/test/(default)'
+            unknown partition '123' in '(123)/test/(kernel)'
+            unknown partition '123' in '(123)/test/(a/b)'
+            unknown partition '123' in '(123)/test/(a/c-d)'
+            no path specified after partition in '(default)'
+            no path specified after partition in '(default)/'
+            no path specified after partition in '(a/b)'
+            no path specified after partition in '(a/b)/'
+            no path specified after partition in '(a/b)//'
+            no path specified after partition in '(a/c-d)'
+            no path specified after partition in '(a/c-d)/'
+            no path specified after partition in '(a/c-d)//'
+            no path specified after partition in '(kernel)'
+            no path specified after partition in '(kernel)/'
+            no path specified after partition in '(kernel)//'
+            """
+        )
 
         assert raised.value.brief == "Invalid usage of partitions"
         assert raised.value.details == (
             "  parts.part-a.organize\n"
-            + indent(unknown_partitions, "    ")
+            + indent(unknown_partitions_organize, "    ")
             + "  parts.part-a.stage\n"
-            + indent(unknown_partitions, "    ")
+            + indent(unknown_partitions_stage_and_prime, "    ")
             + "  parts.part-a.prime\n"
-            + indent(unknown_partitions, "    ")
+            + indent(unknown_partitions_stage_and_prime, "    ")
             + "Valid partitions: default, kernel, a/b, a/c-d"
         )

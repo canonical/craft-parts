@@ -32,6 +32,7 @@ from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import get_partition_dir_map
+from craft_parts.utils.path_utils import get_partition_and_path
 
 
 class PartSpec(BaseModel):
@@ -397,14 +398,15 @@ class Part:
         error_list: List[str] = []
         warning_list: List[str] = []
 
-        for fileset_name, fileset in [
-            # only the destination of organize filepaths use partitions
-            ("organize", self.spec.organize_files.values()),
-            ("stage", self.spec.stage_files),
-            ("prime", self.spec.prime_files),
+        for fileset_name, fileset, require_inner_path in [
+            # organize source entries do not use partitions and
+            # organize destination entries do not require an inner path
+            ("organize", self.spec.organize_files.values(), False),
+            ("stage", self.spec.stage_files, True),
+            ("prime", self.spec.prime_files, True),
         ]:
             partition_warnings, partition_errors = self._check_partitions_in_filepaths(
-                fileset_name, fileset
+                fileset_name, fileset, require_inner_path
             )
             warning_list.extend(partition_warnings)
             error_list.extend(partition_errors)
@@ -421,18 +423,28 @@ class Part:
             )
 
     def _check_partitions_in_filepaths(
-        self, fileset_name: str, fileset: Iterable[str]
+        self, fileset_name: str, fileset: Iterable[str], require_inner_path: bool
     ) -> Tuple[List[str], List[str]]:
         """Check if partitions are properly used in a fileset.
 
         If a filepath begins with a parentheses, then the text inside the parentheses
-        must be a valid partition.
+        must be a valid partition. This is an error.
+
+        Some filesets must specify a path to avoid ambiguity. For example, the
+        following is not allowed:
+            stage:
+              - (default)
+              - (default)/
+        Whereas the organize destination does not require an inner path:
+            organize:
+              - foo: (mypart)
 
         If a path begins with a partition name but is not encapsulated in parentheses,
         a warning is generated. This will not warn for misuses of namespaced partitions.
 
         :param fileset_name: The name of the fileset being checked.
         :param fileset: The list of filepaths to check.
+        :param require_inner_path: True if entries in the fileset need an inner path.
 
         :returns: A tuple containing two lists:
             - A list of warnings of possible misuses of partitions in the fileset
@@ -442,7 +454,7 @@ class Part:
         warning_list: List[str] = []
 
         if not self._partitions:
-            return (warning_list, error_list)
+            return warning_list, error_list
 
         partition_pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
         possible_partition_pattern = re.compile("^-?(?P<possible_partition>[a-z]+)/?")
@@ -463,6 +475,13 @@ class Part:
                         warning_list.append(
                             f"    misused partition {partition!r} in {filepath!r}"
                         )
+
+            if require_inner_path:
+                _, inner_path = get_partition_and_path(filepath)
+                if not inner_path:
+                    error_list.append(
+                        f"    no path specified after partition in {filepath!r}"
+                    )
 
         if error_list:
             error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
