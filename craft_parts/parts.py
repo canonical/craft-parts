@@ -406,7 +406,7 @@ class Part:
             ("prime", self.spec.prime_files, True),
         ]:
             partition_warnings, partition_errors = self._check_partitions_in_filepaths(
-                fileset_name, fileset, require_inner_path
+                fileset_name, fileset, require_inner_path=require_inner_path
             )
             warning_list.extend(partition_warnings)
             error_list.extend(partition_errors)
@@ -423,7 +423,7 @@ class Part:
             )
 
     def _check_partitions_in_filepaths(
-        self, fileset_name: str, fileset: Iterable[str], require_inner_path: bool
+        self, fileset_name: str, fileset: Iterable[str], *, require_inner_path: bool
     ) -> Tuple[List[str], List[str]]:
         """Check if partitions are properly used in a fileset.
 

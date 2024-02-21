@@ -113,9 +113,7 @@ def test_fileset_only_excludes(partition, expected_excludes):
 
     includes, excludes = filesets._get_file_list(stage_set, partition=partition)
 
-    # only the default partition should implicitly include files
-    expected_includes = ["*"] if partition == "default" else []
-    assert includes == expected_includes
+    assert includes == ["*"]
     assert excludes == expected_excludes
 
 
@@ -159,36 +157,36 @@ def test_partition_filesets(entries, includes, excludes):
         # implicit default partition, inclusive
         ("default", ["*"], ["*"], []),
         ("default", ["foo"], ["foo"], []),
-        ("mypart", ["*"], [], []),
-        ("mypart", ["foo"], [], []),
+        ("mypart", ["*"], ["*"], []),
+        ("mypart", ["foo"], ["*"], []),
         # implicit default partition, exclusive
         ("default", ["-*"], ["*"], ["*"]),
         ("default", ["-foo"], ["*"], ["foo"]),
-        ("mypart", ["-*"], [], []),
-        ("mypart", ["-foo"], [], []),
+        ("mypart", ["-*"], ["*"], []),
+        ("mypart", ["-foo"], ["*"], []),
         # explicit default partition, inclusive
         ("default", ["(default)/*"], ["*"], []),
         ("default", ["(default)/foo"], ["foo"], []),
-        ("mypart", ["(default)/*"], [], []),
-        ("mypart", ["(default)/foo"], [], []),
+        ("mypart", ["(default)/*"], ["*"], []),
+        ("mypart", ["(default)/foo"], ["*"], []),
         # explicit default partition, exclusive
         ("default", ["-(default)/*"], ["*"], ["*"]),
         ("default", ["-(default)/foo"], ["*"], ["foo"]),
-        ("mypart", ["-(default)/*"], [], []),
-        ("mypart", ["-(default)/foo"], [], []),
+        ("mypart", ["-(default)/*"], ["*"], []),
+        ("mypart", ["-(default)/foo"], ["*"], []),
         # non-default partition, inclusive
-        ("default", ["(mypart)/*"], [], []),
-        ("default", ["(mypart)/foo"], [], []),
+        ("default", ["(mypart)/*"], ["*"], []),
+        ("default", ["(mypart)/foo"], ["*"], []),
         ("mypart", ["(mypart)/*"], ["*"], []),
         ("mypart", ["(mypart)/foo"], ["foo"], []),
         # non-default partition, exclusive
         ("default", ["-(mypart)/*"], ["*"], []),
         ("default", ["-(mypart)/foo"], ["*"], []),
-        ("mypart", ["-(mypart)/*"], [], ["*"]),
-        ("mypart", ["-(mypart)/foo"], [], ["foo"]),
+        ("mypart", ["-(mypart)/*"], ["*"], ["*"]),
+        ("mypart", ["-(mypart)/foo"], ["*"], ["foo"]),
         # no partitions
         ("default", [], ["*"], []),
-        ("mypart", [], [], []),
+        ("mypart", [], ["*"], []),
     ],
 )
 def test_get_file_list_with_partitions(partition, entries, includes, excludes):

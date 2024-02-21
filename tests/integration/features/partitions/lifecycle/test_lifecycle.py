@@ -72,25 +72,12 @@ class TestCleaning:
                 organize:
                   (default)/file2: (mypart)/file2
                   (default)/duplicate1: (mypart)/duplicate
-                # stage and prime keywords can be removed after #650 is resolved
-                stage:
-                 - (default)/*
-                 - (mypart)/*
-                prime:
-                 - (default)/*
-                 - (mypart)/*
               bar:
                 plugin: dump
                 source: bar
                 organize:
                   (default)/file4: (yourpart)/file4
                   (default)/duplicate: (yourpart)/duplicate
-                stage:
-                 - (default)/*
-                 - (yourpart)/*
-                prime:
-                 - (default)/*
-                 - (yourpart)/*
             """
         )
         Path("foo").mkdir()
