@@ -33,6 +33,8 @@ Filesets are defined for individual parts. The scope of each fileset is the
 part it is defined in. Filesets defined in one part cannot be used by another
 part, and filesets cannot be shared between parts.
 
+.. _filesets_specifying_paths:
+
 Specifying paths
 ~~~~~~~~~~~~~~~~
 
