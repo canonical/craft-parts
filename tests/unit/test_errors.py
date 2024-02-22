@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -396,3 +396,52 @@ def test_overlay_permission_error():
     assert err.brief == "Using the overlay step requires superuser privileges."
     assert err.details is None
     assert err.resolution is None
+
+
+class TestPartitionErrors:
+    def test_partition_error(self):
+        err = errors.PartitionError(
+            brief="test brief", details="test details", resolution="test resolution"
+        )
+
+        assert err.brief == "test brief"
+        assert err.details == "test details"
+        assert err.resolution == "test resolution"
+
+    def test_invalid_partition_usage(self):
+        err = errors.PartitionUsageError(
+            error_list=[
+                "  parts.test-part.organize",
+                "    unknown partition 'foo' in '(foo)'",
+            ],
+            partitions=["default", "mypart", "yourpart"],
+        )
+
+        assert err.brief == "Invalid usage of partitions"
+        assert err.details == (
+            "  parts.test-part.organize\n"
+            "    unknown partition 'foo' in '(foo)'\n"
+            "Valid partitions: default, mypart, yourpart"
+        )
+        assert err.resolution == "Correct the invalid partition name(s) and try again."
+
+    def test_invalid_partition_warning(self):
+        err = errors.PartitionUsageWarning(
+            warning_list=[
+                "  parts.test-part.organize",
+                "    misused partition 'yourpart' in 'yourpart/test-file'",
+            ]
+        )
+
+        assert err.brief == "Possible misuse of partitions"
+        assert err.details == (
+            "The following entries begin with a valid partition name but are not "
+            "wrapped in parentheses. These entries will go into the "
+            "default partition.\n"
+            "  parts.test-part.organize\n"
+            "    misused partition 'yourpart' in 'yourpart/test-file'"
+        )
+        assert err.resolution == (
+            "Wrap the partition name in parentheses, for example "
+            "'default/file' should be written as '(default)/file'"
+        )

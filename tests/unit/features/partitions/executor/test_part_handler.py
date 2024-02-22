@@ -25,6 +25,7 @@ from tests.unit.executor import test_part_handler
 
 PARTITIONS = ["default", "mypart", "yourpart", "our/special-part"]
 TEST_FILES = ["filea", "dir1/file1a", "dir1/file1b", "dir2/dir3/file2a"]
+ALL_FILES = {f"{partition}/{file}" for file in TEST_FILES for partition in PARTITIONS}
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -98,28 +99,13 @@ class TestFileFilter(test_part_handler.TestFileFilter):
     @pytest.mark.parametrize(
         ("filters", "survivors"),
         [
+            ([], ALL_FILES),
+            (["*"], ALL_FILES),
+            (["(default)/"], ALL_FILES),
+            (["(default)/*"], ALL_FILES),
+            (["-filea"], ALL_FILES - {"default/filea"}),
             (
-                [],
-                {f"default/{file}" for file in TEST_FILES},
-            ),
-            (
-                ["*"],
-                {f"default/{file}" for file in TEST_FILES},
-            ),
-            (
-                ["(default)/*"],
-                {f"default/{file}" for file in TEST_FILES},
-            ),
-            (
-                ["-filea"],
-                {
-                    "default/dir1/file1a",
-                    "default/dir1/file1b",
-                    "default/dir2/dir3/file2a",
-                },
-            ),
-            (
-                ["filea", "(mypart)/dir1", "(yourpart)"],
+                ["filea", "(mypart)/dir1", "(yourpart)/*"],
                 {
                     "default/filea",
                     "mypart/dir1/file1a",
@@ -128,10 +114,19 @@ class TestFileFilter(test_part_handler.TestFileFilter):
                     "yourpart/dir1/file1a",
                     "yourpart/dir1/file1b",
                     "yourpart/dir2/dir3/file2a",
+                    "our/special-part/filea",
+                    "our/special-part/dir1/file1a",
+                    "our/special-part/dir1/file1b",
+                    "our/special-part/dir2/dir3/file2a",
                 },
             ),
             (
-                ["-(default)", "-(mypart)", "(yourpart)/filea", "-(our/special-part)"],
+                [
+                    "-(default)/*",
+                    "-(mypart)/*",
+                    "(yourpart)/filea",
+                    "-(our/special-part)/*",
+                ],
                 {"yourpart/filea"},
             ),
         ],

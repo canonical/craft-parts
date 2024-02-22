@@ -173,6 +173,9 @@ def _get_file_list(
 ) -> Tuple[List[str], List[str]]:
     """Split a fileset to obtain include and exclude file filters.
 
+    If the fileset does not include any files, then the include list will contain a
+        single wildcard: ["*"].
+
     :param fileset: The fileset to split.
     :param partition: If provided, only get the file list for files in the partition.
 
@@ -206,21 +209,26 @@ def _get_file_list(
         else:
             includes.append(item)
 
-    includes = includes or ["*"]
+    # short circuit if no partition was provided
+    if not partition:
+        return includes or ["*"], excludes
 
+    # only include files for the partition
     processed_includes: List[str] = []
     for file in includes:
         file_partition, file_inner_path = path_utils.get_partition_and_path(file)
-        if not partition or file_partition == partition:
+        if file_partition == partition:
             processed_includes.append(str(file_inner_path))
 
+    # only exclude files for the partition
     processed_excludes: List[str] = []
     for file in excludes:
         file_partition, file_inner_path = path_utils.get_partition_and_path(file)
-        if not partition or file_partition == partition:
+        if file_partition == partition:
             processed_excludes.append(str(file_inner_path))
 
-    return processed_includes, processed_excludes
+    # the default behavior is to include everything
+    return processed_includes or ["*"], processed_excludes
 
 
 def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:

@@ -95,6 +95,16 @@ def test_fileset_combine_conflicts():
     assert raised.value.conflicting_files == {"otherfile"}
 
 
+def test_fileset_empty():
+    """Empty filesets should default to include a wildcard."""
+    stage_set = Fileset([])
+
+    include, exclude = filesets._get_file_list(stage_set, partition=None)
+
+    assert include == ["*"]
+    assert exclude == []
+
+
 def test_fileset_only_includes():
     stage_set = Fileset(["opt/something", "usr/bin"])
 
