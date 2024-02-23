@@ -67,8 +67,7 @@ class _UpdateHandler(Protocol):
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 class PartHandler:
