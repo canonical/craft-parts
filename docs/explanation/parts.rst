@@ -31,6 +31,31 @@ describe a build process typically accept specifications of parts in YAML format
 mostly-declarative format. Libraries that use parts may use the underlying
 data structures to describe them.
 
+.. mermaid ::
+
+    graph LR
+
+    subgraph Part
+    $CRAFT_PART_SRC
+    $CRAFT_PART_BUILD
+    $CRAFT_PART_INSTALL
+    end
+
+    $CRAFT_PROJECT_DIR
+    --->|pull| $CRAFT_PART_SRC
+    --->|build| $CRAFT_PART_BUILD
+    --->|build| $CRAFT_PART_INSTALL
+    --->|stage| $CRAFT_STAGE
+    --->|prime| $CRAFT_PRIME
+
+    $CRAFT_PROJECT_DIR
+    --->|overlay| $CRAFT_OVERLAY
+    --->|stage| $CRAFT_STAGE
+
+    $CRAFT_PART_INSTALL
+    --->|organize| $CRAFT_PART_INSTALL
+
+
 Describing a part
 -----------------
 
