@@ -105,10 +105,10 @@ Whether to inherit the LDFLAGS from the environment.
 This option will add the LDFLAGS from the environment to the
 Rust linker directives.
 
-Cargo build system and Rust compiler by default do not respect the `LDFLAGS`
+Cargo build system and Rust compiler by default do not respect the ``LDFLAGS``
 environment variable. This option will cause the craft-parts plugin to
-forcibly add the contents inside the `LDFLAGS` to the Rust linker directives
-by wrapping and appending the `LDFLAGS` value to `RUSTFLAGS`.
+forcibly add the contents inside the ``LDFLAGS`` to the Rust linker directives
+by wrapping and appending the ``LDFLAGS`` value to ``RUSTFLAGS``.
 
 .. note::
   You may use this option to tune the Rust binary in a classic Snap to respect
