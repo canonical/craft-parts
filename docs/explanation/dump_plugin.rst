@@ -23,13 +23,10 @@ plugin instead to avoid copying any unnecessary files.
 
 Combining the dump plugin with the :ref:`part properties <part_properties>`
 allows extending the behavior to create new files, modify existing files,
-and/or filter files for the final payload.
+and/or filter files for the final payload. For example, it could be used with
+the :ref:`override-build <override_build>`, to convert file formats.
 
 
-For example, it could be used with the :ref:`override-build <override_build>`,
-to convert file formats. 
-
-
-The plugin could also be used with the :ref:`organize <organize>` to reorganize
+The plugin can also be used with the :ref:`organize <organize>` to reorganize
 the files in the final payload. Like keep only libraries and exclude the
 binaries and headers from SDKs.

@@ -7,7 +7,7 @@ Including local files and remote resources
 Craft-parts provides the built-in :ref:`dump plugin <craft_parts_dump_plugin>`
 for all kinds of projects that need to include local files and remote resources 
 as is.
-This plugin using the :ref:`source <source>` property in the part to download,
+This plugin uses the :ref:`source <source>` property in the part to download,
 unpack, and copy files and directories from the given source to the build
 environment, then do some organizing if needed, and include them in the final
 payload.
@@ -29,7 +29,7 @@ The typical use cases for the ``dump`` plugin:
   artifacts that are not available in the system's package manager or in the
   project's source code.
 
-The supported source types please refer to :ref:`source_type`.
+For supported source types please refer to :ref:`source_type`.
 
 
 Example: To include a local directory and move files to the correct locations
