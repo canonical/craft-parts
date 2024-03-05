@@ -18,11 +18,11 @@ which branch, tag, and/or commit to clone if it is a repository.
 
 If you are not using the source files directly in the final payload, but want to
 run some custom commands to generate them. Then you should use the ``nil``
-plugin instead of this dump plugin to avoid copying any unnecessary files.
+plugin instead to avoid copying any unnecessary files.
 
 
 Combining the dump plugin with the :ref:`part properties <part_properties>`
-allows to extend the behavior to create new files, modify existing files,
+allows extending the behavior to create new files, modify existing files,
 and/or filter files for the final payload.
 
 
