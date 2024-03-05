@@ -16,6 +16,7 @@
 
 import http.server
 import os
+import pathlib
 import tempfile
 import threading
 from pathlib import Path
@@ -42,6 +43,28 @@ def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
     monkeypatch.chdir(tmpdir)
     return tmpdir
+
+
+@pytest.fixture()
+def tmp_homedir_path():
+    """A temporary directory in the user's home directory.
+
+    This generally works around temporary directories being on tmpfs.
+    """
+    with tempfile.TemporaryDirectory(
+        prefix="craft-parts-tests", dir=pathlib.Path.home() / ".cache"
+    ) as tmp_dir:
+        yield pathlib.Path(tmp_dir)
+
+
+@pytest.fixture()
+def new_homedir_path(monkeypatch, tmp_homedir_path):
+    """Change to a new temporary directory in the user's home directory.
+
+    This works around temporary directories sometimes being on tmpfs, which doesn't support xattrs.
+    """
+    monkeypatch.chdir(tmp_homedir_path)
+    return tmp_homedir_path
 
 
 @pytest.fixture()
