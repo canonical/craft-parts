@@ -1,3 +1,5 @@
+.. _craft_parts_python_plugin:
+
 Python plugin
 =============
 

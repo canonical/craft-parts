@@ -8,7 +8,7 @@ files from somewhere and keep the content as is. Its source can be a local
 directory, a remote repository, or a URL. Common use cases include:
 
 - Include static files like scripts or media from a local directory.
-- Download and unpack a pre-compiled proprietary software from a remote URL.
+- Download and unpack pre-compiled proprietary software from a remote URL.
 - Use git to clone a remote SDK, dataset, or model.
 
 
@@ -40,4 +40,5 @@ During the build step, the plugin performs the following actions:
   location.
 * Copy the file or directory if the ``source`` is a local location.
 * Unpack the file if it is an archive specified by the ``source-type`` keyword.
-* Copy all contents and preserve the directory structure to the build directory.
+* Copy all contents and preserve the directory structure to the part's install
+  directory.

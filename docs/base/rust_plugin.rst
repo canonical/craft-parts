@@ -1,3 +1,5 @@
+.. _craft_parts_rust_plugin:
+
 Rust plugin
 =============
 

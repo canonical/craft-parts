@@ -4,11 +4,20 @@
 Including local files and remote resources
 ******************************************
 
-Craft-parts provides built-in :ref:`dump plugin <craft_parts_dump_plugin>` for
-all kinds of projects that need to include local files and remote resources.
-This plugin is used to download, unpack, and copy files and directories from the
-given source to the build environment, then do some organizing if needed, and
-include them in the final payload.
+Craft-parts provides the built-in :ref:`dump plugin <craft_parts_dump_plugin>`
+for all kinds of projects that need to include local files and remote resources 
+as is.
+This plugin using the :ref:`source <source>` property in the part to download,
+unpack, and copy files and directories from the given source to the build
+environment, then do some organizing if needed, and include them in the final
+payload.
+
+If you don't need to copy these files, consider using the ``nil`` plugin.
+If you need to download and build them from source, consider using plugins for
+the corresponding languages, such as the
+:ref:`python plugin <craft_parts_python_plugin>` and the
+:ref:`rust plugin <craft_parts_rust_plugin>`.
+
 
 The typical use cases for the ``dump`` plugin:
 
@@ -31,16 +40,14 @@ Given the following project structure:
 .. code-block:: text
 
   .
-  ├── misc
-  │   ├── fonts
-  │   │   └── good.otf
-  │   └── services
-  │       ├── README
-  │       └── hello.service
-  └── snap
-      └── snapcraft.yaml
-
-
+  └── misc
+      ├── fonts
+      │   └── good.otf
+      └── services
+          ├── README
+          └── hello.service
+    
+    
 The following dump part can be used to include the ``hello.service`` and
 ``good.otf`` files from the ``misc`` directory, then move them to the correct
 locations, keeping only ``/usr`` in the final payload:

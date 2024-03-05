@@ -3,7 +3,7 @@
 Dump Plugin
 ===========
 
-The dump plugin is a simple plugin that by default is equivalent to run the
+The dump plugin is a simple plugin that by default is equivalent to running the
 following command from the source directory:
 
 .. code-block:: shell
@@ -17,7 +17,7 @@ which branch, tag, and/or commit to clone if it is a repository.
 
 
 If you are not using the source files directly in the final payload, but want to
-run some custom commands to generate them. Then you should use the ``nil``
+run some custom commands to generate them, then you should use the ``nil``
 plugin instead to avoid copying any unnecessary files.
 
 
@@ -28,13 +28,6 @@ and/or filter files for the final payload.
 
 For example, it could be used with the :ref:`override-build <override_build>`,
 to convert file formats. 
-
-
-.. ifconfig:: project in ["Snapcraft"]
-
-   Combining the dump plugin with :ref:`build-attributes <build_attributes>` and
-   ``enable-patchelf`` can be used to patch pre-compiled third-party binaries
-   for snaps.
 
 
 The plugin could also be used with the :ref:`organize <organize>` to reorganize
