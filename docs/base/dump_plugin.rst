@@ -18,9 +18,9 @@ Keywords
 This plugin uses the common :ref:`plugin <part-properties-plugin>` keywords as
 well as those for :ref:`sources <part-properties-sources>`.
 
-You will need to specify at least the :ref:`source <source>` keyword.
-:ref:`source-type <source_type>` keyword is optional but recommended for
-specific how to handle the source.
+You must specify at least the :ref:`source <source>` keyword.
+The :ref:`source-type <source_type>` keyword is optional, but recommended, as it
+is used to specify how the source should be handled.
 
 
 Dependencies
