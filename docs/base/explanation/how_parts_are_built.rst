@@ -40,7 +40,7 @@ When the *build* step is run, each part in the ``parts`` subdirectory is
 processed in the order described in the :ref:`build order <parts_build-order>`. The plugin for the part will use the appropriate build system
 to build the part in its ``build`` subdirectory, using a copy of the files
 in its ``src`` subdirectory, and install the result in the part's ``install``
-subdirectory. The files in the ``install`` directory will be organized
+subdirectory. The files in the ``install`` directory will be organised
 according to the rules in the part's :ref:`organize` property.
 
 After the *build* step is run, the directory for each part in the ``parts``

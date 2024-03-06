@@ -16,7 +16,7 @@ or library, it performs some or all of the steps described in the
 #. The *overlay* step unpacks them into a base file system chosen from a
    collection of standard file system images.
 #. The *build* step runs a suitable build tool for the sources to compile
-   a set of build products or artifacts.
+   a set of build products or artefacts.
 #. The *stage* step copies the build products for the part into a common
    area for all parts in a project.
 #. The *prime* step copies the files to be deployed into an area for
@@ -43,7 +43,7 @@ Generally, each part includes information about the following:
 * Its `source <Source_>`_ (where it is obtained from)
 * Its `build dependencies <Build dependencies_>`_ (snaps and packages)
 * The `build process <Build process_>`_
-* How `build artifacts <Build artifacts_>`_ are handled
+* How `build artefacts <Build artefacts_>`_ are handled
 
 Each of these are described in the following sections.
 
@@ -145,21 +145,21 @@ variables in the build environment. This is useful in situations where the
 build process of a part needs to be fine-tuned and can be configured by
 setting environment variables.
 
-The result of the *build* step is a set of build artifacts or products that
+The result of the *build* step is a set of build artefacts or products that
 are the same as those that would be produced by manually compiling or
 building the software.
 
-Build artifacts
+Build artefacts
 ~~~~~~~~~~~~~~~
 
-At the end of the *build* step, the build artifacts can be organized before
+At the end of the *build* step, the build artefacts can be organised before
 the *stage* step is run.
 
 The :ref:`organize` property is used to customise how files are copied from
 the building area to the staging area. It defines an ordered dictionary that
 maps paths in the building area to paths in the staging area.
 
-After the *build* step, the *stage* step is run to collect the artifacts from
+After the *build* step, the *stage* step is run to collect the artefacts from
 the build into a common staging area for all parts. Additional snaps and
 system packages that need to be deployed with the part are specified using
 the :ref:`stage_snaps` and :ref:`stage_packages` properties. Files to be

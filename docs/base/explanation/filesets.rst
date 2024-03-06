@@ -68,7 +68,7 @@ Using filesets
 --------------
 
 Built-in filesets for the *stage* and *prime* steps are both applied to the
-directory containing the artifacts from the *build* step. These are used to
+directory containing the artefacts from the *build* step. These are used to
 specify the files and directories to migrate to the *stage* and *prime* steps.
 
 The contents of the filesets for these steps are specified using the
@@ -91,9 +91,9 @@ When defined:
 
 When used:
 
-* Filesets are used at the start of a step to collect and filter artifacts
+* Filesets are used at the start of a step to collect and filter artefacts
   from an earlier step.
-* Their file paths are applied to the directory containing the artifacts
+* Their file paths are applied to the directory containing the artefacts
   from the earlier step.
 * All files and directories included by filesets are first located, then
   filtered by the filesets that exclude paths.
