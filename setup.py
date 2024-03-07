@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup
 
-VERSION = "1.26.1"
+VERSION = "1.26.2"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
