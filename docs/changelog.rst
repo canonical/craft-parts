@@ -2,6 +2,15 @@
 Changelog
 *********
 
+1.27.0 (2024-03-07)
+-------------------
+
+- Add base layer data to ProjectInfo
+- Add qmake plugin
+- Add proxy support to ant plugin
+- Use rustup snap in the Rust plugin
+- Update documentation
+
 1.26.2 (2024-02-07)
 -------------------
 

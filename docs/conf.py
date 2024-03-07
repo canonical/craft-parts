@@ -38,7 +38,7 @@ copyright = "2023, Canonical Ltd."
 author = "Canonical Ltd."
 
 # The full version, including alpha/beta/rc tags
-release = "1.26.2"
+release = "1.27.0"
 
 # Open Graph configuration - defines what is displayed in the website preview
 ogp_site_url = "https://canonical-craft-parts.readthedocs-hosted.com"
