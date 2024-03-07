@@ -59,6 +59,8 @@ PARTS_PYTHON_VENV_ARGS
 
 Additional arguments for venv.
 
+.. _python-details-begin:
+
 Dependencies
 ------------
 
@@ -76,6 +78,8 @@ variable.
 
 Use of ``python3-<python-package>`` in stage-packages will force the
 inclusion of the Python interpreter.
+
+.. _python-details-end:
 
 How it works
 ------------
