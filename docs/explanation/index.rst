@@ -11,3 +11,4 @@ Explanation
    implementation
    filesets
    overlays
+   dump_plugin

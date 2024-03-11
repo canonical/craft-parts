@@ -31,7 +31,7 @@ from tests.integration.lifecycle import test_lifecycle
 
 # This wildcard import has pytest run any non-overridden lifecycle tests here.
 # pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
-from tests.integration.lifecycle.test_lifecycle import *  # noqa: F403  # pyright: ignore[reportGeneralTypeIssues]
+from tests.integration.lifecycle.test_lifecycle import *  # noqa: F403  # pyright: ignore[reportGeneralTypeIssues,reportAssignmentType]
 
 basic_parts_yaml = textwrap.dedent(
     """\

@@ -2,6 +2,27 @@
 Changelog
 *********
 
+1.27.0 (2024-03-07)
+-------------------
+
+- Add base layer data to ProjectInfo
+- Add qmake plugin
+- Add proxy support to ant plugin
+- Use rustup snap in the Rust plugin
+- Update documentation
+
+1.26.2 (2024-02-07)
+-------------------
+
+- Fix default setting in aliased part fields
+- Fix proxy setting in ant plugin
+
+1.26.1 (2023-12-13)
+-------------------
+
+- Fix chisel slice normalization
+- Address sphinx warnings
+
 1.26.0 (2023-11-21)
 -------------------
 

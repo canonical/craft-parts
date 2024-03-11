@@ -136,6 +136,8 @@ def extract_plugin_properties(
 ) -> Dict[str, Any]:
     """Obtain plugin-specifc entries from part properties.
 
+    Plugin-specifc properties must be prefixed with the name of the plugin.
+
     :param data: A dictionary containing all part properties.
     :plugin_name: The name of the plugin.
 

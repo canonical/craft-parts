@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 from pathlib import Path
 from typing import Optional
 
@@ -70,8 +69,8 @@ class TestSourceHandler:
             """A source handler that doesn't implement abstract methods."""
 
         expected = (
-            "^Can't instantiate abstract class FaultySource with "
-            "abstract methods? pull$"
+            "^Can't instantiate abstract class FaultySource with(out an implementation for)? "
+            "abstract methods? '?pull'?$"
         )
         with pytest.raises(TypeError, match=expected):
             FaultySource(  # type: ignore[reportGeneralTypeIssues]
@@ -231,8 +230,8 @@ class TestFileSourceHandler:
             """A file source handler that doesn't implement abstract methods."""
 
         expected = (
-            "^Can't instantiate abstract class FaultyFileSource with "
-            "abstract methods? provision$"
+            r"^Can't instantiate abstract class FaultyFileSource with(out an "
+            r"implementation for)? abstract methods? '?provision'?$"
         )
         with pytest.raises(TypeError, match=expected):
             FaultyFileSource(  # type: ignore[reportGeneralTypeIssues]

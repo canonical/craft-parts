@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup
 
-VERSION = "1.26.0"
+VERSION = "1.27.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -54,6 +54,8 @@ install_requires = [
     "pyxdg",
     "requests",
     "requests-unixsocket",
+    # See: https://github.com/msabramo/requests-unixsocket/pull/69
+    # When updating to urllib3 v2, also remove the constraint on types-requests.
     "urllib3<2",  # keep compatible API
 ]
 
@@ -72,14 +74,14 @@ docs_require = [
 ]
 
 types_requires = [
-    "mypy[reports]>=1.4.1,<1.6.0",
+    "mypy[reports]>=1.4.1,<2.0",
     "types-colorama",
     "types-docutils",
     "types-Pillow",
     "types-Pygments",
     "types-pytz",
     "types-PyYAML",
-    "types-requests<2.30",
+    "types-requests<2.30",  # When removing this constraint, remove from renovate's ignoreDeps
     "types-setuptools",
 ]
 
@@ -89,14 +91,14 @@ test_requires = [
     "coverage",
     "hypothesis",
     "pydocstyle",
-    "pyright==1.1.337",
+    "pyright==1.1.349",
     "pytest",
     "pytest-check",
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
     "requests-mock",
-    "ruff==0.1.6",
+    "ruff==0.1.14",
     "tox",
     "yamllint==1.32.0",
 ]
