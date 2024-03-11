@@ -43,7 +43,7 @@ def valid_namespaced_partition_strategy(draw):
         lambda n: n != "default"
     )
 
-    partition_strategy = partition_strategy = strategies.text(
+    partition_strategy = strategies.text(
         strategies.sampled_from(ascii_lowercase + "-"), min_size=1
     ).filter(
         lambda partition: (
