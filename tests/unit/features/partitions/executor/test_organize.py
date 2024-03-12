@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
-import pathlib
 
 import pytest
 from craft_parts import errors
@@ -25,43 +24,66 @@ from tests.unit.executor.test_organize import organize_and_assert
 @pytest.mark.parametrize(
     "data",
     [
-        # File in the default partition
+        # Files in the default partition
         {
-            "setup_dirs": [],
-            "setup_files": ["default/foo"],
-            "organize_map": {"foo": "bar"},
-            "expected": [(["bar"], "default")],
-            "expected_message": None,
-            "expected_overwrite": None,
+            "setup_files": ["foo", "bar", "baz", "qux1"],
+            "organize_map": {
+                "foo": "foo1",
+                "qux": "(default)/qux1",
+                "(default)/bar": "bar1",
+                "(default)/baz": "(default)/baz1",
+            },
+            "expected": [(["bar1", "baz1", "foo1", "qux1"], "")],
+        },
+        # Raise an error for files sourced from a non-default partition
+        {
+            "organize_map": {
+                "(mypart)/foo": "(our/special-part)/foo1",
+            },
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*Cannot organize files from 'mypart' partition. "
+                r"Files can only be organized from the 'default' partition.*"
+            ),
         },
         # Files that should have the same name in two different partitions
         {
-            "setup_dirs": [],
-            "setup_files": ["default/foo", "mypart/bar"],
-            "organize_map": {"foo": "baz", "(mypart)/bar": "(mypart)/baz"},
-            "expected": [(["baz"], "default"), (["baz"], "mypart")],
+            "setup_files": ["foo", "bar"],
+            "organize_map": {"foo": "baz", "bar": "(mypart)/baz"},
+            "expected": [
+                (["baz"], ""),
+                (["baz"], "../partitions/mypart/parts/part-name/install"),
+            ],
             "expected_message": None,
             "expected_overwrite": None,
+        },
+        # Files that should have the same name in two different partitions where one is
+        # a namespaced partition
+        {
+            "setup_files": ["foo", "bar"],
+            "organize_map": {
+                "foo": "baz",
+                "bar": "(our/special-part)/baz",
+            },
+            "expected": [
+                (["baz"], ""),
+                (["baz"], "../partitions/our/special-part/parts/part-name/install"),
+            ],
         },
         # simple_dir_with_file
         {
-            "setup_dirs": ["default/foodir"],
-            "setup_files": [os.path.join("default", "foodir", "foo")],
+            "setup_dirs": ["foodir"],
+            "setup_files": [os.path.join("foodir", "foo")],
             "organize_map": {"foodir": "bardir"},
-            "expected": [(["bardir"], "default"), (["foo"], "default/bardir")],
-            "expected_message": None,
-            "expected_overwrite": None,
+            "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize_to_the_same_directory
         {
-            "setup_dirs": ["default/bardir", "default/foodir"],
+            "setup_dirs": ["bardir", "foodir"],
             "setup_files": [
-                os.path.join("default", "foodir", "foo"),
-                os.path.join("default", "bardir", "bar"),
-                os.path.join(
-                    "default",
-                    "basefoo",
-                ),
+                os.path.join("foodir", "foo"),
+                os.path.join("bardir", "bar"),
+                "basefoo",
             ],
             "organize_map": {
                 "foodir": "bin",
@@ -69,131 +91,136 @@ from tests.unit.executor.test_organize import organize_and_assert
                 "basefoo": "bin/basefoo",
             },
             "expected": [
-                (["bin"], "default"),
-                (["bar", "basefoo", "foo"], "default/bin"),
+                (["bin"], ""),
+                (["bar", "basefoo", "foo"], "bin"),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # leading_slash_in_value
         {
-            "setup_dirs": [],
-            "setup_files": ["default/foo"],
+            "setup_files": ["foo"],
             "organize_map": {"foo": "/bar"},
-            "expected": [(["bar"], "default")],
-            "expected_message": None,
-            "expected_overwrite": None,
+            "expected": [(["bar"], "")],
         },
         # overwrite_existing_file
         {
-            "setup_dirs": [],
-            "setup_files": ["default/foo", "default/bar"],
+            "setup_files": ["foo", "bar"],
             "organize_map": {"foo": "bar"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
-                r".*trying to organize file 'foo' to 'bar', but '\(default\)/bar' already exists.*"
+                r".*trying to organize file 'foo' to 'bar', but 'bar' already exists.*"
             ),
-            "expected_overwrite": [(["bar"], "default")],
+            "expected_overwrite": [(["bar"], "")],
+        },
+        # overwrite_existing_file with partitions
+        {
+            "setup_files": ["foo", "bar"],
+            "organize_map": {
+                "(default)/foo": "(our/special-part)/bar",
+                "(default)/bar": "(our/special-part)/bar",
+            },
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize file '\(default\)/foo' to '\(our/special-part\)/bar', "
+                r"but 'partitions/our/special-part/parts/part-name/install/bar' already exists."
+            ),
+            "expected_overwrite": [
+                (["bar"], "../partitions/our/special-part/parts/part-name/install")
+            ],
         },
         # *_for_files
         {
-            "setup_dirs": [],
-            "setup_files": ["default/foo.conf", "default/bar.conf"],
+            "setup_files": ["foo.conf", "bar.conf"],
             "organize_map": {"*.conf": "dir/"},
             "expected": [
-                (["dir"], "default"),
-                (["bar.conf", "foo.conf"], "default/dir"),
+                (["dir"], ""),
+                (["bar.conf", "foo.conf"], "dir"),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # *_for_files_with_non_dir_dst
         {
-            "setup_dirs": [],
-            "setup_files": ["default/foo.conf", "default/bar.conf"],
+            "setup_files": ["foo.conf", "bar.conf"],
             "organize_map": {"*.conf": "dir"},
             "expected": errors.FileOrganizeError,
-            "expected_message": r".*multiple files to be organized into '\(default\)/dir'.*",
-            "expected_overwrite": None,
+            "expected_message": r".*multiple files to be organized into 'dir'.*",
+        },
+        # *_for_files_with_non_dir_dst with partitions
+        {
+            "setup_files": ["foo.conf", "bar.conf"],
+            "organize_map": {"*.conf": "(our/special-part)/dir"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*multiple files to be organized into "
+                r"'partitions/our/special-part/parts/part-name/install/dir'.*"
+            ),
         },
         # *_for_directories
         {
-            "setup_dirs": ["default/dir1", "default/dir2"],
+            "setup_dirs": ["dir1", "dir2"],
             "setup_files": [
-                os.path.join("default", "dir1", "foo"),
-                os.path.join("default", "dir2", "bar"),
+                os.path.join("dir1", "foo"),
+                os.path.join("dir2", "bar"),
             ],
             "organize_map": {"dir*": "dir/"},
             "expected": [
-                (["dir"], "default"),
-                (["dir1", "dir2"], "default/dir"),
-                (["foo"], os.path.join("default", "dir", "dir1")),
-                (["bar"], os.path.join("default", "dir", "dir2")),
+                (["dir"], ""),
+                (["dir1", "dir2"], "dir"),
+                (["foo"], os.path.join("dir", "dir1")),
+                (["bar"], os.path.join("dir", "dir2")),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # combined_*_with_file
         {
-            "setup_dirs": ["default/dir1", "default/dir2"],
+            "setup_dirs": ["dir1", "dir2"],
             "setup_files": [
-                os.path.join("default", "dir1", "foo"),
-                os.path.join("default", "dir1", "bar"),
-                os.path.join("default", "dir2", "bar"),
+                os.path.join("dir1", "foo"),
+                os.path.join("dir1", "bar"),
+                os.path.join("dir2", "bar"),
             ],
             "organize_map": {"dir*": "dir/", "dir1/bar": "."},
             "expected": [
-                (["bar", "dir"], "default"),
-                (["dir1", "dir2"], "default/dir"),
-                (["foo"], os.path.join("default", "dir", "dir1")),
-                (["bar"], os.path.join("default", "dir", "dir2")),
+                (["bar", "dir"], ""),
+                (["dir1", "dir2"], "dir"),
+                (["foo"], os.path.join("dir", "dir1")),
+                (["bar"], os.path.join("dir", "dir2")),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
         # *_into_dir
         {
-            "setup_dirs": ["default/dir"],
+            "setup_dirs": ["dir"],
             "setup_files": [
-                os.path.join("default", "dir", "foo"),
-                os.path.join("default", "dir", "bar"),
+                os.path.join("dir", "foo"),
+                os.path.join("dir", "bar"),
             ],
             "organize_map": {"dir/f*": "nested/dir/"},
             "expected": [
-                (["dir", "nested"], "default"),
-                (["bar"], "default/dir"),
-                (["dir"], "default/nested"),
-                (["foo"], os.path.join("default", "nested", "dir")),
+                (["dir", "nested"], ""),
+                (["bar"], "dir"),
+                (["dir"], "nested"),
+                (["foo"], os.path.join("nested", "dir")),
             ],
-            "expected_message": None,
-            "expected_overwrite": None,
         },
     ],
 )
 def test_organize(new_dir, data):
-    base_dir = pathlib.Path(new_dir, "install")
-    for partition in ["default", "mypart", "yourpart"]:
-        (base_dir / partition).mkdir(parents=True, exist_ok=True)
-
     organize_and_assert(
         tmp_path=new_dir,
-        setup_dirs=data["setup_dirs"],
-        setup_files=data["setup_files"],
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
-        expected_message=data["expected_message"],
-        expected_overwrite=data["expected_overwrite"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
     )
 
     # Verify that it can be organized again by overwriting
     organize_and_assert(
         tmp_path=new_dir,
-        setup_dirs=data["setup_dirs"],
-        setup_files=data["setup_files"],
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
-        expected_message=data["expected_message"],
-        expected_overwrite=data["expected_overwrite"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
         overwrite=True,
     )

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -65,7 +65,7 @@ class StepHandler:
     the running instance.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 (too many arguments)
         self,
         part: Part,
         *,
@@ -75,6 +75,7 @@ class StepHandler:
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
+        partitions: Optional[Set[str]] = None,
     ) -> None:
         self._part = part
         self._step_info = step_info
@@ -83,6 +84,7 @@ class StepHandler:
         self._env = env
         self._stdout = stdout
         self._stderr = stderr
+        self._partitions = partitions
 
     def run_builtin(self) -> StepContents:
         """Run the built-in commands for the current step."""
@@ -158,9 +160,6 @@ class StepHandler:
 
     def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
-        files, dirs = filesets.migratable_filesets(
-            stage_fileset, str(self._part.part_base_install_dir)
-        )
 
         def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
@@ -168,18 +167,42 @@ class StepHandler:
             if not file_path.endswith(".pc"):
                 return
             packages.fix_pkg_config(
-                prefix_prepend=self._part.base_stage_dir,
+                prefix_prepend=self._part.stage_dir,
                 pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_base_install_dir,
+                prefix_trim=self._part.part_install_dir,
             )
 
-        files, dirs = migrate_files(
-            files=files,
-            dirs=dirs,
-            srcdir=self._part.part_base_install_dir,
-            destdir=self._part.base_stage_dir,
-            fixup_func=pkgconfig_fixup,
-        )
+        if self._partitions:
+            files: Set[str] = set()
+            dirs: Set[str] = set()
+            for partition in self._partitions:
+                partition_files, partition_dirs = filesets.migratable_filesets(
+                    stage_fileset,
+                    str(self._part.part_install_dirs[partition]),
+                    partition,
+                )
+                partition_files, partition_dirs = migrate_files(
+                    files=partition_files,
+                    dirs=partition_dirs,
+                    srcdir=self._part.part_install_dirs[partition],
+                    destdir=self._part.dirs.get_stage_dir(partition),
+                    fixup_func=pkgconfig_fixup,
+                )
+
+                files.update(partition_files)
+                dirs.update(partition_dirs)
+        else:
+            files, dirs = filesets.migratable_filesets(
+                stage_fileset, str(self._part.part_install_dir)
+            )
+            files, dirs = migrate_files(
+                files=files,
+                dirs=dirs,
+                srcdir=self._part.part_install_dir,
+                destdir=self._part.stage_dir,
+                fixup_func=pkgconfig_fixup,
+            )
+
         return StepContents(files, dirs)
 
     def _builtin_prime(self) -> StepContents:
@@ -191,16 +214,41 @@ class StepHandler:
             stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
             prime_fileset.combine(stage_fileset)
 
-        files, dirs = filesets.migratable_filesets(
-            prime_fileset, str(self._part.part_base_install_dir)
-        )
-        files, dirs = migrate_files(
-            files=files,
-            dirs=dirs,
-            srcdir=self._part.base_stage_dir,
-            destdir=self._part.base_prime_dir,
-            permissions=self._part.spec.permissions,
-        )
+        if self._partitions:
+            files: Set[str] = set()
+            dirs: Set[str] = set()
+            for partition in self._partitions:
+                partition_files, partition_dirs = filesets.migratable_filesets(
+                    prime_fileset,
+                    str(self._part.part_install_dirs[partition]),
+                    partition,
+                )
+
+                srcdir = self._part.dirs.get_stage_dir(partition)
+                destdir = self._part.dirs.get_prime_dir(partition)
+
+                partition_files, partition_dirs = migrate_files(
+                    files=partition_files,
+                    dirs=partition_dirs,
+                    srcdir=srcdir,
+                    destdir=destdir,
+                    permissions=self._part.spec.permissions,
+                )
+
+                files.update(partition_files)
+                dirs.update(partition_dirs)
+
+        else:
+            files, dirs = filesets.migratable_filesets(
+                prime_fileset, str(self._part.part_install_dir)
+            )
+            files, dirs = migrate_files(
+                files=files,
+                dirs=dirs,
+                srcdir=self._part.stage_dir,
+                destdir=self._part.prime_dir,
+                permissions=self._part.spec.permissions,
+            )
 
         return StepContents(files, dirs)
 

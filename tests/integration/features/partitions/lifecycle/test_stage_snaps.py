@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,15 +16,8 @@
 
 # Allow redefinition in order to include parent tests below.
 # mypy: disable-error-code="no-redef"
-from pathlib import Path
 
-import pytest
 
 # Bring in all stage snaps tests
 # pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
 from tests.integration.lifecycle.test_stage_snaps import *  # noqa: F403
-
-
-@pytest.fixture()
-def foo_install_dir(new_dir):
-    return Path(new_dir, "parts", "foo", "install", "default")

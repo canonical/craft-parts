@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,12 +30,10 @@ def test_dirs(new_dir, partitions):
     assert dirs.overlay_mount_dir == new_dir / "overlay/overlay"
     assert dirs.overlay_packages_dir == new_dir / "overlay/packages"
     assert dirs.overlay_work_dir == new_dir / "overlay/work"
-    assert dirs.base_stage_dir == new_dir / "stage"
-    assert dirs.stage_dir == dirs.base_stage_dir
-    assert set(dirs.stage_dirs.values()) == {dirs.base_stage_dir}
-    assert dirs.base_prime_dir == new_dir / "prime"
-    assert dirs.prime_dir == dirs.base_prime_dir
-    assert set(dirs.prime_dirs.values()) == {dirs.base_prime_dir}
+    assert dirs.stage_dir == new_dir / "stage"
+    assert set(dirs.stage_dirs.values()) == {dirs.stage_dir}
+    assert dirs.prime_dir == new_dir / "prime"
+    assert set(dirs.prime_dirs.values()) == {dirs.prime_dir}
 
 
 def test_dirs_work_dir(new_dir, partitions):
@@ -47,12 +45,10 @@ def test_dirs_work_dir(new_dir, partitions):
     assert dirs.overlay_mount_dir == new_dir / "foobar/overlay/overlay"
     assert dirs.overlay_packages_dir == new_dir / "foobar/overlay/packages"
     assert dirs.overlay_work_dir == new_dir / "foobar/overlay/work"
-    assert dirs.base_stage_dir == new_dir / "foobar/stage"
-    assert dirs.stage_dir == dirs.base_stage_dir
-    assert set(dirs.stage_dirs.values()) == {dirs.base_stage_dir}
-    assert dirs.base_prime_dir == new_dir / "foobar/prime"
-    assert dirs.prime_dir == dirs.base_prime_dir
-    assert set(dirs.prime_dirs.values()) == {dirs.base_prime_dir}
+    assert dirs.stage_dir == new_dir / "foobar/stage"
+    assert set(dirs.stage_dirs.values()) == {dirs.stage_dir}
+    assert dirs.prime_dir == new_dir / "foobar/prime"
+    assert set(dirs.prime_dirs.values()) == {dirs.prime_dir}
 
 
 def test_dirs_work_dir_resolving(partitions):

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,7 @@
 
 from pathlib import Path
 from types import MappingProxyType
-from typing import Dict, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 from craft_parts.utils import partition_utils
 
@@ -54,35 +54,34 @@ class ProjectDirs:
         self.overlay_mount_dir = self.overlay_dir / "overlay"
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
-        self.base_stage_dir = self.work_dir / "stage"
-        self.base_prime_dir = self.work_dir / "prime"
+        self.stage_dir = self.work_dir / "stage"
+        self.prime_dir = self.work_dir / "prime"
         if partitions:
-            self._partitions: Sequence[Optional[str]] = partitions
-            self.stage_dir = self.base_stage_dir / "default"
-            self.prime_dir = self.base_prime_dir / "default"
-            stage_dirs: Dict[Optional[str], Path] = {
-                part: self.base_stage_dir / part for part in partitions
-            }
-            prime_dirs: Dict[Optional[str], Path] = {
-                part: self.base_prime_dir / part for part in partitions
-            }
+            self._partitions: Optional[Sequence[str]] = partitions
+            self.partition_dir: Optional[Path] = self.work_dir / "partitions"
         else:
-            self._partitions = [None]
-            self.stage_dir = self.base_stage_dir
-            self.prime_dir = self.base_prime_dir
-            stage_dirs = {None: self.stage_dir}
-            prime_dirs = {None: self.prime_dir}
-        self.stage_dirs = MappingProxyType(stage_dirs)
-        self.prime_dirs = MappingProxyType(prime_dirs)
+            self._partitions = None
+            self.partition_dir = None
+
+        self.stage_dirs = MappingProxyType(
+            partition_utils.get_partition_dir_map(
+                base_dir=self.work_dir, partitions=partitions, suffix="stage"
+            )
+        )
+        self.prime_dirs = MappingProxyType(
+            partition_utils.get_partition_dir_map(
+                base_dir=self.work_dir, partitions=partitions, suffix="prime"
+            )
+        )
 
     def get_stage_dir(self, partition: Optional[str] = None) -> Path:
         """Get the stage directory for the given partition."""
-        if partition not in self._partitions:
+        if self._partitions and partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")
         return self.stage_dirs[partition]
 
     def get_prime_dir(self, partition: Optional[str] = None) -> Path:
         """Get the stage directory for the given partition."""
-        if partition not in self._partitions:
+        if self._partitions and partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")
         return self.prime_dirs[partition]

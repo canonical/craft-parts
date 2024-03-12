@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -54,8 +54,6 @@ def setup_fixture(new_dir, mocker):
 def test_craftctl_default(new_dir, partitions, capfd, mocker):
     mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
     mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
-
-    partition_dir = "default" if partitions else "."
 
     parts_yaml = textwrap.dedent(
         """\
@@ -113,9 +111,9 @@ def test_craftctl_default(new_dir, partitions, capfd, mocker):
         captured = capfd.readouterr()
         assert captured.out == "pull step\n"
         assert Path("parts/foo/src/foo.txt").exists()
-        assert Path("parts/foo/install", partition_dir, "foo.txt").exists() is False
-        assert Path("stage", partition_dir, "foo.txt").exists() is False
-        assert Path("prime", partition_dir, "foo.txt").exists() is False
+        assert Path("parts/foo/install/foo.txt").exists() is False
+        assert Path("stage/foo.txt").exists() is False
+        assert Path("prime/foo.txt").exists() is False
 
         # Execute the overlay step and add a file to the overlay
         # directory to track file migration.
@@ -129,29 +127,29 @@ def test_craftctl_default(new_dir, partitions, capfd, mocker):
         ctx.execute(actions[2])
         captured = capfd.readouterr()
         assert captured.out == "build step\n"
-        assert Path("parts/foo/install", partition_dir, "foo.txt").exists()
-        assert Path("stage", partition_dir, "foo.txt").exists() is False
-        assert Path("stage", partition_dir, "ovl.txt").exists() is False
-        assert Path("prime", partition_dir, "foo.txt").exists() is False
-        assert Path("prime", partition_dir, "ovl.txt").exists() is False
+        assert Path("parts/foo/install/foo.txt").exists()
+        assert Path("stage/foo.txt").exists() is False
+        assert Path("stage/ovl.txt").exists() is False
+        assert Path("prime/foo.txt").exists() is False
+        assert Path("prime/ovl.txt").exists() is False
 
         # Execute the stage step. Both source and overlay files
         # must be in the stage directory.
         ctx.execute(actions[3])
         captured = capfd.readouterr()
         assert captured.out == "stage step\n"
-        assert Path("stage", partition_dir, "foo.txt").exists()
-        assert Path("stage", partition_dir, "ovl.txt").exists()
-        assert Path("prime", partition_dir, "foo.txt").exists() is False
-        assert Path("prime", partition_dir, "ovl.txt").exists() is False
+        assert Path("stage/foo.txt").exists()
+        assert Path("stage/ovl.txt").exists()
+        assert Path("prime/foo.txt").exists() is False
+        assert Path("prime/ovl.txt").exists() is False
 
         # Execute the prime step. Both source and overlay files
         # must be in the prime directory.
         ctx.execute(actions[4])
         captured = capfd.readouterr()
         assert captured.out == "prime step\n"
-        assert Path("prime", partition_dir, "foo.txt").exists()
-        assert Path("prime", partition_dir, "ovl.txt").exists()
+        assert Path("prime/foo.txt").exists()
+        assert Path("prime/ovl.txt").exists()
 
 
 def test_craftctl_default_arguments(new_dir, partitions, capfd):
