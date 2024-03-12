@@ -156,21 +156,19 @@ def test_get_partition_compatible_filepath_non_partition(path, path_class):
     assert isinstance(actual_inner_path, path_class)
 
 
-@pytest.mark.parametrize(
-    ("path", "expected_partition", "expected_inner_path"),
-    zip(
-        PARTITION_PATHS,
-        # TODO: help!
-        PARTITION_EXPECTED_PARTITIONS,  # pyright: ignore [reportArgumentUsage, reportGeneralTypeIssues]
-        PARTITION_EXPECTED_INNER_PATHS,
-    ),
+ZIPPED_PARTITIONS = zip(
+    PARTITION_PATHS,
+    PARTITION_EXPECTED_PARTITIONS,
+    PARTITION_EXPECTED_INNER_PATHS,
 )
+
+
+@pytest.mark.parametrize("partition_paths", ZIPPED_PARTITIONS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 @pytest.mark.usefixtures("enable_partitions_feature")
-def test_get_partition_compatible_filepath_partition(
-    path, expected_partition, expected_inner_path, path_class
-):
+def test_get_partition_compatible_filepath_partition(partition_paths, path_class):
     """Non-partitioned paths match their given partition."""
+    path, expected_partition, expected_inner_path = partition_paths
     actual_partition, actual_inner_path = get_partition_and_path(path_class(path))
 
     assert actual_partition == expected_partition
