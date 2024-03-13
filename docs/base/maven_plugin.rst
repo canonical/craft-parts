@@ -39,6 +39,8 @@ Please refer to `Configuring Apache Maven <https://maven.apache.org/configure.ht
 a list of environment variables used to configure Maven.
 
 
+.. _maven-details-begin:
+
 Dependencies
 ------------
 
@@ -46,21 +48,8 @@ The plugin expects Maven to be available on the system as the ``mvn`` executable
 a part named ``maven-deps`` is defined. In this case, the plugin will assume that this
 part will stage the ``mvn`` executable to be used in the build step.
 
-A Java Runtime must be staged if not part of the execution environment.
+Note that the Maven plugin does not make a Java runtime available in the target
+environment. This must be handled by the developer when defining the part, according to
+each application's runtime requirements.
 
-
-Example
--------
-
-This is an example of a Snapcraft part using the Maven plugin. Note that the Maven and
-Java Runtime packages are listed as build packages, and the Java Runtime is staged
-to be part of the final payload::
-
-  mkpass:
-    plugin: maven
-    source: .
-    build-packages:
-      - openjdk-11-jre-headless
-      - maven
-    stage-packages:
-      - openjdk-11-jre-headless
+.. _maven-details-end:
