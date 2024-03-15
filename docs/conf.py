@@ -89,6 +89,11 @@ rst_epilog = """
 
 autodoc_mock_imports = ["apt"]
 
+# Links to ignore when checking links
+linkcheck_ignore = [
+    "https://foo.org/",
+]
+
 rst_prolog = """
 .. |br| raw:: html
 

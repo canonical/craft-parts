@@ -17,6 +17,8 @@ help:
 install:
 	@echo "... setting up virtualenv"
 	python3 -m venv sphinx-resources/.sphinx/venv
+	. $(VENV); pip install --upgrade -e ..[docs]
+	. $(VENV); pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
 	. $(VENV); pip install --upgrade -r sphinx-resources/.sphinx/requirements.txt
 
 	@echo "\n" \
