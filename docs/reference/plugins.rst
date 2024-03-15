@@ -9,6 +9,7 @@ lifecycle.
    :maxdepth: 1
 
    plugins/dump_plugin.rst
+   plugins/maven_plugin.rst
    plugins/python_plugin.rst
    plugins/rust_plugin.rst
 
