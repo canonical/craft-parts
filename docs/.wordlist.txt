@@ -175,7 +175,8 @@ PullError
 PullState
 PurePath
 PyPI
-PyYAML’s
+PyYAML
+PyYAML's
 Pydantic
 PythonPlugin
 PythonPluginProperties
@@ -226,7 +227,7 @@ TimedWriter
 Tox
 TypeError
 URI
-URL’s
+URL's
 Umount
 UndefinedPlugin
 Unmark
@@ -243,7 +244,7 @@ XAttributeTooLong
 XDG
 YAML
 YUMRepository
-YUMRepository’s
+YUMRepository's
 ZipSource
 abcdef
 args
@@ -394,6 +395,7 @@ toplevel
 txt
 ubuntu
 umount
+unbuilt
 unmark
 unmarshal
 unmount
