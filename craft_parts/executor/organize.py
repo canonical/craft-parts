@@ -34,14 +34,14 @@ from craft_parts.utils import file_utils, path_utils
 
 
 def organize_files(
-    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool
+    *, part_name: str, file_map: Dict[str, str], base_dir: Path, overwrite: bool
 ) -> None:
     """Rearrange files for part staging.
 
     If partitions are enabled, source filepaths must be in the default partition.
 
     :param part_name: The name of the part to organize files for.
-    :param mapping: A mapping of source filepaths to destination filepaths.
+    :param file_map: A mapping of source filepaths to destination filepaths.
     :param base_dir: Directory containing files to organize.
     :param overwrite: Whether existing files should be overwritten. This is
         only used in build updates, when a part may organize over files
@@ -52,7 +52,7 @@ def organize_files(
     :raises FileOrganizeError: If partitions are enabled and the source file is not from
         the default partition.
     """
-    for key in sorted(mapping, key=lambda x: ["*" in x, x]):
+    for key in sorted(file_map, key=lambda x: ["*" in x, x]):
         src_partition, src_inner_path = path_utils.get_partition_and_path(key)
 
         if src_partition and src_partition != "default":
@@ -69,7 +69,7 @@ def organize_files(
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
         dst_partition, dst_inner_path = path_utils.get_partition_and_path(
-            mapping[key].lstrip("/")
+            file_map[key].lstrip("/")
         )
 
         if dst_partition and dst_partition != "default":
@@ -117,7 +117,7 @@ def organize_files(
                         part_name=part_name,
                         message=(
                             f"trying to organize file {key!r} to "
-                            f"{mapping[key]!r}, but "
+                            f"{file_map[key]!r}, but "
                             f"{partition_path!r} already exists"
                         ),
                     )
