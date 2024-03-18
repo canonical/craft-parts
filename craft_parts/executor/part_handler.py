@@ -880,7 +880,7 @@ class PartHandler:
         organize_files(
             part_name=self._part.name,
             file_map=mapping,
-            base_dir=self._part.part_install_dir,
+            install_dir_map=self._part.part_install_dirs,
             overwrite=overwrite,
         )
 
