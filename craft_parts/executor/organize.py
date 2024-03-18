@@ -107,9 +107,9 @@ def organize_files(
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            f"multiple files to be organized into "
+                            "multiple files to be organized into "
                             f"{partition_path!r}. If this is "
-                            f"supposed to be a directory, end it with a slash."
+                            "supposed to be a directory, end it with a slash."
                         ),
                     )
                 else:
