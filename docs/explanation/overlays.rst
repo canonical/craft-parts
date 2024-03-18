@@ -71,7 +71,7 @@ made by that part to underlying layers. As a consequence, if no modifications
 are made, the result of the overlay step is empty and the result is the same as
 the four-step lifecycle without overlays. Subtractive changes such as file
 removals are allowed and handled through special whiteout files conforming to
-the `OCI image layer specification <oci_image_layers>`_.
+the `OCI image layer specification`_.
 
 Overlay Processing
 ------------------
@@ -151,5 +151,5 @@ Step Invalidation
 
 
 
-.. _oci_image_layers: https://github.com/opencontainers/image-spec/blob/master/layer.md
+.. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/master/layer.md
 .. _Rockcraft: https://canonical-rockcraft.readthedocs-hosted.com/
