@@ -92,7 +92,7 @@ exclude_patterns = [
 ]
 
 rst_epilog = """
-.. include:: /reuse/links.txt
+.. include:: /common/craft-parts/reuse/links.txt
 """
 
 autodoc_mock_imports = ["apt"]
