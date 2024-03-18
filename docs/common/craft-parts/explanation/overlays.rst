@@ -50,7 +50,7 @@ processing order of parts. If the part doesn't specify any overlay parameters,
 this overlay is empty. The overlay's integrity is checked with a checksum
 defined by the following diagram:
 
-.. image:: /images/overlay_checksum.svg
+.. image:: /common/craft-parts/images/overlay_checksum.svg
    :alt: Diagram for generating the overlay checksum.
 
 Each layer's checksum is derived from the combination of the layer's properties
