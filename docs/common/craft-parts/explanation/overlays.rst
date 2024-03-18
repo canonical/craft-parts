@@ -6,7 +6,7 @@ Some Craft applications, such as Rockcraft_, include entire base filesystems in
 addition to the usual part-generated payload. The ``OVERLAY`` step provides the
 means to modify the base filesystem.
 
-.. include:: ../base/overlay_parameters.rst
+.. include:: /common/craft-parts/explanation/overlay_parameters.rst
 
 .. _overlay_visibility:
 

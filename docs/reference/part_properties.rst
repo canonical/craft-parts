@@ -3,4 +3,4 @@
 Part properties
 ===============
 
-.. include:: /base/part_properties.rst
+.. include:: /common/craft-parts/reference/part_properties.rst
