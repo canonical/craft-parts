@@ -1,5 +1,10 @@
 .. Ideally, this would be automatically generated.
 
+.. _part_properties:
+
+Part properties
+===============
+
 .. _after:
 
 after

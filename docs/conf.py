@@ -85,7 +85,6 @@ exclude_patterns = [
     # other files - without this exclusion, Sphinx will complain about duplicate
     # labels.
     "common/craft-parts/explanation/overlay_parameters.rst",
-    "common/craft-parts/reference/part_properties.rst",
     "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
