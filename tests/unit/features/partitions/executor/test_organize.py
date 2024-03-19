@@ -121,7 +121,7 @@ from tests.unit.executor.test_organize import organize_and_assert
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize file '\(default\)/foo' to '\(our/special-part\)/bar', "
-                r"but 'partitions/our/special-part/parts/part-name/install/bar' already exists."
+                r"but '\(our/special-part\)/bar' already exists."
             ),
             "expected_overwrite": [
                 (["bar"], "../partitions/our/special-part/parts/part-name/install")
@@ -149,8 +149,7 @@ from tests.unit.executor.test_organize import organize_and_assert
             "organize_map": {"*.conf": "(our/special-part)/dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
-                r".*multiple files to be organized into "
-                r"'partitions/our/special-part/parts/part-name/install/dir'.*"
+                r".*multiple files to be organized into '\(our/special-part\)/dir'.*"
             ),
         },
         # *_for_directories
@@ -202,6 +201,14 @@ from tests.unit.executor.test_organize import organize_and_assert
     ],
 )
 def test_organize(new_dir, data):
+    install_dirs = {
+        "default": new_dir / "install",
+        "mypart": new_dir / "partitions/mypart/parts/part-name/install",
+        "yourpart": new_dir / "partitions/yourpart/parts/part-name/install",
+        "our/special-part": new_dir
+        / "partitions/our/special-part/parts/part-name/install",
+    }
+
     organize_and_assert(
         tmp_path=new_dir,
         setup_dirs=data.get("setup_dirs", []),
@@ -211,6 +218,7 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
+        install_dirs=install_dirs,
     )
 
     # Verify that it can be organized again by overwriting
@@ -223,4 +231,5 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=True,
+        install_dirs=install_dirs,
     )
