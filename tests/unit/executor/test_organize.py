@@ -142,6 +142,7 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
     )
 
     # Verify that it can be organized again by overwriting
@@ -154,6 +155,7 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=True,
+        install_dirs={None: Path(new_dir / "install")},
     )
 
 
@@ -167,15 +169,16 @@ def organize_and_assert(
     expected_message,
     expected_overwrite,
     overwrite,
+    install_dirs,
 ):
-    base_dir = Path(tmp_path / "install")
-    base_dir.mkdir(parents=True, exist_ok=True)
+    install_dir = Path(tmp_path / "install")
+    install_dir.mkdir(parents=True, exist_ok=True)
 
     for directory in setup_dirs:
-        (base_dir / directory).mkdir(exist_ok=True)
+        (install_dir / directory).mkdir(exist_ok=True)
 
     for file_entry in setup_files:
-        (base_dir / file_entry).touch()
+        (install_dir / file_entry).touch()
 
     if overwrite and expected_overwrite is not None:
         expected = expected_overwrite
@@ -185,8 +188,8 @@ def organize_and_assert(
         with pytest.raises(expected) as raised:
             organize_files(
                 part_name="part-name",
-                mapping=organize_map,
-                base_dir=base_dir,
+                file_map=organize_map,
+                install_dir_map=install_dirs,
                 overwrite=overwrite,
             )
         assert re.match(expected_message, str(raised.value)) is not None
@@ -194,13 +197,13 @@ def organize_and_assert(
     else:
         organize_files(
             part_name="part-name",
-            mapping=organize_map,
-            base_dir=base_dir,
+            file_map=organize_map,
+            install_dir_map=install_dirs,
             overwrite=overwrite,
         )
         expected = cast(List[Tuple[List[str], str]], expected)
         for expect in expected:
-            dir_path = (base_dir / expect[1]).as_posix()
+            dir_path = (install_dir / expect[1]).as_posix()
             dir_contents = os.listdir(dir_path)
             dir_contents.sort()
             assert dir_contents == expect[0]

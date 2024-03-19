@@ -879,8 +879,8 @@ class PartHandler:
         mapping = self._part.spec.organize_files
         organize_files(
             part_name=self._part.name,
-            mapping=mapping,
-            base_dir=self._part.part_install_dir,
+            file_map=mapping,
+            install_dir_map=self._part.part_install_dirs,
             overwrite=overwrite,
         )
 
