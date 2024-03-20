@@ -10,7 +10,7 @@ Reference
    exceptions
    infos
    lifecycle_manager
-   part_properties
+   /common/craft-parts/reference/part_properties
    parts_steps
    plugins
    reference
