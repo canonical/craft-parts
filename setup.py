@@ -145,7 +145,7 @@ setup(
         "craft_parts_docs",
     ],
     # todo: can we make the docs optional?
-    package_dir={"craft_parts_docs": "docs/base"},
+    package_dir={"craft_parts_docs": "docs/common"},
     package_data={
         "craft_parts": ["py.typed"],
         "craft_parts_docs": ["**"],

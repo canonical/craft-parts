@@ -81,10 +81,17 @@ exclude_patterns = [
     "**venv",
     "base",
     "sphinx-resources",
+    # These RST files are explicitly excluded here because they are included by
+    # other files - without this exclusion, Sphinx will complain about duplicate
+    # labels.
+    "common/craft-parts/explanation/overlay_parameters.rst",
+    "common/craft-parts/reference/parts_steps.rst",
+    "common/craft-parts/reference/step_execution_environment.rst",
+    "common/craft-parts/reference/step_output_directories.rst",
 ]
 
 rst_epilog = """
-.. include:: /reuse/links.txt
+.. include:: /common/craft-parts/reuse/links.txt
 """
 
 autodoc_mock_imports = ["apt"]
