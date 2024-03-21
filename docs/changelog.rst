@@ -2,6 +2,13 @@
 Changelog
 *********
 
+1.29.0 (2024-03-20)
+-------------------
+
+- Add maven plugin documentation
+- Add documentation linters
+- Rework bundling of shared docs
+
 1.28.1 (2024-03-19)
 -------------------
 
