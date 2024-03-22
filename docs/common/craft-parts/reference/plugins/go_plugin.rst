@@ -3,8 +3,9 @@
 Go plugin
 =========
 
-The Go plugin builds projects written in the `Go`_ programming language. After a
-successful build, this plugin will install the generated binaries in
+The Go plugin builds `Go`_ modules, which are collections of packages stored
+in a file tree containing a ``go.mod`` file at the root. After a successful
+build, this plugin will install the generated binaries in
 ``$CRAFT_PART_INSTALL/bin``.
 
 
