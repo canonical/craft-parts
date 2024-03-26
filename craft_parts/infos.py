@@ -483,6 +483,7 @@ _PLATFORM_MACHINE_TRANSLATIONS: Dict[str, str] = {
     # Maps other possible ``platform.machine()`` values to the arch translations below.
     "arm64": "aarch64",
     "armv7hl": "armv7l",
+    "armv8l": "armv7l",
     "i386": "i686",
     "amd64": "x86_64",
     "x64": "x86_64",
