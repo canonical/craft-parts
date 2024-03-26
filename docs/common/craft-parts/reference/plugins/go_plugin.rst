@@ -51,6 +51,12 @@ Common means of providing ``go`` are:
 * The ``golang`` Ubuntu package, declared as a ``build-package``.
 * The ``go`` snap, declared as a ``build-snap`` from the desired channel.
 
+Another alternative is to declare another part with the name ``go-deps``. In
+this case, the plugin will assume that this new part will stage the ``go``
+executable to be used in the build step. This can be useful, for example, in
+cases where a specific, unreleased version of ``go`` is desired but
+unavailable as a snap or an Ubuntu package.
+
 .. _go-details-end:
 
 How it works
