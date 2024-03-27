@@ -11,6 +11,7 @@ lifecycle.
    :maxdepth: 1
 
    /common/craft-parts/reference/plugins/dump_plugin.rst
+   /common/craft-parts/reference/plugins/go_plugin.rst
    /common/craft-parts/reference/plugins/maven_plugin.rst
    /common/craft-parts/reference/plugins/python_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
