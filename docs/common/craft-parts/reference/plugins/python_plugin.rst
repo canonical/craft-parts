@@ -1,3 +1,5 @@
+.. _craft_parts_python_plugin:
+
 Python plugin
 =============
 
@@ -57,6 +59,8 @@ PARTS_PYTHON_VENV_ARGS
 
 Additional arguments for venv.
 
+.. _python-details-begin:
+
 Dependencies
 ------------
 
@@ -64,7 +68,7 @@ By default this plugin uses Python from the base when it is available and
 appropriate to use. This depends on the tool and format in use.
 
 * The bases used by Rockcraft do not contain Python, so it will need to be
-  supplied in ROCKs that use it.
+  supplied in rocks that use it.
 * Snaps that use strict confinement will use the version of Python in the
   base. Snaps that use classic confinement will use the host system's Python.
 
@@ -74,6 +78,8 @@ variable.
 
 Use of ``python3-<python-package>`` in stage-packages will force the
 inclusion of the Python interpreter.
+
+.. _python-details-end:
 
 How it works
 ------------

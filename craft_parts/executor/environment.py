@@ -165,15 +165,7 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
         global_environment["CRAFT_OVERLAY"] = str(info.overlay_mount_dir)
 
     if Features().enable_partitions:
-        if not info.partitions:
-            raise errors.FeatureError("Partitions enabled but no partitions specified.")
-        for partition in info.partitions:
-            global_environment[f"CRAFT_{partition.upper()}_STAGE"] = str(
-                info.get_stage_dir(partition=partition)
-            )
-            global_environment[f"CRAFT_{partition.upper()}_PRIME"] = str(
-                info.get_prime_dir(partition=partition)
-            )
+        global_environment.update(_get_environment_for_partitions(info))
 
     global_environment["CRAFT_STAGE"] = str(info.stage_dir)
     global_environment["CRAFT_PRIME"] = str(info.prime_dir)
@@ -182,6 +174,37 @@ def _get_global_environment(info: ProjectInfo) -> Dict[str, str]:
         global_environment["CRAFT_PROJECT_NAME"] = str(info.project_name)
 
     return global_environment
+
+
+def _get_environment_for_partitions(info: ProjectInfo) -> Dict[str, str]:
+    """Get environment variables related to partitions.
+
+    Assumes the partition feature is enabled.
+
+    :param info: The project information.
+
+    :returns: A dictionary contain environment variables for partitions.
+
+    :raises FeatureError: If the Project does not specify any partitions.
+    """
+    environment: Dict[str, str] = {}
+
+    if not info.partitions:
+        raise errors.FeatureError("Partitions enabled but no partitions specified.")
+
+    for partition in info.partitions:
+        formatted_partition = partition.upper().translate(
+            {ord("-"): "_", ord("/"): "_"}
+        )
+
+        environment[f"CRAFT_{formatted_partition}_STAGE"] = str(
+            info.get_stage_dir(partition=partition)
+        )
+        environment[f"CRAFT_{formatted_partition}_PRIME"] = str(
+            info.get_prime_dir(partition=partition)
+        )
+
+    return environment
 
 
 def _get_step_environment(step_info: StepInfo) -> Dict[str, str]:

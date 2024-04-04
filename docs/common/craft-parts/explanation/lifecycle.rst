@@ -127,7 +127,7 @@ parts being reordered within a step:
 Lifecycle processing diagram
 ----------------------------
 
-.. image:: /images/lifecycle_logic.png
+.. image:: /common/craft-parts/images/lifecycle_logic.png
 
 Further Information
 -------------------

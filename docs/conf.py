@@ -38,7 +38,7 @@ copyright = "2023, Canonical Ltd."
 author = "Canonical Ltd."
 
 # The full version, including alpha/beta/rc tags
-release = "1.26.1"
+release = "1.29.0"
 
 # Open Graph configuration - defines what is displayed in the website preview
 ogp_site_url = "https://canonical-craft-parts.readthedocs-hosted.com"
@@ -81,13 +81,25 @@ exclude_patterns = [
     "**venv",
     "base",
     "sphinx-resources",
+    # These RST files are explicitly excluded here because they are included by
+    # other files - without this exclusion, Sphinx will complain about duplicate
+    # labels.
+    "common/craft-parts/explanation/overlay_parameters.rst",
+    "common/craft-parts/reference/parts_steps.rst",
+    "common/craft-parts/reference/step_execution_environment.rst",
+    "common/craft-parts/reference/step_output_directories.rst",
 ]
 
 rst_epilog = """
-.. include:: /reuse/links.txt
+.. include:: /common/craft-parts/reuse/links.txt
 """
 
 autodoc_mock_imports = ["apt"]
+
+# Links to ignore when checking links
+linkcheck_ignore = [
+    "https://foo.org/",
+]
 
 rst_prolog = """
 .. |br| raw:: html

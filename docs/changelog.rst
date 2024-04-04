@@ -2,6 +2,38 @@
 Changelog
 *********
 
+1.29.0 (2024-03-20)
+-------------------
+
+- Add maven plugin documentation
+- Add documentation linters
+- Rework bundling of shared docs
+
+1.28.1 (2024-03-19)
+-------------------
+
+- Fix organize directories
+
+1.28.0 (2024-03-13)
+-------------------
+
+- Add namespaced partitions support
+
+1.27.0 (2024-03-07)
+-------------------
+
+- Add base layer data to ProjectInfo
+- Add qmake plugin
+- Add proxy support to ant plugin
+- Use rustup snap in the Rust plugin
+- Update documentation
+
+1.26.2 (2024-02-07)
+-------------------
+
+- Fix default setting in aliased part fields
+- Fix proxy setting in ant plugin
+
 1.26.1 (2023-12-13)
 -------------------
 

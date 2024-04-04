@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -53,7 +53,7 @@ def test_part_dependency_cycle():
     assert err.resolution == "Review the parts definition to remove dependency cycles."
 
 
-def test_feature_enabled():
+def test_feature():
     err = errors.FeatureError("bummer")
     assert err.message == "bummer"
     assert err.brief == "bummer"
@@ -61,11 +61,11 @@ def test_feature_enabled():
     assert err.resolution == "This operation cannot be executed."
 
 
-def test_feature_disabled():
-    err = errors.FeatureError("bummer")
+def test_feature_with_details():
+    err = errors.FeatureError(message="bummer", details="test details")
     assert err.message == "bummer"
     assert err.brief == "bummer"
-    assert err.details is None
+    assert err.details == "test details"
     assert err.resolution == "This operation cannot be executed."
 
 
@@ -260,6 +260,30 @@ def test_part_files_conflict():
     assert err.resolution is None
 
 
+def test_part_files_conflict_with_partitions():
+    """Test PartsFilesConflict with a partition."""
+    err = errors.PartFilesConflict(
+        part_name="foo",
+        other_part_name="bar",
+        conflicting_files=["file1", "file2"],
+        partition="test",
+    )
+    assert err.part_name == "foo"
+    assert err.other_part_name == "bar"
+    assert err.conflicting_files == ["file1", "file2"]
+    assert err.partition == "test"
+    assert err.brief == (
+        "Failed to stage: parts list the same file with different contents or permissions."
+    )
+    assert err.details == (
+        "Parts 'foo' and 'bar' list the following files for the 'test' partition, "
+        "but with different contents or permissions:\n"
+        "    file1\n"
+        "    file2"
+    )
+    assert err.resolution is None
+
+
 def test_stage_files_conflict():
     err = errors.StageFilesConflict(
         part_name="foo", conflicting_files=["file1", "file2"]
@@ -372,3 +396,52 @@ def test_overlay_permission_error():
     assert err.brief == "Using the overlay step requires superuser privileges."
     assert err.details is None
     assert err.resolution is None
+
+
+class TestPartitionErrors:
+    def test_partition_error(self):
+        err = errors.PartitionError(
+            brief="test brief", details="test details", resolution="test resolution"
+        )
+
+        assert err.brief == "test brief"
+        assert err.details == "test details"
+        assert err.resolution == "test resolution"
+
+    def test_invalid_partition_usage(self):
+        err = errors.PartitionUsageError(
+            error_list=[
+                "  parts.test-part.organize",
+                "    unknown partition 'foo' in '(foo)'",
+            ],
+            partitions=["default", "mypart", "yourpart"],
+        )
+
+        assert err.brief == "Invalid usage of partitions"
+        assert err.details == (
+            "  parts.test-part.organize\n"
+            "    unknown partition 'foo' in '(foo)'\n"
+            "Valid partitions: default, mypart, yourpart"
+        )
+        assert err.resolution == "Correct the invalid partition name(s) and try again."
+
+    def test_invalid_partition_warning(self):
+        err = errors.PartitionUsageWarning(
+            warning_list=[
+                "  parts.test-part.organize",
+                "    misused partition 'yourpart' in 'yourpart/test-file'",
+            ]
+        )
+
+        assert err.brief == "Possible misuse of partitions"
+        assert err.details == (
+            "The following entries begin with a valid partition name but are not "
+            "wrapped in parentheses. These entries will go into the "
+            "default partition.\n"
+            "  parts.test-part.organize\n"
+            "    misused partition 'yourpart' in 'yourpart/test-file'"
+        )
+        assert err.resolution == (
+            "Wrap the partition name in parentheses, for example "
+            "'default/file' should be written as '(default)/file'"
+        )

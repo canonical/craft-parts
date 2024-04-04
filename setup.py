@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup
 
-VERSION = "1.26.1"
+VERSION = "1.29.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -145,7 +145,7 @@ setup(
         "craft_parts_docs",
     ],
     # todo: can we make the docs optional?
-    package_dir={"craft_parts_docs": "docs/base"},
+    package_dir={"craft_parts_docs": "docs/common"},
     package_data={
         "craft_parts": ["py.typed"],
         "craft_parts_docs": ["**"],

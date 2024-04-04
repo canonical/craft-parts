@@ -6,8 +6,9 @@ Explanation
 .. toctree::
    :maxdepth: 1
 
-   parts
-   lifecycle
+   /common/craft-parts/explanation/parts
+   /common/craft-parts/explanation/lifecycle
    implementation
-   filesets
-   overlays
+   /common/craft-parts/explanation/filesets
+   /common/craft-parts/explanation/overlays
+   /common/craft-parts/explanation/dump_plugin
