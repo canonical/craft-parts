@@ -46,7 +46,7 @@ extend-exclude = [
     "__pycache__",
 ]
 # Follow ST063 - Maintaining and updating linting specifications for updating these.
-select = [  # Base linting rule selections.
+lint.select = [  # Base linting rule selections.
     # See the internal document for discussion:
     # https://docs.google.com/document/d/1i1n8pDmFmWi4wTDpk-JfnWCVUThPJiggyPi2DYwBBu4/edit
     # All sections here are stable in ruff and shouldn't randomly introduce
@@ -114,13 +114,12 @@ select = [  # Base linting rule selections.
     "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
     "RUF005",  # Encourages unpacking rather than concatenation
     "RUF008",  # Do not use mutable default values for dataclass attributes
-    "RUF011",  # Don't use static keys in dict comprehensions.
     #"RUF012",  # Mutable class attributes should be annotated with typing.ClassVar
     "RUF013",  # Prohibit implicit Optionals (PEP 484)
     "RUF100",  # #noqa directive that doesn't flag anything
     "RUF200",  # If ruff fails to parse pyproject.toml...
 ]
-ignore = [
+lint.ignore = [
     "ANN10",  # Type annotations for `self` and `cls`
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
     "E501",  # Line too long (reason: black will automatically fix this for us)
@@ -143,20 +142,20 @@ ignore = [
     "COM812", # Trailing comma missing
 ]
 
-[tool.ruff.flake8-annotations]
+[tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 max-args = 8
 max-branches = 16
 max-locals = 18
 # max-attributes = 16
 
-[tool.ruff.pep8-naming]
+[tool.ruff.lint.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**.py" = [  # Some things we want for the moin project are unnecessary in tests.
     "D",  # Ignore docstring rules in tests
     "ANN",  # Ignore type annotations in tests
