@@ -57,7 +57,7 @@ class PartSpec(BaseModel):
     build_packages: List[str] = []
     build_environment: List[Dict[str, str]] = []
     build_attributes: List[str] = []
-    organize_files: Dict[str, str] = Field(default_factory=lambda: {}, alias="organize")
+    organize_files: Dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: List[str] = Field(default_factory=lambda: ["*"], alias="overlay")
     stage_files: List[str] = Field(default_factory=lambda: ["*"], alias="stage")
     prime_files: List[str] = Field(default_factory=lambda: ["*"], alias="prime")
