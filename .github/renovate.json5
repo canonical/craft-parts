@@ -95,7 +95,7 @@
       fileMatch: ["tox.ini"],
       depTypeTemplate: "devDependencies",
       matchStrings: [
-        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n"
+        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><~]=(?<currentValue>.*?)\n"
       ]
     }
   ],
