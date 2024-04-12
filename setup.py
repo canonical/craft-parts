@@ -100,7 +100,7 @@ test_requires = [
     "requests-mock",
     "ruff==0.3.5",
     "tox",
-    "yamllint==1.32.0",
+    "yamllint==1.35.1",
 ]
 
 extras_requires = {
