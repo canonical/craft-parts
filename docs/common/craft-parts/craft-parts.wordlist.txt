@@ -48,6 +48,7 @@ DotnetPluginProperties
 DummyRepository
 DumpPlugin
 DumpPluginProperties
+ErrorDict
 ExecutionContext
 FeatureError
 FieldInfo
@@ -355,6 +356,7 @@ pylint
 pypi
 pyproject
 qmake
+qualname
 readthedocs
 recognized
 reorganize
