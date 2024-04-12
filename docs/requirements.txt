@@ -5,7 +5,7 @@ python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-a
 furo==2024.1.29
 Sphinx==7.2.6
 sphinx-autobuild==2024.2.4
-sphinx-autodoc-typehints==2.0.0
+sphinx-autodoc-typehints==2.0.1
 sphinx-jsonschema==1.19.1
 sphinx-pydantic==0.1.1
 sphinxcontrib-applehelp==1.0.8
