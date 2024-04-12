@@ -653,6 +653,7 @@ def test_step_info_get_project_var():
     [
         ("arm64", "aarch64"),
         ("armv7hl", "armv7l"),
+        ("armv8l", "armv7l"),
         ("i386", "i686"),
         ("AMD64", "x86_64"),
         ("x64", "x86_64"),
