@@ -226,7 +226,6 @@ Subtractive
 TarSource
 TimedWriter
 Tox
-Tup
 TypeError
 URI
 URL's
@@ -330,6 +329,7 @@ mountpoints
 namespace
 namespaced
 nano
+noop
 normalization
 normalize
 npm
