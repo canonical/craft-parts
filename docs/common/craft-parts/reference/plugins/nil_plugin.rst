@@ -30,8 +30,19 @@ This plugin has no dependencies.
 How it works
 ------------
 
-During the build step, this plugin essentially does nothing.
+This plugin does nothing. It serves as a *noop* when there is a need to only use
+native :ref:`part properties <part_properties>`.
 
 Examples
 --------
 
+The following snippet declares a part using the ``nil`` plugin to fetch
+and unpack ``hello`` defined in :ref:`stage-packages <part-properties-plugin>`:
+
+.. code-block:: yaml
+
+    parts:
+      nil:
+        plugin: nil
+        stage-packages:
+          - hello
