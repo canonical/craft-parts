@@ -35,4 +35,3 @@ During the build step, this plugin essentially does nothing.
 Examples
 --------
 
-Refer to :ref:`how_to_nil_plugin`.
