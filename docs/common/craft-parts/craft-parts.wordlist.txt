@@ -5,6 +5,8 @@ AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
 AptCache
+Autoconf
+Automake
 Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
@@ -391,6 +393,7 @@ summarized
 svn
 symlink
 symlinks
+texinfo
 toml
 toolchain
 toplevel
