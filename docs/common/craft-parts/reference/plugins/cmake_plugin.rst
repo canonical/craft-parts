@@ -67,7 +67,7 @@ Examples
 
 The following snippet declares a part using the ``cmake`` plugin. It
 sets the CMAKE_BUILD_TYPE_ to ``RelWithDebInfo`` to generate debug
-symbols from the build.
+symbols from the build:
 
 .. code-block:: yaml
 
