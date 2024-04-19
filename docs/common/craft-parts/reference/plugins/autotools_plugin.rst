@@ -72,7 +72,7 @@ During the build step the plugin performs the following actions:
      project;
      
 * Call ``configure`` with any set ``autotools-configure-parameters``;
-* Call ``make`` to build
+* Call ``make`` to build;
 * Call ``make install`` with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
 
 Examples
