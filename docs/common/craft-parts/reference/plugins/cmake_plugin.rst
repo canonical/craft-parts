@@ -76,7 +76,7 @@ symbols from the build:
         source: .
         plugin: cmake
         cmake-parameters:
-            - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          - -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 .. _GNU Make: https://www.gnu.org/software/make/
 .. _Ninja: https://ninja-build.org/
