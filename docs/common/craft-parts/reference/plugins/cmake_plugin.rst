@@ -6,7 +6,7 @@ CMake plugin
 The CMake plugin configures projects using CMake_ and builds them
 either using `GNU Make`_ or Ninja_.
 
-After a successful build, this plugin will installs the generated
+After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
 Keywords
