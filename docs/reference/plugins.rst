@@ -12,6 +12,7 @@ lifecycle.
 
    /common/craft-parts/reference/plugins/dump_plugin.rst
    /common/craft-parts/reference/plugins/go_plugin.rst
+   /common/craft-parts/reference/plugins/make_plugin.rst
    /common/craft-parts/reference/plugins/maven_plugin.rst
    /common/craft-parts/reference/plugins/nil_plugin.rst
    /common/craft-parts/reference/plugins/npm_plugin.rst
