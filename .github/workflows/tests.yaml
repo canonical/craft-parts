@@ -21,10 +21,12 @@ jobs:
           python-version: "3.10"
       - name: Install python packages and dependencies
         run: |
+          sudo snap install --no-wait ruff
           sudo apt update
           sudo apt install -y libapt-pkg-dev aspell
           pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
           pip install -U -e .[dev]
+          sudo snap watch --last=install
       - name: Run black
         run: |
           make test-black
