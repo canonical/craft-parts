@@ -1,9 +1,9 @@
 .. _craft_parts_scons_plugin:
 
-Scons plugin
+SCons plugin
 ============
 
-The Scons plugin builds projects using Scons_.
+The SCons plugin builds projects using SCons_.
 
 After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
@@ -20,7 +20,7 @@ scons-parameters
 **Type:** list of strings
 **Default:** []
 
-Parameters to pass to scons for building and installation.
+Parameters to pass to SCons for building and installation.
 
 Environment variables
 ---------------------
@@ -30,7 +30,7 @@ This plugin sets ``DESTDIR`` to ``$CRAFT_PART_INSTALL``.
 Dependencies
 ------------
 
-The Scons plugin needs the ``scons`` executable to work.
+The SCons plugin needs the ``scons`` executable to work.
 
 
 How it works
@@ -57,5 +57,5 @@ sets the ``scons-parameters`` for a ``prefix`` to be set to ``/usr``:
         scons-parameters:
             - prefix=/usr
 
-.. _Scons: https://scons.org/
+.. _SCons: https://scons.org/
 
