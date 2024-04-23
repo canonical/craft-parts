@@ -5,7 +5,7 @@ Scons plugin
 
 The Scons plugin builds projects using Scons_.
 
-After a successful build, this plugin will installs the generated
+After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
 Keywords
@@ -30,7 +30,7 @@ This plugin sets ``DESTDIR`` to ``$CRAFT_PART_INSTALL``.
 Dependencies
 ------------
 
-The Scons plugin needs the ``scons`` executable work.
+The Scons plugin needs the ``scons`` executable to work.
 
 
 How it works
