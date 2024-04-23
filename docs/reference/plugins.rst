@@ -19,6 +19,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/nil_plugin.rst
    /common/craft-parts/reference/plugins/python_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
+   /common/craft-parts/reference/plugins/scons_plugin.rst
 
 
 When documenting a new plugin, follow the guidelines in :ref:`how_to_document_a_plugin`.
