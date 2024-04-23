@@ -30,7 +30,19 @@ This plugin sets ``DESTDIR`` to ``$CRAFT_PART_INSTALL``.
 Dependencies
 ------------
 
-The SCons plugin needs the ``scons`` executable to work.
+The SCons plugin needs the ``scons`` executable to build, but does not
+provision it by itself.
+
+The common means of providing ``scons`` is through a
+:ref:`build-packages <build_packages>` entry which for Ubuntu, would be ``scons``.
+
+Another alternative is to define another part with the name ``scons-deps``, and
+declare that the part using the ``scons`` plugin comes :ref:`after <after>` the
+``scons-deps`` part. In this case, the plugin will assume that this new part will
+provide the ``scons`` executable to be used in the build step. This can be useful,
+for example, in cases where a specific, unreleased version of ``scons`` is desired
+but only possible by either building the tool itself from source or through some
+other custom mechanism.
 
 
 How it works
@@ -46,7 +58,9 @@ Examples
 --------
 
 The following snippet declares a part using the ``scons`` plugin. It
-sets the ``scons-parameters`` for a ``prefix`` to be set to ``/usr``:
+sets the ``scons-parameters`` for a ``prefix`` to be set to
+``/usr``. To ``scons`` executable dependency is satisfied with
+:ref:`build-packages <build_packages>`:
 
 .. code-block:: yaml
 
@@ -55,7 +69,10 @@ sets the ``scons-parameters`` for a ``prefix`` to be set to ``/usr``:
         source: .
         plugin: scons
         scons-parameters:
-            - prefix=/usr
+          - prefix=/usr
+        build-packages:
+          - scons
+
 
 .. _SCons: https://scons.org/
 
