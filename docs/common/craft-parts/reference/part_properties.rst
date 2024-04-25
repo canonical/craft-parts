@@ -15,7 +15,7 @@ after
 
 Specifies a list of parts that a given part will be built *after*.
 
-.. ifconfig:: project in ["Snapcraft"]
+.. ifconfig:: project in ("Snapcraft",)
 
    .. _build_attributes:
 
