@@ -86,6 +86,7 @@ JavaPlugin
 LDFLAGS
 LLVM
 LTO
+LTS
 LXD
 LayerHash
 LayerMount
@@ -108,6 +109,7 @@ MigrationState
 Multipass
 NOOP
 NPM
+NVM
 Namespaced
 NetworkRequestError
 NilPlugin
@@ -313,13 +315,16 @@ infos
 ing
 initialized
 iterable
+iojs
 jdk
 jre
+js
 kwargs
 ldflags
 lifecycle
 linters
 lto
+lts
 mcraft
 md
 metaclass

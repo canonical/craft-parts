@@ -39,7 +39,7 @@ The option accepts a NVM-style version string, you can specify one of:
 * LTS code name (e.g. "lts/iron")
 * latest mainline version ("node")
 
-When specifying a non-exact version identifer, the plugin will select
+When specifying a non-exact version identifier, the plugin will select
 the latest version that satisfies the specified version range. If
 the version picked by the plugin does not publish binaries for the
 target architecture, the plugin will pick the nearest version that 
