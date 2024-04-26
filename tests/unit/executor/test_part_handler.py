@@ -698,7 +698,7 @@ class TestPackages:
         assert raised.value.package_name == "pkg1"
 
     def test_pull_fetch_stage_packages_arch(self, mocker, new_dir, partitions):
-        """Verify _run_pull fetches stage packages from the host architecture."""
+        """Verify _run_pull fetches stage packages for the target architecture."""
         getpkg = mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
             return_value=["pkg1"],
@@ -737,7 +737,7 @@ class TestPackages:
             base=mocker.ANY,
             package_names=mocker.ANY,
             stage_packages_path=mocker.ANY,
-            arch=part_info.host_arch,
+            arch=part_info.target_arch,
         )
 
     def test_fetch_stage_snaps(self, mocker, new_dir, partitions):
