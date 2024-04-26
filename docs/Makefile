@@ -51,7 +51,10 @@ clean: clean-doc
 clean-doc:
 	git clean -fx "$(BUILDDIR)"
 
-spelling: html
+clean-html: clean-doc
+	+$(MAKE) html
+
+spelling: clean-html
 	. $(VENV) ; python3 -m pyspelling -c sphinx-resources/.sphinx/spellingcheck.yaml
 
 linkcheck:
