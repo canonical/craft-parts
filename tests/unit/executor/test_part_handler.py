@@ -16,8 +16,9 @@
 
 import logging
 import os
+import platform
 from pathlib import Path
-from typing import cast
+from typing import Dict, cast
 from unittest.mock import call
 
 import pytest
@@ -706,7 +707,24 @@ class TestPackages:
         part = Part(
             "foo", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
         )
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+
+        _platform_machine_translations: Dict[str, str] = {
+            # Maps other possible ``platform.machine()`` values to the arch translations below.
+            "arm64": "aarch64",
+            "armv7hl": "armv7l",
+            "i386": "i686",
+            "amd64": "x86_64",
+            "x64": "x86_64",
+        }
+
+        machine = platform.machine()
+        host_arch = _platform_machine_translations.get(machine.lower(), machine)
+        target_arch = "aarch64"
+
+        if host_arch != "x86_64":
+            target_arch = "x86_64"
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir, arch=target_arch)
         part_info = PartInfo(info, part)
         ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
         handler = PartHandler(
