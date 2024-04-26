@@ -19,7 +19,7 @@ install:
 	python3 -m venv sphinx-resources/.sphinx/venv
 	. $(VENV); pip install --upgrade -e ..[docs]
 	. $(VENV); pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
-	. $(VENV); pip install --upgrade -r sphinx-resources/.sphinx/requirements.txt
+	. $(VENV); pip install --upgrade -r requirements.txt
 	. $(VENV); pip install setuptools  # Needed for Python 3.12: https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
 
 	@echo "\n" \
