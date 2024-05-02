@@ -18,7 +18,7 @@ npm-include-node
 **Default:** False
 
 If this option is set to ``true``, the plugin will download and include the 
-Node.js binaries and its dependencies in the Snap.
+Node.js binaries and its dependencies in the resulting package.
 If ``npm-include-node`` is true, then :ref:`npm-node-version` must be defined.
 
 .. _npm-node-version:
@@ -28,10 +28,10 @@ npm-node-version
 **Type:** string
 **Default:** ``null``
 
-Which version of Node.js to download and include in the final Snap.
+Which version of Node.js to download and include in the final package.
 Required if ``npm-include-node`` is set to true.
 
-The option accepts a NVM-style version string, you can specify one of:
+The option accepts an NVM-style version string; you can specify one of:
 
 * exact version (e.g. "20.12.2")
 * major+minor version (e.g. "20.12")
