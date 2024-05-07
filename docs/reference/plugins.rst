@@ -18,6 +18,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/maven_plugin.rst
    /common/craft-parts/reference/plugins/nil_plugin.rst
    /common/craft-parts/reference/plugins/python_plugin.rst
+   /common/craft-parts/reference/plugins/qmake_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
    /common/craft-parts/reference/plugins/scons_plugin.rst
 
