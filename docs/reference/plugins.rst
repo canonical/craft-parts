@@ -10,6 +10,7 @@ lifecycle.
 .. toctree::
    :maxdepth: 1
 
+   /common/craft-parts/reference/plugins/dotnet_plugin.rst
    /common/craft-parts/reference/plugins/autotools_plugin.rst
    /common/craft-parts/reference/plugins/cmake_plugin.rst
    /common/craft-parts/reference/plugins/dump_plugin.rst
