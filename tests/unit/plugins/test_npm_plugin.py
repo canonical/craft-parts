@@ -257,13 +257,19 @@ class TestPluginNpmPlugin:
             "fi\n",
         ]
 
-    def test_get_build_commands_include_node_true(self, part_info, mocker, new_dir):
+    @pytest.mark.parametrize(
+        "version",
+        ["20", "20.13", "20.13.1", "lts/iron"],
+    )
+    def test_get_build_commands_include_node_true(
+        self, version, part_info, mocker, new_dir
+    ):
         mocker.patch.dict(os.environ, {"SNAP_ARCH": "amd64"})
         properties = NpmPlugin.properties_class.unmarshal(
             {
                 "source": ".",
                 "npm-include-node": True,
-                "npm-node-version": "99.99.99",
+                "npm-node-version": version,
             }
         )
         NpmPlugin._fetch_node_release_index = lambda: [
@@ -273,22 +279,29 @@ class TestPluginNpmPlugin:
                 "files": ["linux-x64"],
                 "lts": False,
                 "security": False,
-            }
+            },
+            {
+                "version": "v20.13.1",
+                "date": "2024-05-09",
+                "files": ["linux-x64"],
+                "lts": "Iron",
+                "security": False,
+            },
         ]
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_pull_commands() == [
-            f'if [ ! -f "{part_info.part_cache_dir}/node-v99.99.99-linux-x64.tar.gz" ]; then\n'
+            f'if [ ! -f "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz" ]; then\n'
             f'    mkdir -p "{part_info.part_cache_dir}"\n'
-            f'    curl --retry 5 -s "https://nodejs.org/dist/v99.99.99/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
-            f'    curl --retry 5 -s "https://nodejs.org/dist/v99.99.99/node-v99.99.99-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v99.99.99-linux-x64.tar.gz"\n'
+            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
+            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/node-v20.13.1-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"\n'
             "fi\n"
             f'cd "{part_info.part_cache_dir}"\n'
             "sha256sum --ignore-missing --strict -c SHASUMS256.txt\n"
         ]
 
         assert plugin.get_build_commands() == [
-            f'tar -xzf "{part_info.part_cache_dir}/node-v99.99.99-linux-x64.tar.gz"'
+            f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
             ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
             "--strip-components=1\n",
             'NPM_VERSION="$(npm --version)"\n'
