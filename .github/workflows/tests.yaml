@@ -14,6 +14,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: true
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -21,7 +22,7 @@ jobs:
       - name: Install python packages and dependencies
         run: |
           sudo apt update
-          sudo apt install -y libapt-pkg-dev
+          sudo apt install -y libapt-pkg-dev aspell
           pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
           pip install -U -e .[dev]
       - name: Run black
@@ -44,7 +45,69 @@ jobs:
           sudo snap install --classic node
           sudo snap install --classic pyright
           make test-pyright
+      - name: Run linkcheck, woke, spelling
+        run: |
+          sudo snap install woke
+          make test-docs
 
+  unit-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.7
+            3.8
+            3.9
+            3.10
+            3.12
+          cache: pip
+      - name: Install apt build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs python3-apt
+      - name: Install additional test dependencies
+        run: |
+          sudo apt install -y ninja-build cmake scons \
+                              autoconf automake autopoint gcc git gperf help2man libtool texinfo
+          python -m pip install tox
+          # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
+          sudo snap install --classic --channel=latest/stable go
+          git clone https://github.com/canonical/chisel.git chisel-tmp
+          cd chisel-tmp && git checkout v0.9.0
+          go mod download
+          sudo go build -o /usr/bin ./...
+          chisel --help
+          # Remove newer go and install regular version for 20.04
+          sudo snap remove go
+          sudo apt install -y golang
+          # Install RPM dependencies for RPM tests
+          sudo apt install rpm
+          # Ensure we don't have dotnet installed, to properly test dotnet-deps
+          # Based on https://github.com/actions/runner-images/blob/main/images/linux/scripts/installers/dotnetcore-sdk.sh
+          sudo apt remove -y dotnet-* || true
+          # Remove manually-installed dotnet from tarballs
+          sudo rm -rf /usr/share/dotnet
+          # Remove dotnet tools
+          rm -rf $HOME/.dotnet
+      - name: specify node version
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+      - name: Setup Tox environments
+        run: tox run -m unit-tests --notest
+      - name: Unit tests
+        run: .tox/.tox/bin/tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.platform }}.json -m unit-tests
+        env:
+          PYTEST_ADDOPTS: "--no-header -vv -rN"
   tests:
     strategy:
       matrix:
@@ -80,9 +143,11 @@ jobs:
           sudo apt install -y ninja-build cmake scons qt5-qmake \
                               autoconf automake autopoint gcc git gperf help2man libtool texinfo
           # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
+          # note: we can't use the snap here because it has strict confinement and can't access
+          # the test files in /tmp/pytest-*
           sudo snap install --classic --channel=latest/stable go
           git clone https://github.com/canonical/chisel.git chisel-tmp
-          cd chisel-tmp && git checkout f0bff5a30dfdcb400b # known "good" commit until Chisel has versions
+          cd chisel-tmp && git checkout v0.9.0
           go mod download
           sudo go build -o /usr/bin ./...
           chisel --help
@@ -102,9 +167,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 16
-      - name: Run unit tests
-        run: |
-          make test-units
       - name: Run integration tests
         run: |
           make test-integrations

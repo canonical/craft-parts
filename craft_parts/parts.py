@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,7 @@
 """Definitions and helpers to handle parts."""
 
 import re
+import warnings
 from pathlib import Path
 from typing import (
     Any,
@@ -40,6 +41,7 @@ from pydantic import (
 )
 from pydantic.functional_validators import AfterValidator
 from typing_extensions import Annotated
+from types import MappingProxyType
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
@@ -48,7 +50,8 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.formatting_utils import humanize_list
+from craft_parts.utils.partition_utils import get_partition_dir_map
+from craft_parts.utils.path_utils import get_partition_and_path
 
 
 def _path_not_empty(v: str) -> str:
@@ -85,8 +88,8 @@ class PartSpec(BaseModel):
     build_packages: List[str] = []
     build_environment: List[Dict[str, str]] = []
     build_attributes: List[str] = []
-    organize_files: Dict[str, str] = Field({}, alias="organize")
-    overlay_files: List[str] = Field(["*"], alias="overlay")
+    organize_files: Dict[str, str] = Field(default_factory=dict, alias="organize")
+    overlay_files: List[str] = Field(default_factory=lambda: ["*"], alias="overlay")
     stage_files: List[
         Annotated[
             str,
@@ -256,6 +259,9 @@ class Part:
                 part_name=name, error_list=err.errors()
             ) from err
 
+        self._check_partition_feature()
+        self._check_partition_usage()
+
     def __repr__(self) -> str:
         return f"Part({self.name!r})"
 
@@ -297,28 +303,9 @@ class Part:
         return self.part_build_dir
 
     @property
-    def part_base_install_dir(self) -> Path:
-        """The base of the part's install directories.
-
-        With partitions disabled, this is the install directory.
-        With partitions enabled, this is the directory containing the partitions.
-
-        A full path to an install location can always be found with:
-        ``part.part_base_install_dir / get_partition_compatible_filepath(location)``
-        """
-        return self._part_dir / "install"
-
-    @property
     def part_install_dir(self) -> Path:
-        """Return the subdirectory to install the part build artifacts.
-
-        With partitions disabled, this is the install directory and is the same
-        as ``part_base_install_dir``
-        With partitions enabled, this is the install directory for the default partition
-        """
-        if self._partitions is None:
-            return self.part_base_install_dir
-        return self.part_base_install_dir / "default"
+        """Return the subdirectory to install the part build artifacts."""
+        return self._part_dir / "install"
 
     @property
     def part_install_dirs(self) -> Mapping[Optional[str], Path]:
@@ -326,12 +313,13 @@ class Part:
 
         With partitions disabled, the only partition name is ``None``
         """
-        if self._partitions is None:
-            return {None: self.part_base_install_dir}
-        return {
-            partition: self.part_base_install_dir / partition
-            for partition in self._partitions
-        }
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"parts/{self.name}/install",
+            )
+        )
 
     @property
     def part_state_dir(self) -> Path:
@@ -369,14 +357,6 @@ class Part:
         return self.dirs.overlay_dir
 
     @property
-    def base_stage_dir(self) -> Path:
-        """Return the base staging area.
-
-        If partitions are enabled, this is the directory containing those partitions.
-        """
-        return self.dirs.base_stage_dir
-
-    @property
     def stage_dir(self) -> Path:
         """Return the staging area containing the installed files from all parts.
 
@@ -391,14 +371,6 @@ class Part:
         If partitions are disabled, the only key is ``None``.
         """
         return self.dirs.stage_dirs
-
-    @property
-    def base_prime_dir(self) -> Path:
-        """Return the primed tree containing the artifacts to deploy.
-
-        If partitions are enabled, this is the directory containing those partitions.
-        """
-        return self.dirs.base_prime_dir
 
     @property
     def prime_dir(self) -> Path:
@@ -428,14 +400,31 @@ class Part:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
 
-    def check_partition_usage(self, partitions: List[str]) -> List[str]:
+    def _check_partition_feature(self) -> None:
+        """Check if the partitions feature is properly used.
+
+        :raises FeatureError: If partitions are defined but the feature is not enabled.
+        """
+        if self._partitions and not Features().enable_partitions:
+            raise errors.FeatureError(
+                "Partitions specified but partitions feature is not enabled."
+            )
+
+        if self._partitions is None and Features().enable_partitions:
+            raise errors.FeatureError(
+                "Partitions feature is enabled but no partitions specified."
+            )
+
+    def _check_partition_usage(self) -> None:
         """Check if partitions are properly used in a part.
 
-        :param partitions: The list of valid partitions.
+        Assumes the partition feature is enabled.
 
-        :returns: A list of invalid uses of partitions in the part.
+        :raises PartitionError: If partitions are not used properly in a fileset.
+        :raises PartitionWarning: If a fileset entry is misusing a partition.
         """
-        error_list: List[str] = []
+        if not self._partitions:
+            return
 
         if not Features().enable_partitions:
             return error_list
@@ -447,43 +436,100 @@ class Part:
             ("organize", self.spec.organize_files.values()),
             ("stage", self.spec.stage_files),
             ("prime", self.spec.prime_files),
+        error_list: List[str] = []
+        warning_list: List[str] = []
+
+        for fileset_name, fileset, require_inner_path in [
+            # organize source entries do not use partitions and
+            # organize destination entries do not require an inner path
+            ("organize", self.spec.organize_files.values(), False),
+            ("stage", self.spec.stage_files, True),
+            ("prime", self.spec.prime_files, True),
         ]:
-            error_list.extend(
-                self._check_partitions_in_filepaths(fileset_name, fileset, partitions)
+            partition_warnings, partition_errors = self._check_partitions_in_filepaths(
+                fileset_name, fileset, require_inner_path=require_inner_path
+            )
+            warning_list.extend(partition_warnings)
+            error_list.extend(partition_errors)
+
+        if warning_list:
+            warnings.warn(
+                errors.PartitionUsageWarning(warning_list=warning_list), stacklevel=1
             )
 
-        return error_list
+        if error_list:
+            raise errors.PartitionUsageError(
+                error_list=error_list,
+                partitions=self._partitions,
+            )
 
     def _check_partitions_in_filepaths(
-        self, fileset_name: str, fileset: Iterable[str], partitions: List[str]
-    ) -> List[str]:
+        self, fileset_name: str, fileset: Iterable[str], *, require_inner_path: bool
+    ) -> Tuple[List[str], List[str]]:
         """Check if partitions are properly used in a fileset.
 
         If a filepath begins with a parentheses, then the text inside the parentheses
-        must be a valid partition.
+        must be a valid partition. This is an error.
+
+        Some filesets must specify a path to avoid ambiguity. For example, the
+        following is not allowed:
+            stage:
+              - (default)
+              - (default)/
+        Whereas the organize destination does not require an inner path:
+            organize:
+              - foo: (mypart)
+
+        If a path begins with a partition name but is not encapsulated in parentheses,
+        a warning is generated. This will not warn for misuses of namespaced partitions.
 
         :param fileset_name: The name of the fileset being checked.
         :param fileset: The list of filepaths to check.
-        :param partitions: The list of valid partitions.
+        :param require_inner_path: True if entries in the fileset need an inner path.
 
-        :returns: A list of invalid uses of partitions in the fileset.
+        :returns: A tuple containing two lists:
+            - A list of warnings of possible misuses of partitions in the fileset
+            - A list of invalid uses of partitions in the fileset
         """
-        error_list = []
-        pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
+        error_list: List[str] = []
+        warning_list: List[str] = []
+
+        if not self._partitions:
+            return warning_list, error_list
+
+        partition_pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
+        possible_partition_pattern = re.compile("^-?(?P<possible_partition>[a-z]+)/?")
 
         for filepath in fileset:
-            match = re.match(pattern, filepath)
+            match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if partition not in partitions:
+                if str(partition) not in self._partitions:
                     error_list.append(
                         f"    unknown partition {partition!r} in {filepath!r}"
+                    )
+            else:
+                match = re.match(possible_partition_pattern, filepath)
+                if match:
+                    partition = match.group("possible_partition")
+                    if partition in self._partitions:
+                        warning_list.append(
+                            f"    misused partition {partition!r} in {filepath!r}"
+                        )
+
+            if require_inner_path:
+                _, inner_path = get_partition_and_path(filepath)
+                if not inner_path:
+                    error_list.append(
+                        f"    no path specified after partition in {filepath!r}"
                     )
 
         if error_list:
             error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
+        if warning_list:
+            warning_list.insert(0, f"  parts.{self.name}.{fileset_name}")
 
-        return error_list
+        return warning_list, error_list
 
 
 # pylint: enable=too-many-public-methods
@@ -635,33 +681,6 @@ def validate_part(data: Dict[str, Any]) -> None:
     :param data: The part data to validate.
     """
     _get_part_spec(data)
-
-
-def validate_partition_usage(part_list: List[Part], partitions: List[str]) -> None:
-    """Validate usage of partitions in a list of parts.
-
-    For each part, the use of partitions in filepaths in overlay, stage, prime, and
-    organize keywords are validated.
-
-    :param part_list: The list of parts to validate.
-    :param partitions: The list of valid partitions.
-
-    :raises ValueError: If partitions are not used properly in the list of parts.
-    """
-    if not Features().enable_partitions:
-        return
-
-    error_list = []
-
-    for part in part_list:
-        error_list.extend(part.check_partition_usage(partitions))
-
-    if error_list:
-        raise errors.FeatureError(
-            "Error: Invalid usage of partitions:\n"
-            + "\n".join(error_list)
-            + f"\nValid partitions are {humanize_list(partitions, 'and')}."
-        )
 
 
 def part_has_overlay(data: Dict[str, Any]) -> bool:

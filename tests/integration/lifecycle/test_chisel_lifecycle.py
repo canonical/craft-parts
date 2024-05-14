@@ -39,11 +39,13 @@ def _current_release_supported() -> bool:
     )
 
 
-@pytest.mark.skipif(not IS_CI, reason="This test needs 'chisel' and only runs on CI.")
+@pytest.mark.skipif(
+    not _current_release_supported(), reason="Test needs Chisel support"
+)
 def test_chisel_lifecycle(new_dir, partitions):
     """Integrated test for Chisel support.
 
-    Note that since this test needs the "chisel" binary, it currently only runs on CI.
+    Note that since this test needs the "chisel" binary.
     """
     _parts_yaml = textwrap.dedent(
         """\
@@ -53,8 +55,6 @@ def test_chisel_lifecycle(new_dir, partitions):
             stage-packages: [ca-certificates_data]
         """
     )
-
-    partition_dir = "default" if partitions else "."
 
     parts = yaml.safe_load(_parts_yaml)
 
@@ -66,21 +66,14 @@ def test_chisel_lifecycle(new_dir, partitions):
         partitions=partitions,
     )
 
-    chisel_supported = _current_release_supported()
-
     actions = lf.plan(Step.PRIME)
 
-    if chisel_supported:
-        with lf.action_executor() as ctx:
-            ctx.execute(actions)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
 
-        root = Path(new_dir, "prime", partition_dir)
-        assert (root / "/etc/ssl/certs/ca-certificates.crt").is_file()
-        assert (root / "/usr/share/ca-certificates").is_dir()
-    else:
-        with pytest.raises(errors.ChiselError):
-            with lf.action_executor() as ctx:
-                ctx.execute(actions)
+    root = Path(new_dir) / "prime"
+    assert (root / "etc/ssl/certs/ca-certificates.crt").is_file()
+    assert (root / "usr/share/ca-certificates").is_dir()
 
 
 @pytest.mark.skipif(
@@ -107,3 +100,44 @@ def test_chisel_error(tmp_path, caplog):
     chisel_error = ':: error: slices of package "invalid-chisel" not found'
     assert err.details is not None
     assert err.details == chisel_error
+
+
+@pytest.mark.skipif(
+    not _current_release_supported(), reason="Test needs Chisel support"
+)
+def test_chisel_normalize_paths(new_dir, partitions):
+    """Check that the contents of cut chisel slices are "normalized" just like
+    staged debs.
+    """
+
+    # We specifically use the openjdk-8-jre-headless_core slice here because
+    # it contains multiple symlinks with absolute paths
+    _parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            stage-packages: [openjdk-8-jre-headless_core]
+        """
+    )
+
+    parts = yaml.safe_load(_parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_slice",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    root = Path(new_dir) / "prime"
+    link = root / "usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security/java.policy"
+    assert link.is_symlink()
+    # Symlink must point to the file in the prime dir
+    assert link.resolve(strict=True) == root / "etc/java-8-openjdk/security/java.policy"

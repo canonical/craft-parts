@@ -2,7 +2,7 @@
 Overriding the default build
 ****************************
 
-Craft-parts provides built-in `plugins </reference/plugins>`_ for a number of
+Craft-parts provides built-in :ref:`plugins <plugins>` for a number of
 different programming languages, frameworks, and build tools. Since it's not
 possible to support *every* possible configuration and scenario for each of
 these technologies, each plugin emits a series of build commands to reproduce
@@ -17,7 +17,7 @@ Typical reasons for using ``override-build`` include:
 
 * Having to run commands before or after the plugin's default commands;
 * Building a project that uses a technology (programming language, framework, or
-  build tool) that is not supported by craft-part's `default plugins </reference/plugins>`_;
+  build tool) that is not supported by craft-part's :ref:`default plugins <plugins>`;
 * More generally, using the ``nil`` plugin (which has no default build
   commands).
 

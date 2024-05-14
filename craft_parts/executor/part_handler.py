@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2023 Canonical Ltd.
+# Copyright 2017-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -57,8 +57,7 @@ class _RunHandler(Protocol):
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> StepState:
-        ...
+    ) -> StepState: ...
 
 
 class _UpdateHandler(Protocol):
@@ -68,8 +67,7 @@ class _UpdateHandler(Protocol):
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 class PartHandler:
@@ -252,7 +250,11 @@ class PartHandler:
                 self._part.spec.overlay_files, name="overlay"
             )
             destdir = self._part.part_layer_dir
-            files, dirs = filesets.migratable_filesets(overlay_fileset, str(destdir))
+            files, dirs = filesets.migratable_filesets(
+                overlay_fileset,
+                str(destdir),
+                "default" if self._part_info.partitions else None,
+            )
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
         else:
             contents = StepContents()
@@ -366,7 +368,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
-            work_dir=self._part.base_stage_dir,
+            work_dir=self._part.stage_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -405,7 +407,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
-            work_dir=self._part.base_prime_dir,
+            work_dir=self._part.prime_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -473,6 +475,7 @@ class PartHandler:
             env=step_env,
             stdout=stdout,
             stderr=stderr,
+            partitions=self._part_info.partitions,
         )
 
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
@@ -812,15 +815,18 @@ class PartHandler:
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
         _remove(self._part.part_build_dir)
-        _remove(self._part.part_install_dir)
+        for install_dir in self._part.part_install_dirs.values():
+            _remove(install_dir)
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
-        self._clean_shared(Step.STAGE, shared_dir=self._part.base_stage_dir)
+        for stage_dir in self._part.stage_dirs.values():
+            self._clean_shared(Step.STAGE, shared_dir=stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
-        self._clean_shared(Step.PRIME, shared_dir=self._part.base_prime_dir)
+        for prime_dir in self._part.prime_dirs.values():
+            self._clean_shared(Step.PRIME, shared_dir=prime_dir)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
@@ -873,8 +879,8 @@ class PartHandler:
         mapping = self._part.spec.organize_files
         organize_files(
             part_name=self._part.name,
-            mapping=mapping,
-            base_dir=self._part.part_base_install_dir,
+            file_map=mapping,
+            install_dir_map=self._part.part_install_dirs,
             overwrite=overwrite,
         )
 

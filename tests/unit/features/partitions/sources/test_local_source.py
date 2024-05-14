@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,18 +13,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import pytest
-from craft_parts import Features
+from tests.unit.sources import test_local_source
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup():
-    Features.reset()
-    Features(enable_overlay=True, enable_partitions=True)
-    yield
-    Features.reset()
-
-
-@pytest.fixture(scope="module", autouse=True)
-def partitions():
-    return ["default", "mypart", "yourpart"]
+@pytest.mark.usefixtures("new_dir")
+class TestLocal(test_local_source.TestLocal):
+    """Tests for local sources with partitions enabled."""

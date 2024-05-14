@@ -129,12 +129,8 @@ class TestPartPartitionUsage:
             "prime": ["(baz)"],
         }
 
-        part_list = [
-            Part("a", part_data, partitions=partitions),
-            Part("b", part_data, partitions=partitions),
-        ]
-
-        assert not parts.validate_partition_usage(part_list, ["default", "kernel"])
+        Part("a", part_data, partitions=partitions)
+        Part("b", part_data, partitions=partitions)
 
 
 class TestPartData:

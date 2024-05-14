@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup
 
-VERSION = "1.26.0"
+VERSION = "1.29.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -46,7 +46,8 @@ def is_rtd() -> bool:
 
 
 install_requires = [
-    "overrides",
+    # see https://github.com/mkorpela/overrides/issues/121
+    "overrides!=7.6.0",
     "PyYAML",
     "pydantic>=2.0.0,<3.0.0",
     "pydantic-yaml[ruamel]>=1.1.0,<=1.2.0",
@@ -90,14 +91,14 @@ test_requires = [
     "coverage",
     "hypothesis",
     "pydocstyle",
-    "pyright==1.1.337",
+    "pyright==1.1.358",
     "pytest",
     "pytest-check",
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
     "requests-mock",
-    "ruff==0.1.6",
+    "ruff==0.4.3",
     "tox",
     "yamllint==1.32.0",
 ]
@@ -144,7 +145,7 @@ setup(
         "craft_parts_docs",
     ],
     # todo: can we make the docs optional?
-    package_dir={"craft_parts_docs": "docs/base"},
+    package_dir={"craft_parts_docs": "docs/common"},
     package_data={
         "craft_parts": ["py.typed"],
         "craft_parts_docs": ["**"],

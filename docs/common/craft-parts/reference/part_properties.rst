@@ -1,5 +1,10 @@
 .. Ideally, this would be automatically generated.
 
+.. _part_properties:
+
+Part properties
+===============
+
 .. _after:
 
 after
@@ -10,7 +15,7 @@ after
 
 Specifies a list of parts that a given part will be built *after*.
 
-.. ifconfig:: project in ["Snapcraft"]
+.. ifconfig:: project in ("Snapcraft",)
 
    .. _build_attributes:
 
@@ -186,7 +191,8 @@ prime
 
 **Step:** prime
 
-The files to copy from the staging area to the priming area.
+The files to copy from the staging area to the priming area,
+see :ref:`filesets_specifying_paths`.
 
 .. _part-properties-sources:
 .. _source:
@@ -293,11 +299,12 @@ found in the :mod:`craft_parts.sources` file.
 
 stage
 -----
-**Type:** array of unique strings with at least item
+**Type:** array of unique strings with at least 1 item
 
 **Step:** stage
 
-The files to copy from the building area to the staging area.
+The files to copy from the building area to the staging area,
+see :ref:`filesets_specifying_paths`.
 
 .. _stage_packages:
 

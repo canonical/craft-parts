@@ -52,7 +52,7 @@ def test_fetch_stage_slices(tmp_path, fake_apt_cache):
     assert not fake_apt_cache.called
 
 
-def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):
+def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run, mocker):
     stage_dir = tmp_path / "stage"
     stage_dir.mkdir()
 
@@ -60,6 +60,9 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):
     install_dir.mkdir()
 
     slices = ["package1_slice1", "package2_slice2"]
+
+    spied_normalize = mocker.spy(deb, "normalize")
+
     deb.Ubuntu.unpack_stage_packages(
         stage_packages_path=stage_dir, install_path=install_dir, stage_packages=slices
     )
@@ -74,6 +77,9 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run):
             "package2_slice2",
         ]
     )
+
+    # Make sure the contents of the cut slices have been normalized.
+    spied_normalize.assert_called_once_with(install_dir, repository=deb.Ubuntu)
 
 
 def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):

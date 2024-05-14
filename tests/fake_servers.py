@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     """The base class for the http server request handlers."""
 
-    def log_message(self, *args):
-        logger.debug(args)
+    def log_message(self, *args, **kwargs) -> None:
+        logger.debug(args, **kwargs)
 
     def raise_not_implemented(self, path):
         logger.error("Not implemented %s in server: %s", path, self.__class__.__name__)

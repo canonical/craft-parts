@@ -6,7 +6,7 @@ Some Craft applications, such as Rockcraft_, include entire base filesystems in
 addition to the usual part-generated payload. The ``OVERLAY`` step provides the
 means to modify the base filesystem.
 
-.. include:: ../base/overlay_parameters.rst
+.. include:: /common/craft-parts/explanation/overlay_parameters.rst
 
 .. _overlay_visibility:
 
@@ -50,7 +50,7 @@ processing order of parts. If the part doesn't specify any overlay parameters,
 this overlay is empty. The overlay's integrity is checked with a checksum
 defined by the following diagram:
 
-.. image:: /images/overlay_checksum.svg
+.. image:: /common/craft-parts/images/overlay_checksum.svg
    :alt: Diagram for generating the overlay checksum.
 
 Each layer's checksum is derived from the combination of the layer's properties
@@ -71,7 +71,7 @@ made by that part to underlying layers. As a consequence, if no modifications
 are made, the result of the overlay step is empty and the result is the same as
 the four-step lifecycle without overlays. Subtractive changes such as file
 removals are allowed and handled through special whiteout files conforming to
-the `OCI image layer specification <oci_image_layers>`_.
+the `OCI image layer specification`_.
 
 Overlay Processing
 ------------------
@@ -151,5 +151,5 @@ Step Invalidation
 
 
 
-.. _oci_image_layers: https://github.com/opencontainers/image-spec/blob/master/layer.md
+.. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/master/layer.md
 .. _Rockcraft: https://canonical-rockcraft.readthedocs-hosted.com/

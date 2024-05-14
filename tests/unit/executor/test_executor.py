@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,7 +17,7 @@
 from pathlib import Path
 
 import pytest
-from craft_parts import callbacks, overlays
+from craft_parts import callbacks
 from craft_parts.actions import Action
 from craft_parts.executor import ExecutionContext, Executor
 from craft_parts.infos import ProjectInfo
@@ -88,25 +88,43 @@ class TestExecutor:
 class TestPackages:
     """Verify package installation during the execution phase."""
 
-    def test_install_packages(self, mocker, new_dir):
+    def test_install_packages(self, mocker, new_dir, partitions):
         install = mocker.patch("craft_parts.packages.Repository.install_packages")
 
-        p1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
-        p2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
+        p1 = Part(
+            "foo", {"plugin": "nil", "build-packages": ["pkg1"]}, partitions=partitions
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-packages": ["pkg2"]},
+            partitions=partitions,
+        )
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
         e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
 
         install.assert_called_once_with(["pkg1", "pkg2"])
 
-    def test_install_extra_build_packages(self, mocker, new_dir):
+    def test_install_extra_build_packages(self, mocker, new_dir, partitions):
         install = mocker.patch("craft_parts.packages.Repository.install_packages")
 
-        p1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
-        p2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-packages": ["pkg1"]},
+            partitions=partitions,
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-packages": ["pkg2"]},
+            partitions=partitions,
+        )
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
 
         e = Executor(
             project_info=info,
@@ -117,30 +135,50 @@ class TestPackages:
 
         install.assert_called_once_with(["pkg1", "pkg2", "pkg3"])
 
-    def test_install_build_snaps(self, mocker, new_dir):
+    def test_install_build_snaps(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.packages.snaps.SnapPackage.get_store_snap_info")
         install = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
-        p1 = Part("foo", {"plugin": "nil", "build-snaps": ["snap1"]})
-        p2 = Part("bar", {"plugin": "nil", "build-snaps": ["snap2"]})
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-snaps": ["snap1"]},
+            partitions=partitions,
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-snaps": ["snap2"]},
+            partitions=partitions,
+        )
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
 
         e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
 
         install.assert_called_once_with({"snap1", "snap2"})
 
-    def test_install_build_snaps_in_container(self, mocker, new_dir):
+    def test_install_build_snaps_in_container(self, mocker, new_dir, partitions):
         mocker.patch(
             "craft_parts.utils.os_utils.is_inside_container", return_value=True
         )
         install = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
-        p1 = Part("foo", {"plugin": "nil", "build-snaps": ["snap1"]})
-        p2 = Part("bar", {"plugin": "nil", "build-snaps": ["snap2"]})
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-snaps": ["snap1"]},
+            partitions=partitions,
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-snaps": ["snap2"]},
+            partitions=partitions,
+        )
 
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
 
         e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
@@ -157,13 +195,22 @@ class TestExecutionContext:
     def teardown_class(self):
         callbacks.unregister_all()
 
-    def test_prologue(self, capfd, new_dir):
+    def test_prologue(self, capfd, new_dir, partitions):
         def cbf(info):
             print(f"prologue {info.custom}")
 
         callbacks.register_prologue(cbf)
-        p1 = Part("p1", {"plugin": "nil", "override-build": "echo build"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "override-build": "echo build"},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            custom="custom",
+            partitions=partitions,
+        )
         e = Executor(project_info=info, part_list=[p1])
 
         with ExecutionContext(executor=e) as ctx:
@@ -172,13 +219,22 @@ class TestExecutionContext:
         captured = capfd.readouterr()
         assert captured.out == "prologue custom\nbuild\n"
 
-    def test_epilogue(self, capfd, new_dir):
+    def test_epilogue(self, capfd, new_dir, partitions):
         def cbf(info):
             print(f"epilogue {info.custom}")
 
         callbacks.register_epilogue(cbf)
-        p1 = Part("p1", {"plugin": "nil", "override-build": "echo build"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "override-build": "echo build"},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            custom="custom",
+            partitions=partitions,
+        )
         e = Executor(project_info=info, part_list=[p1])
 
         with ExecutionContext(executor=e) as ctx:
@@ -187,58 +243,22 @@ class TestExecutionContext:
         captured = capfd.readouterr()
         assert captured.out == "build\nepilogue custom\n"
 
-    def test_prologue_overlay_packages(self, enable_overlay_feature, new_dir, mocker):
-        """Check that the overlay package cache is not touched if the part doesn't have overlay packages"""
-        mock_mount = mocker.patch.object(overlays, "PackageCacheMount")
-
-        p1 = Part("p1", {"plugin": "nil", "overlay-script": "echo overlay"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
-        e = Executor(project_info=info, part_list=[p1])
-
-        with ExecutionContext(executor=e):
-            assert not mock_mount.called
-
-    def test_configure_overlay(self, enable_overlay_feature, new_dir, mocker):
-        """Check that the configure_overlay callback is called when mounting the overlay's package cache."""
-
-        mocker.patch.object(overlays.OverlayManager, "mount_pkg_cache")
-        mocker.patch.object(overlays.OverlayManager, "unmount")
-
-        # This list will contain a record of the calls that are made, in order.
-        call_order = []
-
-        def configure_overlay(overlay_dir: Path, project_info: ProjectInfo) -> None:
-            call_order.append(f"configure_overlay: {overlay_dir} {project_info.custom}")
-
-        def refresh_packages_list() -> None:
-            call_order.append("refresh_packages_list")
-
-        callbacks.register_configure_overlay(configure_overlay)
-        mocker.patch.object(
-            overlays.PackageCacheMount,
-            "refresh_packages_list",
-            side_effect=refresh_packages_list,
-        )
-
-        p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["fake-pkg"]})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
-        e = Executor(project_info=info, part_list=[p1])
-
-        with ExecutionContext(executor=e):
-            # The `configure_overlay()` callback must've been called _before_
-            # refresh_packages_list().
-            assert call_order == [
-                f"configure_overlay: {info.overlay_mount_dir} custom",
-                "refresh_packages_list",
-            ]
-
-    def test_capture_stdout(self, capfd, new_dir):
+    def test_capture_stdout(self, capfd, new_dir, partitions):
         def cbf(info):
             print(f"prologue {info.custom}")
 
         callbacks.register_prologue(cbf)
-        p1 = Part("p1", {"plugin": "nil", "override-build": "echo out; echo err >&2"})
-        info = ProjectInfo(application_name="test", cache_dir=new_dir, custom="custom")
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "override-build": "echo out; echo err >&2"},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            custom="custom",
+            partitions=partitions,
+        )
         e = Executor(project_info=info, part_list=[p1])
 
         output_path = Path("output.txt")
