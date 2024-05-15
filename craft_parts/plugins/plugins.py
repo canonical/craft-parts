@@ -17,7 +17,7 @@
 """Definitions and helpers to handle plugins."""
 
 import copy
-from typing import TYPE_CHECKING, Any, Dict, List, Type
+from typing import TYPE_CHECKING, Any, Dict, Type
 
 from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
@@ -116,16 +116,19 @@ def register(plugins: Dict[str, PluginType]) -> None:
     _PLUGINS.update(plugins)
 
 
-def unregister(plugins: List[str]) -> None:
+def unregister(*plugins: str) -> None:
     """Unregister plugins by name."""
     for plugin in plugins:
         _PLUGINS.pop(plugin, None)
 
 
-def unregister_all() -> None:
-    """Unregister all user-registered plugins."""
+def unregister_all(*, unregister_built_in: bool = False) -> None:
+    """Unregister all user-registered plugins.
+
+    :param unregister_built_in: If true, unregister built in plugins.
+    """
     global _PLUGINS  # noqa: PLW0603
-    _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
+    _PLUGINS = {} if unregister_built_in else copy.deepcopy(_BUILTIN_PLUGINS)
 
 
 def extract_part_properties(

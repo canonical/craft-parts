@@ -140,33 +140,57 @@ class TestPluginRegistry:
 
     def test_register_unregister(self):
         with pytest.raises(ValueError):  # noqa: PT011
-            plugins.get_plugin_class("foo")
+            plugins.get_plugin_class("plugin1")
 
         plugins.register(
             {
-                "foo": FooPlugin,
-                "bar": FooPlugin,
-                "baz": FooPlugin,
+                "plugin1": FooPlugin,
+                "plugin2": FooPlugin,
+                "plugin3": FooPlugin,
+                "plugin4": FooPlugin,
             },
         )
-        foo_plugin = plugins.get_plugin_class("foo")
+        foo_plugin = plugins.get_plugin_class("plugin1")
         assert foo_plugin == FooPlugin
 
         registered_plugins = plugins.get_registered_plugins()
-        for plugin in ["foo", "bar", "baz"]:
+        for plugin in ["plugin1", "plugin2", "plugin3"]:
             assert plugin in registered_plugins
             assert registered_plugins[plugin] == FooPlugin
 
-        # unregister a list of plugins
-        plugins.unregister(["bar", "baz"])
-        for plugin in ["bar", "baz"]:
+        # unregister a plugin
+        plugins.unregister("plugin1")
+        # unregister many plugins
+        plugins.unregister("plugin2", "plugin3")
+
+        # assert plugins are unregistered
+        for plugin in ["plugin1", "plugin2", "plugin3"]:
             with pytest.raises(ValueError):  # noqa: PT011
                 plugins.get_plugin_class(plugin)
 
         # unregister all plugins
         plugins.unregister_all()
         with pytest.raises(ValueError):  # noqa: PT011
-            plugins.get_plugin_class("foo")
+            plugins.get_plugin_class("plugin4")
+
+    @pytest.mark.parametrize(
+        ("unregister_built_in", "expected_plugins"),
+        [
+            (True, {}),
+            (False, plugins.plugins._BUILTIN_PLUGINS),
+            # default behavior
+            (None, plugins.plugins._BUILTIN_PLUGINS),
+        ],
+    )
+    def test_unregister_all(self, unregister_built_in, expected_plugins):
+        plugins.register({"plugin1": FooPlugin})
+
+        if unregister_built_in is None:
+            plugins.unregister_all()
+        else:
+            plugins.unregister_all(unregister_built_in=unregister_built_in)
+
+        assert plugins.get_registered_plugins() == expected_plugins
 
 
 class TestHelpers:
