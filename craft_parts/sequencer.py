@@ -74,6 +74,7 @@ class Sequencer:
         self,
         target_step: Step,
         part_names: Optional[Sequence[str]] = None,
+        *,
         rerun: bool = False,
     ) -> List[Action]:
         """Determine the list of steps to execute for each part.
@@ -127,7 +128,6 @@ class Sequencer:
         current_step: Step,
         target_step: Step,
         part: Part,
-        part_names: Optional[Sequence[str]],
         reason: Optional[str] = None,
         rerun_target_step: bool = False,
     ) -> None:
