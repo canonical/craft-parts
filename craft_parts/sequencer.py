@@ -117,7 +117,6 @@ class Sequencer:
                     current_step=current_step,
                     target_step=target_step,
                     part=part,
-                    part_names=part_names,
                     reason=reason,
                     rerun_target_step=rerun_target_step,
                 )
