@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -142,14 +142,28 @@ class TestPluginRegistry:
         with pytest.raises(ValueError):  # noqa: PT011
             plugins.get_plugin_class("foo")
 
-        plugins.register({"foo": FooPlugin})
+        plugins.register(
+            {
+                "foo": FooPlugin,
+                "bar": FooPlugin,
+                "baz": FooPlugin,
+            },
+        )
         foo_plugin = plugins.get_plugin_class("foo")
         assert foo_plugin == FooPlugin
 
         registered_plugins = plugins.get_registered_plugins()
-        assert "foo" in registered_plugins
-        assert registered_plugins["foo"] == FooPlugin
+        for plugin in ["foo", "bar", "baz"]:
+            assert plugin in registered_plugins
+            assert registered_plugins[plugin] == FooPlugin
 
+        # unregister a list of plugins
+        plugins.unregister(["bar", "baz"])
+        for plugin in ["bar", "baz"]:
+            with pytest.raises(ValueError):  # noqa: PT011
+                plugins.get_plugin_class(plugin)
+
+        # unregister all plugins
         plugins.unregister_all()
         with pytest.raises(ValueError):  # noqa: PT011
             plugins.get_plugin_class("foo")
