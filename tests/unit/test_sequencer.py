@@ -28,9 +28,9 @@ from craft_parts.steps import Step
 
 @pytest.mark.parametrize(
     ("rerun", "action", "reason"),
-    ((False, ActionType.SKIP, "already ran"), (True, ActionType.RERUN, "rerun step")),
+    [(False, ActionType.SKIP, "already ran"), (True, ActionType.RERUN, "rerun step")],
 )
-@pytest.mark.parametrize(("step"), (Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME))
+@pytest.mark.parametrize(("step"), [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
 def test_sequencer_plan(step, action, reason, rerun, mocker, new_dir):
     mocker.patch(
         "craft_parts.state_manager.state_manager.StateManager.has_step_run",
