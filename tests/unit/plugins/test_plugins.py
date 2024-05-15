@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -140,19 +140,38 @@ class TestPluginRegistry:
 
     def test_register_unregister(self):
         with pytest.raises(ValueError):  # noqa: PT011
-            plugins.get_plugin_class("foo")
+            plugins.get_plugin_class("plugin1")
 
-        plugins.register({"foo": FooPlugin})
-        foo_plugin = plugins.get_plugin_class("foo")
+        plugins.register(
+            {
+                "plugin1": FooPlugin,
+                "plugin2": FooPlugin,
+                "plugin3": FooPlugin,
+                "plugin4": FooPlugin,
+            },
+        )
+        foo_plugin = plugins.get_plugin_class("plugin1")
         assert foo_plugin == FooPlugin
 
         registered_plugins = plugins.get_registered_plugins()
-        assert "foo" in registered_plugins
-        assert registered_plugins["foo"] == FooPlugin
+        for plugin in ["plugin1", "plugin2", "plugin3"]:
+            assert plugin in registered_plugins
+            assert registered_plugins[plugin] == FooPlugin
 
+        # unregister a plugin
+        plugins.unregister("plugin1")
+        # unregister many plugins
+        plugins.unregister("plugin2", "plugin3")
+
+        # assert plugins are unregistered
+        for plugin in ["plugin1", "plugin2", "plugin3"]:
+            with pytest.raises(ValueError):  # noqa: PT011
+                plugins.get_plugin_class(plugin)
+
+        # unregister all plugins
         plugins.unregister_all()
         with pytest.raises(ValueError):  # noqa: PT011
-            plugins.get_plugin_class("foo")
+            plugins.get_plugin_class("plugin4")
 
 
 class TestHelpers:
