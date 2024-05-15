@@ -173,25 +173,6 @@ class TestPluginRegistry:
         with pytest.raises(ValueError):  # noqa: PT011
             plugins.get_plugin_class("plugin4")
 
-    @pytest.mark.parametrize(
-        ("unregister_built_in", "expected_plugins"),
-        [
-            (True, {}),
-            (False, plugins.plugins._BUILTIN_PLUGINS),
-            # default behavior
-            (None, plugins.plugins._BUILTIN_PLUGINS),
-        ],
-    )
-    def test_unregister_all(self, unregister_built_in, expected_plugins):
-        plugins.register({"plugin1": FooPlugin})
-
-        if unregister_built_in is None:
-            plugins.unregister_all()
-        else:
-            plugins.unregister_all(unregister_built_in=unregister_built_in)
-
-        assert plugins.get_registered_plugins() == expected_plugins
-
 
 class TestHelpers:
     """Verify plugin helper functions."""

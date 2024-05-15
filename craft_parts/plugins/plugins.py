@@ -122,13 +122,10 @@ def unregister(*plugins: str) -> None:
         _PLUGINS.pop(plugin, None)
 
 
-def unregister_all(*, unregister_built_in: bool = False) -> None:
-    """Unregister all user-registered plugins.
-
-    :param unregister_built_in: If true, unregister built in plugins.
-    """
+def unregister_all() -> None:
+    """Unregister all user-registered plugins."""
     global _PLUGINS  # noqa: PLW0603
-    _PLUGINS = {} if unregister_built_in else copy.deepcopy(_BUILTIN_PLUGINS)
+    _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
 
 def extract_part_properties(
