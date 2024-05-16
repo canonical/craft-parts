@@ -249,6 +249,7 @@ YUMRepository's
 ZipSource
 abcdef
 args
+armv
 artifacts
 autogen
 autotools
