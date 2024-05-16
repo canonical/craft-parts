@@ -249,6 +249,7 @@ YUMRepository's
 ZipSource
 abcdef
 args
+armv
 artifacts
 autogen
 autotools
@@ -403,6 +404,7 @@ unmarshal
 unmount
 unparsed
 unregister
+unregistering
 uri
 url
 utilizing
