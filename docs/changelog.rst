@@ -5,7 +5,7 @@ Changelog
 1.30.0 (2024-05-16)
 -------------------
 - Add support for armv8l
-- Add support for unregistering plugins
+- Add support to unregister plugins
 
 1.29.0 (2024-03-20)
 -------------------
