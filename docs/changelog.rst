@@ -14,7 +14,7 @@ Changelog
 - New and improved documentation
   - Add go plugin reference
   - Add nil plugin reference
-  - Add make pliugin reference
+  - Add make plugin reference
   - Add autotools plugin reference
   - Add cmake plugin reference
   - Add scons plugin reference
