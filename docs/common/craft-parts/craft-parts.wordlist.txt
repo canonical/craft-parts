@@ -5,6 +5,8 @@ AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
 AptCache
+Autoconf
+Automake
 Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
@@ -335,6 +337,7 @@ mountpoints
 namespace
 namespaced
 nano
+noop
 normalization
 normalize
 npm
@@ -397,6 +400,7 @@ summarized
 svn
 symlink
 symlinks
+texinfo
 toml
 toolchain
 toplevel
