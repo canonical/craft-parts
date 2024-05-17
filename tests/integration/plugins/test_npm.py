@@ -161,8 +161,8 @@ def test_npm_plugin_include_node(new_dir, partitions):
         ctx.execute(actions)
 
     binary = Path(lifecycle.project_info.prime_dir, "bin", "npm-hello")
-
-    output = subprocess.check_output([str(binary)], text=True)
+    node_path = Path(lifecycle.project_info.prime_dir, "bin", "node")
+    assert node_path.exists()
+    # try to use bundled Node.js to execute the script
+    output = subprocess.check_output([str(node_path), str(binary)], text=True)
     assert output == "hello world\n"
-
-    assert Path(lifecycle.project_info.prime_dir, "bin", "node").exists()
