@@ -57,3 +57,38 @@ for the target architecture.
     hazard. If your project still requires a JavaScript runtime
     from nearly a decade ago, you should seriously considering
     migrating to the modern Node.js runtime.
+
+Examples
+--------
+
+The following example declares a part using the ``npm`` plugin.
+In this example, we show how you may build the ``terser`` utility
+(an utility for compressing and obfuscating JavaScript code).
+It uses the latest mainline stable version of Node.js and includes
+a copy of the Node.js runtime inside the final package.
+
+.. code-block:: yaml
+
+    parts:
+        app:
+            plugin: npm
+            source: https://github.com/terser/terser
+            source-type: git
+            npm-include-node: true
+            npm-node-version: "node"
+
+Another example that shows how to install an application that
+published to npm registry but does not require Node.js runtime
+to run.
+
+.. code-block:: yaml
+
+    parts:
+        app:
+            plugin: npm
+            source: https://registry.npmjs.org/esbuild/-/esbuild-0.21.3.tgz
+            source-type: tar
+            npm-include-node: false
+            build-snaps:
+            # use Node.js Snap during the build-time only
+                - node
