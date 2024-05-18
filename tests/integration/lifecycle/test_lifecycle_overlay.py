@@ -116,7 +116,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
     with lf.action_executor() as ctx:

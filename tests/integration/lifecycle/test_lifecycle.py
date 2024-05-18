@@ -104,7 +104,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -124,7 +124,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
         Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
         Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -162,7 +162,7 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
                properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="required to build 'bar'"),
+        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="'BUILD' step changed"),
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
