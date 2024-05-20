@@ -36,6 +36,44 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# Architecture name translation from platform to deb/snap.
+_PLATFORM_MACHINE_TO_DEB = {
+    "aarch64": "arm64",
+    "armv7l": "armhf",
+    "i686": "i386",
+    "ppc": "powerpc",
+    "ppc64le": "ppc64el",
+    "x86_64": "amd64",
+    "AMD64": "amd64",  # Windows support
+}
+
+
+# Equivalent platform machine values.
+_PLATFORM_MACHINE_VARIATIONS: Dict[str, str] = {
+    "AMD64": "x86_64",
+    "ARM64": "aarch64",
+    "amd64": "x86_64",
+    "arm64": "aarch64",
+    "armv7hl": "armv7l",
+    "armv8l": "armv7l",
+    "i386": "i686",
+    "x64": "x86_64",
+}
+
+
+# Debian architecture to cpu-vendor-os platform triplet.
+_DEB_TO_TRIPLET: Dict[str, str] = {
+    "amd64": "x86_64-linux-gnu",
+    "arm64": "aarch64-linux-gnu",
+    "armhf": "arm-linux-gnueabihf",
+    "i386": "i386-linux-gnu",
+    "powerpc": "powerpc-linux-gnu",
+    "ppc64el": "powerpc64le-linux-gnu",
+    "riscv64": "riscv64-linux-gnu",
+    "s390x": "s390x-linux-gnu",
+}
+
+
 _var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
@@ -89,6 +127,9 @@ class ProjectInfo:
         base_layer_hash: Optional[bytes] = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
+        if arch and arch not in _DEB_TO_TRIPLET:
+            raise errors.InvalidArchitecture(arch)
+
         if not project_dirs:
             project_dirs = ProjectDirs(partitions=partitions)
 
@@ -96,7 +137,8 @@ class ProjectInfo:
 
         self._application_name = application_name
         self._cache_dir = Path(cache_dir).expanduser().resolve()
-        self._set_machine(arch)
+        self._host_arch = _get_host_architecture()
+        self._arch = arch or self._host_arch
         self._base = base  # base usage is deprecated
         self._parallel_build_count = parallel_build_count
         self._strict_mode = strict_mode
@@ -139,27 +181,27 @@ class ProjectInfo:
     @property
     def arch_build_on(self) -> str:
         """The architecture we are building on."""
-        return self._host_machine["deb"]
+        return self._host_arch
 
     @property
     def arch_build_for(self) -> str:
         """The architecture we are building for."""
-        return self._machine["deb"]
+        return self._arch
 
     @property
     def arch_triplet_build_on(self) -> str:
         """The machine-vendor-os triplet for the platform we are building on."""
-        return self._host_machine["triplet"]
+        return _DEB_TO_TRIPLET[self._host_arch]
 
     @property
     def arch_triplet_build_for(self) -> str:
         """The machine-vendor-os triplet for the platform we are building for."""
-        return self._machine["triplet"]
+        return _DEB_TO_TRIPLET[self._arch]
 
     @property
     def arch_triplet(self) -> str:
         """Return the machine-vendor-os platform triplet definition."""
-        return self._machine["triplet"]
+        return _DEB_TO_TRIPLET[self._arch]
 
     @property
     def is_cross_compiling(self) -> bool:
@@ -179,12 +221,12 @@ class ProjectInfo:
     @property
     def host_arch(self) -> str:
         """Return the host architecture used for debs, snaps and charms."""
-        return self._host_machine["deb"]
+        return self._host_arch
 
     @property
     def target_arch(self) -> str:
         """Return the target architecture used for debs, snaps and charms."""
-        return self._machine["deb"]
+        return self._arch
 
     @property
     def base(self) -> str:
@@ -310,30 +352,6 @@ class ProjectInfo:
 
         if name not in self._project_vars:
             raise ValueError(f"{name!r} not in project variables")
-
-    def _set_machine(self, arch: Optional[str]) -> None:
-        """Initialize host and target machine information based on the architecture.
-
-        :param arch: The architecture to use. If empty, assume the
-            host system architecture.
-        """
-        # set host machine and arch
-        self._host_arch = _get_host_architecture()
-        host_machine = _ARCH_TRANSLATIONS.get(self._host_arch)
-        if not host_machine:
-            raise errors.InvalidArchitecture(self._host_arch)
-        self._host_machine = host_machine
-
-        # set target machine and arch
-        if not arch:
-            arch = self._host_arch
-            logger.debug("Setting target machine to %s", arch)
-        machine = _ARCH_TRANSLATIONS.get(arch)
-        if not machine:
-            raise errors.InvalidArchitecture(arch)
-
-        self._arch = arch
-        self._machine = machine
 
 
 class PartInfo:
@@ -476,78 +494,5 @@ class StepInfo:
 def _get_host_architecture() -> str:
     """Obtain the host system architecture."""
     machine = platform.machine()
-    return _PLATFORM_MACHINE_TRANSLATIONS.get(machine.lower(), machine)
-
-
-_PLATFORM_MACHINE_TRANSLATIONS: Dict[str, str] = {
-    # Maps other possible ``platform.machine()`` values to the arch translations below.
-    "arm64": "aarch64",
-    "armv7hl": "armv7l",
-    "armv8l": "armv7l",
-    "i386": "i686",
-    "amd64": "x86_64",
-    "x64": "x86_64",
-}
-
-_ARCH_TRANSLATIONS: Dict[str, Dict[str, str]] = {
-    "aarch64": {
-        "kernel": "arm64",
-        "deb": "arm64",
-        "uts_machine": "aarch64",
-        "cross-compiler-prefix": "aarch64-linux-gnu-",
-        "triplet": "aarch64-linux-gnu",
-        "core-dynamic-linker": "lib/ld-linux-aarch64.so.1",
-    },
-    "armv7l": {
-        "kernel": "arm",
-        "deb": "armhf",
-        "uts_machine": "arm",
-        "cross-compiler-prefix": "arm-linux-gnueabihf-",
-        "triplet": "arm-linux-gnueabihf",
-        "core-dynamic-linker": "lib/ld-linux-armhf.so.3",
-    },
-    "i686": {
-        "kernel": "x86",
-        "deb": "i386",
-        "uts_machine": "i686",
-        "triplet": "i386-linux-gnu",
-    },
-    "ppc": {
-        "kernel": "powerpc",
-        "deb": "powerpc",
-        "uts_machine": "powerpc",
-        "cross-compiler-prefix": "powerpc-linux-gnu-",
-        "triplet": "powerpc-linux-gnu",
-    },
-    "ppc64le": {
-        "kernel": "powerpc",
-        "deb": "ppc64el",
-        "uts_machine": "ppc64el",
-        "cross-compiler-prefix": "powerpc64le-linux-gnu-",
-        "triplet": "powerpc64le-linux-gnu",
-        "core-dynamic-linker": "lib64/ld64.so.2",
-    },
-    "riscv64": {
-        "kernel": "riscv64",
-        "deb": "riscv64",
-        "uts_machine": "riscv64",
-        "cross-compiler-prefix": "riscv64-linux-gnu-",
-        "triplet": "riscv64-linux-gnu",
-        "core-dynamic-linker": "lib/ld-linux-riscv64-lp64d.so.1",
-    },
-    "s390x": {
-        "kernel": "s390",
-        "deb": "s390x",
-        "uts_machine": "s390x",
-        "cross-compiler-prefix": "s390x-linux-gnu-",
-        "triplet": "s390x-linux-gnu",
-        "core-dynamic-linker": "lib/ld64.so.1",
-    },
-    "x86_64": {
-        "kernel": "x86",
-        "deb": "amd64",
-        "uts_machine": "x86_64",
-        "triplet": "x86_64-linux-gnu",
-        "core-dynamic-linker": "lib64/ld-linux-x86-64.so.2",
-    },
-}
+    machine = _PLATFORM_MACHINE_VARIATIONS.get(machine, machine)
+    return _PLATFORM_MACHINE_TO_DEB.get(machine, machine)

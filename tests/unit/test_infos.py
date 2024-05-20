@@ -23,7 +23,7 @@ from craft_parts.infos import PartInfo, ProjectInfo, ProjectVar, StepInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
-_MOCK_NATIVE_ARCH = "aarch64"
+_MOCK_NATIVE_ARCH = "arm64"
 
 LINUX_ARCHS = [
     ("aarch64", "arm64", "aarch64-linux-gnu", False),
@@ -46,7 +46,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
     x = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        arch=tc_arch,
+        arch=tc_target_arch,
         parallel_build_count=16,
         project_vars_part_name="adopt",
         project_vars={"a": "b"},
@@ -80,12 +80,12 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
 @pytest.mark.parametrize(
     ("machine_arch", "expected_arch"),
     [
-        ("ARM64", "aarch64"),
-        ("armv7hl", "armv7l"),
-        ("i386", "i686"),
-        ("AMD64", "x86_64"),
-        ("x64", "x86_64"),
-        ("aarch64", "aarch64"),
+        ("ARM64", "arm64"),
+        ("armv7hl", "armhf"),
+        ("i386", "i386"),
+        ("AMD64", "amd64"),
+        ("x64", "amd64"),
+        ("aarch64", "arm64"),
     ],
 )
 @pytest.mark.parametrize(
@@ -106,7 +106,7 @@ def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
     x = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        arch=tc_arch,
+        arch=tc_target_arch,
         parallel_build_count=16,
         project_vars_part_name="adopt",
         project_vars={"a": "b"},
@@ -118,7 +118,7 @@ def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
     assert x.application_name == "test"
     assert x.cache_dir == new_dir
     assert x.arch_triplet == tc_triplet
-    assert x.is_cross_compiling == (expected_arch != tc_arch)
+    assert x.is_cross_compiling == (expected_arch != tc_target_arch)
     assert x.parallel_build_count == 16
     assert x.target_arch == tc_target_arch
     assert x.project_name == "project"
@@ -651,13 +651,13 @@ def test_step_info_get_project_var():
 @pytest.mark.parametrize(
     ("machine", "translated_machine"),
     [
-        ("arm64", "aarch64"),
-        ("armv7hl", "armv7l"),
-        ("armv8l", "armv7l"),
-        ("i386", "i686"),
-        ("AMD64", "x86_64"),
-        ("x64", "x86_64"),
-        ("aarch64", "aarch64"),
+        ("arm64", "arm64"),
+        ("armv7hl", "armhf"),
+        ("armv8l", "armhf"),
+        ("i386", "i386"),
+        ("AMD64", "amd64"),
+        ("x64", "amd64"),
+        ("aarch64", "arm64"),
         ("invalid-architecture", "invalid-architecture"),
     ],
 )
