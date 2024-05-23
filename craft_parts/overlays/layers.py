@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -78,7 +78,7 @@ class LayerHash:
 
         :param part: The part whose layer hash will be loaded.
 
-        :return: A layer hash object containing the loaded validaton hash,
+        :return: A layer hash object containing the loaded validation hash,
             or None if the file doesn't exist.
         """
         hash_file = part.part_state_dir / "layer_hash"
