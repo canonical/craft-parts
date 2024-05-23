@@ -544,7 +544,7 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
 
     :raises PartDependencyCycle: if there are circular dependencies.
     """
-    sorted_parts = []  # type: List[Part]
+    sorted_parts: list[Part] = []
 
     # We want to process parts in a consistent order between runs. The
     # simplest way to do this is to sort them by name.

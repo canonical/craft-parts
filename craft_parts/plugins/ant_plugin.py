@@ -150,7 +150,7 @@ class AntPlugin(JavaPlugin):
         # help as much as it should.  (java.net.useSystemProxies=true ought
         # to do the trick, but it relies on desktop configuration rather
         # than using the standard environment variables.)
-        ant_opts = []  # type: List[str]
+        ant_opts: list[str] = []
         ant_opts.extend(_get_proxy_options("http"))
         ant_opts.extend(_get_proxy_options("https"))
         if ant_opts:

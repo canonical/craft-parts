@@ -84,9 +84,9 @@ class FakeSnapd:
 
 
 class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
-    snaps_result = []  # type: List[Dict[str, Any]]
+    snaps_result: list[dict[str, Any]] = []
     snap_details_func = None
-    find_result = []  # type: List[Dict[str, Any]]
+    find_result: list[dict[str, Any]] = []
     find_exit_code = 200  # type: int
     _private_data = {"new_fake_snap_installed": False}
 
