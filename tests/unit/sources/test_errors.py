@@ -84,6 +84,7 @@ def test_http_error():
         source="some_source",
     )
     assert err.status_code == 123
+    assert err.reason == "error_reason"
     assert err.source == "some_source"
     assert err.brief == "Cannot process request (error_reason: 123): some_source"
     assert err.details is None

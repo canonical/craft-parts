@@ -151,6 +151,7 @@ class HttpRequestError(SourceError):
 
     def __init__(self, *, status_code: int, reason: str, source: str) -> None:
         self.status_code = status_code
+        self.reason = reason
         self.source = source
         brief = f"Cannot process request ({reason}: {status_code}): {source}"
         resolution = "Check your URL and permissions and try again."
