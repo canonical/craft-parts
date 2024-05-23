@@ -78,9 +78,7 @@ class _StateDB:
             state, serial=next(self._serial_gen), step_updated=step_updated
         )
 
-    def set(
-        self, *, part_name: str, step: Step, state: _StateWrapper | None
-    ) -> None:
+    def set(self, *, part_name: str, step: Step, state: _StateWrapper | None) -> None:
         """Set a state for a given part and step.
 
         :param part_name: The name of the part corresponding to the state

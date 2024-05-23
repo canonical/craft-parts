@@ -83,9 +83,7 @@ def load_step_state(part: Part, step: Step) -> StepState | None:
     return state_class.unmarshal(state_data)
 
 
-def load_overlay_migration_state(
-    state_dir: Path, step: Step
-) -> MigrationState | None:
+def load_overlay_migration_state(state_dir: Path, step: Step) -> MigrationState | None:
     """Retrieve the overlay migration state for the given step.
 
     :param state_dir: The path to the directory containing migration state files.

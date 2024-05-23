@@ -210,9 +210,7 @@ class Sequencer:
             project_vars=self._get_project_vars(part, current_step),
         )
 
-    def _get_project_vars(
-        self, part: Part, step: Step
-    ) -> dict[str, ProjectVar] | None:
+    def _get_project_vars(self, part: Part, step: Step) -> dict[str, ProjectVar] | None:
         if part.name == self._project_info.project_vars_part_name:
             return self._sm.project_vars(part, step)
         return None
@@ -311,9 +309,7 @@ class Sequencer:
 
         self._sm.set_state(part, step, state=state)
 
-    def _rerun_step(
-        self, part: Part, step: Step, *, reason: str | None = None
-    ) -> None:
+    def _rerun_step(self, part: Part, step: Step, *, reason: str | None = None) -> None:
         """Clean existing state and reexecute the step."""
         logger.debug("rerun step %s:%s", part.name, step)
 

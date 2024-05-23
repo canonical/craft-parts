@@ -510,9 +510,7 @@ def part_by_name(name: str, part_list: list[Part]) -> Part:
     raise errors.InvalidPartName(name)
 
 
-def part_list_by_name(
-    names: Sequence[str] | None, part_list: list[Part]
-) -> list[Part]:
+def part_list_by_name(names: Sequence[str] | None, part_list: list[Part]) -> list[Part]:
     """Return a list of parts from part_list that are named in names.
 
     :param names: The list of part names. If the list is empty or not
