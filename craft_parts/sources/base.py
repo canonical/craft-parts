@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -239,6 +239,15 @@ class FileSourceHandler(SourceHandler):
                 self.source, stream=True, allow_redirects=True, timeout=3600
             )
             request.raise_for_status()
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == requests.codes.not_found:
+                raise errors.SourceNotFound(source=self.source) from err
+
+            raise errors.HttpRequestError(
+                status_code=err.response.status_code,
+                reason=err.response.reason,
+                source=self.source,
+            ) from err
         except requests.exceptions.RequestException as err:
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "

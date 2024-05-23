@@ -69,6 +69,7 @@ GitSource
 GoPlugin
 GoPluginEnvironmentValidator
 GoPluginProperties
+HttpRequestError
 IncompatibleSourceOptions
 InvalidAction
 InvalidActionException

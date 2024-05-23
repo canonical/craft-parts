@@ -77,6 +77,19 @@ def test_network_request_error():
     assert err.resolution == "Check the network and try again."
 
 
+def test_http_error():
+    err = errors.HttpRequestError(
+        status_code=123,
+        reason="error_reason",
+        source="some_source",
+    )
+    assert err.status_code == 123
+    assert err.source == "some_source"
+    assert err.brief == "Cannot process request (error_reason: 123): some_source"
+    assert err.details is None
+    assert err.resolution == "Check your URL and permissions and try again."
+
+
 def test_source_not_found():
     err = errors.SourceNotFound("some_source")
     assert err.source == "some_source"

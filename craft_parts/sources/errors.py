@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -137,6 +137,21 @@ class NetworkRequestError(SourceError):
         self.message = message
         brief = f"Network request error: {message}."
         resolution = "Check the network and try again."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class HttpRequestError(SourceError):
+    """HTTP error occurred during request processing.
+
+    :param code: Request status code.
+    """
+
+    def __init__(self, *, status_code: int, reason: str, source: str) -> None:
+        self.status_code = status_code
+        self.source = source
+        brief = f"Cannot process request ({reason}: {status_code}): {source}"
+        resolution = "Check your URL and permissions and try again."
 
         super().__init__(brief=brief, resolution=resolution)
 
