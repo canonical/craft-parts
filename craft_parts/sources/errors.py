@@ -144,7 +144,9 @@ class NetworkRequestError(SourceError):
 class HttpRequestError(SourceError):
     """HTTP error occurred during request processing.
 
-    :param code: Request status code.
+    :param status_code: Request status code.
+    :param reason: Text explaining status code.
+    :param source: The source defined for the part.
     """
 
     def __init__(self, *, status_code: int, reason: str, source: str) -> None:
