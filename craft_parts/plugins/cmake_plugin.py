@@ -16,7 +16,7 @@
 
 """The cmake plugin."""
 
-from typing import Any, Dict, List, Set, cast
+from typing import Any, cast
 
 from overrides import override
 
@@ -27,7 +27,7 @@ from .properties import PluginProperties
 class CMakePluginProperties(PluginProperties, PluginModel):
     """The part properties used by the cmake plugin."""
 
-    cmake_parameters: List[str] = []
+    cmake_parameters: list[str] = []
     cmake_generator: str = "Unix Makefiles"
 
     # part properties required by the plugin
@@ -35,7 +35,7 @@ class CMakePluginProperties(PluginProperties, PluginModel):
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "CMakePluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "CMakePluginProperties":
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -84,12 +84,12 @@ class CMakePlugin(Plugin):
     properties_class = CMakePluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         build_packages = {"gcc", "cmake"}
 
@@ -101,7 +101,7 @@ class CMakePlugin(Plugin):
         return build_packages
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
             # Also look for staged headers and libraries.
@@ -109,7 +109,7 @@ class CMakePlugin(Plugin):
         }
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(CMakePluginProperties, self._options)
 

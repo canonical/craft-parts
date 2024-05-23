@@ -18,7 +18,7 @@
 
 import abc
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
+from typing import TYPE_CHECKING, Any
 
 from craft_parts.actions import ActionProperties
 
@@ -40,7 +40,7 @@ class Plugin(abc.ABC):
     :param properties: Part-defined properties.
     """
 
-    properties_class: Type[PluginProperties]
+    properties_class: type[PluginProperties]
     validator_class = PluginEnvironmentValidator
 
     supports_strict_mode = False
@@ -53,20 +53,20 @@ class Plugin(abc.ABC):
         self._part_info = part_info
         self._action_properties: ActionProperties
 
-    def get_pull_commands(self) -> List[str]:
+    def get_pull_commands(self) -> list[str]:
         """Return the commands to retrieve dependencies during the pull step."""
         return []
 
     @abc.abstractmethod
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
 
     @abc.abstractmethod
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
 
     @abc.abstractmethod
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
 
     @classmethod
@@ -75,7 +75,7 @@ class Plugin(abc.ABC):
         return False
 
     @abc.abstractmethod
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
 
     def set_action_properties(self, action_properties: ActionProperties) -> None:
@@ -93,7 +93,7 @@ class JavaPlugin(Plugin):
     symlink creation.
     """
 
-    def _get_java_post_build_commands(self) -> List[str]:
+    def _get_java_post_build_commands(self) -> list[str]:
         """Get the bash commands to structure a Java build in the part's install dir.
 
         :return: The returned list contains the bash commands to do the following:
@@ -132,8 +132,8 @@ class PluginModel(PluginPropertiesModel):
 
 
 def extract_plugin_properties(
-    data: Dict[str, Any], *, plugin_name: str, required: Optional[List[str]] = None
-) -> Dict[str, Any]:
+    data: dict[str, Any], *, plugin_name: str, required: list[str] | None = None
+) -> dict[str, Any]:
     """Obtain plugin-specifc entries from part properties.
 
     Plugin-specifc properties must be prefixed with the name of the plugin.
@@ -146,7 +146,7 @@ def extract_plugin_properties(
     if required is None:
         required = []
 
-    plugin_data: Dict[str, Any] = {}
+    plugin_data: dict[str, Any] = {}
     prefix = f"{plugin_name}-"
 
     for key, value in data.items():

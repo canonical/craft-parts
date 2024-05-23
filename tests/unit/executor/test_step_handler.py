@@ -17,7 +17,6 @@ import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Set, Type
 
 import pytest
 from craft_parts import plugins, sources
@@ -42,16 +41,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return ["hello"]
 
 
@@ -61,8 +60,8 @@ def _step_handler_for_step(
     part_info: PartInfo,
     part: Part,
     dirs: ProjectDirs,
-    plugin_class: Type[plugins.Plugin] = FooPlugin,
-    partitions: Optional[Set[str]] = None,
+    plugin_class: type[plugins.Plugin] = FooPlugin,
+    partitions: set[str] | None = None,
 ) -> StepHandler:
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()

@@ -19,8 +19,9 @@
 import os
 import re
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union, cast
+from typing import Any, cast
 
 from pydantic import ValidationError
 
@@ -84,26 +85,26 @@ class LifecycleManager:
 
     def __init__(  # noqa: PLR0913
         self,
-        all_parts: Dict[str, Any],
+        all_parts: dict[str, Any],
         *,
         application_name: str,
-        cache_dir: Union[Path, str],
-        work_dir: Union[Path, str] = ".",
+        cache_dir: Path | str,
+        work_dir: Path | str = ".",
         arch: str = "",
         base: str = "",
-        project_name: Optional[str] = None,
+        project_name: str | None = None,
         parallel_build_count: int = 1,
-        application_package_name: Optional[str] = None,
-        ignore_local_sources: Optional[List[str]] = None,
-        extra_build_packages: Optional[List[str]] = None,
-        extra_build_snaps: Optional[List[str]] = None,
+        application_package_name: str | None = None,
+        ignore_local_sources: list[str] | None = None,
+        extra_build_packages: list[str] | None = None,
+        extra_build_snaps: list[str] | None = None,
         track_stage_packages: bool = False,
         strict_mode: bool = False,
-        base_layer_dir: Optional[Path] = None,
-        base_layer_hash: Optional[bytes] = None,
-        project_vars_part_name: Optional[str] = None,
-        project_vars: Optional[Dict[str, str]] = None,
-        partitions: Optional[List[str]] = None,
+        base_layer_dir: Path | None = None,
+        base_layer_hash: bytes | None = None,
+        project_vars_part_name: str | None = None,
+        project_vars: dict[str, str] | None = None,
+        partitions: list[str] | None = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -167,7 +168,7 @@ class LifecycleManager:
             base_layer_dir = None
 
         if base_layer_hash:
-            layer_hash: Optional[LayerHash] = LayerHash(base_layer_hash)
+            layer_hash: LayerHash | None = LayerHash(base_layer_hash)
         else:
             layer_hash = None
 
@@ -199,7 +200,7 @@ class LifecycleManager:
         return self._project_info
 
     def clean(
-        self, step: Step = Step.PULL, *, part_names: Optional[List[str]] = None
+        self, step: Step = Step.PULL, *, part_names: list[str] | None = None
     ) -> None:
         """Clean the specified step and parts.
 
@@ -225,10 +226,10 @@ class LifecycleManager:
     def plan(
         self,
         target_step: Step,
-        part_names: Optional[Sequence[str]] = None,
+        part_names: Sequence[str] | None = None,
         *,
         rerun: bool = False,
-    ) -> List[Action]:
+    ) -> list[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.
@@ -248,7 +249,7 @@ class LifecycleManager:
         """Return a context manager for action execution."""
         return executor.ExecutionContext(executor=self._executor)
 
-    def get_pull_assets(self, *, part_name: str) -> Optional[Dict[str, Any]]:
+    def get_pull_assets(self, *, part_name: str) -> dict[str, Any] | None:
         """Return the part's pull state assets.
 
         :param part_name: The name of the part to get assets from.
@@ -259,7 +260,7 @@ class LifecycleManager:
         state = cast(states.PullState, states.load_step_state(part, Step.PULL))
         return state.assets if state else None
 
-    def get_primed_stage_packages(self, *, part_name: str) -> Optional[List[str]]:
+    def get_primed_stage_packages(self, *, part_name: str) -> list[str] | None:
         """Return the list of primed stage packages.
 
         :param part_name: The name of the part to get primed stage packages from.
@@ -288,10 +289,10 @@ def _ensure_overlay_supported() -> None:
 
 def _build_part(
     name: str,
-    spec: Dict[str, Any],
+    spec: dict[str, Any],
     project_dirs: ProjectDirs,
     strict_plugins: bool,  # noqa: FBT001
-    partitions: Optional[List[str]],
+    partitions: list[str] | None,
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -346,7 +347,7 @@ def _build_part(
     )
 
 
-def _validate_part_dependencies(part: Part, parts_data: Dict[str, Any]) -> None:
+def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)

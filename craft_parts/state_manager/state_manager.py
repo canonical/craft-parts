@@ -20,7 +20,7 @@ import contextlib
 import itertools
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, cast
+from typing import cast
 
 from craft_parts import parts, sources, steps
 from craft_parts.features import Features
@@ -60,7 +60,7 @@ class _StateDB:
     """A dictionary-backed simple database manager for wrapped states."""
 
     def __init__(self) -> None:
-        self._state: Dict[Tuple[str, Step], _StateWrapper] = {}
+        self._state: dict[tuple[str, Step], _StateWrapper] = {}
         self._serial_gen = itertools.count(1)
 
     def wrap_state(
@@ -79,7 +79,7 @@ class _StateDB:
         )
 
     def set(
-        self, *, part_name: str, step: Step, state: Optional[_StateWrapper]
+        self, *, part_name: str, step: Step, state: _StateWrapper | None
     ) -> None:
         """Set a state for a given part and step.
 
@@ -94,7 +94,7 @@ class _StateDB:
 
         self._state[(part_name, step)] = state
 
-    def get(self, *, part_name: str, step: Step) -> Optional[_StateWrapper]:
+    def get(self, *, part_name: str, step: Step) -> _StateWrapper | None:
         """Retrieve the wrapped state for a given part and step.
 
         :param part_name: The name of the part corresponding to the state
@@ -174,15 +174,15 @@ class StateManager:
         self,
         *,
         project_info: ProjectInfo,
-        part_list: List[Part],
-        ignore_outdated: Optional[List[str]] = None,
+        part_list: list[Part],
+        ignore_outdated: list[str] | None = None,
     ) -> None:
         self._state_db = _StateDB()
         self._project_info = project_info
         self._part_list = part_list
         self._ignore_outdated = ignore_outdated
-        self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
-        self._dirty_report_cache: Dict[Tuple[str, Step], Optional[DirtyReport]] = {}
+        self._source_handler_cache: dict[str, SourceHandler | None] = {}
+        self._dirty_report_cache: dict[tuple[str, Step], DirtyReport | None] = {}
 
         part_step_list = _sort_steps_by_state_timestamp(part_list)
 
@@ -264,7 +264,7 @@ class StateManager:
 
         return False
 
-    def project_vars(self, part: Part, step: Step) -> Optional[Dict[str, ProjectVar]]:
+    def project_vars(self, part: Part, step: Step) -> dict[str, ProjectVar] | None:
         """Obtain the project variables for a given part and step.
 
         :param part: The part corresponding to the state to retrieve.
@@ -278,7 +278,7 @@ class StateManager:
 
         return stw.state.project_options.get("project_vars") or None
 
-    def check_if_outdated(self, part: Part, step: Step) -> Optional[OutdatedReport]:
+    def check_if_outdated(self, part: Part, step: Step) -> OutdatedReport | None:
         """Verify whether a step is outdated.
 
         A step is considered to be outdated if an earlier step in the lifecycle
@@ -345,7 +345,7 @@ class StateManager:
 
         return None
 
-    def check_if_dirty(self, part: Part, step: Step) -> Optional[DirtyReport]:
+    def check_if_dirty(self, part: Part, step: Step) -> DirtyReport | None:
         """Verify whether a step is dirty.
 
         A step is considered to be dirty if relevant properties or project
@@ -405,7 +405,7 @@ class StateManager:
             part, part_list=self._part_list, recursive=True
         )
 
-        changed_dependencies: List[Dependency] = []
+        changed_dependencies: list[Dependency] = []
         for dependency in dependencies:
             prerequisite_stw = self._state_db.get(
                 part_name=dependency.name, step=prerequisite_step
@@ -461,7 +461,7 @@ class StateManager:
 
         return bytes.fromhex(overlay_hash)
 
-    def get_outdated_files(self, part: Part) -> Optional[List[str]]:
+    def get_outdated_files(self, part: Part) -> list[str] | None:
         """Get the list of outdated files for this part.
 
         :param part: The part being processed.
@@ -475,7 +475,7 @@ class StateManager:
         pull_state = cast(PullState, stw.state)
         return pull_state.outdated_files
 
-    def get_outdated_dirs(self, part: Part) -> Optional[List[str]]:
+    def get_outdated_dirs(self, part: Part) -> list[str] | None:
         """Get the list of outdated directories for this part.
 
         :param part: The part being processed.
@@ -490,7 +490,7 @@ class StateManager:
         return pull_state.outdated_dirs
 
 
-def _get_relevant_plugin_properties(part: Part, step: Step) -> List[str]:
+def _get_relevant_plugin_properties(part: Part, step: Step) -> list[str]:
     """Obtain additional properties from plugin.
 
     These are plugin-specific and defines additional properties to compare
@@ -506,8 +506,8 @@ def _get_relevant_plugin_properties(part: Part, step: Step) -> List[str]:
 
 
 def _sort_steps_by_state_timestamp(
-    part_list: List[Part],
-) -> List[Tuple[Part, Step, int]]:
+    part_list: list[Part],
+) -> list[tuple[Part, Step, int]]:
     """Sort steps based on state file timestamp.
 
     Return a sorted list of parts and steps according to the timestamp
@@ -519,7 +519,7 @@ def _sort_steps_by_state_timestamp(
     :return: The sorted list of tuples containing part, step, and state
         file modification time.
     """
-    state_files: List[Tuple[Part, Step, int]] = []
+    state_files: list[tuple[Part, Step, int]] = []
     for part in part_list:
         for step in list(Step):
             path = get_step_state_path(part, step)

@@ -16,7 +16,6 @@
 
 from pathlib import Path
 from textwrap import dedent
-from typing import List
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
@@ -50,7 +49,7 @@ def test_get_build_environment(plugin, new_dir):
 
 def get_build_commands(
     new_dir: Path, *, should_remove_symlinks: bool = False
-) -> List[str]:
+) -> list[str]:
     if should_remove_symlinks:
         postfix = dedent(
             f"""\

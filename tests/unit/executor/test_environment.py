@@ -17,7 +17,6 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Set
 
 import pytest
 from craft_parts import plugins
@@ -33,16 +32,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PLUGIN_ENVVAR": "from_plugin"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 

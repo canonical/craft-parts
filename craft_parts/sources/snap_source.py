@@ -20,7 +20,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import yaml
 from overrides import overrides
@@ -47,11 +47,11 @@ class SnapSource(FileSourceHandler):
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_branch: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(
@@ -85,7 +85,7 @@ class SnapSource(FileSourceHandler):
         self,
         dst: Path,
         keep: bool = False,  # noqa: FBT001, FBT002
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Provision the snap source.
 
