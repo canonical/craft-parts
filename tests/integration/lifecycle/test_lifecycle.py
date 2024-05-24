@@ -229,6 +229,7 @@ def test_lifecycle_rerun_actions(new_dir, partitions, mocker):
         Action("foobar", Step.PULL, action_type=ActionType.RERUN, reason="rerun step"),
     ]
 
+
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning:
     @pytest.fixture(autouse=True)
