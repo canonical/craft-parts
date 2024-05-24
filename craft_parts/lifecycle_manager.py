@@ -223,7 +223,11 @@ class LifecycleManager:
         packages.Repository.refresh_packages_list()
 
     def plan(
-        self, target_step: Step, part_names: Optional[Sequence[str]] = None, *, rerun: bool=False
+        self,
+        target_step: Step,
+        part_names: Optional[Sequence[str]] = None,
+        *,
+        rerun: bool = False,
     ) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
