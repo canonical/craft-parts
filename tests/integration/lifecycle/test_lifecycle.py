@@ -369,7 +369,7 @@ class TestUpdating:
             parts,
             application_name="test_update",
             cache_dir=new_dir,
-            arch="aarch64",
+            arch="arm64",
             partitions=partitions,
         )
         # pylint: enable=attribute-defined-outside-init

@@ -52,7 +52,7 @@ install_requires = [
     "pydantic>=1.9.0,<2.0.0",
     "pydantic-yaml[pyyaml]>=0.11.0,<1.0.0",
     "pyxdg",
-    "requests",
+    "requests<2.32",
     "requests-unixsocket",
     # See: https://github.com/msabramo/requests-unixsocket/pull/69
     # When updating to urllib3 v2, also remove the constraint on types-requests.

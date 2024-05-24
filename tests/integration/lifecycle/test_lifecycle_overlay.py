@@ -384,7 +384,7 @@ class TestUpdating:
         parts = yaml.safe_load(parts_yaml)
 
         lf = craft_parts.LifecycleManager(
-            parts, application_name="test_update", cache_dir=new_dir, arch="aarch64"
+            parts, application_name="test_update", cache_dir=new_dir, arch="arm64"
         )
         lf.refresh_packages_list()
 

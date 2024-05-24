@@ -106,7 +106,7 @@ class TestLifecycleManager:
             project_name="project",
             cache_dir=new_dir,
             work_dir=work_dir,
-            arch="aarch64",
+            arch="arm64",
             parallel_build_count=16,
             custom="foo",
             **self._lcm_kwargs,

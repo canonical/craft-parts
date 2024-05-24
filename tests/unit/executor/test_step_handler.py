@@ -25,7 +25,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
 from craft_parts.executor.step_handler import StepContents, StepHandler
 from craft_parts.infos import (
-    _ARCH_TRANSLATIONS,
+    _DEB_TO_TRIPLET,
     PartInfo,
     ProjectInfo,
     StepInfo,
@@ -151,9 +151,8 @@ class TestStepHandlerBuiltins:
         result = sh.run_builtin()
         build_script_path = Path(new_dir / "parts/p1/run/build.sh")
         environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
-        host_arch = _ARCH_TRANSLATIONS[_get_host_architecture()]
-        triplet = host_arch["triplet"]
-        deb = host_arch["deb"]
+        deb = _get_host_architecture()
+        triplet = _DEB_TO_TRIPLET[deb]
         if partitions is not None:
             partition_script_lines = [
                 f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
