@@ -223,7 +223,7 @@ class LifecycleManager:
         packages.Repository.refresh_packages_list()
 
     def plan(
-        self, target_step: Step, part_names: Optional[Sequence[str]] = None
+        self, target_step: Step, part_names: Optional[Sequence[str]] = None, *, rerun: bool=False
     ) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
@@ -234,7 +234,7 @@ class LifecycleManager:
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
         """
-        return self._sequencer.plan(target_step, part_names)
+        return self._sequencer.plan(target_step, part_names, rerun=rerun)
 
     def reload_state(self) -> None:
         """Reload the ephemeral state from disk."""

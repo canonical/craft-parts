@@ -186,6 +186,49 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
         ctx.execute(actions)
 
 
+def test_lifecycle_rerun_actions(new_dir, partitions, mocker):
+    parts = yaml.safe_load(basic_parts_yaml)
+
+    Path("a.tar.gz").touch()
+
+    # no need to untar the file
+    mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
+
+    # See https://gist.github.com/sergiusens/dcae19c301eb59e091f92ab29d7d03fc
+
+    # first run
+    # command pull
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PULL)
+    assert actions == [
+        Action("foo", Step.PULL),
+        Action("bar", Step.PULL),
+        Action("foobar", Step.PULL),
+    ]
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # rerun skips pull...
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PULL)
+    assert actions == [
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+    ]
+
+    # ...except if explicit rerun is set
+    actions = lf.plan(Step.PULL, rerun=True)
+    assert actions == [
+        Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="rerun step"),
+        Action("bar", Step.PULL, action_type=ActionType.RERUN, reason="rerun step"),
+        Action("foobar", Step.PULL, action_type=ActionType.RERUN, reason="rerun step"),
+    ]
+
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning:
     @pytest.fixture(autouse=True)
