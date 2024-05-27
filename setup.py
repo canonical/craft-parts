@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup
 
-VERSION = "1.29.0"
+VERSION = "1.31.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -52,7 +52,7 @@ install_requires = [
     "pydantic>=1.9.0,<2.0.0",
     "pydantic-yaml[pyyaml]>=0.11.0,<1.0.0",
     "pyxdg",
-    "requests",
+    "requests<2.32.0",
     "requests-unixsocket",
     # See: https://github.com/msabramo/requests-unixsocket/pull/69
     # When updating to urllib3 v2, also remove the constraint on types-requests.
@@ -98,7 +98,6 @@ test_requires = [
     "pytest-mock",
     "pytest-subprocess",
     "requests-mock",
-    "ruff==0.3.5",
     "tox",
     "yamllint==1.32.0",
 ]

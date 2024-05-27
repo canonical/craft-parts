@@ -101,7 +101,7 @@ class JavaPlugin(Plugin):
           - Create bin/ and jar/ directories in ${CRAFT_PART_INSTALL};
           - Find the ``java`` executable (provided by whatever jre the part used) and
             link it as ${CRAFT_PART_INSTALL}/bin/java;
-          - Hardlink the .jar files generated in ${CRAFT_PART_SOURCE} to
+          - Hardlink the .jar files generated in ${CRAFT_PART_BUILD} to
             ${CRAFT_PART_INSTALL}/jar.
         """
         # pylint: disable=line-too-long

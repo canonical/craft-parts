@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -114,6 +114,12 @@ def register(plugins: Dict[str, PluginType]) -> None:
         are plugin classes. Valid plugins must subclass class:`Plugin`.
     """
     _PLUGINS.update(plugins)
+
+
+def unregister(*plugins: str) -> None:
+    """Unregister plugins by name."""
+    for plugin in plugins:
+        _PLUGINS.pop(plugin, None)
 
 
 def unregister_all() -> None:

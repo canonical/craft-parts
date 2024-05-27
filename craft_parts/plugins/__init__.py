@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ from .plugins import (
     get_plugin_class,
     get_registered_plugins,
     register,
+    unregister,
     unregister_all,
 )
 from .validator import PluginEnvironmentValidator
@@ -39,5 +40,6 @@ __all__ = [
     "get_plugin_class",
     "get_registered_plugins",
     "register",
+    "unregister",
     "unregister_all",
 ]

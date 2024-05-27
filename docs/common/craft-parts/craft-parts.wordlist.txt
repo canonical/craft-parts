@@ -5,6 +5,8 @@ AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
 AptCache
+Autoconf
+Automake
 Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
@@ -86,6 +88,7 @@ JavaPlugin
 LDFLAGS
 LLVM
 LTO
+LTS
 LXD
 LayerHash
 LayerMount
@@ -108,6 +111,7 @@ MigrationState
 Multipass
 NOOP
 NPM
+NVM
 Namespaced
 NetworkRequestError
 NilPlugin
@@ -249,6 +253,7 @@ YUMRepository's
 ZipSource
 abcdef
 args
+armv
 artifacts
 autogen
 autotools
@@ -312,13 +317,16 @@ infos
 ing
 initialized
 iterable
+iojs
 jdk
 jre
+js
 kwargs
 ldflags
 lifecycle
 linters
 lto
+lts
 mcraft
 md
 metaclass
@@ -329,6 +337,7 @@ mountpoints
 namespace
 namespaced
 nano
+noop
 normalization
 normalize
 npm
@@ -391,6 +400,7 @@ summarized
 svn
 symlink
 symlinks
+texinfo
 toml
 toolchain
 toplevel
@@ -403,6 +413,7 @@ unmarshal
 unmount
 unparsed
 unregister
+unregistering
 uri
 url
 utilizing
