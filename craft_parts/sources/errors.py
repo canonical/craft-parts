@@ -131,6 +131,7 @@ class NetworkRequestError(SourceError):
     """A network request operation failed.
 
     :param message: The error message.
+    :param source: URL of unreachable source.
     """
 
     def __init__(self, message: str, *, source: Optional[str] = None) -> None:
