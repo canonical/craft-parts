@@ -1,4 +1,4 @@
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ import logging
 import subprocess
 from typing import List, Set
 
-from craft_parts.utils import os_utils
+from craft_parts.utils import os_utils, process_utils
 
 from . import errors
 from .yum import YUMRepository
@@ -58,18 +58,43 @@ class DNFRepository(YUMRepository):
 
         return packages
 
+    # TODO (Dariusz): Update also this signature and calls
     @classmethod
-    def _install_packages(cls, package_names: List[str]) -> None:
+    def _install_packages(
+        cls,
+        package_names: List[str],
+        *,
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
+    ) -> None:
         """Really install the packages."""
         logger.debug("Installing packages: %s", " ".join(package_names))
         dnf_command = ["dnf", "install", "-y"]
         try:
-            process_run(dnf_command + package_names)
+            process_run(
+                dnf_command + package_names,
+                stdout=stdout,
+                stderr=stderr,
+            )
         except subprocess.CalledProcessError as err:
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
 
-def process_run(command: List[str]) -> None:
-    """Run a command and log its output."""
+def process_run(
+    command: List[str],
+    *,
+    stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+    stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
+) -> None:
+    """Run a command and log its output.
+
+    :param stdout: Stream for subprocess output redirection.
+    :param stderr: Stream for subprocess error redirection.
+    """
     # Pass logger so messages can be logged as originating from this package.
-    os_utils.process_run(command, logger.debug)
+    os_utils.process_run(
+        command,
+        logger.debug,
+        stdout=stdout,
+        stderr=stderr,
+    )

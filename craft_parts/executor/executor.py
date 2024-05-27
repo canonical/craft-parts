@@ -28,11 +28,10 @@ from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
-from craft_parts.utils import os_utils
+from craft_parts.utils import os_utils, process_utils
 
 from .collisions import check_for_stage_collisions
 from .part_handler import PartHandler
-from .step_handler import Stream
 
 logger = logging.getLogger(__name__)
 
@@ -81,12 +80,23 @@ class Executor:
             base_layer_dir=base_layer_dir,
         )
 
-    def prologue(self) -> None:
+    def prologue(
+        self,
+        *,
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
+    ) -> None:
         """Prepare the execution environment.
 
         This method is called before executing lifecycle actions.
+
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
         """
-        self._install_build_packages()
+        self._install_build_packages(
+            stdout=stdout,
+            stderr=stderr,
+        )
         self._install_build_snaps()
 
         self._verify_plugin_environment()
@@ -120,13 +130,15 @@ class Executor:
         self,
         actions: Union[Action, List[Action]],
         *,
-        stdout: Stream = None,
-        stderr: Stream = None,
+        stdout: process_utils.Stream = None,
+        stderr: process_utils.Stream = None,
     ) -> None:
         """Execute the specified action or list of actions.
 
         :param actions: An :class:`Action` object or list of :class:`Action`
            objects specifying steps to execute.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :raises InvalidActionException: If the action parameters are invalid.
         """
@@ -183,12 +195,14 @@ class Executor:
         self,
         action: Action,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None:
         """Execute the given action for a part using the provided step information.
 
         :param action: The lifecycle action to run.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
         """
         part = parts.part_by_name(action.part_name, self._part_list)
 
@@ -234,7 +248,12 @@ class Executor:
 
         return handler
 
-    def _install_build_packages(self) -> None:
+    def _install_build_packages(
+        self,
+        *,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
+    ) -> None:
         for part in self._part_list:
             self._create_part_handler(part)
 
@@ -246,7 +265,11 @@ class Executor:
             build_packages.update(self._extra_build_packages)
 
         logger.info("Installing build-packages")
-        packages.Repository.install_packages(sorted(build_packages))
+        packages.Repository.install_packages(
+            sorted(build_packages),
+            stdout=stdout,
+            stderr=stderr,
+        )
 
     def _install_build_snaps(self) -> None:
         build_snaps = set()
@@ -300,11 +323,18 @@ class ExecutionContext:
         self,
         *,
         executor: Executor,
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
     ) -> None:
         self._executor = executor
+        self._stdout = stdout
+        self._stderr = stderr
 
     def __enter__(self) -> "ExecutionContext":
-        self._executor.prologue()
+        self._executor.prologue(
+            stdout=self._stdout,
+            stderr=self._stderr,
+        )
         return self
 
     def __exit__(self, *exc: object) -> None:
@@ -314,13 +344,15 @@ class ExecutionContext:
         self,
         actions: Union[Action, List[Action]],
         *,
-        stdout: Stream = None,
-        stderr: Stream = None,
+        stdout: process_utils.Stream = None,
+        stderr: process_utils.Stream = None,
     ) -> None:
         """Execute the specified action or list of actions.
 
         :param actions: An :class:`Action` object or list of :class:`Action`
            objects specifying steps to execute.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :raises InvalidActionException: If the action parameters are invalid.
         """

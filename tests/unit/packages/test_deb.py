@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@ import pytest
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
 from craft_parts.packages.deb_package import DebPackage
+from craft_parts.utils.process_utils import DEFAULT_STDERR, DEFAULT_STDOUT
 
 # pylint: disable=line-too-long
 # pylint: disable=missing-class-docstring
@@ -363,6 +364,8 @@ class TestBuildPackages:
                     "DEBIAN_PRIORITY": "critical",
                 },
                 stdin=subprocess.DEVNULL,
+                stdout=DEFAULT_STDOUT,
+                stderr=DEFAULT_STDERR,
             ),
         ]
 
@@ -406,6 +409,8 @@ class TestBuildPackages:
                     "DEBIAN_PRIORITY": "critical",
                 },
                 stdin=-3,
+                stdout=DEFAULT_STDOUT,
+                stderr=DEFAULT_STDERR,
             ),
         ]
 
@@ -439,6 +444,8 @@ class TestBuildPackages:
                     "DEBIAN_PRIORITY": "critical",
                 },
                 stdin=-3,
+                stdout=DEFAULT_STDOUT,
+                stderr=DEFAULT_STDERR,
             ),
         ]
 
@@ -474,6 +481,8 @@ class TestBuildPackages:
                     "DEBIAN_PRIORITY": "critical",
                 },
                 stdin=subprocess.DEVNULL,
+                stdout=DEFAULT_STDOUT,
+                stderr=DEFAULT_STDERR,
             ),
         ]
 
@@ -507,6 +516,8 @@ class TestBuildPackages:
                     "DEBIAN_PRIORITY": "critical",
                 },
                 stdin=subprocess.DEVNULL,
+                stdout=DEFAULT_STDOUT,
+                stderr=DEFAULT_STDERR,
             ),
         ]
 
@@ -542,6 +553,8 @@ class TestBuildPackages:
                     "DEBIAN_PRIORITY": "critical",
                 },
                 stdin=subprocess.DEVNULL,
+                stdout=DEFAULT_STDOUT,
+                stderr=DEFAULT_STDERR,
             ),
         ]
 

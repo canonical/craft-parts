@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from craft_parts import errors
+from craft_parts.utils import process_utils
 
 logger = logging.getLogger(__name__)
 
@@ -324,14 +325,23 @@ class OsRelease:
 
 
 def process_run(
-    command: List[str], log_func: Callable[[str], None], **kwargs: Any
+    command: List[str],
+    log_func: Callable[[str], None],
+    *,
+    stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+    stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
+    **kwargs: Any,
 ) -> None:
-    """Run a command and handle its output."""
+    """Run a command and handle its output.
+
+    :param stdout: Stream for subprocess output redirection.
+    :param stderr: Stream for subprocess error redirection.
+    """
     with subprocess.Popen(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
         universal_newlines=True,
+        stdout=stdout,
+        stderr=stderr,
         **kwargs,
     ) as proc:
         if not proc.stdout:

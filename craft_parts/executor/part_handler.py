@@ -37,12 +37,12 @@ from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibili
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import MigrationState, StepState, states
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils, os_utils
+from craft_parts.utils import file_utils, os_utils, process_utils
 
 from . import filesets, migration
 from .environment import generate_step_environment
 from .organize import organize_files
-from .step_handler import StepContents, StepHandler, Stream
+from .step_handler import StepContents, StepHandler
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ class _RunHandler(Protocol):
         self,
         step_info: StepInfo,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> StepState: ...
 
 
@@ -65,8 +65,8 @@ class _UpdateHandler(Protocol):
         self,
         step_info: StepInfo,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None: ...
 
 
@@ -122,12 +122,14 @@ class PartHandler:
         self,
         action: Action,
         *,
-        stdout: Stream = None,
-        stderr: Stream = None,
+        stdout: process_utils.Stream = None,
+        stderr: process_utils.Stream = None,
     ) -> None:
         """Execute the given action for this part using a plugin.
 
         :param action: The action to execute.
+        :param stdout: Stream for command output redirection.
+        :param stderr: Stream for command error redirection.
         """
         step_info = StepInfo(self._part_info, action.step)
 
@@ -177,12 +179,14 @@ class PartHandler:
         self,
         step_info: StepInfo,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> StepState:
         """Execute the pull step for this part.
 
         :param step_info: Information about the step to execute.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :return: The pull step state.
         """
@@ -215,12 +219,14 @@ class PartHandler:
         self,
         step_info: StepInfo,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> StepState:
         """Execute the overlay step for this part.
 
         :param step_info: Information about the step to execute.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :return: The overlay step state.
         """
@@ -273,13 +279,15 @@ class PartHandler:
         self,
         step_info: StepInfo,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
         update: bool = False,
     ) -> StepState:
         """Execute the build step for this part.
 
         :param step_info: Information about the step to execute.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :return: The build step state.
         """
@@ -354,12 +362,14 @@ class PartHandler:
         self,
         step_info: StepInfo,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> StepState:
         """Execute the stage step for this part.
 
         :param step_info: Information about the step to execute.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :return: The stage step state.
         """
@@ -393,12 +403,14 @@ class PartHandler:
         self,
         step_info: StepInfo,
         *,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> StepState:
         """Execute the prime step for this part.
 
         :param step_info: Information about the step to execute.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :return: The prime step state.
         """
@@ -439,14 +451,16 @@ class PartHandler:
         step_info: StepInfo,
         scriptlet_name: str,
         work_dir: Path,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> StepContents:
         """Run the scriptlet if overriding, otherwise run the built-in handler.
 
         :param step_info: Information about the step to execute.
         :param scriptlet_name: The name of this step's scriptlet.
         :param work_dir: The path to run the scriptlet on.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :return: If step is Stage or Prime, return a tuple of sets containing
             the step's file and directory artifacts.
@@ -521,8 +535,8 @@ class PartHandler:
         action: Action,
         *,
         step_info: StepInfo,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None:
         """Call the appropriate update handler for the given step."""
         handler: _UpdateHandler
@@ -562,7 +576,11 @@ class PartHandler:
         callbacks.run_post_step(step_info)
 
     def _update_pull(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None:
         """Handle update action for the pull step.
 
@@ -600,7 +618,11 @@ class PartHandler:
         self._source_handler.update()
 
     def _update_overlay(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None:
         """Handle update action for the overlay step.
 
@@ -612,7 +634,11 @@ class PartHandler:
         """
 
     def _update_build(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None:
         """Handle update action for the build step.
 
@@ -645,8 +671,8 @@ class PartHandler:
         action: Action,
         *,
         step_info: StepInfo,
-        stdout: Stream,
-        stderr: Stream,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None:
         """Call the appropriate reapply handler for the given step."""
         if action.step == Step.OVERLAY:
@@ -658,7 +684,11 @@ class PartHandler:
             )
 
     def _reapply_overlay(
-        self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: process_utils.Stream,
+        stderr: process_utils.Stream,
     ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         shutil.rmtree(self._part.part_layer_dir)

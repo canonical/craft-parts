@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@ from unittest.mock import call
 import pytest
 from craft_parts.packages import errors
 from craft_parts.packages.yum import YUMRepository
+from craft_parts.utils.process_utils import DEFAULT_STDERR, DEFAULT_STDOUT
 
 
 def test_install_packages_simple(fake_yum_run):
@@ -36,7 +37,9 @@ def test_install_packages_simple(fake_yum_run):
                 "package",
                 "package-installed",
                 "versioned-package=2.0",
-            ]
+            ],
+            stdout=DEFAULT_STDOUT,
+            stderr=DEFAULT_STDERR,
         ),
     ]
 
@@ -62,7 +65,11 @@ def test_install_packages_refresh_not_requested(fake_yum_run, mocker):
         ["package-installed", "package"], refresh_package_cache=False
     )
     assert fake_yum_run.mock_calls == [
-        call(["yum", "install", "-y", "package", "package-installed"]),
+        call(
+            ["yum", "install", "-y", "package", "package-installed"],
+            stdout=DEFAULT_STDOUT,
+            stderr=DEFAULT_STDERR,
+        ),
     ]
 
 

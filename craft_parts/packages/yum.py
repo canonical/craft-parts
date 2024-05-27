@@ -18,7 +18,7 @@ import logging
 import subprocess
 from typing import List, Set
 
-from craft_parts.utils import os_utils
+from craft_parts.utils import os_utils, process_utils
 
 from . import errors
 from .base import BaseRepository
@@ -115,6 +115,7 @@ class YUMRepository(BaseRepository):
         """
         raise NotImplementedError("Functionality not yet provided by YUMRepository.")
 
+    # TODO (Dariusz): Update also this signature and calls
     @classmethod
     def install_packages(
         cls,
@@ -122,6 +123,8 @@ class YUMRepository(BaseRepository):
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
     ) -> List[str]:
         """Install packages on the host system."""
         if not package_names:
@@ -138,7 +141,11 @@ class YUMRepository(BaseRepository):
             if refresh_package_cache and install_required:
                 cls.refresh_packages_list()
             if install_required:
-                cls._install_packages(package_names)
+                cls._install_packages(
+                    package_names,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
             else:
                 logger.debug("Requested packages already installed: %s", package_names)
 
@@ -149,12 +156,22 @@ class YUMRepository(BaseRepository):
         return []
 
     @classmethod
-    def _install_packages(cls, package_names: List[str]) -> None:
+    def _install_packages(
+        cls,
+        package_names: List[str],
+        *,
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
+    ) -> None:
         """Really install the packages."""
         logger.debug("Installing packages: %s", " ".join(package_names))
         yum_command = ["yum", "install", "-y"]
         try:
-            process_run(yum_command + package_names)
+            process_run(
+                yum_command + package_names,
+                stdout=stdout,
+                stderr=stderr,
+            )
         except subprocess.CalledProcessError as err:
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
@@ -185,7 +202,21 @@ class YUMRepository(BaseRepository):
         return []
 
 
-def process_run(command: List[str]) -> None:
-    """Run a command and log its output."""
+def process_run(
+    command: List[str],
+    *,
+    stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+    stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
+) -> None:
+    """Run a command and log its output.
+
+    :param stdout: Stream for subprocess output redirection.
+    :param stderr: Stream for subprocess error redirection.
+    """
     # Pass logger so messages can be logged as originating from this package.
-    os_utils.process_run(command, logger.debug)
+    os_utils.process_run(
+        command,
+        logger.debug,
+        stdout=stdout,
+        stderr=stderr,
+    )

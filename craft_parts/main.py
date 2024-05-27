@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -114,13 +114,12 @@ def _process_parts(options: argparse.Namespace) -> None:
 def _do_step(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:
     target_step = _parse_step(options.command) if options.command else Step.PRIME
     part_names = vars(options).get("parts", [])
+    output_stream = None if options.verbose else subprocess.DEVNULL
 
     if options.refresh:
         lcm.refresh_packages_list()
 
     actions = lcm.plan(target_step, part_names)
-
-    output_stream = None if options.verbose else subprocess.DEVNULL
 
     if options.dry_run:
         printed = False
@@ -132,7 +131,10 @@ def _do_step(lcm: craft_parts.LifecycleManager, options: argparse.Namespace) -> 
             print("No actions to execute.")
         sys.exit()
 
-    with lcm.action_executor() as ctx:
+    with lcm.action_executor(
+        stdout=output_stream,
+        stderr=output_stream,
+    ) as ctx:
         for action in actions:
             if options.show_skipped or action.action_type != ActionType.SKIP:
                 print(f"Execute: {_action_message(action)}")

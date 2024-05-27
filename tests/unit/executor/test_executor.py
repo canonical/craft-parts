@@ -23,6 +23,7 @@ from craft_parts.executor import ExecutionContext, Executor
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+from craft_parts.utils.process_utils import DEFAULT_STDERR, DEFAULT_STDOUT
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -106,7 +107,11 @@ class TestPackages:
         e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
 
-        install.assert_called_once_with(["pkg1", "pkg2"])
+        install.assert_called_once_with(
+            ["pkg1", "pkg2"],
+            stdout=DEFAULT_STDOUT,
+            stderr=DEFAULT_STDERR,
+        )
 
     def test_install_extra_build_packages(self, mocker, new_dir, partitions):
         install = mocker.patch("craft_parts.packages.Repository.install_packages")
@@ -133,7 +138,11 @@ class TestPackages:
         )
         e.prologue()
 
-        install.assert_called_once_with(["pkg1", "pkg2", "pkg3"])
+        install.assert_called_once_with(
+            ["pkg1", "pkg2", "pkg3"],
+            stdout=DEFAULT_STDOUT,
+            stderr=DEFAULT_STDERR,
+        )
 
     def test_install_build_snaps(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.packages.snaps.SnapPackage.get_store_snap_info")
