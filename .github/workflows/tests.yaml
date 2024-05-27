@@ -84,7 +84,7 @@ jobs:
           # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
           sudo snap install --classic --channel=latest/stable go
           git clone https://github.com/canonical/chisel.git chisel-tmp
-          cd chisel-tmp && git checkout v0.9.0
+          cd chisel-tmp && git checkout v0.9.1
           go mod download
           sudo go build -o /usr/bin ./...
           chisel --help
@@ -149,7 +149,7 @@ jobs:
           # the test files in /tmp/pytest-*
           sudo snap install --classic --channel=latest/stable go
           git clone https://github.com/canonical/chisel.git chisel-tmp
-          cd chisel-tmp && git checkout v0.9.0
+          cd chisel-tmp && git checkout v0.9.1
           go mod download
           sudo go build -o /usr/bin ./...
           chisel --help
