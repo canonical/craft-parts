@@ -74,7 +74,15 @@ def test_network_request_error():
     assert err.message == "it failed"
     assert err.brief == "Network request error: it failed."
     assert err.details is None
-    assert err.resolution == "Check the network and try again."
+    assert err.resolution == "Check network connection and source, and try again."
+
+
+def test_network_request_error_with_source():
+    err = errors.NetworkRequestError("it failed", source="non-existing-source")
+    assert err.message == "it failed"
+    assert err.brief == "Network request error: it failed."
+    assert err.details == "Source: 'non-existing-source'"
+    assert err.resolution == "Check network connection and source, and try again."
 
 
 def test_http_error():

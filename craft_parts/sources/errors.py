@@ -16,7 +16,7 @@
 
 """Source handler error definitions."""
 
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -133,12 +133,14 @@ class NetworkRequestError(SourceError):
     :param message: The error message.
     """
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, source: Optional[str] = None) -> None:
         self.message = message
+        self.source = source
         brief = f"Network request error: {message}."
-        resolution = "Check the network and try again."
+        resolution = "Check network connection and source, and try again."
+        details = f"Source: {self.source!r}" if self.source is not None else None
 
-        super().__init__(brief=brief, resolution=resolution)
+        super().__init__(brief=brief, details=details, resolution=resolution)
 
 
 class HttpRequestError(SourceError):
