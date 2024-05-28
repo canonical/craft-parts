@@ -69,6 +69,7 @@ GitSource
 GoPlugin
 GoPluginEnvironmentValidator
 GoPluginProperties
+HttpRequestError
 IncompatibleSourceOptions
 InvalidAction
 InvalidActionException
@@ -203,6 +204,7 @@ SDK
 SDKs
 SDL
 ScriptletRunError
+SevenzipSource
 SnapDownloadError
 SnapGetAssertionError
 SnapInstallError
@@ -377,6 +379,7 @@ scons
 scriptlet
 scriptlets
 setuptools
+sevenzip
 sha
 sliceName
 snapd
