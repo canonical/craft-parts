@@ -42,7 +42,7 @@ Sets the Qt major version. The default is Qt 5, set to 6 for Qt 6 projects.
 Environment variables
 ---------------------
 
-The plugin sets the QT_SELECT environment variable to ref:`qt-major-version`.
+The plugin sets the QT_SELECT environment variable to ref:`qmake-major-version`.
 
 
 Dependencies
@@ -62,7 +62,7 @@ During the build step the plugin performs the following actions:
 
 * Run ``qmake`` in the build directory to setup the ``Makefiles``, the
   project is configured with any ``qmake-parameters`` that might have
-  been set. If ``qmake-project-file`` has been set, ``qmake`` refer to
+  been set. If ``qmake-project-file`` has been set, ``qmake`` refers to
   the defined file to configure the project;
 * ``make`` is run to build the source;
 * ``make`` calls the ``install`` target with ``DESTDIR`` set to
@@ -72,7 +72,9 @@ Examples
 --------
 
 The following snippet declares a part using the ``qmake`` plugin for a
-local source that contains a ``.pro`` project file:
+local source that contains a ``.pro`` project file. It specifies that the
+major Qt version is 6, and that the project should be built with the Debug
+configuration:
 
 .. code-block:: yaml
 
@@ -80,6 +82,9 @@ local source that contains a ``.pro`` project file:
       hello:
         source: .
         plugin: qmake
+        qmake-major-version: 6
+        qmake-parameters:
+          - "CONFIG+=debug"
 
 
 .. _qmake: https://doc.qt.io/qt-6/qmake-manual.html
