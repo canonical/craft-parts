@@ -26,6 +26,29 @@ from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
 
+@pytest.mark.parametrize(
+    ("rerun", "action", "reason"),
+    [(False, ActionType.SKIP, "already ran"), (True, ActionType.RERUN, "rerun step")],
+)
+@pytest.mark.parametrize(("step"), [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
+def test_sequencer_plan(step, action, reason, rerun, mocker, new_dir):
+    mocker.patch(
+        "craft_parts.state_manager.state_manager.StateManager.has_step_run",
+        new=lambda _, x, y: y == step,
+    )
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {})
+    seq = Sequencer(part_list=[p1], project_info=info)
+
+    seq.plan(step, part_names=["p1"], rerun=rerun)
+    actions = [
+        Action(part_name="p1", step=s, action_type=ActionType.RUN)
+        for s in step.previous_steps()
+    ]
+    actions.append(Action(part_name="p1", step=step, action_type=action, reason=reason))
+    assert seq._actions == actions
+
+
 def test_sequencer_add_actions(new_dir):
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})

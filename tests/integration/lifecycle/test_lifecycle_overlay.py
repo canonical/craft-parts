@@ -116,7 +116,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -138,7 +138,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         Action("foo", Step.OVERLAY, action_type=ActionType.RUN, reason="required to build 'bar'"),
         Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
         Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -183,7 +183,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="required to build 'bar'"),
+        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="'BUILD' step changed"),
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on

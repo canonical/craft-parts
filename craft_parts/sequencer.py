@@ -71,12 +71,17 @@ class Sequencer:
                 self._overlay_viewers.add(part)
 
     def plan(
-        self, target_step: Step, part_names: Optional[Sequence[str]] = None
+        self,
+        target_step: Step,
+        part_names: Optional[Sequence[str]] = None,
+        *,
+        rerun: bool = False,
     ) -> List[Action]:
         """Determine the list of steps to execute for each part.
 
         :param target_step: The final step to execute for the given part names.
         :param part_names: The names of the parts to process.
+        :param rerun: Whether the step is cleaned before execution.
 
         :returns: The list of actions that should be executed.
         """
@@ -84,7 +89,7 @@ class Sequencer:
             raise errors.FeatureError("Overlay step is not supported.")
 
         self._actions = []
-        self._add_all_actions(target_step, part_names)
+        self._add_all_actions(target_step, part_names, rerun_target_step=rerun)
         return self._actions
 
     def reload_state(self) -> None:
@@ -98,6 +103,8 @@ class Sequencer:
         target_step: Step,
         part_names: Optional[Sequence[str]] = None,
         reason: Optional[str] = None,
+        *,
+        rerun_target_step: bool = False,
     ) -> None:
         selected_parts = part_list_by_name(part_names, self._part_list)
         if not selected_parts:
@@ -110,8 +117,8 @@ class Sequencer:
                     current_step=current_step,
                     target_step=target_step,
                     part=part,
-                    part_names=part_names,
                     reason=reason,
+                    rerun_target_step=rerun_target_step,
                 )
 
     def _add_step_actions(
@@ -120,8 +127,8 @@ class Sequencer:
         current_step: Step,
         target_step: Step,
         part: Part,
-        part_names: Optional[Sequence[str]],
         reason: Optional[str] = None,
+        rerun_target_step: bool = False,
     ) -> None:
         """Verify if this step should be executed."""
         # if overlays disabled, don't generate overlay actions
@@ -138,12 +145,12 @@ class Sequencer:
 
         # If the step has already run:
         #
-        # 1. If the step is the exact step that was requested, and the part was
-        #    explicitly listed, run it again.
+        # 1. If the step is the exact step that was requested, check whether it
+        #    should be re-executed.
 
-        if part_names and current_step == target_step and part.name in part_names:
+        if current_step == target_step and rerun_target_step:
             if not reason:
-                reason = "requested step"
+                reason = "rerun step"
             self._rerun_step(part, current_step, reason=reason)
             return
 
