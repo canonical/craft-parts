@@ -58,7 +58,6 @@ class DNFRepository(YUMRepository):
 
         return packages
 
-    # TODO (Dariusz): Update also this signature and calls
     @classmethod
     def _install_packages(
         cls,
