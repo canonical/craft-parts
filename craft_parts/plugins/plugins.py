@@ -102,8 +102,13 @@ def get_plugin_class(name: str) -> PluginType:
     return _PLUGINS[name]
 
 
+def get_builtin_plugins() -> Dict[str, PluginType]:
+    """Return a dictionary of builtin plugins."""
+    return copy.deepcopy(_BUILTIN_PLUGINS)
+
+
 def get_registered_plugins() -> Dict[str, PluginType]:
-    """Return the list of currently registered plugins."""
+    """Return a dictionary of currently registered plugins."""
     return copy.deepcopy(_PLUGINS)
 
 

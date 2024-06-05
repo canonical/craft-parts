@@ -173,6 +173,11 @@ class TestPluginRegistry:
         with pytest.raises(ValueError):  # noqa: PT011
             plugins.get_plugin_class("plugin4")
 
+    def test_get_builtin_plugins(self):
+        builtin_plugins = plugins.get_builtin_plugins()
+
+        assert builtin_plugins == plugins.plugins._BUILTIN_PLUGINS
+
 
 class TestHelpers:
     """Verify plugin helper functions."""

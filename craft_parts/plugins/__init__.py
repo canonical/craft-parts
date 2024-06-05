@@ -20,6 +20,7 @@ from .base import Plugin, PluginModel, extract_plugin_properties
 from .plugins import (
     PluginProperties,
     extract_part_properties,
+    get_builtin_plugins,
     get_plugin,
     get_plugin_class,
     get_registered_plugins,
@@ -36,6 +37,7 @@ __all__ = [
     "PluginProperties",
     "extract_part_properties",
     "extract_plugin_properties",
+    "get_builtin_plugins",
     "get_plugin",
     "get_plugin_class",
     "get_registered_plugins",
