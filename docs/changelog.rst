@@ -2,8 +2,30 @@
 Changelog
 *********
 
+1.31.0 (2024-05-16)
+-------------------
+
+- Refactored npm plugin
+  - npm-node-version option now accepts a NVM-style version identifier
+  - Move Node.js download to pull commands
+  - Verify SHA256 checksums after node.js download
+  - Use new-style npm-install commands if npm version is newer than 8.x
+  - Set NODE_ENV to production by default
+- New and improved documentation
+  - Add go plugin reference
+  - Add nil plugin reference
+  - Add make plugin reference
+  - Add autotools plugin reference
+  - Add cmake plugin reference
+  - Add scons plugin reference
+  - Add ant plugin reference
+  - Add dotnet plugin reference
+  - Add meson plugin reference
+  - Documentation fixes
+
 1.30.0 (2024-05-16)
 -------------------
+
 - Add support for armv8l
 - Add support for unregistering plugins
 

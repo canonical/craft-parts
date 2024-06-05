@@ -5,6 +5,8 @@ AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
 AptCache
+Autoconf
+Automake
 Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
@@ -67,6 +69,7 @@ GitSource
 GoPlugin
 GoPluginEnvironmentValidator
 GoPluginProperties
+HttpRequestError
 IncompatibleSourceOptions
 InvalidAction
 InvalidActionException
@@ -86,6 +89,7 @@ JavaPlugin
 LDFLAGS
 LLVM
 LTO
+LTS
 LXD
 LayerHash
 LayerMount
@@ -108,6 +112,7 @@ MigrationState
 Multipass
 NOOP
 NPM
+NVM
 Namespaced
 NetworkRequestError
 NilPlugin
@@ -199,6 +204,7 @@ SDK
 SDKs
 SDL
 ScriptletRunError
+SevenzipSource
 SnapDownloadError
 SnapGetAssertionError
 SnapInstallError
@@ -313,13 +319,16 @@ infos
 ing
 initialized
 iterable
+iojs
 jdk
 jre
+js
 kwargs
 ldflags
 lifecycle
 linters
 lto
+lts
 mcraft
 md
 metaclass
@@ -330,6 +339,7 @@ mountpoints
 namespace
 namespaced
 nano
+noop
 normalization
 normalize
 npm
@@ -369,6 +379,7 @@ scons
 scriptlet
 scriptlets
 setuptools
+sevenzip
 sha
 sliceName
 snapd
@@ -392,6 +403,7 @@ summarized
 svn
 symlink
 symlinks
+texinfo
 toml
 toolchain
 toplevel
