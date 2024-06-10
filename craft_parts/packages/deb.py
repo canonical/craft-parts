@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2023 Canonical Ltd.
+# Copyright 2015-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -662,7 +662,7 @@ class Ubuntu(BaseRepository):
                 for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
                     deb_cache_dir
                 ):
-                    logger.debug("Extracting stage package: %s", pkg_name)
+                    logger.info("Extracting stage package: %s", pkg_name)
                     installed.add(f"{pkg_name}={pkg_version}")
                     file_utils.link_or_copy(
                         str(dl_path), str(stage_packages_path / dl_path.name)
