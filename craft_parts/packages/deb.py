@@ -408,7 +408,8 @@ class Ubuntu(BaseRepository):
     ) -> None:
         """Refresh the list of packages available in the repository."""
         # Return early when testing.
-        if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
+        if os.geteuid() != 0:
+            logger.debug("cannot refresh packages list, EUID is not 0")
             return
 
         try:
