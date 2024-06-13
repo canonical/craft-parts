@@ -411,6 +411,10 @@ class Ubuntu(BaseRepository):
         if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
             return
 
+        # Skip when running as non-root user.
+        if os.geteuid() != 0:
+            return
+
         try:
             cmd = ["apt-get", "update"]
             logger.debug("Executing: %s", cmd)
