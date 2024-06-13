@@ -145,7 +145,9 @@ class TestPackages:
 
         assert fetched_packages == ["fake-package=1.0"]
 
-    def test_fetch_virtual_stage_package(self, tmpdir, mocker, fake_apt_cache, fake_deb_run):
+    def test_fetch_virtual_stage_package(
+        self, tmpdir, mocker, fake_apt_cache, fake_deb_run
+    ):
         mocker.patch("os.geteuid", return_value=0)
         _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
@@ -165,7 +167,9 @@ class TestPackages:
         assert fake_deb_run.mock_calls == [call(["apt-get", "update"])]
         assert fetched_packages == ["fake-package=1.0"]
 
-    def test_fetch_stage_package_with_deps(self, tmpdir, mocker, fake_apt_cache, fake_deb_run):
+    def test_fetch_stage_package_with_deps(
+        self, tmpdir, mocker, fake_apt_cache, fake_deb_run
+    ):
         mocker.patch("os.geteuid", return_value=0)
         _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
@@ -252,7 +256,9 @@ class TestPackages:
 
         assert fetched_packages == []
 
-    def test_get_package_fetch_error(self, tmpdir, mocker, fake_apt_cache, fake_deb_run):
+    def test_get_package_fetch_error(
+        self, tmpdir, mocker, fake_apt_cache, fake_deb_run
+    ):
         mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.side_effect = errors.PackageFetchError(
             "foo"
@@ -371,7 +377,9 @@ class TestBuildPackages:
         assert fake_deb_run.mock_calls == []
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_already_installed_no_specified_version(self, fake_apt_cache, fake_deb_run, mocker):
+    def test_already_installed_no_specified_version(
+        self, fake_apt_cache, fake_deb_run, mocker
+    ):
         mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
@@ -503,7 +511,9 @@ class TestBuildPackages:
         ]
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_smart_terminal(self, fake_apt_cache, fake_deb_run, fake_dumb_terminal, mocker):
+    def test_smart_terminal(
+        self, fake_apt_cache, fake_deb_run, fake_dumb_terminal, mocker
+    ):
         mocker.patch("os.geteuid", return_value=0)
         fake_dumb_terminal.return_value = False
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
