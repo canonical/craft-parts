@@ -409,7 +409,7 @@ class Ubuntu(BaseRepository):
         """Refresh the list of packages available in the repository."""
         # Return early when testing.
         if os.geteuid() != 0:
-            logger.debug("cannot refresh packages list, EUID is not 0")
+            logger.warning("Packages list not refreshed, not running as superuser.")
             return
 
         try:
