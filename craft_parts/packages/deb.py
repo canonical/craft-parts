@@ -408,7 +408,8 @@ class Ubuntu(BaseRepository):
     ) -> None:
         """Refresh the list of packages available in the repository."""
         # Return early when testing.
-        if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
+        if os.geteuid() != 0:
+            logger.warning("Packages list not refreshed, not running as superuser.")
             return
 
         try:

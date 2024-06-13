@@ -22,9 +22,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_autotools_plugin(new_dir, partitions, monkeypatch):
-    monkeypatch.setenv("CRAFT_PARTS_PACKAGE_REFRESH", "0")
-
+def test_autotools_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """
         parts:

@@ -50,7 +50,6 @@ def test_logging_info(new_dir, caplog, monkeypatch):
     Path("parts.yaml").write_text(parts_yaml)
 
     monkeypatch.setattr(sys, "argv", ["build"])
-    monkeypatch.setenv("CRAFT_PARTS_PACKAGE_REFRESH", "0")
 
     main.main()
 
