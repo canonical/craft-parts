@@ -23,7 +23,6 @@ import shutil
 from collections.abc import Iterable
 from contextlib import ContextDecorator
 from pathlib import Path
-from typing import Union
 
 try:
     import apt
@@ -392,7 +391,7 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
 
 
 def _ignore_unreadable_files(
-    path: Union[str, "os.PathLike[str]"], names: Iterable[str]
+    path: str | "os.PathLike[str]", names: Iterable[str]
 ) -> list[str]:
     """Ignore unreadable files for copytree.
 

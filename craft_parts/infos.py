@@ -482,7 +482,7 @@ class StepInfo:
         self._part_info = part_info
         self.step = step
         self.step_environment: dict[str, str] = {}
-        self.state: "states.StepState | None" = None
+        self.state: "states.StepState" | None = None
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._part_info, name):
