@@ -391,7 +391,7 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
 
 
 def _ignore_unreadable_files(
-    path: str | "os.PathLike[str]", names: Iterable[str]
+    path: str | os.PathLike[str], names: Iterable[str]
 ) -> list[str]:
     """Ignore unreadable files for copytree.
 
