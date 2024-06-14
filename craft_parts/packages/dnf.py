@@ -18,7 +18,6 @@
 
 import logging
 import subprocess
-from typing import List, Set
 
 from craft_parts.utils import os_utils
 
@@ -32,7 +31,7 @@ class DNFRepository(YUMRepository):
     """Repository management using DNF."""
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+    def get_packages_for_source_type(cls, source_type: str) -> set[str]:
         """Return a list of packages required to work with source_type."""
         if source_type == "bzr":
             raise NotImplementedError(
@@ -59,7 +58,7 @@ class DNFRepository(YUMRepository):
         return packages
 
     @classmethod
-    def _install_packages(cls, package_names: List[str]) -> None:
+    def _install_packages(cls, package_names: list[str]) -> None:
         """Really install the packages."""
         logger.debug("Installing packages: %s", " ".join(package_names))
         dnf_command = ["dnf", "install", "-y"]
@@ -69,7 +68,7 @@ class DNFRepository(YUMRepository):
             raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
 
-def process_run(command: List[str]) -> None:
+def process_run(command: list[str]) -> None:
     """Run a command and log its output."""
     # Pass logger so messages can be logged as originating from this package.
     os_utils.process_run(command, logger.debug)

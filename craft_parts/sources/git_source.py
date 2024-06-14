@@ -21,7 +21,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import cast
 
 from overrides import overrides
 
@@ -58,7 +58,7 @@ class GitSource(SourceHandler):
         return True
 
     @classmethod
-    def generate_version(cls, *, part_src_dir: Optional[Path] = None) -> str:
+    def generate_version(cls, *, part_src_dir: Path | None = None) -> str:
         """Return the latest git tag from PWD or defined part_src_dir.
 
         The output depends on the use of annotated tags and will return
@@ -121,13 +121,13 @@ class GitSource(SourceHandler):
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_branch: Optional[str] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None,
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_depth: int | None = None,
+        source_branch: str | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        ignore_patterns: list[str] | None = None,
     ) -> None:
         super().__init__(
             source,
@@ -298,7 +298,7 @@ class GitSource(SourceHandler):
             self._clone_new()
         self.source_details = self._get_source_details()
 
-    def _get_source_details(self) -> Dict[str, Optional[str]]:
+    def _get_source_details(self) -> dict[str, str | None]:
         """Return a dictionary containing current source parameters."""
         tag = self.source_tag
         commit = self.source_commit

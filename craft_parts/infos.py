@@ -20,7 +20,7 @@ import logging
 import platform
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic_yaml import YamlModel
 
@@ -49,7 +49,7 @@ _PLATFORM_MACHINE_TO_DEB = {
 
 
 # Equivalent platform machine values.
-_PLATFORM_MACHINE_VARIATIONS: Dict[str, str] = {
+_PLATFORM_MACHINE_VARIATIONS: dict[str, str] = {
     "AMD64": "x86_64",
     "ARM64": "aarch64",
     "amd64": "x86_64",
@@ -62,7 +62,7 @@ _PLATFORM_MACHINE_VARIATIONS: Dict[str, str] = {
 
 
 # Debian architecture to cpu-vendor-os platform triplet.
-_DEB_TO_TRIPLET: Dict[str, str] = {
+_DEB_TO_TRIPLET: dict[str, str] = {
     "amd64": "x86_64-linux-gnu",
     "arm64": "aarch64-linux-gnu",
     "armhf": "arm-linux-gnueabihf",
@@ -118,13 +118,13 @@ class ProjectInfo:
         base: str = "",
         parallel_build_count: int = 1,
         strict_mode: bool = False,
-        project_dirs: Optional[ProjectDirs] = None,
-        project_name: Optional[str] = None,
-        project_vars_part_name: Optional[str] = None,
-        project_vars: Optional[Dict[str, str]] = None,
-        partitions: Optional[List[str]] = None,
-        base_layer_dir: Optional[Path] = None,
-        base_layer_hash: Optional[bytes] = None,
+        project_dirs: ProjectDirs | None = None,
+        project_name: str | None = None,
+        project_vars_part_name: str | None = None,
+        project_vars: dict[str, str] | None = None,
+        partitions: list[str] | None = None,
+        base_layer_dir: Path | None = None,
+        base_layer_hash: bytes | None = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         if arch and arch not in _DEB_TO_TRIPLET:
@@ -150,7 +150,7 @@ class ProjectInfo:
         self._custom_args = custom_args
         self._base_layer_dir = base_layer_dir
         self._base_layer_hash = base_layer_hash
-        self.global_environment: Dict[str, str] = {}
+        self.global_environment: dict[str, str] = {}
 
         self.execution_finished = False
 
@@ -164,7 +164,7 @@ class ProjectInfo:
         raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
 
     @property
-    def custom_args(self) -> List[str]:
+    def custom_args(self) -> list[str]:
         """Return the list of custom argument names."""
         return list(self._custom_args.keys())
 
@@ -239,17 +239,17 @@ class ProjectInfo:
         return self._dirs
 
     @property
-    def project_name(self) -> Optional[str]:
+    def project_name(self) -> str | None:
         """Return the name of the project using craft-parts."""
         return self._project_name
 
     @property
-    def project_vars_part_name(self) -> Optional[str]:
+    def project_vars_part_name(self) -> str | None:
         """Return the name of the part that can set project vars."""
         return self._project_vars_part_name
 
     @property
-    def project_options(self) -> Dict[str, Any]:
+    def project_options(self) -> dict[str, Any]:
         """Obtain a project-wide options dictionary."""
         return {
             "application_name": self.application_name,
@@ -260,17 +260,17 @@ class ProjectInfo:
         }
 
     @property
-    def partitions(self) -> Optional[List[str]]:
+    def partitions(self) -> list[str] | None:
         """Return the project's partitions."""
         return self._partitions
 
     @property
-    def base_layer_dir(self) -> Optional[Path]:
+    def base_layer_dir(self) -> Path | None:
         """Return the directory containing the base layer (if any)."""
         return self._base_layer_dir
 
     @property
-    def base_layer_hash(self) -> Optional[bytes]:
+    def base_layer_hash(self) -> bytes | None:
         """Return the hash of the base layer (if any)."""
         return self._base_layer_hash
 
@@ -280,7 +280,7 @@ class ProjectInfo:
         value: str,
         raw_write: bool = False,  # noqa: FBT001, FBT002
         *,
-        part_name: Optional[str] = None,
+        part_name: str | None = None,
     ) -> None:
         """Set the value of a project variable.
 
@@ -481,8 +481,8 @@ class StepInfo:
     ) -> None:
         self._part_info = part_info
         self.step = step
-        self.step_environment: Dict[str, str] = {}
-        self.state: "Optional[states.StepState]" = None
+        self.step_environment: dict[str, str] = {}
+        self.state: states.StepState | None = None
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._part_info, name):

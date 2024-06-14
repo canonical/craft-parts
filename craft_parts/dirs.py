@@ -16,9 +16,9 @@
 
 """Definitions for project directories."""
 
+from collections.abc import Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Optional, Sequence, Union
 
 from craft_parts.utils import partition_utils
 
@@ -43,8 +43,8 @@ class ProjectDirs:
     def __init__(
         self,
         *,
-        partitions: Optional[Sequence[str]] = None,
-        work_dir: Union[Path, str] = ".",
+        partitions: Sequence[str] | None = None,
+        work_dir: Path | str = ".",
     ) -> None:
         partition_utils.validate_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
@@ -57,8 +57,8 @@ class ProjectDirs:
         self.stage_dir = self.work_dir / "stage"
         self.prime_dir = self.work_dir / "prime"
         if partitions:
-            self._partitions: Optional[Sequence[str]] = partitions
-            self.partition_dir: Optional[Path] = self.work_dir / "partitions"
+            self._partitions: Sequence[str] | None = partitions
+            self.partition_dir: Path | None = self.work_dir / "partitions"
         else:
             self._partitions = None
             self.partition_dir = None
@@ -74,13 +74,13 @@ class ProjectDirs:
             )
         )
 
-    def get_stage_dir(self, partition: Optional[str] = None) -> Path:
+    def get_stage_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
         if self._partitions and partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")
         return self.stage_dirs[partition]
 
-    def get_prime_dir(self, partition: Optional[str] = None) -> Path:
+    def get_prime_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
         if self._partitions and partition not in self._partitions:
             raise ValueError(f"Unknown partition {partition}")

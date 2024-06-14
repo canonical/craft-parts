@@ -19,8 +19,8 @@
 import os
 import re
 import tarfile
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, List, Optional
 
 from overrides import overrides
 
@@ -41,13 +41,13 @@ class TarSource(FileSourceHandler):
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None,
+        source_tag: str | None = None,
+        source_commit: str | None = None,
+        source_branch: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        ignore_patterns: list[str] | None = None,
     ) -> None:
         super().__init__(
             source,
@@ -81,7 +81,7 @@ class TarSource(FileSourceHandler):
         self,
         dst: Path,
         keep: bool = False,  # noqa: FBT001, FBT002
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
         tarball = src if src else self.part_src_dir / os.path.basename(self.source)

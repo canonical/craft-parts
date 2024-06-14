@@ -19,7 +19,6 @@
 import os
 import zipfile
 from pathlib import Path
-from typing import List, Optional
 
 from craft_parts.dirs import ProjectDirs
 
@@ -38,13 +37,13 @@ class ZipSource(FileSourceHandler):
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None,
+        source_tag: str | None = None,
+        source_branch: str | None = None,
+        source_commit: str | None = None,
+        source_depth: int | None = None,
+        source_checksum: str | None = None,
+        source_submodules: list[str] | None = None,
+        ignore_patterns: list[str] | None = None,
     ) -> None:
         super().__init__(
             source,
@@ -77,7 +76,7 @@ class ZipSource(FileSourceHandler):
         self,
         dst: Path,
         keep: bool = False,  # noqa: FBT001, FBT002
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Extract zip file contents to the part source dir."""
         zip_file = src if src else self.part_src_dir / os.path.basename(self.source)

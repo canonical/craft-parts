@@ -18,7 +18,7 @@
 
 """The qmake plugin."""
 
-from typing import Any, Dict, List, Set, cast
+from typing import Any, cast
 
 from overrides import override
 from typing_extensions import Self
@@ -30,7 +30,7 @@ from .properties import PluginProperties
 class QmakePluginProperties(PluginProperties, PluginModel):
     """The part properties used by the qmake plugin."""
 
-    qmake_parameters: List[str] = []
+    qmake_parameters: list[str] = []
     qmake_project_file: str = ""
     qmake_major_version: int = 5
 
@@ -38,7 +38,7 @@ class QmakePluginProperties(PluginProperties, PluginModel):
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> Self:
+    def unmarshal(cls, data: dict[str, Any]) -> Self:
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -82,12 +82,12 @@ class QmakePlugin(Plugin):
     properties_class = QmakePluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         options = cast(QmakePluginProperties, self._options)
 
@@ -98,7 +98,7 @@ class QmakePlugin(Plugin):
         return build_packages
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         options = cast(QmakePluginProperties, self._options)
 
@@ -108,7 +108,7 @@ class QmakePlugin(Plugin):
         return {"QT_SELECT": "qt5"}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(QmakePluginProperties, self._options)
 

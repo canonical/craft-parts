@@ -16,7 +16,7 @@
 
 """Source handler error definitions."""
 
-from typing import List, Sequence
+from collections.abc import Sequence
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -66,7 +66,7 @@ class InvalidSourceOptions(SourceError):
     :param options: The invalid source options.
     """
 
-    def __init__(self, *, source_type: str, options: List[str]) -> None:
+    def __init__(self, *, source_type: str, options: list[str]) -> None:
         self.source_type = source_type
         self.options = options
         humanized_options = formatting_utils.humanize_list(options, "and")
@@ -86,7 +86,7 @@ class IncompatibleSourceOptions(SourceError):
     :param options: The list of incompatible source options.
     """
 
-    def __init__(self, source_type: str, options: List[str]) -> None:
+    def __init__(self, source_type: str, options: list[str]) -> None:
         self.source_type = source_type
         self.options = options
         humanized_options = formatting_utils.humanize_list(options, "and")

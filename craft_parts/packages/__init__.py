@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Operations with platform-specific package repositories."""
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
 from . import errors, snaps
 from .normalize import fix_pkg_config
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 # pylint: disable=import-outside-toplevel
 
 
-def _get_repository_for_platform() -> Type["BaseRepository"]:
+def _get_repository_for_platform() -> type["BaseRepository"]:
     if is_deb_based():
         from .deb import Ubuntu
 

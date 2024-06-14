@@ -17,7 +17,6 @@
 import sys
 import textwrap
 from pathlib import Path
-from typing import List
 
 import craft_parts
 import pytest
@@ -796,5 +795,5 @@ class TestOverlaySpecScenarios:
         ]
 
 
-def _filter_skip(actions: List[Action]) -> List[Action]:
+def _filter_skip(actions: list[Action]) -> list[Action]:
     return [a for a in actions if a.action_type != ActionType.SKIP]

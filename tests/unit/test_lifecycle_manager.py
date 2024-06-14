@@ -19,7 +19,7 @@
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import ANY, call
 
 import craft_parts
@@ -39,7 +39,7 @@ def mock_available_plugins(monkeypatch):
     monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
 
 
-def create_data(part_name: str, plugin_name: str) -> Dict[str, Any]:
+def create_data(part_name: str, plugin_name: str) -> dict[str, Any]:
     return {"parts": {part_name: {"plugin": plugin_name}}}
 
 
@@ -57,7 +57,7 @@ class TestLifecycleManager:
             """
         )
         self._data = yaml.safe_load(yaml_data)
-        self._lcm_kwargs: Dict[str, Any] = {}
+        self._lcm_kwargs: dict[str, Any] = {}
         # pylint: enable=attribute-defined-outside-init
 
     def test_invalid_arch(self, new_dir):
@@ -293,7 +293,7 @@ class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
 
     @pytest.fixture()
-    def parts_data(self) -> Dict[str, Any]:
+    def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
 
     def test_overlay_supported(self, mocker, new_dir, parts_data):
@@ -317,7 +317,7 @@ class TestPartitionsDisabled:
     """Partition feature must be enabled when partition are defined."""
 
     @pytest.fixture()
-    def parts_data(self) -> Dict[str, Any]:
+    def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     def test_partitions_disabled(self, new_dir, parts_data):

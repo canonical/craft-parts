@@ -20,7 +20,6 @@ import json
 import logging
 import os
 import sys
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ class CraftCtl:
     """
 
     @classmethod
-    def run(cls, cmd: str, args: List[str]) -> Optional[str]:
+    def run(cls, cmd: str, args: list[str]) -> str | None:
         """Handle craftctl commands.
 
         :param cmd: The command to handle.
@@ -51,7 +50,7 @@ class CraftCtl:
         raise RuntimeError(f"invalid command {cmd!r}")
 
 
-def _client(cmd: str, args: List[str]) -> Optional[str]:
+def _client(cmd: str, args: list[str]) -> str | None:
     """Execute a command in the running step processor.
 
     The control protocol client allows a user scriptlet to execute

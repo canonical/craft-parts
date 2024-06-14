@@ -19,7 +19,7 @@
 
 import logging
 import shlex
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, cast
 
 from overrides import override
 
@@ -33,14 +33,14 @@ logger = logging.getLogger(__name__)
 class MesonPluginProperties(PluginProperties, PluginModel):
     """The part properties used by the Go plugin."""
 
-    meson_parameters: List[str] = []
+    meson_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "MesonPluginProperties":
+    def unmarshal(cls, data: dict[str, Any]) -> "MesonPluginProperties":
         """Populate make properties from the part specification.
 
         :param data: A dictionary containing part properties.
@@ -64,7 +64,7 @@ class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -106,22 +106,22 @@ class MesonPlugin(Plugin):
         return True
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MesonPluginProperties, self._options)
 

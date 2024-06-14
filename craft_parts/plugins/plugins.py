@@ -17,7 +17,7 @@
 """Definitions and helpers to handle plugins."""
 
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Type
+from typing import TYPE_CHECKING, Any
 
 from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
@@ -42,11 +42,11 @@ if TYPE_CHECKING:
     from craft_parts import infos, parts
 
 
-PluginType = Type[Plugin]
+PluginType = type[Plugin]
 
 
 # Plugin registry by plugin API version
-_BUILTIN_PLUGINS: Dict[str, PluginType] = {
+_BUILTIN_PLUGINS: dict[str, PluginType] = {
     "ant": AntPlugin,
     "autotools": AutotoolsPlugin,
     "cmake": CMakePlugin,
@@ -102,12 +102,12 @@ def get_plugin_class(name: str) -> PluginType:
     return _PLUGINS[name]
 
 
-def get_registered_plugins() -> Dict[str, PluginType]:
+def get_registered_plugins() -> dict[str, PluginType]:
     """Return the list of currently registered plugins."""
     return copy.deepcopy(_PLUGINS)
 
 
-def register(plugins: Dict[str, PluginType]) -> None:
+def register(plugins: dict[str, PluginType]) -> None:
     """Register part handler plugins.
 
     :param plugins: a dictionary where the keys are plugin names and values
@@ -129,8 +129,8 @@ def unregister_all() -> None:
 
 
 def extract_part_properties(
-    data: Dict[str, Any], *, plugin_name: str
-) -> Dict[str, Any]:
+    data: dict[str, Any], *, plugin_name: str
+) -> dict[str, Any]:
     """Get common part properties without plugin-specific entries.
 
     :param data: A dictionary containing all part properties.

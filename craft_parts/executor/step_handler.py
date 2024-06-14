@@ -26,7 +26,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, TextIO, Union
+from typing import TextIO
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -42,15 +42,15 @@ from .migration import migrate_files
 
 logger = logging.getLogger(__name__)
 
-Stream = Optional[Union[TextIO, int]]
+Stream = TextIO | int | None
 
 
 @dataclasses.dataclass(frozen=True)
 class StepContents:
     """Files and directories to be added to the step's state."""
 
-    files: Set[str] = dataclasses.field(default_factory=set)
-    dirs: Set[str] = dataclasses.field(default_factory=set)
+    files: set[str] = dataclasses.field(default_factory=set)
+    dirs: set[str] = dataclasses.field(default_factory=set)
 
 
 class StepHandler:
@@ -71,11 +71,11 @@ class StepHandler:
         *,
         step_info: StepInfo,
         plugin: Plugin,
-        source_handler: Optional[SourceHandler],
+        source_handler: SourceHandler | None,
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
-        partitions: Optional[Set[str]] = None,
+        partitions: set[str] | None = None,
     ) -> None:
         self._part = part
         self._step_info = step_info
@@ -173,8 +173,8 @@ class StepHandler:
             )
 
         if self._partitions:
-            files: Set[str] = set()
-            dirs: Set[str] = set()
+            files: set[str] = set()
+            dirs: set[str] = set()
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     stage_fileset,
@@ -215,8 +215,8 @@ class StepHandler:
             prime_fileset.combine(stage_fileset)
 
         if self._partitions:
-            files: Set[str] = set()
-            dirs: Set[str] = set()
+            files: set[str] = set()
+            dirs: set[str] = set()
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     prime_fileset,
@@ -357,7 +357,7 @@ class StepHandler:
         )
 
     def _process_api_commands(
-        self, cmd_name: str, cmd_args: List[str], *, step: Step, scriptlet_name: str
+        self, cmd_name: str, cmd_args: list[str], *, step: Step, scriptlet_name: str
     ) -> str:
         """Invoke API command actions."""
         retval = ""
@@ -433,12 +433,12 @@ class StepHandler:
 
 
 def _create_and_run_script(
-    commands: List[str],
+    commands: list[str],
     script_path: Path,
     cwd: Path,
     stdout: Stream,
     stderr: Stream,
-    build_environment_script_path: Optional[Path] = None,
+    build_environment_script_path: Path | None = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:

@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any
 
 import craft_parts
 import pytest
@@ -27,11 +27,11 @@ from craft_parts import Action, ActionType, Step, errors, plugins
 class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
     """The application-defined plugin properties."""
 
-    app_stuff: List[str]
+    app_stuff: list[str]
     source: str
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
+    def unmarshal(cls, data: dict[str, Any]):
         plugin_data = plugins.extract_plugin_properties(
             data, plugin_name="app", required=["source"]
         )
@@ -43,16 +43,16 @@ class AppPlugin(plugins.Plugin):
 
     properties_class = AppPluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return {"build_snap"}
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {"build_package"}
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PARTS_TEST_VAR": "application plugin"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return ["echo hello ${PARTS_TEST_VAR}"]
 
 

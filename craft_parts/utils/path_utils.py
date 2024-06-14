@@ -17,7 +17,7 @@
 """Utility functions for paths."""
 import re
 from pathlib import PurePath
-from typing import NamedTuple, Optional, Tuple, TypeVar, Union
+from typing import NamedTuple, TypeVar
 
 from craft_parts.errors import FeatureError
 from craft_parts.features import Features
@@ -34,11 +34,11 @@ HAS_NAMESPACED_PARTITION_REGEX = re.compile(r"^(\([a-z]+/(?!-)[a-z\-]+(?<!-)\))(
 class PartitionPathPair(NamedTuple):
     """A pair containing a partition name and a path."""
 
-    partition: Optional[str]
-    path: Union[PurePath, str]
+    partition: str | None
+    path: PurePath | str
 
 
-def _has_partition(path: Union[PurePath, str]) -> bool:
+def _has_partition(path: PurePath | str) -> bool:
     """Check whether a path has an explicit partition."""
     return bool(
         HAS_PARTITION_REGEX.match(str(path))
@@ -69,7 +69,7 @@ def get_partition_and_path(path: FlexiblePath) -> PartitionPathPair:
     return PartitionPathPair("default", path)
 
 
-def _split_partition_and_inner_path(str_path: str) -> Tuple[str, str]:
+def _split_partition_and_inner_path(str_path: str) -> tuple[str, str]:
     """Split a path with a partition into a partition and inner path.
 
     :param str_path: A string of the filepath beginning with a partition to split.

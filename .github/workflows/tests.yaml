@@ -66,9 +66,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: |
-            3.7
-            3.8
-            3.9
             3.10
             3.12
           cache: pip
@@ -113,13 +110,13 @@ jobs:
   tests:
     strategy:
       matrix:
-        os: [ubuntu-20.04]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        os: [ubuntu-22.04]
+        python-version: ["3.10", "3.12"]
         include:
-          - adjective: focal
-          - os: ubuntu-22.04
+          - adjective: jammy
+          - os: ubuntu-20.04
             python-version: "3.10"
-            adjective: jammy
+            adjective: focal
 
     runs-on: ${{ matrix.os }}
     steps:
