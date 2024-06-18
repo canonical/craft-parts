@@ -403,7 +403,9 @@ class TestPartUnmarshal:
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []}, partitions=partitions)
         assert raised.value.part_name == "foo"
-        assert raised.value.message == "- str type expected in field 'plugin'"
+        assert (
+            raised.value.message == "- Input should be a valid string in field 'plugin'"
+        )
 
     @pytest.mark.parametrize("fileset", ["stage", "prime"])
     def test_relative_path_validation(self, partitions, fileset):
@@ -411,9 +413,9 @@ class TestPartUnmarshal:
             Part("foo", {fileset: ["bar", "/baz", ""]}, partitions=partitions)
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
-            "- '/baz' must be a relative path (cannot start with '/') "
-            f"in field '{fileset}[1]'\n"
-            f"- path cannot be empty in field '{fileset}[2]'"
+            "- Value error, '/baz' must be a relative path (cannot start with "
+            f"'/') in field '{fileset}[1]'\n"
+            f"- Value error, path cannot be empty in field '{fileset}[2]'"
         )
 
 
@@ -525,7 +527,7 @@ class TestPartValidation:
             "unexpected-extra": True,
         }
 
-        error = r"unexpected-extra\s+extra fields not permitted"
+        error = r"unexpected-extra\s+[Ee]xtra inputs are not permitted"
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
 
@@ -535,6 +537,6 @@ class TestPartValidation:
             "make-parameters": ["-C bar"],
         }
 
-        error = r"source\s+field required"
+        error = r"source\s+[Ff]ield required"
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)

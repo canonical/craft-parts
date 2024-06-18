@@ -21,9 +21,11 @@ import os
 import re
 import subprocess
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
+from typing import Any, Dict, List, Optional, Set, cast
 
 from overrides import override
+from pydantic import AfterValidator, Field
+from typing_extensions import Annotated
 from pydantic import conlist
 from pydantic import validator as pydantic_validator
 
@@ -33,13 +35,18 @@ from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
-# A workaround for mypy false positives
-# see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
-# The proper fix requires Python 3.9+ (needs `typing.Annotated`)
-if TYPE_CHECKING:
-    UniqueStrList = List[str]
-else:
-    UniqueStrList = conlist(str, unique_items=True)
+
+def _unique_str_list(v: List[str]) -> List[str]:
+    if len(v) != len(set(v)):
+        raise ValueError("not unique string list")
+    return v
+
+
+UniqueStrList = Annotated[
+    List[str],
+    AfterValidator(_unique_str_list),
+    Field(json_schema_extra={"uniqueItems": True}),
+]
 
 
 class RustPluginProperties(PluginProperties, PluginModel):

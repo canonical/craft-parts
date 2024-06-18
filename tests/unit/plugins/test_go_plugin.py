@@ -160,7 +160,7 @@ def test_invalid_parameters():
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("go-invalid",)
-    assert err[0]["type"] == "value_error.extra"
+    assert err[0]["type"] == "extra_forbidden"
 
 
 def test_missing_parameters():
@@ -169,7 +169,7 @@ def test_missing_parameters():
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
-    assert err[0]["type"] == "value_error.missing"
+    assert err[0]["type"] == "missing"
 
 
 def test_get_out_of_source_build(part_info):
