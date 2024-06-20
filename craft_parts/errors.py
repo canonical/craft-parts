@@ -31,11 +31,15 @@ class PartsError(Exception):
     :param brief: Brief description of error.
     :param details: Detailed information.
     :param resolution: Recommendation, if any.
+    :param doc_slug:
+        Reusable documentation slug for consumers adopting
+        the Craft Parts documentation.
     """
 
     brief: str
     details: Optional[str] = None
     resolution: Optional[str] = None
+    doc_slug: Optional[str] = None
 
     def __str__(self) -> str:
         components = [self.brief]
@@ -476,11 +480,13 @@ class PluginBuildError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str) -> None:
+    def __init__(self, *, part_name: str, plugin_name: str) -> None:
         self.part_name = part_name
         brief = f"Failed to run the build script for part {part_name!r}."
-
-        super().__init__(brief=brief)
+        resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
+        super().__init__(
+            brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
+        )
 
 
 class PluginCleanError(PartsError):
