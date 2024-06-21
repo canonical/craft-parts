@@ -794,3 +794,27 @@ def test_get_filtered_stage_package_empty_ignore_filter(mocker):
     )
 
     assert filtered_names == {"some-base-pkg", "some-other-base-pkg"}
+
+
+def test_get_filtered_stage_package_core24(mocker):
+    mock_get_packages_in_base = mocker.patch.object(deb, "get_packages_in_base")
+    mock_get_packages_in_base.return_value = [
+        DebPackage(name="some-package"),
+        DebPackage(name="python3-cffi"),
+        DebPackage(name="python3-cffi-backend"),
+        DebPackage(name="python3-jsonschema"),
+        DebPackage(name="python3-attr"),
+    ]
+
+    filtered_names = deb._get_filtered_stage_package_names(
+        base="core24",
+        package_list=[
+            DebPackage(name="python3-cffi"),
+            DebPackage(name="python3-jsonschema"),
+        ],
+        base_package_names=None,
+    )
+
+    # python3-cffi-backend and python3-attr must NOT be on the list of filtered
+    # names, even though they are present in the core24 base.
+    assert filtered_names == {"some-package"}

@@ -23,6 +23,11 @@ Changelog
   - Add meson plugin reference
   - Documentation fixes
 
+1.30.1 (2024-06-21)
+-------------------
+
+- Fix list of ignored packages in core24 bases when fetching stage-packages
+
 1.30.0 (2024-05-16)
 -------------------
 
