@@ -249,6 +249,36 @@ _IGNORE_FILTERS: Dict[str, Set[str]] = {
         "python3-yaml",
         "python3-zipp",
     },
+    "core24": {
+        "python3-attr",
+        "python3-blinker",
+        "python3-certifi",
+        "python3-cffi-backend",
+        "python3-chardet",
+        "python3-configobj",
+        "python3-cryptography",
+        "python3-dbus",
+        "python3-debconf",
+        "python3-idna",
+        "python3-jinja2",
+        "python3-json-pointer",
+        "python3-jsonpatch",
+        "python3-jsonschema",
+        "python3-jwt",
+        "python3-markupsafe",
+        # Provides /usr/bin/python3, don't bring in unless explicitly requested.
+        # "python3-minimal"
+        "python3-netifaces",
+        "python3-netplan",
+        "python3-oauthlib",
+        # Rely on version brought in by setuptools, unless explicitly requested.
+        # "python3-pkg-resources"
+        "python3-pyrsistent",
+        "python3-requests",
+        "python3-serial",
+        "python3-urllib3",
+        "python3-yaml",
+    },
 }
 
 
