@@ -2,10 +2,16 @@
 Changelog
 *********
 
-1.31.1 (2024-06-24)
+1.32.0 (2024-06-24)
 -------------------
 
-- Fix list of ignored packages in core24 bases when fetching stage-packages
+- Adds support for 7z sources
+- Adds reference documentation for the qmake plugin
+- Improves logging output when fetching packages
+- Improves errors for when sources cannot be fetched
+- Fixes a behavior where apt packages would be fetched when the user was
+  not a superuser
+- Fixes list of ignored packages in core24 bases when fetching stage-packages
 
 1.31.0 (2024-05-16)
 -------------------
