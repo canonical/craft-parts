@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.31.1 (2024-06-24)
+-------------------
+
+- Fix list of ignored packages in core24 bases when fetching stage-packages
+
 1.31.0 (2024-05-16)
 -------------------
 
