@@ -27,10 +27,10 @@ def test_autotools_plugin(new_dir, partitions):
         """
         parts:
           hello:
-            source: https://git.savannah.gnu.org/git/hello.git
+            # Consuming the tarball instead of the "raw" source
+            # removes coverage on testing autotools-bootstrap-parameters
+            source: https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/hello/2.10-3build1/hello_2.10.orig.tar.gz
             plugin: autotools
-            autotools-bootstrap-parameters:
-              - --skip-po
             autotools-configure-parameters:
               - --prefix=/usr/
             build-packages:
