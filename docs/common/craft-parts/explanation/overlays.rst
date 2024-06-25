@@ -151,5 +151,5 @@ Step Invalidation
 
 
 
-.. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/master/layer.md
-.. _Rockcraft: https://canonical-rockcraft.readthedocs-hosted.com/
+.. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/main/layer.md
+.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/en/stable/

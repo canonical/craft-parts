@@ -374,7 +374,7 @@ The ``plugin`` and ``parse-info`` keys apply to all steps.
 .. _`Autotools`: https://www.gnu.org/software/automake/
 .. _`Cargo`: https://crates.io/
 .. _`CMake`: https://cmake.org/
-.. _`Go`: https://golang.org/
+.. _`Go`: https://go.dev/
 .. _`Make`: https://www.gnu.org/software/make/manual/make.html
 .. _`Meson`: https://mesonbuild.com/
 .. _`.Net`: https://github.com/dotnet/core
