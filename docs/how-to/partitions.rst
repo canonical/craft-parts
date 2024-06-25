@@ -54,8 +54,8 @@ Using the partitions
 
 Partitions cannot be used until `after you have configured your application <#app-changes>`_.
 
-In configuration yaml
----------------------
+In configuration yaml lifecycle
+-------------------------------
 
 Defined partitions may be referenced in the ``organize``, ``stage``, and ``prime`` sections of your configuration yaml files::
 
@@ -97,7 +97,16 @@ From the previous example, these variables would be available::
   $CRAFT_KERNEL_PRIME            -> partitions/kernel/prime
   $CRAFT_COMPONENT_BAR_BAZ_PRIME -> partitions/component/bar-baz/prime
 
-Note that the hyphen in the partition ``component/bar-baz`` is converted to an underscore.
+(Note that the hyphen in the partition ``component/bar-baz`` is converted to an underscore in the corresponding variable name.)
+
+You might use these variables in a lifecycle override section of a configuration yaml.  For instance::
+
+  ...
+  prime-override: |
+    cp -R $CRAFT_KERNEL_STAGE/vmlinux $CRAFT_KERNEL_PRIME/
+    chmod -R 444 $CRAFT_KERNEL_PRIME/*
+    cp -R $CRAFT_STAGE/lib/modules/6.x/* $CRAFT_PRIME
+    chmod -R 600 $CRAFT_PRIME/*
 
 From code
 ---------
