@@ -71,6 +71,8 @@ exclude_patterns = [
 # Links to ignore when checking links
 linkcheck_ignore = [
     "https://foo.org/",
+    # GNU's site is a bit unreliable
+    "https://www.gnu.org/.*",
 ]
 
 rst_epilog = """
