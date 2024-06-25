@@ -42,6 +42,9 @@ jobs:
       - name: Run pydocstyle
         run: |
           make test-pydocstyle
+      - name: Run lint-docs
+         run: |
+           tox run -e lint-docs
       - name: Run pyright
         run: |
           sudo snap install --classic node
