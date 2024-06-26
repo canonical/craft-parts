@@ -20,7 +20,9 @@ To add partition support to an application, two basic changes are needed to the 
 
 #. Enable the feature
 
-   When creating the :class:`AppMetadata <craft_application.AppMetadata>`, specify that the application will use the partitions feature::
+   When creating the :class:`AppMetadata <craft_application.AppMetadata>`, specify that the application will use the partitions feature:
+
+   .. code-block:: python
 
      from craft_application import AppMetadata, AppFeatures
 
@@ -35,7 +37,9 @@ To add partition support to an application, two basic changes are needed to the 
 
    Inside your :class:`Application <craft_application.Application>` class, the :class:`ServiceFactory <craft_application.ServiceFactory>` can be told to instantiate the :class:`LifecycleService <craft_application.LifecycleService` with specific ``custom_args`` by calling ``set_kwargs``.
 
-   Override the ``_configure_services`` method, and use ``set_kwargs`` to define the partitions that will eventually be passed to the :class:`LifecycleManager <craft_parts.LifecycleManager>`::
+   Override the ``_configure_services`` method, and use ``set_kwargs`` to define the partitions that will eventually be passed to the :class:`LifecycleManager <craft_parts.LifecycleManager>`:
+
+   .. code-block:: python
 
      @override
      def _configure_services(self, provider_name: str | None) -> None:
@@ -57,7 +61,9 @@ Partitions cannot be used until `after you have configured your application <#ap
 In configuration yaml lifecycle
 -------------------------------
 
-Defined partitions may be referenced in the ``organize``, ``stage``, and ``prime`` sections of your configuration yaml files::
+Defined partitions may be referenced in the ``organize``, ``stage``, and ``prime`` sections of your configuration yaml files:
+
+.. code-block:: yaml
 
   organize:
     <source-path>: (<partition>)/<path>
@@ -68,10 +74,14 @@ Defined partitions may be referenced in the ``organize``, ``stage``, and ``prime
 
 Paths in the configuration yaml not beginning with a partition label will implicitly use the default partition.
 
-The source path of an ``organize`` entry can only be from the default partition.  For example::
+The source path of an ``organize`` entry can only be from the default partition.  For example:
+
+.. code-block:: yaml
 
   organize:
     (kernel)/usr/local/bin/hello: bin/hello
+
+.. code-block:: text
 
   Cannot organize files from 'kernel' partition.
   Files can only be organized from the 'default' partition
@@ -99,9 +109,10 @@ From the previous example, these variables would be available::
 
 (Note that the hyphen in the partition ``component/bar-baz`` is converted to an underscore in the corresponding variable name.)
 
-You might use these variables in a lifecycle override section of a configuration yaml.  For instance::
+You might use these variables in a lifecycle override section of a configuration yaml.  For instance:
 
 .. code-block:: yaml
+
   prime-override: |
     cp -R $CRAFT_KERNEL_STAGE/vmlinux $CRAFT_KERNEL_PRIME/
     chmod -R 444 $CRAFT_KERNEL_PRIME/*
@@ -111,7 +122,9 @@ You might use these variables in a lifecycle override section of a configuration
 From code
 ---------
 
-Application code that can access ``Part`` or ``ProjectDirs`` objects may get partition information from them::
+Application code that can access ``Part`` or ``ProjectDirs`` objects may get partition information from them:
+
+.. code-block:: python-console
 
   >>> Part(name="my-part").part_install_dirs["kernel"]
   Path("partitions/kernel/parts/my-part/install")
