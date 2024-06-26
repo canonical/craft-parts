@@ -42,7 +42,7 @@ Sets the Qt major version. The default is Qt 5, set to 6 for Qt 6 projects.
 Environment variables
 ---------------------
 
-The plugin sets the QT_SELECT environment variable to ref:`qmake-major-version`.
+The plugin sets the QT_SELECT environment variable to :ref:`qmake-major-version`.
 
 
 Dependencies
