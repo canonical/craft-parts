@@ -9,7 +9,7 @@ In the below examples, we work with three partitions: ``default``, ``kernel``, a
 
 ``default`` must always be the first listed partition.
 
-Partition names and namespace names must consist of `only` lower-case alphabetic characters, unless a partition exists under a namespace, in which case it may also contain hyphen characters, though the first and last characters must still be alphabetic.
+Partition names and namespace names must consist of *only* lower-case alphabetic characters, unless a partition exists under a namespace, in which case it may also contain hyphen characters, though the first and last characters must still be alphabetic.
 
 .. _app_changes:
 
@@ -78,7 +78,7 @@ The source path of an ``organize`` entry can only be from the default partition.
 
 When the ``stage`` and ``prime`` keywords are not provided for a part, craft-parts' default behavior is to stage and prime all files for the part in all partitions.
 
-(If a stage or prime filter `is` applied to a partition, the default behavior will not be affected for the other partitions.)
+(If a stage or prime filter *is* applied to a partition, the default behavior will not be affected for the other partitions.)
 
 In environment variables
 ------------------------
