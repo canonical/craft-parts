@@ -1,5 +1,5 @@
 ******************************************
-Adding partition support to an application
+Add partition support to an application
 ******************************************
 
 Partitions basics
@@ -101,7 +101,7 @@ From the previous example, these variables would be available::
 
 You might use these variables in a lifecycle override section of a configuration yaml.  For instance::
 
-  ...
+.. code-block:: yaml
   prime-override: |
     cp -R $CRAFT_KERNEL_STAGE/vmlinux $CRAFT_KERNEL_PRIME/
     chmod -R 444 $CRAFT_KERNEL_PRIME/*
