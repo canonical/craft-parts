@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
+from craft_parts.utils import process_utils
 from craft_parts.utils.partition_utils import validate_partition_names
 
 
@@ -240,9 +241,20 @@ class LifecycleManager:
         """Reload the ephemeral state from disk."""
         self._sequencer.reload_state()
 
-    def action_executor(self) -> executor.ExecutionContext:
-        """Return a context manager for action execution."""
-        return executor.ExecutionContext(executor=self._executor)
+    def action_executor(
+        self,
+        *,
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
+    ) -> executor.ExecutionContext:
+        """Return a context manager for action execution.
+
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
+        """
+        return executor.ExecutionContext(
+            executor=self._executor, stdout=stdout, stderr=stderr
+        )
 
     def get_pull_assets(self, *, part_name: str) -> Optional[Dict[str, Any]]:
         """Return the part's pull state assets.

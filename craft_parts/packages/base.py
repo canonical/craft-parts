@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2023 Canonical Ltd.
+# Copyright 2017-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, List, Optional, Set, Tuple, Type
 
 from craft_parts import xattrs
+from craft_parts.utils import process_utils
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,8 @@ class BaseRepository(abc.ABC):
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,
     ) -> List[str]:
         """Install packages on the host system.
 
@@ -107,6 +110,8 @@ class BaseRepository(abc.ABC):
         :param package_names: A list of package names to install.
         :param list_only: Only list the packages that would be installed.
         :param refresh_package_cache: Refresh the cache before installing.
+        :param stdout: Stream for subprocess output redirection.
+        :param stderr: Stream for subprocess error redirection.
 
         :return: A list with the packages installed and their versions.
         """
@@ -210,6 +215,8 @@ class DummyRepository(BaseRepository):
         *,
         list_only: bool = False,  # noqa: ARG003
         refresh_package_cache: bool = True,  # noqa: ARG003
+        stdout: process_utils.Stream = process_utils.DEFAULT_STDOUT,  # noqa: ARG003
+        stderr: process_utils.Stream = process_utils.DEFAULT_STDERR,  # noqa: ARG003
     ) -> List[str]:
         """Install packages on the host system."""
         return []

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ import craft_parts
 import pytest
 import yaml
 from craft_parts import Action, ActionType, Step, errors, plugins
+from craft_parts.utils.process_utils import DEFAULT_STDERR, DEFAULT_STDOUT
 
 
 class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
@@ -114,7 +115,11 @@ def test_application_plugin_happy(new_dir, partitions, mocker):
     assert output_path.read_text() == "hello application plugin\n"
     assert error_path.read_text() == "+ echo hello application plugin\n"
 
-    mock_install_packages.assert_called_once_with(["build_package"])
+    mock_install_packages.assert_called_once_with(
+        ["build_package"],
+        stdout=DEFAULT_STDOUT,
+        stderr=DEFAULT_STDERR,
+    )
     mock_install_snaps.assert_called_once_with({"build_snap"})
 
     # make sure parts data was not changed
