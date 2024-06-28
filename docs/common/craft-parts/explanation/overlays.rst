@@ -1,5 +1,5 @@
 ****************
-``OVERLAY`` Step
+OVERLAY Step
 ****************
 
 Some Craft applications, such as Rockcraft_, include entire base filesystems in
@@ -145,10 +145,6 @@ the pull step, so if the list of overlay packages is changed, the pull step
 for the part will re-run. If the :ref:`overlay is visible <overlay_visibility>`
 to a part, the overlay integrity code is added to future steps of the part,
 ensuring proper invalidation of those steps if overlay data changes.
-
-Step Invalidation
-=================
-
 
 
 .. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/master/layer.md
