@@ -363,6 +363,7 @@ pkgconfig
 pre
 prepend
 prepended
+prepending
 py
 pydantic
 pylint

@@ -1,5 +1,3 @@
-.. _partition_specific_output_directory_variables:
-
 Partition-specific output directory environment variables
 ---------------------------------------------------------
 
