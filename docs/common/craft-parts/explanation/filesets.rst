@@ -64,6 +64,19 @@ a path with the ``-`` character, as in these examples:
 The second example selects and discards gzipped files in all nested directories
 inside the :file:`usr/share` directory.
 
+Partitions
+^^^^^^^^^^
+
+If partitions are in use, bare path specifications (as demonstrated above) will refer to the default partition.  The following two lines are equivalent:
+
+* :file:`usr/bin/hello`
+* :file:`(default)/usr/bin/hello`
+
+Paths may be specified in any application-defined partition, like so:
+
+* :file:`(boot)/vmlinuz`
+* :file:`(data)/static/uploads/example.png`
+
 Using filesets
 --------------
 

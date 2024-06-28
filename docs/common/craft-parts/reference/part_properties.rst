@@ -90,6 +90,22 @@ to the ``bin`` directory in the staging area and renamed to ``hello``:
    organize:
      hello.py: bin/hello
 
+If partitions are in use by the application, they may be referenced by prepending the partition name, surrounded by parentheses, to the destination path.  Only the destination path may specify a partition; source paths always reference the ``default`` partition.  Omitting the partition name in the destination path causes the file to be copied to the ``default`` partition.
+
+The following example is exactly equivalent to the above example:
+
+.. code:: yaml
+
+   organize:
+     hello.py: (default)/bin/hello
+
+In this example, the file is instead copied to the application-defined ``boot`` partition:
+
+.. code:: yaml
+
+   organize:
+     vmlinuz-6.2.0-39-generic: (boot)/vmlinuz
+
 .. _override_build:
 
 override-build
