@@ -23,6 +23,8 @@ qmake-parameters
 
 Parameters to configure the project using common qmake semantics.
 
+
+
 qmake-project-file
 ~~~~~~~~~~~~~~~~~~
 **Type:** string
@@ -30,6 +32,8 @@ qmake-project-file
 
 The qmake project file to use. This is usually only needed if
 qmake can not determine what project file to use on its own.
+
+.. _qmake-major-version:
 
 qmake-major-version
 ~~~~~~~~~~~~~~~~~~~
@@ -42,7 +46,7 @@ Sets the Qt major version. The default is Qt 5, set to 6 for Qt 6 projects.
 Environment variables
 ---------------------
 
-The plugin sets the QT_SELECT environment variable to ref:`qmake-major-version`.
+The plugin sets the QT_SELECT environment variable to :ref:`qmake-major-version`.
 
 
 Dependencies
