@@ -1,7 +1,7 @@
 Partition-specific output directory environment variables
 ---------------------------------------------------------
 
-If partitions have been enabled, partition-specific environment variables will be created for use during step processing and execution of user-defined scriptlets.
+If partitions are enabled, partition-specific environment variables will be created for use during step processing and execution of user-defined scriptlets.
 
 These variable names will contain the (optional) namespace, partition name, and lifecycle step, formatted as ``CRAFT_[<namespace>_]<partition>_{STAGE|PRIME}``.  The values of these variables will be the directory that corresponds to that partition and step.  For instance, if the defined partitions are ``default``, ``kernel``, and ``component/bar-baz``, the following environment variables will be created::
 
