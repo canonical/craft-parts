@@ -5,6 +5,8 @@ AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
 AptCache
+Autoconf
+Automake
 Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
@@ -67,6 +69,7 @@ GitSource
 GoPlugin
 GoPluginEnvironmentValidator
 GoPluginProperties
+HttpRequestError
 IncompatibleSourceOptions
 InvalidAction
 InvalidActionException
@@ -201,6 +204,7 @@ SDK
 SDKs
 SDL
 ScriptletRunError
+SevenzipSource
 SnapDownloadError
 SnapGetAssertionError
 SnapInstallError
@@ -263,6 +267,7 @@ buildtags
 bzr
 checkfile
 checksums
+chmod
 chroot
 chrooted
 classmethod
@@ -275,6 +280,7 @@ codename
 commandline
 confictling
 config
+cp
 craftctl
 crafter
 ctl
@@ -335,6 +341,7 @@ mountpoints
 namespace
 namespaced
 nano
+noop
 normalization
 normalize
 npm
@@ -356,6 +363,7 @@ pkgconfig
 pre
 prepend
 prepended
+prepending
 py
 pydantic
 pylint
@@ -374,6 +382,7 @@ scons
 scriptlet
 scriptlets
 setuptools
+sevenzip
 sha
 sliceName
 snapd
@@ -397,6 +406,7 @@ summarized
 svn
 symlink
 symlinks
+texinfo
 toml
 toolchain
 toplevel
@@ -419,6 +429,7 @@ validator
 validators
 venv
 verifications
+vmlinux
 xattr
 xattrs
 xml

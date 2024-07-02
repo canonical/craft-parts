@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -246,6 +246,7 @@ class AptCache(ContextDecorator):
                 continue
 
             try:
+                logger.info("Downloading package: %s", package)
                 dl_path = package.candidate.fetch_binary(
                     str(download_path), progress=self.progress
                 )

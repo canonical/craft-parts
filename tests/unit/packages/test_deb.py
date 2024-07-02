@@ -112,6 +112,7 @@ def test_fake_wrapper_apt_unavailable(monkeypatch):
 class TestPackages:
     def test_fetch_stage_packages(self, mocker, tmpdir, fake_apt_cache, fake_deb_run):
         # pylint: disable=unnecessary-dunder-call
+        mocker.patch("os.geteuid", return_value=0)
         mocker.patch(
             "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
             {"filtered-pkg-1", "filtered-pkg-2"},
@@ -144,7 +145,10 @@ class TestPackages:
 
         assert fetched_packages == ["fake-package=1.0"]
 
-    def test_fetch_virtual_stage_package(self, tmpdir, fake_apt_cache, fake_deb_run):
+    def test_fetch_virtual_stage_package(
+        self, tmpdir, mocker, fake_apt_cache, fake_deb_run
+    ):
+        mocker.patch("os.geteuid", return_value=0)
         _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
@@ -163,7 +167,10 @@ class TestPackages:
         assert fake_deb_run.mock_calls == [call(["apt-get", "update"])]
         assert fetched_packages == ["fake-package=1.0"]
 
-    def test_fetch_stage_package_with_deps(self, tmpdir, fake_apt_cache, fake_deb_run):
+    def test_fetch_stage_package_with_deps(
+        self, tmpdir, mocker, fake_apt_cache, fake_deb_run
+    ):
+        mocker.patch("os.geteuid", return_value=0)
         _, debs_path = deb.get_cache_dirs(tmpdir)
         fake_package = debs_path / "fake-package_1.0_all.deb"
         fake_package.touch()
@@ -191,6 +198,7 @@ class TestPackages:
         self, mocker, tmpdir, fake_apt_cache, fake_deb_run
     ):
         # pylint: disable=unnecessary-dunder-call
+        mocker.patch("os.geteuid", return_value=0)
         mocker.patch(
             "craft_parts.packages.deb._DEFAULT_FILTERED_STAGE_PACKAGES",
             {"filtered-pkg-1"},
@@ -248,7 +256,10 @@ class TestPackages:
 
         assert fetched_packages == []
 
-    def test_get_package_fetch_error(self, tmpdir, fake_apt_cache, fake_deb_run):
+    def test_get_package_fetch_error(
+        self, tmpdir, mocker, fake_apt_cache, fake_deb_run
+    ):
+        mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.side_effect = errors.PackageFetchError(
             "foo"
         )
@@ -281,7 +292,8 @@ class TestPackages:
 
         assert mock_normalize.mock_calls == []
 
-    def test_download_packages(self, fake_apt_cache, fake_deb_run):
+    def test_download_packages(self, fake_apt_cache, fake_deb_run, mocker):
+        mocker.patch("os.geteuid", return_value=0)
         deb.Ubuntu.refresh_packages_list()
         deb.Ubuntu.download_packages(["package", "versioned-package=2.0"])
 
@@ -310,7 +322,8 @@ class TestPackages:
 
 class TestBuildPackages:
     @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_install_build_packages(self, fake_apt_cache, fake_deb_run):
+    def test_install_build_packages(self, fake_apt_cache, fake_deb_run, mocker):
+        mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0"),
             ("package-installed", "1.0"),
@@ -364,7 +377,10 @@ class TestBuildPackages:
         assert fake_deb_run.mock_calls == []
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_already_installed_no_specified_version(self, fake_apt_cache, fake_deb_run):
+    def test_already_installed_no_specified_version(
+        self, fake_apt_cache, fake_deb_run, mocker
+    ):
+        mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
         ]
@@ -395,8 +411,9 @@ class TestBuildPackages:
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_already_installed_with_specified_version(
-        self, fake_apt_cache, fake_deb_run
+        self, fake_apt_cache, fake_deb_run, mocker
     ):
+        mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package-installed", "1.0")
         ]
@@ -427,8 +444,9 @@ class TestBuildPackages:
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_already_installed_with_different_version(
-        self, fake_apt_cache, fake_deb_run
+        self, fake_apt_cache, fake_deb_run, mocker
     ):
+        mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("new-version", "3.0")
         ]
@@ -460,7 +478,8 @@ class TestBuildPackages:
         ]
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_install_virtual_build_package(self, fake_apt_cache, fake_deb_run):
+    def test_install_virtual_build_package(self, fake_apt_cache, fake_deb_run, mocker):
+        mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("resolved-virtual-package", "1.0")
         ]
@@ -492,7 +511,10 @@ class TestBuildPackages:
         ]
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_smart_terminal(self, fake_apt_cache, fake_deb_run, fake_dumb_terminal):
+    def test_smart_terminal(
+        self, fake_apt_cache, fake_deb_run, fake_dumb_terminal, mocker
+    ):
+        mocker.patch("os.geteuid", return_value=0)
         fake_dumb_terminal.return_value = False
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
@@ -544,12 +566,14 @@ class TestBuildPackages:
             deb.Ubuntu.install_packages(["package=1.0"])
         assert raised.value.packages == ["package=1.0"]
 
-    def test_refresh_packages_list(self, fake_deb_run):
+    def test_refresh_packages_list(self, fake_deb_run, mocker):
+        mocker.patch("os.geteuid", return_value=0)
         deb.Ubuntu.refresh_packages_list()
 
         assert fake_deb_run.mock_calls == [call(["apt-get", "update"])]
 
-    def test_refresh_packages_list_fails(self, fake_deb_run):
+    def test_refresh_packages_list_fails(self, fake_deb_run, mocker):
+        mocker.patch("os.geteuid", return_value=0)
         fake_deb_run.side_effect = CalledProcessError(
             returncode=1, cmd=["apt-get", "update"]
         )
@@ -667,6 +691,7 @@ class TestStagePackagesFilters:
     def test_fetch_stage_packages_with_filtering(
         self, mocker, tmpdir, fake_apt_cache, fake_deb_run
     ):
+        mocker.patch("os.geteuid", return_value=0)
         callbacks.register_stage_packages_filter(lambda x: ["base-pkg-1"])
         callbacks.register_stage_packages_filter(lambda x: ["base-pkg-2", "base-pkg-3"])
 
@@ -769,3 +794,27 @@ def test_get_filtered_stage_package_empty_ignore_filter(mocker):
     )
 
     assert filtered_names == {"some-base-pkg", "some-other-base-pkg"}
+
+
+def test_get_filtered_stage_package_core24(mocker):
+    mock_get_packages_in_base = mocker.patch.object(deb, "get_packages_in_base")
+    mock_get_packages_in_base.return_value = [
+        DebPackage(name="some-package"),
+        DebPackage(name="python3-cffi"),
+        DebPackage(name="python3-cffi-backend"),
+        DebPackage(name="python3-jsonschema"),
+        DebPackage(name="python3-attr"),
+    ]
+
+    filtered_names = deb._get_filtered_stage_package_names(
+        base="core24",
+        package_list=[
+            DebPackage(name="python3-cffi"),
+            DebPackage(name="python3-jsonschema"),
+        ],
+        base_package_names=None,
+    )
+
+    # python3-cffi-backend and python3-attr must NOT be on the list of filtered
+    # names, even though they are present in the core24 base.
+    assert filtered_names == {"some-package"}

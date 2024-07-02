@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class MesonPluginProperties(PluginProperties, PluginModel):
-    """The part properties used by the Go plugin."""
+    """The part properties used by the Meson plugin."""
 
     meson_parameters: list[str] = []
 

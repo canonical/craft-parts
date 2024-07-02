@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2023 Canonical Ltd.
+# Copyright 2015-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -250,6 +250,36 @@ _IGNORE_FILTERS: dict[str, set[str]] = {
         "python3-yaml",
         "python3-zipp",
     },
+    "core24": {
+        "python3-attr",
+        "python3-blinker",
+        "python3-certifi",
+        "python3-cffi-backend",
+        "python3-chardet",
+        "python3-configobj",
+        "python3-cryptography",
+        "python3-dbus",
+        "python3-debconf",
+        "python3-idna",
+        "python3-jinja2",
+        "python3-json-pointer",
+        "python3-jsonpatch",
+        "python3-jsonschema",
+        "python3-jwt",
+        "python3-markupsafe",
+        # Provides /usr/bin/python3, don't bring in unless explicitly requested.
+        # "python3-minimal"
+        "python3-netifaces",
+        "python3-netplan",
+        "python3-oauthlib",
+        # Rely on version brought in by setuptools, unless explicitly requested.
+        # "python3-pkg-resources"
+        "python3-pyrsistent",
+        "python3-requests",
+        "python3-serial",
+        "python3-urllib3",
+        "python3-yaml",
+    },
 }
 
 
@@ -409,7 +439,8 @@ class Ubuntu(BaseRepository):
     ) -> None:
         """Refresh the list of packages available in the repository."""
         # Return early when testing.
-        if os.getenv("CRAFT_PARTS_PACKAGE_REFRESH", "1") == "0":
+        if os.geteuid() != 0:
+            logger.warning("Packages list not refreshed, not running as superuser.")
             return
 
         try:
@@ -663,7 +694,7 @@ class Ubuntu(BaseRepository):
                 for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
                     deb_cache_dir
                 ):
-                    logger.debug("Extracting stage package: %s", pkg_name)
+                    logger.info("Extracting stage package: %s", pkg_name)
                     installed.add(f"{pkg_name}={pkg_version}")
                     file_utils.link_or_copy(
                         str(dl_path), str(stage_packages_path / dl_path.name)

@@ -51,6 +51,7 @@ or by downloading and installing the appropriate source tarball. On Ubuntu these
 * focal (20.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz
 * jammy (22.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
 * lunar (23.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.5.3ubuntu1/python-apt_2.5.3ubuntu1.tar.xz
+* noble (24.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.7.7ubuntu1/python-apt_2.7.7ubuntu1.tar.xz
 
 ## Running tests
 
