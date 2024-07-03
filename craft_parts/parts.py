@@ -68,9 +68,12 @@ class PartSpec(BaseModel):
     override_stage: str | None = None
     override_prime: str | None = None
     permissions: list[Permissions] = []
-    # TODO[pydantic]: The following keys were removed: `allow_mutation`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(validate_assignment=True, extra="forbid", allow_mutation=False, alias_generator=lambda s: s.replace("_", "-"))
+
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid", frozen=True,
+        alias_generator=lambda s: s.replace("_", "-")
+    )
 
     # pylint: disable=no-self-argument
     # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.

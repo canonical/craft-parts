@@ -49,7 +49,7 @@ class MigrationState(BaseModel):
 
         :returns: The state object containing the migration data.
         """
-        return cls(**data)
+        return cls.parse_obj(data)
 
     def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the part state data.
@@ -78,8 +78,6 @@ class StepState(MigrationState, ABC):
 
     part_properties: dict[str, Any] = {}
     project_options: dict[str, Any] = {}
-    # TODO[pydantic]: The following keys were removed: `allow_mutation`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(
         validate_assignment=True,
         extra="ignore",
@@ -87,6 +85,12 @@ class StepState(MigrationState, ABC):
         alias_generator=lambda s: s.replace("_", "-"),
         populate_by_name=True,
     )
+
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
+        """Create and populate a new state object from dictionary data."""
+        raise RuntimeError("this must be implemented by the step-specific class.")
+
 
     @abstractmethod
     def properties_of_interest(
