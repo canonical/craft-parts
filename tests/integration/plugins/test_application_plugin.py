@@ -145,7 +145,7 @@ def test_application_plugin_missing_stuff(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- field 'app-stuff' is required"
+    assert raised.value.message == "- Field required in field 'app-stuff'"
 
 
 def test_application_plugin_type_error(new_dir, partitions):
@@ -173,7 +173,7 @@ def test_application_plugin_type_error(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- value is not a valid list in field 'app-stuff'"
+    assert raised.value.message == "- Input should be a valid list in field 'app-stuff'"
 
 
 def test_application_plugin_extra_property(new_dir, partitions):
@@ -202,7 +202,7 @@ def test_application_plugin_extra_property(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- extra field 'app-other' not permitted"
+    assert raised.value.message == "- Extra inputs are not permitted in field 'app-other'"
 
 
 def test_application_plugin_not_registered(new_dir, partitions):
