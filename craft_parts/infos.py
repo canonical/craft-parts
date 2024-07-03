@@ -22,7 +22,8 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pydantic_yaml import YamlModel
+import pydantic
+import pydantic_yaml
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -77,7 +78,7 @@ _DEB_TO_TRIPLET: dict[str, str] = {
 _var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-class ProjectVar(YamlModel):
+class ProjectVar(pydantic.BaseModel):
     """Project variables that can be updated using craftctl."""
 
     value: str

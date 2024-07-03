@@ -21,15 +21,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-from pydantic_yaml import YamlModel
-
 from craft_parts.utils import os_utils
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 logger = logging.getLogger(__name__)
 
 
-class MigrationState(YamlModel):
+class MigrationState(BaseModel):
     """State information collected when migrating steps.
 
     The migration state contains the paths to the files and directories

@@ -16,6 +16,7 @@
 
 """The craft Rust plugin."""
 
+import collections
 import logging
 import os
 import re
@@ -24,7 +25,7 @@ from textwrap import dedent
 from typing import List, TYPE_CHECKING, Any, cast
 
 from overrides import override
-from pydantic import Field
+from pydantic import AfterValidator, Field
 from pydantic import validator as pydantic_validator
 
 from . import validator
@@ -34,13 +35,16 @@ from typing_extensions import Annotated
 
 logger = logging.getLogger(__name__)
 
-# A workaround for mypy false positives
-# see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
-# The proper fix requires Python 3.9+ (needs `typing.Annotated`)
-if TYPE_CHECKING:
-    UniqueStrList = list[str]
-else:
-    UniqueStrList = Annotated[List[str], Field(unique_items=True)]
+
+def _validate_list_is_unique(value: list):
+    value_set = set(value)
+    if len(value_set) == len(value):
+        return value
+    dupes = [item for item, count in collections.Counter(value).items() if count > 1]
+    raise ValueError(f"Duplicate values in list: {dupes}")
+
+
+UniqueStrList = Annotated[list[str], AfterValidator(_validate_list_is_unique)]
 
 
 class RustPluginProperties(PluginProperties, PluginModel):

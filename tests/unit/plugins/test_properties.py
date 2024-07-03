@@ -25,7 +25,7 @@ def test_properties_unmarshal():
 
 
 class FooProperties(PluginProperties):
-    foo_parameters: list[str] | None
+    foo_parameters: list[str] | None = None
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "FooProperties":

@@ -21,11 +21,11 @@ import os
 import platform
 import re
 from textwrap import dedent
-from typing import Any, cast
+from typing import Any, Self, cast
 
 import requests
 from overrides import override
-from pydantic import root_validator
+from pydantic import model_validator, root_validator
 
 from craft_parts.errors import InvalidArchitecture
 
@@ -54,17 +54,16 @@ class NpmPluginProperties(PluginProperties, PluginModel):
     npm_node_version: str | None = None
     source: str
 
-    @root_validator
-    @classmethod
-    def node_version_defined(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="after")
+    def node_version_defined(self) -> Self:
         """If npm-include-node is true, then npm-node-version must be defined."""
-        if values.get("npm_include_node") and not values.get("npm_node_version"):
+        if self.npm_include_node and not self.npm_node_version:
             raise ValueError("npm-node-version is required if npm-include-node is true")
-        if values.get("npm_node_version") and not values.get("npm_include_node"):
+        if self.npm_node_version and not self.npm_include_node:
             raise ValueError(
                 "npm-node-version has no effect if npm-include-node is false"
             )
-        return values
+        return self
 
     @classmethod
     @override
