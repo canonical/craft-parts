@@ -1,7 +1,7 @@
 .. _overlays:
 
 ************
-OVERLAY Step
+Overlay Step
 ************
 
 Some Craft applications, such as Rockcraft_, include entire base filesystems in

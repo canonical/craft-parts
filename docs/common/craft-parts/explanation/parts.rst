@@ -159,10 +159,10 @@ system packages that need to be deployed with the part are specified using
 the :ref:`stage_snaps` and :ref:`stage_packages` properties. Files to be
 deployed are specified using the :ref:`stage` property.
 
-.. ifconfig:: project in ("Rockcraft",)
+.. ifconfig:: project in ("Rockcraft", "Snapcraft")
 
-   Chisel slices can be specified in :ref:`stage_packages` property as well, but
-   they are mutually exclusive to use with deb system packages. 
+   Chisel slices can be specified in :ref:`stage_packages` as well, but they
+   cannot be mixed with deb packages. 
 
 In the final *prime* step, the files needed for deployment are copied from
 the staging area to the priming area. During this step the ``prime`` property
