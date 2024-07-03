@@ -23,9 +23,18 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
-from pydantic import field_validator, model_validator, ConfigDict, BaseModel, Field, ValidationError, validator
+from pydantic import (
+    field_validator,
+    model_validator,
+    ConfigDict,
+    BaseModel,
+    Field,
+    ValidationError,
+    validator,
+)
 
 from craft_parts import errors, plugins
+from craft_parts.constraints import RelativePathStr
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.packages import platform
@@ -60,8 +69,12 @@ class PartSpec(BaseModel):
     build_attributes: list[str] = []
     organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
-    stage_files: list[str] = Field(default_factory=lambda: ["*"], alias="stage")
-    prime_files: list[str] = Field(default_factory=lambda: ["*"], alias="prime")
+    stage_files: list[RelativePathStr] = Field(
+        default_factory=lambda: ["*"], alias="stage"
+    )
+    prime_files: list[RelativePathStr] = Field(
+        default_factory=lambda: ["*"], alias="prime"
+    )
     override_pull: str | None = None
     overlay_script: str | None = None
     override_build: str | None = None
@@ -71,23 +84,10 @@ class PartSpec(BaseModel):
 
     model_config = ConfigDict(
         validate_assignment=True,
-        extra="forbid", frozen=True,
-        alias_generator=lambda s: s.replace("_", "-")
+        extra="forbid",
+        frozen=True,
+        alias_generator=lambda s: s.replace("_", "-"),
     )
-
-    # pylint: disable=no-self-argument
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("stage_files", "prime_files", each_item=True)
-    def validate_relative_path_list(cls, item: str) -> str:
-        """Verify list is not empty and does not contain any absolute paths."""
-        if not item:
-            raise ValueError("path cannot be empty")
-        if item.startswith("/"):
-            raise ValueError(
-                f"{item!r} must be a relative path (cannot start with '/')"
-            )
-        return item
 
     @field_validator("overlay_packages", "overlay_files", "overlay_script")
     @classmethod
