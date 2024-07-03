@@ -422,7 +422,7 @@ class TestOverlayDisabled(test_lifecycle_manager.TestOverlayDisabled):
             )
         assert raised.value.part_name == "foo"
         assert (
-            raised.value.message == "- overlays not supported in field 'overlay-script'"
+            raised.value.message == "- Value error, overlays not supported in field 'overlay-script'"
         )
 
 
