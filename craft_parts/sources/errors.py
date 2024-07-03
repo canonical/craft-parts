@@ -134,7 +134,7 @@ class NetworkRequestError(SourceError):
     :param source: URL of unreachable source.
     """
 
-    def __init__(self, message: str, *, source: Optional[str] = None) -> None:
+    def __init__(self, message: str, *, source: str | None = None) -> None:
         self.message = message
         self.source = source
         brief = f"Network request error: {message}."
