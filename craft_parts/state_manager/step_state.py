@@ -21,6 +21,9 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
+import pydantic_yaml
+import yaml
+
 from craft_parts.utils import os_utils
 from pydantic import BaseModel, ConfigDict
 
@@ -61,7 +64,7 @@ class MigrationState(BaseModel):
         :param filepath: The path to the file to write.
         """
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        yaml_data = self.yaml(by_alias=True)
+        yaml_data = yaml.safe_dump(self.model_dump())
         os_utils.TimedWriter.write_text(filepath, yaml_data)
 
 
@@ -77,7 +80,13 @@ class StepState(MigrationState, ABC):
     project_options: dict[str, Any] = {}
     # TODO[pydantic]: The following keys were removed: `allow_mutation`.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(validate_assignment=True, extra="ignore", allow_mutation=False, alias_generator=lambda s: s.replace("_", "-"), populate_by_name=True)
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="ignore",
+        frozen=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+        populate_by_name=True,
+    )
 
     @abstractmethod
     def properties_of_interest(
@@ -133,11 +142,6 @@ class StepState(MigrationState, ABC):
             self.project_options_of_interest(self.project_options),
             self.project_options_of_interest(other_project_options),
         )
-
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
-        """Create and populate a new state object from dictionary data."""
-        raise RuntimeError("this must be implemented by the step-specific class.")
 
 
 def _get_differing_keys(dict1: dict[str, Any], dict2: dict[str, Any]) -> set[str]:
