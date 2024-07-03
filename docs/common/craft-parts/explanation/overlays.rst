@@ -149,5 +149,5 @@ to a part, the overlay integrity code is added to future steps of the part,
 ensuring proper invalidation of those steps if overlay data changes.
 
 
-.. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/master/layer.md
-.. _Rockcraft: https://canonical-rockcraft.readthedocs-hosted.com/
+.. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/main/layer.md
+.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/en/stable/

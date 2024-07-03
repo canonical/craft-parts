@@ -267,6 +267,7 @@ buildtags
 bzr
 checkfile
 checksums
+chmod
 chroot
 chrooted
 classmethod
@@ -279,6 +280,7 @@ codename
 commandline
 confictling
 config
+cp
 craftctl
 crafter
 ctl
@@ -361,6 +363,7 @@ pkgconfig
 pre
 prepend
 prepended
+prepending
 py
 pydantic
 pylint
@@ -426,6 +429,7 @@ validator
 validators
 venv
 verifications
+vmlinux
 xattr
 xattrs
 xml
