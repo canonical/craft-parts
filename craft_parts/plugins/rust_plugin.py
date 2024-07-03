@@ -21,15 +21,16 @@ import os
 import re
 import subprocess
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, cast
+from typing import List, TYPE_CHECKING, Any, cast
 
 from overrides import override
-from pydantic import conlist
+from pydantic import Field
 from pydantic import validator as pydantic_validator
 
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
+from typing_extensions import Annotated
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     UniqueStrList = list[str]
 else:
-    UniqueStrList = conlist(str, unique_items=True)
+    UniqueStrList = Annotated[List[str], Field(unique_items=True)]
 
 
 class RustPluginProperties(PluginProperties, PluginModel):

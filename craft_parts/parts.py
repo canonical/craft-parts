@@ -23,7 +23,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic import field_validator, model_validator, ConfigDict, BaseModel, Field, ValidationError, validator
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
@@ -68,16 +68,13 @@ class PartSpec(BaseModel):
     override_stage: str | None = None
     override_prime: str | None = None
     permissions: list[Permissions] = []
-
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+    # TODO[pydantic]: The following keys were removed: `allow_mutation`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(validate_assignment=True, extra="forbid", allow_mutation=False, alias_generator=lambda s: s.replace("_", "-"))
 
     # pylint: disable=no-self-argument
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("stage_files", "prime_files", each_item=True)
     def validate_relative_path_list(cls, item: str) -> str:
         """Verify list is not empty and does not contain any absolute paths."""
@@ -89,14 +86,16 @@ class PartSpec(BaseModel):
             )
         return item
 
-    @validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @classmethod
     def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_root(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():

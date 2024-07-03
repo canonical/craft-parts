@@ -51,7 +51,7 @@ class NpmPluginProperties(PluginProperties, PluginModel):
 
     # part properties required by the plugin
     npm_include_node: bool = False
-    npm_node_version: str | None
+    npm_node_version: str | None = None
     source: str
 
     @root_validator

@@ -24,6 +24,7 @@ from typing import Any
 from pydantic_yaml import YamlModel
 
 from craft_parts.utils import os_utils
+from pydantic import ConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -76,15 +77,9 @@ class StepState(MigrationState, ABC):
 
     part_properties: dict[str, Any] = {}
     project_options: dict[str, Any] = {}
-
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "ignore"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-        allow_population_by_field_name = True
+    # TODO[pydantic]: The following keys were removed: `allow_mutation`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(validate_assignment=True, extra="ignore", allow_mutation=False, alias_generator=lambda s: s.replace("_", "-"), populate_by_name=True)
 
     @abstractmethod
     def properties_of_interest(
