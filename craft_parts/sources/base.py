@@ -25,6 +25,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+import pydantic
 import requests
 from overrides import overrides
 
@@ -38,6 +39,41 @@ from .checksum import verify_checksum
 logger = logging.getLogger(__name__)
 
 
+def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
+    return {
+        "if": {"not": {"required": ["source-type"]}},
+        "then": {
+            "properties": {
+                "source": {
+                    "type": "string",
+                    "pattern": type_pattern,
+                }
+            }
+        },
+    }
+
+
+def get_model_config(
+    json_schema_extra: dict[str, Any] | None = None,
+) -> pydantic.ConfigDict:
+    """Get a config for a model with minor changes from the default."""
+    return pydantic.ConfigDict(
+        alias_generator=lambda s: s.replace("_", "-"),
+        json_schema_extra=json_schema_extra,
+        extra="forbid",
+    )
+
+
+class SourceModel(pydantic.BaseModel, frozen=True):
+    model_config = get_model_config()
+    source_type: str
+    source: str
+
+
+class FileSourceModel(SourceModel, frozen=True):
+    source_checksum: str | None = None
+
+
 class SourceHandler(abc.ABC):
     """The base class for source type handlers.
 
@@ -45,6 +81,8 @@ class SourceHandler(abc.ABC):
     overridden by subclasses to implement verification and update of
     source files.
     """
+
+    source_model: type[SourceModel] = SourceModel
 
     # pylint: disable=too-many-arguments
 
@@ -55,29 +93,38 @@ class SourceHandler(abc.ABC):
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: str | None = None,
-        source_commit: str | None = None,
-        source_branch: str | None = None,
-        source_depth: int | None = None,
-        source_checksum: str | None = None,
-        source_submodules: list[str] | None = None,
-        command: str | None = None,
         ignore_patterns: list[str] | None = None,
+        **kwargs,
     ) -> None:
         if not ignore_patterns:
             ignore_patterns = []
 
+        invalid_options = []
+        model_params = {key.replace("_", "-"): value for key, value in kwargs.items()}
+        model_params["source"] = source
+        for option, value in kwargs.items():
+            if option not in self.source_model.__fields__:
+                if not value:
+                    del model_params[option.replace("_", "-")]
+                else:
+                    invalid_options.append(option.replace("_", "-"))
+        if len(invalid_options) > 1:
+            raise errors.InvalidSourceOptions(
+                source_type=self.source_model.__fields__["source_type"].default,
+                options=invalid_options,
+            )
+        elif len(invalid_options) == 1:
+            raise errors.InvalidSourceOption(
+                source_type=self.source_model.__fields__["source_type"].default,
+                option=invalid_options[0],
+            )
+
+        self._data = self.source_model.model_validate(model_params)
+
         self.source = source
         self.part_src_dir = part_src_dir
         self._cache_dir = cache_dir
-        self.source_tag = source_tag
-        self.source_commit = source_commit
-        self.source_branch = source_branch
-        self.source_depth = source_depth
-        self.source_checksum = source_checksum
         self.source_details: dict[str, str | None] | None = None
-        self.source_submodules = source_submodules
-        self.command = command
         self._dirs = project_dirs
         self._checked = False
         self._ignore_patterns = ignore_patterns.copy()
@@ -87,12 +134,18 @@ class SourceHandler(abc.ABC):
 
     # pylint: enable=too-many-arguments
 
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._data, name)
+
     @abc.abstractmethod
     def pull(self) -> None:
         """Retrieve the source file."""
 
     def check_if_outdated(
-        self, target: str, *, ignore_files: list[str] | None = None  # noqa: ARG002
+        self,
+        target: str,
+        *,
+        ignore_files: list[str] | None = None,  # noqa: ARG002
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -149,28 +202,16 @@ class FileSourceHandler(SourceHandler):
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: str | None = None,
-        source_commit: str | None = None,
-        source_branch: str | None = None,
-        source_depth: int | None = None,
-        source_checksum: str | None = None,
-        source_submodules: list[str] | None = None,
-        command: str | None = None,
         ignore_patterns: list[str] | None = None,
+        **kwargs,
     ) -> None:
         super().__init__(
             source,
             part_src_dir,
             cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_commit=source_commit,
-            source_branch=source_branch,
-            source_depth=source_depth,
-            source_checksum=source_checksum,
-            source_submodules=source_submodules,
-            command=command,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
+            **kwargs,
         )
         self._file = Path()
 

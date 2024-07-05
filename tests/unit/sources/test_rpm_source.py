@@ -55,11 +55,6 @@ def test_valid_options(partitions):
         pathlib.Path(),
         cache_dir=pathlib.Path(),
         project_dirs=dirs,
-        source_tag=None,
-        source_commit=None,
-        source_branch=None,
-        source_submodules=None,
-        source_depth=None,
     )
 
 
@@ -112,7 +107,9 @@ def test_invalid_options(
     expected,
 ):
     dirs = ProjectDirs(partitions=partitions)
-    with pytest.raises(errors.InvalidSourceOptions) as exc_info:
+    with pytest.raises(
+        (errors.InvalidSourceOptions, errors.InvalidSourceOption)
+    ) as exc_info:
         sources.RpmSource(
             "source",
             pathlib.Path("part_src_dir"),

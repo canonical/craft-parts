@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021, 2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,40 @@
 """Source handler definitions and helpers."""
 
 from . import errors
-from .local_source import LocalSource
-from .snap_source import SnapSource
+from .base import SourceModel
+from .deb_source import DebSource, DebSourceModel
+from .file_source import FileSource, FileSourceModel
+from .git_source import GitSource, GitSourceModel
+from .local_source import LocalSource, LocalSourceModel
+from .rpm_source import RpmSource, RpmSourceModel
+from .sevenzip_source import SevenzipSource, SevenzipSourceModel
+from .snap_source import SnapSource, SnapSourceModel
 from .sources import SourceHandler, get_source_handler, get_source_type_from_uri
+from .tar_source import TarSource, TarSourceModel
+from .zip_source import ZipSource, ZipSourceModel
+
+__all__ = [
+    "errors",
+    "SourceModel",
+    "DebSource",
+    "DebSourceModel",
+    "FileSource",
+    "FileSourceModel",
+    "GitSource",
+    "GitSourceModel",
+    "LocalSource",
+    "LocalSourceModel",
+    "RpmSource",
+    "RpmSourceModel",
+    "SevenzipSource",
+    "SevenzipSourceModel",
+    "SnapSource",
+    "SnapSourceModel",
+    "SourceHandler",
+    "TarSource",
+    "TarSourceModel",
+    "ZipSource",
+    "ZipSourceModel",
+    "get_source_handler",
+    "get_source_type_from_uri",
+]

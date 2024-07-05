@@ -23,23 +23,35 @@ import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+import pathlib
+from typing import Annotated, Any, Literal
 
 from overrides import overrides
+import pydantic
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors
-from .base import SourceHandler
+from .base import SourceHandler, SourceModel, get_json_extra_schema, get_model_config
 
 logger = logging.getLogger(__name__)
 
 # TODO: change file operations to use pathlib
 
 
+class LocalSourceModel(SourceModel, frozen=True):
+    model_config = get_model_config(get_json_extra_schema(r"^\."))
+    source_type: Literal["local"] = "local"
+    source: Annotated[  # pyright: ignore[reportIncompatibleVariableOverride]
+        pathlib.Path, pydantic.BeforeValidator(lambda source: pathlib.Path(source))
+    ]
+
+
 class LocalSource(SourceHandler):
     """The local source handler."""
+
+    source_model = LocalSourceModel
 
     def __init__(
         self,

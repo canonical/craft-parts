@@ -20,7 +20,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import yaml
 from overrides import overrides
@@ -29,7 +29,17 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors
-from .base import FileSourceHandler
+from .base import (
+    FileSourceHandler,
+    FileSourceModel,
+    get_json_extra_schema,
+    get_model_config,
+)
+
+
+class SnapSourceModel(FileSourceModel, frozen=True):
+    model_config = get_model_config(get_json_extra_schema(r"\.snap$"))
+    source_type: Literal["snap"] = "snap"
 
 
 class SnapSource(FileSourceHandler):
@@ -40,45 +50,7 @@ class SnapSource(FileSourceHandler):
     snap.<snap-name>.
     """
 
-    def __init__(  # noqa: PLR0913
-        self,
-        source: str,
-        part_src_dir: Path,
-        *,
-        cache_dir: Path,
-        project_dirs: ProjectDirs,
-        source_tag: str | None = None,
-        source_commit: str | None = None,
-        source_branch: str | None = None,
-        source_depth: int | None = None,
-        source_checksum: str | None = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            source,
-            part_src_dir,
-            cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_commit=source_commit,
-            source_branch=source_branch,
-            source_depth=source_depth,
-            source_checksum=source_checksum,
-            project_dirs=project_dirs,
-            command="unsquashfs",
-            **kwargs,
-        )
-
-        if source_tag:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-tag")
-
-        if source_commit:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-commit")
-
-        if source_branch:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-branch")
-
-        if source_depth:
-            raise errors.InvalidSourceOption(source_type="snap", option="source-depth")
+    source_model = SnapSourceModel
 
     @overrides
     def provision(

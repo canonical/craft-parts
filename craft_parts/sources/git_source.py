@@ -21,16 +21,47 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 from overrides import overrides
+import pydantic
+from typing_extensions import Self
 
 from craft_parts.dirs import ProjectDirs
 
 from . import errors
-from .base import SourceHandler
+from .base import SourceHandler, SourceModel, get_json_extra_schema, get_model_config
 
 logger = logging.getLogger(__name__)
+
+
+class GitSourceModel(SourceModel, frozen=True):
+    model_config = get_model_config(get_json_extra_schema(r"(^git[+@:]|\.git$)"))
+    source_type: Literal["git"] = "git"
+    source: str
+    source_tag: str | None = None
+    source_commit: str | None = None
+    source_branch: str | None = None
+    source_depth: int = 0
+    source_submodules: list[str] | None = None
+
+    # TODO: make these mutually exclusive fields declarative with a jsonschema too.
+    @pydantic.model_validator(mode="after")
+    def _validate_mutually_exclusive_fields(self) -> Self:
+        if self.source_tag and self.source_branch:
+            raise errors.IncompatibleSourceOptions(
+                self.__fields__["source_type"].default, ["source-tag", "source-branch"]
+            )
+        if self.source_tag and self.source_commit:
+            raise errors.IncompatibleSourceOptions(
+                self.__fields__["source_type"].default, ["source-tag", "source-commit"]
+            )
+        if self.source_branch and self.source_commit:
+            raise errors.IncompatibleSourceOptions(
+                self.__fields__["source_type"].default,
+                ["source-branch", "source-commit"],
+            )
+        return self
 
 
 class GitSource(SourceHandler):
@@ -40,6 +71,9 @@ class GitSource(SourceHandler):
     and tag can be specified using part properties ``source-branch``,
     ``source-depth``, `source-commit``, ``source-tag``, and ``source-submodules``.
     """
+
+    source_model = GitSourceModel
+    command = "git"
 
     @classmethod
     def version(cls) -> str:
@@ -113,56 +147,6 @@ class GitSource(SourceHandler):
         commit = match.group("commit")
 
         return f"{tag}+git{revs_ahead}.{commit}"
-
-    def __init__(  # pylint: disable=too-many-arguments  # noqa: PLR0913
-        self,
-        source: str,
-        part_src_dir: Path,
-        *,
-        cache_dir: Path,
-        project_dirs: ProjectDirs,
-        source_tag: str | None = None,
-        source_commit: str | None = None,
-        source_depth: int | None = None,
-        source_branch: str | None = None,
-        source_checksum: str | None = None,
-        source_submodules: list[str] | None = None,
-        ignore_patterns: list[str] | None = None,
-    ) -> None:
-        super().__init__(
-            source,
-            part_src_dir,
-            cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_commit=source_commit,
-            source_depth=source_depth,
-            source_branch=source_branch,
-            source_checksum=source_checksum,
-            source_submodules=source_submodules,
-            project_dirs=project_dirs,
-            ignore_patterns=ignore_patterns,
-            command="git",
-        )
-
-        if not self.command:
-            raise RuntimeError("command not specified")
-
-        if source_tag and source_branch:
-            raise errors.IncompatibleSourceOptions(
-                "git", ["source-tag", "source-branch"]
-            )
-        if source_tag and source_commit:
-            raise errors.IncompatibleSourceOptions(
-                "git", ["source-tag", "source-commit"]
-            )
-        if source_branch and source_commit:
-            raise errors.IncompatibleSourceOptions(
-                "git", ["source-branch", "source-commit"]
-            )
-        if source_checksum:
-            raise errors.InvalidSourceOption(
-                source_type="git", option="source-checksum"
-            )
 
     def _fetch_origin_commit(self) -> None:
         """Fetch from origin, using source-commit if defined."""
@@ -304,7 +288,6 @@ class GitSource(SourceHandler):
         commit = self.source_commit
         branch = self.source_branch
         source = self.source
-        checksum = self.source_checksum
 
         if not tag and not branch and not commit:
             commit = self._run_output(
@@ -316,5 +299,4 @@ class GitSource(SourceHandler):
             "source-branch": branch,
             "source": source,
             "source-tag": tag,
-            "source-checksum": checksum,
         }
