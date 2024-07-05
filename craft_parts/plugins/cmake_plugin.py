@@ -20,11 +20,11 @@ from typing import Any, cast
 
 from overrides import override
 
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 
-class CMakePluginProperties(PluginProperties, PluginModel):
+class CMakePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the cmake plugin."""
 
     cmake_parameters: list[str] = []

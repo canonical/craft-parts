@@ -20,10 +20,10 @@ import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginProperties
-from craft_parts.plugins.base import extract_plugin_properties
+from craft_parts.plugins.properties import extract_plugin_properties
 
 
-class FooPluginProperties(PluginProperties):
+class FooPluginProperties(PluginProperties, frozen=True):
     """Test plugin properties."""
 
     name: str

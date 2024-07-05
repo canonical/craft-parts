@@ -19,7 +19,7 @@
 This plugin just dumps the content from a specified part source.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from overrides import override
 
@@ -29,6 +29,8 @@ from .properties import PluginProperties
 
 class DumpPluginProperties(PluginProperties):
     """The part properties used by the dump plugin."""
+
+    plugin: Literal["dump"]
 
     @classmethod
     @override
@@ -45,7 +47,7 @@ class DumpPluginProperties(PluginProperties):
         """
         if "source" not in data:
             raise ValueError("'source' is required by the dump plugin")
-        return cls()
+        return cls(plugin="dump")
 
 
 class DumpPlugin(Plugin):

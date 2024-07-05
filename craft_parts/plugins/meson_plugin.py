@@ -16,7 +16,6 @@
 
 """The Meson plugin."""
 
-
 import logging
 import shlex
 from typing import Any, cast
@@ -24,13 +23,13 @@ from typing import Any, cast
 from overrides import override
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 logger = logging.getLogger(__name__)
 
 
-class MesonPluginProperties(PluginProperties, PluginModel):
+class MesonPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Meson plugin."""
 
     meson_parameters: list[str] = []

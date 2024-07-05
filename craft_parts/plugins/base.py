@@ -16,18 +16,20 @@
 
 """Plugin base class and definitions."""
 
+from __future__ import annotations
+
 import abc
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
 from craft_parts.actions import ActionProperties
 
-from .properties import PluginProperties, PluginPropertiesModel
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
     from craft_parts import infos
+    from .properties import PluginProperties
 
 
 class Plugin(abc.ABC):
@@ -120,37 +122,3 @@ class JavaPlugin(Plugin):
         # pylint: enable=line-too-long
 
         return link_java + link_jars
-
-
-class PluginModel(PluginPropertiesModel):
-    """Model for plugins using pydantic validation.
-
-    Plugins with configuration properties can use pydantic validation to unmarshal
-    data from part specs. In this case, extract plugin-specific properties using
-    the :func:`extract_plugin_properties` helper.
-    """
-
-
-def extract_plugin_properties(
-    data: dict[str, Any], *, plugin_name: str, required: list[str] | None = None
-) -> dict[str, Any]:
-    """Obtain plugin-specific entries from part properties.
-
-    Plugin-specific properties must be prefixed with the name of the plugin.
-
-    :param data: A dictionary containing all part properties.
-    :plugin_name: The name of the plugin.
-
-    :return: A dictionary with plugin properties.
-    """
-    if required is None:
-        required = []
-
-    plugin_data: dict[str, Any] = {}
-    prefix = f"{plugin_name}-"
-
-    for key, value in data.items():
-        if key.startswith(prefix) or key in required:
-            plugin_data[key] = value
-
-    return plugin_data

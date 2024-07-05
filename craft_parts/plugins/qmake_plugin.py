@@ -23,11 +23,11 @@ from typing import Any, cast
 from overrides import override
 from typing_extensions import Self
 
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 
-class QmakePluginProperties(PluginProperties, PluginModel):
+class QmakePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the qmake plugin."""
 
     qmake_parameters: list[str] = []

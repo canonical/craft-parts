@@ -22,15 +22,16 @@ import os
 import re
 import subprocess
 from textwrap import dedent
-from typing import Annotated, Any, cast
+from typing import List, TYPE_CHECKING, Any, Literal, cast
 
 from overrides import override
 from pydantic import AfterValidator
 from pydantic import validator as pydantic_validator
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
+from typing_extensions import Annotated
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +47,10 @@ def _validate_list_is_unique(value: list) -> list:
 UniqueStrList = Annotated[list[str], AfterValidator(_validate_list_is_unique)]
 
 
-class RustPluginProperties(PluginProperties, PluginModel):
+class RustPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Rust plugin."""
+
+    plugin: Literal["rust"] = "rust"
 
     # part properties required by the plugin
     rust_features: UniqueStrList = []

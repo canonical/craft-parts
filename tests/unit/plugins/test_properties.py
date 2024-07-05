@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any
+from typing import Any, Literal
 
 from craft_parts.plugins import PluginProperties
 
@@ -24,12 +24,9 @@ def test_properties_unmarshal():
     assert isinstance(prop, PluginProperties)
 
 
-class FooProperties(PluginProperties):
+class FooProperties(PluginProperties, frozen=True):
+    plugin: Literal["foo"] = "foo"
     foo_parameters: list[str] | None = None
-
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "FooProperties":
-        return cls(**data)
 
 
 def test_properties_marshal():

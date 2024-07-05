@@ -22,13 +22,13 @@ from typing import Any, cast
 from overrides import override
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 logger = logging.getLogger(__name__)
 
 
-class DotnetPluginProperties(PluginProperties, PluginModel):
+class DotnetPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Dotnet plugin."""
 
     dotnet_build_configuration: str = "Release"

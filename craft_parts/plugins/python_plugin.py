@@ -22,11 +22,11 @@ from typing import Any, cast
 
 from overrides import override
 
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 
-class PythonPluginProperties(PluginProperties, PluginModel):
+class PythonPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the python plugin."""
 
     python_requirements: list[str] = []

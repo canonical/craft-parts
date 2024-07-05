@@ -24,13 +24,13 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 logger = logging.getLogger(__name__)
 
 
-class GoPluginProperties(PluginProperties, PluginModel):
+class GoPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Go plugin."""
 
     go_buildtags: list[str] = []

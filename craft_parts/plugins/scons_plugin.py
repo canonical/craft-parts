@@ -23,11 +23,11 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 
-class SConsPluginProperties(PluginProperties, PluginModel):
+class SConsPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the SCons plugin."""
 
     scons_parameters: list[str] = []

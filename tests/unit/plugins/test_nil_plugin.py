@@ -28,7 +28,7 @@ class TestPluginNil:
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir):
         properties = NilPlugin.properties_class.unmarshal({})
-        part = Part("foo", {})
+        part = Part("foo", {}, plugin_properties=properties)
 
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)

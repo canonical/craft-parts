@@ -20,7 +20,7 @@ import logging
 import os
 import shlex
 from collections.abc import Iterator
-from typing import Any, cast
+from typing import Any, Literal, cast
 from urllib.parse import urlsplit
 
 from overrides import override
@@ -28,15 +28,16 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import JavaPlugin
+from .properties import PluginProperties, extract_plugin_properties
 
 logger = logging.getLogger(__name__)
 
 
-class AntPluginProperties(PluginProperties, PluginModel):
+class AntPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Ant plugin."""
 
+    plugin: Literal["ant"] = "ant"
     ant_build_targets: list[str] = []
     ant_build_file: str | None = None
     ant_properties: dict[str, str] = {}

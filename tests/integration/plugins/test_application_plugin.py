@@ -24,7 +24,7 @@ import yaml
 from craft_parts import Action, ActionType, Step, errors, plugins
 
 
-class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class AppPluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
     app_stuff: list[str]

@@ -20,11 +20,11 @@ from typing import Any, cast
 
 from overrides import override
 
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 
-class MakePluginProperties(PluginProperties, PluginModel):
+class MakePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the make plugin."""
 
     make_parameters: list[str] = []

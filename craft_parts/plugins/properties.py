@@ -17,22 +17,37 @@
 """Definitions and helpers for plugin options."""
 
 from typing import Any
+from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict
 
 
-class PluginPropertiesModel(BaseModel):
-    """Model for plugins properties using pydantic validation."""
+def extract_plugin_properties(
+    data: dict[str, Any], *, plugin_name: str, required: list[str] | None = None
+) -> dict[str, Any]:
+    """Obtain plugin-specifc entries from part properties.
 
-    model_config = ConfigDict(
-        validate_assignment=True,
-        extra="forbid",
-        frozen=True,
-        alias_generator=lambda s: s.replace("_", "-"),
-    )
+    Plugin-specifc properties must be prefixed with the name of the plugin.
+
+    :param data: A dictionary containing all part properties.
+    :plugin_name: The name of the plugin.
+
+    :return: A dictionary with plugin properties.
+    """
+    if required is None:
+        required = []
+
+    plugin_data: dict[str, Any] = {}
+    prefix = f"{plugin_name}-"
+
+    for key, value in data.items():
+        if key.startswith(prefix) or key in required:
+            plugin_data[key] = value
+
+    return plugin_data
 
 
-class PluginProperties(PluginPropertiesModel):
+class PluginProperties(BaseModel, frozen=True):
     """Options specific to a plugin.
 
     PluginProperties should be subclassed into plugin-specific property
@@ -42,19 +57,30 @@ class PluginProperties(PluginPropertiesModel):
     build step is dirty. This can be overridden in each plugin if needed.
     """
 
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        frozen=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+    )
+    plugin: str = ""
+
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "PluginProperties":  # noqa: ARG003
+    def unmarshal(cls, data: dict[str, Any], required: list[str] | None = None) -> Self:  # noqa: ARG003
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
 
         :return: The populated plugin properties data object.
         """
-        return cls()
+        plugin_data = extract_plugin_properties(
+            data, plugin_name=cls.__fields__["plugin"].default, required=required
+        )
+        return cls(**plugin_data)
 
     def marshal(self) -> dict[str, Any]:
         """Obtain a dictionary containing the plugin properties."""
-        return self.dict(by_alias=True)
+        return self.dict(by_alias=True, exclude={"plugin"})
 
     @classmethod
     def get_pull_properties(cls) -> list[str]:
@@ -65,4 +91,7 @@ class PluginProperties(PluginPropertiesModel):
     def get_build_properties(cls) -> list[str]:
         """Obtain the list of properties affecting the build stage."""
         properties = cls.schema(by_alias=True).get("properties")
-        return list(properties.keys()) if properties else []
+        if properties:
+            del properties["plugin"]
+            return list(properties.keys())
+        return []

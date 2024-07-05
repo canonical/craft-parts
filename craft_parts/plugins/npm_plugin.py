@@ -31,8 +31,8 @@ from typing_extensions import Self
 from craft_parts.errors import InvalidArchitecture
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
-from .properties import PluginProperties
+from .base import Plugin
+from .properties import PluginProperties, extract_plugin_properties
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ _NODE_ARCH_FROM_SNAP_ARCH = {
 _NODE_ARCH_FROM_PLATFORM = {"x86_64": {"32bit": "x86", "64bit": "x64"}}
 
 
-class NpmPluginProperties(PluginProperties, PluginModel):
+class NpmPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the npm plugin."""
 
     # part properties required by the plugin
