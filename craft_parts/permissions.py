@@ -21,7 +21,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from pydantic import model_validator, BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class Permissions(BaseModel):

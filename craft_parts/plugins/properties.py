@@ -18,16 +18,17 @@
 
 from typing import Any
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PluginPropertiesModel(BaseModel):
     """Model for plugins properties using pydantic validation."""
+
     model_config = ConfigDict(
         validate_assignment=True,
         extra="forbid",
         frozen=True,
-        alias_generator=lambda s: s.replace("_", "-")
+        alias_generator=lambda s: s.replace("_", "-"),
     )
 
 

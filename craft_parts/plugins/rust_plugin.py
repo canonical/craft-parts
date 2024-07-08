@@ -22,16 +22,15 @@ import os
 import re
 import subprocess
 from textwrap import dedent
-from typing import List, TYPE_CHECKING, Any, cast
+from typing import Annotated, Any, cast
 
 from overrides import override
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator
 from pydantic import validator as pydantic_validator
 
 from . import validator
 from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
-from typing_extensions import Annotated
 
 logger = logging.getLogger(__name__)
 

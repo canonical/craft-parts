@@ -202,7 +202,9 @@ def test_application_plugin_extra_property(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- Extra inputs are not permitted in field 'app-other'"
+    assert (
+        raised.value.message == "- Extra inputs are not permitted in field 'app-other'"
+    )
 
 
 def test_application_plugin_not_registered(new_dir, partitions):

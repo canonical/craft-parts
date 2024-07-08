@@ -20,14 +20,13 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
-from typing_extensions import Self
 
-import pydantic_yaml
 import yaml
+from pydantic import BaseModel, ConfigDict, model_validator
+from typing_extensions import Self
 
 from craft_parts.infos import ProjectVar
 from craft_parts.utils import os_utils
-from pydantic import BaseModel, ConfigDict, model_validator
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +96,9 @@ class StepState(MigrationState, ABC):
             pvars = self.project_options.get("project_vars")
             if pvars:
                 for key, val in pvars.items():
-                    self.project_options["project_vars"][key] = ProjectVar.model_validate(val)
+                    self.project_options["project_vars"][key] = (
+                        ProjectVar.model_validate(val)
+                    )
 
         return self
 
@@ -105,7 +106,6 @@ class StepState(MigrationState, ABC):
     def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
-
 
     @abstractmethod
     def properties_of_interest(

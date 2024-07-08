@@ -404,7 +404,9 @@ class TestPartUnmarshal:
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []}, partitions=partitions)
         assert raised.value.part_name == "foo"
-        assert raised.value.message == "- Input should be a valid string in field 'plugin'"
+        assert (
+            raised.value.message == "- Input should be a valid string in field 'plugin'"
+        )
 
     @pytest.mark.parametrize("fileset", ["stage", "prime"])
     def test_relative_path_validation(self, partitions, fileset):

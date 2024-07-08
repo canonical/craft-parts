@@ -24,13 +24,12 @@ from types import MappingProxyType
 from typing import Any
 
 from pydantic import (
-    field_validator,
-    model_validator,
-    ConfigDict,
     BaseModel,
+    ConfigDict,
     Field,
     ValidationError,
-    validator,
+    field_validator,
+    model_validator,
 )
 
 from craft_parts import errors, plugins

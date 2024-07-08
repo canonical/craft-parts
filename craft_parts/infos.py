@@ -23,7 +23,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pydantic
-import pydantic_yaml
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs

@@ -25,7 +25,7 @@ from typing import Any, cast
 
 import requests
 from overrides import override
-from pydantic import model_validator, root_validator
+from pydantic import model_validator
 from typing_extensions import Self
 
 from craft_parts.errors import InvalidArchitecture

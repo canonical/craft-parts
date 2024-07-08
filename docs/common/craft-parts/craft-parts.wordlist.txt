@@ -386,7 +386,7 @@ sevenzip
 sha
 sliceName
 snapd
-specifc
+specific
 src
 srcdir
 stderr
