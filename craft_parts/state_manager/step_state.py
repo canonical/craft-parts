@@ -89,7 +89,7 @@ class StepState(MigrationState, ABC):
 
     @model_validator(mode="after")
     def _coerce_project_vars(self) -> Self:
-        """Coerce project_vars options to ProjectVar types"""
+        """Coerce project_vars options to ProjectVar types."""
         # FIXME: add proper type definition for project_options so that
         # ProjectVar can be created by pydantic during model unmarshaling.
         if self.project_options:

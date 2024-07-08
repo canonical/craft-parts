@@ -35,7 +35,7 @@ from .properties import PluginProperties
 logger = logging.getLogger(__name__)
 
 
-def _validate_list_is_unique(value: list):
+def _validate_list_is_unique(value: list) -> list:
     value_set = set(value)
     if len(value_set) == len(value):
         return value
