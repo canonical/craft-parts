@@ -20,12 +20,14 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
+from typing_extensions import Self
 
 import pydantic_yaml
 import yaml
 
+from craft_parts.infos import ProjectVar
 from craft_parts.utils import os_utils
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +87,19 @@ class StepState(MigrationState, ABC):
         alias_generator=lambda s: s.replace("_", "-"),
         populate_by_name=True,
     )
+
+    @model_validator(mode="after")
+    def _coerce_project_vars(self) -> Self:
+        """Coerce project_vars options to ProjectVar types"""
+        # FIXME: add proper type definition for project_options so that
+        # ProjectVar can be created by pydantic during model unmarshaling.
+        if self.project_options:
+            pvars = self.project_options.get("project_vars")
+            if pvars:
+                for key, val in pvars.items():
+                    self.project_options["project_vars"][key] = ProjectVar.model_validate(val)
+
+        return self
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
