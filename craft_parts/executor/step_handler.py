@@ -154,7 +154,9 @@ class StepHandler:
                 stderr=self._stderr,
             )
         except subprocess.CalledProcessError as process_error:
-            raise errors.PluginBuildError(part_name=self._part.name) from process_error
+            raise errors.PluginBuildError(
+                part_name=self._part.name, plugin_name=self._part.plugin_name
+            ) from process_error
 
         return StepContents()
 

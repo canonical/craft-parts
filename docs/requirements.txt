@@ -2,8 +2,22 @@ wheel
 setuptools
 python-distutils-extra @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-distutils-extra/2.43/python-distutils-extra_2.43.tar.xz
 python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz
-sphinx-autobuild==2024.2.4
-sphinx-autodoc-typehints==2.0.1
+furo==2024.5.6
+pyspelling==2.10
+myst-parser==2.0.0
+Sphinx==7.3.7
+sphinx-autobuild==2024.4.16
+sphinx-autodoc-typehints==2.2.2
+sphinx-design==0.6.0
+sphinx-jsonschema==1.19.1
 sphinx-pydantic==0.1.1
+sphinx-tabs==3.4.5
+sphinxcontrib-applehelp==1.0.8
+sphinx_design==0.6.0
 sphinxcontrib-details-directive==0.1.0
+sphinxcontrib-devhelp==1.0.6
+sphinxcontrib-htmlhelp==2.0.5
+sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-qthelp==1.0.7
+sphinxext-opengraph==0.9.1
 canonical-sphinx~=0.1

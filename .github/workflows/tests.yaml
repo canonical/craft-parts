@@ -42,6 +42,9 @@ jobs:
       - name: Run pydocstyle
         run: |
           make test-pydocstyle
+      - name: Run lint-docs
+        run: |
+          tox run -e lint-docs
       - name: Run pyright
         run: |
           sudo snap install --classic node
@@ -139,8 +142,9 @@ jobs:
       - name: Install additional test dependencies
         run: |
 
-          sudo apt install -y ninja-build cmake scons qt5-qmake \
-                              autoconf automake autopoint gcc git gperf help2man libtool texinfo
+          sudo apt install -y ninja-build cmake scons qt5-qmake p7zip \
+                              autoconf automake autopoint gcc git gperf help2man libtool texinfo \
+                              curl findutils pkg-config
           # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
           # note: we can't use the snap here because it has strict confinement and can't access
           # the test files in /tmp/pytest-*

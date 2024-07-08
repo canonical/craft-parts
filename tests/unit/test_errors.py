@@ -27,7 +27,7 @@ def test_parts_error_brief():
     assert str(err) == "A brief description."
     assert (
         repr(err)
-        == "PartsError(brief='A brief description.', details=None, resolution=None)"
+        == "PartsError(brief='A brief description.', details=None, resolution=None, doc_slug=None)"
     )
     assert err.brief == "A brief description."
     assert err.details is None
@@ -39,7 +39,7 @@ def test_parts_error_full():
     assert str(err) == "Brief\nDetails\nResolution"
     assert (
         repr(err)
-        == "PartsError(brief='Brief', details='Details', resolution='Resolution')"
+        == "PartsError(brief='Brief', details='Details', resolution='Resolution', doc_slug=None)"
     )
     assert err.brief == "Brief"
     assert err.details == "Details"
@@ -316,11 +316,16 @@ def test_plugin_environment_validation_error():
 
 
 def test_plugin_build_error():
-    err = errors.PluginBuildError(part_name="foo")
+    err = errors.PluginBuildError(part_name="foo", plugin_name="go")
     assert err.part_name == "foo"
+    assert err.plugin_name == "go"
     assert err.brief == "Failed to run the build script for part 'foo'."
     assert err.details is None
-    assert err.resolution is None
+    assert (
+        err.resolution
+        == "Check the build output and verify the project can work with the 'go' plugin."
+    )
+    assert err.doc_slug == "/reference/plugins.html"
 
 
 def test_invalid_control_api_call():

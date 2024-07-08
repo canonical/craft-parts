@@ -2,8 +2,52 @@
 Changelog
 *********
 
+1.33.0 (2024-07-02)
+-------------------
+
+- Add doc slugs for errors during build, linking to plugin docs
+- Add docs for partitions
+
+1.32.0 (2024-06-24)
+-------------------
+
+- Add support for 7z sources
+- Add reference documentation for the qmake plugin
+- Improve logging output when fetching packages
+- Improve errors for when sources cannot be fetched
+- Fix a behavior where apt packages would be fetched when the user was
+  not a superuser
+- Fix list of ignored packages in core24 bases when fetching stage-packages
+
+1.31.0 (2024-05-16)
+-------------------
+
+- Refactor npm plugin
+  - npm-node-version option now accepts a NVM-style version identifier
+  - Move Node.js download to pull commands
+  - Verify SHA256 checksums after node.js download
+  - Use new-style npm-install commands if npm version is newer than 8.x
+  - Set NODE_ENV to production by default
+- New and improved documentation
+  - Add go plugin reference
+  - Add nil plugin reference
+  - Add make plugin reference
+  - Add autotools plugin reference
+  - Add cmake plugin reference
+  - Add scons plugin reference
+  - Add ant plugin reference
+  - Add dotnet plugin reference
+  - Add meson plugin reference
+  - Documentation fixes
+
+1.30.1 (2024-06-21)
+-------------------
+
+- Fix list of ignored packages in core24 bases when fetching stage-packages
+
 1.30.0 (2024-05-16)
 -------------------
+
 - Add support for armv8l
 - Add support for unregistering plugins
 

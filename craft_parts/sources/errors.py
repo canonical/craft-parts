@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2021 Canonical Ltd.
+# Copyright 2017-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -131,12 +131,33 @@ class NetworkRequestError(SourceError):
     """A network request operation failed.
 
     :param message: The error message.
+    :param source: URL of unreachable source.
     """
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, source: str | None = None) -> None:
         self.message = message
+        self.source = source
         brief = f"Network request error: {message}."
-        resolution = "Check the network and try again."
+        resolution = "Check network connection and source, and try again."
+        details = f"Source: {self.source!r}" if self.source is not None else None
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
+
+
+class HttpRequestError(SourceError):
+    """HTTP error occurred during request processing.
+
+    :param status_code: Request status code.
+    :param reason: Text explaining status code.
+    :param source: The source defined for the part.
+    """
+
+    def __init__(self, *, status_code: int, reason: str, source: str) -> None:
+        self.status_code = status_code
+        self.reason = reason
+        self.source = source
+        brief = f"Cannot process request ({reason}: {status_code}): {source}"
+        resolution = "Check your URL and permissions and try again."
 
         super().__init__(brief=brief, resolution=resolution)
 
