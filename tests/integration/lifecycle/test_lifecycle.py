@@ -399,7 +399,7 @@ class TestCleaning:
 
 class TestUpdating:
     @pytest.fixture(autouse=True)
-    def setup(self, new_dir, partitions):
+    def setup_lifecycle(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
         parts_yaml = textwrap.dedent(
             """
