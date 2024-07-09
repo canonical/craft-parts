@@ -1,6 +1,7 @@
 ARGS
 ActionProperties
 ActionType
+AfterValidator
 AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
@@ -12,6 +13,7 @@ AutotoolsPlugin
 AutotoolsPluginProperties
 Backport
 BaseRepository
+BeforeValidator
 BuildPackageNotFound
 BuildPackagesNotInstalled
 BuildState
@@ -29,6 +31,7 @@ Changelog
 Charmcraft
 ChecksumMismatch
 ChiselError
+ClassVar
 ComputedFieldInfo
 Config
 ConfigDict
@@ -109,6 +112,7 @@ MesonPlugin
 MesonPluginEnvironmentValidator
 MesonPluginProperties
 MigrationState
+MinLen
 Multipass
 NOOP
 NPM
@@ -118,6 +122,7 @@ NetworkRequestError
 NilPlugin
 NilPluginProperties
 NonBlockingRWFifo
+NoneType
 Normalization
 Normalize
 NpmPlugin
@@ -180,6 +185,7 @@ ProjectVar
 PullError
 PullState
 PurePath
+PydanticGeneralMetadata
 PyPI
 PyYAML
 PyYAML's
