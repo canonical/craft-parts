@@ -21,14 +21,13 @@ from typing import Literal
 
 from overrides import overrides
 
-from craft_parts.dirs import ProjectDirs
-
-from . import errors
 from .base import FileSourceHandler, get_model_config
 from .base import FileSourceModel as BaseFileSourceModel
 
 
 class FileSourceModel(BaseFileSourceModel, frozen=True):
+    """Pydantic model for plain file source."""
+
     model_config = get_model_config()
     source_type: Literal["file"] = "file"
 

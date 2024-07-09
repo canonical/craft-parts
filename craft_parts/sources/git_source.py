@@ -23,11 +23,9 @@ import sys
 from pathlib import Path
 from typing import Literal, cast
 
-from overrides import overrides
 import pydantic
+from overrides import overrides
 from typing_extensions import Self
-
-from craft_parts.dirs import ProjectDirs
 
 from . import errors
 from .base import SourceHandler, SourceModel, get_json_extra_schema, get_model_config
@@ -36,6 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 class GitSourceModel(SourceModel, frozen=True):
+    """Pydantic model for a git-based source."""
+
     model_config = get_model_config(get_json_extra_schema(r"(^git[+@:]|\.git$)"))
     source_type: Literal["git"] = "git"
     source: str

@@ -21,13 +21,13 @@ import functools
 import glob
 import logging
 import os
+import pathlib
 from collections.abc import Callable
 from pathlib import Path
-import pathlib
 from typing import Annotated, Any, Literal
 
-from overrides import overrides
 import pydantic
+from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
@@ -41,6 +41,8 @@ logger = logging.getLogger(__name__)
 
 
 class LocalSourceModel(SourceModel, frozen=True):
+    """Pydantic model for a generic local source."""
+
     model_config = get_model_config(get_json_extra_schema(r"^\."))
     source_type: Literal["local"] = "local"
     source: Annotated[  # pyright: ignore[reportIncompatibleVariableOverride]

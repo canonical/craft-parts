@@ -25,8 +25,6 @@ from typing import Literal
 
 from overrides import override
 
-from craft_parts.dirs import ProjectDirs
-
 from . import errors
 from .base import (
     FileSourceHandler,
@@ -39,6 +37,8 @@ logger = logging.getLogger(__name__)
 
 
 class RpmSourceModel(FileSourceModel, frozen=True):
+    """Pydantic model for an rpm file source."""
+
     model_config = get_model_config(get_json_extra_schema(r"\.rpm$"))
     source_type: Literal["rpm"] = "rpm"
 

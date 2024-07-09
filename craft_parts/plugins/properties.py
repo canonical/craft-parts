@@ -17,9 +17,9 @@
 """Definitions and helpers for plugin options."""
 
 from typing import Any
-from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict
+from typing_extensions import Self
 
 
 def extract_plugin_properties(
@@ -66,7 +66,7 @@ class PluginProperties(BaseModel, frozen=True):
     plugin: str = ""
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any], required: list[str] | None = None) -> Self:  # noqa: ARG003
+    def unmarshal(cls, data: dict[str, Any], required: list[str] | None = None) -> Self:
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.

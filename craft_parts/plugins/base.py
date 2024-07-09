@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import abc
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from craft_parts.actions import ActionProperties
 
@@ -29,6 +29,7 @@ from .validator import PluginEnvironmentValidator
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
     from craft_parts import infos
+
     from .properties import PluginProperties
 
 
@@ -49,7 +50,7 @@ class Plugin(abc.ABC):
     """Plugins that can run in 'strict' mode must set this classvar to True."""
 
     def __init__(
-        self, *, properties: PluginProperties, part_info: "infos.PartInfo"
+        self, *, properties: PluginProperties, part_info: infos.PartInfo
     ) -> None:
         self._options = properties
         self._part_info = part_info

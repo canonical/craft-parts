@@ -20,7 +20,7 @@ Using this, parts can be defined purely by utilizing properties that are
 automatically included, e.g. stage-packages.
 """
 
-from typing import Any, Literal
+from typing import Literal
 
 from overrides import override
 

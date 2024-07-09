@@ -40,6 +40,16 @@ logger = logging.getLogger(__name__)
 
 
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
+    """Get extra values for this source type's JSON schema.
+
+    This extra schema allows any source string if source-type is provided, but requires
+    the given regex pattern if source-type is not declared. A user's IDE will thus
+    warn that they need "source-type" only if the source type cannot be inferred.
+
+    :param type_pattern: A (string) regular expression to use in determining whether
+        the source string is sufficient to infer source-type.
+    :returns: A dictionary to pass into a source model's config ``json_schema_extra``
+    """
     return {
         "if": {"not": {"required": ["source-type"]}},
         "then": {
@@ -65,12 +75,16 @@ def get_model_config(
 
 
 class SourceModel(pydantic.BaseModel, frozen=True):
+    """A base model for source types."""
+
     model_config = get_model_config()
     source_type: str
     source: str
 
 
 class FileSourceModel(SourceModel, frozen=True):
+    """A base model for file-based source types."""
+
     source_checksum: str | None = None
 
 
@@ -86,7 +100,7 @@ class SourceHandler(abc.ABC):
 
     # pylint: disable=too-many-arguments
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         source: str,
         part_src_dir: Path,
@@ -94,7 +108,7 @@ class SourceHandler(abc.ABC):
         cache_dir: Path,
         project_dirs: ProjectDirs,
         ignore_patterns: list[str] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         if not ignore_patterns:
             ignore_patterns = []
@@ -113,7 +127,7 @@ class SourceHandler(abc.ABC):
                 source_type=self.source_model.__fields__["source_type"].default,
                 options=invalid_options,
             )
-        elif len(invalid_options) == 1:
+        if len(invalid_options) == 1:
             raise errors.InvalidSourceOption(
                 source_type=self.source_model.__fields__["source_type"].default,
                 option=invalid_options[0],
@@ -134,7 +148,7 @@ class SourceHandler(abc.ABC):
 
     # pylint: enable=too-many-arguments
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401 (this must be dynamic)
         return getattr(self._data, name)
 
     @abc.abstractmethod
@@ -143,7 +157,7 @@ class SourceHandler(abc.ABC):
 
     def check_if_outdated(
         self,
-        target: str,
+        target: str,  # noqa: ARG002
         *,
         ignore_files: list[str] | None = None,  # noqa: ARG002
     ) -> bool:
@@ -195,7 +209,7 @@ class FileSourceHandler(SourceHandler):
     """Base class for file source types."""
 
     # pylint: disable=too-many-arguments
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         source: str,
         part_src_dir: Path,
@@ -203,7 +217,7 @@ class FileSourceHandler(SourceHandler):
         cache_dir: Path,
         project_dirs: ProjectDirs,
         ignore_patterns: list[str] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             source,

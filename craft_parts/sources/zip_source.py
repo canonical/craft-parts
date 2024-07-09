@@ -17,23 +17,21 @@
 """Implement the zip file source handler."""
 
 import os
-from typing import Literal
 import zipfile
 from pathlib import Path
+from typing import Literal
 
-from craft_parts.dirs import ProjectDirs
-
-from . import errors
 from .base import (
     FileSourceHandler,
     FileSourceModel,
-    SourceModel,
     get_json_extra_schema,
     get_model_config,
 )
 
 
 class ZipSourceModel(FileSourceModel, frozen=True):
+    """Pydantic model for a zip file source."""
+
     model_config = get_model_config(get_json_extra_schema(r"\.zip$"))
     source_type: Literal["zip"] = "zip"
 

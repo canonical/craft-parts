@@ -21,9 +21,6 @@ import os
 from pathlib import Path
 from typing import Literal
 
-from craft_parts.dirs import ProjectDirs
-
-from . import errors
 from .base import (
     FileSourceHandler,
     FileSourceModel,
@@ -33,6 +30,8 @@ from .base import (
 
 
 class SevenzipSourceModel(FileSourceModel, frozen=True):
+    """Pydantic model for a 7zip file source."""
+
     model_config = get_model_config(get_json_extra_schema(r"\.7z$"))
     source_type: Literal["7z"] = "7z"
 

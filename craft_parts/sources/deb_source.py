@@ -21,10 +21,8 @@ import os
 from pathlib import Path
 from typing import Literal
 
-from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import deb_utils
 
-from . import errors
 from .base import (
     FileSourceHandler,
     FileSourceModel,
@@ -36,6 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 class DebSourceModel(FileSourceModel, frozen=True):
+    """Pydantic model for deb file sources."""
+
     model_config = get_model_config(get_json_extra_schema(r"\.deb$"))
     source_type: Literal["deb"] = "deb"
 
