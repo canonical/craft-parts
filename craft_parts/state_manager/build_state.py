@@ -16,10 +16,10 @@
 
 """State definitions for the build step."""
 
-from typing import Any
+from typing import Annotated, Any
 
+import pydantic
 from overrides import override
-from pydantic import validator
 
 from .step_state import StepState, validate_hex_string
 
@@ -28,11 +28,9 @@ class BuildState(StepState):
     """Context information for the build step."""
 
     assets: dict[str, Any] = {}
-    overlay_hash: str | None = None
-
-    _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
-        validate_hex_string
-    )
+    overlay_hash: Annotated[
+        str | None, pydantic.BeforeValidator(validate_hex_string)
+    ] = None
 
     @classmethod
     @override
