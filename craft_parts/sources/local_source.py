@@ -43,10 +43,10 @@ logger = logging.getLogger(__name__)
 class LocalSourceModel(SourceModel, frozen=True):
     """Pydantic model for a generic local source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"^\."))
+    model_config = get_model_config(get_json_extra_schema(r"^\./?"))
     source_type: Literal["local"] = "local"
     source: Annotated[  # pyright: ignore[reportIncompatibleVariableOverride]
-        pathlib.Path, pydantic.BeforeValidator(lambda source: pathlib.Path(source))
+        pathlib.Path, pydantic.AfterValidator(lambda source: pathlib.Path(source))
     ]
 
 

@@ -52,14 +52,7 @@ def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
     """
     return {
         "if": {"not": {"required": ["source-type"]}},
-        "then": {
-            "properties": {
-                "source": {
-                    "type": "string",
-                    "pattern": type_pattern,
-                }
-            }
-        },
+        "then": {"properties": {"source": {"pattern": type_pattern}}},
     }
 
 
