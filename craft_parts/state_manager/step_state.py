@@ -102,11 +102,6 @@ class StepState(MigrationState, ABC):
 
         return self
 
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
-        """Create and populate a new state object from dictionary data."""
-        raise RuntimeError("this must be implemented by the step-specific class.")
-
     @abstractmethod
     def properties_of_interest(
         self,
@@ -161,6 +156,11 @@ class StepState(MigrationState, ABC):
             self.project_options_of_interest(self.project_options),
             self.project_options_of_interest(other_project_options),
         )
+
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
+        """Create and populate a new state object from dictionary data."""
+        raise RuntimeError("this must be implemented by the step-specific class.")
 
 
 def _get_differing_keys(dict1: dict[str, Any], dict2: dict[str, Any]) -> set[str]:
