@@ -16,14 +16,14 @@
 
 """Definitions and helpers for plugin options."""
 
-from typing import Any
+from typing import Any, ClassVar, Collection
 
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import Self
 
 
 def extract_plugin_properties(
-    data: dict[str, Any], *, plugin_name: str, required: list[str] | None = None
+    data: dict[str, Any], *, plugin_name: str, required: Collection[str] | None = None
 ) -> dict[str, Any]:
     """Obtain plugin-specifc entries from part properties.
 
@@ -65,18 +65,23 @@ class PluginProperties(BaseModel, frozen=True):
     )
     plugin: str = ""
 
+    _required_fields: ClassVar[Collection[str]] = ("source",)
+
     @classmethod
-    def unmarshal(cls, data: dict[str, Any], required: list[str] | None = None) -> Self:
+    def unmarshal(cls, data: dict[str, Any]) -> Self:
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
-
+        :param required: A collection of required property names that don't begin with
+            the plugin prefix.
         :return: The populated plugin properties data object.
         """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name=cls.__fields__["plugin"].default, required=required
+        return cls.model_validate(
+            extract_plugin_properties(
+                data, plugin_name=cls.__fields__["plugin"].default,
+                required=cls._required_fields,
+            )
         )
-        return cls(**plugin_data)
 
     def marshal(self) -> dict[str, Any]:
         """Obtain a dictionary containing the plugin properties."""

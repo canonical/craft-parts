@@ -20,7 +20,7 @@ Using this, parts can be defined purely by utilizing properties that are
 automatically included, e.g. stage-packages.
 """
 
-from typing import Literal
+from typing import ClassVar, Collection, Literal
 
 from overrides import override
 
@@ -32,6 +32,8 @@ class NilPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the nil plugin."""
 
     plugin: Literal["nil"] = "nil"
+    source: str | None = None
+    _required_fields: ClassVar[Collection[str]] = ()
 
 
 class NilPlugin(Plugin):

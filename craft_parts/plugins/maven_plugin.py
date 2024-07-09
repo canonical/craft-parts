@@ -19,7 +19,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -35,26 +35,11 @@ from .properties import PluginProperties, extract_plugin_properties
 class MavenPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the maven plugin."""
 
+    plugin: Literal["maven"] = "maven"
     maven_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "MavenPluginProperties":
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="maven", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

@@ -16,7 +16,7 @@
 
 """The SCons plugin."""
 
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from overrides import override
 
@@ -30,26 +30,11 @@ from .properties import PluginProperties, extract_plugin_properties
 class SConsPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the SCons plugin."""
 
+    plugin: Literal["scons"] = "scons"
     scons_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "SConsPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="scons", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

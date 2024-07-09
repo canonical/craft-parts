@@ -20,7 +20,9 @@ import logging
 import os
 import shlex
 from collections.abc import Iterator
-from typing import Any, Literal, cast
+from typing import Any, Collection, Literal, cast
+import pydantic
+from typing_extensions import Self
 from urllib.parse import urlsplit
 
 from overrides import override
@@ -42,23 +44,7 @@ class AntPluginProperties(PluginProperties, frozen=True):
     ant_build_file: str | None = None
     ant_properties: dict[str, str] = {}
 
-    source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "AntPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="ant", required=["source"]
-        )
-        return cls(**plugin_data)
+    source: str | pydantic.AnyUrl
 
 
 class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

@@ -18,7 +18,7 @@
 
 import logging
 import shlex
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from overrides import override
 
@@ -32,26 +32,11 @@ logger = logging.getLogger(__name__)
 class MesonPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Meson plugin."""
 
+    plugin: Literal["meson"] = "meson"
     meson_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "MesonPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="meson", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

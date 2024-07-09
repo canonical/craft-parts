@@ -24,30 +24,14 @@ from typing import Any, Literal
 from overrides import override
 
 from .base import Plugin
-from .properties import PluginProperties
+from .properties import PluginProperties, extract_plugin_properties
 
 
-class DumpPluginProperties(PluginProperties):
+class DumpPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the dump plugin."""
 
-    plugin: Literal["dump"]
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "DumpPluginProperties":
-        """Populate dump properties from the part specification.
-
-        'source' is a required part property.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise ValueError: If a required property is not found.
-        """
-        if "source" not in data:
-            raise ValueError("'source' is required by the dump plugin")
-        return cls(plugin="dump")
+    plugin: Literal["dump"] = "dump"
+    source: str
 
 
 class DumpPlugin(Plugin):

@@ -18,7 +18,7 @@
 
 """The qmake plugin."""
 
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from overrides import override
 from typing_extensions import Self
@@ -30,27 +30,13 @@ from .properties import PluginProperties, extract_plugin_properties
 class QmakePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the qmake plugin."""
 
+    plugin: Literal["qmake"] = "qmake"
     qmake_parameters: list[str] = []
     qmake_project_file: str = ""
     qmake_major_version: int = 5
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> Self:
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="qmake", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class QmakePlugin(Plugin):

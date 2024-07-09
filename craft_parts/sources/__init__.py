@@ -16,6 +16,9 @@
 
 """Source handler definitions and helpers."""
 
+from typing import Annotated, Any, cast
+
+import pydantic
 from . import errors
 from .base import SourceModel
 from .deb_source import DebSource, DebSourceModel
@@ -29,6 +32,22 @@ from .sources import SourceHandler, get_source_handler, get_source_type_from_uri
 from .tar_source import TarSource, TarSourceModel
 from .zip_source import ZipSource, ZipSourceModel
 
+
+def _detect_source_type(data: SourceModel | dict[str, Any]) -> SourceModel | dict[str, Any]:
+    """Get the source type for a source if it's not already provided."""
+    if isinstance(data, SourceModel) or "source-type" in data:
+        return data
+    data["source-type"] = get_source_type_from_uri(cast(str, data.get("source")))
+    return data
+
+
+PartSourceModel = Annotated[
+        DebSourceModel | FileSourceModel | GitSourceModel | LocalSourceModel | RpmSourceModel | SevenzipSourceModel | SnapSourceModel | TarSourceModel | ZipSourceModel,
+        pydantic.BeforeValidator(_detect_source_type),
+        pydantic.Discriminator("source_type"),
+    ]
+
+
 __all__ = [
     "errors",
     "SourceModel",
@@ -40,6 +59,7 @@ __all__ = [
     "GitSourceModel",
     "LocalSource",
     "LocalSourceModel",
+    "PartSourceModel",
     "RpmSource",
     "RpmSourceModel",
     "SevenzipSource",

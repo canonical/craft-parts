@@ -18,7 +18,7 @@
 
 import shlex
 from textwrap import dedent
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from overrides import override
 
@@ -29,28 +29,13 @@ from .properties import PluginProperties, extract_plugin_properties
 class PythonPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the python plugin."""
 
+    plugin: Literal["python"] = "python"
     python_requirements: list[str] = []
     python_constraints: list[str] = []
     python_packages: list[str] = ["pip", "setuptools", "wheel"]
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "PythonPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="python", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class PythonPlugin(Plugin):
