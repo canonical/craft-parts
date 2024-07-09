@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 import requests
 from craft_parts import ProjectDirs
-from craft_parts.sources import sources
+from craft_parts import sources
 
 
 @pytest.mark.http_request_handler("FakeFileHTTPRequestHandler")
