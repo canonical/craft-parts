@@ -20,12 +20,12 @@ Using this, parts can be defined purely by utilizing properties that are
 automatically included, e.g. stage-packages.
 """
 
-from collections.abc import Collection
-from typing import ClassVar, Literal
+from typing import Any, Literal
 
 from overrides import override
+from typing_extensions import Self
 
-from .base import Plugin
+from .base import Plugin, extract_plugin_properties
 from .properties import PluginProperties
 
 
@@ -34,7 +34,22 @@ class NilPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["nil"] = "nil"
 
-    _required_fields: ClassVar[Collection[str]] = ()
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> Self:
+        """Populate class attributes from the part specification.
+
+        :param data: A dictionary containing part properties.
+
+        :return: The populated plugin properties data object.
+        """
+        required = ["source"] if "source" in data else []
+        return cls.model_validate(
+            extract_plugin_properties(
+                data,
+                plugin_name="nil",
+                required=cls._required_fields,
+            )
+        )
 
 
 class NilPlugin(Plugin):

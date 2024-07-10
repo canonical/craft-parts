@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@ from craft_parts import Action, ActionType, Step, errors, plugins
 class AppPluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    plugin: Literal["app-plugin"] = "app-plugin"
+    plugin: Literal["app"] = "app"
     app_stuff: list[str]
     source: str
 

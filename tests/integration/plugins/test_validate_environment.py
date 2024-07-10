@@ -55,7 +55,7 @@ def mytool_error(new_dir):
 class AppPluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    plugin: Literal["app-plugin"] = "app-plugin"
+    plugin: Literal["app"] = "app"
 
 
 class AppPluginEnvironmentValidator(plugins.PluginEnvironmentValidator):
