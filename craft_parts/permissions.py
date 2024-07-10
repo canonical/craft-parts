@@ -21,7 +21,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 
 class Permissions(BaseModel):
@@ -48,7 +48,8 @@ class Permissions(BaseModel):
     mode: str | None = None
 
     # pylint: disable=no-self-argument
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_root(cls, values: dict[Any, Any]) -> dict[Any, Any]:
         """Validate that "owner" and "group" are correctly specified."""
         has_owner = "owner" in values

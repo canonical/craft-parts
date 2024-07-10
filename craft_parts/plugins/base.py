@@ -134,9 +134,9 @@ class PluginModel(PluginPropertiesModel):
 def extract_plugin_properties(
     data: dict[str, Any], *, plugin_name: str, required: list[str] | None = None
 ) -> dict[str, Any]:
-    """Obtain plugin-specifc entries from part properties.
+    """Obtain plugin-specific entries from part properties.
 
-    Plugin-specifc properties must be prefixed with the name of the plugin.
+    Plugin-specific properties must be prefixed with the name of the plugin.
 
     :param data: A dictionary containing all part properties.
     :plugin_name: The name of the plugin.

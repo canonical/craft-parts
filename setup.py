@@ -49,8 +49,8 @@ install_requires = [
     # see https://github.com/mkorpela/overrides/issues/121
     "overrides!=7.6.0",
     "PyYAML",
-    "pydantic>=1.9.0,<2.0.0",
-    "pydantic-yaml[pyyaml]>=0.11.0,<1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-yaml[pyyaml]>=1.0.0",
     "pyxdg",
     "requests<2.32.0",
     "requests-unixsocket",

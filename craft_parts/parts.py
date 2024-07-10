@@ -23,9 +23,17 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from craft_parts import errors, plugins
+from craft_parts.constraints import RelativePathStr
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.packages import platform
@@ -60,8 +68,12 @@ class PartSpec(BaseModel):
     build_attributes: list[str] = []
     organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
-    stage_files: list[str] = Field(default_factory=lambda: ["*"], alias="stage")
-    prime_files: list[str] = Field(default_factory=lambda: ["*"], alias="prime")
+    stage_files: list[RelativePathStr] = Field(
+        default_factory=lambda: ["*"], alias="stage"
+    )
+    prime_files: list[RelativePathStr] = Field(
+        default_factory=lambda: ["*"], alias="prime"
+    )
     override_pull: str | None = None
     overlay_script: str | None = None
     override_build: str | None = None
@@ -69,34 +81,23 @@ class PartSpec(BaseModel):
     override_prime: str | None = None
     permissions: list[Permissions] = []
 
-    class Config:
-        """Pydantic model configuration."""
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        frozen=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+    )
 
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-
-    # pylint: disable=no-self-argument
-    @validator("stage_files", "prime_files", each_item=True)
-    def validate_relative_path_list(cls, item: str) -> str:
-        """Verify list is not empty and does not contain any absolute paths."""
-        if not item:
-            raise ValueError("path cannot be empty")
-        if item.startswith("/"):
-            raise ValueError(
-                f"{item!r} must be a relative path (cannot start with '/')"
-            )
-        return item
-
-    @validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @classmethod
     def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_root(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():

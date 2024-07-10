@@ -21,14 +21,17 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-from pydantic_yaml import YamlModel
+import yaml
+from pydantic import BaseModel, ConfigDict, model_validator
+from typing_extensions import Self
 
+from craft_parts.infos import ProjectVar
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
 
 
-class MigrationState(YamlModel):
+class MigrationState(BaseModel):
     """State information collected when migrating steps.
 
     The migration state contains the paths to the files and directories
@@ -47,7 +50,7 @@ class MigrationState(YamlModel):
 
         :returns: The state object containing the migration data.
         """
-        return cls(**data)
+        return cls.parse_obj(data)
 
     def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the part state data.
@@ -62,7 +65,7 @@ class MigrationState(YamlModel):
         :param filepath: The path to the file to write.
         """
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        yaml_data = self.yaml(by_alias=True)
+        yaml_data = yaml.safe_dump(self.model_dump())
         os_utils.TimedWriter.write_text(filepath, yaml_data)
 
 
@@ -76,15 +79,28 @@ class StepState(MigrationState, ABC):
 
     part_properties: dict[str, Any] = {}
     project_options: dict[str, Any] = {}
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="ignore",
+        frozen=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+        populate_by_name=True,
+    )
 
-    class Config:
-        """Pydantic model configuration."""
+    @model_validator(mode="after")
+    def _coerce_project_vars(self) -> Self:
+        """Coerce project_vars options to ProjectVar types."""
+        # FIXME: add proper type definition for project_options so that
+        # ProjectVar can be created by pydantic during model unmarshaling.
+        if self.project_options:
+            pvars = self.project_options.get("project_vars")
+            if pvars:
+                for key, val in pvars.items():
+                    self.project_options["project_vars"][key] = (
+                        ProjectVar.model_validate(val)
+                    )
 
-        validate_assignment = True
-        extra = "ignore"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-        allow_population_by_field_name = True
+        return self
 
     @abstractmethod
     def properties_of_interest(

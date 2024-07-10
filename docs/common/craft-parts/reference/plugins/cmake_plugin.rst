@@ -42,7 +42,7 @@ Dependencies
 
 The CMake plugin needs the ``cmake`` executable to configure, and
 ``make`` or ``ninja`` executable to build. ``make`` and ``ninja`` are
-dependant on the selected ``cmake-generator``. These dependencies are
+dependent on the selected ``cmake-generator``. These dependencies are
 provided by the plugin as a ``build-packages`` entry.
 
 The plugin also sets up ``gcc``.  Other compiler or library

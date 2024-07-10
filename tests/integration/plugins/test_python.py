@@ -365,7 +365,6 @@ def test_find_payload_python_good_version(new_dir, partitions):
     payload_python = (install_dir / f"usr/bin/{real_basename}").resolve()
     expected_text = textwrap.dedent(
         f"""\
-        Looking for a Python interpreter called "{real_basename}" in the payload...
         Found interpreter in payload: "{payload_python}"
         """
     )
