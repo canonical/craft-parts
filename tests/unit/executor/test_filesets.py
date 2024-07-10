@@ -17,7 +17,7 @@
 import pytest
 from craft_parts import errors
 from craft_parts.executor import filesets
-from craft_parts.executor.filesets import Fileset
+from craft_parts.executor import Fileset
 
 
 @pytest.mark.parametrize(
