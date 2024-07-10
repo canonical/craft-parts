@@ -17,60 +17,27 @@
 """Implement the zip file source handler."""
 
 import os
+from typing import Literal
 import zipfile
 from pathlib import Path
 
 from craft_parts.dirs import ProjectDirs
 
 from . import errors
-from .base import FileSourceHandler
+from .base import BaseFileSourceModel, FileSourceHandler, get_json_extra_schema, get_model_config
+
+
+class ZipSourceModel(BaseFileSourceModel, frozen=True):
+    """Pydantic model for a zip file source."""
+
+    model_config = get_model_config(get_json_extra_schema(r"\.zip$"))
+    source_type: Literal["zip"] = "zip"
 
 
 class ZipSource(FileSourceHandler):
     """The zip file source handler."""
 
-    # pylint: disable=too-many-arguments
-    def __init__(  # noqa: PLR0913
-        self,
-        source: str,
-        part_src_dir: Path,
-        *,
-        cache_dir: Path,
-        project_dirs: ProjectDirs,
-        source_tag: str | None = None,
-        source_branch: str | None = None,
-        source_commit: str | None = None,
-        source_depth: int | None = None,
-        source_checksum: str | None = None,
-        source_submodules: list[str] | None = None,
-        ignore_patterns: list[str] | None = None,
-    ) -> None:
-        super().__init__(
-            source,
-            part_src_dir,
-            cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_branch=source_branch,
-            source_commit=source_commit,
-            source_depth=source_depth,
-            source_checksum=source_checksum,
-            source_submodules=source_submodules,
-            project_dirs=project_dirs,
-            ignore_patterns=ignore_patterns,
-        )
-        if source_tag:
-            raise errors.InvalidSourceOption(source_type="zip", option="source-tag")
-
-        if source_commit:
-            raise errors.InvalidSourceOption(source_type="zip", option="source-commit")
-
-        if source_branch:
-            raise errors.InvalidSourceOption(source_type="zip", option="source-branch")
-
-        if source_depth:
-            raise errors.InvalidSourceOption(source_type="zip", option="source-depth")
-
-    # pylint: enable=too-many-arguments
+    source_model = ZipSourceModel
 
     def provision(
         self,

@@ -15,19 +15,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
 from re import escape
+from typing import Literal
 
 import pytest
 import requests
 from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
-from craft_parts.sources.base import FileSourceHandler, SourceHandler
+from craft_parts.sources.base import FileSourceHandler, BaseFileSourceModel, SourceHandler, SourceModel
 from overrides import overrides
 
 # pylint: disable=attribute-defined-outside-init
 
 
+class FooSourceModel(SourceModel, frozen=True):
+    source_type: Literal["foo"] = "foo"
+
+
 class FooSourceHandler(SourceHandler):
     """A source handler that does nothing."""
+
+    source_model = FooSourceModel
 
     def pull(self) -> None:
         """Pull this source type."""
@@ -45,15 +52,6 @@ class TestSourceHandler:
             cache_dir=new_dir,
             project_dirs=self._dirs,
         )
-
-    def test_source(self):
-        assert self.source.source_tag is None
-        assert self.source.source_commit is None
-        assert self.source.source_branch is None
-        assert self.source.source_depth is None
-        assert self.source.source_checksum is None
-        assert self.source.source_submodules is None
-        assert self.source.command is None
 
     def test_source_check_if_outdated(self):
         with pytest.raises(errors.SourceUpdateUnsupported) as raised:
@@ -82,8 +80,14 @@ class TestSourceHandler:
             )
 
 
+class BarFileSourceModel(BaseFileSourceModel, frozen=True):
+    source_type: Literal["bar"] = "bar"
+
+
 class BarFileSource(FileSourceHandler):
     """A file source handler."""
+
+    source_model = BarFileSourceModel
 
     @overrides
     def provision(
@@ -110,15 +114,6 @@ class TestFileSourceHandler:
             cache_dir=new_dir,
             project_dirs=self._dirs,
         )
-
-    def test_file_source(self):
-        assert self.source.source_tag is None
-        assert self.source.source_commit is None
-        assert self.source.source_branch is None
-        assert self.source.source_depth is None
-        assert self.source.source_checksum is None
-        assert self.source.source_submodules is None
-        assert self.source.command is None
 
     def test_pull_file(self, new_dir):
         self.source.source = "src/my_file"
