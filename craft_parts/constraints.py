@@ -24,7 +24,7 @@ from pydantic import AfterValidator, BeforeValidator, Field
 T = TypeVar("T")
 
 
-def _validate_list_is_unique(value: list[T]) -> list[T]:
+def _validate_list_is_unique(value: list) -> list:
     value_set = set(value)
     if len(value_set) == len(value):
         return value
