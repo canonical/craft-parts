@@ -25,15 +25,20 @@ from typing import Literal
 
 from overrides import overrides
 
-from craft_parts.dirs import ProjectDirs
-
-from . import errors
-from .base import BaseFileSourceModel, FileSourceHandler, get_json_extra_schema, get_model_config
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 
 class TarSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for a tar file source."""
-    model_config = get_model_config(get_json_extra_schema(r"\.(tar(\.[a-z0-9]+)?|tgz)$"))
+
+    model_config = get_model_config(
+        get_json_extra_schema(r"\.(tar(\.[a-z0-9]+)?|tgz)$")
+    )
     source_type: Literal["tar"] = "tar"
 
 

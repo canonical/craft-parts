@@ -20,16 +20,20 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 import yaml
 from overrides import overrides
 
-from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors
-from .base import BaseFileSourceModel, FileSourceHandler, get_json_extra_schema, get_model_config
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 
 class SnapSourceModel(BaseFileSourceModel, frozen=True):

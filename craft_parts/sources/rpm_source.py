@@ -25,10 +25,13 @@ from typing import Literal
 
 from overrides import override
 
-from craft_parts.dirs import ProjectDirs
-
 from . import errors
-from .base import BaseFileSourceModel, FileSourceHandler, get_json_extra_schema, get_model_config
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 logger = logging.getLogger(__name__)
 

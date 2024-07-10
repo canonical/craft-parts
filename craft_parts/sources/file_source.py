@@ -23,12 +23,12 @@ from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 
-from . import errors
 from .base import BaseFileSourceModel, FileSourceHandler, get_model_config
 
 
 class FileSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for plain file source."""
+
     model_config = get_model_config()
     source_type: Literal["file"]
 
@@ -38,9 +38,25 @@ class FileSource(FileSourceHandler):
 
     source_model = FileSourceModel
 
-    def __init__(self, source: str, part_src_dir: Path, *, cache_dir: Path, project_dirs: ProjectDirs, ignore_patterns: list[str] | None = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        source: str,
+        part_src_dir: Path,
+        *,
+        cache_dir: Path,
+        project_dirs: ProjectDirs,
+        ignore_patterns: list[str] | None = None,
+        **kwargs: Any,
+    ) -> None:
         kwargs.setdefault("source_type", "file")
-        super().__init__(source, part_src_dir, cache_dir=cache_dir, project_dirs=project_dirs, ignore_patterns=ignore_patterns, **kwargs)
+        super().__init__(
+            source,
+            part_src_dir,
+            cache_dir=cache_dir,
+            project_dirs=project_dirs,
+            ignore_patterns=ignore_patterns,
+            **kwargs,
+        )
 
     @overrides
     def provision(

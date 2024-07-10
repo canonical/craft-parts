@@ -17,14 +17,16 @@
 """Implement the zip file source handler."""
 
 import os
-from typing import Literal
 import zipfile
 from pathlib import Path
+from typing import Literal
 
-from craft_parts.dirs import ProjectDirs
-
-from . import errors
-from .base import BaseFileSourceModel, FileSourceHandler, get_json_extra_schema, get_model_config
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 
 class ZipSourceModel(BaseFileSourceModel, frozen=True):

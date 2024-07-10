@@ -21,11 +21,14 @@ import os
 from pathlib import Path
 from typing import Literal
 
-from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import deb_utils
 
-from . import errors
-from .base import FileSourceHandler, BaseFileSourceModel, get_json_extra_schema, get_model_config
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 logger = logging.getLogger(__name__)
 

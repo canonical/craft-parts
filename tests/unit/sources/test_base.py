@@ -21,7 +21,12 @@ import pytest
 import requests
 from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
-from craft_parts.sources.base import FileSourceHandler, BaseFileSourceModel, SourceHandler, SourceModel
+from craft_parts.sources.base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    SourceHandler,
+    SourceModel,
+)
 from overrides import overrides
 
 # pylint: disable=attribute-defined-outside-init

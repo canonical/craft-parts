@@ -21,13 +21,11 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import ClassVar, Literal, cast
-from typing_extensions import Self
+from typing import Any, ClassVar, Literal, cast
 
-from overrides import overrides
 import pydantic
-
-from craft_parts.dirs import ProjectDirs
+from overrides import overrides
+from typing_extensions import Self
 
 from . import errors
 from .base import SourceHandler, SourceModel, get_json_extra_schema, get_model_config
@@ -150,17 +148,13 @@ class GitSource(SourceHandler):
 
         return f"{tag}+git{revs_ahead}.{commit}"
 
-    def __init__(  # pylint: disable=too-many-arguments  # noqa: PLR0913
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         source: str,
         part_src_dir: Path,
-        **kwargs
+        **kwargs: Any,
     ) -> None:
-        super().__init__(
-            source,
-            part_src_dir,
-            **kwargs
-        )
+        super().__init__(source, part_src_dir, **kwargs)
 
     def _fetch_origin_commit(self) -> None:
         """Fetch from origin, using source-commit if defined."""
