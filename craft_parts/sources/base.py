@@ -67,7 +67,7 @@ def get_model_config(
     )
 
 
-class SourceModel(pydantic.BaseModel, frozen=True):
+class SourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     """A base model for source types."""
 
     model_config = get_model_config()
@@ -107,20 +107,22 @@ class SourceHandler(abc.ABC):
         invalid_options = []
         model_params = {key.replace("_", "-"): value for key, value in kwargs.items()}
         model_params["source"] = source
+        properties = self.source_model.model_json_schema()["properties"]
         for option, value in kwargs.items():
-            if option not in self.source_model.__fields__:
+            option_alias = option.replace("_", "-")
+            if option_alias not in properties:
                 if not value:
-                    del model_params[option.replace("_", "-")]
+                    del model_params[option_alias]
                 else:
-                    invalid_options.append(option.replace("_", "-"))
+                    invalid_options.append(option_alias)
         if len(invalid_options) > 1:
             raise errors.InvalidSourceOptions(
-                source_type=self.source_model.__fields__["source_type"].default,
+                source_type=properties["source-type"]["default"],
                 options=invalid_options,
             )
         if len(invalid_options) == 1:
             raise errors.InvalidSourceOption(
-                source_type=self.source_model.__fields__["source_type"].default,
+                source_type=properties["source-type"]["default"],
                 option=invalid_options[0],
             )
 
@@ -195,7 +197,7 @@ class FileSourceHandler(SourceHandler):
     """Base class for file source types."""
 
     # pylint: disable=too-many-arguments
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         source: str,
         part_src_dir: Path,
@@ -205,7 +207,7 @@ class FileSourceHandler(SourceHandler):
         source_checksum: str | None = None,
         command: str | None = None,
         ignore_patterns: list[str] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             source,
