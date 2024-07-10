@@ -34,6 +34,7 @@ from .properties import PluginProperties, extract_plugin_properties
 
 logger = logging.getLogger(__name__)
 
+UniqueStrList = Annotated[list[str], AfterValidator(_validate_list_is_unique)]
 
 def _validate_list_is_unique(value: list) -> list:
     value_set = set(value)

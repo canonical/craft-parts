@@ -46,7 +46,7 @@ def extract_plugin_properties(
 
     return plugin_data
 
-
+ 
 class PluginProperties(BaseModel, frozen=True):
     """Options specific to a plugin.
 
