@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2023 Canonical Ltd.
+# Copyright 2020-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,16 +18,18 @@
 
 import shlex
 from textwrap import dedent
-from typing import Any, cast
+from typing import Literal, cast
 
 from overrides import override
 
-from .base import Plugin, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 
-class PythonPluginProperties(PluginProperties):
+class PythonPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the python plugin."""
+
+    plugin: Literal["python"] = "python"
 
     python_requirements: list[str] = []
     python_constraints: list[str] = []
@@ -35,22 +37,6 @@ class PythonPluginProperties(PluginProperties):
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "PythonPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="python", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class PythonPlugin(Plugin):

@@ -17,7 +17,7 @@
 import subprocess
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Literal
 
 import craft_parts
 import pytest
@@ -52,12 +52,10 @@ def mytool_error(new_dir):
     return tool
 
 
-class AppPluginProperties(plugins.PluginProperties):
+class AppPluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
-        return cls()
+    plugin: Literal["app-plugin"] = "app-plugin"
 
 
 class AppPluginEnvironmentValidator(plugins.PluginEnvironmentValidator):

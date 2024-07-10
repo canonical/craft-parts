@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2023 Canonical Ltd.
+# Copyright 2020-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,10 @@
 
 """Plugin base class and definitions."""
 
+from __future__ import annotations
+
 import abc
+from collections.abc import Collection
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
@@ -47,7 +50,7 @@ class Plugin(abc.ABC):
     """Plugins that can run in 'strict' mode must set this classvar to True."""
 
     def __init__(
-        self, *, properties: PluginProperties, part_info: "infos.PartInfo"
+        self, *, properties: PluginProperties, part_info: infos.PartInfo
     ) -> None:
         self._options = properties
         self._part_info = part_info
@@ -123,7 +126,7 @@ class JavaPlugin(Plugin):
 
 
 def extract_plugin_properties(
-    data: dict[str, Any], *, plugin_name: str, required: list[str] | None = None
+    data: dict[str, Any], *, plugin_name: str, required: Collection[str] | None = None
 ) -> dict[str, Any]:
     """Obtain plugin-specific entries from part properties.
 

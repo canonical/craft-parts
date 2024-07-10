@@ -212,7 +212,7 @@ class Part:
             project_dirs = ProjectDirs(partitions=partitions)
 
         if not plugin_properties:
-            plugin_properties = PluginProperties()
+            plugin_properties = PluginProperties.unmarshal(data)
 
         plugin_name: str = data.get("plugin", "")
 

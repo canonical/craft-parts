@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,14 +22,14 @@ import os
 import re
 import subprocess
 from textwrap import dedent
-from typing import Annotated, Any, cast
+from typing import Annotated, Literal, cast
 
 from overrides import override
 from pydantic import AfterValidator
 from pydantic import validator as pydantic_validator
 
 from . import validator
-from .base import Plugin, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
@@ -46,8 +46,10 @@ def _validate_list_is_unique(value: list) -> list:
 UniqueStrList = Annotated[list[str], AfterValidator(_validate_list_is_unique)]
 
 
-class RustPluginProperties(PluginProperties):
+class RustPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Rust plugin."""
+
+    plugin: Literal["rust"] = "rust"
 
     # part properties required by the plugin
     rust_features: UniqueStrList = []
@@ -77,24 +79,6 @@ class RustPluginProperties(PluginProperties):
         if re.match(r"^\d+\.\d+(\.\d+)?(-[\w-]+)?$", value):
             return value
         raise ValueError(f"Invalid rust-channel: {value}")
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "RustPluginProperties":
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data,
-            plugin_name="rust",
-            required=["source"],
-        )
-        return cls(**plugin_data)
 
 
 class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

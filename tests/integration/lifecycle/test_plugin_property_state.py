@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import craft_parts
 import pytest
@@ -34,16 +34,12 @@ def teardown_module():
     plugins.unregister_all()
 
 
-class ExamplePluginProperties(plugins.PluginProperties):
+class ExamplePluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    example_property: int | None
+    plugin: Literal["example"] = "example"
 
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "ExamplePluginProperties":
-        plugin_data = plugins.extract_plugin_properties(data, plugin_name="example")
-        return cls(**plugin_data)
+    example_property: int | None
 
 
 class ExamplePlugin(plugins.Plugin):
@@ -160,7 +156,7 @@ def test_plugin_property_build_dirty(new_dir):
     ]
 
 
-class Example2PluginProperties(plugins.PluginProperties):
+class Example2PluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
     example_property: int | None

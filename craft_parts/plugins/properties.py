@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,23 +16,20 @@
 
 """Definitions and helpers for plugin options."""
 
-from typing import Any
+from collections.abc import Collection
+from typing import Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict
+import pydantic
+from typing_extensions import Self
 
-
-class PluginPropertiesModel(BaseModel):
-    """Model for plugins properties using pydantic validation."""
-
-    model_config = ConfigDict(
-        validate_assignment=True,
-        extra="forbid",
-        frozen=True,
-        alias_generator=lambda s: s.replace("_", "-"),
-    )
+from . import base
 
 
-class PluginProperties(PluginPropertiesModel):
+# We set `frozen=True` here so that pyright knows to treat variable types as covariant
+# rather than invariant, improving the readability of child classes.
+# As a side effect, we have to tell mypy not to warn about setting this config item
+# twice.
+class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     """Options specific to a plugin.
 
     PluginProperties should be subclassed into plugin-specific property
@@ -42,19 +39,38 @@ class PluginProperties(PluginPropertiesModel):
     build step is dirty. This can be overridden in each plugin if needed.
     """
 
+    model_config = pydantic.ConfigDict(
+        alias_generator=lambda s: s.replace("_", "-"),
+        extra="forbid",
+        frozen=True,
+        validate_assignment=True,
+    )
+
+    plugin: Any = ""
+    source: str | None = None
+
+    _required_fields: ClassVar[Collection[str]] = ("plugin", "source")
+
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "PluginProperties":  # noqa: ARG003
+    def unmarshal(cls, data: dict[str, Any]) -> Self:
         """Populate class attributes from the part specification.
 
         :param data: A dictionary containing part properties.
 
         :return: The populated plugin properties data object.
         """
-        return cls()
+        plugin_name = cls.model_json_schema()["properties"]["plugin"].get("default", "")
+        return cls.model_validate(
+            base.extract_plugin_properties(
+                data,
+                plugin_name=plugin_name,
+                required=cls._required_fields,
+            )
+        )
 
     def marshal(self) -> dict[str, Any]:
         """Obtain a dictionary containing the plugin properties."""
-        return self.dict(by_alias=True)
+        return self.model_dump(mode="json", by_alias=True, exclude={"plugin"})
 
     @classmethod
     def get_pull_properties(cls) -> list[str]:
@@ -65,4 +81,7 @@ class PluginProperties(PluginPropertiesModel):
     def get_build_properties(cls) -> list[str]:
         """Obtain the list of properties affecting the build stage."""
         properties = cls.schema(by_alias=True).get("properties")
-        return list(properties.keys()) if properties else []
+        if properties:
+            del properties["plugin"]
+            return list(properties)
+        return []

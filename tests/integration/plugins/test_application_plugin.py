@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Literal
 
 import craft_parts
 import pytest
@@ -24,18 +24,12 @@ import yaml
 from craft_parts import Action, ActionType, Step, errors, plugins
 
 
-class AppPluginProperties(plugins.PluginProperties):
+class AppPluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
+    plugin: Literal["app-plugin"] = "app-plugin"
     app_stuff: list[str]
     source: str
-
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
-        plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="app", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class AppPlugin(plugins.Plugin):

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, cast
+from typing import Literal, cast
 
 import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
@@ -23,14 +23,12 @@ from craft_parts.plugins import Plugin, PluginProperties
 from craft_parts.plugins.base import extract_plugin_properties
 
 
-class FooPluginProperties(PluginProperties):
+class FooPluginProperties(PluginProperties, frozen=True):
     """Test plugin properties."""
 
-    name: str
+    plugin: Literal["foo"] = "foo"
 
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
-        return cls(name=data.get("foo-name", "nothing"))
+    foo_name: str
 
 
 class FooPlugin(Plugin):
@@ -49,7 +47,7 @@ class FooPlugin(Plugin):
 
     def get_build_commands(self) -> list[str]:
         options = cast(FooPluginProperties, self._options)
-        return ["hello", options.name]
+        return ["hello", options.foo_name]
 
 
 def test_plugin(new_dir):

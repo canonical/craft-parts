@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ import logging
 import os
 import shlex
 from collections.abc import Iterator
-from typing import Any, cast
+from typing import Literal, cast
 from urllib.parse import urlsplit
 
 from overrides import override
@@ -28,36 +28,22 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin, extract_plugin_properties
+from .base import JavaPlugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
 
-class AntPluginProperties(PluginProperties):
+class AntPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Ant plugin."""
+
+    plugin: Literal["ant"] = "ant"
 
     ant_build_targets: list[str] = []
     ant_build_file: str | None = None
     ant_properties: dict[str, str] = {}
 
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "AntPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="ant", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

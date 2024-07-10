@@ -18,7 +18,6 @@
 
 from .base import Plugin, extract_plugin_properties
 from .plugins import (
-    PluginProperties,
     extract_part_properties,
     get_plugin,
     get_plugin_class,
@@ -27,6 +26,7 @@ from .plugins import (
     unregister,
     unregister_all,
 )
+from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
 __all__ = [

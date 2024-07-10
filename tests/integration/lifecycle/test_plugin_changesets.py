@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Literal
 
 import craft_parts
 import yaml
@@ -31,12 +31,10 @@ def teardown_module():
     plugins.unregister_all()
 
 
-class ExamplePluginProperties(plugins.PluginProperties):
+class ExamplePluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
-        return cls()
+    plugin: Literal["example"] = "example"
 
 
 class ExamplePlugin(plugins.Plugin):
