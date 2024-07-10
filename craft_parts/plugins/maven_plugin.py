@@ -28,11 +28,11 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin, PluginModel, extract_plugin_properties
+from .base import JavaPlugin, extract_plugin_properties
 from .properties import PluginProperties
 
 
-class MavenPluginProperties(PluginProperties, PluginModel):
+class MavenPluginProperties(PluginProperties):
     """The part properties used by the maven plugin."""
 
     maven_parameters: list[str] = []

@@ -16,7 +16,7 @@
 
 """Craft Parts plugins subsystem."""
 
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin, extract_plugin_properties
 from .plugins import (
     PluginProperties,
     extract_part_properties,
@@ -32,7 +32,6 @@ from .validator import PluginEnvironmentValidator
 __all__ = [
     "Plugin",
     "PluginEnvironmentValidator",
-    "PluginModel",
     "PluginProperties",
     "extract_part_properties",
     "extract_plugin_properties",

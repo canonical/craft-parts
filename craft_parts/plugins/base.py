@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 
 from craft_parts.actions import ActionProperties
 
-from .properties import PluginProperties, PluginPropertiesModel
+from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
@@ -120,15 +120,6 @@ class JavaPlugin(Plugin):
         # pylint: enable=line-too-long
 
         return link_java + link_jars
-
-
-class PluginModel(PluginPropertiesModel):
-    """Model for plugins using pydantic validation.
-
-    Plugins with configuration properties can use pydantic validation to unmarshal
-    data from part specs. In this case, extract plugin-specific properties using
-    the :func:`extract_plugin_properties` helper.
-    """
 
 
 def extract_plugin_properties(

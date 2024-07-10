@@ -28,13 +28,13 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin, PluginModel, extract_plugin_properties
+from .base import JavaPlugin, extract_plugin_properties
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
 
-class AntPluginProperties(PluginProperties, PluginModel):
+class AntPluginProperties(PluginProperties):
     """The part properties used by the Ant plugin."""
 
     ant_build_targets: list[str] = []

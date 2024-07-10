@@ -29,7 +29,7 @@ from pydantic import AfterValidator
 from pydantic import validator as pydantic_validator
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin, extract_plugin_properties
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def _validate_list_is_unique(value: list) -> list:
 UniqueStrList = Annotated[list[str], AfterValidator(_validate_list_is_unique)]
 
 
-class RustPluginProperties(PluginProperties, PluginModel):
+class RustPluginProperties(PluginProperties):
     """The part properties used by the Rust plugin."""
 
     # part properties required by the plugin

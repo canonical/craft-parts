@@ -31,7 +31,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-class ExamplePluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class ExamplePluginProperties(plugins.PluginProperties):
     """The application-defined plugin properties."""
 
     @classmethod

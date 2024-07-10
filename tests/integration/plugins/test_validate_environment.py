@@ -52,7 +52,7 @@ def mytool_error(new_dir):
     return tool
 
 
-class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class AppPluginProperties(plugins.PluginProperties):
     """The application-defined plugin properties."""
 
     @classmethod

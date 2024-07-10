@@ -24,13 +24,13 @@ from typing import Any, cast
 from overrides import override
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin, extract_plugin_properties
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
 
-class MesonPluginProperties(PluginProperties, PluginModel):
+class MesonPluginProperties(PluginProperties):
     """The part properties used by the Meson plugin."""
 
     meson_parameters: list[str] = []
