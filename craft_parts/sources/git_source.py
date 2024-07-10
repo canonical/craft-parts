@@ -158,14 +158,7 @@ class GitSource(SourceHandler):
 
     def _fetch_origin_commit(self) -> None:
         """Fetch from origin, using source-commit if defined."""
-        command_str = cast(str, self.command)
-        command = [
-            command_str,
-            "-C",
-            str(self.part_src_dir),
-            "fetch",
-            "origin",
-        ]
+        command = [self.command, "-C", str(self.part_src_dir), "fetch", "origin"]
         if self.source_commit:
             command.append(self.source_commit)
 
@@ -205,11 +198,7 @@ class GitSource(SourceHandler):
         else:
             refspec = "refs/remotes/origin/" + self._get_current_branch()
 
-        command_prefix = [
-            cast(str, self.command),
-            "-C",
-            str(self.part_src_dir),
-        ]
+        command_prefix = [self.command, "-C", str(self.part_src_dir)]
         command = [*command_prefix, "fetch", "--prune"]
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
@@ -229,7 +218,7 @@ class GitSource(SourceHandler):
 
     def _clone_new(self) -> None:
         """Clone a git repository, using submodules, branch, and depth if defined."""
-        command = [cast(str, self.command), "clone"]
+        command = [self.command, "clone"]
         if self.source_submodules is None:
             command.append("--recursive")
         else:
@@ -252,7 +241,7 @@ class GitSource(SourceHandler):
         if self.source_commit:
             self._fetch_origin_commit()
             command = [
-                cast(str, self.command),
+                self.command,
                 "-C",
                 str(self.part_src_dir),
                 "checkout",
