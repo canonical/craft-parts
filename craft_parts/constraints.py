@@ -15,10 +15,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Pydantic constraints for various items."""
 
+import collections
 import re
-from typing import Annotated
+from typing import Annotated, TypeVar
 
-from pydantic import BeforeValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field
+
+T = TypeVar("T")
+
+
+def _validate_list_is_unique(value: list) -> list:
+    value_set = set(value)
+    if len(value_set) == len(value):
+        return value
+    dupes = [item for item, count in collections.Counter(value).items() if count > 1]
+    raise ValueError(f"Duplicate values in list: {dupes}")
 
 
 def _validate_relative_path_str(path: str) -> str:
@@ -43,3 +54,5 @@ RelativePathStr = Annotated[
     # The field here is used to provide information in the JSON schema and IDEs.
     Field(description="relative path", min_length=1, pattern=re.compile(r"^[^\/].*")),
 ]
+
+UniqueList = Annotated[list[T], AfterValidator(_validate_list_is_unique)]
