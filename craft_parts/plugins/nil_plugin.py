@@ -33,7 +33,6 @@ class NilPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["nil"] = "nil"
     source: str | None = None
-    _required_fields: ClassVar[Collection[str]] = ()
 
 
 class NilPlugin(Plugin):
