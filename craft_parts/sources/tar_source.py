@@ -33,7 +33,7 @@ from .base import (
 )
 
 
-class TarSourceModel(BaseFileSourceModel, frozen=True):
+class TarSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a tar file source."""
 
     model_config = get_model_config(

@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # TODO: change file operations to use pathlib
 
 
-class LocalSourceModel(SourceModel, frozen=True):
+class LocalSourceModel(SourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a generic local source."""
 
     model_config = get_model_config(get_json_extra_schema(r"^\./?"))

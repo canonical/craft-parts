@@ -33,7 +33,7 @@ from .base import SourceHandler, SourceModel, get_json_extra_schema, get_model_c
 logger = logging.getLogger(__name__)
 
 
-class GitSourceModel(SourceModel, frozen=True):
+class GitSourceModel(SourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a git-based source."""
 
     model_config = get_model_config(get_json_extra_schema(r"(^git[+@:]|\.git$)"))
