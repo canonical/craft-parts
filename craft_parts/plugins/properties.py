@@ -46,7 +46,7 @@ class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
         validate_assignment=True,
     )
 
-    plugin: Any = ""
+    plugin: str = ""
     source: str | None = None
 
     _required_fields: ClassVar[Collection[str]] = ("plugin", "source")
