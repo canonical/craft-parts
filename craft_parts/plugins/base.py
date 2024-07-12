@@ -19,9 +19,8 @@
 from __future__ import annotations
 
 import abc
-from collections.abc import Collection
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from craft_parts.actions import ActionProperties
 

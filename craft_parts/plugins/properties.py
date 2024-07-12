@@ -17,8 +17,7 @@
 """Definitions and helpers for plugin options."""
 
 import functools
-from collections.abc import Collection
-from typing import Any, ClassVar
+from typing import Any, cast
 
 import pydantic
 from typing_extensions import Self
@@ -52,7 +51,9 @@ class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     @functools.lru_cache(maxsize=1)
     def model_properties(cls) -> dict[str, dict[str, Any]]:
         """Get the properties for this model from the JSON schema."""
-        return cls.model_json_schema().get("properties", {})
+        return cast(
+            dict[str, dict[str, Any]], cls.model_json_schema().get("properties", {})
+        )
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> Self:

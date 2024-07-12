@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import craft_parts
 import pytest
