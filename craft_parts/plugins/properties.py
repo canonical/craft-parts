@@ -80,8 +80,5 @@ class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     @classmethod
     def get_build_properties(cls) -> list[str]:
         """Obtain the list of properties affecting the build stage."""
-        properties = cls.schema(by_alias=True).get("properties")
-        if properties:
-            del properties["plugin"]
-            return list(properties)
-        return []
+        properties = cls.schema(by_alias=True).get("properties", [])
+        return [p for p in properties if p != "plugin"]
