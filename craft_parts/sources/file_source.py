@@ -17,59 +17,46 @@
 """Implement the plain file source handler."""
 
 from pathlib import Path
+from typing import Any, Literal
 
 from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 
-from . import errors
-from .base import FileSourceHandler
+from .base import BaseFileSourceModel, FileSourceHandler, get_model_config
+
+
+class FileSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+    """Pydantic model for plain file source."""
+
+    model_config = get_model_config()
+    source_type: Literal["file"]
 
 
 class FileSource(FileSourceHandler):
     """The plain file source handler."""
 
-    # pylint: disable-next=too-many-arguments
-    def __init__(  # noqa: PLR0913
+    source_model = FileSourceModel
+
+    def __init__(
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: str | None = None,
-        source_commit: str | None = None,
-        source_branch: str | None = None,
-        source_depth: int | None = None,
-        source_submodules: list[str] | None = None,
-        source_checksum: str | None = None,
         ignore_patterns: list[str] | None = None,
+        **kwargs: Any,
     ) -> None:
+        kwargs.setdefault("source_type", "file")
         super().__init__(
             source,
             part_src_dir,
             cache_dir=cache_dir,
-            source_commit=source_commit,
-            source_tag=source_tag,
-            source_branch=source_branch,
-            source_depth=source_depth,
-            source_checksum=source_checksum,
-            source_submodules=source_submodules,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
+            **kwargs,
         )
-
-        if source_commit:
-            raise errors.InvalidSourceOption(source_type="file", option="source-commit")
-
-        if source_tag:
-            raise errors.InvalidSourceOption(source_type="file", option="source-tag")
-
-        if source_depth:
-            raise errors.InvalidSourceOption(source_type="file", option="source-depth")
-
-        if source_branch:
-            raise errors.InvalidSourceOption(source_type="file", option="source-branch")
 
     @overrides
     def provision(

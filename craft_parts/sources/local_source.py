@@ -21,25 +21,39 @@ import functools
 import glob
 import logging
 import os
+import pathlib
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Literal
 
+import pydantic
 from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors
-from .base import SourceHandler
+from .base import SourceHandler, SourceModel, get_json_extra_schema, get_model_config
 
 logger = logging.getLogger(__name__)
 
 # TODO: change file operations to use pathlib
 
 
+class LocalSourceModel(SourceModel, frozen=True):  # type: ignore[misc]
+    """Pydantic model for a generic local source."""
+
+    model_config = get_model_config(get_json_extra_schema(r"^\./?"))
+    source_type: Literal["local"] = "local"
+    source: Annotated[  # type: ignore[assignment]
+        pathlib.Path, pydantic.AfterValidator(lambda source: pathlib.Path(source))
+    ]
+
+
 class LocalSource(SourceHandler):
     """The local source handler."""
+
+    source_model = LocalSourceModel
 
     def __init__(
         self,
