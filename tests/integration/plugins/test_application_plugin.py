@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Literal
 
 import craft_parts
 import pytest
@@ -24,18 +24,12 @@ import yaml
 from craft_parts import Action, ActionType, Step, errors, plugins
 
 
-class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class AppPluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
+    plugin: Literal["app"] = "app"
     app_stuff: list[str]
     source: str
-
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
-        plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="app", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class AppPlugin(plugins.Plugin):

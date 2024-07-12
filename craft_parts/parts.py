@@ -212,7 +212,12 @@ class Part:
             project_dirs = ProjectDirs(partitions=partitions)
 
         if not plugin_properties:
-            plugin_properties = PluginProperties()
+            try:
+                plugin_properties = PluginProperties.unmarshal(data)
+            except ValidationError as err:
+                raise errors.PartSpecificationError.from_validation_error(
+                    part_name=name, error_list=err.errors()
+                ) from err
 
         plugin_name: str = data.get("plugin", "")
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2022 Canonical Ltd.
+# Copyright 2020-2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,38 +16,24 @@
 
 """The cmake plugin."""
 
-from typing import Any, cast
+from typing import Literal, cast
 
 from overrides import override
 
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 
-class CMakePluginProperties(PluginProperties, PluginModel):
+class CMakePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the cmake plugin."""
+
+    plugin: Literal["cmake"] = "cmake"
 
     cmake_parameters: list[str] = []
     cmake_generator: str = "Unix Makefiles"
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "CMakePluginProperties":
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="cmake", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class CMakePlugin(Plugin):

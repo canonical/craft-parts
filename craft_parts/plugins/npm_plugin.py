@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@ import os
 import platform
 import re
 from textwrap import dedent
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import requests
 from overrides import override
@@ -31,7 +31,7 @@ from typing_extensions import Self
 from craft_parts.errors import InvalidArchitecture
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
@@ -47,8 +47,10 @@ _NODE_ARCH_FROM_SNAP_ARCH = {
 _NODE_ARCH_FROM_PLATFORM = {"x86_64": {"32bit": "x86", "64bit": "x64"}}
 
 
-class NpmPluginProperties(PluginProperties, PluginModel):
+class NpmPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the npm plugin."""
+
+    plugin: Literal["npm"] = "npm"
 
     # part properties required by the plugin
     npm_include_node: bool = False
@@ -65,22 +67,6 @@ class NpmPluginProperties(PluginProperties, PluginModel):
                 "npm-node-version has no effect if npm-include-node is false"
             )
         return self
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "NpmPluginProperties":
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="npm", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

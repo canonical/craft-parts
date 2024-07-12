@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,41 +17,27 @@
 """The Dotnet plugin."""
 
 import logging
-from typing import Any, cast
+from typing import Literal, cast
 
 from overrides import override
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
 
-class DotnetPluginProperties(PluginProperties, PluginModel):
+class DotnetPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Dotnet plugin."""
+
+    plugin: Literal["dotnet"] = "dotnet"
 
     dotnet_build_configuration: str = "Release"
     dotnet_self_contained_runtime_identifier: str | None = None
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "DotnetPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="dotnet", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

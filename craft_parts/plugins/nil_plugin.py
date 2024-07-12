@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020 Canonical Ltd.
+# Copyright 2020,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Using this, parts can be defined purely by utilizing properties that are
 automatically included, e.g. stage-packages.
 """
 
-from typing import Any
+from typing import Literal
 
 from overrides import override
 
@@ -28,19 +28,10 @@ from .base import Plugin
 from .properties import PluginProperties
 
 
-class NilPluginProperties(PluginProperties):
+class NilPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the nil plugin."""
 
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "NilPluginProperties":  # noqa: ARG003
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-        """
-        return cls()
+    plugin: Literal["nil"] = "nil"
 
 
 class NilPlugin(Plugin):

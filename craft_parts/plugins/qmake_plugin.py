@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023,2024 Canonical Ltd.
 # Copyright 2023 Scarlett Moore <sgmoore@kde.org>.
 #
 # This program is free software; you can redistribute it and/or
@@ -18,17 +18,18 @@
 
 """The qmake plugin."""
 
-from typing import Any, cast
+from typing import Literal, cast
 
 from overrides import override
-from typing_extensions import Self
 
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 
-class QmakePluginProperties(PluginProperties, PluginModel):
+class QmakePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the qmake plugin."""
+
+    plugin: Literal["qmake"] = "qmake"
 
     qmake_parameters: list[str] = []
     qmake_project_file: str = ""
@@ -36,21 +37,6 @@ class QmakePluginProperties(PluginProperties, PluginModel):
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> Self:
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="qmake", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class QmakePlugin(Plugin):

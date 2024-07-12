@@ -40,9 +40,8 @@ class TestPluginDump:
         self._plugin = DumpPlugin(properties=properties, part_info=part_info)
 
     def test_unmarshal_error(self):
-        with pytest.raises(ValueError) as raised:  # noqa: PT011
+        with pytest.raises(ValueError, match=r"source\n\s+Field required"):
             DumpPlugin.properties_class.unmarshal({})
-        assert str(raised.value) == "'source' is required by the dump plugin"
 
     def test_get_build_packages(self):
         assert self._plugin.get_build_packages() == set()

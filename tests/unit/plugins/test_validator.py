@@ -15,9 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Literal
 
 import pytest
 from craft_parts import errors
@@ -48,17 +47,14 @@ def empty_foo_exe(new_dir):
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
-        part=Part("my-part", {}),
+        part=Part("my-part", {"plugin": "foo"}),
     )
 
 
-@dataclass
-class FooPluginProperties(PluginProperties):
+class FooPluginProperties(PluginProperties, frozen=True):
     """Test plugin properties."""
 
-    @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
-        return cls()
+    plugin: Literal["foo"] = "foo"
 
 
 class FooPluginEnvironmentValidator(PluginEnvironmentValidator):

@@ -54,6 +54,7 @@ class TestGetPlugin:
             ("make", MakePlugin, {"source": "."}),
             ("meson", MesonPlugin, {"source": "."}),
             ("nil", NilPlugin, {}),
+            ("nil", NilPlugin, {"source": "."}),
             ("npm", NpmPlugin, {"source": "."}),
             ("python", PythonPlugin, {"source": "."}),
             ("qmake", QmakePlugin, {"source": "."}),

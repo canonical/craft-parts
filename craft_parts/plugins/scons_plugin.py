@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,40 +16,26 @@
 
 """The SCons plugin."""
 
-from typing import Any, cast
+from typing import Literal, cast
 
 from overrides import override
 
 from craft_parts import errors
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 
-class SConsPluginProperties(PluginProperties, PluginModel):
+class SConsPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the SCons plugin."""
+
+    plugin: Literal["scons"] = "scons"
 
     scons_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: dict[str, Any]) -> "SConsPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="scons", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

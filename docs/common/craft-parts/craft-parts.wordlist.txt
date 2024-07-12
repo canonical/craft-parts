@@ -89,6 +89,7 @@ InvalidSourceOptions
 InvalidSourceType
 Iterable
 JavaPlugin
+JSON
 LDFLAGS
 LLVM
 LTO
