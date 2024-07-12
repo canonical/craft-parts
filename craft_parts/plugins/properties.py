@@ -69,6 +69,8 @@ class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
         plugin_data = {
             key: value
             for key, value in data.items()
+            # Note: We also use startswith here in order to have the Properties object
+            # provide an "extra inputs are not permitted" error message.
             if key in properties or key.startswith(f"{plugin_name}-")
         }
 
