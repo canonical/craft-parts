@@ -12,6 +12,7 @@ Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
 Backport
+BaseFileSourceModel
 BaseRepository
 BeforeValidator
 BuildPackageNotFound
@@ -45,6 +46,7 @@ DNFRepository
 DebError
 DebPackage
 DebSource
+DebSourceModel
 DirtyReport
 DotPluginEnvironmentValidator
 Dotnet
@@ -62,6 +64,7 @@ FileOrganizeError
 FileProviderNotFound
 FileSource
 FileSourceHandler
+FileSourceModel
 Filepaths
 Fileset
 FilesetConflict
@@ -69,6 +72,7 @@ FilesetError
 Filesets
 GiB
 GitSource
+GitSourceModel
 GoPlugin
 GoPluginEnvironmentValidator
 GoPluginProperties
@@ -101,6 +105,7 @@ LayerStateManager
 Lifecycle
 LifecycleManager
 LocalSource
+LocalSourceModel
 LogProgress
 MakePlugin
 MakePluginProperties
@@ -197,6 +202,7 @@ QmakePlugin
 QmakePluginProperties
 Rockcraft
 RpmSource
+RpmSourceModel
 RuntimeError
 RuntimeIdentifier
 RustPlugin
@@ -212,17 +218,20 @@ SDKs
 SDL
 ScriptletRunError
 SevenzipSource
+SevenzipSourceModel
 SnapDownloadError
 SnapGetAssertionError
 SnapInstallError
 SnapPackage
 SnapRefreshError
 SnapSource
+SnapSourceModel
 SnapUnavailable
 Snapcraft
 SnapdConnectionError
 SourceError
 SourceHandler
+SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 StageFilesConflict
@@ -237,6 +246,7 @@ Submodules
 Subpackages
 Subtractive
 TarSource
+TarSourceModel
 TimedWriter
 Tox
 TypeError
@@ -260,6 +270,7 @@ YAML
 YUMRepository
 YUMRepository's
 ZipSource
+ZipSourceModel
 abcdef
 args
 armv
@@ -332,6 +343,7 @@ iojs
 jdk
 jre
 js
+json
 kwargs
 ldflags
 lifecycle
@@ -414,6 +426,7 @@ svn
 symlink
 symlinks
 texinfo
+tgz
 toml
 toolchain
 toplevel
