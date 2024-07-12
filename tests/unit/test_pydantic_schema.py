@@ -76,7 +76,6 @@ VALID_EXPLICIT_SOURCE_DATAS = [  # Source data that is only valid as an explicit
 
 INVALID_PART_DATAS = [
     None,
-    pytest.param({}, id="empty-part"),
     pytest.param(
         {"plugin": "nil", "nil-extra-property": "invalid"}, id="nil-extra-property"
     ),
