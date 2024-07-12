@@ -67,7 +67,7 @@ def get_model_config(
     )
 
 
-class SourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
+class BaseSourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     """A base model for source types."""
 
     model_config = get_model_config()
@@ -75,7 +75,7 @@ class SourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     source: str
 
 
-class BaseFileSourceModel(SourceModel, frozen=True):
+class BaseFileSourceModel(BaseSourceModel, frozen=True):
     """A base model for file-based source types."""
 
     source_checksum: str | None = None
@@ -89,7 +89,7 @@ class SourceHandler(abc.ABC):
     source files.
     """
 
-    source_model: ClassVar[type[SourceModel]] = SourceModel
+    source_model: ClassVar[type[BaseSourceModel]]
 
     def __init__(
         self,

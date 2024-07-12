@@ -33,14 +33,19 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors
-from .base import SourceHandler, SourceModel, get_json_extra_schema, get_model_config
+from .base import (
+    BaseSourceModel,
+    SourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 logger = logging.getLogger(__name__)
 
 # TODO: change file operations to use pathlib
 
 
-class LocalSourceModel(SourceModel, frozen=True):  # type: ignore[misc]
+class LocalSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a generic local source."""
 
     model_config = get_model_config(get_json_extra_schema(r"^\./?"))

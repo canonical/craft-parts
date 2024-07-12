@@ -17,27 +17,36 @@
 
 from __future__ import annotations
 
-import itertools
-from typing import Annotated, Type
-
+import jsonschema
 import pydantic
 import pytest
-import jsonschema
-import pytest_check
-import yaml
-
 from craft_parts import pydantic_schema
 from craft_parts.plugins import plugins
 
-
 VALID_PLUGIN_DATAS = [
-    *(pytest.param({"plugin": plugin}, id=f"plugin_{plugin}") for plugin in plugins.get_registered_plugins()),
-    {"plugin": "ant", "ant-build-targets": ["anthill"], "ant-build-file": "buildme.ant", "ant-properties": {"parts": "head,thorax,abdomen"}},
-    {"plugin": "autotools", "autotools-configure-parameters": ["magic"], "autotools-bootstrap-parameters": ["shoelaces"]},
+    *(
+        pytest.param({"plugin": plugin}, id=f"plugin_{plugin}")
+        for plugin in plugins.get_registered_plugins()
+    ),
+    {
+        "plugin": "ant",
+        "ant-build-targets": ["anthill"],
+        "ant-build-file": "buildme.ant",
+        "ant-properties": {"parts": "head,thorax,abdomen"},
+    },
+    {
+        "plugin": "autotools",
+        "autotools-configure-parameters": ["magic"],
+        "autotools-bootstrap-parameters": ["shoelaces"],
+    },
     {"plugin": "rust", "rust-features": ["abc", "def"]},
 ]
 VALID_SOURCE_DATAS = [
-    {"source-type": "deb", "source": "https://example.com/example.deb", "source-checksum": "sha256:blah"},
+    {
+        "source-type": "deb",
+        "source": "https://example.com/example.deb",
+        "source-checksum": "sha256:blah",
+    },
     {"source-type": "git", "source": "git@github.com/canonical/craft-parts"},
     {"source-type": "git", "source": "git+ssh://github.com/canonical/craft-parts"},
     {"source-type": "git", "source": "https://github.com/canonical/craft-parts.git"},
@@ -55,17 +64,31 @@ VALID_EXPLICIT_SOURCE_DATAS = [  # Source data that is only valid as an explicit
     {"source-type": "file", "source": "some_file"},
     {"source-type": "deb", "source": "https://example.com/example.deb?key=value"},
     {"source-type": "git", "source": "user@git.kernel.org/linux"},
-    {"source-type": "git", "source": "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux/"},
-    *({"source-type": source_type, "source": "blah"} for source_type in ("deb", "git", "local", "rpm", "7z", "snap", "tar", "zip"))
+    {
+        "source-type": "git",
+        "source": "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux/",
+    },
+    *(
+        {"source-type": source_type, "source": "blah"}
+        for source_type in ("deb", "git", "local", "rpm", "7z", "snap", "tar", "zip")
+    ),
 ]
 
 INVALID_PART_DATAS = [
     None,
     pytest.param({}, id="empty-part"),
-    pytest.param({"plugin": "nil", "nil-extra-property": "invalid"}, id="nil-extra-property"),
+    pytest.param(
+        {"plugin": "nil", "nil-extra-property": "invalid"}, id="nil-extra-property"
+    ),
     pytest.param({"plugin": "dump"}, id="missing-source"),
-    pytest.param({"plugin": "nil", "source": ".", "source-branch": "invalid"}, id="branch-on-local-source"),
-    pytest.param({"plugin": "nil", "source-type": "git", "source": ".", "source-checksum": ""}, id="checksum-on-git-source"),
+    pytest.param(
+        {"plugin": "nil", "source": ".", "source-branch": "invalid"},
+        id="branch-on-local-source",
+    ),
+    pytest.param(
+        {"plugin": "nil", "source-type": "git", "source": ".", "source-checksum": ""},
+        id="checksum-on-git-source",
+    ),
 ]
 
 
@@ -73,20 +96,24 @@ INVALID_PART_DATAS = [
 def part_schema():
     return pydantic_schema.Part.model_json_schema()
 
+
 @pytest.fixture(scope="module")
 def validator(part_schema):
     return jsonschema.Draft202012Validator(part_schema)
 
+
 @pytest.mark.parametrize("plugin_data", VALID_PLUGIN_DATAS)
-@pytest.mark.parametrize("source_data", VALID_SOURCE_DATAS + VALID_EXPLICIT_SOURCE_DATAS)
+@pytest.mark.parametrize(
+    "source_data", VALID_SOURCE_DATAS + VALID_EXPLICIT_SOURCE_DATAS
+)
 def test_valid_part_schema(validator, plugin_data, source_data):
     part_data = plugin_data | source_data
     validator.validate(part_data)
     part = pydantic_schema.Part.model_validate(part_data)
 
-    pytest_check.equal(part.plugin_data.plugin, part_data["plugin"])
+    assert part.plugin_data.plugin == part_data["plugin"]
 
-#
+
 @pytest.mark.parametrize("plugin_data", VALID_PLUGIN_DATAS)
 @pytest.mark.parametrize("source_data", VALID_SOURCE_DATAS)
 def test_part_schema_implicit_source_type(validator, plugin_data, source_data):
