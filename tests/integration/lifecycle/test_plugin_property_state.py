@@ -163,12 +163,6 @@ class Example2PluginProperties(plugins.PluginProperties, frozen=True):
 
     @classmethod
     @override
-    def unmarshal(cls, data: dict[str, Any]) -> "Example2PluginProperties":
-        plugin_data = plugins.extract_plugin_properties(data, plugin_name="example")
-        return cls(**plugin_data)
-
-    @classmethod
-    @override
     def get_pull_properties(cls) -> list[str]:
         return ["example-property"]
 

@@ -16,6 +16,8 @@
 
 from typing import Literal
 
+import pydantic
+import pytest
 from craft_parts.plugins import PluginProperties
 
 
@@ -24,9 +26,28 @@ class FooProperties(PluginProperties, frozen=True):
     foo_parameters: list[str] | None = None
 
 
-def test_properties_unmarshal():
-    prop = FooProperties.unmarshal({})
+VALID_FOO_DICTS = [
+    {},
+    {"foo-parameters": []},
+    {"plugin": "foo", "foo-parameters": ["bar"]},
+    {"source": "https://example.com/foo.git", "plugin": "foo"},
+    {"ignored-property": True},
+    {"foo": "also-ignored"},
+]
+
+
+@pytest.mark.parametrize("data", VALID_FOO_DICTS)
+def test_properties_unmarshal_valid(data):
+    prop = FooProperties.unmarshal(data)
     assert isinstance(prop, PluginProperties)
+
+
+@pytest.mark.parametrize("data", [{"foo-invalid": True}])
+def test_properties_unmarshal_invalid(data):
+    with pytest.raises(
+        pydantic.ValidationError, match="Extra inputs are not permitted"
+    ):
+        FooProperties.unmarshal(data)
 
 
 def test_properties_marshal():

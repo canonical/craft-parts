@@ -123,28 +123,3 @@ class JavaPlugin(Plugin):
         # pylint: enable=line-too-long
 
         return link_java + link_jars
-
-
-def extract_plugin_properties(
-    data: dict[str, Any], *, plugin_name: str, required: Collection[str] | None = None
-) -> dict[str, Any]:
-    """Obtain plugin-specific entries from part properties.
-
-    Plugin-specific properties must be prefixed with the name of the plugin.
-
-    :param data: A dictionary containing all part properties.
-    :plugin_name: The name of the plugin.
-
-    :return: A dictionary with plugin properties.
-    """
-    if required is None:
-        required = []
-
-    plugin_data: dict[str, Any] = {}
-    prefix = f"{plugin_name}-"
-
-    for key, value in data.items():
-        if key.startswith(prefix) or key in required:
-            plugin_data[key] = value
-
-    return plugin_data

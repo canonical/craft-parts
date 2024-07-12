@@ -16,13 +16,12 @@
 
 """Definitions and helpers for plugin options."""
 
+import functools
 from collections.abc import Collection
 from typing import Any, ClassVar
 
 import pydantic
 from typing_extensions import Self
-
-from . import base
 
 
 # We set `frozen=True` here so that pyright knows to treat variable types as covariant
@@ -49,7 +48,11 @@ class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     plugin: str = ""
     source: str | None = None
 
-    _required_fields: ClassVar[Collection[str]] = ("plugin", "source")
+    @classmethod
+    @functools.lru_cache(maxsize=1)
+    def model_properties(cls) -> dict[str, dict[str, Any]]:
+        """Get the properties for this model from the JSON schema."""
+        return cls.model_json_schema().get("properties", {})
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> Self:
@@ -59,14 +62,16 @@ class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
 
         :return: The populated plugin properties data object.
         """
-        plugin_name = cls.model_json_schema()["properties"]["plugin"].get("default", "")
-        return cls.model_validate(
-            base.extract_plugin_properties(
-                data,
-                plugin_name=plugin_name,
-                required=cls._required_fields,
-            )
-        )
+        properties = cls.model_properties()
+        plugin_name = properties["plugin"].get("default", "")
+
+        plugin_data = {
+            key: value
+            for key, value in data.items()
+            if key in properties or key.startswith(f"{plugin_name}-")
+        }
+
+        return cls.model_validate(plugin_data)
 
     def marshal(self) -> dict[str, Any]:
         """Obtain a dictionary containing the plugin properties."""
@@ -80,5 +85,4 @@ class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
     @classmethod
     def get_build_properties(cls) -> list[str]:
         """Obtain the list of properties affecting the build stage."""
-        properties = cls.schema(by_alias=True).get("properties", [])
-        return [p for p in properties if p != "plugin"]
+        return [p for p in cls.model_properties() if p != "plugin"]

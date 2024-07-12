@@ -20,7 +20,6 @@ import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginProperties
-from craft_parts.plugins.base import extract_plugin_properties
 
 
 class FooPluginProperties(PluginProperties, frozen=True):
@@ -84,16 +83,3 @@ def test_abstract_methods(new_dir):
 
     with pytest.raises(TypeError, match=expected):
         FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
-
-
-def test_extract_plugin_properties():
-    data = {
-        "foo": True,
-        "test": "yes",
-        "test-one": 1,
-        "test-two": 2,
-        "not-test-three": 3,
-    }
-
-    plugin_data = extract_plugin_properties(data, plugin_name="test")
-    assert plugin_data == {"test-one": 1, "test-two": 2}
