@@ -12,6 +12,7 @@ Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
 Backport
+BaseSourceModel
 BaseFileSourceModel
 BaseRepository
 BeforeValidator
@@ -70,6 +71,7 @@ Fileset
 FilesetConflict
 FilesetError
 Filesets
+GenerateJsonSchema
 GiB
 GitSource
 GitSourceModel
@@ -174,6 +176,7 @@ PartitionPathPair
 PartitionUsageError
 PartitionUsageWarning
 PartsError
+PartsFile
 PluginBuildError
 PluginCleanError
 PluginEnvironmentValidationError
@@ -304,6 +307,7 @@ crafter
 ctl
 customization
 dataset
+defs
 deps
 destdir
 dev
@@ -397,6 +401,7 @@ reorganized
 runtime
 rustc
 rustup
+schemas
 scons
 scriptlet
 scriptlets
