@@ -22,7 +22,6 @@ from pathlib import Path
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
-from craft_parts.executor.environment import generate_step_environment
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.parts import Part, sort_parts
@@ -30,6 +29,7 @@ from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
 from .collisions import check_for_stage_collisions
+from .environment import generate_step_environment
 from .part_handler import PartHandler
 from .step_handler import Stream
 

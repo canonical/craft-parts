@@ -21,11 +21,11 @@ import os
 from typing import Any
 
 from craft_parts import errors, permissions
-from craft_parts.executor import filesets
-from craft_parts.executor.filesets import Fileset
 from craft_parts.features import Features
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
+
+from . import filesets
 
 
 def check_for_stage_collisions(
@@ -79,7 +79,7 @@ def _check_for_stage_collisions_per_partition(
             continue
 
         # Gather our own files up.
-        stage_fileset = Fileset(stage_files, name="stage")
+        stage_fileset = filesets.Fileset(stage_files, name="stage")
         srcdir = str(part.part_install_dirs[partition])
         part_files, part_directories = filesets.migratable_filesets(
             stage_fileset, srcdir, partition

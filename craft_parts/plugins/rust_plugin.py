@@ -16,17 +16,17 @@
 
 """The craft Rust plugin."""
 
-import collections
 import logging
 import os
 import re
 import subprocess
 from textwrap import dedent
-from typing import Annotated, Literal, cast
+from typing import Literal, cast
 
 from overrides import override
-from pydantic import AfterValidator
 from pydantic import validator as pydantic_validator
+
+from craft_parts.constraints import UniqueList
 
 from . import validator
 from .base import Plugin
@@ -35,25 +35,14 @@ from .properties import PluginProperties
 logger = logging.getLogger(__name__)
 
 
-def _validate_list_is_unique(value: list) -> list:
-    value_set = set(value)
-    if len(value_set) == len(value):
-        return value
-    dupes = [item for item, count in collections.Counter(value).items() if count > 1]
-    raise ValueError(f"Duplicate values in list: {dupes}")
-
-
-UniqueStrList = Annotated[list[str], AfterValidator(_validate_list_is_unique)]
-
-
 class RustPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Rust plugin."""
 
     plugin: Literal["rust"] = "rust"
 
     # part properties required by the plugin
-    rust_features: UniqueStrList = []
-    rust_path: UniqueStrList = ["."]
+    rust_features: UniqueList[str] = []
+    rust_path: UniqueList[str] = ["."]
     rust_channel: str | None = None
     rust_use_global_lto: bool = False
     rust_no_default_features: bool = False
@@ -61,7 +50,7 @@ class RustPluginProperties(PluginProperties, frozen=True):
     rust_cargo_parameters: list[str] = []
     rust_inherit_ldflags: bool = False
     source: str
-    after: UniqueStrList | None = None
+    after: UniqueList[str] | None = None
 
     @pydantic_validator("rust_channel")
     @classmethod
