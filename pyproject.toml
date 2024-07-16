@@ -1,3 +1,119 @@
+[project]
+name = "craft-parts"
+dynamic = ["readme", "version"]
+dependencies = [
+    # see https://github.com/mkorpela/overrides/issues/121
+    "overrides!=7.6.0",
+    "PyYAML",
+    "pydantic>=1.9.0,<2.0.0",
+    "pydantic-yaml[pyyaml]>=0.11.0,<1.0.0",
+    "pyxdg",
+    "requests<2.32.0",
+    "requests-unixsocket",
+    # See: https://github.com/msabramo/requests-unixsocket/pull/69
+    # When updating to urllib3 v2, also remove the constraint on types-requests.
+    "urllib3<2",  # keep compatible API
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.7"
+
+[project.scripts]
+craftctl = "craft_parts.ctl:main"
+
+[project.optional-dependencies]
+dev = [
+    "autoflake",
+    "build",
+    "codespell",
+    "coverage[toml]~=7.4",
+    "hypothesis",
+    "pydocstyle",
+    "pytest~=8.0",
+    "pytest-check",
+    "pytest-cov~=5.0",
+    "pytest-mock~=3.12",
+    "pytest-subprocess",
+    "requests-mock",
+    "tox",
+    "twine",
+]
+lint = [
+    "black",
+    "yamllint~=1.34",
+]
+types = [
+    "mypy[reports]~=1.10.0",
+    "pyright==1.1.358",
+    "types-colorama",
+    "types-docutils",
+    "types-Pillow",
+    "types-Pygments",
+    "types-pytz",
+    "types-PyYAML",
+    "types-requests<2.30",  # When removing this constraint, remove from renovate's ignoreDeps
+    "types-setuptools",
+]
+docs = [
+    "canonical-sphinx~=0.1",
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-autobuild~=2024.2",
+    "sphinx-pydantic==0.1.1",
+    "sphinx-rtd-theme",
+    "sphinx-toolbox~=3.5",
+    "sphinx-lint==0.9.1",
+    "sphinxcontrib-details-directive==0.1.0",
+]
+apt = [
+    "python-apt>=2.0.0"
+]
+
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "setuptools_scm[toml]>=7.1"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+readme = {file = "README.rst"}
+
+[tool.setuptools_scm]
+write_to = "craft_parts/_version.py"
+# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
+# version scheme:
+#   - X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>
+# parts of scheme:
+#   - X.Y.Z - most recent git tag
+#   - post<commits since tag>+g<hash> - present when current commit is not tagged
+#   - .d<%Y%m%d> - present when working dir is dirty
+# version scheme when no tags exist:
+#   - 0.0.post<total commits>+g<hash>
+version_scheme = "post-release"
+# deviations from the default 'git describe' command:
+# - only match annotated tags
+# - only match tags formatted as 'X.Y.Z'
+git_describe_command = "git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'"
+
+[tool.setuptools]
+packages = [
+    "craft_parts",
+    "craft_parts_docs",
+]
+package-dir = {craft_parts_docs = "docs/common"}
+
 [tool.black]
 target-version = ["py38"]
 
