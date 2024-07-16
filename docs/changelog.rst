@@ -2,21 +2,27 @@
 Changelog
 *********
 
+1.33.0 (2024-07-02)
+-------------------
+
+- Add doc slugs for errors during build, linking to plugin docs
+- Add docs for partitions
+
 1.32.0 (2024-06-24)
 -------------------
 
-- Adds support for 7z sources
-- Adds reference documentation for the qmake plugin
-- Improves logging output when fetching packages
-- Improves errors for when sources cannot be fetched
-- Fixes a behavior where apt packages would be fetched when the user was
+- Add support for 7z sources
+- Add reference documentation for the qmake plugin
+- Improve logging output when fetching packages
+- Improve errors for when sources cannot be fetched
+- Fix a behavior where apt packages would be fetched when the user was
   not a superuser
-- Fixes list of ignored packages in core24 bases when fetching stage-packages
+- Fix list of ignored packages in core24 bases when fetching stage-packages
 
 1.31.0 (2024-05-16)
 -------------------
 
-- Refactored npm plugin
+- Refactor npm plugin
   - npm-node-version option now accepts a NVM-style version identifier
   - Move Node.js download to pull commands
   - Verify SHA256 checksums after node.js download
