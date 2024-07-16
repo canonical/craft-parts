@@ -94,3 +94,4 @@ The following snippet declares a part using the ``go`` plugin. It uses the stabl
 .. _Build tags: https://pkg.go.dev/cmd/go#hdr-Build_constraints
 .. _Go: https://go.dev/
 .. _go generate: https://go.dev/blog/generate
+

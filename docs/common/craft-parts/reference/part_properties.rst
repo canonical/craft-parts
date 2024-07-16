@@ -90,6 +90,22 @@ to the ``bin`` directory in the staging area and renamed to ``hello``:
    organize:
      hello.py: bin/hello
 
+If partitions are in use by the application, they may be referenced by prepending the partition name, surrounded by parentheses, to the destination path.  Only the destination path may specify a partition; source paths always reference the ``default`` partition.  Omitting the partition name in the destination path causes the file to be copied to the ``default`` partition.
+
+The following example is exactly equivalent to the above example:
+
+.. code:: yaml
+
+   organize:
+     hello.py: (default)/bin/hello
+
+In this example, the file is instead copied to the application-defined ``boot`` partition:
+
+.. code:: yaml
+
+   organize:
+     vmlinuz-6.2.0-39-generic: (boot)/vmlinuz
+
 .. _override_build:
 
 override-build
@@ -374,7 +390,7 @@ The ``plugin`` and ``parse-info`` keys apply to all steps.
 .. _`Autotools`: https://www.gnu.org/software/automake/
 .. _`Cargo`: https://crates.io/
 .. _`CMake`: https://cmake.org/
-.. _`Go`: https://golang.org/
+.. _`Go`: https://go.dev/
 .. _`Make`: https://www.gnu.org/software/make/manual/make.html
 .. _`Meson`: https://mesonbuild.com/
 .. _`.Net`: https://github.com/dotnet/core
