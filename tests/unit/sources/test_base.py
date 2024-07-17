@@ -23,16 +23,16 @@ from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
 from craft_parts.sources.base import (
     BaseFileSourceModel,
+    BaseSourceModel,
     FileSourceHandler,
     SourceHandler,
-    SourceModel,
 )
 from overrides import overrides
 
 # pylint: disable=attribute-defined-outside-init
 
 
-class FooSourceModel(SourceModel, frozen=True):
+class FooSourceModel(BaseSourceModel, frozen=True):
     source_type: Literal["foo"] = "foo"
 
 

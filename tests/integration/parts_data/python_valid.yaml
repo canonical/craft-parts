@@ -1,0 +1,14 @@
+description: A valid parts file using the python plugin with some extra keywords.
+parts:
+  python:
+    plugin: python
+    source: .
+    python-requirements:
+      - requirements.txt
+    python-constraints:
+      - constraints.txt
+    python-packages:
+      - pip
+      - setuptools
+      - wheel
+      - build
