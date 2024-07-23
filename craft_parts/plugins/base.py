@@ -18,7 +18,7 @@
 
 import abc
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
+from typing import TYPE_CHECKING, Any, Collection, Dict, List, Set, Type
 
 from craft_parts.actions import ActionProperties
 
@@ -132,7 +132,7 @@ class PluginModel(PluginPropertiesModel):
 
 
 def extract_plugin_properties(
-    data: Dict[str, Any], *, plugin_name: str, required: Optional[List[str]] = None
+    data: Dict[str, Any], *, plugin_name: str, required: Collection[str] = ()
 ) -> Dict[str, Any]:
     """Obtain plugin-specifc entries from part properties.
 
@@ -143,14 +143,8 @@ def extract_plugin_properties(
 
     :return: A dictionary with plugin properties.
     """
-    if required is None:
-        required = []
-
-    plugin_data: Dict[str, Any] = {}
-    prefix = f"{plugin_name}-"
-
-    for key, value in data.items():
-        if key.startswith(prefix) or key in required:
-            plugin_data[key] = value
-
-    return plugin_data
+    return {
+        key: value
+        for key, value in data.items()
+        if key.startswith(f"{plugin_name}-") or key in required
+    }

@@ -91,7 +91,7 @@ test_requires = [
     "coverage",
     "hypothesis",
     "pydocstyle",
-    "pyright==1.1.358",
+    "pyright==1.1.372",
     "pytest",
     "pytest-check",
     "pytest-cov",
