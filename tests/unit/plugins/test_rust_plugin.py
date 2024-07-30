@@ -20,7 +20,7 @@ import pytest_subprocess
 from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.rust_plugin import RustPlugin
+from craft_parts.plugins.rust_plugin import RustPlugin, RustPluginProperties
 from pydantic import ValidationError
 
 
@@ -30,6 +30,21 @@ def part_info(new_dir):
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
+
+
+@pytest.mark.parametrize(
+    "rust_channel",
+    [
+        "stable",
+        "beta",
+        "nightly",
+        "stable-x86_64-unknown-linux-gnu",
+        "1.0.0",
+        "1.68.2-x86_64-unknown-linux-gnu",
+    ],
+)
+def test_validate_rust_channel(rust_channel):
+    RustPluginProperties.validate_rust_channel(rust_channel)
 
 
 def test_get_build_snaps(fake_process: pytest_subprocess.FakeProcess, part_info):
