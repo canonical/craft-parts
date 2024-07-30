@@ -113,6 +113,7 @@ Multipass
 NOOP
 NPM
 NVM
+Namespaces
 Namespaced
 NetworkRequestError
 NilPlugin
