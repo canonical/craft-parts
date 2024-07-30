@@ -55,11 +55,13 @@ class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     def _validate_mutually_exclusive_fields(self) -> Self:
         if self.source_tag and self.source_branch:
             raise errors.IncompatibleSourceOptions(
-                self.model_fields["source_type"].default, ["source-tag", "source-branch"]
+                self.model_fields["source_type"].default,
+                ["source-tag", "source-branch"],
             )
         if self.source_tag and self.source_commit:
             raise errors.IncompatibleSourceOptions(
-                self.model_fields["source_type"].default, ["source-tag", "source-commit"]
+                self.model_fields["source_type"].default,
+                ["source-tag", "source-commit"],
             )
         if self.source_branch and self.source_commit:
             raise errors.IncompatibleSourceOptions(
