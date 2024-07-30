@@ -143,7 +143,7 @@ class PartSpec(BaseModel):
         :return: The newly created dictionary.
 
         """
-        return self.dict(by_alias=True)
+        return self.model_dump(by_alias=True)
 
     def get_scriptlet(self, step: Step) -> str | None:
         """Return the scriptlet contents, if any, for the given step.
