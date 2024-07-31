@@ -33,9 +33,9 @@ clean: ## Clean artifacts from building, testing, etc.
 
 .PHONY: coverage
 coverage: ## Run pytest with coverage report.
-	coverage run --source craft_parts -m pytest
+	coverage run --source craft_parts -m pytest tests/unit
 	coverage report -m
-	coverage html
+	coverage xml
 
 .PHONY: preparedocs
 preparedocs: ## move file from the sphinx-starter-pack to docs folder
