@@ -183,4 +183,7 @@ The parts in the list will be *built and staged* before the part is built.
 
 This is covered in detail in :ref:`part_processing_order`.
 
+
+.. _include-how-parts-are-built:
+
 .. include:: how_parts_are_built.rst
