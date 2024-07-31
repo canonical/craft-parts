@@ -33,11 +33,15 @@ number of subdirectories:
 The standard actions for the *pull* step can be overridden or extended by
 using the :ref:`override_pull` key to describe a series of actions.
 
+.. _overlay-step-begin:
+
 The overlay step
 ~~~~~~~~~~~~~~~~
 
 The *overlay* step is used in some Craft tools to provide an additional layer that
 overlays the base filesystem layer. Check :ref:`Overlay step explanation <overlays>` for more details.
+
+.. _overlay-step-end:
 
 The build step
 ~~~~~~~~~~~~~~
