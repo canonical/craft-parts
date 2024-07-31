@@ -47,12 +47,13 @@ def new_dir(monkeypatch, tmpdir):
 
 @pytest.fixture()
 def tmp_homedir_path():
-    """A temporary directory in the user's home directory.
+    """A non-hidden temporary directory in the user's home directory.
 
-    This generally works around temporary directories being on tmpfs.
+    This works around temporary directories being of tmpfs and is an accessible
+    location for snaps with the 'home' plug like chisel.
     """
     with tempfile.TemporaryDirectory(
-        prefix="craft-parts-tests", dir=pathlib.Path.home() / ".cache"
+        prefix="craft-parts-tests", dir=pathlib.Path.home()
     ) as tmp_dir:
         yield pathlib.Path(tmp_dir)
 
