@@ -16,7 +16,7 @@
 """Unit tests for the lifecycle manager with the partitions feature."""
 import sys
 import textwrap
-from string import ascii_lowercase
+from string import ascii_lowercase, digits
 from textwrap import dedent
 from typing import Any, Dict
 
@@ -33,7 +33,9 @@ mock_available_plugins = test_lifecycle_manager.mock_available_plugins
 
 def valid_non_namespaced_partition_strategy():
     """A strategy for a list of valid non-namespaced partitions."""
-    return strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1)
+    return strategies.text(
+        strategies.sampled_from(ascii_lowercase + digits), min_size=1
+    )
 
 
 @strategies.composite
@@ -44,7 +46,7 @@ def valid_namespaced_partition_strategy(draw):
     )
 
     partition_strategy = strategies.text(
-        strategies.sampled_from(ascii_lowercase + "-"), min_size=1
+        strategies.sampled_from(ascii_lowercase + digits + "-"), min_size=1
     ).filter(
         lambda partition: (
             not partition.startswith("-")
@@ -197,7 +199,6 @@ class TestPartitionsSupport:
             ["default", "-"],
             ["default", "Test"],
             ["default", "TEST"],
-            ["default", "test1"],
             ["default", "te-st"],
             pytest.param(
                 ["default", "tеst"],  # noqa: RUF001 (ambiguous character)
@@ -244,10 +245,8 @@ class TestPartitionsSupport:
             ["default", "-a-/b"],
             ["default", "a/Test"],
             ["default", "a/TEST"],
-            ["default", "a/test1"],
             ["default", "Test/a"],
             ["default", "TEST/a"],
-            ["default", "test1/a"],
             ["default", "te-st/a"],
             pytest.param(
                 ["default", "test/ο"],  # noqa: RUF001 (ambiguous character)

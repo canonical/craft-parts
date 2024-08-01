@@ -22,10 +22,12 @@ from typing import Dict, Iterable, Optional, Sequence, Set
 from craft_parts import errors, features
 
 # regex for a valid partition name
-_VALID_PARTITION_REGEX = re.compile(r"[a-z]+", re.ASCII)
+_VALID_PARTITION_REGEX = re.compile(r"[a-z0-9]+", re.ASCII)
 
 # regex for a valid namespaced partition name
-_VALID_NAMESPACED_PARTITION_REGEX = re.compile(r"[a-z]+/(?!-)[a-z\-]+(?<!-)", re.ASCII)
+_VALID_NAMESPACED_PARTITION_REGEX = re.compile(
+    r"[a-z0-9]+/(?!-)[a-z0-9\-]+(?<!-)", re.ASCII
+)
 
 
 def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
@@ -33,15 +35,15 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
 
     If the partition feature is enabled, then:
       - the first partition must be "default"
-      - each partition must contain only lowercase alphabetical characters
+      - each partition must contain only lowercase alphanumeric characters
       - partitions are unique
 
     Namespaced partitions can also be validated in addition to regular (or
     'non-namespaced') partitions. The format is `<namespace>/<partition>`.
 
     Namespaced partitions have the following naming convention:
-      - the namespace must contain only lowercase alphabetical characters
-      - the partition must contain only lowercase alphabetical characters and hyphens
+      - the namespace must contain only lowercase alphanumeric characters
+      - the partition must contain only lowercase alphanumeric characters and hyphens
       - the partition cannot begin or end with a hyphen
 
     :param partitions: Partition data to verify.
@@ -109,15 +111,16 @@ def _validate_partition_naming_convention(partitions: Sequence[str]) -> None:
                 message=f"Namespaced partition {partition!r} is invalid.",
                 details=(
                     "Namespaced partitions are formatted as `<namespace>/"
-                    "<partition>`. Namespaces must only contain lowercase letters. "
-                    "Namespaced partitions must only contain lowercase letters and "
-                    "hyphens and cannot start or end with a hyphen."
+                    "<partition>`. Namespaces must only contain lowercase letters "
+                    "and numbers. Namespaced partitions must only contain lowercase "
+                    "letters, numbers, and hyphens and cannot start or end with a "
+                    "hyphen."
                 ),
             )
 
         raise errors.FeatureError(
             message=f"Partition {partition!r} is invalid.",
-            details="Partitions must only contain lowercase letters.",
+            details="Partitions must only contain lowercase letters and numbers.",
         )
 
 
@@ -126,6 +129,8 @@ def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
 
     For example, `foo` conflicts in ['default', 'foo', 'foo/bar'].
     Assumes partition names are valid.
+
+    This does not catch conflicts with hyphens in partitions (#789).
 
     :raises FeatureError: for namespace conflicts
     """
