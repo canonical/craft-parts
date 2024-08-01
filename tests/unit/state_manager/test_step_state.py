@@ -129,7 +129,7 @@ class TestStepStatePersist:
             content = f.read()
 
         new_state = yaml.safe_load(content)
-        assert SomeStepState.parse_obj(new_state) == state
+        assert SomeStepState.model_validate(new_state) == state
 
 
 class TestStateChanges:

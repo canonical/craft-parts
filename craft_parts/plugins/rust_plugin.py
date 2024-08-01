@@ -23,8 +23,8 @@ import subprocess
 from textwrap import dedent
 from typing import Literal, cast
 
+import pydantic
 from overrides import override
-from pydantic import validator as pydantic_validator
 
 from craft_parts.constraints import UniqueList
 
@@ -52,7 +52,7 @@ class RustPluginProperties(PluginProperties, frozen=True):
     source: str  # pyright: ignore[reportGeneralTypeIssues]
     after: UniqueList[str] | None = None
 
-    @pydantic_validator("rust_channel")
+    @pydantic.field_validator("rust_channel")
     @classmethod
     def validate_rust_channel(cls, value: str | None) -> str | None:
         """Validate the rust-channel property.

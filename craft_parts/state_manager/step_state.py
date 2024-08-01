@@ -50,14 +50,14 @@ class MigrationState(BaseModel):
 
         :returns: The state object containing the migration data.
         """
-        return cls.parse_obj(data)
+        return cls.model_validate(data)
 
     def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the part state data.
 
         :return: The newly created dictionary.
         """
-        return self.dict(by_alias=True)
+        return self.model_dump(by_alias=True)
 
     def write(self, filepath: Path) -> None:
         """Write state data to disk.
