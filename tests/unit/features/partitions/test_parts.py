@@ -219,9 +219,9 @@ class TestPartPartitionUsage:
         """Return a fileset of invalid uses of partition names.
 
         These filepaths are not necessarily violating the naming convention for
-        partitions, but the partitions here are unknown (and thus invalid) to a
-        LifecycleManager was created with the partitions "default", "a/b", "a/c-d",
-        and "kernel".
+        partitions, but the partitions here are unknown and thus invalid to a
+        LifecycleManager that was created with the partitions "default", "a/b",
+        "a/c-d", and "kernel".
         """
         return [
             # unknown partition names

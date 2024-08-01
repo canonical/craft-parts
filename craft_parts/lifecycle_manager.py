@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -77,8 +77,11 @@ class LifecycleManager:
         matching this name.
     :param project_vars: A dictionary containing project variables.
     :param partitions: A list of partitions to use when the partitions feature is
-        enabled. The first partition must be "default" and all partitions must be
-        lowercase alphabetical.
+        enabled. The first partition must be "default" Partitions must contain only
+        lowercase alphanumeric characters. Partitions may have an optional namespace
+        prefix separated by a forward slash, which must contain only lowercase
+        alphanumeric characters. Namespaced partitions must only contain lowercase
+        alphanumeric characters and hyphens.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """

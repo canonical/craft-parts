@@ -39,7 +39,7 @@ class GoPluginProperties(PluginProperties, frozen=True):
     go_generate: list[str] = []
 
     # part properties required by the plugin
-    source: str
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
