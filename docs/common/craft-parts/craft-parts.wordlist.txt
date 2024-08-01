@@ -189,6 +189,7 @@ PythonPlugin
 PythonPluginProperties
 QmakePlugin
 QmakePluginProperties
+README
 Rockcraft
 RpmSource
 RuntimeError
@@ -340,6 +341,7 @@ mkdirs
 mountpoint
 mountpoints
 namespace
+namespaces
 namespaced
 nano
 noop
@@ -348,6 +350,7 @@ normalize
 npm
 oci
 ok
+onboarding
 opencontainers
 organization
 organize
