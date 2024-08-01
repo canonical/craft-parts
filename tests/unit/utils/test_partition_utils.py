@@ -48,11 +48,15 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
     [
         ["default"],
         ["default", "mypart"],
+        ["default", "mypart1"],
         ["default", "mypart", "test/foo"],
+        ["default", "mypart", "test1/foo2"],
         ["default", "mypart", "test/foo-bar"],
+        ["default", "mypart", "test1/foo-bar2"],
     ],
 )
 def test_validate_partitions_success_feature_enabled(partitions):
+    """Test validation of partition names."""
     partition_utils.validate_partition_names(partitions)
 
 

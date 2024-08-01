@@ -125,6 +125,7 @@ Multipass
 NOOP
 NPM
 NVM
+Namespaces
 Namespaced
 NetworkRequestError
 NilPlugin
@@ -203,6 +204,7 @@ PythonPlugin
 PythonPluginProperties
 QmakePlugin
 QmakePluginProperties
+README
 Rockcraft
 RpmSource
 RpmSourceModel
@@ -362,6 +364,7 @@ mkdirs
 mountpoint
 mountpoints
 namespace
+namespaces
 namespaced
 nano
 noop
@@ -370,6 +373,7 @@ normalize
 npm
 oci
 ok
+onboarding
 opencontainers
 organization
 organize

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,14 +23,15 @@ from craft_parts.executor import environment
     [
         (["default"], {"CRAFT_DEFAULT_STAGE", "CRAFT_DEFAULT_PRIME"}),
         (
-            ["default", "abc", "foo/bar-baz"],
+            # exercise lowercase alphabetical, numbers, and hyphens
+            ["default", "abc123", "foo1/bar-baz2"],
             {
                 "CRAFT_DEFAULT_STAGE",
                 "CRAFT_DEFAULT_PRIME",
-                "CRAFT_ABC_STAGE",
-                "CRAFT_ABC_PRIME",
-                "CRAFT_FOO_BAR_BAZ_STAGE",
-                "CRAFT_FOO_BAR_BAZ_PRIME",
+                "CRAFT_ABC123_STAGE",
+                "CRAFT_ABC123_PRIME",
+                "CRAFT_FOO1_BAR_BAZ2_STAGE",
+                "CRAFT_FOO1_BAR_BAZ2_PRIME",
             },
         ),
     ],

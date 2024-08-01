@@ -9,18 +9,8 @@ part of a larger project containing many components.
 
 When the Craft Parts framework is used to process a part on behalf of a tool
 or library, it performs some or all of the steps described in the
-:ref:`parts lifecycle <lifecycle>`:
-
-#. The *pull* step pulls the source code and dependencies from locations
-   defined in the part and places them into a package cache.
-#. The *overlay* step unpacks them into a base file system chosen from a
-   collection of standard file system images.
-#. The *build* step runs a suitable build tool for the sources to compile
-   a set of build products or artefacts.
-#. The *stage* step copies the build products for the part into a common
-   area for all parts in a project.
-#. The *prime* step copies the files to be deployed into an area for
-   further processing.
+:ref:`parts lifecycle <lifecycle>`: *PULL*, *OVERLAY*, *BUILD*, *STAGE* and
+*PRIME*.
 
 Not all of these steps may be needed for every use case, and tools that use
 the Craft Parts framework can skip those that are not appropriate for their
@@ -91,6 +81,8 @@ sources where builds will occur. **Note:** This property restricts the build
 to the subdirectory specified, preventing access to files in the parent
 directory and elsewhere in the file system directory structure.
 
+.. _build_dependencies:
+
 Build dependencies
 ~~~~~~~~~~~~~~~~~~
 
@@ -149,6 +141,8 @@ The result of the *build* step is a set of build artefacts or products that
 are the same as those that would be produced by manually compiling or
 building the software.
 
+.. _build_artefacts:
+
 Build artefacts
 ~~~~~~~~~~~~~~~
 
@@ -165,11 +159,17 @@ system packages that need to be deployed with the part are specified using
 the :ref:`stage_snaps` and :ref:`stage_packages` properties. Files to be
 deployed are specified using the :ref:`stage` property.
 
+.. ifconfig:: project in ("Rockcraft", "Snapcraft")
+
+   Chisel slices can be specified in :ref:`stage_packages` as well, but they
+   cannot be mixed with deb packages. 
+
 In the final *prime* step, the files needed for deployment are copied from
 the staging area to the priming area. During this step the ``prime`` property
 is typically used to exclude files in the staging area that are not required
 at run-time. This is especially useful for multi-part projects that include
 their own compilers or development tools.
+
 
 .. _parts_build-order:
 
@@ -182,5 +182,8 @@ specifies a list containing the names of parts that it will be built after.
 The parts in the list will be *built and staged* before the part is built.
 
 This is covered in detail in :ref:`part_processing_order`.
+
+
+.. _include-how-parts-are-built:
 
 .. include:: how_parts_are_built.rst

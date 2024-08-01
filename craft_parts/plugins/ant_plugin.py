@@ -43,7 +43,7 @@ class AntPluginProperties(PluginProperties, frozen=True):
     ant_build_file: str | None = None
     ant_properties: dict[str, str] = {}
 
-    source: str
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

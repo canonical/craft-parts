@@ -36,7 +36,7 @@ class PythonPluginProperties(PluginProperties, frozen=True):
     python_packages: list[str] = ["pip", "setuptools", "wheel"]
 
     # part properties required by the plugin
-    source: str
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class PythonPlugin(Plugin):

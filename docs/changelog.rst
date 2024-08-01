@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.34.0 (2024-08-01)
+-------------------
+- Allow numbers in partitions, partition namespaces, and namespaced partitions.
+- Add documentation for chisel and the overlay step
+- Improve README onboarding
+
 1.33.0 (2024-07-02)
 -------------------
 

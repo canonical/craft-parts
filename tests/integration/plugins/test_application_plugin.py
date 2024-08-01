@@ -29,7 +29,7 @@ class AppPluginProperties(plugins.PluginProperties, frozen=True):
 
     plugin: Literal["app"] = "app"
     app_stuff: list[str]
-    source: str
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class AppPlugin(plugins.Plugin):
