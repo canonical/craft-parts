@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020 Canonical Ltd.
+# Copyright 2020,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
 This plugin just dumps the content from a specified part source.
 """
 
-from typing import Any, Dict, List, Set
+from typing import Literal
 
 from overrides import override
 
@@ -27,25 +27,11 @@ from .base import Plugin
 from .properties import PluginProperties
 
 
-class DumpPluginProperties(PluginProperties):
+class DumpPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the dump plugin."""
 
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "DumpPluginProperties":
-        """Populate dump properties from the part specification.
-
-        'source' is a required part property.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise ValueError: If a required property is not found.
-        """
-        if "source" not in data:
-            raise ValueError("'source' is required by the dump plugin")
-        return cls()
+    plugin: Literal["dump"] = "dump"
+    source: str
 
 
 class DumpPlugin(Plugin):
@@ -56,27 +42,27 @@ class DumpPlugin(Plugin):
     supports_strict_mode = True
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_pull_commands(self) -> List[str]:
+    def get_pull_commands(self) -> list[str]:
         """Return a list commands to retrieve dependencies during the pull step."""
         return []
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         install_dir = self._part_info.part_install_dir
         return [f'cp --archive --link --no-dereference . "{install_dir}"']

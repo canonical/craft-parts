@@ -1,6 +1,7 @@
 ARGS
 ActionProperties
 ActionType
+AfterValidator
 AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
@@ -11,7 +12,10 @@ Autotools
 AutotoolsPlugin
 AutotoolsPluginProperties
 Backport
+BaseSourceModel
+BaseFileSourceModel
 BaseRepository
+BeforeValidator
 BuildPackageNotFound
 BuildPackagesNotInstalled
 BuildState
@@ -29,6 +33,7 @@ Changelog
 Charmcraft
 ChecksumMismatch
 ChiselError
+ClassVar
 ComputedFieldInfo
 Config
 ConfigDict
@@ -42,6 +47,7 @@ DNFRepository
 DebError
 DebPackage
 DebSource
+DebSourceModel
 DirtyReport
 DotPluginEnvironmentValidator
 Dotnet
@@ -59,13 +65,16 @@ FileOrganizeError
 FileProviderNotFound
 FileSource
 FileSourceHandler
+FileSourceModel
 Filepaths
 Fileset
 FilesetConflict
 FilesetError
 Filesets
+GenerateJsonSchema
 GiB
 GitSource
+GitSourceModel
 GoPlugin
 GoPluginEnvironmentValidator
 GoPluginProperties
@@ -86,6 +95,7 @@ InvalidSourceOptions
 InvalidSourceType
 Iterable
 JavaPlugin
+JSON
 LDFLAGS
 LLVM
 LTO
@@ -97,6 +107,7 @@ LayerStateManager
 Lifecycle
 LifecycleManager
 LocalSource
+LocalSourceModel
 LogProgress
 MakePlugin
 MakePluginProperties
@@ -109,6 +120,7 @@ MesonPlugin
 MesonPluginEnvironmentValidator
 MesonPluginProperties
 MigrationState
+MinLen
 Multipass
 NOOP
 NPM
@@ -119,6 +131,7 @@ NetworkRequestError
 NilPlugin
 NilPluginProperties
 NonBlockingRWFifo
+NoneType
 Normalization
 Normalize
 NpmPlugin
@@ -164,6 +177,7 @@ PartitionPathPair
 PartitionUsageError
 PartitionUsageWarning
 PartsError
+PartsFile
 PluginBuildError
 PluginCleanError
 PluginEnvironmentValidationError
@@ -181,6 +195,7 @@ ProjectVar
 PullError
 PullState
 PurePath
+PydanticGeneralMetadata
 PyPI
 PyYAML
 PyYAML's
@@ -192,6 +207,7 @@ QmakePluginProperties
 README
 Rockcraft
 RpmSource
+RpmSourceModel
 RuntimeError
 RuntimeIdentifier
 RustPlugin
@@ -207,17 +223,20 @@ SDKs
 SDL
 ScriptletRunError
 SevenzipSource
+SevenzipSourceModel
 SnapDownloadError
 SnapGetAssertionError
 SnapInstallError
 SnapPackage
 SnapRefreshError
 SnapSource
+SnapSourceModel
 SnapUnavailable
 Snapcraft
 SnapdConnectionError
 SourceError
 SourceHandler
+SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 StageFilesConflict
@@ -232,6 +251,7 @@ Submodules
 Subpackages
 Subtractive
 TarSource
+TarSourceModel
 TimedWriter
 Tox
 TypeError
@@ -255,6 +275,7 @@ YAML
 YUMRepository
 YUMRepository's
 ZipSource
+ZipSourceModel
 abcdef
 args
 armv
@@ -288,6 +309,7 @@ crafter
 ctl
 customization
 dataset
+defs
 deps
 destdir
 dev
@@ -327,6 +349,7 @@ iojs
 jdk
 jre
 js
+json
 kwargs
 ldflags
 lifecycle
@@ -382,6 +405,7 @@ reorganized
 runtime
 rustc
 rustup
+schemas
 scons
 scriptlet
 scriptlets
@@ -390,7 +414,7 @@ sevenzip
 sha
 sliceName
 snapd
-specifc
+specific
 src
 srcdir
 stderr
@@ -411,6 +435,7 @@ svn
 symlink
 symlinks
 texinfo
+tgz
 toml
 toolchain
 toplevel

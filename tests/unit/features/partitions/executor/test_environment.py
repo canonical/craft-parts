@@ -40,7 +40,7 @@ def test_get_global_environment(new_dir, partitions, variables: set):
     """Test that expand_environment behaves correctly with partitions enabled."""
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",

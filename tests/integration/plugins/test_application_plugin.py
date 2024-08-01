@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Literal
 
 import craft_parts
 import pytest
@@ -24,18 +24,12 @@ import yaml
 from craft_parts import Action, ActionType, Step, errors, plugins
 
 
-class AppPluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class AppPluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    app_stuff: List[str]
+    plugin: Literal["app"] = "app"
+    app_stuff: list[str]
     source: str
-
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
-        plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="app", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class AppPlugin(plugins.Plugin):
@@ -43,16 +37,16 @@ class AppPlugin(plugins.Plugin):
 
     properties_class = AppPluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return {"build_snap"}
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {"build_package"}
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PARTS_TEST_VAR": "application plugin"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return ["echo hello ${PARTS_TEST_VAR}"]
 
 
@@ -145,7 +139,7 @@ def test_application_plugin_missing_stuff(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- field 'app-stuff' is required"
+    assert raised.value.message == "- Field required in field 'app-stuff'"
 
 
 def test_application_plugin_type_error(new_dir, partitions):
@@ -173,7 +167,7 @@ def test_application_plugin_type_error(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- value is not a valid list in field 'app-stuff'"
+    assert raised.value.message == "- Input should be a valid list in field 'app-stuff'"
 
 
 def test_application_plugin_extra_property(new_dir, partitions):
@@ -202,7 +196,9 @@ def test_application_plugin_extra_property(new_dir, partitions):
         )
 
     assert raised.value.part_name == "foo"
-    assert raised.value.message == "- extra field 'app-other' not permitted"
+    assert (
+        raised.value.message == "- Extra inputs are not permitted in field 'app-other'"
+    )
 
 
 def test_application_plugin_not_registered(new_dir, partitions):

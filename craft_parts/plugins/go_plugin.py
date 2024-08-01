@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2020-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,43 +17,29 @@
 """The Go plugin."""
 
 import logging
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Literal, cast
 
 from overrides import override
 
 from craft_parts import errors
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
 
-class GoPluginProperties(PluginProperties, PluginModel):
+class GoPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Go plugin."""
 
-    go_buildtags: List[str] = []
-    go_generate: List[str] = []
+    plugin: Literal["go"] = "go"
+
+    go_buildtags: list[str] = []
+    go_generate: list[str] = []
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "GoPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="go", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -65,7 +51,7 @@ class GoPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -113,30 +99,30 @@ class GoPlugin(Plugin):
     validator_class = GoPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
             "GOBIN": f"{self._part_info.part_install_dir}/bin",
         }
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(GoPluginProperties, self._options)
 
         tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
-        generate_cmds: List[str] = [f"go generate {cmd}" for cmd in options.go_generate]
+        generate_cmds: list[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
         return [
             "go mod download all",

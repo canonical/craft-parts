@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Literal
 
 import craft_parts
 import yaml
@@ -31,12 +31,10 @@ def teardown_module():
     plugins.unregister_all()
 
 
-class ExamplePluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class ExamplePluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
-        return cls()
+    plugin: Literal["example"] = "example"
 
 
 class ExamplePlugin(plugins.Plugin):
@@ -44,16 +42,16 @@ class ExamplePlugin(plugins.Plugin):
 
     properties_class = ExamplePluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         if self._action_properties.changed_files:
             return [f"echo Changed files: {self._action_properties.changed_files}"]
 

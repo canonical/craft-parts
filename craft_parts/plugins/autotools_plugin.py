@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020 Canonical Ltd.
+# Copyright 2020,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,38 +16,24 @@
 
 """The autotools plugin implementation."""
 
-from typing import Any, Dict, List, Set, cast
+from typing import Literal, cast
 
 from overrides import override
 
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 
-class AutotoolsPluginProperties(PluginProperties, PluginModel):
+class AutotoolsPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the autotools plugin."""
 
-    autotools_configure_parameters: List[str] = []
-    autotools_bootstrap_parameters: List[str] = []
+    plugin: Literal["autotools"] = "autotools"
+
+    autotools_configure_parameters: list[str] = []
+    autotools_bootstrap_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "AutotoolsPluginProperties":
-        """Populate autotools properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="autotools", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class AutotoolsPlugin(Plugin):
@@ -81,17 +67,17 @@ class AutotoolsPlugin(Plugin):
     properties_class = AutotoolsPluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"autoconf", "automake", "autopoint", "gcc", "libtool"}
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
@@ -113,7 +99,7 @@ class AutotoolsPlugin(Plugin):
     # pylint: disable=line-too-long
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         return [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",

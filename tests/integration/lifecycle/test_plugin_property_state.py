@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Literal
 
 import craft_parts
 import pytest
@@ -34,16 +34,12 @@ def teardown_module():
     plugins.unregister_all()
 
 
-class ExamplePluginProperties(plugins.PluginProperties):
+class ExamplePluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    example_property: Optional[int]
+    plugin: Literal["example"] = "example"
 
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "ExamplePluginProperties":
-        plugin_data = plugins.extract_plugin_properties(data, plugin_name="example")
-        return cls(**plugin_data)
+    example_property: int | None
 
 
 class ExamplePlugin(plugins.Plugin):
@@ -52,19 +48,19 @@ class ExamplePlugin(plugins.Plugin):
     properties_class = ExamplePluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 
@@ -160,20 +156,14 @@ def test_plugin_property_build_dirty(new_dir):
     ]
 
 
-class Example2PluginProperties(plugins.PluginProperties):
+class Example2PluginProperties(plugins.PluginProperties, frozen=True):
     """The application-defined plugin properties."""
 
-    example_property: Optional[int]
+    example_property: int | None
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "Example2PluginProperties":
-        plugin_data = plugins.extract_plugin_properties(data, plugin_name="example")
-        return cls(**plugin_data)
-
-    @classmethod
-    @override
-    def get_pull_properties(cls) -> List[str]:
+    def get_pull_properties(cls) -> list[str]:
         return ["example-property"]
 
 
@@ -183,19 +173,19 @@ class Example2Plugin(plugins.Plugin):
     properties_class = Example2PluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 

@@ -17,7 +17,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, List, Tuple, cast
+from typing import Any, cast
 
 import pytest
 from craft_parts import errors
@@ -165,7 +165,7 @@ def organize_and_assert(
     setup_dirs,
     setup_files,
     organize_map,
-    expected: List[Any],
+    expected: list[Any],
     expected_message,
     expected_overwrite,
     overwrite,
@@ -201,7 +201,7 @@ def organize_and_assert(
             install_dir_map=install_dirs,
             overwrite=overwrite,
         )
-        expected = cast(List[Tuple[List[str], str]], expected)
+        expected = cast(list[tuple[list[str], str]], expected)
         for expect in expected:
             dir_path = (install_dir / expect[1]).as_posix()
             dir_contents = os.listdir(dir_path)

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from craft_parts import LifecycleManager, Step
@@ -26,7 +26,7 @@ class TestCollisions:
     """Test collision scenarios."""
 
     @pytest.fixture()
-    def stub_parts_yaml(self) -> Dict[str, Any]:
+    def stub_parts_yaml(self) -> dict[str, Any]:
         """Return a part dictionary containing 2 parts."""
         return {
             "parts": {

@@ -18,7 +18,6 @@
 
 import os
 from glob import iglob
-from typing import List, Optional, Set, Tuple
 
 from craft_parts import errors, features
 from craft_parts.utils import path_utils
@@ -31,7 +30,7 @@ class Fileset:
     Filepaths to exclude begin with a hyphen.
     """
 
-    def __init__(self, entries: List[str], *, name: str = "") -> None:
+    def __init__(self, entries: list[str], *, name: str = "") -> None:
         """Initialize a fileset.
 
         If the partition feature is enabled, files in the default partition are
@@ -45,7 +44,7 @@ class Fileset:
         """
         self._name = name
         self._validate_entries(entries)
-        self._list: List[str] = [_normalize_entry(entry) for entry in entries]
+        self._list: list[str] = [_normalize_entry(entry) for entry in entries]
 
     def __repr__(self) -> str:
         return f"Fileset({self._list!r}, name={self._name!r})"
@@ -56,17 +55,17 @@ class Fileset:
         return self._name
 
     @property
-    def entries(self) -> List[str]:
+    def entries(self) -> list[str]:
         """Return the list of entries in this fileset."""
         return self._list.copy()
 
     @property
-    def includes(self) -> List[str]:
+    def includes(self) -> list[str]:
         """Return the list of files to be included."""
         return [x for x in self._list if x[0] != "-"]
 
     @property
-    def excludes(self) -> List[str]:
+    def excludes(self) -> list[str]:
         """Return the list of files to be excluded."""
         return [x[1:] for x in self._list if x[0] == "-"]
 
@@ -102,7 +101,7 @@ class Fileset:
         if to_combine:
             self._list = list(set(self._list + other.entries))
 
-    def _validate_entries(self, entries: List[str]) -> None:
+    def _validate_entries(self, entries: list[str]) -> None:
         """Validate that entries are not absolute filepaths.
 
         :param entries: List of entries to validate.
@@ -118,8 +117,8 @@ class Fileset:
 
 
 def migratable_filesets(
-    fileset: Fileset, srcdir: str, partition: Optional[str] = None
-) -> Tuple[Set[str], Set[str]]:
+    fileset: Fileset, srcdir: str, partition: str | None = None
+) -> tuple[set[str], set[str]]:
     """Determine the files to migrate from a directory based on a fileset.
 
     :param fileset: The fileset used to filter files in the srcdir.
@@ -169,8 +168,8 @@ def migratable_filesets(
 
 
 def _get_file_list(
-    fileset: Fileset, partition: Optional[str]
-) -> Tuple[List[str], List[str]]:
+    fileset: Fileset, partition: str | None
+) -> tuple[list[str], list[str]]:
     """Split a fileset to obtain include and exclude file filters.
 
     If the fileset does not include any files, then the include list will contain a
@@ -198,8 +197,8 @@ def _get_file_list(
             )
         )
 
-    includes: List[str] = []
-    excludes: List[str] = []
+    includes: list[str] = []
+    excludes: list[str] = []
 
     for item in fileset.entries:
         if item.startswith("-"):
@@ -214,14 +213,14 @@ def _get_file_list(
         return includes or ["*"], excludes
 
     # only include files for the partition
-    processed_includes: List[str] = []
+    processed_includes: list[str] = []
     for file in includes:
         file_partition, file_inner_path = path_utils.get_partition_and_path(file)
         if file_partition == partition:
             processed_includes.append(str(file_inner_path))
 
     # only exclude files for the partition
-    processed_excludes: List[str] = []
+    processed_excludes: list[str] = []
     for file in excludes:
         file_partition, file_inner_path = path_utils.get_partition_and_path(file)
         if file_partition == partition:
@@ -231,7 +230,7 @@ def _get_file_list(
     return processed_includes or ["*"], processed_excludes
 
 
-def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:
+def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
     """Obtain the list of files to include based on include file filter.
 
     :param directory: The path to the tree containing the files to filter.
@@ -268,8 +267,8 @@ def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:
 
 
 def _generate_exclude_set(
-    directory: str, excludes: List[str]
-) -> Tuple[Set[str], Set[str]]:
+    directory: str, excludes: list[str]
+) -> tuple[set[str], set[str]]:
     """Obtain the list of files to exclude based on exclude file filter.
 
     :param directory: The path to the tree containing the files to filter.

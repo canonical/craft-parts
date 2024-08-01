@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,8 @@
 import logging
 import os
 import shlex
-from typing import Any, Dict, Iterator, List, Optional, Set, cast
+from collections.abc import Iterator
+from typing import Literal, cast
 from urllib.parse import urlsplit
 
 from overrides import override
@@ -27,36 +28,22 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin, PluginModel, extract_plugin_properties
+from .base import JavaPlugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
 
-class AntPluginProperties(PluginProperties, PluginModel):
+class AntPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Ant plugin."""
 
-    ant_build_targets: List[str] = []
-    ant_build_file: Optional[str] = None
-    ant_properties: Dict[str, str] = {}
+    plugin: Literal["ant"] = "ant"
+
+    ant_build_targets: list[str] = []
+    ant_build_file: str | None = None
+    ant_properties: dict[str, str] = {}
 
     source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "AntPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="ant", required=["source"]
-        )
-        return cls(**plugin_data)
 
 
 class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -68,7 +55,7 @@ class AntPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -133,23 +120,23 @@ class AntPlugin(JavaPlugin):
     validator_class = AntPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         # Getting ant to use a proxy requires a little work; the JRE doesn't
         # help as much as it should.  (java.net.useSystemProxies=true ought
         # to do the trick, but it relies on desktop configuration rather
         # than using the standard environment variables.)
-        ant_opts = []  # type: List[str]
+        ant_opts: list[str] = []
         ant_opts.extend(_get_proxy_options("http"))
         ant_opts.extend(_get_proxy_options("https"))
         if ant_opts:
@@ -157,7 +144,7 @@ class AntPlugin(JavaPlugin):
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(AntPluginProperties, self._options)
 
@@ -188,7 +175,7 @@ def _get_proxy_options(scheme: str) -> Iterator[str]:
             yield f"-D{scheme}.proxyPassword={parsed.password}"
 
 
-def _shlex_join(elements: List[str]) -> str:
+def _shlex_join(elements: list[str]) -> str:
     try:
         return shlex.join(elements)
     except AttributeError:
