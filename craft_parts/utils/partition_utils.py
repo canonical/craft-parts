@@ -35,15 +35,15 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
 
     If the partition feature is enabled, then:
       - the first partition must be "default"
-      - each partition must contain only lowercase alphabetical characters and numbers
+      - each partition must contain only lowercase alphanumeric characters
       - partitions are unique
 
     Namespaced partitions can also be validated in addition to regular (or
     'non-namespaced') partitions. The format is `<namespace>/<partition>`.
 
     Namespaced partitions have the following naming convention:
-      - the namespace must contain only lowercase alphabetical characters and numbers
-      - the partition must contain only lowercase alphabetical characters, numbers, and hyphens
+      - the namespace must contain only lowercase alphanumeric characters
+      - the partition must contain only lowercase alphanumeric characters and hyphens
       - the partition cannot begin or end with a hyphen
 
     :param partitions: Partition data to verify.

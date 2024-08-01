@@ -76,11 +76,11 @@ class LifecycleManager:
         matching this name.
     :param project_vars: A dictionary containing project variables.
     :param partitions: A list of partitions to use when the partitions feature is
-        enabled. The first partition must be "default" and partitions must contain only
-        lowercase alphabetical and numbers. Partitions may have an optional namespace
-        prefix separated by a forward slash. Namespaces must contain only lowercase
-        alphabetical and numbers and namespaced partitions must only contain lowercase
-        alphabetical, numbers, and hyphens.
+        enabled. The first partition must be "default" Partitions must contain only
+        lowercase alphanumeric characters. Partitions may have an optional namespace
+        prefix separated by a forward slash, which must contain only lowercase
+        alphanumeric characters. Namespaced partitions must only contain lowercase
+        alphanumeric characters and hyphens.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
