@@ -117,6 +117,7 @@ setup(
     version=VERSION,
     description="Craft parts tooling",
     long_description=readme,
+    long_description_content_type="text/markdown",
     author="Canonical Ltd.",
     author_email="snapcraft@lists.snapcraft.io",
     url="https://github.com/canonical/craft-parts",
