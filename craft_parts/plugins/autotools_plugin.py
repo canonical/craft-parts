@@ -33,7 +33,7 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
     autotools_bootstrap_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class AutotoolsPlugin(Plugin):
