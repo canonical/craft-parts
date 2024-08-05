@@ -21,12 +21,15 @@ from typing import Dict, Iterable, Optional, Sequence, Set
 
 from craft_parts import errors, features
 
-# regex for a valid partition name
-_VALID_PARTITION_REGEX = re.compile(r"[a-z0-9]+", re.ASCII)
-
-# regex for a valid namespaced partition name
+_VALID_PARTITION_REGEX = re.compile(r"(?!-)[a-z0-9-]+(?<!-)", re.ASCII)
+_VALID_NAMESPACE_REGEX = re.compile(r"[a-z0-9]+", re.ASCII)
 _VALID_NAMESPACED_PARTITION_REGEX = re.compile(
-    r"[a-z0-9]+/(?!-)[a-z0-9\-]+(?<!-)", re.ASCII
+    _VALID_NAMESPACE_REGEX.pattern + r"/" + _VALID_PARTITION_REGEX.pattern, re.ASCII
+)
+
+_PARTITION_DETAIL = (
+    "Partitions must only contain lowercase letters, numbers,"
+    "and hyphens, and may not begin or end with a hyphen."
 )
 
 
@@ -35,16 +38,15 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
 
     If the partition feature is enabled, then:
       - the first partition must be "default"
-      - each partition must contain only lowercase alphanumeric characters
+      - each partition name must contain only lowercase alphanumeric characters
+        and hyphens, but not begin or end with a hyphen
       - partitions are unique
 
     Namespaced partitions can also be validated in addition to regular (or
     'non-namespaced') partitions. The format is `<namespace>/<partition>`.
 
-    Namespaced partitions have the following naming convention:
-      - the namespace must contain only lowercase alphanumeric characters
-      - the partition must contain only lowercase alphanumeric characters and hyphens
-      - the partition cannot begin or end with a hyphen
+    Namespaced partition names follow the same conventions described above.
+    Namespace names must consist of only lowercase alphanumeric characters.
 
     :param partitions: Partition data to verify.
 
@@ -112,15 +114,13 @@ def _validate_partition_naming_convention(partitions: Sequence[str]) -> None:
                 details=(
                     "Namespaced partitions are formatted as `<namespace>/"
                     "<partition>`. Namespaces must only contain lowercase letters "
-                    "and numbers. Namespaced partitions must only contain lowercase "
-                    "letters, numbers, and hyphens and cannot start or end with a "
-                    "hyphen."
+                    "and numbers. " + _PARTITION_DETAIL
                 ),
             )
 
         raise errors.FeatureError(
             message=f"Partition {partition!r} is invalid.",
-            details="Partitions must only contain lowercase letters and numbers.",
+            details=_PARTITION_DETAIL,
         )
 
 
@@ -129,8 +129,6 @@ def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
 
     For example, `foo` conflicts in ['default', 'foo', 'foo/bar'].
     Assumes partition names are valid.
-
-    This does not catch conflicts with hyphens in partitions (#789).
 
     :raises FeatureError: for namespace conflicts
     """
@@ -151,6 +149,27 @@ def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
                     f"Partition {regular_partition!r} conflicts with the namespace of "
                     f"partition {namespaced_partition!r}"
                 )
+
+    # At this point we know that any remaining conflicts will be overlaps
+    # caused by hyphens and namespaces.  For example, "foo-bar" and "foo/bar"
+    # would both result in environment variable FOO_BAR.
+    underscored_partitions = {}
+    for partition in partitions:
+        underscored = partition.replace("-", "_").replace("/", "_")
+        if underscored not in underscored_partitions:
+            underscored_partitions[underscored] = partition
+            continue
+
+        # Collision.  Figure out which is which so we can raise a good error message.
+        namespaced_partition = underscored_partitions[underscored]
+        hyphenated_partition = partition
+        if "/" in partition:
+            namespaced_partition = partition
+            hyphenated_partition = underscored_partitions[underscored]
+        raise errors.FeatureError(
+            f"Namespaced partition {namespaced_partition!r} conflicts with hyphenated "
+            f"partition {hyphenated_partition!r}."
+        )
 
 
 def get_partition_dir_map(
