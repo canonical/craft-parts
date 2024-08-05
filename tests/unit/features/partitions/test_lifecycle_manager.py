@@ -31,23 +31,30 @@ from tests.unit import test_lifecycle_manager
 mock_available_plugins = test_lifecycle_manager.mock_available_plugins
 
 
-def valid_non_namespaced_partition_strategy():
-    """A strategy for a list of valid non-namespaced partitions."""
+no_default = lambda n: n != "default"
+yes_default = lambda lst: ["default", *lst]
+
+
+def valid_partition_namespace_strategy():
+    """A strategy for valid namespaces."""
     return strategies.text(
         strategies.sampled_from(ascii_lowercase + digits), min_size=1
+    )
+
+
+def valid_partition_name_strategy():
+    """A strategy for valid partition names."""
+    return strategies.text(
+        strategies.sampled_from(ascii_lowercase + digits + "-"), min_size=1
     )
 
 
 @strategies.composite
 def valid_namespaced_partition_strategy(draw):
     """A strategy that generates a valid namespaced partition."""
-    namespace_strategy = valid_non_namespaced_partition_strategy().filter(
-        lambda n: n != "default"
-    )
+    namespace_strategy = valid_partition_namespace_strategy().filter(no_default)
 
-    partition_strategy = strategies.text(
-        strategies.sampled_from(ascii_lowercase + digits + "-"), min_size=1
-    ).filter(
+    partition_strategy = valid_partition_name_strategy().filter(
         lambda partition: (
             not partition.startswith("-")
             and not partition.endswith("-")
@@ -58,31 +65,14 @@ def valid_namespaced_partition_strategy(draw):
     return f"{draw(namespace_strategy)}/{draw(partition_strategy)}"
 
 
-def valid_non_namedspaced_partitions_strategy():
-    """A strategy for a list of valid partitions."""
-    non_default_partition = valid_non_namespaced_partition_strategy().filter(
-        lambda part: part != "default"
-    )
-    return strategies.lists(
-        non_default_partition,
-        min_size=1,
-        unique=True,
-    ).map(lambda lst: ["default", *lst])
-
-
 def valid_namespaced_partitions_strategy():
     """A strategy for a list of valid namespaced partitions."""
     partition_strategy = valid_namespaced_partition_strategy()
-    return strategies.lists(partition_strategy, unique=True).map(
-        lambda lst: ["default", *lst]
-    )
+    return strategies.lists(partition_strategy, unique=True).map(yes_default)
 
 
 def valid_partitions_strategy():
     """A strategy that generates valid list of partitions, namespaced or not."""
-    non_namespaced = valid_non_namespaced_partition_strategy().filter(
-        lambda part: part != "default"
-    )
     namespaced = valid_namespaced_partition_strategy()
 
     def _check_no_duplicate_namespaces(lst):
@@ -92,9 +82,9 @@ def valid_partitions_strategy():
         return non_namespaced_set.isdisjoint(namespaced_set)
 
     return (
-        strategies.lists(strategies.one_of(non_namespaced, namespaced), unique=True)
+        strategies.lists(namespaced, unique=True)
         .filter(_check_no_duplicate_namespaces)
-        .map(lambda lst: ["default", *lst])
+        .map(yes_default)
     )
 
 
@@ -199,7 +189,7 @@ class TestPartitionsSupport:
             ["default", "-"],
             ["default", "Test"],
             ["default", "TEST"],
-            ["default", "te-st"],
+            ["default", "test-"],
             pytest.param(
                 ["default", "tеst"],  # noqa: RUF001 (ambiguous character)
                 id="test-with-cyrillic-e",
