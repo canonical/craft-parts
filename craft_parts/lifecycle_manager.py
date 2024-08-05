@@ -78,8 +78,8 @@ class LifecycleManager:
     :param partitions: A list of partitions to use when the partitions feature is
         enabled. The first partition must be "default". Partitions may have an
         optional namespace prefix separated by a forward slash. Partition names
-        must contain one or more lowercase alphanumeric characters or hyphen
-        ("-"), and may not begin or end with hyphen.  Namespace names must
+        must contain one or more lowercase alphanumeric characters or hyphens
+        ("-"), and may not begin or end with a hyphen.  Namespace names must
         consist of only lowercase alphanumeric characters.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.

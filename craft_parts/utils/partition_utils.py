@@ -29,7 +29,7 @@ _VALID_NAMESPACED_PARTITION_REGEX = re.compile(
 
 _PARTITION_DETAIL = (
     "Partitions must only contain lowercase letters, numbers,"
-    "and hyphens, and may not begin or end with hyphen."
+    "and hyphens, and may not begin or end with a hyphen."
 )
 
 
@@ -39,7 +39,7 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     If the partition feature is enabled, then:
       - the first partition must be "default"
       - each partition name must contain only lowercase alphanumeric characters
-        and hyphen, but not begin or end with hyphen
+        and hyphen, but not begin or end with a hyphen
       - partitions are unique
 
     Namespaced partitions can also be validated in addition to regular (or
