@@ -31,8 +31,12 @@ from tests.unit import test_lifecycle_manager
 mock_available_plugins = test_lifecycle_manager.mock_available_plugins
 
 
-no_default = lambda n: n != "default"
-yes_default = lambda lst: ["default", *lst]
+def no_default(n):
+    return n != "default"
+
+
+def yes_default(lst):
+    return ["default", *lst]
 
 
 def valid_partition_namespace_strategy():
