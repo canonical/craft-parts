@@ -39,7 +39,7 @@ def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
     If the partition feature is enabled, then:
       - the first partition must be "default"
       - each partition name must contain only lowercase alphanumeric characters
-        and hyphen, but not begin or end with a hyphen
+        and hyphens, but not begin or end with a hyphen
       - partitions are unique
 
     Namespaced partitions can also be validated in addition to regular (or
