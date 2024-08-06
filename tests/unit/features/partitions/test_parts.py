@@ -118,14 +118,13 @@ class TestPartPartitionUsage:
     @pytest.fixture()
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
-        return ["default", "kernel", "a/b", "a/c-d"]
+        return ["default", "kernel", "a/b", "a/c-d", "f00d", "ha-ha"]
 
     @pytest.fixture()
     def valid_fileset(self):
-        """Return a fileset of that properly uses partition names.
+        """Return a fileset of valid partition names.
 
-        Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
-        the LifecycleManager.
+        Assumes partition_list has been passed to the LifecycleManager.
 
         This list contains variations of two scenarios:
         1. A filepath beginning with a valid partition name (i.e. `(default)/test`)
@@ -178,6 +177,8 @@ class TestPartPartitionUsage:
             "test/(a/c-d)",
             "test(a/c-d)/test",
             "test/(a/c-d)/test",
+            "(f00d)/test",
+            "(ha-ha)/test",
         ]
 
     @pytest.fixture()
@@ -187,14 +188,18 @@ class TestPartPartitionUsage:
         Partition names are misused when an entry begins with a partition name
         but is not wrapped in parentheses.
 
-        Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
-        the LifecycleManager.
+        Assumes partition_list has been passed to the LifecycleManager.
+
         """
         return [
             "default",
             "default/foo",
             "kernel",
             "kernel/foo",
+            "f00d",
+            "f00d/foo",
+            "ha-ha",
+            "ha-ha/foo",
         ]
 
     @pytest.fixture()
@@ -204,8 +209,7 @@ class TestPartPartitionUsage:
         Partition names are misused when an entry begins with a partition name
         but is not wrapped in parentheses.
 
-        Assumes "default", "a/b", "a/c-d", and "kernel" are passed to
-        the LifecycleManager.
+        Assumes partition_list has been passed to the LifecycleManager.
         """
         return [
             "a/b",
@@ -220,8 +224,8 @@ class TestPartPartitionUsage:
 
         These filepaths are not necessarily violating the naming convention for
         partitions, but the partitions here are unknown and thus invalid to a
-        LifecycleManager that was created with the partitions "default", "a/b",
-        "a/c-d", and "kernel".
+
+        Assumes partition_list has been passed to the LifecycleManager.
         """
         return [
             # unknown partition names
@@ -363,7 +367,7 @@ class TestPartPartitionUsage:
 
         assert raised.value.brief == "Invalid usage of partitions"
         assert raised.value.details == dedent(
-            """\
+            f"""\
               parts.part-a.organize
                 unknown partition 'foo' in '(foo)'
               parts.part-a.stage
@@ -371,7 +375,7 @@ class TestPartPartitionUsage:
               parts.part-a.prime
                 unknown partition 'baz' in '(baz)'
                 no path specified after partition in '(baz)'
-            Valid partitions: default, kernel, a/b, a/c-d"""
+            Valid partitions: {", ".join(partition_list)}"""
         )
 
     def test_part_invalid_partition_usage_complex(
@@ -429,7 +433,9 @@ class TestPartPartitionUsage:
             no path specified after partition in '(foo)/'
             unknown partition 'foo' in '(foo)/test'
             unknown partition 'foo-bar' in '(foo-bar)'
+            no path specified after partition in '(foo-bar)'
             unknown partition 'foo-bar' in '(foo-bar)/'
+            no path specified after partition in '(foo-bar)/'
             unknown partition 'foo-bar' in '(foo-bar)/test'
             unknown partition 'foo/bar' in '(foo/bar)'
             no path specified after partition in '(foo/bar)'
@@ -472,5 +478,6 @@ class TestPartPartitionUsage:
             + indent(unknown_partitions_stage_and_prime, "    ")
             + "  parts.part-a.prime\n"
             + indent(unknown_partitions_stage_and_prime, "    ")
-            + "Valid partitions: default, kernel, a/b, a/c-d"
+            + "Valid partitions: "
+            + ", ".join(partition_list)
         )

@@ -21,13 +21,13 @@ from typing import Dict, Iterable, Optional, Sequence, Set
 
 from craft_parts import errors, features
 
-_VALID_PARTITION_REGEX = re.compile(r"(?!-)[a-z0-9-]+(?<!-)", re.ASCII)
-_VALID_NAMESPACE_REGEX = re.compile(r"[a-z0-9]+", re.ASCII)
-_VALID_NAMESPACED_PARTITION_REGEX = re.compile(
-    _VALID_NAMESPACE_REGEX.pattern + r"/" + _VALID_PARTITION_REGEX.pattern, re.ASCII
+VALID_PARTITION_REGEX = re.compile(r"(?!-)[a-z0-9-]+(?<!-)", re.ASCII)
+VALID_NAMESPACE_REGEX = re.compile(r"[a-z0-9]+", re.ASCII)
+VALID_NAMESPACED_PARTITION_REGEX = re.compile(
+    VALID_NAMESPACE_REGEX.pattern + r"/" + VALID_PARTITION_REGEX.pattern, re.ASCII
 )
 
-_PARTITION_DETAIL = (
+PARTITION_INVALID_MSG = (
     "Partitions must only contain lowercase letters, numbers,"
     "and hyphens, and may not begin or end with a hyphen."
 )
@@ -82,7 +82,7 @@ def _is_valid_partition_name(partition: str) -> bool:
 
     :returns: true if the namespaced partition is valid
     """
-    return bool(re.fullmatch(_VALID_PARTITION_REGEX, partition))
+    return bool(re.fullmatch(VALID_PARTITION_REGEX, partition))
 
 
 def _is_valid_namespaced_partition_name(partition: str) -> bool:
@@ -92,7 +92,7 @@ def _is_valid_namespaced_partition_name(partition: str) -> bool:
 
     :returns: true if the namespaced partition is valid
     """
-    return bool(re.fullmatch(_VALID_NAMESPACED_PARTITION_REGEX, partition))
+    return bool(re.fullmatch(VALID_NAMESPACED_PARTITION_REGEX, partition))
 
 
 def _validate_partition_naming_convention(partitions: Sequence[str]) -> None:
@@ -114,13 +114,13 @@ def _validate_partition_naming_convention(partitions: Sequence[str]) -> None:
                 details=(
                     "Namespaced partitions are formatted as `<namespace>/"
                     "<partition>`. Namespaces must only contain lowercase letters "
-                    "and numbers. " + _PARTITION_DETAIL
+                    "and numbers. " + PARTITION_INVALID_MSG
                 ),
             )
 
         raise errors.FeatureError(
             message=f"Partition {partition!r} is invalid.",
-            details=_PARTITION_DETAIL,
+            details=PARTITION_INVALID_MSG,
         )
 
 

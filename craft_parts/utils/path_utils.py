@@ -21,14 +21,20 @@ from typing import NamedTuple, Optional, Tuple, TypeVar, Union
 
 from craft_parts.errors import FeatureError
 from craft_parts.features import Features
+from craft_parts.utils import partition_utils
 
 FlexiblePath = TypeVar("FlexiblePath", PurePath, str)
 
-# regex for a path beginning with a partition
-HAS_PARTITION_REGEX = re.compile(r"^\([a-z]+\)(/.*)?$")
+# regex for a path beginning with a (partition), like "(boot)/bin/sh"
+HAS_PARTITION_REGEX = re.compile(
+    r"^\(" + partition_utils.VALID_PARTITION_REGEX.pattern + r"\)(/.*)?$"
+)
 
-# regex for a path beginning with a namespaced partition
-HAS_NAMESPACED_PARTITION_REGEX = re.compile(r"^(\([a-z]+/(?!-)[a-z\-]+(?<!-)\))(/.*)?$")
+# regex for a path beginning with a namespaced partition, like "(a/boot)/bin/sh"
+# Note that unlike HAS_PARTITION_REGEX, this one captures both namespaced partition and path.
+HAS_NAMESPACED_PARTITION_REGEX = re.compile(
+    r"^(\(" + partition_utils.VALID_NAMESPACED_PARTITION_REGEX.pattern + r"\))(/.*)?$"
+)
 
 
 class PartitionPathPair(NamedTuple):
