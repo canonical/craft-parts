@@ -223,7 +223,7 @@ class TestPartPartitionUsage:
         """Return a fileset of invalid uses of partition names.
 
         These filepaths are not necessarily violating the naming convention for
-        partitions, but the partitions here are unknown and thus invalid to a
+        partitions, but the partitions here are unknown and thus invalid.
 
         Assumes partition_list has been passed to the LifecycleManager.
         """
