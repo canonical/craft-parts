@@ -39,6 +39,9 @@ PARTITION_PATHS = [
     "(default)/path",
     "(default)//path",
     "(partition)/path",
+    "(parti-tion)/path",
+    "(parti-tion)//path",
+    "(parti-tion2)/path",
     "(test/partition)",
     "(test/partition)/",
     "(test/partition)//",
@@ -46,6 +49,7 @@ PARTITION_PATHS = [
     "(test/partition)//path",
     "(test/parti-tion)/path",
     "(test/parti-tion)//path",
+    "(test/parti-tion2)/path",
 ]
 
 PARTITION_EXPECTED_PARTITIONS = [
@@ -55,6 +59,9 @@ PARTITION_EXPECTED_PARTITIONS = [
     "default",
     "default",
     "partition",
+    "parti-tion",
+    "parti-tion",
+    "parti-tion2",
     "test/partition",
     "test/partition",
     "test/partition",
@@ -62,6 +69,7 @@ PARTITION_EXPECTED_PARTITIONS = [
     "test/partition",
     "test/parti-tion",
     "test/parti-tion",
+    "test/parti-tion2",
 ]
 
 PARTITION_EXPECTED_INNER_PATHS = [
@@ -71,9 +79,13 @@ PARTITION_EXPECTED_INNER_PATHS = [
     "path",
     "path",
     "path",
+    "path",
+    "path",
+    "path",
     "",
     "",
     "",
+    "path",
     "path",
     "path",
     "path",
@@ -93,15 +105,20 @@ assert len(PARTITION_PATHS) == len(
     ("full_path", "expected"),
     [
         ("some/path", False),
+        ("not(a)partition", False),
         # regular partitions
         ("(default)", True),
         ("(default)/", True),
         ("(part)/some/path", True),
+        ("(is1)/apartition", True),
+        ("(woo-hoo)/im-a-partition", True),
         ("(nota)partition", False),
         ("(NOTA)/partition", False),
-        ("(not1)/partition", False),
+        ("(not!a)/partition", False),
         # namespaced partitions
         ("(is/a)/partition", True),
+        ("(look/ma-n0-hands)", True),
+        ("(foo/bar)/baz/qux", True),
         ("(not/a)partition", False),
         ("(NOT/a)partition", False),
         ("(not/A)partition", False),
