@@ -46,6 +46,10 @@ class TestXattrs:
                 xattrs.read_xattr(test_file, "attr")
             assert str(raised.value) == "xattr support only available for Linux"
 
+    def test_read_xattr_nonexistent(self):
+        with pytest.raises(FileNotFoundError):
+            xattrs.read_xattr("I-DONT-EXIST", "attr")
+
     def test_write_xattr(self, test_file):
         value = "foo"
         if sys.platform == "linux":
