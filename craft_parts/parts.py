@@ -19,10 +19,29 @@
 import re
 import warnings
 from pathlib import Path
-from types import MappingProxyType
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    cast,
+)
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+from pydantic.functional_validators import AfterValidator
+from typing_extensions import Annotated
+from types import MappingProxyType
 
 from craft_parts import errors, plugins
 from craft_parts.dirs import ProjectDirs
@@ -33,6 +52,18 @@ from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import get_partition_dir_map
 from craft_parts.utils.path_utils import get_partition_and_path
+
+
+def _path_not_empty(v: str) -> str:
+    if not v:
+        raise ValueError("path cannot be empty")
+    return v
+
+
+def _path_be_relative(v: str) -> str:
+    if v.startswith("/"):
+        raise ValueError(f"{v!r} must be a relative path (cannot start with '/')")
+    return v
 
 
 class PartSpec(BaseModel):
@@ -59,44 +90,44 @@ class PartSpec(BaseModel):
     build_attributes: List[str] = []
     organize_files: Dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: List[str] = Field(default_factory=lambda: ["*"], alias="overlay")
-    stage_files: List[str] = Field(default_factory=lambda: ["*"], alias="stage")
-    prime_files: List[str] = Field(default_factory=lambda: ["*"], alias="prime")
+    stage_files: List[
+        Annotated[
+            str,
+            AfterValidator(_path_not_empty),
+            AfterValidator(_path_be_relative),
+        ]
+    ] = Field(["*"], alias="stage")
+    prime_files: List[
+        Annotated[
+            str,
+            AfterValidator(_path_not_empty),
+            AfterValidator(_path_be_relative),
+        ]
+    ] = Field(["*"], alias="prime")
     override_pull: Optional[str] = None
     overlay_script: Optional[str] = None
     override_build: Optional[str] = None
     override_stage: Optional[str] = None
     override_prime: Optional[str] = None
     permissions: List[Permissions] = []
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        frozen=True,
+        alias_generator=lambda s: s.replace("_", "-"),
+    )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
-
-    # pylint: disable=no-self-argument
-    @validator("stage_files", "prime_files", each_item=True)
-    def validate_relative_path_list(cls, item: str) -> str:
-        """Verify list is not empty and does not contain any absolute paths."""
-        if not item:
-            raise ValueError("path cannot be empty")
-        if item.startswith("/"):
-            raise ValueError(
-                f"{item!r} must be a relative path (cannot start with '/')"
-            )
-        return item
-
-    @validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @classmethod
     def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
 
-    @root_validator(pre=True)
-    def validate_root(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="after")
+    @classmethod
+    def validate_root(cls, values: Any) -> Any:  # noqa: ANN401
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.
@@ -106,7 +137,7 @@ class PartSpec(BaseModel):
             return "_" in name
 
         # Detect a mixture of .deb packages and chisel slices.
-        stage_packages = values.get("stage-packages", [])
+        stage_packages = cast(PartSpec, values).stage_packages or []
         has_slices = any(name for name in stage_packages if is_slice(name))
         has_packages = any(name for name in stage_packages if not is_slice(name))
 
@@ -141,7 +172,7 @@ class PartSpec(BaseModel):
         :return: The newly created dictionary.
 
         """
-        return self.dict(by_alias=True)
+        return self.model_dump(by_alias=True)
 
     def get_scriptlet(self, step: Step) -> Optional[str]:
         """Return the scriptlet contents, if any, for the given step.
@@ -395,6 +426,16 @@ class Part:
         if not self._partitions:
             return
 
+        if not Features().enable_partitions:
+            return error_list
+
+        for fileset_name, fileset in [
+            ("overlay", self.spec.overlay_files),
+            # only the destination of organize filepaths use partitions
+            # pylint: disable-next: no-member
+            ("organize", self.spec.organize_files.values()),
+            ("stage", self.spec.stage_files),
+            ("prime", self.spec.prime_files),
         error_list: List[str] = []
         warning_list: List[str] = []
 

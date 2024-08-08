@@ -22,7 +22,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from pydantic_yaml import YamlModel
+from pydantic import BaseModel
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 _var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-class ProjectVar(YamlModel):
+class ProjectVar(BaseModel):
     """Project variables that can be updated using craftctl."""
 
     value: str

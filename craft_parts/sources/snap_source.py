@@ -22,8 +22,8 @@ import tempfile
 from pathlib import Path
 from typing import Any, Optional, cast
 
-import yaml
 from overrides import overrides
+from ruamel.yaml import YAML
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
@@ -135,6 +135,7 @@ def _get_snap_name(snap: str, snap_dir: str) -> str:
     """
     try:
         with open(os.path.join(snap_dir, "meta", "snap.yaml")) as snap_yaml:
-            return cast(str, yaml.safe_load(snap_yaml)["name"])
+            yaml = YAML()
+            return cast(str, yaml.load(snap_yaml)["name"])
     except (FileNotFoundError, KeyError) as snap_error:
         raise errors.InvalidSnapPackage(snap) from snap_error
