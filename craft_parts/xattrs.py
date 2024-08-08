@@ -45,6 +45,8 @@ def read_xattr(path: str, key: str) -> Optional[str]:
 
     try:
         value = os.getxattr(path, key)
+    except FileNotFoundError:
+        raise
     except OSError as error:
         # No label present with:
         # OSError: [Errno 61] No data available: b'<path>'
