@@ -14,23 +14,20 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Set, cast
+from typing import Literal, cast
 
 import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginProperties
-from craft_parts.plugins.base import extract_plugin_properties
 
 
-class FooPluginProperties(PluginProperties):
+class FooPluginProperties(PluginProperties, frozen=True):
     """Test plugin properties."""
 
-    name: str
+    plugin: Literal["foo"] = "foo"
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
-        return cls(name=data.get("foo-name", "nothing"))
+    foo_name: str
 
 
 class FooPlugin(Plugin):
@@ -38,18 +35,18 @@ class FooPlugin(Plugin):
 
     properties_class = FooPluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return {"build_snap"}
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {"build_package"}
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"ENV": "value"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         options = cast(FooPluginProperties, self._options)
-        return ["hello", options.name]
+        return ["hello", options.foo_name]
 
 
 def test_plugin(new_dir):
@@ -86,16 +83,3 @@ def test_abstract_methods(new_dir):
 
     with pytest.raises(TypeError, match=expected):
         FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
-
-
-def test_extract_plugin_properties():
-    data = {
-        "foo": True,
-        "test": "yes",
-        "test-one": 1,
-        "test-two": 2,
-        "not-test-three": 3,
-    }
-
-    plugin_data = extract_plugin_properties(data, plugin_name="test")
-    assert plugin_data == {"test-one": 1, "test-two": 2}

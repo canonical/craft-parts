@@ -17,7 +17,7 @@
 """Determine the sequence of lifecycle actions to be executed."""
 
 import logging
-from typing import Dict, List, Optional, Sequence, Set
+from collections.abc import Sequence
 
 from craft_parts import errors, parts, steps
 from craft_parts.actions import Action, ActionProperties, ActionType
@@ -48,10 +48,10 @@ class Sequencer:
     def __init__(
         self,
         *,
-        part_list: List[Part],
+        part_list: list[Part],
         project_info: ProjectInfo,
-        ignore_outdated: Optional[List[str]] = None,
-        base_layer_hash: Optional[LayerHash] = None,
+        ignore_outdated: list[str] | None = None,
+        base_layer_hash: LayerHash | None = None,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -61,9 +61,9 @@ class Sequencer:
             ignore_outdated=ignore_outdated,
         )
         self._layer_state = LayerStateManager(self._part_list, base_layer_hash)
-        self._actions: List[Action] = []
+        self._actions: list[Action] = []
 
-        self._overlay_viewers: Set[Part] = set()
+        self._overlay_viewers: set[Part] = set()
         for part in part_list:
             if parts.has_overlay_visibility(
                 part, viewers=self._overlay_viewers, part_list=part_list
@@ -71,12 +71,17 @@ class Sequencer:
                 self._overlay_viewers.add(part)
 
     def plan(
-        self, target_step: Step, part_names: Optional[Sequence[str]] = None
-    ) -> List[Action]:
+        self,
+        target_step: Step,
+        part_names: Sequence[str] | None = None,
+        *,
+        rerun: bool = False,
+    ) -> list[Action]:
         """Determine the list of steps to execute for each part.
 
         :param target_step: The final step to execute for the given part names.
         :param part_names: The names of the parts to process.
+        :param rerun: Whether the step is cleaned before execution.
 
         :returns: The list of actions that should be executed.
         """
@@ -84,7 +89,7 @@ class Sequencer:
             raise errors.FeatureError("Overlay step is not supported.")
 
         self._actions = []
-        self._add_all_actions(target_step, part_names)
+        self._add_all_actions(target_step, part_names, rerun_target_step=rerun)
         return self._actions
 
     def reload_state(self) -> None:
@@ -96,8 +101,10 @@ class Sequencer:
     def _add_all_actions(
         self,
         target_step: Step,
-        part_names: Optional[Sequence[str]] = None,
-        reason: Optional[str] = None,
+        part_names: Sequence[str] | None = None,
+        reason: str | None = None,
+        *,
+        rerun_target_step: bool = False,
     ) -> None:
         selected_parts = part_list_by_name(part_names, self._part_list)
         if not selected_parts:
@@ -110,8 +117,8 @@ class Sequencer:
                     current_step=current_step,
                     target_step=target_step,
                     part=part,
-                    part_names=part_names,
                     reason=reason,
+                    rerun_target_step=rerun_target_step,
                 )
 
     def _add_step_actions(
@@ -120,8 +127,8 @@ class Sequencer:
         current_step: Step,
         target_step: Step,
         part: Part,
-        part_names: Optional[Sequence[str]],
-        reason: Optional[str] = None,
+        reason: str | None = None,
+        rerun_target_step: bool = False,
     ) -> None:
         """Verify if this step should be executed."""
         # if overlays disabled, don't generate overlay actions
@@ -138,12 +145,12 @@ class Sequencer:
 
         # If the step has already run:
         #
-        # 1. If the step is the exact step that was requested, and the part was
-        #    explicitly listed, run it again.
+        # 1. If the step is the exact step that was requested, check whether it
+        #    should be re-executed.
 
-        if part_names and current_step == target_step and part.name in part_names:
+        if current_step == target_step and rerun_target_step:
             if not reason:
-                reason = "requested step"
+                reason = "rerun step"
             self._rerun_step(part, current_step, reason=reason)
             return
 
@@ -203,9 +210,7 @@ class Sequencer:
             project_vars=self._get_project_vars(part, current_step),
         )
 
-    def _get_project_vars(
-        self, part: Part, step: Step
-    ) -> Optional[Dict[str, ProjectVar]]:
+    def _get_project_vars(self, part: Part, step: Step) -> dict[str, ProjectVar] | None:
         if part.name == self._project_info.project_vars_part_name:
             return self._sm.project_vars(part, step)
         return None
@@ -229,7 +234,7 @@ class Sequencer:
         part: Part,
         step: Step,
         *,
-        reason: Optional[str] = None,
+        reason: str | None = None,
         rerun: bool = False,
     ) -> None:
         self._process_dependencies(part, step)
@@ -304,9 +309,7 @@ class Sequencer:
 
         self._sm.set_state(part, step, state=state)
 
-    def _rerun_step(
-        self, part: Part, step: Step, *, reason: Optional[str] = None
-    ) -> None:
+    def _rerun_step(self, part: Part, step: Step, *, reason: str | None = None) -> None:
         """Clean existing state and reexecute the step."""
         logger.debug("rerun step %s:%s", part.name, step)
 
@@ -321,9 +324,9 @@ class Sequencer:
         part: Part,
         step: Step,
         *,
-        reason: Optional[str] = None,
-        outdated_files: Optional[List[str]] = None,
-        outdated_dirs: Optional[List[str]] = None,
+        reason: str | None = None,
+        outdated_files: list[str] | None = None,
+        outdated_dirs: list[str] | None = None,
     ) -> None:
         """Set the step state as reexecuted by updating its timestamp."""
         logger.debug("update step %s:%s", part.name, step)
@@ -349,7 +352,7 @@ class Sequencer:
             self._sm.set_state(part, step, state=state)
 
     def _reapply_layer(
-        self, part: Part, layer_hash: LayerHash, *, reason: Optional[str] = None
+        self, part: Part, layer_hash: LayerHash, *, reason: str | None = None
     ) -> None:
         """Update the layer hash without changing the step state."""
         logger.debug("reapply layer %s: hash=%s", part.name, layer_hash)
@@ -364,9 +367,9 @@ class Sequencer:
         step: Step,
         *,
         action_type: ActionType = ActionType.RUN,
-        reason: Optional[str] = None,
-        project_vars: Optional[Dict[str, ProjectVar]] = None,
-        properties: Optional[ActionProperties] = None,
+        reason: str | None = None,
+        project_vars: dict[str, ProjectVar] | None = None,
+        properties: ActionProperties | None = None,
     ) -> None:
         logger.debug("add action %s:%s(%s)", part.name, step, action_type)
         if not properties:
@@ -386,7 +389,7 @@ class Sequencer:
     def _ensure_overlay_consistency(
         self,
         top_part: Part,
-        reason: Optional[str] = None,
+        reason: str | None = None,
         skip_last: bool = False,  # noqa: FBT001, FBT002
     ) -> LayerHash:
         """Make sure overlay step layers are consistent.
@@ -466,7 +469,7 @@ class Sequencer:
         return False
 
 
-_step_verb: Dict[Step, str] = {
+_step_verb: dict[Step, str] = {
     Step.PULL: "pull",
     Step.OVERLAY: "overlay",
     Step.BUILD: "build",

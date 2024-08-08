@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2023 Canonical Ltd.
+# Copyright 2015-2023,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Literal, cast
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -28,33 +28,19 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin, PluginModel, extract_plugin_properties
+from .base import JavaPlugin
 from .properties import PluginProperties
 
 
-class MavenPluginProperties(PluginProperties, PluginModel):
+class MavenPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the maven plugin."""
 
-    maven_parameters: List[str] = []
+    plugin: Literal["maven"] = "maven"
+
+    maven_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "MavenPluginProperties":
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="maven", required=["source"]
-        )
-        return cls(**plugin_data)
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -66,7 +52,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment contains dependencies needed by the plugin.
 
@@ -111,22 +97,22 @@ class MavenPlugin(JavaPlugin):
     validator_class = MavenPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 

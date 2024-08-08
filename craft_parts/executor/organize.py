@@ -25,9 +25,9 @@ represents how the file is going to be staged.
 import contextlib
 import os
 import shutil
+from collections.abc import Mapping
 from glob import iglob
 from pathlib import Path
-from typing import Dict, Mapping, Optional
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
@@ -36,8 +36,8 @@ from craft_parts.utils import file_utils, path_utils
 def organize_files(
     *,
     part_name: str,
-    file_map: Dict[str, str],
-    install_dir_map: Mapping[Optional[str], Path],
+    file_map: dict[str, str],
+    install_dir_map: Mapping[str | None, Path],
     overwrite: bool,
 ) -> None:
     """Rearrange files for part staging.

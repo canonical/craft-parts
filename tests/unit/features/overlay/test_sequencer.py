@@ -56,7 +56,7 @@ def test_sequencer_add_actions(new_dir):
     ],
 )
 def test_sequencer_run_step(step, state_class, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"stage": ["pkg"]})
 
     seq = Sequencer(part_list=[p1], project_info=info)
@@ -86,7 +86,7 @@ def test_sequencer_run_step(step, state_class, new_dir):
 
 
 def test_sequencer_run_step_invalid(new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"stage": ["pkg"]})
 
     seq = Sequencer(part_list=[p1], project_info=info)
@@ -106,7 +106,7 @@ def test_sequencer_run_step_invalid(new_dir):
     ],
 )
 def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"stage": ["pkg"]})
 
     seq = Sequencer(part_list=[p1], project_info=info)
@@ -155,7 +155,7 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
     ],
 )
 def test_sequencer_update_step(step, state_class, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
     s1 = state_class()
     s1.write(Path("parts/p1/state") / step.name.lower())
@@ -185,7 +185,7 @@ def test_sequencer_update_step(step, state_class, new_dir):
 
 
 def test_sequencer_process_dependencies(mocker, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"after": ["p2"]})
     p2 = Part("p2", {})
 
@@ -201,7 +201,7 @@ def test_sequencer_process_dependencies(mocker, new_dir):
 
 
 def test_sequencer_ensure_overlay_consistency(mocker, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
     p2 = Part("p2", {})
 
@@ -230,7 +230,7 @@ def test_sequencer_ensure_overlay_consistency(mocker, new_dir):
 
 
 def test_sequencer_ensure_overlay_consistency_no_run(mocker, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
     p2 = Part("p2", {})
 
@@ -248,7 +248,7 @@ def test_sequencer_ensure_overlay_consistency_no_run(mocker, new_dir):
 
 
 def test_sequencer_ensure_overlay_consistency_dont_skip_last(mocker, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
     p2 = Part("p2", {})
 
@@ -270,7 +270,7 @@ def test_sequencer_ensure_overlay_consistency_dont_skip_last(mocker, new_dir):
 
 
 def test_sequencer_ensure_overlay_consistency_rerun(mocker, new_dir):
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
     p2 = Part("p2", {})
 
@@ -303,7 +303,7 @@ def test_overlay_dependencies_not_dirty(mocker, new_dir):
         "6554e32fa718d54160d0511b36f81458e4cb2357"
     )
 
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {})
     p2 = Part("p2", {})
     seq = Sequencer(part_list=[p1, p2], project_info=info)
@@ -323,7 +323,7 @@ def test_overlay_dependencies_layer_not_dirty(mocker, new_dir):
         "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b"
     )
 
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"overlay-script": "ls"})
     seq = Sequencer(part_list=[p1], project_info=info)
 
@@ -340,7 +340,7 @@ def test_overlay_dependencies_layer_reapply(mocker, new_dir):
     Path("parts/p1/state").mkdir(parents=True)
     Path("parts/p1/state/layer_hash").write_text("00000000")
 
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"overlay-script": "ls"})
     seq = Sequencer(part_list=[p1], project_info=info)
 
@@ -365,7 +365,7 @@ def test_overlay_dependencies_build_not_dirty(mocker, new_dir):
     state = states.BuildState(overlay_hash="00000000")
     state.write(Path("parts/p1/state/build"))
 
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"overlay-script": "ls"})
     seq = Sequencer(part_list=[p1], project_info=info)
 
@@ -386,7 +386,7 @@ def test_overlay_dependencies_build_rerun_step(mocker, new_dir):
     state = states.BuildState(overlay_hash="11111111")
     state.write(Path("parts/p1/state/build"))
 
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"overlay-script": "ls"})
     seq = Sequencer(part_list=[p1], project_info=info)
 
@@ -407,7 +407,7 @@ def test_overlay_dependencies_stage_not_dirty(mocker, new_dir):
     state = states.StageState(overlay_hash="00000000")
     state.write(Path("parts/p1/state/stage"))
 
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"overlay-script": "ls"})
     seq = Sequencer(part_list=[p1], project_info=info)
 
@@ -428,7 +428,7 @@ def test_overlay_dependencies_stage_rerun_step(mocker, new_dir):
     state = states.StageState(overlay_hash="11111111")
     state.write(Path("parts/p1/state/stage"))
 
-    info = ProjectInfo(arch="aarch64", application_name="test", cache_dir=new_dir)
+    info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"overlay-script": "ls"})
     seq = Sequencer(part_list=[p1], project_info=info)
 

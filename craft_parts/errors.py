@@ -18,7 +18,8 @@
 
 import dataclasses
 import pathlib
-from typing import TYPE_CHECKING, Iterable, List, Optional, Set
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
@@ -37,9 +38,9 @@ class PartsError(Exception):
     """
 
     brief: str
-    details: Optional[str] = None
-    resolution: Optional[str] = None
-    doc_slug: Optional[str] = None
+    details: str | None = None
+    resolution: str | None = None
+    doc_slug: str | None = None
 
     def __str__(self) -> str:
         components = [self.brief]
@@ -56,7 +57,7 @@ class PartsError(Exception):
 class FeatureError(PartsError):
     """A feature is not configured as expected."""
 
-    def __init__(self, message: str, details: Optional[str] = None) -> None:
+    def __init__(self, message: str, details: str | None = None) -> None:
         self.message = message
         brief = message
         resolution = "This operation cannot be executed."
@@ -137,14 +138,14 @@ class PartSpecificationError(PartsError):
 
     @classmethod
     def from_validation_error(
-        cls, *, part_name: str, error_list: List["ErrorDict"]
+        cls, *, part_name: str, error_list: list["ErrorDict"]
     ) -> "PartSpecificationError":
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
         :param error_list: A list of dictionaries containing pydantic error definitions.
         """
-        formatted_errors: List[str] = []
+        formatted_errors: list[str] = []
 
         for error in error_list:
             loc = error.get("loc")
@@ -358,7 +359,7 @@ class FilesetConflict(PartsError):
     :param conflicting_files: A set containing the conflicting file names.
     """
 
-    def __init__(self, conflicting_files: Set[str]) -> None:
+    def __init__(self, conflicting_files: set[str]) -> None:
         self.conflicting_files = conflicting_files
         brief = "Failed to filter files: inconsistent 'stage' and 'prime' filesets."
         details = (
@@ -401,8 +402,8 @@ class PartFilesConflict(PartsError):
         *,
         part_name: str,
         other_part_name: str,
-        conflicting_files: List[str],
-        partition: Optional[str] = None,
+        conflicting_files: list[str],
+        partition: str | None = None,
     ) -> None:
         self.part_name = part_name
         self.other_part_name = other_part_name
@@ -432,7 +433,7 @@ class StageFilesConflict(PartsError):
     :param conflicting_files: The list of confictling files.
     """
 
-    def __init__(self, *, part_name: str, conflicting_files: List[str]) -> None:
+    def __init__(self, *, part_name: str, conflicting_files: list[str]) -> None:
         self.part_name = part_name
         self.conflicting_files = conflicting_files
         indented_conflicting_files = (f"    {i}" for i in conflicting_files)
@@ -623,7 +624,7 @@ class DebError(PartsError):
     """A "deb"-related command failed."""
 
     def __init__(
-        self, deb_path: pathlib.Path, command: List[str], exit_code: int
+        self, deb_path: pathlib.Path, command: list[str], exit_code: int
     ) -> None:
         brief = (
             f"Failed when handling {deb_path}: "
@@ -641,8 +642,8 @@ class PartitionError(PartsError):
         self,
         brief: str,
         *,
-        details: Optional[str] = None,
-        resolution: Optional[str] = None,
+        details: str | None = None,
+        resolution: str | None = None,
     ) -> None:
         super().__init__(brief=brief, details=details, resolution=resolution)
 
@@ -654,7 +655,7 @@ class PartitionUsageError(PartitionError):
     """
 
     def __init__(
-        self, error_list: Iterable[str], partitions: Optional[Iterable[str]]
+        self, error_list: Iterable[str], partitions: Iterable[str] | None
     ) -> None:
         valid_partitions = (
             f"\nValid partitions: {', '.join(partitions)}" if partitions else ""

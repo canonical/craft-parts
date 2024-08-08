@@ -22,7 +22,7 @@ from . import plugins
 from .actions import Action, ActionProperties, ActionType
 from .dirs import ProjectDirs
 from .errors import PartsError
-from .executor.environment import expand_environment
+from .executor import expand_environment
 from .features import Features
 from .infos import PartInfo, ProjectInfo, StepInfo
 from .lifecycle_manager import LifecycleManager

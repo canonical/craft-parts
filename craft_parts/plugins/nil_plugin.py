@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020 Canonical Ltd.
+# Copyright 2020,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Using this, parts can be defined purely by utilizing properties that are
 automatically included, e.g. stage-packages.
 """
 
-from typing import Any, Dict, List, Set
+from typing import Literal
 
 from overrides import override
 
@@ -28,19 +28,10 @@ from .base import Plugin
 from .properties import PluginProperties
 
 
-class NilPluginProperties(PluginProperties):
+class NilPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the nil plugin."""
 
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "NilPluginProperties":  # noqa: ARG003
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-        """
-        return cls()
+    plugin: Literal["nil"] = "nil"
 
 
 class NilPlugin(Plugin):
@@ -66,26 +57,26 @@ class NilPlugin(Plugin):
     supports_strict_mode = True
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
     @override
-    def get_pull_commands(self) -> List[str]:
+    def get_pull_commands(self) -> list[str]:
         """Return a list commands to retrieve dependencies during the pull step."""
         return []
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         return []

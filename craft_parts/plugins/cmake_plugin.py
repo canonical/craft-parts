@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2022 Canonical Ltd.
+# Copyright 2020-2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,38 +16,24 @@
 
 """The cmake plugin."""
 
-from typing import Any, Dict, List, Set, cast
+from typing import Literal, cast
 
 from overrides import override
 
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 
-class CMakePluginProperties(PluginProperties, PluginModel):
+class CMakePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the cmake plugin."""
 
-    cmake_parameters: List[str] = []
+    plugin: Literal["cmake"] = "cmake"
+
+    cmake_parameters: list[str] = []
     cmake_generator: str = "Unix Makefiles"
 
     # part properties required by the plugin
-    source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "CMakePluginProperties":
-        """Populate class attributes from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="cmake", required=["source"]
-        )
-        return cls(**plugin_data)
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class CMakePlugin(Plugin):
@@ -84,12 +70,12 @@ class CMakePlugin(Plugin):
     properties_class = CMakePluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         build_packages = {"gcc", "cmake"}
 
@@ -101,7 +87,7 @@ class CMakePlugin(Plugin):
         return build_packages
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
             # Also look for staged headers and libraries.
@@ -109,7 +95,7 @@ class CMakePlugin(Plugin):
         }
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(CMakePluginProperties, self._options)
 

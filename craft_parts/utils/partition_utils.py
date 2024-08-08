@@ -16,8 +16,8 @@
 """Unit tests for partition utilities."""
 
 import re
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Sequence, Set
 
 from craft_parts import errors, features
 
@@ -33,7 +33,7 @@ PARTITION_INVALID_MSG = (
 )
 
 
-def validate_partition_names(partitions: Optional[Sequence[str]]) -> None:
+def validate_partition_names(partitions: Sequence[str] | None) -> None:
     """Validate the partition feature set.
 
     If the partition feature is enabled, then:
@@ -132,8 +132,8 @@ def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
 
     :raises FeatureError: for namespace conflicts
     """
-    namespaced_partitions: Set[str] = set()
-    regular_partitions: Set[str] = set()
+    namespaced_partitions: set[str] = set()
+    regular_partitions: set[str] = set()
 
     # sort partitions
     for partition in partitions:
@@ -173,8 +173,8 @@ def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
 
 
 def get_partition_dir_map(
-    base_dir: Path, partitions: Optional[Iterable[str]], suffix: str = ""
-) -> Dict[Optional[str], Path]:
+    base_dir: Path, partitions: Iterable[str] | None, suffix: str = ""
+) -> dict[str | None, Path]:
     """Return a mapping of partition directories.
 
     The default partition maps to directories in the base_dir.

@@ -19,63 +19,33 @@
 
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Literal
 
-from craft_parts.dirs import ProjectDirs
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
-from . import errors
-from .base import FileSourceHandler
+
+class SevenzipSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+    """Pydantic for a 7zip file source."""
+
+    model_config = get_model_config(get_json_extra_schema(r"\.7z$"))
+    source_type: Literal["7z"] = "7z"
 
 
 class SevenzipSource(FileSourceHandler):
     """The zip file source handler."""
 
-    def __init__(  # noqa: PLR0913
-        self,
-        source: str,
-        part_src_dir: Path,
-        *,
-        cache_dir: Path,
-        project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ) -> None:
-        super().__init__(
-            source,
-            part_src_dir,
-            cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_branch=source_branch,
-            source_commit=source_commit,
-            source_checksum=source_checksum,
-            source_depth=source_depth,
-            source_submodules=source_submodules,
-            project_dirs=project_dirs,
-            ignore_patterns=ignore_patterns,
-            command="7zip",
-        )
-        if source_tag:
-            raise errors.InvalidSourceOption(source_type="7z", option="source-tag")
-
-        if source_commit:
-            raise errors.InvalidSourceOption(source_type="7z", option="source-commit")
-
-        if source_branch:
-            raise errors.InvalidSourceOption(source_type="7z", option="source-branch")
-
-        if source_depth:
-            raise errors.InvalidSourceOption(source_type="7z", option="source-depth")
+    source_model = SevenzipSourceModel
 
     def provision(
         self,
         dst: Path,
         keep: bool = False,  # noqa: FBT001, FBT002
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Extract 7z file contents to the part source dir."""
         if src:

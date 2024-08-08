@@ -19,11 +19,9 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
-from craft_parts.executor.environment import generate_step_environment
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.parts import Part, sort_parts
@@ -31,6 +29,7 @@ from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
 from .collisions import check_for_stage_collisions
+from .environment import generate_step_environment
 from .part_handler import PartHandler
 from .step_handler import Stream
 
@@ -57,14 +56,14 @@ class Executor:
     def __init__(
         self,
         *,
-        part_list: List[Part],
+        part_list: list[Part],
         project_info: ProjectInfo,
-        extra_build_packages: Optional[List[str]] = None,
-        extra_build_snaps: Optional[List[str]] = None,
+        extra_build_packages: list[str] | None = None,
+        extra_build_snaps: list[str] | None = None,
         track_stage_packages: bool = False,
-        ignore_patterns: Optional[List[str]] = None,
-        base_layer_dir: Optional[Path] = None,
-        base_layer_hash: Optional[LayerHash] = None,
+        ignore_patterns: list[str] | None = None,
+        base_layer_dir: Path | None = None,
+        base_layer_hash: LayerHash | None = None,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -72,7 +71,7 @@ class Executor:
         self._extra_build_snaps = extra_build_snaps
         self._track_stage_packages = track_stage_packages
         self._base_layer_hash = base_layer_hash
-        self._handler: Dict[str, PartHandler] = {}
+        self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
 
         self._overlay_manager = OverlayManager(
@@ -118,7 +117,7 @@ class Executor:
 
     def execute(
         self,
-        actions: Union[Action, List[Action]],
+        actions: Action | list[Action],
         *,
         stdout: Stream = None,
         stderr: Stream = None,
@@ -136,9 +135,7 @@ class Executor:
         for act in actions:
             self._run_action(act, stdout=stdout, stderr=stderr)
 
-    def clean(
-        self, initial_step: Step, *, part_names: Optional[List[str]] = None
-    ) -> None:
+    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:
         """Clean the given parts, or all parts if none is specified.
 
         :param initial_step: The step to clean. More steps may be cleaned
@@ -312,7 +309,7 @@ class ExecutionContext:
 
     def execute(
         self,
-        actions: Union[Action, List[Action]],
+        actions: Action | list[Action],
         *,
         stdout: Stream = None,
         stderr: Stream = None,
