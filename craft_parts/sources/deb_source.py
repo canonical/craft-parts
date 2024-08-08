@@ -19,69 +19,37 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Literal
 
-from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import deb_utils
 
-from . import errors
-from .base import FileSourceHandler
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 logger = logging.getLogger(__name__)
+
+
+class DebSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+    """Pydantic model for deb file sources."""
+
+    model_config = get_model_config(get_json_extra_schema(r"\.deb$"))
+    source_type: Literal["deb"] = "deb"
 
 
 class DebSource(FileSourceHandler):
     """The "deb" file source handler."""
 
-    # pylint: disable=too-many-arguments
-    def __init__(  # noqa: PLR0913
-        self,
-        source: str,
-        part_src_dir: Path,
-        *,
-        cache_dir: Path,
-        project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        source_depth: Optional[int] = None,
-        ignore_patterns: Optional[List[str]] = None,
-    ) -> None:
-        super().__init__(
-            source,
-            part_src_dir,
-            cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_branch=source_branch,
-            source_commit=source_commit,
-            source_checksum=source_checksum,
-            source_submodules=source_submodules,
-            source_depth=source_depth,
-            project_dirs=project_dirs,
-            ignore_patterns=ignore_patterns,
-        )
-
-        if source_tag:
-            raise errors.InvalidSourceOption(source_type="deb", option="source-tag")
-
-        if source_commit:
-            raise errors.InvalidSourceOption(source_type="deb", option="source-commit")
-
-        if source_branch:
-            raise errors.InvalidSourceOption(source_type="deb", option="source-branch")
-
-        if source_depth:
-            raise errors.InvalidSourceOption(source_type="deb", option="source-depth")
-
-    # pylint: enable=too-many-arguments
+    source_model = DebSourceModel
 
     def provision(
         self,
         dst: Path,
         keep: bool = False,  # noqa: FBT001, FBT002
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Extract deb file contents to the part source dir."""
         deb_file = src if src else self.part_src_dir / os.path.basename(self.source)

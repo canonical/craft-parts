@@ -15,20 +15,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
 from re import escape
-from typing import Optional
+from typing import Literal
 
 import pytest
 import requests
 from craft_parts import ProjectDirs
 from craft_parts.sources import cache, errors
-from craft_parts.sources.base import FileSourceHandler, SourceHandler
+from craft_parts.sources.base import (
+    BaseFileSourceModel,
+    BaseSourceModel,
+    FileSourceHandler,
+    SourceHandler,
+)
 from overrides import overrides
 
 # pylint: disable=attribute-defined-outside-init
 
 
+class FooSourceModel(BaseSourceModel, frozen=True):
+    source_type: Literal["foo"] = "foo"
+
+
 class FooSourceHandler(SourceHandler):
     """A source handler that does nothing."""
+
+    source_model = FooSourceModel
 
     def pull(self) -> None:
         """Pull this source type."""
@@ -46,15 +57,6 @@ class TestSourceHandler:
             cache_dir=new_dir,
             project_dirs=self._dirs,
         )
-
-    def test_source(self):
-        assert self.source.source_tag is None
-        assert self.source.source_commit is None
-        assert self.source.source_branch is None
-        assert self.source.source_depth is None
-        assert self.source.source_checksum is None
-        assert self.source.source_submodules is None
-        assert self.source.command is None
 
     def test_source_check_if_outdated(self):
         with pytest.raises(errors.SourceUpdateUnsupported) as raised:
@@ -83,15 +85,21 @@ class TestSourceHandler:
             )
 
 
+class BarFileSourceModel(BaseFileSourceModel, frozen=True):
+    source_type: Literal["bar"] = "bar"
+
+
 class BarFileSource(FileSourceHandler):
     """A file source handler."""
+
+    source_model = BarFileSourceModel
 
     @overrides
     def provision(
         self,
         dst: Path,
         keep: bool = False,  # noqa: FBT001, FBT002
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Extract source payload."""
         self.provision_dst = dst
@@ -102,27 +110,24 @@ class BarFileSource(FileSourceHandler):
 class TestFileSourceHandler:
     """Verify FileSourceHandler methods and attributes."""
 
+    def set_source(self, cache_dir, **kwargs) -> None:
+        """Set the source."""
+        source_kwargs = {
+            "source": "source",
+            "part_src_dir": Path("parts/foo/src"),
+            "project_dirs": self._dirs,
+            "cache_dir": cache_dir,
+        }
+        source_kwargs.update(kwargs)
+        self.source = BarFileSource(**source_kwargs)
+
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
         self._dirs = ProjectDirs(partitions=partitions)
-        self.source = BarFileSource(
-            source="source",
-            part_src_dir=Path("parts/foo/src"),
-            cache_dir=new_dir,
-            project_dirs=self._dirs,
-        )
-
-    def test_file_source(self):
-        assert self.source.source_tag is None
-        assert self.source.source_commit is None
-        assert self.source.source_branch is None
-        assert self.source.source_depth is None
-        assert self.source.source_checksum is None
-        assert self.source.source_submodules is None
-        assert self.source.command is None
+        self.set_source(cache_dir=new_dir)
 
     def test_pull_file(self, new_dir):
-        self.source.source = "src/my_file"
+        self.set_source(source="src/my_file", cache_dir=new_dir)
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
         Path("parts/foo/src").mkdir(parents=True)
@@ -144,8 +149,11 @@ class TestFileSourceHandler:
         assert raised.value.source == "src/my_file"
 
     def test_pull_file_checksum(self, new_dir):
-        self.source.source = "src/my_file"
-        self.source.source_checksum = "md5/9a0364b9e99bb480dd25e1f0284c8555"
+        self.set_source(
+            cache_dir=new_dir,
+            source="src/my_file",
+            source_checksum="md5/9a0364b9e99bb480dd25e1f0284c8555",
+        )
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
         Path("parts/foo/src").mkdir(parents=True)
@@ -159,10 +167,10 @@ class TestFileSourceHandler:
         dest = Path(new_dir, "parts", "foo", "src", "my_file")
         assert dest.is_file()
 
-    @pytest.mark.usefixtures("new_dir")
-    def test_pull_file_checksum_error(self):
-        self.source.source = "src/my_file"
-        self.source.source_checksum = "md5/12345"
+    def test_pull_file_checksum_error(self, new_dir):
+        self.set_source(
+            cache_dir=new_dir, source="src/my_file", source_checksum="md5/12345"
+        )
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
         Path("parts/foo/src").mkdir(parents=True)
@@ -187,8 +195,11 @@ class TestFileSourceHandler:
         assert downloaded.is_file()
 
     def test_pull_url_checksum(self, requests_mock, new_dir):
-        self.source.source = "http://test.com/some_file"
-        self.source.source_checksum = "md5/9a0364b9e99bb480dd25e1f0284c8555"
+        self.set_source(
+            cache_dir=new_dir,
+            source="http://test.com/some_file",
+            source_checksum="md5/9a0364b9e99bb480dd25e1f0284c8555",
+        )
         requests_mock.get(self.source.source, text="content")
         Path("parts/foo/src").mkdir(parents=True)
 
@@ -207,8 +218,11 @@ class TestFileSourceHandler:
         assert Path(cached).read_bytes() == b"content"
 
     def test_pull_url_checksum_cached(self, requests_mock, new_dir):
-        self.source.source = "http://test.com/some_file"
-        self.source.source_checksum = "md5/9a0364b9e99bb480dd25e1f0284c8555"
+        self.set_source(
+            cache_dir=new_dir,
+            source="http://test.com/some_file",
+            source_checksum="md5/9a0364b9e99bb480dd25e1f0284c8555",
+        )
         Path("parts/foo/src").mkdir(parents=True)
         requests_mock.get(self.source.source, text="other_content")
 
@@ -228,7 +242,7 @@ class TestFileSourceHandler:
         assert downloaded.read_bytes() == b"content"
 
     def test_pull_url_not_found(self, requests_mock, new_dir):
-        self.source.source = "http://test.com/some_file"
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
         requests_mock.get(
             self.source.source,
             status_code=requests.codes.not_found,
@@ -247,7 +261,7 @@ class TestFileSourceHandler:
         [requests.codes.unauthorized, requests.codes.internal_server_error],
     )
     def test_pull_url_http_error(self, requests_mock, new_dir, error_code):
-        self.source.source = "http://test.com/some_file"
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
         requests_mock.get(self.source.source, status_code=error_code, reason="Error")
 
         expected = escape(

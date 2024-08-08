@@ -17,7 +17,6 @@
 import os
 import shutil
 import subprocess
-from typing import List, Tuple
 
 import craft_parts.packages.snaps
 
@@ -65,7 +64,7 @@ class FakeSnapCommand:
     def login(self, email):
         self._email = email
 
-    def _get_snap_cmd(self, cmd) -> Tuple[str, List[str]]:
+    def _get_snap_cmd(self, cmd) -> tuple[str, list[str]]:
         try:
             snap_cmd_index = cmd.index("snap")
         except ValueError:

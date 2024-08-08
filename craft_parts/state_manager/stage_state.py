@@ -16,10 +16,10 @@
 
 """State definitions for the stage step."""
 
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any
 
+import pydantic
 from overrides import override
-from pydantic import validator
 
 from .step_state import StepState, validate_hex_string
 
@@ -27,15 +27,13 @@ from .step_state import StepState, validate_hex_string
 class StageState(StepState):
     """Context information for the stage step."""
 
-    overlay_hash: Optional[str] = None
-
-    _validate_hex_string = validator("overlay_hash", allow_reuse=True)(
-        validate_hex_string
-    )
+    overlay_hash: Annotated[
+        str | None, pydantic.BeforeValidator(validate_hex_string)
+    ] = None
 
     @classmethod
     @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "StageState":
+    def unmarshal(cls, data: dict[str, Any]) -> "StageState":
         """Create and populate a new ``StageState`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
@@ -55,10 +53,10 @@ class StageState(StepState):
     @override
     def properties_of_interest(
         self,
-        part_properties: Dict[str, Any],
+        part_properties: dict[str, Any],
         *,
-        extra_properties: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        extra_properties: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Return relevant properties concerning this step.
 
         :param part_properties: A dictionary containing all part properties.
@@ -75,8 +73,8 @@ class StageState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, project_options: dict[str, Any]
+    ) -> dict[str, Any]:
         """Return relevant project options concerning this step.
 
         :param project_options: A dictionary containing all project options.

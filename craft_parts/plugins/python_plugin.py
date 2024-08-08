@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2023 Canonical Ltd.
+# Copyright 2020-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,39 +18,25 @@
 
 import shlex
 from textwrap import dedent
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Literal, cast
 
 from overrides import override
 
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
 
 
-class PythonPluginProperties(PluginProperties, PluginModel):
+class PythonPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the python plugin."""
 
-    python_requirements: List[str] = []
-    python_constraints: List[str] = []
-    python_packages: List[str] = ["pip", "setuptools", "wheel"]
+    plugin: Literal["python"] = "python"
+
+    python_requirements: list[str] = []
+    python_constraints: list[str] = []
+    python_packages: list[str] = ["pip", "setuptools", "wheel"]
 
     # part properties required by the plugin
-    source: str
-
-    @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "PythonPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-        plugin_data = extract_plugin_properties(
-            data, plugin_name="python", required=["source"]
-        )
-        return cls(**plugin_data)
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
 class PythonPlugin(Plugin):
@@ -59,17 +45,17 @@ class PythonPlugin(Plugin):
     properties_class = PythonPluginProperties
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"findutils", "python3-dev", "python3-venv"}
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         return {
             # Add PATH to the python interpreter we always intend to use with
@@ -83,7 +69,7 @@ class PythonPlugin(Plugin):
     # pylint: disable=line-too-long
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         build_commands = [
             f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{self._part_info.part_install_dir}"',
@@ -200,7 +186,7 @@ class PythonPlugin(Plugin):
         """
         return False
 
-    def _get_system_python_interpreter(self) -> Optional[str]:
+    def _get_system_python_interpreter(self) -> str | None:
         """Obtain the path to the system-provided python interpreter.
 
         This method can be overridden by application-specific subclasses. It
