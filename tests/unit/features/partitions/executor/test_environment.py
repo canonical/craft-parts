@@ -24,12 +24,14 @@ from craft_parts.executor import environment
         (["default"], {"CRAFT_DEFAULT_STAGE", "CRAFT_DEFAULT_PRIME"}),
         (
             # exercise lowercase alphabetical, numbers, and hyphens
-            ["default", "abc123", "foo1/bar-baz2"],
+            ["default", "abc123", "abc-123", "foo1/bar-baz2"],
             {
                 "CRAFT_DEFAULT_STAGE",
                 "CRAFT_DEFAULT_PRIME",
                 "CRAFT_ABC123_STAGE",
                 "CRAFT_ABC123_PRIME",
+                "CRAFT_ABC_123_STAGE",
+                "CRAFT_ABC_123_PRIME",
                 "CRAFT_FOO1_BAR_BAZ2_STAGE",
                 "CRAFT_FOO1_BAR_BAZ2_PRIME",
             },

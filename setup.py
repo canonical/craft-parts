@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup
 
-VERSION = "1.33.0"
+VERSION = "1.34.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -119,6 +119,7 @@ setup(
     version=VERSION,
     description="Craft parts tooling",
     long_description=readme,
+    long_description_content_type="text/markdown",
     author="Canonical Ltd.",
     author_email="snapcraft@lists.snapcraft.io",
     url="https://github.com/canonical/craft-parts",
