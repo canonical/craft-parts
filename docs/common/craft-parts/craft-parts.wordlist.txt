@@ -61,6 +61,7 @@ ExecutionContext
 FeatureError
 FieldInfo
 FileCache
+FileNotFoundError
 FileOrganizeError
 FileProviderNotFound
 FileSource
