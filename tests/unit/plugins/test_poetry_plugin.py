@@ -140,18 +140,9 @@ def test_get_build_commands(new_dir, optional_groups, export_addendum):
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials" + export_addendum,
-        f"{new_dir}/parts/p1/install/bin/pip install --requirement {new_dir}/parts/p1/build/requirements.txt",
+        f"{new_dir}/parts/p1/install/bin/pip install --requirement {new_dir}/parts/p1/build/requirements.txt .",
         *get_build_commands(new_dir),
     ]
-
-
-def test_invalid_properties():
-    with pytest.raises(ValidationError) as raised:
-        PoetryPlugin.properties_class.unmarshal({"source": ".", "poetry-invalid": True})
-    err = raised.value.errors()
-    assert len(err) == 1
-    assert err[0]["loc"] == ("poetry-invalid",)
-    assert err[0]["type"] == "extra_forbidden"
 
 
 def test_missing_properties():

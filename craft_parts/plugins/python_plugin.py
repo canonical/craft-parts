@@ -44,28 +44,6 @@ class PythonPlugin(BasePythonPlugin):
 
     properties_class = PythonPluginProperties
 
-    @override
-    def get_build_snaps(self) -> set[str]:
-        """Return a set of required snaps to install in the build environment."""
-        return set()
-
-    @override
-    def get_build_packages(self) -> set[str]:
-        """Return a set of required packages to install in the build environment."""
-        return {"findutils", "python3-dev", "python3-venv"}
-
-    @override
-    def get_build_environment(self) -> dict[str, str]:
-        """Return a dictionary with the environment to use in the build step."""
-        return {
-            # Add PATH to the python interpreter we always intend to use with
-            # this plugin. It can be user overridden, but that is an explicit
-            # choice made by a user.
-            "PATH": f"{self._part_info.part_install_dir}/bin:${{PATH}}",
-            "PARTS_PYTHON_INTERPRETER": "python3",
-            "PARTS_PYTHON_VENV_ARGS": "",
-        }
-
     # pylint: disable=line-too-long
 
     @override

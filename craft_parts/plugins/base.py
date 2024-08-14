@@ -20,8 +20,12 @@ from __future__ import annotations
 
 import abc
 from copy import deepcopy
+import shutil
 from typing import TYPE_CHECKING
 
+from overrides import override
+
+from craft_parts import errors
 from craft_parts.actions import ActionProperties
 
 from .properties import PluginProperties
@@ -122,3 +126,66 @@ class JavaPlugin(Plugin):
         # pylint: enable=line-too-long
 
         return link_java + link_jars
+
+
+class BasePythonPlugin(Plugin):
+    """A base class for Python plugins.
+
+    Provides common methods for dealing with Python items.
+    """
+
+    @override
+    def get_build_snaps(self) -> set[str]:
+        """Return a set of required snaps to install in the build environment."""
+        return set()
+
+    @override
+    def get_build_packages(self) -> set[str]:
+        """Return a set of required packages to install in the build environment."""
+        return {"findutils", "python3-dev", "python3-venv"}
+
+    @override
+    def get_build_environment(self) -> dict[str, str]:
+        """Return a dictionary with the environment to use in the build step."""
+        python3_path = shutil.which("python3")
+        if python3_path is None:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_info._part_name,
+                reason="cannot find a python3 executable on the system"
+            )
+        return {
+            # Add PATH to the python interpreter we always intend to use with
+            # this plugin. It can be user overridden, but that is an explicit
+            # choice made by a user.
+            "PATH": f"{self._part_info.part_install_dir}/bin:${{PATH}}",
+            "PARTS_PYTHON_INTERPRETER": "python3",
+            "PARTS_PYTHON_VENV_ARGS": "",
+        }
+
+
+    def _should_remove_symlinks(self) -> bool:
+        """Configure executables symlink removal.
+
+        This method can be overridden by application-specific subclasses to control
+        whether symlinks in the virtual environment should be removed. Default is
+        False.  If True, the venv-created symlinks to python* in bin/ will be
+        removed and will not be recreated.
+        """
+        return False
+
+    def _get_system_python_interpreter(self) -> str | None:
+        """Obtain the path to the system-provided python interpreter.
+
+        This method can be overridden by application-specific subclasses. It
+        returns the path to the Python that bin/python3 should be symlinked to
+        if Python is not part of the payload.
+        """
+        return '$(readlink -f "$(which "${PARTS_PYTHON_INTERPRETER}")")'
+
+    def _get_script_interpreter(self) -> str:
+        """Obtain the shebang line to use in Python scripts.
+
+        This method can be overridden by application-specific subclasses. It
+        returns the script interpreter to use in existing Python scripts.
+        """
+        return "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"

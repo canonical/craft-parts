@@ -92,35 +92,12 @@ class PoetryPlugin(BasePythonPlugin):
         return "Poetry" in poetry_version
 
     @override
-    def get_build_snaps(self) -> set[str]:
-        """Return a set of required snaps to install in the build environment."""
-        return set()
-
-    @override
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
-        build_packages = {"findutils", "python3-dev", "python3-venv"}
+        build_packages = super().get_build_packages()
         if not self._system_has_poetry():
             build_packages |= {"python3-poetry"}
         return build_packages
-
-    @override
-    def get_build_environment(self) -> dict[str, str]:
-        """Return a dictionary with the environment to use in the build step."""
-        python3_path = shutil.which("python3")
-        if python3_path is None:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_info._part_name,
-                reason="cannot find a python3 executable on the system"
-            )
-        return {
-            # Add PATH to the python interpreter we always intend to use with
-            # this plugin. It can be user overridden, but that is an explicit
-            # choice made by a user.
-            "PATH": f"{self._part_info.part_install_dir}/bin:${{PATH}}",
-            "PARTS_PYTHON_INTERPRETER": "python3",
-            "PARTS_PYTHON_VENV_ARGS": "",
-        }
 
     # pylint: disable=line-too-long
 
