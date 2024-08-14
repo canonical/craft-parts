@@ -32,6 +32,7 @@ from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
 from .npm_plugin import NpmPlugin
 from .properties import PluginProperties
+from .poetry_plugin import PoetryPlugin
 from .python_plugin import PythonPlugin
 from .qmake_plugin import QmakePlugin
 from .rust_plugin import RustPlugin
@@ -58,6 +59,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "meson": MesonPlugin,
     "nil": NilPlugin,
     "npm": NpmPlugin,
+    "poetry": PoetryPlugin,
     "python": PythonPlugin,
     "qmake": QmakePlugin,
     "rust": RustPlugin,

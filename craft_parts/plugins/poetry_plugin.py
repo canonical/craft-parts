@@ -17,32 +17,79 @@
 """The python plugin."""
 
 import shlex
+import shutil
+import subprocess
 from textwrap import dedent
 from typing import Literal, cast
 
 from overrides import override
+import pydantic
+
+from craft_parts import errors
+from craft_parts.plugins import validator
 
 from .base import BasePythonPlugin, Plugin
 from .properties import PluginProperties
 
 
-class PythonPluginProperties(PluginProperties, frozen=True):
+class PoetryPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the python plugin."""
 
-    plugin: Literal["python"] = "python"
+    plugin: Literal["poetry"] = "poetry"
 
-    python_requirements: list[str] = []
-    python_constraints: list[str] = []
-    python_packages: list[str] = ["pip", "setuptools", "wheel"]
+    poetry_with: set[str] = pydantic.Field(
+        default_factory=set,
+        title="Optional dependency groups",
+        description="optional dependency groups to include when installing."
+    )
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
-class PythonPlugin(BasePythonPlugin):
+class PoetryPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+    """Check the execution environment for the Rust plugin.
+
+    :param part_name: The part whose build environment is being validated.
+    :param env: A string containing the build step environment setup.
+    """
+
+    _options: PoetryPluginProperties
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment has the dependencies to build Rust applications.
+
+        :param part_dependencies: A list of the parts this part depends on.
+        """
+        if shutil.which("python3") is None:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason="cannot find a python3 executable on the system"
+            )
+        if "poetry-deps" in (part_dependencies or ()):
+            self.validate_dependency(
+                dependency="poetry",
+                plugin_name=self._options.plugin,
+                part_dependencies=part_dependencies,
+            )
+
+
+class PoetryPlugin(BasePythonPlugin):
     """A plugin to build python parts."""
 
-    properties_class = PythonPluginProperties
+    properties_class = PoetryPluginProperties
+    validator_class = PoetryPluginEnvironmentValidator
+    _options: PoetryPluginProperties
+
+    def _system_has_poetry(self) -> bool:
+        try:
+            poetry_version = subprocess.check_output(["poetry", "--version"], text=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+        return "Poetry" in poetry_version
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -52,11 +99,20 @@ class PythonPlugin(BasePythonPlugin):
     @override
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
-        return {"findutils", "python3-dev", "python3-venv"}
+        build_packages = {"findutils", "python3-dev", "python3-venv"}
+        if not self._system_has_poetry():
+            build_packages |= {"python3-poetry"}
+        return build_packages
 
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
+        python3_path = shutil.which("python3")
+        if python3_path is None:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_info._part_name,
+                reason="cannot find a python3 executable on the system"
+            )
         return {
             # Add PATH to the python interpreter we always intend to use with
             # this plugin. It can be user overridden, but that is an explicit
@@ -76,29 +132,26 @@ class PythonPlugin(BasePythonPlugin):
             f'PARTS_PYTHON_VENV_INTERP_PATH="{self._part_info.part_install_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         ]
 
-        options = cast(PythonPluginProperties, self._options)
-
+        venv_python = f"{self._part_info.part_install_dir}/bin/python"
         pip = f"{self._part_info.part_install_dir}/bin/pip"
 
-        if options.python_constraints:
-            constraints = " ".join(f"-c {c!r}" for c in options.python_constraints)
-        else:
-            constraints = ""
+        requirements_path = self._part_info.part_build_dir / "requirements.txt"
 
-        if options.python_packages:
-            python_packages = " ".join(
-                [shlex.quote(pkg) for pkg in options.python_packages]
+        export_command = [
+            "poetry",
+            "export",
+            "--format=requirements.txt",
+            f"--output={requirements_path}",
+            "--with-credentials",
+        ]
+        if self._options.poetry_with:
+            export_command.append(
+                f"--with={','.join(sorted(self._options.poetry_with))}",
             )
-            python_packages_cmd = f"{pip} install {constraints} -U {python_packages}"
-            build_commands.append(python_packages_cmd)
-
-        if options.python_requirements:
-            requirements = " ".join(f"-r {r!r}" for r in options.python_requirements)
-            requirements_cmd = f"{pip} install {constraints} -U {requirements}"
-            build_commands.append(requirements_cmd)
+        build_commands.append(shlex.join(export_command))
 
         build_commands.append(
-            f"[ -f setup.py ] || [ -f pyproject.toml ] && {pip} install {constraints} -U ."
+            f"{pip} install --requirement {requirements_path} ."
         )
 
         # Now fix shebangs.
@@ -158,12 +211,10 @@ class PythonPlugin(BasePythonPlugin):
         # Handle the venv symlink (either remove it or set the final correct target)
         if self._should_remove_symlinks():
             build_commands.append(
-                dedent(
-                    f"""\
-                    echo Removing python symlinks in {self._part_info.part_install_dir}/bin
-                    rm "{self._part_info.part_install_dir}"/bin/python*
-                    """
-                )
+                f"echo Removing python symlinks in {self._part_info.part_install_dir}/bin"
+            )
+            build_commands.append(
+                f'rm "{self._part_info.part_install_dir}"/bin/python*'
             )
         else:
             build_commands.append(
@@ -175,3 +226,4 @@ class PythonPlugin(BasePythonPlugin):
             )
 
         return build_commands
+
