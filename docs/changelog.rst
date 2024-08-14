@@ -2,6 +2,26 @@
 Changelog
 *********
 
+2.0.0 (2024-08-08)
+------------------
+
+Breaking changes:
+
+- Set minimum Python version to 3.10
+- Plugin models are restructured
+- Migrate to Pydantic 2
+- API uses Debian architecture names rather than Python platform names
+
+New features:
+
+- Plugin models can use Pydantic JSON schema export
+- Partition names can include hyphens
+
+Bug fixes:
+
+- Xattrs raise FileNotFoundError when appropriate
+- Partition names are more strictly checked.
+
 1.34.0 (2024-08-01)
 -------------------
 - Allow numbers in partitions, partition namespaces, and namespaced partitions.
