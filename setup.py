@@ -50,7 +50,6 @@ install_requires = [
     "overrides!=7.6.0",
     "PyYAML",
     "pydantic>=2.0.0",
-    "pydantic-yaml[pyyaml]>=1.0.0",
     "pyxdg",
     "requests<2.32.0",
     "requests-unixsocket",
