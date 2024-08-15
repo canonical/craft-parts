@@ -21,9 +21,12 @@ import functools
 import json
 import logging
 import os
+import select
+import selectors
 import subprocess
 import tempfile
 import textwrap
+import threading
 import time
 from pathlib import Path
 from typing import List, Optional, Set, TextIO, Union
@@ -152,6 +155,8 @@ class StepHandler:
                 cwd=self._part.part_build_subdir,
                 stdout=self._stdout,
                 stderr=self._stderr,
+                part_name=self._part.name,
+                plugin_name=self._part.plugin_name,
             )
         except subprocess.CalledProcessError as process_error:
             raise errors.PluginBuildError(
@@ -434,6 +439,41 @@ class StepHandler:
             self._builtin_prime()
 
 
+class StdErrHandler(threading.Thread):
+    def __init__(self, final_stderr) -> None:
+        super().__init__()
+        self.final_stderr = final_stderr
+
+        # declare the types to satisfy mypy
+        self.read_pipe: int
+        self.write_pipe: int
+        self.read_pipe, self.write_pipe = os.pipe()
+        self.read_err = []
+        self.stop_flag = False
+
+    def run(self) -> None:
+        _PIPE_READER_CHUNK_SIZE = 4096
+        selector = selectors.DefaultSelector()
+        selector.register(self.read_pipe, selectors.EVENT_READ)
+        while True:
+            events = selector.select(timeout=0.1)
+            if events:
+                data = os.read(self.read_pipe, _PIPE_READER_CHUNK_SIZE)
+                self.read_err.append(data)
+                os.write(self.final_stderr, data)
+            if self.stop_flag:
+                selector.close()
+                break
+
+    def stop(self) -> None:
+        if self.stop_flag:
+            return
+        self.stop_flag = True
+        self.join()
+        os.close(self.read_pipe)
+        os.close(self.write_pipe)
+
+
 def _create_and_run_script(
     commands: List[str],
     script_path: Path,
@@ -441,6 +481,8 @@ def _create_and_run_script(
     stdout: Stream,
     stderr: Stream,
     build_environment_script_path: Optional[Path] = None,
+    part_name: str = "",
+    plugin_name: str = "",
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
@@ -458,10 +500,22 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    subprocess.run(
-        [script_path],
-        cwd=cwd,
-        check=True,
-        stdout=stdout,
-        stderr=stderr,
-    )
+    handler = StdErrHandler(stderr)
+    handler.start()
+
+    try:
+        subprocess.run(
+            [script_path],
+            cwd=cwd,
+            check=True,
+            stdout=stdout,
+            stderr=handler.write_pipe,
+        )
+    except subprocess.CalledProcessError:
+        handler.stop()
+        err = b"".join(handler.read_err)
+        raise errors.PluginBuildError(
+            part_name=part_name, plugin_name=plugin_name, stderr=err
+        )
+    finally:
+        handler.stop()

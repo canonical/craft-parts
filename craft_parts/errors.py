@@ -481,10 +481,19 @@ class PluginBuildError(PartsError):
     :param plugin_name: The name of the plugin being processed.
     """
 
-    def __init__(self, *, part_name: str, plugin_name: str) -> None:
+    def __init__(
+        self, *, part_name: str, plugin_name: str, stderr: bytes | None = None
+    ) -> None:
         self.part_name = part_name
         self.plugin_name = plugin_name
         brief = f"Failed to run the build script for part {part_name!r}."
+
+        if stderr:
+            brief += "\nCaptured standard error:"
+            for line in stderr.split(b"\n"):
+                if line:
+                    brief += f"\n:: {line.decode()}"
+
         resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
         super().__init__(
             brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
