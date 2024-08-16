@@ -541,3 +541,12 @@ class TestPartValidation:
         error = r"source\s+Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
+
+    def test_part_coerces_numbers(self, partitions):
+        data = {
+            "plugin": "nil",
+            "build-environment": [
+                {"CGO_ENABLED": 0}
+            ]
+        }
+        parts.validate_part(data)
