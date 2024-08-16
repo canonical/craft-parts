@@ -23,7 +23,7 @@ import yaml
 from craft_parts import Action, Step
 
 
-@pytest.fixture()
+@pytest.fixture
 def install_dir():
     """Installation directory for the standard dump plugin."""
     return Path("parts", "foo", "install")

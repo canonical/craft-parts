@@ -28,7 +28,7 @@ from tests.unit import test_lifecycle_manager
 from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
     monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
@@ -41,7 +41,7 @@ class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
 class TestOverlaySupport:
     """Overlays only supported in linux and must run as root."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
 

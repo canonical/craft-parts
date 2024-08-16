@@ -25,7 +25,7 @@ from craft_parts.errors import PartFilesConflict
 class TestCollisions:
     """Test collision scenarios."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def stub_parts_yaml(self) -> dict[str, Any]:
         """Return a part dictionary containing 2 parts."""
         return {

@@ -23,7 +23,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins.qmake_plugin import QmakePlugin
 
 
-@pytest.fixture()
+@pytest.fixture
 def setup_method_fixture():
     def _setup_method_fixture(new_dir, properties=None):
         if properties is None:

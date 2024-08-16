@@ -33,7 +33,7 @@ from craft_parts.state_manager import states
 from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
     monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
@@ -292,7 +292,7 @@ class TestLifecycleManager:
 class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil", "overlay-script": "ls"}}}
 
@@ -317,7 +317,7 @@ class TestOverlayDisabled:
 class TestPartitionsDisabled:
     """Partition feature must be enabled when partition are defined."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 

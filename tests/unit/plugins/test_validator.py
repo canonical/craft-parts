@@ -25,7 +25,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginEnvironmentValidator, PluginProperties
 
 
-@pytest.fixture()
+@pytest.fixture
 def foo_exe(new_dir):
     exe = Path(new_dir, "mock_bin", "foo")
     exe.parent.mkdir(exist_ok=True)
@@ -34,7 +34,7 @@ def foo_exe(new_dir):
     return exe
 
 
-@pytest.fixture()
+@pytest.fixture
 def empty_foo_exe(new_dir):
     exe = Path(new_dir, "mock_bin", "foo")
     exe.parent.mkdir(exist_ok=True)
@@ -43,7 +43,7 @@ def empty_foo_exe(new_dir):
     return exe
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),

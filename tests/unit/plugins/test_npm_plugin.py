@@ -26,7 +26,7 @@ from pydantic import ValidationError
 # pylint: disable=too-many-public-methods
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),

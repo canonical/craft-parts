@@ -25,7 +25,7 @@ import yaml
 from craft_parts import Step, errors, plugins
 
 
-@pytest.fixture()
+@pytest.fixture
 def mytool(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
@@ -34,7 +34,7 @@ def mytool(new_dir):
     return tool
 
 
-@pytest.fixture()
+@pytest.fixture
 def mytool_not_ok(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)
@@ -43,7 +43,7 @@ def mytool_not_ok(new_dir):
     return tool
 
 
-@pytest.fixture()
+@pytest.fixture
 def mytool_error(new_dir):
     tool = Path(new_dir, "mock_bin", "mytool")
     tool.parent.mkdir(exist_ok=True)

@@ -76,7 +76,7 @@ class TestPkgNameParts:
 class TestOriginStagePackage:
     """Check extended attribute setting."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_file(self, new_homedir_path):
         # These tests don't work on tmpfs
         file_path = new_homedir_path / ".tests-xattr-test-file"

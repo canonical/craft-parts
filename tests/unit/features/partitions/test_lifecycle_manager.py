@@ -95,12 +95,12 @@ def valid_partitions_strategy():
 class TestPartitionsSupport:
     """Verify LifecycleManager supports partitions."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
         return ["default", "kernel"]
 
-    @pytest.fixture()
+    @pytest.fixture
     def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 

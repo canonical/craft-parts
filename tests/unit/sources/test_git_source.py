@@ -40,24 +40,24 @@ def _fake_git_command_error(*args, **kwargs):
     raise subprocess.CalledProcessError(44, ["git"], output=b"git: some error")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_get_source_details(mocker) -> None:
     mocker.patch(
         "craft_parts.sources.git_source.GitSource._get_source_details", return_value=""
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_check_output(mocker):
     return mocker.patch("subprocess.check_output")
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_run(mocker):
     return mocker.patch("craft_parts.sources.base.SourceHandler._run")
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_get_current_branch(mocker):
     mocker.patch(
         "craft_parts.sources.git_source.GitSource._get_current_branch",
