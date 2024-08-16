@@ -18,10 +18,10 @@
 
 import os
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
-from xml.etree import ElementTree
 
 from overrides import override
 
@@ -139,7 +139,7 @@ def _create_settings(settings_path: Path) -> None:
 
     :param settings_path: the location the settings file will be created.
     """
-    settings = ElementTree.Element(
+    settings = ET.Element(
         "settings",
         attrib={
             "xmlns": "http://maven.apache.org/SETTINGS/1.0.0",
@@ -150,10 +150,10 @@ def _create_settings(settings_path: Path) -> None:
             ),
         },
     )
-    element = ElementTree.Element("interactiveMode")
+    element = ET.Element("interactiveMode")
     element.text = "false"
     settings.append(element)
-    proxies = ElementTree.Element("proxies")
+    proxies = ET.Element("proxies")
 
     for protocol in ("http", "https"):
         env_name = f"{protocol}_proxy"
@@ -161,7 +161,7 @@ def _create_settings(settings_path: Path) -> None:
             continue
 
         proxy_url = urlparse(os.environ[env_name])
-        proxy = ElementTree.Element("proxy")
+        proxy = ET.Element("proxy")
         proxy_tags = [
             ("id", env_name),
             ("active", "true"),
@@ -176,14 +176,14 @@ def _create_settings(settings_path: Path) -> None:
         proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
 
         for tag, text in proxy_tags:
-            element = ElementTree.Element(tag)
+            element = ET.Element(tag)
             element.text = text
             proxy.append(element)
 
         proxies.append(proxy)
 
     settings.append(proxies)
-    tree = ElementTree.ElementTree(settings)
+    tree = ET.ElementTree(settings)
     os.makedirs(os.path.dirname(settings_path), exist_ok=True)
 
     with settings_path.open("w") as file:
