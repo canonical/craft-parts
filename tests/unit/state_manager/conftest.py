@@ -19,7 +19,7 @@ from typing import Any
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def properties() -> dict[str, Any]:
     return {
         "plugin": "nil",
@@ -49,7 +49,7 @@ def properties() -> dict[str, Any]:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def project_options() -> dict[str, Any]:
     return {
         "application-name": "test",

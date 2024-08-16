@@ -23,7 +23,7 @@ from craft_parts.plugins.go_plugin import GoPlugin
 from pydantic import ValidationError
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),

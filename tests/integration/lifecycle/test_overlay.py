@@ -29,7 +29,7 @@ def setup_feature(enable_overlay_feature):
     return
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")
 
@@ -48,7 +48,7 @@ def mock_overlay_support_prerequisites(mocker):
 
 
 class TestOverlayLayerOrder:
-    @pytest.fixture()
+    @pytest.fixture
     def lifecycle(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
