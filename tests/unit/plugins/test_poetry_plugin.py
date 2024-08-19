@@ -34,8 +34,17 @@ def plugin(new_dir):
     return PoetryPlugin(properties=properties, part_info=part_info)
 
 
-def test_get_build_packages(plugin):
-    assert plugin.get_build_packages() == {"findutils", "python3-venv", "python3-dev"}
+@pytest.mark.parametrize(
+    ("has_poetry", "expected_packages"),
+    [
+        (False, {"python3-poetry"}),
+        (True, set()),
+    ]
+)
+def test_get_build_packages(monkeypatch, plugin: PoetryPlugin, has_poetry, expected_packages: set):
+    monkeypatch.setattr(plugin, "_system_has_poetry", lambda: has_poetry)
+
+    assert plugin.get_build_packages().issuperset(expected_packages)
 
 
 def test_get_build_environment(plugin, new_dir):
@@ -61,9 +70,7 @@ def get_build_commands(
         )
     else:
         postfix = dedent(
-            """\
-            ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
-            """
+            'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"'
         )
 
     return [

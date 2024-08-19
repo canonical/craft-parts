@@ -49,10 +49,7 @@ class PythonPlugin(BasePythonPlugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        build_commands = [
-            f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{self._part_info.part_install_dir}"',
-            f'PARTS_PYTHON_VENV_INTERP_PATH="{self._part_info.part_install_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        ]
+        build_commands = self._get_venv_commands()
 
         options = cast(PythonPluginProperties, self._options)
 
@@ -89,49 +86,7 @@ class PythonPlugin(BasePythonPlugin):
                 """
             )
         )
-        # Find the "real" python3 interpreter.
-        python_interpreter = self._get_system_python_interpreter() or ""
-        build_commands.append(
-            dedent(
-                f"""\
-                # look for a provisioned python interpreter
-                opts_state="$(set +o|grep errexit)"
-                set +e
-                install_dir="{self._part_info.part_install_dir}/usr/bin"
-                stage_dir="{self._part_info.stage_dir}/usr/bin"
-
-                # look for the right Python version - if the venv was created with python3.10,
-                # look for python3.10
-                basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
-                echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
-                payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
-
-                if [ -n "$payload_python" ]; then
-                    # We found a provisioned interpreter, use it.
-                    echo Found interpreter in payload: \\"${{payload_python}}\\"
-                    installed_python="${{payload_python##{self._part_info.part_install_dir}}}"
-                    if [ "$installed_python" = "$payload_python" ]; then
-                        # Found a staged interpreter.
-                        symlink_target="..${{payload_python##{self._part_info.stage_dir}}}"
-                    else
-                        # The interpreter was installed but not staged yet.
-                        symlink_target="..$installed_python"
-                    fi
-                else
-                    # Otherwise use what _get_system_python_interpreter() told us.
-                    echo "Python interpreter not found in payload."
-                    symlink_target="{python_interpreter}"
-                fi
-
-                if [ -z "$symlink_target" ]; then
-                    echo "No suitable Python interpreter found, giving up."
-                    exit 1
-                fi
-
-                eval "${{opts_state}}"
-                """
-            )
-        )
+        build_commands.append(self._get_find_python_interpreter_script())
 
         # Handle the venv symlink (either remove it or set the final correct target)
         if self._should_remove_symlinks():
