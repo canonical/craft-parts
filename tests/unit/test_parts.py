@@ -543,10 +543,5 @@ class TestPartValidation:
             parts.validate_part(data)
 
     def test_part_coerces_numbers(self, partitions):
-        data = {
-            "plugin": "nil",
-            "build-environment": [
-                {"CGO_ENABLED": 0}
-            ]
-        }
+        data = {"plugin": "nil", "build-environment": [{"CGO_ENABLED": 0}]}
         parts.validate_part(data)
