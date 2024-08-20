@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import abc
+import pathlib
 import textwrap
 from copy import deepcopy
 from typing import TYPE_CHECKING
@@ -162,11 +163,16 @@ class BasePythonPlugin(Plugin):
             "PARTS_PYTHON_VENV_ARGS": "",
         }
 
+    def _get_venv_directory(self) -> pathlib.Path:
+        """Get the directory into which the virtualenv should be placed."""
+        return self._part_info.part_install_dir
+
     def _get_create_venv_commands(self) -> list[str]:
         """Get the commands for setting up the virtual environment."""
+        venv_dir = self._part_info.part_install_dir
         return [
-            f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{self._part_info.part_install_dir}"',
-            f'PARTS_PYTHON_VENV_INTERP_PATH="{self._part_info.part_install_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+            f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{venv_dir}"',
+            f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         ]
 
     def _get_find_python_interpreter_commands(self) -> list[str]:
