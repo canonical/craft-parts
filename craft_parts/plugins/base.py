@@ -292,7 +292,10 @@ class BasePythonPlugin(Plugin):
                 f"echo Removing python symlinks in {venv_dir}/bin",
                 f'rm "{venv_dir}"/bin/python*',
             ]
-        return ['ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"']
+        return [
+            'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"',
+            f'find "{self._get_venv_directory()}/bin" -type l -executable -name "python*" -print0 | xargs -n1 -0 ln -sf "${{symlink_target}}"'
+        ]
 
     def _should_remove_symlinks(self) -> bool:
         """Configure executables symlink removal.
