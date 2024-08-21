@@ -155,7 +155,7 @@ class BasePythonPlugin(Plugin):
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         if self._use_uv:
-            return {"astral-uv"}
+            return {"astral-uv/latest/beta"}
         return set()
 
     @override
