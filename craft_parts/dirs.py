@@ -20,6 +20,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from types import MappingProxyType
 
+from craft_parts.errors import PartitionNotFound
 from craft_parts.utils import partition_utils
 
 
@@ -77,11 +78,11 @@ class ProjectDirs:
     def get_stage_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
         if self._partitions and partition not in self._partitions:
-            raise ValueError(f"Unknown partition {partition}")
+            raise PartitionNotFound(partition, self._partitions)
         return self.stage_dirs[partition]
 
     def get_prime_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
         if self._partitions and partition not in self._partitions:
-            raise ValueError(f"Unknown partition {partition}")
+            raise PartitionNotFound(partition, self._partitions)
         return self.prime_dirs[partition]

@@ -652,6 +652,7 @@ class PartitionUsageError(PartitionError):
     """Error for a list of invalid partition usages.
 
     :param error_list: Iterable of strings describing the invalid usages.
+    :param partitions: Iterable of the names of valid partitions.
     """
 
     def __init__(
@@ -688,3 +689,18 @@ class PartitionUsageWarning(PartitionError, Warning):
             ),
         )
         Warning.__init__(self)
+
+
+class PartitionNotFound(PartitionUsageError):
+    """A partition has been specified that does not exist.
+
+    :param partition_name: The name of the partition that does not exist.
+    :param partitions: Iterable of the names of valid partitions.
+    """
+
+    def __init__(self, partition_name: str, partitions: Iterable[str]) -> None:
+        self.partition_name = partition_name
+        super().__init__(
+            brief=f"Requested partition does not exist: {partition_name!r}",
+            partitions=partitions,
+        )
