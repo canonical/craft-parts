@@ -40,6 +40,7 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
         title="Optional dependency groups",
         description="optional dependency groups to include when installing.",
     )
+    poetry_use_uv: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]

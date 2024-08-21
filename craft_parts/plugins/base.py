@@ -136,10 +136,34 @@ class BasePythonPlugin(Plugin):
     Provides common methods for dealing with Python items.
     """
 
+    def __init__(
+        self, *, properties: PluginProperties, part_info: infos.PartInfo
+    ) -> None:
+        super().__init__(properties=properties, part_info=part_info)
+        use_uv_attr_name = f"{properties.plugin}_use_uv"
+        if not hasattr(properties, use_uv_attr_name):
+            raise AttributeError(
+                f"Plugin properties requires a {use_uv_attr_name!r} property"
+            )
+
+    @property
+    def _use_uv(self) -> bool:
+        """Whether the plugin should use uv rather than venv and pip."""
+        return getattr(self._options, f"{self._options.plugin}_use_uv", False)
+
     @override
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
+        if self._use_uv:
+            return {"astral-uv"}
         return set()
+
+    @override
+    def get_pull_commands(self) -> list[str]:
+        commands = super().get_pull_commands()
+        if self._use_uv:
+            commands.append("snap alias astral-uv.uv uv || true")
+        return commands
 
     @override
     def get_build_packages(self) -> set[str]:
@@ -147,7 +171,10 @@ class BasePythonPlugin(Plugin):
 
         Child classes that need to override this should extend the returned set.
         """
-        return {"findutils", "python3-dev", "python3-venv"}
+        packages = {"findutils", "python3-dev"}
+        if not self._use_uv:
+            packages.add("python3-venv")
+        return packages
 
     @override
     def get_build_environment(self) -> dict[str, str]:
@@ -177,8 +204,18 @@ class BasePythonPlugin(Plugin):
     def _get_create_venv_commands(self) -> list[str]:
         """Get the commands for setting up the virtual environment."""
         venv_dir = self._get_venv_directory()
+        venv_commands = (
+            [
+                f'uv venv ${{PARTS_PYTHON_VENV_ARGS}} "{venv_dir}"',
+                f'export UV_PYTHON="{venv_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+            ]
+            if self._use_uv
+            else [
+                f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{venv_dir}"'
+            ]
+        )
         return [
-            f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{venv_dir}"',
+            *venv_commands,
             f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         ]
 
@@ -286,7 +323,13 @@ class BasePythonPlugin(Plugin):
 
     def _get_pip(self) -> str:
         """Get the pip command to use."""
+<<<<<<< HEAD
         return f"{self._get_venv_directory()}/bin/pip"
+=======
+        if self._use_uv:
+            return "uv pip"
+        return f"{self._part_info.part_install_dir}/bin/pip"
+>>>>>>> 16fe8fe (experimental: uv support for Python plugins)
 
     @abc.abstractmethod
     def _get_package_install_commands(self) -> list[str]:

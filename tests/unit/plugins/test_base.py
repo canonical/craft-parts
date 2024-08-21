@@ -87,10 +87,14 @@ def test_abstract_methods(new_dir):
         FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
 
 
+class FooPythonPluginProperties(FooPluginProperties, frozen=True):
+    foo_use_uv: bool = False
+
+
 class FooPythonPlugin(BasePythonPlugin):
     """A plugin for testing the base Python plugin."""
 
-    properties_class = FooPluginProperties
+    properties_class = FooPythonPluginProperties
 
     def _get_package_install_commands(self) -> list[str]:
         return ["echo 'This is where I put my install commands... if I had any!'"]
@@ -107,12 +111,19 @@ def python_plugin(new_dir):
     return FooPythonPlugin(properties=properties, part_info=part_info)
 
 
-def test_python_get_build_packages(python_plugin):
-    assert python_plugin.get_build_packages() == {
-        "findutils",
-        "python3-venv",
-        "python3-dev",
-    }
+@pytest.mark.parametrize(
+    ("use_uv", "expected_packages"),
+    [
+        (False, {"findutils", "python3-venv", "python3-dev"}),
+        (True, {"findutils", "python3-dev"}),
+    ],
+)
+def test_python_get_build_packages(python_plugin, use_uv, expected_packages):
+    python_plugin._options = python_plugin._options.model_copy(
+        update={"foo_use_uv": use_uv}
+    )
+
+    assert python_plugin.get_build_packages() == expected_packages
 
 
 def test_python_get_build_environment(new_dir, python_plugin):
@@ -123,11 +134,44 @@ def test_python_get_build_environment(new_dir, python_plugin):
     }
 
 
-def test_python_get_create_venv_commands(new_dir, python_plugin: FooPythonPlugin):
-    assert python_plugin._get_create_venv_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-    ]
+@pytest.mark.parametrize("use_uv", [False, True])
+def test_python_use_uv(python_plugin: FooPythonPlugin, use_uv):
+    python_plugin._options = python_plugin._options.model_copy(
+        update={"foo_use_uv": use_uv}
+    )
+
+    assert python_plugin._use_uv == use_uv
+
+
+@pytest.mark.parametrize(
+    ("use_uv", "expected_template"),
+    [
+        (
+            False,
+            [
+                '"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+                'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+            ],
+        ),
+        (
+            True,
+            [
+                'uv venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+                'export UV_PYTHON="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+                'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+            ],
+        ),
+    ],
+)
+def test_python_get_create_venv_commands(
+    new_dir, python_plugin: FooPythonPlugin, use_uv, expected_template
+):
+    expected = [i.format(new_dir=new_dir) for i in expected_template]
+    python_plugin._options = python_plugin._options.model_copy(
+        update={"foo_use_uv": use_uv}
+    )
+
+    assert python_plugin._get_create_venv_commands() == expected
 
 
 def test_python_get_find_python_interpreter_commands(

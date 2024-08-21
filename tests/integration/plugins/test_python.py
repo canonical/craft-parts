@@ -34,7 +34,12 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_python_plugin(new_dir, partitions):
+@pytest.fixture(params=[False, True])
+def use_uv(request):
+    return request.param
+
+
+def test_python_plugin(new_dir, partitions, use_uv):
     """Prime a simple python source."""
     source_location = Path(__file__).parent / "test_python"
 
@@ -44,6 +49,7 @@ def test_python_plugin(new_dir, partitions):
           foo:
             plugin: python
             source: {source_location}
+            python-use-uv: {use_uv}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -61,7 +67,7 @@ def test_python_plugin(new_dir, partitions):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
-def test_python_plugin_with_pyproject_toml(new_dir, partitions):
+def test_python_plugin_with_pyproject_toml(new_dir, partitions, use_uv):
     """Prime a simple python source."""
     source_location = Path(__file__).parent / "test_python_pyproject_toml"
 
@@ -71,6 +77,7 @@ def test_python_plugin_with_pyproject_toml(new_dir, partitions):
           foo:
             plugin: python
             source: {source_location}
+            python-use-uv: {use_uv}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -91,14 +98,15 @@ def test_python_plugin_with_pyproject_toml(new_dir, partitions):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
-def test_python_plugin_symlink(new_dir, partitions):
+def test_python_plugin_symlink(new_dir, partitions, use_uv):
     """Run in the standard scenario with no overrides."""
     parts_yaml = textwrap.dedent(
-        """\
+        f"""\
         parts:
           foo:
             plugin: python
             source: .
+            python-use-uv: {use_uv}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -120,7 +128,7 @@ def test_python_plugin_symlink(new_dir, partitions):
     assert os.path.basename(python_link).startswith("python3")
 
 
-def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
+def test_python_plugin_override_get_system_interpreter(new_dir, partitions, use_uv):
     """Override the system interpreter, link should use it."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
@@ -131,11 +139,12 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     plugins.register({"python": MyPythonPlugin})
 
     parts_yaml = textwrap.dedent(
-        """\
+        f"""\
         parts:
           foo:
             plugin: python
             source: .
+            python-use-uv: {use_uv}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -155,7 +164,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
 def test_python_plugin_no_system_interpreter(
-    new_dir, partitions, remove_symlinks: bool  # noqa: FBT001
+    new_dir, partitions, use_uv, remove_symlinks: bool  # noqa: FBT001
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
@@ -173,11 +182,12 @@ def test_python_plugin_no_system_interpreter(
     plugins.register({"python": MyPythonPlugin})
 
     parts_yaml = textwrap.dedent(
-        """\
+        f"""\
         parts:
           foo:
             plugin: python
             source: .
+            python-use-uv: {use_uv}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -191,7 +201,7 @@ def test_python_plugin_no_system_interpreter(
         ctx.execute(actions)
 
 
-def test_python_plugin_remove_symlinks(new_dir, partitions):
+def test_python_plugin_remove_symlinks(new_dir, partitions, use_uv):
     """Override symlink removal."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
@@ -223,7 +233,7 @@ def test_python_plugin_remove_symlinks(new_dir, partitions):
     assert python_link.exists() is False
 
 
-def test_python_plugin_fix_shebangs(new_dir, partitions):
+def test_python_plugin_fix_shebangs(new_dir, partitions, use_uv):
     """Check if shebangs are properly fixed in scripts."""
     parts_yaml = textwrap.dedent(
         """\
@@ -247,7 +257,7 @@ def test_python_plugin_fix_shebangs(new_dir, partitions):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
-def test_python_plugin_override_shebangs(new_dir, partitions):
+def test_python_plugin_override_shebangs(new_dir, partitions, use_uv):
     """Override what we want in script shebang lines."""
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
@@ -294,7 +304,7 @@ parts:
 """
 
 
-def test_find_payload_python_bad_version(new_dir, partitions):
+def test_find_payload_python_bad_version(new_dir, partitions, use_uv):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
 
@@ -337,7 +347,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     assert expected_text in output
 
 
-def test_find_payload_python_good_version(new_dir, partitions):
+def test_find_payload_python_good_version(new_dir, partitions, use_uv):
     """Test that the build succeeds if a payload interpreter is needed, and it's
     the right Python version."""
 

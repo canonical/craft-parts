@@ -18,7 +18,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-import pytest_check  # type: ignore[import-untyped]
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.poetry_plugin import PoetryPlugin
 from pydantic import ValidationError
@@ -193,10 +192,7 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
 
     build_commands = plugin.get_build_commands()
 
-    pytest_check.is_in(
+    assert build_commands[-2:] == [
         f"echo Removing python symlinks in {plugin._part_info.part_install_dir}/bin",
-        build_commands,
-    )
-    pytest_check.is_in(
-        f'rm "{plugin._part_info.part_install_dir}"/bin/python*', build_commands
-    )
+        f'rm "{plugin._part_info.part_install_dir}"/bin/python*',
+    ]

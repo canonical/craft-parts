@@ -23,17 +23,20 @@ from craft_parts.plugins.python_plugin import PythonPlugin
 from pydantic import ValidationError
 
 
+@pytest.fixture(params=[False, True])
+def use_uv(request):
+    return request.param
+
+
 @pytest.fixture
-def plugin(new_dir):
-    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+def plugin(new_dir, use_uv):
+    properties = PythonPlugin.properties_class.unmarshal(
+        {"source": ".", "python-use-uv": use_uv}
+    )
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
     return PythonPlugin(properties=properties, part_info=part_info)
-
-
-def test_get_build_packages(plugin):
-    assert plugin.get_build_packages() == {"findutils", "python3-venv", "python3-dev"}
 
 
 def test_get_build_environment(plugin, new_dir):
@@ -108,17 +111,35 @@ def get_build_commands(
     ]
 
 
-def test_get_build_commands(plugin, new_dir):
-    assert plugin.get_build_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
-        *get_build_commands(new_dir),
-    ]
+@pytest.mark.parametrize(
+    ("uv", "expected_template"),
+    [
+        (
+            False,
+            [
+                '"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+                'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+                "{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
+                "{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U -r 'requirements.txt'",
+                "[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U .",
+            ],
+        ),
+        (
+            True,
+            [
+                'uv venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+                'export UV_PYTHON="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+                'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+                "uv pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
+                "uv pip install -c 'constraints.txt' -U -r 'requirements.txt'",
+                "[ -f setup.py ] || [ -f pyproject.toml ] && uv pip install -c 'constraints.txt' -U .",
+            ],
+        ),
+    ],
+)
+def test_get_build_commands_with_all_properties(new_dir, uv, expected_template):
+    expected = [s.format(new_dir=new_dir) for s in expected_template]
 
-
-def test_get_build_commands_with_all_properties(new_dir):
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
     properties = PythonPlugin.properties_class.unmarshal(
@@ -127,17 +148,14 @@ def test_get_build_commands_with_all_properties(new_dir):
             "python-constraints": ["constraints.txt"],
             "python-requirements": ["requirements.txt"],
             "python-packages": ["pip", "some-pkg; sys_platform != 'win32'"],
+            "python-use-uv": uv,
         }
     )
 
     python_plugin = PythonPlugin(part_info=part_info, properties=properties)
 
     assert python_plugin.get_build_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
-        f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U .",
+        *expected,
         *get_build_commands(new_dir),
     ]
 
@@ -186,10 +204,7 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
         return_value=True,
     )
 
-    assert plugin.get_build_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
-        *get_build_commands(new_dir, should_remove_symlinks=True),
+    assert plugin.get_build_commands()[-2:] == [
+        f"echo Removing python symlinks in {new_dir}/parts/p1/install/bin",
+        f'rm "{new_dir}/parts/p1/install"/bin/python*',
     ]

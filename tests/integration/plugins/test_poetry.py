@@ -36,14 +36,23 @@ def teardown_module():
     plugins.unregister_all()
 
 
+@pytest.fixture(params=[False, True])
+def use_uv(request):
+    return request.param
+
+
 @pytest.fixture(params=["test_poetry"])
 def source_directory(request):
     return pathlib.Path(__file__).parent / request.param
 
 
 @pytest.fixture
-def poetry_part(source_directory):
-    return {"source": str(source_directory), "plugin": "poetry"}
+def poetry_part(source_directory, use_uv):
+    return {
+        "source": str(source_directory),
+        "plugin": "poetry",
+        "poetry-use-uv": use_uv,
+    }
 
 
 @pytest.fixture
@@ -201,13 +210,19 @@ def test_poetry_plugin_override_shebangs(new_dir, partitions, parts_dict):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    primed_script = pathlib.Path(lf.project_info.prime_dir, "bin/pip")
+    primed_script = pathlib.Path(lf.project_info.prime_dir, "bin/mytest")
     assert primed_script.open().readline().rstrip() == "#!/my/script/interpreter"
 
 
-def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry_part):
+def test_find_payload_python_bad_version(
+    new_dir, partitions, parts_dict, poetry_part, use_uv
+):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
+    if use_uv:
+        poetry_part["build-environment"] = [
+            {"PARTS_PYTHON_VENV_ARGS": "--allow-existing"}
+        ]
     poetry_part["override-build"] = textwrap.dedent(
         f"""\
         # Put a binary called "python3.3" in the payload
@@ -225,8 +240,7 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
 
     plugins.register({"poetry": MyPoetryPlugin})
 
-    real_python = pathlib.Path(sys.executable).resolve()
-    real_basename = real_python.name
+    pathlib.Path(sys.executable).resolve()
 
     lf = LifecycleManager(
         parts_dict,
@@ -243,8 +257,7 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
 
     output = out.read_text()
     expected_text = textwrap.dedent(
-        f"""\
-        Looking for a Python interpreter called "{real_basename}" in the payload...
+        """\
         Python interpreter not found in payload.
         No suitable Python interpreter found, giving up.
         """
@@ -252,9 +265,25 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
     assert expected_text in output
 
 
-def test_find_payload_python_good_version(new_dir, partitions, parts_dict, poetry_part):
+def test_find_payload_python_good_version(
+    new_dir, partitions, parts_dict, poetry_part, use_uv
+):
     """Test that the build succeeds if a payload interpreter is needed, and it's
     the right Python version."""
+    if use_uv:
+        # uv can get multiple Python versions - ensure we're using the same version.
+        python_version_str = ".".join(str(i) for i in sys.version_info[:3])
+        poetry_part["build-environment"] = [
+            {
+                "PARTS_PYTHON_VENV_ARGS": " ".join(
+                    [
+                        "--allow-existing",
+                        f"--python={python_version_str}",
+                        "--python-preference=only-system",
+                    ]
+                )
+            }
+        ]
 
     real_python = pathlib.Path(sys.executable).resolve()
     real_basename = real_python.name
@@ -284,9 +313,5 @@ def test_find_payload_python_good_version(new_dir, partitions, parts_dict, poetr
 
     output = out.read_text()
     payload_python = (install_dir / f"usr/bin/{real_basename}").resolve()
-    expected_text = textwrap.dedent(
-        f"""\
-        Found interpreter in payload: "{payload_python}"
-        """
-    )
+    expected_text = f'Found interpreter in payload: "{payload_python}"'
     assert expected_text in output

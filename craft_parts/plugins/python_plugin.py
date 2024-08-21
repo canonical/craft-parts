@@ -31,6 +31,7 @@ class PythonPluginProperties(PluginProperties, frozen=True):
     python_requirements: list[str] = []
     python_constraints: list[str] = []
     python_packages: list[str] = ["pip", "setuptools", "wheel"]
+    python_use_uv: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
