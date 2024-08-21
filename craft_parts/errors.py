@@ -653,17 +653,21 @@ class PartitionUsageError(PartitionError):
 
     :param error_list: Iterable of strings describing the invalid usages.
     :param partitions: Iterable of the names of valid partitions.
+    :param brief: Override brief message.
     """
 
     def __init__(
-        self, error_list: Iterable[str], partitions: Iterable[str] | None
+        self,
+        error_list: Iterable[str],
+        partitions: Iterable[str] | None,
+        brief: str | None = None,
     ) -> None:
         valid_partitions = (
             f"\nValid partitions: {', '.join(partitions)}" if partitions else ""
         )
 
         super().__init__(
-            brief="Invalid usage of partitions",
+            brief=brief or "Invalid usage of partitions",
             details="\n".join(error_list) + valid_partitions,
             resolution="Correct the invalid partition name(s) and try again.",
         )
@@ -703,4 +707,5 @@ class PartitionNotFound(PartitionUsageError):
         super().__init__(
             brief=f"Requested partition does not exist: {partition_name!r}",
             partitions=partitions,
+            error_list=[],
         )
