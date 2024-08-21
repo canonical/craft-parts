@@ -278,7 +278,7 @@ class BasePythonPlugin(Plugin):
         return [
             textwrap.dedent(
                 f"""\
-                find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \\
+                find "{self._get_venv_directory()}" -type f -executable -print0 | xargs -0 \\
                     sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"
                 """
             )
