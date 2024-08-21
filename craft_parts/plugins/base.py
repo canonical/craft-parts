@@ -323,13 +323,9 @@ class BasePythonPlugin(Plugin):
 
     def _get_pip(self) -> str:
         """Get the pip command to use."""
-<<<<<<< HEAD
-        return f"{self._get_venv_directory()}/bin/pip"
-=======
         if self._use_uv:
             return "uv pip"
-        return f"{self._part_info.part_install_dir}/bin/pip"
->>>>>>> 16fe8fe (experimental: uv support for Python plugins)
+        return f"{self._get_venv_directory()}/bin/pip"
 
     @abc.abstractmethod
     def _get_package_install_commands(self) -> list[str]:

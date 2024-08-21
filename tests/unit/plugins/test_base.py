@@ -174,6 +174,38 @@ def test_python_get_create_venv_commands(
     assert python_plugin._get_create_venv_commands() == expected
 
 
+@pytest.mark.parametrize(
+    ("use_uv", "expected_template"),
+    [
+        (
+            False,
+            [
+                '"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install/venv"',
+                'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/venv/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+            ],
+        ),
+        (
+            True,
+            [
+                'uv venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install/venv"',
+                'export UV_PYTHON="{new_dir}/parts/p1/install/venv/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+                'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/venv/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+            ],
+        ),
+    ],
+)
+def test_python_get_create_venv_commands_different_venv_directory(
+    mocker, new_dir, python_plugin: FooPythonPlugin, use_uv, expected_template
+):
+    python_plugin._get_venv_directory = lambda: (new_dir / "parts/p1/install/venv")
+    expected = [i.format(new_dir=new_dir) for i in expected_template]
+    python_plugin._options = python_plugin._options.model_copy(
+        update={"foo_use_uv": use_uv}
+    )
+
+    assert python_plugin._get_create_venv_commands() == expected
+
+
 def test_python_get_find_python_interpreter_commands(
     new_dir, python_plugin: FooPythonPlugin
 ):
