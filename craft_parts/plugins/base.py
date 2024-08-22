@@ -19,13 +19,11 @@
 from __future__ import annotations
 
 import abc
-import shutil
 import textwrap
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from overrides import override
-from pydantic import errors
 
 from craft_parts.actions import ActionProperties
 
