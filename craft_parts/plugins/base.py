@@ -164,12 +164,17 @@ class BasePythonPlugin(Plugin):
         }
 
     def _get_venv_directory(self) -> pathlib.Path:
-        """Get the directory into which the virtualenv should be placed."""
+        """Get the directory into which the virtualenv should be placed.
+
+        This method can be overridden by application-specific subclasses to control
+        the location of the virtual environment if it should be a subdirectory of
+        the install dir.
+        """
         return self._part_info.part_install_dir
 
     def _get_create_venv_commands(self) -> list[str]:
         """Get the commands for setting up the virtual environment."""
-        venv_dir = self._part_info.part_install_dir
+        venv_dir = self._get_venv_directory()
         return [
             f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{venv_dir}"',
             f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
@@ -243,9 +248,10 @@ class BasePythonPlugin(Plugin):
     def _get_handle_symlinks_commands(self) -> list[str]:
         """Get commands for handling Python symlinks."""
         if self._should_remove_symlinks():
+            venv_dir = self._get_venv_directory()
             return [
-                f"echo Removing python symlinks in {self._part_info.part_install_dir}/bin",
-                f'rm "{self._part_info.part_install_dir}"/bin/python*',
+                f"echo Removing python symlinks in {venv_dir}/bin",
+                f'rm "{venv_dir}"/bin/python*',
             ]
         return ['ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"']
 
@@ -278,7 +284,7 @@ class BasePythonPlugin(Plugin):
 
     def _get_pip(self) -> str:
         """Get the pip command to use."""
-        return f"{self._part_info.part_install_dir}/bin/pip"
+        return f"{self._get_venv_directory()}/bin/pip"
 
     @abc.abstractmethod
     def _get_package_install_commands(self) -> list[str]:
