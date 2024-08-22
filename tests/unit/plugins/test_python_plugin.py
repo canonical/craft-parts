@@ -51,18 +51,12 @@ def get_build_commands(
     new_dir: Path, *, should_remove_symlinks: bool = False
 ) -> list[str]:
     if should_remove_symlinks:
-        postfix = dedent(
-            f"""\
-            echo Removing python symlinks in {new_dir}/parts/p1/install/bin
-            rm "{new_dir}/parts/p1/install"/bin/python*
-            """
-        )
+        postfix = [
+            f"echo Removing python symlinks in {new_dir}/parts/p1/install/bin",
+            f'rm "{new_dir}/parts/p1/install"/bin/python*',
+        ]
     else:
-        postfix = dedent(
-            """\
-            ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
-            """
-        )
+        postfix = ['ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"']
 
     return [
         dedent(
@@ -110,7 +104,7 @@ def get_build_commands(
             eval "${{opts_state}}"
             """
         ),
-        postfix,
+        *postfix,
     ]
 
 
