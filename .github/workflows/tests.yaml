@@ -58,22 +58,12 @@ jobs:
   unit-tests:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
         python-versions:
           - |
-            3.7
-            3.8
-            3.9
             3.10
             3.12
-        include:
-          - os: ubuntu-24.04
-            # Noble doesn't have a 3.7 release from GH
-            python-versions: |
-              3.8
-              3.10
-              3.12
-              3.13-dev
+            3.13-dev
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -136,7 +126,7 @@ jobs:
           - adjective: jammy
           - os: ubuntu-20.04
             python-version: "3.10"
-            adjective: jammy
+            adjective: focal
           - os: ubuntu-24.04
             python-version: "3.12"
             adjective: noble
