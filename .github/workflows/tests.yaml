@@ -96,11 +96,18 @@ jobs:
           echo "::endgroup::"
           echo "::group::apt install"
           sudo apt install -y ninja-build cmake scons \
-                              autoconf automake autopoint gcc git gperf help2man libtool texinfo python3-poetry
+                              autoconf automake autopoint gcc git gperf help2man libtool texinfo
           # Remove newer go and install regular version for 20.04
           sudo apt install -y golang
           # Install RPM dependencies for RPM tests
           sudo apt install rpm
+          # Install poetry. From pipx on focal, from apt on newer systems.
+          if [[ $(grep VERSION_CODENAME /etc/os-release ) == "VERSION_CODENAME=focal" ]]; then
+            sudo apt-get install -y pipx
+            pipx install poetry
+          else
+            sudo apt-get install -y python3-poetry
+          fi
           # Ensure we don't have dotnet installed, to properly test dotnet-deps
           # Based on https://github.com/actions/runner-images/blob/main/images/linux/scripts/installers/dotnetcore-sdk.sh
           sudo apt remove -y dotnet-* || true
