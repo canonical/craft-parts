@@ -96,7 +96,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::apt install"
           sudo apt install -y ninja-build cmake scons \
-                              autoconf automake autopoint gcc git gperf help2man libtool texinfo
+                              autoconf automake autopoint gcc git gperf help2man libtool texinfo python3-poetry
           # Remove newer go and install regular version for 20.04
           sudo apt install -y golang
           # Install RPM dependencies for RPM tests
