@@ -155,12 +155,6 @@ class BasePythonPlugin(Plugin):
         Child classes that need to override this should extend the dictionary returned
         by this class.
         """
-        python3_path = shutil.which("python3")
-        if python3_path is None:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_info.part_name,
-                reason="cannot find a python3 executable on the system",
-            )
         return {
             # Add PATH to the python interpreter we always intend to use with
             # this plugin. It can be user overridden, but that is an explicit
