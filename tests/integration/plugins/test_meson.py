@@ -23,7 +23,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-@pytest.fixture()
+@pytest.fixture
 def meson():
     subprocess.run(["pip", "install", "meson"], check=True)
     yield

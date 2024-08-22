@@ -18,3 +18,4 @@
 
 from .environment import expand_environment
 from .executor import ExecutionContext, Executor
+from .filesets import Fileset

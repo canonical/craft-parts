@@ -17,7 +17,6 @@
 import sys
 import textwrap
 from pathlib import Path
-from typing import List
 
 import craft_parts
 import pytest
@@ -30,7 +29,7 @@ def setup_feature(enable_overlay_feature):
     return
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")
 
@@ -49,7 +48,7 @@ def mock_overlay_support_prerequisites(mocker):
 
 
 class TestOverlayLayerOrder:
-    @pytest.fixture()
+    @pytest.fixture
     def lifecycle(self, new_dir):
         parts_yaml = textwrap.dedent(
             """
@@ -116,7 +115,7 @@ class TestOverlayLayerOrder:
         assert actions == [
             # fmt: off
             Action("p3", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("p3", Step.OVERLAY, action_type=ActionType.RERUN, reason="requested step"),
+            Action("p3", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
             # fmt: on
         ]
 
@@ -146,9 +145,7 @@ class TestOverlayLayerOrder:
         assert actions == [
             # fmt: off
             Action("p3", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("p2", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-            Action("p2", Step.OVERLAY, action_type=ActionType.RERUN, reason="required to overlay 'p3'"),
-            Action("p3", Step.OVERLAY, action_type=ActionType.RERUN, reason="requested step"),
+            Action("p3", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
             # fmt: on
         ]
 
@@ -798,5 +795,5 @@ class TestOverlaySpecScenarios:
         ]
 
 
-def _filter_skip(actions: List[Action]) -> List[Action]:
+def _filter_skip(actions: list[Action]) -> list[Action]:
     return [a for a in actions if a.action_type != ActionType.SKIP]

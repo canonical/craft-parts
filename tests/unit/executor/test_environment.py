@@ -17,7 +17,6 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Set
 
 import pytest
 from craft_parts import plugins
@@ -33,16 +32,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PLUGIN_ENVVAR": "from_plugin"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 
@@ -77,7 +76,7 @@ def directories(new_dir):  # pylint: disable=unused-argument
 def test_generate_step_environment_build(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -134,7 +133,7 @@ def test_generate_step_environment_build(new_dir):
 def test_generate_step_environment_no_project_name(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
     )
@@ -187,7 +186,7 @@ def test_generate_step_environment_no_project_name(new_dir):
 def test_generate_step_environment_no_build(new_dir, step):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -240,7 +239,7 @@ def test_generate_step_environment_no_build(new_dir, step):
 def test_generate_step_environment_no_user_env(new_dir):
     p1 = Part("p1", {})
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -303,7 +302,7 @@ def test_generate_step_environment_no_user_env(new_dir):
 def test_expand_variables(new_dir, partitions, var, value):
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -325,10 +324,10 @@ def test_expand_variables_order(mocker, new_dir, partitions):
 
     $CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR} should be replaced before $CRAFT_ARCH_TRIPLET
     """
-    mocker.patch("craft_parts.infos._get_host_architecture", return_value="x86_64")
+    mocker.patch("craft_parts.infos._get_host_architecture", return_value="amd64")
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -360,7 +359,7 @@ def test_expand_variables_order(mocker, new_dir, partitions):
 def test_expand_variables_skip(new_dir, partitions):
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -389,7 +388,7 @@ def test_expand_variables_skip(new_dir, partitions):
 def test_expand_variables_deprecated(new_dir, name, value, caplog):
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work"),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -415,7 +414,7 @@ def test_get_global_environment(new_dir, partitions, invalid_vars):
     """Test that get_global_environment doesn't include partitions when disabled."""
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",

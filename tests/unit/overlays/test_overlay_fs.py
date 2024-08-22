@@ -17,7 +17,6 @@
 import os
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import List
 
 import pytest
 from craft_parts.overlays import errors, overlay_fs
@@ -27,7 +26,7 @@ class TestOverlayFS:
     """Mount and unmount an overlayfs."""
 
     @staticmethod
-    def _make_overlay_fs(lower: List[Path]) -> overlay_fs.OverlayFS:
+    def _make_overlay_fs(lower: list[Path]) -> overlay_fs.OverlayFS:
         return overlay_fs.OverlayFS(
             lower_dirs=lower,
             upper_dir=Path("/upper"),

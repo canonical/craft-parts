@@ -18,7 +18,6 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List
 from unittest import mock
 
 import pytest
@@ -29,11 +28,11 @@ from craft_parts.sources.git_source import GitSource
 # pylint: disable=too-many-lines
 
 
-def _call(cmd: List[str]) -> None:
+def _call(cmd: list[str]) -> None:
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def _call_with_output(cmd: List[str]) -> str:
+def _call_with_output(cmd: list[str]) -> str:
     return subprocess.check_output(cmd).decode("utf-8").strip()
 
 
@@ -41,24 +40,24 @@ def _fake_git_command_error(*args, **kwargs):
     raise subprocess.CalledProcessError(44, ["git"], output=b"git: some error")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_get_source_details(mocker) -> None:
     mocker.patch(
         "craft_parts.sources.git_source.GitSource._get_source_details", return_value=""
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_check_output(mocker):
     return mocker.patch("subprocess.check_output")
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_run(mocker):
     return mocker.patch("craft_parts.sources.base.SourceHandler._run")
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_get_current_branch(mocker):
     mocker.patch(
         "craft_parts.sources.git_source.GitSource._get_current_branch",

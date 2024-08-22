@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
 import pathlib
-from typing import Iterator, Set
+from collections.abc import Iterator
 
 import pytest
 from craft_parts import Action, Step
@@ -84,12 +84,12 @@ class TestFileFilter(test_part_handler.TestFileFilter):
 
     _destdir = pathlib.Path("destdir")
 
-    def _iter_files(self, partitions: Set[str]) -> Iterator[str]:
+    def _iter_files(self, partitions: set[str]) -> Iterator[str]:
         """Iterate over the partitions and files to test."""
         for partition, file in itertools.product(partitions, TEST_FILES):
             yield f"{partition}/{file}"
 
-    @pytest.fixture()
+    @pytest.fixture
     def make_files(self, new_dir, partitions):
         for file in self._iter_files(partitions):
             path = self._destdir / file

@@ -48,11 +48,16 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
     [
         ["default"],
         ["default", "mypart"],
+        ["default", "mypart1"],
+        ["default", "my-part"],
         ["default", "mypart", "test/foo"],
+        ["default", "mypart", "test1/foo2"],
         ["default", "mypart", "test/foo-bar"],
+        ["default", "mypart", "test1/foo-bar2"],
     ],
 )
 def test_validate_partitions_success_feature_enabled(partitions):
+    """Test validation of partition names."""
     partition_utils.validate_partition_names(partitions)
 
 
@@ -65,10 +70,28 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (["default", "default"], "Partitions must be unique."),
         (["default", "test/foo", "test/foo"], "Partitions must be unique."),
         (["default", "!!!"], "Partition '!!!' is invalid."),
+        (["default", "-"], "Partition '-' is invalid."),
+        (["default", "woop-"], "Partition 'woop-' is invalid."),
         (["default", "test/!!!"], "Namespaced partition 'test/!!!' is invalid."),
+        (["default", "test/-"], "Namespaced partition 'test/-' is invalid."),
+        (["default", "te-st/foo"], "Namespaced partition 'te-st/foo' is invalid."),
         (
             ["default", "test", "test/foo"],
             "Partition 'test' conflicts with the namespace of partition 'test/foo'",
+        ),
+        (
+            ["default", "test-foo", "test/foo"],
+            (
+                "Namespaced partition 'test/foo' conflicts with hyphenated partition "
+                "'test-foo'."
+            ),
+        ),
+        (
+            ["default", "test/foo", "test-foo"],
+            (
+                "Namespaced partition 'test/foo' conflicts with hyphenated partition "
+                "'test-foo'."
+            ),
         ),
     ],
 )

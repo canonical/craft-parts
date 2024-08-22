@@ -16,9 +16,9 @@
 """Unit tests for the lifecycle manager with the partitions feature."""
 import sys
 import textwrap
-from string import ascii_lowercase
+from string import ascii_lowercase, digits
 from textwrap import dedent
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 import pytest_check  # type: ignore[import]
@@ -31,21 +31,34 @@ from tests.unit import test_lifecycle_manager
 mock_available_plugins = test_lifecycle_manager.mock_available_plugins
 
 
-def valid_non_namespaced_partition_strategy():
-    """A strategy for a list of valid non-namespaced partitions."""
-    return strategies.text(strategies.sampled_from(ascii_lowercase), min_size=1)
+def no_default(n):
+    return n != "default"
+
+
+def yes_default(lst):
+    return ["default", *lst]
+
+
+def valid_partition_namespace_strategy():
+    """A strategy for valid namespaces."""
+    return strategies.text(
+        strategies.sampled_from(ascii_lowercase + digits), min_size=1
+    )
+
+
+def valid_partition_name_strategy():
+    """A strategy for valid partition names."""
+    return strategies.text(
+        strategies.sampled_from(ascii_lowercase + digits + "-"), min_size=1
+    )
 
 
 @strategies.composite
 def valid_namespaced_partition_strategy(draw):
     """A strategy that generates a valid namespaced partition."""
-    namespace_strategy = valid_non_namespaced_partition_strategy().filter(
-        lambda n: n != "default"
-    )
+    namespace_strategy = valid_partition_namespace_strategy().filter(no_default)
 
-    partition_strategy = strategies.text(
-        strategies.sampled_from(ascii_lowercase + "-"), min_size=1
-    ).filter(
+    partition_strategy = valid_partition_name_strategy().filter(
         lambda partition: (
             not partition.startswith("-")
             and not partition.endswith("-")
@@ -56,31 +69,14 @@ def valid_namespaced_partition_strategy(draw):
     return f"{draw(namespace_strategy)}/{draw(partition_strategy)}"
 
 
-def valid_non_namedspaced_partitions_strategy():
-    """A strategy for a list of valid partitions."""
-    non_default_partition = valid_non_namespaced_partition_strategy().filter(
-        lambda part: part != "default"
-    )
-    return strategies.lists(
-        non_default_partition,
-        min_size=1,
-        unique=True,
-    ).map(lambda lst: ["default", *lst])
-
-
 def valid_namespaced_partitions_strategy():
     """A strategy for a list of valid namespaced partitions."""
     partition_strategy = valid_namespaced_partition_strategy()
-    return strategies.lists(partition_strategy, unique=True).map(
-        lambda lst: ["default", *lst]
-    )
+    return strategies.lists(partition_strategy, unique=True).map(yes_default)
 
 
 def valid_partitions_strategy():
     """A strategy that generates valid list of partitions, namespaced or not."""
-    non_namespaced = valid_non_namespaced_partition_strategy().filter(
-        lambda part: part != "default"
-    )
     namespaced = valid_namespaced_partition_strategy()
 
     def _check_no_duplicate_namespaces(lst):
@@ -90,22 +86,22 @@ def valid_partitions_strategy():
         return non_namespaced_set.isdisjoint(namespaced_set)
 
     return (
-        strategies.lists(strategies.one_of(non_namespaced, namespaced), unique=True)
+        strategies.lists(namespaced, unique=True)
         .filter(_check_no_duplicate_namespaces)
-        .map(lambda lst: ["default", *lst])
+        .map(yes_default)
     )
 
 
 class TestPartitionsSupport:
     """Verify LifecycleManager supports partitions."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
         return ["default", "kernel"]
 
-    @pytest.fixture()
-    def parts_data(self) -> Dict[str, Any]:
+    @pytest.fixture
+    def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
     @pytest.mark.parametrize("partitions", [["default"], ["default", "kernel"]])
@@ -118,7 +114,7 @@ class TestPartitionsSupport:
             project_name="project",
             cache_dir=new_dir,
             work_dir=work_dir,
-            arch="aarch64",
+            arch="arm64",
             parallel_build_count=16,
             custom="foo",
             partitions=partitions,
@@ -197,8 +193,7 @@ class TestPartitionsSupport:
             ["default", "-"],
             ["default", "Test"],
             ["default", "TEST"],
-            ["default", "test1"],
-            ["default", "te-st"],
+            ["default", "test-"],
             pytest.param(
                 ["default", "tеst"],  # noqa: RUF001 (ambiguous character)
                 id="test-with-cyrillic-e",
@@ -244,10 +239,8 @@ class TestPartitionsSupport:
             ["default", "-a-/b"],
             ["default", "a/Test"],
             ["default", "a/TEST"],
-            ["default", "a/test1"],
             ["default", "Test/a"],
             ["default", "TEST/a"],
-            ["default", "test1/a"],
             ["default", "te-st/a"],
             pytest.param(
                 ["default", "test/ο"],  # noqa: RUF001 (ambiguous character)
@@ -386,7 +379,7 @@ class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):
             project_name="project",
             cache_dir=new_dir,
             work_dir=work_dir,
-            arch="aarch64",
+            arch="arm64",
             parallel_build_count=16,
             custom="foo",
             **self._lcm_kwargs,
@@ -422,7 +415,8 @@ class TestOverlayDisabled(test_lifecycle_manager.TestOverlayDisabled):
             )
         assert raised.value.part_name == "foo"
         assert (
-            raised.value.message == "- overlays not supported in field 'overlay-script'"
+            raised.value.message
+            == "- Value error, overlays not supported in field 'overlay-script'"
         )
 
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2023 Canonical Ltd.
+# Copyright 2020-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,13 +16,15 @@
 
 """Plugin base class and definitions."""
 
+from __future__ import annotations
+
 import abc
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type
+from typing import TYPE_CHECKING
 
 from craft_parts.actions import ActionProperties
 
-from .properties import PluginProperties, PluginPropertiesModel
+from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
@@ -40,33 +42,33 @@ class Plugin(abc.ABC):
     :param properties: Part-defined properties.
     """
 
-    properties_class: Type[PluginProperties]
+    properties_class: type[PluginProperties]
     validator_class = PluginEnvironmentValidator
 
     supports_strict_mode = False
     """Plugins that can run in 'strict' mode must set this classvar to True."""
 
     def __init__(
-        self, *, properties: PluginProperties, part_info: "infos.PartInfo"
+        self, *, properties: PluginProperties, part_info: infos.PartInfo
     ) -> None:
         self._options = properties
         self._part_info = part_info
         self._action_properties: ActionProperties
 
-    def get_pull_commands(self) -> List[str]:
+    def get_pull_commands(self) -> list[str]:
         """Return the commands to retrieve dependencies during the pull step."""
         return []
 
     @abc.abstractmethod
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
 
     @abc.abstractmethod
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
 
     @abc.abstractmethod
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
 
     @classmethod
@@ -75,7 +77,7 @@ class Plugin(abc.ABC):
         return False
 
     @abc.abstractmethod
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
 
     def set_action_properties(self, action_properties: ActionProperties) -> None:
@@ -93,7 +95,7 @@ class JavaPlugin(Plugin):
     symlink creation.
     """
 
-    def _get_java_post_build_commands(self) -> List[str]:
+    def _get_java_post_build_commands(self) -> list[str]:
         """Get the bash commands to structure a Java build in the part's install dir.
 
         :return: The returned list contains the bash commands to do the following:
@@ -120,37 +122,3 @@ class JavaPlugin(Plugin):
         # pylint: enable=line-too-long
 
         return link_java + link_jars
-
-
-class PluginModel(PluginPropertiesModel):
-    """Model for plugins using pydantic validation.
-
-    Plugins with configuration properties can use pydantic validation to unmarshal
-    data from part specs. In this case, extract plugin-specific properties using
-    the :func:`extract_plugin_properties` helper.
-    """
-
-
-def extract_plugin_properties(
-    data: Dict[str, Any], *, plugin_name: str, required: Optional[List[str]] = None
-) -> Dict[str, Any]:
-    """Obtain plugin-specifc entries from part properties.
-
-    Plugin-specifc properties must be prefixed with the name of the plugin.
-
-    :param data: A dictionary containing all part properties.
-    :plugin_name: The name of the plugin.
-
-    :return: A dictionary with plugin properties.
-    """
-    if required is None:
-        required = []
-
-    plugin_data: Dict[str, Any] = {}
-    prefix = f"{plugin_name}-"
-
-    for key, value in data.items():
-        if key.startswith(prefix) or key in required:
-            plugin_data[key] = value
-
-    return plugin_data

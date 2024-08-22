@@ -26,7 +26,7 @@ from pydantic import ValidationError
 # pylint: disable=too-many-public-methods
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -325,7 +325,7 @@ class TestPluginNpmPlugin:
             )
 
         assert raised.value.errors()[0]["msg"] == (
-            "npm-node-version is required if npm-include-node is true"
+            "Value error, npm-node-version is required if npm-include-node is true"
         )
 
     @pytest.mark.parametrize(

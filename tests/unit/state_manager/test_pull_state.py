@@ -76,7 +76,7 @@ class TestPullStatePersist:
             content = f.read()
 
         new_state = yaml.safe_load(content)
-        assert new_state == state.marshal()
+        assert PullState.unmarshal(new_state).marshal() == state.marshal()
 
 
 class TestPullStateChanges:

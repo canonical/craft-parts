@@ -90,7 +90,7 @@ _pull_state_bar = textwrap.dedent(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def pull_state(new_dir):
     # build current state
     Path(new_dir / "parts/foo/state").mkdir(parents=True)
@@ -174,8 +174,9 @@ class TestSequencerPlan:
             Action("bar", Step.PRIME, action_type=ActionType.RUN),
         ]
 
+    @pytest.mark.parametrize("rerun", [False, True])
     @pytest.mark.usefixtures("pull_state")
-    def test_plan_requested_part_step(self):
+    def test_plan_requested_part_step(self, rerun):
         p1 = Part("foo", {"plugin": "nil"})
 
         seq = sequencer.Sequencer(
@@ -183,13 +184,20 @@ class TestSequencerPlan:
             project_info=ProjectInfo(application_name="test", cache_dir=Path()),
         )
 
-        actions = seq.plan(Step.PULL, part_names=["foo"])
+        actions = seq.plan(Step.PULL, part_names=["foo"], rerun=rerun)
 
-        assert actions == [
-            Action(
-                "foo", Step.PULL, action_type=ActionType.RERUN, reason="requested step"
-            ),
-        ]
+        if rerun:
+            assert actions == [
+                Action(
+                    "foo", Step.PULL, action_type=ActionType.RERUN, reason="rerun step"
+                ),
+            ]
+        else:
+            assert actions == [
+                Action(
+                    "foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"
+                ),
+            ]
 
     @pytest.mark.usefixtures("pull_state")
     def test_plan_dirty_step(self):

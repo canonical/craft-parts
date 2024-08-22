@@ -69,7 +69,10 @@ build-snaps
 
 The snaps to be installed in the build environment before the build is
 performed. These provide libraries and executables that the part needs during
-the build process.
+the build process. They take the form of ``<snap>/<version>/<channel>``,
+``<snap>/<channel>`` or just ``<snap>``. For example, the ``node`` snap could be
+specified as ``node/18/stable``, ``node/latest/stable`` or ``node/stable`` to
+select different versions.
 
 .. _organize:
 

@@ -8,7 +8,7 @@ on:
 
 jobs:
   linters:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,6 +59,21 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
+        python-versions:
+          - |
+            3.7
+            3.8
+            3.9
+            3.10
+            3.12
+        include:
+          - os: ubuntu-24.04
+            # Noble doesn't have a 3.7 release from GH
+            python-versions: |
+              3.8
+              3.10
+              3.12
+              3.13-dev
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -68,12 +83,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: |
-            3.7
-            3.8
-            3.9
-            3.10
-            3.12
+          python-version: ${{ matrix.python-versions }}
           cache: pip
       - name: Install apt build dependencies
         run: |
@@ -81,28 +91,32 @@ jobs:
           sudo apt install -y libapt-pkg-dev intltool fuse-overlayfs python3-apt
       - name: Install additional test dependencies
         run: |
+          echo "::group::snap install"
+          sudo snap install chisel --channel latest/candidate --no-wait
+          echo "::endgroup::"
+          echo "::group::apt install"
           sudo apt install -y ninja-build cmake scons \
                               autoconf automake autopoint gcc git gperf help2man libtool texinfo
-          python -m pip install tox
-          # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
-          sudo snap install --classic --channel=latest/stable go
-          git clone https://github.com/canonical/chisel.git chisel-tmp
-          cd chisel-tmp && git checkout v0.9.1
-          go mod download
-          sudo go build -o /usr/bin ./...
-          chisel --help
           # Remove newer go and install regular version for 20.04
-          sudo snap remove go
           sudo apt install -y golang
           # Install RPM dependencies for RPM tests
           sudo apt install rpm
           # Ensure we don't have dotnet installed, to properly test dotnet-deps
           # Based on https://github.com/actions/runner-images/blob/main/images/linux/scripts/installers/dotnetcore-sdk.sh
           sudo apt remove -y dotnet-* || true
+          echo "::endgroup::"
+          echo "::group::pip install"
+          python -m pip install tox
+          echo "::endgroup::"
+          echo "::group::dotnet removal"
           # Remove manually-installed dotnet from tarballs
           sudo rm -rf /usr/share/dotnet
           # Remove dotnet tools
           rm -rf $HOME/.dotnet
+          echo "::endgroup::"
+          echo "::group::Wait for snap to complete"
+          snap watch --last=install
+          echo "::endgroup::"
       - name: specify node version
         uses: actions/setup-node@v4
         with:
@@ -116,13 +130,16 @@ jobs:
   tests:
     strategy:
       matrix:
-        os: [ubuntu-20.04]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        os: [ubuntu-22.04]
+        python-version: ["3.10", "3.12"]
         include:
-          - adjective: focal
-          - os: ubuntu-22.04
+          - adjective: jammy
+          - os: ubuntu-20.04
             python-version: "3.10"
             adjective: jammy
+          - os: ubuntu-24.04
+            python-version: "3.12"
+            adjective: noble
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -144,24 +161,16 @@ jobs:
           pip install -e .[dev]
       - name: Install additional test dependencies
         run: |
-
+          echo "::group::snap install"
+          sudo snap install --no-wait core20
+          sudo snap install chisel --channel latest/candidate --no-wait
+          echo "::endgroup::"
+          echo "::group::apt install"
           sudo apt install -y ninja-build cmake scons qt5-qmake p7zip \
                               autoconf automake autopoint gcc git gperf help2man libtool texinfo \
-                              curl findutils pkg-config
-          # Build Chisel: needs a newer version of go than is available in Ubuntu 20.04
-          # note: we can't use the snap here because it has strict confinement and can't access
-          # the test files in /tmp/pytest-*
-          sudo snap install --classic --channel=latest/stable go
-          git clone https://github.com/canonical/chisel.git chisel-tmp
-          cd chisel-tmp && git checkout v0.9.1
-          go mod download
-          sudo go build -o /usr/bin ./...
-          chisel --help
-          # Remove newer go and install regular version for 20.04
-          sudo snap remove go
-          sudo apt install -y golang
-          # Install RPM dependencies for RPM tests
-          sudo apt install rpm
+                              curl findutils pkg-config golang rpm
+          echo "::endgroup::"
+          echo "::group::dotnet removal"
           # Ensure we don't have dotnet installed, to properly test dotnet-deps
           # Based on https://github.com/actions/runner-images/blob/main/images/linux/scripts/installers/dotnetcore-sdk.sh
           sudo apt remove -y dotnet-* || true
@@ -169,6 +178,10 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           # Remove dotnet tools
           rm -rf $HOME/.dotnet
+          echo "::endgroup::"
+          echo "::group::Wait for snap to complete"
+          snap watch --last=install
+          echo "::endgroup::"
       - name: specify node version
         uses: actions/setup-node@v4
         with:

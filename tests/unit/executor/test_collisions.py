@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
-from typing import List
 
 import pytest
 from craft_parts import errors
@@ -27,7 +26,7 @@ from craft_parts.permissions import Permissions
 class TestCollisions:
     """Check collision scenarios."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def part0(self, tmpdir, partitions) -> Part:
         part = Part(
             name="part0",
@@ -40,7 +39,7 @@ class TestCollisions:
             (install_dir / "file.pc").write_text(f"prefix={install_dir}\nName: File")
         return part
 
-    @pytest.fixture()
+    @pytest.fixture
     def part1(self, tmpdir, partitions) -> Part:
         part = Part(
             name="part1",
@@ -54,7 +53,7 @@ class TestCollisions:
             (install_dir / "file.pc").write_text(f"prefix={install_dir}\nName: File")
         return part
 
-    @pytest.fixture()
+    @pytest.fixture
     def part2(self, tmpdir, partitions) -> Part:
         part = Part(
             name="part2",
@@ -72,7 +71,7 @@ class TestCollisions:
             )
         return part
 
-    @pytest.fixture()
+    @pytest.fixture
     def part3(self, tmpdir, partitions) -> Part:
         part = Part(
             name="part3",
@@ -87,7 +86,7 @@ class TestCollisions:
             (install_dir / "a" / "2").write_text("")
         return part
 
-    @pytest.fixture()
+    @pytest.fixture
     def part4(self, tmpdir, partitions) -> Part:
         part = Part(
             name="part4",
@@ -103,7 +102,7 @@ class TestCollisions:
             )
         return part
 
-    @pytest.fixture()
+    @pytest.fixture
     def part5(self, tmpdir, partitions) -> Part:
         # Create a new part with a symlink that collides with part1's
         # non-symlink.
@@ -118,7 +117,7 @@ class TestCollisions:
             (install_dir / "a").symlink_to("foo")
         return part
 
-    @pytest.fixture()
+    @pytest.fixture
     def part6(self, tmpdir, partitions) -> Part:
         # Create a new part with a symlink that points to a different place
         # than part5's symlink.
@@ -202,9 +201,9 @@ class TestCollisions:
     def create_part_with_permissions(
         self,
         part_name: str,
-        permissions: List[Permissions],
+        permissions: list[Permissions],
         tmpdir: Path,
-        partitions: List[str],
+        partitions: list[str],
     ) -> Part:
         part = Part(
             part_name,

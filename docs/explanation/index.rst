@@ -3,6 +3,9 @@
 Explanation
 ***********
 
+This section of the documentation covers the concepts of Craft Parts, how they
+can be used, and the lifecycle of the different steps performed on them.
+
 .. toctree::
    :maxdepth: 1
 

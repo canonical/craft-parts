@@ -27,7 +27,7 @@ from tests import linux_only
 class TestXattrs:
     """Extended attribute tests."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_file(self):
         # These tests don't work on tmpfs
         file_path = Path(".tests-xattr-test-file")
@@ -45,6 +45,10 @@ class TestXattrs:
             with pytest.raises(RuntimeError) as raised:
                 xattrs.read_xattr(test_file, "attr")
             assert str(raised.value) == "xattr support only available for Linux"
+
+    def test_read_xattr_nonexistent(self):
+        with pytest.raises(FileNotFoundError):
+            xattrs.read_xattr("I-DONT-EXIST", "attr")
 
     def test_write_xattr(self, test_file):
         value = "foo"
