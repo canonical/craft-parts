@@ -189,6 +189,9 @@ PluginNotStrict
 PluginProperties
 PluginPropertiesModel
 PluginPullError
+PoetryPlugin
+PoetryPluginEnvironmentValidator
+PoetryPluginProperties
 Prepend
 PrimeState
 ProjectDirs
