@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The python plugin."""
+"""The poetry plugin."""
 
 import shlex
 import shutil
@@ -32,7 +32,7 @@ from .properties import PluginProperties
 
 
 class PoetryPluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the python plugin."""
+    """The part properties used by the poetry plugin."""
 
     plugin: Literal["poetry"] = "poetry"
 
@@ -47,7 +47,7 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
 
 
 class PoetryPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
-    """Check the execution environment for the Rust plugin.
+    """Check the execution environment for the Poetry plugin.
 
     :param part_name: The part whose build environment is being validated.
     :param env: A string containing the build step environment setup.
@@ -59,15 +59,10 @@ class PoetryPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     def validate_environment(
         self, *, part_dependencies: list[str] | None = None
     ) -> None:
-        """Ensure the environment has the dependencies to build Rust applications.
+        """Ensure the environment has the dependencies to build Poetry applications.
 
         :param part_dependencies: A list of the parts this part depends on.
         """
-        if shutil.which("python3") is None:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason="cannot find a python3 executable on the system",
-            )
         if "poetry-deps" in (part_dependencies or ()):
             self.validate_dependency(
                 dependency="poetry",
@@ -114,6 +109,7 @@ class PoetryPlugin(BasePythonPlugin):
             "--format=requirements.txt",
             f"--output={requirements_path}",
             "--with-credentials",
+            "--without-hashes",
         ]
         if self._options.poetry_with:
             export_command.append(
