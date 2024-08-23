@@ -190,6 +190,15 @@ jobs:
           echo "::group::Wait for snap to complete"
           snap watch --last=install
           echo "::endgroup::"
+          echo "::group::Poetry"
+          # Install poetry. From pipx on focal, from apt on newer systems.
+          if [[ $(grep VERSION_CODENAME /etc/os-release ) == "VERSION_CODENAME=focal" ]]; then
+            sudo apt-get install -y pipx
+            pipx install poetry
+          else
+            sudo apt-get install -y python3-poetry
+          fi
+          echo "::endgroup::"
       - name: specify node version
         uses: actions/setup-node@v4
         with:
