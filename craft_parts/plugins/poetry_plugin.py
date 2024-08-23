@@ -16,15 +16,14 @@
 
 """The poetry plugin."""
 
+import pathlib
 import shlex
-import shutil
 import subprocess
 from typing import Literal
 
 import pydantic
 from overrides import override
 
-from craft_parts import errors
 from craft_parts.plugins import validator
 
 from .base import BasePythonPlugin
@@ -93,30 +92,56 @@ class PoetryPlugin(BasePythonPlugin):
             build_packages |= {"python3-poetry"}
         return build_packages
 
-    def _get_pip_command(self) -> str:
-        """Get the pip command for installing the package and its dependencies."""
-        requirements_path = self._part_info.part_build_dir / "requirements.txt"
-        return f"{self._get_pip()} install --requirement={requirements_path} ."
+    def _get_poetry_export_commands(self, requirements_path: pathlib.Path) -> list[str]:
+        """Get the commands for exporting from poetry.
 
-    @override
-    def _get_package_install_commands(self) -> list[str]:
-        """Return a list of commands to run during the build step."""
-        requirements_path = self._part_info.part_build_dir / "requirements.txt"
+        Application-specific classes may override this if they need to export from
+        poetry differently.
 
+        :param requirements_path: The path of the requirements.txt file to write to.
+        :returns: A list of strings forming the export script.
+        """
         export_command = [
             "poetry",
             "export",
             "--format=requirements.txt",
             f"--output={requirements_path}",
             "--with-credentials",
-            "--without-hashes",
         ]
         if self._options.poetry_with:
             export_command.append(
                 f"--with={','.join(sorted(self._options.poetry_with))}",
             )
 
+        return [shlex.join(export_command)]
+
+    def _get_pip_install_commands(self, requirements_path: pathlib.Path) -> list[str]:
+        """Get the commands for installing with pip.
+
+        Application-specific classes my override this if they need to install
+        differently.
+
+        :param requirements_path: The path of the requirements.txt file to write to.
+        :returns: A list of strings forming the install script.
+        """
+        pip = self._get_pip()
         return [
-            shlex.join(export_command),
-            self._get_pip_command(),
+            # These steps need to be separate because poetry export defaults to including
+            # hashes, which don't work with installing from a directory.
+            f"{pip} install --requirement={requirements_path}",
+            # All dependencies should be installed through the requirements file made by
+            # poetry.
+            f"{pip} install --no-deps .",
+            # Check that the virtualenv is consistent.
+            f"{pip} check",
+        ]
+
+    @override
+    def _get_package_install_commands(self) -> list[str]:
+        """Return a list of commands to run during the build step."""
+        requirements_path = self._part_info.part_build_dir / "requirements.txt"
+
+        return [
+            *self._get_poetry_export_commands(requirements_path),
+            *self._get_pip_install_commands(requirements_path),
         ]

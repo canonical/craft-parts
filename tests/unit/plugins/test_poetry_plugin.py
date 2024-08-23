@@ -149,7 +149,9 @@ def test_get_build_commands(new_dir, optional_groups, export_addendum):
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials"
         + export_addendum,
-        f"{new_dir}/parts/p1/install/bin/pip install --requirement={new_dir}/parts/p1/build/requirements.txt .",
+        f"{new_dir}/parts/p1/install/bin/pip install --requirement={new_dir}/parts/p1/build/requirements.txt",
+        f"{new_dir}/parts/p1/install/bin/pip install --no-deps .",
+        f"{new_dir}/parts/p1/install/bin/pip check",
         *get_build_commands(new_dir),
     ]
 
