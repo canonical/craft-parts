@@ -35,10 +35,10 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["poetry"] = "poetry"
 
-    poetry_with: set[str] = pydantic.Field(
-        default_factory=set,
-        title="Optional dependency groups",
-        description="optional dependency groups to include when installing.",
+    poetry_dependency_groups: set[str] = pydantic.Field(
+        default_factory=lambda: {"main"},
+        title="Dependency groups to include",
+        description="dependency groups to include when installing.",
     )
 
     # part properties required by the plugin
@@ -107,11 +107,8 @@ class PoetryPlugin(BasePythonPlugin):
             "--format=requirements.txt",
             f"--output={requirements_path}",
             "--with-credentials",
+            f"--only={','.join(sorted(self._options.poetry_dependency_groups))}",
         ]
-        if self._options.poetry_with:
-            export_command.append(
-                f"--with={','.join(sorted(self._options.poetry_with))}",
-            )
 
         return [shlex.join(export_command)]
 
@@ -128,7 +125,9 @@ class PoetryPlugin(BasePythonPlugin):
         return [
             # These steps need to be separate because poetry export defaults to including
             # hashes, which don't work with installing from a directory.
-            f"{pip} install --requirement={requirements_path}",
+            # Pip shouldn't install deps, as poetry export should be a complete
+            # virtual environment description.
+            f"{pip} install --no-deps --requirement={requirements_path}",
             # All dependencies should be installed through the requirements file made by
             # poetry.
             f"{pip} install --no-deps .",

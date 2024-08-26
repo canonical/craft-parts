@@ -124,12 +124,30 @@ def get_build_commands(
     ]
 
 
+def test_get_build_commands_default(new_dir):
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
+    properties = PoetryPlugin.properties_class.unmarshal({"source": "."})
+
+    plugin = PoetryPlugin(part_info=part_info, properties=properties)
+
+    assert plugin.get_build_commands() == [
+        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+        f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials --only=main",
+        f"{new_dir}/parts/p1/install/bin/pip install --no-deps --requirement={new_dir}/parts/p1/build/requirements.txt",
+        f"{new_dir}/parts/p1/install/bin/pip install --no-deps .",
+        f"{new_dir}/parts/p1/install/bin/pip check",
+        *get_build_commands(new_dir),
+    ]
+
+
 @pytest.mark.parametrize(
     ("optional_groups", "export_addendum"),
     [
-        (set(), ""),
-        ({"dev"}, " --with=dev"),
-        ({"toml", "yaml", "silly-walks"}, " --with=silly-walks,toml,yaml"),
+        ({"main"}, " --only=main"),
+        ({"dev"}, " --only=dev"),
+        ({"toml", "yaml", "silly-walks"}, " --only=silly-walks,toml,yaml"),
     ],
 )
 def test_get_build_commands(new_dir, optional_groups, export_addendum):
@@ -138,7 +156,7 @@ def test_get_build_commands(new_dir, optional_groups, export_addendum):
     properties = PoetryPlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "poetry-with": optional_groups,
+            "poetry-dependency-groups": optional_groups,
         }
     )
 
@@ -147,9 +165,8 @@ def test_get_build_commands(new_dir, optional_groups, export_addendum):
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials"
-        + export_addendum,
-        f"{new_dir}/parts/p1/install/bin/pip install --requirement={new_dir}/parts/p1/build/requirements.txt",
+        f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials{export_addendum}",
+        f"{new_dir}/parts/p1/install/bin/pip install --no-deps --requirement={new_dir}/parts/p1/build/requirements.txt",
         f"{new_dir}/parts/p1/install/bin/pip install --no-deps .",
         f"{new_dir}/parts/p1/install/bin/pip check",
         *get_build_commands(new_dir),

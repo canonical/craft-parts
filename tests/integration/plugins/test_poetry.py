@@ -36,7 +36,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
-@pytest.fixture(params=["test_poetry"])
+@pytest.fixture(params=["test_poetry", "test_poetry_indirect_deps"])
 def source_directory(request):
     return pathlib.Path(__file__).parent / request.param
 
