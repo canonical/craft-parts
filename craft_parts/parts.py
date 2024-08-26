@@ -86,6 +86,7 @@ class PartSpec(BaseModel):
         extra="forbid",
         frozen=True,
         alias_generator=lambda s: s.replace("_", "-"),
+        coerce_numbers_to_str=True,
     )
 
     @field_validator("overlay_packages", "overlay_files", "overlay_script")
