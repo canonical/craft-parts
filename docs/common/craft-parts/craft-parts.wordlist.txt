@@ -14,6 +14,7 @@ AutotoolsPluginProperties
 Backport
 BaseSourceModel
 BaseFileSourceModel
+BasePythonPlugin
 BaseRepository
 BeforeValidator
 BuildPackageNotFound
@@ -188,6 +189,9 @@ PluginNotStrict
 PluginProperties
 PluginPropertiesModel
 PluginPullError
+PoetryPlugin
+PoetryPluginEnvironmentValidator
+PoetryPluginProperties
 Prepend
 PrimeState
 ProjectDirs
