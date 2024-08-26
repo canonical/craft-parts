@@ -27,7 +27,7 @@ Environment variables
 
 This plugin also sets environment variables in the build environment. User-set
 environment variables will override these values. Users may also set
-`environment variables to configure poetry <poetry-config-env-vars>`_ using the
+`environment variables to configure poetry`_ using the
 :ref:`build-environment <build_environment>` key.
 
 PARTS_PYTHON_INTERPRETER
@@ -102,4 +102,4 @@ During the build step, the plugin performs the following actions:
 5. It runs :command:`pip check` to ensure the virtual environment is consistent.
 
 .. _Poetry: https://python-poetry.org
-.. _poetry-config-env-vars: https://python-poetry.org/docs/configuration/#using-environment-variables
+.. _environment variables to configure poetry: https://python-poetry.org/docs/configuration/#using-environment-variables
