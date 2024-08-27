@@ -62,10 +62,10 @@ of the Python interpreter.
 Poetry
 ~~~~~~
 
-By default, this plugin gets poetry from the ``python3-poetry`` package on the build
-system. If that is not desired (for example, if a newer version  of poetry is
+By default, this plugin gets Poetry from the ``python3-poetry`` package on the build
+system. If that is not desired (for example, if a newer version  of Poetry is
 required), a ``poetry-deps`` part can install poetry in the build system. Any parts
-that use the poetry plugin must run ``after`` the ``poetry-deps`` part:
+that use the Poetry plugin must run ``after`` the ``poetry-deps`` part:
 
 .. code-block:: yaml
 
