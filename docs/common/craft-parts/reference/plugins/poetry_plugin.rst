@@ -20,28 +20,28 @@ poetry-with:
 ~~~~~~~~~~~~
 **Type:** list of strings
 
-Extra dependency groups to use other than the defaults.
+Extra `dependency groups`_ to use other than the defaults.
 
 Environment variables
 ---------------------
 
 This plugin also sets environment variables in the build environment. User-set
 environment variables will override these values. Users may also set
-`environment variables to configure poetry`_ using the
+`environment variables to configure Poetry`_ using the
 :ref:`build-environment <build_environment>` key.
 
 PARTS_PYTHON_INTERPRETER
 ~~~~~~~~~~~~~~~~~~~~~~~~
 **Default value:** python3
 
-The interpreter binary to search for in ``PATH`` or an absolute path to the
-interpreter (e.g. ``${CRAFT_STAGE}/bin/python``).
+Either the interpreter binary to search for in ``PATH`` or an absolute path to
+the interpreter (e.g. ``${CRAFT_STAGE}/bin/python``).
 
 PARTS_PYTHON_VENV_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~
 **Default value:** (empty string)
 
-Additional arguments for venv.
+Additional arguments passed to ``python -m venv``.
 
 .. _poetry-details-begin:
 
@@ -51,8 +51,8 @@ Dependencies
 Python
 ~~~~~~
 
-By default this plugin uses Python from the base when it is available and
-appropriate to use, using the same logic as the
+By default this plugin uses the system Python when available and appropriate to
+use, using the same logic as the
 :ref:`Python plugin <craft_parts_python_plugin>`. If a different interpreter is
 desired, it must be made available in the build environment (including the ``venv``
 module) and its path must be included in the ``PATH`` environment variable.
@@ -102,4 +102,5 @@ During the build step, the plugin performs the following actions:
 5. It runs :command:`pip check` to ensure the virtual environment is consistent.
 
 .. _Poetry: https://python-poetry.org
-.. _environment variables to configure poetry: https://python-poetry.org/docs/configuration/#using-environment-variables
+.. _dependency groups: https://python-poetry.org/docs/managing-dependencies#dependency-groups
+.. _environment variables to configure Poetry: https://python-poetry.org/docs/configuration/#using-environment-variables
