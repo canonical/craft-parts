@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,22 +18,34 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+import pytest_check  # type: ignore[import-untyped]
 from craft_parts import Part, PartInfo, ProjectInfo
-from craft_parts.plugins.python_plugin import PythonPlugin
+from craft_parts.plugins.poetry_plugin import PoetryPlugin
 from pydantic import ValidationError
 
 
 @pytest.fixture
 def plugin(new_dir):
-    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    properties = PoetryPlugin.properties_class.unmarshal({"source": "."})
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
-    return PythonPlugin(properties=properties, part_info=part_info)
+    return PoetryPlugin(properties=properties, part_info=part_info)
 
 
-def test_get_build_packages(plugin):
-    assert plugin.get_build_packages() == {"findutils", "python3-venv", "python3-dev"}
+@pytest.mark.parametrize(
+    ("has_poetry", "expected_packages"),
+    [
+        (False, {"python3-poetry"}),
+        (True, set()),
+    ],
+)
+def test_get_build_packages(
+    monkeypatch, plugin: PoetryPlugin, has_poetry, expected_packages: set
+):
+    monkeypatch.setattr(plugin, "_system_has_poetry", lambda: has_poetry)
+
+    assert plugin.get_build_packages().issuperset(expected_packages)
 
 
 def test_get_build_environment(plugin, new_dir):
@@ -51,12 +63,16 @@ def get_build_commands(
     new_dir: Path, *, should_remove_symlinks: bool = False
 ) -> list[str]:
     if should_remove_symlinks:
-        postfix = [
-            f"echo Removing python symlinks in {new_dir}/parts/p1/install/bin",
-            f'rm "{new_dir}/parts/p1/install"/bin/python*',
-        ]
+        postfix = dedent(
+            f"""\
+            echo Removing python symlinks in {new_dir}/parts/p1/install/bin
+            rm "{new_dir}/parts/p1/install"/bin/python*
+            """
+        )
     else:
-        postfix = ['ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"']
+        postfix = dedent(
+            'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"'
+        )
 
     return [
         dedent(
@@ -104,56 +120,45 @@ def get_build_commands(
             eval "${{opts_state}}"
             """
         ),
-        *postfix,
+        postfix,
     ]
 
 
-def test_get_build_commands(plugin, new_dir):
-    assert plugin.get_build_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
-        *get_build_commands(new_dir),
-    ]
-
-
-def test_get_build_commands_with_all_properties(new_dir):
+@pytest.mark.parametrize(
+    ("optional_groups", "export_addendum"),
+    [
+        (set(), ""),
+        ({"dev"}, " --with=dev"),
+        ({"toml", "yaml", "silly-walks"}, " --with=silly-walks,toml,yaml"),
+    ],
+)
+def test_get_build_commands(new_dir, optional_groups, export_addendum):
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
-    properties = PythonPlugin.properties_class.unmarshal(
+    properties = PoetryPlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "python-constraints": ["constraints.txt"],
-            "python-requirements": ["requirements.txt"],
-            "python-packages": ["pip", "some-pkg; sys_platform != 'win32'"],
+            "poetry-with": optional_groups,
         }
     )
 
-    python_plugin = PythonPlugin(part_info=part_info, properties=properties)
+    plugin = PoetryPlugin(part_info=part_info, properties=properties)
 
-    assert python_plugin.get_build_commands() == [
+    assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U pip 'some-pkg; sys_platform != '\"'\"'win32'\"'\"''",
-        f"{new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install -c 'constraints.txt' -U .",
+        f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials"
+        + export_addendum,
+        f"{new_dir}/parts/p1/install/bin/pip install --requirement={new_dir}/parts/p1/build/requirements.txt",
+        f"{new_dir}/parts/p1/install/bin/pip install --no-deps .",
+        f"{new_dir}/parts/p1/install/bin/pip check",
         *get_build_commands(new_dir),
     ]
-
-
-def test_invalid_properties():
-    with pytest.raises(ValidationError) as raised:
-        PythonPlugin.properties_class.unmarshal({"source": ".", "python-invalid": True})
-    err = raised.value.errors()
-    assert len(err) == 1
-    assert err[0]["loc"] == ("python-invalid",)
-    assert err[0]["type"] == "extra_forbidden"
 
 
 def test_missing_properties():
     with pytest.raises(ValidationError) as raised:
-        PythonPlugin.properties_class.unmarshal({})
+        PoetryPlugin.properties_class.unmarshal({})
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
@@ -182,14 +187,16 @@ def test_script_interpreter(plugin):
 
 def test_call_should_remove_symlinks(plugin, new_dir, mocker):
     mocker.patch(
-        "craft_parts.plugins.python_plugin.PythonPlugin._should_remove_symlinks",
+        "craft_parts.plugins.poetry_plugin.PoetryPlugin._should_remove_symlinks",
         return_value=True,
     )
 
-    assert plugin.get_build_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/p1/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
-        *get_build_commands(new_dir, should_remove_symlinks=True),
-    ]
+    build_commands = plugin.get_build_commands()
+
+    pytest_check.is_in(
+        f"echo Removing python symlinks in {plugin._part_info.part_install_dir}/bin",
+        build_commands,
+    )
+    pytest_check.is_in(
+        f'rm "{plugin._part_info.part_install_dir}"/bin/python*', build_commands
+    )
