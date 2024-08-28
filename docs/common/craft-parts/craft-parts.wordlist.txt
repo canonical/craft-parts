@@ -175,6 +175,7 @@ PartInfo
 PartSpec
 PartSpecificationError
 PartitionError
+PartitionNotFound
 PartitionPathPair
 PartitionUsageError
 PartitionUsageWarning
