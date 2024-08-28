@@ -3,8 +3,6 @@
 Poetry plugin
 =============
 
-**Version**: 2.1
-
 The Poetry plugin can be used for Python projects that use the `Poetry`_ build system.
 
 Keywords
