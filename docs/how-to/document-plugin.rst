@@ -9,16 +9,12 @@ headings and main text.
 
 <name>
     The name of the plugin; e.g. Python
-<version>
-    The version of the library or tool that provides the plugin; e.g. Snapcraft 8.0.
 
 Replace the instructions with suitable descriptions.
 
 
 <Name> plugin
 -------------
-
-**Version**: <version>
 
 A general description of the plugin that includes as many of these items as
 necessary:
@@ -30,6 +26,9 @@ necessary:
 
 It is also useful to indicate if the plugin replaces an existing plugin, or
 should be used instead of another similar plugin.
+
+If documenting an application-specific plugin, it may be appropriate to include
+the version of the application in which this plugin first appears here.
 
 
 Keywords
