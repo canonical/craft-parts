@@ -20,6 +20,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from types import MappingProxyType
 
+from craft_parts.errors import PartitionNotFound, PartitionUsageError
 from craft_parts.utils import partition_utils
 
 
@@ -74,14 +75,27 @@ class ProjectDirs:
             )
         )
 
+    def _validate_requested_partition(
+        self, dir_name: str, partition: str | None = None
+    ) -> None:
+        """Ensure the requested partition is valid."""
+        if self._partitions:
+            if not partition:
+                raise PartitionUsageError(
+                    error_list=[
+                        f"Partitions are enabled, you must specify which partition's {dir_name!r} you want."
+                    ],
+                    partitions=self._partitions,
+                )
+            if partition not in self._partitions:
+                raise PartitionNotFound(partition, self._partitions)
+
     def get_stage_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
-        if self._partitions and partition not in self._partitions:
-            raise ValueError(f"Unknown partition {partition}")
+        self._validate_requested_partition("stage_dir", partition)
         return self.stage_dirs[partition]
 
     def get_prime_dir(self, partition: str | None = None) -> Path:
-        """Get the stage directory for the given partition."""
-        if self._partitions and partition not in self._partitions:
-            raise ValueError(f"Unknown partition {partition}")
+        """Get the prime directory for the given partition."""
+        self._validate_requested_partition("prime_dir", partition)
         return self.prime_dirs[partition]
