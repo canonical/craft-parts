@@ -82,7 +82,7 @@ class ProjectDirs:
         if self._partitions:
             if not partition:
                 raise PartitionUsageError(
-                    error_list=f"Partitions are enabled, you must specify which partition's {dir_name} you want.",
+                    error_list=[f"Partitions are enabled, you must specify which partition's {dir_name!r} you want."],
                     partitions=self._partitions,
                 )
             if partition not in self._partitions:
