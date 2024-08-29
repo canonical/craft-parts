@@ -703,6 +703,7 @@ class PartitionNotFound(PartitionUsageError):
     """
 
     def __init__(self, partition_name: str, partitions: Iterable[str]) -> None:
+        # Allow callers catching this exception easy access to the partition name
         self.partition_name = partition_name
         super().__init__(
             brief=f"Requested partition does not exist: {partition_name!r}",
