@@ -672,7 +672,7 @@ def is_slice(name: str) -> bool:
     return "_" in name
 
 
-def _get_part_spec(data: Dict[str, Any]) -> PartSpec:
+def _get_part_spec(data: dict[str, Any]) -> PartSpec:
     if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
 
