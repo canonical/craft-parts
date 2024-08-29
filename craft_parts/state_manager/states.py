@@ -19,7 +19,6 @@
 import contextlib
 import logging
 from pathlib import Path
-from typing import Optional, Type
 
 import yaml
 
@@ -37,7 +36,7 @@ from .step_state import MigrationState, StepState
 logger = logging.getLogger(__name__)
 
 
-def load_step_state(part: Part, step: Step) -> Optional[StepState]:
+def load_step_state(part: Part, step: Step) -> StepState | None:
     """Retrieve the persistent state for the given part and step.
 
     :param part: The part corresponding to the state to load.
@@ -66,7 +65,7 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
             for key, val in pvars.items():
                 state_data["project-options"]["project_vars"][key] = ProjectVar(**val)
 
-    state_class: Type[StepState]
+    state_class: type[StepState]
 
     if step == Step.PULL:
         state_class = PullState
@@ -84,9 +83,7 @@ def load_step_state(part: Part, step: Step) -> Optional[StepState]:
     return state_class.unmarshal(state_data)
 
 
-def load_overlay_migration_state(
-    state_dir: Path, step: Step
-) -> Optional[MigrationState]:
+def load_overlay_migration_state(state_dir: Path, step: Step) -> MigrationState | None:
     """Retrieve the overlay migration state for the given step.
 
     :param state_dir: The path to the directory containing migration state files.

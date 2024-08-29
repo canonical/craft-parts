@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,7 +17,6 @@ import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Set, Type
 
 import pytest
 from craft_parts import plugins, sources
@@ -25,7 +24,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
 from craft_parts.executor.step_handler import StepContents, StepHandler
 from craft_parts.infos import (
-    _ARCH_TRANSLATIONS,
+    _DEB_TO_TRIPLET,
     PartInfo,
     ProjectInfo,
     StepInfo,
@@ -42,16 +41,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return ["hello"]
 
 
@@ -61,7 +60,8 @@ def _step_handler_for_step(
     part_info: PartInfo,
     part: Part,
     dirs: ProjectDirs,
-    plugin_class: Type[plugins.Plugin] = FooPlugin,
+    plugin_class: type[plugins.Plugin] = FooPlugin,
+    partitions: set[str] | None = None,
 ) -> StepHandler:
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
@@ -79,6 +79,7 @@ def _step_handler_for_step(
         plugin=plugin,
         source_handler=source_handler,
         env=step_env,
+        partitions=partitions,
     )
 
 
@@ -149,26 +150,29 @@ class TestStepHandlerBuiltins:
         result = sh.run_builtin()
         build_script_path = Path(new_dir / "parts/p1/run/build.sh")
         environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
-        host_arch = _ARCH_TRANSLATIONS[_get_host_architecture()]
-        triplet = host_arch["triplet"]
-        deb = host_arch["deb"]
+        deb = _get_host_architecture()
+        triplet = _DEB_TO_TRIPLET[deb]
         if partitions is not None:
-            default_partition_dir = "/default"
-            partition_script_lines = itertools.chain.from_iterable(
-                zip(
-                    (
-                        f'export CRAFT_{p.upper()}_STAGE="{new_dir}/stage/{p}"'
-                        for p in partitions
-                    ),
-                    (
-                        f'export CRAFT_{p.upper()}_PRIME="{new_dir}/prime/{p}"'
-                        for p in partitions
-                    ),
-                )
-            )
+            partition_script_lines = [
+                f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
+                f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
+                *itertools.chain.from_iterable(
+                    zip(
+                        [
+                            f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/partitions/{p}/stage"'
+                            for p in partitions
+                            if p != "default"
+                        ],
+                        [
+                            f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/partitions/{p}/prime"'
+                            for p in partitions
+                            if p != "default"
+                        ],
+                    )
+                ),
+            ]
         else:
             partition_script_lines = []
-            default_partition_dir = ""
 
         expected_script = "\n".join(
             (
@@ -184,15 +188,15 @@ class TestStepHandlerBuiltins:
                 'export CRAFT_PARALLEL_BUILD_COUNT="1"',
                 f'export CRAFT_PROJECT_DIR="{new_dir}"',
                 *partition_script_lines,
-                f'export CRAFT_STAGE="{new_dir}/stage{default_partition_dir}"',
-                f'export CRAFT_PRIME="{new_dir}/prime{default_partition_dir}"',
+                f'export CRAFT_STAGE="{new_dir}/stage"',
+                f'export CRAFT_PRIME="{new_dir}/prime"',
                 'export CRAFT_PART_NAME="p1"',
                 'export CRAFT_STEP_NAME="BUILD"',
                 f'export CRAFT_PART_SRC="{new_dir}/parts/p1/src"',
                 f'export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"',
                 f'export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"',
                 f'export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"',
-                f'export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install{default_partition_dir}"',
+                f'export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"',
                 "## Plugin environment",
                 "## User environment",
                 "",
@@ -224,7 +228,7 @@ class TestStepHandlerBuiltins:
         )
         assert result == StepContents()
 
-    def test_run_builtin_stage(self, new_dir, mocker):
+    def test_run_builtin_stage(self, new_dir, partitions):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
@@ -236,12 +240,13 @@ class TestStepHandlerBuiltins:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=partitions,
         )
         result = sh.run_builtin()
 
         assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
 
-    def test_run_builtin_prime(self, new_dir, mocker):
+    def test_run_builtin_prime(self, new_dir, partitions):
         Path("parts/p1/install").mkdir(parents=True)
         Path("parts/p1/install/subdir").mkdir(parents=True)
         Path("parts/p1/install/foo").write_text("content")
@@ -255,6 +260,7 @@ class TestStepHandlerBuiltins:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=partitions,
         )
         result = sh.run_builtin()
 

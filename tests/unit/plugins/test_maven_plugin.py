@@ -16,10 +16,10 @@
 
 import io
 import os
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from textwrap import dedent
 from unittest import mock
-from xml.etree import ElementTree
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo, errors
@@ -27,7 +27,7 @@ from craft_parts.plugins.maven_plugin import MavenPlugin
 from pydantic import ValidationError
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -137,7 +137,7 @@ def test_missing_parameters():
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
-    assert err[0]["type"] == "value_error.missing"
+    assert err[0]["type"] == "missing"
 
 
 def test_get_build_commands(part_info):
@@ -226,7 +226,7 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
 
 def _normalize_settings(settings):
     with io.StringIO(settings) as f:
-        tree = ElementTree.parse(f)  # noqa: S314
+        tree = ET.parse(f)  # noqa: S314
     for element in tree.iter():
         if element.text is not None and element.text.isspace():
             element.text = None

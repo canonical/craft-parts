@@ -72,9 +72,33 @@ def test_source_update_unsupported():
 def test_network_request_error():
     err = errors.NetworkRequestError("it failed")
     assert err.message == "it failed"
+    assert err.source is None
     assert err.brief == "Network request error: it failed."
     assert err.details is None
-    assert err.resolution == "Check the network and try again."
+    assert err.resolution == "Check network connection and source, and try again."
+
+
+def test_network_request_error_with_source():
+    err = errors.NetworkRequestError("it failed", source="non-existing-source")
+    assert err.message == "it failed"
+    assert err.source == "non-existing-source"
+    assert err.brief == "Network request error: it failed."
+    assert err.details == "Source: 'non-existing-source'"
+    assert err.resolution == "Check network connection and source, and try again."
+
+
+def test_http_error():
+    err = errors.HttpRequestError(
+        status_code=123,
+        reason="error_reason",
+        source="some_source",
+    )
+    assert err.status_code == 123
+    assert err.reason == "error_reason"
+    assert err.source == "some_source"
+    assert err.brief == "Cannot process request (error_reason: 123): some_source"
+    assert err.details is None
+    assert err.resolution == "Check your URL and permissions and try again."
 
 
 def test_source_not_found():

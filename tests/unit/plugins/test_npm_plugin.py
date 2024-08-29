@@ -26,7 +26,7 @@ from pydantic import ValidationError
 # pylint: disable=too-many-public-methods
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -199,7 +199,7 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {}
+        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
 
     def test_get_build_environment_include_node_false(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -210,7 +210,7 @@ class TestPluginNpmPlugin:
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {}
+        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
 
     def test_get_build_environment_include_node_true(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -224,6 +224,7 @@ class TestPluginNpmPlugin:
 
         assert plugin.get_build_environment() == {
             "PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}",
+            "NODE_ENV": "production",
         }
 
     def test_get_build_commands(self, part_info, new_dir):
@@ -231,7 +232,13 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
+            'NPM_VERSION="$(npm --version)"\n'
+            "# use the new-style install command if npm >= 10.0.0\n"
+            "if ((${NPM_VERSION%%.*}>=10)); then\n"
+            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+            "else\n"
+            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+            "fi\n",
         ]
 
     def test_get_build_commands_false(self, part_info, new_dir):
@@ -241,28 +248,69 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
+            'NPM_VERSION="$(npm --version)"\n'
+            "# use the new-style install command if npm >= 10.0.0\n"
+            "if ((${NPM_VERSION%%.*}>=10)); then\n"
+            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+            "else\n"
+            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+            "fi\n",
         ]
 
-    def test_get_build_commands_include_node_true(self, part_info, mocker, new_dir):
+    @pytest.mark.parametrize(
+        "version",
+        ["20", "20.13", "20.13.1", "lts/iron"],
+    )
+    def test_get_build_commands_include_node_true(
+        self, version, part_info, mocker, new_dir
+    ):
         mocker.patch.dict(os.environ, {"SNAP_ARCH": "amd64"})
         properties = NpmPlugin.properties_class.unmarshal(
             {
                 "source": ".",
                 "npm-include-node": True,
-                "npm-node-version": "16.14.2",
+                "npm-node-version": version,
             }
         )
+        NpmPlugin._fetch_node_release_index = lambda: [
+            {
+                "version": "v99.99.99",
+                "date": "3304-12-31",
+                "files": ["linux-x64"],
+                "lts": False,
+                "security": False,
+            },
+            {
+                "version": "v20.13.1",
+                "date": "2024-05-09",
+                "files": ["linux-x64"],
+                "lts": "Iron",
+                "security": False,
+            },
+        ]
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
+        assert plugin.get_pull_commands() == [
+            f'if [ ! -f "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz" ]; then\n'
+            f'    mkdir -p "{part_info.part_cache_dir}"\n'
+            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
+            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/node-v20.13.1-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"\n'
+            "fi\n"
+            f'cd "{part_info.part_cache_dir}"\n'
+            "sha256sum --ignore-missing --strict -c SHASUMS256.txt\n"
+        ]
+
         assert plugin.get_build_commands() == [
-            'if [ ! -f "${CRAFT_PART_INSTALL}/bin/node" ]; then\n'
-            '    curl -s "https://nodejs.org/dist/v16.14.2/'
-            'node-v16.14.2-linux-x64.tar.gz" |\n'
-            '    tar xzf - -C "${CRAFT_PART_INSTALL}/"                         '
-            "--no-same-owner --strip-components=1\n"
+            f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
+            ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
+            "--strip-components=1\n",
+            'NPM_VERSION="$(npm --version)"\n'
+            "# use the new-style install command if npm >= 10.0.0\n"
+            "if ((${NPM_VERSION%%.*}>=10)); then\n"
+            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+            "else\n"
+            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
             "fi\n",
-            'npm install -g --prefix "${CRAFT_PART_INSTALL}" $(npm pack . | tail -1)',
         ]
 
     def test_get_build_commands_include_node_true_no_node_version(
@@ -277,7 +325,7 @@ class TestPluginNpmPlugin:
             )
 
         assert raised.value.errors()[0]["msg"] == (
-            "npm-node-version is required if npm-include-node is true"
+            "Value error, npm-node-version is required if npm-include-node is true"
         )
 
     @pytest.mark.parametrize(

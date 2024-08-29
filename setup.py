@@ -21,7 +21,7 @@ import re
 
 from setuptools import find_packages, setup
 
-VERSION = "1.26.1"
+VERSION = "2.0.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -49,10 +49,9 @@ install_requires = [
     # see https://github.com/mkorpela/overrides/issues/121
     "overrides!=7.6.0",
     "PyYAML",
-    "pydantic>=1.9.0,<2.0.0",
-    "pydantic-yaml[pyyaml]>=0.11.0,<1.0.0",
+    "pydantic>=2.0.0",
     "pyxdg",
-    "requests",
+    "requests<2.32.0",
     "requests-unixsocket",
     # See: https://github.com/msabramo/requests-unixsocket/pull/69
     # When updating to urllib3 v2, also remove the constraint on types-requests.
@@ -77,6 +76,7 @@ types_requires = [
     "mypy[reports]>=1.4.1,<2.0",
     "types-colorama",
     "types-docutils",
+    "types-jsonschema",
     "types-Pillow",
     "types-Pygments",
     "types-pytz",
@@ -90,15 +90,15 @@ test_requires = [
     "codespell",
     "coverage",
     "hypothesis",
+    "jsonschema",
     "pydocstyle",
-    "pyright==1.1.337",
+    "pyright==1.1.372",
     "pytest",
     "pytest-check",
     "pytest-cov",
     "pytest-mock",
     "pytest-subprocess",
     "requests-mock",
-    "ruff==0.1.6",
     "tox",
     "yamllint==1.32.0",
 ]
@@ -118,20 +118,20 @@ setup(
     version=VERSION,
     description="Craft parts tooling",
     long_description=readme,
+    long_description_content_type="text/markdown",
     author="Canonical Ltd.",
     author_email="snapcraft@lists.snapcraft.io",
     url="https://github.com/canonical/craft-parts",
     license="GNU General Public License v3",
-    python_requires=">=3.7",
+    python_requires=">=3.10",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     entry_points={
         "console_scripts": [
@@ -145,7 +145,7 @@ setup(
         "craft_parts_docs",
     ],
     # todo: can we make the docs optional?
-    package_dir={"craft_parts_docs": "docs/base"},
+    package_dir={"craft_parts_docs": "docs/common"},
     package_data={
         "craft_parts": ["py.typed"],
         "craft_parts_docs": ["**"],

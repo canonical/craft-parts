@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,39 +25,64 @@ represents how the file is going to be staged.
 import contextlib
 import os
 import shutil
+from collections.abc import Mapping
 from glob import iglob
 from pathlib import Path
-from typing import Dict
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
 
 
 def organize_files(
-    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool
+    *,
+    part_name: str,
+    file_map: dict[str, str],
+    install_dir_map: Mapping[str | None, Path],
+    overwrite: bool,
 ) -> None:
     """Rearrange files for part staging.
 
-    :param fileset: A fileset containing the `organize` file mapping.
-    :param base_dir: Where the installed files are located.
+    If partitions are enabled, source filepaths must be in the default partition.
+
+    :param part_name: The name of the part to organize files for.
+    :param file_map: A mapping of source filepaths to destination filepaths.
+    :param install_dir_map: A mapping of partition names to their install directories.
     :param overwrite: Whether existing files should be overwritten. This is
         only used in build updates, when a part may organize over files
         it previously organized.
+
+    :raises FileOrganizeError: If the destination file already exists or multiple files
+        are organized to the same destination.
+    :raises FileOrganizeError: If partitions are enabled and the source file is not from
+        the default partition.
     """
-    for key in sorted(mapping, key=lambda x: ["*" in x, x]):
-        src = os.path.join(base_dir, path_utils.get_partitioned_path(key))
+    for key in sorted(file_map, key=lambda x: ["*" in x, x]):
+        src_partition, src_inner_path = path_utils.get_partition_and_path(key)
+
+        if src_partition and src_partition != "default":
+            raise errors.FileOrganizeError(
+                part_name=part_name,
+                message=(
+                    f"Cannot organize files from {src_partition!r} partition. "
+                    "Files can only be organized from the 'default' partition"
+                ),
+            )
+
+        src = os.path.join(install_dir_map[src_partition], src_inner_path)
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        partition, inner_path = path_utils.get_partition_and_path(
-            mapping[key].lstrip("/")
+        dst_partition, dst_inner_path = path_utils.get_partition_and_path(
+            file_map[key].lstrip("/")
         )
-        if partition:
-            dst = os.path.join(base_dir, partition, inner_path)
-            partition_path = os.path.join(f"({partition})", inner_path)
+
+        dst = os.path.join(install_dir_map[dst_partition], dst_inner_path)
+
+        # prefix the partition to the log-friendly version of the destination
+        if dst_partition and dst_partition != "default":
+            dst_string = f"({dst_partition})/{dst_inner_path}"
         else:
-            dst = os.path.join(base_dir, inner_path)
-            partition_path = str(inner_path)
+            dst_string = str(dst_inner_path)
 
         sources = iglob(src, recursive=True)
 
@@ -80,9 +105,9 @@ def organize_files(
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            f"multiple files to be organized into "
-                            f"{partition_path!r}. If this is "
-                            f"supposed to be a directory, end it with a slash."
+                            "multiple files to be organized into "
+                            f"{dst_string!r}. If this is "
+                            "supposed to be a directory, end it with a slash."
                         ),
                     )
                 else:
@@ -90,8 +115,8 @@ def organize_files(
                         part_name=part_name,
                         message=(
                             f"trying to organize file {key!r} to "
-                            f"{mapping[key]!r}, but "
-                            f"{partition_path!r} already exists"
+                            f"{file_map[key]!r}, but "
+                            f"{dst_string!r} already exists"
                         ),
                     )
 

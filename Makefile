@@ -33,9 +33,20 @@ clean: ## Clean artifacts from building, testing, etc.
 
 .PHONY: coverage
 coverage: ## Run pytest with coverage report.
-	coverage run --source craft_parts -m pytest
+	coverage run --source craft_parts -m pytest tests/unit
 	coverage report -m
-	coverage html
+	coverage xml
+
+.PHONY: preparedocs
+preparedocs: ## move file from the sphinx-starter-pack to docs folder
+	cp docs/sphinx-resources/.sphinx/_static/* docs/_static
+	mkdir -p docs/_templates
+	cp -R docs/sphinx-resources/.sphinx/_templates/* docs/_templates
+	cp docs/sphinx-resources/.sphinx/spellingcheck.yaml docs/spellingcheck.yaml
+
+.PHONY: installdocs
+installdocs: preparedocs ## install documentation dependencies.
+	$(MAKE) -C docs install
 
 .PHONY: docs
 docs: ## Generate documentation.
@@ -77,7 +88,7 @@ test-flake8:
 
 .PHONY: test-ruff
 test-ruff:
-	ruff $(SOURCES)
+	ruff check $(SOURCES)
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
@@ -98,6 +109,12 @@ test-pyright:
 .PHONY: test-units
 test-units: ## Run unit tests.
 	pytest tests/unit
+
+.PHONY: test-docs
+test-docs: installdocs ## Run docs tests.
+	$(MAKE) -C docs linkcheck
+	$(MAKE) -C docs woke
+	$(MAKE) -C docs spelling
 
 .PHONY: tests
 tests: lint test-units test-integrations ## Run all tests.

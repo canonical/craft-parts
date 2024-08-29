@@ -1,0 +1,15 @@
+description: A parts file with several unusual uses of the nil plugin.
+parts:
+  nil: {}
+  basic-nil:
+    plugin: nil
+  nil-with-source:
+    plugin: nil
+    source: .
+  overrides:
+    plugin: nil
+    source: .
+    override-pull: |
+      wget https://example.com
+    build-packages:
+      - wget

@@ -75,7 +75,7 @@ class TestPrimeStatePersist:
             content = f.read()
 
         new_state = yaml.safe_load(content)
-        assert new_state == state.marshal()
+        assert PrimeState.unmarshal(new_state).marshal() == state.marshal()
 
 
 class TestPrimeStateChanges:

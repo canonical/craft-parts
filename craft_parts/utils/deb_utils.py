@@ -17,8 +17,8 @@
 """deb-related utilities used by both `packages` and `sources`."""
 
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from craft_parts import errors
 from craft_parts.utils import os_utils

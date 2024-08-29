@@ -15,9 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Literal
 
 import pytest
 from craft_parts import errors
@@ -26,7 +25,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginEnvironmentValidator, PluginProperties
 
 
-@pytest.fixture()
+@pytest.fixture
 def foo_exe(new_dir):
     exe = Path(new_dir, "mock_bin", "foo")
     exe.parent.mkdir(exist_ok=True)
@@ -35,7 +34,7 @@ def foo_exe(new_dir):
     return exe
 
 
-@pytest.fixture()
+@pytest.fixture
 def empty_foo_exe(new_dir):
     exe = Path(new_dir, "mock_bin", "foo")
     exe.parent.mkdir(exist_ok=True)
@@ -44,27 +43,24 @@ def empty_foo_exe(new_dir):
     return exe
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
-        part=Part("my-part", {}),
+        part=Part("my-part", {"plugin": "foo"}),
     )
 
 
-@dataclass
-class FooPluginProperties(PluginProperties):
+class FooPluginProperties(PluginProperties, frozen=True):
     """Test plugin properties."""
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
-        return cls()
+    plugin: Literal["foo"] = "foo"
 
 
 class FooPluginEnvironmentValidator(PluginEnvironmentValidator):
     """Check the execution environment for the test plugin."""
 
-    def validate_environment(self, *, part_dependencies: Optional[List[str]] = None):
+    def validate_environment(self, *, part_dependencies: list[str] | None = None):
         """Ensure the environment contains dependencies needed by the plugin.
 
         If the foo executable is created in a part, that part must be named
@@ -100,16 +96,16 @@ class FooPlugin(Plugin):
     properties_class = FooPluginProperties
     validator_class = FooPluginEnvironmentValidator
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return ["foo"]
 
 

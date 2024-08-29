@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2023 Canonical Ltd.
+# Copyright 2017-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,10 @@ import logging
 import os
 import os.path
 import shutil
+from collections.abc import Callable, Sequence
 from glob import iglob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, cast
+from typing import Any, cast
 
 from typing_extensions import Protocol
 
@@ -57,8 +58,7 @@ class _RunHandler(Protocol):
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> StepState:
-        ...
+    ) -> StepState: ...
 
 
 class _UpdateHandler(Protocol):
@@ -68,8 +68,7 @@ class _UpdateHandler(Protocol):
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 class PartHandler:
@@ -85,11 +84,11 @@ class PartHandler:
         part: Part,
         *,
         part_info: PartInfo,
-        part_list: List[Part],
+        part_list: list[Part],
         track_stage_packages: bool = False,
         overlay_manager: OverlayManager,
-        ignore_patterns: Optional[List[str]] = None,
-        base_layer_hash: Optional[LayerHash] = None,
+        ignore_patterns: list[str] | None = None,
+        base_layer_hash: LayerHash | None = None,
     ) -> None:
         self._part = part
         self._part_info = part_info
@@ -97,7 +96,7 @@ class PartHandler:
         self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
-        self._app_environment: Dict[str, str] = {}
+        self._app_environment: dict[str, str] = {}
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -252,7 +251,11 @@ class PartHandler:
                 self._part.spec.overlay_files, name="overlay"
             )
             destdir = self._part.part_layer_dir
-            files, dirs = filesets.migratable_filesets(overlay_fileset, str(destdir))
+            files, dirs = filesets.migratable_filesets(
+                overlay_fileset,
+                str(destdir),
+                "default" if self._part_info.partitions else None,
+            )
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
         else:
             contents = StepContents()
@@ -366,7 +369,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
-            work_dir=self._part.base_stage_dir,
+            work_dir=self._part.stage_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -405,7 +408,7 @@ class PartHandler:
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
-            work_dir=self._part.base_prime_dir,
+            work_dir=self._part.prime_dir,
             stdout=stdout,
             stderr=stderr,
         )
@@ -473,6 +476,7 @@ class PartHandler:
             env=step_env,
             stdout=stdout,
             stderr=stderr,
+            partitions=self._part_info.partitions,
         )
 
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
@@ -685,8 +689,8 @@ class PartHandler:
             return
 
         logger.debug("staging overlay files")
-        migrated_files: Set[str] = set()
-        migrated_dirs: Set[str] = set()
+        migrated_files: set[str] = set()
+        migrated_dirs: set[str] = set()
 
         # process layers from top to bottom (reversed)
         for part in reversed(parts_with_overlay):
@@ -731,8 +735,8 @@ class PartHandler:
             return
 
         logger.debug("priming overlay files")
-        migrated_files: Set[str] = set()
-        migrated_dirs: Set[str] = set()
+        migrated_files: set[str] = set()
+        migrated_dirs: set[str] = set()
 
         # process layers from top to bottom (reversed)
         for part in reversed(parts_with_overlay):
@@ -812,15 +816,18 @@ class PartHandler:
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
         _remove(self._part.part_build_dir)
-        _remove(self._part.part_install_dir)
+        for install_dir in self._part.part_install_dirs.values():
+            _remove(install_dir)
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
-        self._clean_shared(Step.STAGE, shared_dir=self._part.base_stage_dir)
+        for stage_dir in self._part.stage_dirs.values():
+            self._clean_shared(Step.STAGE, shared_dir=stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
-        self._clean_shared(Step.PRIME, shared_dir=self._part.base_prime_dir)
+        for prime_dir in self._part.prime_dirs.values():
+            self._clean_shared(Step.PRIME, shared_dir=prime_dir)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
@@ -873,12 +880,12 @@ class PartHandler:
         mapping = self._part.spec.organize_files
         organize_files(
             part_name=self._part.name,
-            mapping=mapping,
-            base_dir=self._part.part_base_install_dir,
+            file_map=mapping,
+            install_dir_map=self._part.part_install_dirs,
             overwrite=overwrite,
         )
 
-    def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:
+    def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.
 
         :raises StagePackageNotFound: If a package is not available for download.
@@ -903,7 +910,7 @@ class PartHandler:
 
         return fetched_packages
 
-    def _fetch_stage_snaps(self) -> Optional[Sequence[str]]:
+    def _fetch_stage_snaps(self) -> Sequence[str] | None:
         """Download snap packages to the part's snap directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
@@ -989,7 +996,7 @@ def _remove(filename: Path) -> None:
 
 
 def _apply_file_filter(
-    *, filter_files: Set[str], filter_dirs: Set[str], destdir: Path
+    *, filter_files: set[str], filter_dirs: set[str], destdir: Path
 ) -> None:
     """Remove files and directories from the filesystem.
 
@@ -1022,7 +1029,7 @@ def _apply_file_filter(
                 shutil.rmtree(str(path))
 
 
-def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
+def _get_build_packages(*, part: Part, plugin: Plugin) -> list[str]:
     """Obtain the consolidated list of required build packages.
 
     The list of build packages include packages defined directly in
@@ -1034,7 +1041,7 @@ def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
 
     :return: The list of build packages.
     """
-    all_packages: List[str] = []
+    all_packages: list[str] = []
 
     build_packages = part.spec.build_packages
     if build_packages:
@@ -1062,7 +1069,7 @@ def _get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
     return all_packages
 
 
-def _get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
+def _get_build_snaps(*, part: Part, plugin: Plugin) -> list[str]:
     """Obtain the consolidated list of required build snaps.
 
     The list of build snaps include snaps defined directly in the parts
@@ -1073,7 +1080,7 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
 
     :return: The list of build snaps.
     """
-    all_snaps: List[str] = []
+    all_snaps: list[str] = []
 
     build_snaps = part.spec.build_snaps
     if build_snaps:
@@ -1088,7 +1095,7 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
     return all_snaps
 
 
-def _get_machine_manifest() -> Dict[str, Any]:
+def _get_machine_manifest() -> dict[str, Any]:
     """Obtain information about the system OS and runtime environment."""
     return {
         "uname": os_utils.get_system_info(),
@@ -1097,7 +1104,7 @@ def _get_machine_manifest() -> Dict[str, Any]:
     }
 
 
-def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]:
+def _load_part_states(step: Step, part_list: list[Part]) -> dict[str, StepState]:
     """Return a dictionary of the state of the given step for all given parts.
 
     :param step: The step whose states should be loaded.
@@ -1105,7 +1112,7 @@ def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]
 
     :return: A dictionary mapping part names to its state for the given step.
     """
-    part_states: Dict[str, StepState] = {}
+    part_states: dict[str, StepState] = {}
     for part in part_list:
         state = states.load_step_state(part, step)
         if state:
@@ -1113,7 +1120,7 @@ def _load_part_states(step: Step, part_list: List[Part]) -> Dict[str, StepState]
     return part_states
 
 
-def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Part]:
+def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Part]:
     """Obtain a list of parts with overlay that reached the given step.
 
     :param step: The step to test for parts with overlay.
@@ -1125,8 +1132,8 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: List[Part]) -> List[Pa
     return [p for p in oparts if states.get_step_state_path(p, step).exists()]
 
 
-def _get_primed_stage_packages(snap_files: Set[str], *, prime_dir: Path) -> Set[str]:
-    primed_stage_packages: Set[str] = set()
+def _get_primed_stage_packages(snap_files: set[str], *, prime_dir: Path) -> set[str]:
+    primed_stage_packages: set[str] = set()
     for _snap_file in snap_files:
         snap_file = str(prime_dir / _snap_file)
         stage_package = read_origin_stage_package(snap_file)

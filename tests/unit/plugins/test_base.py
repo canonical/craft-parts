@@ -14,23 +14,22 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Set, cast
+import textwrap
+from typing import Literal, cast
 
 import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin, PluginProperties
-from craft_parts.plugins.base import extract_plugin_properties
+from craft_parts.plugins.base import BasePythonPlugin
 
 
-class FooPluginProperties(PluginProperties):
+class FooPluginProperties(PluginProperties, frozen=True):
     """Test plugin properties."""
 
-    name: str
+    plugin: Literal["foo"] = "foo"
 
-    @classmethod
-    def unmarshal(cls, data: Dict[str, Any]):
-        return cls(name=data.get("foo-name", "nothing"))
+    foo_name: str
 
 
 class FooPlugin(Plugin):
@@ -38,18 +37,18 @@ class FooPlugin(Plugin):
 
     properties_class = FooPluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return {"build_snap"}
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return {"build_package"}
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"ENV": "value"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         options = cast(FooPluginProperties, self._options)
-        return ["hello", options.name]
+        return ["hello", options.foo_name]
 
 
 def test_plugin(new_dir):
@@ -88,14 +87,183 @@ def test_abstract_methods(new_dir):
         FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
 
 
-def test_extract_plugin_properties():
-    data = {
-        "foo": True,
-        "test": "yes",
-        "test-one": 1,
-        "test-two": 2,
-        "not-test-three": 3,
+class FooPythonPlugin(BasePythonPlugin):
+    """A plugin for testing the base Python plugin."""
+
+    properties_class = FooPluginProperties
+
+    def _get_package_install_commands(self) -> list[str]:
+        return ["echo 'This is where I put my install commands... if I had any!'"]
+
+
+@pytest.fixture
+def python_plugin(new_dir):
+    properties = FooPythonPlugin.properties_class.unmarshal(
+        {"source": ".", "foo-name": "testy"}
+    )
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
+
+    return FooPythonPlugin(properties=properties, part_info=part_info)
+
+
+def test_python_get_build_packages(python_plugin):
+    assert python_plugin.get_build_packages() == {
+        "findutils",
+        "python3-venv",
+        "python3-dev",
     }
 
-    plugin_data = extract_plugin_properties(data, plugin_name="test")
-    assert plugin_data == {"test-one": 1, "test-two": 2}
+
+def test_python_get_build_environment(new_dir, python_plugin):
+    assert python_plugin.get_build_environment() == {
+        "PATH": f"{new_dir}/parts/p1/install/bin:${{PATH}}",
+        "PARTS_PYTHON_INTERPRETER": "python3",
+        "PARTS_PYTHON_VENV_ARGS": "",
+    }
+
+
+def test_python_get_create_venv_commands(new_dir, python_plugin: FooPythonPlugin):
+    assert python_plugin._get_create_venv_commands() == [
+        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+    ]
+
+
+def test_python_get_find_python_interpreter_commands(
+    new_dir, python_plugin: FooPythonPlugin
+):
+    assert python_plugin._get_find_python_interpreter_commands() == [
+        textwrap.dedent(
+            f"""\
+            # look for a provisioned python interpreter
+            opts_state="$(set +o|grep errexit)"
+            set +e
+            install_dir="{new_dir}/parts/p1/install/usr/bin"
+            stage_dir="{new_dir}/stage/usr/bin"
+
+            # look for the right Python version - if the venv was created with python3.10,
+            # look for python3.10
+            basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
+            echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+
+            if [ -n "$payload_python" ]; then
+                # We found a provisioned interpreter, use it.
+                echo Found interpreter in payload: \\"${{payload_python}}\\"
+                installed_python="${{payload_python##{new_dir}/parts/p1/install}}"
+                if [ "$installed_python" = "$payload_python" ]; then
+                    # Found a staged interpreter.
+                    symlink_target="..${{payload_python##{new_dir}/stage}}"
+                else
+                    # The interpreter was installed but not staged yet.
+                    symlink_target="..$installed_python"
+                fi
+            else
+                # Otherwise use what _get_system_python_interpreter() told us.
+                echo "Python interpreter not found in payload."
+                symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
+            fi
+
+            if [ -z "$symlink_target" ]; then
+                echo "No suitable Python interpreter found, giving up."
+                exit 1
+            fi
+
+            eval "${{opts_state}}"
+            """
+        ),
+    ]
+
+
+def test_python_get_rewrite_shebangs_commands(new_dir, python_plugin: FooPythonPlugin):
+    assert python_plugin._get_rewrite_shebangs_commands() == [
+        textwrap.dedent(
+            f"""\
+            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\
+                sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
+            """
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    ("should_remove_symlinks", "expected_template"),
+    [
+        (
+            True,
+            [
+                "echo Removing python symlinks in {install_dir}/bin",
+                'rm "{install_dir}"/bin/python*',
+            ],
+        ),
+        (False, ['ln -sf "${{symlink_target}}" "${{PARTS_PYTHON_VENV_INTERP_PATH}}"']),
+    ],
+)
+def test_python_get_handle_symlinks_commands(
+    new_dir,
+    python_plugin: FooPythonPlugin,
+    should_remove_symlinks,
+    expected_template: list[str],
+):
+    expected = [
+        template.format(install_dir=new_dir / "parts" / "p1" / "install")
+        for template in expected_template
+    ]
+    python_plugin._should_remove_symlinks = lambda: should_remove_symlinks  # type: ignore[method-assign]
+
+    assert python_plugin._get_handle_symlinks_commands() == expected
+
+
+def test_python_get_build_commands(new_dir, python_plugin: FooPythonPlugin):
+    assert python_plugin.get_build_commands() == [
+        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
+        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+        "echo 'This is where I put my install commands... if I had any!'",
+        textwrap.dedent(
+            f"""\
+            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\
+                sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
+            """
+        ),
+        textwrap.dedent(
+            f"""\
+            # look for a provisioned python interpreter
+            opts_state="$(set +o|grep errexit)"
+            set +e
+            install_dir="{new_dir}/parts/p1/install/usr/bin"
+            stage_dir="{new_dir}/stage/usr/bin"
+
+            # look for the right Python version - if the venv was created with python3.10,
+            # look for python3.10
+            basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
+            echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+
+            if [ -n "$payload_python" ]; then
+                # We found a provisioned interpreter, use it.
+                echo Found interpreter in payload: \\"${{payload_python}}\\"
+                installed_python="${{payload_python##{new_dir}/parts/p1/install}}"
+                if [ "$installed_python" = "$payload_python" ]; then
+                    # Found a staged interpreter.
+                    symlink_target="..${{payload_python##{new_dir}/stage}}"
+                else
+                    # The interpreter was installed but not staged yet.
+                    symlink_target="..$installed_python"
+                fi
+            else
+                # Otherwise use what _get_system_python_interpreter() told us.
+                echo "Python interpreter not found in payload."
+                symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
+            fi
+
+            if [ -z "$symlink_target" ]; then
+                echo "No suitable Python interpreter found, giving up."
+                exit 1
+            fi
+
+            eval "${{opts_state}}"
+            """
+        ),
+        'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"',
+    ]

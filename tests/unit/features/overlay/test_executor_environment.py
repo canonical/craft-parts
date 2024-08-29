@@ -16,7 +16,6 @@
 
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Set
 
 import pytest
 from craft_parts import plugins
@@ -32,16 +31,16 @@ class FooPlugin(plugins.Plugin):
 
     properties_class = plugins.PluginProperties
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         return set()
 
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         return set()
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         return {"PLUGIN_ENVVAR": "from_plugin"}
 
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         return []
 
 
@@ -82,7 +81,7 @@ def test_generate_step_environment_build(new_dir, partitions):
         partitions=partitions,
     )
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -144,7 +143,7 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
         partitions=partitions,
     )
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
     )
@@ -202,7 +201,7 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
         partitions=partitions,
     )
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -256,7 +255,7 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
 def test_generate_step_environment_no_user_env(new_dir, partitions):
     p1 = Part("p1", {})
     info = ProjectInfo(
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -321,7 +320,7 @@ def test_generate_step_environment_no_user_env(new_dir, partitions):
 def test_expand_variables(new_dir, partitions, var, value):
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -344,10 +343,10 @@ def test_expand_variables_order(mocker, new_dir, partitions):
 
     $CRAFT_ARCH_TRIPLET_BUILD_{ON|FOR} should be replaced before $CRAFT_ARCH_TRIPLET
     """
-    mocker.patch("craft_parts.infos._get_host_architecture", return_value="x86_64")
+    mocker.patch("craft_parts.infos._get_host_architecture", return_value="amd64")
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",
@@ -379,7 +378,7 @@ def test_expand_variables_order(mocker, new_dir, partitions):
 def test_expand_variables_skip(new_dir, partitions):
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
-        arch="aarch64",
+        arch="arm64",
         application_name="xyz",
         cache_dir=new_dir,
         project_name="test-project",

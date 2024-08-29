@@ -19,7 +19,6 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ class FileCache:
         """
         self.file_cache = Path(cache_dir, namespace)
 
-    def cache(self, *, filename: str, key: str) -> Optional[Path]:
+    def cache(self, *, filename: str, key: str) -> Path | None:
         """Cache a file revision with hash in XDG cache, unless it already exists.
 
         :param filename: The path to the file to cache.
@@ -53,7 +52,7 @@ class FileCache:
             return None
         return cached_file_path
 
-    def get(self, *, key: str) -> Optional[Path]:
+    def get(self, *, key: str) -> Path | None:
         """Get the filepath which matches the hash calculated with algorithm.
 
         :param key: The key used to cache the file.

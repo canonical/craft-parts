@@ -2,6 +2,113 @@
 Changelog
 *********
 
+2.0.0 (2024-08-08)
+------------------
+
+Breaking changes:
+
+- Set minimum Python version to 3.10
+- Plugin models are restructured
+- Migrate to Pydantic 2
+- API uses Debian architecture names rather than Python platform names
+
+New features:
+
+- Plugin models can use Pydantic JSON schema export
+- Partition names can include hyphens
+
+Bug fixes:
+
+- Xattrs raise FileNotFoundError when appropriate
+- Partition names are more strictly checked.
+
+1.34.0 (2024-08-01)
+-------------------
+- Allow numbers in partitions, partition namespaces, and namespaced partitions.
+- Add documentation for chisel and the overlay step
+- Improve README onboarding
+
+1.33.0 (2024-07-02)
+-------------------
+
+- Add doc slugs for errors during build, linking to plugin docs
+- Add docs for partitions
+
+1.32.0 (2024-06-24)
+-------------------
+
+- Add support for 7z sources
+- Add reference documentation for the qmake plugin
+- Improve logging output when fetching packages
+- Improve errors for when sources cannot be fetched
+- Fix a behavior where apt packages would be fetched when the user was
+  not a superuser
+- Fix list of ignored packages in core24 bases when fetching stage-packages
+
+1.31.0 (2024-05-16)
+-------------------
+
+- Refactor npm plugin
+  - npm-node-version option now accepts a NVM-style version identifier
+  - Move Node.js download to pull commands
+  - Verify SHA256 checksums after node.js download
+  - Use new-style npm-install commands if npm version is newer than 8.x
+  - Set NODE_ENV to production by default
+- New and improved documentation
+  - Add go plugin reference
+  - Add nil plugin reference
+  - Add make plugin reference
+  - Add autotools plugin reference
+  - Add cmake plugin reference
+  - Add scons plugin reference
+  - Add ant plugin reference
+  - Add dotnet plugin reference
+  - Add meson plugin reference
+  - Documentation fixes
+
+1.30.1 (2024-06-21)
+-------------------
+
+- Fix list of ignored packages in core24 bases when fetching stage-packages
+
+1.30.0 (2024-05-16)
+-------------------
+
+- Add support for armv8l
+- Add support for unregistering plugins
+
+1.29.0 (2024-03-20)
+-------------------
+
+- Add maven plugin documentation
+- Add documentation linters
+- Rework bundling of shared docs
+
+1.28.1 (2024-03-19)
+-------------------
+
+- Fix organize directories
+
+1.28.0 (2024-03-13)
+-------------------
+
+- Add namespaced partitions support
+
+1.27.0 (2024-03-07)
+-------------------
+
+- Add base layer data to ProjectInfo
+- Add qmake plugin
+- Add proxy support to ant plugin
+- Use rustup snap in the Rust plugin
+- Update documentation
+
+1.26.2 (2024-02-07)
+-------------------
+
+- Fix default setting in aliased part fields
+- Fix proxy setting in ant plugin
+
 1.26.1 (2023-12-13)
 -------------------
 

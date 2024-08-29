@@ -26,7 +26,7 @@ from craft_parts import errors
 from craft_parts.utils import os_utils
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_check_output(mocker):
     return mocker.patch("subprocess.check_output")
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022-2023 Canonical Ltd.
+# Copyright 2022-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,62 +17,57 @@
 """The craft Rust plugin."""
 
 import logging
+import os
+import re
 import subprocess
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
+from typing import Literal, cast
 
+import pydantic
 from overrides import override
-from pydantic import conlist
+
+from craft_parts.constraints import UniqueList
 
 from . import validator
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .properties import PluginProperties
-
-GET_RUSTUP_COMMAND_TEMPLATE = (
-    "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
-    "sh -s -- -y --no-modify-path --profile=minimal --default-toolchain {channel}"
-)
 
 logger = logging.getLogger(__name__)
 
-# A workaround for mypy false positives
-# see https://github.com/samuelcolvin/pydantic/issues/975#issuecomment-551147305
-# The proper fix requires Python 3.9+ (needs `typing.Annotated`)
-if TYPE_CHECKING:
-    UniqueStrList = List[str]
-else:
-    UniqueStrList = conlist(str, unique_items=True)
 
-
-class RustPluginProperties(PluginProperties, PluginModel):
+class RustPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Rust plugin."""
 
+    plugin: Literal["rust"] = "rust"
+
     # part properties required by the plugin
-    rust_features: UniqueStrList = []
-    rust_path: UniqueStrList = ["."]
-    rust_channel: Optional[str] = None
+    rust_features: UniqueList[str] = []
+    rust_path: UniqueList[str] = ["."]
+    rust_channel: str | None = None
     rust_use_global_lto: bool = False
     rust_no_default_features: bool = False
-    source: str
-    after: Optional[UniqueStrList] = None
+    rust_ignore_toolchain_file: bool = False
+    rust_cargo_parameters: list[str] = []
+    rust_inherit_ldflags: bool = False
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    after: UniqueList[str] | None = None
 
+    @pydantic.field_validator("rust_channel")
     @classmethod
-    @override
-    def unmarshal(cls, data: Dict[str, Any]) -> "RustPluginProperties":
-        """Populate class attributes from the part specification.
+    def validate_rust_channel(cls, value: str | None) -> str | None:
+        """Validate the rust-channel property.
 
-        :param data: A dictionary containing part properties.
+        :param value: The value to validate.
 
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
+        :return: The validated value.
         """
-        plugin_data = extract_plugin_properties(
-            data,
-            plugin_name="rust",
-            required=["source"],
-        )
-        return cls(**plugin_data)
+        if value is None or value == "none":
+            return value
+        if re.match(r"^(stable|beta|nightly)(-[\w-]+)?$", value):
+            return value
+        if re.match(r"^\d+\.\d+(\.\d+)?(-[\w-]+)?$", value):
+            return value
+        raise ValueError(f"Invalid rust-channel: {value}")
 
 
 class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -84,7 +79,7 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     @override
     def validate_environment(
-        self, *, part_dependencies: Optional[List[str]] = None
+        self, *, part_dependencies: list[str] | None = None
     ) -> None:
         """Ensure the environment has the dependencies to build Rust applications.
 
@@ -125,9 +120,19 @@ class RustPlugin(Plugin):
           If you don't want this plugin to install Rust toolchain for you,
           you can put "none" for this option.
 
+        - rust-ignore-toolchain-file
+          (boolean, default False)
+          Whether to ignore the rust-toolchain.toml file.
+          The upstream project can use this file to specify which Rust
+          toolchain to use and which component to install.
+          If you don't want to follow the upstream project's specifications,
+          you can put true for this option to ignore the toolchain file.
+
         - rust-features
           (list of strings)
-          Features used to build optional dependencies
+          Features used to build optional dependencies.
+          You can specify ["*"] for all features
+          (including all the optional ones).
 
         - rust-path
           (list of strings, default [.])
@@ -145,18 +150,32 @@ class RustPlugin(Plugin):
           reducing the final binary size.
           This will forcibly enable LTO for all the crates you specified,
           regardless of whether you have LTO enabled in the Cargo.toml file
+
+        - rust-cargo-parameters
+          (list of strings)
+          Append additional parameters to the Cargo command line.
+
+        - rust-inherit-ldflags
+          (boolean, default False)
+          Whether to inherit the LDFLAGS from the environment.
+          This option will add the LDFLAGS from the environment to the
+          Rust linker directives.
     """
 
     properties_class = RustPluginProperties
     validator_class = RustPluginEnvironmentValidator
 
     @override
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
-        return set()
+        options = cast(RustPluginProperties, self._options)
+        if not options.rust_channel and self._check_system_rust():
+            logger.info("Rust is installed on the system, skipping rustup")
+            return set()
+        return {"rustup"}
 
     @override
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return {"curl", "gcc", "git", "pkg-config", "findutils"}
 
@@ -170,37 +189,49 @@ class RustPlugin(Plugin):
         else:
             return "rustc" in rust_version and "cargo" in cargo_version
 
-    def _check_rustup(self) -> bool:
-        try:
-            rustup_version = subprocess.check_output(["rustup", "--version"])
-            return "rustup" in rustup_version.decode("utf-8")
-        except (subprocess.CalledProcessError, FileNotFoundError):
+    def _check_toolchain_file(self) -> bool:
+        """Return if the rust-toolchain.toml file exists."""
+        options = cast(RustPluginProperties, self._options)
+        if options.rust_ignore_toolchain_file:
             return False
-
-    def _get_setup_rustup(self, channel: str) -> List[str]:
-        return [GET_RUSTUP_COMMAND_TEMPLATE.format(channel=channel)]
+        return os.path.exists("rust-toolchain.toml") or os.path.exists("rust-toolchain")
 
     @override
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
-        return {
+        variables = {
             "PATH": "${HOME}/.cargo/bin:${PATH}",
         }
+        options = cast(RustPluginProperties, self._options)
+        if options.rust_ignore_toolchain_file:
+            # add a forced override to ignore the toolchain file
+            variables["RUSTUP_TOOLCHAIN"] = options.rust_channel or "stable"
+        return variables
 
     @override
-    def get_pull_commands(self) -> List[str]:
+    def get_pull_commands(self) -> list[str]:
         """Return a list of commands to run during the pull step."""
         options = cast(RustPluginProperties, self._options)
-        if not options.rust_channel and self._check_system_rust():
-            logger.info("Rust is installed on the system, skipping rustup")
-            return []
-
         rust_channel = options.rust_channel or "stable"
-        if rust_channel == "none":
+
+        if rust_channel == "none" or (
+            not options.rust_channel and self._check_system_rust()
+        ):
+            logger.info("User does not want to use rustup, skipping")
             return []
-        if not self._check_rustup():
-            logger.info("Rustup not found, installing it")
-            return self._get_setup_rustup(rust_channel)
+        if self._check_toolchain_file():
+            if options.rust_channel != "none":
+                logger.warning(
+                    "Specified rust-channel value is overridden by the rust-toolchain.toml file!"
+                )
+                logger.info(
+                    "If you don't want this behavior, you can set rust-ignore-toolchain-file to true"
+                )
+            logger.info("Using the version defined in rust-toolchain.toml file")
+            # we need to use a tool managed by rustup to trigger an install
+            # when the toolchain file is present
+            # (otherwise rustup won't install the correct version)
+            return ["cargo --version"]
         logger.info("Switch rustup channel to %s", rust_channel)
         return [
             f"rustup update {rust_channel}",
@@ -208,16 +239,23 @@ class RustPlugin(Plugin):
         ]
 
     @override
-    def get_build_commands(self) -> List[str]:
+    def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(RustPluginProperties, self._options)
 
-        rust_build_cmd: List[str] = []
-        config_cmd: List[str] = []
+        rust_build_cmd: list[str] = []
+        config_cmd: list[str] = []
 
         if options.rust_features:
-            features_string = " ".join(options.rust_features)
-            config_cmd.extend(["--features", f"'{features_string}'"])
+            if "*" in options.rust_features:
+                if len(options.rust_features) > 1:
+                    raise ValueError(
+                        "Please specify either the wildcard feature or a list of specific features"
+                    )
+                config_cmd.append("--all-features")
+            else:
+                features_string = " ".join(options.rust_features)
+                config_cmd.extend(["--features", f"'{features_string}'"])
 
         if options.rust_use_global_lto:
             logger.info("Adding overrides for LTO support")
@@ -230,6 +268,21 @@ class RustPlugin(Plugin):
 
         if options.rust_no_default_features:
             config_cmd.append("--no-default-features")
+
+        if options.rust_cargo_parameters:
+            config_cmd.extend(options.rust_cargo_parameters)
+
+        if options.rust_inherit_ldflags:
+            rust_build_cmd.append(
+                dedent(
+                    """\
+                    if [ -n "${LDFLAGS}" ]; then
+                        RUSTFLAGS="${RUSTFLAGS:-} -Clink-args=\"${LDFLAGS}\""
+                        export RUSTFLAGS
+                    fi\
+                    """
+                )
+            )
 
         for crate in options.rust_path:
             logger.info("Generating build commands for %s", crate)

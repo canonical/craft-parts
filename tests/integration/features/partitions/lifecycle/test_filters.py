@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -53,5 +53,5 @@ def test_stage_prime_filtering(new_dir, partitions):
         ctx.execute(actions)
 
     # testfile must be in stage but not in prime
-    assert Path("stage/default/testfile").exists()
-    assert Path("prime/default/testfile").exists() is False
+    assert Path("stage/testfile").exists()
+    assert Path("prime/testfile").exists() is False

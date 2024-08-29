@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,6 @@ import os
 import sys
 import textwrap
 from pathlib import Path
-from typing import Optional
 
 import craft_parts.plugins.plugins
 import pytest
@@ -126,7 +125,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override
-        def _get_system_python_interpreter(self) -> Optional[str]:
+        def _get_system_python_interpreter(self) -> str | None:
             return "use-this-python"
 
     plugins.register({"python": MyPythonPlugin})
@@ -162,7 +161,7 @@ def test_python_plugin_no_system_interpreter(
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override
-        def _get_system_python_interpreter(self) -> Optional[str]:
+        def _get_system_python_interpreter(self) -> str | None:
             return None
 
         @override
@@ -301,7 +300,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
 
     class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
         @override
-        def _get_system_python_interpreter(self) -> Optional[str]:
+        def _get_system_python_interpreter(self) -> str | None:
             # To have the build fail after failing to find the payload interpreter
             return None
 
@@ -344,7 +343,7 @@ def test_find_payload_python_good_version(new_dir, partitions):
 
     real_python = Path(sys.executable).resolve()
     real_basename = real_python.name
-    install_dir = Path("parts/foo/install", "default" if partitions else ".")
+    install_dir = Path("parts/foo/install")
 
     # Copy the "real" binary into the payload before calling the plugin's build.
     parts_yaml = PART_WITH_PAYLOAD_PYTHON.format(
@@ -366,7 +365,6 @@ def test_find_payload_python_good_version(new_dir, partitions):
     payload_python = (install_dir / f"usr/bin/{real_basename}").resolve()
     expected_text = textwrap.dedent(
         f"""\
-        Looking for a Python interpreter called "{real_basename}" in the payload...
         Found interpreter in payload: "{payload_python}"
         """
     )

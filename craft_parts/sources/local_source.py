@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,24 +21,44 @@ import functools
 import glob
 import logging
 import os
+import pathlib
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Set, Tuple
+from typing import Annotated, Any, Literal
 
+import pydantic
 from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
 
 from . import errors
-from .base import SourceHandler
+from .base import (
+    BaseSourceModel,
+    SourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
 
 logger = logging.getLogger(__name__)
 
 # TODO: change file operations to use pathlib
 
 
+class LocalSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
+    """Pydantic model for a generic local source."""
+
+    model_config = get_model_config(get_json_extra_schema(r"^\./?"))
+    source_type: Literal["local"] = "local"
+    source: Annotated[  # type: ignore[assignment]
+        pathlib.Path, pydantic.AfterValidator(lambda source: pathlib.Path(source))
+    ]
+
+
 class LocalSource(SourceHandler):
     """The local source handler."""
+
+    source_model = LocalSourceModel
 
     def __init__(
         self,
@@ -56,6 +76,8 @@ class LocalSource(SourceHandler):
             self._ignore_patterns.append(self._dirs.parts_dir.name)
             self._ignore_patterns.append(self._dirs.stage_dir.name)
             self._ignore_patterns.append(self._dirs.prime_dir.name)
+            if self._dirs.partition_dir:
+                self._ignore_patterns.append(self._dirs.partition_dir.name)
         else:
             # otherwise check if work_dir inside source dir
             with contextlib.suppress(ValueError):
@@ -68,8 +90,8 @@ class LocalSource(SourceHandler):
         self._ignore = functools.partial(
             _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns
         )
-        self._updated_files: Set[str] = set()
-        self._updated_directories: Set[str] = set()
+        self._updated_files: set[str] = set()
+        self._updated_directories: set[str] = set()
 
     @overrides
     def pull(self) -> None:
@@ -86,7 +108,7 @@ class LocalSource(SourceHandler):
 
     @overrides
     def check_if_outdated(
-        self, target: str, *, ignore_files: Optional[List[str]] = None
+        self, target: str, *, ignore_files: list[str] | None = None
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -144,7 +166,7 @@ class LocalSource(SourceHandler):
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
     @overrides
-    def get_outdated_files(self) -> Tuple[List[str], List[str]]:
+    def get_outdated_files(self) -> tuple[list[str], list[str]]:
         """Obtain lists of outdated files and directories.
 
         :return: The lists of outdated files and directories.
@@ -181,11 +203,11 @@ class LocalSource(SourceHandler):
 def _ignore(
     source: str,
     current_directory: str,
-    patterns: List[str],
+    patterns: list[str],
     directory: str,
     _files: Any,  # noqa: ANN401
-    also_ignore: Optional[List[str]] = None,
-) -> List[str]:
+    also_ignore: list[str] | None = None,
+) -> list[str]:
     """Build a list of files to ignore based on the given patterns."""
     ignored = []
     if directory in (source, current_directory):

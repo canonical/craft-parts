@@ -81,7 +81,7 @@ cases you want to refer to the documentation for the specific plugin.
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Type
+from typing import TYPE_CHECKING
 
 from craft_parts.dirs import ProjectDirs
 
@@ -92,6 +92,7 @@ from .file_source import FileSource
 from .git_source import GitSource
 from .local_source import LocalSource
 from .rpm_source import RpmSource
+from .sevenzip_source import SevenzipSource
 from .snap_source import SnapSource
 from .tar_source import TarSource
 from .zip_source import ZipSource
@@ -99,10 +100,10 @@ from .zip_source import ZipSource
 if TYPE_CHECKING:
     from craft_parts.parts import Part
 
-SourceHandlerType = Type[SourceHandler]
+SourceHandlerType = type[SourceHandler]
 
 
-_source_handler: Dict[str, SourceHandlerType] = {
+_source_handler: dict[str, SourceHandlerType] = {
     "local": LocalSource,
     "tar": TarSource,
     "git": GitSource,
@@ -111,6 +112,7 @@ _source_handler: Dict[str, SourceHandlerType] = {
     "deb": DebSource,
     "file": FileSource,
     "rpm": RpmSource,
+    "7z": SevenzipSource,
 }
 
 
@@ -118,8 +120,8 @@ def get_source_handler(
     cache_dir: Path,
     part: "Part",
     project_dirs: ProjectDirs,
-    ignore_patterns: Optional[List[str]] = None,
-) -> Optional[SourceHandler]:
+    ignore_patterns: list[str] | None = None,
+) -> SourceHandler | None:
     """Return the appropriate handler for the given source.
 
     :param application_name: The name of the application using Craft Parts.

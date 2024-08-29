@@ -18,7 +18,17 @@ import sys
 import textwrap
 from pathlib import Path
 
+import craft_parts
 from craft_parts import main
+
+
+def setup_function():
+    craft_parts.Features.reset()
+
+
+def teardown_function():
+    craft_parts.Features.reset()
+
 
 parts_yaml = textwrap.dedent(
     """
@@ -40,7 +50,6 @@ def test_logging_info(new_dir, caplog, monkeypatch):
     Path("parts.yaml").write_text(parts_yaml)
 
     monkeypatch.setattr(sys, "argv", ["build"])
-    monkeypatch.setenv("CRAFT_PARTS_PACKAGE_REFRESH", "0")
 
     main.main()
 

@@ -4,7 +4,7 @@ from craft_parts.plugins.scons_plugin import SConsPlugin
 from pydantic import ValidationError
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
@@ -113,7 +113,7 @@ def test_missing_parameters():
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
-    assert err[0]["type"] == "value_error.missing"
+    assert err[0]["type"] == "missing"
 
 
 def test_get_build_commands(part_info):

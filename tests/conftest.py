@@ -16,10 +16,11 @@
 
 import http.server
 import os
+import pathlib
 import tempfile
 import threading
 from pathlib import Path
-from typing import Any, Dict, NamedTuple, Optional
+from typing import Any, NamedTuple
 from unittest import mock
 
 import pytest
@@ -37,28 +38,51 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
     monkeypatch.chdir(tmpdir)
     return tmpdir
 
 
-@pytest.fixture()
+@pytest.fixture
+def tmp_homedir_path():
+    """A non-hidden temporary directory in the user's home directory.
+
+    This works around temporary directories being of tmpfs and is an accessible
+    location for snaps with the 'home' plug like chisel.
+    """
+    with tempfile.TemporaryDirectory(
+        prefix="craft-parts-tests", dir=pathlib.Path.home()
+    ) as tmp_dir:
+        yield pathlib.Path(tmp_dir)
+
+
+@pytest.fixture
+def new_homedir_path(monkeypatch, tmp_homedir_path):
+    """Change to a new temporary directory in the user's home directory.
+
+    This works around temporary directories sometimes being on tmpfs, which doesn't support xattrs.
+    """
+    monkeypatch.chdir(tmp_homedir_path)
+    return tmp_homedir_path
+
+
+@pytest.fixture
 def mock_chdir(monkeypatch):
     mock_fn = mock.Mock(spec=os.chdir)
     monkeypatch.setattr(os, "chdir", mock_fn)
     return mock_fn
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_chroot(monkeypatch):
     mock_fn = mock.Mock(spec=os.chroot)
     monkeypatch.setattr(os, "chroot", mock_fn)
     return mock_fn
 
 
-@pytest.fixture()
+@pytest.fixture
 def enable_overlay_feature():
     assert Features().enable_overlay is False
     Features.reset()
@@ -69,7 +93,7 @@ def enable_overlay_feature():
     Features.reset()
 
 
-@pytest.fixture()
+@pytest.fixture
 def enable_partitions_feature():
     assert Features().enable_partitions is False
     Features.reset()
@@ -80,14 +104,14 @@ def enable_partitions_feature():
     Features.reset()
 
 
-@pytest.fixture()
+@pytest.fixture
 def partitions():
     if Features().enable_partitions:
         return ["default", "mypart", "yourpart"]
     return None
 
 
-@pytest.fixture()
+@pytest.fixture
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False
@@ -171,13 +195,13 @@ def fake_snapd():
     socket_path_patcher.stop()
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_snap_command(mocker):
     """Mock the snap command."""
     return FakeSnapCommand(mocker)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dependency_fixture(new_dir):
     """Fixture factory for dependencies."""
 
@@ -185,7 +209,7 @@ def dependency_fixture(new_dir):
         name: str,
         broken: bool = False,  # noqa: FBT001, FBT002
         invalid: bool = False,  # noqa: FBT001, FBT002
-        output: Optional[str] = None,
+        output: str | None = None,
     ) -> Path:
         """Creates a mock executable dependency.
 
@@ -217,11 +241,11 @@ class ChmodCall(NamedTuple):
 
     owner: int
     group: int
-    kwargs: Dict[str, Any]
+    kwargs: dict[str, Any]
 
 
-@pytest.fixture()
-def mock_chown(mocker) -> Dict[str, ChmodCall]:
+@pytest.fixture
+def mock_chown(mocker) -> dict[str, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the

@@ -26,7 +26,7 @@ from craft_parts.actions import Action
 from craft_parts.steps import Step
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_deb(tmp_path: Path) -> Path:
     """
     Create a basic .deb file and return its path.

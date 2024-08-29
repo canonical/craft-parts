@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,28 +16,28 @@
 
 """Craft Parts plugins subsystem."""
 
-from .base import Plugin, PluginModel, extract_plugin_properties
+from .base import Plugin
 from .plugins import (
-    PluginProperties,
     extract_part_properties,
     get_plugin,
     get_plugin_class,
     get_registered_plugins,
     register,
+    unregister,
     unregister_all,
 )
+from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
 __all__ = [
     "Plugin",
     "PluginEnvironmentValidator",
-    "PluginModel",
     "PluginProperties",
     "extract_part_properties",
-    "extract_plugin_properties",
     "get_plugin",
     "get_plugin_class",
     "get_registered_plugins",
     "register",
+    "unregister",
     "unregister_all",
 ]

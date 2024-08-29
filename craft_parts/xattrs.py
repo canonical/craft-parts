@@ -19,14 +19,13 @@
 import logging
 import os
 import sys
-from typing import Optional
 
 from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
 
-def read_xattr(path: str, key: str) -> Optional[str]:
+def read_xattr(path: str, key: str) -> str | None:
     """Get extended attribute metadata from a file.
 
     :param path: The file to get metadata from.
@@ -45,6 +44,8 @@ def read_xattr(path: str, key: str) -> Optional[str]:
 
     try:
         value = os.getxattr(path, key)
+    except FileNotFoundError:
+        raise
     except OSError as error:
         # No label present with:
         # OSError: [Errno 61] No data available: b'<path>'

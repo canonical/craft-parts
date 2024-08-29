@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,9 +21,11 @@ import logging
 import os
 import shutil
 import subprocess
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, ClassVar
 
+import pydantic
 import requests
 from overrides import overrides
 
@@ -37,6 +39,48 @@ from .checksum import verify_checksum
 logger = logging.getLogger(__name__)
 
 
+def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
+    """Get extra values for this source type's JSON schema.
+
+    This extra schema allows any source string if source-type is provided, but requires
+    the given regex pattern if source-type is not declared. A user's IDE will thus
+    warn that they need "source-type" only if the source type cannot be inferred.
+
+    :param type_pattern: A (string) regular expression to use in determining whether
+        the source string is sufficient to infer source-type.
+    :returns: A dictionary to pass into a source model's config ``json_schema_extra``
+    """
+    return {
+        "if": {"not": {"required": ["source-type"]}},
+        "then": {"properties": {"source": {"pattern": type_pattern}}},
+    }
+
+
+def get_model_config(
+    json_schema_extra: dict[str, Any] | None = None,
+) -> pydantic.ConfigDict:
+    """Get a config for a model with minor changes from the default."""
+    return pydantic.ConfigDict(
+        alias_generator=lambda s: s.replace("_", "-"),
+        json_schema_extra=json_schema_extra,
+        extra="forbid",
+    )
+
+
+class BaseSourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
+    """A base model for source types."""
+
+    model_config = get_model_config()
+    source_type: str
+    source: str
+
+
+class BaseFileSourceModel(BaseSourceModel, frozen=True):
+    """A base model for file-based source types."""
+
+    source_checksum: str | None = None
+
+
 class SourceHandler(abc.ABC):
     """The base class for source type handlers.
 
@@ -45,53 +89,65 @@ class SourceHandler(abc.ABC):
     source files.
     """
 
-    # pylint: disable=too-many-arguments
+    source_model: ClassVar[type[BaseSourceModel]]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        command: Optional[str] = None,
-        ignore_patterns: Optional[List[str]] = None,
+        ignore_patterns: list[str] | None = None,
+        **kwargs: Any,
     ) -> None:
         if not ignore_patterns:
             ignore_patterns = []
 
+        invalid_options = []
+        model_params = {key.replace("_", "-"): value for key, value in kwargs.items()}
+        model_params["source"] = source
+        properties = self.source_model.model_json_schema()["properties"]
+        for option, value in kwargs.items():
+            option_alias = option.replace("_", "-")
+            if option_alias not in properties:
+                if not value:
+                    del model_params[option_alias]
+                else:
+                    invalid_options.append(option_alias)
+        if len(invalid_options) > 1:
+            raise errors.InvalidSourceOptions(
+                source_type=properties["source-type"]["default"],
+                options=invalid_options,
+            )
+        if len(invalid_options) == 1:
+            raise errors.InvalidSourceOption(
+                source_type=properties["source-type"]["default"],
+                option=invalid_options[0],
+            )
+
+        self._data = self.source_model.model_validate(model_params)
+
         self.source = source
         self.part_src_dir = part_src_dir
         self._cache_dir = cache_dir
-        self.source_tag = source_tag
-        self.source_commit = source_commit
-        self.source_branch = source_branch
-        self.source_depth = source_depth
-        self.source_checksum = source_checksum
-        self.source_details: Optional[Dict[str, Optional[str]]] = None
-        self.source_submodules = source_submodules
-        self.command = command
+        self.source_details: dict[str, str | None] | None = None
         self._dirs = project_dirs
         self._checked = False
         self._ignore_patterns = ignore_patterns.copy()
 
-        self.outdated_files: Optional[List[str]] = None
-        self.outdated_dirs: Optional[List[str]] = None
+        self.outdated_files: list[str] | None = None
+        self.outdated_dirs: list[str] | None = None
 
-    # pylint: enable=too-many-arguments
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401 (this must be dynamic)
+        return getattr(self._data, name)
 
     @abc.abstractmethod
     def pull(self) -> None:
         """Retrieve the source file."""
 
     def check_if_outdated(
-        self, target: str, *, ignore_files: Optional[List[str]] = None  # noqa: ARG002
+        self, target: str, *, ignore_files: list[str] | None = None  # noqa: ARG002
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -105,7 +161,7 @@ class SourceHandler(abc.ABC):
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
-    def get_outdated_files(self) -> Tuple[List[str], List[str]]:
+    def get_outdated_files(self) -> tuple[list[str], list[str]]:
         """Obtain lists of outdated files and directories.
 
         :return: The lists of outdated files and directories.
@@ -123,7 +179,7 @@ class SourceHandler(abc.ABC):
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
     @classmethod
-    def _run(cls, command: List[str], **kwargs: Any) -> None:
+    def _run(cls, command: list[str], **kwargs: Any) -> None:
         try:
             os_utils.process_run(command, logger.debug, **kwargs)
         except subprocess.CalledProcessError as err:
@@ -141,35 +197,27 @@ class FileSourceHandler(SourceHandler):
     """Base class for file source types."""
 
     # pylint: disable=too-many-arguments
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         source: str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
         project_dirs: ProjectDirs,
-        source_tag: Optional[str] = None,
-        source_commit: Optional[str] = None,
-        source_branch: Optional[str] = None,
-        source_depth: Optional[int] = None,
-        source_checksum: Optional[str] = None,
-        source_submodules: Optional[List[str]] = None,
-        command: Optional[str] = None,
-        ignore_patterns: Optional[List[str]] = None,
+        source_checksum: str | None = None,
+        command: str | None = None,
+        ignore_patterns: list[str] | None = None,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             source,
             part_src_dir,
             cache_dir=cache_dir,
-            source_tag=source_tag,
-            source_commit=source_commit,
-            source_branch=source_branch,
-            source_depth=source_depth,
             source_checksum=source_checksum,
-            source_submodules=source_submodules,
             command=command,
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
+            **kwargs,
         )
         self._file = Path()
 
@@ -180,7 +228,7 @@ class FileSourceHandler(SourceHandler):
         self,
         dst: Path,
         keep: bool = False,  # noqa: FBT001, FBT002
-        src: Optional[Path] = None,
+        src: Path | None = None,
     ) -> None:
         """Process the source file to extract its payload."""
 
@@ -210,7 +258,7 @@ class FileSourceHandler(SourceHandler):
 
         self.provision(self.part_src_dir, src=source_file)
 
-    def download(self, filepath: Optional[Path] = None) -> Path:
+    def download(self, filepath: Path | None = None) -> Path:
         """Download the URL from a remote location.
 
         :param filepath: the destination file to download to.
@@ -239,10 +287,20 @@ class FileSourceHandler(SourceHandler):
                 self.source, stream=True, allow_redirects=True, timeout=3600
             )
             request.raise_for_status()
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == requests.codes.not_found:
+                raise errors.SourceNotFound(source=self.source) from err
+
+            raise errors.HttpRequestError(
+                status_code=err.response.status_code,
+                reason=err.response.reason,
+                source=self.source,
+            ) from err
         except requests.exceptions.RequestException as err:
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
-                f"response={err.response!r})"
+                f"response={err.response!r})",
+                source=self.source,
             ) from err
 
         url_utils.download_request(request, str(self._file))

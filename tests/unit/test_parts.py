@@ -129,12 +129,8 @@ class TestPartPartitionUsage:
             "prime": ["(baz)"],
         }
 
-        part_list = [
-            Part("a", part_data, partitions=partitions),
-            Part("b", part_data, partitions=partitions),
-        ]
-
-        assert not parts.validate_partition_usage(part_list, ["default", "kernel"])
+        Part("a", part_data, partitions=partitions)
+        Part("b", part_data, partitions=partitions)
 
 
 class TestPartData:
@@ -406,7 +402,8 @@ class TestPartUnmarshal:
             Part("foo", data, partitions=partitions)
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
-            "- extra field 'a' not permitted\n- extra field 'b' not permitted"
+            "- Extra inputs are not permitted in field 'a'\n"
+            "- Extra inputs are not permitted in field 'b'"
         )
 
     def test_part_spec_not_dict(self, partitions):
@@ -419,7 +416,9 @@ class TestPartUnmarshal:
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []}, partitions=partitions)
         assert raised.value.part_name == "foo"
-        assert raised.value.message == "- str type expected in field 'plugin'"
+        assert (
+            raised.value.message == "- Input should be a valid string in field 'plugin'"
+        )
 
     @pytest.mark.parametrize("fileset", ["stage", "prime"])
     def test_relative_path_validation(self, partitions, fileset):
@@ -427,9 +426,9 @@ class TestPartUnmarshal:
             Part("foo", {fileset: ["bar", "/baz", ""]}, partitions=partitions)
         assert raised.value.part_name == "foo"
         assert raised.value.message == (
-            "- '/baz' must be a relative path (cannot start with '/') "
+            "- Value error, '/baz' must be a relative path (cannot start with '/') "
             f"in field '{fileset}[1]'\n"
-            f"- path cannot be empty in field '{fileset}[2]'"
+            f"- Value error, path cannot be empty in field '{fileset}[2]'"
         )
 
 
@@ -541,7 +540,7 @@ class TestPartValidation:
             "unexpected-extra": True,
         }
 
-        error = r"unexpected-extra\s+extra fields not permitted"
+        error = r"unexpected-extra\s+Extra inputs are not permitted"
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
 
@@ -551,6 +550,10 @@ class TestPartValidation:
             "make-parameters": ["-C bar"],
         }
 
-        error = r"source\s+field required"
+        error = r"source\s+Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
+
+    def test_part_coerces_numbers(self, partitions):
+        data = {"plugin": "nil", "build-environment": [{"CGO_ENABLED": 0}]}
+        parts.validate_part(data)

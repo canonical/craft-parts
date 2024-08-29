@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,9 +19,9 @@
 import os
 import re
 import sys
-import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union, cast
+from typing import Any, cast
 
 from pydantic import ValidationError
 
@@ -31,7 +31,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
-from craft_parts.parts import Part, part_by_name, validate_partition_usage
+from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import validate_partition_names
@@ -77,34 +77,37 @@ class LifecycleManager:
         matching this name.
     :param project_vars: A dictionary containing project variables.
     :param partitions: A list of partitions to use when the partitions feature is
-        enabled. The first partition must be "default" and all partitions must be
-        lowercase alphabetical.
+        enabled. The first partition must be "default". Partitions may have an
+        optional namespace prefix separated by a forward slash. Partition names
+        must contain one or more lowercase alphanumeric characters or hyphens
+        ("-"), and may not begin or end with a hyphen.  Namespace names must
+        consist of only lowercase alphanumeric characters.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
 
     def __init__(  # noqa: PLR0913
         self,
-        all_parts: Dict[str, Any],
+        all_parts: dict[str, Any],
         *,
         application_name: str,
-        cache_dir: Union[Path, str],
-        work_dir: Union[Path, str] = ".",
+        cache_dir: Path | str,
+        work_dir: Path | str = ".",
         arch: str = "",
         base: str = "",
-        project_name: Optional[str] = None,
+        project_name: str | None = None,
         parallel_build_count: int = 1,
-        application_package_name: Optional[str] = None,
-        ignore_local_sources: Optional[List[str]] = None,
-        extra_build_packages: Optional[List[str]] = None,
-        extra_build_snaps: Optional[List[str]] = None,
+        application_package_name: str | None = None,
+        ignore_local_sources: list[str] | None = None,
+        extra_build_packages: list[str] | None = None,
+        extra_build_snaps: list[str] | None = None,
         track_stage_packages: bool = False,
         strict_mode: bool = False,
-        base_layer_dir: Optional[Path] = None,
-        base_layer_hash: Optional[bytes] = None,
-        project_vars_part_name: Optional[str] = None,
-        project_vars: Optional[Dict[str, str]] = None,
-        partitions: Optional[List[str]] = None,
+        base_layer_dir: Path | None = None,
+        base_layer_hash: bytes | None = None,
+        project_vars_part_name: str | None = None,
+        project_vars: dict[str, str] | None = None,
+        partitions: list[str] | None = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -154,12 +157,7 @@ class LifecycleManager:
             _validate_part_dependencies(part, parts_data)
             part_list.append(part)
 
-        if partitions:
-            validate_partition_usage(part_list, partitions)
-
         self._has_overlay = any(p.has_overlay for p in part_list)
-
-        _validate_partition_usage_in_parts(part_list, partitions)
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
@@ -173,7 +171,7 @@ class LifecycleManager:
             base_layer_dir = None
 
         if base_layer_hash:
-            layer_hash: Optional[LayerHash] = LayerHash(base_layer_hash)
+            layer_hash: LayerHash | None = LayerHash(base_layer_hash)
         else:
             layer_hash = None
 
@@ -205,7 +203,7 @@ class LifecycleManager:
         return self._project_info
 
     def clean(
-        self, step: Step = Step.PULL, *, part_names: Optional[List[str]] = None
+        self, step: Step = Step.PULL, *, part_names: list[str] | None = None
     ) -> None:
         """Clean the specified step and parts.
 
@@ -229,8 +227,12 @@ class LifecycleManager:
         packages.Repository.refresh_packages_list()
 
     def plan(
-        self, target_step: Step, part_names: Optional[Sequence[str]] = None
-    ) -> List[Action]:
+        self,
+        target_step: Step,
+        part_names: Sequence[str] | None = None,
+        *,
+        rerun: bool = False,
+    ) -> list[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.
@@ -240,7 +242,7 @@ class LifecycleManager:
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
         """
-        return self._sequencer.plan(target_step, part_names)
+        return self._sequencer.plan(target_step, part_names, rerun=rerun)
 
     def reload_state(self) -> None:
         """Reload the ephemeral state from disk."""
@@ -250,7 +252,7 @@ class LifecycleManager:
         """Return a context manager for action execution."""
         return executor.ExecutionContext(executor=self._executor)
 
-    def get_pull_assets(self, *, part_name: str) -> Optional[Dict[str, Any]]:
+    def get_pull_assets(self, *, part_name: str) -> dict[str, Any] | None:
         """Return the part's pull state assets.
 
         :param part_name: The name of the part to get assets from.
@@ -261,7 +263,7 @@ class LifecycleManager:
         state = cast(states.PullState, states.load_step_state(part, Step.PULL))
         return state.assets if state else None
 
-    def get_primed_stage_packages(self, *, part_name: str) -> Optional[List[str]]:
+    def get_primed_stage_packages(self, *, part_name: str) -> list[str] | None:
         """Return the list of primed stage packages.
 
         :param part_name: The name of the part to get primed stage packages from.
@@ -290,10 +292,10 @@ def _ensure_overlay_supported() -> None:
 
 def _build_part(
     name: str,
-    spec: Dict[str, Any],
+    spec: dict[str, Any],
     project_dirs: ProjectDirs,
     strict_plugins: bool,  # noqa: FBT001
-    partitions: Optional[List[str]],
+    partitions: list[str] | None,
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -348,71 +350,7 @@ def _build_part(
     )
 
 
-def _validate_part_dependencies(part: Part, parts_data: Dict[str, Any]) -> None:
+def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
-
-
-def _validate_partition_usage_in_parts(
-    part_list: List[Part], partitions: Optional[List[str]]
-) -> None:
-    # skip validation if partitions are not enabled
-    if not Features().enable_partitions:
-        return
-
-    if not partitions:
-        partitions = []
-
-    for part in part_list:
-        for filepaths in [
-            part.spec.organize_files,
-            part.spec.overlay_files,
-            part.spec.prime_files,
-            part.spec.stage_files,
-        ]:
-            _validate_partitions_in_paths(list(filepaths), partitions)
-
-
-def _validate_partitions_in_paths(
-    paths: List[str], valid_partitions: List[str]
-) -> None:
-    """Validate a list of paths to ensure that any partitions are unambiguous.
-
-    Each path in the the list of paths should either explicitly name a valid
-    partition or should not begin with a partition name. If a path contains
-    an explicitly declared invalid partition, an error will be raised.
-    If a path begins with a name that is a valid partition but does not use
-    the parenthetical to indicate that it is a partition, a warning will be
-    logged that the path will go into the default partition and that the user
-    should specify the default partition in that path to silence the warning.
-    """
-    # do not validate default glob
-    if paths == ["*"]:
-        return
-
-    for filepath in paths:
-        match = re.match("^-?\\((?P<partition>[a-z]+)\\)", filepath)
-        if match:
-            partition = match.group("partition")
-            if partition not in valid_partitions:
-                raise errors.InvalidPartitionError(
-                    partition, filepath, valid_partitions
-                )
-        match = re.match("^-?(?P<possible_partition>[a-z]+)/?", filepath)
-        if match:
-            partition = match.group("possible_partition")
-            if partition in valid_partitions:
-                warnings.warn(
-                    errors.PartitionWarning(
-                        partition,
-                        f"Path begins with a valid partition name ({partition!r}), "
-                        "but it is not wrapped in parentheses.",
-                        details="This path will go into the default partition.",
-                        resolution=(
-                            "Specify the correct partition name, for example "
-                            f"'(default)/{filepath}'"
-                        ),
-                    ),
-                    stacklevel=1,
-                )

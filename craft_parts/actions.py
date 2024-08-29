@@ -18,7 +18,7 @@
 
 import enum
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 from craft_parts.steps import Step
 
@@ -57,8 +57,8 @@ class ActionType(enum.IntEnum):
 class ActionProperties:
     """Properties defined for an action."""
 
-    changed_files: Optional[List[str]] = None
-    changed_dirs: Optional[List[str]] = None
+    changed_files: list[str] | None = None
+    changed_dirs: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -81,6 +81,6 @@ class Action:
     part_name: str
     step: Step
     action_type: ActionType = ActionType.RUN
-    reason: Optional[str] = None
-    project_vars: Optional[Dict[str, "ProjectVar"]] = None
+    reason: str | None = None
+    project_vars: dict[str, "ProjectVar"] | None = None
     properties: ActionProperties = field(default=ActionProperties())

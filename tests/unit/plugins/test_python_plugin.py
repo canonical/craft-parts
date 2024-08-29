@@ -16,7 +16,6 @@
 
 from pathlib import Path
 from textwrap import dedent
-from typing import List
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
@@ -24,7 +23,7 @@ from craft_parts.plugins.python_plugin import PythonPlugin
 from pydantic import ValidationError
 
 
-@pytest.fixture()
+@pytest.fixture
 def plugin(new_dir):
     properties = PythonPlugin.properties_class.unmarshal({"source": "."})
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
@@ -50,20 +49,14 @@ def test_get_build_environment(plugin, new_dir):
 
 def get_build_commands(
     new_dir: Path, *, should_remove_symlinks: bool = False
-) -> List[str]:
+) -> list[str]:
     if should_remove_symlinks:
-        postfix = dedent(
-            f"""\
-            echo Removing python symlinks in {new_dir}/parts/p1/install/bin
-            rm "{new_dir}/parts/p1/install"/bin/python*
-            """
-        )
+        postfix = [
+            f"echo Removing python symlinks in {new_dir}/parts/p1/install/bin",
+            f'rm "{new_dir}/parts/p1/install"/bin/python*',
+        ]
     else:
-        postfix = dedent(
-            """\
-            ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"
-            """
-        )
+        postfix = ['ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"']
 
     return [
         dedent(
@@ -111,7 +104,7 @@ def get_build_commands(
             eval "${{opts_state}}"
             """
         ),
-        postfix,
+        *postfix,
     ]
 
 
@@ -155,7 +148,7 @@ def test_invalid_properties():
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("python-invalid",)
-    assert err[0]["type"] == "value_error.extra"
+    assert err[0]["type"] == "extra_forbidden"
 
 
 def test_missing_properties():
@@ -164,7 +157,7 @@ def test_missing_properties():
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
-    assert err[0]["type"] == "value_error.missing"
+    assert err[0]["type"] == "missing"
 
 
 def test_get_out_of_source_build(plugin):

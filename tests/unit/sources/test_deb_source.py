@@ -21,7 +21,7 @@ from craft_parts.sources import sources
 from craft_parts.utils import os_utils
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_process_run(mocker):
     return mocker.patch.object(os_utils, "process_run", autospec=True)
 

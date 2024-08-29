@@ -370,7 +370,6 @@ def test_main_step_specify_part_dry_run(mocker, capfd):
                 "Build foo\n"
                 "Stage foo (required to build 'bar')\n"
                 "Build bar\n"
-                "Restage foo (requested step)\n"
                 "Stage bar\n"
             ),
         ),

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -39,11 +39,13 @@ def _current_release_supported() -> bool:
     )
 
 
-@pytest.mark.skipif(not IS_CI, reason="This test needs 'chisel' and only runs on CI.")
-def test_chisel_lifecycle(new_dir, partitions):
+@pytest.mark.skipif(
+    not _current_release_supported(), reason="Test needs Chisel support"
+)
+def test_chisel_lifecycle(new_homedir_path, partitions):
     """Integrated test for Chisel support.
 
-    Note that since this test needs the "chisel" binary, it currently only runs on CI.
+    Note that since this test needs the "chisel" binary.
     """
     _parts_yaml = textwrap.dedent(
         """\
@@ -54,42 +56,33 @@ def test_chisel_lifecycle(new_dir, partitions):
         """
     )
 
-    partition_dir = "default" if partitions else "."
-
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
         parts,
         application_name="test_slice",
-        cache_dir=new_dir,
-        work_dir=new_dir,
+        cache_dir=new_homedir_path,
+        work_dir=new_homedir_path,
         partitions=partitions,
     )
 
-    chisel_supported = _current_release_supported()
-
     actions = lf.plan(Step.PRIME)
 
-    if chisel_supported:
-        with lf.action_executor() as ctx:
-            ctx.execute(actions)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
 
-        root = Path(new_dir, "prime", partition_dir)
-        assert (root / "/etc/ssl/certs/ca-certificates.crt").is_file()
-        assert (root / "/usr/share/ca-certificates").is_dir()
-    else:
-        with pytest.raises(errors.ChiselError):
-            with lf.action_executor() as ctx:
-                ctx.execute(actions)
+    root = Path(new_homedir_path) / "prime"
+    assert (root / "etc/ssl/certs/ca-certificates.crt").is_file()
+    assert (root / "usr/share/ca-certificates").is_dir()
 
 
 @pytest.mark.skipif(
     not _current_release_supported(), reason="Test needs Chisel support"
 )
-def test_chisel_error(tmp_path, caplog):
+def test_chisel_error(new_homedir_path, caplog):
     """Test that the error that is raised when Chisel fails contains the expected information."""
     caplog.set_level(logging.DEBUG)
-    install_path = tmp_path / "install"
+    install_path = new_homedir_path / "install"
     with pytest.raises(errors.ChiselError) as exc:
         deb.Ubuntu.unpack_stage_packages(
             stage_packages_path=Path("unused"),
@@ -112,7 +105,7 @@ def test_chisel_error(tmp_path, caplog):
 @pytest.mark.skipif(
     not _current_release_supported(), reason="Test needs Chisel support"
 )
-def test_chisel_normalize_paths(new_dir, partitions):
+def test_chisel_normalize_paths(new_homedir_path, partitions):
     """Check that the contents of cut chisel slices are "normalized" just like
     staged debs.
     """
@@ -128,15 +121,13 @@ def test_chisel_normalize_paths(new_dir, partitions):
         """
     )
 
-    partition_dir = "default" if partitions else "."
-
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
         parts,
         application_name="test_slice",
-        cache_dir=new_dir,
-        work_dir=new_dir,
+        cache_dir=new_homedir_path,
+        work_dir=new_homedir_path,
         partitions=partitions,
     )
 
@@ -145,7 +136,7 @@ def test_chisel_normalize_paths(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    root = Path(new_dir, "prime", partition_dir)
+    root = Path(new_homedir_path) / "prime"
     link = root / "usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security/java.policy"
     assert link.is_symlink()
     # Symlink must point to the file in the prime dir

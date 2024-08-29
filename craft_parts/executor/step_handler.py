@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022 Canonical Ltd.
+# Copyright 2016-2022,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
-from typing import List, Optional, Set, TextIO, Union
+from typing import TextIO
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -42,15 +42,15 @@ from .migration import migrate_files
 
 logger = logging.getLogger(__name__)
 
-Stream = Optional[Union[TextIO, int]]
+Stream = TextIO | int | None
 
 
 @dataclasses.dataclass(frozen=True)
 class StepContents:
     """Files and directories to be added to the step's state."""
 
-    files: Set[str] = dataclasses.field(default_factory=set)
-    dirs: Set[str] = dataclasses.field(default_factory=set)
+    files: set[str] = dataclasses.field(default_factory=set)
+    dirs: set[str] = dataclasses.field(default_factory=set)
 
 
 class StepHandler:
@@ -71,10 +71,11 @@ class StepHandler:
         *,
         step_info: StepInfo,
         plugin: Plugin,
-        source_handler: Optional[SourceHandler],
+        source_handler: SourceHandler | None,
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
+        partitions: set[str] | None = None,
     ) -> None:
         self._part = part
         self._step_info = step_info
@@ -83,6 +84,7 @@ class StepHandler:
         self._env = env
         self._stdout = stdout
         self._stderr = stderr
+        self._partitions = partitions
 
     def run_builtin(self) -> StepContents:
         """Run the built-in commands for the current step."""
@@ -152,15 +154,14 @@ class StepHandler:
                 stderr=self._stderr,
             )
         except subprocess.CalledProcessError as process_error:
-            raise errors.PluginBuildError(part_name=self._part.name) from process_error
+            raise errors.PluginBuildError(
+                part_name=self._part.name, plugin_name=self._part.plugin_name
+            ) from process_error
 
         return StepContents()
 
     def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
-        files, dirs = filesets.migratable_filesets(
-            stage_fileset, str(self._part.part_base_install_dir)
-        )
 
         def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
@@ -168,18 +169,42 @@ class StepHandler:
             if not file_path.endswith(".pc"):
                 return
             packages.fix_pkg_config(
-                prefix_prepend=self._part.base_stage_dir,
+                prefix_prepend=self._part.stage_dir,
                 pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_base_install_dir,
+                prefix_trim=self._part.part_install_dir,
             )
 
-        files, dirs = migrate_files(
-            files=files,
-            dirs=dirs,
-            srcdir=self._part.part_base_install_dir,
-            destdir=self._part.base_stage_dir,
-            fixup_func=pkgconfig_fixup,
-        )
+        if self._partitions:
+            files: set[str] = set()
+            dirs: set[str] = set()
+            for partition in self._partitions:
+                partition_files, partition_dirs = filesets.migratable_filesets(
+                    stage_fileset,
+                    str(self._part.part_install_dirs[partition]),
+                    partition,
+                )
+                partition_files, partition_dirs = migrate_files(
+                    files=partition_files,
+                    dirs=partition_dirs,
+                    srcdir=self._part.part_install_dirs[partition],
+                    destdir=self._part.dirs.get_stage_dir(partition),
+                    fixup_func=pkgconfig_fixup,
+                )
+
+                files.update(partition_files)
+                dirs.update(partition_dirs)
+        else:
+            files, dirs = filesets.migratable_filesets(
+                stage_fileset, str(self._part.part_install_dir)
+            )
+            files, dirs = migrate_files(
+                files=files,
+                dirs=dirs,
+                srcdir=self._part.part_install_dir,
+                destdir=self._part.stage_dir,
+                fixup_func=pkgconfig_fixup,
+            )
+
         return StepContents(files, dirs)
 
     def _builtin_prime(self) -> StepContents:
@@ -191,16 +216,41 @@ class StepHandler:
             stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
             prime_fileset.combine(stage_fileset)
 
-        files, dirs = filesets.migratable_filesets(
-            prime_fileset, str(self._part.part_base_install_dir)
-        )
-        files, dirs = migrate_files(
-            files=files,
-            dirs=dirs,
-            srcdir=self._part.base_stage_dir,
-            destdir=self._part.base_prime_dir,
-            permissions=self._part.spec.permissions,
-        )
+        if self._partitions:
+            files: set[str] = set()
+            dirs: set[str] = set()
+            for partition in self._partitions:
+                partition_files, partition_dirs = filesets.migratable_filesets(
+                    prime_fileset,
+                    str(self._part.part_install_dirs[partition]),
+                    partition,
+                )
+
+                srcdir = self._part.dirs.get_stage_dir(partition)
+                destdir = self._part.dirs.get_prime_dir(partition)
+
+                partition_files, partition_dirs = migrate_files(
+                    files=partition_files,
+                    dirs=partition_dirs,
+                    srcdir=srcdir,
+                    destdir=destdir,
+                    permissions=self._part.spec.permissions,
+                )
+
+                files.update(partition_files)
+                dirs.update(partition_dirs)
+
+        else:
+            files, dirs = filesets.migratable_filesets(
+                prime_fileset, str(self._part.part_install_dir)
+            )
+            files, dirs = migrate_files(
+                files=files,
+                dirs=dirs,
+                srcdir=self._part.stage_dir,
+                destdir=self._part.prime_dir,
+                permissions=self._part.spec.permissions,
+            )
 
         return StepContents(files, dirs)
 
@@ -309,7 +359,7 @@ class StepHandler:
         )
 
     def _process_api_commands(
-        self, cmd_name: str, cmd_args: List[str], *, step: Step, scriptlet_name: str
+        self, cmd_name: str, cmd_args: list[str], *, step: Step, scriptlet_name: str
     ) -> str:
         """Invoke API command actions."""
         retval = ""
@@ -385,12 +435,12 @@ class StepHandler:
 
 
 def _create_and_run_script(
-    commands: List[str],
+    commands: list[str],
     script_path: Path,
     cwd: Path,
     stdout: Stream,
     stderr: Stream,
-    build_environment_script_path: Optional[Path] = None,
+    build_environment_script_path: Path | None = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
