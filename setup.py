@@ -75,7 +75,7 @@ test_requires = [
     "codespell",
     "coverage",
     "isort",
-    "mypy==0.991",
+    "mypy==1.11.2",
     "pydocstyle",
     "pylint",
     "pylint-fixme-info",
