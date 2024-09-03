@@ -302,3 +302,39 @@ class TestCleaning:
 
 class TestUpdating(test_lifecycle.TestUpdating):
     """Run all updating tests with partitions enabled."""
+
+
+def test_track_stage_packages_with_partitions(new_dir):
+    partitions = ["default", "binaries", "docs"]
+    parts_yaml = textwrap.dedent(
+        """
+            parts:
+              foo:
+                plugin: nil
+                stage-packages:
+                  - hello
+                organize:
+                  usr/bin: (binaries)/
+                  usr/share/doc: (docs)/
+            """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_track_stage_packages_with_partitions",
+        cache_dir=new_dir,
+        partitions=partitions,
+        track_stage_packages=True,
+    )
+
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    packages = lifecycle.get_primed_stage_packages(part_name="foo")
+    assert packages is not None
+
+    name_only = [p.split("=")[0] for p in packages]
+    assert "hello" in name_only

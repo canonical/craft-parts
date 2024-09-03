@@ -420,8 +420,9 @@ class PartHandler:
             and self._track_stage_packages
             and is_deb_based()
         ):
+            prime_dirs = list(self._part.prime_dirs.values())
             primed_stage_packages = _get_primed_stage_packages(
-                contents.files, prime_dir=self._part.prime_dir
+                contents.files, prime_dirs=prime_dirs
             )
         else:
             primed_stage_packages = set()
@@ -1132,11 +1133,16 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Pa
     return [p for p in oparts if states.get_step_state_path(p, step).exists()]
 
 
-def _get_primed_stage_packages(snap_files: set[str], *, prime_dir: Path) -> set[str]:
+def _get_primed_stage_packages(
+    snap_files: set[str], *, prime_dirs: list[Path]
+) -> set[str]:
     primed_stage_packages: set[str] = set()
     for _snap_file in snap_files:
-        snap_file = str(prime_dir / _snap_file)
-        stage_package = read_origin_stage_package(snap_file)
-        if stage_package:
-            primed_stage_packages.add(stage_package)
+        for prime_dir in prime_dirs:
+            snap_file = prime_dir / _snap_file
+            if not snap_file.exists():
+                continue
+            stage_package = read_origin_stage_package(str(snap_file))
+            if stage_package:
+                primed_stage_packages.add(stage_package)
     return primed_stage_packages
