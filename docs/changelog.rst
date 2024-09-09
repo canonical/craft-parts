@@ -2,6 +2,21 @@
 Changelog
 *********
 
+2.1.0 (2024-09-09)
+------------------
+
+New features:
+
+- Add a :doc:`Poetry plugin</common/craft-parts/reference/plugins/poetry_plugin>`
+  for Python projects that use the `Poetry`_ build system.
+- Add a new error message when getting a directory for a non-existent partition.
+
+Bug fixes:
+
+- Fix a regression where numeric part properties could not be parsed.
+- Fix a bug where stage-packages tracking would fail when files were organized
+  into a non-default partition.
+
 2.0.0 (2024-08-08)
 ------------------
 
@@ -540,3 +555,4 @@ Bug fixes:
 
 
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
+.. _Poetry: https://python-poetry.org
