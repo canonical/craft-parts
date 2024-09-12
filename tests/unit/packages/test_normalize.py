@@ -24,7 +24,7 @@ from craft_parts.packages.base import DummyRepository
 from craft_parts.packages.normalize import fix_pkg_config, normalize
 
 
-@pytest.fixture()
+@pytest.fixture
 def pkg_config_file():
     """Fixture for writing a pkg-config (.pc) files."""
 
@@ -56,7 +56,7 @@ def pkg_config_file():
     return _pkg_config_file
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_pkg_config_content():
     """Returns a string containing the expected content of the pkg-config fixture."""
 

@@ -38,7 +38,7 @@ def mock_env_copy():
         yield m
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_all_packages_installed(mocker):
     mocker.patch(
         "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
@@ -46,7 +46,7 @@ def fake_all_packages_installed(mocker):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_dumb_terminal(mocker):
     return mocker.patch(
         "craft_parts.utils.os_utils.is_dumb_terminal", return_value=True
@@ -605,7 +605,7 @@ def test_packages_for_source_type(source_type, pkgs):
     assert deb.Ubuntu.get_packages_for_source_type(source_type) == pkgs
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_dpkg_query(mocker):
     def dpkg_query(*args, **kwargs):
         # dpkg-query -S file_path

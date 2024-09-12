@@ -30,7 +30,7 @@ class TestCollisions(test_collisions.TestCollisions):
 class TestCollisionsInPartitions:
     """Test collision scenarios in partition stage dirs."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def stub_parts_yaml(self) -> Dict[str, Any]:
         """Return a part dictionary containing 2 parts."""
         return {

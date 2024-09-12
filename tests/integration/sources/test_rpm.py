@@ -26,7 +26,7 @@ from craft_parts.actions import Action
 from craft_parts.steps import Step
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_rpm(tmp_path: Path) -> Path:
     """
     Create a basic .rpm file and return its path.

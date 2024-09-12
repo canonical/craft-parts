@@ -100,7 +100,7 @@ class TestCleaning:
             partitions=partitions,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def foo_files(self):
         """Return a dictionary of steps and the files created by that step for foo."""
         return {
@@ -130,7 +130,7 @@ class TestCleaning:
             ],
         }
 
-    @pytest.fixture()
+    @pytest.fixture
     def bar_files(self):
         """Return a dictionary of steps and the files created by that step for bar."""
         return {
@@ -156,7 +156,7 @@ class TestCleaning:
             ],
         }
 
-    @pytest.fixture()
+    @pytest.fixture
     def state_files(self):
         return ["build", "prime", "pull", "stage"]
 

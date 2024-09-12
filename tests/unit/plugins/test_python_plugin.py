@@ -24,7 +24,7 @@ from craft_parts.plugins.python_plugin import PythonPlugin
 from pydantic import ValidationError
 
 
-@pytest.fixture()
+@pytest.fixture
 def plugin(new_dir):
     properties = PythonPlugin.properties_class.unmarshal({"source": "."})
     info = ProjectInfo(application_name="test", cache_dir=new_dir)

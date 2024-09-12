@@ -218,7 +218,7 @@ class TestCleaning:
 
         # pylint: enable=attribute-defined-outside-init
 
-    @pytest.fixture()
+    @pytest.fixture
     def foo_files(self):
         return [
             Path("parts/foo/src/foo.txt"),
@@ -227,7 +227,7 @@ class TestCleaning:
             Path("prime/foo.txt"),
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def bar_files(self):
         return [
             Path("parts/bar/src/bar.txt"),
@@ -236,7 +236,7 @@ class TestCleaning:
             Path("prime/bar.txt"),
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def state_files(self):
         return ["build", "prime", "pull", "stage"]
 

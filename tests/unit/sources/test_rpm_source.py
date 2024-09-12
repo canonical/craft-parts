@@ -24,7 +24,7 @@ from craft_parts.sources import errors, sources
 
 
 # region Fixtures
-@pytest.fixture()
+@pytest.fixture
 def rpm_source(tmp_path: pathlib.Path, partitions):
     dest_dir = tmp_path / "src"
     dest_dir.mkdir()
@@ -34,12 +34,12 @@ def rpm_source(tmp_path: pathlib.Path, partitions):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_popen(mocker):
     return mocker.patch.object(subprocess, "Popen", autospec=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_tarfile_open(mocker):
     return mocker.patch.object(tarfile, "open", autospec=True)
 
