@@ -65,7 +65,7 @@ class StepHandler:
     the running instance.
     """
 
-    def __init__(  # noqa: PLR0913 (too many arguments)
+    def __init__(
         self,
         part: Part,
         *,

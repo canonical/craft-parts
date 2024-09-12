@@ -41,7 +41,7 @@ class FakeConn:
         self.sent = data
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_conn():
     return FakeConn()
 

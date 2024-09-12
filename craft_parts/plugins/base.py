@@ -146,11 +146,10 @@ def extract_plugin_properties(
     if required is None:
         required = []
 
-    plugin_data: Dict[str, Any] = {}
     prefix = f"{plugin_name}-"
 
-    for key, value in data.items():
-        if key.startswith(prefix) or key in required:
-            plugin_data[key] = value
-
-    return plugin_data
+    return {
+        key: value
+        for key, value in data.items()
+        if key.startswith(prefix) or key in required
+    }

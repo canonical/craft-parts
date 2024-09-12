@@ -115,12 +115,12 @@ class TestPartValidation(test_parts.TestPartValidation):
 class TestPartPartitionUsage:
     """Test usage of partitions in parts."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def partition_list(self):
         """Return a list of partitions, 'default' and 'kernel'."""
         return ["default", "kernel", "a/b", "a/c-d"]
 
-    @pytest.fixture()
+    @pytest.fixture
     def valid_fileset(self):
         """Return a fileset of that properly uses partition names.
 
@@ -180,7 +180,7 @@ class TestPartPartitionUsage:
             "test/(a/c-d)/test",
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def misused_fileset(self):
         """Return a fileset that misuses partition names.
 
@@ -197,7 +197,7 @@ class TestPartPartitionUsage:
             "kernel/foo",
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def misused_namespaced_fileset(self):
         """Return a fileset that misuses namespaced partitions.
 
@@ -214,7 +214,7 @@ class TestPartPartitionUsage:
             "a/c-d/foo",
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def invalid_fileset(self):
         """Return a fileset of invalid uses of partition names.
 
