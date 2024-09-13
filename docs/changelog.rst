@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.33.1 (2024-09-13)
+-------------------
+
+- Fix NPM plugin to be stateless, allowing lifecycle steps to be
+  executed in separate runs.
+
 2.1.0 (2024-09-09)
 ------------------
 
