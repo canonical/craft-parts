@@ -2,6 +2,11 @@
 Changelog
 *********
 
+2.1.1 (2024-09-13)
+------------------
+
+- This release brings the bug fix from ``1.33.1`` into the ``2.1.x`` series.
+
 1.33.1 (2024-09-13)
 -------------------
 
