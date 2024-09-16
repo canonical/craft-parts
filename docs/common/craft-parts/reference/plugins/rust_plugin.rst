@@ -117,7 +117,7 @@ by wrapping and appending the ``LDFLAGS`` value to ``RUSTFLAGS``.
   the Snap linkage, so that the binary will not find the libraries in the host
   filesystem.
 
-  Here is an example on how you might do this on core22:
+  Here is an example on how you might do this on core24:
 
   .. code-block:: yaml
 
@@ -128,8 +128,8 @@ by wrapping and appending the ``LDFLAGS`` value to ``RUSTFLAGS``.
             rust-inherit-ldflags: true
             build-environment:
               - LDFLAGS: >
-                  -Wl,-rpath=\$ORIGIN/lib:/snap/core22/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
-                  -Wl,-dynamic-linker=$(find /snap/core22/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR -name 'ld*.so.*' -print | head -n1)
+                  -Wl,-rpath=\$ORIGIN/lib:/snap/core24/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
+                  -Wl,-dynamic-linker=$(find /snap/core24/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR -name 'ld*.so.*' -print | head -n1)
 
 
 Environment variables
@@ -174,8 +174,26 @@ To get even better performance, you might want to follow the tips below.
 
 * (Advanced) Perform cross-language LTO. This requires installing the correct version of LLVM/Clang and setting the right environment variables.
   You must know which LLVM version of your selected Rust toolchain is using.
-  For example, Rust 1.71 uses LLVM 16 because you can see it bundles a ``libLLVM-16-rust-1.71.1-stable.so`` file in the ``lib`` directory.
-  In this case, you want to install ``clang-16`` and ``lld-16`` from the Ubuntu archive.
+  You can use ``rustc -vV`` to print out the LLVM version used by the compiler. For example, you can see Rust 1.81 uses LLVM 18.1 because
+  it prints out an output like this:
+
+  .. terminal::
+    :input: rustc -vV
+    :user: dev
+    :host: ubuntu
+
+    rustc 1.81.0 (eeb90cda1 2024-09-04)
+    binary: rustc
+    commit-hash: eeb90cda1969383f56a2637cbd3037bdf598841c
+    commit-date: 2024-09-04
+    host: x86_64-unknown-linux-gnu
+    release: 1.81.0
+    LLVM version: 18.1.7
+
+  On Rust toolchains that do not include the LLVM version, you can still check the LLVM version number by examining the ``lib`` directory.
+  For example, Rust 1.81 uses LLVM 18.1 because it bundles a ``libLLVM.so.18.1-rust-1.81.0-stable`` file under the ``lib`` directory.
+
+  In this case, you want to install ``clang-18`` and ``lld-18`` from the Ubuntu archive.
 
   * You will need to set these environment variables for Clang:
       .. code-block:: yaml
@@ -185,22 +203,22 @@ To get even better performance, you might want to follow the tips below.
             plugin: rust
             source: .
             build-packages:
-              - clang-16
-              - lld-16
+              - clang-18
+              - lld-18
             build-environment:
-              - CC: clang-16
-              - CXX: clang++-16
-              - CFLAGS: -flto=fat
-              - CXXFLAGS: -flto=fat
-              - RUSTFLAGS: "-Cembed-bitcode=yes -Clinker-plugin-lto -Clinker=clang-16 -Clink-arg=-flto -Clink-arg=-fuse-ld=lld"
+              - CC: clang-18
+              - CXX: clang++-18
+              - CFLAGS: -flto=full -O3
+              - CXXFLAGS: -flto=full -O3
+              - RUSTFLAGS: "-Cembed-bitcode=yes -Clinker-plugin-lto -Clinker=clang-18 -Clink-arg=-flto=full -Clink-arg=-fuse-ld=lld -Clink-arg=-Wl,--lto-O3"
 
     For some projects that manipulate the object files during the build, you may also need:
       .. code-block:: bash
 
-        export NM=llvm-nm-16
-        export AR=llvm-ar-16
-        export RANLIB=llvm-ranlib-16
+        export NM=llvm-nm-18
+        export AR=llvm-ar-18
+        export RANLIB=llvm-ranlib-18
 
     You can refer to the `rustc documentation <https://doc.rust-lang.org/rustc/codegen-options/index.html>`_ for more information on the meaning of those options.
   * You will need significantly more memory and CPU time for large projects to build and link.
-    For instance, Firefox under full LTO requires about 62 GiB of memory to pass the linking phase.
+    For instance, Firefox under full LTO requires about 80 GiB of memory to pass the linking phase.
