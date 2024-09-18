@@ -174,8 +174,8 @@ To get even better performance, you might want to follow the tips below.
 
 * (Advanced) Perform cross-language LTO. This requires installing the correct version of LLVM/Clang and setting the right environment variables.
   You must know which LLVM version of your selected Rust toolchain is using.
-  You can use ``rustc -vV`` to print out the LLVM version used by the compiler. For example, you can see Rust 1.81 uses LLVM 18.1 because
-  it prints out an output like this:
+  You can use ``rustc -vV`` to check the LLVM version used by the compiler. For example, you can see Rust 1.81 uses LLVM 18.1 because
+  it prints an output like this:
 
   .. terminal::
     :input: rustc -vV
@@ -190,10 +190,9 @@ To get even better performance, you might want to follow the tips below.
     release: 1.81.0
     LLVM version: 18.1.7
 
-  On Rust toolchains that do not include the LLVM version, you can still check the LLVM version number by examining the ``lib`` directory.
+  On Rust toolchains that don't include the LLVM version, you can check the LLVM version number by examining the ``lib`` directory.
   For example, Rust 1.81 uses LLVM 18.1 because it bundles a ``libLLVM.so.18.1-rust-1.81.0-stable`` file under the ``lib`` directory.
-
-  In this case, you want to install ``clang-18`` and ``lld-18`` from the Ubuntu archive.
+  In this case, you would install ``clang-18`` and ``lld-18`` from the Ubuntu archive.
 
   * You will need to set these environment variables for Clang:
       .. code-block:: yaml
