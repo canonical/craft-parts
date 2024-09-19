@@ -290,17 +290,16 @@ class TestPluginNpmPlugin:
         ]
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_pull_commands() == [
+        assert plugin.get_pull_commands() == []
+
+        assert plugin.get_build_commands() == [
             f'if [ ! -f "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz" ]; then\n'
             f'    mkdir -p "{part_info.part_cache_dir}"\n'
             f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
             f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/node-v20.13.1-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"\n'
             "fi\n"
-            f'cd "{part_info.part_cache_dir}"\n'
-            "sha256sum --ignore-missing --strict -c SHASUMS256.txt\n"
-        ]
-
-        assert plugin.get_build_commands() == [
+            f'pushd "{part_info.part_cache_dir}"\n'
+            "sha256sum --ignore-missing --strict -c SHASUMS256.txt\npopd\n",
             f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
             ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
             "--strip-components=1\n",

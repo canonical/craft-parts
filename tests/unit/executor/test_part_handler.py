@@ -200,6 +200,7 @@ class TestPartHandling:
             return_value=StepContents({"file"}, {"dir"}),
         )
         mocker.patch("os.getxattr", return_value=b"pkg")
+        mocker.patch("pathlib.Path.exists", return_value=True)
 
         ovmgr = OverlayManager(
             project_info=self._project_info, part_list=[self._part], base_layer_dir=None

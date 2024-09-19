@@ -175,6 +175,7 @@ PartInfo
 PartSpec
 PartSpecificationError
 PartitionError
+PartitionNotFound
 PartitionPathPair
 PartitionUsageError
 PartitionUsageWarning
@@ -201,6 +202,7 @@ PullError
 PullState
 PurePath
 PydanticGeneralMetadata
+PydanticUndefined
 PyPI
 PyYAML
 PyYAML's
