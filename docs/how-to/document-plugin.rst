@@ -27,9 +27,6 @@ necessary:
 It is also useful to indicate if the plugin replaces an existing plugin, or
 should be used instead of another similar plugin.
 
-If documenting an application-specific plugin, it may be appropriate to include
-the version of the application in which this plugin first appears here.
-
 
 Keywords
 ~~~~~~~~
