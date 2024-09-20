@@ -445,6 +445,7 @@ texinfo
 tgz
 toml
 toolchain
+toolchains
 toplevel
 txt
 ubuntu
