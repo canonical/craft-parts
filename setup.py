@@ -81,6 +81,7 @@ test_requires = [
     "pylint-fixme-info",
     "pylint-pytest",
     "pytest<8",
+    "pytest-check",
     "pytest-mock",
     "requests-mock",
     "ruff==0.0.239",
