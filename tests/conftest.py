@@ -47,6 +47,12 @@ def new_dir(monkeypatch, tmpdir):
 
 
 @pytest.fixture
+def new_path(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+@pytest.fixture
 def mock_chdir(monkeypatch):
     mock_fn = mock.Mock(spec=os.chdir)
     monkeypatch.setattr(os, "chdir", mock_fn)
