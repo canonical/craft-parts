@@ -50,9 +50,8 @@ install_requires = [
     "pydantic>=1.9.0,<2.0.0",
     "pydantic-yaml[pyyaml]>=0.11.0,<1.0.0",
     "pyxdg",
-    "requests<2.32",
-    "requests-unixsocket",
-    "urllib3<2",  # keep compatible API
+    "requests",
+    "requests-unixsocket2",
 ]
 
 dev_requires = [
