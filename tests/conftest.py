@@ -46,6 +46,12 @@ def new_dir(monkeypatch, tmpdir):
 
 
 @pytest.fixture
+def new_path(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+@pytest.fixture
 def tmp_homedir_path():
     """A non-hidden temporary directory in the user's home directory.
 
