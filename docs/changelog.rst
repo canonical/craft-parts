@@ -2,6 +2,11 @@
 Changelog
 *********
 
+X.Y.Z (2024-MM-DD)
+------------------
+
+- Replace the dependency on requests-unixsocket with requests-unixsocket2
+
 2.1.1 (2024-09-13)
 ------------------
 
