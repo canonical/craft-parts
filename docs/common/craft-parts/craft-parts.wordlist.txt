@@ -451,6 +451,7 @@ txt
 ubuntu
 umount
 unbuilt
+unixsocket
 unmark
 unmarshal
 unmount
