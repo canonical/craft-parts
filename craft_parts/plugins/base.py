@@ -242,11 +242,16 @@ class BasePythonPlugin(Plugin):
         shebangs in the final environment should be handled.
         """
         script_interpreter = self._get_script_interpreter()
+        find_cmd = (
+            f'find "{self._part_info.part_install_dir}" -type f -executable -print0'
+        )
+        xargs_cmd = "xargs --no-run-if-empty -0"
+        sed_cmd = f'sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"'
         return [
             textwrap.dedent(
                 f"""\
-                find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \\
-                    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"
+                {find_cmd} | {xargs_cmd} \\
+                    {sed_cmd}
                 """
             )
         ]

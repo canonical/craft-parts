@@ -77,7 +77,7 @@ def get_build_commands(
     return [
         dedent(
             f"""\
-            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\
+            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs --no-run-if-empty -0 \\
                 sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
             """
         ),

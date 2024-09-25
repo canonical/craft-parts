@@ -180,7 +180,7 @@ def test_python_get_rewrite_shebangs_commands(new_dir, python_plugin: FooPythonP
     assert python_plugin._get_rewrite_shebangs_commands() == [
         textwrap.dedent(
             f"""\
-            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\
+            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs --no-run-if-empty -0 \\
                 sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
             """
         )
@@ -222,7 +222,7 @@ def test_python_get_build_commands(new_dir, python_plugin: FooPythonPlugin):
         "echo 'This is where I put my install commands... if I had any!'",
         textwrap.dedent(
             f"""\
-            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs -0 \\
+            find "{new_dir}/parts/p1/install" -type f -executable -print0 | xargs --no-run-if-empty -0 \\
                 sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|#!/usr/bin/env ${{PARTS_PYTHON_INTERPRETER}}|"
             """
         ),
