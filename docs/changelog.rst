@@ -7,6 +7,11 @@ X.Y.Z (2024-MM-DD)
 
 - Replace the dependency on requests-unixsocket with requests-unixsocket2
 
+Bug Fixes:
+
+- Fixed an issue where the ``python`` plugin would fail to build if the part
+  had no Python scripts.
+
 2.1.1 (2024-09-13)
 ------------------
 
