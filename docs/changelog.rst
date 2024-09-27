@@ -2,6 +2,12 @@
 Changelog
 *********
 
+1.25.3 (2024-09-27)
+-------------------
+
+- Replace requests-unixsocket with requests-unixsocket2
+- Bump minimum Python version to 3.8 (required for requests-unixsocket2)
+
 1.25.2 (2023-10-24)
 -------------------
 
