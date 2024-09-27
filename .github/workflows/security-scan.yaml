@@ -10,6 +10,6 @@ on:
 jobs:
   python-scans:
     name: Scan Python project
-    uses: lengau/starflow/.github/workflows/scan-python.yaml@work/secscan
+    uses: canonical/starflow/.github/workflows/scan-python.yaml@main
     with:
       packages: python-apt-dev
