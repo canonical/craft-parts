@@ -29,7 +29,7 @@ from craft_parts.utils import os_utils
 IS_CI: bool = os.getenv("CI") == "true"
 
 # These are the Ubuntu versions that Chisel currently supports.
-SUPPORTED_UBUNTU_VERSIONS = {"22.04", "22.10"}
+SUPPORTED_UBUNTU_VERSIONS = {"20.04", "22.04", "22.10", "24.04"}
 
 
 def _current_release_supported() -> bool:
