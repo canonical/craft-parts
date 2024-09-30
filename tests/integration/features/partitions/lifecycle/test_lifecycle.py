@@ -16,6 +16,7 @@
 
 # Allow redefinition in order to include parent tests below.
 # mypy: disable-error-code="no-redef"
+# pyright: reportAssignmentType=warning
 import pathlib
 import textwrap
 
