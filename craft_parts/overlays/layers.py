@@ -78,7 +78,7 @@ class LayerHash:
 
         :param part: The part whose layer hash will be loaded.
 
-        :return: A layer hash object containing the loaded validaton hash,
+        :return: A layer hash object containing the loaded validation hash,
             or None if the file doesn't exist.
         """
         hash_file = part.part_state_dir / "layer_hash"
