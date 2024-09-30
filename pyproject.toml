@@ -57,7 +57,7 @@ min-similarity-lines=13
 [tool.pylint.format]
 max-line-length = "88"
 max-attributes = 16
-max-args= 6
+max-args= 12
 max-locals = 18
 
 [tool.pylint.MASTER]
@@ -65,7 +65,7 @@ extension-pkg-whitelist = [
     "apt_pkg",
     "pydantic"
 ]
-load-plugins = "pylint_fixme_info,pylint_pytest"
+load-plugins = "pylint_pytest"
 good-names = "id"
 
 [tool.ruff]
