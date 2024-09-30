@@ -83,7 +83,7 @@ class LifecycleManager:
         to :ref:`callbacks<callbacks>`.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         all_parts: Dict[str, Any],
         *,
