@@ -45,7 +45,7 @@ install_requires = [
     "pydantic>=1.9.0,<2",
     "pydantic-yaml[pyyaml]<1",
     "pyxdg",
-    "requests",
+    "requests<2.32",
     "requests-unixsocket",
     "urllib3<2",  # keep compatible API
 ]
@@ -80,7 +80,7 @@ test_requires = [
     "pylint",
     "pylint-fixme-info",
     "pylint-pytest",
-    "pytest",
+    "pytest<8",
     "pytest-mock",
     "requests-mock",
     "ruff==0.0.239",
