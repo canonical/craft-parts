@@ -144,7 +144,7 @@ class YUMRepository(BaseRepository):
 
         # XXX Facundo 2023-02-07: the information returned by this method is not used
         # anywhere, so we should clean it up and just return None (here, and in the
-        # Ubuntu reposity too, where a further cleaning should be done) -- related
+        # Ubuntu repository too, where a further cleaning should be done) -- related
         # to this, `list_only` should go away.
         return []
 
