@@ -16,6 +16,8 @@
 
 """Support for deb files."""
 
+# pyright: reportPossiblyUnboundVariable=false, reportIncompatibleMethodOverride=warning
+
 import fileinput
 import functools
 import logging
