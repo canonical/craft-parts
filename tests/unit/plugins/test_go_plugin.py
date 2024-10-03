@@ -191,3 +191,18 @@ def test_get_build_commands_go_generate(part_info):
         "go generate -x b",
         'go install -p "1"  ./...',
     ]
+
+
+def test_get_build_commands_go_workspace_use(part_info):
+    properties = GoPlugin.properties_class.unmarshal(
+        {"source": ".", "go-workspace-use": ["go-flags", "go-cmp"]}
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "[ -f go.work ] || go work init",
+        "go work use .",
+        "go work use go-flags",
+        "go work use go-cmp",
+        'go install -p "1"  ./...',
+    ]

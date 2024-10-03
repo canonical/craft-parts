@@ -33,6 +33,18 @@ Parameters to pass to `go generate`_ before building. Each item on the list
 will be a separate ``go generate`` call. The default behavior is not to call
 ``go generate``.
 
+go-workspace-use
+~~~~~~~~~~~~~~~~
+**Type**: list of strings
+**Default** []
+
+Parameters to setup a `go workspace`_ with modules to use for the build. The
+current source is added automatically when any path is defined. Paths must be on
+the local filesystem (e.g.; within ``$CRAFT/STAGE``).
+
+The use of ``go.work`` omits the downloading of go modules.
+
+
 Environment variables
 ---------------------
 
@@ -48,7 +60,7 @@ provision it by itself, to allow flexibility in the choice of compiler version.
 
 Common means of providing ``go`` are:
 
-* The ``golang`` Ubuntu package, declared as a ``build-package``.
+***** The ``golang`` Ubuntu package, declared as a ``build-package``.
 * The ``go`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``go-deps``, and
@@ -65,11 +77,17 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Call ``go mod download all`` to find and download all necessary modules;
+* If ``go-workspace-use`` is defined:
+  * Call ``go work init`` if ``go.work`` is not found;
+  * Call ``go work use .`` to add the source for the part;
+  * Call ``go work use <item>`` for each item in ``go-workspace-use``;
+* If ``go-workspace-use`` is not defined, call ``go mod download all`` to find
+  and download all necessary modules;
 * Call ``go generate <item>`` for each item in ``go-generate``;
 * Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
   ``--tags`` parameter.
 
+If
 Examples
 --------
 
@@ -94,4 +112,4 @@ The following snippet declares a part using the ``go`` plugin. It uses the stabl
 .. _Build tags: https://pkg.go.dev/cmd/go#hdr-Build_constraints
 .. _Go: https://go.dev/
 .. _go generate: https://go.dev/blog/generate
-
+.. _go workspace: https://go.dev/blog/get-familiar-with-workspaces
