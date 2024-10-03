@@ -37,6 +37,7 @@ class GoPluginProperties(PluginProperties, frozen=True):
 
     go_buildtags: list[str] = []
     go_generate: list[str] = []
+    go_workspace_use: list[str] = []
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -93,6 +94,10 @@ class GoPlugin(Plugin):
       (list of strings)
       Parameters to pass to `go generate` before building. Each item on the list
       will be a separate `go generate` call. Default is not to call `go generate`.
+    - ``go-workspace-use``
+      (list of strings)
+      Parameters for `go work use` statements to setup a workspace to consume
+      go modules from.
     """
 
     properties_class = GoPluginProperties
@@ -120,12 +125,21 @@ class GoPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(GoPluginProperties, self._options)
 
+        init_cmds: list[str] = []
+        if options.go_workspace_use:
+            # Only initialize if go.work is not there.
+            init_cmds.append("[ -f go.work ] || go work init")
+            init_cmds.append("go work use .")
+            init_cmds.extend([f"go work use {use}" for use in options.go_workspace_use])
+        else:
+            init_cmds.append("go mod download all")
+
         tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
         generate_cmds: list[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
         return [
-            "go mod download all",
+            *init_cmds,
             *generate_cmds,
             f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
         ]
