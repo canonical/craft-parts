@@ -127,8 +127,9 @@ class GoPlugin(Plugin):
 
         init_cmds: list[str] = []
         if options.go_workspace_use:
-            # Only initialize if go.work is not there.
-            init_cmds.append("[ -f go.work ] || go work init")
+            # go.work should not be part of the source to be built in this
+            # scenario
+            init_cmds.append("go work init")
             init_cmds.append("go work use .")
             init_cmds.extend([f"go work use {use}" for use in options.go_workspace_use])
         else:
