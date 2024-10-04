@@ -78,7 +78,7 @@ How it works
 During the build step the plugin performs the following actions:
 
 * If ``go-workspace-use`` is defined:
-  * Call ``go work init`` if ``go.work`` is not found;
+  * Call ``go work init``;
   * Call ``go work use .`` to add the source for the part;
   * Call ``go work use <item>`` for each item in ``go-workspace-use``;
 * If ``go-workspace-use`` is not defined, call ``go mod download all`` to find
