@@ -2,7 +2,7 @@
 Changelog
 *********
 
-X.Y.Z (2024-MM-DD)
+2.1.2 (2024-10-04)
 ------------------
 
 - Replace the dependency on requests-unixsocket with requests-unixsocket2
@@ -11,6 +11,12 @@ Bug Fixes:
 
 - Fixed an issue where the ``python`` plugin would fail to build if the part
   had no Python scripts.
+
+Documentation:
+
+- Update the :doc:`Rust
+  plugin`</common/craft-parts/reference/plugins/rust_plugin>` doc with recent
+  changes to the Rust toolchain.
 
 2.1.1 (2024-09-13)
 ------------------
