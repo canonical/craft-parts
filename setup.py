@@ -97,7 +97,7 @@ test_requires = [
     "pytest-subprocess",
     "requests-mock",
     "tox",
-    "yamllint==1.32.0",
+    "yamllint==1.35.1",
 ]
 
 extras_requires = {
