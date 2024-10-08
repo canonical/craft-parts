@@ -11,6 +11,7 @@ any of the following things:
   :file:`pyproject.toml` file.
 - Install packages using :command:`pip`.
 
+.. _craft_parts_python_plugin-keywords:
 
 Keywords
 --------
@@ -40,6 +41,7 @@ python-packages
 A list of dependencies to install from PyPI. If needed, :command:`pip`,
 :command:`setuptools` and :command:`wheel` can be upgraded here.
 
+.. _craft_parts_python_plugin-environment_variables:
 
 Environment variables
 ---------------------

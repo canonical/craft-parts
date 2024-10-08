@@ -5,6 +5,8 @@ Poetry plugin
 
 The Poetry plugin can be used for Python projects that use the `Poetry`_ build system.
 
+.. _craft_parts_poetry_plugin-keywords:
+
 Keywords
 --------
 
@@ -19,6 +21,8 @@ poetry-with:
 **Type:** list of strings
 
 Extra `dependency groups`_ to use other than the defaults.
+
+.. _craft_parts_poetry_plugin-environment_variables:
 
 Environment variables
 ---------------------
