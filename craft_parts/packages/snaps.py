@@ -19,6 +19,7 @@
 import contextlib
 import logging
 import os
+import pathlib
 import subprocess
 import sys
 from collections.abc import Iterator, Sequence
@@ -200,7 +201,7 @@ class SnapPackage:
         store_channels = self._get_store_channels()
         return self.channel in store_channels
 
-    def download(self, *, directory: str | None = None) -> None:
+    def download(self, *, directory: str | pathlib.Path | None = None) -> None:
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.
@@ -270,7 +271,7 @@ class SnapPackage:
         self._is_installed = None
 
 
-def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
+def download_snaps(*, snaps_list: Sequence[str], directory: str | pathlib.Path) -> None:
     """Download snaps of the format <snap-name>/<channel> into directory.
 
     The target directory is created if it does not exist.

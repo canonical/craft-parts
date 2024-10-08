@@ -266,6 +266,12 @@ class NpmPlugin(Plugin):
     @override
     def get_pull_commands(self) -> list[str]:
         """Return a list of commands to run during the pull step."""
+        return []
+
+    @override
+    def get_build_commands(self) -> list[str]:
+        """Return a list of commands to run during the build step."""
+        cmd = []
         options = cast(NpmPluginProperties, self._options)
         if options.npm_include_node:
             arch = self._get_architecture()
@@ -277,7 +283,7 @@ class NpmPlugin(Plugin):
             self._node_binary_path = os.path.join(
                 self._part_info.part_cache_dir, file_name
             )
-            return [
+            cmd += [
                 dedent(
                     f"""\
                 if [ ! -f "{self._node_binary_path}" ]; then
@@ -285,17 +291,22 @@ class NpmPlugin(Plugin):
                     curl --retry 5 -s "{checksum_uri}" -o "{self._part_info.part_cache_dir}"/SHASUMS256.txt
                     curl --retry 5 -s "{node_uri}" -o "{self._node_binary_path}"
                 fi
-                cd "{self._part_info.part_cache_dir}"
+                pushd "{self._part_info.part_cache_dir}"
                 sha256sum --ignore-missing --strict -c SHASUMS256.txt
+                popd
                 """
                 )
             ]
-        return []
-
-    @override
-    def get_build_commands(self) -> list[str]:
-        """Return a list of commands to run during the build step."""
-        cmd = [
+        if self._node_binary_path is not None:
+            cmd += [
+                dedent(
+                    f"""\
+                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
+                    --no-same-owner --strip-components=1
+                """
+                ),
+            ]
+        cmd += [
             dedent(
                 """\
             NPM_VERSION="$(npm --version)"
@@ -308,14 +319,4 @@ class NpmPlugin(Plugin):
             """
             )
         ]
-        if self._node_binary_path is not None:
-            cmd.insert(
-                0,
-                dedent(
-                    f"""\
-                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
-                    --no-same-owner --strip-components=1
-                """
-                ),
-            )
         return cmd

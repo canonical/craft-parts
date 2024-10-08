@@ -175,6 +175,7 @@ PartInfo
 PartSpec
 PartSpecificationError
 PartitionError
+PartitionNotFound
 PartitionPathPair
 PartitionUsageError
 PartitionUsageWarning
@@ -201,6 +202,7 @@ PullError
 PullState
 PurePath
 PydanticGeneralMetadata
+PydanticUndefined
 PyPI
 PyYAML
 PyYAML's
@@ -443,11 +445,13 @@ texinfo
 tgz
 toml
 toolchain
+toolchains
 toplevel
 txt
 ubuntu
 umount
 unbuilt
+unixsocket
 unmark
 unmarshal
 unmount

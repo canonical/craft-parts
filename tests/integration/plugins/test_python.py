@@ -369,3 +369,42 @@ def test_find_payload_python_good_version(new_dir, partitions):
         """
     )
     assert expected_text in output
+
+
+def test_no_shebangs(new_dir, partitions):
+    """Test that building a Python part with no scripts works."""
+
+    class ScriptlessPlugin(craft_parts.plugins.plugins.PythonPlugin):
+        @override
+        def _get_package_install_commands(self) -> list[str]:
+            return [
+                *super()._get_package_install_commands(),
+                f"rm {self._part_info.part_install_dir}/bin/pip*",
+                f"rm {self._part_info.part_install_dir}/bin/mytest",
+            ]
+
+    plugins.register({"python": ScriptlessPlugin})
+
+    source_location = Path(__file__).parent / "test_python"
+
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          foo:
+            plugin: python
+            source: {source_location}
+            python-packages: [] # to remove default wheel, setuptools, etc
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_python", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    primed_script = lf.project_info.prime_dir / "bin/mytest"
+    assert not primed_script.exists()

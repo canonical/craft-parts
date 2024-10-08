@@ -99,6 +99,27 @@ class JavaPlugin(Plugin):
     symlink creation.
     """
 
+    def _get_java_link_commands(self) -> list[str]:
+        """Get the bash commands to provide /bin/java symlink."""
+        # pylint: disable=line-too-long
+        return [
+            '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
+            "mkdir -p ${CRAFT_PART_INSTALL}/bin",
+            "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
+            "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
+        ]
+        # pylint: enable=line-too-long
+
+    def _get_jar_link_commands(self) -> list[str]:
+        """Get the bash commands to provide ${CRAFT_STAGE}/jars."""
+        # pylint: disable=line-too-long
+        return [
+            "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
+            "mkdir -p ${CRAFT_PART_INSTALL}/jar",
+            r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
+        ]
+        # pylint: enable=line-too-long
+
     def _get_java_post_build_commands(self) -> list[str]:
         """Get the bash commands to structure a Java build in the part's install dir.
 
@@ -110,22 +131,7 @@ class JavaPlugin(Plugin):
           - Hardlink the .jar files generated in ${CRAFT_PART_BUILD} to
             ${CRAFT_PART_INSTALL}/jar.
         """
-        # pylint: disable=line-too-long
-        link_java = [
-            '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
-            "mkdir -p ${CRAFT_PART_INSTALL}/bin",
-            "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
-            "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
-        ]
-
-        link_jars = [
-            "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
-            "mkdir -p ${CRAFT_PART_INSTALL}/jar",
-            r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
-        ]
-        # pylint: enable=line-too-long
-
-        return link_java + link_jars
+        return self._get_java_link_commands() + self._get_jar_link_commands()
 
 
 class BasePythonPlugin(Plugin):
@@ -236,11 +242,16 @@ class BasePythonPlugin(Plugin):
         shebangs in the final environment should be handled.
         """
         script_interpreter = self._get_script_interpreter()
+        find_cmd = (
+            f'find "{self._part_info.part_install_dir}" -type f -executable -print0'
+        )
+        xargs_cmd = "xargs --no-run-if-empty -0"
+        sed_cmd = f'sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"'
         return [
             textwrap.dedent(
                 f"""\
-                find "{self._part_info.part_install_dir}" -type f -executable -print0 | xargs -0 \\
-                    sed -i "1 s|^#\\!${{PARTS_PYTHON_VENV_INTERP_PATH}}.*$|{script_interpreter}|"
+                {find_cmd} | {xargs_cmd} \\
+                    {sed_cmd}
                 """
             )
         ]
