@@ -456,7 +456,7 @@ class Ubuntu(BaseRepository):
     def upgrade_packages(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls,
     ) -> None:
-        """Upgrade packages."""
+        """Upgrade all packages."""
         # Return early when testing.
         if os.geteuid() != 0:
             logger.warning("Packages not upgraded, not running as superuser.")

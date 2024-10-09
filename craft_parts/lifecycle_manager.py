@@ -226,6 +226,10 @@ class LifecycleManager:
         """
         packages.Repository.refresh_packages_list()
 
+    def upgrade_packages(self) -> None:
+        """Upgrade all installed packages."""
+        packages.Repository.upgrade_packages()
+
     def plan(
         self,
         target_step: Step,

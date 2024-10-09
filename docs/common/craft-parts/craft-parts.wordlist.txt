@@ -164,6 +164,7 @@ PackageCacheMount
 PackageFetchError
 PackageListRefreshError
 PackageNotFound
+PackageUpgradeError
 PackagesDownloadError
 PackagesError
 PackagesNotFound
