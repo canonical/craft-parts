@@ -85,6 +85,10 @@ class YUMRepository(BaseRepository):
         """
 
     @classmethod
+    def upgrade_packages(cls) -> None:
+        """Upgrade the packages in the repository."""
+
+    @classmethod
     def _check_if_all_packages_installed(cls, package_names: list[str]) -> bool:
         """Check if all given packages are installed.
 

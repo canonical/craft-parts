@@ -453,6 +453,25 @@ class Ubuntu(BaseRepository):
             ) from call_error
 
     @classmethod
+    def upgrade_packages(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls,
+    ) -> None:
+        """Upgrade packages."""
+        # Return early when testing.
+        if os.geteuid() != 0:
+            logger.warning("Packages not upgraded, not running as superuser.")
+            return
+
+        try:
+            cmd = ["apt-get", "upgrade", "-y"]
+            logger.debug("Executing: %s", cmd)
+            process_run(cmd)
+        except subprocess.CalledProcessError as call_error:
+            raise errors.PackageUpgradeError(
+                "failed to run apt upgrade"
+            ) from call_error
+
+    @classmethod
     @_apt_cache_wrapper
     def _check_if_all_packages_installed(cls, package_names: list[str]) -> bool:
         """Check if all given packages are installed.

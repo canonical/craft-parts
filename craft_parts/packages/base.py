@@ -74,6 +74,15 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
+    def upgrade_packages(cls) -> None:
+        """Upgrade the packages in the repository.
+
+        If upgrade is not possible :class:`PackageUpgradeError`
+        should be raised.
+        """
+
+    @classmethod
+    @abc.abstractmethod
     def download_packages(cls, package_names: list[str]) -> None:
         """Download the specified packages to the local package cache.
 
@@ -198,6 +207,10 @@ class DummyRepository(BaseRepository):
     @classmethod
     def refresh_packages_list(cls) -> None:
         """Refresh the build packages cache."""
+
+    @classmethod
+    def upgrade_packages(cls) -> None:
+        """Upgrade the packages."""
 
     @classmethod
     def download_packages(cls, package_names: list[str]) -> None:
