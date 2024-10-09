@@ -178,8 +178,9 @@ class PartSpec(BaseModel):
 
         :param data: The part data to query.
         """
-        stage_packages = self.stage_packages or []
-        return any(is_slice(name) for name in stage_packages)
+        if not self.stage_packages:
+            return False
+        return any(is_slice(name) for name in self.stage_packages)
 
 
 # pylint: disable=too-many-public-methods
