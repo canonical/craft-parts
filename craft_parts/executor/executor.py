@@ -99,6 +99,8 @@ class Executor:
                     self._project_info.overlay_mount_dir, self._project_info
                 )
                 ctx.refresh_packages_list()
+                logger.info("Upgrading packages in the overlay base")
+                ctx.upgrade_packages()
 
         callbacks.run_prologue(self._project_info)
 
