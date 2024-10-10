@@ -583,6 +583,23 @@ class TestBuildPackages:
 
         assert fake_deb_run.mock_calls == [call(["apt-get", "update"])]
 
+    def test_upgrade_packages(self, fake_deb_run, mocker):
+        mocker.patch("os.geteuid", return_value=0)
+        deb.Ubuntu.upgrade_packages()
+
+        assert fake_deb_run.mock_calls == [call(["apt-get", "upgrade", "-y"])]
+
+    def test_upgrade_packages_fails(self, fake_deb_run, mocker):
+        mocker.patch("os.geteuid", return_value=0)
+        fake_deb_run.side_effect = CalledProcessError(
+            returncode=1, cmd=["apt-get", "upgrade", "-y"]
+        )
+
+        with pytest.raises(errors.PackageUpgradeError):
+            deb.Ubuntu.upgrade_packages()
+
+        assert fake_deb_run.mock_calls == [call(["apt-get", "upgrade", "-y"])]
+
 
 @pytest.mark.parametrize(
     ("source_type", "pkgs"),
