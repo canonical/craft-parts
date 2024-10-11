@@ -92,6 +92,19 @@ class PackageListRefreshError(PackagesError):
         super().__init__(brief=brief)
 
 
+class PackageUpgradeError(PackagesError):
+    """Failed to upgrade the available packages.
+
+    :param message: The error message.
+    """
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        brief = f"Failed to upgrade the packages: {message}."
+
+        super().__init__(brief=brief)
+
+
 class PackageBroken(PackagesError):
     """Package has unmet dependencies.
 
