@@ -73,11 +73,19 @@ class TestExecutionContextOverlays:
         def refresh_packages_list() -> None:
             call_order.append("refresh_packages_list")
 
+        def upgrade_packages() -> None:
+            call_order.append("upgrade_packages")
+
         callbacks.register_configure_overlay(configure_overlay)
         mocker.patch.object(
             overlays.PackageCacheMount,
             "refresh_packages_list",
             side_effect=refresh_packages_list,
+        )
+        mocker.patch.object(
+            overlays.PackageCacheMount,
+            "upgrade_packages",
+            side_effect=upgrade_packages,
         )
 
         p1 = Part("p1", {"plugin": "nil", "overlay-packages": ["fake-pkg"]})
@@ -90,4 +98,5 @@ class TestExecutionContextOverlays:
             assert call_order == [
                 f"configure_overlay: {info.overlay_mount_dir} custom",
                 "refresh_packages_list",
+                "upgrade_packages",
             ]
