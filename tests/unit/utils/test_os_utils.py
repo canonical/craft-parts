@@ -19,6 +19,7 @@ import os
 import subprocess
 import textwrap
 from pathlib import Path
+from unittest import mock
 from unittest.mock import call
 
 import pytest
@@ -419,3 +420,25 @@ class TestMount:
             call(1),
             call(1),
         ]
+
+
+@pytest.mark.parametrize(
+    ("command", "log_calls"),
+    [
+        (["true"], []),
+        (["echo", "hi"], [mock.call(":: hi")]),
+        (
+            ["bash", "-c", "echo Line 1; echo Line 2; echo Line 3 >> /dev/stderr"],
+            [
+                mock.call(":: Line 1"),
+                mock.call(":: Line 2"),
+                mock.call(":: Line 3"),
+            ],
+        ),
+    ],
+)
+def test_process_run_output_correct(command: list[str], log_calls):
+    mock_logger = mock.Mock()
+    os_utils.process_run(command, mock_logger)
+
+    assert mock_logger.mock_calls == log_calls
