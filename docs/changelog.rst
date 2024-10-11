@@ -2,6 +2,14 @@
 Changelog
 *********
 
+2.1.3 (2024-10-11)
+------------------
+
+- Added some missing internal links to the documentation.
+- Improve test coverage for `os_utils module <craft-parts-utils-package>`_
+
+For a complete list of commits, check out the `2.1.3`_ release on GitHub.
+
 2.1.2 (2024-10-04)
 ------------------
 
@@ -18,16 +26,22 @@ Documentation:
   plugin`</common/craft-parts/reference/plugins/rust_plugin>` doc with recent
   changes to the Rust toolchain.
 
+For a complete list of commits, check out the `2.1.2`_ release on GitHub.
+
 2.1.1 (2024-09-13)
 ------------------
 
 - This release brings the bug fix from ``1.33.1`` into the ``2.1.x`` series.
+
+For a complete list of commits, check out the `2.1.1`_ release on GitHub.
 
 1.33.1 (2024-09-13)
 -------------------
 
 - Fix NPM plugin to be stateless, allowing lifecycle steps to be
   executed in separate runs.
+
+For a complete list of commits, check out the `1.33.1`_ release on GitHub.
 
 2.1.0 (2024-09-09)
 ------------------
@@ -43,6 +57,8 @@ Bug fixes:
 - Fix a regression where numeric part properties could not be parsed.
 - Fix a bug where stage-packages tracking would fail when files were organized
   into a non-default partition.
+
+For a complete list of commits, check out the `2.1.0`_ release on GitHub.
 
 2.0.0 (2024-08-08)
 ------------------
@@ -63,6 +79,8 @@ Bug fixes:
 
 - Xattrs raise FileNotFoundError when appropriate
 - Partition names are more strictly checked.
+
+For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 
 1.34.0 (2024-08-01)
 -------------------
@@ -583,3 +601,10 @@ Bug fixes:
 
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
+
+.. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
+.. _2.1.2: https://github.com/canonical/craft-parts/releases/tag/2.1.2
+.. _2.1.1: https://github.com/canonical/craft-parts/releases/tag/2.1.1
+.. _2.1.0: https://github.com/canonical/craft-parts/releases/tag/2.1.0
+.. _2.0.0: https://github.com/canonical/craft-parts/releases/tag/2.0.0
+.. _1.33.1: https://github.com/canonical/craft-parts/releases/tag/1.33.1
