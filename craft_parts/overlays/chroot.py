@@ -142,13 +142,19 @@ def _cleanup_chroot(path: Path, use_host_sources: bool) -> None:
 
 class _Mount:
     def __init__(
-        self, src: str | Path, mountpoint: str | Path, *args, fstype: str | None = None
+        self,
+        src: str | Path,
+        mountpoint: str | Path,
+        *args,
+        fstype: str | None = None,
+        skip_missing: bool = True,
     ) -> None:
         """Mount entry for chroot setup."""
 
         self.src = Path(src)
         self.mountpoint = Path(mountpoint)
         self.args = list(args)
+        self.skip_missing = skip_missing
 
         if fstype is not None:
             self.args.append(f"-t{fstype}")
@@ -171,7 +177,7 @@ class _Mount:
     def mount_to(self, chroot: Path, *args: str) -> None:
         abs_mountpoint = self.get_abs_path(chroot, self.mountpoint)
 
-        if not self.mountpoint_exists(abs_mountpoint):
+        if self.skip_missing and not self.mountpoint_exists(abs_mountpoint):
             logger.warning("[pid=%d] mount: %r not found!", os.getpid(), abs_mountpoint)
             return
 
@@ -180,7 +186,7 @@ class _Mount:
     def unmount_from(self, chroot: Path, *args: str) -> None:
         abs_mountpoint = self.get_abs_path(chroot, self.mountpoint)
 
-        if not self.mountpoint_exists(abs_mountpoint):
+        if self.skip_missing and not self.mountpoint_exists(abs_mountpoint):
             logger.warning("[pid=%d] umount: %r not found!", os.getpid(), chroot)
             return
 
@@ -195,8 +201,11 @@ class _BindMount(_Mount):
         src: str | Path,
         mountpoint: str | Path,
         *args: str,
+        skip_missing: bool = True,
     ) -> None:
-        super().__init__(src, mountpoint, f"--{self.bind_type}", *args)
+        super().__init__(
+            src, mountpoint, f"--{self.bind_type}", *args, skip_missing=skip_missing
+        )
 
     def mountpoint_exists(self, mountpoint: Path):
         if self.src.exists() and self.src.is_file():
@@ -211,14 +220,14 @@ class _BindMount(_Mount):
                 rmtree(mountpoint)
 
             # prep mount point
-            mountpoint.mkdir(exist_ok=True)
+            mountpoint.mkdir(parents=True, exist_ok=True)
 
         elif src.is_file():
             # remove existing file
             if mountpoint.exists():
                 mountpoint.unlink()
             else:
-                mountpoint.parent.mkdir(exist_ok=True)
+                mountpoint.parent.mkdir(parents=True, exist_ok=True)
 
             # prep mount point
             mountpoint.touch()
@@ -237,7 +246,7 @@ class _RBindMount(_BindMount):
 
 class _TempFSClone(_Mount):
     def __init__(self, src: str, mountpoint: str, *args) -> None:
-        super().__init__(src, mountpoint, *args, fstype="tmpfs")
+        super().__init__(src, mountpoint, *args, fstype="tmpfs", skip_missing=False)
 
     def _mount(self, src: Path, mountpoint: Path, *args) -> None:
         if src.is_dir():
@@ -279,9 +288,15 @@ _linux_mounts: list[_Mount] = [
 # TODO: parameterize this per linux distribution / package manager
 _ubuntu_apt_mounts = [
     _TempFSClone("/etc/apt", "/etc/apt"),
-    _BindMount("/usr/share/ca-certificates/", "/usr/share/ca-certificates/"),
-    _BindMount("/etc/ssl/certs/", "/etc/ssl/certs/"),
-    _BindMount("/etc/ca-certificates.conf", "/etc/ca-certificates.conf"),
+    _BindMount(
+        "/usr/share/ca-certificates/",
+        "/usr/share/ca-certificates/",
+        skip_missing=False,
+    ),
+    _BindMount("/etc/ssl/certs/", "/etc/ssl/certs/", skip_missing=False),
+    _BindMount(
+        "/etc/ca-certificates.conf", "/etc/ca-certificates.conf", skip_missing=False
+    ),
 ]
 
 
