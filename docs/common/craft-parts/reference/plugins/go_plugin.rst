@@ -48,7 +48,7 @@ provision it by itself, to allow flexibility in the choice of compiler version.
 
 Common means of providing ``go`` are:
 
-***** The ``golang`` Ubuntu package, declared as a ``build-package``.
+* The ``golang`` Ubuntu package, declared as a ``build-package``.
 * The ``go`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``go-deps``, and
