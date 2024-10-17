@@ -28,7 +28,10 @@ def go_version():
     output = subprocess.run(
         ["go", "version"], check=True, capture_output=True
     ).stdout.decode()
-    return re.match(r"go version go([\d.]+)", output).group(1)
+    match = re.match(r"go version go([\d.]+)", output)
+    if match is None:
+        raise RuntimeError("Cannot determine go version")
+    return match.group(1)
 
 
 def test_go_workspace_use(new_dir, partitions, go_version):
