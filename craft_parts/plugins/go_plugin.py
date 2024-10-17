@@ -37,7 +37,6 @@ class GoPluginProperties(PluginProperties, frozen=True):
 
     go_buildtags: list[str] = []
     go_generate: list[str] = []
-    go_workspace_use: list[str] = []
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
