@@ -39,6 +39,8 @@ class OverlayManager:
     :param part_list: A list of all parts in the project.
     :param base_layer_dir: The directory containing the overlay base, or None
         if the project doesn't use overlay parameters.
+    :param use_host_sources: Configure chroot to use package sources from
+        the the host enviroment.
     """
 
     def __init__(
@@ -47,12 +49,14 @@ class OverlayManager:
         project_info: ProjectInfo,
         part_list: list[Part],
         base_layer_dir: Path | None,
+        use_host_sources: bool = False,
     ) -> None:
         self._project_info = project_info
         self._part_list = part_list
         self._layer_dirs = [p.part_layer_dir for p in part_list]
         self._overlay_fs: OverlayFS | None = None
         self._base_layer_dir = base_layer_dir
+        self._use_host_sources = use_host_sources
 
     @property
     def base_layer_dir(self) -> Path | None:
@@ -128,7 +132,11 @@ class OverlayManager:
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
         packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
-        chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
+        chroot.chroot(
+            mount_dir,
+            packages.Repository.refresh_packages_list,
+            use_host_sources=self._use_host_sources,
+        )
 
     def download_packages(self, package_names: list[str]) -> None:
         """Download packages and populate the overlay package cache.
@@ -139,7 +147,12 @@ class OverlayManager:
             raise RuntimeError("overlay filesystem not mounted")
 
         mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(mount_dir, packages.Repository.download_packages, package_names)
+        chroot.chroot(
+            mount_dir,
+            packages.Repository.download_packages,
+            args=(package_names,),
+            use_host_sources=self._use_host_sources,
+        )
 
     def install_packages(self, package_names: list[str]) -> None:
         """Install packages on the overlay area using chroot.
@@ -153,8 +166,9 @@ class OverlayManager:
         chroot.chroot(
             mount_dir,
             packages.Repository.install_packages,
-            package_names,
-            refresh_package_cache=False,
+            args=(package_names,),
+            use_host_sources=self._use_host_sources,
+            kwargs={"refresh_package_cache": False},
         )
 
 

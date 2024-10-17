@@ -64,6 +64,7 @@ class Executor:
         ignore_patterns: list[str] | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: LayerHash | None = None,
+        use_host_sources: bool = False,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -73,11 +74,13 @@ class Executor:
         self._base_layer_hash = base_layer_hash
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
+        self._use_host_sources = use_host_sources
 
         self._overlay_manager = OverlayManager(
             project_info=self._project_info,
             part_list=self._part_list,
             base_layer_dir=base_layer_dir,
+            use_host_sources=use_host_sources,
         )
 
     def prologue(self) -> None:
