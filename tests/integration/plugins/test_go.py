@@ -114,3 +114,41 @@ def test_go_generate(new_dir, partitions):
     output = subprocess.check_output([str(binary)], text=True)
     # This is the expected output that "gen/generator.go" sets in "main.go"
     assert output == "This is a generated line\n"
+
+
+def test_go_workspace_use(new_dir, partitions):
+    source_location = Path(__file__).parent / "test_go_workspace"
+
+    parts_yaml = textwrap.dedent(
+        f"""
+        parts:
+          go-flags:
+            source: https://github.com/jessevdk/go-flags.git
+            plugin: go-use
+          hello:
+            after:
+            - go-flags
+            plugin: go
+            source: {source_location}
+            build-environment:
+              - GO111MODULE: "on"
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+    lf = LifecycleManager(
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    binary = Path(lf.project_info.prime_dir, "bin", "workspace")
+    assert binary.is_file()
+
+    output = subprocess.check_output([str(binary), "--say=hello"], text=True)
+    assert output == "hello\n"

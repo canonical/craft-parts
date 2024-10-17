@@ -19,7 +19,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.go_plugin import GoPlugin
+from craft_parts.plugins.go_use_plugin import GoUsePlugin
 from pydantic import ValidationError
 
 
@@ -36,13 +36,13 @@ def go_workspace(part_info):
     part_info._project_info.dirs.parts_dir.mkdir()
     go_workspace = part_info._project_info.dirs.parts_dir / "go.work"
     go_workspace.touch()
-    yield
+    yield go_workspace
     go_workspace.unlink()
 
 
 def test_validate_environment(dependency_fixture, part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
     go = dependency_fixture("go", output="go version go1.17 linux/amd64")
 
     validator = plugin.validator_class(
@@ -52,8 +52,8 @@ def test_validate_environment(dependency_fixture, part_info):
 
 
 def test_validate_environment_missing_go(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
@@ -65,8 +65,8 @@ def test_validate_environment_missing_go(part_info):
 
 
 def test_validate_environment_broken_go(dependency_fixture, part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
     go = dependency_fixture("go", broken=True)
 
     validator = plugin.validator_class(
@@ -79,8 +79,8 @@ def test_validate_environment_broken_go(dependency_fixture, part_info):
 
 
 def test_validate_environment_invalid_go(dependency_fixture, part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
     go = dependency_fixture("go", invalid=True)
 
     validator = plugin.validator_class(
@@ -93,8 +93,8 @@ def test_validate_environment_invalid_go(dependency_fixture, part_info):
 
 
 def test_validate_environment_with_go_part(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
@@ -103,8 +103,8 @@ def test_validate_environment_with_go_part(part_info):
 
 
 def test_validate_environment_without_go_part(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
@@ -119,62 +119,29 @@ def test_validate_environment_without_go_part(part_info):
 
 
 def test_get_build_snaps(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_snaps() == set()
 
 
 def test_get_build_packages(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_packages() == set()
 
 
 def test_get_build_environment(new_dir, part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_environment() == {
-        "GOBIN": f"{new_dir}/parts/my-part/install/bin",
-    }
-
-
-def test_get_build_commands(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
-
-    assert plugin.get_build_commands() == [
-        "go mod download all",
-        'go install -p "1"  ./...',
-    ]
-
-
-def test_get_build_commands_with_buildtags(part_info):
-    properties = GoPlugin.properties_class.unmarshal(
-        {"source": ".", "go-buildtags": ["dev", "debug"]}
-    )
-    plugin = GoPlugin(properties=properties, part_info=part_info)
-
-    assert plugin.get_build_commands() == [
-        "go mod download all",
-        'go install -p "1" -tags=dev,debug ./...',
-    ]
-
-
-def test_invalid_parameters():
-    with pytest.raises(ValidationError) as raised:
-        GoPlugin.properties_class.unmarshal({"source": ".", "go-invalid": True})
-    err = raised.value.errors()
-    assert len(err) == 1
-    assert err[0]["loc"] == ("go-invalid",)
-    assert err[0]["type"] == "extra_forbidden"
+    assert plugin.get_build_environment() == {}
 
 
 def test_missing_parameters():
     with pytest.raises(ValidationError) as raised:
-        GoPlugin.properties_class.unmarshal({})
+        GoUsePlugin.properties_class.unmarshal({})
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
@@ -182,32 +149,39 @@ def test_missing_parameters():
 
 
 def test_get_out_of_source_build(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_out_of_source_build() is False
+    assert plugin.get_out_of_source_build() is True
 
 
-def test_get_build_commands_go_generate(part_info):
-    properties = GoPlugin.properties_class.unmarshal(
-        {"source": ".", "go-generate": ["-v a", "-x b"]}
+def test_get_build_commands(mocker, part_info, go_workspace):
+    """Test that go work is created and that work.go is created."""
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
+
+    # Let the plugin set it up
+    go_workspace.unlink()
+    run_mock = mocker.patch(
+        "subprocess.run", side_effect=lambda *args, **kwargs: go_workspace.touch()
     )
-    plugin = GoPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == [
-        "go mod download all",
-        "go generate -v a",
-        "go generate -x b",
-        'go install -p "1"  ./...',
+        f"go work use {plugin._part_info.part_src_dir}",
     ]
+    run_mock.assert_called_once_with(
+        ["go", "work", "init"], capture_output=True, check=True, cwd=go_workspace.parent
+    )
 
 
 @pytest.mark.usefixtures("go_workspace")
-def test_get_build_commands_go_workspace_use(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoPlugin(properties=properties, part_info=part_info)
+def test_get_build_commands_workspace_in_use(mocker, part_info):
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
+
+    run_mock = mocker.patch("subprocess.run")
 
     assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_build_dir}",
-        'go install -p "1"  ./...',
+        f"go work use {plugin._part_info.part_src_dir}",
     ]
+    run_mock.assert_not_called()

@@ -65,7 +65,11 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Call ``go mod download all`` to find and download all necessary modules;
+* If a `go workspace`_ has been setup by use of the :ref:`go-use <craft_parts_go_use_plugin>`
+  plugin,
+  call ``go work use <build-dir>`` to add the source for the part to the workspace;
+* If not operating in the context of  a `go workspace`_, call ``go mod download all``
+  to find and download all necessary modules;
 * Call ``go generate <item>`` for each item in ``go-generate``;
 * Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
   ``--tags`` parameter.
@@ -94,4 +98,4 @@ The following snippet declares a part using the ``go`` plugin. It uses the stabl
 .. _Build tags: https://pkg.go.dev/cmd/go#hdr-Build_constraints
 .. _Go: https://go.dev/
 .. _go generate: https://go.dev/blog/generate
-
+.. _go workspace: https://go.dev/blog/get-familiar-with-workspaces

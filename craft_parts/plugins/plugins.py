@@ -26,6 +26,7 @@ from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
+from .go_use_plugin import GoUsePlugin
 from .make_plugin import MakePlugin
 from .maven_plugin import MavenPlugin
 from .meson_plugin import MesonPlugin
@@ -54,6 +55,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "dotnet": DotnetPlugin,
     "dump": DumpPlugin,
     "go": GoPlugin,
+    "go-use": GoUsePlugin,
     "make": MakePlugin,
     "maven": MavenPlugin,
     "meson": MesonPlugin,

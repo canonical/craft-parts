@@ -80,6 +80,8 @@ GitSourceModel
 GoPlugin
 GoPluginEnvironmentValidator
 GoPluginProperties
+GoUsePlugin
+GoUsePluginProperties
 HttpRequestError
 IncompatibleSourceOptions
 InvalidAction
