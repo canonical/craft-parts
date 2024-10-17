@@ -40,7 +40,7 @@ class GoUsePluginProperties(PluginProperties, frozen=True):
 
 
 class GoUsePlugin(Plugin):
-    """A plugin to to setup the source into a go workspace.
+    """A plugin to setup the source into a go workspace.
 
     The go plugin requires a go compiler installed on your system. This can
     be achieved by adding the appropriate golang package to ``build-packages``,
