@@ -34,7 +34,7 @@ def part_info(new_dir):
 @pytest.fixture
 def go_workspace(part_info):
     part_info._project_info.dirs.parts_dir.mkdir()
-    go_workspace = part_info._project_info.dirs.parts_dir / "work.go"
+    go_workspace = part_info._project_info.dirs.parts_dir / "go.work"
     go_workspace.touch()
     yield go_workspace
     go_workspace.unlink()
@@ -156,7 +156,7 @@ def test_get_out_of_source_build(part_info):
 
 
 def test_get_build_commands(mocker, part_info, go_workspace):
-    """Test that go work is created and that go.work is created."""
+    """Test that go work is created and that work.go is created."""
     properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
     plugin = GoUsePlugin(properties=properties, part_info=part_info)
 

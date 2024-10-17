@@ -25,6 +25,7 @@ from overrides import override
 from .base import Plugin
 from .go_plugin import GoPluginEnvironmentValidator
 from .properties import PluginProperties
+from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
@@ -75,17 +76,27 @@ class GoUsePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         # Set the go workspace directory to live at the root of all parts.
         workspace_dir = self._part_info._project_info.dirs.parts_dir  # noqa: SLF001
-        workspace = workspace_dir / "work.go"
+        workspace = workspace_dir / "go.work"
 
         # We do not want this implementation detail exposed in the run script
         if not workspace.exists():
-            logging.debug(f"Initializing go workspace at {workspace}")
-            subprocess.run(
-                ["go", "work", "init"],
-                capture_output=True,
-                check=True,
-                cwd=workspace_dir,
-            )
+            logger.debug(f"Init go workspace at {workspace}")
+            try:
+                subprocess.run(
+                    ["go", "work", "init"],
+                    capture_output=True,
+                    check=True,
+                    cwd=workspace_dir,
+                )
+            except subprocess.CalledProcessError as call_error:
+                logger.debug(
+                    f"Workspace init failed {call_error!r} "
+                    f"stdout: {call_error.stdout!r} "
+                    f"stderr: {call_error.stderr}"
+                )
+                raise errors.PluginBuildError(
+                    part_name=self._part_info.part_name, plugin_name="go-use"
+                )
 
         return [
             f"go work use {self._part_info.part_src_dir}",

@@ -123,20 +123,19 @@ class GoPlugin(Plugin):
 
         # Matches go-use plugin expectation.
         workspace_dir = self._part_info._project_info.dirs.parts_dir  # noqa: SLF001
-        workspace = workspace_dir / "work.go"
+        workspace = workspace_dir / "go.work"
 
-        init_cmds: list[str] = []
         if workspace.exists():
-            init_cmds.append(f"go work use {self._part_info.part_build_dir}")
+            init_cmd = f"go work use {self._part_info.part_build_dir}"
         else:
-            init_cmds.append("go mod download all")
+            init_cmd = "go mod download all"
 
         tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
         generate_cmds: list[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
         return [
-            *init_cmds,
+            init_cmd,
             *generate_cmds,
             f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
         ]
