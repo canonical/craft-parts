@@ -17,6 +17,7 @@
 """The Go Use plugin."""
 
 import logging
+import subprocess
 from typing import Literal
 
 from overrides import override
@@ -74,8 +75,18 @@ class GoUsePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         # Set the go workspace directory to live at the root of all parts.
         workspace_dir = self._part_info._project_info.dirs.parts_dir  # noqa: SLF001
+        workspace = workspace_dir / "work.go"
+
+        # We do not want this implementation detail exposed in the run script
+        if not workspace.exists():
+            logging.debug(f"Initializing go workspace at {workspace}")
+            subprocess.run(
+                ["go", "work", "init"],
+                capture_output=True,
+                check=True,
+                cwd=workspace_dir,
+            )
 
         return [
-            f"[ -f '{workspace_dir}' ] || (cd {workspace_dir} && go work init)",
             f"go work use {self._part_info.part_src_dir}",
         ]
