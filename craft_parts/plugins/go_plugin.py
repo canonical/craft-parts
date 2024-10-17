@@ -94,10 +94,6 @@ class GoPlugin(Plugin):
       (list of strings)
       Parameters to pass to `go generate` before building. Each item on the list
       will be a separate `go generate` call. Default is not to call `go generate`.
-    - ``go-workspace-use``
-      (list of strings)
-      Parameters for `go work use` statements to setup a workspace to consume
-      go modules from.
     """
 
     properties_class = GoPluginProperties
@@ -125,13 +121,13 @@ class GoPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(GoPluginProperties, self._options)
 
+        # Matches go-use plugin expectation.
+        workspace_dir = self._part_info._project_info.dirs.parts_dir
+        workspace = workspace_dir / "work.go"
+
         init_cmds: list[str] = []
-        if options.go_workspace_use:
-            # go.work should not be part of the source to be built in this
-            # scenario
-            init_cmds.append("go work init")
-            init_cmds.append("go work use .")
-            init_cmds.extend([f"go work use {use}" for use in options.go_workspace_use])
+        if workspace:
+            init_cmds.append(f"go work use {self._part_info.part_build_dir}")
         else:
             init_cmds.append("go mod download all")
 

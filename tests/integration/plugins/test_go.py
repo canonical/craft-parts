@@ -117,11 +117,6 @@ def test_go_generate(new_dir, partitions):
 
 
 def test_go_workspace_use(new_dir, partitions):
-    """Test code generation via "go generate" in parts using the go plugin
-
-    The go code in the "test_go" dir uses "gen/generator.go" to create, at build time,
-    the "main.go" file that produces the final binary.
-    """
     source_location = Path(__file__).parent / "test_go_workspace"
 
     parts_yaml = textwrap.dedent(
@@ -129,18 +124,12 @@ def test_go_workspace_use(new_dir, partitions):
         parts:
           go-flags:
             source: https://github.com/jessevdk/go-flags.git
-            plugin: dump
-            organize:
-              "*": modules/go-flags/
-            prime:
-              - -modules
+            plugin: go-use
           hello:
             after:
             - go-flags
             plugin: go
             source: {source_location}
-            go-workspace-use:
-              - $CRAFT_STAGE/modules/go-flags
             build-environment:
               - GO111MODULE: "on"
         """
@@ -162,5 +151,4 @@ def test_go_workspace_use(new_dir, partitions):
     assert binary.is_file()
 
     output = subprocess.check_output([str(binary), "--say=hello"], text=True)
-    # This is the expected output that "gen/generator.go" sets in "main.go"
     assert output == "hello\n"

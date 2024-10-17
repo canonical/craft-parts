@@ -33,18 +33,6 @@ Parameters to pass to `go generate`_ before building. Each item on the list
 will be a separate ``go generate`` call. The default behavior is not to call
 ``go generate``.
 
-go-workspace-use
-~~~~~~~~~~~~~~~~
-**Type**: list of strings
-**Default** []
-
-Parameters to setup a `go workspace`_ with modules to use for the build. The
-current source is added automatically when any path is defined. Paths must be on
-the local filesystem (e.g.; within ``$CRAFT/STAGE``).
-
-The use of ``go.work`` omits the downloading of go modules.
-
-
 Environment variables
 ---------------------
 
@@ -77,17 +65,14 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* If ``go-workspace-use`` is defined:
-  * Call ``go work init``;
-  * Call ``go work use .`` to add the source for the part;
-  * Call ``go work use <item>`` for each item in ``go-workspace-use``;
-* If ``go-workspace-use`` is not defined, call ``go mod download all`` to find
-  and download all necessary modules;
+* If a `go workspace`_ has been setup by use of the :ref:`go-use <go-use>` plugin,
+  call ``go work use <build-dir>`` to add the source for the part to the workspace;
+* If not operating in the context of  a `go workspace`_, call ``go mod download all``
+  to find and download all necessary modules;
 * Call ``go generate <item>`` for each item in ``go-generate``;
 * Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
   ``--tags`` parameter.
 
-If
 Examples
 --------
 
