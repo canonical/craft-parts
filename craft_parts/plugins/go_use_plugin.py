@@ -76,7 +76,6 @@ class GoUsePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         # Set the go workspace directory to live at the root of all parts.
         workspace_dir = self._part_info._project_info.dirs.parts_dir
-        workspace = workspace_dir / "work.go"
 
         return [
             f"[ -f '{workspace_dir}' ] || (cd {workspace_dir} && go work init)",
