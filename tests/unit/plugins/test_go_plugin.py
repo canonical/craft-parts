@@ -31,6 +31,14 @@ def part_info(new_dir):
     )
 
 
+@pytest.fixture
+def go_workspace(part_info):
+    go_workspace = part_info._project_info.dirs.parts_dir / "work.go"
+    go_workspace.touch()
+    yield
+    go_workspace.unlink()
+
+
 def test_validate_environment(dependency_fixture, part_info):
     properties = GoPlugin.properties_class.unmarshal({"source": "."})
     plugin = GoPlugin(properties=properties, part_info=part_info)
@@ -193,18 +201,12 @@ def test_get_build_commands_go_generate(part_info):
     ]
 
 
+@pytest.mark.usefixture("go_workspace")
 def test_get_build_commands_go_workspace_use(part_info):
     properties = GoPlugin.properties_class.unmarshal({"source": "."})
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
-    workspace_dir = plugin._part_info._project_info.dirs.parts_dir
-    workspace = workspace_dir / "work.go"
-    workspace_dir.mkdir(parents=True)
-    workspace.touch()
-
     assert plugin.get_build_commands() == [
         f"go work use {plugin._part_info.part_build_dir}",
-        "go work use go-flags",
-        "go work use go-cmp",
         'go install -p "1"  ./...',
     ]
