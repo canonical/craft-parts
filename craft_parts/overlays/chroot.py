@@ -153,63 +153,72 @@ class _Mount:
         if fstype is not None:
             self.args.append(f"-t{fstype}")
 
-    def _mount(self, src: Path, mountpoint: Path, *args) -> None:
-        mountpoint_str = str(mountpoint)
-        src_str = str(src)
-
-        # Only mount if mountpoint exists.
-        pid = os.getpid()
-        if mountpoint.exists():
-            logger.debug("[pid=%d] mount %r on chroot", pid, mountpoint_str)
-            os_utils.mount(src_str, mountpoint_str, *args)
-        else:
-            logger.error("[pid=%d] mountpoint %r does not exist", pid, mountpoint_str)
-
     @staticmethod
     def get_abs_path(path: Path, chroot_path: Path):
         return path / str(chroot_path).lstrip("/")
 
-    def mount_to(self, path: Path, *args) -> None:
-        abs_mountpoint = self.get_abs_path(path, self.mountpoint)
+    def mountpoint_exists(self, mountpoint: Path):
+        return mountpoint.exists()
+
+    def _mount(self, src: Path, mountpoint: Path, *args: str) -> None:
+        logger.debug("[pid=%d] mount %r on chroot", os.getpid(), src)
+        os_utils.mount(str(src), str(mountpoint), *args)
+
+    def _umount(self, mountpoint: Path, *args: str) -> None:
+        logger.debug("[pid=%d] umount: %r", os.getpid(), mountpoint)
+        os_utils.umount(str(mountpoint), *args)
+
+    def mount_to(self, chroot: Path, *args: str) -> None:
+        abs_mountpoint = self.get_abs_path(chroot, self.mountpoint)
+
+        if not self.mountpoint_exists(abs_mountpoint):
+            logger.warning("[pid=%d] mount: %r not found!", os.getpid(), abs_mountpoint)
+            return
 
         self._mount(self.src, abs_mountpoint, *self.args, *args)
 
-    def _umount(self, mountpoint: Path, *args) -> None:
-        mountpoint_str = str(mountpoint)
+    def unmount_from(self, chroot: Path, *args: str) -> None:
+        abs_mountpoint = self.get_abs_path(chroot, self.mountpoint)
 
-        pid = os.getpid()
-        if mountpoint.exists():
-            logger.debug("[pid=%d] umount: %r", pid, mountpoint_str)
-            os_utils.umount(mountpoint_str, *args)
-        else:
-            logger.warning("[pid=%d] umount: %r not found!", pid, mountpoint_str)
+        if not self.mountpoint_exists(abs_mountpoint):
+            logger.warning("[pid=%d] umount: %r not found!", os.getpid(), chroot)
+            return
 
-    def unmount_from(self, path: Path, *args) -> None:
-        abs_mountpoint = self.get_abs_path(path, self.mountpoint)
         self._umount(abs_mountpoint, *args)
 
 
 class _BindMount(_Mount):
     bind_type = "bind"
 
-    def __init__(self, src: str | Path, mountpoint: str | Path, *args) -> None:
+    def __init__(
+        self,
+        src: str | Path,
+        mountpoint: str | Path,
+        *args: str,
+    ) -> None:
         super().__init__(src, mountpoint, f"--{self.bind_type}", *args)
 
-    def _mount(self, src: Path, mountpoint: Path, *args) -> None:
+    def mountpoint_exists(self, mountpoint: Path):
+        if self.src.exists() and self.src.is_file():
+            return mountpoint.parent.exists()
+
+        return mountpoint.exists()
+
+    def _mount(self, src: Path, mountpoint: Path, *args: str) -> None:
         if src.is_dir():
             # remove existing content of dir
             if mountpoint.exists():
                 rmtree(mountpoint)
 
             # prep mount point
-            mountpoint.mkdir(parents=True, exist_ok=True)
+            mountpoint.mkdir(exist_ok=True)
 
         elif src.is_file():
             # remove existing file
             if mountpoint.exists():
                 mountpoint.unlink()
             else:
-                mountpoint.parent.mkdir(parents=True, exist_ok=True)
+                mountpoint.parent.mkdir(exist_ok=True)
 
             # prep mount point
             mountpoint.touch()
