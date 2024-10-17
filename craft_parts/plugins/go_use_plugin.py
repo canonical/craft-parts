@@ -22,10 +22,11 @@ from typing import Literal
 
 from overrides import override
 
+from craft_parts import errors
+
 from .base import Plugin
 from .go_plugin import GoPluginEnvironmentValidator
 from .properties import PluginProperties
-from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
