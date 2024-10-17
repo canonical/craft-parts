@@ -126,7 +126,7 @@ class GoPlugin(Plugin):
         workspace = workspace_dir / "work.go"
 
         init_cmds: list[str] = []
-        if workspace:
+        if workspace.exists():
             init_cmds.append(f"go work use {self._part_info.part_build_dir}")
         else:
             init_cmds.append("go mod download all")
