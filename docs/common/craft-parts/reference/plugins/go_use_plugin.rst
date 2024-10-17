@@ -13,7 +13,7 @@ Keywords
 There are no additional keywords to the the common :ref:`plugin <part-properties-plugin>`
 and :ref:`sources <part-properties-sources>` keywords.
 
-.. _go-details-begin:
+.. _go-use-details-begin:
 
 Dependencies
 ------------
@@ -33,7 +33,7 @@ stage the ``go`` executable to be used in the build step. This can be useful,
 for example, in cases where a specific, unreleased version of ``go`` is desired
 but unavailable as a snap or an Ubuntu package.
 
-.. _go-details-end:
+.. _go-use-details-end:
 
 How it works
 ------------

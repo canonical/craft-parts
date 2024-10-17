@@ -65,7 +65,8 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* If a `go workspace`_ has been setup by use of the :ref:`go-use <go-use>` plugin,
+* If a `go workspace`_ has been setup by use of the :ref:`go-use <craft_parts_go_use_plugin>`
+  plugin,
   call ``go work use <build-dir>`` to add the source for the part to the workspace;
 * If not operating in the context of  a `go workspace`_, call ``go mod download all``
   to find and download all necessary modules;
