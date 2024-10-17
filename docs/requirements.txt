@@ -12,10 +12,10 @@ sphinx-design==0.6.0
 sphinx-jsonschema==1.19.1
 sphinx-pydantic==0.1.1
 sphinx-tabs==3.4.5
-sphinxcontrib-applehelp==1.0.8
+sphinxcontrib-applehelp==2.0.0
 sphinx_design==0.6.0
 sphinxcontrib-details-directive==0.1.0
-sphinxcontrib-devhelp==1.0.6
+sphinxcontrib-devhelp==2.0.0
 sphinxcontrib-htmlhelp==2.0.5
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.7
