@@ -21,11 +21,9 @@ from typing import Literal
 
 from overrides import override
 
-from craft_parts import errors
-
 from .base import Plugin
-from .properties import PluginProperties
 from .go_plugin import GoPluginEnvironmentValidator
+from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +73,7 @@ class GoUsePlugin(Plugin):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         # Set the go workspace directory to live at the root of all parts.
-        workspace_dir = self._part_info._project_info.dirs.parts_dir
+        workspace_dir = self._part_info._project_info.dirs.parts_dir  # noqa: SLF001
 
         return [
             f"[ -f '{workspace_dir}' ] || (cd {workspace_dir} && go work init)",

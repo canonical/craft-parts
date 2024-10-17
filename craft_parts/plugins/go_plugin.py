@@ -122,7 +122,7 @@ class GoPlugin(Plugin):
         options = cast(GoPluginProperties, self._options)
 
         # Matches go-use plugin expectation.
-        workspace_dir = self._part_info._project_info.dirs.parts_dir
+        workspace_dir = self._part_info._project_info.dirs.parts_dir  # noqa: SLF001
         workspace = workspace_dir / "work.go"
 
         init_cmds: list[str] = []
