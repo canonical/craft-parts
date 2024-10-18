@@ -3,7 +3,7 @@
 Go Use plugin
 =============
 
-The Go plugin allows for setting up a `go workspace`_ for `Go`_ modules. It is
+The Go Use plugin allows for setting up a `go workspace`_ for `Go`_ modules. It is
 a companion plugin meant to be used with the :ref:`Go plugin <craft_parts_go_plugin>`.
 Use of this plugin sets up ``go.work`` and affects all parts.
 
