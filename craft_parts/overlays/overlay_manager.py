@@ -130,6 +130,14 @@ class OverlayManager:
         packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
 
+    def upgrade_packages(self) -> None:
+        """Upgrade all packages in the overlay system."""
+        if not self._overlay_fs:
+            raise RuntimeError("overlay filesystem not mounted")
+
+        mount_dir = self._project_info.overlay_mount_dir
+        chroot.chroot(mount_dir, packages.Repository.upgrade_packages)
+
     def download_packages(self, package_names: list[str]) -> None:
         """Download packages and populate the overlay package cache.
 
@@ -225,6 +233,10 @@ class PackageCacheMount:
     def refresh_packages_list(self) -> None:
         """Update the list of available packages in the overlay system."""
         self._overlay_manager.refresh_packages_list()
+
+    def upgrade_packages(self) -> None:
+        """Upgrade all packages in the overlay system."""
+        self._overlay_manager.upgrade_packages()
 
     def download_packages(self, package_names: list[str]) -> None:
         """Download the specified packages to the local system.
