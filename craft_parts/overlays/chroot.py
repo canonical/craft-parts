@@ -101,7 +101,7 @@ def _compare_os_release(host: os_utils.OsRelease, chroot: os_utils.OsRelease):
 
 
 def _host_compatible_chroot(path: Path) -> bool:
-    """Raise exception if host and chroot are not the same distrobution and release"""
+    """Raise exception if host and chroot are not the same distribution and release"""
     # Note: /etc/os-release is symlinked to /usr/lib/os-release
     # This could cause an issue if /etc/os-release is removed at any point.
     host_os_release = os_utils.OsRelease()

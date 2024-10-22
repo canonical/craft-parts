@@ -40,7 +40,7 @@ class OverlayManager:
     :param base_layer_dir: The directory containing the overlay base, or None
         if the project doesn't use overlay parameters.
     :param use_host_sources: Configure chroot to use package sources from
-        the the host enviroment.
+        the the host environment.
     """
 
     def __init__(
