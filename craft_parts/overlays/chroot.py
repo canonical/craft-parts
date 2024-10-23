@@ -144,53 +144,67 @@ class _Mount:
     def __init__(
         self,
         src: str | Path,
-        mountpoint: str | Path,
+        dst: str | Path,
         *args,
         fstype: str | None = None,
         skip_missing: bool = True,
     ) -> None:
-        """Mount entry for chroot setup."""
+        """Management class for chroot mounts."""
 
         self.src = Path(src)
-        self.mountpoint = Path(mountpoint)
+        self.dst = Path(dst)
         self.args = list(args)
         self.skip_missing = skip_missing
 
         if fstype is not None:
             self.args.append(f"-t{fstype}")
 
-    @staticmethod
-    def get_abs_path(path: Path, chroot_path: Path):
+        logger.debug("[pid=%d] Mount Manager %s", os.getpid(), self)
+
+    def _mount(self, src: Path, chroot: Path, *args: str) -> None:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        os_utils.mount(str(src), str(abs_dst), *args)
+
+    def _umount(self, chroot: Path, *args: str) -> None:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        os_utils.umount(str(abs_dst), *args)
+
+    def get_abs_path(self, path: Path, chroot_path: Path) -> Path:
+        """Make `chroot_path` relative to host `path`"""
         return path / str(chroot_path).lstrip("/")
 
-    def mountpoint_exists(self, mountpoint: Path):
-        return mountpoint.exists()
+    def dst_exists(self, chroot: Path):
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        return abs_dst.is_symlink() or abs_dst.exists()
 
-    def _mount(self, src: Path, mountpoint: Path, *args: str) -> None:
-        logger.debug("[pid=%d] mount %r on chroot", os.getpid(), src)
-        os_utils.mount(str(src), str(mountpoint), *args)
+    def remove_dst(self, chroot: Path):
+        pass
 
-    def _umount(self, mountpoint: Path, *args: str) -> None:
-        logger.debug("[pid=%d] umount: %r", os.getpid(), mountpoint)
-        os_utils.umount(str(mountpoint), *args)
+    def create_dst(self, chroot: Path):
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        abs_dst.parent.mkdir(parents=True, exist_ok=True)
 
     def mount_to(self, chroot: Path, *args: str) -> None:
-        abs_mountpoint = self.get_abs_path(chroot, self.mountpoint)
-
-        if self.skip_missing and not self.mountpoint_exists(abs_mountpoint):
-            logger.warning("[pid=%d] mount: %r not found!", os.getpid(), abs_mountpoint)
+        logger.debug(f"Mounting {self.dst}")
+        if self.dst_exists(chroot):
+            self.remove_dst(chroot)
+        elif self.skip_missing:
+            abs_dst = self.get_abs_path(chroot, self.dst)
+            logger.warning(
+                "[pid=%d] mount: %r not found. Skipping", os.getpid(), abs_dst
+            )
             return
-
-        self._mount(self.src, abs_mountpoint, *self.args, *args)
+        self.create_dst(chroot)
+        self._mount(self.src, chroot, *self.args, *args)
 
     def unmount_from(self, chroot: Path, *args: str) -> None:
-        abs_mountpoint = self.get_abs_path(chroot, self.mountpoint)
-
-        if self.skip_missing and not self.mountpoint_exists(abs_mountpoint):
-            logger.warning("[pid=%d] umount: %r not found!", os.getpid(), chroot)
+        logger.debug(f"Mounting {self.dst}")
+        if self.skip_missing and not self.dst_exists(chroot):
+            abs_dst = self.get_abs_path(chroot, self.dst)
+            logger.warning("[pid=%d] umount: %r not found!", os.getpid(), abs_dst)
             return
 
-        self._umount(abs_mountpoint, *args)
+        self._umount(chroot, *args)
 
 
 class _BindMount(_Mount):
@@ -199,72 +213,64 @@ class _BindMount(_Mount):
     def __init__(
         self,
         src: str | Path,
-        mountpoint: str | Path,
+        dst: str | Path,
         *args: str,
         skip_missing: bool = True,
     ) -> None:
         super().__init__(
-            src, mountpoint, f"--{self.bind_type}", *args, skip_missing=skip_missing
+            src, dst, f"--{self.bind_type}", *args, skip_missing=skip_missing
         )
 
-    def mountpoint_exists(self, mountpoint: Path):
-        if self.src.exists() and self.src.is_file():
-            return mountpoint.parent.exists()
+    def dst_exists(self, chroot: Path):
+        abs_dst = self.get_abs_path(chroot, self.dst)
 
-        return mountpoint.exists()
+        if self.src.is_file():
+            return abs_dst.is_symlink() or abs_dst.exists() or abs_dst.parent.is_dir()
 
-    def _mount(self, src: Path, mountpoint: Path, *args: str) -> None:
-        if src.is_dir():
-            # remove existing content of dir
-            if mountpoint.exists():
-                rmtree(mountpoint)
+        return abs_dst.is_symlink() or abs_dst.exists()
 
-            # prep mount point
-            mountpoint.mkdir(parents=True, exist_ok=True)
+    def create_dst(self, chroot: Path):
+        abs_dst = self.get_abs_path(chroot, self.dst)
 
-        elif src.is_file():
-            # remove existing file
-            if mountpoint.exists():
-                mountpoint.unlink()
-            else:
-                mountpoint.parent.mkdir(parents=True, exist_ok=True)
+        if self.src.is_dir():
+            abs_dst.mkdir(parents=True, exist_ok=True)
+        elif self.src.is_file():
+            abs_dst.touch()
 
-            # prep mount point
-            mountpoint.touch()
-        else:
+    def remove_dst(self, chroot: Path):
+        abs_dst = self.get_abs_path(chroot, self.dst)
+
+        if abs_dst.is_symlink() or abs_dst.is_file():
+            abs_dst.unlink()
+
+    def _mount(self, src: Path, chroot: Path, *args: str) -> None:
+        if not src.exists():
             raise FileNotFoundError(f"Path not found: {src}")
 
-        super()._mount(src, mountpoint, *args)
+        super()._mount(src, chroot, *args)
 
 
 class _RBindMount(_BindMount):
     bind_type = "rbind"
 
-    def _umount(self, mountpoint: Path, *args) -> None:
-        super()._umount(mountpoint, "--recursive", "--lazy", *args)
+    def _umount(self, chroot: Path, *args) -> None:
+        super()._umount(chroot, "--recursive", "--lazy", *args)
 
 
 class _TempFSClone(_Mount):
-    def __init__(self, src: str, mountpoint: str, *args) -> None:
-        super().__init__(src, mountpoint, *args, fstype="tmpfs", skip_missing=False)
+    def __init__(self, src: str, dst: str, *args) -> None:
+        super().__init__(src, dst, *args, fstype="tmpfs", skip_missing=False)
 
-    def _mount(self, src: Path, mountpoint: Path, *args) -> None:
-        if src.is_dir():
-            # remove existing content of dir
-            if mountpoint.exists():
-                rmtree(mountpoint)
-
-            # prep mount point
-            mountpoint.mkdir(parents=True, exist_ok=True)
-
-        elif src.is_file():
-            raise NotADirectoryError(f"Path is a directory: {src}")
-        else:
+    def _mount(self, src: Path, chroot: Path, *args) -> None:
+        if src.is_file():
+            raise NotADirectoryError(f"Path is a file: {src}")
+        if not src.exists():
             raise FileNotFoundError(f"Path not found: {src}")
 
-        super()._mount(src, mountpoint, *args)
+        super()._mount(src, chroot, *args)
 
-        copytree(src, mountpoint, dirs_exist_ok=True)
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        copytree(src, abs_dst, dirs_exist_ok=True)
 
 
 # Essential filesystems to mount in order to have basic utilities and
