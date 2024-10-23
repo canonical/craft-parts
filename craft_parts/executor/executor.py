@@ -53,7 +53,7 @@ class Executor:
     :param ignore_patterns: File patterns to ignore when pulling local sources.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         part_list: list[Part],
