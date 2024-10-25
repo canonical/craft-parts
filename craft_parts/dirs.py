@@ -46,6 +46,7 @@ class ProjectDirs:
         *,
         partitions: Sequence[str] | None = None,
         work_dir: Path | str = ".",
+        user_dirs: dict[str, Path | str] | None = None,
     ) -> None:
         partition_utils.validate_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
@@ -75,6 +76,10 @@ class ProjectDirs:
             )
         )
 
+        self._user_dirs: dict[str, Path] = {}
+        for name, user_dir in (user_dirs or {}).items():
+            self.set_user_dir(name, user_dir)
+
     def _validate_requested_partition(
         self, dir_name: str, partition: str | None = None
     ) -> None:
@@ -99,3 +104,24 @@ class ProjectDirs:
         """Get the prime directory for the given partition."""
         self._validate_requested_partition("prime_dir", partition)
         return self.prime_dirs[partition]
+
+    def set_user_dir(self, name: str, user_dir: Path | str) -> None:
+        """Validate and set a user dir, overwriting if it already exists.
+
+        Ensures the user dir has a non-clashing name, and converts the
+        """
+        try:
+            getattr(self, name)
+        except AttributeError:
+            pass
+        else:
+            raise NameError(
+                f"Cannot create user dir {name!r} - would shadow existing non-user dir"
+            )
+        self._user_dirs[name] = Path(user_dir)
+
+    def __getattr__(self, name: str) -> Path:
+        if name in self._user_dirs:
+            return self._user_dirs[name]
+
+        raise AttributeError(f"{self.__class__.__name__!r} has no attribute {name!r}")
