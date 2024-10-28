@@ -24,7 +24,7 @@ from .dirs import ProjectDirs
 from .errors import PartsError
 from .executor import expand_environment
 from .features import Features
-from .infos import PartInfo, ProjectInfo, StepInfo
+from .infos import PartInfo, ProjectInfo, StepInfo, get_value_from_nested_dict, set_value_in_nested_dict, has_key
 from .lifecycle_manager import LifecycleManager
 from .parts import Part, part_has_overlay, validate_part
 from .steps import Step
@@ -46,4 +46,7 @@ __all__ = [
     "expand_environment",
     "validate_part",
     "part_has_overlay",
+    "get_value_from_nested_dict",
+    "set_value_in_nested_dict",
+    "has_key",
 ]

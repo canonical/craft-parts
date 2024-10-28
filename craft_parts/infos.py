@@ -74,8 +74,11 @@ _DEB_TO_TRIPLET: dict[str, str] = {
 }
 
 
-_var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_single_var_name = r"^[A-Za-z_][A-Za-z0-9_]*$"
+"""Notation for a single variable name."""
 
+_var_name_pattern = re.compile(fr"^{_single_var_name}(?:\.{_single_var_name})*$")
+"""Notation for dot-separated variable names."""
 
 class ProjectVar(pydantic.BaseModel):
     """Project variables that can be updated using craftctl."""
@@ -122,6 +125,7 @@ class ProjectInfo:
         project_name: str | None = None,
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
+        project_vars_new: dict[str, Any] | None = None,
         partitions: list[str] | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
@@ -146,6 +150,8 @@ class ProjectInfo:
         self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
+        self._project_vars_new = self._create_project_vars_new(project_vars_new) if project_vars_new else {}
+
         self._partitions = partitions
         self._custom_args = custom_args
         self._base_layer_dir = base_layer_dir
@@ -153,6 +159,16 @@ class ProjectInfo:
         self.global_environment: dict[str, str] = {}
 
         self.execution_finished = False
+
+    def _create_project_vars_new(self, project_vars: dict[str, Any]) -> dict[str, Any]:
+        """Iterate through nested dictionaries and replace every value with a ProjectVar object."""
+        new_vars = {}
+        for key, value in project_vars.items():
+            if isinstance(value, dict):
+                new_vars[key] = self._create_project_vars_new(value)
+            else:
+                new_vars[key] = ProjectVar(value=value)
+        return new_vars
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._dirs, name):
@@ -256,7 +272,7 @@ class ProjectInfo:
             "arch_triplet": self.arch_triplet,
             "target_arch": self.target_arch,
             "project_vars_part_name": self._project_vars_part_name,
-            "project_vars": self._project_vars,
+            "project_vars": self._project_vars_new,
         }
 
     @property
@@ -299,27 +315,37 @@ class ProjectInfo:
         """
         self._ensure_valid_variable_name(name)
 
+        project_var = get_value_from_nested_dict(self._project_vars_new, name)
+
         if raw_write:
-            self._project_vars[name].value = value
-            self._project_vars[name].updated = True
+            project_var.value = value
+            project_var.updated = True
+            #self._project_vars[name].value = value
+            #self._project_vars[name].updated = True
             return
 
-        if self._project_vars[name].updated:
+        #if self._project_vars[name].updated:
+        if project_var.updated:
             raise RuntimeError(f"variable {name!r} can be set only once")
 
-        if self._project_vars_part_name == part_name:
-            self._project_vars[name].value = value
-            self._project_vars[name].updated = True
-        elif not self._project_vars_part_name:
-            raise RuntimeError(
-                f"variable {name!r} can only be set in a part that "
-                "adopts external metadata"
-            )
-        else:
-            raise RuntimeError(
-                f"variable {name!r} can only be set "
-                f"in part {self._project_vars_part_name!r}"
-            )
+        project_var.value = value
+        project_var.updated = True
+        set_value_in_nested_dict(self._project_vars_new, name, project_var)
+
+        # TODO: check part name from the project var
+        #if self._project_vars_part_name == part_name:
+        #    self._project_vars[name].value = value
+        #    self._project_vars[name].updated = True
+        #elif not self._project_vars_part_name:
+        #    raise RuntimeError(
+        #        f"variable {name!r} can only be set in a part that "
+        #        "adopts external metadata"
+        #    )
+        #else:
+        #    raise RuntimeError(
+        #        f"variable {name!r} can only be set "
+        #        f"in part {self._project_vars_part_name!r}"
+        #    )
 
     def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
         """Get the value of a project variable.
@@ -340,19 +366,59 @@ class ProjectInfo:
                 f"cannot consume variable {name!r} during lifecycle execution"
             )
 
-        return self._project_vars[name].value
+        return get_value_from_nested_dict(self._project_vars_new, name).value
 
     def _ensure_valid_variable_name(self, name: str) -> None:
         """Raise an error if variable name is invalid.
 
         :param name: The variable name to verify.
         """
-        if not _var_name_pattern.match(name):
-            raise ValueError(f"{name!r} is not a valid variable name")
+        #if not _var_name_pattern.match(name):
+        #    raise ValueError(f"{name!r} is not a valid variable name")
 
-        if name not in self._project_vars:
+        if not has_key(self._project_vars_new, name):
             raise ValueError(f"{name!r} not in project variables")
 
+def has_key(data: dict[str, Any], key_path: str) -> bool:
+    """Traverse through a nested dictionary to see if a key exists.
+
+    :param data: The dictionary to search.
+    :param key_path: The key path to search for. "A.B.C" would search for
+      data["A"]["B"]["C"].
+    """
+    keys = key_path.split(".")
+    for key in keys:
+        if isinstance(data, dict) and key in data:
+            data = data[key]
+        else:
+            return False
+    return True
+
+def get_value_from_nested_dict(data: dict[str, Any], key_path: str) -> Any:
+    """Traverse through a nested dictionary to get a ProjectVar object.
+
+    Assumes the key exists in the dictionary from `_ensure_valid_variable_name`.
+
+    :param data: The dictionary to search.
+    :param key_path: The key path to search for. "A.B.C" would get the project
+      variable at data["A"]["B"]["C"].
+    """
+    keys = key_path.split(".")
+    for key in keys:
+        data = data[key]
+    return data
+
+def set_value_in_nested_dict(data: dict[str, Any], key_path: str, project_var: ProjectVar) -> None:
+    """Traverse through a nested dictionary to set a ProjectVar object.
+
+    :param data: The dictionary to traverse.
+    :param key_path: The key path to set. "A.B.C" would set data["A"]["B"]["C"].
+    :param project_var: The ProjectVar object to set.
+    """
+    keys = key_path.split(".")
+    for key in keys[:-1]:
+        data = data[key]
+    data[keys[-1]] = project_var
 
 class PartInfo:
     """Part-level information containing project and part fields.

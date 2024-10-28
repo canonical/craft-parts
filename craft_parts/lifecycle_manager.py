@@ -107,6 +107,7 @@ class LifecycleManager:
         base_layer_hash: bytes | None = None,
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
+        project_vars_new: dict[str, Any] | None = None,
         partitions: list[str] | None = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
@@ -141,6 +142,7 @@ class LifecycleManager:
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
+            project_vars_new=project_vars_new,
             partitions=partitions,
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,

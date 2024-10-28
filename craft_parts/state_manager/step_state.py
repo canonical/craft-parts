@@ -95,12 +95,20 @@ class StepState(MigrationState, ABC):
         if self.project_options:
             pvars = self.project_options.get("project_vars")
             if pvars:
-                for key, val in pvars.items():
-                    self.project_options["project_vars"][key] = (
-                        ProjectVar.model_validate(val)
-                    )
+                self._coerce_project_vars_recurse(self.project_options["project_vars"])
+                #for key, val in pvars.items():
+                #    self.project_options["project_vars"][key] = (
+                #        ProjectVar.model_validate(val)
+                #    )
 
         return self
+
+    def _coerce_project_vars_recurse(self, data: dict[str, Any]):
+        for key, val in data.items():
+            if isinstance(val, dict) and val.get("updated") is None:
+                self._coerce_project_vars_recurse(val)
+            else:
+                data[key] = ProjectVar.model_validate(val)
 
     @abstractmethod
     def properties_of_interest(
