@@ -19,11 +19,13 @@ import os
 from pathlib import Path
 import select
 import subprocess
-from typing import cast, Union, Sequence
+import threading
+from typing import Union, Sequence, TextIO, Any
 
 Command = Union[str, Path, Sequence[Union[str, Path]]]
+Stream = int | TextIO | None
 
-BUF_SIZE = 4096
+_BUF_SIZE = 4096
 
 @dataclass
 class ForkResult:
@@ -32,10 +34,52 @@ class ForkResult:
     stderr: bytes
     combined: bytes
 
-def run(command: Command, cwd: Path) -> ForkResult:
+class StreamHandler(threading.Thread):
+    def __init__(self, true_fd: Stream) -> None:
+        super().__init__()
+        if isinstance(true_fd, int):
+            self._true_fd = true_fd
+        elif isinstance(true_fd, TextIO):
+            self._true_fd = true_fd.fileno()
+        else:
+            self._true_fd = -1
+
+        self.collected = b""
+        self._read_pipe, self._write_pipe = os.pipe()
+        self._stop_flag = False
+
+    def run(self) -> None:
+        while True:
+            r, _, _ = select.select([self._read_pipe], [], [])
+
+            try:
+                if self._read_pipe in r:
+                    data = os.read(self._read_pipe, _BUF_SIZE)
+                    self.collected += data
+                    if self._true_fd != -1:
+                        os.write(self._true_fd, data)
+            
+            except BlockingIOError:
+                pass
+
+            if self._stop_flag:
+                break
+
+    def stop(self) -> None:
+        if self._stop_flag:
+            return
+        self._stop_flag = True
+        os.close(self._read_pipe)
+        os.close(self._write_pipe)
+
+    def write(self, data: bytearray) -> None:
+        os.write(self._write_pipe, data)
+
+
+def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResult:
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
-    stdout = stderr = comb = b""
+    comb = b""
     
     fdout = proc.stdout.fileno() # type: ignore # stdout (and stderr below) are guaranteed not `None` because we called with `subprocess.PIPE`
     fderr = proc.stderr.fileno() # type: ignore
@@ -46,29 +90,33 @@ def run(command: Command, cwd: Path) -> ForkResult:
     line_out = bytearray()
     line_err = bytearray()
 
+    out = StreamHandler(stdout)
+    err = StreamHandler(stderr)
+    out.start()
+    err.start()
     while True:
         r, _, _ = select.select([fdout, fderr], [], [])
 
         try:
             if fdout in r:
-                data = os.read(fdout, BUF_SIZE)
+                data = os.read(fdout, _BUF_SIZE)
                 i = data.rfind(b'\n')
                 if i >= 0:
                     line_out.extend(data[:i+1])
                     comb += line_out
-                    stdout += line_out
+                    out.write(line_out)
                     line_out.clear()
                     line_out.extend(data[i+1:])
                 else:
                     line_out.extend(data)
 
             if fderr in r:
-                data = os.read(fderr, BUF_SIZE)
+                data = os.read(fderr, _BUF_SIZE)
                 i = data.rfind(b'\n')
                 if i >= 0:
                     line_err.extend(data[:i+1])
                     comb += line_err
-                    stderr += line_err
+                    err.write(line_err)
                     line_err.clear()
                     line_err.extend(data[i+1:])
                 else:
@@ -78,6 +126,8 @@ def run(command: Command, cwd: Path) -> ForkResult:
             pass
 
         if proc.poll() is not None:
+            out.stop()
+            err.stop()
             break
 
-    return ForkResult(proc.returncode, stdout, stderr, comb)
+    return ForkResult(proc.returncode, out.collected, err.collected, comb)

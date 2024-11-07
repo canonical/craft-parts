@@ -460,7 +460,7 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    fork = fork_utils.run([script_path], cwd)
+    fork = fork_utils.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr)
 
     if fork.returncode != 0:
         raise errors.PluginBuildError(
