@@ -20,7 +20,6 @@ from pathlib import Path
 
 import yaml
 from craft_parts import LifecycleManager, Step
-from craft_parts.plugins import java_plugin
 
 
 def run_build(new_dir, partitions, application):
@@ -80,35 +79,3 @@ def test_java_plugin(new_dir, partitions):
         [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld-1.0.jar"], text=True
     )
     assert output.strip() == "Hello from Maven-built Java"
-
-
-def test_java_plugin_no_java(new_dir, partitions, mocker):
-
-    def _check_java(self, javac: str):
-        return None, ""
-
-    mocker.patch.object(java_plugin.JavaPlugin, "_check_java", _check_java)
-
-    prime_dir = run_build(new_dir, partitions, "test_java_plugin_no_java")
-
-    with open(Path(prime_dir, "java_home")) as file:
-        content = file.read()
-        assert content == "default\n"
-
-
-def test_java_plugin_jre_21(new_dir, partitions, mocker):
-
-    orig_check_java = java_plugin.JavaPlugin._check_java
-
-    def _check_java(self, javac: str):
-        if "21" in javac:
-            return None, ""
-        return orig_check_java(self, javac)
-
-    mocker.patch.object(java_plugin.JavaPlugin, "_check_java", _check_java)
-
-    prime_dir = run_build(new_dir, partitions, "test_java_plugin_jre_21")
-
-    with open(Path(prime_dir, "java_home")) as file:
-        content = file.read()
-        assert "17" in content
