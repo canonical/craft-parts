@@ -20,7 +20,7 @@ from pathlib import Path
 
 import yaml
 from craft_parts import LifecycleManager, Step
-from craft_parts.plugins import maven_plugin
+from craft_parts.plugins import java_plugin
 
 
 def run_build(new_dir, partitions):
@@ -87,7 +87,7 @@ def test_java_plugin_no_java(new_dir, partitions, mocker):
     def _find_javac(self):
         return []
 
-    mocker.patch.object(maven_plugin.MavenPlugin, "_find_javac", _find_javac)
+    mocker.patch.object(java_plugin.JavaPlugin, "_find_javac", _find_javac)
 
     prime_dir = run_build(new_dir, partitions)
 
@@ -98,14 +98,14 @@ def test_java_plugin_no_java(new_dir, partitions, mocker):
 
 def test_java_plugin_jre_21(new_dir, partitions, mocker):
 
-    orig_check_java = maven_plugin.MavenPlugin._check_java
+    orig_check_java = java_plugin.JavaPlugin._check_java
 
     def _check_java(self, javac: str):
         if "21" in javac:
             return None, ""
         return orig_check_java(self, javac)
 
-    mocker.patch.object(maven_plugin.MavenPlugin, "_check_java", _check_java)
+    mocker.patch.object(java_plugin.JavaPlugin, "_check_java", _check_java)
 
     prime_dir = run_build(new_dir, partitions)
 
