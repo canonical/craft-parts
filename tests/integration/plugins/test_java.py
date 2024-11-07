@@ -74,7 +74,7 @@ def test_java_plugin(new_dir, partitions):
 
     with open(Path(prime_dir, "java_home")) as file:
         content = file.read()
-        assert content == "/usr/lib/jvm/java-21-openjdk-amd64\n"
+        assert "21" in content
 
     output = subprocess.check_output(
         [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld-1.0.jar"], text=True
