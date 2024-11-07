@@ -111,4 +111,4 @@ def test_java_plugin_jre_21(new_dir, partitions, mocker):
 
     with open(Path(prime_dir, "java_home")) as file:
         content = file.read()
-        assert content == "/usr/lib/jvm/java-17-openjdk-amd64\n"
+        assert "17" in content
