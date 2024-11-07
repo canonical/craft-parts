@@ -54,9 +54,9 @@ class JavaPlugin(Plugin):
                 spec_version = subprocess.check_output(
                     [java_home + "/bin/java", "-cp", tempdir, "Test"]
                 )
-                # Java 8 reports spec 1.8. Treat it as a spec version 1
+                # Java 8 reports spec 1.8. Treat it as a spec version 8
                 # 11 and up report the actual spec version number
-                version = int(spec_version.decode().split(".")[0])
+                version = int(spec_version.decode().split(".")[-1])
 
             except subprocess.CalledProcessError as err:
                 logging.info(f"{javac} is not a valid Java compiler: {err.output}")
