@@ -46,10 +46,12 @@ class StreamHandler(threading.Thread):
 
         self.collected = b""
         self._read_pipe, self._write_pipe = os.pipe()
+        os.set_blocking(self._read_pipe, False)
+        os.set_blocking(self._write_pipe, False)
         self._stop_flag = False
 
     def run(self) -> None:
-        while True:
+        while not self._stop_flag:
             r, _, _ = select.select([self._read_pipe], [], [])
 
             try:
@@ -61,9 +63,6 @@ class StreamHandler(threading.Thread):
             
             except BlockingIOError:
                 pass
-
-            if self._stop_flag:
-                break
 
     def join(self, timeout: float | None = None) -> None:
         if self._stop_flag:
