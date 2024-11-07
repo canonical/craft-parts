@@ -57,11 +57,15 @@ class JavaPlugin(Plugin):
                 # Java 8 reports spec 1.8. Treat it as a spec version 1
                 # 11 and up report the actual spec version number
                 version = int(spec_version.decode().split(".")[0])
-                return version, java_home
+
             except subprocess.CalledProcessError as err:
                 logging.info(f"{javac} is not a valid Java compiler: {err.output}")
             except PermissionError as err:
-                logging.info(f"{javac} is not a valid Java compiler. Permission error {err}")
+                logging.info(
+                    f"{javac} is not a valid Java compiler. Permission error {err}"
+                )
+            else:
+                return version, java_home
         return None, None
 
     @override

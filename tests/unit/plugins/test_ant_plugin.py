@@ -123,7 +123,7 @@ def test_get_build_environment(part_info):
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
     env = plugin.get_build_environment()
-    assert "JAVA_HOME" in env.keys()
+    assert "JAVA_HOME" in env
     assert len(env) == 1
 
 
