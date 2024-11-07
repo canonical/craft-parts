@@ -72,7 +72,7 @@ class JavaPlugin(Plugin):
         output = subprocess.check_output(cmd)
         candidate_java = {}
         for javac in output.decode().split("\n"):
-            spec, home =  self._check_java(javac)
+            spec, home = self._check_java(javac)
             if spec is not None:
                 candidate_java[spec] = home
         if len(candidate_java) > 0:
