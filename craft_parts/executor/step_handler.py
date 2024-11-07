@@ -34,7 +34,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils
+from craft_parts.utils import file_utils, fork_utils
 
 from . import filesets
 from .filesets import Fileset
@@ -441,6 +441,8 @@ def _create_and_run_script(
     stdout: Stream,
     stderr: Stream,
     build_environment_script_path: Path | None = None,
+    part_name: str = "",
+    plugin_name: str = "",
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
@@ -458,10 +460,9 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    subprocess.run(
-        [script_path],
-        cwd=cwd,
-        check=True,
-        stdout=stdout,
-        stderr=stderr,
-    )
+    fork = fork_utils.run([script_path], cwd)
+
+    if fork.returncode != 0:
+        raise errors.PluginBuildError(
+            part_name=part_name, plugin_name=plugin_name, stderr=fork.stderr
+        )
