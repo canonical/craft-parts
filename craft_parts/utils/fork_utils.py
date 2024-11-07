@@ -20,7 +20,7 @@ from pathlib import Path
 import select
 import subprocess
 import threading
-from typing import Union, Sequence, TextIO, Any
+from typing import Union, Sequence, TextIO
 
 Command = Union[str, Path, Sequence[Union[str, Path]]]
 Stream = int | TextIO | None
@@ -69,6 +69,7 @@ class StreamHandler(threading.Thread):
         if self._stop_flag:
             return
         self._stop_flag = True
+        self.join()
         os.close(self._read_pipe)
         os.close(self._write_pipe)
 
