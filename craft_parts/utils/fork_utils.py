@@ -59,16 +59,27 @@ class StreamHandler(threading.Thread):
                     data = os.read(self._read_pipe, _BUF_SIZE)
                     self.collected += data
                     if self._true_fd != -1:
-                        os.write(self._true_fd, data)
+                        try:
+                            os.write(self._true_fd, data)
+                        except OSError:
+                            raise RuntimeError("Stream handle given to StreamHandler object was unreachable. Was it closed early?")
             
             except BlockingIOError:
                 pass
 
-    def join(self, timeout: float | None = None) -> None:
+            except OSError as e:
+                # Occurs when the pipe closes while trying to read from it. This generally happens if the program
+                # responsible for the pipe is stopped. Since that makes it expected behavior for the pipe to be 
+                # closed, we can discard this specific error
+                if e.errno == 9:
+                    return
+                else:
+                    raise e
+
+    def stop(self) -> None:
         if self._stop_flag:
             return
         self._stop_flag = True
-        super().join(timeout)
         os.close(self._read_pipe)
         os.close(self._write_pipe)
 
@@ -126,8 +137,8 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResu
             pass
 
         if proc.poll() is not None:
-            out.join()
-            err.join()
+            out.stop()
+            err.stop()
             break
 
     return ForkResult(proc.returncode, out.collected, err.collected, comb)
