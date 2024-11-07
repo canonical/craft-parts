@@ -42,7 +42,7 @@ def test_java_plugin(new_dir, partitions):
             stage-packages: [openjdk-21-jre-headless]
             build-packages:
                 - openjdk-8-jdk-headless
-                - openjdk-17-jdk-headless
+                - openjdk-17-jre-headless
                 - openjdk-21-jdk-headless
             override-build: |
                 echo $JAVA_HOME > $CRAFT_PART_INSTALL/java_home
