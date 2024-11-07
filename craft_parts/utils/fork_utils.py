@@ -62,24 +62,14 @@ class StreamHandler(threading.Thread):
             except BlockingIOError:
                 pass
 
-            except OSError as e:
-                # Happens in cases where the thread ends but this function is still trying to read
-                # Since this function manages the read/write pipes, we can assume that this function
-                # should simply stop running at this point.
-                #
-                # FIXME: Needs refactoring. This could possibly ignore an error when trying to write
-                # to self._true_fd, which is not a file descriptor we manage.
-                if e.errno == 9:
-                    break
-
             if self._stop_flag:
                 break
 
-    def stop(self) -> None:
+    def join(self, timeout: float | None = None) -> None:
         if self._stop_flag:
             return
         self._stop_flag = True
-        self.join()
+        super().join(timeout)
         os.close(self._read_pipe)
         os.close(self._write_pipe)
 
@@ -137,8 +127,8 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResu
             pass
 
         if proc.poll() is not None:
-            out.stop()
-            err.stop()
+            out.join()
+            err.join()
             break
 
     return ForkResult(proc.returncode, out.collected, err.collected, comb)
