@@ -62,6 +62,16 @@ class StreamHandler(threading.Thread):
             except BlockingIOError:
                 pass
 
+            except OSError as e:
+                # Happens in cases where the thread ends but this function is still trying to read
+                # Since this function manages the read/write pipes, we can assume that this function
+                # should simply stop running at this point.
+                #
+                # FIXME: Needs refactoring. This could possibly ignore an error when trying to write
+                # to self._true_fd, which is not a file descriptor we manage.
+                if e.errno == 9:
+                    break
+
             if self._stop_flag:
                 break
 
