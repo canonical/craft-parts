@@ -23,7 +23,7 @@ from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import java_plugin
 
 
-def run_build(new_dir, partitions):
+def run_build(new_dir, partitions, application):
     source_location = Path(__file__).parent / "test_maven"
 
     parts_yaml = textwrap.dedent(
@@ -45,7 +45,7 @@ def run_build(new_dir, partitions):
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
         parts,
-        application_name="test_java_home",
+        application_name=application,
         cache_dir=new_dir,
         work_dir=new_dir,
         partitions=partitions,
@@ -68,7 +68,7 @@ def test_java_plugin(new_dir, partitions):
     is set to Java 17.
     """
 
-    prime_dir = run_build(new_dir, partitions)
+    prime_dir = run_build(new_dir, partitions, "test_java_plugin")
     java_binary = Path(prime_dir, "bin", "java")
     assert java_binary.is_file()
 
@@ -84,12 +84,12 @@ def test_java_plugin(new_dir, partitions):
 
 def test_java_plugin_no_java(new_dir, partitions, mocker):
 
-    def _find_javac(self):
-        return []
+    def _check_java(self, javac: str):
+        return None, ""
 
-    mocker.patch.object(java_plugin.JavaPlugin, "_find_javac", _find_javac)
+    mocker.patch.object(java_plugin.JavaPlugin, "_check_java", _check_java)
 
-    prime_dir = run_build(new_dir, partitions)
+    prime_dir = run_build(new_dir, partitions, "test_java_plugin_no_java")
 
     with open(Path(prime_dir, "java_home")) as file:
         content = file.read()
@@ -107,7 +107,7 @@ def test_java_plugin_jre_21(new_dir, partitions, mocker):
 
     mocker.patch.object(java_plugin.JavaPlugin, "_check_java", _check_java)
 
-    prime_dir = run_build(new_dir, partitions)
+    prime_dir = run_build(new_dir, partitions, "test_java_plugin_jre_21")
 
     with open(Path(prime_dir, "java_home")) as file:
         content = file.read()
