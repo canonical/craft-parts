@@ -37,7 +37,7 @@ class JavaPlugin(Plugin):
     symlink creation.
     """
 
-    def _check_java(self, javac: str) -> tuple[int, str] | tuple[None, None]:
+    def _check_java(self, javac: str) -> tuple[int | None, str]:
         with tempfile.TemporaryDirectory() as tempdir:
             test_class = """
                 public class Test {
@@ -66,7 +66,7 @@ class JavaPlugin(Plugin):
                 )
             else:
                 return version, java_home
-        return None, None
+        return None, ""
 
     @override
     def get_build_environment(self) -> dict[str, str]:
