@@ -68,14 +68,17 @@ class JavaPlugin(Plugin):
                 return version, java_home
         return None, ""
 
+    def _find_javac(self) -> list[str]:
+        cmd = ["find", "/usr/lib/jvm", "-path", "*/bin/javac", "-print"]
+        output = subprocess.check_output(cmd)
+        return [x for x in output.decode().split("\n") if len(x) > 0]
+
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Override JAVA_HOME in the build environment."""
         env = {}
-        cmd = ["find", "/usr/lib/jvm", "-path", "*/bin/javac", "-print"]
-        output = subprocess.check_output(cmd)
         candidate_java = {}
-        for javac in output.decode().split("\n"):
+        for javac in self._find_javac():
             spec, home = self._check_java(javac)
             if spec is not None:
                 candidate_java[spec] = home
