@@ -47,7 +47,7 @@ class StreamHandler(threading.Thread):
 
     def __init__(self, fd: Stream) -> None:
         """Initialize a StreamHandler
-        
+
         :param fd: The "real" file descriptor to print to.
         """
         super().__init__()
@@ -70,7 +70,7 @@ class StreamHandler(threading.Thread):
 
     def run(self) -> None:
         """Constantly check if any data has been sent, then duplicate it if so.
-        
+
         :raises RuntimeError: If the file descriptor passed at initialization is closed before `.stop()` is called.
         :raises OSError: If an internal error occurs preventing this function from reading or writing from pipes.
         """
@@ -110,7 +110,7 @@ class StreamHandler(threading.Thread):
 
     def write(self, data: bytearray) -> None:
         """Send a message to write to the channels managed by this instance.
-        
+
         :param data: Byte data to write
         """
         os.write(self._write_pipe, data)
