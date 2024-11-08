@@ -458,4 +458,4 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    fork_utils.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr)
+    fork_utils.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)
