@@ -123,9 +123,7 @@ class StepHandler:
                     stderr=self._stderr,
                 )
             except fork_utils.ForkError:
-                raise errors.PluginPullError(
-                    part_name=self._part.name
-                )
+                raise errors.PluginPullError(part_name=self._part.name)
 
         return StepContents()
 
@@ -155,7 +153,9 @@ class StepHandler:
             )
         except fork_utils.ForkError as forkerror:
             raise errors.PluginBuildError(
-                part_name=self._part.name, plugin_name=self._part.plugin_name, stderr=forkerror.result.stderr
+                part_name=self._part.name,
+                plugin_name=self._part.plugin_name,
+                stderr=forkerror.result.stderr,
             )
 
         return StepContents()

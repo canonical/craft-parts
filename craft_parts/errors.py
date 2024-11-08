@@ -482,7 +482,9 @@ class PluginBuildError(PartsError):
     :param plugin_name: The name of the plugin being processed.
     """
 
-    def __init__(self, *, part_name: str, plugin_name: str, stderr: bytes | None = None) -> None:
+    def __init__(
+        self, *, part_name: str, plugin_name: str, stderr: bytes | None = None
+    ) -> None:
         self.part_name = part_name
         self.plugin_name = plugin_name
         brief = f"Failed to run the build script for part {part_name!r}."

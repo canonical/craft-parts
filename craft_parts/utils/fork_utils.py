@@ -31,6 +31,7 @@ Stream = int | TextIO | None
 
 _BUF_SIZE = 4096
 
+
 @dataclass
 class ForkResult:
     """Describes the outcome of a forked process."""
@@ -39,6 +40,7 @@ class ForkResult:
     stdout: bytes
     stderr: bytes
     combined: bytes
+
 
 class StreamHandler(threading.Thread):
     """Helper class for splitting a stream into two destinations: the stream handed to it via `fd` and the `self.collected` field."""
@@ -72,7 +74,9 @@ class StreamHandler(threading.Thread):
                         try:
                             os.write(self._true_fd, data)
                         except OSError:
-                            raise RuntimeError("Stream handle given to StreamHandler object was unreachable. Was it closed early?")
+                            raise RuntimeError(
+                                "Stream handle given to StreamHandler object was unreachable. Was it closed early?"
+                            )
 
             except BlockingIOError:
                 pass
@@ -98,7 +102,9 @@ class StreamHandler(threading.Thread):
         os.write(self._write_pipe, data)
 
 
-def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: bool = False) -> ForkResult:
+def run(
+    command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: bool = False
+) -> ForkResult:
     """Execute a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
 
     Args:
@@ -112,12 +118,14 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: b
         ForkError when forked process exits with a non-zero return code
 
     """
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+    proc = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+    )
 
     comb = b""
 
     # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
-    fdout = cast(IO[bytes], proc.stdout).fileno() 
+    fdout = cast(IO[bytes], proc.stdout).fileno()
     fderr = cast(IO[bytes], proc.stderr).fileno()
 
     os.set_blocking(fdout, False)
@@ -138,11 +146,11 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: b
                 data = os.read(fdout, _BUF_SIZE)
                 i = data.rfind(b"\n")
                 if i >= 0:
-                    line_out.extend(data[:i+1])
+                    line_out.extend(data[: i + 1])
                     comb += line_out
                     out.write(line_out)
                     line_out.clear()
-                    line_out.extend(data[i+1:])
+                    line_out.extend(data[i + 1 :])
                 else:
                     line_out.extend(data)
 
@@ -150,11 +158,11 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: b
                 data = os.read(fderr, _BUF_SIZE)
                 i = data.rfind(b"\n")
                 if i >= 0:
-                    line_err.extend(data[:i+1])
+                    line_err.extend(data[: i + 1])
                     comb += line_err
                     err.write(line_err)
                     line_err.clear()
-                    line_err.extend(data[i+1:])
+                    line_err.extend(data[i + 1 :])
                 else:
                     line_err.extend(data)
 
@@ -172,6 +180,7 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: b
         raise ForkError(result=result, cwd=cwd, command=command)
 
     return result
+
 
 @dataclass
 class ForkError(Exception):
