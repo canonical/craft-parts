@@ -20,9 +20,9 @@ from pathlib import Path
 import select
 import subprocess
 import threading
-from typing import Union, Sequence, TextIO
+from typing import Sequence, TextIO
 
-Command = Union[str, Path, Sequence[Union[str, Path]]]
+Command = str | Path | Sequence[str | Path]
 Stream = int | TextIO | None
 
 _BUF_SIZE = 4096
@@ -35,12 +35,14 @@ class ForkResult:
     combined: bytes
 
 class StreamHandler(threading.Thread):
-    def __init__(self, true_fd: Stream) -> None:
+    """Helper class for splitting a stream into two destinations: the stream handed to it via `fd` and the `self.collected` field."""
+    def __init__(self, fd: Stream) -> None:
+        """`true_fd` should be the file descriptor that this instance writes to"""
         super().__init__()
-        if isinstance(true_fd, int):
-            self._true_fd = true_fd
-        elif isinstance(true_fd, TextIO):
-            self._true_fd = true_fd.fileno()
+        if isinstance(fd, int):
+            self._true_fd = fd
+        elif isinstance(fd, TextIO):
+            self._true_fd = fd.fileno()
         else:
             self._true_fd = -1
 
@@ -51,6 +53,7 @@ class StreamHandler(threading.Thread):
         self._stop_flag = False
 
     def run(self) -> None:
+        """Constantly check if `self._read_pipe` has any data ready to be read, then duplicate it if so"""
         while not self._stop_flag:
             r, _, _ = select.select([self._read_pipe], [], [])
 
@@ -77,6 +80,7 @@ class StreamHandler(threading.Thread):
                     raise e
 
     def stop(self) -> None:
+        """Stops monitoring the stream and closes all associated pipes"""
         if self._stop_flag:
             return
         self._stop_flag = True
@@ -84,10 +88,18 @@ class StreamHandler(threading.Thread):
         os.close(self._write_pipe)
 
     def write(self, data: bytearray) -> None:
+        """Sends a message to write to the channels managed by this instance"""
         os.write(self._write_pipe, data)
 
 
 def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResult:
+    """Executes a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
+        Args:
+            command: Command to execute.
+            cwd: Path to execute in.
+            stdout: Handle to a fd or I/O stream to treat as stdout
+            stderr: Handle to a fd or I/O stream to treat as stderr
+    """
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
     comb = b""
@@ -145,6 +157,7 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResu
 
 @dataclass
 class ForkError(Exception):
+    """Simple error for failed forked processes. Generally raised if the return code of a forked process is non-zero."""
     result: ForkResult
     cwd: Path
     command: Command
