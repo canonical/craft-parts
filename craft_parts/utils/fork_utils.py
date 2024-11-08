@@ -46,7 +46,7 @@ class StreamHandler(threading.Thread):
     """Helper class for splitting a stream into two destinations: the stream handed to it via ``fd`` and the ``self.collected`` field."""
 
     def __init__(self, fd: Stream) -> None:
-        """Initialize a StreamHandler
+        """Initialize a StreamHandler.
 
         :param fd: The "real" file descriptor to print to.
         """
@@ -66,6 +66,7 @@ class StreamHandler(threading.Thread):
 
     @property
     def collected(self) -> bytes:
+        """Data collected from stream over the lifetime of this handler."""
         return self._collected
 
     def run(self) -> None:
