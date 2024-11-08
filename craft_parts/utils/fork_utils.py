@@ -14,13 +14,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass
+"""Utilities for executing subprocesses and handling their stdout and stderr streams."""
+
+import errno
 import os
-from pathlib import Path
 import select
 import subprocess
 import threading
-from typing import Sequence, TextIO
+from collections.abc import Sequence
+from dataclasses import dataclass
+from pathlib import Path
+from typing import IO, TextIO, cast
 
 Command = str | Path | Sequence[str | Path]
 Stream = int | TextIO | None
@@ -29,6 +33,8 @@ _BUF_SIZE = 4096
 
 @dataclass
 class ForkResult:
+    """Describes the outcome of a forked process."""
+
     returncode: int
     stdout: bytes
     stderr: bytes
@@ -36,8 +42,9 @@ class ForkResult:
 
 class StreamHandler(threading.Thread):
     """Helper class for splitting a stream into two destinations: the stream handed to it via `fd` and the `self.collected` field."""
+
     def __init__(self, fd: Stream) -> None:
-        """`true_fd` should be the file descriptor that this instance writes to"""
+        """`fd` should be the file descriptor that this instance writes to."""
         super().__init__()
         if isinstance(fd, int):
             self._true_fd = fd
@@ -53,7 +60,7 @@ class StreamHandler(threading.Thread):
         self._stop_flag = False
 
     def run(self) -> None:
-        """Constantly check if `self._read_pipe` has any data ready to be read, then duplicate it if so"""
+        """Constantly check if `self._read_pipe` has any data ready to be read, then duplicate it if so."""
         while not self._stop_flag:
             r, _, _ = select.select([self._read_pipe], [], [])
 
@@ -66,21 +73,20 @@ class StreamHandler(threading.Thread):
                             os.write(self._true_fd, data)
                         except OSError:
                             raise RuntimeError("Stream handle given to StreamHandler object was unreachable. Was it closed early?")
-            
+
             except BlockingIOError:
                 pass
 
             except OSError as e:
                 # Occurs when the pipe closes while trying to read from it. This generally happens if the program
-                # responsible for the pipe is stopped. Since that makes it expected behavior for the pipe to be 
+                # responsible for the pipe is stopped. Since that makes it expected behavior for the pipe to be
                 # closed, we can discard this specific error
-                if e.errno == 9:
+                if e.errno == errno.EBADF:
                     return
-                else:
-                    raise e
+                raise
 
     def stop(self) -> None:
-        """Stops monitoring the stream and closes all associated pipes"""
+        """Stop monitoring the stream and close all associated pipes."""
         if self._stop_flag:
             return
         self._stop_flag = True
@@ -88,27 +94,31 @@ class StreamHandler(threading.Thread):
         os.close(self._write_pipe)
 
     def write(self, data: bytearray) -> None:
-        """Sends a message to write to the channels managed by this instance"""
+        """Send a message to write to the channels managed by this instance."""
         os.write(self._write_pipe, data)
 
 
-def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, check: bool = False) -> ForkResult:
-    """Executes a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
-        Args:
-            command: Command to execute.
-            cwd: Path to execute in.
-            stdout: Handle to a fd or I/O stream to treat as stdout
-            stderr: Handle to a fd or I/O stream to treat as stderr
+def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: bool = False) -> ForkResult:
+    """Execute a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
 
-        Raises:
-            ForkError when forked process exits with a non-zero return code
+    Args:
+        command: Command to execute.
+        cwd: Path to execute in.
+        stdout: Handle to a fd or I/O stream to treat as stdout
+        stderr: Handle to a fd or I/O stream to treat as stderr
+        check: If True, a ForkError exception will be raised if `command` returns a non-zero return code.
+
+    Raises:
+        ForkError when forked process exits with a non-zero return code
+
     """
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
     comb = b""
-    
-    fdout = proc.stdout.fileno() # type: ignore # stdout (and stderr below) are guaranteed not `None` because we called with `subprocess.PIPE`
-    fderr = proc.stderr.fileno() # type: ignore
+
+    # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
+    fdout = cast(IO[bytes], proc.stdout).fileno() 
+    fderr = cast(IO[bytes], proc.stderr).fileno()
 
     os.set_blocking(fdout, False)
     os.set_blocking(fderr, False)
@@ -126,7 +136,7 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, check: bool
         try:
             if fdout in r:
                 data = os.read(fdout, _BUF_SIZE)
-                i = data.rfind(b'\n')
+                i = data.rfind(b"\n")
                 if i >= 0:
                     line_out.extend(data[:i+1])
                     comb += line_out
@@ -138,7 +148,7 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, check: bool
 
             if fderr in r:
                 data = os.read(fderr, _BUF_SIZE)
-                i = data.rfind(b'\n')
+                i = data.rfind(b"\n")
                 if i >= 0:
                     line_err.extend(data[:i+1])
                     comb += line_err
@@ -157,7 +167,7 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, check: bool
             break
 
     result = ForkResult(proc.returncode, out.collected, err.collected, comb)
-    
+
     if check and result.returncode != 0:
         raise ForkError(result=result, cwd=cwd, command=command)
 
@@ -166,6 +176,7 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, check: bool
 @dataclass
 class ForkError(Exception):
     """Simple error for failed forked processes. Generally raised if the return code of a forked process is non-zero."""
+
     result: ForkResult
     cwd: Path
     command: Command

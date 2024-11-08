@@ -486,13 +486,13 @@ class PluginBuildError(PartsError):
         self.part_name = part_name
         self.plugin_name = plugin_name
         brief = f"Failed to run the build script for part {part_name!r}."
-        
+
         if stderr is not None:
             brief += "\nCaptured standard error:"
             for line in stderr.split(b"\n"):
                 if line:
                     brief += f"\n:: {line.decode()}"
-        
+
         resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
         super().__init__(
             brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
