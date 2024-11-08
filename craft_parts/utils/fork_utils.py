@@ -43,10 +43,13 @@ class ForkResult:
 
 
 class StreamHandler(threading.Thread):
-    """Helper class for splitting a stream into two destinations: the stream handed to it via `fd` and the `self.collected` field."""
+    """Helper class for splitting a stream into two destinations: the stream handed to it via ``fd`` and the ``self.collected`` field."""
 
     def __init__(self, fd: Stream) -> None:
-        """`fd` should be the file descriptor that this instance writes to."""
+        """Initialize a StreamHandler
+        
+        :param fd: The "real" file descriptor to print to.
+        """
         super().__init__()
         if isinstance(fd, int):
             self._true_fd = fd
@@ -55,21 +58,29 @@ class StreamHandler(threading.Thread):
         else:
             self._true_fd = -1
 
-        self.collected = b""
+        self._collected = b""
         self._read_pipe, self._write_pipe = os.pipe()
         os.set_blocking(self._read_pipe, False)
         os.set_blocking(self._write_pipe, False)
         self._stop_flag = False
 
+    @property
+    def collected(self) -> bytes:
+        return self._collected
+
     def run(self) -> None:
-        """Constantly check if `self._read_pipe` has any data ready to be read, then duplicate it if so."""
+        """Constantly check if any data has been sent, then duplicate it if so.
+        
+        :raises RuntimeError: If the file descriptor passed at initialization is closed before `.stop()` is called.
+        :raises OSError: If an internal error occurs preventing this function from reading or writing from pipes.
+        """
         while not self._stop_flag:
             r, _, _ = select.select([self._read_pipe], [], [])
 
             try:
                 if self._read_pipe in r:
                     data = os.read(self._read_pipe, _BUF_SIZE)
-                    self.collected += data
+                    self._collected += data
                     if self._true_fd != -1:
                         try:
                             os.write(self._true_fd, data)
@@ -98,7 +109,10 @@ class StreamHandler(threading.Thread):
         os.close(self._write_pipe)
 
     def write(self, data: bytearray) -> None:
-        """Send a message to write to the channels managed by this instance."""
+        """Send a message to write to the channels managed by this instance.
+        
+        :param data: Byte data to write
+        """
         os.write(self._write_pipe, data)
 
 
@@ -107,16 +121,21 @@ def run(
 ) -> ForkResult:
     """Execute a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
 
-    Args:
-        command: Command to execute.
-        cwd: Path to execute in.
-        stdout: Handle to a fd or I/O stream to treat as stdout
-        stderr: Handle to a fd or I/O stream to treat as stderr
-        check: If True, a ForkError exception will be raised if `command` returns a non-zero return code.
+    :param command: Command to execute.
+    :type Command:
+    :param cwd: Path to execute in.
+    :type Path:
+    :param stdout: Handle to a fd or I/O stream to treat as stdout
+    :type Stream:
+    :param stderr: Handle to a fd or I/O stream to treat as stderr
+    :type Stream:
+    :param check: If True, a ForkError exception will be raised if ``command`` returns a non-zero return code.
+    :type bool:
 
-    Raises:
-        ForkError when forked process exits with a non-zero return code
+    :raises ForkError: If forked process exits with a non-zero return code
 
+    :return: A description of the forked process' outcome
+    :rtype: ForkResult
     """
     proc = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
