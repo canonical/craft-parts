@@ -92,13 +92,16 @@ class StreamHandler(threading.Thread):
         os.write(self._write_pipe, data)
 
 
-def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResult:
+def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream, check: bool = False) -> ForkResult:
     """Executes a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
         Args:
             command: Command to execute.
             cwd: Path to execute in.
             stdout: Handle to a fd or I/O stream to treat as stdout
             stderr: Handle to a fd or I/O stream to treat as stderr
+
+        Raises:
+            ForkError when forked process exits with a non-zero return code
     """
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
@@ -153,7 +156,12 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResu
             err.stop()
             break
 
-    return ForkResult(proc.returncode, out.collected, err.collected, comb)
+    result = ForkResult(proc.returncode, out.collected, err.collected, comb)
+    
+    if check and result.returncode != 0:
+        raise ForkError(result=result, cwd=cwd, command=command)
+
+    return result
 
 @dataclass
 class ForkError(Exception):
