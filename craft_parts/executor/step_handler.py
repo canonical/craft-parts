@@ -122,10 +122,10 @@ class StepHandler:
                     stdout=self._stdout,
                     stderr=self._stderr,
                 )
-            except subprocess.CalledProcessError as process_error:
+            except fork_utils.ForkError:
                 raise errors.PluginPullError(
                     part_name=self._part.name
-                ) from process_error
+                )
 
         return StepContents()
 
@@ -153,10 +153,10 @@ class StepHandler:
                 stdout=self._stdout,
                 stderr=self._stderr,
             )
-        except subprocess.CalledProcessError as process_error:
+        except fork_utils.ForkError as forkerror:
             raise errors.PluginBuildError(
-                part_name=self._part.name, plugin_name=self._part.plugin_name
-            ) from process_error
+                part_name=self._part.name, plugin_name=self._part.plugin_name, stderr=forkerror.result.stderr
+            )
 
         return StepContents()
 
@@ -441,8 +441,6 @@ def _create_and_run_script(
     stdout: Stream,
     stderr: Stream,
     build_environment_script_path: Path | None = None,
-    part_name: str = "",
-    plugin_name: str = "",
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
@@ -463,6 +461,6 @@ def _create_and_run_script(
     fork = fork_utils.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr)
 
     if fork.returncode != 0:
-        raise errors.PluginBuildError(
-            part_name=part_name, plugin_name=plugin_name, stderr=fork.stderr
+        raise fork_utils.ForkError(
+            result=fork, cwd=cwd, command=script_path
         )

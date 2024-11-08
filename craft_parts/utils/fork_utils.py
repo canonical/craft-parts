@@ -142,3 +142,9 @@ def run(command: Command, cwd: Path, stdout: Stream, stderr: Stream) -> ForkResu
             break
 
     return ForkResult(proc.returncode, out.collected, err.collected, comb)
+
+@dataclass
+class ForkError(Exception):
+    result: ForkResult
+    cwd: Path
+    command: Command
