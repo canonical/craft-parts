@@ -59,13 +59,15 @@ class JavaPlugin(Plugin):
                 version = int(spec_version.split(".")[-1])
 
             except subprocess.CalledProcessError as err:
-                logging.info(f"{javac} is not a valid Java compiler: {err.output}")
+                logging.debug(f"{javac} is not a valid Java compiler: {err.output}")
             except PermissionError as err:
-                logging.info(
+                logging.debug(
                     f"{javac} is not a valid Java compiler. Permission error {err}"
                 )
             else:
+                logging.info(f"Found JAVA_HOME {java_home}. Java version {version}.")
                 return version, java_home
+        logging.info("JDK not found.")
         return None, ""
 
     def _find_javac(self) -> list[str]:
