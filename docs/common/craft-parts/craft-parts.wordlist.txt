@@ -451,6 +451,7 @@ summarized
 svn
 symlink
 symlinks
+sys
 texinfo
 tgz
 toml
