@@ -70,7 +70,7 @@ class JavaPlugin(Plugin):
 
     def _find_javac(self) -> list[str]:
         cmd = ["find", "/usr/lib/jvm", "-path", "*/bin/javac", "-print"]
-        output = subprocess.check_output(cmd)
+        output = subprocess.check_output(cmd, text=True)
         return [x for x in output.decode().split("\n") if len(x) > 0]
 
     @override
