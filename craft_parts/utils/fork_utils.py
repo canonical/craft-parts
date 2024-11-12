@@ -77,7 +77,7 @@ class StreamHandler(threading.Thread):
         :raises OSError: If an internal error occurs preventing this function from reading or writing from pipes.
         """
         while not self._stop_flag:
-            r, _, _ = select.select([self._read_pipe], [], [])
+            r, _, _ = select.select([self._read_pipe], [], [], 0.25)
 
             try:
                 if self._read_pipe in r:
@@ -102,11 +102,12 @@ class StreamHandler(threading.Thread):
                     return
                 raise
 
-    def stop(self) -> None:
-        """Stop monitoring the stream and close all associated pipes."""
+    def join(self, timeout: float | None = None) -> None:
+        """Stop monitoring the stream and close all associated pipes. Blocks until done reading."""
         if self._stop_flag:
             return
         self._stop_flag = True
+        super().join(timeout)
         os.close(self._read_pipe)
         os.close(self._write_pipe)
 
@@ -119,7 +120,12 @@ class StreamHandler(threading.Thread):
 
 
 def run(
-    command: Command, cwd: Path, stdout: Stream, stderr: Stream, *, check: bool = False
+    command: Command,
+    *,
+    cwd: Path | None = None,
+    stdout: Stream = None,
+    stderr: Stream = None,
+    check: bool = False,
 ) -> ForkResult:
     """Execute a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
 
@@ -192,8 +198,8 @@ def run(
             pass
 
         if proc.poll() is not None:
-            out.stop()
-            err.stop()
+            out.join()
+            err.join()
             break
 
     result = ForkResult(proc.returncode, out.collected, err.collected, comb)
@@ -209,5 +215,5 @@ class ForkError(Exception):
     """Simple error for failed forked processes. Generally raised if the return code of a forked process is non-zero."""
 
     result: ForkResult
-    cwd: Path
+    cwd: Path | None
     command: Command
