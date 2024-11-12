@@ -68,7 +68,7 @@ def test_java_plugin(new_dir, partitions):
     """
 
     prime_dir = run_build(new_dir, partitions, "test_java_plugin")
-    java_binary = Path(prime_dir, "bin", "java")
+    java_binary = prime_dir / "bin/java"
     assert java_binary.is_file()
 
     with open(Path(prime_dir, "java_home")) as file:
