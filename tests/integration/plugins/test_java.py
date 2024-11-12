@@ -68,12 +68,11 @@ def test_java_plugin(new_dir, partitions):
     """
 
     prime_dir = run_build(new_dir, partitions, "test_java_plugin")
-    java_binary = Path(prime_dir, "bin", "java")
+    java_binary = prime_dir / "bin/java"
     assert java_binary.is_file()
 
-    with open(Path(prime_dir, "java_home")) as file:
-        content = file.read()
-        assert "21" in content
+    content = (prime_dir / "java_home").read_text()
+    assert "21" in content
 
     output = subprocess.check_output(
         [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld-1.0.jar"], text=True
