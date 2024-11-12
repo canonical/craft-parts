@@ -20,6 +20,7 @@ import errno
 import os
 import select
 import subprocess
+import sys
 import threading
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -53,10 +54,10 @@ class StreamHandler(threading.Thread):
         super().__init__()
         if isinstance(fd, int):
             self._true_fd = fd
-        elif isinstance(fd, TextIO):
-            self._true_fd = fd.fileno()
-        else:
+        elif fd is None:
             self._true_fd = -1
+        else:
+            self._true_fd = fd.fileno()
 
         self._collected = b""
         self._read_pipe, self._write_pipe = os.pipe()
@@ -126,11 +127,11 @@ def run(
     :type Command:
     :param cwd: Path to execute in.
     :type Path:
-    :param stdout: Handle to a fd or I/O stream to treat as stdout
+    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to `sys.stdout`, and any negative number results in no printing at all.
     :type Stream:
-    :param stderr: Handle to a fd or I/O stream to treat as stderr
+    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to `sys.stderr`, and any negative number results in no printing at all.
     :type Stream:
-    :param check: If True, a ForkError exception will be raised if ``command`` returns a non-zero return code.
+    :param check: If True, a ForkError exception will be raised if `command` returns a non-zero return code.
     :type bool:
 
     :raises ForkError: If forked process exits with a non-zero return code
@@ -154,8 +155,15 @@ def run(
     line_out = bytearray()
     line_err = bytearray()
 
-    out = StreamHandler(stdout)
-    err = StreamHandler(stderr)
+    if stdout is None:
+        out = StreamHandler(sys.stdout)
+    else:
+        out = StreamHandler(stdout)
+    if stderr is None:
+        err = StreamHandler(sys.stderr)
+    else:
+        err = StreamHandler(stderr)
+
     out.start()
     err.start()
     while True:
