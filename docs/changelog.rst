@@ -2,6 +2,12 @@
 Changelog
 *********
 
+X.Y.Z (2024-MM-DD)
+------------------
+
+- Set JAVA_HOME environment variable in Java plugin. The plugin will
+  try to detect the latest available JDK.
+
 2.1.2 (2024-10-04)
 ------------------
 
@@ -245,7 +251,7 @@ Bug fixes:
 1.19.7 (2023-08-09)
 -------------------
 
-- Only load project variables in adopting part 
+- Only load project variables in adopting part
 
 1.19.6 (2023-06-09)
 -------------------
