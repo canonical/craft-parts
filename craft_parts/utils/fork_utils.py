@@ -47,7 +47,7 @@ class StreamHandler(threading.Thread):
     """Helper class for splitting a stream into two destinations: the stream handed to it via ``fd`` and the ``self.collected`` field."""
 
     def __init__(self, fd: Stream) -> None:
-        """Initialize a StreamHandler.
+        """Initialise a StreamHandler.
 
         :param fd: The "real" file descriptor to print to.
         """
@@ -73,7 +73,7 @@ class StreamHandler(threading.Thread):
     def run(self) -> None:
         """Constantly check if any data has been sent, then duplicate it if so.
 
-        :raises RuntimeError: If the file descriptor passed at initialization is closed before `.stop()` is called.
+        :raises RuntimeError: If the file descriptor passed at initialisation is closed before `.stop()` is called.
         :raises OSError: If an internal error occurs preventing this function from reading or writing from pipes.
         """
         while not self._stop_flag:

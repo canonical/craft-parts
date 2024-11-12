@@ -73,6 +73,8 @@ Fileset
 FilesetConflict
 FilesetError
 Filesets
+ForkError
+ForkResult
 GenerateJsonSchema
 GiB
 GitSource
@@ -142,6 +144,7 @@ NpmPlugin
 NpmPluginEnvironmentValidator
 NpmPluginProperties
 OCI
+OSError
 OsRelease
 OsReleaseCodenameError
 OsReleaseIdError
@@ -256,6 +259,7 @@ StepContents
 StepHandler
 StepInfo
 StepState
+StreamHandler
 Submodules
 Subpackages
 Subtractive
@@ -317,6 +321,7 @@ craftctl
 crafter
 ctl
 customization
+cwd
 dataset
 defs
 deps
@@ -333,6 +338,7 @@ dst
 emacs
 env
 executables
+fd
 filepath
 filepaths
 fileset
@@ -411,6 +417,7 @@ readthedocs
 recognized
 reorganize
 reorganized
+returncode
 runtime
 rustc
 rustup
@@ -438,6 +445,7 @@ subdirectory
 subkey
 submodules
 subprocess
+subprocesses
 subtree
 summarized
 svn
