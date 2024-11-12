@@ -155,14 +155,8 @@ def run(
     line_out = bytearray()
     line_err = bytearray()
 
-    if stdout is None:
-        out = StreamHandler(sys.stdout)
-    else:
-        out = StreamHandler(stdout)
-    if stderr is None:
-        err = StreamHandler(sys.stderr)
-    else:
-        err = StreamHandler(stderr)
+    out = StreamHandler(sys.stdout if stdout is None else stdout)
+    err = StreamHandler(sys.stderr if stderr is None else stderr)
 
     out.start()
     err.start()
