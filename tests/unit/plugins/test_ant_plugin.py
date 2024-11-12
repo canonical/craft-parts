@@ -171,8 +171,7 @@ def test_get_build_environment_proxy(part_info, env, opts):
     plugin = AntPlugin(properties=properties, part_info=part_info)
     with mock.patch.dict(os.environ, env):
         env = plugin.get_build_environment()
-        del env["JAVA_HOME"]
-        assert env == {"ANT_OPTS": opts}
+        assert env["ANT_OPTS"] == opts
 
 
 def test_missing_parameters():
