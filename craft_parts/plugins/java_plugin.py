@@ -56,7 +56,7 @@ class JavaPlugin(Plugin):
                 )
                 # Java 8 reports spec 1.8. Treat it as a spec version 8
                 # 11 and up report the actual spec version number
-                version = int(spec_version.decode().split(".")[-1])
+                version = int(spec_version.split(".")[-1])
 
             except subprocess.CalledProcessError as err:
                 logging.info(f"{javac} is not a valid Java compiler: {err.output}")
@@ -71,7 +71,7 @@ class JavaPlugin(Plugin):
     def _find_javac(self) -> list[str]:
         cmd = ["find", "/usr/lib/jvm", "-path", "*/bin/javac", "-print"]
         output = subprocess.check_output(cmd, text=True)
-        return [x for x in output.decode().split("\n") if len(x) > 0]
+        return [x for x in output.split("\n") if len(x) > 0]
 
     @override
     def get_build_environment(self) -> dict[str, str]:
