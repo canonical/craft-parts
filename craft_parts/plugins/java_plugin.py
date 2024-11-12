@@ -52,7 +52,7 @@ class JavaPlugin(Plugin):
                 subprocess.call([javac, "-d", tempdir, f"{tempdir}/Test.java"])
                 java_home = os.path.dirname(os.path.dirname(javac))
                 spec_version = subprocess.check_output(
-                    [java_home + "/bin/java", "-cp", tempdir, "Test"]
+                    [java_home + "/bin/java", "-cp", tempdir, "Test"], text=True
                 )
                 # Java 8 reports spec 1.8. Treat it as a spec version 8
                 # 11 and up report the actual spec version number
