@@ -110,7 +110,7 @@ class LifecycleManager:
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
         partitions: list[str] | None = None,
-        filesystem_mounts: dict[str, Any] | None = None,
+        use_host_sources: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -209,6 +209,7 @@ class LifecycleManager:
             track_stage_packages=track_stage_packages,
             base_layer_dir=base_layer_dir,
             base_layer_hash=layer_hash,
+            use_host_sources=use_host_sources,
         )
         self._project_info = project_info
         # pylint: enable=too-many-locals
