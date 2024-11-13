@@ -47,7 +47,7 @@ class StreamHandler(threading.Thread):
     """Helper class for splitting a stream into two destinations: the stream handed to it via ``fd`` and the ``self.collected`` field."""
 
     def __init__(self, fd: Stream) -> None:
-        """Initialise a StreamHandler.
+        """Initialise a ``StreamHandler``.
 
         :param fd: The "real" file descriptor to print to.
         """
@@ -73,7 +73,7 @@ class StreamHandler(threading.Thread):
     def run(self) -> None:
         """Constantly check if any data has been sent, then duplicate it if so.
 
-        :raises RuntimeError: If the file descriptor passed at initialisation is closed before `.stop()` is called.
+        :raises RuntimeError: If the file descriptor passed at initialisation is closed before ``.stop()`` is called.
         :raises OSError: If an internal error occurs preventing this function from reading or writing from pipes.
         """
         while not self._stop_flag:
@@ -133,11 +133,11 @@ def run(
     :type Command:
     :param cwd: Path to execute in.
     :type Path:
-    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to `sys.stdout`, and any negative number results in no printing at all.
+    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to ``sys.stdout``, and any negative number results in no printing at all.
     :type Stream:
-    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to `sys.stderr`, and any negative number results in no printing at all.
+    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to ``sys.stderr``, and any negative number results in no printing at all.
     :type Stream:
-    :param check: If True, a ForkError exception will be raised if `command` returns a non-zero return code.
+    :param check: If True, a ForkError exception will be raised if ``command`` returns a non-zero return code.
     :type bool:
 
     :raises ForkError: If forked process exits with a non-zero return code
