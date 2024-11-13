@@ -77,7 +77,9 @@ class StreamHandler(threading.Thread):
         :raises OSError: If an internal error occurs preventing this function from reading or writing from pipes.
         """
         while not self._stop_flag:
+            print(f"FD={self._true_fd} preparing a select")
             r, _, _ = select.select([self._read_pipe], [], [], 0.25)
+            print(f"FD={self._true_fd} select completed")
 
             try:
                 if self._read_pipe in r:
@@ -107,7 +109,9 @@ class StreamHandler(threading.Thread):
         if self._stop_flag:
             return
         self._stop_flag = True
+        print(f"FD={self._true_fd} waiting on super join")
         super().join(timeout)
+        print(f"FD={self._true_fd} joined on super")
         os.close(self._read_pipe)
         os.close(self._write_pipe)
 
@@ -164,10 +168,14 @@ def run(
     out = StreamHandler(sys.stdout if stdout is None else stdout)
     err = StreamHandler(sys.stderr if stderr is None else stderr)
 
+    print(f"out-fd = {out._true_fd}")
+    print(f"err-fd = {err._true_fd}")
     out.start()
     err.start()
     while True:
-        r, _, _ = select.select([fdout, fderr], [], [])
+        print("selecting on main thread")
+        r, _, _ = select.select([fdout, fderr], [], [], 0.25)
+        print("selected on main thread")
 
         try:
             if fdout in r:
@@ -198,8 +206,10 @@ def run(
             pass
 
         if proc.poll() is not None:
+            print("about to join")
             out.join()
             err.join()
+            print("joined")
             break
 
     result = ForkResult(proc.returncode, out.collected, err.collected, comb)
