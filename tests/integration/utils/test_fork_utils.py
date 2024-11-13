@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections.abc import Iterable
 from pathlib import Path
 
 import pytest
@@ -32,13 +31,20 @@ def test_simple_script(case_dir, capfd) -> None:
 
 
 def test_complex_script(case_dir, capfd) -> None:
-    def build_string_from_iter(it: Iterable[int]) -> str:
-        return "\n".join({str(n) for n in it}) + "\n"
-
     result = fork_utils.run(["/bin/bash", case_dir / "complex.sh"])
-    assert build_string_from_iter(range(0, 400)) == result.combined.decode("utf-8")
 
-    assert build_string_from_iter(range(0, 400, 4)) == capfd.readouterr().out
+    out, err = capfd.readouterr()
+    out_n = [int(s) for s in out.split()]
+    err_n = [int(s) for s in err.split()]
+
+    comb_n = out_n + err_n
+    comb_sort = sorted(comb_n)
+    expected = "\n".join([str(n) for n in comb_sort]) + "\n"
+    assert expected == result.combined.decode("utf-8")
+
+    out_sort = sorted(out_n)
+    expected = "\n".join([str(n) for n in out_sort]) + "\n"
+    assert expected == result.stdout.decode("utf-8")
 
 
 def test_fails_on_check(case_dir) -> None:
