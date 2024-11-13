@@ -83,6 +83,7 @@ GoPluginProperties
 GoUsePlugin
 GoUsePluginProperties
 HttpRequestError
+IncompatibleChrootError
 IncompatibleSourceOptions
 InvalidAction
 InvalidActionException
