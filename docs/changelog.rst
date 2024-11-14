@@ -5,7 +5,7 @@ Changelog
 X.Y.Z (2024-MM-DD)
 ------------------
 
-- Set JAVA_HOME environment variable in Java plugin. The plugin will
+- Set JAVA_HOME environment variable in Java-based plugins. The plugin will
   try to detect the latest available JDK.
 
 2.1.2 (2024-10-04)
