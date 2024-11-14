@@ -64,7 +64,7 @@ def test_java_plugin(new_dir, partitions):
     - Selected Java VM should be able to compile test test file
 
     The test installs multiple Java VMs and asserts that JAVA_HOME
-    is set to Java 17.
+    is set to Java 21.
     """
 
     prime_dir = run_build(new_dir, partitions, "test_java_plugin")
