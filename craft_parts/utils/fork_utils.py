@@ -75,8 +75,8 @@ def run(  # noqa: PLR0915
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
     )
 
-    stdout = _select_stream(stdout, sys.stdout)
-    stderr = _select_stream(stderr, sys.stderr)
+    stdout_fd = _select_stream(stdout, sys.stdout.fileno())
+    stderr_fd = _select_stream(stderr, sys.stderr.fileno())
 
     # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
     fdout = cast(IO[bytes], proc.stdout).fileno()
@@ -101,7 +101,7 @@ def run(  # noqa: PLR0915
                     line_out.extend(data[: i + 1])
                     comb += line_out
                     out += line_out
-                    print(line_out.decode("utf-8"), file=stdout, end="")
+                    os.write(stdout_fd, line_out)
                     line_out.clear()
                     line_out.extend(data[i + 1 :])
                 else:
@@ -114,7 +114,7 @@ def run(  # noqa: PLR0915
                     line_err.extend(data[: i + 1])
                     comb += line_err
                     err += line_err
-                    print(line_err.decode("utf-8"), file=stderr, end="")
+                    os.write(stderr_fd, line_err)
                     line_err.clear()
                     line_err.extend(data[i + 1 :])
                 else:
@@ -124,19 +124,19 @@ def run(  # noqa: PLR0915
             pass
 
         except Exception:
-            if stdout.name == os.devnull:
-                stdout.close()
-            if stderr.name == os.devnull:
-                stderr.close()
+            if stdout == DEVNULL:
+                os.close(stdout_fd)
+            if stderr == DEVNULL:
+                os.close(stderr_fd)
             raise
 
         if proc.poll() is not None:
             break
 
-    if stdout.name == os.devnull:
-        stdout.close()
-    if stderr.name == os.devnull:
-        stderr.close()
+    if stdout == DEVNULL:
+        os.close(stdout_fd)
+    if stderr == DEVNULL:
+        os.close(stderr_fd)
 
     result = ForkResult(proc.returncode, out, err, comb)
 
@@ -146,16 +146,15 @@ def run(  # noqa: PLR0915
     return result
 
 
-def _select_stream(stream: Stream, default: TextIO) -> TextIO:
-    """Translate a ``Stream`` object into a usable Python stream handle."""
-    if isinstance(stream, int):
-        if stream != DEVNULL:
-            raise ValueError(
-                f'Invalid stream "{stream}": Raw file descriptors are not supported.'
-            )
-        return open(os.devnull, "w")
+def _select_stream(stream: Stream, default: int) -> int:
+    """Translate a ``Stream`` object into a raw FD."""
+    if stream == DEVNULL:
+        return os.open(os.devnull, os.O_WRONLY)
+    if isinstance(stream, TextIO):
+        return stream.fileno()
     if stream is None:
         return default
+
     return stream
 
 

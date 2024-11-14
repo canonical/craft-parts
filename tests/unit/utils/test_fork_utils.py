@@ -14,13 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 from craft_parts.utils import fork_utils
-
-
-def test_no_raw_fd():
-    with pytest.raises(ValueError, match="Raw file descriptors are not supported."):
-        fork_utils.run(["true"], stdout=-999)
 
 
 def test_devnull(capfd):
