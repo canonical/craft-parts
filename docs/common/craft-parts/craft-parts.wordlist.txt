@@ -338,6 +338,7 @@ dst
 emacs
 env
 executables
+fd
 filepath
 filepaths
 fileset
