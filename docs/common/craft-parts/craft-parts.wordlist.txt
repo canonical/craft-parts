@@ -49,6 +49,7 @@ DebError
 DebPackage
 DebSource
 DebSourceModel
+DEVNULL
 DirtyReport
 DotPluginEnvironmentValidator
 Dotnet
@@ -259,7 +260,6 @@ StepContents
 StepHandler
 StepInfo
 StepState
-StreamHandler
 Submodules
 Subpackages
 Subtractive
@@ -338,7 +338,6 @@ dst
 emacs
 env
 executables
-fd
 filepath
 filepaths
 fileset
