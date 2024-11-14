@@ -16,21 +16,22 @@
 
 """Utilities for executing subprocesses and handling their stdout and stderr streams."""
 
-import errno
 import os
 import select
 import subprocess
 import sys
-import threading
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, TextIO, cast
 
 Command = str | Path | Sequence[str | Path]
-Stream = int | TextIO | None
+Stream = TextIO | int | None
 
 _BUF_SIZE = 4096
+
+# Compatibility with subprocess.DEVNULL
+DEVNULL = subprocess.DEVNULL
 
 
 @dataclass
@@ -43,87 +44,7 @@ class ForkResult:
     combined: bytes
 
 
-class StreamHandler(threading.Thread):
-    """Helper class for splitting a stream into two destinations: the stream handed to it via ``fd`` and the ``self.collected`` field."""
-
-    def __init__(self, fd: Stream) -> None:
-        """Initialise a ``StreamHandler``.
-
-        :param fd: The "real" file descriptor to print to.
-        """
-        super().__init__()
-        if isinstance(fd, int):
-            self._true_fd = fd
-        elif fd is None:
-            self._true_fd = -1
-        else:
-            self._true_fd = fd.fileno()
-
-        self._collected = b""
-        self._read_pipe, self._write_pipe = os.pipe()
-        os.set_blocking(self._read_pipe, False)
-        os.set_blocking(self._write_pipe, False)
-        self._stop_flag = False
-
-    @property
-    def collected(self) -> bytes:
-        """Data collected from stream over the lifetime of this handler."""
-        return self._collected
-
-    def run(self) -> None:
-        """Constantly check if any data has been sent, then duplicate it if so.
-
-        :raises RuntimeError: If the file descriptor passed at initialisation is closed before ``.stop()`` is called.
-        :raises OSError: If an internal error occurs preventing this function from reading or writing from pipes.
-        """
-        while not self._stop_flag:
-            print(f"FD={self._true_fd} preparing a select")
-            r, _, _ = select.select([self._read_pipe], [], [], 0.25)
-            print(f"FD={self._true_fd} select completed")
-
-            try:
-                if self._read_pipe in r:
-                    data = os.read(self._read_pipe, _BUF_SIZE)
-                    self._collected += data
-                    if self._true_fd != -1:
-                        try:
-                            os.write(self._true_fd, data)
-                        except OSError:
-                            raise RuntimeError(
-                                "Stream handle given to StreamHandler object was unreachable. Was it closed early?"
-                            )
-
-            except BlockingIOError:
-                pass
-
-            except OSError as e:
-                # Occurs when the pipe closes while trying to read from it. This generally happens if the program
-                # responsible for the pipe is stopped. Since that makes it expected behavior for the pipe to be
-                # closed, we can discard this specific error
-                if e.errno == errno.EBADF:
-                    return
-                raise
-
-    def join(self, timeout: float | None = None) -> None:
-        """Stop monitoring the stream and close all associated pipes. Blocks until done reading."""
-        if self._stop_flag:
-            return
-        self._stop_flag = True
-        print(f"FD={self._true_fd} waiting on super join")
-        super().join(timeout)
-        print(f"FD={self._true_fd} joined on super")
-        os.close(self._read_pipe)
-        os.close(self._write_pipe)
-
-    def write(self, data: bytearray) -> None:
-        """Send a message to write to the channels managed by this instance.
-
-        :param data: Byte data to write
-        """
-        os.write(self._write_pipe, data)
-
-
-def run(
+def run(  # noqa: PLR0915
     command: Command,
     *,
     cwd: Path | None = None,
@@ -136,24 +57,26 @@ def run(
     :param command: Command to execute.
     :type Command:
     :param cwd: Path to execute in.
-    :type Path:
-    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to ``sys.stdout``, and any negative number results in no printing at all.
+    :type Path | None:
+    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to ``sys.stdout``, and fork_utils.DEVNULL can be passed for no printing.
     :type Stream:
-    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to ``sys.stderr``, and any negative number results in no printing at all.
+    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to ``sys.stderr``, and fork_utils.DEVNULL can be passed for no printing.
     :type Stream:
     :param check: If True, a ForkError exception will be raised if ``command`` returns a non-zero return code.
     :type bool:
 
-    :raises ForkError: If forked process exits with a non-zero return code
+    :raises ForkError: If forked process exits with a non-zero return code.
+    :raises OSError: If the specified executable is not found.
 
-    :return: A description of the forked process' outcome
+    :return: A description of the forked process' outcome.
     :rtype: ForkResult
     """
     proc = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
     )
 
-    comb = b""
+    stdout = _select_stream(stdout, sys.stdout)
+    stderr = _select_stream(stderr, sys.stderr)
 
     # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
     fdout = cast(IO[bytes], proc.stdout).fileno()
@@ -165,17 +88,10 @@ def run(
     line_out = bytearray()
     line_err = bytearray()
 
-    out = StreamHandler(sys.stdout if stdout is None else stdout)
-    err = StreamHandler(sys.stderr if stderr is None else stderr)
+    out = err = comb = b""
 
-    print(f"out-fd = {out._true_fd}")
-    print(f"err-fd = {err._true_fd}")
-    out.start()
-    err.start()
     while True:
-        print("selecting on main thread")
-        r, _, _ = select.select([fdout, fderr], [], [], 0.25)
-        print("selected on main thread")
+        r, _, _ = select.select([fdout, fderr], [], [])
 
         try:
             if fdout in r:
@@ -184,7 +100,8 @@ def run(
                 if i >= 0:
                     line_out.extend(data[: i + 1])
                     comb += line_out
-                    out.write(line_out)
+                    out += line_out
+                    print(line_out.decode("utf-8"), file=stdout, end="")
                     line_out.clear()
                     line_out.extend(data[i + 1 :])
                 else:
@@ -196,7 +113,8 @@ def run(
                 if i >= 0:
                     line_err.extend(data[: i + 1])
                     comb += line_err
-                    err.write(line_err)
+                    err += line_err
+                    print(line_err.decode("utf-8"), file=stderr, end="")
                     line_err.clear()
                     line_err.extend(data[i + 1 :])
                 else:
@@ -205,19 +123,40 @@ def run(
         except BlockingIOError:
             pass
 
+        except Exception:
+            if stdout.name == os.devnull:
+                stdout.close()
+            if stderr.name == os.devnull:
+                stderr.close()
+            raise
+
         if proc.poll() is not None:
-            print("about to join")
-            out.join()
-            err.join()
-            print("joined")
             break
 
-    result = ForkResult(proc.returncode, out.collected, err.collected, comb)
+    if stdout.name == os.devnull:
+        stdout.close()
+    if stderr.name == os.devnull:
+        stderr.close()
+
+    result = ForkResult(proc.returncode, out, err, comb)
 
     if check and result.returncode != 0:
         raise ForkError(result=result, cwd=cwd, command=command)
 
     return result
+
+
+def _select_stream(stream: Stream, default: TextIO) -> TextIO:
+    """Translate a ``Stream`` object into a usable Python stream handle."""
+    if isinstance(stream, int):
+        if stream != DEVNULL:
+            raise ValueError(
+                f'Invalid stream "{stream}": Raw file descriptors are not supported.'
+            )
+        return open(os.devnull, "w")
+    if stream is None:
+        return default
+    return stream
 
 
 @dataclass
