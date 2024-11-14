@@ -150,12 +150,12 @@ def _select_stream(stream: Stream, default: int) -> int:
     """Translate a ``Stream`` object into a raw FD."""
     if stream == DEVNULL:
         return os.open(os.devnull, os.O_WRONLY)
-    if isinstance(stream, TextIO):
-        return stream.fileno()
+    if isinstance(stream, int):
+        return stream
     if stream is None:
         return default
 
-    return stream
+    return stream.fileno()
 
 
 @dataclass
