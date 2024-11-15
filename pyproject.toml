@@ -30,12 +30,13 @@ apt = [
     "python-apt>=2.4.0;sys_platform=='linux'"
 ]
 docs = [
+    "canonical-sphinx",
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
     "sphinx-pydantic",
     "sphinx-rtd-theme",
-    "sphinxcontrib-details-directive==0.1.0",
+    "sphinxcontrib-details-directive",
 ]
 dev = [  # TODO: Remove this once we've switched CI to uv
     # Inherited from starbase
