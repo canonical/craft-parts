@@ -34,16 +34,19 @@ def plugin(new_dir):
 
 
 @pytest.mark.parametrize(
-    ("has_poetry", "expected_packages"),
+    ("has_poetry", "part_deps", "expected_packages"),
     [
-        (False, {"python3-poetry"}),
-        (True, set()),
+        (False, set(), {"python3-poetry"}),
+        (False, {"poetry-deps"}, set()),
+        (True, {"poetry-deps"}, set()),
+        (True, set(), set()),
     ],
 )
 def test_get_build_packages(
-    monkeypatch, plugin: PoetryPlugin, has_poetry, expected_packages: set
+    monkeypatch, plugin: PoetryPlugin, has_poetry, part_deps, expected_packages: set
 ):
     monkeypatch.setattr(plugin, "_system_has_poetry", lambda: has_poetry)
+    plugin._part_info.dependencies = part_deps  # type: ignore[attr-defined]
 
     assert plugin.get_build_packages().issuperset(expected_packages)
 
