@@ -93,7 +93,7 @@ class JavaPlugin(Plugin):
         """Get the bash commands to provide /bin/java symlink."""
         # pylint: disable=line-too-long
         return [
-            '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
+            '# Find the "java" executable and make a link to it in $CRAFT_PART_INSTALL/bin/java',
             "mkdir -p ${CRAFT_PART_INSTALL}/bin",
             "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
             "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
