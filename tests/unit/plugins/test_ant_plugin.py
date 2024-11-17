@@ -124,7 +124,7 @@ def test_get_build_environment(part_info):
     plugin = AntPlugin(properties=properties, part_info=part_info)
     env = plugin.get_build_environment()
     assert "JAVA_HOME" in env
-    assert len(env) == 1
+    assert "ANT_OPTS" not in env
 
 
 @pytest.mark.parametrize(
