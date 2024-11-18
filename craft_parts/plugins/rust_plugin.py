@@ -172,6 +172,8 @@ class RustPlugin(Plugin):
         if not options.rust_channel and self._check_system_rust():
             logger.info("Rust is installed on the system, skipping rustup")
             return set()
+        if options.rust_channel == "none" or "rust-deps" in (options.after or []):
+            return set()
         return {"rustup"}
 
     @override
