@@ -4,6 +4,8 @@ Ant plugin
 ==========
 
 The Ant plugin builds Java projects using the `Apache Ant`_ build tool.
+This plugin will set the ``JAVA_HOME`` environment variable to the
+path to the latest JDK found in the build environment.
 
 After a successful build, this plugin will:
 
