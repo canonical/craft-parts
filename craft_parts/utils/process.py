@@ -79,17 +79,21 @@ def run(
     stderr: Stream = None,
     check: bool = True,
 ) -> ProcessResult:
-    """Execute a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
+    """Execute a subprocess and collects its stdout and stderr streams as separate 
+    accounts and a singular, combined account.
 
     :param command: Command to execute.
     :type Command:
     :param cwd: Path to execute in.
     :type Path | None:
-    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to ``sys.stdout``, and process.DEVNULL can be passed for no printing.
+    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults
+        to ``sys.stdout``, and process.DEVNULL can be passed for no printing.
     :type Stream:
-    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to ``sys.stderr``, and process.DEVNULL can be passed for no printing.
+    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults
+        to ``sys.stderr``, and process.DEVNULL can be passed for no printing.
     :type Stream:
-    :param check: If True, a ProcessError exception will be raised if ``command`` returns a non-zero return code.
+    :param check: If True, a ProcessError exception will be raised if ``command``
+        returns a non-zero return code.
     :type bool:
 
     :raises ProcessError: If process exits with a non-zero return code.
@@ -168,7 +172,8 @@ def _select_stream(stream: Stream, default: int) -> int:
 
 @dataclass
 class ProcessError(Exception):
-    """Simple error for failed processes. Generally raised if the return code of a process is non-zero."""
+    """Simple error for failed processes. Generally raised if the return code of 
+        a process is non-zero."""
 
     result: ProcessResult
     cwd: Path | None
