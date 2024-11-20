@@ -178,11 +178,15 @@ class PartSpec(BaseModel):
     @property
     def has_slices(self) -> bool:
         """Return whether the part contains chisel slices."""
-        return any(p for p in self.stage_packages if "_" in p)
+        if not self.stage_packages:
+            return False
+        return any("_" in p for p in self.stage_packages)
 
     @property
     def has_chisel_as_build_snap(self) -> bool:
         """Return whether the part has chisel as build snap."""
+        if not self.build_snaps:
+            return False
         return any(
             p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
         )
