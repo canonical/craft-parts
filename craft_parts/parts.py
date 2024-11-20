@@ -393,6 +393,16 @@ class Part:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
 
+    @property
+    def has_slices(self) -> bool:
+        """Return whether this part has slices in its stage-packages."""
+        return self.spec.has_slices
+
+    @property
+    def has_chisel_as_build_snap(self) -> bool:
+        """Return whether this part has chisel in its build-snaps."""
+        return self.spec.has_chisel_as_build_snap
+
     def _check_partition_feature(self) -> None:
         """Check if the partitions feature is properly used.
 
