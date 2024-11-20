@@ -44,13 +44,40 @@ class ProcessResult:
     combined: bytes
 
 
-def run(  # noqa: PLR0915
+class _ProcessStream:
+    def __init__(self, read_fd, write_fd):
+        self.read_fd = read_fd
+        self.write_fd = write_fd
+
+        self._linebuf = bytearray()
+        self._streambuf = b""
+    
+    @property
+    def singular(self) -> bytes:
+        return self._streambuf
+    
+    def process(self) -> bytes:
+        """Process any data in ``self.read_fd``, then return it."""
+        data = os.read(self.read_fd, _BUF_SIZE)
+        i = data.rfind(b"\n")
+        if i >= 0:
+            self._linebuf.extend(data[: i + 1])
+            self._streambuf += self._linebuf
+            os.write(self.write_fd, self._linebuf)
+            self._linebuf.clear()
+            self._linebuf.extend(data[i + 1:])
+            return data
+        else:
+            self._linebuf.extend(data)
+            return b""
+
+def run(
     command: Command,
     *,
     cwd: Path | None = None,
     stdout: Stream = None,
     stderr: Stream = None,
-    check: bool = False,
+    check: bool = True,
 ) -> ProcessResult:
     """Execute a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
 
@@ -75,70 +102,49 @@ def run(  # noqa: PLR0915
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
     )
 
-    stdout_fd = _select_stream(stdout, sys.stdout.fileno())
-    stderr_fd = _select_stream(stderr, sys.stderr.fileno())
+    out_fd = _select_stream(stdout, sys.stdout.fileno())
+    err_fd = _select_stream(stderr, sys.stderr.fileno())
 
     # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
-    fdout = cast(IO[bytes], proc.stdout).fileno()
-    fderr = cast(IO[bytes], proc.stderr).fileno()
+    proc_stdout = cast(IO[bytes], proc.stdout).fileno()
+    proc_stderr = cast(IO[bytes], proc.stderr).fileno()
 
-    os.set_blocking(fdout, False)
-    os.set_blocking(fderr, False)
+    os.set_blocking(proc_stdout, False)
+    os.set_blocking(proc_stderr, False)
 
-    line_out = bytearray()
-    line_err = bytearray()
-
-    out = err = comb = b""
+    out_handler = _ProcessStream(proc_stdout, out_fd)
+    err_handler = _ProcessStream(proc_stderr, err_fd)
+    combined = b""
 
     while True:
-        r, _, _ = select.select([fdout, fderr], [], [])
+        r, _, _ = select.select([proc_stdout, proc_stderr], [], [])
 
         try:
-            if fdout in r:
-                data = os.read(fdout, _BUF_SIZE)
-                i = data.rfind(b"\n")
-                if i >= 0:
-                    line_out.extend(data[: i + 1])
-                    comb += line_out
-                    out += line_out
-                    os.write(stdout_fd, line_out)
-                    line_out.clear()
-                    line_out.extend(data[i + 1 :])
-                else:
-                    line_out.extend(data)
+            if proc_stdout in r:
+                combined += out_handler.process()
 
-            if fderr in r:
-                data = os.read(fderr, _BUF_SIZE)
-                i = data.rfind(b"\n")
-                if i >= 0:
-                    line_err.extend(data[: i + 1])
-                    comb += line_err
-                    err += line_err
-                    os.write(stderr_fd, line_err)
-                    line_err.clear()
-                    line_err.extend(data[i + 1 :])
-                else:
-                    line_err.extend(data)
+            if proc_stderr in r:
+                combined += err_handler.process()
 
         except BlockingIOError:
             pass
 
         except Exception:
             if stdout == DEVNULL:
-                os.close(stdout_fd)
+                os.close(out_fd)
             if stderr == DEVNULL:
-                os.close(stderr_fd)
+                os.close(err_fd)
             raise
 
         if proc.poll() is not None:
             break
 
     if stdout == DEVNULL:
-        os.close(stdout_fd)
+        os.close(out_fd)
     if stderr == DEVNULL:
-        os.close(stderr_fd)
+        os.close(err_fd)
 
-    result = ProcessResult(proc.returncode, out, err, comb)
+    result = ProcessResult(proc.returncode, out_handler.singular, err_handler.singular, combined)
 
     if check and result.returncode != 0:
         raise ProcessError(result=result, cwd=cwd, command=command)
