@@ -175,6 +175,18 @@ class PartSpec(BaseModel):
             or self.overlay_files != ["*"]
         )
 
+    @property
+    def has_slices(self) -> bool:
+        """Return whether the part contains chisel slices."""
+        return any(p for p in self.stage_packages if "_" in p)
+
+    @property
+    def has_chisel_as_build_snap(self) -> bool:
+        """Return whether the part has chisel as build snap."""
+        return any(
+            p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
+        )
+
 
 # pylint: disable=too-many-public-methods
 class Part:
