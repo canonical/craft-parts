@@ -45,17 +45,17 @@ class ProcessResult:
 
 
 class _ProcessStream:
-    def __init__(self, read_fd, write_fd):
+    def __init__(self, read_fd: int, write_fd: int) -> None:
         self.read_fd = read_fd
         self.write_fd = write_fd
 
         self._linebuf = bytearray()
         self._streambuf = b""
-    
+
     @property
     def singular(self) -> bytes:
         return self._streambuf
-    
+
     def process(self) -> bytes:
         """Process any data in ``self.read_fd``, then return it."""
         data = os.read(self.read_fd, _BUF_SIZE)
@@ -65,11 +65,11 @@ class _ProcessStream:
             self._streambuf += self._linebuf
             os.write(self.write_fd, self._linebuf)
             self._linebuf.clear()
-            self._linebuf.extend(data[i + 1:])
+            self._linebuf.extend(data[i + 1 :])
             return data
-        else:
-            self._linebuf.extend(data)
-            return b""
+        self._linebuf.extend(data)
+        return b""
+
 
 def run(
     command: Command,
@@ -144,7 +144,9 @@ def run(
     if stderr == DEVNULL:
         os.close(err_fd)
 
-    result = ProcessResult(proc.returncode, out_handler.singular, err_handler.singular, combined)
+    result = ProcessResult(
+        proc.returncode, out_handler.singular, err_handler.singular, combined
+    )
 
     if check and result.returncode != 0:
         raise ProcessError(result=result, cwd=cwd, command=command)

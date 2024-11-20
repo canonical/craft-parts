@@ -34,7 +34,7 @@ def test_complex_script(case_dir, capfd) -> None:
     def _build_expected(raw: list[int]) -> str:
         sorted_output = sorted(raw)
         return "\n".join([str(n) for n in sorted_output]) + "\n"
-    
+
     result = process.run(["/bin/bash", case_dir / "complex.sh"])
 
     out, err = capfd.readouterr()
