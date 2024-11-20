@@ -137,7 +137,7 @@ class TestStepHandlerBuiltins:
         assert result == StepContents()
 
     def test_run_builtin_build(self, new_dir, partitions, mocker):
-        mock_run = mocker.patch("craft_parts.utils.fork_utils.run")
+        mock_run = mocker.patch("craft_parts.utils.process.run")
 
         Path("parts/p1/run").mkdir(parents=True)
         sh = _step_handler_for_step(
@@ -283,7 +283,7 @@ class TestStepHandlerBuiltins:
     def test_run_builtin_pull_strict(self, new_dir, mocker):
         """Test the Pull step in strict mode calls get_pull_commands()"""
         Path("parts/p1/run").mkdir(parents=True)
-        mock_run = mocker.patch("craft_parts.utils.fork_utils.run")
+        mock_run = mocker.patch("craft_parts.utils.process.run")
         self._project_info._strict_mode = True
         sh = _step_handler_for_step(
             Step.PULL,

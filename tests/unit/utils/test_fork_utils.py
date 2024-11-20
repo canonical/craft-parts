@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from craft_parts.utils import fork_utils
+from craft_parts.utils import process
 
 
 def test_devnull(capfd):
-    result = fork_utils.run(["echo", "hello"], stdout=fork_utils.DEVNULL)
+    result = process.run(["echo", "hello"], stdout=process.DEVNULL)
 
     assert capfd.readouterr().out == ""
     assert result.stdout == b"hello\n"

@@ -34,7 +34,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils, fork_utils
+from craft_parts.utils import file_utils, process
 
 from . import filesets
 from .filesets import Fileset
@@ -122,7 +122,7 @@ class StepHandler:
                     stdout=self._stdout,
                     stderr=self._stderr,
                 )
-            except fork_utils.ForkError:
+            except process.ProcessError:
                 raise errors.PluginPullError(part_name=self._part.name)
 
         return StepContents()
@@ -151,11 +151,11 @@ class StepHandler:
                 stdout=self._stdout,
                 stderr=self._stderr,
             )
-        except fork_utils.ForkError as forkerror:
+        except process.ProcessError as procerror:
             raise errors.PluginBuildError(
                 part_name=self._part.name,
                 plugin_name=self._part.plugin_name,
-                stderr=forkerror.result.stderr,
+                stderr=procerror.result.stderr,
             )
 
         return StepContents()
@@ -458,4 +458,4 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    fork_utils.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)
+    process.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)

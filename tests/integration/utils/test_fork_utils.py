@@ -17,7 +17,7 @@
 from pathlib import Path
 
 import pytest
-from craft_parts.utils import fork_utils
+from craft_parts.utils import process
 
 
 @pytest.fixture
@@ -26,12 +26,12 @@ def case_dir() -> Path:
 
 
 def test_simple_script(case_dir, capfd) -> None:
-    fork_utils.run(["/bin/bash", case_dir / "simple.sh"])
+    process.run(["/bin/bash", case_dir / "simple.sh"])
     assert capfd.readouterr().out == "foo\n"
 
 
 def test_complex_script(case_dir, capfd) -> None:
-    result = fork_utils.run(["/bin/bash", case_dir / "complex.sh"])
+    result = process.run(["/bin/bash", case_dir / "complex.sh"])
 
     out, err = capfd.readouterr()
     out_n = [int(s) for s in out.split()]
@@ -48,7 +48,7 @@ def test_complex_script(case_dir, capfd) -> None:
 
 
 def test_fails_on_check(case_dir) -> None:
-    with pytest.raises(fork_utils.ForkError) as raises:
-        fork_utils.run(["/bin/bash", case_dir / "fails.sh"], check=True)
+    with pytest.raises(process.ProcessError) as raises:
+        process.run(["/bin/bash", case_dir / "fails.sh"], check=True)
 
     assert raises.value.result.returncode == 1

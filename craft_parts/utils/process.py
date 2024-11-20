@@ -35,8 +35,8 @@ DEVNULL = subprocess.DEVNULL
 
 
 @dataclass
-class ForkResult:
-    """Describes the outcome of a forked process."""
+class ProcessResult:
+    """Describes the outcome of a process."""
 
     returncode: int
     stdout: bytes
@@ -51,25 +51,25 @@ def run(  # noqa: PLR0915
     stdout: Stream = None,
     stderr: Stream = None,
     check: bool = False,
-) -> ForkResult:
+) -> ProcessResult:
     """Execute a subprocess and collects its stdout and stderr streams as separate accounts and a singular, combined account.
 
     :param command: Command to execute.
     :type Command:
     :param cwd: Path to execute in.
     :type Path | None:
-    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to ``sys.stdout``, and fork_utils.DEVNULL can be passed for no printing.
+    :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults to ``sys.stdout``, and process.DEVNULL can be passed for no printing.
     :type Stream:
-    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to ``sys.stderr``, and fork_utils.DEVNULL can be passed for no printing.
+    :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults to ``sys.stderr``, and process.DEVNULL can be passed for no printing.
     :type Stream:
-    :param check: If True, a ForkError exception will be raised if ``command`` returns a non-zero return code.
+    :param check: If True, a ProcessError exception will be raised if ``command`` returns a non-zero return code.
     :type bool:
 
-    :raises ForkError: If forked process exits with a non-zero return code.
+    :raises ProcessError: If process exits with a non-zero return code.
     :raises OSError: If the specified executable is not found.
 
-    :return: A description of the forked process' outcome.
-    :rtype: ForkResult
+    :return: A description of the process' outcome.
+    :rtype: ProcessResult
     """
     proc = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
@@ -138,10 +138,10 @@ def run(  # noqa: PLR0915
     if stderr == DEVNULL:
         os.close(stderr_fd)
 
-    result = ForkResult(proc.returncode, out, err, comb)
+    result = ProcessResult(proc.returncode, out, err, comb)
 
     if check and result.returncode != 0:
-        raise ForkError(result=result, cwd=cwd, command=command)
+        raise ProcessError(result=result, cwd=cwd, command=command)
 
     return result
 
@@ -159,9 +159,9 @@ def _select_stream(stream: Stream, default: int) -> int:
 
 
 @dataclass
-class ForkError(Exception):
-    """Simple error for failed forked processes. Generally raised if the return code of a forked process is non-zero."""
+class ProcessError(Exception):
+    """Simple error for failed processes. Generally raised if the return code of a process is non-zero."""
 
-    result: ForkResult
+    result: ProcessResult
     cwd: Path | None
     command: Command

@@ -74,8 +74,8 @@ Fileset
 FilesetConflict
 FilesetError
 Filesets
-ForkError
-ForkResult
+ProcessError
+ProcessResult
 GenerateJsonSchema
 GiB
 GitSource

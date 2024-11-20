@@ -493,7 +493,7 @@ class PluginBuildError(PartsError):
             brief += "\nCaptured standard error:"
             for line in stderr.split(b"\n"):
                 if line:
-                    brief += f"\n:: {line.decode()}"
+                    brief += f"\n:: {line.decode("utf-8", errors="replace")}"
 
         resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
         super().__init__(
