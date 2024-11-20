@@ -22,7 +22,7 @@ from craft_parts.utils import process
 
 @pytest.fixture
 def case_dir() -> Path:
-    return Path(__file__).parent / "test_fork_utils"
+    return Path(__file__).parent / "test_process"
 
 
 def test_simple_script(case_dir, capfd) -> None:
@@ -31,6 +31,10 @@ def test_simple_script(case_dir, capfd) -> None:
 
 
 def test_complex_script(case_dir, capfd) -> None:
+    def _build_expected(raw: list[int]) -> str:
+        sorted_output = sorted(raw)
+        return "\n".join([str(n) for n in sorted_output]) + "\n"
+    
     result = process.run(["/bin/bash", case_dir / "complex.sh"])
 
     out, err = capfd.readouterr()
@@ -38,13 +42,14 @@ def test_complex_script(case_dir, capfd) -> None:
     err_n = [int(s) for s in err.split()]
 
     comb_n = out_n + err_n
-    comb_sort = sorted(comb_n)
-    expected = "\n".join([str(n) for n in comb_sort]) + "\n"
+    expected = _build_expected(comb_n)
     assert expected == result.combined.decode("utf-8")
 
-    out_sort = sorted(out_n)
-    expected = "\n".join([str(n) for n in out_sort]) + "\n"
+    expected = _build_expected(out_n)
     assert expected == result.stdout.decode("utf-8")
+
+    expected = _build_expected(err_n)
+    assert expected == result.stderr.decode("utf-8")
 
 
 def test_fails_on_check(case_dir) -> None:
@@ -52,3 +57,11 @@ def test_fails_on_check(case_dir) -> None:
         process.run(["/bin/bash", case_dir / "fails.sh"], check=True)
 
     assert raises.value.result.returncode == 1
+    assert raises.value.result.stderr == b"Error: Not enough cows.\n"
+
+
+def test_devnull(capfd):
+    result = process.run(["echo", "hello"], stdout=process.DEVNULL)
+
+    assert capfd.readouterr().out == ""
+    assert result.stdout == b"hello\n"
