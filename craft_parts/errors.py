@@ -16,11 +16,11 @@
 
 """Craft parts errors."""
 
-import functools
-from overrides import override
 import pathlib
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
+
+from overrides import override
 
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
@@ -42,7 +42,13 @@ class PartsError(Exception):
     resolution: str | None = None
     doc_slug: str | None = None
 
-    def __init__(self, brief: str, details: str | None = None, resolution: str | None = None, doc_slug: str | None = None) -> None:
+    def __init__(
+        self,
+        brief: str,
+        details: str | None = None,
+        resolution: str | None = None,
+        doc_slug: str | None = None,
+    ) -> None:
         self._brief = brief
         self.details = details
         self.resolution = resolution
@@ -59,11 +65,10 @@ class PartsError(Exception):
 
         return "\n".join(components)
 
-    
     @property
     def brief(self) -> str:
+        """A brief summary of the error."""
         return self._brief
-    
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(brief={self.brief!r}, details={self.details!r}, resolution={self.resolution!r}, doc_slug={self.doc_slug!r})"
@@ -510,16 +515,18 @@ class PluginBuildError(PartsError):
             brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
         )
 
-    
     @property
-    @functools.cache
     @override
     def brief(self) -> str:
+        """A brief summary of the error.
+
+        Discards all trace lines that come before the last-executed script line
+        """
         brief = f"Failed to run the build script for part {self.part_name!r}."
 
         if self.stderr is None:
             return brief
-        
+
         stderr = self.stderr.decode("utf-8", errors="replace")
         brief += "\nCaptured standard error:"
 

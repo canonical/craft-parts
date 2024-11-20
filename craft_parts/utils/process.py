@@ -79,7 +79,9 @@ def run(
     stderr: Stream = None,
     check: bool = True,
 ) -> ProcessResult:
-    """Execute a subprocess and collects its stdout and stderr streams as separate 
+    """Execute a subprocess and collect its output.
+
+    This function collects the stdout and stderr streams as separate
     accounts and a singular, combined account.
 
     :param command: Command to execute.
@@ -172,8 +174,10 @@ def _select_stream(stream: Stream, default: int) -> int:
 
 @dataclass
 class ProcessError(Exception):
-    """Simple error for failed processes. Generally raised if the return code of 
-        a process is non-zero."""
+    """Simple error for failed processes.
+
+    Generally raised if the return code of a process is non-zero.
+    """
 
     result: ProcessResult
     cwd: Path | None
