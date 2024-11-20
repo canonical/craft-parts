@@ -16,7 +16,8 @@
 
 """Craft parts errors."""
 
-import dataclasses
+import functools
+from overrides import override
 import pathlib
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
@@ -25,7 +26,6 @@ if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
 
 
-@dataclasses.dataclass(repr=True)
 class PartsError(Exception):
     """Unexpected error.
 
@@ -37,10 +37,16 @@ class PartsError(Exception):
         the Craft Parts documentation.
     """
 
-    brief: str
+    _brief: str
     details: str | None = None
     resolution: str | None = None
     doc_slug: str | None = None
+
+    def __init__(self, brief: str, details: str | None = None, resolution: str | None = None, doc_slug: str | None = None) -> None:
+        self._brief = brief
+        self.details = details
+        self.resolution = resolution
+        self.doc_slug = doc_slug
 
     def __str__(self) -> str:
         components = [self.brief]
@@ -52,6 +58,15 @@ class PartsError(Exception):
             components.append(self.resolution)
 
         return "\n".join(components)
+
+    
+    @property
+    def brief(self) -> str:
+        return self._brief
+    
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(brief={self.brief!r}, details={self.details!r}, resolution={self.resolution!r}, doc_slug={self.doc_slug!r})"
 
 
 class FeatureError(PartsError):
@@ -487,18 +502,43 @@ class PluginBuildError(PartsError):
     ) -> None:
         self.part_name = part_name
         self.plugin_name = plugin_name
+        self.stderr = stderr
         brief = f"Failed to run the build script for part {part_name!r}."
-
-        if stderr is not None:
-            brief += "\nCaptured standard error:"
-            for line in stderr.split(b"\n"):
-                if line:
-                    brief += f"\n:: {line.decode('utf-8', errors='replace')}"
 
         resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
         super().__init__(
             brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
         )
+
+    
+    @property
+    @functools.cache
+    @override
+    def brief(self) -> str:
+        brief = f"Failed to run the build script for part {self.part_name!r}."
+
+        if self.stderr is None:
+            return brief
+        
+        stderr = self.stderr.decode("utf-8", errors="replace")
+        brief += "\nCaptured standard error:"
+
+        stderr_lines = stderr.split("\n")
+        # Find the final command captured in the logs
+        last_command = None
+        for idx, line in enumerate(reversed(stderr_lines)):
+            if line.startswith("+"):
+                last_command = len(stderr_lines) - idx - 1
+                break
+        else:
+            # Fallback to printing the whole log
+            last_command = 0
+
+        for line in stderr_lines[last_command:]:
+            if line:
+                brief += f"\n:: {line}"
+
+        return brief
 
 
 class PluginCleanError(PartsError):
