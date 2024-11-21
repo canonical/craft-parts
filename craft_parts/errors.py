@@ -16,10 +16,10 @@
 
 """Craft parts errors."""
 
+from io import StringIO
 import pathlib
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
-
 from overrides import override
 
 if TYPE_CHECKING:
@@ -522,13 +522,14 @@ class PluginBuildError(PartsError):
 
         Discards all trace lines that come before the last-executed script line
         """
-        brief = f"Failed to run the build script for part {self.part_name!r}."
+        brief_io = StringIO()
+        brief_io.write(f"Failed to run the build script for part {self.part_name!r}.")
 
         if self.stderr is None:
-            return brief
+            return brief_io.read()
 
         stderr = self.stderr.decode("utf-8", errors="replace")
-        brief += "\nCaptured standard error:"
+        brief_io.write("\nCaptured standard error:")
 
         stderr_lines = stderr.split("\n")
         # Find the final command captured in the logs
@@ -543,9 +544,9 @@ class PluginBuildError(PartsError):
 
         for line in stderr_lines[last_command:]:
             if line:
-                brief += f"\n:: {line}"
+                brief_io.write(f"\n:: {line}")
 
-        return brief
+        return brief_io.read()
 
 
 class PluginCleanError(PartsError):
