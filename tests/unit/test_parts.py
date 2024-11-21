@@ -353,6 +353,7 @@ class TestPartData:
             ({}, False),
             ({"build-snaps": ["hello", "chisel/latest/candidate"]}, True),
             ({"build-snaps": ["chisel"]}, True),
+            ({"build-snaps": ["chiselhelper"]}, False),
             ({"build-snaps": ["hello"]}, False),
         ],
     )
