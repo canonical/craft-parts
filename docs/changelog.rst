@@ -8,6 +8,24 @@ X.Y.Z (2024-MM-DD)
 - Set JAVA_HOME environment variable in Java-based plugins. The plugin will
   try to detect the latest available JDK.
 
+2.1.3 (2024-11-20)
+------------------
+
+Bug fixes:
+
+- Fix an issue where the ``poetry`` plugin would still try to install poetry
+  from the package repositories when ``poetry-deps`` was declared as a
+  dependency
+
+Documentation:
+
+- Add some missing references in the
+  :doc:`Poetry plugin</common/craft-parts/reference/plugins/poetry_plugin>` and
+  :doc:`Python plugin</common/craft-parts/reference/plugins/python_plugin>` pages.
+- Fix a broken link in the :doc:`Tutorial examples</tutorials/examples>`.
+
+For a complete list of commits, check out the `2.1.3`_ release on GitHub.
+
 2.1.2 (2024-10-04)
 ------------------
 
@@ -21,7 +39,7 @@ Bug Fixes:
 Documentation:
 
 - Update the :doc:`Rust
-  plugin`</common/craft-parts/reference/plugins/rust_plugin>` doc with recent
+  plugin</common/craft-parts/reference/plugins/rust_plugin>` doc with recent
   changes to the Rust toolchain.
 
 2.1.1 (2024-09-13)
@@ -589,3 +607,5 @@ Bug fixes:
 
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
+
+.. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3

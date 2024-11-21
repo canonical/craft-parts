@@ -16,7 +16,7 @@
 
 """Craft a project from several parts."""
 
-__version__ = "2.1.2"
+__version__ = "2.1.3"
 
 from . import plugins
 from .actions import Action, ActionProperties, ActionType
