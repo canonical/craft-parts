@@ -16,10 +16,11 @@
 
 """Craft parts errors."""
 
-from io import StringIO
 import pathlib
 from collections.abc import Iterable
+from io import StringIO
 from typing import TYPE_CHECKING
+
 from overrides import override
 
 if TYPE_CHECKING:
@@ -526,6 +527,7 @@ class PluginBuildError(PartsError):
         brief_io.write(f"Failed to run the build script for part {self.part_name!r}.")
 
         if self.stderr is None:
+            brief_io.seek(0)
             return brief_io.read()
 
         stderr = self.stderr.decode("utf-8", errors="replace")
@@ -546,6 +548,7 @@ class PluginBuildError(PartsError):
             if line:
                 brief_io.write(f"\n:: {line}")
 
+        brief_io.seek(0)
         return brief_io.read()
 
 

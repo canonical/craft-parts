@@ -37,7 +37,6 @@ def test_complex_script(case_dir, capfd) -> None:
 
     result = process.run(["/bin/bash", case_dir / "complex.sh"])
 
-
     out, err = capfd.readouterr()
     out_n = [int(s) for s in out.split()]
     err_n = [int(s) for s in err.split()]
