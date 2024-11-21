@@ -16,6 +16,7 @@
 
 """Craft parts errors."""
 
+import contextlib
 import pathlib
 from collections.abc import Iterable
 from io import StringIO
@@ -523,33 +524,33 @@ class PluginBuildError(PartsError):
 
         Discards all trace lines that come before the last-executed script line
         """
-        brief_io = StringIO()
-        brief_io.write(f"Failed to run the build script for part {self.part_name!r}.")
+        with contextlib.closing(StringIO()) as brief_io:
+            brief_io.write(
+                f"Failed to run the build script for part {self.part_name!r}."
+            )
 
-        if self.stderr is None:
-            brief_io.seek(0)
-            return brief_io.read()
+            if self.stderr is None:
+                return brief_io.getvalue()
 
-        stderr = self.stderr.decode("utf-8", errors="replace")
-        brief_io.write("\nCaptured standard error:")
+            stderr = self.stderr.decode("utf-8", errors="replace")
+            brief_io.write("\nCaptured standard error:")
 
-        stderr_lines = stderr.split("\n")
-        # Find the final command captured in the logs
-        last_command = None
-        for idx, line in enumerate(reversed(stderr_lines)):
-            if line.startswith("+"):
-                last_command = len(stderr_lines) - idx - 1
-                break
-        else:
-            # Fallback to printing the whole log
-            last_command = 0
+            stderr_lines = stderr.split("\n")
+            # Find the final command captured in the logs
+            last_command = None
+            for idx, line in enumerate(reversed(stderr_lines)):
+                if line.startswith("+"):
+                    last_command = len(stderr_lines) - idx - 1
+                    break
+            else:
+                # Fallback to printing the whole log
+                last_command = 0
 
-        for line in stderr_lines[last_command:]:
-            if line:
-                brief_io.write(f"\n:: {line}")
+            for line in stderr_lines[last_command:]:
+                if line:
+                    brief_io.write(f"\n:: {line}")
 
-        brief_io.seek(0)
-        return brief_io.read()
+            return brief_io.getvalue()
 
 
 class PluginCleanError(PartsError):
