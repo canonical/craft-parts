@@ -88,7 +88,10 @@ class PoetryPlugin(BasePythonPlugin):
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         build_packages = super().get_build_packages()
-        if not self._system_has_poetry():
+        if (
+            not self._system_has_poetry()
+            and "poetry-deps" not in self._part_info.dependencies
+        ):
             build_packages |= {"python3-poetry"}
         return build_packages
 
