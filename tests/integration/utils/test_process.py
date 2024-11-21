@@ -37,9 +37,16 @@ def test_complex_script(case_dir, capfd) -> None:
 
     result = process.run(["/bin/bash", case_dir / "complex.sh"])
 
+
     out, err = capfd.readouterr()
     out_n = [int(s) for s in out.split()]
     err_n = [int(s) for s in err.split()]
+
+    # From complex.sh
+    expected_out_size = 100
+    expected_err_size = 300
+    assert len(out_n) == expected_out_size
+    assert len(err_n) == expected_err_size
 
     comb_n = out_n + err_n
     expected = _build_expected(comb_n)
