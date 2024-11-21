@@ -23,6 +23,17 @@ from craft_parts.parts import Part
 from craft_parts.plugins.rust_plugin import RustPlugin, RustPluginProperties
 from pydantic import ValidationError
 
+SAMPLE_RUST_CHANNELS = [
+    "stable",
+    None,  # synonym for "stable"
+    "beta",
+    "nightly",
+    "stable-x86_64-unknown-linux-gnu",
+    "1.0.0",
+    "1.68.2-x86_64-unknown-linux-gnu",
+]
+NO_INSTALL_RUST_CHANNEL = "none"
+
 
 @pytest.fixture
 def part_info(new_dir):
@@ -33,29 +44,40 @@ def part_info(new_dir):
 
 
 @pytest.mark.parametrize(
-    "rust_channel",
+    "rust_channel", [*SAMPLE_RUST_CHANNELS, NO_INSTALL_RUST_CHANNEL]
+)
+def test_validate_rust_channel(rust_channel: str):
+    RustPluginProperties.validate_rust_channel(rust_channel)
+
+
+@pytest.mark.parametrize(
+    ("rust_channel", "expected"),
     [
-        "stable",
-        "beta",
-        "nightly",
-        "stable-x86_64-unknown-linux-gnu",
-        "1.0.0",
-        "1.68.2-x86_64-unknown-linux-gnu",
+        *((channel, {"rustup"}) for channel in SAMPLE_RUST_CHANNELS),
+        (NO_INSTALL_RUST_CHANNEL, set()),
     ],
 )
-def test_validate_rust_channel(rust_channel):
-    RustPluginProperties.validate_rust_channel(
-        rust_channel
-    )  # pyright: ignore[reportCallIssue]
-
-
-def test_get_build_snaps(fake_process: pytest_subprocess.FakeProcess, part_info):
-    fake_process.register(["rustc", "--version"], stdout="Not installed")
-    fake_process.register(["cargo", "--version"], stdout="Not installed")
-
-    properties = RustPlugin.properties_class.unmarshal({"source": "."})
+def test_get_build_snaps_by_channel(part_info, rust_channel, expected):
+    properties = RustPlugin.properties_class.unmarshal(
+        {"source": ".", "rust-channel": rust_channel}
+    )
     plugin = RustPlugin(properties=properties, part_info=part_info)
-    assert plugin.get_build_snaps() == {"rustup"}
+    assert plugin.get_build_snaps() == expected
+
+
+@pytest.mark.parametrize(
+    ("after", "expected"),
+    [
+        (None, {"rustup"}),
+        ([], {"rustup"}),
+        (["not-rust-deps", "also-not-rust-deps"], {"rustup"}),
+        (["rust-deps"], set()),
+    ],
+)
+def test_get_build_snaps_with_rust_deps(part_info, after, expected):
+    properties = RustPlugin.properties_class.unmarshal({"source": ".", "after": after})
+    plugin = RustPlugin(properties=properties, part_info=part_info)
+    assert plugin.get_build_snaps() == expected
 
 
 def test_get_build_packages(part_info):

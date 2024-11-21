@@ -169,8 +169,15 @@ class RustPlugin(Plugin):
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         options = cast(RustPluginProperties, self._options)
-        if not options.rust_channel and self._check_system_rust():
-            logger.info("Rust is installed on the system, skipping rustup")
+        if options.rust_channel == "none":
+            logger.info(
+                "Not installing rustup because rust-channel 'none' was specified."
+            )
+            return set()
+        if options.after and "rust-deps" in options.after:
+            logger.info(
+                "Not installing rustup because a 'rust-deps' dependent part is specified."
+            )
             return set()
         return {"rustup"}
 
