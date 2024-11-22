@@ -73,6 +73,7 @@ def test_plugin_build_errors(new_dir, partitions):
     assert str(raised.value) == textwrap.dedent(
         """\
             Failed to run the build script for part 'foo'.
+
             Captured standard error:
             :: + go install -p 1 ./...
             :: # example.com/hello

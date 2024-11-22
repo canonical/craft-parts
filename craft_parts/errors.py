@@ -39,8 +39,8 @@ class PartsError(Exception):
         the Craft Parts documentation.
     """
 
-    _brief: str
-    details: str | None = None
+    brief: str
+    _details: str | None = None
     resolution: str | None = None
     doc_slug: str | None = None
 
@@ -51,8 +51,8 @@ class PartsError(Exception):
         resolution: str | None = None,
         doc_slug: str | None = None,
     ) -> None:
-        self._brief = brief
-        self.details = details
+        self.brief = brief
+        self._details = details
         self.resolution = resolution
         self.doc_slug = doc_slug
 
@@ -67,13 +67,13 @@ class PartsError(Exception):
 
         return "\n".join(components)
 
-    @property
-    def brief(self) -> str:
-        """A brief summary of the error."""
-        return self._brief
-
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(brief={self.brief!r}, details={self.details!r}, resolution={self.resolution!r}, doc_slug={self.doc_slug!r})"
+
+    @property
+    def details(self) -> str | None:
+        """Further details on the error."""
+        return self._details
 
 
 class FeatureError(PartsError):
@@ -519,18 +519,14 @@ class PluginBuildError(PartsError):
 
     @property
     @override
-    def brief(self) -> str:
-        """A brief summary of the error.
+    def details(self) -> str | None:
+        """Further details on the error.
 
         Discards all trace lines that come before the last-executed script line
         """
         with contextlib.closing(StringIO()) as brief_io:
-            brief_io.write(
-                f"Failed to run the build script for part {self.part_name!r}."
-            )
-
             if self.stderr is None:
-                return brief_io.getvalue()
+                return None
 
             stderr = self.stderr.decode("utf-8", errors="replace")
             brief_io.write("\nCaptured standard error:")
