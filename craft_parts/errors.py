@@ -40,7 +40,6 @@ class PartsError(Exception):
     """
 
     brief: str
-    _details: str | None = None
     resolution: str | None = None
     doc_slug: str | None = None
 
