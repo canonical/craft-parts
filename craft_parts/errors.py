@@ -41,6 +41,7 @@ class PartsError(Exception):
     details: str | None = None
     resolution: str | None = None
     doc_slug: str | None = None
+    user_error: bool = False
 
     def __str__(self) -> str:
         components = [self.brief]
