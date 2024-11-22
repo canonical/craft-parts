@@ -7,7 +7,7 @@ pyspelling==2.10
 myst-parser==3.0.1
 Sphinx==7.4.7
 sphinx-autobuild==2024.10.3
-sphinx-autodoc-typehints==2.2.2
+sphinx-autodoc-typehints==2.5.0
 sphinx-design==0.6.1
 sphinx-jsonschema==1.19.1
 sphinx-pydantic==0.1.1
