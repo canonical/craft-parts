@@ -20,8 +20,10 @@ import os
 import select
 import subprocess
 import sys
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
+from contextlib import closing, contextmanager
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 from typing import IO, TextIO, cast
 
@@ -114,50 +116,44 @@ def run(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
     )
 
-    out_fd = _select_stream(stdout, sys.stdout.fileno())
-    err_fd = _select_stream(stderr, sys.stderr.fileno())
+    with (
+        _select_stream(stdout, sys.stdout.fileno()) as out_fd,
+        _select_stream(stderr, sys.stderr.fileno()) as err_fd,
+    ):
+        # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
+        proc_stdout = cast(IO[bytes], proc.stdout).fileno()
+        proc_stderr = cast(IO[bytes], proc.stderr).fileno()
 
-    # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
-    proc_stdout = cast(IO[bytes], proc.stdout).fileno()
-    proc_stderr = cast(IO[bytes], proc.stderr).fileno()
+        os.set_blocking(proc_stdout, False)
+        os.set_blocking(proc_stderr, False)
 
-    os.set_blocking(proc_stdout, False)
-    os.set_blocking(proc_stderr, False)
+        out_handler = _ProcessStream(proc_stdout, out_fd)
+        err_handler = _ProcessStream(proc_stderr, err_fd)
 
-    out_handler = _ProcessStream(proc_stdout, out_fd)
-    err_handler = _ProcessStream(proc_stderr, err_fd)
-    combined = b""
+        with closing(BytesIO()) as combined_io:
+            while True:
+                r, _, _ = select.select([proc_stdout, proc_stderr], [], [])
 
-    while True:
-        r, _, _ = select.select([proc_stdout, proc_stderr], [], [])
+                try:
+                    if proc_stdout in r:
+                        combined_io.write(out_handler.process())
 
-        try:
-            if proc_stdout in r:
-                combined += out_handler.process()
+                    if proc_stderr in r:
+                        combined_io.write(err_handler.process())
 
-            if proc_stderr in r:
-                combined += err_handler.process()
+                except BlockingIOError:
+                    pass
 
-        except BlockingIOError:
-            pass
-
-        except Exception:
-            if stdout == DEVNULL:
-                os.close(out_fd)
-            if stderr == DEVNULL:
-                os.close(err_fd)
-            raise
-
-        if proc.poll() is not None:
-            break
-
-    if stdout == DEVNULL:
-        os.close(out_fd)
-    if stderr == DEVNULL:
-        os.close(err_fd)
+                if proc.poll() is not None:
+                    combined = combined_io.getvalue()
+                    break
 
     result = ProcessResult(
-        proc.returncode, out_handler.singular, err_handler.singular, combined, command
+        proc.returncode,
+        out_handler.singular,
+        err_handler.singular,
+        combined,
+        command,
     )
 
     if check and result.returncode != 0:
@@ -166,16 +162,33 @@ def run(
     return result
 
 
-def _select_stream(stream: Stream, default: int) -> int:
-    """Translate a ``Stream`` object into a raw FD."""
-    if stream == DEVNULL:
-        return os.open(os.devnull, os.O_WRONLY)
-    if isinstance(stream, int):
-        return stream
-    if stream is None:
-        return default
+@contextmanager
+def _select_stream(stream: Stream, default: int) -> Generator[int]:
+    """Select and return an appropriate raw file descriptor.
 
-    return stream.fileno()
+    Based on the input, this function returns a raw integer file descriptor according
+    to what is expected from the ``run()`` function in this same module.
+
+    If determining the file handle involves opening our own, this generator handles
+    closing it afterwards.
+    """
+    s: int
+    close = False
+    if stream == DEVNULL:
+        s = os.open(os.devnull, os.O_WRONLY)
+        close = True
+    elif isinstance(stream, int):
+        s = stream
+    elif stream is None:
+        s = default
+    else:
+        s = stream.fileno()
+
+    try:
+        yield s
+    finally:
+        if close:
+            os.close(s)
 
 
 @dataclass
