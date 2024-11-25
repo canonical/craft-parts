@@ -523,12 +523,12 @@ class PluginBuildError(PartsError):
 
         Discards all trace lines that come before the last-executed script line
         """
-        with contextlib.closing(StringIO()) as brief_io:
+        with contextlib.closing(StringIO()) as details_io:
             if self.stderr is None:
                 return None
 
             stderr = self.stderr.decode("utf-8", errors="replace")
-            brief_io.write("\nCaptured standard error:")
+            details_io.write("\nCaptured standard error:")
 
             stderr_lines = stderr.split("\n")
             # Find the final command captured in the logs
@@ -543,9 +543,9 @@ class PluginBuildError(PartsError):
 
             for line in stderr_lines[last_command:]:
                 if line:
-                    brief_io.write(f"\n:: {line}")
+                    details_io.write(f"\n:: {line}")
 
-            return brief_io.getvalue()
+            return details_io.getvalue()
 
 
 class PluginCleanError(PartsError):
