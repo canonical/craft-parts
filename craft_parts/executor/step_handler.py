@@ -151,12 +151,12 @@ class StepHandler:
                 stdout=self._stdout,
                 stderr=self._stderr,
             )
-        except process.ProcessError as procerror:
+        except process.ProcessError as process_error:
             raise errors.PluginBuildError(
                 part_name=self._part.name,
                 plugin_name=self._part.plugin_name,
-                stderr=procerror.result.stderr,
-            )
+                stderr=process_error.result.stderr,
+            ) from process_error
 
         return StepContents()
 
