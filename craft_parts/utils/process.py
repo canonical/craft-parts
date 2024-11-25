@@ -57,7 +57,7 @@ class _ProcessStream:
         return self._streambuf
 
     def process(self) -> bytes:
-        """Process any data in ``self.read_fd``, then return it."""
+        """Forward any data from ``self.read_fd`` to ``self.write_fd`` and return a copy of it."""
         data = os.read(self.read_fd, _BUF_SIZE)
         i = data.rfind(b"\n")
         if i >= 0:
