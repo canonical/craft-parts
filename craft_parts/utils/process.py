@@ -42,6 +42,12 @@ class ProcessResult:
     stdout: bytes
     stderr: bytes
     combined: bytes
+    command: Command
+
+    def check_returncode(self) -> None:
+        """Raise an exception if the process returned non-zero."""
+        if self.returncode != 0:
+            raise ProcessError(self)
 
 
 class _ProcessStream:
@@ -151,11 +157,11 @@ def run(
         os.close(err_fd)
 
     result = ProcessResult(
-        proc.returncode, out_handler.singular, err_handler.singular, combined
+        proc.returncode, out_handler.singular, err_handler.singular, combined, command
     )
 
     if check and result.returncode != 0:
-        raise ProcessError(result=result, cwd=cwd, command=command)
+        raise ProcessError(result)
 
     return result
 
@@ -180,5 +186,3 @@ class ProcessError(Exception):
     """
 
     result: ProcessResult
-    cwd: Path | None
-    command: Command
