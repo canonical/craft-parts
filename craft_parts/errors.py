@@ -510,7 +510,6 @@ class PluginBuildError(PartsError):
         self.plugin_name = plugin_name
         self.stderr = stderr
         brief = f"Failed to run the build script for part {part_name!r}."
-
         resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
         super().__init__(
             brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
