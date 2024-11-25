@@ -149,6 +149,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-dir]
+"craft_parts" = "craft_parts"
 "craft_parts_docs" = "docs/common"
 
 
