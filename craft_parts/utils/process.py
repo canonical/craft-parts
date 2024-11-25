@@ -156,8 +156,8 @@ def run(
         command,
     )
 
-    if check and result.returncode != 0:
-        raise ProcessError(result)
+    if check:
+        result.check_returncode()
 
     return result
 

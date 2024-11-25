@@ -122,8 +122,10 @@ class StepHandler:
                     stdout=self._stdout,
                     stderr=self._stderr,
                 )
-            except process.ProcessError:
-                raise errors.PluginPullError(part_name=self._part.name)
+            except process.ProcessError as process_error:
+                raise (
+                    errors.PluginPullError(part_name=self._part.name)
+                ) from process_error
 
         return StepContents()
 
