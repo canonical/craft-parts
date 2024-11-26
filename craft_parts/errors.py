@@ -39,10 +39,6 @@ class PartsError(Exception):
         the Craft Parts documentation.
     """
 
-    brief: str
-    resolution: str | None = None
-    doc_slug: str | None = None
-
     def __init__(
         self,
         brief: str,
