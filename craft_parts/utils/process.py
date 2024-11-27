@@ -103,20 +103,15 @@ def run(
     accounts and a singular, combined account.
 
     :param command: Command to execute.
-    :type Command:
     :param cwd: Path to execute in.
-    :type Path | None:
     :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults
         to ``sys.stdout``, and process.DEVNULL can be passed for no printing or
         stream capturing.
-    :type Stream:
     :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults
         to ``sys.stderr``, and process.DEVNULL can be passed for no printing or
         stream capturing.
-    :type Stream:
     :param check: If True, a ProcessError exception will be raised if ``command``
         returns a non-zero return code.
-    :type bool:
 
     :raises ProcessError: If process exits with a non-zero return code.
     :raises OSError: If the specified executable is not found.
