@@ -28,7 +28,7 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin
+from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,7 @@ class AntPlugin(JavaPlugin):
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
+        env = super().get_build_environment()
         # Getting ant to use a proxy requires a little work; the JRE doesn't
         # help as much as it should.  (java.net.useSystemProxies=true ought
         # to do the trick, but it relies on desktop configuration rather
@@ -140,8 +141,8 @@ class AntPlugin(JavaPlugin):
         ant_opts.extend(_get_proxy_options("http"))
         ant_opts.extend(_get_proxy_options("https"))
         if ant_opts:
-            return {"ANT_OPTS": _shlex_join(ant_opts)}
-        return {}
+            env["ANT_OPTS"] = _shlex_join(ant_opts)
+        return env
 
     @override
     def get_build_commands(self) -> list[str]:

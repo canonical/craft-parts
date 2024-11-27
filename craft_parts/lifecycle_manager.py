@@ -158,6 +158,14 @@ class LifecycleManager:
             part_list.append(part)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
+        self._needs_chisel = any(p.has_slices for p in part_list)
+        self._has_chisel = any(p.has_chisel_as_build_snap for p in part_list)
+
+        # add a chisel as a build snap if needed
+        if self._needs_chisel and not self._has_chisel:
+            if extra_build_snaps is None:
+                extra_build_snaps = []
+            extra_build_snaps.append("chisel/latest/stable")
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
