@@ -27,7 +27,7 @@ def test_parts_error_brief():
     assert str(err) == "A brief description."
     assert (
         repr(err)
-        == "PartsError(brief='A brief description.', details=None, resolution=None, doc_slug=None)"
+        == "PartsError(brief='A brief description.', details=None, resolution=None, doc_slug=None, user_error=False)"
     )
     assert err.brief == "A brief description."
     assert err.details is None
@@ -39,7 +39,7 @@ def test_parts_error_full():
     assert str(err) == "Brief\nDetails\nResolution"
     assert (
         repr(err)
-        == "PartsError(brief='Brief', details='Details', resolution='Resolution', doc_slug=None)"
+        == "PartsError(brief='Brief', details='Details', resolution='Resolution', doc_slug=None, user_error=False)"
     )
     assert err.brief == "Brief"
     assert err.details == "Details"
