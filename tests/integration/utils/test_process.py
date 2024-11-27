@@ -70,4 +70,4 @@ def test_devnull(capfd):
     result = process.run(["echo", "hello"], stdout=process.DEVNULL)
 
     assert capfd.readouterr().out == ""
-    assert result.stdout == b"hello\n"
+    assert result.stdout == b""

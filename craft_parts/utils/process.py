@@ -17,7 +17,7 @@
 """Utilities for executing subprocesses and handling their stdout and stderr streams."""
 
 import os
-import select
+import selectors
 import subprocess
 import sys
 from collections.abc import Generator, Sequence
@@ -25,7 +25,7 @@ from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-from typing import IO, TextIO, cast
+from typing import IO, TextIO
 
 Command = str | Path | Sequence[str | Path]
 Stream = TextIO | int | None
@@ -60,12 +60,18 @@ class _ProcessStream:
         self._linebuf = bytearray()
         self._streambuf = b""
 
+        # (Mostly) optimize away the process function if the read handle is empty
+        if self.read_fd == DEVNULL:
+            self.process = self._process_nothing # type: ignore[method-assign]
+
     @property
     def singular(self) -> bytes:
         return self._streambuf
 
     def process(self) -> bytes:
-        """Forward any data from ``self.read_fd`` to ``self.write_fd`` and return a copy of it."""
+        """Forward any data from ``self.read_fd`` to ``self.write_fd`` and return a copy of it.
+        
+        Does nothing if ``read_fd`` is DEVNULL."""
         data = os.read(self.read_fd, _BUF_SIZE)
         i = data.rfind(b"\n")
         if i >= 0:
@@ -76,6 +82,10 @@ class _ProcessStream:
             self._linebuf.extend(data[i + 1 :])
             return data
         self._linebuf.extend(data)
+        return b""
+    
+    def _process_nothing(self) -> bytes:
+        """Do nothing."""
         return b""
 
 
@@ -97,10 +107,12 @@ def run(
     :param cwd: Path to execute in.
     :type Path | None:
     :param stdout: Handle to a fd or I/O stream to treat as stdout. None defaults
-        to ``sys.stdout``, and process.DEVNULL can be passed for no printing.
+        to ``sys.stdout``, and process.DEVNULL can be passed for no printing or
+        stream capturing.
     :type Stream:
     :param stderr: Handle to a fd or I/O stream to treat as stderr. None defaults
-        to ``sys.stderr``, and process.DEVNULL can be passed for no printing.
+        to ``sys.stderr``, and process.DEVNULL can be passed for no printing or
+        stream capturing.
     :type Stream:
     :param check: If True, a ProcessError exception will be raised if ``command``
         returns a non-zero return code.
@@ -112,34 +124,37 @@ def run(
     :return: A description of the process' outcome.
     :rtype: ProcessResult
     """
+    # Optimized base case - no redirection at all
+    if stdout == DEVNULL and stderr == DEVNULL:
+        result_sp = subprocess.run(
+            command, stdout=DEVNULL, stderr=DEVNULL, cwd=cwd, check=False
+        )
+        result = ProcessResult(result_sp.returncode, b"", b"", b"", command)
+        if check:
+            result.check_returncode()
+        return result
+    
     proc = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+        command,
+        stdout=DEVNULL if stdout == DEVNULL else subprocess.PIPE,
+        stderr=DEVNULL if stderr == DEVNULL else subprocess.PIPE,
+        cwd=cwd,
     )
 
     with (
-        _select_stream(stdout, sys.stdout.fileno()) as out_fd,
-        _select_stream(stderr, sys.stderr.fileno()) as err_fd,
+        _select_stream(stdout, sys.stdout) as out_fd,
+        _select_stream(stderr, sys.stderr) as err_fd,
     ):
-        # stdout and stderr are guaranteed not `None` because we called with `subprocess.PIPE`
-        proc_stdout = cast(IO[bytes], proc.stdout).fileno()
-        proc_stderr = cast(IO[bytes], proc.stderr).fileno()
-
-        os.set_blocking(proc_stdout, False)
-        os.set_blocking(proc_stderr, False)
-
-        out_handler = _ProcessStream(proc_stdout, out_fd)
-        err_handler = _ProcessStream(proc_stderr, err_fd)
+        # Set up select library with any streams that need monitoring
+        selector = selectors.DefaultSelector()
+        out_handler = _get_stream_handler(proc.stdout, out_fd, selector)
+        err_handler = _get_stream_handler(proc.stderr, err_fd, selector)
 
         with closing(BytesIO()) as combined_io:
             while True:
-                r, _, _ = select.select([proc_stdout, proc_stderr], [], [])
-
                 try:
-                    if proc_stdout in r:
-                        combined_io.write(out_handler.process())
-
-                    if proc_stderr in r:
-                        combined_io.write(err_handler.process())
+                    for event, _ in selector.select():
+                        combined_io.write(event.data.process())
 
                 except BlockingIOError:
                     pass
@@ -148,10 +163,13 @@ def run(
                     combined = combined_io.getvalue()
                     break
 
+    stdout_res = out_handler.singular if out_handler else b""
+    stderr_res = err_handler.singular if err_handler else b""
+
     result = ProcessResult(
         proc.returncode,
-        out_handler.singular,
-        err_handler.singular,
+        stdout_res,
+        stderr_res,
         combined,
         command,
     )
@@ -163,7 +181,7 @@ def run(
 
 
 @contextmanager
-def _select_stream(stream: Stream, default: int) -> Generator[int]:
+def _select_stream(stream: Stream, default_stream: TextIO) -> Generator[int]:
     """Select and return an appropriate raw file descriptor.
 
     Based on the input, this function returns a raw integer file descriptor according
@@ -172,23 +190,27 @@ def _select_stream(stream: Stream, default: int) -> Generator[int]:
     If determining the file handle involves opening our own, this generator handles
     closing it afterwards.
     """
-    s: int
-    close = False
     if stream == DEVNULL:
-        s = os.open(os.devnull, os.O_WRONLY)
-        close = True
+        with open(os.devnull, "wb") as s:
+            yield s.fileno()
     elif isinstance(stream, int):
-        s = stream
+        yield stream
     elif stream is None:
-        s = default
+        yield default_stream.fileno()
     else:
-        s = stream.fileno()
+        yield stream.fileno()
 
-    try:
-        yield s
-    finally:
-        if close:
-            os.close(s)
+
+def _get_stream_handler(proc_std: IO[bytes] | None, write_fd: int, selector: selectors.BaseSelector) -> _ProcessStream | None:
+    """Create a stream handle if necessary and register it."""
+    if not proc_std:
+        return None
+    
+    proc_fd = proc_std.fileno()
+    os.set_blocking(proc_fd, False)
+    handler = _ProcessStream(proc_fd, write_fd)
+    selector.register(proc_std, selectors.EVENT_READ, handler)
+    return handler
 
 
 @dataclass
