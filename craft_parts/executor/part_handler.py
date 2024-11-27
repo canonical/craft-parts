@@ -285,7 +285,7 @@ class PartHandler:
         :return: The build step state.
         """
         self._make_dirs()
-        self._unpack_stage_packages()
+        self._unpack_stage_packages()  # NOTE: this is where stage-packages are xattr annotated
         self._unpack_stage_snaps()
 
         if not update and not self._plugin.get_out_of_source_build():
@@ -315,6 +315,9 @@ class PartHandler:
                 stderr=stderr,
             )
 
+        # The plugin has by now generated our list of packages (_run_step -> run_builtin -> _builtin_build), now parse it to get the list of files and xattr them
+        self._annotate_plugin_files()
+    
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:
         #
@@ -982,6 +985,24 @@ class PartHandler:
         for snap_source in snap_sources:
             snap_source.provision(install_dir, keep=True)
 
+    def _annotate_plugin_files(self) -> None:
+        """If the plugin has generated a list of the files it is staging, get that list and annotate those files."""
+        print("******************************************************")
+        print("******************************************************")
+        print("******************************************************")
+        print("******************************************************")
+        print("******************************************************")
+        print("******************************************************")
+        print("******************************************************")
+        got_something = False
+        for pkg_name, pkg_files in self._plugin.read_file_list().items():
+            print(">>>", pkg_name)
+            print(pkg_files)
+            got_something = True
+        if got_something:
+            #breakpoint()
+            import sys
+            sys.exit()
 
 def _remove(filename: Path) -> None:
     """Remove the given directory entry.

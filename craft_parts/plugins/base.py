@@ -84,6 +84,17 @@ class Plugin(abc.ABC):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
 
+    def get_post_install_file_list_commands(self) -> list[str]:
+        """Get the commands for listing the files that were installed for each package, after installation.
+
+        If not provided, no commands will be run, and the plugin's output will not be annotated with xattrs.
+        """
+        return []
+
+    def read_file_list(self) -> dict[str, list[Path]]:
+        """If the plugin created a file list in get_post_install_file_list_commands, this will read it."""
+        return {}
+
     def set_action_properties(self, action_properties: ActionProperties) -> None:
         """Store a copy of the given action properties.
 
