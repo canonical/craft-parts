@@ -987,17 +987,13 @@ class PartHandler:
 
     def _annotate_plugin_files(self) -> None:
         """If the plugin has generated a list of the files it is staging, get that list and annotate those files."""
-        print("******************************************************")
-        print("******************************************************")
-        print("******************************************************")
-        print("******************************************************")
-        print("******************************************************")
-        print("******************************************************")
-        print("******************************************************")
         got_something = False
-        for pkg_name, pkg_files in self._plugin.read_file_list().items():
-            print(">>>", pkg_name)
-            print(pkg_files)
+        for pkg_name, pkg_files in self._plugin.get_file_list().items():
+            print("******************************************************")
+            print(pkg_name)
+            print("******************************************************")
+            for f in pkg_files:
+                print("-", f.as_posix())
             got_something = True
         if got_something:
             #breakpoint()

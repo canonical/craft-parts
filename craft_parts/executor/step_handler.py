@@ -136,7 +136,6 @@ class StepHandler:
     def _builtin_build(self) -> StepContents:
         # Plugin commands.
         build_commands = self._plugin.get_build_commands()
-        file_list_commands = self._plugin.get_post_install_file_list_commands()
 
         # save script to set the build environment
         build_environment_script_path = (
@@ -149,14 +148,6 @@ class StepHandler:
             _create_and_run_script(
                 build_commands,
                 script_path=self._part.part_run_dir.absolute() / "build.sh",
-                build_environment_script_path=build_environment_script_path,
-                cwd=self._part.part_build_subdir,
-                stdout=self._stdout,
-                stderr=self._stderr,
-            )
-            _create_and_run_script(
-                file_list_commands,
-                script_path=self._part.part_run_dir.absolute() / "filelist.sh",
                 build_environment_script_path=build_environment_script_path,
                 cwd=self._part.part_build_subdir,
                 stdout=self._stdout,

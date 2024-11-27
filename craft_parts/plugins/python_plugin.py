@@ -16,6 +16,7 @@
 
 """The python plugin."""
 
+import csv
 from email import policy
 from email.parser import HeaderParser
 import json
@@ -106,75 +107,40 @@ class PythonPlugin(BasePythonPlugin):
 
         return install_commands
 
-    def get_post_install_file_list_commands(self) -> list[str]:
-        # Make use of the JSON report pip can generate to figure out what dependencies resolved to in order to make up the whole package list.
-        
-        # The docs seem to indicate that passing "-r $file" and $package to pip install are mutually exclusive, as does the code above.  But adding them all together into one pip command seems to work.
+    def get_file_list(self) -> dict[str, list[Path]]:
+        # https://packaging.python.org/en/latest/specifications/binary-distribution-format/
+        # Read the RECORD files
 
-        # If this approach doesn't pan out, we might try using something like pip-compile, or check out its code
-        # https://github.com/jazzband/pip-tools
+        venvdir = self._get_venv_directory()
+        python_path = venvdir / "bin/python"
+        python_version = python_path.resolve().name
 
-        resolve_deps_command = f"{self._get_pip()} install --dry-run --ignore-installed --quiet --report - "
-        
-        if self._options.python_packages:
-            python_packages = self._options.get_formatted_packages()
-            resolve_deps_command += python_packages + " "
+        site_pkgs_dir = venvdir / "lib" / python_version / "site-packages"
 
-        if self._options.python_requirements:
-            requirements = self._options.get_formatted_requirements()
-            resolve_deps_command += requirements + " "
+        # Could also add the pkginfo library and skip a lot of the below
 
-        # Subshell inserts '.' into the list of pip things to get dependencies from
-        resolve_deps_command += f"$({_TEST_DIR_INSTALLABLE_CMD} && echo .) "
-
-        # Pipe the json to jq and extract the values we care about, package names
-        resolve_deps_command += " | jq -r '.[\"install\"][][\"metadata\"][\"name\"]'"
-
-        get_package_list_command = f"_PACKAGES_RESOLVED=\"$({resolve_deps_command})\""
-        
-        # Absurdly, 'pip show' outputs "RFC-compliant mail header format", according to the help output.  So parse that for the file list
-        get_file_list_command = f"pip show -f $_PACKAGES_RESOLVED > $CRAFT_PART_BUILD/{_PIP_SHOW_OUT_FILE}"
-
-        return [
-            get_package_list_command,
-            get_file_list_command,
-        ]
-
-    def read_file_list(self) -> dict[str, list[Path]]:
-        linesep = policy.default.linesep
-        msgsep = "---"
-        parser = HeaderParser()
-
-        with open(self._part_info.part_build_dir / _PIP_SHOW_OUT_FILE, "r") as f:
-            all_packages_full_email = f.read().strip()
-
-        # I figured there was a way to pass multiple emails as a single document using a separator, and if you ask pip show for information on multiple packages it will indeed separate each with "---" on its own line.  But I it doesn't seem that the python "email" package supports parsing this, and I couldn't find any info about this behavior in any RFC (though it's probably in one of them).
-        all_packages_email_split = all_packages_full_email.split(f"{linesep}{msgsep}{linesep}")
-       
         ret = {}
-        #breakpoint()
-        for package_raw_str in all_packages_email_split:
-            if not package_raw_str:
+        for pkg_dir in site_pkgs_dir.iterdir():
+            # We only care about the metadata dirs
+            if not pkg_dir.name.endswith(".dist-info"):
                 continue
 
-            # Sometimes the output contains multiple newlines in a row, (like in the license text) which makes "email" think this is the end of the header, and everything following is message body.  Fix it with regex
-            # TODO: compile regex
-            normalized_package_raw_str = re.sub('\n+', '\n', package_raw_str.strip())
+            # Get package name from filename - could also parse it from METADATA
+            # I assume there must be at least one character for version, not sure what else it could look like though.  I've seen:
+            # - 0.0.0
+            # - 0.0
+            # TODO: look this up
+            pkg_name_match = re.match(r"^(.*)-[0-9.]+\.dist-info$", pkg_dir.name)
+            if not pkg_name_match:
+                raise Exception(f"Unexpectedly formatted dist-info dir: {pkg_dir.name!r}")
+            pkg_name = pkg_name_match[1]
 
-            # TODO: Actually it seems these license texts are actually a bigger problem than this regex can solve.  The not sure how to make the parser handle continuation lines in the license field.  Ignore for now
+            record_file = pkg_dir / "RECORD"
+            with open(record_file, "r") as f:
+                csvreader = csv.reader(f)
 
-            package_message = parser.parsestr(normalized_package_raw_str)
-
-            # TODO: Add some error handling to this - there could be all kinds of wacky inputs coming from these pip packages
-
-            package_name = package_message["Name"]
-            
-            if not package_message['Files']:
-                ret[package_name] = "<cannot parse>"
-                continue
-
-            package_files = [s.strip() for s in package_message["Files"].strip().splitlines()]
-            ret[package_name] = package_files
-
+                # First row is files
+                # TODO: Remove all files listed under the dist-info dir?
+                pkg_files = [Path(f[0]) for f in csvreader]
+                ret[pkg_name] = pkg_files
         return ret
-

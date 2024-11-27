@@ -84,15 +84,11 @@ class Plugin(abc.ABC):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
 
-    def get_post_install_file_list_commands(self) -> list[str]:
-        """Get the commands for listing the files that were installed for each package, after installation.
+    def get_file_list(self) -> dict[str, list[Path]]:
+        """Return a mapping of installed package name -> file list, if the plugin supports it.
 
-        If not provided, no commands will be run, and the plugin's output will not be annotated with xattrs.
+        Used for xattr annotation.
         """
-        return []
-
-    def read_file_list(self) -> dict[str, list[Path]]:
-        """If the plugin created a file list in get_post_install_file_list_commands, this will read it."""
         return {}
 
     def set_action_properties(self, action_properties: ActionProperties) -> None:
@@ -146,6 +142,11 @@ class BasePythonPlugin(Plugin):
         the install dir.
         """
         return self._part_info.part_install_dir
+
+    def _get_site_packages_directory(self) -> pathlib.Path:
+        """Get the directory into which site packages are installed in the venv."""
+        venvdir = self._get_venv_directory()
+        return venvdir / "lib" / pyver / "site-packages"
 
     def _get_create_venv_commands(self) -> list[str]:
         """Get the commands for setting up the virtual environment."""
