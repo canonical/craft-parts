@@ -62,7 +62,7 @@ class _ProcessStream:
 
         # (Mostly) optimize away the process function if the read handle is empty
         if self.read_fd == DEVNULL:
-            self.process = self._process_nothing # type: ignore[method-assign]
+            self.process = self._process_nothing  # type: ignore[method-assign]
 
     @property
     def singular(self) -> bytes:
@@ -70,8 +70,9 @@ class _ProcessStream:
 
     def process(self) -> bytes:
         """Forward any data from ``self.read_fd`` to ``self.write_fd`` and return a copy of it.
-        
-        Does nothing if ``read_fd`` is DEVNULL."""
+
+        Does nothing if ``read_fd`` is DEVNULL.
+        """
         data = os.read(self.read_fd, _BUF_SIZE)
         i = data.rfind(b"\n")
         if i >= 0:
@@ -83,7 +84,7 @@ class _ProcessStream:
             return data
         self._linebuf.extend(data)
         return b""
-    
+
     def _process_nothing(self) -> bytes:
         """Do nothing."""
         return b""
@@ -128,7 +129,7 @@ def run(
         if check:
             result.check_returncode()
         return result
-    
+
     proc = subprocess.Popen(
         command,
         stdout=DEVNULL if stdout == DEVNULL else subprocess.PIPE,
@@ -196,11 +197,13 @@ def _select_stream(stream: Stream, default_stream: TextIO) -> Generator[int]:
         yield stream.fileno()
 
 
-def _get_stream_handler(proc_std: IO[bytes] | None, write_fd: int, selector: selectors.BaseSelector) -> _ProcessStream | None:
+def _get_stream_handler(
+    proc_std: IO[bytes] | None, write_fd: int, selector: selectors.BaseSelector
+) -> _ProcessStream | None:
     """Create a stream handle if necessary and register it."""
     if not proc_std:
         return None
-    
+
     proc_fd = proc_std.fileno()
     os.set_blocking(proc_fd, False)
     handler = _ProcessStream(proc_fd, write_fd)
