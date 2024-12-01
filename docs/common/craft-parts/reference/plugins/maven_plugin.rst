@@ -3,6 +3,7 @@
 Maven plugin
 ============
 
+.. _craft_parts_maven_plugin_description_begin:
 The Maven plugin builds Java projects using the Maven build tool.
 This plugin will set the ``JAVA_HOME`` environment variable to the
 path to the latest JDK found in the build environment.
@@ -15,6 +16,7 @@ After a successful build, this plugin will:
 * Hard link the ``.jar`` files generated in ``$CRAFT_PART_BUILD`` to
   ``$CRAFT_PART_INSTALL/jar``.
 
+.. _craft_parts_maven_plugin_description_end:
 
 Keywords
 --------
