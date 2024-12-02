@@ -16,8 +16,10 @@
 
 """The npm plugin."""
 
+import json
 import logging
 import os
+from pathlib import Path
 import platform
 import re
 from textwrap import dedent
@@ -320,3 +322,99 @@ class NpmPlugin(Plugin):
             )
         ]
         return cmd
+    
+    def _append_package_dir(self, pkg_dir: Path, pkg_name: str | None, file_list: dict[str, list[Path]], missing_deps: list[str]) -> None:
+        """Reads a package dir and appends to file_list.
+
+        :param pkg_dir: A dir containing a package.json.
+        :param pkg_name: Passed when the package's name is known (i.e., not at the top level).
+        :param file_list: The data structure to add the package to.
+        :param missing_deps: A list of package name dependencies that couldn't be found via simple resolution, for verifying at the end.
+        """
+        if pkg_dir.name.startswith("@"):
+            # This is a scoped name: the package.json file(s) will be in dir(s) under the scope name dir.
+            # https://docs.npmjs.com/cli/v9/using-npm/scope
+            missing_deps = []
+            for unscoped_pkg_dir in pkg_dir.iterdir():
+                # TODO: Do we need to build the name to pass in the recursive call here?
+                self._append_package_dir(unscoped_pkg_dir, None, file_list, missing_deps)
+            return
+
+        # From the package-json npm docs page:
+        # "If the package.json for your package is not in the root directory (for example if it is part of a monorepo), you can specify the directory in which it lives"
+        # Need to figure out whether the final package will always have a package.json on the top level, even if the source repo doesn't.
+
+        metadata_file = pkg_dir / "package.json"
+        try:
+            with open(metadata_file, "r") as f:
+                metadata = json.load(f)
+        except FileNotFoundError:
+            # The package.json didn't exist, assume this isn't a top-level dir and this means that we have dependencies that are at the same level as each other.  For instance, if A depends on B and C, and B also depends on C, then we'll fail to find C under B's node_modules dir because it already exists in A's node_modules dir.
+            # If the package name hasn't been passed, then something is wrong.
+            if not pkg_name:
+                raise
+            missing_deps.append(pkg_name)
+            return
+
+        # https://docs.npmjs.com/cli/v10/configuring-npm/package-json
+
+        pkg_name = metadata["name"]
+        if pkg_name in file_list:
+            # We've already resolved this package at a different level
+            return
+
+        # NPM allows str or dict for bin - normalize it
+        bintype = type(metadata.get("bin", False))
+        bins = []
+        if bintype is str:
+            bins = [pkg_dir / metadata["bin"]]
+        elif bintype is dict:
+            bins = [pkg_dir / bin_file for _, bin_file in metadata["bin"].items()]
+
+        # TODO: man
+
+        # TODO: directories (directories.bin, directories.man)
+
+        # TODO: scripts
+
+        # TODO: workspaces?
+
+        # TODO: verify default values
+
+        file_list[pkg_name] = [
+            pkg_dir / metadata.get("main", "index.js"),
+            
+        ] + bins
+
+        # TODO: peerDependencies
+        # (may or may not be installed)
+
+        # TODO: bundleDependencies
+        # (do we want to call out files that were bundled in as originating from their actual source package?)
+
+        # TODO: optionalDepenencies
+
+        try:
+            for dep_name in metadata.get("dependencies", []):
+                dep_pkg_dir = pkg_dir / "node_modules" / dep_name
+                self._append_package_dir(dep_pkg_dir, dep_name, file_list, missing_deps)
+        except KeyError as e:
+            # No dependencies
+            pass
+
+
+    # TODO: It seems like node packages don't have a manifest?  In which case we'll need to inspect the archive, and thus have a plugin hook at a different spot
+
+    def get_file_list(self) -> dict[str, list[Path]]:
+        modules_dir = self._part_info.part_install_dir / "usr/lib/node_modules"
+
+        ret = {}
+        missing = []
+        for pkg_dir in modules_dir.iterdir():
+            # These pkg_dirs will be the leaf modules installed by the user
+            self._append_package_dir(pkg_dir, None, ret, missing)
+        #breakpoint()
+
+        # TODO: Figure out if the "missing packages" is actually a case we can hit, and either add in the checking for it or remove it
+
+        return ret

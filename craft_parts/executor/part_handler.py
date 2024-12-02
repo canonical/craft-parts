@@ -995,10 +995,12 @@ class PartHandler:
             for f in pkg_files:
                 print("-", f.as_posix())
             got_something = True
-        if got_something:
+        #if got_something:
             #breakpoint()
-            import sys
-            sys.exit()
+            #import sys
+            #sys.exit()
+
+        # TODO: Iterate over primed files and call mark_origin_stage_package 
 
 def _remove(filename: Path) -> None:
     """Remove the given directory entry.
