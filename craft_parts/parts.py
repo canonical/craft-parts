@@ -684,6 +684,26 @@ def part_has_overlay(data: dict[str, Any]) -> bool:
     return spec.has_overlay
 
 
+def part_has_slices(data: dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` contains slices.
+
+    :param data: The part data to query.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_slices
+
+
+def part_has_chisel_as_build_snap(data: dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` has chisel in build-snaps.
+
+    :param data: The part data to query.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_chisel_as_build_snap
+
+
 def _get_part_spec(data: dict[str, Any]) -> PartSpec:
     if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
