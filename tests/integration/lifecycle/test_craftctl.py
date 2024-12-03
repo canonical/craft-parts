@@ -51,6 +51,61 @@ def setup_fixture(new_dir, mocker):
     mocker.patch("craft_parts.utils.os_utils.umount")
 
 
+def test_craftctl_chroot(new_dir, partitions, capfd, mocker):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: dump
+            source: foo
+            overlay-script: |
+              echo "overlay step"
+              craftctl chroot touch /chroot_test.txt
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    Path("foo").mkdir()
+    Path("foo/foo.txt").touch()
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_ctl",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+        partitions=partitions,
+    )
+
+    # Check if planning resulted in the correct list of actions.
+    actions = lf.plan(Step.OVERLAY)
+    assert actions == [
+        Action("foo", Step.PULL),
+        Action("foo", Step.OVERLAY),
+    ]
+
+    # Execute each step and verify if scriptlet and built-in handler
+    # ran as expected.
+
+    with lf.action_executor() as ctx:
+        # Execute the pull step. The source file must have been
+        # copied to the part src directory.
+        ctx.execute(actions[0])
+        captured = capfd.readouterr()
+        assert captured.out == "pull step\n"
+
+        # Execute the overlay step and add a file to the overlay
+        # directory to track file migration.
+        ctx.execute(actions[1])
+        captured = capfd.readouterr()
+        Path("parts/foo/layer/ovl.txt").touch()
+        assert captured.out == "overlay step\n"
+        assert Path("overlay")
+
+
 def test_craftctl_default(new_dir, partitions, capfd, mocker):
     mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
     mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")

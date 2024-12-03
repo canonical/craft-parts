@@ -378,6 +378,45 @@ class StepHandler:
                     message=f"invalid arguments to command {cmd_name!r}",
                 )
             self._execute_builtin_handler(step)
+        elif cmd_name == "chroot":
+            if self._step_info.step != step.OVERLAY:
+                raise invalid_control_api_call(
+                    message=f"{cmd_name!r} can only run in overlay step",
+                )
+            if len(cmd_args) < 1:
+                raise invalid_control_api_call(
+                    message=(
+                        f"invalid arguments to command {cmd_name!r} (want at least 1 argument)"
+                    ),
+                )
+
+            try:
+                target_dir = self._part.overlay_dir
+                commands = [
+                    f"mkdir -p {target_dir}/etc {target_dir}/dev {target_dir}/sys {target_dir}/proc",
+                    f"cp /etc/resolv.conf {target_dir}/etc/",
+                    f"mount --bind /dev {target_dir}/dev",
+                    f"mount --bind /sys {target_dir}/sys",
+                    f"mount --bind /proc {target_dir}/proc",
+                    " ".join("chroot", *cmd_args),
+                    f"umount {target_dir}/dev",
+                    f"umount {target_dir}/sys",
+                    f"umount {target_dir}/proc",
+                ]
+                _create_and_run_script(
+                    commands,
+                    script_path=target_dir.absolute()
+                    / "overlay-chroot.sh",
+                    cwd=target_dir,
+                    stdout=self._stdout,
+                    stderr=self._stderr,
+                )
+            except (ValueError, RuntimeError) as err:
+                raise errors.InvalidControlAPICall(
+                    part_name=self._part.name,
+                    scriptlet_name=scriptlet_name,
+                    message=str(err),
+                ) from err
         elif cmd_name == "set":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(
