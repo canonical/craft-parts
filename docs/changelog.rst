@@ -2,6 +2,16 @@
 Changelog
 *********
 
+2.1.4 (2024-12-04)
+------------------
+
+Bug fixes:
+
+- Fix a regression where trying to use the poetry plugin without poetry
+  installed on the system would give an error.
+
+For a complete list of commits, check out the `2.1.4`_ release on GitHub.
+
 2.1.3 (2024-11-20)
 ------------------
 
@@ -603,3 +613,4 @@ Bug fixes:
 .. _Poetry: https://python-poetry.org
 
 .. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
+.. _2.1.4: https://github.com/canonical/craft-parts/releases/tag/2.1.4

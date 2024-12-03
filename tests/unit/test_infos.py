@@ -485,6 +485,13 @@ def test_part_info_get_project_var():
     )
 
 
+def test_part_info_part_dependencies():
+    info = ProjectInfo(application_name="test", cache_dir=Path())
+    part = Part("foo", {"after": ["part1", "part2"]})
+    x = PartInfo(project_info=info, part=part)
+    assert x.part_dependencies == ["part1", "part2"]
+
+
 def test_step_info(new_dir):
     info = ProjectInfo(
         application_name="test",
