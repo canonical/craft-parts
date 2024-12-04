@@ -90,7 +90,7 @@ class PoetryPlugin(BasePythonPlugin):
         build_packages = super().get_build_packages()
         if (
             not self._system_has_poetry()
-            and "poetry-deps" not in self._part_info.dependencies
+            and "poetry-deps" not in self._part_info.part_dependencies
         ):
             build_packages |= {"python3-poetry"}
         return build_packages
