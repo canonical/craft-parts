@@ -8,6 +8,16 @@ X.Y.Z (2024-MM-DD)
 - Set JAVA_HOME environment variable in Java-based plugins. The plugin will
   try to detect the latest available JDK.
 
+2.1.4 (2024-12-04)
+------------------
+
+Bug fixes:
+
+- Fix a regression where trying to use the poetry plugin without poetry
+  installed on the system would give an error.
+
+For a complete list of commits, check out the `2.1.4`_ release on GitHub.
+
 2.1.3 (2024-11-20)
 ------------------
 
@@ -618,6 +628,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.1.4: https://github.com/canonical/craft-parts/releases/tag/2.1.4
 .. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
 .. _2.1.2: https://github.com/canonical/craft-parts/releases/tag/2.1.2
 .. _2.1.1: https://github.com/canonical/craft-parts/releases/tag/2.1.1
