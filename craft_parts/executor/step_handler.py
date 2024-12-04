@@ -405,8 +405,7 @@ class StepHandler:
                 ]
                 _create_and_run_script(
                     commands,
-                    script_path=target_dir.absolute()
-                    / "overlay-chroot.sh",
+                    script_path=target_dir.absolute() / "overlay-chroot.sh",
                     cwd=target_dir,
                     stdout=self._stdout,
                     stderr=self._stderr,

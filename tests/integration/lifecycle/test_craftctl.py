@@ -61,9 +61,12 @@ def test_craftctl_chroot(new_dir, partitions, capfd, mocker):
           foo:
             plugin: dump
             source: foo
+            override-pull: |
+              echo "pull step"
+              craftctl default
             overlay-script: |
               echo "overlay step"
-              craftctl chroot touch /chroot_test.txt
+              craftctl chroot touch test.txt
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -101,7 +104,8 @@ def test_craftctl_chroot(new_dir, partitions, capfd, mocker):
         # directory to track file migration.
         ctx.execute(actions[1])
         captured = capfd.readouterr()
-        Path("parts/foo/layer/ovl.txt").touch()
+        assert Path("parts/foo/layer/test.txt").exists() is True
+        assert Path("parts/foo/layer/etc/resolv.conf").exists() is True
         assert captured.out == "overlay step\n"
         assert Path("overlay")
 
