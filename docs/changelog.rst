@@ -7,6 +7,8 @@ X.Y.Z (2024-MM-DD)
 
 - Set JAVA_HOME environment variable in Java-based plugins. The plugin will
   try to detect the latest available JDK.
+- Prefer "craft.git" as the binary to handle git sources, in environments where
+  it is available.
 
 2.1.4 (2024-12-04)
 ------------------
