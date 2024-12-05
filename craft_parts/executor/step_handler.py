@@ -409,6 +409,7 @@ class StepHandler:
                     cwd=target_dir,
                     stdout=self._stdout,
                     stderr=self._stderr,
+                    with_root_access=True,
                 )
             except (ValueError, RuntimeError) as err:
                 raise errors.InvalidControlAPICall(
@@ -481,6 +482,8 @@ def _create_and_run_script(
     stdout: Stream,
     stderr: Stream,
     build_environment_script_path: Path | None = None,
+    *,
+    with_root_access: bool = False,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
@@ -498,4 +501,9 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    process.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)
+    if with_root_access and Path("/usr/bin/sudo").exists():
+        process.run(
+            ["sudo", script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True
+        )
+    else:
+        process.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)
