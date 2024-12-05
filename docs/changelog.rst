@@ -2,6 +2,40 @@
 Changelog
 *********
 
+X.Y.Z (2024-MM-DD)
+------------------
+
+- Set JAVA_HOME environment variable in Java-based plugins. The plugin will
+  try to detect the latest available JDK.
+
+2.1.4 (2024-12-04)
+------------------
+
+Bug fixes:
+
+- Fix a regression where trying to use the poetry plugin without poetry
+  installed on the system would give an error.
+
+For a complete list of commits, check out the `2.1.4`_ release on GitHub.
+
+2.1.3 (2024-11-20)
+------------------
+
+Bug fixes:
+
+- Fix an issue where the ``poetry`` plugin would still try to install poetry
+  from the package repositories when ``poetry-deps`` was declared as a
+  dependency
+
+Documentation:
+
+- Add some missing references in the
+  :doc:`Poetry plugin</common/craft-parts/reference/plugins/poetry_plugin>` and
+  :doc:`Python plugin</common/craft-parts/reference/plugins/python_plugin>` pages.
+- Fix a broken link in the :doc:`Tutorial examples</tutorials/examples>`.
+
+For a complete list of commits, check out the `2.1.3`_ release on GitHub.
+
 2.1.2 (2024-10-04)
 ------------------
 
@@ -15,19 +49,25 @@ Bug Fixes:
 Documentation:
 
 - Update the :doc:`Rust
-  plugin`</common/craft-parts/reference/plugins/rust_plugin>` doc with recent
+  plugin</common/craft-parts/reference/plugins/rust_plugin>` doc with recent
   changes to the Rust toolchain.
+
+For a complete list of commits, check out the `2.1.2`_ release on GitHub.
 
 2.1.1 (2024-09-13)
 ------------------
 
 - This release brings the bug fix from ``1.33.1`` into the ``2.1.x`` series.
 
+For a complete list of commits, check out the `2.1.1`_ release on GitHub.
+
 1.33.1 (2024-09-13)
 -------------------
 
 - Fix NPM plugin to be stateless, allowing lifecycle steps to be
   executed in separate runs.
+
+For a complete list of commits, check out the `1.33.1`_ release on GitHub.
 
 2.1.0 (2024-09-09)
 ------------------
@@ -43,6 +83,8 @@ Bug fixes:
 - Fix a regression where numeric part properties could not be parsed.
 - Fix a bug where stage-packages tracking would fail when files were organized
   into a non-default partition.
+
+For a complete list of commits, check out the `2.1.0`_ release on GitHub.
 
 2.0.0 (2024-08-08)
 ------------------
@@ -63,6 +105,8 @@ Bug fixes:
 
 - Xattrs raise FileNotFoundError when appropriate
 - Partition names are more strictly checked.
+
+For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 
 1.34.0 (2024-08-01)
 -------------------
@@ -245,7 +289,7 @@ Bug fixes:
 1.19.7 (2023-08-09)
 -------------------
 
-- Only load project variables in adopting part 
+- Only load project variables in adopting part
 
 1.19.6 (2023-06-09)
 -------------------
@@ -583,3 +627,11 @@ Bug fixes:
 
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
+
+.. _2.1.4: https://github.com/canonical/craft-parts/releases/tag/2.1.4
+.. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
+.. _2.1.2: https://github.com/canonical/craft-parts/releases/tag/2.1.2
+.. _2.1.1: https://github.com/canonical/craft-parts/releases/tag/2.1.1
+.. _1.33.1: https://github.com/canonical/craft-parts/releases/tag/1.33.1
+.. _2.1.0: https://github.com/canonical/craft-parts/releases/tag/2.1.0
+.. _2.0.0: https://github.com/canonical/craft-parts/releases/tag/2.0.0

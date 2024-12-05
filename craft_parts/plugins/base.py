@@ -92,48 +92,6 @@ class Plugin(abc.ABC):
         self._action_properties = deepcopy(action_properties)
 
 
-class JavaPlugin(Plugin):
-    """A base class for java-related plugins.
-
-    Provide common methods to deal with the java executable location and
-    symlink creation.
-    """
-
-    def _get_java_link_commands(self) -> list[str]:
-        """Get the bash commands to provide /bin/java symlink."""
-        # pylint: disable=line-too-long
-        return [
-            '# Find the "java" executable and make a link to it in CRAFT_PART_INSTALL/bin/java',
-            "mkdir -p ${CRAFT_PART_INSTALL}/bin",
-            "java_bin=$(find ${CRAFT_PART_INSTALL} -name java -type f -executable)",
-            "ln -s --relative $java_bin ${CRAFT_PART_INSTALL}/bin/java",
-        ]
-        # pylint: enable=line-too-long
-
-    def _get_jar_link_commands(self) -> list[str]:
-        """Get the bash commands to provide ${CRAFT_STAGE}/jars."""
-        # pylint: disable=line-too-long
-        return [
-            "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
-            "mkdir -p ${CRAFT_PART_INSTALL}/jar",
-            r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
-        ]
-        # pylint: enable=line-too-long
-
-    def _get_java_post_build_commands(self) -> list[str]:
-        """Get the bash commands to structure a Java build in the part's install dir.
-
-        :return: The returned list contains the bash commands to do the following:
-
-          - Create bin/ and jar/ directories in ${CRAFT_PART_INSTALL};
-          - Find the ``java`` executable (provided by whatever jre the part used) and
-            link it as ${CRAFT_PART_INSTALL}/bin/java;
-          - Hardlink the .jar files generated in ${CRAFT_PART_BUILD} to
-            ${CRAFT_PART_INSTALL}/jar.
-        """
-        return self._get_java_link_commands() + self._get_jar_link_commands()
-
-
 class BasePythonPlugin(Plugin):
     """A base class for Python plugins.
 

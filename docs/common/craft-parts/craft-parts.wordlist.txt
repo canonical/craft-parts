@@ -49,6 +49,7 @@ DebError
 DebPackage
 DebSource
 DebSourceModel
+DEVNULL
 DirtyReport
 DotPluginEnvironmentValidator
 Dotnet
@@ -73,6 +74,8 @@ Fileset
 FilesetConflict
 FilesetError
 Filesets
+ProcessError
+ProcessResult
 GenerateJsonSchema
 GiB
 GitSource
@@ -143,6 +146,7 @@ NpmPlugin
 NpmPluginEnvironmentValidator
 NpmPluginProperties
 OCI
+OSError
 OsRelease
 OsReleaseCodenameError
 OsReleaseIdError
@@ -318,6 +322,7 @@ craftctl
 crafter
 ctl
 customization
+cwd
 dataset
 defs
 deps
@@ -334,6 +339,7 @@ dst
 emacs
 env
 executables
+fd
 filepath
 filepaths
 fileset
@@ -412,6 +418,7 @@ readthedocs
 recognized
 reorganize
 reorganized
+returncode
 runtime
 rustc
 rustup
@@ -439,11 +446,13 @@ subdirectory
 subkey
 submodules
 subprocess
+subprocesses
 subtree
 summarized
 svn
 symlink
 symlinks
+sys
 texinfo
 tgz
 toml

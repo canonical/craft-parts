@@ -16,7 +16,7 @@
 
 """Craft a project from several parts."""
 
-__version__ = "2.1.2"
+__version__ = "2.1.4"
 
 from . import plugins
 from .actions import Action, ActionProperties, ActionType
@@ -26,7 +26,13 @@ from .executor import expand_environment
 from .features import Features
 from .infos import PartInfo, ProjectInfo, StepInfo
 from .lifecycle_manager import LifecycleManager
-from .parts import Part, part_has_overlay, validate_part
+from .parts import (
+    Part,
+    part_has_chisel_as_build_snap,
+    part_has_slices,
+    part_has_overlay,
+    validate_part,
+)
 from .steps import Step
 
 __all__ = [
@@ -46,4 +52,6 @@ __all__ = [
     "expand_environment",
     "validate_part",
     "part_has_overlay",
+    "part_has_slices",
+    "part_has_chisel_as_build_snap",
 ]

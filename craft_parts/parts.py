@@ -175,6 +175,22 @@ class PartSpec(BaseModel):
             or self.overlay_files != ["*"]
         )
 
+    @property
+    def has_slices(self) -> bool:
+        """Return whether the part contains chisel slices."""
+        if not self.stage_packages:
+            return False
+        return any("_" in p for p in self.stage_packages)
+
+    @property
+    def has_chisel_as_build_snap(self) -> bool:
+        """Return whether the part has chisel as build snap."""
+        if not self.build_snaps:
+            return False
+        return any(
+            p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
+        )
+
 
 # pylint: disable=too-many-public-methods
 class Part:
@@ -376,6 +392,16 @@ class Part:
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
+
+    @property
+    def has_slices(self) -> bool:
+        """Return whether this part has slices in its stage-packages."""
+        return self.spec.has_slices
+
+    @property
+    def has_chisel_as_build_snap(self) -> bool:
+        """Return whether this part has chisel in its build-snaps."""
+        return self.spec.has_chisel_as_build_snap
 
     def _check_partition_feature(self) -> None:
         """Check if the partitions feature is properly used.
@@ -656,6 +682,26 @@ def part_has_overlay(data: dict[str, Any]) -> bool:
     spec = _get_part_spec(data)
 
     return spec.has_overlay
+
+
+def part_has_slices(data: dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` contains slices.
+
+    :param data: The part data to query.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_slices
+
+
+def part_has_chisel_as_build_snap(data: dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` has chisel in build-snaps.
+
+    :param data: The part data to query.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_chisel_as_build_snap
 
 
 def _get_part_spec(data: dict[str, Any]) -> PartSpec:

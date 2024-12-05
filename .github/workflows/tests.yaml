@@ -189,6 +189,9 @@ jobs:
             sudo apt-get install -y python3-poetry
           fi
           echo "::endgroup::"
+          echo "::group::JDK"
+          sudo apt-get install -y openjdk-17-jdk-headless openjdk-21-jdk-headless openjdk-8-jdk-headless
+          echo "::endgroup::"
       - name: specify node version
         uses: actions/setup-node@v4
         with:

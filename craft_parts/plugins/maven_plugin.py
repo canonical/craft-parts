@@ -28,7 +28,7 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .base import JavaPlugin
+from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
 
@@ -105,11 +105,6 @@ class MavenPlugin(JavaPlugin):
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         return set()
-
-    @override
-    def get_build_environment(self) -> dict[str, str]:
-        """Return a dictionary with the environment to use in the build step."""
-        return {}
 
     @override
     def get_build_commands(self) -> list[str]:

@@ -16,16 +16,18 @@
 
 """Craft parts errors."""
 
-import dataclasses
+import contextlib
 import pathlib
 from collections.abc import Iterable
+from io import StringIO
 from typing import TYPE_CHECKING
+
+from overrides import override
 
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
 
 
-@dataclasses.dataclass(repr=True)
 class PartsError(Exception):
     """Unexpected error.
 
@@ -37,10 +39,17 @@ class PartsError(Exception):
         the Craft Parts documentation.
     """
 
-    brief: str
-    details: str | None = None
-    resolution: str | None = None
-    doc_slug: str | None = None
+    def __init__(
+        self,
+        brief: str,
+        details: str | None = None,
+        resolution: str | None = None,
+        doc_slug: str | None = None,
+    ) -> None:
+        self.brief = brief
+        self._details = details
+        self.resolution = resolution
+        self.doc_slug = doc_slug
 
     def __str__(self) -> str:
         components = [self.brief]
@@ -52,6 +61,14 @@ class PartsError(Exception):
             components.append(self.resolution)
 
         return "\n".join(components)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(brief={self.brief!r}, details={self.details!r}, resolution={self.resolution!r}, doc_slug={self.doc_slug!r})"
+
+    @property
+    def details(self) -> str | None:
+        """Further details on the error."""
+        return self._details
 
 
 class FeatureError(PartsError):
@@ -482,14 +499,48 @@ class PluginBuildError(PartsError):
     :param plugin_name: The name of the plugin being processed.
     """
 
-    def __init__(self, *, part_name: str, plugin_name: str) -> None:
+    def __init__(
+        self, *, part_name: str, plugin_name: str, stderr: bytes | None = None
+    ) -> None:
         self.part_name = part_name
         self.plugin_name = plugin_name
+        self.stderr = stderr
         brief = f"Failed to run the build script for part {part_name!r}."
         resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
         super().__init__(
             brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
         )
+
+    @property
+    @override
+    def details(self) -> str | None:
+        """Further details on the error.
+
+        Discards all trace lines that come before the last-executed script line
+        """
+        with contextlib.closing(StringIO()) as details_io:
+            if self.stderr is None:
+                return None
+
+            stderr = self.stderr.decode("utf-8", errors="replace")
+            details_io.write("\nCaptured standard error:")
+
+            stderr_lines = stderr.split("\n")
+            # Find the final command captured in the logs
+            last_command = None
+            for idx, line in enumerate(reversed(stderr_lines)):
+                if line.startswith("+"):
+                    last_command = len(stderr_lines) - idx - 1
+                    break
+            else:
+                # Fallback to printing the whole log
+                last_command = 0
+
+            for line in stderr_lines[last_command:]:
+                if line:
+                    details_io.write(f"\n:: {line}")
+
+            return details_io.getvalue()
 
 
 class PluginCleanError(PartsError):

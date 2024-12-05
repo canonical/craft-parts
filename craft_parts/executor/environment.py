@@ -273,9 +273,9 @@ def expand_environment(
         sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True)
     )
 
-    for key in data:
+    for key, value in data.items():
         if not skip or key not in skip:
-            data[key] = _replace_attr(data[key], replacements)
+            data[key] = _replace_attr(value, replacements)
 
 
 def _replace_attr(
