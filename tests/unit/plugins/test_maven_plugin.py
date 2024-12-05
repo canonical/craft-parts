@@ -127,8 +127,9 @@ def test_get_build_snaps_and_packages(part_info):
 def test_get_build_environment(part_info):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-
-    assert plugin.get_build_environment() == {}
+    env = plugin.get_build_environment()
+    assert "JAVA_HOME" in env
+    assert len(env) == 1
 
 
 def test_missing_parameters():

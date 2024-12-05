@@ -122,8 +122,9 @@ def test_get_build_snaps_and_packages(part_info):
 def test_get_build_environment(part_info):
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
-
-    assert plugin.get_build_environment() == {}
+    env = plugin.get_build_environment()
+    assert "JAVA_HOME" in env
+    assert "ANT_OPTS" not in env
 
 
 @pytest.mark.parametrize(
@@ -169,7 +170,8 @@ def test_get_build_environment_proxy(part_info, env, opts):
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
     with mock.patch.dict(os.environ, env):
-        assert plugin.get_build_environment() == {"ANT_OPTS": opts}
+        env = plugin.get_build_environment()
+        assert env["ANT_OPTS"] == opts
 
 
 def test_missing_parameters():

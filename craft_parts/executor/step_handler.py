@@ -34,7 +34,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils
+from craft_parts.utils import file_utils, process
 
 from . import filesets
 from .filesets import Fileset
@@ -122,9 +122,9 @@ class StepHandler:
                     stdout=self._stdout,
                     stderr=self._stderr,
                 )
-            except subprocess.CalledProcessError as process_error:
-                raise errors.PluginPullError(
-                    part_name=self._part.name
+            except process.ProcessError as process_error:
+                raise (
+                    errors.PluginPullError(part_name=self._part.name)
                 ) from process_error
 
         return StepContents()
@@ -153,9 +153,11 @@ class StepHandler:
                 stdout=self._stdout,
                 stderr=self._stderr,
             )
-        except subprocess.CalledProcessError as process_error:
+        except process.ProcessError as process_error:
             raise errors.PluginBuildError(
-                part_name=self._part.name, plugin_name=self._part.plugin_name
+                part_name=self._part.name,
+                plugin_name=self._part.plugin_name,
+                stderr=process_error.result.stderr,
             ) from process_error
 
         return StepContents()
@@ -458,10 +460,4 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    subprocess.run(
-        [script_path],
-        cwd=cwd,
-        check=True,
-        stdout=stdout,
-        stderr=stderr,
-    )
+    process.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)

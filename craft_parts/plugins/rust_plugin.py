@@ -85,9 +85,14 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
         """
-        if "rust-deps" in (part_dependencies or []):
-            options = cast(RustPluginProperties, self._options)
-            if options.rust_channel and options.rust_channel != "none":
+        options = cast(RustPluginProperties, self._options)
+        has_rust_deps = "rust-deps" in (part_dependencies or [])
+        if has_rust_deps or options.rust_channel == "none":
+            if (
+                has_rust_deps
+                and options.rust_channel
+                and options.rust_channel != "none"
+            ):
                 raise validator.errors.PluginEnvironmentValidationError(
                     part_name=self._part_name,
                     reason="rust-deps can not be used"
@@ -99,6 +104,14 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     plugin_name="rust",
                     part_dependencies=part_dependencies,
                 )
+            return
+        # Check if rustup is properly installed
+        self.validate_dependency(
+            dependency="rustup",
+            argument="dump-testament",
+            plugin_name="rust",
+            part_dependencies=part_dependencies,
+        )
 
 
 class RustPlugin(Plugin):
@@ -171,6 +184,8 @@ class RustPlugin(Plugin):
         options = cast(RustPluginProperties, self._options)
         if not options.rust_channel and self._check_system_rust():
             logger.info("Rust is installed on the system, skipping rustup")
+            return set()
+        if options.rust_channel == "none" or "rust-deps" in (options.after or []):
             return set()
         return {"rustup"}
 
