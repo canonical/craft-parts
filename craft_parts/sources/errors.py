@@ -32,11 +32,16 @@ class InvalidSourceType(SourceError):
     :param source: The source defined for the part.
     """
 
-    def __init__(self, source: str) -> None:
+    def __init__(self, source: str, *, source_type: str | None = None) -> None:
         self.source = source
-        brief = f"Failed to pull source: unable to determine source type of {source!r}."
+        self.source_type = source_type
 
-        super().__init__(brief=brief)
+        if source_type:
+            message = f"unknown source-type {source_type!r}."
+        else:
+            message = f"unable to determine source type of {source!r}."
+
+        super().__init__(brief=f"Failed to pull source: {message}")
 
 
 class InvalidSourceOption(SourceError):

@@ -280,7 +280,7 @@ class TestLocal:
         assert os.readlink(file_symlink) == "file"
 
     def test_has_source_handler_entry(self):
-        assert sources._source_handler["local"] is LocalSource
+        assert sources._get_source_handler_class("", source_type="local") is LocalSource
 
     def test_ignore_patterns_workdir(self, new_dir, partitions):
         ignore_patterns = ["hello"]

@@ -75,4 +75,7 @@ class TestZipSource:
             assert zip_file.read() == "Test fake file"
 
     def test_has_source_handler_entry(self):
-        assert sources._source_handler["zip"] is sources.ZipSource
+        assert (
+            sources._get_source_handler_class("", source_type="zip")
+            is sources.ZipSource
+        )
