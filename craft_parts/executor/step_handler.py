@@ -391,14 +391,14 @@ class StepHandler:
                 )
 
             try:
-                target_dir = self._part.overlay_dir
+                target_dir = self._part.part_layer_dir
                 commands = [
                     f"mkdir -p {target_dir}/etc {target_dir}/dev {target_dir}/sys {target_dir}/proc",
                     f"cp /etc/resolv.conf {target_dir}/etc/",
                     f"mount --bind /dev {target_dir}/dev",
                     f"mount --bind /sys {target_dir}/sys",
                     f"mount --bind /proc {target_dir}/proc",
-                    " ".join("chroot", *cmd_args),
+                    " ".join(["chroot", *cmd_args]),
                     f"umount {target_dir}/dev",
                     f"umount {target_dir}/sys",
                     f"umount {target_dir}/proc",
