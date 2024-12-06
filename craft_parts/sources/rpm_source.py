@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
 class RpmSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for an rpm file source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.rpm$"))
+    pattern = r"\.rpm$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["rpm"] = "rpm"
 
 

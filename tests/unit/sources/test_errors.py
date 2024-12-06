@@ -27,6 +27,15 @@ def test_invalid_source_type():
     assert err.resolution is None
 
 
+def test_invalid_source_type_with_type():
+    err = errors.InvalidSourceType("t-death.adf", source_type="yolo")
+    assert err.source == "t-death.adf"
+    assert err.source_type == "yolo"
+    assert err.brief == ("Failed to pull source: unknown source-type 'yolo'.")
+    assert err.details is None
+    assert err.resolution is None
+
+
 def test_invalid_source_option():
     err = errors.InvalidSourceOption(source_type="lzx", option="source-depth")
     assert err.source_type == "lzx"

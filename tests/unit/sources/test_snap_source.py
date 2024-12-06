@@ -17,7 +17,6 @@
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -73,11 +72,11 @@ class TestSnapSource:
         assert Path(self._dest_dir / "meta.basic").is_dir()
         assert Path(self._dest_dir / "meta.basic/snap.yaml").is_file()
 
-    def test_has_source_handler_entry_on_linux(self):
-        if sys.platform == "linux":
-            assert sources._source_handler["snap"] is sources.SnapSource
-        else:
-            assert "snap" not in sources._source_handler
+    def test_has_source_handler_entry(self):
+        assert (
+            sources._get_source_handler_class("", source_type="snap")
+            is sources.SnapSource
+        )
 
     def test_pull_failure_bad_unsquash(self, new_dir, mocker):
         mocker.patch(

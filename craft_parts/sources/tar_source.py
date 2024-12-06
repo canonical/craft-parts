@@ -36,6 +36,7 @@ from .base import (
 class TarSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a tar file source."""
 
+    pattern = r"\.(tar(\.[a-z0-9]+)?|tgz)$"
     model_config = get_model_config(
         get_json_extra_schema(r"\.(tar(\.[a-z0-9]+)?|tgz)$")
     )

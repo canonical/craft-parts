@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 class DebSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for deb file sources."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.deb$"))
+    pattern = r"\.deb$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["deb"] = "deb"
 
 

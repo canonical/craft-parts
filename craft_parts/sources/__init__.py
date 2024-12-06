@@ -29,7 +29,13 @@ from .local_source import LocalSource, LocalSourceModel
 from .rpm_source import RpmSource, RpmSourceModel
 from .sevenzip_source import SevenzipSource, SevenzipSourceModel
 from .snap_source import SnapSource, SnapSourceModel
-from .sources import SourceHandler, get_source_handler, get_source_type_from_uri
+from .sources import (
+    SourceHandler,
+    get_source_handler,
+    get_source_type_from_uri,
+    register,
+    unregister,
+)
 from .tar_source import TarSource, TarSourceModel
 from .zip_source import ZipSource, ZipSourceModel
 
@@ -79,4 +85,6 @@ __all__ = [
     "TarSourceModel",
     "ZipSource",
     "ZipSourceModel",
+    "register",
+    "unregister",
 ]

@@ -11,3 +11,4 @@ How-to guides
    Override a part's default build behavior </common/craft-parts/how-to/override_build>
    Document a plugin <document-plugin>
    Including local files and remote resources </common/craft-parts/how-to/include_files>
+   Add a custom source type to an application <source-handler>

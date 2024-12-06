@@ -72,7 +72,18 @@ class BaseSourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
 
     model_config = get_model_config()
     source_type: str
+    """The name of this source type.
+
+    Sources must define this with a type hint of a Literal type of its name
+    and a value of its name.
+    """
     source: str
+    pattern: ClassVar[str | None] = None
+    """A regular expression for inferring this source type.
+
+    If pattern is None (the default), the source type cannot be inferred and must
+    always be explicitly written in the source-type field of a part.
+    """
 
 
 class BaseFileSourceModel(BaseSourceModel, frozen=True):

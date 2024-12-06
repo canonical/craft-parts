@@ -32,7 +32,8 @@ from .base import (
 class SevenzipSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic for a 7zip file source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.7z$"))
+    pattern = r"\.7z$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["7z"] = "7z"
 
 

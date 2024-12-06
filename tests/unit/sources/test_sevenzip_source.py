@@ -120,4 +120,7 @@ class TestZipSource:
         assert raised.value.exit_code == 1
 
     def test_has_source_handler_entry(self):
-        assert sources._source_handler["7z"] is sources.SevenzipSource
+        assert (
+            sources._get_source_handler_class("", source_type="7z")
+            is sources.SevenzipSource
+        )

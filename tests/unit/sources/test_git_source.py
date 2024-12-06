@@ -817,7 +817,7 @@ class TestGitSource(GitBaseTestCase):
         assert raised.value.option == "source-checksum"
 
     def test_has_source_handler_entry(self):
-        assert sources._source_handler["git"] is GitSource
+        assert sources._get_source_handler_class("", source_type="git") is GitSource
 
     def test_pull_failure(self, mocker, new_dir):
         mock_process_run = mocker.patch("craft_parts.utils.os_utils.process_run")
