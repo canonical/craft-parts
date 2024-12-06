@@ -82,7 +82,7 @@ The last method that we have to define, however, is where the actual build comma
         install_dir = self._part_info.part_install_dir
         return [f'cp --archive --link --no-dereference . "{install_dir}"']
 
-Notice we don't require a user-provided source directory/file - this is because we let the ``source`` parameter do the heavy-lifting. The source parameter is a mandatory parameter that specifies the working files of a part. It has a lot of specialized logic for different filetypes ranging from tarfiles to git repositories, so we can leverage that to get much stronger functionality out of our otherwise simple plugin.
+Notice we don't require a user-provided source directory/file - this is because we let the ``source`` parameter do the heavy-lifting. The source parameter is a mandatory parameter that specifies the working files of a part. It has a lot of specialised logic for different file types ranging from tar files to git repositories, so we can leverage that to get much stronger functionality out of our otherwise simple plugin.
 
 Final steps
 ~~~~~~~~~~~
