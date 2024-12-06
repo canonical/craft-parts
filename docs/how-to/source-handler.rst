@@ -50,7 +50,7 @@ needed to define the ``PULL`` behaviour of the source type.
 
 .. note::
     Craft Parts does not install any required tools for custom source handlers.
-    The given handler will fail on a machine that does not have
+    The handler in this example will fail on a machine that does not have
     `rsync <https://rsync.samba.org/>`_ installed before the part is pulled.
 
 
