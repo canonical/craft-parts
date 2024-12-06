@@ -398,7 +398,7 @@ class StepHandler:
                     f"mount --bind /dev {target_dir}/dev",
                     f"mount --bind /sys {target_dir}/sys",
                     f"mount --bind /proc {target_dir}/proc",
-                    " ".join(["chroot", *cmd_args]),
+                    " ".join(["chroot", str(target_dir), *cmd_args]),
                     f"umount {target_dir}/dev",
                     f"umount {target_dir}/sys",
                     f"umount {target_dir}/proc",
