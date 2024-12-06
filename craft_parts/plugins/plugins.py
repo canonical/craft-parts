@@ -38,6 +38,7 @@ from .python_plugin import PythonPlugin
 from .qmake_plugin import QmakePlugin
 from .rust_plugin import RustPlugin
 from .scons_plugin import SConsPlugin
+from .uv_plugin import UvPlugin
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -66,6 +67,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "qmake": QmakePlugin,
     "rust": RustPlugin,
     "scons": SConsPlugin,
+    "uv": UvPlugin,
 }
 
 _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
