@@ -72,5 +72,5 @@ woke:
 	. $(VENV); $(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 rundocs: ## start a documentation runserver
-	sphinx-autobuild $(SPHINXOPTS) --ignore ".git/*" --ignore "*.scss"  --host 0.0.0.0 --port $(PORT) "$(SOURCEDIR)" "$(BUILDDIR)"
+	sphinx-autobuild $(SPHINXOPTS) --ignore ".git/*" --ignore "*.scss" --ignore "*.kate-swp"  --host 0.0.0.0 --port $(PORT) "$(SOURCEDIR)" "$(BUILDDIR)"
 
