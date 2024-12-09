@@ -64,8 +64,6 @@ def test_craftctl_chroot(new_dir, partitions, capfd, mocker):
             override-pull: |
               echo "pull step"
               craftctl default
-            overlay-packages:
-              - coreutils
             overlay-script: |
               echo "overlay step"
               craftctl chroot touch test.txt
