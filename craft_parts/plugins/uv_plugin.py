@@ -149,4 +149,7 @@ class UvPlugin(BasePythonPlugin):
         build_environment = super().get_build_environment()
         build_environment["UV_FROZEN"] = "1"
         build_environment["UV_PYTHON_DOWNLOADS"] = "never"
+        build_environment["UV_PROJECT_ENVIRONMENT"] = str(self._get_venv_directory().resolve())
+        build_environment["UV_PYTHON"] = f'"${{PARTS_PYTHON_INTERPRETER}}"'
+        build_environment["UV_PYTHON_PREFERENCE"] = "only-system"
         return build_environment
