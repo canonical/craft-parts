@@ -16,16 +16,15 @@
 
 """The uv plugin."""
 
-import pathlib
 import shlex
-import subprocess
-from typing import Literal
+import shutil
+from typing import Literal, cast
 
 import pydantic
 from overrides import override
 
-from craft_parts.plugins import validator
 from craft_parts import errors
+from craft_parts.plugins import validator
 
 from .base import BasePythonPlugin
 from .properties import PluginProperties
@@ -40,6 +39,12 @@ class UvPluginProperties(PluginProperties, frozen=True):
         default_factory=set,
         title="Optional dependency groups",
         description="Optional dependency groups to include when installing.",
+    )
+
+    uv_install_packages: set[str] = pydantic.Field(
+        default={'"${CRAFT_PART_NAME}"'},
+        title="Optional install packages",
+        description="Optional list of python packages to build and install as the final product.",
     )
 
     # part properties required by the plugin
@@ -84,72 +89,55 @@ class UvPlugin(BasePythonPlugin):
     properties_class = UvPluginProperties
     validator_class = UvPluginEnvironmentValidator
     _options: UvPluginProperties
-    
+
     def _get_uv(self) -> str:
-        return f'"${{HOME}}/.cargo/bin/uv'
-    
+        uv = shutil.which("uv")
+        # Guaranteed not-none by the validator class, which already asserted uv
+        # was installed
+        return cast(str, uv)
+
     @override
     def _get_pip(self) -> str:
         return f"{self._get_uv()} pip"
 
-    def _get_uv_export_commands(self, requirements_path: pathlib.Path) -> list[str]:
-        """Get the commands for exporting from uv.
-
-        Application-specific classes may override this if they need to export from
-        uv differently.
-
-        :param requirements_path: The path of the requirements.txt file to write to.
-        :returns: A list of strings forming the export script.
-        """
-        export_command = [
-            "uv",
-            "export",
-            "--no-dev",
-            "--format=requirements.txt",
-            f"--output={requirements_path}",
-        ]
-        if self._options.uv_extras:
-            for extra in self._options.uv_extras:
-                export_command.append(
-                    f"--extra={extra}",
-                )
-
-        return [shlex.join(export_command)]
-    
     def _get_create_venv_commands(self) -> list[str]:
         return [f'{self._get_uv()} venv --relocatable "${{CRAFT_PART_INSTALL}}']
-
-    def _get_pip_install_commands(self, requirements_path: pathlib.Path) -> list[str]:
-        """Get the commands for installing with pip.
-
-        Application-specific classes my override this if they need to install
-        differently.
-
-        :param requirements_path: The path of the requirements.txt file to write to.
-        :returns: A list of strings forming the install script.
-        """
-        pip = self._get_pip()
-        return [
-            f'{pip} install --python "${{CRAFT_PART_INSTALL}}/bin/python -r {requirements_path.resolve()}',
-            f'{pip} install --python "${{CRAFT_PART_INSTALL}} "${{CRAFT_PART_NAME}} @ ${{CRAFT_PART_BUILD}}'
-        ]
 
     @override
     def _get_package_install_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         requirements_path = self._part_info.part_build_dir / "requirements.txt"
 
-        return [
-            *self._get_uv_export_commands(requirements_path),
-            *self._get_pip_install_commands(requirements_path),
+        sync_command = [
+            self._get_uv(),
+            "sync",
+            "--no-dev",
+            "--no-editable",
+            "--python",
+            '"${{CRAFT_PART_INSTALL}}/bin/python"',
+            "-r",
+            requirements_path.resolve(),
+            *[f' --extra "{extra}"' for extra in self._options.uv_extras],
         ]
-    
+
+        install_commands = [shlex.join(sync_command)]
+
+        install_commands.extend([
+            f'{self._get_pip()} install --python "${{CRAFT_PART_INSTALL}}" "{package} @ ${{CRAFT_PART_BUILD}}"'
+            for package in self._options.uv_install_packages
+        ])
+
+        return install_commands
+
     @override
     def get_build_environment(self) -> dict[str, str]:
+        """Return a dictionary with the environment to use in the build step."""
         build_environment = super().get_build_environment()
-        build_environment["UV_FROZEN"] = "1"
+        build_environment["UV_FROZEN"] = "true"
         build_environment["UV_PYTHON_DOWNLOADS"] = "never"
-        build_environment["UV_PROJECT_ENVIRONMENT"] = str(self._get_venv_directory().resolve())
-        build_environment["UV_PYTHON"] = f'"${{PARTS_PYTHON_INTERPRETER}}"'
+        build_environment["UV_PROJECT_ENVIRONMENT"] = str(
+            self._get_venv_directory().resolve()
+        )
+        build_environment["UV_PYTHON"] = '"${PARTS_PYTHON_INTERPRETER}"'
         build_environment["UV_PYTHON_PREFERENCE"] = "only-system"
         return build_environment
