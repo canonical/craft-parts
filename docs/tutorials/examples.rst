@@ -56,5 +56,5 @@ Learning more
   is a good reference for a real world usage of the lifecycle manager.
 
 - Parts are similar to those used in Snapcraft, including some of its V2 plugins.
-  See the `Snapcraft parts documentation <https://snapcraft.io/docs/snapcraft-parts-metadata>`_
+  See the `Snapcraft parts documentation <https://snapcraft.io/docs/adding-parts>`_
   for details.

@@ -9,7 +9,8 @@ Keywords
 --------
 
 In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
+:ref:`sources <part-properties-sources>` keywords (see :ref:`common part 
+properties <part_properties>`), this plugin provides the following 
 plugin-specific keywords:
 
 npm-include-node
