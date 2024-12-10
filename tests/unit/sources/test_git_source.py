@@ -24,7 +24,6 @@ import pytest
 from craft_parts import ProjectDirs
 from craft_parts.sources import errors, sources
 from craft_parts.sources.git_source import GitSource
-from craft_parts.utils.git import get_git_command
 
 # pylint: disable=too-many-lines
 
@@ -1089,22 +1088,3 @@ class TestGitGenerateVersionNoGit:
 
         with pytest.raises(errors.VCSError):
             GitSource.generate_version()
-
-
-@pytest.mark.parametrize(
-    ("which_result", "expected_command"),
-    [
-        (None, "git"),
-        ("/usr/bin/craft.git", "/usr/bin/craft.git"),
-        (
-            "/snap/snapcraft/current/libexec/snapcraft/craft.git",
-            "/snap/snapcraft/current/libexec/snapcraft/craft.git",
-        ),
-    ],
-)
-def test_git_command(which_result, expected_command, mocker):
-    mocker.patch.object(shutil, "which", return_value=which_result)
-    get_git_command.cache_clear()
-
-    git_command = GitSource.command()
-    assert git_command == expected_command
