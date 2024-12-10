@@ -8,6 +8,8 @@ X.Y.Z (2024-MM-DD)
 - Set JAVA_HOME environment variable in Java-based plugins. The plugin will
   try to detect the latest available JDK.
 - Add an API for :ref:`registering custom source types <how_to_add_a_source_handler>`.
+- Prefer "craft.git" as the binary to handle git sources, in environments where
+  it is available.
 
 2.1.4 (2024-12-04)
 ------------------

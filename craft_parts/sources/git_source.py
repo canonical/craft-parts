@@ -21,11 +21,13 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, ClassVar, Literal, cast
+from typing import Any, Literal, cast
 
 import pydantic
 from overrides import overrides
 from typing_extensions import Self
+
+from craft_parts.utils.git import get_git_command
 
 from . import errors
 from .base import (
@@ -81,13 +83,14 @@ class GitSource(SourceHandler):
     """
 
     source_model = GitSourceModel
-    command: ClassVar[str] = "git"
 
     @classmethod
     def version(cls) -> str:
         """Get git version information."""
         return subprocess.check_output(
-            ["git", "version"], universal_newlines=True, stderr=subprocess.DEVNULL
+            [get_git_command(), "version"],
+            universal_newlines=True,
+            stderr=subprocess.DEVNULL,
         ).strip()
 
     @classmethod
@@ -118,7 +121,7 @@ class GitSource(SourceHandler):
         try:
             output = (
                 subprocess.check_output(
-                    ["git", "-C", str(part_src_dir), "describe", "--dirty"],
+                    [get_git_command(), "-C", str(part_src_dir), "describe", "--dirty"],
                     stderr=subprocess.DEVNULL,
                 )
                 .decode(encoding)
@@ -128,7 +131,14 @@ class GitSource(SourceHandler):
             # If we fall into this exception it is because the repo is not
             # tagged at all.
             proc = subprocess.Popen(  # pylint: disable=consider-using-with
-                ["git", "-C", str(part_src_dir), "describe", "--dirty", "--always"],
+                [
+                    get_git_command(),
+                    "-C",
+                    str(part_src_dir),
+                    "describe",
+                    "--dirty",
+                    "--always",
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
@@ -166,7 +176,7 @@ class GitSource(SourceHandler):
 
     def _fetch_origin_commit(self) -> None:
         """Fetch from origin, using source-commit if defined."""
-        command = [self.command, "-C", str(self.part_src_dir), "fetch", "origin"]
+        command = [get_git_command(), "-C", str(self.part_src_dir), "fetch", "origin"]
         if self.source_commit:
             command.append(self.source_commit)
 
@@ -175,7 +185,7 @@ class GitSource(SourceHandler):
     def _get_current_branch(self) -> str:
         """Get current git branch."""
         command = [
-            self.command,
+            get_git_command(),
             "-C",
             str(self.part_src_dir),
             "branch",
@@ -206,7 +216,7 @@ class GitSource(SourceHandler):
         else:
             refspec = "refs/remotes/origin/" + self._get_current_branch()
 
-        command_prefix = [self.command, "-C", str(self.part_src_dir)]
+        command_prefix = [get_git_command(), "-C", str(self.part_src_dir)]
         command = [*command_prefix, "fetch", "--prune"]
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
@@ -226,7 +236,7 @@ class GitSource(SourceHandler):
 
     def _clone_new(self) -> None:
         """Clone a git repository, using submodules, branch, and depth if defined."""
-        command = [self.command, "clone"]
+        command = [get_git_command(), "clone"]
         if self.source_submodules is None:
             command.append("--recursive")
         else:
@@ -249,7 +259,7 @@ class GitSource(SourceHandler):
         if self.source_commit:
             self._fetch_origin_commit()
             command = [
-                self.command,
+                get_git_command(),
                 "-C",
                 str(self.part_src_dir),
                 "checkout",
@@ -296,7 +306,7 @@ class GitSource(SourceHandler):
 
         if not tag and not branch and not commit:
             commit = self._run_output(
-                ["git", "-C", str(self.part_src_dir), "rev-parse", "HEAD"]
+                [get_git_command(), "-C", str(self.part_src_dir), "rev-parse", "HEAD"]
             )
 
         return {
