@@ -19,7 +19,7 @@ import sys
 import textwrap
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import craft_parts.plugins.plugins
 import pytest
@@ -48,7 +48,7 @@ def uv_parts_simple() -> Callable[[], dict[str, Any]]:
             """
         )
 
-        return yaml.safe_load(parts_yaml)
+        return cast(dict[str, Any], yaml.safe_load(parts_yaml))
 
     return _inner
 
@@ -201,7 +201,7 @@ def uv_parts_complex() -> Callable[[str, str], dict[str, Any]]:
             """
         )
 
-        return yaml.safe_load(parts_yaml)
+        return cast(dict[str, Any], yaml.safe_load(parts_yaml))
 
     return _inner
 
