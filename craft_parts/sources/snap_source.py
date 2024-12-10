@@ -39,7 +39,8 @@ from .base import (
 class SnapSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a snap file source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.snap$"))
+    pattern = r"\.snap$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["snap"] = "snap"
 
 

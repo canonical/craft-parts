@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a git-based source."""
 
+    pattern = r"(^git(\+.+:|[@:])|\.git$)"
     model_config = get_model_config(get_json_extra_schema(r"(^git[+@:]|\.git$)"))
     source_type: Literal["git"] = "git"
     source: str
