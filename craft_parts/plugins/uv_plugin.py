@@ -41,12 +41,6 @@ class UvPluginProperties(PluginProperties, frozen=True):
         description="Optional dependency groups to include when installing.",
     )
 
-    uv_install_packages: set[str] = pydantic.Field(
-        default={'"${CRAFT_PART_NAME}"'},
-        title="Optional install packages",
-        description="Optional list of python packages to build and install as the final product.",
-    )
-
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
@@ -99,35 +93,28 @@ class UvPlugin(BasePythonPlugin):
     @override
     def _get_pip(self) -> str:
         return f"{self._get_uv()} pip"
+    
+    @override
+    def _get_rewrite_shebangs_commands(self) -> list[str]:
+        return []
 
     def _get_create_venv_commands(self) -> list[str]:
-        return [f'{self._get_uv()} venv --relocatable "${{CRAFT_PART_INSTALL}}']
+        venv_commands = super()._get_create_venv_commands()
+        venv_commands.append(f'{self._get_uv()} venv --relocatable "{self._get_venv_directory()}"')
+        return venv_commands
 
     @override
     def _get_package_install_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        requirements_path = self._part_info.part_build_dir / "requirements.txt"
-
         sync_command = [
             self._get_uv(),
             "sync",
             "--no-dev",
             "--no-editable",
-            "--python",
-            '"${{CRAFT_PART_INSTALL}}/bin/python"',
-            "-r",
-            requirements_path.resolve(),
-            *[f' --extra "{extra}"' for extra in self._options.uv_extras],
+            *[f'--extra "{extra}"' for extra in self._options.uv_extras],
         ]
 
-        install_commands = [shlex.join(sync_command)]
-
-        install_commands.extend([
-            f'{self._get_pip()} install --python "${{CRAFT_PART_INSTALL}}" "{package} @ ${{CRAFT_PART_BUILD}}"'
-            for package in self._options.uv_install_packages
-        ])
-
-        return install_commands
+        return [shlex.join(sync_command)]
 
     @override
     def get_build_environment(self) -> dict[str, str]:
