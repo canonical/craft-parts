@@ -93,15 +93,16 @@ class UvPlugin(BasePythonPlugin):
     @override
     def _get_pip(self) -> str:
         return f"{self._get_uv()} pip"
-    
+
     @override
     def _get_rewrite_shebangs_commands(self) -> list[str]:
         return []
 
     def _get_create_venv_commands(self) -> list[str]:
-        venv_commands = super()._get_create_venv_commands()
-        venv_commands.append(f'{self._get_uv()} venv --relocatable "{self._get_venv_directory()}"')
-        return venv_commands
+        return [
+            f'{self._get_uv()} venv --relocatable --allow-existing --python "{self._get_system_python_interpreter()}" "{self._get_venv_directory()}"',
+            f'PARTS_PYTHON_VENV_INTERP_PATH="{self._get_venv_directory()}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
+        ]
 
     @override
     def _get_package_install_commands(self) -> list[str]:
@@ -120,11 +121,10 @@ class UvPlugin(BasePythonPlugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         build_environment = super().get_build_environment()
+        build_environment["VIRTUAL_ENV"] = str(self._get_venv_directory().resolve())
+        build_environment["UV_PROJECT_ENVIRONMENT"] = build_environment["VIRTUAL_ENV"]
         build_environment["UV_FROZEN"] = "true"
         build_environment["UV_PYTHON_DOWNLOADS"] = "never"
-        build_environment["UV_PROJECT_ENVIRONMENT"] = str(
-            self._get_venv_directory().resolve()
-        )
         build_environment["UV_PYTHON"] = '"${PARTS_PYTHON_INTERPRETER}"'
         build_environment["UV_PYTHON_PREFERENCE"] = "only-system"
         return build_environment
