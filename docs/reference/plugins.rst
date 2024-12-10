@@ -27,6 +27,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/qmake_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
    /common/craft-parts/reference/plugins/scons_plugin.rst
+   /common/craft-parts/reference/plugins/uv_plugin.rst
 
 
 When documenting a new plugin, follow the guidelines in :ref:`how_to_document_a_plugin`.
