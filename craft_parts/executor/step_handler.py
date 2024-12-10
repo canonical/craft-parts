@@ -398,10 +398,17 @@ class StepHandler:
                     f"mount --bind /dev {target_dir}/dev",
                     f"mount --bind /sys {target_dir}/sys",
                     f"mount --bind /proc {target_dir}/proc",
+                    f"mount --bind /usr/share/ca-certificates/ {target_dir}/usr/share/ca-certificates",
+                    f"mount --bind /etc/ssl/certs/ {target_dir}/etc/ssl/certs/",
+                    f"mount --bind /etc/apt {target_dir}/etc/apt",
+                    f"cp /etc/ca-certificates.conf {target_dir}/etc/",
                     " ".join(cmd_args),
                     f"umount {target_dir}/dev",
                     f"umount {target_dir}/sys",
                     f"umount {target_dir}/proc",
+                    f"umount {target_dir}/etc/apt",
+                    f"umount {target_dir}/usr/share/ca-certificates",
+                    f"umount {target_dir}/etc/ssl/certs",
                 ]
                 _create_and_run_script(
                     commands,
