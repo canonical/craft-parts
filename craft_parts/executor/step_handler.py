@@ -393,7 +393,7 @@ class StepHandler:
             try:
                 target_dir = self._part.part_layer_dir
                 commands = [
-                    f"mkdir -p {target_dir}/etc {target_dir}/dev {target_dir}/sys {target_dir}/proc",
+                    f"mkdir -p {target_dir}/etc {target_dir}/dev {target_dir}/sys {target_dir}/proc {target_dir}/usr/share/ca-certificates {target_dir}/etc/apt {target_dir}/etc/ssl/certs",
                     f"cp /etc/resolv.conf {target_dir}/etc/",
                     f"mount --bind /dev {target_dir}/dev",
                     f"mount --bind /sys {target_dir}/sys",
