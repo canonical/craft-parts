@@ -33,7 +33,7 @@ this plugin defines additional variables defined below.
 
     This section describes how this plugin uses ``uv``-specific variables. For
     more information, as well as a complete list of environment variables
-    for ``uv``, see the `uv documentation <https://docs.astral.sh/uv/configuration/environment/>`_.
+    for ``uv``, see the `uv documentation <https://docs.astral.sh/uv/configuration/environment/>`__.
 
 UV_FROZEN
 ~~~~~~~~~
@@ -96,5 +96,5 @@ During the build step, the plugin performs the following actions:
 See also
 --------
 
-:ref:`Python plugin <_craft_parts_python_plugin>`
-:ref:`Poetry plugin <_craft_parts_poetry_plugin>`
+:ref:`Python plugin <craft_parts_python_plugin>`
+:ref:`Poetry plugin <craft_parts_poetry_plugin>`
