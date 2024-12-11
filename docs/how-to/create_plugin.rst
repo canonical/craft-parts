@@ -48,7 +48,7 @@ Add the two required properties:
     1. ``plugin`` is a constant string literal. This property represents the
        exposed name of your plugin. It will be invoked in user-facing tools
        and configuration, such as keys that select your plugin in a
-       `Snapcraft recipe <snapcraft.yaml>`_.
+       `Snapcraft recipe`_.
     #. ``source`` is a string. This property is the path to the working files
        of a part. It has specialised logic for different file types ranging
        from tar balls to Git repositories, so you can leverage it to get much
@@ -159,4 +159,4 @@ Next steps
 :ref:`How to document a plugin <how_to_document_a_plugin>`
 
 .. LINKS
-.. _snapcraft.yaml: https://snapcraft.io/docs/build-configuration
+.. _Snapcraft recipe: https://snapcraft.io/docs/build-configuration
