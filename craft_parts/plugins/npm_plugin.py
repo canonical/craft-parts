@@ -16,6 +16,7 @@
 
 """The npm plugin."""
 
+from collections import defaultdict
 import logging
 import os
 from pathlib import Path
@@ -369,9 +370,29 @@ class NpmPlugin(Plugin):
             for pkg_dir in scope_dir.iterdir():
                 self._append_package_dir(pkg_dir, file_list, scope_name)
 
+    def _append_symlinks(self, link_dir: Path, file_list: PackageFileList) -> None:
+        """Append symlinks in link_dir under the appropriate package in file_list."""
+        # Map target paths to links.  This seems backwards but using the targets as keys is more efficient in the loop below.  It's unlikely but there could be multiple symlinks here that point at the same target file, hence the defaultdict(set).
+        links = defaultdict(set)
+        for symlink in [link_dir.iterdir()]:
+            if not symlink.is_symlink():
+                continue
+            target = symlink.readlink().absolute()
+            links[target].add(symlink)
+
+        # Insert those links into our package files data structure
+        for pkg_tuple, pkg_files in file_list.items():
+            for pkg_file in pkg_files:
+                if pkg_file in links:
+                    pkg_files.update(links[pkg_file])
+
     @override
     def get_file_list(self) -> PackageFileList:
         root_modules_dir = (self._part_info.part_install_dir / "usr/lib/node_modules").absolute()
         file_list = {}
         self._append_node_modules_dir(root_modules_dir, file_list)
+
+        self._append_symlinks(self._part_info.part_install_dir / "usr/bin", file_list)
+        self._append_symlinks(self._part_info.part_install_dir / "usr/share/man", file_list)
+
         return file_list
