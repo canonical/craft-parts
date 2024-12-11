@@ -26,11 +26,6 @@ in. At the top of your new file, import:
 
 Define the properties class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-All plugins make use of a "properties" class to describe their metadata.
-This encompasses two kinds of property: common ones and unique ones. Common
-properties are those that are used by every plugin. Currently, there are just
-two common properties.
-
 Next, design the plugin's interface. All plugins make use of a ``properties``
 class to describe their interfaces. There are two required properties that
 all plugins have in common, and you can add more to account for additional
