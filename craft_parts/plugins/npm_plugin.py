@@ -16,12 +16,13 @@
 
 """The npm plugin."""
 
-from collections import defaultdict
+import json
 import logging
 import os
-from pathlib import Path
 import platform
 import re
+from collections import defaultdict
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
@@ -332,7 +333,7 @@ class NpmPlugin(Plugin):
         # The only thing we have to rely on the package.json for is the version
         # https://docs.npmjs.com/cli/v10/configuring-npm/package-json
         metadata_file = pkg_dir / "package.json"
-        with open(metadata_file, "r") as f:
+        with open(metadata_file) as f:
             metadata = json.load(f)
         pkg_version = metadata["version"]
 
@@ -347,7 +348,7 @@ class NpmPlugin(Plugin):
 
             for file_or_dir in dirnames + filenames:
                 pkg_contents.add(walk_iteration_root / file_or_dir)
-        
+
         key = (pkg_name, pkg_version)
         if key in file_list:
             # It appears we have two installs of the same package and version at different points in the tree.  This is fine.  If we ever care to add provenance information to the xattrs (i.e., which package installed which other package) then this scenario would be a problem and we'd need to revisit this whole approach.
@@ -367,7 +368,7 @@ class NpmPlugin(Plugin):
             # There will be one or more scoped packages here, have to dig deeper
             scope_dir = pkg_dir
             scope_name = scope_dir.name
-            for pkg_dir in scope_dir.iterdir():
+            for pkg_dir in scope_dir.iterdir():  # noqa: PLW2901
                 self._append_package_dir(pkg_dir, file_list, scope_name)
 
     def _append_symlinks(self, link_dir: Path, file_list: PackageFileList) -> None:
@@ -381,7 +382,7 @@ class NpmPlugin(Plugin):
             links[target].add(symlink)
 
         # Insert those links into our package files data structure
-        for pkg_tuple, pkg_files in file_list.items():
+        for pkg_files in file_list.values():
             for pkg_file in pkg_files:
                 if pkg_file in links:
                     pkg_files.update(links[pkg_file])
