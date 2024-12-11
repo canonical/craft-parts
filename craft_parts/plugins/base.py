@@ -36,6 +36,9 @@ if TYPE_CHECKING:
     from craft_parts import infos
 
 
+PackageFileList = dict[tuple[str, str], set[pathlib.Path]]
+
+
 class Plugin(abc.ABC):
     """The base class for plugins.
 
@@ -90,6 +93,10 @@ class Plugin(abc.ABC):
         :param action_properties: The properties to store.
         """
         self._action_properties = deepcopy(action_properties)
+
+    def get_file_list(self) -> PackageFileList:
+        """Get a mapping of (package name, package version) -> installed file."""
+        return {}
 
 
 class BasePythonPlugin(Plugin):
