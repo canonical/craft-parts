@@ -117,7 +117,7 @@ def test_uv_plugin_override_get_system_interpreter(
 
     python_link = Path(lf.project_info.prime_dir, "bin", "python")
     assert python_link.is_symlink()
-    assert os.readlink(python_link) == os.readlink(sys.executable)
+    assert python_link.resolve() == Path(sys.executable).resolve()
 
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
