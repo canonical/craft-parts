@@ -2,8 +2,15 @@
 Changelog
 *********
 
-X.Y.Z (2024-MM-DD)
+2.2.0 (2024-MM-DD)
 ------------------
+
+New features:
+
+- Add a :doc:`uv plugin</common/craft-parts/reference/plugins/uv_plugin>` for
+  projects that use the uv build system.
+
+Bug fixes:
 
 - Set JAVA_HOME environment variable in Java-based plugins. The plugin will
   try to detect the latest available JDK.
