@@ -192,6 +192,10 @@ jobs:
           echo "::group::JDK"
           sudo apt-get install -y openjdk-17-jdk-headless openjdk-21-jdk-headless openjdk-8-jdk-headless
           echo "::endgroup::"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.7"
       - name: specify node version
         uses: actions/setup-node@v4
         with:

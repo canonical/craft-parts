@@ -277,6 +277,9 @@ Unmark
 Unmount
 UnpackError
 Unregister
+UvPlugin
+UvPluginEnvironmentValidator
+UvPluginProperties
 VCSError
 VENV
 VM
@@ -475,6 +478,7 @@ uri
 url
 utilizing
 utils
+uv
 validation
 validator
 validators
