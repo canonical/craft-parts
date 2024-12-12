@@ -24,13 +24,18 @@ from pydantic import ValidationError
 
 
 @pytest.fixture
-def plugin(new_dir):
+def plugin(new_dir, monkeypatch):
     properties = UvPlugin.properties_class.unmarshal({"source": "."})
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
-    return UvPlugin(properties=properties, part_info=part_info)
+    # Put a fake uv binary on the path
+    fake_uv = Path(new_dir) / "test_bin" / "uv"
+    fake_uv.parent.mkdir()
+    fake_uv.touch(mode=0o744)
+    monkeypatch.setenv("PATH", new_dir, ":")
 
+    return UvPlugin(properties=properties, part_info=part_info)
 
 def test_get_build_packages(plugin):
     assert plugin.get_build_packages() == {"findutils", "python3-venv", "python3-dev"}
