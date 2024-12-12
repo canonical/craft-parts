@@ -32,7 +32,8 @@ from .base import (
 class ZipSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a zip file source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.zip$"))
+    pattern = r"\.zip$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["zip"] = "zip"
 
 

@@ -12,3 +12,4 @@ How-to guides
    Create a plugin <create_plugin>
    Document a plugin <document-plugin>
    Including local files and remote resources </common/craft-parts/how-to/include_files>
+   Add a custom source type to an application <source-handler>

@@ -419,6 +419,7 @@ recognized
 reorganize
 reorganized
 returncode
+rsync
 runtime
 rustc
 rustup
