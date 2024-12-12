@@ -17,8 +17,7 @@
 """The uv plugin."""
 
 import shlex
-import shutil
-from typing import Literal, cast
+from typing import Literal
 
 import pydantic
 from overrides import override
@@ -90,15 +89,9 @@ class UvPlugin(BasePythonPlugin):
     validator_class = UvPluginEnvironmentValidator
     _options: UvPluginProperties
 
-    def _get_uv(self) -> str:
-        uv = shutil.which("uv")
-        # Guaranteed not-none by the validator class, which already asserted uv
-        # was installed
-        return cast(str, uv)
-
     @override
     def _get_pip(self) -> str:
-        return f"{self._get_uv()} pip"
+        return "uv pip"
 
     @override
     def _get_rewrite_shebangs_commands(self) -> list[str]:
@@ -106,7 +99,7 @@ class UvPlugin(BasePythonPlugin):
 
     def _get_create_venv_commands(self) -> list[str]:
         return [
-            f'{self._get_uv()} venv --relocatable --allow-existing --python "{self._get_system_python_interpreter()}" "{self._get_venv_directory()}"',
+            f'uv venv --relocatable --allow-existing --python "{self._get_system_python_interpreter()}" "{self._get_venv_directory()}"',
             f'PARTS_PYTHON_VENV_INTERP_PATH="{self._get_venv_directory()}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         ]
 
@@ -114,7 +107,7 @@ class UvPlugin(BasePythonPlugin):
     def _get_package_install_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         sync_command = [
-            self._get_uv(),
+            "uv",
             "sync",
             "--no-dev",
             "--no-editable",

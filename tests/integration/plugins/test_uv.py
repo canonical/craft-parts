@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 import sys
 import textwrap
 from collections.abc import Callable
@@ -37,26 +38,23 @@ def teardown_module():
 
 
 @pytest.fixture
-def uv_parts_simple() -> Callable[[], dict[str, Any]]:
-    def _inner() -> dict[str, Any]:
-        parts_yaml = textwrap.dedent(
-            f"""\
-            parts:
-              foo:
-                plugin: uv
-                source: {Path(__file__).parent / "test_uv"}
-            """
-        )
+def uv_parts_simple() -> dict[str, Any]:
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          foo:
+            plugin: uv
+            source: "{Path(__file__).parent / "test_uv"}"
+        """
+    )
 
-        return cast(dict[str, Any], yaml.safe_load(parts_yaml))
-
-    return _inner
+    return cast(dict[str, Any], yaml.safe_load(parts_yaml))
 
 
 def test_uv_plugin(new_dir, partitions, uv_parts_simple):
     """Prime a simple python source."""
     lf = LifecycleManager(
-        uv_parts_simple(),
+        uv_parts_simple,
         application_name="test_uv",
         cache_dir=new_dir,
         partitions=partitions,
@@ -69,11 +67,14 @@ def test_uv_plugin(new_dir, partitions, uv_parts_simple):
     primed_script = Path(lf.project_info.prime_dir, "bin", "mytestuv")
     assert primed_script.exists()
 
+    output = subprocess.getoutput(str(primed_script))
+    assert output == "it works with uv too!"
+
 
 def test_uv_plugin_symlink(new_dir, partitions, uv_parts_simple):
     """Run in the standard scenario with no overrides."""
     lf = LifecycleManager(
-        uv_parts_simple(),
+        uv_parts_simple,
         application_name="test_uv",
         cache_dir=new_dir,
         partitions=partitions,
@@ -105,7 +106,7 @@ def test_uv_plugin_override_get_system_interpreter(
     plugins.register({"uv": MyUvPlugin})
 
     lf = LifecycleManager(
-        uv_parts_simple(),
+        uv_parts_simple,
         application_name="test_uv",
         cache_dir=new_dir,
         partitions=partitions,
@@ -140,7 +141,7 @@ def test_uv_plugin_no_system_interpreter(
     plugins.register({"uv": MyUvPlugin})
 
     lf = LifecycleManager(
-        uv_parts_simple(),
+        uv_parts_simple,
         application_name="test_uv",
         cache_dir=new_dir,
         partitions=partitions,
@@ -162,7 +163,7 @@ def test_uv_plugin_remove_symlinks(new_dir, partitions, uv_parts_simple):
     plugins.register({"uv": MyUvPlugin})
 
     lf = LifecycleManager(
-        uv_parts_simple(),
+        uv_parts_simple,
         application_name="test_uv",
         cache_dir=new_dir,
         partitions=partitions,

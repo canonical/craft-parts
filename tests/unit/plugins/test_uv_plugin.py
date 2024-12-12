@@ -29,13 +29,8 @@ def plugin(new_dir, monkeypatch):
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
-    # Put a fake uv binary on the path
-    fake_uv = Path(new_dir) / "test_bin" / "uv"
-    fake_uv.parent.mkdir()
-    fake_uv.touch(mode=0o744)
-    monkeypatch.setenv("PATH", new_dir, ":")
-
     return UvPlugin(properties=properties, part_info=part_info)
+
 
 def test_get_build_packages(plugin):
     assert plugin.get_build_packages() == {"findutils", "python3-venv", "python3-dev"}
@@ -115,12 +110,11 @@ def get_build_commands(
 
 def test_get_build_commands(plugin, new_dir):
     venv_dir = plugin._part_info.part_install_dir
-    uv = plugin._get_uv()
 
     assert plugin.get_build_commands() == [
-        f'{uv} venv --relocatable --allow-existing --python "{plugin._get_system_python_interpreter()}" "{venv_dir}"',
+        f'uv venv --relocatable --allow-existing --python "{plugin._get_system_python_interpreter()}" "{venv_dir}"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{uv} sync --no-dev --no-editable",
+        "uv sync --no-dev --no-editable",
         *get_build_commands(new_dir),
     ]
 
@@ -139,11 +133,10 @@ def test_get_build_commands_with_all_properties(new_dir):
 
     uv_plugin = UvPlugin(part_info=part_info, properties=properties)
     venv_dir = uv_plugin._part_info.part_install_dir
-    uv = uv_plugin._get_uv()
     assert uv_plugin.get_build_commands() == [
-        f'{uv} venv --relocatable --allow-existing --python "{uv_plugin._get_system_python_interpreter()}" "{venv_dir}"',
+        f'uv venv --relocatable --allow-existing --python "{uv_plugin._get_system_python_interpreter()}" "{venv_dir}"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{uv} sync --no-dev --no-editable",
+        "uv sync --no-dev --no-editable",
         *get_build_commands(new_dir),
     ]
 
@@ -190,10 +183,9 @@ def test_call_should_remove_symlinks(plugin, new_dir, monkeypatch):
     monkeypatch.setattr(UvPlugin, "_should_remove_symlinks", lambda _s: True)
 
     venv_dir = plugin._part_info.part_install_dir
-    uv = plugin._get_uv()
     assert plugin.get_build_commands() == [
-        f'{uv} venv --relocatable --allow-existing --python "{plugin._get_system_python_interpreter()}" "{venv_dir}"',
+        f'uv venv --relocatable --allow-existing --python "{plugin._get_system_python_interpreter()}" "{venv_dir}"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_dir}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{uv} sync --no-dev --no-editable",
+        "uv sync --no-dev --no-editable",
         *get_build_commands(new_dir, should_remove_symlinks=True),
     ]
