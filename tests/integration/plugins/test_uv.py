@@ -38,13 +38,13 @@ def teardown_module():
 
 @pytest.fixture
 def uv_parts_simple() -> Callable[[], dict[str, Any]]:
-    def _inner(*, source: Path = Path(__file__).parent / "test_uv") -> dict[str, Any]:
+    def _inner() -> dict[str, Any]:
         parts_yaml = textwrap.dedent(
             f"""\
             parts:
               foo:
                 plugin: uv
-                source: {source}
+                source: {Path(__file__).parent / "test_uv"}
             """
         )
 

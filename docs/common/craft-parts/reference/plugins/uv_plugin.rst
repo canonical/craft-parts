@@ -48,19 +48,19 @@ UV_PROJECT_ENVIRONMENT
 **Default value:** See below
 
 A path to the Python virtual environment to build with. By default, this
-variable populates itself with the directory that this plugin will create the
-virtual environment.
+variable populates itself with the directory in which this plugin will create
+the virtual environment.
 
 UV_PYTHON_DOWNLOADS
 ~~~~~~~~~~~~~~~~~~~
-**Default value:** never
+**Default value:** "never"
 
 Whether or not to automatically download Python if the requested version is
 missing.
 
 UV_PYTHON
 ~~~~~~~~~
-**Default value:** ``PARTS_PYTHON_INTERPRETER``
+**Default value:** ``${PARTS_PYTHON_INTERPRETER}``
 
 The version of Python that uv should use. See :ref:`Python plugin environment
 variables <craft_parts_python_plugin-environment_variables>` for more
@@ -68,7 +68,7 @@ information.
 
 UV_PYTHON_PREFERENCE
 ~~~~~~~~~~~~~~~~~~~~
-**Default value:** only-system
+**Default value:** "only-system"
 
 **Possible values:** only-system, only-managed, system, managed
 

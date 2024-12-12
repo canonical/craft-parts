@@ -120,11 +120,12 @@ class UvPlugin(BasePythonPlugin):
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
-        build_environment = super().get_build_environment()
-        build_environment["VIRTUAL_ENV"] = str(self._get_venv_directory().resolve())
-        build_environment["UV_PROJECT_ENVIRONMENT"] = build_environment["VIRTUAL_ENV"]
-        build_environment["UV_FROZEN"] = "true"
-        build_environment["UV_PYTHON_DOWNLOADS"] = "never"
-        build_environment["UV_PYTHON"] = '"${PARTS_PYTHON_INTERPRETER}"'
-        build_environment["UV_PYTHON_PREFERENCE"] = "only-system"
-        return build_environment
+        venv_dir = str(self._get_venv_directory().resolve())
+        return super().get_build_environment() | {
+            "VIRTUAL_ENV": venv_dir,
+            "UV_PROJECT_ENVIRONMENT": venv_dir,
+            "UV_FROZEN": "true",
+            "UV_PYTHON_DOWNLOADS": "never",
+            "UV_PYTHON": '"${PARTS_PYTHON_INTERPRETER}"',
+            "UV_PYTHON_PREFERENCE": "only-system",
+        }
