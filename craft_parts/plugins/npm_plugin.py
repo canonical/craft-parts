@@ -325,10 +325,7 @@ class NpmPlugin(Plugin):
         return cmd
 
     def _append_package_dir(
-        self,
-        pkg_dir: Path,
-        file_list: PackageFileList,
-        scope_name: str | None = None
+        self, pkg_dir: Path, file_list: PackageFileList, scope_name: str | None = None
     ) -> None:
         """Read the things in the package dir into the data structure."""
         pkg_name = pkg_dir.name
@@ -349,7 +346,9 @@ class NpmPlugin(Plugin):
             if "node_modules" in dirnames:
                 # More packages under here, not part of this package
                 del dirnames["node_modules"]
-                self._append_node_modules_dir(walk_iteration_root / "node_modules", file_list)
+                self._append_node_modules_dir(
+                    walk_iteration_root / "node_modules", file_list
+                )
 
             for file_or_dir in dirnames + filenames:
                 pkg_contents.add(walk_iteration_root / file_or_dir)
@@ -361,8 +360,12 @@ class NpmPlugin(Plugin):
         else:
             file_list[key] = pkg_contents
 
-
-    def _append_node_modules_dir(self, node_modules_dir: Path, file_list: PackageFileList, _scope_name: str | None) -> None:
+    def _append_node_modules_dir(
+        self,
+        node_modules_dir: Path,
+        file_list: PackageFileList,
+        _scope_name: str | None,
+    ) -> None:
         """Recursively walk through the node_modules file tree."""
         for pkg_dir in node_modules_dir.iterdir():
             if not pkg_dir.name.startswith("@"):
@@ -394,11 +397,15 @@ class NpmPlugin(Plugin):
 
     @override
     def get_file_list(self) -> PackageFileList:
-        root_modules_dir = (self._part_info.part_install_dir / "usr/lib/node_modules").absolute()
+        root_modules_dir = (
+            self._part_info.part_install_dir / "usr/lib/node_modules"
+        ).absolute()
         file_list = {}
         self._append_node_modules_dir(root_modules_dir, file_list)
 
         self._append_symlinks(self._part_info.part_install_dir / "usr/bin", file_list)
-        self._append_symlinks(self._part_info.part_install_dir / "usr/share/man", file_list)
+        self._append_symlinks(
+            self._part_info.part_install_dir / "usr/share/man", file_list
+        )
 
         return file_list
