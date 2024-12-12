@@ -37,6 +37,12 @@ class UvPluginProperties(PluginProperties, frozen=True):
 
     uv_extras: set[str] = pydantic.Field(
         default_factory=set,
+        title="Optional extra dependencies",
+        description="Optional extra dependencies to include when installing.",
+    )
+
+    uv_groups: set[str] = pydantic.Field(
+        default_factory=set,
         title="Optional dependency groups",
         description="Optional dependency groups to include when installing.",
     )
@@ -113,6 +119,7 @@ class UvPlugin(BasePythonPlugin):
             "--no-dev",
             "--no-editable",
             *[f'--extra "{extra}"' for extra in self._options.uv_extras],
+            *[f'--group "{group}"' for group in self._options.uv_groups],
         ]
 
         return [shlex.join(sync_command)]

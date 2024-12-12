@@ -17,8 +17,15 @@ uv-extras
 ~~~~~~~~~
 **Type:** list of strings
 
+Extra dependencies to build with. Each element of the list is passed
+exactly as ``--extra EXTRA``.
+
+uv-groups
+~~~~~~~~~
+**Type:** list of strings
+
 Extra dependency groups to build with. Each element of the list is passed
-exactly as ``--extra GROUP``.
+exactly as ``--group GROUP``.
 
 
 Environment variables
