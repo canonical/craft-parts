@@ -4,8 +4,8 @@ How to create a plugin
 ======================
 
 Plugins help to bring new tools and programming languages into Craft Parts.
-This document contains instructions on how to recreate the simple
-:py:class:`~craft-parts.plugins.dump_plugin.DumpPlugin` plugin.
+This document contains instructions on how to recreate the simple :ref:`dump
+plugin <craft_parts_dump_plugin>`.
 
 
 Create your plugin file
