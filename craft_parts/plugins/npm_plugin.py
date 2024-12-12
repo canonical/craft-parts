@@ -324,12 +324,7 @@ class NpmPlugin(Plugin):
         ]
         return cmd
 
-    def _append_package_dir(
-        self,
-        pkg_dir: Path,
-        file_list: PackageFileList,
-        scope_name: str | None = None
-    ) -> None:
+    def _append_package_dir(self, pkg_dir: Path, file_list: PackageFileList, scope_name: str | None = None) -> None:
         """Read the things in the package dir into the data structure."""
         pkg_name = pkg_dir.name
         if scope_name:

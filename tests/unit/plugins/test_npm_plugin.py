@@ -15,11 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from pathlib import Path
-from textwrap import dedent
 
 import pytest
-import yaml
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
@@ -382,42 +379,3 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_out_of_source_build() is False
-
-    @pytest.mark.parametrize(
-        ("file_structure", "expected_data_structure"),
-        [
-            (
-                dedent("""
-                mypackage:
-                - filea
-                - fileb
-                - package.json:
-                    version: 2.3
-                    whatever: ignored
-                    name: not-this
-                - dira:
-                  - subfilea
-                  - subfileb"""),
-                {
-                    ("mypackage", "2.3"): {
-                        Path("mypackage"),
-                        Path("mypackage/filea"),
-                        Path("mypackage/fileb"),
-                        Path("mypackage/package.json"),
-                        Path("mypackage/dira"),
-                        Path("mypackage/dira/subfilea"),
-                        Path("mypackage/dira/subfileb"),
-                    }
-                }
-            ),
-        ]
-    )
-    def test_get_xattr_file_list(self, part_info, file_structure, expected_data_structure):
-        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
-        plugin = NpmPlugin(properties=properties, part_info=part_info)
-
-        plugin._part_info.part_install_dir
-
-        files = yaml.safe_load(file_structure)
-
-        breakpoint()
