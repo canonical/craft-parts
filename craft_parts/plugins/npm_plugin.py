@@ -345,7 +345,7 @@ class NpmPlugin(Plugin):
 
             if "node_modules" in dirnames:
                 # More packages under here, not part of this package
-                del dirnames["node_modules"]
+                dirnames.remove("node_modules")
                 self._append_node_modules_dir(
                     walk_iteration_root / "node_modules", file_list
                 )
@@ -364,7 +364,6 @@ class NpmPlugin(Plugin):
         self,
         node_modules_dir: Path,
         file_list: PackageFileList,
-        _scope_name: str | None,
     ) -> None:
         """Recursively walk through the node_modules file tree."""
         for pkg_dir in node_modules_dir.iterdir():
@@ -383,7 +382,7 @@ class NpmPlugin(Plugin):
         """Append symlinks in link_dir under the appropriate package in file_list."""
         # Map target paths to links.  This seems backwards but using the targets as keys is more efficient in the loop below.  It's unlikely but there could be multiple symlinks here that point at the same target file, hence the defaultdict(set).
         links = defaultdict(set)
-        for symlink in [link_dir.iterdir()]:
+        for symlink in list(link_dir.iterdir()):
             if not symlink.is_symlink():
                 continue
             target = symlink.readlink().absolute()
@@ -400,7 +399,7 @@ class NpmPlugin(Plugin):
         root_modules_dir = (
             self._part_info.part_install_dir / "usr/lib/node_modules"
         ).absolute()
-        file_list = {}
+        file_list: PackageFileList = {}
         self._append_node_modules_dir(root_modules_dir, file_list)
 
         self._append_symlinks(self._part_info.part_install_dir / "usr/bin", file_list)
