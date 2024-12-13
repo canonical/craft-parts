@@ -240,7 +240,7 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
     assert len(actual_file_list[ar500]) == 5, ar500
 
     # Between 5.0.0 and 5.0.1 they seem to have stopped packaging the readme;
-    # back to 4 files per install.
+    # back to 4 files per install, and there are two installs of this version.
     ar501 = ("ansi-regex", "5.0.1")
     assert ar501 in actual_file_list
     assert len(actual_file_list[ar501]) == 8, ar501
