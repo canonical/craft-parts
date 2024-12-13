@@ -355,7 +355,11 @@ class NpmPlugin(Plugin):
 
         key = (pkg_name, pkg_version)
         if key in file_list:
-            # It appears we have two installs of the same package and version at different points in the tree.  This is fine.  If we ever care to add provenance information to the xattrs (i.e., which package installed which other package) then this scenario would be a problem and we'd need to revisit this whole approach.
+            # It appears we have two installs of the same package and version
+            # at different points in the tree.  This is fine.  If we ever care
+            # to add provenance information to the xattrs (i.e., which package
+            # installed which other package) then this scenario would be a
+            # problem and we'd need to revisit this whole approach.
             file_list[key].update(pkg_contents)
         else:
             file_list[key] = pkg_contents
@@ -380,7 +384,10 @@ class NpmPlugin(Plugin):
 
     def _append_symlinks(self, link_dir: Path, file_list: PackageFileList) -> None:
         """Append symlinks in link_dir under the appropriate package in file_list."""
-        # Map target paths to links.  This seems backwards but using the targets as keys is more efficient in the loop below.  It's unlikely but there could be multiple symlinks here that point at the same target file, hence the defaultdict(set).
+        # Map target paths to links.  This seems backwards but using the
+        # targets as keys is more efficient in the loop below.  It's unlikely
+        # but there could be multiple symlinks here that point at the same
+        # target file, hence the defaultdict(set).
         links = defaultdict(set)
         for symlink in list(link_dir.iterdir()):
             if not symlink.is_symlink():
