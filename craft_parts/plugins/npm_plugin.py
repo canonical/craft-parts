@@ -385,11 +385,11 @@ class NpmPlugin(Plugin):
     def _append_symlinks(self, link_dir: Path, file_list: PackageFileList) -> None:
         """Append symlinks in link_dir under the appropriate package in file_list."""
         # Map target paths to links.  This seems backwards but using the
-        # targets as keys is more efficient in the loop below.  It's unlikely
-        # but there could be multiple symlinks here that point at the same
-        # target file, hence the defaultdict(set).
+        # targets as keys is more efficient in the loop below.
+        # There could be multiple symlinks here that point at the same
+        # target file, hence the value is a set.
         links = defaultdict(set)
-        for symlink in list(link_dir.iterdir()):
+        for symlink in link_dir.iterdir():
             if not symlink.is_symlink():
                 continue
             target = symlink.resolve()
