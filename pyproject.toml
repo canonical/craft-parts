@@ -27,9 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 apt = [
-    "python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu2/python-apt_2.4.0ubuntu2.tar.xz ; sys_platform == 'linux'",
-
-#    "python-apt>=2.4.0;sys_platform=='linux'"
+    "python-apt>=2.4.0;sys_platform=='linux'"
 ]
 docs = [
     "canonical-sphinx",
