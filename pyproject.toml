@@ -182,6 +182,12 @@ skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,.
 quiet-level = 3
 check-filenames = true
 
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+markers = ["slow: slow tests"]
+
 [tool.mypy]
 python_version = "3.10"
 exclude = [
