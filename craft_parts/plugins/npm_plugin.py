@@ -397,14 +397,14 @@ class NpmPlugin(Plugin):
     @override
     def get_file_list(self) -> PackageFileList:
         root_modules_dir = (
-            self._part_info.part_install_dir / "usr/lib/node_modules"
+            self._part_info.part_install_dir / "lib/node_modules"
         ).absolute()
         file_list: PackageFileList = {}
         self._append_node_modules_dir(root_modules_dir, file_list)
 
-        self._append_symlinks(self._part_info.part_install_dir / "usr/bin", file_list)
+        self._append_symlinks(self._part_info.part_install_dir / "bin", file_list)
         self._append_symlinks(
-            self._part_info.part_install_dir / "usr/share/man", file_list
+            self._part_info.part_install_dir / "share/man", file_list
         )
 
         return file_list
