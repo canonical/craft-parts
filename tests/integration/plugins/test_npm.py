@@ -217,6 +217,10 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
     # This example bundles in node, which brings a ton of other dependencies -
     # this is perfect for checking all sorts of weird behavior.
 
+    seeking_packages = {
+        "npm-hello": False,
+        "npm": False,
+    }
     for (pkg_name, _), pkg_files in actual_file_list.items():
         # Check for the files from our little fake package
         if pkg_name == "npm-hello":
@@ -225,6 +229,7 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
                 "lib/node_modules/npm-hello/hello.js",
                 "lib/node_modules/npm-hello/package.json",
             }
+            seeking_packages["npm-hello"] = True
 
         # Verify bins were installed properly
         if pkg_name == "npm":
@@ -233,6 +238,10 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
             )
             assert "bin/npm" in pkg_files_rerooted
             assert "bin/npx" in pkg_files_rerooted
+            seeking_packages["npm"] = True
+    sought_collapsed = set(seeking_packages.values())
+    success = len(sought_collapsed) == 1 and sought_collapsed.pop()
+    assert success, f"Didn't find one or more packages: {seeking_packages}"
 
     # Node itself depends on four different versions of this ansi-regex
     # package. npm itself directly depends on 2.1.1, and two of npm's
