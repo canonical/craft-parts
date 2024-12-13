@@ -23,18 +23,6 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def _mk_hello_js():
-    Path("hello.js").write_text(
-        textwrap.dedent(
-            """\
-            #!/usr/bin/env node
-
-            console.log('hello world');
-            """
-        )
-    )
-
-
 @pytest.fixture
 def create_fake_package():
     def _create_fake_package():
@@ -50,7 +38,15 @@ def create_fake_package():
         )
         parts = yaml.safe_load(parts_yaml)
 
-        _mk_hello_js()
+        Path("hello.js").write_text(
+            textwrap.dedent(
+                """\
+                #!/usr/bin/env node
+
+                console.log('hello world');
+                """
+            )
+        )
 
         Path("package.json").write_text(
             textwrap.dedent(
@@ -85,6 +81,13 @@ def create_fake_package():
         )
         return parts
     return _create_fake_package
+
+
+def _make_paths_relative(pkg_files_abs):
+    """Takes an iterable of Paths and chops off everything before and including
+    the "install" directory, returning these transformed paths as strings in a set.
+    """
+    return set(str(f).partition("/install/")[2] for f in pkg_files_abs)
 
 
 def test_npm_plugin(create_fake_package, new_dir, partitions):
@@ -130,7 +133,7 @@ def test_npm_plugin_include_node(create_fake_package, new_dir, partitions):
 
 
 @pytest.mark.slow
-def test_npm_plugin_get_file_list_simple(create_fake_package, new_dir, partitions):
+def test_npm_plugin_get_file_list(create_fake_package, new_dir, partitions):
     parts = create_fake_package()
     lifecycle = LifecycleManager(
         parts,
@@ -146,27 +149,50 @@ def test_npm_plugin_get_file_list_simple(create_fake_package, new_dir, partition
     part_name = list(parts["parts"].keys())[0]
     actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_file_list()
 
-    # The "simple" example bundles in node and a ton of other dependencies - only
-    # check for existence of the files from our little fake pacakge.
+    # This example bundles in node, which brings a ton of other dependencies -
+    # this is perfect for checking all sorts of weird behavior.
+
     for (pkg_name, pkg_version), pkg_files in actual_file_list.items():
-        if pkg_name != "npm-hello":
-            continue
-        pkg_files_rerooted = set(str(f).partition("/install/")[2] for f in pkg_files)
-        assert pkg_files_rerooted == {
-            "bin/npm-hello",
-            "lib/node_modules/npm-hello/hello.js",
-            "lib/node_modules/npm-hello/package.json",
-        }
+        # Check for the files from our little fake package
+        if pkg_name == "npm-hello":
+            pkg_files_rerooted = _make_paths_relative(pkg_files)
+            assert pkg_files_rerooted == {
+                "bin/npm-hello",
+                "lib/node_modules/npm-hello/hello.js",
+                "lib/node_modules/npm-hello/package.json",
+            } 
 
+        # Verify bins were installed properly
+        if pkg_name == "npm":
+            pkg_files_rerooted = _make_paths_relative(pkg_files)
+            assert "bin/npm" in pkg_files_rerooted
+            assert "bin/npx" in pkg_files_rerooted
 
-#def test_npm_plugin_get_file_list_complex(
-#
-#    parts_yaml = textwrap.dedent(
-#        """\
-#        parts:
-#          foob:
-#            plugin: npm
-#            source: https://github.com/animate-object/is-ten
-#        """
-#    )
-#    parts = yaml.safe_load(parts_yaml)
+    # Node itself depends on four different versions of this ansi-regex
+    # package. npm itself directly depends on 2.1.1, and two of npm's
+    # dependencies (cli-columns and gauge) both depend on 5.0.1, which means
+    # their files get collapsed under a single key (which doesn't matter for
+    # our purposes.)
+    ar211 = ("ansi-regex", "2.1.1")
+    assert ar211 in actual_file_list
+    assert len(actual_file_list[ar211]) == 4, ar211
+
+    ar300 = ("ansi-regex", "3.0.0")
+    assert ar300 in actual_file_list
+    assert len(actual_file_list[ar300]) == 4, ar300
+
+    # Added "index.d.ts" file, absent from previous versions
+    ar500 = ("ansi-regex", "5.0.0")
+    assert ar500 in actual_file_list
+    assert len(actual_file_list[ar500]) == 5, ar500
+
+    # Between 5.0.0 and 5.0.1 they seem to have stopped packaging the readme;
+    # back to 4 files per install.
+    ar501 = ("ansi-regex", "5.0.1")
+    assert ar501 in actual_file_list
+    assert len(actual_file_list[ar501]) == 8, ar501
+
+    # Verify scoped names work properly:
+    assert ('@npmcli/installed-package-contents', '1.0.7') in actual_file_list
+    assert ('@tootallnate/once', '1.1.2') in actual_file_list
+    assert ('@tootallnate/once', '2.0.0') in actual_file_list
