@@ -16,9 +16,9 @@
 
 import json
 import os
-from pathlib import Path
 import random
 import string
+from pathlib import Path
 
 import pytest
 from craft_parts import errors
@@ -385,10 +385,10 @@ class TestPluginNpmPlugin:
 
         assert plugin.get_out_of_source_build() is False
 
-    def test_get_file_list(self, part_info, new_dir):
+    def test_get_file_list(self, part_info, new_dir):  # noqa: PLR0915
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
-       
+
         # Build a fake file tree, emulating what real package installs look like.
         # Integration tests actually install stuff and check a subset of the
         # large installed trees.
@@ -396,15 +396,23 @@ class TestPluginNpmPlugin:
         root.mkdir(parents=True)
 
         def _randstr():
-            return "".join(random.choice(string.ascii_letters + string.digits + ".-_") for i in range(10))
+            return "".join(
+                random.choice(  # noqa: S311
+                    string.ascii_letters + string.digits + ".-_"
+                )
+                for i in range(10)
+            )
 
         def _mk_package_json(path, version):
             with open(path / "package.json", "w") as f:
-                json.dump({
-                    "version": version,
-                    "name": _randstr(),
-                    _randstr(): _randstr(),
-                }, f)
+                json.dump(
+                    {
+                        "version": version,
+                        "name": _randstr(),
+                        _randstr(): _randstr(),
+                    },
+                    f,
+                )
 
         def _mk_module_b(path, version):
             (path / "index.js").touch()
@@ -479,8 +487,14 @@ class TestPluginNpmPlugin:
         (root / "lib/node_modules/modulea/node_modules").mkdir()
         (root / "lib/node_modules/modulea/node_modules/@periscope").mkdir()
         (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep").mkdir()
-        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules").mkdir()
-        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb").mkdir()
+        (
+            root
+            / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules"
+        ).mkdir()
+        (
+            root
+            / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb"
+        ).mkdir()
         (root / "lib/node_modules/modulea/node_modules/moduleb").mkdir()
 
         (root / "lib/node_modules/@scopename/modulec/node_modules").mkdir()
@@ -495,7 +509,7 @@ class TestPluginNpmPlugin:
 
         dupe_moduleb_version = "1.01.1a"
         _mk_module_b(root / "lib/node_modules/moduleb", dupe_moduleb_version)
-        
+
         (root / "lib/node_modules/@scopename/modulec/bin").mkdir()
         (root / "lib/node_modules/@scopename/modulec/bin/index.js").touch()
         (root / "lib/node_modules/@scopename/modulec/lib").mkdir()
@@ -504,23 +518,49 @@ class TestPluginNpmPlugin:
         modulec_version = _randstr()
         _mk_package_json(root / "lib/node_modules/@scopename/modulec", modulec_version)
 
-        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/AUTHORS.txt").touch()
-        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js").touch()
+        (
+            root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/AUTHORS.txt"
+        ).touch()
+        (
+            root
+            / "lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js"
+        ).touch()
         sodeep_version = _randstr()
-        _mk_package_json(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep", sodeep_version)
+        _mk_package_json(
+            root / "lib/node_modules/modulea/node_modules/@periscope/sodeep",
+            sodeep_version,
+        )
 
         sodeep_moduleb_version = "178"
-        _mk_module_b(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb", sodeep_moduleb_version)
+        _mk_module_b(
+            root
+            / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb",
+            sodeep_moduleb_version,
+        )
 
         modulea_moduleb_version = "2.77"
-        _mk_module_b(root / "lib/node_modules/modulea/node_modules/moduleb", modulea_moduleb_version)
+        _mk_module_b(
+            root / "lib/node_modules/modulea/node_modules/moduleb",
+            modulea_moduleb_version,
+        )
 
-        _mk_module_b(root / "lib/node_modules/@scopename/modulec/node_modules/moduleb", dupe_moduleb_version)
+        _mk_module_b(
+            root / "lib/node_modules/@scopename/modulec/node_modules/moduleb",
+            dupe_moduleb_version,
+        )
 
         # bin symlinks
-        (root / "bin/my_executable").symlink_to("../lib/node_modules/modulea/bin/cli.js", target_is_directory=True)
-        (root / "bin/uboat").symlink_to("../lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js", target_is_directory=True)
-        (root / "bin/modulec_thing").symlink_to("../lib/node_modules/@scopename/modulec/bin/index.js", target_is_directory=True)
+        (root / "bin/my_executable").symlink_to(
+            "../lib/node_modules/modulea/bin/cli.js", target_is_directory=True
+        )
+        (root / "bin/uboat").symlink_to(
+            "../lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js",
+            target_is_directory=True,
+        )
+        (root / "bin/modulec_thing").symlink_to(
+            "../lib/node_modules/@scopename/modulec/bin/index.js",
+            target_is_directory=True,
+        )
 
         expected = {
             Package("modulea", modulea_version): {
@@ -533,8 +573,14 @@ class TestPluginNpmPlugin:
             Package("moduleb", dupe_moduleb_version): {
                 Path(root / "lib/node_modules/moduleb/index.js"),
                 Path(root / "lib/node_modules/moduleb/package.json"),
-                Path(root / "lib/node_modules/@scopename/modulec/node_modules/moduleb/index.js"),
-                Path(root / "lib/node_modules/@scopename/modulec/node_modules/moduleb/package.json"),
+                Path(
+                    root
+                    / "lib/node_modules/@scopename/modulec/node_modules/moduleb/index.js"
+                ),
+                Path(
+                    root
+                    / "lib/node_modules/@scopename/modulec/node_modules/moduleb/package.json"
+                ),
             },
             Package("@scopename/modulec", modulec_version): {
                 Path(root / "bin/modulec_thing"),
@@ -547,18 +593,35 @@ class TestPluginNpmPlugin:
             },
             Package("@periscope/sodeep", sodeep_version): {
                 Path(root / "bin/uboat"),
-                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/AUTHORS.txt"),
-                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js"),
-                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/package.json"),
+                Path(
+                    root
+                    / "lib/node_modules/modulea/node_modules/@periscope/sodeep/AUTHORS.txt"
+                ),
+                Path(
+                    root
+                    / "lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js"
+                ),
+                Path(
+                    root
+                    / "lib/node_modules/modulea/node_modules/@periscope/sodeep/package.json"
+                ),
             },
             Package("moduleb", sodeep_moduleb_version): {
-                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/index.js"),
-                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/package.json"),
+                Path(
+                    root
+                    / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/index.js"
+                ),
+                Path(
+                    root
+                    / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/package.json"
+                ),
             },
             Package("moduleb", modulea_moduleb_version): {
                 Path(root / "lib/node_modules/modulea/node_modules/moduleb/index.js"),
-                Path(root / "lib/node_modules/modulea/node_modules/moduleb/package.json"),
+                Path(
+                    root / "lib/node_modules/modulea/node_modules/moduleb/package.json"
+                ),
             },
         }
-        
+
         assert expected == plugin.get_file_list()
