@@ -523,8 +523,6 @@ class PluginBuildError(PartsError):
                 return None
 
             stderr = self.stderr.decode("utf-8", errors="replace")
-            details_io.write("\nCaptured standard error:")
-
             stderr_lines = stderr.split("\n")
             # Find the final command captured in the logs
             last_command = None
