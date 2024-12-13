@@ -212,7 +212,7 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
         ctx.execute(actions)
 
     part_name = list(parts["parts"].keys())[0]
-    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_file_list()
+    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_files()
     part_install_dir = lifecycle._executor._part_list[0].part_install_dir
 
     # This example bundles in node, which brings a ton of other dependencies -

@@ -34,7 +34,7 @@ from typing_extensions import Self
 from craft_parts.errors import InvalidArchitecture
 
 from . import validator
-from .base import Package, PackageFileList, Plugin
+from .base import Package, PackageFiles, Plugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
@@ -325,11 +325,11 @@ class NpmPlugin(Plugin):
         return cmd
 
     @override
-    def get_file_list(self) -> PackageFileList:
+    def get_files(self) -> PackageFiles:
         root_modules_dir = (
             self._part_info.part_install_dir / "lib/node_modules"
         ).absolute()
-        file_list: PackageFileList = {}
+        file_list: PackageFiles = {}
         _append_node_modules_dir(root_modules_dir, file_list)
 
         _append_symlinks(self._part_info.part_install_dir / "bin", file_list)
@@ -339,7 +339,7 @@ class NpmPlugin(Plugin):
 
 
 def _append_package_dir(
-    pkg_dir: Path, file_list: PackageFileList, scope_name: str | None = None
+    pkg_dir: Path, file_list: PackageFiles, scope_name: str | None = None
 ) -> None:
     """Read the things in the package dir into the data structure."""
     pkg_name = pkg_dir.name
@@ -379,7 +379,7 @@ def _append_package_dir(
 
 def _append_node_modules_dir(
     node_modules_dir: Path,
-    file_list: PackageFileList,
+    file_list: PackageFiles,
 ) -> None:
     """Recursively walk through the node_modules file tree."""
     for pkg_dir in node_modules_dir.iterdir():
@@ -395,7 +395,7 @@ def _append_node_modules_dir(
             _append_package_dir(pkg_dir, file_list, scope_name)
 
 
-def _append_symlinks(link_dir: Path, file_list: PackageFileList) -> None:
+def _append_symlinks(link_dir: Path, file_list: PackageFiles) -> None:
     """Append symlinks in link_dir under the appropriate package in file_list."""
     # Map target paths to links.  This seems backwards but using the
     # targets as keys is more efficient in the loop below.
@@ -413,7 +413,7 @@ def _append_symlinks(link_dir: Path, file_list: PackageFileList) -> None:
         links[target].add(symlink)
 
     # Find what packages those links point into
-    to_add: PackageFileList = defaultdict(set)
+    to_add: PackageFiles = defaultdict(set)
     for pkg, pkg_files in file_list.items():
         for pkg_file in pkg_files:
             if pkg_file.resolve() in links:

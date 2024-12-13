@@ -624,4 +624,4 @@ class TestPluginNpmPlugin:
             },
         }
 
-        assert expected == plugin.get_file_list()
+        assert expected == plugin.get_files()

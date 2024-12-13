@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from craft_parts import infos
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Package:
     """A dataclass that uniquely identifies a package."""
 
@@ -45,7 +45,7 @@ class Package:
     version: str
 
 
-PackageFileList = dict[Package, set[pathlib.Path]]
+PackageFiles = dict[Package, set[pathlib.Path]]
 
 
 class Plugin(abc.ABC):
@@ -103,7 +103,7 @@ class Plugin(abc.ABC):
         """
         self._action_properties = deepcopy(action_properties)
 
-    def get_file_list(self) -> PackageFileList:
+    def get_files(self) -> PackageFiles:
         """Get a mapping of (package name, package version) -> installed file."""
         return {}
 
