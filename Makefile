@@ -67,7 +67,7 @@ install: clean ## Install python package.
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-codespell test-ruff test-mypy test-pydocstyle test-pyright ## Run all linting tests
+lint: test-black test-codespell test-ruff test-mypy test-pyright ## Run all linting tests
 
 .PHONY: release
 release: dist ## Release with twine.
@@ -97,10 +97,6 @@ test-integrations: ## Run integration tests.
 .PHONY: test-mypy
 test-mypy:
 	mypy $(SOURCES)
-
-.PHONY: test-pydocstyle
-test-pydocstyle:
-	pydocstyle craft_parts
 
 .PHONY: test-pyright
 test-pyright:

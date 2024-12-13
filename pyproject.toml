@@ -182,6 +182,12 @@ skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,.
 quiet-level = 3
 check-filenames = true
 
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+markers = ["slow: slow tests"]
+
 [tool.mypy]
 python_version = "3.10"
 exclude = [
@@ -329,6 +335,16 @@ lint.ignore = [
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
+
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [  # Functions with these decorators don't have to have docstrings.
+    "typing.overload",  # Default configuration
+    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
+    "overrides.override",
+    "overrides.overrides",
+    "typing.override",
+    "typing_extensions.override",
+]
 
 [tool.ruff.lint.pylint]
 max-args = 8

@@ -22,6 +22,7 @@ import abc
 import pathlib
 import textwrap
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from overrides import override
@@ -34,6 +35,17 @@ from .validator import PluginEnvironmentValidator
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
     from craft_parts import infos
+
+
+@dataclass(frozen=True, slots=True)
+class Package:
+    """A dataclass that uniquely identifies a package."""
+
+    name: str
+    version: str
+
+
+PackageFiles = dict[Package, set[pathlib.Path]]
 
 
 class Plugin(abc.ABC):
@@ -90,6 +102,10 @@ class Plugin(abc.ABC):
         :param action_properties: The properties to store.
         """
         self._action_properties = deepcopy(action_properties)
+
+    def get_files(self) -> PackageFiles:
+        """Get a mapping of (package name, package version) -> installed file."""
+        return {}
 
 
 class BasePythonPlugin(Plugin):
