@@ -402,7 +402,7 @@ class NpmPlugin(Plugin):
                 if pkg_file.resolve() in links:
                     link = links[pkg_file]
                     to_add[pkg_tuple].update(link)
-                    
+
         # Insert those links into our package files data structure
         for pkg_tuple, pkg_files in to_add.items():
             file_list[pkg_tuple].update(pkg_files)
@@ -416,8 +416,6 @@ class NpmPlugin(Plugin):
         self._append_node_modules_dir(root_modules_dir, file_list)
 
         self._append_symlinks(self._part_info.part_install_dir / "bin", file_list)
-        self._append_symlinks(
-            self._part_info.part_install_dir / "share/man", file_list
-        )
+        self._append_symlinks(self._part_info.part_install_dir / "share/man", file_list)
 
         return file_list

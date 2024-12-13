@@ -80,6 +80,7 @@ def create_fake_package():
             )
         )
         return parts
+
     return _create_fake_package
 
 
@@ -87,7 +88,7 @@ def _make_paths_relative(pkg_files_abs):
     """Takes an iterable of Paths and chops off everything before and including
     the "install" directory, returning these transformed paths as strings in a set.
     """
-    return set(str(f).partition("/install/")[2] for f in pkg_files_abs)
+    return {str(f).partition("/install/")[2] for f in pkg_files_abs}
 
 
 def test_npm_plugin(create_fake_package, new_dir, partitions):
@@ -152,7 +153,7 @@ def test_npm_plugin_get_file_list(create_fake_package, new_dir, partitions):
     # This example bundles in node, which brings a ton of other dependencies -
     # this is perfect for checking all sorts of weird behavior.
 
-    for (pkg_name, pkg_version), pkg_files in actual_file_list.items():
+    for (pkg_name, _), pkg_files in actual_file_list.items():
         # Check for the files from our little fake package
         if pkg_name == "npm-hello":
             pkg_files_rerooted = _make_paths_relative(pkg_files)
@@ -160,7 +161,7 @@ def test_npm_plugin_get_file_list(create_fake_package, new_dir, partitions):
                 "bin/npm-hello",
                 "lib/node_modules/npm-hello/hello.js",
                 "lib/node_modules/npm-hello/package.json",
-            } 
+            }
 
         # Verify bins were installed properly
         if pkg_name == "npm":
@@ -193,6 +194,6 @@ def test_npm_plugin_get_file_list(create_fake_package, new_dir, partitions):
     assert len(actual_file_list[ar501]) == 8, ar501
 
     # Verify scoped names work properly:
-    assert ('@npmcli/installed-package-contents', '1.0.7') in actual_file_list
-    assert ('@tootallnate/once', '1.1.2') in actual_file_list
-    assert ('@tootallnate/once', '2.0.0') in actual_file_list
+    assert ("@npmcli/installed-package-contents", "1.0.7") in actual_file_list
+    assert ("@tootallnate/once", "1.1.2") in actual_file_list
+    assert ("@tootallnate/once", "2.0.0") in actual_file_list
