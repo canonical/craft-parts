@@ -324,98 +324,98 @@ class NpmPlugin(Plugin):
         ]
         return cmd
 
-    def _append_package_dir(
-        self, pkg_dir: Path, file_list: PackageFileList, scope_name: str | None = None
-    ) -> None:
-        """Read the things in the package dir into the data structure."""
-        pkg_name = pkg_dir.name
-        if scope_name:
-            pkg_name = f"{scope_name}/{pkg_name}"
-
-        # The only thing we have to rely on the package.json for is the version
-        # https://docs.npmjs.com/cli/v10/configuring-npm/package-json
-        metadata_file = pkg_dir / "package.json"
-        with open(metadata_file) as f:
-            metadata = json.load(f)
-        pkg_version = metadata["version"]
-
-        pkg_contents = set()
-        for dirpath, dirnames, filenames in os.walk(pkg_dir):
-            walk_iteration_root = Path(dirpath)
-
-            if "node_modules" in dirnames:
-                # More packages under here, not part of this package
-                dirnames.remove("node_modules")
-                self._append_node_modules_dir(
-                    walk_iteration_root / "node_modules", file_list
-                )
-
-            for file_or_dir in dirnames + filenames:
-                pkg_contents.add(walk_iteration_root / file_or_dir)
-
-        key = (pkg_name, pkg_version)
-        if key in file_list:
-            # It appears we have two installs of the same package and version
-            # at different points in the tree.  This is fine.  If we ever care
-            # to add provenance information to the xattrs (i.e., which package
-            # installed which other package) then this scenario would be a
-            # problem and we'd need to revisit this whole approach.
-            file_list[key].update(pkg_contents)
-        else:
-            file_list[key] = pkg_contents
-
-    def _append_node_modules_dir(
-        self,
-        node_modules_dir: Path,
-        file_list: PackageFileList,
-    ) -> None:
-        """Recursively walk through the node_modules file tree."""
-        for pkg_dir in node_modules_dir.iterdir():
-            if not pkg_dir.name.startswith("@"):
-                # Simple case
-                self._append_package_dir(pkg_dir, file_list)
-                continue
-
-            # There will be one or more scoped packages here, have to dig deeper
-            scope_dir = pkg_dir
-            scope_name = scope_dir.name
-            for pkg_dir in scope_dir.iterdir():  # noqa: PLW2901
-                self._append_package_dir(pkg_dir, file_list, scope_name)
-
-    def _append_symlinks(self, link_dir: Path, file_list: PackageFileList) -> None:
-        """Append symlinks in link_dir under the appropriate package in file_list."""
-        # Map target paths to links.  This seems backwards but using the
-        # targets as keys is more efficient in the loop below.
-        # There could be multiple symlinks here that point at the same
-        # target file, hence the value is a set.
-        links = defaultdict(set)
-        for symlink in link_dir.iterdir():
-            if not symlink.is_symlink():
-                continue
-            target = symlink.resolve()
-            links[target].add(symlink)
-
-        # Find what packages those links point into
-        to_add: PackageFileList = defaultdict(set)
-        for pkg_tuple, pkg_files in file_list.items():
-            for pkg_file in pkg_files:
-                if pkg_file.resolve() in links:
-                    link = links[pkg_file]
-                    to_add[pkg_tuple].update(link)
-
-        # Insert those links into our package files data structure
-        for pkg_tuple, pkg_files in to_add.items():
-            file_list[pkg_tuple].update(pkg_files)
-
     @override
     def get_file_list(self) -> PackageFileList:
         root_modules_dir = (
             self._part_info.part_install_dir / "lib/node_modules"
         ).absolute()
         file_list: PackageFileList = {}
-        self._append_node_modules_dir(root_modules_dir, file_list)
+        _append_node_modules_dir(root_modules_dir, file_list)
 
-        self._append_symlinks(self._part_info.part_install_dir / "bin", file_list)
-        self._append_symlinks(self._part_info.part_install_dir / "share/man", file_list)
+        _append_symlinks(self._part_info.part_install_dir / "bin", file_list)
+        _append_symlinks(self._part_info.part_install_dir / "share/man", file_list)
 
         return file_list
+
+
+def _append_package_dir(
+    pkg_dir: Path, file_list: PackageFileList, scope_name: str | None = None
+) -> None:
+    """Read the things in the package dir into the data structure."""
+    pkg_name = pkg_dir.name
+    if scope_name:
+        pkg_name = f"{scope_name}/{pkg_name}"
+
+    # The only thing we have to rely on the package.json for is the version
+    # https://docs.npmjs.com/cli/v10/configuring-npm/package-json
+    metadata_file = pkg_dir / "package.json"
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+    pkg_version = metadata["version"]
+
+    pkg_contents = set()
+    for dirpath, dirnames, filenames in os.walk(pkg_dir):
+        walk_iteration_root = Path(dirpath)
+
+        if "node_modules" in dirnames:
+            # More packages under here, not part of this package
+            dirnames.remove("node_modules")
+            _append_node_modules_dir(walk_iteration_root / "node_modules", file_list)
+
+        for file_or_dir in dirnames + filenames:
+            pkg_contents.add(walk_iteration_root / file_or_dir)
+
+    key = (pkg_name, pkg_version)
+    if key in file_list:
+        # It appears we have two installs of the same package and version
+        # at different points in the tree.  This is fine.  If we ever care
+        # to add provenance information to the xattrs (i.e., which package
+        # installed which other package) then this scenario would be a
+        # problem and we'd need to revisit this whole approach.
+        file_list[key].update(pkg_contents)
+    else:
+        file_list[key] = pkg_contents
+
+
+def _append_node_modules_dir(
+    node_modules_dir: Path,
+    file_list: PackageFileList,
+) -> None:
+    """Recursively walk through the node_modules file tree."""
+    for pkg_dir in node_modules_dir.iterdir():
+        if not pkg_dir.name.startswith("@"):
+            # Simple case
+            _append_package_dir(pkg_dir, file_list)
+            continue
+
+        # There will be one or more scoped packages here, have to dig deeper
+        scope_dir = pkg_dir
+        scope_name = scope_dir.name
+        for pkg_dir in scope_dir.iterdir():  # noqa: PLW2901
+            _append_package_dir(pkg_dir, file_list, scope_name)
+
+
+def _append_symlinks(link_dir: Path, file_list: PackageFileList) -> None:
+    """Append symlinks in link_dir under the appropriate package in file_list."""
+    # Map target paths to links.  This seems backwards but using the
+    # targets as keys is more efficient in the loop below.
+    # There could be multiple symlinks here that point at the same
+    # target file, hence the value is a set.
+    links = defaultdict(set)
+    for symlink in link_dir.iterdir():
+        if not symlink.is_symlink():
+            continue
+        target = symlink.resolve()
+        links[target].add(symlink)
+
+    # Find what packages those links point into
+    to_add: PackageFileList = defaultdict(set)
+    for pkg_tuple, pkg_files in file_list.items():
+        for pkg_file in pkg_files:
+            if pkg_file.resolve() in links:
+                link = links[pkg_file]
+                to_add[pkg_tuple].update(link)
+
+    # Insert those links into our package files data structure
+    for pkg_tuple, pkg_files in to_add.items():
+        file_list[pkg_tuple].update(pkg_files)
