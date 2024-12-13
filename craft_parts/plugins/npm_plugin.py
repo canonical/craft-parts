@@ -385,14 +385,21 @@ class NpmPlugin(Plugin):
         for symlink in list(link_dir.iterdir()):
             if not symlink.is_symlink():
                 continue
-            target = symlink.readlink().absolute()
+            target = symlink.resolve()
             links[target].add(symlink)
 
-        # Insert those links into our package files data structure
-        for pkg_files in file_list.values():
+        # Find what packages those links point into
+        to_add: PackageFileList = defaultdict(set)
+        for pkg_tuple, pkg_files in file_list.items():
             for pkg_file in pkg_files:
-                if pkg_file in links:
-                    pkg_files.update(links[pkg_file])
+                if pkg_file.resolve() in links:
+                    breakpoint()
+                    link = links[pkg_file]
+                    to_add[pkg_tuple].update(link)
+                    
+        # Insert those links into our package files data structure
+        for pkg_tuple, pkg_files in to_add.items():
+            file_list[pkg_tuple].update(pkg_files)
 
     @override
     def get_file_list(self) -> PackageFileList:
