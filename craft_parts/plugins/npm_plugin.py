@@ -34,7 +34,7 @@ from typing_extensions import Self
 from craft_parts.errors import InvalidArchitecture
 
 from . import validator
-from .base import PackageFileList, Plugin
+from .base import Package, PackageFileList, Plugin
 from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
@@ -365,7 +365,7 @@ def _append_package_dir(
         for file_or_dir in dirnames + filenames:
             pkg_contents.add(walk_iteration_root / file_or_dir)
 
-    key = (pkg_name, pkg_version)
+    key = Package(pkg_name, pkg_version)
     if key in file_list:
         # It appears we have two installs of the same package and version
         # at different points in the tree.  This is fine.  If we ever care
@@ -410,12 +410,12 @@ def _append_symlinks(link_dir: Path, file_list: PackageFileList) -> None:
 
     # Find what packages those links point into
     to_add: PackageFileList = defaultdict(set)
-    for pkg_tuple, pkg_files in file_list.items():
+    for pkg, pkg_files in file_list.items():
         for pkg_file in pkg_files:
             if pkg_file.resolve() in links:
                 link = links[pkg_file]
-                to_add[pkg_tuple].update(link)
+                to_add[pkg].update(link)
 
     # Insert those links into our package files data structure
-    for pkg_tuple, pkg_files in to_add.items():
-        file_list[pkg_tuple].update(pkg_files)
+    for pkg, pkg_files in to_add.items():
+        file_list[pkg].update(pkg_files)

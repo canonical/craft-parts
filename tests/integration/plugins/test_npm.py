@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
+from craft_parts.plugins.base import Package
 
 
 @pytest.fixture
@@ -221,24 +222,26 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
         "npm-hello": False,
         "npm": False,
     }
-    for (pkg_name, _), pkg_files in actual_file_list.items():
+    for pkg, pkg_files in actual_file_list.items():
         # Check for the files from our little fake package
-        if pkg_name == "npm-hello":
+        if pkg.name == "npm-hello":
             assert _paths_relative_to_install_dir(pkg_files, part_install_dir) == {
                 "bin/npm-hello",
                 "lib/node_modules/npm-hello/hello.js",
                 "lib/node_modules/npm-hello/package.json",
             }
-            seeking_packages["npm-hello"] = True
 
         # Verify bins were installed properly
-        if pkg_name == "npm":
+        if pkg.name == "npm":
             pkg_files_rerooted = _paths_relative_to_install_dir(
                 pkg_files, part_install_dir
             )
             assert "bin/npm" in pkg_files_rerooted
             assert "bin/npx" in pkg_files_rerooted
-            seeking_packages["npm"] = True
+
+        if pkg.name in seeking_packages:
+            seeking_packages[pkg.name] = True
+
     sought_collapsed = set(seeking_packages.values())
     success = len(sought_collapsed) == 1 and sought_collapsed.pop()
     assert success, f"Didn't find one or more packages: {seeking_packages}"
@@ -248,7 +251,7 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
     # dependencies (cli-columns and gauge) both depend on 5.0.1, which means
     # their files get collapsed under a single key (which doesn't matter for
     # our purposes.)
-    ar211 = ("ansi-regex", "2.1.1")
+    ar211 = Package("ansi-regex", "2.1.1")
     assert ar211 in actual_file_list
     assert len(actual_file_list[ar211]) == 4, ar211
     assert _paths_relative_to_install_dir(
@@ -260,18 +263,18 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
         "lib/node_modules/npm/node_modules/ansi-regex/readme.md",
     }
 
-    ar300 = ("ansi-regex", "3.0.0")
+    ar300 = Package("ansi-regex", "3.0.0")
     assert ar300 in actual_file_list
     assert len(actual_file_list[ar300]) == 4, ar300
 
     # Added "index.d.ts" file, absent from previous versions
-    ar500 = ("ansi-regex", "5.0.0")
+    ar500 = Package("ansi-regex", "5.0.0")
     assert ar500 in actual_file_list
     assert len(actual_file_list[ar500]) == 5, ar500
 
     # Between 5.0.0 and 5.0.1 they seem to have stopped packaging the readme;
     # back to 4 files per install, and there are two installs of this version.
-    ar501 = ("ansi-regex", "5.0.1")
+    ar501 = Package("ansi-regex", "5.0.1")
     assert ar501 in actual_file_list
     assert len(actual_file_list[ar501]) == 8, ar501
     assert _paths_relative_to_parent_modules_dir(actual_file_list[ar501]) == {
@@ -282,6 +285,6 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
     }
 
     # Verify scoped names work properly:
-    assert ("@npmcli/installed-package-contents", "1.0.7") in actual_file_list
-    assert ("@tootallnate/once", "1.1.2") in actual_file_list
-    assert ("@tootallnate/once", "2.0.0") in actual_file_list
+    assert Package("@npmcli/installed-package-contents", "1.0.7") in actual_file_list
+    assert Package("@tootallnate/once", "1.1.2") in actual_file_list
+    assert Package("@tootallnate/once", "2.0.0") in actual_file_list

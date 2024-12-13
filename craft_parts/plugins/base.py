@@ -22,6 +22,7 @@ import abc
 import pathlib
 import textwrap
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from overrides import override
@@ -36,7 +37,15 @@ if TYPE_CHECKING:
     from craft_parts import infos
 
 
-PackageFileList = dict[tuple[str, str], set[pathlib.Path]]
+@dataclass(frozen=True)
+class Package:
+    """A dataclass that uniquely identifies a package."""
+
+    name: str
+    version: str
+
+
+PackageFileList = dict[Package, set[pathlib.Path]]
 
 
 class Plugin(abc.ABC):
