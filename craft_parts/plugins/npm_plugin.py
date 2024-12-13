@@ -400,7 +400,6 @@ class NpmPlugin(Plugin):
         for pkg_tuple, pkg_files in file_list.items():
             for pkg_file in pkg_files:
                 if pkg_file.resolve() in links:
-                    breakpoint()
                     link = links[pkg_file]
                     to_add[pkg_tuple].update(link)
                     

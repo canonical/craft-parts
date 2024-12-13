@@ -129,6 +129,7 @@ def test_npm_plugin_include_node(create_fake_package, new_dir, partitions):
     assert output == "hello world\n"
 
 
+@pytest.mark.slow
 def test_npm_plugin_get_file_list_simple(create_fake_package, new_dir, partitions):
     parts = create_fake_package()
     lifecycle = LifecycleManager(
@@ -145,16 +146,17 @@ def test_npm_plugin_get_file_list_simple(create_fake_package, new_dir, partition
     part_name = list(parts["parts"].keys())[0]
     actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_file_list()
 
-    
-
-    breakpoint()
-
-    binary = Path(lifecycle.project_info.prime_dir, "bin", "npm-hello")
-
-    output = subprocess.check_output([str(binary)], text=True)
-    assert output == "hello world\n"
-
-    assert Path(lifecycle.project_info.prime_dir, "bin", "node").exists() is False
+    # The "simple" example bundles in node and a ton of other dependencies - only
+    # check for existence of the files from our little fake pacakge.
+    for (pkg_name, pkg_version), pkg_files in actual_file_list.items():
+        if pkg_name != "npm-hello":
+            continue
+        pkg_files_rerooted = set(str(f).partition("/install/")[2] for f in pkg_files)
+        assert pkg_files_rerooted == {
+            "bin/npm-hello",
+            "lib/node_modules/npm-hello/hello.js",
+            "lib/node_modules/npm-hello/package.json",
+        }
 
 
 #def test_npm_plugin_get_file_list_complex(
