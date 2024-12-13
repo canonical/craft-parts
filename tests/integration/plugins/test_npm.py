@@ -24,10 +24,9 @@ from craft_parts import LifecycleManager, Step
 
 
 @pytest.fixture
-def create_fake_package():
-    def _create_fake_package():
-        parts_yaml = textwrap.dedent(
-            """\
+def create_fake_package_with_node():
+    def _create_fake_package_with_node():
+        parts_yaml = """\
             parts:
               foo:
                 plugin: npm
@@ -35,7 +34,9 @@ def create_fake_package():
                 npm-include-node: True
                 npm-node-version: "16.14.2"
             """
-        )
+        parts_yaml = textwrap.dedent(parts_yaml)
+        print(parts_yaml)
+
         parts = yaml.safe_load(parts_yaml)
 
         Path("hello.js").write_text(
@@ -81,7 +82,7 @@ def create_fake_package():
         )
         return parts
 
-    return _create_fake_package
+    return _create_fake_package_with_node
 
 
 def _make_paths_relative(pkg_files_abs):
@@ -91,8 +92,59 @@ def _make_paths_relative(pkg_files_abs):
     return {str(f).partition("/install/")[2] for f in pkg_files_abs}
 
 
-def test_npm_plugin(create_fake_package, new_dir, partitions):
-    parts = create_fake_package()
+def test_npm_plugin(create_fake_package_with_node, new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: npm
+            source: .
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    Path("hello.js").write_text(
+        textwrap.dedent(
+            """\
+            #!/usr/bin/env node
+
+            console.log('hello world');
+            """
+        )
+    )
+
+    Path("package.json").write_text(
+        textwrap.dedent(
+            """\
+            {
+              "name": "npm-hello",
+              "version": "1.0.0",
+              "description": "Testing grounds for snapcraft integration tests",
+              "bin": {
+                "npm-hello": "hello.js"
+              },
+              "scripts": {
+                "npm-hello": "echo 'Error: no test specified' && exit 1"
+              },
+              "author": "",
+              "license": "GPL-3.0"
+            }
+            """
+        )
+    )
+
+    Path("package-lock.json").write_text(
+        textwrap.dedent(
+            """\
+            {
+              "name": "npm-hello",
+              "version": "1.0.0",
+              "lockfileVersion": 1
+            }
+            """
+        )
+    )
+
     lifecycle = LifecycleManager(
         parts,
         application_name="test_npm_plugin",
@@ -112,8 +164,8 @@ def test_npm_plugin(create_fake_package, new_dir, partitions):
     assert Path(lifecycle.project_info.prime_dir, "bin", "node").exists() is False
 
 
-def test_npm_plugin_include_node(create_fake_package, new_dir, partitions):
-    parts = create_fake_package()
+def test_npm_plugin_include_node(create_fake_package_with_node, new_dir, partitions):
+    parts = create_fake_package_with_node()
     lifecycle = LifecycleManager(
         parts,
         application_name="test_npm_plugin",
@@ -134,8 +186,8 @@ def test_npm_plugin_include_node(create_fake_package, new_dir, partitions):
 
 
 @pytest.mark.slow
-def test_npm_plugin_get_file_list(create_fake_package, new_dir, partitions):
-    parts = create_fake_package()
+def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partitions):
+    parts = create_fake_package_with_node()
     lifecycle = LifecycleManager(
         parts,
         application_name="test_npm_plugin",
