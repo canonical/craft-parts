@@ -401,6 +401,10 @@ def _append_symlinks(link_dir: Path, file_list: PackageFileList) -> None:
     # targets as keys is more efficient in the loop below.
     # There could be multiple symlinks here that point at the same
     # target file, hence the value is a set.
+    if not link_dir.is_dir():
+        # These may not exist, it's fine
+        return
+
     links = defaultdict(set)
     for symlink in link_dir.iterdir():
         if not symlink.is_symlink():

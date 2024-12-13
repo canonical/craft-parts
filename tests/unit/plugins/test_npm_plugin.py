@@ -14,12 +14,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import os
+from pathlib import Path
+import random
+import string
 
 import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
+from craft_parts.plugins.base import Package
 from craft_parts.plugins.npm_plugin import NpmPlugin
 from pydantic import ValidationError
 
@@ -379,3 +384,181 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_out_of_source_build() is False
+
+    def test_get_file_list(self, part_info, new_dir):
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=part_info)
+       
+        # Build a fake file tree, emulating what real package installs look like.
+        # Integration tests actually install stuff and check a subset of the
+        # large installed trees.
+        root = plugin._part_info.part_install_dir
+        root.mkdir(parents=True)
+
+        def _randstr():
+            return "".join(random.choice(string.ascii_letters + string.digits + ".-_") for i in range(10))
+
+        def _mk_package_json(path, version):
+            with open(path / "package.json", "w") as f:
+                json.dump({
+                    "version": version,
+                    "name": _randstr(),
+                    _randstr(): _randstr(),
+                }, f)
+
+        def _mk_module_b(path, version):
+            (path / "index.js").touch()
+            _mk_package_json(path, version)
+
+        # This tree should exercise a lot of weird things that node does and
+        # how we handle them:
+        # ├── bin
+        # │   ├── my_executable -> ../lib/node_modules/modulea/bin/cli.js
+        # │   ├── uboat -> ../lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js
+        # │   ├── something_else -> ../another/path
+        # │   ├── not-even-a-link
+        # │   └── modulec_thing -> ../lib/node_modules/@scopename/modulec/bin/index.js
+        # ├── glorp
+        #     └── plop
+        # └── lib
+        #     ├── boop
+        #     └── node_modules
+        #         ├── modulea
+        #         │   ├── bin
+        #         │   │   └── cli.js
+        #         │   ├── index.js
+        #         │   ├── package.json
+        #         │   └── node_modules
+        #         │       ├── @periscope
+        #         │       │   └── sodeep
+        #         │       │       ├── AUTHORS.txt
+        #         │       │       ├── submarine.js
+        #         │       │       ├── package.json
+        #         │       │       └── node_modules
+        #         │       │           └── moduleb
+        #         │       │               ├── index.js
+        #         │       │               └── package.json (v178)
+        #         │       └── moduleb
+        #         │           ├── index.js
+        #         │           └── package.json (v2.77)
+        #         ├── moduleb
+        #         │   ├── index.js
+        #         │   └── package.json (v1.01.1a)
+        #         └── @scopename
+        #             └── modulec
+        #                 ├── bin
+        #                 │   └── index.js
+        #                 ├── lib
+        #                 │   └── index.js
+        #                 ├── LICENSE
+        #                 ├── package.json
+        #                 └── node_modules
+        #                      └── moduleb
+        #                          ├── index.js
+        #                          └── package.json (v1.01.1a)
+
+        # Top dirs
+        (root / "bin").mkdir()
+        (root / "lib").mkdir()
+        (root / "lib/node_modules").mkdir()
+        (root / "glorp").mkdir()
+
+        # Ignored files
+        (root / "glorp/plop").touch()
+        (root / "bin/not-even-a-link").touch()
+        (root / "lib/boop").touch()
+        (root / "bin/something_else").symlink_to("../another/path")
+
+        # Module dir trees
+        (root / "lib/node_modules/modulea").mkdir()
+        (root / "lib/node_modules/moduleb").mkdir()
+        (root / "lib/node_modules/@scopename").mkdir()
+        (root / "lib/node_modules/@scopename/modulec").mkdir()
+
+        # Submodule dir trees
+        (root / "lib/node_modules/modulea/node_modules").mkdir()
+        (root / "lib/node_modules/modulea/node_modules/@periscope").mkdir()
+        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep").mkdir()
+        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules").mkdir()
+        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb").mkdir()
+        (root / "lib/node_modules/modulea/node_modules/moduleb").mkdir()
+
+        (root / "lib/node_modules/@scopename/modulec/node_modules").mkdir()
+        (root / "lib/node_modules/@scopename/modulec/node_modules/moduleb").mkdir()
+
+        # Populate each module install dir
+        (root / "lib/node_modules/modulea/bin").mkdir()
+        (root / "lib/node_modules/modulea/bin/cli.js").touch()
+        (root / "lib/node_modules/modulea/index.js").touch()
+        modulea_version = _randstr()
+        _mk_package_json(root / "lib/node_modules/modulea", modulea_version)
+
+        dupe_moduleb_version = "1.01.1a"
+        _mk_module_b(root / "lib/node_modules/moduleb", dupe_moduleb_version)
+        
+        (root / "lib/node_modules/@scopename/modulec/bin").mkdir()
+        (root / "lib/node_modules/@scopename/modulec/bin/index.js").touch()
+        (root / "lib/node_modules/@scopename/modulec/lib").mkdir()
+        (root / "lib/node_modules/@scopename/modulec/lib/index.js").touch()
+        (root / "lib/node_modules/@scopename/modulec/LICENSE").touch()
+        modulec_version = _randstr()
+        _mk_package_json(root / "lib/node_modules/@scopename/modulec", modulec_version)
+
+        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/AUTHORS.txt").touch()
+        (root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js").touch()
+        sodeep_version = _randstr()
+        _mk_package_json(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep", sodeep_version)
+
+        sodeep_moduleb_version = "178"
+        _mk_module_b(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb", sodeep_moduleb_version)
+
+        modulea_moduleb_version = "2.77"
+        _mk_module_b(root / "lib/node_modules/modulea/node_modules/moduleb", modulea_moduleb_version)
+
+        _mk_module_b(root / "lib/node_modules/@scopename/modulec/node_modules/moduleb", dupe_moduleb_version)
+
+        # bin symlinks
+        (root / "bin/my_executable").symlink_to("../lib/node_modules/modulea/bin/cli.js", target_is_directory=True)
+        (root / "bin/uboat").symlink_to("../lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js", target_is_directory=True)
+        (root / "bin/modulec_thing").symlink_to("../lib/node_modules/@scopename/modulec/bin/index.js", target_is_directory=True)
+
+        expected = {
+            Package("modulea", modulea_version): {
+                Path(root / "bin/my_executable"),
+                Path(root / "lib/node_modules/modulea/bin"),
+                Path(root / "lib/node_modules/modulea/bin/cli.js"),
+                Path(root / "lib/node_modules/modulea/index.js"),
+                Path(root / "lib/node_modules/modulea/package.json"),
+            },
+            Package("moduleb", dupe_moduleb_version): {
+                Path(root / "lib/node_modules/moduleb/index.js"),
+                Path(root / "lib/node_modules/moduleb/package.json"),
+                Path(root / "lib/node_modules/@scopename/modulec/node_modules/moduleb/index.js"),
+                Path(root / "lib/node_modules/@scopename/modulec/node_modules/moduleb/package.json"),
+            },
+            Package("@scopename/modulec", modulec_version): {
+                Path(root / "bin/modulec_thing"),
+                Path(root / "lib/node_modules/@scopename/modulec/bin"),
+                Path(root / "lib/node_modules/@scopename/modulec/bin/index.js"),
+                Path(root / "lib/node_modules/@scopename/modulec/lib"),
+                Path(root / "lib/node_modules/@scopename/modulec/lib/index.js"),
+                Path(root / "lib/node_modules/@scopename/modulec/LICENSE"),
+                Path(root / "lib/node_modules/@scopename/modulec/package.json"),
+            },
+            Package("@periscope/sodeep", sodeep_version): {
+                Path(root / "bin/uboat"),
+                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/AUTHORS.txt"),
+                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/submarine.js"),
+                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/package.json"),
+            },
+            Package("moduleb", sodeep_moduleb_version): {
+                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/index.js"),
+                Path(root / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/package.json"),
+            },
+            Package("moduleb", modulea_moduleb_version): {
+                Path(root / "lib/node_modules/modulea/node_modules/moduleb/index.js"),
+                Path(root / "lib/node_modules/modulea/node_modules/moduleb/package.json"),
+            },
+        }
+        
+        assert expected == plugin.get_file_list()
