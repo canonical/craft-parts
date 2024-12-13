@@ -85,11 +85,22 @@ def create_fake_package_with_node():
     return _create_fake_package_with_node
 
 
-def _make_paths_relative(pkg_files_abs):
+def _paths_relative_to_install_dir(pkg_files_abs, part_install_dir):
     """Takes an iterable of Paths and chops off everything before and including
     the "install" directory, returning these transformed paths as strings in a set.
     """
-    return {str(f).partition("/install/")[2] for f in pkg_files_abs}
+    return {
+        f.as_posix().partition(part_install_dir.as_posix() + "/")[2]
+        for f in pkg_files_abs
+    }
+
+
+def _paths_relative_to_parent_modules_dir(pkg_files_abs):
+    """Takes an iterable of Paths and chops off everything before and including
+    the deepest "node_modules" directory, returning these transformed paths as strings
+    in a set.
+    """
+    return {f.as_posix().rpartition("/node_modules/")[2] for f in pkg_files_abs}
 
 
 def test_npm_plugin(create_fake_package_with_node, new_dir, partitions):
@@ -201,6 +212,7 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
 
     part_name = list(parts["parts"].keys())[0]
     actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_file_list()
+    part_install_dir = lifecycle._executor._part_list[0].part_install_dir
 
     # This example bundles in node, which brings a ton of other dependencies -
     # this is perfect for checking all sorts of weird behavior.
@@ -208,8 +220,7 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
     for (pkg_name, _), pkg_files in actual_file_list.items():
         # Check for the files from our little fake package
         if pkg_name == "npm-hello":
-            pkg_files_rerooted = _make_paths_relative(pkg_files)
-            assert pkg_files_rerooted == {
+            assert _paths_relative_to_install_dir(pkg_files, part_install_dir) == {
                 "bin/npm-hello",
                 "lib/node_modules/npm-hello/hello.js",
                 "lib/node_modules/npm-hello/package.json",
@@ -217,7 +228,9 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
 
         # Verify bins were installed properly
         if pkg_name == "npm":
-            pkg_files_rerooted = _make_paths_relative(pkg_files)
+            pkg_files_rerooted = _paths_relative_to_install_dir(
+                pkg_files, part_install_dir
+            )
             assert "bin/npm" in pkg_files_rerooted
             assert "bin/npx" in pkg_files_rerooted
 
@@ -229,6 +242,14 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
     ar211 = ("ansi-regex", "2.1.1")
     assert ar211 in actual_file_list
     assert len(actual_file_list[ar211]) == 4, ar211
+    assert _paths_relative_to_install_dir(
+        actual_file_list[ar211], part_install_dir
+    ) == {
+        "lib/node_modules/npm/node_modules/ansi-regex/index.js",
+        "lib/node_modules/npm/node_modules/ansi-regex/license",
+        "lib/node_modules/npm/node_modules/ansi-regex/package.json",
+        "lib/node_modules/npm/node_modules/ansi-regex/readme.md",
+    }
 
     ar300 = ("ansi-regex", "3.0.0")
     assert ar300 in actual_file_list
@@ -244,6 +265,12 @@ def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partit
     ar501 = ("ansi-regex", "5.0.1")
     assert ar501 in actual_file_list
     assert len(actual_file_list[ar501]) == 8, ar501
+    assert _paths_relative_to_parent_modules_dir(actual_file_list[ar501]) == {
+        "ansi-regex/index.js",
+        "ansi-regex/index.d.ts",
+        "ansi-regex/license",
+        "ansi-regex/package.json",
+    }
 
     # Verify scoped names work properly:
     assert ("@npmcli/installed-package-contents", "1.0.7") in actual_file_list
