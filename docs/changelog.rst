@@ -9,20 +9,20 @@ New features:
 
 - Add a :ref:`uv plugin<craft_parts_uv_plugin>` for projects that use the `uv
   <https://docs.astral.sh/uv/>`_ build system.
-- Add a :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a `go
-  workspace` for Go modules.
+- Add a :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
+  `workspace <https://go.dev/ref/mod#workspaces>`_ for Go modules.
 - Add an API for :ref:`registering custom source types
   <how_to_add_a_source_handler>`.
 - Prefer ``craft.git`` as the binary to handle git sources, in environments
-  where it is available.
+  where it's available.
 - Set ``JAVA_HOME`` environment variable in Java-based plugins. The plugin will
   try to detect the latest available JDK.
-- Add ``part_has_slices`` function to determine if a part has slices in its
+- Add a ``part_has_slices`` function to determine if a part has slices in its
   ``stage-packages`` key.
-- Add ``part_has_chisel_as_build_snap`` function to determine if a part lists
-  ``chisel`` as a ``build-snap``.
-- Add ``chisel`` as a ``build-snap`` if any part has slices and ``chisel`` is
-  not already listed as a ``build-snap``.
+- Add a ``part_has_chisel_as_build_snap`` function to determine if a part
+  lists ``chisel`` as a ``build-snap``.
+- Add ``chisel`` as a ``build-snap`` if any part has slices and ``chisel``
+  isn't already listed as a ``build-snap``.
 - Split stdout and stderr from ``subprocess`` calls for better presentation of
   build errors.
 
@@ -38,7 +38,6 @@ Documentation:
   :ref:`maven plugin<craft_parts_maven_plugin>` reference pages.
 - Add a link to common part properties from the :ref:`npm
   plugin<craft_parts_npm_plugin>` reference page.
-- Add links to commit history for ``2.x`` releases in the changelog.
 
 For a complete list of commits, check out the `2.2.0`_ release on GitHub.
 
