@@ -43,7 +43,12 @@ def source_directory(request):
 
 @pytest.fixture
 def poetry_part(source_directory):
-    return {"source": str(source_directory), "plugin": "poetry"}
+    return {
+        "source": str(source_directory),
+        "plugin": "poetry",
+        "poetry-export-extra-args": ["--without-hashes"],
+        "poetry-pip-extra-args": ["--no-deps"],
+    }
 
 
 @pytest.fixture

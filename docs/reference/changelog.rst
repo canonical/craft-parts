@@ -9,6 +9,8 @@ New features:
 
 - Add a :doc:`uv plugin</common/craft-parts/reference/plugins/uv_plugin>` for
   projects that use the uv build system.
+- Add new ``poetry-export-extra-args`` and ``poetry-pip-extra-args`` keys
+  to the :doc:`poetry plugin</common/craft-parts/reference/plugins/poetry_plugin>`
 
 Bug fixes:
 
