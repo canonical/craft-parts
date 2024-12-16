@@ -305,6 +305,7 @@ bool
 boolean
 buildtags
 bzr
+changelog
 checkfile
 checksums
 chmod

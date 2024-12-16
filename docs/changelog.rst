@@ -2,21 +2,45 @@
 Changelog
 *********
 
-2.2.0 (2024-MM-DD)
+2.2.0 (2024-12-16)
 ------------------
 
 New features:
 
-- Add a :doc:`uv plugin</common/craft-parts/reference/plugins/uv_plugin>` for
-  projects that use the uv build system.
+- Add a :ref:`uv plugin<craft_parts_uv_plugin>` for projects that use the `uv
+  <https://docs.astral.sh/uv/>`_ build system.
+- Add a :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a `go
+  workspace` for Go modules.
+- Add an API for :ref:`registering custom source types
+  <how_to_add_a_source_handler>`.
+- Prefer ``craft.git`` as the binary to handle git sources, in environments
+  where it is available.
+- Set ``JAVA_HOME`` environment variable in Java-based plugins. The plugin will
+  try to detect the latest available JDK.
+- Add ``part_has_slices`` function to determine if a part has slices in its
+  ``stage-packages`` key.
+- Add ``part_has_chisel_as_build_snap`` function to determine if a part lists
+  ``chisel`` as a ``build-snap``.
+- Add ``chisel`` as a ``build-snap`` if any part has slices and ``chisel`` is
+  not already listed as a ``build-snap``.
+- Split stdout and stderr from ``subprocess`` calls for better presentation of
+  build errors.
 
 Bug fixes:
 
-- Set JAVA_HOME environment variable in Java-based plugins. The plugin will
-  try to detect the latest available JDK.
-- Add an API for :ref:`registering custom source types <how_to_add_a_source_handler>`.
-- Prefer "craft.git" as the binary to handle git sources, in environments where
-  it is available.
+- Remove redundant ``Captured standard error:`` text from plugin build errors.
+- Fix dependency validation for the ``rust`` plugin when a ``rust-deps`` part
+  exists.
+
+Documentation:
+
+- Add labels to the :ref:`ant plugin<craft_parts_ant_plugin>` and
+  :ref:`maven plugin<craft_parts_maven_plugin>` reference pages.
+- Add a link to common part properties from the :ref:`npm
+  plugin<craft_parts_npm_plugin>` reference page.
+- Add links to commit history for ``2.x`` releases in the changelog.
+
+For a complete list of commits, check out the `2.2.0`_ release on GitHub.
 
 2.1.4 (2024-12-04)
 ------------------
@@ -638,6 +662,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.2.0: https://github.com/canonical/craft-parts/releases/tag/2.2.0
 .. _2.1.4: https://github.com/canonical/craft-parts/releases/tag/2.1.4
 .. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
 .. _2.1.2: https://github.com/canonical/craft-parts/releases/tag/2.1.2
