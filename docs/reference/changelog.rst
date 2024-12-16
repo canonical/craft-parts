@@ -11,6 +11,8 @@ New features:
   <https://docs.astral.sh/uv/>`_ build system.
 - Add a :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
   `workspace <https://go.dev/ref/mod#workspaces>`_ for Go modules.
+- Add new ``poetry-export-extra-args`` and ``poetry-pip-extra-args`` keys
+  to the :ref:`poetry plugin<craft_parts_poetry_plugin>`.
 - Add an API for :ref:`registering custom source types
   <how_to_add_a_source_handler>`.
 - Prefer ``craft.git`` as the binary to handle git sources, in environments

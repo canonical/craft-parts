@@ -14,7 +14,7 @@ Reference
    parts_steps
    plugins
    reference
-   ../changelog
+   changelog
 
 Indices and tables
 ==================

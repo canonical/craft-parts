@@ -136,20 +136,38 @@ def get_build_commands(
 
 
 @pytest.mark.parametrize(
-    ("optional_groups", "export_addendum"),
+    ("optional_groups", "poetry_extra_args", "export_addendum"),
     [
-        (set(), ""),
-        ({"dev"}, " --with=dev"),
-        ({"toml", "yaml", "silly-walks"}, " --with=silly-walks,toml,yaml"),
+        (set(), [], ""),
+        ({"dev"}, [], " --with=dev"),
+        ({"toml", "yaml", "silly-walks"}, [], " --with=silly-walks,toml,yaml"),
+        (set(), ["--no-binary=:all:"], " --no-binary=:all:"),
     ],
 )
-def test_get_build_commands(new_dir, optional_groups, export_addendum):
+@pytest.mark.parametrize(
+    ("pip_extra_args", "pip_addendum"),
+    [
+        ([], ""),
+        (["--no-binary=:all:"], "--no-binary=:all:"),
+        (["--pre", "-U"], "--pre -U"),
+    ],
+)
+def test_get_build_commands(
+    new_dir,
+    optional_groups,
+    poetry_extra_args,
+    export_addendum,
+    pip_extra_args,
+    pip_addendum,
+):
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
     properties = PoetryPlugin.properties_class.unmarshal(
         {
             "source": ".",
             "poetry-with": optional_groups,
+            "poetry-export-extra-args": poetry_extra_args,
+            "poetry-pip-extra-args": pip_extra_args,
         }
     )
 
@@ -160,7 +178,7 @@ def test_get_build_commands(new_dir, optional_groups, export_addendum):
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials"
         + export_addendum,
-        f"{new_dir}/parts/p1/install/bin/pip install --requirement={new_dir}/parts/p1/build/requirements.txt",
+        f"{new_dir}/parts/p1/install/bin/pip install {pip_addendum} --requirement={new_dir}/parts/p1/build/requirements.txt",
         f"{new_dir}/parts/p1/install/bin/pip install --no-deps .",
         f"{new_dir}/parts/p1/install/bin/pip check",
         *get_build_commands(new_dir),
