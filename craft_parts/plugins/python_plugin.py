@@ -16,6 +16,11 @@
 
 """The python plugin."""
 
+import csv
+import email
+from email.parser import HeaderParser
+from overrides import override
+from pathlib import Path
 import shlex
 from typing import Literal
 
@@ -78,15 +83,12 @@ class PythonPlugin(BasePythonPlugin):
     @override
     def get_files(self) -> PackageFiles:
         # https://packaging.python.org/en/latest/specifications/binary-distribution-format/
-        # Read the RECORD files
+        # Could also add the pkginfo library for this
 
         venvdir = self._get_venv_directory()
         python_path = venvdir / "bin/python"
         python_version = python_path.resolve().name
-
         site_pkgs_dir = venvdir / "lib" / python_version / "site-packages"
-
-        # Could also add the pkginfo library and skip a lot of the below
 
         ret = {}
         for pkg_dir in site_pkgs_dir.iterdir():
@@ -94,22 +96,21 @@ class PythonPlugin(BasePythonPlugin):
             if not pkg_dir.name.endswith(".dist-info"):
                 continue
 
-            # Get package name and version from filename - could also parse it from METADATA
-            # I assume there must be at least one character for version, not sure what else it could look like though.  I've seen:
-            # - 0.0.0
-            # - 0.0
-            # TODO: look this up
-            pkg_name_match = re.match(r"^(.*)-[0-9.]+\.dist-info$", pkg_dir.name)
-            if not pkg_name_match:
-                raise Exception(f"Unexpectedly formatted dist-info dir: {pkg_dir.name!r}")
-            pkg_name = pkg_name_match[1]
+            # Get package name and version from from METADATA file.
+            # https://packaging.python.org/en/latest/specifications/core-metadata/
+            parser = HeaderParser()
+            with open(pkg_dir / "METADATA", "r") as f:
+                pkg_metadata = parser.parse(f)
+            pkg_name = pkg_metadata["Name"]
+            pkg_version = pkg_metadata["Version"]
 
+            # Read the RECORD file
             record_file = pkg_dir / "RECORD"
             with open(record_file, "r") as f:
                 csvreader = csv.reader(f)
 
                 # First row is files
                 # TODO: Remove all files listed under the dist-info dir?
-                pkg_files = [Path(f[0]) for f in csvreader]
-                ret[pkg_name] = pkg_files
+                pkg_files = {Path(f[0]).absolute() for f in csvreader}
+                ret[Package(pkg_name, pkg_version)] = pkg_files
         return ret

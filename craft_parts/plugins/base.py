@@ -44,6 +44,11 @@ class Package:
     name: str
     version: str
 
+    def __lt__(self, other):
+        if self.name == other.name:
+            return self.version < other.version
+        return self.name < other.name
+
 
 PackageFiles = dict[Package, set[pathlib.Path]]
 
