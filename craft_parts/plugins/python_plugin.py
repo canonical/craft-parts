@@ -106,11 +106,11 @@ class PythonPlugin(BasePythonPlugin):
 
             # Read the RECORD file
             record_file = pkg_dir / "RECORD"
-            with open(record_file, "r") as f:
-                csvreader = csv.reader(f)
+            with open(record_file, "r") as record_file_obj:
+                csvreader = csv.reader(record_file_obj)
 
-                # First row is files
-                # TODO: Remove all files listed under the dist-info dir?
-                pkg_files = {Path(f[0]).absolute() for f in csvreader}
+                # First column is files.  These are relative, resolve() to get
+                # rid of all the ".." that leads up to the bin dir.
+                pkg_files = {(site_pkgs_dir / f[0]).resolve() for f in csvreader}
                 ret[Package(pkg_name, pkg_version)] = pkg_files
         return ret
