@@ -5,6 +5,7 @@ uv plugin
 
 The uv plugin can be used for Python projects that use the uv build tool.
 
+.. _craft_parts_uv_plugin-keywords:
 
 Keywords
 --------
@@ -27,6 +28,7 @@ uv-groups
 Extra dependency groups to build with. Each element of the list is passed
 exactly as ``--group GROUP``.
 
+.. _craft_parts_uv_plugin-environment_variables:
 
 Environment variables
 ---------------------
@@ -82,6 +84,7 @@ UV_PYTHON_PREFERENCE
 Whether uv should prefer (or exclusively use) system or uv-managed Python
 versions.
 
+.. _uv-details-begin:
 
 Dependencies
 ------------
@@ -90,6 +93,7 @@ uv must already be installed on the build system in order to use this plugin.
 For installation instructions, see `uv documentation
 <https://docs.astral.sh/uv/getting-started/installation/>`_.
 
+.. _uv-details-end:
 
 How it works
 ------------
