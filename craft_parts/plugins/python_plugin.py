@@ -78,7 +78,6 @@ class PythonPlugin(BasePythonPlugin):
 
         return commands
 
-
     @override
     def get_files(self) -> PackageFiles:
         # https://packaging.python.org/en/latest/specifications/binary-distribution-format/
