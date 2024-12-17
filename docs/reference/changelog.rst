@@ -321,6 +321,12 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Tox and packaging updates
 - Documentation updates
 
+1.19.8 (2024-09-24)
+-------------------
+
+- Replace requests-unixsocket with requests-unixsocket2
+- Bump minimum Python version to 3.8 (required for requests-unixsocket2)
+
 1.19.7 (2023-08-09)
 -------------------
 
