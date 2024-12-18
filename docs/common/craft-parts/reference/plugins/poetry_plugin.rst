@@ -32,7 +32,7 @@ poetry-with:
 ~~~~~~~~~~~~
 **Type:** list of strings
 
-Extra `dependency groups`_ to use other than the defaults.
+Optional and non-optional `dependency groups`_ to include. By default, only the main dependencies are included.
 
 .. _craft_parts_poetry_plugin-environment_variables:
 
