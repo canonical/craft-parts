@@ -443,17 +443,29 @@ def test_python_plugin_get_files(new_dir, partitions):
     # We can't assert the exact set of keys because the pip version will change
     # over time.  And we can't assert the number of keys because py3.10 installs
     # setuptools as a separate package.
-    print(actual_file_list.keys())
-    for expected_pkg in {
-        Package(name="Flask", version="3.1.0"),
-        Package(name="Jinja2", version="3.1.4"),
-        Package(name="MarkupSafe", version="3.0.2"),
-        Package(name="Werkzeug", version="3.1.3"),
-        Package(name="blinker", version="1.9.0"),
-        Package(name="click", version="8.1.7"),
-        Package(name="itsdangerous", version="2.2.0"),
-    }:
-        assert expected_pkg in actual_file_list
+    assert Package(name="Flask", version="3.1.0") in actual_file_list
+
+    # Can't assert specific versions here because flask has >= versions for its
+    # dependencies.
+    seeking_pkgs = {
+        pkgname: False
+        for pkgname in [
+            "Jinja2",
+            "MarkupSafe",
+            "Werkzeug",
+            "blinker",
+            "click",
+            "itsdangerous",
+        ]
+    }
+    for found_pkg in actual_file_list:
+        for sought_pkg in seeking_pkgs:
+            if found_pkg.name == sought_pkg:
+                seeking_pkgs[sought_pkg] = True
+                break
+    sought_collapsed = set(seeking_pkgs.values())
+    success = len(sought_collapsed) == 1 and sought_collapsed.pop()
+    assert success, f"Didn't find one or more expected packages: {seeking_pkgs}"
 
     # Check a few specifics to make sure we got package contents correctly
     assert part_install_dir / "bin/flask" in actual_file_list[Package("Flask", "3.1.0")]
