@@ -230,8 +230,7 @@ def test_get_file_list(new_dir):
         dist_info_files_abs = [metadata_file, record_file] + [
             dist_info_dir / f for f in dist_info_extra_files
         ]
-        all_files = bin_files_abs + pkg_files_abs + dist_info_files_abs
-        for f in all_files:
+        for f in bin_files_abs + pkg_files_abs + dist_info_files_abs:
             f.parent.mkdir(exist_ok=True, parents=True)
             f.touch()
 
@@ -242,10 +241,20 @@ def test_get_file_list(new_dir):
             f.write(metadata.as_string())
 
         # Columns 2 and 3 are sha and size, but we don't care
-        file_data = [
-            [f.relative_to(pkgs_install_dir, walk_up=True), None, None]
-            for f in all_files
-        ]
+        file_data = []
+        for bin_file in bin_files_abs:
+            # Python 3.12's Path.relative_to adds the walk_up kwarg, which
+            # greatly simplifies all this.  Sadly this test needs to run on
+            # 3.10 as well.
+            # So instead we have to manually build the relative path of the bins.
+            bin_file_relative = Path("../../..") / bin_file.relative_to(
+                plugin._part_info.part_install_dir
+            )
+            file_data.append([bin_file_relative, None, None])
+        for pkg_file in pkg_files_abs + dist_info_files_abs:
+            file_data.append(  # noqa: PERF401
+                [pkg_file.relative_to(pkgs_install_dir), None, None]
+            )
 
         with open(record_file, "w+", newline="") as f:
             csvwriter = csv.writer(f)
