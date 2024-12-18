@@ -22,6 +22,8 @@ from pathlib import Path
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
+from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.parts import Part
 from craft_parts.plugins.base import Package
 from craft_parts.plugins.python_plugin import PythonPlugin
 from overrides import override
@@ -438,6 +440,17 @@ def test_python_plugin_get_files(new_dir, partitions):
     part_name = list(parts["parts"].keys())[0]
     actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_files()
     part_install_dir = lifecycle._executor._part_list[0].part_install_dir
+
+    # Real quick instantiate another copy of the plugin to ensure statelessness.
+    properties2 = PythonPlugin.properties_class.unmarshal(parts["parts"]["foo"])
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        ),
+        part=Part("foo", {"source": "."}, partitions=partitions),
+    )
+    plugin2 = PythonPlugin(properties=properties2, part_info=part_info)
+    assert plugin2.get_files() == actual_file_list
 
     # Make sure all the expected packages were installed.
     # We can't assert the exact set of keys because the pip version will change
