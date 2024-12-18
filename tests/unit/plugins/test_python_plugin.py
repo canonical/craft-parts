@@ -215,62 +215,39 @@ def test_get_file_list(new_dir):
     pkgs_install_dir.mkdir(parents=True)
     bins_dir.mkdir()
 
-    def _mk_pkg(name, version, pkg_files, bin_files=None, dist_info_extra_files=None):
-        pkg_dir = pkgs_install_dir / name
-        dist_info_dir = pkgs_install_dir / f"{name}-{version}.dist-info"
-        if not bin_files:
-            bin_files = []
-        if not dist_info_extra_files:
-            dist_info_extra_files = []
-        metadata_file = dist_info_dir / "METADATA"
-        record_file = dist_info_dir / "RECORD"
+    (bins_dir / "doit").touch()
 
-        pkg_files_abs = [pkg_dir / f for f in pkg_files]
-        bin_files_abs = [bins_dir / f for f in bin_files]
-        dist_info_files_abs = [metadata_file, record_file] + [
-            dist_info_dir / f for f in dist_info_extra_files
-        ]
-        for f in bin_files_abs + pkg_files_abs + dist_info_files_abs:
-            f.parent.mkdir(exist_ok=True, parents=True)
-            f.touch()
+    (pkgs_install_dir / "fakeee").mkdir()
+    (pkgs_install_dir / "fakeee/a_file.py").touch()
+    (pkgs_install_dir / "fakeee/things").mkdir()
+    (pkgs_install_dir / "fakeee/things/stuff.py").touch()
+    (pkgs_install_dir / "fakeee/things/nothing.py").touch()
 
-        metadata = EmailMessage(policy=email.policy.compat32)
-        metadata.add_header("Name", name)
-        metadata.add_header("Version", version)
-        with open(metadata_file, "w+") as f:
-            f.write(metadata.as_string())
+    (pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info").mkdir()
+    (pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/LICENSE.txt").touch()
+    (pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/REQUESTED").touch()
 
-        # Columns 2 and 3 are sha and size, but we don't care
-        file_data = []
-        for bin_file in bin_files_abs:
-            # Python 3.12's Path.relative_to adds the walk_up kwarg, which
-            # greatly simplifies all this.  Sadly this test needs to run on
-            # 3.10 as well.
-            # So instead we have to manually build the relative path of the bins.
-            bin_file_relative = Path("../../..") / bin_file.relative_to(
-                plugin._part_info.part_install_dir
-            )
-            file_data.append([bin_file_relative, None, None])
-        for pkg_file in pkg_files_abs + dist_info_files_abs:
-            file_data.append(  # noqa: PERF401
-                [pkg_file.relative_to(pkgs_install_dir), None, None]
-            )
+    metadata = EmailMessage(policy=email.policy.compat32)
+    metadata.add_header("Name", "fakeee")
+    metadata.add_header("Version", "1.2.3-deb_ian")
+    with open(pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/METADATA", "w+") as f:
+        f.write(metadata.as_string())
 
-        with open(record_file, "w+", newline="") as f:
-            csvwriter = csv.writer(f)
-            csvwriter.writerows(file_data)
-
-    _mk_pkg(
-        "fakeee",
-        "1.2.3-deb_ian",
-        [
-            "a_file.py",
-            "things/stuff.py",
-            "things/nothing.py",
-        ],
-        bin_files=["doit"],
-        dist_info_extra_files=["REQUESTED", "LICENSE.txt"],
-    )
+    file_data = [
+        ["../../../bin/doit", None, None],
+        ["fakeee/a_file.py", None, None],
+        ["fakeee/things/stuff.py", None, None],
+        ["fakeee/things/nothing.py", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/LICENSE.txt", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/METADATA", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/RECORD", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/REQUESTED", None, None],
+    ]
+    with open(
+        pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/RECORD", "w+", newline=""
+    ) as f:
+        csvwriter = csv.writer(f)
+        csvwriter.writerows(file_data)
 
     expected = {
         Package("fakeee", "1.2.3-deb_ian"): {
