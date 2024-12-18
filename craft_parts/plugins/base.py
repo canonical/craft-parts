@@ -37,17 +37,12 @@ if TYPE_CHECKING:
     from craft_parts import infos
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, order=True)
 class Package:
     """A dataclass that uniquely identifies a package."""
 
     name: str
     version: str
-
-    def __lt__(self, other: Package) -> bool:
-        if self.name == other.name:
-            return self.version < other.version
-        return self.name < other.name
 
 
 PackageFiles = dict[Package, set[pathlib.Path]]

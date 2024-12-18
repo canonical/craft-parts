@@ -89,7 +89,7 @@ class PythonPlugin(BasePythonPlugin):
         site_pkgs_dir = venvdir / "lib" / python_version / "site-packages"
 
         ret = {}
-        for pkg_dir in site_pkgs_dir.iterdir():
+        for pkg_dir in site_pkgs_dir.glob("*.dist-info"):
             # We only care about the metadata dirs
             if not pkg_dir.name.endswith(".dist-info"):
                 continue
