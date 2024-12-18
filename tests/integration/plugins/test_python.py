@@ -19,10 +19,11 @@ import sys
 import textwrap
 from pathlib import Path
 
-import craft_parts.plugins.plugins
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
+from craft_parts.plugins.base import Package
+from craft_parts.plugins.python_plugin import PythonPlugin
 from overrides import override
 
 
@@ -123,7 +124,7 @@ def test_python_plugin_symlink(new_dir, partitions):
 def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     """Override the system interpreter, link should use it."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_system_python_interpreter(self) -> str | None:
             return "use-this-python"
@@ -159,7 +160,7 @@ def test_python_plugin_no_system_interpreter(
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_system_python_interpreter(self) -> str | None:
             return None
@@ -194,7 +195,7 @@ def test_python_plugin_no_system_interpreter(
 def test_python_plugin_remove_symlinks(new_dir, partitions):
     """Override symlink removal."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _should_remove_symlinks(self) -> bool:
             return True
@@ -250,7 +251,7 @@ def test_python_plugin_fix_shebangs(new_dir, partitions):
 def test_python_plugin_override_shebangs(new_dir, partitions):
     """Override what we want in script shebang lines."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_script_interpreter(self) -> str:
             return "#!/my/script/interpreter"
@@ -298,7 +299,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_system_python_interpreter(self) -> str | None:
             # To have the build fail after failing to find the payload interpreter
@@ -374,7 +375,7 @@ def test_find_payload_python_good_version(new_dir, partitions):
 def test_no_shebangs(new_dir, partitions):
     """Test that building a Python part with no scripts works."""
 
-    class ScriptlessPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class ScriptlessPlugin(PythonPlugin):
         @override
         def _get_package_install_commands(self) -> list[str]:
             return [
@@ -408,3 +409,51 @@ def test_no_shebangs(new_dir, partitions):
 
     primed_script = lf.project_info.prime_dir / "bin/mytest"
     assert not primed_script.exists()
+
+
+@pytest.mark.slow
+def test_python_plugin_get_files(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: python
+            source: .
+            python-packages: [flask==3.1.0]
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = LifecycleManager(
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lifecycle.plan(Step.BUILD)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    part_name = list(parts["parts"].keys())[0]
+    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_files()
+    part_install_dir = lifecycle._executor._part_list[0].part_install_dir
+
+    # Make sure all the expected packages were installed
+    assert set(actual_file_list.keys()) == {
+        Package(name="Flask", version="3.1.0"),
+        Package(name="Jinja2", version="3.1.4"),
+        Package(name="MarkupSafe", version="3.0.2"),
+        Package(name="Werkzeug", version="3.1.3"),
+        Package(name="blinker", version="1.9.0"),
+        Package(name="click", version="8.1.7"),
+        Package(name="itsdangerous", version="2.2.0"),
+        Package(name="pip", version="24.0"),
+    }
+
+    # Check a few specifics to make sure we got package contents correctly
+    flask_files = actual_file_list[Package("Flask", "3.1.0")]
+    assert part_install_dir / "bin/flask" in flask_files
+    assert len(flask_files) == 58
+    assert len(actual_file_list[Package("MarkupSafe", "3.0.2")]) == 14
+    assert len(actual_file_list[Package("Werkzeug", "3.1.3")]) == 116
