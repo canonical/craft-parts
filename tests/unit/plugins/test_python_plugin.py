@@ -14,11 +14,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import csv
+import email.policy
+from email.message import EmailMessage
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts.plugins.base import Package
 from craft_parts.plugins.python_plugin import PythonPlugin
 from pydantic import ValidationError
 
@@ -193,3 +197,71 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
         *get_build_commands(new_dir, should_remove_symlinks=True),
     ]
+
+
+def test_get_file_list(new_dir):
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    plugin = PythonPlugin(properties=properties, part_info=part_info)
+
+    # Build a fake file tree, emulating what real package installs look like.
+    # Integration tests actually install stuff and check a subset of the
+    # large installed trees.
+    pkgs_install_dir = plugin._part_info.part_install_dir / "lib/python/site-packages"
+    bins_dir = plugin._part_info.part_install_dir / "bin"
+    pkgs_install_dir.mkdir(parents=True)
+    bins_dir.mkdir()
+
+    (bins_dir / "doit").touch()
+
+    (pkgs_install_dir / "fakeee").mkdir()
+    (pkgs_install_dir / "fakeee/a_file.py").touch()
+    (pkgs_install_dir / "fakeee/things").mkdir()
+    (pkgs_install_dir / "fakeee/things/stuff.py").touch()
+    (pkgs_install_dir / "fakeee/things/nothing.py").touch()
+
+    (pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info").mkdir()
+    (pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/LICENSE.txt").touch()
+    (pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/REQUESTED").touch()
+
+    metadata = EmailMessage(policy=email.policy.compat32)
+    metadata.add_header("Name", "fakeee")
+    metadata.add_header("Version", "1.2.3-deb_ian")
+    with open(pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/METADATA", "w+") as f:
+        f.write(metadata.as_string())
+
+    file_data = [
+        ["../../../bin/doit", None, None],
+        ["fakeee/a_file.py", None, None],
+        ["fakeee/things/stuff.py", None, None],
+        ["fakeee/things/nothing.py", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/LICENSE.txt", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/METADATA", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/RECORD", None, None],
+        ["fakeee-1.2.3-deb_ian.dist-info/REQUESTED", None, None],
+    ]
+    with open(
+        pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/RECORD", "w+", newline=""
+    ) as f:
+        csvwriter = csv.writer(f)
+        csvwriter.writerows(file_data)
+
+    expected = {
+        Package("fakeee", "1.2.3-deb_ian"): {
+            bins_dir / "doit",
+            pkgs_install_dir / "fakeee/a_file.py",
+            pkgs_install_dir / "fakeee/things/stuff.py",
+            pkgs_install_dir / "fakeee/things/nothing.py",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/LICENSE.txt",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/METADATA",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/RECORD",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/REQUESTED",
+        },
+    }
+
+    actual = plugin.get_files()
+
+    assert expected == actual

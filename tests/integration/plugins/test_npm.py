@@ -198,7 +198,7 @@ def test_npm_plugin_include_node(create_fake_package_with_node, new_dir, partiti
 
 
 @pytest.mark.slow
-def test_npm_plugin_get_file_list(create_fake_package_with_node, new_dir, partitions):
+def test_npm_plugin_get_files(create_fake_package_with_node, new_dir, partitions):
     parts = create_fake_package_with_node()
     lifecycle = LifecycleManager(
         parts,

@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from craft_parts import infos
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, order=True)
 class Package:
     """A dataclass that uniquely identifies a package."""
 
