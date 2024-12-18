@@ -441,8 +441,9 @@ def test_python_plugin_get_files(new_dir, partitions):
 
     # Make sure all the expected packages were installed.
     # We can't assert the exact set of keys because the pip version will change
-    # over time.
-    assert len(actual_file_list) == 8
+    # over time.  And we can't assert the number of keys because py3.10 installs
+    # setuptools as a separate package.
+    print(actual_file_list.keys())
     for expected_pkg in {
         Package(name="Flask", version="3.1.0"),
         Package(name="Jinja2", version="3.1.4"),
