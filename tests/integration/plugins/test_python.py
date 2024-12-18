@@ -455,8 +455,7 @@ def test_python_plugin_get_files(new_dir, partitions):
         assert expected_pkg in actual_file_list
 
     # Check a few specifics to make sure we got package contents correctly
-    flask_files = actual_file_list[Package("Flask", "3.1.0")]
-    assert part_install_dir / "bin/flask" in flask_files
-    assert len(flask_files) == 58
+    assert part_install_dir / "bin/flask" in actual_file_list[Package("Flask", "3.1.0")]
+    assert len(actual_file_list[Package("Jinja2", "3.1.4")]) == 57
     assert len(actual_file_list[Package("MarkupSafe", "3.0.2")]) == 14
     assert len(actual_file_list[Package("Werkzeug", "3.1.3")]) == 116
