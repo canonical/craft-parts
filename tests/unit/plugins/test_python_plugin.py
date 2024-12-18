@@ -14,11 +14,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import csv
+import email.policy
+from email.message import EmailMessage
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts.plugins.base import Package
 from craft_parts.plugins.python_plugin import PythonPlugin
 from pydantic import ValidationError
 
@@ -193,3 +197,85 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
         *get_build_commands(new_dir, should_remove_symlinks=True),
     ]
+
+
+def test_get_file_list(new_dir):
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    plugin = PythonPlugin(properties=properties, part_info=part_info)
+
+    # Build a fake file tree, emulating what real package installs look like.
+    # Integration tests actually install stuff and check a subset of the
+    # large installed trees.
+    pkgs_install_dir = plugin._part_info.part_install_dir / "lib/python/site-packages"
+    bins_dir = plugin._part_info.part_install_dir / "bin"
+    pkgs_install_dir.mkdir(parents=True)
+    bins_dir.mkdir()
+
+    def _mk_pkg(name, version, pkg_files, bin_files=None, dist_info_extra_files=None):
+        pkg_dir = pkgs_install_dir / name
+        dist_info_dir = pkgs_install_dir / f"{name}-{version}.dist-info"
+        if not bin_files:
+            bin_files = []
+        if not dist_info_extra_files:
+            dist_info_extra_files = []
+        metadata_file = dist_info_dir / "METADATA"
+        record_file = dist_info_dir / "RECORD"
+
+        pkg_files_abs = [pkg_dir / f for f in pkg_files]
+        bin_files_abs = [bins_dir / f for f in bin_files]
+        dist_info_files_abs = [metadata_file, record_file] + [
+            dist_info_dir / f for f in dist_info_extra_files
+        ]
+        all_files = bin_files_abs + pkg_files_abs + dist_info_files_abs
+        for f in all_files:
+            f.parent.mkdir(exist_ok=True, parents=True)
+            f.touch()
+
+        metadata = EmailMessage(policy=email.policy.compat32)
+        metadata.add_header("Name", name)
+        metadata.add_header("Version", version)
+        with open(metadata_file, "w+") as f:
+            f.write(metadata.as_string())
+
+        # Columns 2 and 3 are sha and size, but we don't care
+        file_data = [
+            [f.relative_to(pkgs_install_dir, walk_up=True), None, None]
+            for f in all_files
+        ]
+
+        with open(record_file, "w+", newline="") as f:
+            csvwriter = csv.writer(f)
+            csvwriter.writerows(file_data)
+
+    _mk_pkg(
+        "fakeee",
+        "1.2.3-deb_ian",
+        [
+            "a_file.py",
+            "things/stuff.py",
+            "things/nothing.py",
+        ],
+        bin_files=["doit"],
+        dist_info_extra_files=["REQUESTED", "LICENSE.txt"],
+    )
+
+    expected = {
+        Package("fakeee", "1.2.3-deb_ian"): {
+            bins_dir / "doit",
+            pkgs_install_dir / "fakeee/a_file.py",
+            pkgs_install_dir / "fakeee/things/stuff.py",
+            pkgs_install_dir / "fakeee/things/nothing.py",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/LICENSE.txt",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/METADATA",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/RECORD",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/REQUESTED",
+        },
+    }
+
+    actual = plugin.get_files()
+
+    assert expected == actual
