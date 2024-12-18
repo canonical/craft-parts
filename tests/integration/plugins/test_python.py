@@ -439,8 +439,11 @@ def test_python_plugin_get_files(new_dir, partitions):
     actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_files()
     part_install_dir = lifecycle._executor._part_list[0].part_install_dir
 
-    # Make sure all the expected packages were installed
-    assert set(actual_file_list.keys()) == {
+    # Make sure all the expected packages were installed.
+    # We can't assert the exact set of keys because the pip version will change
+    # over time.
+    assert len(actual_file_list) == 8
+    for expected_pkg in {
         Package(name="Flask", version="3.1.0"),
         Package(name="Jinja2", version="3.1.4"),
         Package(name="MarkupSafe", version="3.0.2"),
@@ -448,8 +451,8 @@ def test_python_plugin_get_files(new_dir, partitions):
         Package(name="blinker", version="1.9.0"),
         Package(name="click", version="8.1.7"),
         Package(name="itsdangerous", version="2.2.0"),
-        Package(name="pip", version="24.0"),
-    }
+    }:
+        assert expected_pkg in actual_file_list
 
     # Check a few specifics to make sure we got package contents correctly
     flask_files = actual_file_list[Package("Flask", "3.1.0")]
