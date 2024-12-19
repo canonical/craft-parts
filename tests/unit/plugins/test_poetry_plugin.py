@@ -93,15 +93,15 @@ def test_get_install_commands(
     )
 
     plugin = PoetryPlugin(part_info=part_info, properties=properties)
-    
+
     requirements = new_dir / "parts" / "p1" / "build" / "requirements.txt"
     pip = new_dir / "parts" / "p1" / "install" / "bin" / "pip"
     assert plugin._get_package_install_commands() == [
         f"poetry export --format=requirements.txt --output={requirements} --with-credentials"
-            + export_addendum,
+        + export_addendum,
         f"{pip} install {pip_addendum} --requirement={requirements}",
         f"{pip} install --no-deps .",
-        f"{pip} check"
+        f"{pip} check",
     ]
 
 
