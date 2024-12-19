@@ -2,6 +2,14 @@
 Changelog
 *********
 
+2.2.1 (2024-12-19)
+------------------
+
+Bug fixes:
+
+- Fix how extras and groups are parsed for the
+  :ref:`uv plugin<craft_parts_uv_plugin>`.
+
 2.2.0 (2024-12-16)
 ------------------
 
