@@ -73,7 +73,7 @@ def test_get_build_packages(
         (["--pre", "-U"], "--pre -U"),
     ],
 )
-def test_get_build_commands(
+def test_get_install_commands(
     new_dir,
     optional_groups,
     poetry_extra_args,
@@ -93,16 +93,15 @@ def test_get_build_commands(
     )
 
     plugin = PoetryPlugin(part_info=part_info, properties=properties)
-
-    assert plugin.get_build_commands() == [
-        f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/p1/install"',
-        f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/p1/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"poetry export --format=requirements.txt --output={new_dir}/parts/p1/build/requirements.txt --with-credentials"
-        + export_addendum,
-        f"{new_dir}/parts/p1/install/bin/pip install {pip_addendum} --requirement={new_dir}/parts/p1/build/requirements.txt",
-        f"{new_dir}/parts/p1/install/bin/pip install --no-deps .",
-        f"{new_dir}/parts/p1/install/bin/pip check",
-        *get_build_commands(new_dir),
+    
+    requirements = new_dir / "parts" / "p1" / "build" / "requirements.txt"
+    pip = new_dir / "parts" / "p1" / "install" / "bin" / "pip"
+    assert plugin._get_package_install_commands() == [
+        f"poetry export --format=requirements.txt --output={requirements} --with-credentials"
+            + export_addendum,
+        f"{pip} install {pip_addendum} --requirement={requirements}",
+        f"{pip} install --no-deps .",
+        f"{pip} check"
     ]
 
 
