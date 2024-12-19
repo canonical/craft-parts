@@ -111,9 +111,12 @@ class UvPlugin(BasePythonPlugin):
             "sync",
             "--no-dev",
             "--no-editable",
-            *[f'--extra "{extra}"' for extra in self._options.uv_extras],
-            *[f'--group "{group}"' for group in self._options.uv_groups],
         ]
+
+        for extra in sorted(self._options.uv_extras):
+            sync_command.extend(["--extra", extra])
+        for group in sorted(self._options.uv_groups):
+            sync_command.extend(["--group", group])
 
         return [shlex.join(sync_command)]
 
