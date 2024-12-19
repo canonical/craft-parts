@@ -20,7 +20,6 @@ import contextlib
 import dataclasses
 import logging
 
-from craft_parts.errors import FeatureError
 from craft_parts.utils import Singleton
 
 logger = logging.getLogger()
@@ -36,17 +35,6 @@ class Features(metaclass=Singleton):
 
     enable_overlay: bool = False
     enable_partitions: bool = False
-
-    def __post_init__(self) -> None:
-        """Validate feature set.
-
-        :raises FeatureError: If mutually exclusive features are enabled.
-        """
-        if self.enable_overlay and self.enable_partitions:
-            raise FeatureError(
-                message="Cannot enable overlay and partition features.",
-                details="Overlay and partition features are mutually exclusive.",
-            )
 
     @classmethod
     def reset(cls) -> None:
