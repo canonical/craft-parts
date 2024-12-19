@@ -23,29 +23,29 @@ from craft_parts.plugins.base import BasePythonPlugin, PluginProperties
 from overrides import override
 
 
-class AwesomePythonPluginProperties(PluginProperties, frozen=True):
-    plugin: Literal["awesomepy"] = "awesomepy"
+class FakePythonPluginProperties(PluginProperties, frozen=True):
+    plugin: Literal["fakepy"] = "fakepy"
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
-class AwesomePythonPlugin(BasePythonPlugin):
+class FakePythonPlugin(BasePythonPlugin):
     """A really awesome Python plugin"""
 
-    properties_class = AwesomePythonPluginProperties
-    _options: AwesomePythonPluginProperties
+    properties_class = FakePythonPluginProperties
+    _options: FakePythonPluginProperties
 
     @override
     def _get_package_install_commands(self) -> list[str]:
-        return ['"${PARTS_PYTHON_INTERPRETER}" -m awesome_pip --install']
+        return ['"${PARTS_PYTHON_INTERPRETER}" -m fake_pip --install']
 
 
 @pytest.fixture
 def plugin(new_dir):
-    properties = AwesomePythonPlugin.properties_class.unmarshal({"source": "."})
+    properties = FakePythonPlugin.properties_class.unmarshal({"source": "."})
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
 
-    return AwesomePythonPlugin(properties=properties, part_info=part_info)
+    return FakePythonPlugin(properties=properties, part_info=part_info)
 
 
 def get_python_build_commands(
@@ -138,7 +138,7 @@ def test_get_build_commands(plugin, new_dir) -> None:
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{venv_path}"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_path}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        '"${PARTS_PYTHON_INTERPRETER}" -m awesome_pip --install',
+        '"${PARTS_PYTHON_INTERPRETER}" -m fake_pip --install',
         *get_python_shebang_rewrite_commands(
             "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}",
             str(plugin._part_info.part_install_dir),
@@ -154,7 +154,7 @@ def test_call_should_remove_symlinks(plugin, new_dir, monkeypatch):
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{venv_path}"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{venv_path}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        '"${PARTS_PYTHON_INTERPRETER}" -m awesome_pip --install',
+        '"${PARTS_PYTHON_INTERPRETER}" -m fake_pip --install',
         *get_python_shebang_rewrite_commands(
             "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}",
             str(plugin._part_info.part_install_dir),
