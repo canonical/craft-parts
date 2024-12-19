@@ -2,6 +2,18 @@
 Changelog
 *********
 
+2.2.1 (2024-MM-DD)
+------------------
+
+Bug fixes:
+
+- Fix how extras and groups are parsed for the
+  :ref:`uv plugin<craft_parts_uv_plugin>`
+
+Other improvements:
+
+- Reorganize tests for Python-based plugins to avoid repeating tests
+
 2.2.0 (2024-12-16)
 ------------------
 
