@@ -74,15 +74,3 @@ def test_get_out_of_source_build(plugin):
 
 def test_should_remove_symlinks(plugin):
     assert plugin._should_remove_symlinks() is False
-
-
-def test_get_system_python_interpreter(plugin):
-    assert plugin._get_system_python_interpreter() == (
-        '$(readlink -f "$(which "${PARTS_PYTHON_INTERPRETER}")")'
-    )
-
-
-def test_script_interpreter(plugin):
-    assert plugin._get_script_interpreter() == (
-        "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"
-    )

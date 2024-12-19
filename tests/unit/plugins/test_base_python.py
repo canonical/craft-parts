@@ -167,3 +167,9 @@ def test_script_interpreter(plugin):
     assert plugin._get_script_interpreter() == (
         "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"
     )
+
+
+def test_get_system_python_interpreter(plugin):
+    assert plugin._get_system_python_interpreter() == (
+        '$(readlink -f "$(which "${PARTS_PYTHON_INTERPRETER}")")'
+    )
