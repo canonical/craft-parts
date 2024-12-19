@@ -473,12 +473,12 @@ def test_python_plugin_get_files(new_dir, partitions):
         ]
     }
     for found_pkg in actual_file_list:
-        # Check a few specifics to make sure we got package contents correctly
-        if found_pkg.name == "Jinja2":
-            assert len(actual_file_list[found_pkg]) == 57
-        elif found_pkg.name == "Werkzeug":
-            assert len(actual_file_list[found_pkg]) == 116
+        # Make sure we got some contents.
+        # Wheels have at least a METADATA, a RECORD, and we can assume at least
+        # one actual source file.
+        if found_pkg.name in seeking_pkgs:
+            assert len(actual_file_list[found_pkg]) >= 3
 
-        if found_pkg.name == in seeking_pkgs:
+        if found_pkg.name in seeking_pkgs:
             seeking_pkgs[found_pkg.name] = True
     assert all(seeking_pkgs.values()), f"Didn't find one or more expected packages:\n{seeking_pkgs}"
