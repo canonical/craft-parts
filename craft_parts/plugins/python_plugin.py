@@ -90,10 +90,6 @@ class PythonPlugin(BasePythonPlugin):
 
         ret = {}
         for pkg_dir in site_pkgs_dir.glob("*.dist-info"):
-            # We only care about the metadata dirs
-            if not pkg_dir.name.endswith(".dist-info"):
-                continue
-
             # Get package name and version from from METADATA file.
             # https://packaging.python.org/en/latest/specifications/core-metadata/
             parser = HeaderParser()
