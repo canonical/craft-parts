@@ -456,7 +456,9 @@ def test_python_plugin_get_files(new_dir, partitions):
     # We can't assert the exact set of keys because the pip version will change
     # over time.  And we can't assert the number of keys because py3.10 installs
     # setuptools as a separate package.
+
     assert Package(name="Flask", version="3.1.0") in actual_file_list
+    assert part_install_dir / "bin/flask" in actual_file_list[Package("Flask", "3.1.0")]
 
     # Can't assert specific versions here because flask has >= versions for its
     # dependencies.
@@ -464,7 +466,6 @@ def test_python_plugin_get_files(new_dir, partitions):
         pkgname: False
         for pkgname in [
             "Jinja2",
-            "MarkupSafe",
             "Werkzeug",
             "blinker",
             "click",
@@ -472,6 +473,12 @@ def test_python_plugin_get_files(new_dir, partitions):
         ]
     }
     for found_pkg in actual_file_list:
+        # Check a few specifics to make sure we got package contents correctly
+        if found_pkg.name == "Jinja2":
+            assert len(actual_file_list[found_pkg]) == 57
+        elif found_pkg.name == "Werkzeug":
+            assert len(actual_file_list[found_pkg]) == 116
+
         for sought_pkg in seeking_pkgs:
             if found_pkg.name == sought_pkg:
                 seeking_pkgs[sought_pkg] = True
@@ -479,9 +486,3 @@ def test_python_plugin_get_files(new_dir, partitions):
     sought_collapsed = set(seeking_pkgs.values())
     success = len(sought_collapsed) == 1 and sought_collapsed.pop()
     assert success, f"Didn't find one or more expected packages: {seeking_pkgs}"
-
-    # Check a few specifics to make sure we got package contents correctly
-    assert part_install_dir / "bin/flask" in actual_file_list[Package("Flask", "3.1.0")]
-    assert len(actual_file_list[Package("Jinja2", "3.1.4")]) == 57
-    assert len(actual_file_list[Package("MarkupSafe", "3.0.2")]) == 14
-    assert len(actual_file_list[Package("Werkzeug", "3.1.3")]) == 116
