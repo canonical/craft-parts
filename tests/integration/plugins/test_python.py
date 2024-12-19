@@ -479,10 +479,8 @@ def test_python_plugin_get_files(new_dir, partitions):
         elif found_pkg.name == "Werkzeug":
             assert len(actual_file_list[found_pkg]) == 116
 
-        for sought_pkg in seeking_pkgs:
-            if found_pkg.name == sought_pkg:
-                seeking_pkgs[sought_pkg] = True
-                break
+        if found_pkg.name == in seeking_pkgs:
+            seeking_pkgs[found_pkg.name] = True
     sought_collapsed = set(seeking_pkgs.values())
     success = len(sought_collapsed) == 1 and sought_collapsed.pop()
     assert success, f"Didn't find one or more expected packages: {seeking_pkgs}"
