@@ -19,10 +19,13 @@ import sys
 import textwrap
 from pathlib import Path
 
-import craft_parts.plugins.plugins
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
+from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.parts import Part
+from craft_parts.plugins.base import Package
+from craft_parts.plugins.python_plugin import PythonPlugin
 from overrides import override
 
 
@@ -123,7 +126,7 @@ def test_python_plugin_symlink(new_dir, partitions):
 def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     """Override the system interpreter, link should use it."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_system_python_interpreter(self) -> str | None:
             return "use-this-python"
@@ -159,7 +162,7 @@ def test_python_plugin_no_system_interpreter(
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_system_python_interpreter(self) -> str | None:
             return None
@@ -194,7 +197,7 @@ def test_python_plugin_no_system_interpreter(
 def test_python_plugin_remove_symlinks(new_dir, partitions):
     """Override symlink removal."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _should_remove_symlinks(self) -> bool:
             return True
@@ -250,7 +253,7 @@ def test_python_plugin_fix_shebangs(new_dir, partitions):
 def test_python_plugin_override_shebangs(new_dir, partitions):
     """Override what we want in script shebang lines."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_script_interpreter(self) -> str:
             return "#!/my/script/interpreter"
@@ -298,7 +301,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
 
-    class MyPythonPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class MyPythonPlugin(PythonPlugin):
         @override
         def _get_system_python_interpreter(self) -> str | None:
             # To have the build fail after failing to find the payload interpreter
@@ -374,7 +377,7 @@ def test_find_payload_python_good_version(new_dir, partitions):
 def test_no_shebangs(new_dir, partitions):
     """Test that building a Python part with no scripts works."""
 
-    class ScriptlessPlugin(craft_parts.plugins.plugins.PythonPlugin):
+    class ScriptlessPlugin(PythonPlugin):
         @override
         def _get_package_install_commands(self) -> list[str]:
             return [
@@ -408,3 +411,76 @@ def test_no_shebangs(new_dir, partitions):
 
     primed_script = lf.project_info.prime_dir / "bin/mytest"
     assert not primed_script.exists()
+
+
+@pytest.mark.slow
+def test_python_plugin_get_files(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: python
+            source: .
+            python-packages: [flask==3.1.0]
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = LifecycleManager(
+        parts,
+        application_name="test_python",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lifecycle.plan(Step.BUILD)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    part_name = list(parts["parts"].keys())[0]
+    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_files()
+    part_install_dir = lifecycle._executor._part_list[0].part_install_dir
+
+    # Real quick instantiate another copy of the plugin to ensure statelessness.
+    properties2 = PythonPlugin.properties_class.unmarshal(parts["parts"]["foo"])
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        ),
+        part=Part("foo", {"source": "."}, partitions=partitions),
+    )
+    plugin2 = PythonPlugin(properties=properties2, part_info=part_info)
+    assert plugin2.get_files() == actual_file_list
+
+    # Make sure all the expected packages were installed.
+    # We can't assert the exact set of keys because the pip version will change
+    # over time.  And we can't assert the number of keys because py3.10 installs
+    # setuptools as a separate package.
+
+    assert Package(name="Flask", version="3.1.0") in actual_file_list
+    assert part_install_dir / "bin/flask" in actual_file_list[Package("Flask", "3.1.0")]
+
+    # Can't assert specific versions here because flask has >= versions for its
+    # dependencies.
+    seeking_pkgs = {
+        pkgname: False
+        for pkgname in [
+            "Jinja2",
+            "Werkzeug",
+            "blinker",
+            "click",
+            "itsdangerous",
+        ]
+    }
+    for found_pkg in actual_file_list:
+        # Make sure we got some contents.
+        # Wheels have at least a METADATA, a RECORD, and we can assume at least
+        # one actual source file.
+        if found_pkg.name in seeking_pkgs:
+            assert len(actual_file_list[found_pkg]) >= 3
+
+        if found_pkg.name in seeking_pkgs:
+            seeking_pkgs[found_pkg.name] = True
+    assert all(
+        seeking_pkgs.values()
+    ), f"Didn't find one or more expected packages:\n{seeking_pkgs}"
