@@ -18,6 +18,7 @@ processing and execution of user-defined scriptlets:
       - ``riscv64-linux-gnu``
   * - ``CRAFT_ARCH_TRIPLET_BUILD_ON``
     - The architecture triplet of the host running the build. For example:
+
       - ``x86_64-linux-gnu``
       - ``riscv64-linux-gnu``
   * - ``CRAFT_ARCH_BUILD_FOR``
