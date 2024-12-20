@@ -2,6 +2,15 @@
 Changelog
 *********
 
+2.3.0 (2025-XX-XX)
+------------------
+
+Documentation:
+
+- Reorganise and improve the :ref:`craft_parts_step_execution_environment`
+  reference, including example values and documentation of additional
+  environment variables.
+
 2.2.1 (2024-12-19)
 ------------------
 
