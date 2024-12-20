@@ -481,4 +481,6 @@ def test_python_plugin_get_files(new_dir, partitions):
 
         if found_pkg.name in seeking_pkgs:
             seeking_pkgs[found_pkg.name] = True
-    assert all(seeking_pkgs.values()), f"Didn't find one or more expected packages:\n{seeking_pkgs}"
+    assert all(
+        seeking_pkgs.values()
+    ), f"Didn't find one or more expected packages:\n{seeking_pkgs}"
