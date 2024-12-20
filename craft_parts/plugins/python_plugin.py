@@ -16,10 +16,14 @@
 
 """The python plugin."""
 
+import csv
 import shlex
+from email.parser import HeaderParser
 from typing import Literal
 
-from .base import BasePythonPlugin
+from overrides import override
+
+from .base import BasePythonPlugin, Package, PackageFiles
 from .properties import PluginProperties
 
 
@@ -73,3 +77,34 @@ class PythonPlugin(BasePythonPlugin):
         )
 
         return commands
+
+    @override
+    def get_files(self) -> PackageFiles:
+        # https://packaging.python.org/en/latest/specifications/binary-distribution-format/
+        # Could also add the pkginfo library for this
+
+        venvdir = self._get_venv_directory()
+        python_path = venvdir / "bin/python"
+        python_version = python_path.resolve().name
+        site_pkgs_dir = venvdir / "lib" / python_version / "site-packages"
+
+        ret = {}
+        for pkg_dir in site_pkgs_dir.glob("*.dist-info"):
+            # Get package name and version from from METADATA file.
+            # https://packaging.python.org/en/latest/specifications/core-metadata/
+            parser = HeaderParser()
+            with open(pkg_dir / "METADATA") as f:
+                pkg_metadata = parser.parse(f)
+            pkg_name = pkg_metadata["Name"]
+            pkg_version = pkg_metadata["Version"]
+
+            # Read the RECORD file
+            record_file = pkg_dir / "RECORD"
+            with open(record_file) as record_file_obj:
+                csvreader = csv.reader(record_file_obj)
+
+                # First column is files.  These are relative, resolve() to get
+                # rid of all the ".." that leads up to the bin dir.
+                pkg_files = {(site_pkgs_dir / f[0]).resolve() for f in csvreader}
+                ret[Package(pkg_name, pkg_version)] = pkg_files
+        return ret

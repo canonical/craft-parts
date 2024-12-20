@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import shutil
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts.plugins.base import Package
 from craft_parts.plugins.python_plugin import PythonPlugin
 from pydantic import ValidationError
 
@@ -193,3 +195,38 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/p1/install/bin/pip install  -U .",
         *get_build_commands(new_dir, should_remove_symlinks=True),
     ]
+
+
+def test_get_files(new_dir):
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    plugin = PythonPlugin(properties=properties, part_info=part_info)
+
+    root = plugin._part_info.part_install_dir
+    bins_dir = root / "bin"
+    pkgs_install_dir = root / "lib/python/site-packages"
+
+    # Copy in a fake file tree that emulates a real package installs.
+    # (Integration tests actually install stuff and check a subset of the
+    # large installed trees.)
+    shutil.copytree(Path(__file__).parent / "testfiles/python/install", root)
+
+    expected = {
+        Package("fakeee", "1.2.3-deb_ian"): {
+            bins_dir / "doit",
+            pkgs_install_dir / "fakeee/a_file.py",
+            pkgs_install_dir / "fakeee/things/stuff.py",
+            pkgs_install_dir / "fakeee/things/nothing.py",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/LICENSE.txt",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/METADATA",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/RECORD",
+            pkgs_install_dir / "fakeee-1.2.3-deb_ian.dist-info/REQUESTED",
+        },
+    }
+
+    actual = plugin.get_files()
+
+    assert expected == actual
