@@ -4,7 +4,7 @@ python-distutils-extra @ https://launchpad.net/ubuntu/+archive/primary/+sourcefi
 python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.0ubuntu0.20.04.6/python-apt_2.0.0ubuntu0.20.04.6.tar.xz
 furo==2022.12.7
 Sphinx==5.3.0
-sphinx-autobuild==2021.3.14
+sphinx-autobuild==2024.10.3
 sphinx-autodoc-typehints==1.20.0
 sphinx-jsonschema==1.19.1
 sphinx-pydantic==0.1.1
