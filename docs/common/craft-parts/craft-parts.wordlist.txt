@@ -102,6 +102,7 @@ InvalidSourceOptions
 InvalidSourceType
 Iterable
 JavaPlugin
+JLink
 JSON
 LDFLAGS
 LLVM
@@ -367,6 +368,7 @@ initialized
 iterable
 iojs
 jdk
+jlink
 jre
 js
 json
