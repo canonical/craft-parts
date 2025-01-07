@@ -88,7 +88,7 @@ def test_get_install_commands(
     uv_plugin = UvPlugin(part_info=part_info, properties=properties)
 
     assert uv_plugin._get_package_install_commands() == [
-        f"uv sync --no-dev --no-editable{extras_expected}{groups_expected}"
+        f"uv sync --no-dev --no-editable --reinstall{extras_expected}{groups_expected}"
     ]
 
 
