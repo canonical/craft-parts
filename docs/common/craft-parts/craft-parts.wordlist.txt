@@ -103,6 +103,8 @@ InvalidSourceType
 Iterable
 JavaPlugin
 JLink
+JLinkPlugin
+JLinkPluginProperties
 JSON
 LDFLAGS
 LLVM
@@ -313,6 +315,7 @@ chmod
 chroot
 chrooted
 classmethod
+classpath
 classvar
 cli
 cls
@@ -367,6 +370,7 @@ ing
 initialized
 iterable
 iojs
+jdeps
 jdk
 jlink
 jre
@@ -397,6 +401,7 @@ oci
 ok
 onboarding
 opencontainers
+openjdk
 organization
 organize
 organized
