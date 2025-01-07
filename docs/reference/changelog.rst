@@ -2,7 +2,7 @@
 Changelog
 *********
 
-2.2.2 (YYYY-MM-DD)
+2.2.2 (2025-MM-DD)
 ------------------
 
 Bug fixes:
