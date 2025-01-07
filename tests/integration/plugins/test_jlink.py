@@ -22,6 +22,7 @@ from pathlib import Path
 import yaml
 from craft_parts import LifecycleManager, Step
 
+
 def test_jlink_plugin_other_java(new_dir, partitions):
     """Test that jlink produces image for the different Java version"""
 
@@ -48,6 +49,7 @@ def test_jlink_plugin_other_java(new_dir, partitions):
 
     assert bool(glob.glob(str(new_dir / "stage/usr/lib/jvm/java-17-*")))
     assert not bool(glob.glob(str(new_dir / "stage/usr/lib/jvm/java-21-*")))
+
 
 def test_jlink_plugin_with_jar(new_dir, partitions):
     """Test that jlink produces tailored modules"""
