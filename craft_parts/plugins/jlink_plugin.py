@@ -75,6 +75,7 @@ class JLinkPlugin(Plugin):
             "(cd ${CRAFT_PART_BUILD}/tmp && for jar in ${PROCESS_JARS}; do jar xvf ${jar}; done;)"
         )
         commands.append("CPATH=$(find ${CRAFT_PART_BUILD}/tmp -type f -name *.jar)")
+        commands.append("CPATH=$(CPATH):$(find ${CRAFT_STAGE} -type f -name *.jar)")
         commands.append("CPATH=$(echo ${CPATH}:. | sed s'/[[:space:]]/:/'g)")
         commands.append("echo ${CPATH}")
         commands.append(
