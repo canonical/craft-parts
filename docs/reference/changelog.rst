@@ -2,6 +2,14 @@
 Changelog
 *********
 
+2.2.2 (2025-MM-DD)
+------------------
+
+Bug fixes:
+
+- Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
+  source changes.
+
 2.2.1 (2024-12-19)
 ------------------
 
