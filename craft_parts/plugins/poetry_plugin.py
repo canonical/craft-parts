@@ -37,8 +37,8 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
 
     poetry_with: set[str] = pydantic.Field(
         default_factory=set,
-        title="Optional dependency groups",
-        description="optional dependency groups to include when installing.",
+        title="Dependency groups to include",
+        description="dependency groups to include. By default, only the main dependencies are included.",
     )
     poetry_export_extra_args: list[str] = pydantic.Field(
         default_factory=list,

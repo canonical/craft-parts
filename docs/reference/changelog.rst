@@ -97,6 +97,14 @@ Documentation:
 
 For a complete list of commits, check out the `2.1.2`_ release on GitHub.
 
+1.25.3 (2024-09-27)
+-------------------
+
+- Replace requests-unixsocket with requests-unixsocket2
+- Bump minimum Python version to 3.8 (required for requests-unixsocket2)
+
+For a complete list of commits, check out the `1.25.3`_ release on GitHub.
+
 2.1.1 (2024-09-13)
 ------------------
 
@@ -682,6 +690,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
 .. _2.1.2: https://github.com/canonical/craft-parts/releases/tag/2.1.2
 .. _2.1.1: https://github.com/canonical/craft-parts/releases/tag/2.1.1
+.. _1.25.3: https://github.com/canonical/craft-parts/releases/tag/1.25.3
 .. _1.33.1: https://github.com/canonical/craft-parts/releases/tag/1.33.1
 .. _2.1.0: https://github.com/canonical/craft-parts/releases/tag/2.1.0
 .. _2.0.0: https://github.com/canonical/craft-parts/releases/tag/2.0.0
