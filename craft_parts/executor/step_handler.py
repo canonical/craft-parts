@@ -21,10 +21,11 @@ import functools
 import json
 import logging
 import os
+import selectors
+import socket
 import subprocess
 import tempfile
 import textwrap
-import time
 from pathlib import Path
 from typing import TextIO
 
@@ -34,7 +35,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils, process
+from craft_parts.utils import process
 
 from . import filesets
 from .filesets import Fileset
@@ -270,18 +271,15 @@ class StepHandler:
         :param work_dir: the directory where the script will be executed.
         """
         with tempfile.TemporaryDirectory() as tempdir:
-            call_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "function_call")
-            )
-            feedback_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "call_feedback")
-            )
+            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")
+            ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            ctl_socket.bind(ctl_socket_path)
+            ctl_socket.listen(1)
 
             script = textwrap.dedent(
                 f"""\
                 set -euo pipefail
-                export PARTS_CALL_FIFO={call_fifo.path}
-                export PARTS_FEEDBACK_FIFO={feedback_fifo.path}
+                export PARTS_CTL_SOCKET={ctl_socket_path}
 
                 {self._env}
 
@@ -303,30 +301,45 @@ class StepHandler:
                     stderr=self._stderr,
                 )
 
+            selector = selectors.DefaultSelector()
+
+            def accept(sock: Stream, _mask: int) -> None:
+                conn, addr = sock.accept()
+                #conn.setblocking(False)  # noqa: FBT003
+                selector.register(conn, selectors.EVENT_READ, read)
+
+            def read(conn: Stream, _mask: int) -> None:
+                data = conn.recv(1024)
+                logger.debug("ctl server received:", str(data))
+                if not data:
+                    selector.unregister(conn)
+                    conn.close()
+                    return
+
+                try:
+                    retval = self._handle_control_api(step, scriptlet_name, data.decode("utf-8"))
+                    conn.send(f"OK {retval!s}\n" if retval else "OK\n".encode("utf-8"))
+                except errors.PartsError as error:
+                    conn.send(f"ERR {error!s}\n".encode("utf-8"))
+
+
             status = None
+            selector.register(ctl_socket, selectors.EVENT_READ, accept)
+
             try:
                 while status is None:
-                    function_call = call_fifo.read()
-                    if not function_call:
+                    events = selector.select(timeout=1)
+                    if events:
+                        for key, mask in events:
+                            callback = key.data
+                            callback(key.fileobj, mask)
+                    else:
                         status = process.poll()
-                        time.sleep(0.1)  # Don't loop TOO busily
-                        continue
-
-                    # Handle the function and send feedback to caller.
-                    try:
-                        retval = self._handle_control_api(
-                            step, scriptlet_name, function_call.strip()
-                        )
-                        feedback_fifo.write(f"OK {retval!s}\n" if retval else "OK\n")
-                    except errors.PartsError as error:
-                        feedback_fifo.write(f"ERR {error!s}\n")
-
             except Exception as error:
                 logger.debug("scriptlet execution failed: %s", error)
                 raise
             finally:
-                call_fifo.close()
-                feedback_fifo.close()
+                ctl_socket.close()
 
             if process.returncode != 0:
                 raise errors.ScriptletRunError(

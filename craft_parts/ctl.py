@@ -19,6 +19,7 @@
 import json
 import logging
 import os
+import socket
 import sys
 
 logger = logging.getLogger(__name__)
@@ -64,21 +65,20 @@ def _client(cmd: str, args: list[str]) -> str | None:
     :raise RuntimeError: If the command is invalid.
     """
     try:
-        call_fifo = os.environ["PARTS_CALL_FIFO"]
-        feedback_fifo = os.environ["PARTS_FEEDBACK_FIFO"]
+        ctl_socket_path = os.environ["PARTS_CTL_SOCKET"]
     except KeyError as err:
         raise RuntimeError(
             f"{err!s} environment variable must be defined.\nNote that this "
             f"utility is designed for use only in part scriptlets."
         ) from err
 
+    logger.debug("ctl socket:", ctl_socket_path)
+
     data = {"function": cmd, "args": args}
-
-    with open(call_fifo, "w") as fifo:
-        fifo.write(json.dumps(data))
-
-    with open(feedback_fifo) as fifo:
-        feedback = fifo.readline().split(" ", 1)
+    ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    ctl_socket.connect(ctl_socket_path)
+    ctl_socket.send(bytes(json.dumps(data), encoding="utf8"))
+    feedback = ctl_socket.recv(1024).decode("utf8").split(" ")
 
     # response from server is in the form "<status> <message>" where
     # <status> can be either "OK" or "ERR".  Previous server versions
@@ -88,6 +88,8 @@ def _client(cmd: str, args: list[str]) -> str | None:
     status = feedback[0]
     message = feedback[1].strip() if len(feedback) > 1 else ""
     retval = None
+
+    logger.debug("status", status)
 
     if status == "OK":
         # command has succeeded

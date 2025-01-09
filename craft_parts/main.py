@@ -51,6 +51,9 @@ def main() -> None:
 
     craft_parts.Features(enable_overlay=True)
 
+    _process_parts(options)
+    sys.exit(0)
+
     try:
         _process_parts(options)
     except OSError as err:
