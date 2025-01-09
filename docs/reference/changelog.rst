@@ -7,7 +7,7 @@ Changelog
 
 New features:
 
-- Add a ``cargo-package`` plugin for offline rust crate building.
+- Add a ``cargo-package`` plugin for offline Rust crate building.
 
 2.2.2 (2025-01-13)
 ------------------
