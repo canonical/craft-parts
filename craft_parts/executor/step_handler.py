@@ -23,9 +23,7 @@ import logging
 import os
 import selectors
 import socket
-import subprocess
 import tempfile
-import textwrap
 from pathlib import Path
 from typing import TextIO
 
@@ -276,77 +274,66 @@ class StepHandler:
             ctl_socket.bind(ctl_socket_path)
             ctl_socket.listen(1)
 
-            script = textwrap.dedent(
-                f"""\
-                set -euo pipefail
-                export PARTS_CTL_SOCKET={ctl_socket_path}
+            selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)
 
-                {self._env}
+            scriptlet_commands = [
+                "set +x",
+                f"export PARTS_CTL_SOCKET={ctl_socket_path}",
+                self._env,
+                "set -x",
+                scriptlet,
+            ]
 
-                set -x
-                {scriptlet}"""
-            )
-
-            # FIXME: refactor ctl protocol server
-
-            with tempfile.TemporaryFile(mode="w+") as script_file:
-                print(script, file=script_file)
-                script_file.flush()
-                script_file.seek(0)
-                process = subprocess.Popen(  # pylint: disable=consider-using-with
-                    ["/bin/bash"],
-                    stdin=script_file,
+            try:
+                _create_and_run_script(
+                    scriptlet_commands,
+                    script_path=Path(tempdir) / "scriptlet.sh",
                     cwd=work_dir,
                     stdout=self._stdout,
                     stderr=self._stderr,
+                    selector=selector,
                 )
-
-            selector = selectors.DefaultSelector()
-
-            def accept(sock: Stream, _mask: int) -> None:
-                conn, addr = sock.accept()
-                #conn.setblocking(False)  # noqa: FBT003
-                selector.register(conn, selectors.EVENT_READ, read)
-
-            def read(conn: Stream, _mask: int) -> None:
-                data = conn.recv(1024)
-                logger.debug("ctl server received:", str(data))
-                if not data:
-                    selector.unregister(conn)
-                    conn.close()
-                    return
-
-                try:
-                    retval = self._handle_control_api(step, scriptlet_name, data.decode("utf-8"))
-                    conn.send(f"OK {retval!s}\n" if retval else "OK\n".encode("utf-8"))
-                except errors.PartsError as error:
-                    conn.send(f"ERR {error!s}\n".encode("utf-8"))
-
-
-            status = None
-            selector.register(ctl_socket, selectors.EVENT_READ, accept)
-
-            try:
-                while status is None:
-                    events = selector.select(timeout=1)
-                    if events:
-                        for key, mask in events:
-                            callback = key.data
-                            callback(key.fileobj, mask)
-                    else:
-                        status = process.poll()
-            except Exception as error:
-                logger.debug("scriptlet execution failed: %s", error)
-                raise
-            finally:
-                ctl_socket.close()
-
-            if process.returncode != 0:
+            except process.ProcessError as process_error:
                 raise errors.ScriptletRunError(
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
-                    exit_code=status,
+                    exit_code=process_error.result.returncode,
+                    stderr=process_error.result.stderr,
+                ) from process_error
+            finally:
+                ctl_socket.close()
+
+    def _ctl_server_selector(
+        self, step: Step, scriptlet_name: str, stream: Stream
+    ) -> selectors.BaseSelector:
+        selector = selectors.DefaultSelector()
+
+        def accept(sock: Stream, _mask: int) -> None:
+            conn, addr = sock.accept()
+            selector.register(conn, selectors.EVENT_READ, read)
+
+        def read(conn: Stream, _mask: int) -> None:
+            data = conn.recv(1024)
+            logger.debug(f"ctl server received: {data!s}")
+            if not data:
+                selector.unregister(conn)
+                conn.close()
+                return
+
+            try:
+                retval = self._handle_control_api(
+                    step, scriptlet_name, data.decode("utf-8")
                 )
+                conn.send((f"OK {retval!s}\n" if retval else "OK\n").encode())
+            except errors.PluginBuildError:
+                # If craftctl default raises PluginBuildError, pass it upwards.
+                raise
+            except errors.PartsError as error:
+                conn.send(f"ERR {error!s}\n".encode())
+
+        selector.register(stream, selectors.EVENT_READ, accept)
+
+        return selector
 
     def _handle_control_api(
         self, step: Step, scriptlet_name: str, function_call: str
@@ -456,6 +443,7 @@ def _create_and_run_script(
     stdout: Stream,
     stderr: Stream,
     build_environment_script_path: Path | None = None,
+    selector: selectors.BaseSelector | None = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
@@ -473,4 +461,11 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    process.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)
+    process.run(
+        [script_path],
+        cwd=cwd,
+        stdout=stdout,
+        stderr=stderr,
+        check=True,
+        selector=selector,
+    )

@@ -97,6 +97,7 @@ def run(
     stdout: Stream = None,
     stderr: Stream = None,
     check: bool = True,
+    selector: selectors.BaseSelector | None = None,
 ) -> ProcessResult:
     """Execute a subprocess and collect its output.
 
@@ -113,6 +114,8 @@ def run(
         stream capturing.
     :param check: If True, a ProcessError exception will be raised if ``command``
         returns a non-zero return code.
+    :param selector: If defined, use the caller-supplied selector instead of
+        creating a new one.
 
     :raises ProcessError: If process exits with a non-zero return code.
     :raises OSError: If the specified executable is not found.
@@ -120,8 +123,8 @@ def run(
     :return: A description of the process' outcome.
     :rtype: ProcessResult
     """
-    # Optimized base case - no redirection at all
-    if stdout == DEVNULL and stderr == DEVNULL:
+    # Optimized base case - no custom handlers or redirections at all
+    if not selector and stdout == DEVNULL and stderr == DEVNULL:
         result_sp = subprocess.run(
             command, stdout=DEVNULL, stderr=DEVNULL, cwd=cwd, check=False
         )
@@ -142,16 +145,22 @@ def run(
         _select_stream(stderr, sys.stderr) as err_fd,
     ):
         # Set up select library with any streams that need monitoring
-        selector = selectors.DefaultSelector()
+        selector = selector or selectors.DefaultSelector()
         out_handler = _get_stream_handler(proc.stdout, out_fd, selector)
         err_handler = _get_stream_handler(proc.stderr, err_fd, selector)
 
         with closing(BytesIO()) as combined_io:
             while True:
                 try:
-                    for event, _ in selector.select():
-                        combined_io.write(event.data.process())
-
+                    # Time out if we don't have any event to handle
+                    for key, mask in selector.select(0.1):
+                        if isinstance(key.data, _ProcessStream):
+                            # Handle i/o stream processing.
+                            combined_io.write(key.data.process())
+                        else:
+                            # Generic handlers from caller selector.
+                            callback = key.data
+                            callback(key.fileobj, mask)
                 except BlockingIOError:
                     pass
 

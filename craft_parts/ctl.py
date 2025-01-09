@@ -72,7 +72,7 @@ def _client(cmd: str, args: list[str]) -> str | None:
             f"utility is designed for use only in part scriptlets."
         ) from err
 
-    logger.debug("ctl socket:", ctl_socket_path)
+    logger.debug(f"ctl socket: {ctl_socket_path}")
 
     data = {"function": cmd, "args": args}
     ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -89,7 +89,7 @@ def _client(cmd: str, args: list[str]) -> str | None:
     message = feedback[1].strip() if len(feedback) > 1 else ""
     retval = None
 
-    logger.debug("status", status)
+    logger.debug(f"status: {status}")
 
     if status == "OK":
         # command has succeeded

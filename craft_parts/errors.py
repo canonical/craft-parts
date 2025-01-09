@@ -492,7 +492,7 @@ class PluginPullError(PartsError):
         super().__init__(brief=brief)
 
 
-class PluginBuildError(PartsError):
+class UserExecutionError(PartsError):
     """Plugin build script failed at runtime.
 
     :param part_name: The name of the part being processed.
@@ -500,13 +500,9 @@ class PluginBuildError(PartsError):
     """
 
     def __init__(
-        self, *, part_name: str, plugin_name: str, stderr: bytes | None = None
+        self, *, brief: str, resolution: str, stderr: bytes | None = None
     ) -> None:
-        self.part_name = part_name
-        self.plugin_name = plugin_name
         self.stderr = stderr
-        brief = f"Failed to run the build script for part {part_name!r}."
-        resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
         super().__init__(
             brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
         )
@@ -539,6 +535,25 @@ class PluginBuildError(PartsError):
                     details_io.write(f"\n:: {line}")
 
             return details_io.getvalue()
+
+
+class PluginBuildError(UserExecutionError):
+    """Plugin build script failed at runtime.
+
+    :param part_name: The name of the part being processed.
+    :param plugin_name: The name of the plugin being processed.
+    :param stderr: The contents of the build execution error.
+    """
+
+    def __init__(
+        self, *, part_name: str, plugin_name: str, stderr: bytes | None = None
+    ) -> None:
+        self.part_name = part_name
+        self.plugin_name = plugin_name
+        brief = f"Failed to run the build script for part {part_name!r}."
+        resolution = f"Check the build output and verify the project can work with the {plugin_name!r} plugin."
+
+        super().__init__(brief=brief, resolution=resolution, stderr=stderr)
 
 
 class PluginCleanError(PartsError):
@@ -575,15 +590,23 @@ class InvalidControlAPICall(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class ScriptletRunError(PartsError):
+class ScriptletRunError(UserExecutionError):
     """A scriptlet execution failed.
 
     :param part_name: The name of the part being processed.
     :param scriptlet_name: The name of the scriptlet that failed to execute.
     :param exit_code: The execution error code.
+    :param stderr: The contents of the scriptlet execution error.
     """
 
-    def __init__(self, *, part_name: str, scriptlet_name: str, exit_code: int) -> None:
+    def __init__(
+        self,
+        *,
+        part_name: str,
+        scriptlet_name: str,
+        exit_code: int,
+        stderr: bytes | None = None,
+    ) -> None:
         self.part_name = part_name
         self.scriptlet_name = scriptlet_name
         self.exit_code = exit_code
@@ -592,7 +615,7 @@ class ScriptletRunError(PartsError):
         )
         resolution = "Review the scriptlet and make sure it's correct."
 
-        super().__init__(brief=brief, resolution=resolution)
+        super().__init__(brief=brief, resolution=resolution, stderr=stderr)
 
 
 class CallbackRegistrationError(PartsError):
