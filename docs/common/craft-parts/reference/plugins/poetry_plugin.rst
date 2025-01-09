@@ -10,8 +10,8 @@ The Poetry plugin can be used for Python projects that use the `Poetry`_ build s
 Keywords
 --------
 
-This plugin uses the common :ref:`plugin <part-properties-plugin>` keywords as
-well as those for :ref:`sources <part-properties-sources>`.
+This plugin uses the common :external+craft-parts:ref:`plugin <part-properties-plugin>` keywords as
+well as those for :external+craft-parts:ref:`sources <part-properties-sources>`.
 
 Additionally, this plugin provides the plugin-specific keywords defined in the
 following sections.
@@ -20,7 +20,8 @@ poetry-export-extra-args:
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
-Extra arguments to pass at the end of the poetry `export command`_.
+Extra arguments to pass at the end of the poetry `export command
+<https://python-poetry.org/docs/cli/#export>`_.
 
 poetry-pip-extra-args:
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -117,5 +118,4 @@ During the build step, the plugin performs the following actions:
 
 .. _Poetry: https://python-poetry.org
 .. _Dependency groups: https://python-poetry.org/docs/managing-dependencies#dependency-groups
-.. _export command: https://python-poetry.org/docs/cli/#export
 .. _environment variables to configure Poetry: https://python-poetry.org/docs/configuration/#using-environment-variables

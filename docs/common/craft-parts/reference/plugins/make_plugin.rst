@@ -11,8 +11,9 @@ the ``install`` ``Makefile`` target with ``DESTDIR`` set to
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
+In addition to the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` and ::external+craft-parts:ref:`sources
+<part-properties-sources>` keywords, this plugin provides the following
 plugin-specific keywords:
 
 make-parameters

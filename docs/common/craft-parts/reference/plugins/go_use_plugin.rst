@@ -3,15 +3,17 @@
 Go Use plugin
 =============
 
-The Go Use plugin allows for setting up a `go workspace`_ for `Go`_ modules. It is
-a companion plugin meant to be used with the :ref:`Go plugin <craft_parts_go_plugin>`.
-Use of this plugin sets up ``go.work`` and affects all parts.
+The Go Use plugin allows for setting up a `go workspace`_ for `Go`_ modules. It
+is a companion plugin meant to be used with the :external+craft-parts:ref:`Go
+plugin <craft_parts_go_plugin>`. Use of this plugin sets up ``go.work`` and
+affects all parts.
 
 Keywords
 --------
 
-There are no additional keywords to the the common :ref:`plugin <part-properties-plugin>`
-and :ref:`sources <part-properties-sources>` keywords.
+There are no additional keywords to the the common
+:external+craft-parts:ref:`plugin <part-properties-plugin>` and
+:external+craft-parts:ref:`sources <part-properties-sources>` keywords.
 
 .. _go-use-details-begin:
 
@@ -27,11 +29,12 @@ Common means of providing ``go`` are:
 * The ``go`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``go-deps``, and
-declare that the part using the ``go`` plugin comes :ref:`after <after>` the
-``go-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``go`` executable to be used in the build step. This can be useful,
-for example, in cases where a specific, unreleased version of ``go`` is desired
-but unavailable as a snap or an Ubuntu package.
+declare that the part using the ``go`` plugin comes
+:external+craft-parts:ref:`after <after>` the ``go-deps`` part. In this case,
+the plugin will assume that this new part will stage the ``go`` executable to
+be used in the build step. This can be useful, for example, in cases where a
+specific, unreleased version of ``go`` is desired but unavailable as a snap or
+an Ubuntu package.
 
 .. _go-use-details-end:
 

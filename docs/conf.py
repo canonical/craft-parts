@@ -41,6 +41,7 @@ extensions.extend(
         "sphinx.ext.autodoc",
         "sphinx.ext.autosummary",
         "sphinx.ext.ifconfig",
+        "sphinx.ext.intersphinx",
         "sphinx.ext.napoleon",
         "sphinx.ext.viewcode",
         "sphinx_autodoc_typehints",  # must be loaded after napoleon
@@ -81,6 +82,10 @@ linkcheck_ignore = [
 rst_epilog = """
 .. include:: /common/craft-parts/reuse/links.txt
 """
+
+intersphinx_mapping = {
+    "craft-parts": ("https://canonical-craft-parts.readthedocs-hosted.com/en/latest/", None),
+}
 
 autodoc_mock_imports = ["apt"]
 

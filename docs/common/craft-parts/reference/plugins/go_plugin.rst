@@ -12,8 +12,9 @@ build, this plugin will install the generated binaries in
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
+In addition to the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` and :external+craft-parts:ref:`sources
+<part-properties-sources>` keywords, this plugin provides the following
 plugin-specific keywords:
 
 go-buildtags
@@ -52,11 +53,12 @@ Common means of providing ``go`` are:
 * The ``go`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``go-deps``, and
-declare that the part using the ``go`` plugin comes :ref:`after <after>` the
-``go-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``go`` executable to be used in the build step. This can be useful,
-for example, in cases where a specific, unreleased version of ``go`` is desired
-but unavailable as a snap or an Ubuntu package.
+declare that the part using the ``go`` plugin comes
+:external+craft-parts:ref:`after <after>` the ``go-deps`` part. In this case,
+the plugin will assume that this new part will stage the ``go`` executable to
+be used in the build step. This can be useful, for example, in cases where a
+specific, unreleased version of ``go`` is desired but unavailable as a snap or
+an Ubuntu package.
 
 .. _go-details-end:
 
@@ -65,9 +67,9 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* If a `go workspace`_ has been setup by use of the :ref:`go-use <craft_parts_go_use_plugin>`
-  plugin,
-  call ``go work use <build-dir>`` to add the source for the part to the workspace;
+* If a `go workspace`_ has been setup by use of the
+  :external+craft-parts:ref:`go-use <craft_parts_go_use_plugin>` plugin, call
+  ``go work use <build-dir>`` to add the source for the part to the workspace;
 * If not operating in the context of  a `go workspace`_, call ``go mod download all``
   to find and download all necessary modules;
 * Call ``go generate <item>`` for each item in ``go-generate``;

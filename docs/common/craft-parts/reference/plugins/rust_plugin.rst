@@ -8,8 +8,9 @@ The Rust plugin can be used for Rust projects that use the Cargo build system.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
+In addition to the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` and :external+craft-parts:ref:`sources
+<part-properties-sources>` keywords, this plugin provides the following
 plugin-specific keywords:
 
 rust-channel
@@ -52,7 +53,8 @@ rust-no-default-features
 If this option is set to ``true``, the default features specified by the project
 will be ignored.
 
-You can then use the :ref:`rust-features` keyword to specify any features you wish to override.
+You can then use the :external+craft-parts:ref:`rust-features` keyword to
+specify any features you wish to override.
 
 rust-path
 ~~~~~~~~~
@@ -78,7 +80,8 @@ in the Cargo.toml file.
 
 This is equivalent to the ``lto = "fat"`` option in the Cargo.toml file.
 
-If you want better runtime performance, see the :ref:`Performance tuning<perf-tuning>` section below.
+If you want better runtime performance, see the :ref:`Performance
+tuning<perf-tuning>` section below.
 
 rust-ignore-toolchain-file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,8 +165,9 @@ Many Rust programs boast their performance over similar programs implemented in 
 programming languages.
 To get even better performance, you might want to follow the tips below.
 
-* Use the :ref:`rust-use-global-lto` option to enable LTO support. This is suitable for most
-  projects. However, analysing the whole program during the build time requires more memory and CPU time.
+* Use the :external+craft-parts:ref:`rust-use-global-lto` option to enable LTO
+  support. This is suitable for most projects. However, analysing the whole
+  program during the build time requires more memory and CPU time.
 
 * Specify ``codegen-units=1`` in ``Cargo.toml`` to reduce LLVM parallelism. This may sound counter-intuitive,
   but reducing code generator threads could improve the quality of generated machine code.

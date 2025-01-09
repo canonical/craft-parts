@@ -9,6 +9,8 @@ Bug fixes:
 
 - Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
   source changes.
+- Fix a downstream issue where apps that transclude some but not all of the
+  Craft Parts plugin references have Sphinx build errors.
 
 2.2.1 (2024-12-19)
 ------------------

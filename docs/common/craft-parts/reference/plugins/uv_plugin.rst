@@ -10,9 +10,10 @@ The uv plugin can be used for Python projects that use the uv build tool.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the
-following plugin-specific keywords:
+In addition to the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` and :external+craft-parts:ref:`sources
+<part-properties-sources>` keywords, this plugin provides the following
+plugin-specific keywords:
 
 uv-extras
 ~~~~~~~~~
@@ -33,9 +34,9 @@ exactly as ``--group GROUP``.
 Environment variables
 ---------------------
 
-Along with the variables defined by the :ref:`Python plugin
-<craft_parts_python_plugin-environment_variables>`, this plugin responds to its
-own special variables.
+Along with the variables defined by the :external+craft-parts:ref:`Python
+plugin <craft_parts_python_plugin-environment_variables>`, this plugin responds
+to its own special variables.
 
 .. note::
 
@@ -71,7 +72,7 @@ UV_PYTHON
 ~~~~~~~~~
 **Default value:** ``${PARTS_PYTHON_INTERPRETER}``
 
-The version of Python that uv should use. See :ref:`Python plugin environment
+The version of Python that uv should use. See :external+craft-parts:ref:`Python plugin environment
 variables <craft_parts_python_plugin-environment_variables>` for more
 information.
 

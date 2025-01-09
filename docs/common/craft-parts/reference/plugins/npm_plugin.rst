@@ -8,9 +8,10 @@ The NPM plugin can be used for Node.js projects that use NPM (or Yarn) as the pa
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords (see :ref:`common part 
-properties <part_properties>`), this plugin provides the following 
+In addition to the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` and :external+craft-parts:ref:`sources
+<part-properties-sources>` keywords (see :external+craft-parts:ref:`common part
+properties <part_properties>`), this plugin provides the following
 plugin-specific keywords:
 
 npm-include-node

@@ -11,8 +11,9 @@ binaries in ``$CRAFT_PART_INSTALL``.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
+In addition to the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` and :external+craft-parts:ref:`sources
+<part-properties-sources>` keywords, this plugin provides the following
 plugin-specific keywords:
 
 meson_parameters
@@ -31,11 +32,12 @@ The plugin needs the ``meson`` executable to configure the project, and the
 typically be provisioned via ``build-packages`` or ``build-snaps``.
 
 Another alternative is to define another part with the name ``meson-deps``, and
-declare that the part using the ``meson`` plugin comes :ref:`after <after>` the
-``meson-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``meson`` and ``ninja`` executables to be used in the build step.
-This can be useful, for example, in cases where specific, unreleased versions of
-the tools are desired but unavailable as a snap or an Ubuntu package.
+declare that the part using the ``meson`` plugin comes
+:external+craft-parts:ref:`after <after>` the ``meson-deps`` part. In this
+case, the plugin will assume that this new part will stage the ``meson`` and
+``ninja`` executables to be used in the build step. This can be useful, for
+example, in cases where specific, unreleased versions of the tools are desired
+but unavailable as a snap or an Ubuntu package.
 
 How it works
 ------------

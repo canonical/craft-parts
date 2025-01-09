@@ -16,8 +16,9 @@ any of the following things:
 Keywords
 --------
 
-This plugin uses the common :ref:`plugin <part-properties-plugin>` keywords as
-well as those for :ref:`sources <part-properties-sources>`.
+This plugin uses the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` keywords as well as those for
+:external+craft-parts:ref:`sources <part-properties-sources>`.
 
 Additionally, this plugin provides the plugin-specific keywords defined in the
 following sections.
@@ -95,4 +96,3 @@ During the build step, the plugin performs the following actions:
   ``python-packages`` keywords.
 * If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
   files are used to install the dependencies specified by the package itself.
-

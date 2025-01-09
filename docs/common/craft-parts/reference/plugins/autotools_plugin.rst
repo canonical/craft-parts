@@ -19,8 +19,9 @@ After a successful build, this plugin will install the generated binaries in
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
+In addition to the common :external+craft-parts:ref:`plugin
+<part-properties-plugin>` and :external+craft-parts:ref:`sources
+<part-properties-sources>` keywords, this plugin provides the following
 plugin-specific keywords:
 
 autotools-bootstrap-parameters
