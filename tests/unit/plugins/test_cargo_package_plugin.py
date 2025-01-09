@@ -13,18 +13,14 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import subprocess
 
 import pytest
-import pytest_subprocess
-from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.cargo_package_plugin import (
-    CargoPackagePlugin, CargoPackagePluginProperties
+    CargoPackagePlugin,
+    CargoPackagePluginProperties,
 )
-from craft_parts.plugins.validator import PluginEnvironmentValidator
-from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -34,13 +30,16 @@ def part_info(new_dir):
         part=Part("my-part", {}),
     )
 
+
 @pytest.fixture(params=[[], ["edge", "corner"]])
 def features(request):
     return request.param
 
+
 @pytest.fixture(params=["cargo", "cargo-123.456"])
 def cargo_command(request):
     return request.param
+
 
 @pytest.fixture
 def properties(features, cargo_command) -> CargoPackagePluginProperties:
@@ -56,6 +55,7 @@ def properties(features, cargo_command) -> CargoPackagePluginProperties:
 @pytest.fixture
 def plugin(part_info, properties) -> CargoPackagePlugin:
     return CargoPackagePlugin(properties=properties, part_info=part_info)
+
 
 def test_get_build_snaps(plugin):
     assert plugin.get_build_snaps() == set()
@@ -76,7 +76,7 @@ def test_get_package_command(plugin, cargo_command, features):
         for feature in features:
             assert feature in command
     else:
-        assert not "--features" in command
+        assert "--features" not in command
 
 
 def test_get_build_commands(plugin):

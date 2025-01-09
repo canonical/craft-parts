@@ -17,15 +17,10 @@
 """A plugin for packaging rust crates and publishing them to a local registry.."""
 
 import logging
-import os
 import pathlib
-import re
-import subprocess
-from textwrap import dedent
 import textwrap
 from typing import Literal, cast
 
-import pydantic
 from overrides import override
 
 from craft_parts.constraints import UniqueList
@@ -64,6 +59,7 @@ class CargoPackagePluginProperties(PluginProperties, frozen=True):
 
 
 class CargoPackagePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+    """Validate the environment for the cargo package plugin."""
 
     @override
     def validate_environment(
@@ -86,6 +82,7 @@ class CargoPackagePluginEnvironmentValidator(validator.PluginEnvironmentValidato
 
 
 class CargoPackagePlugin(Plugin):
+    """Build a Cargo crate and publish it to a local directory registry."""
 
     properties_class = CargoPackagePluginProperties
     validator_class = CargoPackagePluginEnvironmentValidator
@@ -110,6 +107,7 @@ class CargoPackagePlugin(Plugin):
 
     @override
     def get_build_environment(self) -> dict[str, str]:
+        """Return a dictionary with the environment to use in the build step."""
         return {}
 
     def _get_package_command(self) -> str:
@@ -123,8 +121,6 @@ class CargoPackagePlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        options = cast(CargoPackagePluginProperties, self._options)
-
         # We do not want this implementation detail exposed in the run script
         # This sets the default registry for all parts to use.
         cargo_config = pathlib.Path("~/.cargo/config.toml").expanduser().resolve()
@@ -142,7 +138,7 @@ class CargoPackagePlugin(Plugin):
         # to use the Debian cargo registry at /usr/share/cargo/registry, they
         # can set CARGO_REGISTRY_DIRECTORY=/usr/share/cargo/registry and then in
         # all other parts set the cargo config environment variable
-        # CARGO_REGISTRY_DEFAULT=apt
+        # CARGO_REGISTRY_DEFAULT to the value "apt"
         write_registry_bash = (
             f"${{CARGO_REGISTRY_DIRECTORY:-{self._registry_output_dir}}}"
         )

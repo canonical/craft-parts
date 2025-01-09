@@ -14,19 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import subprocess
-import sys
-import textwrap
-from collections.abc import Callable
 import pathlib
-from typing import Any, cast
+import subprocess
+import textwrap
 
-import craft_parts.plugins.plugins
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step, errors, plugins
-from overrides import override
+from craft_parts import LifecycleManager, Step
 
 CARGO_PARTS_YAML = """\
 parts:
@@ -47,8 +41,11 @@ parts:
       - CARGO_REGISTRY_DEFAULT: "craft-parts"
 """
 
+
 @pytest.fixture(autouse=True)
-def fake_homedir(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> pathlib.Path:
+def fake_homedir(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> pathlib.Path:
     """Use a temporary path as the fake home directory."""
     monkeypatch.setenv("HOME", tmp_path.as_posix())
     return tmp_path
@@ -101,9 +98,7 @@ def test_cargo_package_plugin_with_rust_consumer(new_dir, partitions):
 
     binary = pathlib.Path(lifecycle.project_info.prime_dir, "bin", "package-test")
 
-    output = subprocess.run(
-        [str(binary)], text=True, capture_output=True, check=True
-    )
+    output = subprocess.run([str(binary)], text=True, capture_output=True, check=True)
     assert output.stdout == "Hello, world!\n"
 
     binary_contents = binary.read_bytes()
