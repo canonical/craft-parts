@@ -19,7 +19,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from craft_parts import plugins, sources
+from craft_parts import errors, plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
 from craft_parts.executor.step_handler import StepContents, StepHandler
@@ -225,6 +225,7 @@ class TestStepHandlerBuiltins:
             check=True,
             stdout=None,
             stderr=None,
+            selector=None,
         )
         assert result == StepContents()
 
@@ -325,7 +326,7 @@ class TestStepHandlerRunScriptlet:
 
     def test_run_scriptlet(self, new_dir, capfd):
         sh = _step_handler_for_step(
-            Step.PULL,
+            Step.BUILD,
             cache_dir=new_dir,
             part_info=self._part_info,
             part=self._part,
@@ -336,5 +337,22 @@ class TestStepHandlerRunScriptlet:
         )
         captured = capfd.readouterr()
         assert captured.out == "hello world\n"
+
+    def test_run_scriptlet_error(self, new_dir, capfd):
+        sh = _step_handler_for_step(
+            Step.BUILD,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
+        with pytest.raises(errors.ScriptletRunError) as raised:
+            sh.run_scriptlet(
+                "echo uh-oh>&2;false",
+                scriptlet_name="name",
+                step=Step.BUILD,
+                work_dir=new_dir,
+            )
+        assert raised.value.stderr.endswith(b"\n+ echo uh-oh\nuh-oh\n+ false\n")
 
     # TODO: test ctl api server

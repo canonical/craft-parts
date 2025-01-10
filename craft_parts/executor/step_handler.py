@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022,2024 Canonical Ltd.
+# Copyright 2016-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -277,10 +277,8 @@ class StepHandler:
             selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)
 
             scriptlet_commands = [
-                "set +x",
                 f"export PARTS_CTL_SOCKET={ctl_socket_path}",
                 self._env,
-                "set -x",
                 scriptlet,
             ]
 
