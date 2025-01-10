@@ -22,7 +22,7 @@ import pytest
 from craft_parts import plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
-from craft_parts.executor.step_handler import StepContents, StepHandler
+from craft_parts.executor.step_handler import StepContents, StepHandler, _merge_plugin_and_user_filesets
 from craft_parts.infos import (
     _DEB_TO_TRIPLET,
     PartInfo,
@@ -338,3 +338,25 @@ class TestStepHandlerRunScriptlet:
         assert captured.out == "hello world\n"
 
     # TODO: test ctl api server
+
+
+class TestMergePluginAndUserFilesets:
+    """Unit tests for merging plugin and user filesets."""
+
+    @pytest.mark.parametrize("name", ["Bob", "Bill", "Homer"])
+    @pytest.mark.parametrize(
+        ("plugin_entries", "user_entries", "expected"),
+        [
+            ([], ["*"], ["*"]),
+            (["*"], ["*"], ["*"]),
+            (["-include/"], ["*"], ["*", "-include/"]),
+            (["-include/"], ["bin/", "lib/"], ["bin/", "lib/", "-include/"]),
+        ]
+    )
+    def test_merge_correctness(self, plugin_entries: list[str], user_entries: list[str], name: str, expected: list[str]) -> None:
+        actual = _merge_plugin_and_user_filesets(
+            plugin_entries=plugin_entries, user_entries=user_entries, name=name
+        )
+
+        assert actual.name == name
+        assert actual.entries == expected

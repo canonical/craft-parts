@@ -72,7 +72,7 @@ class PartSpec(BaseModel):
         default_factory=lambda: ["*"], alias="stage"
     )
     prime_files: list[RelativePathStr] = Field(
-        default_factory=lambda: ["*"], alias="prime"
+        default_factory=list, alias="prime"
     )
     override_pull: str | None = None
     overlay_script: str | None = None

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2024 Canonical Ltd.
+# Copyright 2020-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -90,6 +90,24 @@ class Plugin(abc.ABC):
         :param action_properties: The properties to store.
         """
         self._action_properties = deepcopy(action_properties)
+
+    def get_stage_fileset_entries(self) -> list[str]:
+        """Get plugin-specific entries needed for the stage fileset.
+
+        :returns: Entries the plugin adds for manipulating the stage fileset.
+
+        Any entries in this list may be overridden by user-provided values.
+        """
+        return []
+
+    def get_prime_fileset_entries(self) -> list[str]:
+        """Get plugin-specific entries needed for the prime fileset.
+
+        :returns: Entries the plugin adds for manipulating the prime fileset.
+
+        Any entries in this list may be overridden by user-provided values.
+        """
+        return []
 
 
 class BasePythonPlugin(Plugin):
