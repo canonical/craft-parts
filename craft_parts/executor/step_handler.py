@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022,2024 Canonical Ltd.
+# Copyright 2016-2022,2024-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -162,8 +162,19 @@ class StepHandler:
 
         return StepContents()
 
+    @property
+    def _stage_fileset(self) -> Fileset:
+        """The fileset used for the stage step."""
+        if "**" in self._part.spec.stage_files:
+            return Fileset(self._part.spec.stage_files, name="stage")
+        return _merge_plugin_and_user_filesets(
+            plugin_entries=self._plugin.get_stage_fileset_entries(),
+            user_entries=self._part.spec.stage_files,
+            name="stage"
+        )
+
     def _builtin_stage(self) -> StepContents:
-        stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
+        stage_fileset = self._stage_fileset
 
         def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
@@ -210,13 +221,33 @@ class StepHandler:
         return StepContents(files, dirs)
 
     def _builtin_prime(self) -> StepContents:
-        prime_fileset = Fileset(self._part.spec.prime_files, name="prime")
+        user_prime_fileset = Fileset(self._part.spec.prime_files)
+
+        plugin_entries = (
+            [] if "**" in self._part.spec.prime_files
+            else self._plugin.get_prime_fileset_entries()
+        )
+        if "**" not in self._part.spec.stage_files:
+            plugin_entries.extend(self._plugin.get_stage_fileset_entries())
 
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
-        if prime_fileset.entries == ["*"] or len(prime_fileset.includes) == 0:
-            stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
-            prime_fileset.combine(stage_fileset)
+        if user_prime_fileset.entries == ["*"]:
+            user_entries = self._part.spec.stage_files
+        elif len(user_prime_fileset.includes) == 0:
+            user_entries = (
+                *self._part.spec.stage_files,
+                *self._part.spec.prime_files,
+            )
+        else:
+            user_entries = self._part.spec.prime_files
+
+        user_entries = [item for item in user_entries if item != "**"]
+        prime_fileset = _merge_plugin_and_user_filesets(
+            plugin_entries=plugin_entries,
+            user_entries=user_entries,
+            name="prime"
+        )
 
         if self._partitions:
             files: set[str] = set()
@@ -461,3 +492,37 @@ def _create_and_run_script(
     logger.debug("Executing %r", script_path)
 
     process.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)
+
+
+def _merge_plugin_and_user_filesets(
+    *,
+    plugin_entries: list[str],
+    user_entries: list[str],
+    name: str
+) -> Fileset:
+    """Merge a user-provided list and a plugin-provided list of files for a fileset.
+
+    :param plugin_entries: a list of strings for the fileset based from the plugin.
+    :param user_entries: a list of strings for the fileset coming from the user.
+    :returns: A Fileset where user items take precedence over the plugin.
+
+    The user's configuration overrides the plugin's, but only if the entry is the same.
+    """
+    plugin_fileset = Fileset(plugin_entries)
+    user_fileset = Fileset(user_entries)
+
+    uncategorised_user_entries = set(user_fileset.includes) | set(user_fileset.excludes)
+
+    filtered_plugin_includes = set(plugin_fileset.includes) - uncategorised_user_entries
+    filtered_plugin_excludes = set(plugin_fileset.excludes) - uncategorised_user_entries
+
+    includes = user_fileset.includes + sorted(filtered_plugin_includes)
+    excludes = user_fileset.excludes + sorted(filtered_plugin_excludes)
+
+    entries = [
+        *includes,
+        *(f"-{exclude}" for exclude in excludes),
+    ]
+
+    return Fileset(entries, name=name)
+
