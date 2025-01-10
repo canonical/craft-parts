@@ -68,6 +68,9 @@ class PartSpec(BaseModel):
     build_attributes: list[str] = []
     organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
+    backstage_files: list[RelativePathStr] = Field(
+        default_factory=lambda: ["*"], alias="backstage"
+    )
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"], alias="stage"
     )
@@ -301,6 +304,11 @@ class Part:
         return self._part_dir / "install"
 
     @property
+    def part_buildout_dir(self) -> Path:
+        """Return the subdirectory to install internal part build artifacts."""
+        return self._part_dir / "buildout"
+
+    @property
     def part_install_dirs(self) -> Mapping[str | None, Path]:
         """Return a mapping of partition names to install directories.
 
@@ -348,6 +356,11 @@ class Part:
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
         return self.dirs.overlay_dir
+
+    @property
+    def backstage_dir(self) -> Path:
+        """Return the backstage area containing internal artifacts from all parts."""
+        return self.dirs.backstage_dir
 
     @property
     def stage_dir(self) -> Path:

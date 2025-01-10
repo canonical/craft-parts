@@ -365,6 +365,7 @@ class PartHandler:
         :return: The stage step state.
         """
         self._make_dirs()
+        backstage_contents = self._migrate_to_backstage()
 
         contents = self._run_step(
             step_info=step_info,
@@ -388,7 +389,50 @@ class PartHandler:
             files=contents.files,
             directories=contents.dirs,
             overlay_hash=overlay_hash.hex(),
+            backstage_files=backstage_contents.files,
+            backstage_directories=backstage_contents.dirs,
         )
+
+    def _migrate_to_backstage(self) -> StepContents:
+        """Migrate files from the part's buildout directory to the backstage directory."""
+        migratable = set(self._part.part_buildout_dir.rglob("*"))
+        migratable_dirs = {
+            str(path.relative_to(self._part.part_buildout_dir))
+            for path in migratable if path.is_dir()
+        }
+        migratable_files = {
+            str(path.relative_to(self._part.part_buildout_dir))
+            for path in migratable if path.is_file()
+        }
+
+        def pkgconfig_fixup(
+            file_path: str,
+            prefix_prepend: Path = self._part.stage_dir,
+            prefix_trim: Path = self._part.part_install_dir,
+        ) -> None:
+            if os.path.islink(file_path):
+                return
+            if not file_path.endswith(".pc"):
+                return
+            packages.fix_pkg_config(
+                prefix_prepend=self._part.backstage_dir,
+                pkg_config_file=Path(file_path),
+                prefix_trim=self._part.part_buildout_dir,
+            )
+            packages.fix_pkg_config(
+                prefix_prepend=self._part.backstage_dir,
+                pkg_config_file=Path(file_path),
+                prefix_trim=self._part.part_install_dir,
+            )
+
+        files, dirs = migration.migrate_files(
+            files=migratable_files, dirs=migratable_dirs,
+            srcdir=self._part.part_buildout_dir,
+            destdir=self._part.backstage_dir,
+            fixup_func=pkgconfig_fixup,
+        )
+        return StepContents(files, dirs)
+
 
     def _run_prime(
         self,
@@ -867,6 +911,7 @@ class PartHandler:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
+            self._part.part_buildout_dir,
             *self._part.part_install_dirs.values(),
             self._part.part_layer_dir,
             self._part.part_state_dir,

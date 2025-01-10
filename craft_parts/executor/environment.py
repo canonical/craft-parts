@@ -91,7 +91,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     :return: A dictionary containing the built-in environment.
     """
     part_environment = _get_step_environment(step_info)
-    paths = [part.part_install_dir, part.stage_dir]
+    paths = [part.part_install_dir, part.stage_dir, part.backstage_dir]
 
     bin_paths = []
     for path in paths:
@@ -162,6 +162,9 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
         "CRAFT_PROJECT_DIR": str(info.project_dir),
         # Build system configurations for the project.
         "CARGO_HOME": str(info.dirs.work_dir / "cargo"),
+        "CRAFT_BACKSTAGE": str(info.backstage_dir),
+        "CRAFT_STAGE": str(info.stage_dir),
+        "CRAFT_PRIME": str(info.prime_dir),
     }
 
     if Features().enable_overlay:
@@ -169,9 +172,6 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
 
     if Features().enable_partitions:
         global_environment.update(_get_environment_for_partitions(info))
-
-    global_environment["CRAFT_STAGE"] = str(info.stage_dir)
-    global_environment["CRAFT_PRIME"] = str(info.prime_dir)
 
     if info.project_name is not None:
         global_environment["CRAFT_PROJECT_NAME"] = str(info.project_name)
@@ -228,6 +228,7 @@ def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
         "CRAFT_PART_BUILD": str(step_info.part_build_dir),
         "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
         "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
+        "CRAFT_PART_BUILDOUT": str(step_info.part_buildout_dir),
     }
 
 
