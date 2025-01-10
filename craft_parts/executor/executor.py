@@ -165,6 +165,7 @@ class Executor:
                 for stage_dir in self._project_info.stage_dirs.values():
                     if stage_dir.exists():
                         shutil.rmtree(stage_dir)
+                shutil.rmtree(self._project_info.backstage_dir)
 
             if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
                 shutil.rmtree(self._project_info.parts_dir)

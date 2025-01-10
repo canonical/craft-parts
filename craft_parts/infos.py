@@ -373,6 +373,7 @@ class PartInfo:
         self._part_src_subdir = part.part_src_subdir
         self._part_build_dir = part.part_build_dir
         self._part_build_subdir = part.part_build_subdir
+        self._part_buildout_dir = part.part_buildout_dir
         self._part_install_dir = part.part_install_dir
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
@@ -416,6 +417,11 @@ class PartInfo:
     def part_build_subdir(self) -> Path:
         """Return the subdirectory in build containing the source subtree (if any)."""
         return self._part_build_subdir
+
+    @property
+    def part_buildout_dir(self) -> Path:
+        """Return the subdirectory for internal artifact output."""
+        return self._part_buildout_dir
 
     @property
     def part_install_dir(self) -> Path:
