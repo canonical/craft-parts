@@ -19,7 +19,6 @@ import os
 import selectors
 import socket
 import subprocess
-from typing import TextIO
 
 import pytest
 from craft_parts.utils import process
@@ -65,11 +64,11 @@ def test_run_selector(out, err, new_dir):
     sock.bind(sock_path)
     sock.listen(1)
 
-    def accept(sock: TextIO, _mask: int) -> None:
+    def accept(sock: socket.socket, _mask: int) -> None:
         conn, addr = sock.accept()
         selector.register(conn, selectors.EVENT_READ, read)
 
-    def read(conn: TextIO, _mask: int) -> None:
+    def read(conn: socket.socket, _mask: int) -> None:
         data = conn.recv(16)
         if not data:
             selector.unregister(conn)

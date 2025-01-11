@@ -353,6 +353,7 @@ class TestStepHandlerRunScriptlet:
                 step=Step.BUILD,
                 work_dir=new_dir,
             )
+        assert raised.value.stderr is not None
         assert raised.value.stderr.endswith(b"\n+ echo uh-oh\nuh-oh\n+ false\n")
 
     # TODO: test ctl api server

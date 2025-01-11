@@ -302,15 +302,15 @@ class StepHandler:
                 ctl_socket.close()
 
     def _ctl_server_selector(
-        self, step: Step, scriptlet_name: str, stream: Stream
+        self, step: Step, scriptlet_name: str, stream: socket.socket
     ) -> selectors.BaseSelector:
         selector = selectors.DefaultSelector()
 
-        def accept(sock: Stream, _mask: int) -> None:
+        def accept(sock: socket.socket, _mask: int) -> None:
             conn, addr = sock.accept()
             selector.register(conn, selectors.EVENT_READ, read)
 
-        def read(conn: Stream, _mask: int) -> None:
+        def read(conn: socket.socket, _mask: int) -> None:
             data = conn.recv(1024)
             logger.debug(f"ctl server received: {data!s}")
             if not data:
