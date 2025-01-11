@@ -78,7 +78,7 @@ def _client(cmd: str, args: list[str]) -> str | None:
     ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     ctl_socket.connect(ctl_socket_path)
     ctl_socket.send(bytes(json.dumps(data), encoding="utf8"))
-    feedback = ctl_socket.recv(1024).decode("utf8").split(" ")
+    feedback = ctl_socket.recv(1024).decode("utf8").split(" ", 1)
 
     # response from server is in the form "<status> <message>" where
     # <status> can be either "OK" or "ERR".  Previous server versions
