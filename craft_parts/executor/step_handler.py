@@ -147,7 +147,7 @@ class StepHandler:
             _create_and_run_script(
                 build_commands,
                 script_path=self._part.part_run_dir.absolute() / "build.sh",
-                build_environment_script_path=build_environment_script_path,
+                environment_script_path=build_environment_script_path,
                 cwd=self._part.part_build_subdir,
                 stdout=self._stdout,
                 stderr=self._stderr,
@@ -276,19 +276,19 @@ class StepHandler:
 
             selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)
 
-            scriptlet_commands = [
-                f"export PARTS_CTL_SOCKET={ctl_socket_path}",
-                self._env,
-                scriptlet,
-            ]
+            environment = f"export PARTS_CTL_SOCKET={ctl_socket_path}\n" + self._env
+            environment_script_path = Path(tempdir) / "environment.sh"
+            environment_script_path.write_text(environment)
+            environment_script_path.chmod(0o644)
 
             try:
                 _create_and_run_script(
-                    scriptlet_commands,
+                    [scriptlet],
                     script_path=Path(tempdir) / "scriptlet.sh",
                     cwd=work_dir,
                     stdout=self._stdout,
                     stderr=self._stderr,
+                    environment_script_path=environment_script_path,
                     selector=selector,
                 )
             except process.ProcessError as process_error:
@@ -440,7 +440,7 @@ def _create_and_run_script(
     cwd: Path,
     stdout: Stream,
     stderr: Stream,
-    build_environment_script_path: Path | None = None,
+    environment_script_path: Path | None = None,
     selector: selectors.BaseSelector | None = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
@@ -448,8 +448,8 @@ def _create_and_run_script(
         print("#!/bin/bash", file=run_file)
         print("set -euo pipefail", file=run_file)
 
-        if build_environment_script_path:
-            print(f"source {build_environment_script_path}", file=run_file)
+        if environment_script_path:
+            print(f"source {environment_script_path}", file=run_file)
 
         print("set -x", file=run_file)
 
