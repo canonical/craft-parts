@@ -322,7 +322,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     actions = lf.plan(Step.PRIME)
 
     out = Path("out.txt")
-    with out.open(mode="w") as outfile, pytest.raises(errors.ScriptletRunError):
+    with out.open(mode="w") as outfile, pytest.raises(errors.PluginBuildError):
         with lf.action_executor() as ctx:
             ctx.execute(actions, stdout=outfile)
 
