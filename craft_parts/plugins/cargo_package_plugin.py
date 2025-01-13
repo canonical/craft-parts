@@ -149,11 +149,11 @@ class CargoPackagePlugin(Plugin):
                 f"""\
                     pushd target/package
                     for package in *.crate; do
-                        tar xf $package
-                        rm $package
+                        tar xf "$package"
+                        rm "$package"
                     done
                     for package in */; do
-                        echo '{{"files":{{}}}}' > $package/.cargo-checksum.json
+                        echo '{{"files":{{}}}}' > "$package/.cargo-checksum.json"
                     done
                     cp --recursive --archive --link --no-dereference . {write_registry_bash}
                     popd
