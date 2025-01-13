@@ -52,7 +52,7 @@ class CargoPackagePluginProperties(PluginProperties, frozen=True):
     plugin: Literal["cargo-package"] = "cargo-package"
 
     # part properties required by the plugin
-    cargo_package_features: UniqueList[str] = []
+    cargo_package_features: UniqueList[str] = Field(default_factory=list)
     cargo_package_cargo_command: str = "cargo"
     source: str  # pyright: ignore[reportGeneralTypeIssues]
     after: UniqueList[str] | None = None
