@@ -37,6 +37,7 @@ class TestPartSpecs:
             "source": "http://example.com/hello-2.3.tar.gz",
             "source-checksum": "md5/d9210476aac5f367b14e513bdefdee08",
             "source-branch": "release",
+            "source-channel": None,
             "source-commit": "2514f9533ec9b45d07883e10a561b248497a8e3c",
             "source-depth": 3,
             "source-subdir": "src",
