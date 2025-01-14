@@ -277,7 +277,7 @@ class StepHandler:
             selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)
 
             environment = f"export PARTS_CTL_SOCKET={ctl_socket_path}\n" + self._env
-            environment_script_path = Path(tempdir) / "environment.sh"
+            environment_script_path = Path(tempdir) / "scriptlet_environment.sh"
             environment_script_path.write_text(environment)
             environment_script_path.chmod(0o644)
 
