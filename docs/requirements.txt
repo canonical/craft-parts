@@ -328,7 +328,7 @@ uvicorn==0.34.0
     # via
     #   -r requirements.txt
     #   sphinx-autobuild
-watchfiles==1.0.3
+watchfiles==1.0.4
     # via
     #   -r requirements.txt
     #   sphinx-autobuild
