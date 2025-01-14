@@ -16,6 +16,7 @@
 
 """Craft parts errors."""
 
+import abc
 import contextlib
 import pathlib
 from collections.abc import Iterable
@@ -492,7 +493,7 @@ class PluginPullError(PartsError):
         super().__init__(brief=brief)
 
 
-class UserExecutionError(PartsError):
+class UserExecutionError(PartsError, abc.ABC):
     """Plugin build script failed at runtime.
 
     :param part_name: The name of the part being processed.
