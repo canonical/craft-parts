@@ -334,7 +334,7 @@ toml = [
 
 [[package]]
 name = "craft-parts"
-version = "2.2.1.post19+g139c4d5.d20250108"
+version = "2.2.1.post21+gf142785.d20250114"
 source = { editable = "." }
 dependencies = [
     { name = "overrides" },
@@ -441,7 +441,7 @@ requires-dist = [
     { name = "overrides", specifier = "!=7.6.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pydocstyle", marker = "extra == 'dev'" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.388" },
+    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.391" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "~=8.0" },
     { name = "pytest-check", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = "~=5.0" },
@@ -486,7 +486,7 @@ dev = [
     { name = "jsonschema" },
     { name = "mypy", extras = ["reports"], specifier = "~=1.14.1" },
     { name = "pydocstyle" },
-    { name = "pyright", specifier = "==1.1.388" },
+    { name = "pyright", specifier = "==1.1.391" },
     { name = "pytest", specifier = "~=8.0" },
     { name = "pytest-check" },
     { name = "pytest-cov", specifier = "~=5.0" },
@@ -1117,15 +1117,15 @@ wheels = [
 
 [[package]]
 name = "pyright"
-version = "1.1.388"
+version = "1.1.391"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nodeenv" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/83/e9867538a794638d2d20ac3ab3106a31aca1d9cfea530c9b2921809dae03/pyright-1.1.388.tar.gz", hash = "sha256:0166d19b716b77fd2d9055de29f71d844874dbc6b9d3472ccd22df91db3dfa34", size = 21939 }
+sdist = { url = "https://files.pythonhosted.org/packages/11/05/4ea52a8a45cc28897edb485b4102d37cbfd5fce8445d679cdeb62bfad221/pyright-1.1.391.tar.gz", hash = "sha256:66b2d42cdf5c3cbab05f2f4b76e8bec8aa78e679bfa0b6ad7b923d9e027cadb2", size = 21965 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/57/7fb00363b7f267a398c5bdf4f55f3e64f7c2076b2e7d2901b3373d52b6ff/pyright-1.1.388-py3-none-any.whl", hash = "sha256:c7068e9f2c23539c6ac35fc9efac6c6c1b9aa5a0ce97a9a8a6cf0090d7cbf84c", size = 18579 },
+    { url = "https://files.pythonhosted.org/packages/ad/89/66f49552fbeb21944c8077d11834b2201514a56fd1b7747ffff9630f1bd9/pyright-1.1.391-py3-none-any.whl", hash = "sha256:54fa186f8b3e8a55a44ebfa842636635688670c6896dcf6cf4a7fc75062f4d15", size = 18579 },
 ]
 
 [[package]]
