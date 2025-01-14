@@ -355,5 +355,3 @@ class TestStepHandlerRunScriptlet:
             )
         assert raised.value.stderr is not None
         assert raised.value.stderr.endswith(b"\nuh-oh\n+ false\n")
-
-    # TODO: test ctl api server
