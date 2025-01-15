@@ -79,7 +79,7 @@ class PythonPlugin(BasePythonPlugin):
         return commands
 
     @override
-    def get_files(self) -> PackageFiles:
+    def get_package_files(self) -> PackageFiles:
         # https://packaging.python.org/en/latest/specifications/binary-distribution-format/
         # Could also add the pkginfo library for this
 
@@ -106,5 +106,5 @@ class PythonPlugin(BasePythonPlugin):
                 # First column is files.  These are relative, resolve() to get
                 # rid of all the ".." that leads up to the bin dir.
                 pkg_files = {(site_pkgs_dir / f[0]).resolve() for f in csvreader}
-                ret[Package(pkg_name, pkg_version)] = pkg_files
+                ret[Package("python", pkg_name, pkg_version)] = pkg_files
         return ret

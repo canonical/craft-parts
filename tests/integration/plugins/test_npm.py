@@ -198,7 +198,7 @@ def test_npm_plugin_include_node(create_fake_package_with_node, new_dir, partiti
 
 
 @pytest.mark.slow
-def test_npm_plugin_get_files(create_fake_package_with_node, new_dir, partitions):
+def test_npm_plugin_get_package_files(create_fake_package_with_node, new_dir, partitions):
     parts = create_fake_package_with_node()
     lifecycle = LifecycleManager(
         parts,
@@ -212,7 +212,7 @@ def test_npm_plugin_get_files(create_fake_package_with_node, new_dir, partitions
         ctx.execute(actions)
 
     part_name = list(parts["parts"].keys())[0]
-    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_files()
+    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_package_files()
     part_install_dir = lifecycle._executor._part_list[0].part_install_dir
 
     # This example bundles in node, which brings a ton of other dependencies -
@@ -251,7 +251,7 @@ def test_npm_plugin_get_files(create_fake_package_with_node, new_dir, partitions
     # dependencies (cli-columns and gauge) both depend on 5.0.1, which means
     # their files get collapsed under a single key (which doesn't matter for
     # our purposes.)
-    ar211 = Package("ansi-regex", "2.1.1")
+    ar211 = Package("npm", "ansi-regex", "2.1.1")
     assert ar211 in actual_file_list
     assert len(actual_file_list[ar211]) == 4, ar211
     assert _paths_relative_to_install_dir(
@@ -263,18 +263,18 @@ def test_npm_plugin_get_files(create_fake_package_with_node, new_dir, partitions
         "lib/node_modules/npm/node_modules/ansi-regex/readme.md",
     }
 
-    ar300 = Package("ansi-regex", "3.0.0")
+    ar300 = Package("npm", "ansi-regex", "3.0.0")
     assert ar300 in actual_file_list
     assert len(actual_file_list[ar300]) == 4, ar300
 
     # Added "index.d.ts" file, absent from previous versions
-    ar500 = Package("ansi-regex", "5.0.0")
+    ar500 = Package("npm", "ansi-regex", "5.0.0")
     assert ar500 in actual_file_list
     assert len(actual_file_list[ar500]) == 5, ar500
 
     # Between 5.0.0 and 5.0.1 they seem to have stopped packaging the readme;
     # back to 4 files per install, and there are two installs of this version.
-    ar501 = Package("ansi-regex", "5.0.1")
+    ar501 = Package("npm", "ansi-regex", "5.0.1")
     assert ar501 in actual_file_list
     assert len(actual_file_list[ar501]) == 8, ar501
     assert _paths_relative_to_parent_modules_dir(actual_file_list[ar501]) == {
@@ -285,6 +285,6 @@ def test_npm_plugin_get_files(create_fake_package_with_node, new_dir, partitions
     }
 
     # Verify scoped names work properly:
-    assert Package("@npmcli/installed-package-contents", "1.0.7") in actual_file_list
-    assert Package("@tootallnate/once", "1.1.2") in actual_file_list
-    assert Package("@tootallnate/once", "2.0.0") in actual_file_list
+    assert Package("npm", "@npmcli/installed-package-contents", "1.0.7") in actual_file_list
+    assert Package("npm", "@tootallnate/once", "1.1.2") in actual_file_list
+    assert Package("npm", "@tootallnate/once", "2.0.0") in actual_file_list

@@ -197,7 +197,7 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
     ]
 
 
-def test_get_files(new_dir):
+def test_get_package_files(new_dir):
     part_info = PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
@@ -215,7 +215,7 @@ def test_get_files(new_dir):
     shutil.copytree(Path(__file__).parent / "testfiles/python/install", root)
 
     expected = {
-        Package("fakeee", "1.2.3-deb_ian"): {
+        Package("python", "fakeee", "1.2.3-deb_ian"): {
             bins_dir / "doit",
             pkgs_install_dir / "fakeee/a_file.py",
             pkgs_install_dir / "fakeee/things/stuff.py",
@@ -227,6 +227,6 @@ def test_get_files(new_dir):
         },
     }
 
-    actual = plugin.get_files()
+    actual = plugin.get_package_files()
 
     assert expected == actual

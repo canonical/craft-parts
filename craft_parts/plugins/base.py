@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 class Package:
     """A dataclass that uniquely identifies a package."""
 
+    plugin: str
     name: str
     version: str
 
@@ -103,8 +104,11 @@ class Plugin(abc.ABC):
         """
         self._action_properties = deepcopy(action_properties)
 
-    def get_files(self) -> PackageFiles:
-        """Get a mapping of (package name, package version) -> installed file."""
+    def get_package_files(self) -> PackageFiles:
+        """Get a mapping of Package -> files, if the plugin supports this.
+
+        Used for xattr annotation, for reduced SBOM generation.
+        """
         return {}
 
 

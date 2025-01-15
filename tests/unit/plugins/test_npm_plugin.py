@@ -385,7 +385,7 @@ class TestPluginNpmPlugin:
 
         assert plugin.get_out_of_source_build() is False
 
-    def test_get_file_list(self, part_info, new_dir):  # noqa: PLR0915
+    def test_get_package_files(self, part_info, new_dir):  # noqa: PLR0915
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
@@ -563,14 +563,14 @@ class TestPluginNpmPlugin:
         )
 
         expected = {
-            Package("modulea", modulea_version): {
+            Package("npm", "modulea", modulea_version): {
                 Path(root / "bin/my_executable"),
                 Path(root / "lib/node_modules/modulea/bin"),
                 Path(root / "lib/node_modules/modulea/bin/cli.js"),
                 Path(root / "lib/node_modules/modulea/index.js"),
                 Path(root / "lib/node_modules/modulea/package.json"),
             },
-            Package("moduleb", dupe_moduleb_version): {
+            Package("npm", "moduleb", dupe_moduleb_version): {
                 Path(root / "lib/node_modules/moduleb/index.js"),
                 Path(root / "lib/node_modules/moduleb/package.json"),
                 Path(
@@ -582,7 +582,7 @@ class TestPluginNpmPlugin:
                     / "lib/node_modules/@scopename/modulec/node_modules/moduleb/package.json"
                 ),
             },
-            Package("@scopename/modulec", modulec_version): {
+            Package("npm", "@scopename/modulec", modulec_version): {
                 Path(root / "bin/modulec_thing"),
                 Path(root / "lib/node_modules/@scopename/modulec/bin"),
                 Path(root / "lib/node_modules/@scopename/modulec/bin/index.js"),
@@ -591,7 +591,7 @@ class TestPluginNpmPlugin:
                 Path(root / "lib/node_modules/@scopename/modulec/LICENSE"),
                 Path(root / "lib/node_modules/@scopename/modulec/package.json"),
             },
-            Package("@periscope/sodeep", sodeep_version): {
+            Package("npm", "@periscope/sodeep", sodeep_version): {
                 Path(root / "bin/uboat"),
                 Path(
                     root
@@ -606,7 +606,7 @@ class TestPluginNpmPlugin:
                     / "lib/node_modules/modulea/node_modules/@periscope/sodeep/package.json"
                 ),
             },
-            Package("moduleb", sodeep_moduleb_version): {
+            Package("npm", "moduleb", sodeep_moduleb_version): {
                 Path(
                     root
                     / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/index.js"
@@ -616,7 +616,7 @@ class TestPluginNpmPlugin:
                     / "lib/node_modules/modulea/node_modules/@periscope/sodeep/node_modules/moduleb/package.json"
                 ),
             },
-            Package("moduleb", modulea_moduleb_version): {
+            Package("npm", "moduleb", modulea_moduleb_version): {
                 Path(root / "lib/node_modules/modulea/node_modules/moduleb/index.js"),
                 Path(
                     root / "lib/node_modules/modulea/node_modules/moduleb/package.json"
@@ -624,4 +624,4 @@ class TestPluginNpmPlugin:
             },
         }
 
-        assert expected == plugin.get_files()
+        assert expected == plugin.get_package_files()

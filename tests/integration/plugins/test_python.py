@@ -414,7 +414,7 @@ def test_no_shebangs(new_dir, partitions):
 
 
 @pytest.mark.slow
-def test_python_plugin_get_files(new_dir, partitions):
+def test_python_plugin_get_package_files(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -438,7 +438,7 @@ def test_python_plugin_get_files(new_dir, partitions):
         ctx.execute(actions)
 
     part_name = list(parts["parts"].keys())[0]
-    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_files()
+    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_package_files()
     part_install_dir = lifecycle._executor._part_list[0].part_install_dir
 
     # Real quick instantiate another copy of the plugin to ensure statelessness.
@@ -450,15 +450,15 @@ def test_python_plugin_get_files(new_dir, partitions):
         part=Part("foo", {"source": "."}, partitions=partitions),
     )
     plugin2 = PythonPlugin(properties=properties2, part_info=part_info)
-    assert plugin2.get_files() == actual_file_list
+    assert plugin2.get_package_files() == actual_file_list
 
     # Make sure all the expected packages were installed.
     # We can't assert the exact set of keys because the pip version will change
     # over time.  And we can't assert the number of keys because py3.10 installs
     # setuptools as a separate package.
 
-    assert Package(name="Flask", version="3.1.0") in actual_file_list
-    assert part_install_dir / "bin/flask" in actual_file_list[Package("Flask", "3.1.0")]
+    assert Package("python", name="Flask", version="3.1.0") in actual_file_list
+    assert part_install_dir / "bin/flask" in actual_file_list[Package("python", "Flask", "3.1.0")]
 
     # Can't assert specific versions here because flask has >= versions for its
     # dependencies.
