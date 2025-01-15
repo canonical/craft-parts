@@ -20,6 +20,9 @@ BeforeValidator
 BuildPackageNotFound
 BuildPackagesNotInstalled
 BuildState
+CargoPackagePlugin
+CargoPackagePluginEnvironmentValidator
+CargoPackagePluginProperties
 CLI
 CMake
 CMakeLists

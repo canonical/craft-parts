@@ -81,4 +81,4 @@ def test_get_package_command(plugin, cargo_command, features):
 
 def test_get_build_commands(plugin):
     commands = plugin.get_build_commands()
-    assert "echo '{\"files\":{}}' > $package/.cargo-checksum.json" in commands[1]
+    assert 'echo \'{"files":{}}\' > "$package/.cargo-checksum.json"' in commands[1]
