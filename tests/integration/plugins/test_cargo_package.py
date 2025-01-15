@@ -32,6 +32,7 @@ parts:
     after: [rust-ascii]
     plugin: rust
     source: .
+    rust-channel: none
     build-environment:
       # Should not be necessary as the other part sets offline, but do so anyway
       # so we don't use an online version if we change this.
