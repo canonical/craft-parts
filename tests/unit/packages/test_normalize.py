@@ -375,7 +375,7 @@ class TestFixPkgConfig:
 
 
 @pytest.mark.parametrize(
-    "src,dst,result",
+    ("src", "dst", "result"),
     [
         ("a", "rel-to-a", "a"),
         ("/a", "abs-to-a", "a"),

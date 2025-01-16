@@ -316,7 +316,7 @@ class PartHandler:
                 stdout=stdout,
                 stderr=stderr,
             )
-        
+
         # The plugin has by now built/unpacked packages, now get that file list mapping
         # and xattr the files.
         self._annotate_plugin_files()
@@ -987,7 +987,7 @@ class PartHandler:
 
         for snap_source in snap_sources:
             snap_source.provision(install_dir, keep=True)
-    
+
     def _annotate_plugin_files(self) -> None:
         """Get the PackageFiles from the plugin and tag all the files it includes."""
         for pkg, pkg_files in self._plugin.get_file_list().items():
