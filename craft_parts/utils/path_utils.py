@@ -106,4 +106,3 @@ def _split_partition_and_inner_path(str_path: str) -> tuple[str, str]:
     inner_path = (inner_path or "").lstrip("/")
 
     return partition, inner_path
-
