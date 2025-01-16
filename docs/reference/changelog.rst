@@ -34,7 +34,7 @@ Bug fixes:
 
 - Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
   source changes.
-- Honor the \${pcfiledir} entries in pkgconfig files.
+- Honor the ``pcfiledir`` tag in ``pkgconfig`` files.
 
 Documentation:
 
