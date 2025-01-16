@@ -18,6 +18,7 @@
 
 import logging
 import os
+from pathlib import Path
 import sys
 
 from craft_parts import errors
@@ -25,7 +26,7 @@ from craft_parts import errors
 logger = logging.getLogger(__name__)
 
 
-def read_xattr(path: str, key: str) -> str | None:
+def read_xattr(path: str | Path, key: str) -> str | None:
     """Get extended attribute metadata from a file.
 
     :param path: The file to get metadata from.
@@ -35,6 +36,7 @@ def read_xattr(path: str, key: str) -> str | None:
     """
     if sys.platform != "linux":
         raise RuntimeError("xattr support only available for Linux")
+    path = str(path)
 
     # Extended attributes do not apply to symlinks.
     if os.path.islink(path):
@@ -58,7 +60,7 @@ def read_xattr(path: str, key: str) -> str | None:
     return value.decode().strip()
 
 
-def write_xattr(path: str, key: str, value: str) -> None:
+def write_xattr(path: str | Path, key: str, value: str) -> None:
     """Add extended attribute metadata to a file.
 
     :param path: The file to add metadata to.
@@ -67,6 +69,7 @@ def write_xattr(path: str, key: str, value: str) -> None:
     """
     if sys.platform != "linux":
         raise RuntimeError("xattr support only available for Linux")
+    path = str(path)
 
     # Extended attributes do not apply to symlinks.
     if os.path.islink(path):
