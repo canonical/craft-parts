@@ -124,7 +124,7 @@ class CargoPackagePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         # We do not want this implementation detail exposed in the run script
         # This sets the default registry for all parts to use.
-        cargo_config = pathlib.Path("~/.cargo/config.toml").expanduser().resolve()
+        cargo_config = self._part_info.work_dir / ".cargo/config.toml"
         if not cargo_config.exists():
             cargo_config.parent.mkdir(exist_ok=True, parents=True)
             cargo_config.write_text(
