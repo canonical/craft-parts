@@ -365,6 +365,18 @@ class TestFixPkgConfig:
             f"{tmpdir}/usr"
         )
 
+    def test_normalize_fix_pkg_config_with_pcfiledir(
+        self, tmpdir, pkg_config_file, expected_pkg_config_content
+    ):
+        """Verify normalization fixes pkg-config files."""
+        pc_file = tmpdir / "my-file.pc"
+        pkg_config_file(pc_file, "${pcfiledir}/../../..")
+        normalize(tmpdir, repository=DummyRepository)
+
+        assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+            "${pcfiledir}/../../.."
+        )
+
     def test_fix_pkg_config_is_dir(self, tmpdir):
         """Verify directories ending in .pc do not raise an error."""
         pc_file = tmpdir / "granite.pc"
