@@ -115,6 +115,8 @@ During the build step, the plugin performs the following actions:
    dependencies.
 5. It runs :command:`pip check` to ensure the virtual environment is consistent.
 
+.. _craft_parts_poetry_links:
+
 .. _Poetry: https://python-poetry.org
 .. _Dependency groups: https://python-poetry.org/docs/managing-dependencies#dependency-groups
 .. _export command: https://python-poetry.org/docs/cli/#export
