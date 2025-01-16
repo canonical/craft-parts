@@ -198,7 +198,9 @@ def test_npm_plugin_include_node(create_fake_package_with_node, new_dir, partiti
 
 
 @pytest.mark.slow
-def test_npm_plugin_get_package_files(create_fake_package_with_node, new_dir, partitions):
+def test_npm_plugin_get_package_files(
+    create_fake_package_with_node, new_dir, partitions
+):
     parts = create_fake_package_with_node()
     lifecycle = LifecycleManager(
         parts,
@@ -212,7 +214,9 @@ def test_npm_plugin_get_package_files(create_fake_package_with_node, new_dir, pa
         ctx.execute(actions)
 
     part_name = list(parts["parts"].keys())[0]
-    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_package_files()
+    actual_file_list = lifecycle._executor._handler[
+        part_name
+    ]._plugin.get_package_files()
     part_install_dir = lifecycle._executor._part_list[0].part_install_dir
 
     # This example bundles in node, which brings a ton of other dependencies -
@@ -285,6 +289,9 @@ def test_npm_plugin_get_package_files(create_fake_package_with_node, new_dir, pa
     }
 
     # Verify scoped names work properly:
-    assert Package("npm", "@npmcli/installed-package-contents", "1.0.7") in actual_file_list
+    assert (
+        Package("npm", "@npmcli/installed-package-contents", "1.0.7")
+        in actual_file_list
+    )
     assert Package("npm", "@tootallnate/once", "1.1.2") in actual_file_list
     assert Package("npm", "@tootallnate/once", "2.0.0") in actual_file_list

@@ -438,7 +438,9 @@ def test_python_plugin_get_package_files(new_dir, partitions):
         ctx.execute(actions)
 
     part_name = list(parts["parts"].keys())[0]
-    actual_file_list = lifecycle._executor._handler[part_name]._plugin.get_package_files()
+    actual_file_list = lifecycle._executor._handler[
+        part_name
+    ]._plugin.get_package_files()
     part_install_dir = lifecycle._executor._part_list[0].part_install_dir
 
     # Real quick instantiate another copy of the plugin to ensure statelessness.
@@ -458,7 +460,10 @@ def test_python_plugin_get_package_files(new_dir, partitions):
     # setuptools as a separate package.
 
     assert Package("python", name="Flask", version="3.1.0") in actual_file_list
-    assert part_install_dir / "bin/flask" in actual_file_list[Package("python", "Flask", "3.1.0")]
+    assert (
+        part_install_dir / "bin/flask"
+        in actual_file_list[Package("python", "Flask", "3.1.0")]
+    )
 
     # Can't assert specific versions here because flask has >= versions for its
     # dependencies.
