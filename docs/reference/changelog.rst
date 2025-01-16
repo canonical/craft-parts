@@ -12,7 +12,7 @@ Bug fixes:
 
 Documentation:
 
-- Correct maven plugin docstring to refer to Maven from Go.
+- Correct the Maven plugin docstring to refer to Maven from Go.
 
 2.2.1 (2024-12-19)
 ------------------
