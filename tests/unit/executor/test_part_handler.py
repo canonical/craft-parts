@@ -30,6 +30,7 @@ from craft_parts.executor.step_handler import StepContents
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
+from craft_parts.plugins.base import Package
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -819,6 +820,47 @@ class TestPackages:
         mock_snap_provision.assert_called_once_with(
             new_dir / "parts/p1/install",
             keep=True,
+        )
+
+    def test_annotate_plugin_files(self, mocker):
+        mock_write_xattr = mocker.patch("craft_parts.xattrs.write_xattr")
+
+        package_files = {
+            Package("foo", "bar", "41"): {
+                Path("hehe/haha/hoho"),
+                Path("woop/de/doo"),
+                Path("/tmp"),
+            },
+            Package("foo", "bar", "41.0000001"): {
+                Path("/tmp"),
+                Path("something_else"),
+            },
+            Package("foo", "quz", "17million"): {
+                Path("/tmp"),
+            },
+            Package("wef", "few", "0.0"): {
+                Path("/tmp"),
+            },
+        }
+
+        part_handler = mocker.MagicMock(spec=PartHandler)
+        part_handler._plugin = mocker.MagicMock()
+        part_handler._plugin.get_package_files = mocker.MagicMock(
+            return_value=package_files
+        )
+        PartHandler._annotate_plugin_files(part_handler)
+
+        mock_write_xattr.assert_has_calls(
+            [
+                call(Path("hehe/haha/hoho"), "origin_foo_package", "bar=41"),
+                call(Path("woop/de/doo"), "origin_foo_package", "bar=41"),
+                call(Path("/tmp"), "origin_foo_package", "bar=41"),
+                call(Path("/tmp"), "origin_foo_package", "bar=41.0000001"),
+                call(Path("something_else"), "origin_foo_package", "bar=41.0000001"),
+                call(Path("/tmp"), "origin_foo_package", "quz=17million"),
+                call(Path("/tmp"), "origin_wef_package", "few=0.0"),
+            ],
+            any_order=True,
         )
 
     def test_get_build_packages(self, new_dir, partitions):
