@@ -990,7 +990,7 @@ class PartHandler:
 
     def _annotate_plugin_files(self) -> None:
         """Get the PackageFiles from the plugin and tag all the files it includes."""
-        for pkg, pkg_files in self._plugin.get_file_list().items():
+        for pkg, pkg_files in self._plugin.get_package_files().items():
             for pkg_file in pkg_files:
                 xattrs.write_xattr(
                     pkg_file,
