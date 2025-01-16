@@ -71,10 +71,6 @@ class CargoPackagePluginEnvironmentValidator(validator.PluginEnvironmentValidato
         :param part_dependencies: A list of the parts this part depends on.
         """
         options = cast(CargoPackagePluginProperties, self._options)
-        if "rust-deps" in (part_dependencies or []):
-            # If we have a rust-deps dependency, we don't need to check for cargo.
-            return
-
         self.validate_dependency(
             dependency=options.cargo_package_cargo_command,
             plugin_name=options.plugin,

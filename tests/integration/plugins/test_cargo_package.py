@@ -42,6 +42,8 @@ parts:
       # Not necessary as the other part overrides crates.io, but override it anyway
       # to ensure forward compatibility.
       - CARGO_REGISTRY_DEFAULT: "craft-parts"
+      # Don't use snaps first.
+      - PATH: /usr/bin:$PATH
 """
 
 
