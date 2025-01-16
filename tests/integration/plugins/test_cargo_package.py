@@ -28,6 +28,8 @@ parts:
     plugin: cargo-package
     source: https://github.com/tomprogrammer/rust-ascii.git
     source-tag: v0.8.7  # Intentionally get a very old version of ascii to test
+    # Use the system's cargo, not cargo from the snap.
+    cargo-package-cargo-command: /usr/bin/cargo
   ascii-consumer:  # Test that we can correctly consume the package from another part.
     after: [rust-ascii]
     plugin: rust
