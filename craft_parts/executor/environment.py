@@ -161,7 +161,7 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
         "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(info.project_dir),
         # Build system configurations for the project.
-        "CARGO_HOME": str(info.dirs.work_dir / ".cargo"),
+        "CARGO_HOME": str(info.dirs.work_dir / "cargo"),
     }
 
     if Features().enable_overlay:
