@@ -304,7 +304,7 @@ class StepHandler:
     def _ctl_server_selector(
         self, step: Step, scriptlet_name: str, stream: socket.socket
     ) -> selectors.BaseSelector:
-        selector = selectors.DefaultSelector()
+        selector = selectors.SelectSelector()
 
         def accept(sock: socket.socket, _mask: int) -> None:
             conn, addr = sock.accept()

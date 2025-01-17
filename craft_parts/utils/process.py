@@ -145,7 +145,7 @@ def run(
         _select_stream(stderr, sys.stderr) as err_fd,
     ):
         # Set up select library with any streams that need monitoring
-        selector = selector or selectors.DefaultSelector()
+        selector = selector or selectors.SelectSelector()
         out_handler = _get_stream_handler(proc.stdout, out_fd, selector)
         err_handler = _get_stream_handler(proc.stderr, err_fd, selector)
 
@@ -167,6 +167,8 @@ def run(
                 if proc.poll() is not None:
                     combined = combined_io.getvalue()
                     break
+
+    proc.wait()
 
     stdout_res = out_handler.singular if out_handler else b""
     stderr_res = err_handler.singular if err_handler else b""
