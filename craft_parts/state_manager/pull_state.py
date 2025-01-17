@@ -71,6 +71,7 @@ class PullState(StepState):
             "source-tag",
             "source-type",
             "source-branch",
+            "source-channel",
             "source-subdir",
             "source-submodules",
             "override-pull",
