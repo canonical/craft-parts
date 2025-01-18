@@ -8,9 +8,6 @@ parts:
       - -DCMAKE_BUILD_TYPE=RelWithDebInfo
     build-attributes:
       - enable-patchelf
-    override-build: |
-      craftctl default
-      mv $CRAFT_PART_INSTALL/usr/include $CRAFT_PART_BUILDOUT/include
     stage:
       # Ensure that we're not staging the headers in the normal stage directory.
       # Instead, we stage the headers in the backstage directory.
