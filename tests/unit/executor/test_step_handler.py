@@ -187,6 +187,7 @@ class TestStepHandlerBuiltins:
                 f'export CRAFT_ARCH_TRIPLET_BUILD_FOR="{triplet}"',
                 'export CRAFT_PARALLEL_BUILD_COUNT="1"',
                 f'export CRAFT_PROJECT_DIR="{new_dir}"',
+                f'export CARGO_HOME="{new_dir}/cargo"',
                 *partition_script_lines,
                 f'export CRAFT_STAGE="{new_dir}/stage"',
                 f'export CRAFT_PRIME="{new_dir}/prime"',

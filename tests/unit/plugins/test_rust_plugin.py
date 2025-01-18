@@ -86,7 +86,9 @@ def test_get_build_environment(part_info):
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_environment() == {"PATH": "${HOME}/.cargo/bin:${PATH}"}
+    assert plugin.get_build_environment() == {
+        "PATH": "${CARGO_HOME}/bin:${HOME}/.cargo/bin:${PATH}"
+    }
 
 
 def test_get_build_commands_default(part_info):

@@ -215,7 +215,7 @@ class RustPlugin(Plugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         variables = {
-            "PATH": "${HOME}/.cargo/bin:${PATH}",
+            "PATH": "${CARGO_HOME}/bin:${HOME}/.cargo/bin:${PATH}",
         }
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:

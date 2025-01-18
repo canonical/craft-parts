@@ -334,7 +334,6 @@ toml = [
 
 [[package]]
 name = "craft-parts"
-version = "2.2.1.post21+gf142785.d20250114"
 source = { editable = "." }
 dependencies = [
     { name = "overrides" },

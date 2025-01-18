@@ -2,7 +2,14 @@
 Changelog
 *********
 
-2.2.2 (2025-MM-DD)
+2.3.0 (2025-MM-DD)
+------------------
+
+New features:
+
+- Add a ``cargo-package`` plugin for offline Rust crate building.
+
+2.2.2 (2025-01-13)
 ------------------
 
 Bug fixes:
