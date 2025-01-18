@@ -228,7 +228,6 @@ def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
         "CRAFT_PART_BUILD": str(step_info.part_build_dir),
         "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
         "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
-        "CRAFT_PART_BUILDOUT": str(step_info.part_buildout_dir),
     }
 
 

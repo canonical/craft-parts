@@ -365,7 +365,6 @@ class PartHandler:
         :return: The stage step state.
         """
         self._make_dirs()
-        backstage_contents = self._migrate_to_backstage()
 
         contents = self._run_step(
             step_info=step_info,
@@ -374,6 +373,7 @@ class PartHandler:
             stdout=stdout,
             stderr=stderr,
         )
+        backstage_contents = self._migrate_to_backstage()
 
         self._migrate_overlay_files_to_stage()
 

@@ -18,11 +18,25 @@
 
 import os
 import pathlib
+from typing import cast
+from typing_extensions import override
 
 import pytest
 import yaml
 
 import craft_parts
+from craft_parts import plugins
+from craft_parts.plugins import cmake_plugin
+
+
+class CMakeBackstagePlugin(cmake_plugin.CMakePlugin):
+
+    @override
+    def get_build_commands(self) -> list[str]:
+        options = cast(cmake_plugin.CMakePluginProperties, self._options)
+        return super().get_build_commands() + [
+            f"mv {self._part_info.part_install_dir}/usr/include {self._part_info.part_buildout_dir}/include"
+        ]
 
 
 @pytest.mark.parametrize(
@@ -34,6 +48,7 @@ import craft_parts
 )
 def test_dependent_parts(new_dir, project):
     """Test building pygit2 with a dependent part that builds libgit2."""
+    plugins.register({"cmake": CMakeBackstagePlugin})
     parts_dir = pathlib.Path(__file__).parent / project
     parts = yaml.safe_load((parts_dir / "parts.yaml").read_text())
 
