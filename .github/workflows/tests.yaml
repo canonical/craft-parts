@@ -84,7 +84,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::apt install"
           sudo apt install -y ninja-build cmake scons \
-                              autoconf automake autopoint gcc git gperf help2man libtool texinfo
+                              autoconf automake autopoint gcc git gperf help2man libtool texinfo socat
           # Install go from the Snap Store
           go_job=$(sudo snap install --no-wait --classic go)
           # Install RPM dependencies for RPM tests

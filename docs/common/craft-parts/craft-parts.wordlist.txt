@@ -277,6 +277,7 @@ Unmark
 Unmount
 UnpackError
 Unregister
+UserExecutionError
 UvPlugin
 UvPluginEnvironmentValidator
 UvPluginProperties
@@ -469,6 +470,7 @@ txt
 ubuntu
 umount
 unbuilt
+unix
 unixsocket
 unmark
 unmarshal
