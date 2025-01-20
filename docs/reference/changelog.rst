@@ -2,6 +2,48 @@
 Changelog
 *********
 
+2.3.0 (unreleased)
+------------------
+
+- Change craftctl communication mechanism to unix sockets to consolidate
+  the ctl server and output stream processing selector loops.
+- Get the error output from step scriptlet execution and surface it when
+  raising ScriptletRunError.
+- Add :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up Java
+  runtime.
+
+2.2.2 (2025-MM-DD)
+------------------
+
+Bug fixes:
+
+- Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
+  source changes.
+
+Documentation:
+
+- Correct the Maven plugin docstring to refer to Maven from Go.
+
+2.3.0 (unreleased)
+------------------
+
+- Change craftctl communication mechanism to unix sockets to consolidate
+  the ctl server and output stream processing selector loops.
+- Get the error output from step scriptlet execution and surface it when
+  raising ScriptletRunError.
+
+2.2.2 (2025-MM-DD)
+------------------
+
+Bug fixes:
+
+- Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
+  source changes.
+
+Documentation:
+
+- Correct the Maven plugin docstring to refer to Maven from Go.
+
 2.3.0 (2025-XX-XX)
 ------------------
 

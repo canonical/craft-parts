@@ -26,8 +26,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-apt = [
-    "python-apt>=2.4.0;sys_platform=='linux'"
+apt-jammy = [
+    # Stay on 2.4 for Jammy
+    "python-apt~=2.4.0;sys_platform=='linux'",
+]
+apt-noble = [
+    # 2.7 for Noble
+    "python-apt~=2.7.0;sys_platform=='linux'",
+]
+apt-oracular = [
+    # 2.9 for Oracular+
+    "python-apt~=2.9.0;sys_platform=='linux'",
+]
+apt-plucky = [
+    # While Plucky is in development, it should use the latest
+    "python-apt>=2.9.0;sys_platform=='linux'",
 ]
 docs = [
     "canonical-sphinx",
@@ -46,8 +59,8 @@ dev = [  # TODO: Remove this once we've switched CI to uv
     "pytest-cov~=5.0",
     "pytest-mock~=3.12",
     "yamllint~=1.34",
-    "mypy[reports]~=1.11.0",
-    "pyright==1.1.388",
+    "mypy[reports]~=1.14.1",
+    "pyright==1.1.391",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
@@ -103,8 +116,8 @@ dev-dependencies = [
     "pytest-cov~=5.0",
     "pytest-mock~=3.12",
     "yamllint~=1.35",
-    "mypy[reports]~=1.11.0",
-    "pyright==1.1.388",
+    "mypy[reports]~=1.14.1",
+    "pyright==1.1.391",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
@@ -133,6 +146,19 @@ dev-dependencies = [
     "types-requests",
     "types-setuptools",
 ]
+conflicts = [
+    [
+        { extra = "apt-jammy" },
+        { extra = "apt-noble" },
+        { extra = "apt-oracular" },
+        { extra = "apt-plucky" },
+    ]
+]
+
+
+[[tool.uv.index]]
+name = "python-apt-wheels"
+url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"
 
 
 [project.scripts]
@@ -171,7 +197,16 @@ version_scheme = "post-release"
 # deviations from the default 'git describe' command:
 # - only match annotated tags
 # - only match tags formatted as 'X.Y.Z'
-git_describe_command = "git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'"
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--long",
+    "--match",
+    "[0-9]*.[0-9]*.[0-9]*",
+    "--exclude",
+    "*[^0-9.]*",
+]
 
 [tool.black]
 target-version = ["py310"]
@@ -305,7 +340,6 @@ lint.select = [  # Base linting rule selections.
     "RUF200",  # If ruff fails to parse pyproject.toml...
 ]
 lint.ignore = [
-    "ANN10",  # Type annotations for `self` and `cls`
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
     "E501",  # Line too long (reason: black will automatically fix this for us)
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
@@ -350,7 +384,6 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
     "S108", # Allow Probable insecure usage of temporary file or directory
     "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
     "PLR2004", # Allow magic values in tests
-    "PT004", # Allow fixture no return in tests
     "SLF",  # Allow accessing private members from tests.
     "INP001", # Allow implicit namespace package
     "RUF012", # Allow mutable class attributes without `typing.ClassVar`

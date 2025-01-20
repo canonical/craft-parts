@@ -32,7 +32,7 @@ poetry-with:
 ~~~~~~~~~~~~
 **Type:** list of strings
 
-Extra `dependency groups`_ to use other than the defaults.
+`Dependency groups`_ to include. By default, only the main dependencies are included.
 
 .. _craft_parts_poetry_plugin-environment_variables:
 
@@ -115,7 +115,9 @@ During the build step, the plugin performs the following actions:
    dependencies.
 5. It runs :command:`pip check` to ensure the virtual environment is consistent.
 
+.. _craft_parts_poetry_links:
+
 .. _Poetry: https://python-poetry.org
-.. _dependency groups: https://python-poetry.org/docs/managing-dependencies#dependency-groups
+.. _Dependency groups: https://python-poetry.org/docs/managing-dependencies#dependency-groups
 .. _export command: https://python-poetry.org/docs/cli/#export
 .. _environment variables to configure Poetry: https://python-poetry.org/docs/configuration/#using-environment-variables

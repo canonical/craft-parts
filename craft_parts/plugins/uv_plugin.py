@@ -111,6 +111,7 @@ class UvPlugin(BasePythonPlugin):
             "sync",
             "--no-dev",
             "--no-editable",
+            "--reinstall",
         ]
 
         for extra in sorted(self._options.uv_extras):
