@@ -104,6 +104,7 @@ Iterable
 JavaPlugin
 JLink
 JLinkPlugin
+JLinkPluginEnvironmentValidator
 JLinkPluginProperties
 JSON
 LDFLAGS
@@ -148,6 +149,7 @@ NpmPlugin
 NpmPluginEnvironmentValidator
 NpmPluginProperties
 OCI
+OpenJDK
 OSError
 OsRelease
 OsReleaseCodenameError
