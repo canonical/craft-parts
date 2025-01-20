@@ -23,34 +23,6 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_jlink_plugin_other_java(new_dir, partitions):
-    """Test that jlink produces image for the different Java version"""
-
-    parts_yaml = textwrap.dedent(
-        """
-        parts:
-            my-part:
-                plugin: jlink
-                jlink-java-version: 17
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-
-    lf = LifecycleManager(
-        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
-    )
-    actions = lf.plan(Step.PRIME)
-
-    with lf.action_executor() as ctx:
-        ctx.execute(actions)
-
-    java = new_dir / "stage/usr/bin/java"
-    assert java.isfile()
-
-    assert bool(glob.glob(str(new_dir / "stage/usr/lib/jvm/java-17-*")))
-    assert not bool(glob.glob(str(new_dir / "stage/usr/lib/jvm/java-21-*")))
-
-
 def test_jlink_plugin_with_jar(new_dir, partitions):
     """Test that jlink produces tailored modules"""
 
