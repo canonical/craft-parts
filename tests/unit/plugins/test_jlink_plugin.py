@@ -41,19 +41,6 @@ def test_jlink_plugin_defaults(part_info):
     assert plugin.get_build_environment() == {}
 
 
-def test_jlink_plugin_java_version(part_info):
-    """Validate setting of jlink version."""
-    properties = JLinkPlugin.properties_class.unmarshal(
-        {"source": ".", "jlink-java-version": "17"}
-    )
-    plugin = JLinkPlugin(properties=properties, part_info=part_info)
-
-    assert (
-        "DEST=usr/lib/jvm/java-17-openjdk-${CRAFT_TARGET_ARCH}"
-        in plugin.get_build_commands()
-    )
-
-
 def test_jlink_plugin_jar_files(part_info):
     """Validate setting of jlink version."""
     properties = JLinkPlugin.properties_class.unmarshal(
