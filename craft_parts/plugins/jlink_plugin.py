@@ -106,11 +106,11 @@ class JLinkPlugin(Plugin):
         # create temp folder
         commands.append("mkdir -p ${CRAFT_PART_BUILD}/tmp")
         # extract jar files into temp folder - spring boot fat jar
-        # contains dependant jars inside
+        # contains dependent jars inside
         commands.append(
             "(cd ${CRAFT_PART_BUILD}/tmp && for jar in ${PROCESS_JARS}; do jar xvf ${jar}; done;)"
         )
-        # create classpath - add all dependant jars and all staged jars
+        # create classpath - add all dependent jars and all staged jars
         commands.append("CPATH=.")
         commands.append(
             """
