@@ -2,15 +2,18 @@
 Changelog
 *********
 
-2.3.0 (unreleased)
+2.3.0 (2025-01-20)
 ------------------
+
+New features:
 
 - Change craftctl communication mechanism to unix sockets to consolidate
   the ctl server and output stream processing selector loops.
 - Get the error output from step scriptlet execution and surface it when
   raising ScriptletRunError.
 
-2.2.2 (2025-MM-DD)
+
+2.2.2 (2025-01-13)
 ------------------
 
 Bug fixes:
