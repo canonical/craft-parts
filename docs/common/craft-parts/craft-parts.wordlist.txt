@@ -226,6 +226,7 @@ RuntimeIdentifier
 RustPlugin
 RustPluginEnvironmentValidator
 RustPluginProperties
+SBOM
 SCons
 SConsPlugin
 SConsPluginEnvironmentValidator

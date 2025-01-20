@@ -325,7 +325,7 @@ class NpmPlugin(Plugin):
         return cmd
 
     @override
-    def get_files(self) -> PackageFiles:
+    def get_package_files(self) -> PackageFiles:
         root_modules_dir = (
             self._part_info.part_install_dir / "lib/node_modules"
         ).absolute()
@@ -365,7 +365,7 @@ def _append_package_dir(
         for file_or_dir in dirnames + filenames:
             pkg_contents.add(walk_iteration_root / file_or_dir)
 
-    key = Package(pkg_name, pkg_version)
+    key = Package("npm", pkg_name, pkg_version)
     if key in file_list:
         # It appears we have two installs of the same package and version
         # at different points in the tree.  This is fine.  If we ever care
