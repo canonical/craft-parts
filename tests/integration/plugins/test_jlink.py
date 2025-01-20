@@ -99,6 +99,39 @@ def test_jlink_plugin_with_jar(new_dir, partitions):
     assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) > 0
 
 
+def test_jlink_plugin_java_home(new_dir, partitions):
+    """Test that jlink uses JAVA_HOME to select JDK
+    The host has both 17 and 21 installed.
+    The output should be 17"""
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+            my-part:
+                plugin: jlink
+                source: "https://github.com/canonical/chisel-releases"
+                source-type: "git"
+                source-branch: "ubuntu-24.04"
+                build-environment:
+                    - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-${CRAFT_ARCH_BUILD_FOR}
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    java_release = Path(
+        new_dir
+        / f"stage/usr/lib/jvm/java-17-openjdk-{lf.project_info.target_arch}/release"
+    )
+    assert 'JAVA_VERSION="17.' in java_release.read_text()
+
+
 def test_jlink_plugin_base(new_dir, partitions):
     """Test that jlink produces base image"""
 

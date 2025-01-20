@@ -22,26 +22,49 @@ from overrides import override
 
 from .base import Plugin
 from .properties import PluginProperties
+from .validator import PluginEnvironmentValidator
 
 
 class JLinkPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the JLink plugin."""
 
     plugin: Literal["jlink"] = "jlink"
-    jlink_java_version: int = 21
     jlink_jars: list[str] = []
+
+
+class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):
+    """Check the execution environment for the JLink plugin.
+
+    :param part_name: The part whose build environment is being validated.
+    :param env: A string containing the build step environment setup.
+    """
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+
+        :param part_dependencies: A list of the parts this part depends on.
+
+        :raises PluginEnvironmentValidationError: If go is invalid
+          and there are no parts named go.
+        """
+        self.validate_dependency(
+            dependency="jlink", plugin_name="jlink", part_dependencies=part_dependencies
+        )
 
 
 class JLinkPlugin(Plugin):
     """Create a Java Runtime using JLink."""
 
     properties_class = JLinkPluginProperties
+    validator_class = JLinkPluginEnvironmentValidator
 
     @override
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
-        options = cast(JLinkPluginProperties, self._options)
-        return {f"openjdk-{options.jlink_java_version}-jdk"}
+        return set()
 
     @override
     def get_build_environment(self) -> dict[str, str]:
@@ -60,8 +83,20 @@ class JLinkPlugin(Plugin):
 
         commands = []
 
-        java_home = f"usr/lib/jvm/java-{options.jlink_java_version}-openjdk-${{CRAFT_TARGET_ARCH}}"
+        # ensure that JAVA_HOME/bin is the first entry on the path
+        # this allows to select JDK installation
+        commands.append("PATH=${JAVA_HOME:-$(which jlink)}/bin:$PATH")
 
+        # extract jlink version and use it to define the destination
+        # and multi-release jar version for the dependency enumeration
+        commands.append("JLINK_VERSION=$(jlink --version)")
+        commands.append(
+            "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_TARGET_ARCH}"
+        )
+        commands.append("MULTI_RELEASE=${JLINK_VERSION%%.*}")
+
+        # find application jars - either all jars in the staging area
+        # or a list specified in jlink_jars option
         if len(options.jlink_jars) > 0:
             jars = " ".join(["${CRAFT_STAGE}/" + x for x in options.jlink_jars])
             commands.append(f"PROCESS_JARS={jars}")
@@ -70,30 +105,39 @@ class JLinkPlugin(Plugin):
 
         # create temp folder
         commands.append("mkdir -p ${CRAFT_PART_BUILD}/tmp")
-        # extract jar files into temp folder
+        # extract jar files into temp folder - spring boot fat jar
+        # contains dependant jars inside
         commands.append(
             "(cd ${CRAFT_PART_BUILD}/tmp && for jar in ${PROCESS_JARS}; do jar xvf ${jar}; done;)"
         )
-        commands.append("CPATH=$(find ${CRAFT_PART_BUILD}/tmp -type f -name *.jar)")
-        commands.append("CPATH=$(CPATH):$(find ${CRAFT_STAGE} -type f -name *.jar)")
-        commands.append("CPATH=$(echo ${CPATH}:. | sed s'/[[:space:]]/:/'g)")
-        commands.append("echo ${CPATH}")
+        # create classpath - add all dependant jars and all staged jars
+        commands.append("CPATH=.")
         commands.append(
-            f"""if [ "x${{PROCESS_JARS}}" != "x" ]; then
-                deps=$(jdeps --class-path=${{CPATH}} -q --recursive  --ignore-missing-deps \
-                    --print-module-deps --multi-release {options.jlink_java_version} ${{PROCESS_JARS}})
+            """
+                find ${CRAFT_PART_BUILD}/tmp -type f -name *.jar | while IFS= read -r file; do
+                    CPATH=$CPATH:${file}
+                done
+                find ${CRAFT_STAGE} -type f -name *.jar | while IFS= read -r file; do
+                    CPATH=$CPATH:${file}
+                done
+            """
+        )
+        commands.append(
+            """if [ "x${PROCESS_JARS}" != "x" ]; then
+                deps=$(jdeps --class-path=${CPATH} -q --recursive  --ignore-missing-deps \
+                    --print-module-deps --multi-release ${MULTI_RELEASE} ${PROCESS_JARS})
                 else
                     deps=java.base
                 fi
             """
         )
-        commands.append(f"INSTALL_ROOT=${{CRAFT_PART_INSTALL}}/{java_home}")
+        commands.append("INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}")
 
         commands.append(
             "rm -rf ${INSTALL_ROOT} && jlink --add-modules ${deps} --output ${INSTALL_ROOT}"
         )
         # create /usr/bin/java link
         commands.append(
-            f"(cd ${{CRAFT_PART_INSTALL}} && mkdir -p usr/bin && ln -s --relative {java_home}/bin/java usr/bin/)"
+            "(cd ${CRAFT_PART_INSTALL} && mkdir -p usr/bin && ln -s --relative ${DEST}/bin/java usr/bin/)"
         )
         return commands

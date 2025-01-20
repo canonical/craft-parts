@@ -34,9 +34,10 @@ def test_jlink_plugin_defaults(part_info):
     properties = JLinkPlugin.properties_class.unmarshal({"source": "."})
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
-    assert len(plugin.get_build_packages()) == 1
-    assert "openjdk-21-jdk" in plugin.get_build_packages()
-
+    assert (
+        "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_TARGET_ARCH}"
+        in plugin.get_build_commands()
+    )
     assert plugin.get_build_environment() == {}
 
 
@@ -47,8 +48,10 @@ def test_jlink_plugin_java_version(part_info):
     )
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
-    assert len(plugin.get_build_packages()) == 1
-    assert "openjdk-17-jdk" in plugin.get_build_packages()
+    assert (
+        "DEST=usr/lib/jvm/java-17-openjdk-${CRAFT_TARGET_ARCH}"
+        in plugin.get_build_commands()
+    )
 
 
 def test_jlink_plugin_jar_files(part_info):
