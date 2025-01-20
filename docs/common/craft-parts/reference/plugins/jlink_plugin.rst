@@ -17,12 +17,6 @@ well as those for :ref:`sources <part-properties-sources>`.
 Additionally, this plugin provides the plugin-specific keywords defined in the
 following sections.
 
-jlink-java-version
-~~~~~~~~~~~~~~~~~~~
-**Type:** str
-
-Java package version to use for the build (e.g. 21 will install openjdk-21-jdk).
-
 jlink-jars
 ~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
@@ -33,7 +27,24 @@ will find all jar files in the staging area.
 Dependencies
 ------------
 
-By default this plugin uses openjdk-21-jdk from the build base.
+The plugin expects OpenJDK to be available on the system and contain
+``jlink`` executable, unless a part named ``jlink-deps`` is defined.
+In this case, the plugin will assume that this part will stage the
+openjdk to be used in the build step.
+
+If the system has multiple OpenJDK installations available, it
+should be selected by setting the ``JAVA_HOME`` environment variable.
+
+.. code-block:: yaml
+
+    parts:
+        runtime:
+            plugin: jlink
+            build-packages:
+                - openjdk-21-jdk
+            build-environment:
+                - JAVA_HOME: /usr/jvm/java-21-openjdk-${CRAFT_ARCH_BUILD_FOR}
+
 
 The user is expected to stage openjdk dependencies either by installing
 an appropriate openjdk slice:
