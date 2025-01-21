@@ -70,7 +70,7 @@ The following environment variables are also included, but are deprecated:
     - The machine-vendor-os platform triplet definition.
       Use ``CRAFT_ARCH_TRIPLET_BUILD_ON`` or ``CRAFT_ARCH_TRIPLET_BUILD_FOR`` instead.
   * - ``CRAFT_TARGET_ARCH``
-    - The architecture we're building for. Use ``CRAFT_ARCH_BUILD_FOR`` instead.
+    - The architecture of the build target. Use ``CRAFT_ARCH_BUILD_FOR`` instead.
 
 Some standard environment variables are also modified during parts execution steps.
 
@@ -80,7 +80,7 @@ Some standard environment variables are also modified during parts execution ste
 Several paths are prepended to ``PATH`` during step execution, allowing staged
 executables from previous parts as well as already-built executables from the current
 path to be executed without calling their full path. The paths are only added to
-``PATH`` if they exist. These paths are:
+``PATH`` if they exist. These paths are, in order:
 
 - ``$CRAFT_PART_INSTALL/usr/sbin``
 - ``$CRAFT_PART_INSTALL/usr/bin``
