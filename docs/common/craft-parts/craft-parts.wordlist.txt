@@ -277,6 +277,7 @@ Unmark
 Unmount
 UnpackError
 Unregister
+UserExecutionError
 UvPlugin
 UvPluginEnvironmentValidator
 UvPluginProperties
@@ -338,6 +339,7 @@ distro
 distros
 dl
 dnf
+docstring
 dotnet
 dst
 emacs
@@ -469,6 +471,7 @@ txt
 ubuntu
 umount
 unbuilt
+unix
 unixsocket
 unmark
 unmarshal

@@ -2,7 +2,7 @@
 Changelog
 *********
 
-2.3.0 (2025-XX-XX)
+2.4.0 (2025-XX-XX)
 ------------------
 
 Documentation:
@@ -10,6 +10,28 @@ Documentation:
 - Reorganise and improve the :ref:`craft_parts_step_execution_environment`
   reference, including example values and documentation of additional
   environment variables.
+
+2.3.0 (2025-01-20)
+------------------
+
+New features:
+
+- Change craftctl communication mechanism to unix sockets to consolidate
+  the ctl server and output stream processing selector loops.
+- Get the error output from step scriptlet execution and surface it when
+  raising ScriptletRunError.
+
+2.2.2 (2025-01-13)
+------------------
+
+Bug fixes:
+
+- Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
+  source changes.
+
+Documentation:
+
+- Correct the Maven plugin docstring to refer to Maven from Go.
 
 2.2.1 (2024-12-19)
 ------------------
@@ -105,6 +127,14 @@ Documentation:
   changes to the Rust toolchain.
 
 For a complete list of commits, check out the `2.1.2`_ release on GitHub.
+
+1.25.3 (2024-09-27)
+-------------------
+
+- Replace requests-unixsocket with requests-unixsocket2
+- Bump minimum Python version to 3.8 (required for requests-unixsocket2)
+
+For a complete list of commits, check out the `1.25.3`_ release on GitHub.
 
 2.1.1 (2024-09-13)
 ------------------
@@ -691,6 +721,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
 .. _2.1.2: https://github.com/canonical/craft-parts/releases/tag/2.1.2
 .. _2.1.1: https://github.com/canonical/craft-parts/releases/tag/2.1.1
+.. _1.25.3: https://github.com/canonical/craft-parts/releases/tag/1.25.3
 .. _1.33.1: https://github.com/canonical/craft-parts/releases/tag/1.33.1
 .. _2.1.0: https://github.com/canonical/craft-parts/releases/tag/2.1.0
 .. _2.0.0: https://github.com/canonical/craft-parts/releases/tag/2.0.0
