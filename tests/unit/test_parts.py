@@ -52,6 +52,7 @@ class TestPartSpecs:
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
+            "backstage": ["*"],
             "stage": ["-usr/docs"],
             "prime": ["*"],
             "override-pull": "override-pull",
@@ -152,6 +153,7 @@ class TestPartData:
         assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.part_layer_dir == new_dir / "parts/foo/layer"
         assert p.part_cache_dir == new_dir / "parts/foo/cache"
+        assert p.backstage_dir == new_dir / "backstage"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
@@ -173,6 +175,7 @@ class TestPartData:
         assert p.part_snaps_dir == new_dir / "foobar/parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
         assert p.part_layer_dir == new_dir / "foobar/parts/foo/layer"
+        assert p.backstage_dir == new_dir / "foobar/backstage"
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
