@@ -2,8 +2,12 @@
 Changelog
 *********
 
-2.4.0 (2025-XX-XX)
+X.Y.Z (2025-MM-DD)
 ------------------
+
+Bug fixes:
+
+- Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
 
 Documentation:
 
@@ -21,9 +25,6 @@ New features:
 - Get the error output from step scriptlet execution and surface it when
   raising ScriptletRunError.
 
-2.2.2 (2025-01-13)
-------------------
-
 Bug fixes:
 
 - Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
@@ -32,6 +33,15 @@ Bug fixes:
 Documentation:
 
 - Correct the Maven plugin docstring to refer to Maven from Go.
+
+
+2.2.2 (2025-01-13)
+------------------
+
+Documentation:
+
+- Add a cross-reference target for Poetry external links.
+
 
 2.2.1 (2024-12-19)
 ------------------

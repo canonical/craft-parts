@@ -100,5 +100,5 @@ class GoUsePlugin(Plugin):
                 )
 
         return [
-            f"go work use {self._part_info.part_src_dir}",
+            f"go work use {self._part_info.part_src_subdir}",
         ]
