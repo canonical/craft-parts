@@ -394,14 +394,14 @@ class PartHandler:
         )
 
     def _migrate_to_backstage(self) -> StepContents:
-        """Migrate files from the part's buildout directory to the backstage directory."""
-        migratable = set(self._part.part_buildout_dir.rglob("*"))
+        """Migrate files from the part's export directory to the backstage directory."""
+        migratable = set(self._part.part_export_dir.rglob("*"))
         migratable_dirs = {
-            str(path.relative_to(self._part.part_buildout_dir))
+            str(path.relative_to(self._part.part_export_dir))
             for path in migratable if path.is_dir()
         }
         migratable_files = {
-            str(path.relative_to(self._part.part_buildout_dir))
+            str(path.relative_to(self._part.part_export_dir))
             for path in migratable if path.is_file()
         }
 
@@ -417,7 +417,7 @@ class PartHandler:
             packages.fix_pkg_config(
                 prefix_prepend=self._part.backstage_dir,
                 pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_buildout_dir,
+                prefix_trim=self._part.part_export_dir,
             )
             packages.fix_pkg_config(
                 prefix_prepend=self._part.backstage_dir,
@@ -427,7 +427,7 @@ class PartHandler:
 
         files, dirs = migration.migrate_files(
             files=migratable_files, dirs=migratable_dirs,
-            srcdir=self._part.part_buildout_dir,
+            srcdir=self._part.part_export_dir,
             destdir=self._part.backstage_dir,
             fixup_func=pkgconfig_fixup,
         )
@@ -911,7 +911,7 @@ class PartHandler:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
-            self._part.part_buildout_dir,
+            self._part.part_export_dir,
             *self._part.part_install_dirs.values(),
             self._part.part_layer_dir,
             self._part.part_state_dir,

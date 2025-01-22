@@ -304,9 +304,9 @@ class Part:
         return self._part_dir / "install"
 
     @property
-    def part_buildout_dir(self) -> Path:
+    def part_export_dir(self) -> Path:
         """Return the subdirectory to install internal part build artifacts."""
-        return self._part_dir / "buildout"
+        return self._part_dir / "export"
 
     @property
     def part_install_dirs(self) -> Mapping[str | None, Path]:

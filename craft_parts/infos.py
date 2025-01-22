@@ -373,7 +373,7 @@ class PartInfo:
         self._part_src_subdir = part.part_src_subdir
         self._part_build_dir = part.part_build_dir
         self._part_build_subdir = part.part_build_subdir
-        self._part_buildout_dir = part.part_buildout_dir
+        self._part_export_dir = part.part_export_dir
         self._part_install_dir = part.part_install_dir
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
@@ -419,9 +419,9 @@ class PartInfo:
         return self._part_build_subdir
 
     @property
-    def part_buildout_dir(self) -> Path:
+    def part_export_dir(self) -> Path:
         """Return the subdirectory for internal artifact output."""
-        return self._part_buildout_dir
+        return self._part_export_dir
 
     @property
     def part_install_dir(self) -> Path:

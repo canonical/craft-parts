@@ -35,7 +35,7 @@ class CMakeBackstagePlugin(cmake_plugin.CMakePlugin):
     def get_build_commands(self) -> list[str]:
         options = cast(cmake_plugin.CMakePluginProperties, self._options)
         return super().get_build_commands() + [
-            f"mv {self._part_info.part_install_dir}/usr/include {self._part_info.part_buildout_dir}/include"
+            f"mv {self._part_info.part_install_dir}/usr/include {self._part_info.part_export_dir}/include"
         ]
 
 
