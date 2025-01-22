@@ -1,4 +1,8 @@
 ARGS
+FOO
+BAR
+BAZ
+QUX
 ActionProperties
 ActionType
 AfterValidator
@@ -307,6 +311,8 @@ artifacts
 autogen
 autotools
 backend
+bar
+baz
 behavior
 bool
 boolean
@@ -432,6 +438,7 @@ pypi
 pyproject
 qmake
 qualname
+qux
 readthedocs
 recognized
 reorganize
