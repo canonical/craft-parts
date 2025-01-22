@@ -16,7 +16,6 @@
 
 import pathlib
 import subprocess
-import textwrap
 from typing import cast
 
 import pytest
@@ -83,7 +82,9 @@ def fake_homedir(
 
 
 def test_cargo_package_plugin_goes_to_backstage(new_path, partitions):
-    parts = yaml.safe_load((pathlib.Path(__file__).parent / "test_cargo_package/parts.yaml").read_text())
+    parts = yaml.safe_load(
+        (pathlib.Path(__file__).parent / "test_cargo_package/parts.yaml").read_text()
+    )
 
     lifecycle = LifecycleManager(
         parts,
@@ -99,7 +100,9 @@ def test_cargo_package_plugin_goes_to_backstage(new_path, partitions):
     # Nothing in the backstage yet
     assert list(lifecycle.project_info.backstage_dir.rglob("*")) == []
     # But we have stuff to export.
-    assert (new_path / "parts/root/export/cargo_registry/ascii-1.1.0/.cargo-checksum.json").exists()
+    assert (
+        new_path / "parts/root/export/cargo_registry/ascii-1.1.0/.cargo-checksum.json"
+    ).exists()
 
     actions = lifecycle.plan(Step.STAGE)
     with lifecycle.action_executor() as ctx:
@@ -158,4 +161,3 @@ def test_cargo_package_plugin_with_wrong_version(new_dir, partitions):
 
     assert b'failed to select a version for the requirement `ascii = "^0.8.7"`' in err
     assert b"candidate versions found which didn't match: 1.1.0" in err
-

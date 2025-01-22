@@ -398,17 +398,17 @@ class PartHandler:
         migratable = set(self._part.part_export_dir.rglob("*"))
         migratable_dirs = {
             str(path.relative_to(self._part.part_export_dir))
-            for path in migratable if path.is_dir()
+            for path in migratable
+            if path.is_dir()
         }
         migratable_files = {
             str(path.relative_to(self._part.part_export_dir))
-            for path in migratable if path.is_file()
+            for path in migratable
+            if path.is_file()
         }
 
         def pkgconfig_fixup(
             file_path: str,
-            prefix_prepend: Path = self._part.stage_dir,
-            prefix_trim: Path = self._part.part_install_dir,
         ) -> None:
             if os.path.islink(file_path):
                 return
@@ -426,13 +426,13 @@ class PartHandler:
             )
 
         files, dirs = migration.migrate_files(
-            files=migratable_files, dirs=migratable_dirs,
+            files=migratable_files,
+            dirs=migratable_dirs,
             srcdir=self._part.part_export_dir,
             destdir=self._part.backstage_dir,
             fixup_func=pkgconfig_fixup,
         )
         return StepContents(files, dirs)
-
 
     def _run_prime(
         self,
