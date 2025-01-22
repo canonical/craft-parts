@@ -1,0 +1,11 @@
+description: A test project that builds a cargo package and checks for its output in backstage.
+parts:
+  root:
+    source: https://github.com/tomprogrammer/rust-ascii/archive/refs/tags/v1.1.0.tar.gz
+    plugin: cargo-package
+    cargo-package-cargo-command: /usr/bin/cargo
+  check:
+    plugin: nil
+    after: [root]
+    override-build: |
+      test -f "${CRAFT_BACKSTAGE}/cargo_registry/ascii-1.1.0/.cargo-checksum.json"

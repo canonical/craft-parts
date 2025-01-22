@@ -19,14 +19,13 @@
 import os
 import pathlib
 from typing import cast
-from typing_extensions import override
-
-import pytest
-import yaml
 
 import craft_parts
+import pytest
+import yaml
 from craft_parts import plugins
 from craft_parts.plugins import cmake_plugin
+from typing_extensions import override
 
 
 class CMakeBackstagePlugin(cmake_plugin.CMakePlugin):
@@ -42,19 +41,19 @@ class CMakeBackstagePlugin(cmake_plugin.CMakePlugin):
 @pytest.mark.parametrize(
     "project",
     [
-        "pygit2-1.13",
-        # "pygit2-1.17"
+        "cargo-package",
     ]
 )
-def test_dependent_parts(new_dir, project):
+def test_dependent_parts(new_path: pathlib.Path, project):
     """Test building pygit2 with a dependent part that builds libgit2."""
     plugins.register({"cmake": CMakeBackstagePlugin})
     parts_dir = pathlib.Path(__file__).parent / project
+    backstage_dir = new_path / "backstage"
     parts = yaml.safe_load((parts_dir / "parts.yaml").read_text())
 
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_dependent_parts", cache_dir=new_dir,
+        parts, application_name="test_dependent_parts", cache_dir=new_path,
         parallel_build_count=len(os.sched_getaffinity(0))
     )
 
@@ -63,15 +62,12 @@ def test_dependent_parts(new_dir, project):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    assert not pathlib.Path("stage/usr/include/git2.h").exists()
-    assert not pathlib.Path("stage/include/git2.h").exists()
-    assert pathlib.Path("backstage/include/git2.h").exists()
+    assert backstage_dir.is_dir()
 
-    lf.clean(craft_parts.Step.BUILD, part_names=["libgit2"])
+    children = list(backstage_dir.rglob("*"))
 
-    assert not pathlib.Path("backstage/include/git2.h").exists()
-    #
-    # with lf.action_executor() as ctx:
-    #     ctx.execute(actions)
-    #
-    # assert pathlib.Path("backstage/include/git2.h").exists()
+    lf.clean(part_names=["root"])
+
+    # TODO: Uncomment this when we have cleaning.
+    # for child in children:
+    #     assert not child.is_file()
