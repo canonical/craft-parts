@@ -13,6 +13,7 @@ New features:
 Bug fixes:
 
 - Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
+- Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
 
 Documentation:
 
@@ -34,7 +35,6 @@ Bug fixes:
 
 - Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
   source changes.
-- Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
 
 Documentation:
 
