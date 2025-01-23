@@ -88,7 +88,7 @@ How it works
 During the build step, the plugin performs the following actions:
 
 * Finds all jar files in the staging area or selects jars specified in
-  ``jlink_jars``.
+  ``jlink-jars``.
 * Unpacks jar files to the temporary location and concatenates all embedded jars
   into `jdeps <jdeps_>`_ classpath.
 * Runs `jdeps <jdeps_>`_ to discover Java modules required for the staged jars.
