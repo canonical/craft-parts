@@ -29,8 +29,8 @@ Dependencies
 
 The plugin expects OpenJDK to be available on the system and contain
 the ``jlink`` executable, unless a part named ``jlink-deps`` is defined.
-In this case, the plugin will assume that this part will stage the
-openjdk to be used in the build step.
+In that case, the plugin assumes that this part will stage the
+OpenJDK installation to be used in the build step.
 
 If the system has multiple OpenJDK installations available, one
 must be selected by setting the ``JAVA_HOME`` environment variable.
