@@ -62,7 +62,7 @@ an appropriate openjdk slice:
             stage-packages:
                 - openjdk-21-jre-headless_security
 
-or by installing the dependencies directly:
+Or, by installing the dependencies directly:
 
 .. code-block:: yaml
 
