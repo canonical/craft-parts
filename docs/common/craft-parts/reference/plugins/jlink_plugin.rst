@@ -21,7 +21,7 @@ jlink-jars
 ~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
-List of paths to jar files of your application. If not specified, plugin
+List of paths to your application's jar files. If not specified, the plugin
 will find all jar files in the staging area.
 
 Dependencies
