@@ -38,12 +38,12 @@ must be selected by setting the ``JAVA_HOME`` environment variable.
 .. code-block:: yaml
 
     parts:
-        runtime:
-            plugin: jlink
-            build-packages:
-                - openjdk-21-jdk
-            build-environment:
-                - JAVA_HOME: /usr/jvm/java-21-openjdk-${CRAFT_ARCH_BUILD_FOR}
+      runtime:
+        plugin: jlink
+        build-packages:
+          - openjdk-21-jdk
+        build-environment:
+          - JAVA_HOME: /usr/jvm/java-21-openjdk-${CRAFT_ARCH_BUILD_FOR}
 
 
 The user is expected to stage OpenJDK dependencies either by installing
@@ -52,34 +52,34 @@ an appropriate openjdk slice:
 .. code-block:: yaml
 
     parts:
-        runtime:
-            plugin: jlink
-            after:
-                - deps
+      runtime:
+          plugin: jlink
+          after:
+            - deps
 
         deps:
-            plugin: nil
-            stage-packages:
-                - openjdk-21-jre-headless_security
+          plugin: nil
+          stage-packages:
+            - openjdk-21-jre-headless_security
 
 Or, by installing the dependencies directly:
 
 .. code-block:: yaml
 
     parts:
-        runtime:
-            plugin: jlink
-            after:
-                - deps
+      runtime:
+          plugin: jlink
+          after:
+            - deps
 
-        deps:
-            plugin: nil
-            stage-packages:
-                - libc6_libs
-                - libgcc-s1_libs
-                - libstdc++6_libs
-                - zlib1g_libs
-                - libnss3_libs
+      deps:
+          plugin: nil
+          stage-packages:
+            - libc6_libs
+            - libgcc-s1_libs
+            - libstdc++6_libs
+            - zlib1g_libs
+            - libnss3_libs
 
 
 How it works
