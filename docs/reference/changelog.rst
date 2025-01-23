@@ -2,55 +2,44 @@
 Changelog
 *********
 
-2.3.0 (unreleased)
-------------------
 
-- Change craftctl communication mechanism to unix sockets to consolidate
-  the ctl server and output stream processing selector loops.
-- Get the error output from step scriptlet execution and surface it when
-  raising ScriptletRunError.
-- Add the :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up Java
-  runtime.
-
-2.2.2 (2025-MM-DD)
+X.Y.Z (2025-MM-DD)
 ------------------
 
 Bug fixes:
 
-- Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
-  source changes.
+- Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
+- Add the :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up
+  Java runtime.
 
-Documentation:
 
-- Correct the Maven plugin docstring to refer to Maven from Go.
-
-2.3.0 (unreleased)
-------------------
-
-- Change craftctl communication mechanism to unix sockets to consolidate
-  the ctl server and output stream processing selector loops.
-- Get the error output from step scriptlet execution and surface it when
-  raising ScriptletRunError.
-
-2.2.2 (2025-MM-DD)
-------------------
-
-Bug fixes:
-
-- Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
-  source changes.
-
-Documentation:
-
-- Correct the Maven plugin docstring to refer to Maven from Go.
-
-2.3.0 (2025-XX-XX)
+2.3.0 (2025-01-20)
 ------------------
 
 New features:
 
-- Add :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up Java
-  runtime.
+- Change craftctl communication mechanism to unix sockets to consolidate
+  the ctl server and output stream processing selector loops.
+- Get the error output from step scriptlet execution and surface it when
+  raising ScriptletRunError.
+
+Bug fixes:
+
+- Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
+  source changes.
+
+Documentation:
+
+- Correct the Maven plugin docstring to refer to Maven from Go.
+
+
+2.2.2 (2025-01-13)
+------------------
+
+Documentation:
+
+- Add a cross-reference target for Poetry external links.
+
 
 2.2.1 (2024-12-19)
 ------------------
