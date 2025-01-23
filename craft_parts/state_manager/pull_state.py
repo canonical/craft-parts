@@ -70,6 +70,7 @@ class PullState(StepState):
             "source-depth",
             "source-tag",
             "source-type",
+            "source-channel",
             "source-branch",
             "source-subdir",
             "source-submodules",
