@@ -32,8 +32,8 @@ the ``jlink`` executable, unless a part named ``jlink-deps`` is defined.
 In this case, the plugin will assume that this part will stage the
 openjdk to be used in the build step.
 
-If the system has multiple OpenJDK installations available, it
-should be selected by setting the ``JAVA_HOME`` environment variable.
+If the system has multiple OpenJDK installations available, one
+must be selected by setting the ``JAVA_HOME`` environment variable.
 
 .. code-block:: yaml
 
