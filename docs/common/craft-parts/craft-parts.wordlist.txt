@@ -101,6 +101,7 @@ InvalidSourceOption
 InvalidSourceOptions
 InvalidSourceType
 Iterable
+JAR
 JavaPlugin
 JLink
 JLinkPlugin

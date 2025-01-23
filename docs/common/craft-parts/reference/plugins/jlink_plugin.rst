@@ -21,8 +21,8 @@ jlink-jars
 ~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
-List of paths to your application's jar files. If not specified, the plugin
-will find all jar files in the staging area.
+List of paths to your application's JAR files. If not specified, the plugin
+will find all JAR files in the staging area.
 
 Dependencies
 ------------
@@ -87,9 +87,9 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-* Finds all jar files in the staging area or selects jars specified in
+* Finds all JAR files in the staging area or selects jars specified in
   ``jlink-jars``.
-* Unpacks jar files to the temporary location and concatenates all embedded jars
+* Unpacks JAR files to the temporary location and concatenates all embedded jars
   into `jdeps <jdeps_>`_ classpath.
 * Runs `jdeps <jdeps_>`_ to discover Java modules required for the staged jars.
 * Runs `jlink <jlink_>`_ to create a runtime image from the build JDK.
