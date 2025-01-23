@@ -46,7 +46,7 @@ should be selected by setting the ``JAVA_HOME`` environment variable.
                 - JAVA_HOME: /usr/jvm/java-21-openjdk-${CRAFT_ARCH_BUILD_FOR}
 
 
-The user is expected to stage openjdk dependencies either by installing
+The user is expected to stage OpenJDK dependencies either by installing
 an appropriate openjdk slice:
 
 .. code-block:: yaml
