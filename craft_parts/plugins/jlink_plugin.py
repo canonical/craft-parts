@@ -83,13 +83,24 @@ class JLinkPlugin(Plugin):
 
         commands = []
 
-        # ensure that JAVA_HOME/bin is the first entry on the path
-        # this allows to select JDK installation
-        commands.append("PATH=${JAVA_HOME:-$(which jlink)}/bin:$PATH")
+        # Set JAVA_HOME to be used in jlink commands
+        commands.append(
+            """
+                if [ -z "${JAVA_HOME+x}" ]; then
+                    JAVA_HOME=$(dirname $(dirname $(readlink -f $(which jlink))))
+                fi
+                if [ ! -x "${JAVA_HOME}/bin/java" ]; then
+                    echo "Error: JAVA_HOME: '${JAVA_HOME}/bin/java' is not an executable." >&2
+                    exit 1
+                fi
+                JLINK=${JAVA_HOME}/bin/jlink
+                JDEPS=${JAVA_HOME}/bin/jdeps
+            """
+        )
 
         # extract jlink version and use it to define the destination
         # and multi-release jar version for the dependency enumeration
-        commands.append("JLINK_VERSION=$(jlink --version)")
+        commands.append("JLINK_VERSION=$(${JLINK} --version)")
         commands.append(
             "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_TARGET_ARCH}"
         )
@@ -124,7 +135,7 @@ class JLinkPlugin(Plugin):
         )
         commands.append(
             """if [ "x${PROCESS_JARS}" != "x" ]; then
-                deps=$(jdeps --class-path=${CPATH} -q --recursive  --ignore-missing-deps \
+                deps=$(${JDEPS} --class-path=${CPATH} -q --recursive  --ignore-missing-deps \
                     --print-module-deps --multi-release ${MULTI_RELEASE} ${PROCESS_JARS})
                 else
                     deps=java.base
@@ -134,7 +145,7 @@ class JLinkPlugin(Plugin):
         commands.append("INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}")
 
         commands.append(
-            "rm -rf ${INSTALL_ROOT} && jlink --add-modules ${deps} --output ${INSTALL_ROOT}"
+            "rm -rf ${INSTALL_ROOT} && ${JLINK} --add-modules ${deps} --output ${INSTALL_ROOT}"
         )
         # create /usr/bin/java link
         commands.append(

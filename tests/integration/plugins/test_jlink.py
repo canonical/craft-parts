@@ -18,8 +18,9 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
-from craft_parts import LifecycleManager, Step
+from craft_parts import LifecycleManager, Step, errors
 
 
 def test_jlink_plugin_with_jar(new_dir, partitions):
@@ -70,10 +71,42 @@ def test_jlink_plugin_with_jar(new_dir, partitions):
     assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) > 0
 
 
+def test_jlink_plugin_bad_java_home(new_dir, partitions):
+    """Test that jlink fails when JAVA_HOME is
+    set incorrectly."""
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+            my-part:
+                plugin: jlink
+                source: "https://github.com/canonical/chisel-releases"
+                source-type: "git"
+                source-branch: "ubuntu-24.04"
+                build-environment:
+                    - JAVA_HOME: /bad
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with pytest.raises(
+        errors.PluginBuildError,
+        match="Failed to run the build script for part 'my-part",
+    ) as pe:
+        with lf.action_executor() as ctx:
+            ctx.execute(actions)
+
+    assert "Error: JAVA_HOME: '/bad/bin/java' is not an executable." in str(
+        pe.value.stderr
+    )
+
+
 def test_jlink_plugin_java_home(new_dir, partitions):
-    """Test that jlink uses JAVA_HOME to select JDK
-    The host has both 17 and 21 installed.
-    The output should be 17"""
+
     parts_yaml = textwrap.dedent(
         """
         parts:
