@@ -54,6 +54,8 @@ an appropriate OpenJDK slice:
     parts:
       runtime:
           plugin: jlink
+          build-packages:
+            - openjdk-21-jdk
           after:
             - deps
 
@@ -69,6 +71,8 @@ Or, by installing the dependencies directly:
     parts:
       runtime:
           plugin: jlink
+          build-packages:
+            - openjdk-21-jdk
           after:
             - deps
 
