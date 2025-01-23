@@ -47,7 +47,7 @@ must be selected by setting the ``JAVA_HOME`` environment variable.
 
 
 The user is expected to stage OpenJDK dependencies either by installing
-an appropriate openjdk slice:
+an appropriate OpenJDK slice:
 
 .. code-block:: yaml
 
