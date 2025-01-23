@@ -6,9 +6,17 @@ Changelog
 X.Y.Z (2025-MM-DD)
 ------------------
 
+New features:
+
+- Add new PartSpec property ``source-channel``.
+
 Bug fixes:
 
 - Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
+
+Documentation:
+
+- Add missing links to GitHub releases.
 
 
 2.3.0 (2025-01-20)
@@ -30,6 +38,7 @@ Documentation:
 
 - Correct the Maven plugin docstring to refer to Maven from Go.
 
+For a complete list of commits, check out the `2.3.0`_ release on GitHub.
 
 2.2.2 (2025-01-13)
 ------------------
@@ -38,6 +47,7 @@ Documentation:
 
 - Add a cross-reference target for Poetry external links.
 
+For a complete list of commits, check out the `2.2.2`_ release on GitHub.
 
 2.2.1 (2024-12-19)
 ------------------
@@ -46,6 +56,8 @@ Bug fixes:
 
 - Fix how extras and groups are parsed for the
   :ref:`uv plugin<craft_parts_uv_plugin>`.
+
+For a complete list of commits, check out the `2.2.1`_ release on GitHub.
 
 2.2.0 (2024-12-16)
 ------------------
@@ -722,6 +734,9 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.3.0: https://github.com/canonical/craft-parts/releases/tag/2.3.0
+.. _2.2.2: https://github.com/canonical/craft-parts/releases/tag/2.2.2
+.. _2.2.1: https://github.com/canonical/craft-parts/releases/tag/2.2.1
 .. _2.2.0: https://github.com/canonical/craft-parts/releases/tag/2.2.0
 .. _2.1.4: https://github.com/canonical/craft-parts/releases/tag/2.1.4
 .. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
