@@ -43,12 +43,12 @@ def test_java_plugin_no_java(part_info, mocker):
     assert plugin.get_build_environment() == {}
 
 
-def test_java_plugin_jre_21(part_info, mocker):
+def test_java_plugin_jre_not_17(part_info, mocker):
 
     orig_check_java = JavaPlugin._check_java
 
     def _check_java(self, javac: str):
-        if "21" in javac:
+        if "17" not in javac:
             return None, ""
         return orig_check_java(self, javac)
 

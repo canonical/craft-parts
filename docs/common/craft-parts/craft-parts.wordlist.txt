@@ -409,6 +409,7 @@ packahe
 param
 params
 pc
+pcfiledir
 pkgconfig
 pre
 prepend
