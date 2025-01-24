@@ -22,12 +22,12 @@ processing and execution of user-defined scriptlets:
       - ``x86_64-linux-gnu``
       - ``riscv64-linux-gnu``
   * - ``CRAFT_ARCH_BUILD_FOR``
-    - The architecture triplet of the build target. For example:
+    - The architecture of the build target. For example:
 
       - ``amd64``
       - ``riscv64``
   * - ``CRAFT_ARCH_BUILD_ON``
-    - The architecture triplet of the build target. For example:
+    - The architecture of the build target. For example:
 
       - ``amd64``
       - ``riscv64``
