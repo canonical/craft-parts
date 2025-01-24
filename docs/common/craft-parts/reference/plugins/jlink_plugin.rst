@@ -53,11 +53,11 @@ an appropriate OpenJDK slice:
 
     parts:
       runtime:
-          plugin: jlink
-          build-packages:
-            - openjdk-21-jdk
-          after:
-            - deps
+        plugin: jlink
+        build-packages:
+          - openjdk-21-jdk
+        after:
+          - deps
 
         deps:
           plugin: nil
