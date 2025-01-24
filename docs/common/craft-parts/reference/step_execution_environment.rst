@@ -94,7 +94,7 @@ path to be executed without calling their full path. The paths are only added to
 ``CPPFLAGS``, ``CFLAGS``, ``CXXFLAGS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each of these variables is set with a series of ``-isystem`` parameters added
+Each of these variables is set with a series of ``-isystem`` parameters
 to add the following include paths to most C and C++ compilers, if they exist:
 
 - ``$CRAFT_PART_INSTALL/include``
