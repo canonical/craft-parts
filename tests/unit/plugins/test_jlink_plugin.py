@@ -35,7 +35,7 @@ def test_jlink_plugin_defaults(part_info):
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
     assert (
-        "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_TARGET_ARCH}"
+        "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}"
         in plugin.get_build_commands()
     )
     assert plugin.get_build_environment() == {}
