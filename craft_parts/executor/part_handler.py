@@ -43,7 +43,7 @@ from craft_parts.utils import file_utils, os_utils
 from . import filesets, migration
 from .environment import generate_step_environment
 from .organize import organize_files
-from .step_handler import StepContents, StepHandler, Stream
+from .step_handler import StageContents, StepContents, StepHandler, Stream
 
 logger = logging.getLogger(__name__)
 
@@ -366,14 +366,16 @@ class PartHandler:
         """
         self._make_dirs()
 
-        contents = self._run_step(
-            step_info=step_info,
-            scriptlet_name="override-stage",
-            work_dir=self._part.stage_dir,
-            stdout=stdout,
-            stderr=stderr,
+        contents = cast(
+            StageContents,
+            self._run_step(
+                step_info=step_info,
+                scriptlet_name="override-stage",
+                work_dir=self._part.stage_dir,
+                stdout=stdout,
+                stderr=stderr,
+            )
         )
-        backstage_contents = self._migrate_to_backstage()
 
         self._migrate_overlay_files_to_stage()
 
@@ -389,50 +391,9 @@ class PartHandler:
             files=contents.files,
             directories=contents.dirs,
             overlay_hash=overlay_hash.hex(),
-            backstage_files=backstage_contents.files,
-            backstage_directories=backstage_contents.dirs,
+            backstage_files=contents.backstage_files,
+            backstage_directories=contents.backstage_dirs,
         )
-
-    def _migrate_to_backstage(self) -> StepContents:
-        """Migrate files from the part's export directory to the backstage directory."""
-        migratable = set(self._part.part_export_dir.rglob("*"))
-        migratable_dirs = {
-            str(path.relative_to(self._part.part_export_dir))
-            for path in migratable
-            if path.is_dir()
-        }
-        migratable_files = {
-            str(path.relative_to(self._part.part_export_dir))
-            for path in migratable
-            if path.is_file()
-        }
-
-        def pkgconfig_fixup(
-            file_path: str,
-        ) -> None:
-            if os.path.islink(file_path):
-                return
-            if not file_path.endswith(".pc"):
-                return
-            packages.fix_pkg_config(
-                prefix_prepend=self._part.backstage_dir,
-                pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_export_dir,
-            )
-            packages.fix_pkg_config(
-                prefix_prepend=self._part.backstage_dir,
-                pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_install_dir,
-            )
-
-        files, dirs = migration.migrate_files(
-            files=migratable_files,
-            dirs=migratable_dirs,
-            srcdir=self._part.part_export_dir,
-            destdir=self._part.backstage_dir,
-            fixup_func=pkgconfig_fixup,
-        )
-        return StepContents(files, dirs)
 
     def _run_prime(
         self,
@@ -532,6 +493,8 @@ class PartHandler:
                 step=step_info.step,
                 work_dir=work_dir,
             )
+            if step_info.step == Step.STAGE:
+                return StageContents()
             return StepContents()
 
         return step_handler.run_builtin()

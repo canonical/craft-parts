@@ -21,7 +21,7 @@ from craft_parts import errors
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import part_handler
 from craft_parts.executor.part_handler import PartHandler
-from craft_parts.executor.step_handler import StepContents
+from craft_parts.executor.step_handler import StageContents, StepContents
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
@@ -167,7 +167,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
     def test_run_stage(self, mocker):
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_stage",
-            return_value=StepContents({"file"}, {"dir"}),
+            return_value=StageContents({"file"}, {"dir"}, {"back_file"}, {"back_dir"}),
         )
 
         state = self._handler._run_stage(
@@ -178,6 +178,8 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
+            backstage_files={"back_file"},
+            backstage_directories={"back_dir"},
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 

@@ -53,6 +53,14 @@ class StepContents:
     dirs: set[str] = dataclasses.field(default_factory=set)
 
 
+@dataclasses.dataclass(frozen=True)
+class StageContents(StepContents):
+    """Files and directories for both stage and backstage in the step's state."""
+
+    backstage_files: set[str] = dataclasses.field(default_factory=set)
+    backstage_dirs: set[str] = dataclasses.field(default_factory=set)
+
+
 class StepHandler:
     """Executes built-in or user-specified step commands.
 
@@ -162,7 +170,7 @@ class StepHandler:
 
         return StepContents()
 
-    def _builtin_stage(self) -> StepContents:
+    def _builtin_stage(self) -> StageContents:
         stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
 
         def pkgconfig_fixup(file_path: str) -> None:
@@ -172,6 +180,24 @@ class StepHandler:
                 return
             packages.fix_pkg_config(
                 prefix_prepend=self._part.stage_dir,
+                pkg_config_file=Path(file_path),
+                prefix_trim=self._part.part_install_dir,
+            )
+
+        def backstage_pkgconfig_fixup(
+            file_path: str,
+        ) -> None:
+            if os.path.islink(file_path):
+                return
+            if not file_path.endswith(".pc"):
+                return
+            packages.fix_pkg_config(
+                prefix_prepend=self._part.backstage_dir,
+                pkg_config_file=Path(file_path),
+                prefix_trim=self._part.part_export_dir,
+            )
+            packages.fix_pkg_config(
+                prefix_prepend=self._part.backstage_dir,
                 pkg_config_file=Path(file_path),
                 prefix_trim=self._part.part_install_dir,
             )
@@ -195,6 +221,11 @@ class StepHandler:
 
                 files.update(partition_files)
                 dirs.update(partition_dirs)
+            backstage_files, backstage_dirs = filesets.migratable_filesets(
+                Fileset(["(default)/*"], name="backstage"),
+                str(self._part.part_export_dir),
+                "default",
+            )
         else:
             files, dirs = filesets.migratable_filesets(
                 stage_fileset, str(self._part.part_install_dir)
@@ -206,8 +237,20 @@ class StepHandler:
                 destdir=self._part.stage_dir,
                 fixup_func=pkgconfig_fixup,
             )
+            backstage_files, backstage_dirs = filesets.migratable_filesets(
+                Fileset(["*"], name="backstage"),
+                str(self._part.part_export_dir),
+            )
 
-        return StepContents(files, dirs)
+        backstage_files, backstage_dirs = migrate_files(
+            files=backstage_files,
+            dirs=backstage_dirs,
+            srcdir=self._part.part_export_dir,
+            destdir=self._part.backstage_dir,
+            fixup_func=backstage_pkgconfig_fixup,
+        )
+
+        return StageContents(files, dirs, backstage_files, backstage_dirs)
 
     def _builtin_prime(self) -> StepContents:
         prime_fileset = Fileset(self._part.spec.prime_files, name="prime")
