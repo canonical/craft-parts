@@ -70,20 +70,20 @@ Or, by installing the dependencies directly:
 
     parts:
       runtime:
-          plugin: jlink
-          build-packages:
-            - openjdk-21-jdk
-          after:
-            - deps
+        plugin: jlink
+        build-packages:
+          - openjdk-21-jdk
+        after:
+          - deps
 
       deps:
-          plugin: nil
-          stage-packages:
-            - libc6_libs
-            - libgcc-s1_libs
-            - libstdc++6_libs
-            - zlib1g_libs
-            - libnss3_libs
+        plugin: nil
+        stage-packages:
+          - libc6_libs
+          - libgcc-s1_libs
+          - libstdc++6_libs
+          - zlib1g_libs
+          - libnss3_libs
 
 
 How it works
