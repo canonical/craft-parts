@@ -162,7 +162,6 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
         "CRAFT_PROJECT_DIR": str(info.project_dir),
         # Build system configurations for the project.
         "CARGO_HOME": str(info.dirs.work_dir / "cargo"),
-        "CRAFT_BACKSTAGE": str(info.backstage_dir),
         "CRAFT_STAGE": str(info.stage_dir),
         "CRAFT_PRIME": str(info.prime_dir),
     }
