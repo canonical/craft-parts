@@ -2,6 +2,12 @@
 Changelog
 *********
 
+X.Y.Z (2025-MM-DD)
+------------------
+
+Bug fixes:
+
+- Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
 
 2.4.0 (2025-01-23)
 ------------------
@@ -13,7 +19,6 @@ New features:
 Bug fixes:
 
 - Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
-- Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
 
 Documentation:
 
