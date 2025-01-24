@@ -29,7 +29,7 @@ Dependencies
 
 The plugin expects OpenJDK to be available on the system and to contain
 the ``jlink`` executable, unless a part named ``jlink-deps`` is defined.
-In that case, the plugin assumes that this part will stage the
+In that case, the plugin assumes that the ``jlink-deps`` part will stage the
 OpenJDK installation to be used in the build step.
 
 If the system has multiple OpenJDK installations available, one
