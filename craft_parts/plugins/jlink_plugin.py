@@ -102,7 +102,7 @@ class JLinkPlugin(Plugin):
         # and multi-release jar version for the dependency enumeration
         commands.append("JLINK_VERSION=$(${JLINK} --version)")
         commands.append(
-            "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_TARGET_ARCH}"
+            "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}"
         )
         commands.append("MULTI_RELEASE=${JLINK_VERSION%%.*}")
 
