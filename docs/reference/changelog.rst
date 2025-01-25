@@ -2,6 +2,12 @@
 Changelog
 *********
 
+2.4.1 (2025-01-24)
+------------------
+
+Bug fixes:
+
+- Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
 
 2.4.0 (2025-01-23)
 ------------------
