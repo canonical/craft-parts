@@ -3,9 +3,9 @@
 JLink plugin
 =============
 
-The `JLink <jlink>`_ plugin can be used for Java projects where you would want to
-deploy a Java runtime specific for your application or install a minimal
-Java runtime.
+The `JLink <jlink_>`_ plugin can be used for Java projects where
+you would want to deploy a Java runtime specific for your application
+or install a minimal Java runtime.
 
 
 Keywords
