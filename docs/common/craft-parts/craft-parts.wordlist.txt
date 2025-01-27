@@ -375,6 +375,7 @@ json
 kwargs
 ldflags
 lifecycle
+linkers
 linters
 lto
 lts
