@@ -1,12 +1,12 @@
 .. _craft_parts_cargo-package_plugin:
 
-cargo-package plugin
+Cargo package plugin
 ====================
 
-The cargo-package plugin can be used for Rust projects that are dependencies of
+The Cargo package plugin can be used for Rust projects that are dependencies of
 other Rust packages. It is a companion plugin meant to be used with the
 :ref:`Rust plugin <craft_parts_rust_plugin>`. Use of this plugin makes rust
-builds in all parts happen offline.
+builds in **all** parts happen offline.
 
 .. _craft_parts_cargo-package_plugin-keywords:
 
@@ -28,10 +28,12 @@ cargo-package-cargo-command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Type:** string
 
-What command to use as the ``cargo`` executable. Can be used if a non-default
-version of cargo is needed. For example: ``cargo: /usr/bin/cargo-1.82``
+**Example:** ``cargo: /usr/bin/cargo-1.82``
 
-.. _craft_parts_uv_plugin-environment_variables:
+What command to use as the ``cargo`` executable. Can be used if a custom
+version of cargo is needed.
+
+.. _craft_parts_cargo-package_plugin-environment_variables:
 
 Environment variables
 ---------------------
@@ -39,7 +41,8 @@ Environment variables
 CARGO_REGISTRY_DIRECTORY
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The location where cargo will publish the crate.
+The location where cargo will publish the crate. This does not need to be changed
+in most cases.
 
 .. _cargo-details-begin:
 
@@ -61,4 +64,26 @@ During the build step, the plugin performs the following actions:
 When setting up the system, it makes the craft-parts directory registry, which is
 the destination of all parts using this plugin, the default registry. It also installs
 an ``apt`` registry to allow dependent parts to collect dependencies from
-``librust-*-dev`` packages if they choose.
+``librust-*-dev`` packages if they choose. In this case, the final part's crate
+will need to `override dependencies
+<https://doc.rust-lang.org/cargo/reference/overriding-dependencies.html>`_ to get the
+correct crates from the correct locations.
+
+Examples
+--------
+
+The following snippet declares a part named ``ascii`` using the ``cargo-package``
+plugin and a ``hello`` part that uses it. Note how the ``hello`` part uses the
+``after`` keyword to define that it only builds after the ``ascii`` part is run.
+
+.. code-block:: yaml
+
+    ascii:
+      plugin: cargo-package
+      source: https://github.com/tomprogrammer/rust-ascii.git
+      source-tag: v1.1.0
+    hello:
+      after: [ascii]
+      plugin: rust
+      source: .
+      rust-channel: none
