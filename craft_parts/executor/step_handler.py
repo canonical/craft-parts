@@ -396,11 +396,17 @@ class StepHandler:
             target_dir = self._part.dirs.overlay_mount_dir
 
             def execute_cmd(cmd_args: list[str]) -> None:
-                subprocess.check_call(args=cmd_args)
+                logger.debug(f"Executing {cmd_args} in root {target_dir}")
+                subprocess.run(
+                    cmd_args,
+                    check=True,
+                    stdout=self._stdout,
+                    stderr=self._stderr,
+                )
 
             chroot.chroot(
                 target_dir, execute_cmd, args=(cmd_args,), use_host_sources=True
-            )  # type: ignore
+            )
 
         elif cmd_name == "set":
             if len(cmd_args) != 1:
