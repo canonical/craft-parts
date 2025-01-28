@@ -21,7 +21,7 @@ from craft_parts import errors
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import part_handler
 from craft_parts.executor.part_handler import PartHandler
-from craft_parts.executor.step_handler import StageContents, StepContents
+from craft_parts.executor.step_handler import StageContents
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part

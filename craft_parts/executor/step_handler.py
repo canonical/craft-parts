@@ -184,24 +184,6 @@ class StepHandler:
                 prefix_trim=self._part.part_install_dir,
             )
 
-        def backstage_pkgconfig_fixup(
-            file_path: str,
-        ) -> None:
-            if os.path.islink(file_path):
-                return
-            if not file_path.endswith(".pc"):
-                return
-            packages.fix_pkg_config(
-                prefix_prepend=self._part.backstage_dir,
-                pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_export_dir,
-            )
-            packages.fix_pkg_config(
-                prefix_prepend=self._part.backstage_dir,
-                pkg_config_file=Path(file_path),
-                prefix_trim=self._part.part_install_dir,
-            )
-
         if self._partitions:
             files: set[str] = set()
             dirs: set[str] = set()
@@ -247,7 +229,6 @@ class StepHandler:
             dirs=backstage_dirs,
             srcdir=self._part.part_export_dir,
             destdir=self._part.backstage_dir,
-            fixup_func=backstage_pkgconfig_fixup,
         )
 
         return StageContents(files, dirs, backstage_files, backstage_dirs)

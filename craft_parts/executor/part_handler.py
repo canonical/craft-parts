@@ -374,7 +374,7 @@ class PartHandler:
                 work_dir=self._part.stage_dir,
                 stdout=stdout,
                 stderr=stderr,
-            )
+            ),
         )
 
         self._migrate_overlay_files_to_stage()
