@@ -68,9 +68,6 @@ class PartSpec(BaseModel):
     build_attributes: list[str] = []
     organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
-    backstage_files: list[RelativePathStr] = Field(
-        default_factory=lambda: ["*"], alias="backstage"
-    )
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"], alias="stage"
     )

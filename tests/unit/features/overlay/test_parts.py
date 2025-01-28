@@ -54,7 +54,6 @@ class TestPartSpecs:
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
             "overlay": ["etc/issue"],
-            "backstage": ["*"],
             "stage": ["-usr/docs"],
             "prime": ["*"],
             "override-pull": "override-pull",

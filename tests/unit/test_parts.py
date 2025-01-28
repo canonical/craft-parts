@@ -52,7 +52,6 @@ class TestPartSpecs:
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
-            "backstage": ["*"],
             "stage": ["-usr/docs"],
             "prime": ["*"],
             "override-pull": "override-pull",
