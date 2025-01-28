@@ -43,7 +43,7 @@ from craft_parts.utils import file_utils, os_utils
 from . import filesets, migration
 from .environment import generate_step_environment
 from .organize import organize_files
-from .step_handler import StepContents, StepHandler, Stream
+from .step_handler import StageContents, StepContents, StepHandler, Stream
 
 logger = logging.getLogger(__name__)
 
@@ -366,12 +366,15 @@ class PartHandler:
         """
         self._make_dirs()
 
-        contents = self._run_step(
-            step_info=step_info,
-            scriptlet_name="override-stage",
-            work_dir=self._part.stage_dir,
-            stdout=stdout,
-            stderr=stderr,
+        contents = cast(
+            StageContents,
+            self._run_step(
+                step_info=step_info,
+                scriptlet_name="override-stage",
+                work_dir=self._part.stage_dir,
+                stdout=stdout,
+                stderr=stderr,
+            ),
         )
 
         self._migrate_overlay_files_to_stage()
@@ -388,6 +391,8 @@ class PartHandler:
             files=contents.files,
             directories=contents.dirs,
             overlay_hash=overlay_hash.hex(),
+            backstage_files=contents.backstage_files,
+            backstage_directories=contents.backstage_dirs,
         )
 
     def _run_prime(
@@ -488,6 +493,8 @@ class PartHandler:
                 step=step_info.step,
                 work_dir=work_dir,
             )
+            if step_info.step == Step.STAGE:
+                return StageContents()
             return StepContents()
 
         return step_handler.run_builtin()
@@ -867,6 +874,7 @@ class PartHandler:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
+            self._part.part_export_dir,
             *self._part.part_install_dirs.values(),
             self._part.part_layer_dir,
             self._part.part_state_dir,

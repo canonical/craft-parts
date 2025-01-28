@@ -96,11 +96,11 @@ class CargoPackagePlugin(Plugin):
 
     @property
     def _registry_dir(self) -> pathlib.Path:
-        return self._part_info.project_info.dirs.stage_dir / "cargo_registry"
+        return self._part_info.project_info.dirs.backstage_dir / "cargo_registry"
 
     @property
     def _registry_output_dir(self) -> pathlib.Path:
-        return self._part_info.part_install_dir / "cargo_registry"
+        return self._part_info.part_export_dir / "cargo_registry"
 
     @override
     def get_build_environment(self) -> dict[str, str]:

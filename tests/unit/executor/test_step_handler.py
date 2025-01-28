@@ -22,7 +22,7 @@ import pytest
 from craft_parts import plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
-from craft_parts.executor.step_handler import StepContents, StepHandler
+from craft_parts.executor.step_handler import StageContents, StepContents, StepHandler
 from craft_parts.infos import (
     _DEB_TO_TRIPLET,
     PartInfo,
@@ -235,6 +235,10 @@ class TestStepHandlerBuiltins:
         Path("parts/p1/install/foo").write_text("content")
         Path("parts/p1/install/subdir/bar").write_text("content")
         Path("stage").mkdir()
+        Path("parts/p1/export/subdir").mkdir(parents=True)
+        Path("parts/p1/export/foo").write_text("content")
+        Path("parts/p1/export/subdir/bar").write_text("content")
+        Path("backstage").mkdir()
         sh = _step_handler_for_step(
             Step.STAGE,
             cache_dir=new_dir,
@@ -245,7 +249,12 @@ class TestStepHandlerBuiltins:
         )
         result = sh.run_builtin()
 
-        assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
+        assert result == StageContents(
+            files={"subdir/bar", "foo"},
+            dirs={"subdir"},
+            backstage_files={"foo", "subdir/bar"},
+            backstage_dirs={"subdir"},
+        )
 
     def test_run_builtin_prime(self, new_dir, partitions):
         Path("parts/p1/install").mkdir(parents=True)

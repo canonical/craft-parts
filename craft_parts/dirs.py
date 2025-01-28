@@ -56,6 +56,7 @@ class ProjectDirs:
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
         self.stage_dir = self.work_dir / "stage"
+        self.backstage_dir = self.work_dir / "backstage"
         self.prime_dir = self.work_dir / "prime"
         if partitions:
             self._partitions: Sequence[str] | None = partitions

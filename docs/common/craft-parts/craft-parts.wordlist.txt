@@ -256,6 +256,7 @@ SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 SSL
+StageContents
 StageFilesConflict
 StagePackageNotFound
 StageState
@@ -299,6 +300,7 @@ ZipSourceModel
 abcdef
 args
 armv
+artifact
 artifacts
 autogen
 autotools
