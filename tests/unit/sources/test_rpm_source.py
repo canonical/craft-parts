@@ -97,7 +97,7 @@ def test_valid_options(partitions):
             "branch",
             "submodule",
             "depth",
-            "'source-branch', 'source-commit', 'source-depth', 'source-submodules', and 'source-tag'",
+            "'source-branch', 'source-commit', 'source-depth', 'source-submodules' and 'source-tag'",
             id="all-values-bad",
         ),
     ],
