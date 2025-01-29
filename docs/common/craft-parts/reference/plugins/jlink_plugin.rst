@@ -65,6 +65,8 @@ an appropriate OpenJDK slice:
           plugin: nil
           stage-packages:
             - openjdk-21-jre-headless_security
+          stage:
+            - -usr/lib/jvm
 
 Or, by installing the dependencies directly:
 
