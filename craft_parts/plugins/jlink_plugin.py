@@ -145,7 +145,7 @@ class JLinkPlugin(Plugin):
         commands.append("INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}")
 
         commands.append(
-            "rm -rf ${INSTALL_ROOT} && ${JLINK} --add-modules ${deps} --output ${INSTALL_ROOT}"
+            "rm -rf ${INSTALL_ROOT} && ${JLINK} --no-header-files --no-man-pages --strip-debug --add-modules ${deps} --output ${INSTALL_ROOT}"
         )
         # create /usr/bin/java link
         commands.append(
