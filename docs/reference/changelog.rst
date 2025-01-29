@@ -17,6 +17,12 @@ Bug fixes:
 
 - Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
 
+Documentation:
+
+- Reorganise and improve the :ref:`craft_parts_step_execution_environment`
+  reference, including example values and documentation of additional
+  environment variables.
+
 2.4.0 (2025-01-23)
 ------------------
 
