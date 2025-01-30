@@ -5,7 +5,7 @@ Cargo package plugin
 
 The Cargo package plugin can be used for Rust projects that are dependencies of
 other Rust packages. It is a companion plugin meant to be used with the
-:ref:`Rust plugin <craft_parts_rust_plugin>`. Use of this plugin makes rust
+:ref:`Rust plugin <craft_parts_rust_plugin>`. Use of this plugin makes Rust
 builds in *all* parts happen offline.
 
 .. _craft_parts_cargo-package_plugin-keywords:
@@ -58,7 +58,7 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-#. It sets up the system to use a local craft-parts directory registry
+#. It sets up the system to use a local ``craft-parts`` directory registry
 #. It packages the crate
 #. It publishes the crate to a local ``craft-parts`` directory registry for use by
    other parts
