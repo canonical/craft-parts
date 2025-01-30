@@ -58,8 +58,8 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
 
-        :raises PluginEnvironmentValidationError: If go is invalid
-          and there are no parts named go.
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
         """
         version = self.validate_dependency(
             dependency="mvn",

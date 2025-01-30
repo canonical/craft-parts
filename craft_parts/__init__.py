@@ -16,8 +16,6 @@
 
 """Craft a project from several parts."""
 
-__version__ = "2.1.4"
-
 from . import plugins
 from .actions import Action, ActionProperties, ActionType
 from .dirs import ProjectDirs
@@ -35,7 +33,20 @@ from .parts import (
 )
 from .steps import Step
 
+
+try:
+    from ._version import __version__
+except ImportError:  # pragma: no cover
+    from importlib.metadata import version, PackageNotFoundError
+
+    try:
+        __version__ = version("craft_parts")
+    except PackageNotFoundError:
+        __version__ = "dev"
+
+
 __all__ = [
+    "__version__",
     "Features",
     "Action",
     "ActionProperties",

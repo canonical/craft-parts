@@ -50,6 +50,7 @@ class PartSpec(BaseModel):
     plugin: str | None = None
     source: str | None = None
     source_checksum: str = ""
+    source_channel: str | None = None
     source_branch: str = ""
     source_commit: str = ""
     source_depth: int = 0

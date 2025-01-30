@@ -37,8 +37,18 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
 
     poetry_with: set[str] = pydantic.Field(
         default_factory=set,
-        title="Optional dependency groups",
-        description="optional dependency groups to include when installing.",
+        title="Dependency groups to include",
+        description="dependency groups to include. By default, only the main dependencies are included.",
+    )
+    poetry_export_extra_args: list[str] = pydantic.Field(
+        default_factory=list,
+        title="Extra arguments for poetry export",
+        description="extra arguments to pass to poetry export when creating requirements.txt.",
+    )
+    poetry_pip_extra_args: list[str] = pydantic.Field(
+        default_factory=list,
+        title="Extra arguments for pip install",
+        description="extra arguments to pass to pip install installing dependencies.",
     )
 
     # part properties required by the plugin
@@ -115,6 +125,7 @@ class PoetryPlugin(BasePythonPlugin):
             export_command.append(
                 f"--with={','.join(sorted(self._options.poetry_with))}",
             )
+        export_command.extend(self._options.poetry_export_extra_args)
 
         return [shlex.join(export_command)]
 
@@ -128,10 +139,11 @@ class PoetryPlugin(BasePythonPlugin):
         :returns: A list of strings forming the install script.
         """
         pip = self._get_pip()
+        pip_extra_args = shlex.join(self._options.poetry_pip_extra_args)
         return [
             # These steps need to be separate because poetry export defaults to including
             # hashes, which don't work with installing from a directory.
-            f"{pip} install --requirement={requirements_path}",
+            f"{pip} install {pip_extra_args} --requirement={requirements_path}",
             # All dependencies should be installed through the requirements file made by
             # poetry.
             f"{pip} install --no-deps .",
