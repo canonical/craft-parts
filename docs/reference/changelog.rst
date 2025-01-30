@@ -2,6 +2,14 @@
 Changelog
 *********
 
+2.5.0 (2025-XX-XX)
+------------------
+
+New features:
+
+- Add the :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up
+  Java runtime.
+
 2.4.1 (2025-01-24)
 ------------------
 
