@@ -41,7 +41,7 @@ from .zip_source import ZipSource, ZipSourceModel
 
 
 def _detect_source_type(
-    data: SourceModel | dict[str, Any]
+    data: SourceModel | dict[str, Any],
 ) -> SourceModel | dict[str, Any]:
     """Get the source type for a source if it's not already provided."""
     if isinstance(data, BaseSourceModel) or "source-type" in data:

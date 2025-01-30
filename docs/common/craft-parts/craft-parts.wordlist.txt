@@ -101,7 +101,12 @@ InvalidSourceOption
 InvalidSourceOptions
 InvalidSourceType
 Iterable
+JAR
 JavaPlugin
+JLink
+JLinkPlugin
+JLinkPluginEnvironmentValidator
+JLinkPluginProperties
 JSON
 LDFLAGS
 LLVM
@@ -145,6 +150,7 @@ NpmPlugin
 NpmPluginEnvironmentValidator
 NpmPluginProperties
 OCI
+OpenJDK
 OSError
 OsRelease
 OsReleaseCodenameError
@@ -313,6 +319,7 @@ chmod
 chroot
 chrooted
 classmethod
+classpath
 classvar
 cli
 cls
@@ -368,7 +375,9 @@ ing
 initialized
 iterable
 iojs
+jdeps
 jdk
+jlink
 jre
 js
 json
@@ -398,6 +407,7 @@ oci
 ok
 onboarding
 opencontainers
+openjdk
 organization
 organize
 organized
