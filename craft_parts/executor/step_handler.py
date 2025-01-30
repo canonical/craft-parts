@@ -395,7 +395,7 @@ class StepHandler:
 
             def execute_cmd(cmd_args: list[str]) -> None:
                 logger.debug(f"Executing {cmd_args} in root {target_dir}")
-                subprocess.run(
+                process.run(
                     cmd_args,
                     check=True,
                     stdout=self._stdout,
