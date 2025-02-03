@@ -101,7 +101,12 @@ InvalidSourceOption
 InvalidSourceOptions
 InvalidSourceType
 Iterable
+JAR
 JavaPlugin
+JLink
+JLinkPlugin
+JLinkPluginEnvironmentValidator
+JLinkPluginProperties
 JSON
 LDFLAGS
 LLVM
@@ -145,6 +150,7 @@ NpmPlugin
 NpmPluginEnvironmentValidator
 NpmPluginProperties
 OCI
+OpenJDK
 OSError
 OsRelease
 OsReleaseCodenameError
@@ -277,6 +283,7 @@ Unmark
 Unmount
 UnpackError
 Unregister
+UserExecutionError
 UvPlugin
 UvPluginEnvironmentValidator
 UvPluginProperties
@@ -312,6 +319,7 @@ chmod
 chroot
 chrooted
 classmethod
+classpath
 classvar
 cli
 cls
@@ -338,6 +346,7 @@ distro
 distros
 dl
 dnf
+docstring
 dotnet
 dst
 emacs
@@ -366,13 +375,16 @@ ing
 initialized
 iterable
 iojs
+jdeps
 jdk
+jlink
 jre
 js
 json
 kwargs
 ldflags
 lifecycle
+linkers
 linters
 lto
 lts
@@ -395,6 +407,7 @@ oci
 ok
 onboarding
 opencontainers
+openjdk
 organization
 organize
 organized
@@ -406,6 +419,7 @@ packahe
 param
 params
 pc
+pcfiledir
 pkgconfig
 pre
 prepend
@@ -468,6 +482,7 @@ txt
 ubuntu
 umount
 unbuilt
+unix
 unixsocket
 unmark
 unmarshal

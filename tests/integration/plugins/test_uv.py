@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023-2024 Canonical Ltd.
+# Copyright 2023-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -234,7 +234,7 @@ def test_find_payload_python_bad_version(new_dir, partitions, uv_parts_complex):
     actions = lf.plan(Step.PRIME)
 
     out = Path("out.txt")
-    with out.open(mode="w") as outfile, pytest.raises(errors.ScriptletRunError):
+    with out.open(mode="w") as outfile, pytest.raises(errors.PluginBuildError):
         with lf.action_executor() as ctx:
             ctx.execute(actions, stdout=outfile, stderr=outfile)
 

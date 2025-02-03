@@ -2,13 +2,73 @@
 Changelog
 *********
 
-2.2.2 (2025-MM-DD)
+2.5.0 (2025-01-30)
 ------------------
+
+New features:
+
+- Add the :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up
+  Java runtime.
+
+2.4.1 (2025-01-24)
+------------------
+
+Bug fixes:
+
+- Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
+
+Documentation:
+
+- Reorganise and improve the :ref:`craft_parts_step_execution_environment`
+  reference, including example values and documentation of additional
+  environment variables.
+
+2.4.0 (2025-01-23)
+------------------
+
+New features:
+
+- Add new PartSpec property ``source-channel``.
+
+Bug fixes:
+
+- Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
+
+Documentation:
+
+- Add missing links to GitHub releases.
+
+For a complete list of commits, check out the `2.4.0`_ release on GitHub.
+
+2.3.0 (2025-01-20)
+------------------
+
+New features:
+
+- Change craftctl communication mechanism to unix sockets to consolidate
+  the ctl server and output stream processing selector loops.
+- Get the error output from step scriptlet execution and surface it when
+  raising ScriptletRunError.
 
 Bug fixes:
 
 - Make sure the :ref:`uv plugin<craft_parts_uv_plugin>` is re-entrant on
   source changes.
+
+Documentation:
+
+- Correct the Maven plugin docstring to refer to Maven from Go.
+
+For a complete list of commits, check out the `2.3.0`_ release on GitHub.
+
+2.2.2 (2025-01-13)
+------------------
+
+Documentation:
+
+- Add a cross-reference target for Poetry external links.
+
+For a complete list of commits, check out the `2.2.2`_ release on GitHub.
 
 2.2.1 (2024-12-19)
 ------------------
@@ -17,6 +77,8 @@ Bug fixes:
 
 - Fix how extras and groups are parsed for the
   :ref:`uv plugin<craft_parts_uv_plugin>`.
+
+For a complete list of commits, check out the `2.2.1`_ release on GitHub.
 
 2.2.0 (2024-12-16)
 ------------------
@@ -693,6 +755,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
+.. _2.3.0: https://github.com/canonical/craft-parts/releases/tag/2.3.0
+.. _2.2.2: https://github.com/canonical/craft-parts/releases/tag/2.2.2
+.. _2.2.1: https://github.com/canonical/craft-parts/releases/tag/2.2.1
 .. _2.2.0: https://github.com/canonical/craft-parts/releases/tag/2.2.0
 .. _2.1.4: https://github.com/canonical/craft-parts/releases/tag/2.1.4
 .. _2.1.3: https://github.com/canonical/craft-parts/releases/tag/2.1.3
