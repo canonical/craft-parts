@@ -27,6 +27,7 @@ from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
 from .go_use_plugin import GoUsePlugin
+from .jlink_plugin import JLinkPlugin
 from .make_plugin import MakePlugin
 from .maven_plugin import MavenPlugin
 from .meson_plugin import MesonPlugin
@@ -38,6 +39,7 @@ from .python_plugin import PythonPlugin
 from .qmake_plugin import QmakePlugin
 from .rust_plugin import RustPlugin
 from .scons_plugin import SConsPlugin
+from .uv_plugin import UvPlugin
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -56,6 +58,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "dump": DumpPlugin,
     "go": GoPlugin,
     "go-use": GoUsePlugin,
+    "jlink": JLinkPlugin,
     "make": MakePlugin,
     "maven": MavenPlugin,
     "meson": MesonPlugin,
@@ -66,6 +69,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "qmake": QmakePlugin,
     "rust": RustPlugin,
     "scons": SConsPlugin,
+    "uv": UvPlugin,
 }
 
 _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)

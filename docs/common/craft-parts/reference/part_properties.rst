@@ -80,7 +80,7 @@ organize
 --------
 **Type:** ordered dictionary mapping strings to strings
 
-**Step:** stage
+**Step:** build
 
 Describes how files in the building area should be represented in the staging
 area.

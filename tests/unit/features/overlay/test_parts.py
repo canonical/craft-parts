@@ -36,6 +36,7 @@ class TestPartSpecs:
             "plugin": "nil",
             "source": "http://example.com/hello-2.3.tar.gz",
             "source-checksum": "md5/d9210476aac5f367b14e513bdefdee08",
+            "source-channel": None,
             "source-branch": "release",
             "source-commit": "2514f9533ec9b45d07883e10a561b248497a8e3c",
             "source-depth": 3,

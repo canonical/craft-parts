@@ -167,7 +167,7 @@ def test_get_build_commands(mocker, part_info, go_workspace):
     )
 
     assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_src_dir}",
+        f"go work use {plugin._part_info.part_src_subdir}",
     ]
     run_mock.assert_called_once_with(
         ["go", "work", "init"], capture_output=True, check=True, cwd=go_workspace.parent
@@ -182,6 +182,24 @@ def test_get_build_commands_workspace_in_use(mocker, part_info):
     run_mock = mocker.patch("subprocess.run")
 
     assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_src_dir}",
+        f"go work use {plugin._part_info.part_src_subdir}",
+    ]
+    run_mock.assert_not_called()
+
+
+@pytest.mark.usefixtures("go_workspace")
+def test_get_build_commands_subdir(mocker, new_dir):
+    part_spec = {"source": ".", "source-subdir": "my/subdir"}
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", part_spec),
+    )
+    properties = GoUsePlugin.properties_class.unmarshal(part_spec)
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
+
+    run_mock = mocker.patch("subprocess.run")
+
+    assert plugin.get_build_commands() == [
+        f"go work use {plugin._part_info.part_src_subdir}",
     ]
     run_mock.assert_not_called()

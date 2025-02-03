@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@ code for that part, and how to unpack it if necessary.
     directory tree or a tarball or a revision control repository
     ('git:...').
 
-  - source-type: git, bzr, hg, svn, tar, deb, rpm, or zip
+  - source-type: git, tar, deb, rpm, or zip
 
     In some cases the source string is not enough to identify the version
     control system or compression algorithm. The source-type key can tell
@@ -83,10 +83,12 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pydantic_core
+
 from craft_parts.dirs import ProjectDirs
 
 from . import errors
-from .base import SourceHandler
+from .base import BaseSourceModel, SourceHandler
 from .deb_source import DebSource
 from .file_source import FileSource
 from .git_source import GitSource
@@ -102,8 +104,7 @@ if TYPE_CHECKING:
 
 SourceHandlerType = type[SourceHandler]
 
-
-_source_handler: dict[str, SourceHandlerType] = {
+_MANDATORY_SOURCES: dict[str, SourceHandlerType] = {
     "local": LocalSource,
     "tar": TarSource,
     "git": GitSource,
@@ -114,6 +115,39 @@ _source_handler: dict[str, SourceHandlerType] = {
     "rpm": RpmSource,
     "7z": SevenzipSource,
 }
+
+_SOURCES: dict[str, SourceHandlerType] = {}
+
+
+def _get_type_name_from_model(model: type[BaseSourceModel]) -> str:
+    source_type = model.model_fields["source_type"]
+    if (default := source_type.get_default()) is not pydantic_core.PydanticUndefined:
+        return str(default)
+    if source_type.annotation is None:
+        raise TypeError("Source type needs an annotation.")
+    return str(source_type.annotation.__args__[0])
+
+
+def register(source: SourceHandlerType, /) -> None:
+    """Register source handlers.
+
+    :param source: a SourceHandler class to register.
+    :raises: ValueError if the source handler overrides a built-in source type.
+    """
+    source_name = _get_type_name_from_model(source.source_model)
+    if source_name in _MANDATORY_SOURCES:
+        raise ValueError(f"Built-in source types cannot be overridden: {source_name!r}")
+    _SOURCES[source_name] = source
+
+
+def unregister(source: str, /) -> None:
+    """Unregister a source handler by name."""
+    if source in _MANDATORY_SOURCES:
+        raise ValueError(f"Built-in source types cannot be unregistered: {source!r}")
+    try:
+        del _SOURCES[source]
+    except KeyError:
+        raise ValueError(f"Source type not registered: {source!r}") from None
 
 
 def get_source_handler(
@@ -139,6 +173,7 @@ def get_source_handler(
             source=part.spec.source,
             part_src_dir=part.part_src_dir,
             source_checksum=part.spec.source_checksum,
+            source_channel=part.spec.source_channel,
             source_branch=part.spec.source_branch,
             source_tag=part.spec.source_tag,
             source_depth=part.spec.source_depth,
@@ -163,13 +198,12 @@ def _get_source_handler_class(
     if not source_type:
         source_type = get_source_type_from_uri(source)
 
-    if source_type not in _source_handler:
-        raise errors.InvalidSourceType(source)
+    if source_type in _MANDATORY_SOURCES:
+        return _MANDATORY_SOURCES[source_type]
+    if source_type in _SOURCES:
+        return _SOURCES[source_type]
 
-    return _source_handler.get(source_type, LocalSource)
-
-
-_tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
+    raise errors.InvalidSourceType(source, source_type=source_type)
 
 
 def get_source_type_from_uri(
@@ -180,24 +214,17 @@ def get_source_type_from_uri(
     :param source: The source specification.
     :param ignore_errors: Don't raise InvalidSourceType if the source
         type could not be determined.
+    :returns: a string matching the registered source type.
 
     :raise InvalidSourceType: If the source type is unknown.
     """
-    for extension in ["zip", "deb", "rpm", "7z", "snap"]:
-        if source.endswith(f".{extension}"):
-            return extension
-    source_type = ""
-    if source.startswith(("bzr:", "lp:")):
-        source_type = "bzr"
-    elif source.startswith(("git:", "git@", "git+ssh:")) or source.endswith(".git"):
-        source_type = "git"
-    elif source.startswith("svn:"):
-        source_type = "subversion"
-    elif _tar_type_regex.match(source):
-        source_type = "tar"
-    elif os.path.isdir(source):
-        source_type = "local"
-    elif not ignore_errors:
-        raise errors.InvalidSourceType(source)
-
-    return source_type
+    for source_cls in (*_MANDATORY_SOURCES.values(), *_SOURCES.values()):
+        source_model = source_cls.source_model
+        if source_model.pattern and re.search(source_model.pattern, source):
+            return _get_type_name_from_model(source_model)
+    # Special case for the "local" source for backwards compatibility.
+    if os.path.isdir(source):
+        return "local"
+    if ignore_errors:
+        return ""
+    raise errors.InvalidSourceType(source)

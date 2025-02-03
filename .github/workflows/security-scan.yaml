@@ -13,3 +13,4 @@ jobs:
     uses: canonical/starflow/.github/workflows/scan-python.yaml@main
     with:
       packages: python-apt-dev
+      uv-export: false # can't use `--all-extras` due to the different versions of python-apt conflicting

@@ -1,3 +1,213 @@
+[project]
+name = "craft-parts"
+dynamic = ["version"]
+description = "Craft parts tooling"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Canonical Ltd.", email = "snapcraft@lists.snapcraft.io" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "overrides!=7.6.0",
+    "pydantic>=2.0.0",
+    "pyxdg",
+    "PyYAML",
+    "requests-unixsocket2>=0.4.0",
+    "requests>=2.32,<3.0",
+]
+
+[project.optional-dependencies]
+apt-jammy = [
+    # Stay on 2.4 for Jammy
+    "python-apt~=2.4.0;sys_platform=='linux'",
+]
+apt-noble = [
+    # 2.7 for Noble
+    "python-apt~=2.7.0;sys_platform=='linux'",
+]
+apt-oracular = [
+    # 2.9 for Oracular+
+    "python-apt~=2.9.0;sys_platform=='linux'",
+]
+apt-plucky = [
+    # While Plucky is in development, it should use the latest
+    "python-apt>=2.9.0;sys_platform=='linux'",
+]
+docs = [
+    "canonical-sphinx",
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-lint",
+    "sphinx-pydantic",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-details-directive",
+]
+dev = [  # TODO: Remove this once we've switched CI to uv
+    # Inherited from starbase
+    "build",
+    "coverage[toml]~=7.4",
+    "pytest~=8.0",
+    "pytest-cov~=5.0",
+    "pytest-mock~=3.12",
+    "yamllint~=1.34",
+    "mypy[reports]~=1.14.1",
+    "pyright==1.1.391",
+    "types-Pygments",
+    "types-colorama",
+    "types-setuptools",
+
+    # Project-specific linting
+    "autoflake",
+    "black",
+    "codespell",
+    "pydocstyle",
+    "tox",
+
+    # Testing
+    "hypothesis",
+    "jsonschema",
+    "pytest-check",
+    "pytest-subprocess",
+    "requests-mock",
+
+    # Type checking
+    "types-colorama",
+    "types-docutils",
+    "types-jsonschema",
+    "types-Pillow",
+    "types-Pygments",
+    "types-pytz",
+    "types-PyYAML",
+    "types-requests",
+    "types-setuptools",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    # Basic constraints to allow --resolution=lowest
+    "build>=0.7.0",
+    "iniconfig>=1.1.0",
+    "lxml>=5.0",
+    "pyparsing>=3.0.0",
+    "pyproject-hooks>=1.0.0",
+    "pyyaml>=5.0",
+    "markdown>=3.0",
+    "markupsafe>=2.0",
+    "pyyaml>5.0",
+    "regex>=2021.11.10",
+    "sphinx-basic-ng>=1.0.0b1",
+    "tornado>=4.0",
+    "webencodings>=0.4.0",
+]
+dev-dependencies = [
+    # Inherited from starbase
+    "build",
+    "coverage[toml]~=7.4",
+    "pytest~=8.0",
+    "pytest-cov~=5.0",
+    "pytest-mock~=3.12",
+    "yamllint~=1.35",
+    "mypy[reports]~=1.14.1",
+    "pyright==1.1.391",
+    "types-Pygments",
+    "types-colorama",
+    "types-setuptools",
+
+    # Project-specific linting
+    "autoflake",
+    "black",
+    "codespell",
+    "pydocstyle",
+
+    # Testing
+    "hypothesis",
+    "jsonschema",
+    "pytest-check",
+    "pytest-subprocess",
+    "requests-mock",
+
+    # Type checking
+    "types-colorama",
+    "types-docutils",
+    "types-jsonschema",
+    "types-Pillow",
+    "types-Pygments",
+    "types-pytz",
+    "types-PyYAML",
+    "types-requests",
+    "types-setuptools",
+]
+conflicts = [
+    [
+        { extra = "apt-jammy" },
+        { extra = "apt-noble" },
+        { extra = "apt-oracular" },
+        { extra = "apt-plucky" },
+    ]
+]
+
+
+[[tool.uv.index]]
+name = "python-apt-wheels"
+url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"
+
+
+[project.scripts]
+craftctl = "craft_parts.ctl:main"
+
+[project.urls]
+Homepage = "https://github.com/canonical/craft-parts"
+
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "setuptools_scm[toml]>=7.1"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+"craft_parts" = "craft_parts"
+"craft_parts_docs" = "docs/common"
+
+
+[tool.setuptools.dynamic]
+readme = {file = "README.rst"}
+
+[tool.setuptools_scm]
+write_to = "craft_parts/_version.py"
+# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
+# version scheme:
+#   - X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>
+# parts of scheme:
+#   - X.Y.Z - most recent git tag
+#   - post<commits since tag>+g<hash> - present when current commit is not tagged
+#   - .d<%Y%m%d> - present when working dir is dirty
+# version scheme when no tags exist:
+#   - 0.0.post<total commits>+g<hash>
+version_scheme = "post-release"
+# deviations from the default 'git describe' command:
+# - only match annotated tags
+# - only match tags formatted as 'X.Y.Z'
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--long",
+    "--match",
+    "[0-9]*.[0-9]*.[0-9]*",
+    "--exclude",
+    "*[^0-9.]*",
+]
+
 [tool.black]
 target-version = ["py310"]
 
@@ -6,7 +216,6 @@ ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
 skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,./docs/_build,.direnv,.venv,venv,.vscode"
 quiet-level = 3
 check-filenames = true
-
 
 [tool.mypy]
 python_version = "3.10"
@@ -36,6 +245,17 @@ no_implicit_optional = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 strict = false
+
+[tool.pydocstyle]
+ignore = [
+    "D105", # Missing docstring in magic method (reason: magic methods already have definitions)
+    "D107", # Missing docstring in __init__ (reason: documented in class docstring)
+    "D203", # 1 blank line required before class docstring (reason: pep257 default)
+    "D204",
+    "D213", # Multi-line docstring summary should start at the second line (reason: pep257 default)
+    "D215", # Section underline is over-indented (reason: pep257 default)
+]
+
 
 [tool.ruff]
 line-length = 88
@@ -120,7 +340,6 @@ lint.select = [  # Base linting rule selections.
     "RUF200",  # If ruff fails to parse pyproject.toml...
 ]
 lint.ignore = [
-    "ANN10",  # Type annotations for `self` and `cls`
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
     "E501",  # Line too long (reason: black will automatically fix this for us)
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
@@ -165,7 +384,6 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
     "S108", # Allow Probable insecure usage of temporary file or directory
     "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
     "PLR2004", # Allow magic values in tests
-    "PT004", # Allow fixture no return in tests
     "SLF",  # Allow accessing private members from tests.
     "INP001", # Allow implicit namespace package
     "RUF012", # Allow mutable class attributes without `typing.ClassVar`
