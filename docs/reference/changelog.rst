@@ -2,6 +2,14 @@
 Changelog
 *********
 
+X.X.X (2025-MM-DD)
+------------------
+
+Bug fixes:
+
+- Allow for a non-specific system Python interpreter when using the
+  :ref:`uv plugin<craft_parts_uv_plugin>`.
+
 2.5.0 (2025-01-30)
 ------------------
 
