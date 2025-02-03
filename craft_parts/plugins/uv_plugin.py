@@ -99,7 +99,7 @@ class UvPlugin(BasePythonPlugin):
 
     def _get_create_venv_commands(self) -> list[str]:
         return [
-            f'uv venv --relocatable --allow-existing --python "{self._get_system_python_interpreter()}" "{self._get_venv_directory()}"',
+            f'uv venv --relocatable --allow-existing --python ${{PARTS_PYTHON_INTERPRETER}} "{self._get_venv_directory()}"',
             f'PARTS_PYTHON_VENV_INTERP_PATH="{self._get_venv_directory()}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         ]
 
