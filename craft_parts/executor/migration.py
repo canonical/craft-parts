@@ -23,6 +23,7 @@ from pathlib import Path
 
 from craft_parts import overlays
 from craft_parts.permissions import Permissions, filter_permissions
+from craft_parts.state_manager.stage_state import StageState
 from craft_parts.state_manager.states import MigrationState, StepState
 from craft_parts.utils import file_utils
 
@@ -179,6 +180,28 @@ def clean_shared_area(
 
     # Finally, clean the files and directories that are specific to this
     # part.
+    _clean_migrated_files(files, directories, shared_dir)
+
+
+def clean_backstage(
+    *, part_name: str, shared_dir: Path, part_states: dict[str, StageState]
+) -> None:
+    """Clean files added by a part to the backstage directory."""
+    if part_name not in part_states:
+        return
+
+    files = part_states[part_name].backstage_files
+    directories = part_states[part_name].backstage_directories
+
+    # We want to make sure we don't remove a file or directory that's
+    # being used by another part. So we'll examine the state for all parts
+    # in the project and leave any files or directories found to be in
+    # common.
+    for other_name, other_state in part_states.items():
+        if other_state and other_name != part_name:
+            files -= other_state.backstage_files
+            directories -= other_state.backstage_directories
+
     _clean_migrated_files(files, directories, shared_dir)
 
 

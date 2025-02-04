@@ -37,6 +37,7 @@ from craft_parts.packages.platform import is_deb_based
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import MigrationState, StepState, states
+from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 
@@ -827,10 +828,20 @@ class PartHandler:
         for install_dir in self._part.part_install_dirs.values():
             _remove(install_dir)
 
+        _remove(self._part.part_export_dir)
+
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
         for stage_dir in self._part.stage_dirs.values():
             self._clean_shared(Step.STAGE, shared_dir=stage_dir)
+
+        migration.clean_backstage(
+            part_name=self._part.name,
+            shared_dir=self._part.backstage_dir,
+            part_states=cast(
+                dict[str, StageState], _load_part_states(Step.STAGE, self._part_list)
+            ),
+        )
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
