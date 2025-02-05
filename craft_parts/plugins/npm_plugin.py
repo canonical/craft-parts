@@ -273,7 +273,7 @@ class NpmPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         cmd = []
         options = cast(NpmPluginProperties, self._options)
-        need_fix_symlinks = self._part_info.project_info.base == "core24"
+        need_fix_symlinks = self._part_info.project_info.base == "ubuntu@24.04"
         if need_fix_symlinks:
             cmd += [
                 dedent(
