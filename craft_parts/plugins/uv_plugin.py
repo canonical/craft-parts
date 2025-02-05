@@ -98,8 +98,14 @@ class UvPlugin(BasePythonPlugin):
         return []
 
     def _get_create_venv_commands(self) -> list[str]:
+        # Explicitly request a Python version if provided by the plugin, otherwise use the global
+        # parts interpreter.
+        python_ver = (
+            self._get_system_python_interpreter()
+            or "$(which ${PARTS_PYTHON_INTERPRETER})"
+        )
         return [
-            f'uv venv --relocatable --allow-existing --python "{self._get_system_python_interpreter()}" "{self._get_venv_directory()}"',
+            f'uv venv --relocatable --allow-existing --python {python_ver} "{self._get_venv_directory()}"',
             f'PARTS_PYTHON_VENV_INTERP_PATH="{self._get_venv_directory()}/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         ]
 
