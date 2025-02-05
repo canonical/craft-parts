@@ -273,6 +273,18 @@ class NpmPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         cmd = []
         options = cast(NpmPluginProperties, self._options)
+        need_fix_symlinks = self._part_info.project_info.base == "core24"
+        if need_fix_symlinks:
+            cmd += [
+                dedent(
+                    """\
+                for dir in lib bin; do
+                    mkdir -p ${CRAFT_PART_INSTALL}/usr/${dir}
+                    ln -s usr/${dir} ${CRAFT_PART_INSTALL}/${dir}
+                done
+                """
+                )
+            ]
         if options.npm_include_node:
             arch = self._get_architecture()
             version = options.npm_node_version
@@ -301,7 +313,7 @@ class NpmPlugin(Plugin):
             cmd += [
                 dedent(
                     f"""\
-                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
+                tar -{"h" if need_fix_symlinks else ""}xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
                     --no-same-owner --strip-components=1
                 """
                 ),
