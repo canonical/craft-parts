@@ -2,6 +2,16 @@
 Changelog
 *********
 
+2.4.2 (2025-03-04)
+------------------
+
+Bug fixes:
+
+- Allow for a non-specific system Python interpreter when using the
+  :ref:`uv plugin<craft_parts_uv_plugin>`.
+
+For a complete list of commits, check out the `2.4.2`_ release on GitHub.
+
 2.4.1 (2025-01-24)
 ------------------
 
@@ -741,6 +751,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
 .. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
 .. _2.3.0: https://github.com/canonical/craft-parts/releases/tag/2.3.0
 .. _2.2.2: https://github.com/canonical/craft-parts/releases/tag/2.2.2

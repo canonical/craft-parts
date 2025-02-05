@@ -148,8 +148,10 @@ def test_uv_plugin_no_system_interpreter(
     )
     actions = lf.plan(Step.PRIME)
 
-    with lf.action_executor() as ctx, pytest.raises(errors.PluginBuildError):
+    with lf.action_executor() as ctx, pytest.raises(errors.PluginBuildError) as exc:
         ctx.execute(actions)
+
+    assert b"No suitable Python interpreter found" in cast(bytes, exc.value.stderr)
 
 
 def test_uv_plugin_remove_symlinks(new_dir, partitions, uv_parts_simple):
