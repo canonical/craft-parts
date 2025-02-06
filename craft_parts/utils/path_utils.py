@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utility functions for paths."""
+
 import re
 from pathlib import PurePath
 from typing import NamedTuple, TypeVar
@@ -27,13 +28,7 @@ FlexiblePath = TypeVar("FlexiblePath", PurePath, str)
 
 # regex for a path beginning with a (partition), like "(boot)/bin/sh"
 HAS_PARTITION_REGEX = re.compile(
-    r"^\(" + partition_utils.VALID_PARTITION_REGEX.pattern + r"\)(/.*)?$"
-)
-
-# regex for a path beginning with a namespaced partition, like "(a/boot)/bin/sh"
-# Note that unlike HAS_PARTITION_REGEX, this one captures both namespaced partition and path.
-HAS_NAMESPACED_PARTITION_REGEX = re.compile(
-    r"^(\(" + partition_utils.VALID_NAMESPACED_PARTITION_REGEX.pattern + r"\))(/.*)?$"
+    r"^(\(" + partition_utils.VALID_PARTITION_REGEX.pattern + r"\))(/.*)?$"
 )
 
 
@@ -46,10 +41,7 @@ class PartitionPathPair(NamedTuple):
 
 def _has_partition(path: PurePath | str) -> bool:
     """Check whether a path has an explicit partition."""
-    return bool(
-        HAS_PARTITION_REGEX.match(str(path))
-        or HAS_NAMESPACED_PARTITION_REGEX.match(str(path))
-    )
+    return bool(HAS_PARTITION_REGEX.match(str(path)))
 
 
 def get_partition_and_path(path: FlexiblePath) -> PartitionPathPair:
@@ -85,17 +77,7 @@ def _split_partition_and_inner_path(str_path: str) -> tuple[str, str]:
 
     :raises FeatureError: If `str_path` does not begin with a partition.
     """
-    # split regular partitions
-    if re.match(HAS_PARTITION_REGEX, str_path):
-        if "/" in str_path:
-            # split into partition and inner_path
-            partition, inner_path = str_path.split("/", maxsplit=1)
-            # remove extra forward slashes between the partition and inner path
-            return partition, inner_path.lstrip("/")
-        return str_path, ""
-
-    # split namespaced partitions
-    match = re.match(HAS_NAMESPACED_PARTITION_REGEX, str_path)
+    match = re.match(HAS_PARTITION_REGEX, str_path)
 
     if not match:
         raise FeatureError(f"Filepath {str_path!r} does not begin with a partition.")

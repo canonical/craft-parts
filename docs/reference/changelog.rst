@@ -2,8 +2,12 @@
 Changelog
 *********
 
-X.X.X (2025-MM-DD)
+2.6.0 (2025-MM-DD)
 ------------------
+
+New features:
+
+- Partition names can include slashes.
 
 Bug fixes:
 
