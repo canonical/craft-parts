@@ -828,11 +828,13 @@ class PartHandler:
         """Remove the current part's stage step files and state."""
         for stage_dir in self._part.stage_dirs.values():
             self._clean_shared(Step.STAGE, shared_dir=stage_dir)
+        self._clean_overlay_migration_state(Step.STAGE)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
         for prime_dir in self._part.prime_dirs.values():
             self._clean_shared(Step.PRIME, shared_dir=prime_dir)
+        self._clean_overlay_migration_state(Step.PRIME)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
@@ -862,10 +864,19 @@ class PartHandler:
                 part_states=part_states,
                 overlay_migration_state=overlay_migration_state,
             )
+
+    def _clean_overlay_migration_state(self, step: Step) -> None:
+        """Remove the overlay migration state."""
+        if (
+            self._part.has_overlay
+            and len(_parts_with_overlay_in_step(step, part_list=self._part_list)) == 1
+        ):
             overlay_migration_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dir, step
             )
-            logger.info(f"remove overlay migration state file for part {self._part.name} and step: {step}")
+            logger.info(
+                f"remove overlay migration state file for part {self._part.name} and step: {step}"
+            )
             overlay_migration_state_path.unlink()
 
     def _make_dirs(self) -> None:
