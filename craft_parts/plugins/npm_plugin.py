@@ -29,6 +29,7 @@ from pydantic import model_validator
 from typing_extensions import Self
 
 from craft_parts.errors import InvalidArchitecture
+from craft_parts.utils.os_utils import OsRelease
 
 from . import validator
 from .base import Plugin
@@ -273,7 +274,7 @@ class NpmPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         cmd = []
         options = cast(NpmPluginProperties, self._options)
-        need_fix_symlinks = self._part_info.project_info.base == "ubuntu@24.04"
+        need_fix_symlinks = OsRelease().version_id() == "24.04"
         if need_fix_symlinks:
             cmd += [
                 dedent(
