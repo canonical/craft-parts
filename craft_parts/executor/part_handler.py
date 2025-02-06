@@ -330,7 +330,11 @@ class PartHandler:
         # time around. We can be confident that this won't overwrite anything else,
         # because to do so would require changing the `organize` keyword, which will
         # make the build step dirty and require a clean instead of an update.
-        self._organize(overwrite=update)
+        if has_overlay_visibility(self._part, part_list=self._part_list):
+            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                self._organize(overwrite=update)
+        else:
+            self._organize(overwrite=update)
 
         assets = {
             "build-packages": self.build_packages,
@@ -861,6 +865,7 @@ class PartHandler:
             overlay_migration_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dir, step
             )
+            logger.info(f"remove overlay migration state file for part {self._part.name} and step: {step}")
             overlay_migration_state_path.unlink()
 
     def _make_dirs(self) -> None:
