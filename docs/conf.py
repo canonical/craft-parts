@@ -74,6 +74,8 @@ linkcheck_ignore = [
     "https://foo.org/",
     # GNU's site is a bit unreliable
     "https://www.gnu.org/.*",
+    # https://github.com/rust-lang/crates.io/issues/788
+    "https://crates.io/",
     # Ignore releases, since we'll include the next release before it exists.
     "https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
 ]
