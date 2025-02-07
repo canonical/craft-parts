@@ -842,6 +842,7 @@ class PartHandler:
         :param step: The step corresponding to the shared directory.
         :param shared_dir: The shared directory to clean.
         """
+        logger.info(f"clean shared dir: {shared_dir} for step: {step}")
         part_states = _load_part_states(step, self._part_list)
         overlay_migration_state = states.load_overlay_migration_state(
             self._part.overlay_dir, step
@@ -854,10 +855,12 @@ class PartHandler:
             overlay_migration_state=overlay_migration_state,
         )
 
+        parts_with_overlay_in_step = _parts_with_overlay_in_step(step, part_list=self._part_list)
+        logger.info(f"parts_with_overlay_in_step: {parts_with_overlay_in_step}")
         # remove overlay data if this is the last part with overlay
         if (
             self._part.has_overlay
-            and len(_parts_with_overlay_in_step(step, part_list=self._part_list)) == 1
+            and len(parts_with_overlay_in_step) == 1
         ):
             migration.clean_shared_overlay(
                 shared_dir=shared_dir,
