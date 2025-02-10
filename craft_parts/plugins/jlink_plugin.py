@@ -135,8 +135,11 @@ class JLinkPlugin(Plugin):
         )
         commands.append(
             """if [ "x${PROCESS_JARS}" != "x" ]; then
-                deps=$(${JDEPS} --class-path=${CPATH} -q --recursive  --ignore-missing-deps \
-                    --print-module-deps --multi-release ${MULTI_RELEASE} ${PROCESS_JARS})
+                deps=$(${JDEPS} --print-module-deps -q --recursive \
+                    --ignore-missing-deps \
+                    --multi-release ${MULTI_RELEASE} \
+                    --class-path=${CPATH} \
+                    ${PROCESS_JARS})
                 else
                     deps=java.base
                 fi
