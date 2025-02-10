@@ -90,14 +90,14 @@ class PartHandler:
         track_stage_packages: bool = False,
         overlay_managers: dict[str, OverlayManager],
         ignore_patterns: list[str] | None = None,
-        base_layer_hash: LayerHash | None = None,
+        base_layer_hashes: dict[str, LayerHash | None] = None,
     ) -> None:
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
         self._track_stage_packages = track_stage_packages
         self._overlay_managers = overlay_managers
-        self._base_layer_hash = base_layer_hash
+        self._base_layer_hashes = base_layer_hashes
         self._app_environment: dict[str, str] = {}
 
         self._plugin = plugins.get_plugin(
@@ -271,9 +271,9 @@ class PartHandler:
 
         else:
             contents = StepContents()
-
-        layer_hash = self._compute_layer_hash(all_parts=False)
-        layer_hash.save(self._part)
+        for partition in self._part_info.partitions:
+            layer_hash = self._compute_layer_hash(partition=partition, all_parts=False)
+            layer_hash.save(self._part, partition)
 
         return states.OverlayState(
             part_properties=self._part_properties,
@@ -355,7 +355,7 @@ class PartHandler:
         # so we compute it for all parts. The overlay hash is added to the build state
         # to ensure proper build step invalidation of parts that can see the overlay
         # filesystem if overlay contents change.
-        overlay_hash = self._compute_layer_hash(all_parts=True)
+        overlay_hash = self._compute_layer_hash(partition="default", all_parts=True)
 
         return states.BuildState(
             part_properties=self._part_properties,
@@ -393,7 +393,7 @@ class PartHandler:
         # so we compute it for all parts. The overlay hash is added to the stage state
         # to ensure proper stage step invalidation of parts that declare overlay
         # parameters if overlay contents change.
-        overlay_hash = self._compute_layer_hash(all_parts=True)
+        overlay_hash = self._compute_layer_hash(partition="default", all_parts=True)
 
         return states.StageState(
             part_properties=self._part_properties,
@@ -505,7 +505,7 @@ class PartHandler:
 
         return step_handler.run_builtin()
 
-    def _compute_layer_hash(self, *, all_parts: bool) -> LayerHash:
+    def _compute_layer_hash(self, partition: str, *, all_parts: bool) -> LayerHash:
         """Obtain the layer verification hash.
 
         The layer verification hash is computed as a digest of layer parameters
@@ -519,7 +519,7 @@ class PartHandler:
 
         :returns: The layer verification hash.
         """
-        part_hash = self._base_layer_hash
+        part_hash = self._base_layer_hashes.get(partition)
 
         for part in self._part_list:
             part_hash = LayerHash.for_part(part, previous_layer_hash=part_hash)
@@ -930,7 +930,7 @@ class PartHandler:
         organize_files(
             part_name=self._part.name,
             file_map=mapping,
-            install_dir_map=self._part.part_install_dirs,
+            install_dir_map=self._part.part_layer_dirs,
             overwrite=overwrite,
         )
 

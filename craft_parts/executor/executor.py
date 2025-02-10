@@ -19,6 +19,7 @@
 import logging
 import shutil
 from pathlib import Path
+import hashlib
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
@@ -74,6 +75,9 @@ class Executor:
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
 
+        self._base_layer_hashes: dict[str, LayerHash | None] = {
+            "default": base_layer_hash
+        }
         self._overlay_managers: dict[str, OverlayManager] = {}
 
         if not self._project_info.partitions:
@@ -86,13 +90,20 @@ class Executor:
                 )
             }
         else:
+            hasher = hashlib.sha1()
+            hasher.update("empty base layer".encode())
+            empty_base_layer_digest = hasher.digest()
+
             for partition in self._project_info.partitions:
                 self._overlay_managers[partition] = OverlayManager(
                     project_info=self._project_info,
                     part_list=self._part_list,
-                    base_layer_dir=self._project_info.get_overlay_base_layer_dir(partition),
+                    base_layer_dir=self._project_info.get_overlay_base_layer_dir(
+                        partition
+                    ),
                     partition=partition,
                 )
+                self._base_layer_hashes[partition] = LayerHash(empty_base_layer_digest)
 
     def prologue(self) -> None:
         """Prepare the execution environment.
@@ -239,7 +250,7 @@ class Executor:
             track_stage_packages=self._track_stage_packages,
             overlay_managers=self._overlay_managers,
             ignore_patterns=self._ignore_patterns,
-            base_layer_hash=self._base_layer_hash,
+            base_layer_hashes=self._base_layer_hashes,
         )
         self._handler[part.name] = handler
 

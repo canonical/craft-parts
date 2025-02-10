@@ -74,7 +74,7 @@ class OverlayManager:
         lowers = [self._base_layer_dir]
 
         if pkg_cache:
-            lowers.append(self._project_info.overlay_packages_dir)
+            lowers.append(self._project_info.get_overlay_packages_dir(self._partition))
 
         _layer_dirs = [p.part_layer_dirs.get(self._partition) for p in self._part_list]
 
@@ -88,10 +88,10 @@ class OverlayManager:
         self._overlay_fs = OverlayFS(
             lower_dirs=lowers,
             upper_dir=upper,
-            work_dir=self._project_info.overlay_work_dir,
+            work_dir=self._project_info.get_overlay_work_dir(self._partition),
         )
 
-        self._overlay_fs.mount(self._project_info.overlay_mount_dir)
+        self._overlay_fs.mount(self._project_info.get_overlay_mount_dir(self._partition))
 
     def mount_pkg_cache(self) -> None:
         """Mount the overlay step package cache layer."""
@@ -102,8 +102,8 @@ class OverlayManager:
 
         self._overlay_fs = OverlayFS(
             lower_dirs=[self._base_layer_dir],
-            upper_dir=self._project_info.overlay_packages_dir,
-            work_dir=self._project_info.overlay_work_dir,
+            upper_dir=self._project_info.get_overlay_packages_dir(self._partition),
+            work_dir=self._project_info.get_overlay_work_dir(self._partition),
         )
 
         self._overlay_fs.mount(self._project_info.overlay_mount_dir)
@@ -131,7 +131,7 @@ class OverlayManager:
         if not self._overlay_fs:
             raise RuntimeError("overlay filesystem not mounted")
 
-        mount_dir = self._project_info.overlay_mount_dir
+        mount_dir = self._project_info.get_overlay_mount_dir(self._partition)
         # Ensure we always run refresh_packages_list by resetting the cache
         packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
@@ -144,7 +144,7 @@ class OverlayManager:
         if not self._overlay_fs:
             raise RuntimeError("overlay filesystem not mounted")
 
-        mount_dir = self._project_info.overlay_mount_dir
+        mount_dir = self._project_info.get_overlay_mount_dir(self._partition)
         chroot.chroot(mount_dir, packages.Repository.download_packages, package_names)
 
     def install_packages(self, package_names: list[str]) -> None:

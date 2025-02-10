@@ -89,12 +89,12 @@ class LayerHash:
 
         return cls(bytes.fromhex(hex_string))
 
-    def save(self, part: Part) -> None:
+    def save(self, part: Part, partition: str) -> None:
         """Save the part layer validation hash to persistent storage.
 
         :param part: The part whose layer hash will be saved.
         """
-        hash_file = part.part_state_dir / "layer_hash"
+        hash_file = part.part_state_dirs.get(partition) / "layer_hash"
         hash_file.write_text(self.hex())
 
     def hex(self) -> str:
