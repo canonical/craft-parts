@@ -68,6 +68,9 @@ class PartSpec(BaseModel):
     build_environment: list[dict[str, str]] = []
     build_attributes: list[str] = []
     organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
+    organize_overlay_files: dict[str, str] = Field(
+        default_factory=dict, alias="organize-overlay"
+    )
     overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"], alias="stage"
@@ -321,6 +324,20 @@ class Part:
         return self._part_dir / "state"
 
     @property
+    def part_state_dirs(self) -> Mapping[str | None, Path]:
+        """Return a mapping of partition names to state directories.
+
+        With partitions disabled, the only partition name is ``None``
+        """
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"parts/{self.name}/state",
+            )
+        )
+
+    @property
     def part_cache_dir(self) -> Path:
         """Return the subdirectory containing the part cache directory."""
         return self._part_dir / "cache"
@@ -363,6 +380,56 @@ class Part:
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
         return self.dirs.overlay_dir
+
+    @property
+    def overlay_dirs(self) -> Mapping[str | None, Path]:
+        """A mapping of partition name to partition overlay directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.overlay_dirs
+
+    @property
+    def overlay_mount_dirs(self) -> Mapping[str | None, Path]:
+        """A mapping of partition name to partition overlay mount directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"overlay/overlay",
+            )
+        )
+
+    @property
+    def overlay_work_dirs(self) -> Mapping[str | None, Path]:
+        """A mapping of partition name to partition overlay work directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"overlay/work",
+            )
+        )
+
+    @property
+    def overlay_base_layer_dirs(self) -> Mapping[str | None, Path]:
+        """A mapping of partition name to partition overlay base_layer directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"overlay/base_layer",
+            )
+        )
 
     @property
     def stage_dir(self) -> Path:
@@ -450,6 +517,7 @@ class Part:
         for fileset_name, fileset, require_inner_path in [
             # organize source entries do not use partitions and
             # organize destination entries do not require an inner path
+            ("organize-overlay", self.spec.organize_overlay_files.values(), False),
             ("organize", self.spec.organize_files.values(), False),
             ("stage", self.spec.stage_files, True),
             ("prime", self.spec.prime_files, True),

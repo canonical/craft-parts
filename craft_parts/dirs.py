@@ -64,6 +64,11 @@ class ProjectDirs:
             self._partitions = None
             self.partition_dir = None
 
+        self.overlay_dirs = MappingProxyType(
+            partition_utils.get_partition_dir_map(
+                base_dir=self.work_dir, partitions=partitions, suffix="overlay"
+            )
+        )
         self.stage_dirs = MappingProxyType(
             partition_utils.get_partition_dir_map(
                 base_dir=self.work_dir, partitions=partitions, suffix="stage"
@@ -89,6 +94,31 @@ class ProjectDirs:
                 )
             if partition not in self._partitions:
                 raise PartitionNotFound(partition, self._partitions)
+
+    def get_overlay_dir(self, partition: str | None = None) -> Path:
+        """Get the overlay directory for the given partition."""
+        self._validate_requested_partition("overlay_dir", partition)
+        return self.overlay_dirs[partition]
+
+    def get_overlay_mount_dir(self, partition: str | None = None) -> Path:
+        """Get the overlay mount directory for the given partition."""
+        self._validate_requested_partition("overlay_dir", partition)
+        return self.overlay_dirs[partition] / "overlay"
+
+    def get_overlay_work_dir(self, partition: str | None = None) -> Path:
+        """Get the overlay work directory for the given partition."""
+        self._validate_requested_partition("overlay_dir", partition)
+        return self.overlay_dirs[partition] / "work"
+
+    def get_overlay_packages_dir(self, partition: str | None = None) -> Path:
+        """Get the overlay packages directory for the given partition."""
+        self._validate_requested_partition("overlay_dir", partition)
+        return self.overlay_dirs[partition] / "packages"
+
+    def get_overlay_base_layer_dir(self, partition: str | None = None) -> Path:
+        """Get the overlay work directory for the given partition."""
+        self._validate_requested_partition("overlay_dir", partition)
+        return self.overlay_dirs[partition] / "base_layer"
 
     def get_stage_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""

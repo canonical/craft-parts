@@ -45,6 +45,8 @@ from .environment import generate_step_environment
 from .organize import organize_files
 from .step_handler import StepContents, StepHandler, Stream
 
+from contextlib import ExitStack
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,7 +88,7 @@ class PartHandler:
         part_info: PartInfo,
         part_list: list[Part],
         track_stage_packages: bool = False,
-        overlay_manager: OverlayManager,
+        overlay_managers: dict[str, OverlayManager],
         ignore_patterns: list[str] | None = None,
         base_layer_hash: LayerHash | None = None,
     ) -> None:
@@ -94,7 +96,7 @@ class PartHandler:
         self._part_info = part_info
         self._part_list = part_list
         self._track_stage_packages = track_stage_packages
-        self._overlay_manager = overlay_manager
+        self._overlay_managers = overlay_managers
         self._base_layer_hash = base_layer_hash
         self._app_environment: dict[str, str] = {}
 
@@ -218,6 +220,7 @@ class PartHandler:
         *,
         stdout: Stream,
         stderr: Stream,
+        update: bool = False,
     ) -> StepState:
         """Execute the overlay step for this part.
 
@@ -230,14 +233,15 @@ class PartHandler:
         if self._part.has_overlay:
             # install overlay packages
             overlay_packages = self._part.spec.overlay_packages
+            default_overlay_manager = self._overlay_managers.get("default")
             if overlay_packages:
                 with overlays.LayerMount(
-                    self._overlay_manager, top_part=self._part
+                    default_overlay_manager, top_part=self._part
                 ) as ctx:
                     ctx.install_packages(overlay_packages)
 
             # execute overlay script
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+            with overlays.LayerMount(default_overlay_manager, top_part=self._part):
                 contents = self._run_step(
                     step_info=step_info,
                     scriptlet_name="overlay-script",
@@ -257,6 +261,14 @@ class PartHandler:
                 "default" if self._part_info.partitions else None,
             )
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
+
+            with ExitStack() as stack:
+                for manager in self._overlay_managers.values():
+                    stack.enter_context(
+                        overlays.LayerMount(manager, top_part=self._part)
+                    )
+                self._organize_overlay(overwrite=update)
+
         else:
             contents = StepContents()
 
@@ -297,8 +309,9 @@ class PartHandler:
             )
 
         # Perform the build step
+        default_overlay_manager = self._overlay_managers.get("default")
         if has_overlay_visibility(self._part, part_list=self._part_list):
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+            with overlays.LayerMount(default_overlay_manager, top_part=self._part):
                 self._run_step(
                     step_info=step_info,
                     scriptlet_name="override-build",
@@ -330,11 +343,7 @@ class PartHandler:
         # time around. We can be confident that this won't overwrite anything else,
         # because to do so would require changing the `organize` keyword, which will
         # make the build step dirty and require a clean instead of an update.
-        if has_overlay_visibility(self._part, part_list=self._part_list):
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                self._organize(overwrite=update)
-        else:
-            self._organize(overwrite=update)
+        self._organize(overwrite=update)
 
         assets = {
             "build-packages": self.build_packages,
@@ -761,8 +770,11 @@ class PartHandler:
             migrated_dirs |= layer_dirs
 
         # Clean up dangling whiteout files with no backing files to white out
+        default_overlay_manager = self._overlay_managers.get("default")
         dangling_whiteouts = migration.filter_dangling_whiteouts(
-            migrated_files, migrated_dirs, base_dir=self._overlay_manager.base_layer_dir
+            migrated_files,
+            migrated_dirs,
+            base_dir=default_overlay_manager.base_layer_dir,
         )
         for whiteout in dangling_whiteouts:
             primed_whiteout = self._part_info.prime_dir / whiteout
@@ -817,6 +829,8 @@ class PartHandler:
         """Remove the current part' s layer data and verification hash."""
         _remove(self._part.part_layer_dir)
         _remove(self._part.part_state_dir / "layer_hash")
+        for layer_dir in self._part.part_layer_dirs.values():
+            _remove(layer_dir)
 
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
@@ -887,10 +901,15 @@ class PartHandler:
             self._part.part_src_dir,
             self._part.part_build_dir,
             *self._part.part_install_dirs.values(),
+            *self._part.part_state_dirs.values(),
             self._part.part_layer_dir,
             *self._part.part_layer_dirs.values(),
             self._part.part_state_dir,
             self._part.part_run_dir,
+            *self._part.overlay_dirs.values(),
+            *self._part.overlay_mount_dirs.values(),
+            *self._part.overlay_work_dirs.values(),
+            *self._part.overlay_base_layer_dirs.values(),
             *self._part.stage_dirs.values(),
             *self._part.prime_dirs.values(),
         ]
@@ -899,6 +918,15 @@ class PartHandler:
 
     def _organize(self, *, overwrite: bool = False) -> None:
         mapping = self._part.spec.organize_files
+        organize_files(
+            part_name=self._part.name,
+            file_map=mapping,
+            install_dir_map=self._part.part_install_dirs,
+            overwrite=overwrite,
+        )
+
+    def _organize_overlay(self, *, overwrite: bool = False) -> None:
+        mapping = self._part.spec.organize_overlay_files
         organize_files(
             part_name=self._part.name,
             file_map=mapping,
@@ -953,7 +981,9 @@ class PartHandler:
             return
 
         try:
-            with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+            with overlays.PackageCacheMount(
+                self._overlay_managers.get("default")
+            ) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:

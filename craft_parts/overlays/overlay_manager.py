@@ -47,19 +47,22 @@ class OverlayManager:
         project_info: ProjectInfo,
         part_list: list[Part],
         base_layer_dir: Path | None,
+        partition: str,
     ) -> None:
         self._project_info = project_info
         self._part_list = part_list
-        self._layer_dirs = [p.part_layer_dir for p in part_list]
         self._overlay_fs: OverlayFS | None = None
         self._base_layer_dir = base_layer_dir
+        self._partition = partition
 
     @property
     def base_layer_dir(self) -> Path | None:
         """Return the path to the base layer, if any."""
         return self._base_layer_dir
 
-    def mount_layer(self, part: Part, *, pkg_cache: bool = False) -> None:
+    def mount_layer(
+        self, part: Part, *, pkg_cache: bool = False
+    ) -> None:
         """Mount the overlay step layer stack up to the given part.
 
         :param part: The part corresponding to the topmost layer to mount.
@@ -73,9 +76,11 @@ class OverlayManager:
         if pkg_cache:
             lowers.append(self._project_info.overlay_packages_dir)
 
+        _layer_dirs = [p.part_layer_dirs.get(self._partition) for p in self._part_list]
+
         index = self._part_list.index(part)
-        lowers.extend(self._layer_dirs[0:index])
-        upper = self._layer_dirs[index]
+        lowers.extend(_layer_dirs[0:index])
+        upper = _layer_dirs[index]
 
         # lower dirs are stacked from right to left
         lowers.reverse()
@@ -114,10 +119,11 @@ class OverlayManager:
     def mkdirs(self) -> None:
         """Create overlay directories and mountpoints."""
         for overlay_dir in [
-            self._project_info.overlay_mount_dir,
-            self._project_info.overlay_packages_dir,
-            self._project_info.overlay_work_dir,
+            self._project_info.get_overlay_mount_dir(self._partition),
+            self._project_info.get_overlay_packages_dir(self._partition),
+            self._project_info.get_overlay_work_dir(self._partition),
         ]:
+            logger.debug(f"creating {overlay_dir}")
             overlay_dir.mkdir(parents=True, exist_ok=True)
 
     def refresh_packages_list(self) -> None:

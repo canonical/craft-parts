@@ -74,11 +74,25 @@ class Executor:
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
 
-        self._overlay_manager = OverlayManager(
-            project_info=self._project_info,
-            part_list=self._part_list,
-            base_layer_dir=base_layer_dir,
-        )
+        self._overlay_managers: dict[str, OverlayManager] = {}
+
+        if not self._project_info.partitions:
+            self._overlay_managers = {
+                "default": OverlayManager(
+                    project_info=self._project_info,
+                    part_list=self._part_list,
+                    base_layer_dir=base_layer_dir,
+                    partition="default",
+                )
+            }
+        else:
+            for partition in self._project_info.partitions:
+                self._overlay_managers[partition] = OverlayManager(
+                    project_info=self._project_info,
+                    part_list=self._part_list,
+                    base_layer_dir=self._project_info.get_overlay_base_layer_dir(partition),
+                    partition=partition,
+                )
 
     def prologue(self) -> None:
         """Prepare the execution environment.
@@ -94,7 +108,7 @@ class Executor:
         # overlay packages.
         if any(p.spec.overlay_packages for p in self._part_list):
             logger.info("Updating base overlay system")
-            with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+            with overlays.PackageCacheMount(self._overlay_managers) as ctx:
                 callbacks.run_configure_overlay(
                     self._project_info.overlay_mount_dir, self._project_info
                 )
@@ -223,7 +237,7 @@ class Executor:
             part_info=PartInfo(self._project_info, part),
             part_list=self._part_list,
             track_stage_packages=self._track_stage_packages,
-            overlay_manager=self._overlay_manager,
+            overlay_managers=self._overlay_managers,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,
         )
