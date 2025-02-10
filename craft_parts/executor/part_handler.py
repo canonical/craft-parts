@@ -828,13 +828,13 @@ class PartHandler:
         """Remove the current part's stage step files and state."""
         for stage_dir in self._part.stage_dirs.values():
             self._clean_shared(Step.STAGE, shared_dir=stage_dir)
-        self._clean_overlay_migration_state(Step.STAGE)
+        self._clean_shared_overlay(Step.STAGE, shared_dir=self._part.stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
         for prime_dir in self._part.prime_dirs.values():
             self._clean_shared(Step.PRIME, shared_dir=prime_dir)
-        self._clean_overlay_migration_state(Step.PRIME)
+        self._clean_shared_overlay(Step.PRIME, shared_dir=self._part.stage_dir)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
@@ -855,25 +855,25 @@ class PartHandler:
             overlay_migration_state=overlay_migration_state,
         )
 
-        parts_with_overlay_in_step = _parts_with_overlay_in_step(step, part_list=self._part_list)
+    def _clean_shared_overlay(self, step: Step, *, shared_dir: Path) -> None:
+        """Remove files shared from the overlay."""
+        part_states = _load_part_states(step, self._part_list)
+        parts_with_overlay_in_step = _parts_with_overlay_in_step(
+            step, part_list=self._part_list
+        )
+        overlay_migration_state = states.load_overlay_migration_state(
+            self._part.overlay_dir, step
+        )
+
         logger.info(f"parts_with_overlay_in_step: {parts_with_overlay_in_step}")
+
         # remove overlay data if this is the last part with overlay
-        if (
-            self._part.has_overlay
-            and len(parts_with_overlay_in_step) == 1
-        ):
+        if self._part.has_overlay and len(parts_with_overlay_in_step) == 1:
             migration.clean_shared_overlay(
                 shared_dir=shared_dir,
                 part_states=part_states,
                 overlay_migration_state=overlay_migration_state,
             )
-
-    def _clean_overlay_migration_state(self, step: Step) -> None:
-        """Remove the overlay migration state."""
-        if (
-            self._part.has_overlay
-            and len(_parts_with_overlay_in_step(step, part_list=self._part_list)) == 1
-        ):
             overlay_migration_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dir, step
             )
