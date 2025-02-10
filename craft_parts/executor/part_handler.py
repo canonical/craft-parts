@@ -686,44 +686,45 @@ class PartHandler:
         list of visible overlay entries, converting overlayfs whiteout files
         and opaque dirs to OCI.
         """
-        stage_overlay_state_path = states.get_overlay_migration_state_path(
-            self._part.overlay_dir, Step.STAGE
-        )
-
-        # Overlay data is migrated to stage only when the first part declaring overlay
-        # parameters is migrated.
-        if stage_overlay_state_path.exists():
-            logger.debug(
-                "stage overlay migration state exists, not migrating overlay data"
-            )
-            return
-
         parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
         if self._part not in parts_with_overlay:
             return
 
-        logger.debug("staging overlay files")
-        migrated_files: set[str] = set()
-        migrated_dirs: set[str] = set()
-
-        # process layers from top to bottom (reversed)
-        for part in reversed(parts_with_overlay):
-            logger.debug("migrate part %r layer to stage", part.name)
-            visible_files, visible_dirs = overlays.visible_in_layer(
-                part.part_layer_dir, part.stage_dir
+        for partition in self._part_info.partitions:
+            stage_overlay_state_path = states.get_overlay_migration_state_path(
+                self._part.overlay_dirs.get(partition), Step.STAGE
             )
-            layer_files, layer_dirs = migration.migrate_files(
-                files=visible_files,
-                dirs=visible_dirs,
-                srcdir=part.part_layer_dir,
-                destdir=part.stage_dir,
-                oci_translation=True,
-            )
-            migrated_files |= layer_files
-            migrated_dirs |= layer_dirs
 
-        state = MigrationState(files=migrated_files, directories=migrated_dirs)
-        state.write(stage_overlay_state_path)
+            # Overlay data is migrated to stage only when the first part declaring overlay
+            # parameters is migrated.
+            if stage_overlay_state_path.exists():
+                logger.debug(
+                    "stage overlay migration state exists, not migrating overlay data"
+                )
+                continue
+
+            logger.debug("staging overlay files")
+            migrated_files: set[str] = set()
+            migrated_dirs: set[str] = set()
+
+            # process layers from top to bottom (reversed)
+            for part in reversed(parts_with_overlay):
+                logger.debug("migrate part %r layer to stage", part.name)
+                visible_files, visible_dirs = overlays.visible_in_layer(
+                    part.part_layer_dirs.get(partition), part.stage_dirs.get(partition)
+                )
+                layer_files, layer_dirs = migration.migrate_files(
+                    files=visible_files,
+                    dirs=visible_dirs,
+                    srcdir=part.part_layer_dirs.get(partition),
+                    destdir=part.stage_dirs.get(partition),
+                    oci_translation=True,
+                )
+                migrated_files |= layer_files
+                migrated_dirs |= layer_dirs
+
+            state = MigrationState(files=migrated_files, directories=migrated_dirs)
+            state.write(stage_overlay_state_path)
 
     def _migrate_overlay_files_to_prime(self) -> None:
         """Prime overlay files and create state.
