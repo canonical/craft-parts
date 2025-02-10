@@ -92,6 +92,11 @@ def _process_parts(options: argparse.Namespace) -> None:
         base_layer_hash = b""
         overlay_base = None
 
+    if options.partitions:
+        partitions = options.partitions.split(",")
+    else:
+        partitions = ["default"]
+
     lcm = craft_parts.LifecycleManager(
         part_data,
         application_name=options.application_name,
@@ -101,6 +106,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         base=options.base,
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
+        partitions=partitions,
     )
 
     command = options.command if options.command else "prime"
@@ -266,6 +272,12 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="name",
         default="",
         help="Use the specified build base. Defaults to host system.",
+    )
+    parser.add_argument(
+        "--partitions",
+        metavar="name",
+        default="",
+        help="List of partitions to create.",
     )
     parser.add_argument(
         "--cache-dir",
