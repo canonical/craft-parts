@@ -125,11 +125,11 @@ class JLinkPlugin(Plugin):
         commands.append("CPATH=.")
         commands.append(
             """
-                find ${CRAFT_PART_BUILD}/tmp -type f -name *.jar | while IFS= read -r file; do
-                    CPATH=$CPATH:${file}
+                for file in $(find "${CRAFT_PART_BUILD}/tmp" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
                 done
-                find ${CRAFT_STAGE} -type f -name *.jar | while IFS= read -r file; do
-                    CPATH=$CPATH:${file}
+                for file in $(find "${CRAFT_STAGE}" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
                 done
             """
         )
