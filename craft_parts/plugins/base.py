@@ -25,8 +25,10 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from overrides import override
+from packaging.version import Version
 
 from craft_parts.actions import ActionProperties
+from craft_parts.utils.os_utils import OsRelease
 
 from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
@@ -266,10 +268,24 @@ class BasePythonPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        return [
+        need_fix_symlinks = Version(OsRelease().version_id()) > Version("23.10")
+        cmd = []
+        if need_fix_symlinks:
+            cmd += [
+                textwrap.dedent(
+                    """\
+                for dir in lib bin; do
+                    mkdir -p ${CRAFT_PART_INSTALL}/usr/${dir}
+                    ln -s usr/${dir} ${CRAFT_PART_INSTALL}/${dir}
+                done
+                """
+                )
+            ]
+        cmd.extend([
             *self._get_create_venv_commands(),
             *self._get_package_install_commands(),
             *self._get_rewrite_shebangs_commands(),
             *self._get_find_python_interpreter_commands(),
             *self._get_handle_symlinks_commands(),
-        ]
+        ])
+        return cmd
