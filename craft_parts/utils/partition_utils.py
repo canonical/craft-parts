@@ -231,6 +231,7 @@ def get_partition_dir_map(
     if partitions:
         return {
             "default": base_dir / suffix,
+            "overlay": base_dir / "overlay/overlay", # hack to access the mounted overlay when organizing
             **{
                 partition: base_dir / "partitions" / partition / suffix
                 for partition in partitions

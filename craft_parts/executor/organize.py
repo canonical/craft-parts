@@ -59,7 +59,7 @@ def organize_files(
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
         src_partition, src_inner_path = path_utils.get_partition_and_path(key)
 
-        if src_partition and src_partition != "default":
+        if src_partition and src_partition not in ("default", "overlay"):
             raise errors.FileOrganizeError(
                 part_name=part_name,
                 message=(
