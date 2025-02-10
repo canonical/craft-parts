@@ -49,7 +49,7 @@ def main() -> None:
 
     logging.basicConfig(level=log_level)
 
-    craft_parts.Features(enable_overlay=True)
+    craft_parts.Features(enable_overlay=True, enable_partitions=True)
 
     try:
         _process_parts(options)
