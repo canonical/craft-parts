@@ -9,6 +9,7 @@ Bug fixes:
 
 - Allow for a non-specific system Python interpreter when using the
   :ref:`uv plugin<craft_parts_uv_plugin>`.
+- Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
 
 For a complete list of commits, check out the `2.3.1`_ release on GitHub.
 
