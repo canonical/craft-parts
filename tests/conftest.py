@@ -38,6 +38,11 @@ def pytest_configure(config):
     )
 
 
+@pytest.fixture(params=["amd64", "arm64", "armhf", "ppc64el", "riscv64", "s390x"])
+def target_architecture(request: pytest.FixtureRequest):
+    return request.param
+
+
 @pytest.fixture
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""

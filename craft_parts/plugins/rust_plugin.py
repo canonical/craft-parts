@@ -34,6 +34,16 @@ from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
+_DEBIAN_ARCH_TO_RUST = {
+    "i386": "i686-unknown-linux-gnu",
+    "amd64": "x86_64-unknown-linux-gnu",
+    "armhf": "armv8-unknown-linux-gnueabihf",
+    "arm64": "aarch64-unknown-linux-gnu",
+    "ppc64el": "powerpc64le-unknown-linux-gnu",
+    "riscv64": "riscv64gc-unknown-linux-gnu",
+    "s390x": "s390x-unknown-linux-gnu",
+}
+
 
 class RustPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Rust plugin."""
@@ -216,6 +226,7 @@ class RustPlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         variables = {
             "PATH": "${HOME}/.cargo/bin:${PATH}",
+            "CARGO_BUILD_TARGET": _DEBIAN_ARCH_TO_RUST[self._part_info.arch_build_for],
         }
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
@@ -248,9 +259,11 @@ class RustPlugin(Plugin):
             # (otherwise rustup won't install the correct version)
             return ["cargo --version"]
         logger.info("Switch rustup channel to %s", rust_channel)
+        target = _DEBIAN_ARCH_TO_RUST[self._part_info.arch_build_for]
         return [
-            f"rustup update {rust_channel}",
-            f"rustup default {rust_channel}",
+            f"rustup update {rust_channel}-{target}",
+            f"rustup default {rust_channel}-{target}",
+            f"rustup target add {target}",
         ]
 
     @override

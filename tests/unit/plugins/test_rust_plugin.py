@@ -20,15 +20,19 @@ import pytest_subprocess
 from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.rust_plugin import RustPlugin, RustPluginProperties
+from craft_parts.plugins.rust_plugin import _DEBIAN_ARCH_TO_RUST, RustPlugin, RustPluginProperties
 from craft_parts.plugins.validator import PluginEnvironmentValidator
 from pydantic import ValidationError
 
 
 @pytest.fixture
-def part_info(new_dir):
+def part_info(new_dir, target_architecture):
     return PartInfo(
-        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        project_info=ProjectInfo(
+            application_name="test",
+            arch=target_architecture,
+            cache_dir=new_dir,
+        ),
         part=Part("my-part", {}),
     )
 
@@ -82,14 +86,17 @@ def test_get_build_packages(part_info):
     }
 
 
-def test_get_build_environment(part_info):
+def test_get_build_environment(part_info, target_architecture):
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_environment() == {"PATH": "${HOME}/.cargo/bin:${PATH}"}
+    assert plugin.get_build_environment() == {
+        "PATH": "${HOME}/.cargo/bin:${PATH}",
+        "CARGO_BUILD_TARGET": _DEBIAN_ARCH_TO_RUST[target_architecture]
+    }
 
 
-def test_get_build_commands_default(part_info):
+def test_get_build_commands_default(part_info, target_architecture):
     properties = RustPlugin.properties_class.unmarshal(
         {"source": ".", "rust-channel": "stable"}
     )
@@ -222,7 +229,7 @@ def test_error_on_conflict_config(part_info):
         pytest.param(
             "You don't have rust installed!",
             "You don't have rust installed!",
-            ["rustup update stable", "rustup default stable"],
+            ["rustup update stable", "rustup default stable", "rustup target add {target}"],
             id="not-installed",
         ),
     ],
@@ -233,6 +240,7 @@ def test_get_pull_commands_compat_no_exceptions(
     rustc_stdout,
     cargo_stdout,
     pull_commands,
+    target_architecture,
 ):
     fake_process.register(["rustc", "--version"], stdout=rustc_stdout)
     fake_process.register(["cargo", "--version"], stdout=cargo_stdout)
@@ -243,7 +251,10 @@ def test_get_pull_commands_compat_no_exceptions(
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
     commands = plugin.get_build_commands()
-    assert plugin.get_pull_commands() == pull_commands
+    assert plugin.get_pull_commands() == [
+        cmd.format(target=_DEBIAN_ARCH_TO_RUST[target_architecture])
+        for cmd in pull_commands
+    ]
     assert 'cargo install -f --locked --path "."' in commands[0]
 
 
@@ -252,7 +263,11 @@ def test_get_pull_commands_compat_no_exceptions(
 )
 @pytest.mark.parametrize("failed_command", ["rustc", "cargo", "rustup"])
 def test_get_pull_commands_compat_with_exceptions(
-    fake_process: pytest_subprocess.FakeProcess, part_info, failed_command, exc_class
+    fake_process: pytest_subprocess.FakeProcess,
+    part_info,
+    failed_command,
+    exc_class,
+    target_architecture: str
 ):
     fake_process.register(["rustc", "--version"])
     fake_process.register(["cargo", "--version"])
@@ -270,7 +285,8 @@ def test_get_pull_commands_compat_with_exceptions(
 
     assert plugin.get_pull_commands() == [
         "rustup update stable",
-        "rustup default stable",
+        f"rustup default stable-{_DEBIAN_ARCH_TO_RUST[target_architecture]}",
+        f"rustup target add {_DEBIAN_ARCH_TO_RUST[target_architecture]}",
     ]
 
 

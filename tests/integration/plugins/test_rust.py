@@ -20,6 +20,8 @@ from pathlib import Path
 
 import yaml
 from craft_parts import LifecycleManager, Step
+from craft_parts.plugins.rust_plugin import _DEBIAN_ARCH_TO_RUST
+from tests.conftest import target_architecture
 
 
 def test_rust_plugin(new_dir, partitions):
@@ -70,6 +72,69 @@ def test_rust_plugin(new_dir, partitions):
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "hello world\n"
+
+
+def test_rust_plugin_builds_for_correct_architecture(new_dir, partitions, target_architecture):
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          foo:
+            plugin: rust
+            source: .
+            # This is needed because the rust plugin doesn't detect which rust
+            # we're using
+            override-pull: |
+              craftctl default
+              rustup default stable-{_DEBIAN_ARCH_TO_RUST[target_architecture]}
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    Path("Cargo.toml").write_text(
+        textwrap.dedent(
+            """\
+            [package]
+            name = "rust-hello"
+            version = "1.0.0"
+            edition = "2021"
+            """
+        )
+    )
+
+    Path("src").mkdir()
+    Path("src/main.rs").write_text(
+        textwrap.dedent(
+            """\
+            fn main() {
+                println!("hello world");
+            }
+            """
+        )
+    )
+
+    lifecycle = LifecycleManager(
+        parts,
+        application_name="test_rust_plugin_arch",
+        arch=target_architecture,
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    binary = Path(lifecycle.project_info.prime_dir, "bin", "rust-hello")
+
+    output = subprocess.check_output([
+        "file", str(binary)
+    ], text=True)
+    assert output.startswith(f"{str(binary)}: ELF")
+    DEB_TO_MACHINE = {
+        "amd64": "x86-64"
+    }
+    target_machine = DEB_TO_MACHINE.get(target_architecture, target_architecture)
+    assert target_machine in output
 
 
 def test_rust_plugin_features(new_dir, partitions):
