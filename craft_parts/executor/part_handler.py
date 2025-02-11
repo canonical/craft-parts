@@ -931,7 +931,7 @@ class PartHandler:
         organize_files(
             part_name=self._part.name,
             file_map=mapping,
-            install_dir_map=self._part.part_layer_dirs,
+            install_dir_map=self._part.overlay_mount_dirs,
             overwrite=overwrite,
         )
 
