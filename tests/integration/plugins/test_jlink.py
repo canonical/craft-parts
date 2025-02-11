@@ -22,6 +22,7 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
 
+
 @pytest.fixture()
 def build_test_jar():
     Path("Test.java").write_text(
@@ -57,6 +58,7 @@ def build_test_jar():
         check=True,
         capture_output=True,
     )
+
 
 @pytest.mark.usefixtures("build_test_jar")
 def test_jlink_plugin_embedded_jar(new_dir, partitions):
