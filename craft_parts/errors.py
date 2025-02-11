@@ -513,7 +513,7 @@ class UserExecutionError(PartsError, abc.ABC):
     def details(self) -> str | None:
         """Further details on the error.
 
-        Displays last three lines from the error output.
+        Displays the last three lines from the error output.
         """
         if self.stderr is None:
             return None
