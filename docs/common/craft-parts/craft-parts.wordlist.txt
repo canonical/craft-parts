@@ -44,6 +44,7 @@ Config
 ConfigDict
 CopyFileNotFound
 CopyTreeError
+CPATH
 CraftCtl
 Craftctl
 DESTDIR
