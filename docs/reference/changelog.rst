@@ -2,6 +2,15 @@
 Changelog
 *********
 
+2.5.1 (2025-02-11)
+------------------
+
+Bug fixes:
+
+- Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
+- Fix Jdeps parameter ordering.
+
+
 2.3.1 (2025-02-07)
 ------------------
 
@@ -9,8 +18,6 @@ Bug fixes:
 
 - Allow for a non-specific system Python interpreter when using the
   :ref:`uv plugin<craft_parts_uv_plugin>`.
-- Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
-- Fix Jdeps parameter ordering.
 
 For a complete list of commits, check out the `2.3.1`_ release on GitHub.
 
