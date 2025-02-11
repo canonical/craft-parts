@@ -242,7 +242,12 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
     actions = lf.plan(Step.PRIME)
 
     out = pathlib.Path("out.txt")
-    with out.open(mode="w") as outfile, err.open(mode="w") as errfile, pytest.raises(errors.PluginBuildError):
+    err = pathlib.Path("err.txt")
+    with (
+        out.open(mode="w") as outfile,
+        err.open(mode="w") as errfile,
+        pytest.raises(errors.PluginBuildError),
+    ):
         with lf.action_executor() as ctx:
             ctx.execute(actions, stdout=outfile, stderr=errfile)
 
@@ -255,12 +260,7 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
     assert expected_text in output
 
     output = err.read_text()
-    expected_text = textwrap.dedent(
-        f"""\
-        No suitable Python interpreter found, giving up.
-        """
-    )
-    assert expected_text in output
+    assert "No suitable Python interpreter found, giving up." in output
 
 
 def test_find_payload_python_good_version(new_dir, partitions, parts_dict, poetry_part):
