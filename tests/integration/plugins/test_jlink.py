@@ -22,6 +22,7 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
 
+
 def test_jlink_plugin_embedded_jar(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """
@@ -61,10 +62,18 @@ def test_jlink_plugin_embedded_jar(new_dir, partitions):
 
         """
     )
-    subprocess.run(["javac", "Test.java", "Embedded.java"], check=True, capture_output=True)
-    subprocess.run(["jar", "cvf", "embedded.jar", "Embedded.class"], check=True, capture_output=True)
     subprocess.run(
-        ["jar", "cvf", "test.jar", "Test.class", "embedded.jar"], check=True, capture_output=True
+        ["javac", "Test.java", "Embedded.java"], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["jar", "cvf", "embedded.jar", "Embedded.class"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["jar", "cvf", "test.jar", "Test.class", "embedded.jar"],
+        check=True,
+        capture_output=True,
     )
 
     lf = LifecycleManager(
