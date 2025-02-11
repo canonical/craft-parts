@@ -22,26 +22,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
 
-
-def test_jlink_plugin_embedded_jar(new_dir, partitions):
-    parts_yaml = textwrap.dedent(
-        """
-        parts:
-            my-part:
-                plugin: jlink
-                source: https://github.com/canonical/chisel-releases
-                source-type: git
-                source-branch: ubuntu-24.04
-                jlink-jars: ["test.jar"]
-                after: ["stage-jar"]
-            stage-jar:
-                plugin: dump
-                source: .
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-
-    # build test jar
+@pytest.fixture()
+def build_test_jar():
     Path("Test.java").write_text(
         """
             public class Test {
@@ -75,6 +57,24 @@ def test_jlink_plugin_embedded_jar(new_dir, partitions):
         check=True,
         capture_output=True,
     )
+
+@pytest.mark.usefixtures("build_test_jar")
+def test_jlink_plugin_embedded_jar(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+            my-part:
+                plugin: jlink
+                source: .
+                source-branch: ubuntu-24.04
+                jlink-jars: ["test.jar"]
+                after: ["stage-jar"]
+            stage-jar:
+                plugin: dump
+                source: .
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
         parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
