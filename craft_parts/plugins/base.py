@@ -179,12 +179,12 @@ class BasePythonPlugin(Plugin):
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="{python_interpreter}"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 

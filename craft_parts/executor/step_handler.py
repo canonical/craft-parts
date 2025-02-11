@@ -156,7 +156,7 @@ class StepHandler:
             raise errors.PluginBuildError(
                 part_name=self._part.name,
                 plugin_name=self._part.plugin_name,
-                stderr=process_error.result.combined,
+                stderr=process_error.result.stderr,
             ) from process_error
 
         return StepContents()
@@ -296,7 +296,7 @@ class StepHandler:
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
                     exit_code=process_error.result.returncode,
-                    stderr=process_error.result.combined,
+                    stderr=process_error.result.stderr,
                 ) from process_error
             finally:
                 ctl_socket.close()

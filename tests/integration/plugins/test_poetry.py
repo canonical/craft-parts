@@ -242,15 +242,21 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
     actions = lf.plan(Step.PRIME)
 
     out = pathlib.Path("out.txt")
-    with out.open(mode="w") as outfile, pytest.raises(errors.PluginBuildError):
+    with out.open(mode="w") as outfile, err.open(mode="w") as errfile, pytest.raises(errors.PluginBuildError):
         with lf.action_executor() as ctx:
-            ctx.execute(actions, stdout=outfile)
+            ctx.execute(actions, stdout=outfile, stderr=errfile)
 
     output = out.read_text()
     expected_text = textwrap.dedent(
         f"""\
         Looking for a Python interpreter called "{real_basename}" in the payload...
-        Python interpreter not found in payload.
+        """
+    )
+    assert expected_text in output
+
+    output = err.read_text()
+    expected_text = textwrap.dedent(
+        f"""\
         No suitable Python interpreter found, giving up.
         """
     )

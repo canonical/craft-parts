@@ -161,12 +161,12 @@ def test_python_get_find_python_interpreter_commands(
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 
@@ -253,12 +253,12 @@ def test_python_get_build_commands(new_dir, python_plugin: FooPythonPlugin):
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 
