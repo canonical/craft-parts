@@ -340,7 +340,15 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     assert expected_text in output
 
     output = err.read_text()
-    assert "No suitable Python interpreter found, giving up." in output
+    expected_text = textwrap.dedent(
+        f"""\
+        + '[' -z '' ']'
+        + echo 'No suitable Python interpreter found, giving up.'
+        No suitable Python interpreter found, giving up.
+        + exit 1
+        """
+    )
+    assert expected_text in output
 
 
 def test_find_payload_python_good_version(new_dir, partitions):

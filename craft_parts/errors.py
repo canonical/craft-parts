@@ -513,16 +513,27 @@ class UserExecutionError(PartsError, abc.ABC):
     def details(self) -> str | None:
         """Further details on the error.
 
-        Displays the last three lines from the error output.
+        Displays the last three trace lines from the error output.
         """
         if self.stderr is None:
             return None
 
         with contextlib.closing(StringIO()) as details_io:
-            output = self.stderr.decode("utf-8", errors="replace")
-            output_lines = filter(lambda x: x, output.split("\n"))
+            stderr = self.stderr.decode("utf-8", errors="replace")
+            stderr_lines = list(filter(lambda x: x, stderr.split("\n")))
 
-            for line in list(output_lines)[-3:]:
+            # Find the third trace output line
+            anchor_line = 0
+            traced_lines_to_display = 3
+            count = 0
+            for idx, line in enumerate(reversed(stderr_lines)):
+                if line.startswith("+"):
+                    count += 1
+                    if count >= traced_lines_to_display:
+                        anchor_line = -idx
+                        break
+
+            for line in stderr_lines[anchor_line:]:
                 details_io.write(f"\n:: {line}")
 
             return details_io.getvalue()
