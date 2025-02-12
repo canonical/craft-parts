@@ -24,7 +24,7 @@ from craft_parts import LifecycleManager, Step, errors
 
 
 @pytest.fixture()
-def build_test_jar():
+def build_test_jar(new_dir):
     Path("Test.java").write_text(
         """
             public class Test {
@@ -68,7 +68,6 @@ def test_jlink_plugin_embedded_jar(new_dir, partitions):
             my-part:
                 plugin: jlink
                 source: .
-                source-branch: ubuntu-24.04
                 jlink-jars: ["test.jar"]
                 after: ["stage-jar"]
             stage-jar:
