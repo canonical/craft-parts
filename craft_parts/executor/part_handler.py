@@ -677,7 +677,9 @@ class PartHandler:
         self, step_info: StepInfo, *, stdout: Stream, stderr: Stream
     ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
-        shutil.rmtree(self._part.part_layer_dir)
+        for partition in self._part_info.partitions:
+            shutil.rmtree(self._part.part_layer_dirs.get(partition))
+
         self._run_overlay(step_info, stdout=stdout, stderr=stderr)
 
     def _migrate_overlay_files_to_stage(self) -> None:
@@ -828,11 +830,10 @@ class PartHandler:
         _remove(self._part.part_src_dir)
 
     def _clean_overlay(self) -> None:
-        """Remove the current part' s layer data and verification hash."""
-        _remove(self._part.part_layer_dir)
-        _remove(self._part.part_state_dir / "layer_hash")
-        for layer_dir in self._part.part_layer_dirs.values():
-            _remove(layer_dir)
+        """Remove the current part' s layer data and verification hashes."""
+        for partition in self._part_info.partitions:
+            _remove(self._part.part_layer_dirs.get(partition))
+            _remove(self._part.part_state_dirs.get(partition)/ "layer_hash")
 
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
