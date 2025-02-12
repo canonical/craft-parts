@@ -164,7 +164,7 @@ class BasePythonPlugin(Plugin):
             # look for python3.10
             basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
             echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
-            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null ||:)
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null || true)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
