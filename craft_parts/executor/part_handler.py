@@ -266,7 +266,7 @@ class PartHandler:
                     stack.enter_context(
                         overlays.LayerMount(manager, top_part=self._part)
                     )
-                self._organize_overlay(overwrite=update)
+                self._overlay_organize(overwrite=update)
 
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
 
@@ -927,8 +927,8 @@ class PartHandler:
             overwrite=overwrite,
         )
 
-    def _organize_overlay(self, *, overwrite: bool = False) -> None:
-        mapping = self._part.spec.organize_overlay_files
+    def _overlay_organize(self, *, overwrite: bool = False) -> None:
+        mapping = self._part.spec.overlay_organize_files
         organize_files(
             part_name=self._part.name,
             file_map=mapping,
