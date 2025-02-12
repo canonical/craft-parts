@@ -260,7 +260,6 @@ class PartHandler:
                 str(destdir),
                 "default" if self._part_info.partitions else None,
             )
-            _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
 
             with ExitStack() as stack:
                 for manager in self._overlay_managers.values():
@@ -268,6 +267,8 @@ class PartHandler:
                         overlays.LayerMount(manager, top_part=self._part)
                     )
                 self._organize_overlay(overwrite=update)
+
+            _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
 
         else:
             contents = StepContents()
