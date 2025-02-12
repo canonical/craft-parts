@@ -529,7 +529,7 @@ class UserExecutionError(PartsError, abc.ABC):
             for idx, line in enumerate(reversed(stderr_lines)):
                 if line.startswith("+"):
                     count += 1
-                    if count >= traced_lines_to_display:
+                    if count > traced_lines_to_display:
                         anchor_line = -idx
                         break
 

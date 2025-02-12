@@ -261,7 +261,7 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
 
     output = err.read_text()
     expected_text = textwrap.dedent(
-        f"""\
+        """\
         + '[' -z '' ']'
         + echo 'No suitable Python interpreter found, giving up.'
         No suitable Python interpreter found, giving up.
