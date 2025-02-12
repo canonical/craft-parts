@@ -23,7 +23,7 @@ import yaml
 from craft_parts import LifecycleManager, Step, errors
 
 
-@pytest.fixture()
+@pytest.fixture
 def build_test_jar(new_dir):
     Path("Test.java").write_text(
         """
