@@ -2,7 +2,7 @@
 Changelog
 *********
 
-X.Y.Z (yyyy-mm-dd)
+X.Y.Z ()
 ------------------
 
 Bug fixes:
