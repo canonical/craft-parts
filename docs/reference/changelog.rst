@@ -2,6 +2,16 @@
 Changelog
 *********
 
+2.6.1 (2025-02-12)
+------------------
+
+Bug fixes:
+
+- Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
+- Fix Jdeps parameter ordering in the 
+  :ref:`jlink plugin<craft_parts_jlink_plugin>`.
+
+
 2.3.1 (2025-02-07)
 ------------------
 
