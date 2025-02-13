@@ -340,7 +340,8 @@ def test_find_payload_python_bad_version(new_dir, partitions):
         with lf.action_executor() as ctx:
             ctx.execute(actions, stdout=outfile, stderr=errfile)
 
-    assert expected_error_text in exc_info.value.stderr.decode()
+    error = exc_info.value.stderr
+    assert error and expected_error_text in error.decode()
 
     output = out.read_text()
     expected_text = textwrap.dedent(
