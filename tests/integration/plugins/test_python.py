@@ -321,20 +321,38 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     )
     actions = lf.plan(Step.PRIME)
 
+    expected_error_text = textwrap.dedent(
+        """\
+        + '[' -z '' ']'
+        + echo 'No suitable Python interpreter found, giving up.'
+        No suitable Python interpreter found, giving up.
+        + exit 1
+        """
+    )
+
     out = Path("out.txt")
-    with out.open(mode="w") as outfile, pytest.raises(errors.PluginBuildError):
+    err = Path("err.txt")
+    with (
+        out.open(mode="w") as outfile,
+        err.open(mode="w") as errfile,
+        pytest.raises(errors.PluginBuildError) as exc_info,
+    ):
         with lf.action_executor() as ctx:
-            ctx.execute(actions, stdout=outfile)
+            ctx.execute(actions, stdout=outfile, stderr=errfile)
+
+    assert exc_info.value.stderr is not None
+    assert expected_error_text in exc_info.value.stderr.decode()
 
     output = out.read_text()
     expected_text = textwrap.dedent(
         f"""\
         Looking for a Python interpreter called "{real_basename}" in the payload...
-        Python interpreter not found in payload.
-        No suitable Python interpreter found, giving up.
         """
     )
     assert expected_text in output
+
+    output = err.read_text()
+    assert expected_error_text in output
 
 
 def test_find_payload_python_good_version(new_dir, partitions):

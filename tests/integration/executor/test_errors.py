@@ -74,6 +74,7 @@ def test_plugin_build_errors(new_dir, partitions):
         """\
             Failed to run the build script for part 'foo'.
 
+            :: + go mod download all
             :: + go install -p 1 ./...
             :: # example.com/hello
             :: ./hello.go:9:9: undefined: fmt.Printfs
