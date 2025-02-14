@@ -334,9 +334,9 @@ toml = [
 
 [[package]]
 name = "craft-parts"
-version = "2.2.1.post21+gf142785.d20250114"
 source = { editable = "." }
 dependencies = [
+    { name = "humanize" },
     { name = "overrides" },
     { name = "pydantic" },
     { name = "pyxdg" },
@@ -435,6 +435,7 @@ requires-dist = [
     { name = "canonical-sphinx", marker = "extra == 'docs'" },
     { name = "codespell", marker = "extra == 'dev'" },
     { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = "~=7.4" },
+    { name = "humanize", specifier = ">=4.11.0" },
     { name = "hypothesis", marker = "extra == 'dev'" },
     { name = "jsonschema", marker = "extra == 'dev'" },
     { name = "mypy", extras = ["reports"], marker = "extra == 'dev'", specifier = "~=1.14.1" },
@@ -554,6 +555,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a0/e2/d351d69a9a9e4badb4a5be062c2d0e87bd9e6c23b5e57337fef14bef34c8/furo-2024.8.6.tar.gz", hash = "sha256:b63e4cee8abfc3136d3bc03a3d45a76a850bada4d6374d24c1716b0e01394a01", size = 1661506 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/27/48/e791a7ed487dbb9729ef32bb5d1af16693d8925f4366befef54119b2e576/furo-2024.8.6-py3-none-any.whl", hash = "sha256:6cd97c58b47813d3619e63e9081169880fbe331f0ca883c871ff1f3f11814f5c", size = 341333 },
+]
+
+[[package]]
+name = "humanize"
+version = "4.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/40/64a912b9330786df25e58127194d4a5a7441f818b400b155e748a270f924/humanize-4.11.0.tar.gz", hash = "sha256:e66f36020a2d5a974c504bd2555cf770621dbdbb6d82f94a6857c0b1ea2608be", size = 80374 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/75/4bc3e242ad13f2e6c12e0b0401ab2c5e5c6f0d7da37ec69bc808e24e0ccb/humanize-4.11.0-py3-none-any.whl", hash = "sha256:b53caaec8532bcb2fff70c8826f904c35943f8cecaca29d272d9df38092736c0", size = 128055 },
 ]
 
 [[package]]
