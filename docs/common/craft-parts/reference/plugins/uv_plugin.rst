@@ -33,8 +33,7 @@ exactly as ``--group GROUP``.
 Environment variables
 ---------------------
 
-Along with the variables defined by the :ref:`Python plugin
-<craft_parts_python_plugin-environment_variables>`, this plugin responds to its
+Along with the variables defined by the Python plugin, this plugin responds to its
 own special variables.
 
 .. note::
@@ -71,9 +70,7 @@ UV_PYTHON
 ~~~~~~~~~
 **Default value:** ``${PARTS_PYTHON_INTERPRETER}``
 
-The version of Python that uv should use. See :ref:`Python plugin environment
-variables <craft_parts_python_plugin-environment_variables>` for more
-information.
+The version of Python that uv should use.
 
 UV_PYTHON_PREFERENCE
 ~~~~~~~~~~~~~~~~~~~~
