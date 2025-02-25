@@ -174,11 +174,44 @@ class GitSource(SourceHandler):
     ) -> None:
         super().__init__(source, part_src_dir, **kwargs)
 
+    def _expand_commit(self, commit: str) -> str:
+        """Expand a commit hash to full length."""
+        # short-circuit if the commit is already full length
+        if len(commit) == 40:  # noqa: PLR2004 (magic-value)
+            return commit
+
+        try:
+            # 'git rev-parse' expands non-ambiguous commits to full length (40 characters).
+            return subprocess.check_output(
+                [
+                    get_git_command(),
+                    "-C",
+                    str(self.part_src_dir),
+                    "rev-parse",
+                    commit,
+                ],
+                text=True,
+            ).strip()
+        except subprocess.CalledProcessError as err:
+            # 'rev-parse' will fail if the commit is out of the source-depth range, so give a helpful error
+            if self.source_depth:
+                raise errors.VCSError(
+                    message=f"Failed to parse commit {commit!r}.",
+                    resolution=(
+                        "Ensure 'source-commit' is correct, provide a full-length (40 character) commit, "
+                        "or remove the 'source-depth' key from the part."
+                    ),
+                ) from err
+            raise errors.VCSError(
+                message=f"Failed to parse commit {commit!r}.",
+                resolution="Ensure 'source-commit' is correct or provide a full-length (40 character) commit.",
+            ) from err
+
     def _fetch_origin_commit(self) -> None:
         """Fetch from origin, using source-commit if defined."""
         command = [get_git_command(), "-C", str(self.part_src_dir), "fetch", "origin"]
         if self.source_commit:
-            command.append(self.source_commit)
+            command.append(self._expand_commit(self.source_commit))
 
         self._run(command)
 
@@ -211,8 +244,8 @@ class GitSource(SourceHandler):
         elif self.source_tag:
             refspec = "refs/tags/" + self.source_tag
         elif self.source_commit:
-            refspec = self.source_commit
             self._fetch_origin_commit()
+            refspec = self._expand_commit(self.source_commit)
         else:
             refspec = "refs/remotes/origin/" + self._get_current_branch()
 
@@ -258,12 +291,13 @@ class GitSource(SourceHandler):
 
         if self.source_commit:
             self._fetch_origin_commit()
+            full_commit = self._expand_commit(self.source_commit)
             command = [
                 get_git_command(),
                 "-C",
                 str(self.part_src_dir),
                 "checkout",
-                self.source_commit,
+                full_commit,
             ]
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)

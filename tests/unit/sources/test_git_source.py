@@ -156,47 +156,96 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_commit(self, fake_run, new_dir):
+    def test_pull_full_length_commit(self, fake_run, new_dir):
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
         git = GitSource(
             "git://my-source",
             Path("source_dir"),
             cache_dir=new_dir,
-            source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
+            source_commit=commit,
             project_dirs=self._dirs,
         )
+
         git.pull()
 
         fake_run.assert_has_calls(
             [
                 mock.call(
-                    [
-                        "git",
-                        "clone",
-                        "--recursive",
-                        "git://my-source",
-                        "source_dir",
-                    ]
+                    ["git", "clone", "--recursive", "git://my-source", "source_dir"]
                 ),
-                mock.call(
-                    [
-                        "git",
-                        "-C",
-                        "source_dir",
-                        "fetch",
-                        "origin",
-                        "2514f9533ec9b45d07883e10a561b248497a8e3c",
-                    ]
-                ),
-                mock.call(
-                    [
-                        "git",
-                        "-C",
-                        "source_dir",
-                        "checkout",
-                        "2514f9533ec9b45d07883e10a561b248497a8e3c",
-                    ]
-                ),
+                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
+                mock.call(["git", "-C", "source_dir", "checkout", commit]),
             ]
+        )
+
+    def test_pull_short_commit(self, fake_check_output, fake_run, new_dir):
+        short_commit = "2514f9533e"
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
+        fake_check_output.return_value = commit
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit=short_commit,
+            project_dirs=self._dirs,
+        )
+
+        git.pull()
+
+        fake_check_output.assert_has_calls(
+            [
+                mock.call(
+                    ["git", "-C", "source_dir", "rev-parse", short_commit], text=True
+                )
+            ]
+            * 2
+        )
+        fake_run.assert_has_calls(
+            [
+                mock.call(
+                    ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+                ),
+                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
+                mock.call(["git", "-C", "source_dir", "checkout", commit]),
+            ]
+        )
+
+    def test_pull_short_commit_error(self, fake_check_output, fake_run, new_dir):
+        fake_check_output.side_effect = subprocess.CalledProcessError(1, [])
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit="deadbeef",
+            project_dirs=self._dirs,
+        )
+
+        with pytest.raises(errors.VCSError) as raised:
+            git.pull()
+
+        assert raised.value.message == "Failed to parse commit 'deadbeef'."
+        assert raised.value.resolution == (
+            "Ensure 'source-commit' is correct or provide a full-length (40 character) commit."
+        )
+
+    def test_pull_short_commit_depth_error(self, fake_check_output, fake_run, new_dir):
+        fake_check_output.side_effect = subprocess.CalledProcessError(1, [])
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit="deadbeef",
+            source_depth=1,
+            project_dirs=self._dirs,
+        )
+
+        with pytest.raises(errors.VCSError) as raised:
+            git.pull()
+
+        assert raised.value.message == "Failed to parse commit 'deadbeef'."
+        assert raised.value.resolution == (
+            "Ensure 'source-commit' is correct, provide a full-length (40 character) "
+            "commit, or remove the 'source-depth' key from the part."
         )
 
     def test_pull_with_submodules_default(self, fake_run, new_dir):
@@ -395,20 +444,22 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_existing_with_commit(self, mocker, fake_run, new_dir):
+    def test_pull_existing_with_full_length_commit(self, fake_run, new_dir):
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
             "git://my-source",
             Path("source_dir"),
             cache_dir=new_dir,
-            source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
+            source_commit=commit,
             project_dirs=self._dirs,
         )
         git.pull()
 
         fake_run.assert_has_calls(
             [
+                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
                 mock.call(
                     [
                         "git",
@@ -419,16 +470,60 @@ class TestGitSource:
                         "--recurse-submodules=yes",
                     ]
                 ),
+                mock.call(["git", "-C", "source_dir", "reset", "--hard", commit]),
                 mock.call(
                     [
                         "git",
                         "-C",
                         "source_dir",
-                        "reset",
-                        "--hard",
-                        "2514f9533ec9b45d07883e10a561b248497a8e3c",
+                        "submodule",
+                        "update",
+                        "--recursive",
+                        "--force",
                     ]
                 ),
+            ]
+        )
+
+    def test_pull_existing_with_short_commit(
+        self, fake_check_output, fake_run, new_dir
+    ):
+        short_commit = "2514f9533e"
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
+        fake_check_output.return_value = commit
+        Path("source_dir/.git").mkdir(parents=True)
+
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit=short_commit,
+            project_dirs=self._dirs,
+        )
+        git.pull()
+
+        fake_check_output.assert_has_calls(
+            [
+                mock.call(
+                    ["git", "-C", "source_dir", "rev-parse", short_commit], text=True
+                )
+            ]
+            * 2
+        )
+        fake_run.assert_has_calls(
+            [
+                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "fetch",
+                        "--prune",
+                        "--recurse-submodules=yes",
+                    ]
+                ),
+                mock.call(["git", "-C", "source_dir", "reset", "--hard", commit]),
                 mock.call(
                     [
                         "git",

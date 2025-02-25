@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 from craft_parts.sources import errors
 
 
@@ -137,9 +138,12 @@ def test_pull_error():
     assert err.resolution == "Make sure sources are correctly specified."
 
 
-def test_vcs_error():
-    err = errors.VCSError("cvs: everything failed")
+@pytest.mark.parametrize(
+    "args", [{}, {"resolution": None}, {"resolution": "test-resolution"}]
+)
+def test_vcs_error(args):
+    err = errors.VCSError("cvs: everything failed", **args)
     assert err.message == "cvs: everything failed"
     assert err.brief == "cvs: everything failed"
     assert err.details is None
-    assert err.resolution is None
+    assert err.resolution == args.get("resolution")
