@@ -71,6 +71,9 @@ class GitBaseTestCase:
             body = fp.read()
         assert body == expected
 
+    def get_commit(self, path) -> str:
+        return _call_with_output(["git", "-C", path, "rev-parse", "HEAD"])
+
 
 class TestGitSource(GitBaseTestCase):
     def test_pull_existing_after_update(self, new_dir):
@@ -154,6 +157,94 @@ class TestGitSource(GitBaseTestCase):
         # assert the commit was actually pulled
         with open(Path(working_tree / "test.txt")) as file:
             assert file.read() == "Howdy, Partner!"
+
+    @pytest.mark.parametrize("use_short_commit", [True, False])
+    def test_pull_new_commit(self, use_short_commit, new_dir):
+        """Pull a commit in a new repo."""
+        # set up repositories
+        remote = Path("remote.git").absolute()
+        working_tree = Path("working-tree").absolute()
+        other_tree = Path("helper-tree").absolute()
+        self.clean_dir(remote)
+        self.clean_dir(working_tree)
+        self.clean_dir(other_tree)
+
+        # initialize remote
+        os.chdir(remote)
+        _call(["git", "init", "--bare"])
+
+        # initialize the other tree, clone, commit, and push
+        self.clone_repo(remote, other_tree)
+        os.chdir(other_tree)
+        self.add_file("test.txt", "Hello, World!", "created test.txt")
+        _call(["git", "push", str(remote)])
+        commit = self.get_commit(other_tree)
+
+        # test that short commits are expanded
+        commit = commit[:10] if use_short_commit else commit
+
+        # create a second commit and push
+        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", str(remote)])
+
+        git = GitSource(
+            str(remote),
+            working_tree,
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+            # provide a short commit
+            source_commit=commit[:10],
+        )
+
+        git.pull()
+
+        # assert the first commit was pulled
+        with open(Path(working_tree / "test.txt")) as file:
+            assert file.read() == "Hello, World!"
+
+    @pytest.mark.parametrize("use_short_commit", [True, False])
+    def test_pull_existing_commit(self, use_short_commit, new_dir):
+        """Pull a commit in an existing repo."""
+        # set up repositories
+        remote = Path("remote.git").absolute()
+        working_tree = Path("working-tree").absolute()
+        self.clean_dir(remote)
+        self.clean_dir(working_tree)
+
+        # initialize remote
+        os.chdir(remote)
+        _call(["git", "init", "--bare"])
+
+        # initialize working tree
+        self.clone_repo(remote, working_tree)
+
+        # from the working tree, clone, commit, and push
+        os.chdir(working_tree)
+        self.add_file("test.txt", "Hello, World!", "created test.txt")
+        _call(["git", "push", str(remote)])
+        commit = self.get_commit(working_tree)
+
+        # test that short commits are expanded
+        commit = commit[:10] if use_short_commit else commit
+
+        # create a second commit and push
+        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", str(remote)])
+
+        git = GitSource(
+            str(remote),
+            working_tree,
+            cache_dir=new_dir,
+            project_dirs=self._dirs,
+            # provide a short commit
+            source_commit=commit[:10],
+        )
+
+        git.pull()
+
+        # assert the first commit was pulled
+        with open(Path(working_tree / "test.txt")) as file:
+            assert file.read() == "Hello, World!"
 
 
 class TestGitConflicts(GitBaseTestCase):

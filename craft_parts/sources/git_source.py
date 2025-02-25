@@ -174,11 +174,25 @@ class GitSource(SourceHandler):
     ) -> None:
         super().__init__(source, part_src_dir, **kwargs)
 
+    def _expand_commit(self, commit: str) -> str:
+        """Expand a commit hash to full length."""
+        # 'git rev-parse' expands non-ambiguous commits to full length (40 characters).
+        # Full length commits are unchanged.
+        return self._run_output(
+            [
+                get_git_command(),
+                "-C",
+                str(self.part_src_dir),
+                "rev-parse",
+                commit,
+            ]
+        )
+
     def _fetch_origin_commit(self) -> None:
         """Fetch from origin, using source-commit if defined."""
         command = [get_git_command(), "-C", str(self.part_src_dir), "fetch", "origin"]
         if self.source_commit:
-            command.append(self.source_commit)
+            command.append(self._expand_commit(self.source_commit))
 
         self._run(command)
 
@@ -211,8 +225,8 @@ class GitSource(SourceHandler):
         elif self.source_tag:
             refspec = "refs/tags/" + self.source_tag
         elif self.source_commit:
-            refspec = self.source_commit
             self._fetch_origin_commit()
+            refspec = self._expand_commit(self.source_commit)
         else:
             refspec = "refs/remotes/origin/" + self._get_current_branch()
 
@@ -258,12 +272,13 @@ class GitSource(SourceHandler):
 
         if self.source_commit:
             self._fetch_origin_commit()
+            full_commit = self._expand_commit(self.source_commit)
             command = [
                 get_git_command(),
                 "-C",
                 str(self.part_src_dir),
                 "checkout",
-                self.source_commit,
+                full_commit,
             ]
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)

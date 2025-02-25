@@ -156,16 +156,25 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_commit(self, fake_run, new_dir):
+    def test_pull_commit(self, fake_check_output, fake_run, new_dir):
+        fake_check_output.return_value = "2514f9533ec9b45d07883e10a561b248497a8e3c"
         git = GitSource(
             "git://my-source",
             Path("source_dir"),
             cache_dir=new_dir,
-            source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
+            source_commit="2514f9533e",
             project_dirs=self._dirs,
         )
         git.pull()
 
+        fake_check_output.assert_has_calls(
+            [
+                mock.call(
+                    ["git", "-C", "source_dir", "rev-parse", "2514f9533e"], text=True
+                )
+            ]
+            * 2
+        )
         fake_run.assert_has_calls(
             [
                 mock.call(
@@ -395,18 +404,27 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_existing_with_commit(self, mocker, fake_run, new_dir):
+    def test_pull_existing_with_commit(self, fake_check_output, fake_run, new_dir):
+        fake_check_output.return_value = "2514f9533ec9b45d07883e10a561b248497a8e3c"
         Path("source_dir/.git").mkdir(parents=True)
 
         git = GitSource(
             "git://my-source",
             Path("source_dir"),
             cache_dir=new_dir,
-            source_commit="2514f9533ec9b45d07883e10a561b248497a8e3c",
+            source_commit="2514f9533e",
             project_dirs=self._dirs,
         )
         git.pull()
 
+        fake_check_output.assert_has_calls(
+            [
+                mock.call(
+                    ["git", "-C", "source_dir", "rev-parse", "2514f9533e"], text=True
+                )
+            ]
+            * 2
+        )
         fake_run.assert_has_calls(
             [
                 mock.call(

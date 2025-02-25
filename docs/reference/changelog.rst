@@ -2,6 +2,14 @@
 Changelog
 *********
 
+2.7.0 (2025-MM-DDD)
+-------------------
+
+New features:
+
+- Previously, ``source-commit`` could only accept full length (40 character)
+  hashes. Now, ``source-commit`` can accept short hashes.
+
 2.6.2 (2025-02-20)
 ------------------
 

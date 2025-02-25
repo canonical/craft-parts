@@ -47,6 +47,7 @@ CopyTreeError
 CPATH
 CraftCtl
 Craftctl
+DDD
 DESTDIR
 DNF
 DNFRepository
