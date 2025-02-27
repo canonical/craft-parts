@@ -21,6 +21,7 @@ from typing import Literal, cast
 
 from overrides import override
 
+from . import validator
 from .base import Plugin
 from .properties import PluginProperties
 
@@ -48,6 +49,28 @@ class Dotnet2PluginProperties(PluginProperties, frozen=True):
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
+
+
+class Dotnet2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+    """Check the execution environment for the Dotnet plugin.
+
+    :param part_name: The part whose build environment is being validated.
+    :param env: A string containing the build step environment setup.
+    """
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+
+        :param part_dependencies: A list of the parts this part depends on.
+        """
+        self.validate_dependency(
+            dependency="dotnet",
+            plugin_name="dotnet2",
+            part_dependencies=part_dependencies,
+        )
 
 
 class Dotnet2Plugin(Plugin):
@@ -100,6 +123,7 @@ class Dotnet2Plugin(Plugin):
     """
 
     properties_class = Dotnet2PluginProperties
+    validator_class = Dotnet2PluginEnvironmentValidator
 
     @override
     def get_build_snaps(self) -> set[str]:
