@@ -201,8 +201,6 @@ class Dotnet2Plugin(Plugin):
 
     def _get_restore_command(self, dotnet_path: str, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
         restore_cmd = f"{dotnet_path}/dotnet restore"
-        if options.dotnet2_project:
-            restore_cmd += f" {options.dotnet2_project}"
 
         if options.dotnet2_restore_sources:
             logger.info(f"Using restore sources: {options.dotnet2_restore_sources}")
@@ -213,6 +211,9 @@ class Dotnet2Plugin(Plugin):
 
         restore_cmd += f" --verbosity {options.dotnet2_verbosity}"
         restore_cmd += f" --runtime {dotnet_rid}"
+
+        if options.dotnet2_project:
+            restore_cmd += f" {options.dotnet2_project}"
 
         return restore_cmd
     
@@ -246,11 +247,11 @@ class Dotnet2Plugin(Plugin):
             "--no-restore --no-build"
         )
 
-        if options.dotnet2_project:
-            publish_cmd += f" {options.dotnet2_project}"
-
         # Self contained build
         publish_cmd += f" --runtime {dotnet_rid}"
         publish_cmd += f" --self-contained {options.dotnet2_self_contained}"
+
+        if options.dotnet2_project:
+            publish_cmd += f" {options.dotnet2_project}"
 
         return publish_cmd
