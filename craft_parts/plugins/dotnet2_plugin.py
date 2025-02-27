@@ -164,6 +164,10 @@ class Dotnet2Plugin(Plugin):
 
         if not dotnet_rid:
             raise ValueError(f"Unsupported architecture: {build_for}")
+        
+        # Validate verbosity
+        if options.dotnet2_verbosity not in ["quiet", "q", "minimal", "m", "normal", "n", "detailed", "d", "diagnostic", "diag"]:
+            raise ValueError("Invalid verbosity level")
 
         # Restore step
         restore_cmd = self._get_restore_command(dotnet_path, dotnet_rid, options)
