@@ -16,6 +16,7 @@
 
 
 import pytest
+from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.dotnet2_plugin import Dotnet2Plugin
@@ -39,6 +40,59 @@ def test_validate_environment(dependency_fixture, part_info):
         part_name="my-part", env=f"PATH={str(dotnet.parent)}", properties=properties
     )
     validator.validate_environment()
+
+
+def test_validate_environment_missing_dotnet(part_info):
+    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
+    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
+        validator.validate_environment()
+
+    assert raised.value.reason == "'dotnet' not found"
+
+
+def test_validate_environment_broken_dotnet(dependency_fixture, part_info):
+    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    dotnet = dependency_fixture("dotnet", broken=True)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(dotnet.parent)}", properties=properties
+    )
+    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
+        validator.validate_environment()
+
+    assert raised.value.reason == "'dotnet' failed with error code 33"
+
+
+def test_validate_environment_with_dotnet_part(part_info):
+    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
+    validator.validate_environment(part_dependencies=["dotnet2-deps"])
+
+
+def test_validate_environment_without_dotnet_part(part_info):
+    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
+    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
+        validator.validate_environment(part_dependencies=[])
+
+    assert raised.value.reason == (
+        "'dotnet' not found and part 'my-part' does not depend on a part named "
+        "'dotnet2-deps' that would satisfy the dependency"
+    )
 
 
 @pytest.mark.parametrize("dotnet_version, expected_snap_name", [
