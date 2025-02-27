@@ -184,11 +184,11 @@ class Dotnet2Plugin(Plugin):
         version = options.dotnet2_version
 
         # Validate version
-        if len(version) == 1:
+        if len(version.split('.')) == 1:
             if not version.isdigit() or int(version) < 6:
                 raise ValueError("Version must be greater or equal to 6.0")
-            snap_version = version
-        elif len(version) == 3 and version[1] == '.':
+            snap_version = f"{version}0"
+        elif len(version.split('.')) > 1:
             major, minor = version.split('.')
             if not (major.isdigit() and minor.isdigit()) or int(major) < 6:
                 raise ValueError("Version must be greater or equal to 6.0")
