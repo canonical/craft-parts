@@ -626,5 +626,6 @@ def test_get_out_of_source_build(part_info):
 
 def _remove_commands_from_string(string: str, commands: list[str]) -> str:
     for command in commands:
-        string = string.replace(command, "")
-    return string.strip()
+        assert command in string
+        string = string.replace(command, "").strip()
+    return string
