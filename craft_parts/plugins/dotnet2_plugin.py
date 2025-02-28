@@ -130,6 +130,10 @@ class Dotnet2Plugin(Plugin):
         """Return a set of required snaps to install in the build environment."""
         options = cast(Dotnet2PluginProperties, self._options)
 
+        # .NET binary provided by the user
+        if "dotnet2-deps" in self._part_info.part_dependencies:
+            return set()
+
         snap_name = self._generate_snap_name(options)
         logger.info(f"Using .NET SDK content snap: {snap_name}")
 
@@ -152,6 +156,10 @@ class Dotnet2Plugin(Plugin):
             "DOTNET_NOLOGO": "1",
         }
 
+        # .NET binary provided by the user
+        if "dotnet2-deps" in self._part_info.part_dependencies:
+            return environment
+
         build_on = self._part_info.project_info.arch_build_on
         snap_name = self._generate_snap_name(options)
 
@@ -161,6 +169,10 @@ class Dotnet2Plugin(Plugin):
             environment["LD_LIBRARY_PATH"] = f"/snap/{snap_name}/current/lib/aarch64-linux-gnu:/snap/{snap_name}/current/usr/lib/aarch64-linux-gnu"
         else:
             raise ValueError(f"Unsupported architecture: {build_on}")
+
+        snap_location = f"/snap/{self._generate_snap_name(options)}/current"
+        dotnet_path = f"{snap_location}/usr/lib/dotnet"
+        environment["PATH"] = f"{dotnet_path}:${{PATH}}"
 
         logger.info(f"Using environment:")
         for key, value in environment.items():
@@ -173,9 +185,8 @@ class Dotnet2Plugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(Dotnet2PluginProperties, self._options)
 
-        # Locate the dotnet executable from the dotnet-sdk snap
-        snap_location = f"/snap/{self._generate_snap_name(options)}/current"
-        dotnet_path = f"{snap_location}/usr/lib/dotnet"
+        # Check if version is valid
+        self._generate_snap_name(options)
 
         # Runtime identifier
         _DEBIAN_ARCH_TO_DOTNET_RID = {
@@ -194,13 +205,13 @@ class Dotnet2Plugin(Plugin):
             raise ValueError("Invalid verbosity level")
 
         # Restore step
-        restore_cmd = self._get_restore_command(dotnet_path, dotnet_rid, options)
+        restore_cmd = self._get_restore_command(dotnet_rid, options)
 
         # Build step
-        build_cmd = self._get_build_command(dotnet_path, dotnet_rid, options)
+        build_cmd = self._get_build_command(dotnet_rid, options)
 
         # Publish step
-        publish_cmd = self._get_publish_command(dotnet_path, dotnet_rid, options)
+        publish_cmd = self._get_publish_command(dotnet_rid, options)
 
         return [restore_cmd, build_cmd, publish_cmd]
 
@@ -223,8 +234,8 @@ class Dotnet2Plugin(Plugin):
         snap_name = f"dotnet-sdk-{snap_version}"
         return snap_name
 
-    def _get_restore_command(self, dotnet_path: str, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
-        restore_cmd = f"{dotnet_path}/dotnet restore"
+    def _get_restore_command(self, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
+        restore_cmd = "dotnet restore"
 
         if options.dotnet2_restore_sources:
             logger.info(f"Using restore sources: {options.dotnet2_restore_sources}")
@@ -241,9 +252,9 @@ class Dotnet2Plugin(Plugin):
 
         return restore_cmd
     
-    def _get_build_command(self, dotnet_path: str, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
+    def _get_build_command(self, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
         build_cmd = (
-            f"{dotnet_path}/dotnet build "
+            "dotnet build "
             f"--configuration {options.dotnet2_configuration} "
             f"--no-restore"
         )
@@ -262,9 +273,9 @@ class Dotnet2Plugin(Plugin):
 
         return build_cmd
     
-    def _get_publish_command(self, dotnet_path: str, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
+    def _get_publish_command(self, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
         publish_cmd = (
-            f"{dotnet_path}/dotnet publish "
+            "dotnet publish "
             f"--configuration {options.dotnet2_configuration} "
             f"--output {self._part_info.part_install_dir} "
             f"--verbosity {options.dotnet2_verbosity} "
