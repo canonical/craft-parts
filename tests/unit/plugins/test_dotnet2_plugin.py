@@ -120,36 +120,65 @@ def test_get_build_packages(part_info):
     assert plugin.get_build_packages() == set()
 
 
-def test_get_build_environment(part_info):
+@pytest.mark.parametrize("part_version", [
+    "2",
+    "2.2",
+    "3",
+    "3.1",
+    "5",
+    "5.0",
+    "5.1",
+])
+def test_get_build_environment_without_dotnet2_deps_and_invalid_versions(part_info, part_version):
     properties = Dotnet2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet2-version": "8.0"
+            "dotnet2-version": part_version
+        })
+    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+
+    with pytest.raises(ValueError) as raised:
+        plugin.get_build_environment()
+
+    assert str(raised.value) == "Version must be greater or equal to 6.0"
+
+
+@pytest.mark.parametrize("part_version", [
+    "8",
+    "8.0",
+    "9",
+    "9.1",
+    "10"
+])
+def test_get_build_environment_without_dotnet2_deps_and_valid_versions(part_info, part_version):
+    properties = Dotnet2Plugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "dotnet2-version": part_version
         })
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
     environment = plugin.get_build_environment()
-    assert len(environment) >= 2
+    assert len(environment) == 3
     assert environment["DOTNET_NOLOGO"] == "1"
     assert "LD_LIBRARY_PATH" in environment
+    assert "PATH" in environment
 
 
 def test_get_build_commands_default_values(part_info):
     properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path, "restore", "--verbosity normal", "--runtime linux-x64"
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet", "restore", "--verbosity normal", "--runtime linux-x64"
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -159,8 +188,8 @@ def test_get_build_commands_default_values(part_info):
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -183,21 +212,19 @@ def test_get_build_commands_configuration(part_info, configuration):
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         "--verbosity normal",
         "--runtime linux-x64"
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         f"--configuration {configuration}",
         "--no-restore",
@@ -207,8 +234,8 @@ def test_get_build_commands_configuration(part_info, configuration):
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         f"--configuration {configuration}",
         f"--output {plugin._part_info.part_install_dir}",
@@ -227,13 +254,11 @@ def test_get_build_commands_project(part_info):
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         "--verbosity normal",
         "--runtime linux-x64",
@@ -241,8 +266,8 @@ def test_get_build_commands_project(part_info):
     ])
     assert build_commands[0].strip() == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -253,8 +278,8 @@ def test_get_build_commands_project(part_info):
     ])
     assert build_commands[1].strip() == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -278,21 +303,19 @@ def test_get_build_commands_self_contained(part_info, self_contained):
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         "--verbosity normal",
         "--runtime linux-x64"
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -302,8 +325,8 @@ def test_get_build_commands_self_contained(part_info, self_contained):
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -334,21 +357,19 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         f"--verbosity {verbosity}",
         "--runtime linux-x64"
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -358,8 +379,8 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -384,32 +405,30 @@ def test_get_build_commands_invalid_verbosity(part_info):
     assert str(raised.value) == "Invalid verbosity level"
 
 
-@pytest.mark.parametrize("part_version, snap_version", [
-    ( "8", "80" ),
-    ( "8.0", "80" ),
-    ( "9.1", "91" ),
+@pytest.mark.parametrize("part_version", [
+    "8",
+    "8.0",
+    "9.1",
 ])
-def test_get_build_commands_valid_version(part_info, part_version, snap_version):
+def test_get_build_commands_valid_version(part_info, part_version):
     properties = Dotnet2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet2-version": part_version}
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = f"/snap/dotnet-sdk-{snap_version}/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         "--verbosity normal",
         "--runtime linux-x64"
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -419,8 +438,8 @@ def test_get_build_commands_valid_version(part_info, part_version, snap_version)
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -463,13 +482,11 @@ def test_get_build_commands_restore_sources(part_info):
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         "--verbosity normal",
         "--runtime linux-x64",
@@ -478,8 +495,8 @@ def test_get_build_commands_restore_sources(part_info):
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -489,8 +506,8 @@ def test_get_build_commands_restore_sources(part_info):
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -512,13 +529,11 @@ def test_get_build_commands_restore_configfile(part_info):
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         "--configfile configfile",
         "--verbosity normal",
@@ -526,8 +541,8 @@ def test_get_build_commands_restore_configfile(part_info):
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -537,8 +552,8 @@ def test_get_build_commands_restore_configfile(part_info):
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -560,21 +575,19 @@ def test_get_build_commands_build_framework(part_info):
     )
     plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
 
-    default_snap_path = "/snap/dotnet-sdk-80/current/usr/lib/dotnet/dotnet"
-
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
 
-    build_commands[0] = _remove_commands_from_string(build_commands[0], [
-        default_snap_path,
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
         "restore",
         "--verbosity normal",
         "--runtime linux-x64"
     ])
     assert build_commands[0] == ""
 
-    build_commands[1] = _remove_commands_from_string(build_commands[1], [
-        default_snap_path,
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
         "build",
         "--configuration Release",
         "--no-restore",
@@ -585,8 +598,8 @@ def test_get_build_commands_build_framework(part_info):
     ])
     assert build_commands[1] == ""
 
-    build_commands[2] = _remove_commands_from_string(build_commands[2], [
-        default_snap_path,
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
         "publish",
         "--configuration Release",
         f"--output {plugin._part_info.part_install_dir}",
@@ -624,8 +637,8 @@ def test_get_out_of_source_build(part_info):
     assert plugin.get_out_of_source_build() is False
 
 
-def _remove_commands_from_string(string: str, commands: list[str]) -> str:
-    for command in commands:
-        assert command in string
-        string = string.replace(command, "").strip()
-    return string
+def _remove_parameter_from_command(command: str, parameters: list[str]) -> str:
+    for parameter in parameters:
+        assert parameter in command
+        command = command.replace(parameter, "").strip()
+    return command
