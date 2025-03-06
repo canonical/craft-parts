@@ -2,6 +2,13 @@
 Changelog
 *********
 
+2.7.0 (2025-03-06)
+------------------
+
+New features:
+
+- Add spring-boot plugin for building Java Spring Boot project.
+
 2.6.2 (2025-02-20)
 ------------------
 
