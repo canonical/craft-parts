@@ -39,6 +39,7 @@ from .python_plugin import PythonPlugin
 from .qmake_plugin import QmakePlugin
 from .rust_plugin import RustPlugin
 from .scons_plugin import SConsPlugin
+from .spring_boot_plugin import SpringBootPlugin
 from .uv_plugin import UvPlugin
 
 if TYPE_CHECKING:
@@ -69,6 +70,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "qmake": QmakePlugin,
     "rust": RustPlugin,
     "scons": SConsPlugin,
+    "spring-boot": SpringBootPlugin,
     "uv": UvPlugin,
 }
 
