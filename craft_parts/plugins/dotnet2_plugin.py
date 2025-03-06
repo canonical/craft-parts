@@ -38,7 +38,7 @@ class Dotnet2PluginProperties(PluginProperties, frozen=True):
     dotnet2_project: str | None = None
     dotnet2_self_contained: bool = False
     dotnet2_verbosity: str = "normal"
-    dotnet2_version: str = "8.0"
+    dotnet2_version: str | None = None
 
     # Restore specific flags
     dotnet2_restore_sources: list[str] = []
@@ -100,7 +100,9 @@ class Dotnet2Plugin(Plugin):
 
     - ``dotnet2-version``
       (string)
-      The version of the .NET SDK to use. (Default: "8.0").
+      The version of the .NET SDK to download and use. This parameter is optional, so if
+      no value is specified, the plugin will assume a .NET SDK is being provided and will
+      not attempt to download one.
 
     Restore-specific Flags:
 
@@ -131,7 +133,7 @@ class Dotnet2Plugin(Plugin):
         options = cast(Dotnet2PluginProperties, self._options)
 
         # .NET binary provided by the user
-        if "dotnet2-deps" in self._part_info.part_dependencies:
+        if "dotnet2-deps" in self._part_info.part_dependencies or options.dotnet2_version is None:
             return set()
 
         snap_name = self._generate_snap_name(options)
@@ -215,8 +217,10 @@ class Dotnet2Plugin(Plugin):
 
         return [restore_cmd, build_cmd, publish_cmd]
 
-    def _generate_snap_name(self, options: Dotnet2PluginProperties) -> str:
+    def _generate_snap_name(self, options: Dotnet2PluginProperties) -> str | None:
         version = options.dotnet2_version
+        if version is None:
+            return None
 
         # Validate version
         if len(version.split('.')) == 1:
