@@ -44,6 +44,7 @@ sudo apt install libapt-pkg-dev intltool fuse-overlayfs python3.10-venv python3-
 The following are required to run integration tests (it is a default target for `make tests`):
 ```bash
 sudo snap install chisel --candidate
+sudo snap install devpack-for-spring --edge --classic # required for spring-boot plugin test
 sudo apt install ninja-build cmake scons qt5-qmake p7zip rpm \
                  autoconf automake autopoint gcc git gperf help2man libtool texinfo \
                  pkg-config

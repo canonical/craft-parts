@@ -161,6 +161,7 @@ jobs:
           sudo snap install --no-wait core20
           sudo snap install chisel --channel latest/candidate --no-wait
           sudo snap install go --classic --no-wait
+          sudo snap install devpack-for-spring --classic --edge --no-wait
           echo "::endgroup::"
           echo "::group::apt install"
           sudo apt install -y ninja-build cmake scons qt5-qmake p7zip \
