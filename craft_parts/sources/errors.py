@@ -216,13 +216,15 @@ class PullError(SourceError):
     :param exit_code: The command exit code.
     """
 
-    def __init__(self, *, command: Sequence, exit_code: int) -> None:
+    def __init__(
+        self, *, command: Sequence, exit_code: int, resolution: str | None = None
+    ) -> None:
         self.command = command
         self.exit_code = exit_code
         brief = (
             f"Failed to pull source: command {command!r} exited with code {exit_code}."
         )
-        resolution = "Make sure sources are correctly specified."
+        resolution = resolution or "Make sure sources are correctly specified."
 
         super().__init__(brief=brief, resolution=resolution)
 
@@ -230,8 +232,8 @@ class PullError(SourceError):
 class VCSError(SourceError):
     """A version control system command failed."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, resolution: str | None = None) -> None:
         self.message = message
         brief = message
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, resolution=resolution)

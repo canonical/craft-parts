@@ -2,12 +2,24 @@
 Changelog
 *********
 
-2.7.0 (2025-03-06)
-------------------
+2.7.0 (2025-MM-DDD)
+-------------------
 
 New features:
 
+- Previously, ``source-commit`` could only accept full length (40 character)
+  hashes. Now, ``source-commit`` can accept short hashes.
 - Add spring-boot plugin for building Java Spring Boot project.
+
+2.4.2 (2025-03-04)
+------------------
+
+Bug fixes:
+
+- Allow for a non-specific system Python interpreter when using the
+  :ref:`uv plugin<craft_parts_uv_plugin>`.
+
+For a complete list of commits, check out the `2.4.2`_ release on GitHub.
 
 2.6.2 (2025-02-20)
 ------------------
@@ -800,6 +812,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
 .. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
 .. _2.3.1: https://github.com/canonical/craft-parts/releases/tag/2.3.1
 .. _2.3.0: https://github.com/canonical/craft-parts/releases/tag/2.3.0
