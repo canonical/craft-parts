@@ -52,6 +52,7 @@ def test_jlink_plugin_jar_files(part_info):
 
     assert "PROCESS_JARS=${CRAFT_STAGE}/foo.jar" in plugin.get_build_commands()
 
+
 def test_jlink_plugin_find_jars(part_info, tmp_path):
     """Ensure all jar files are found when not specified in options"""
     (tmp_path / "file1.jar").touch()
