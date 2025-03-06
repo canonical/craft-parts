@@ -5,7 +5,7 @@ Using parts in a project file
 
 When packing, :ref:`parts <parts>` are used to describe your package, where its various
 components can be found, its build and run-time requirements, and its dependencies.
-Consequently, all package will have one or more parts.
+Consequently, all packages will have one or more parts.
 
 .. _how-to-use-parts_details:
 
@@ -13,7 +13,7 @@ Parts are purposefully flexible to allow for varied and disparate sources. At it
 simplest, a part will locate a project's source code and invoke a
 :ref:`plugin <plugins>` to build the application in the environment. However, a part
 can just as easily be used to source and extract a binary executable from an RPM file.
-They can also download tagged code from a remote repository, pull in dependencies,
+It can also download tagged code from a remote repository, pull in dependencies,
 define a build order, or completely override any stage of the
 :ref:`lifecycle <lifecycle>`.
 
@@ -27,15 +27,15 @@ this:
 
 .. code:: yaml
 
-    parts:
-        my-part:
-            plugin: dump
-            source: hello.sh
-            source-type: file
+   parts:
+     my-part:
+       plugin: dump
+       source: hello.sh
+       source-type: file
 
-A part starts with an arbitrary name, in this case, ``my-part``. They always will go
-under the top-level ``parts`` key, which can contain as many parts as your application
-requires. In this case, there is only one part.
+A part starts with an arbitrary name, in this case, ``my-part``. They go under the
+top-level ``parts`` key, which can contain as many parts as your package requires. In
+this case, there is only one part.
 
 Next, a source should be specified. The ``source`` key can dynamically handle many
 kinds of inputs, such as tarballs, remote repositories, local directories, or Debian
