@@ -309,6 +309,7 @@ ZipSourceModel
 abcdef
 args
 armv
+artifact
 artifacts
 autogen
 autotools
