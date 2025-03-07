@@ -9,6 +9,7 @@ New features:
 
 - Previously, ``source-commit`` could only accept full length (40 character)
   hashes. Now, ``source-commit`` can accept short hashes.
+- Add spring-boot plugin for building Java Spring Boot project.
 
 Bug fixes:
 

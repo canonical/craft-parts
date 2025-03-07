@@ -264,6 +264,9 @@ SourceHandler
 SourceModel
 SourceNotFound
 SourceUpdateUnsupported
+SpringBootPlugin
+SpringBootPluginProperties
+SpringBootPluginEnvironmentValidator
 SSL
 StageFilesConflict
 StagePackageNotFound
