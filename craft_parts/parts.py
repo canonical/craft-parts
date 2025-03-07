@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -69,6 +69,9 @@ class PartSpec(BaseModel):
     build_attributes: list[str] = []
     organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
+    overlay_organize_files: dict[str, str] = Field(
+        default_factory=dict, alias="overlay-organize"
+    )
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"], alias="stage"
     )
@@ -90,7 +93,9 @@ class PartSpec(BaseModel):
         coerce_numbers_to_str=True,
     )
 
-    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator(
+        "overlay_packages", "overlay_files", "overlay_script", "overlay_organize_files"
+    )
     @classmethod
     def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
         """Check if overlay attributes specified when feature is disabled."""
@@ -174,6 +179,7 @@ class PartSpec(BaseModel):
             self.overlay_packages
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
+            or self.overlay_organize_files
         )
 
     @property
@@ -346,6 +352,20 @@ class Part:
         return self._part_dir / "layer"
 
     @property
+    def part_layer_dirs(self) -> Mapping[str | None, Path]:
+        """Return a mapping of partition names to layer directories.
+
+        With partitions disabled, the only partition name is ``None``
+        """
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"parts/{self.name}/layer",
+            )
+        )
+
+    @property
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
         return self.dirs.overlay_dir
@@ -436,6 +456,7 @@ class Part:
         for fileset_name, fileset, require_inner_path in [
             # organize source entries do not use partitions and
             # organize destination entries do not require an inner path
+            ("overlay-organize", self.spec.overlay_organize_files.values(), False),
             ("organize", self.spec.organize_files.values(), False),
             ("stage", self.spec.stage_files, True),
             ("prime", self.spec.prime_files, True),
