@@ -82,6 +82,16 @@ class SpringBootPlugin(Plugin):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         commands = []
+        # Set JAVA_HOME
+        commands.append(
+            textwrap.dedent(
+                """\
+                if [ -z "${JAVA_HOME+x}" ]; then
+                    JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+                fi
+                """
+            )
+        )
         # Set project base
         commands.append(
             textwrap.dedent(
@@ -116,7 +126,7 @@ class SpringBootPlugin(Plugin):
         commands.append(
             textwrap.dedent(
                 """\
-                SYSTEM_JAVA_MAJOR_VERSION=$(java -version 2>&1 | grep -oP \
+                SYSTEM_JAVA_MAJOR_VERSION=$($JAVA_HOME/bin/java -version 2>&1 | grep -oP \
                 'openjdk version "\\K(1\\.\\d+|\\d+)')
                 """
             )

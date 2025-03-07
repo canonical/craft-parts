@@ -26,17 +26,21 @@ from craft_parts import LifecycleManager, Step, errors
 
 
 @pytest.fixture
-def install_spring_boot_project(tmp_path, new_dir):
+def source_location(new_dir):
+    return new_dir / "test_spring_boot"
+
+
+@pytest.fixture
+def install_spring_boot_project(source_location):
     # Using default CLI arguments to generate the project. Without specifying
     # all the arguments, the CLi becomes interactive.
     subprocess.check_call(
         [
-            "sudo",  # requires sudo in tmp path
             "devpack-for-spring",
             "boot",
             "start",
             "--path",
-            "app",
+            str(source_location),
             "--project",
             "maven-project",
             "--language",
@@ -66,23 +70,9 @@ def install_spring_boot_project(tmp_path, new_dir):
 
 
 @pytest.fixture
-def cleanup_java_11():
-    yield
-    subprocess.check_call(["sudo", "apt", "remove", "openjdk-11-jdk", "-y"])
-    subprocess.check_call(["sudo", "apt", "autoremove", "-y"])
-
-
-@pytest.fixture
-def cleanup_java_17():
-    yield
-    subprocess.check_call(["sudo", "apt", "remove", "openjdk-17-jdk", "-y"])
-    subprocess.check_call(["sudo", "apt", "autoremove", "-y"])
-
-
-@pytest.fixture
-def spring_boot_plugin_parts():
+def spring_boot_plugin_parts(source_location):
     parts_yaml = textwrap.dedent(
-        """
+        f"""\
         parts:
             deps-setup:
                 plugin: nil
@@ -90,18 +80,20 @@ def spring_boot_plugin_parts():
                 - openjdk-17-jdk
             my-part:
                 plugin: spring-boot
-                source: app
+                source: {source_location}
                 after: [deps-setup]
+                build-environment:
+                - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
         """
     )
     return yaml.safe_load(parts_yaml)
 
 
-@pytest.mark.usefixtures("install_spring_boot_project", "cleanup_java_11")
-def test_spring_boot_plugin_project_java_mismatch(new_dir, partitions):
+@pytest.mark.usefixtures("install_spring_boot_project")
+def test_spring_boot_plugin_project_java_mismatch(new_dir, partitions, source_location):
     """Spring boot project and system incompatible Java version."""
     parts_yaml = textwrap.dedent(
-        """
+        f"""\
         parts:
             deps-setup:
                 plugin: nil
@@ -109,8 +101,10 @@ def test_spring_boot_plugin_project_java_mismatch(new_dir, partitions):
                 - openjdk-11-jdk
             my-part:
                 plugin: spring-boot
-                source: app
+                source: {source_location}
                 after: [deps-setup]
+                build-environment:
+                - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -152,11 +146,11 @@ def test_spring_boot_plugin_output_jar(new_dir, partitions, spring_boot_plugin_p
 
 @pytest.mark.usefixtures("install_spring_boot_project")
 def test_spring_boot_plugin_project_build_wrapper_not_executable(
-    new_dir, partitions, spring_boot_plugin_parts
+    new_dir, partitions, spring_boot_plugin_parts, source_location
 ):
     """Spring boot project has mvnw but is not executable."""
     os.chmod(
-        new_dir / "app/mvnw",
+        source_location / "mvnw",
         # Read write permissions for users, groups and others but not executable
         stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH,
     )
@@ -178,12 +172,12 @@ def test_spring_boot_plugin_project_build_wrapper_not_executable(
     assert '"mvnw" found but not executable' in str(pe.value.stderr)
 
 
-@pytest.mark.usefixtures("install_spring_boot_project", "cleanup_java_17")
+@pytest.mark.usefixtures("install_spring_boot_project")
 def test_spring_boot_plugin_project_build_wrapper_not_exists(
-    new_dir, partitions, spring_boot_plugin_parts
+    new_dir, partitions, spring_boot_plugin_parts, source_location
 ):
     """Spring boot project has no mvnw or gradlew wrapper."""
-    (new_dir / "app/mvnw").remove()
+    (source_location / "mvnw").remove()
     lf = LifecycleManager(
         spring_boot_plugin_parts,
         application_name="test_spring_boot",
