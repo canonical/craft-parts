@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2024 Canonical Ltd.
+# Copyright 2017-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,7 @@ from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
+from craft_parts.permissions import Permissions
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import MigrationState, StepState, states
 from craft_parts.steps import Step
@@ -69,6 +70,34 @@ class _UpdateHandler(Protocol):
         stdout: Stream,
         stderr: Stream,
     ) -> None: ...
+
+
+class _Squasher:
+    def __init__(self) -> None:
+        self.migrated_files: set[str] = set()
+        self.migrated_dirs: set[str] = set()
+
+    def migrate(
+        self,
+        refdir: Path,
+        srcdir: Path,
+        destdir: Path,
+        permissions: list[Permissions] | None = None,
+    ) -> None:
+        visible_files, visible_dirs = overlays.visible_in_layer(refdir, destdir)
+        layer_files, layer_dirs = migration.migrate_files(
+            files=visible_files,
+            dirs=visible_dirs,
+            srcdir=srcdir,
+            destdir=destdir,
+            oci_translation=True,
+            permissions=permissions,
+        )
+        self.migrated_files |= layer_files
+        self.migrated_dirs |= layer_dirs
+
+    def get_state(self) -> MigrationState:
+        return MigrationState(files=self.migrated_files, directories=self.migrated_dirs)
 
 
 class PartHandler:
@@ -246,6 +275,14 @@ class PartHandler:
                     stderr=stderr,
                 )
 
+                # apply overlay-organize
+                organize_files(
+                    part_name=self._part.name,
+                    file_map=self._part.spec.overlay_organize_files,
+                    install_dir_map=self._part.part_layer_dirs,
+                    overwrite=False,
+                )
+
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
                 self._part.spec.overlay_files, name="overlay"
@@ -330,7 +367,12 @@ class PartHandler:
         # time around. We can be confident that this won't overwrite anything else,
         # because to do so would require changing the `organize` keyword, which will
         # make the build step dirty and require a clean instead of an update.
-        self._organize(overwrite=update)
+        organize_files(
+            part_name=self._part.name,
+            file_map=self._part.spec.organize_files,
+            install_dir_map=self._part.part_install_dirs,
+            overwrite=update,
+        )
 
         assets = {
             "build-packages": self.build_packages,
@@ -664,6 +706,13 @@ class PartHandler:
     ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         shutil.rmtree(self._part.part_layer_dir)
+
+        # delete partition layer dirs, if any
+        for partition in self._part_info.partitions or (None,):
+            layer_dir = self._part.part_layer_dirs[partition]
+            if layer_dir.exists():
+                shutil.rmtree(self._part.part_layer_dirs[partition])
+
         self._run_overlay(step_info, stdout=stdout, stderr=stderr)
 
     def _migrate_overlay_files_to_stage(self) -> None:
@@ -690,27 +739,25 @@ class PartHandler:
             return
 
         logger.debug("staging overlay files")
-        migrated_files: set[str] = set()
-        migrated_dirs: set[str] = set()
 
-        # process layers from top to bottom (reversed)
-        for part in reversed(parts_with_overlay):
-            logger.debug("migrate part %r layer to stage", part.name)
-            visible_files, visible_dirs = overlays.visible_in_layer(
-                part.part_layer_dir, part.stage_dir
-            )
-            layer_files, layer_dirs = migration.migrate_files(
-                files=visible_files,
-                dirs=visible_dirs,
-                srcdir=part.part_layer_dir,
-                destdir=part.stage_dir,
-                oci_translation=True,
-            )
-            migrated_files |= layer_files
-            migrated_dirs |= layer_dirs
+        # process parts in each partition
+        for partition in self._part_info.partitions or (None,):
+            squasher = _Squasher()
+            for part in reversed(parts_with_overlay):
+                logger.debug(
+                    "migrate %s partition part %r layer to stage",
+                    partition,
+                    part.name,
+                )
+                squasher.migrate(
+                    refdir=part.part_layer_dirs[partition],
+                    srcdir=part.part_layer_dirs[partition],
+                    destdir=part.stage_dirs[partition],
+                )
 
-        state = MigrationState(files=migrated_files, directories=migrated_dirs)
-        state.write(stage_overlay_state_path)
+            if partition in ("default", None):
+                state = squasher.get_state()
+                state.write(stage_overlay_state_path)
 
     def _migrate_overlay_files_to_prime(self) -> None:
         """Prime overlay files and create state.
@@ -736,42 +783,50 @@ class PartHandler:
             return
 
         logger.debug("priming overlay files")
-        migrated_files: set[str] = set()
-        migrated_dirs: set[str] = set()
 
-        # process layers from top to bottom (reversed)
-        for part in reversed(parts_with_overlay):
-            logger.debug("migrate part %r layer to prime", part.name)
-            visible_files, visible_dirs = overlays.visible_in_layer(
-                part.part_layer_dir, part.prime_dir
-            )
-            layer_files, layer_dirs = migration.migrate_files(
-                files=visible_files,
-                dirs=visible_dirs,
-                srcdir=part.stage_dir,
-                destdir=part.prime_dir,
-                oci_translation=True,
-                permissions=part.spec.permissions,
-            )
-            migrated_files |= layer_files
-            migrated_dirs |= layer_dirs
+        # Process parts in each partition.
+        for partition in self._part_info.partitions or (None,):
+            squasher = _Squasher()
+            for part in reversed(parts_with_overlay):
+                logger.debug(
+                    "migrate %s partition part %r layer to prime",
+                    partition,
+                    part.name,
+                )
+                squasher.migrate(
+                    refdir=part.part_layer_dirs[partition],
+                    srcdir=part.stage_dirs[partition],
+                    destdir=part.prime_dirs[partition],
+                    permissions=part.spec.permissions,
+                )
 
-        # Clean up dangling whiteout files with no backing files to white out
+            if partition in ("default", None):
+                # Non-default partitions have no dangling whiteout files
+                # because content was copied from an assembled overlay stack.
+                self._clean_dangling_whiteouts(
+                    self._part_info.prime_dir,
+                    squasher.migrated_files,
+                    squasher.migrated_dirs,
+                )
+
+                state = squasher.get_state()
+                state.write(prime_overlay_state_path)
+
+    def _clean_dangling_whiteouts(
+        self, prime_dir: Path, migrated_files: set[str], migrated_dirs: set[str]
+    ) -> None:
+        """Clean up dangling whiteout files with no backing files to white out."""
         dangling_whiteouts = migration.filter_dangling_whiteouts(
             migrated_files, migrated_dirs, base_dir=self._overlay_manager.base_layer_dir
         )
         for whiteout in dangling_whiteouts:
-            primed_whiteout = self._part_info.prime_dir / whiteout
+            primed_whiteout = prime_dir / whiteout
             try:
                 primed_whiteout.unlink()
                 logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
                 # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
-
-        # Create overlay migration state file
-        state = MigrationState(files=migrated_files, directories=migrated_dirs)
-        state.write(prime_overlay_state_path)
 
     def clean_step(self, step: Step) -> None:
         """Remove the work files and the state of the given step.
@@ -824,11 +879,13 @@ class PartHandler:
         """Remove the current part's stage step files and state."""
         for stage_dir in self._part.stage_dirs.values():
             self._clean_shared(Step.STAGE, shared_dir=stage_dir)
+        self._clean_shared_overlay(Step.STAGE, shared_dir=self._part.stage_dir)
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
         for prime_dir in self._part.prime_dirs.values():
             self._clean_shared(Step.PRIME, shared_dir=prime_dir)
+        self._clean_shared_overlay(Step.PRIME, shared_dir=self._part.prime_dir)
 
     def _clean_shared(self, step: Step, *, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
@@ -836,6 +893,7 @@ class PartHandler:
         :param step: The step corresponding to the shared directory.
         :param shared_dir: The shared directory to clean.
         """
+        logger.info(f"clean shared dir: {shared_dir} for step: {step}")
         part_states = _load_part_states(step, self._part_list)
         overlay_migration_state = states.load_overlay_migration_state(
             self._part.overlay_dir, step
@@ -848,11 +906,20 @@ class PartHandler:
             overlay_migration_state=overlay_migration_state,
         )
 
+    def _clean_shared_overlay(self, step: Step, *, shared_dir: Path) -> None:
+        """Remove shared files originating from overlay."""
+        part_states = _load_part_states(step, self._part_list)
+        parts_with_overlay_in_step = _parts_with_overlay_in_step(
+            step, part_list=self._part_list
+        )
+        overlay_migration_state = states.load_overlay_migration_state(
+            self._part.overlay_dir, step
+        )
+
+        logger.info(f"parts_with_overlay_in_step: {parts_with_overlay_in_step}")
+
         # remove overlay data if this is the last part with overlay
-        if (
-            self._part.has_overlay
-            and len(_parts_with_overlay_in_step(step, part_list=self._part_list)) == 1
-        ):
+        if self._part.has_overlay and len(parts_with_overlay_in_step) == 1:
             migration.clean_shared_overlay(
                 shared_dir=shared_dir,
                 part_states=part_states,
@@ -860,6 +927,9 @@ class PartHandler:
             )
             overlay_migration_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dir, step
+            )
+            logger.info(
+                f"remove overlay migration state file for part {self._part.name}, step {step}"
             )
             overlay_migration_state_path.unlink()
 
@@ -876,15 +946,6 @@ class PartHandler:
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
-
-    def _organize(self, *, overwrite: bool = False) -> None:
-        mapping = self._part.spec.organize_files
-        organize_files(
-            part_name=self._part.name,
-            file_map=mapping,
-            install_dir_map=self._part.part_install_dirs,
-            overwrite=overwrite,
-        )
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.

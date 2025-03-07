@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,12 @@ class LayerHash:
         hasher.update(digest)
         for entry in part.spec.overlay_files:
             hasher.update(entry.encode())
+        digest = hasher.digest()
+
+        hasher = hashlib.sha1()  # noqa: S324
+        hasher.update(digest)
+        for key, value in part.spec.overlay_organize_files.items():
+            hasher.update(f"{key}:{value}".encode())
         digest = hasher.digest()
 
         hasher = hashlib.sha1()  # noqa: S324

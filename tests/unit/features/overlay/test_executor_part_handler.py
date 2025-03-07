@@ -135,7 +135,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
                 "installed-packages": ["hello=2.10"],
                 "installed-snaps": ["snapcraft=6466"],
             },
-            overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
+            overlay_hash="c7990a45eda02495b2e8b9d8a37b2f39046820ba",
         )
 
         self._mock_mount_overlayfs.assert_called_with(
@@ -178,7 +178,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
-            overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
+            overlay_hash="c7990a45eda02495b2e8b9d8a37b2f39046820ba",
         )
 
     # pylint: disable=too-many-arguments
@@ -289,7 +289,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
 
         layer_hash = handler._compute_layer_hash(all_parts=False)
-        assert layer_hash.hex() == "80ab51c6c76eb2b6fc01adc3143ebaf2b982ae56"
+        assert layer_hash.hex() == "a4a95026b752232f5f626c409fac9f3e8d15b456"
 
     def test_compute_layer_hash_for_all_parts(self, new_dir, partitions):
         p1 = Part(
@@ -308,7 +308,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
 
         layer_hash = handler._compute_layer_hash(all_parts=True)
-        assert layer_hash.hex() == "f4ae5a2ed1b4fd8a7e03f9264ab0f98ed6fd991b"
+        assert layer_hash.hex() == "80595044b014b79932599b1c940eab8a467f9d79"
 
 
 @pytest.mark.usefixtures("new_dir")

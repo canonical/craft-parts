@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -46,13 +46,13 @@ class TestLayerHash:
     @pytest.mark.parametrize(
         ("pkgs", "files", "script", "result"),
         [
-            ([], [], None, "80324ed2458e5d51e851972d092a0996dc038e8b"),
-            ([], ["*"], None, "6554e32fa718d54160d0511b36f81458e4cb2357"),
-            ([], [], "*", "8d272addf312552ba12cd7b4dd89c4d9544366a7"),
-            ([], ["bin"], None, "0aeef6012aca34bf245609066ae16cb477d22f42"),
-            (["bin"], [], None, "9aad6e7062ab06181086b9c27aa3013d892adc34"),
-            (["pkg"], ["*"], None, "ac0ab0b4ff2bbbdd362a3719bf8311f3d73d43bc"),
-            ([], ["*"], "ls", "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b"),
+            ([], [], None, "de1b879d934299b3f03f0a5cdb99c50bdc5cb4ea"),
+            ([], ["*"], None, "a3700a380077e2a4306b64628707ad87588040f2"),
+            ([], [], "*", "44a97a466dc271278457e876811d29092d4d6548"),
+            ([], ["bin"], None, "e8840727bd9f6c2f349fdfd5184ce020e3bb4b1a"),
+            (["bin"], [], None, "38f0170996429f0e052ae7bb96503536ff5433cf"),
+            (["pkg"], ["*"], None, "ac6c933ee9026a0138f55d02cb6a5f9825e6241f"),
+            ([], ["*"], "ls", "c34c6c804be958015d3eeb08e48cb4f510db151a"),
         ],
     )
     def test_compute(self, pkgs, files, script, result):
@@ -68,10 +68,10 @@ class TestLayerHash:
     def test_previous_hash(self):
         p1 = Part("p1", {"overlay-packages": [], "overlay": [], "overlay-script": None})
         h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash(b""))
-        assert h1.hex() == "80324ed2458e5d51e851972d092a0996dc038e8b"
+        assert h1.hex() == "de1b879d934299b3f03f0a5cdb99c50bdc5cb4ea"
 
         h2 = LayerHash.for_part(p1, previous_layer_hash=h1)
-        assert h2.hex() == "bb6d57381ec9fb85207c85b865ef6d709930f291"
+        assert h2.hex() == "4f63b8db261be70583f8087b45751ba736245555"
 
     def test_load(self, new_dir):
         hash_file = Path("parts/p1/state/layer_hash")
@@ -138,10 +138,10 @@ class TestLayerStateManager:
     @pytest.mark.parametrize(
         ("params", "digest"),
         [
-            ({}, "a42a1d8ac7fdcfc4752e28aba0b0ee905e7cf96f"),
-            ({"overlay-script": "true"}, "fa8a0be828daebe4fd503d14fa9d6307ae0b01ae"),
-            ({"overlay-packages": ["pkg"]}, "1d1f4f14a6809e389bdb6c6d0fb58fa5491c7981"),
-            ({"overlay": ["/etc"]}, "b4d14ee52c4ba9c5d5c7610c5e2bce06f2f34b2b"),
+            ({}, "3d8c26b77e6283c3e210c588ec19c987c7dc7a9f"),
+            ({"overlay-script": "true"}, "b69cd7845011bfd85fdcd38e3ada4c089f6b2a05"),
+            ({"overlay-packages": ["pkg"]}, "388f8ab69c396a8e5fffce327cf1f305d574f7ab"),
+            ({"overlay": ["/etc"]}, "4e469622a748e0f443d3ff8a06e4a4d90705064f"),
         ],
     )
     def test_compute_layer_hash(self, params, digest):
@@ -154,10 +154,10 @@ class TestLayerStateManager:
     @pytest.mark.parametrize(
         ("params", "digest"),
         [
-            ({}, "a15e326327c3456bc5547a69fe2996bcf8088cba"),
-            ({"overlay-script": "true"}, "a992882dc823bde22d93b0fe4ea6282926b5cfa9"),
-            ({"overlay-packages": ["pkg"]}, "c890ac631a1cde929edefb1b27b10d9ba848d548"),
-            ({"overlay": ["/etc"]}, "c1b0caeabdfc607110dbcbb1c58a320127b61622"),
+            ({}, "4ed3533f46ecaade7ada8b4faa4d8bbd788d1dff"),
+            ({"overlay-script": "true"}, "a1b8c832eb43b3ed644cd9f7b3c32f99878c51dd"),
+            ({"overlay-packages": ["pkg"]}, "d970b40822b6fd7c431133bc054a61ad51ada1fe"),
+            ({"overlay": ["/etc"]}, "969e90e8869a8ac6b5f5ec01ba4429d6e54766b0"),
         ],
     )
     def test_compute_layer_hash_new_base(self, params, digest):
@@ -180,7 +180,7 @@ class TestLayerStateManager:
         lsm.set_layer_hash(p1, layer_hash)
 
         p2_layer_hash = lsm.compute_layer_hash(p2)
-        assert p2_layer_hash.hex() == "c6e659c5a430c093a120bb17868ade39e91e00b8"
+        assert p2_layer_hash.hex() == "dd59cf89fc34b540c99ad85738b11b08db160e38"
 
     def test_compute_layer_hash_multiple_parts_new_base(self):
         p1 = Part("p1", {})
@@ -195,7 +195,7 @@ class TestLayerStateManager:
         lsm.set_layer_hash(p1, layer_hash)
 
         p2_layer_hash = lsm.compute_layer_hash(p2)
-        assert p2_layer_hash.hex() == "c522dd71ef33a7eee9b8122ff8f4482152a99a12"
+        assert p2_layer_hash.hex() == "9376078c2087328a386b056b97ffa6c2a558daca"
 
     def test_get_overlay_hash(self):
         p1 = Part("p1", {})

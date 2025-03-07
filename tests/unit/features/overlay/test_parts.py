@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -59,6 +59,7 @@ class TestPartSpecs:
             "prime": ["*"],
             "override-pull": "override-pull",
             "overlay-script": "overlay-script",
+            "overlay-organize": {"src3": "dest3"},
             "override-build": "override-build",
             "override-stage": "override-stage",
             "override-prime": "override-prime",
@@ -105,18 +106,20 @@ class TestPartSpecs:
         assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
-        ("packages", "script", "files", "result"),
+        ("packages", "script", "files", "organize", "result"),
         [
-            ([], None, ["*"], False),
-            (["pkg"], None, ["*"], True),
-            ([], "ls", ["*"], True),
-            ([], None, ["-usr/share"], True),
+            ([], None, ["*"], {}, False),
+            (["pkg"], None, ["*"], {}, True),
+            ([], "ls", ["*"], {}, True),
+            ([], None, ["-usr/share"], {}, True),
+            ([], None, ["*"], {"src": "dest"}, True),
         ],
     )
-    def test_spec_has_overlay(self, packages, script, files, result):
+    def test_spec_has_overlay(self, packages, script, files, organize, result):
         data = {
             "overlay-packages": packages,
             "overlay-script": script,
+            "overlay-organize": organize,
             "overlay": files,
         }
         spec = PartSpec.unmarshal(data)
@@ -321,20 +324,22 @@ class TestPartData:
         assert p.spec.get_scriptlet(step) is None
 
     @pytest.mark.parametrize(
-        ("packages", "script", "files", "result"),
+        ("packages", "script", "files", "organize", "result"),
         [
-            ([], None, ["*"], False),
-            (["pkg"], None, ["*"], True),
-            ([], "ls", ["*"], True),
-            ([], None, ["-usr/share"], True),
+            ([], None, ["*"], {}, False),
+            (["pkg"], None, ["*"], {}, True),
+            ([], "ls", ["*"], {}, True),
+            ([], None, ["-usr/share"], {}, True),
+            ([], None, ["*"], {"src": "dest"}, True),
         ],
     )
-    def test_part_has_overlay(self, packages, script, files, result):
+    def test_part_has_overlay(self, packages, script, files, organize, result):
         p = Part(
             "foo",
             {
                 "overlay-packages": packages,
                 "overlay-script": script,
+                "overlay-organize": organize,
                 "overlay": files,
             },
         )

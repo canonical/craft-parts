@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -226,7 +226,7 @@ def test_sequencer_ensure_overlay_consistency(mocker, new_dir):
             ),
         ]
     )
-    assert value.hex() == "8d9f437db97f7276a2d68fc44683b6761035f73c"
+    assert value.hex() == "5f1b2ab81abb7e8efb0b9d03eedb0bea64ba40a7"
 
 
 def test_sequencer_ensure_overlay_consistency_no_run(mocker, new_dir):
@@ -235,7 +235,7 @@ def test_sequencer_ensure_overlay_consistency_no_run(mocker, new_dir):
     p2 = Part("p2", {})
 
     Path("parts/p1/state").mkdir(parents=True)
-    layer_hash = LayerHash(bytes.fromhex("6554e32fa718d54160d0511b36f81458e4cb2357"))
+    layer_hash = LayerHash(bytes.fromhex("a3700a380077e2a4306b64628707ad87588040f2"))
     layer_hash.save(p1)
 
     seq = Sequencer(part_list=[p1, p2], project_info=info)
@@ -244,7 +244,7 @@ def test_sequencer_ensure_overlay_consistency_no_run(mocker, new_dir):
 
     value = seq._ensure_overlay_consistency(p2, skip_last=True)
     mock_add_all_actions.assert_not_called()
-    assert value.hex() == "8d9f437db97f7276a2d68fc44683b6761035f73c"
+    assert value.hex() == "5f1b2ab81abb7e8efb0b9d03eedb0bea64ba40a7"
 
 
 def test_sequencer_ensure_overlay_consistency_dont_skip_last(mocker, new_dir):
@@ -253,7 +253,7 @@ def test_sequencer_ensure_overlay_consistency_dont_skip_last(mocker, new_dir):
     p2 = Part("p2", {})
 
     Path("parts/p1/state").mkdir(parents=True)
-    layer_hash = LayerHash(bytes.fromhex("6554e32fa718d54160d0511b36f81458e4cb2357"))
+    layer_hash = LayerHash(bytes.fromhex("a3700a380077e2a4306b64628707ad87588040f2"))
     layer_hash.save(p1)
 
     seq = Sequencer(part_list=[p1, p2], project_info=info)
@@ -266,7 +266,7 @@ def test_sequencer_ensure_overlay_consistency_dont_skip_last(mocker, new_dir):
         part_names=["p2"],
         reason=None,
     )
-    assert value.hex() == "8d9f437db97f7276a2d68fc44683b6761035f73c"
+    assert value.hex() == "5f1b2ab81abb7e8efb0b9d03eedb0bea64ba40a7"
 
 
 def test_sequencer_ensure_overlay_consistency_rerun(mocker, new_dir):
@@ -291,7 +291,7 @@ def test_sequencer_ensure_overlay_consistency_rerun(mocker, new_dir):
         part_names=["p1"],
         reason="test",
     )
-    assert value.hex() == "8d9f437db97f7276a2d68fc44683b6761035f73c"
+    assert value.hex() == "5f1b2ab81abb7e8efb0b9d03eedb0bea64ba40a7"
 
 
 def test_overlay_dependencies_not_dirty(mocker, new_dir):
@@ -300,7 +300,7 @@ def test_overlay_dependencies_not_dirty(mocker, new_dir):
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
     Path("parts/p1/state/layer_hash").write_text(
-        "6554e32fa718d54160d0511b36f81458e4cb2357"
+        "a3700a380077e2a4306b64628707ad87588040f2"
     )
 
     info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
@@ -320,7 +320,7 @@ def test_overlay_dependencies_layer_not_dirty(mocker, new_dir):
     # create p1 layer hash state
     Path("parts/p1/state").mkdir(parents=True)
     Path("parts/p1/state/layer_hash").write_text(
-        "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b"
+        "c34c6c804be958015d3eeb08e48cb4f510db151a"
     )
 
     info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
@@ -349,7 +349,7 @@ def test_overlay_dependencies_layer_reapply(mocker, new_dir):
     assert is_dirty is True
     mock_reapply.assert_called_with(
         p1,
-        LayerHash(bytes.fromhex("9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b")),
+        LayerHash(bytes.fromhex("c34c6c804be958015d3eeb08e48cb4f510db151a")),
         reason="previous layer changed",
     )
 
