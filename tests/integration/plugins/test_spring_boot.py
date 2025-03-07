@@ -22,7 +22,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts import LifecycleManager, Step, errors
 
 
