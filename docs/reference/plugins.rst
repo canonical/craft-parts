@@ -28,6 +28,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/qmake_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
    /common/craft-parts/reference/plugins/scons_plugin.rst
+   /common/craft-parts/reference/plugins/spring_boot_plugin.rst
    /common/craft-parts/reference/plugins/uv_plugin.rst
 
 
