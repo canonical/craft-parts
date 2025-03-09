@@ -18,7 +18,6 @@
 
 from collections.abc import Sequence
 from pathlib import Path
-from types import MappingProxyType
 
 from craft_parts.errors import PartitionNotFound, PartitionUsageError
 from craft_parts.utils import partition_utils
@@ -70,11 +69,9 @@ class ProjectDirs:
 
     def _get_partition_dirs(
         self, partitions: Sequence[str] | None, dirname: str
-    ) -> MappingProxyType:
-        return MappingProxyType(
-            partition_utils.get_partition_dir_map(
-                base_dir=self.work_dir, partitions=partitions, suffix=dirname
-            )
+    ) -> dict[str | None, Path]:
+        return partition_utils.get_partition_dir_map(
+            base_dir=self.work_dir, partitions=partitions, suffix=dirname
         )
 
     def _validate_requested_partition(
