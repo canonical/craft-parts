@@ -2,6 +2,13 @@
 Changelog
 *********
 
+2.4.3 (unreleased)
+------------------
+
+Bug fixes:
+
+- Address race condition when collecting subprocess output.
+
 2.4.2 (2025-03-04)
 ------------------
 
