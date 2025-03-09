@@ -357,6 +357,7 @@ class TestPartReapplyHandler(test_executor_part_handler.TestPartReapplyHandler):
         self._handler.run_action(Action("foo.txt", Step.PULL))
 
         Path("parts/foo/layer/foo.txt").touch()
+        Path("partitions/mypart/parts/foo/layer").mkdir(parents=True)
         Path("partitions/mypart/parts/foo/layer/foo.txt").touch()
 
         self._handler.run_action(Action("foo", Step.OVERLAY, ActionType.REAPPLY))

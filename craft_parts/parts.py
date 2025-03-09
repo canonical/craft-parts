@@ -371,6 +371,14 @@ class Part:
         return self.dirs.overlay_dir
 
     @property
+    def overlay_dirs(self) -> Mapping[str | None, Path]:
+        """A mapping of partition name to partition overlay directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.overlay_dirs
+
+    @property
     def stage_dir(self) -> Path:
         """Return the staging area containing the installed files from all parts.
 

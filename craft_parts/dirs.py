@@ -64,14 +64,16 @@ class ProjectDirs:
             self._partitions = None
             self.partition_dir = None
 
-        self.stage_dirs = MappingProxyType(
+        self.overlay_dirs = self._get_partition_dirs(partitions, "overlay")
+        self.stage_dirs = self._get_partition_dirs(partitions, "stage")
+        self.prime_dirs = self._get_partition_dirs(partitions, "prime")
+
+    def _get_partition_dirs(
+        self, partitions: Sequence[str] | None, dirname: str
+    ) -> MappingProxyType:
+        return MappingProxyType(
             partition_utils.get_partition_dir_map(
-                base_dir=self.work_dir, partitions=partitions, suffix="stage"
-            )
-        )
-        self.prime_dirs = MappingProxyType(
-            partition_utils.get_partition_dir_map(
-                base_dir=self.work_dir, partitions=partitions, suffix="prime"
+                base_dir=self.work_dir, partitions=partitions, suffix=dirname
             )
         )
 
