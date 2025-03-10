@@ -92,7 +92,7 @@ test-ruff:
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
-	pytest --basetemp .tmp tests/integration
+	pytest tests/integration
 
 .PHONY: test-mypy
 test-mypy:
