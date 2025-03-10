@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -47,8 +47,8 @@ class SpringBootPluginEnvironmentValidator(PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
 
-        :raises PluginEnvironmentValidationError: If go is invalid
-          and there are no parts named go.
+        :raises PluginEnvironmentValidationError: If Java is invalid
+          and there are no parts named Java.
         """
         self.validate_dependency(
             dependency="java",
@@ -82,7 +82,14 @@ class SpringBootPlugin(Plugin):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         commands = []
+        # Set DOC_URL
+        commands.append(
+            "DOC_URL='https://documentation.ubuntu.com/rockcraft/en/latest/common/craft-parts/"
+            "reference/plugins/spring-boot-plugin/'"
+        )
         # Set JAVA_HOME
+        # The java executable is a symlink of a symlink to the following directory:
+        # /usr/lib/jvm/java-<version>-openjdk-<arch>/bin/java
         commands.append(
             textwrap.dedent(
                 """\
@@ -97,11 +104,12 @@ class SpringBootPlugin(Plugin):
             textwrap.dedent(
                 """\
                 if [[ -e "./mvnw" ]]; then
-                    PROJECT_BASE="maven"
+                    PROJECT_TOOLING="maven"
                 elif [[ -e "./gradlew" ]]; then
-                    PROJECT_BASE="gradle"
+                    PROJECT_TOOLING="gradle"
                 else
                     echo 'Neither "mvnw" nor "gradlew" found.'
+                    echo "See how to use the plugin at $DOC_URL."
                     exit 1
                 fi
                 """
@@ -111,18 +119,23 @@ class SpringBootPlugin(Plugin):
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ "$PROJECT_BASE" == "maven" && ! -x "./mvnw" ]]; then
+                if [[ "$PROJECT_TOOLING" == "maven" && ! -x "./mvnw" ]]; then
                     echo '"mvnw" found but not executable.'
+                    echo "See how to use the plugin at $DOC_URL."
                     exit 1
-                elif [[ "$PROJECT_BASE" == "gradle" && ! -x "./gradlew" ]]; then
+                elif [[ "$PROJECT_TOOLING" == "gradle" && ! -x "./gradlew" ]]; then
                     echo '"gradlew" found but not executable.'
+                    echo "See how to use the plugin at $DOC_URL."
                     exit 1
                 fi
                 """
             )
         )
 
-        # Check system Java version compatibility with project Java version
+        # Check system Java version compatibility with project Java version.
+        # The output of the java -version command is to the stderr hence the redirection.
+        # Lower Java versions come in 1.x format, while higher versions come in x format, hence the
+        # grep regex command finds 1.x or x.
         commands.append(
             textwrap.dedent(
                 """\
@@ -131,14 +144,16 @@ class SpringBootPlugin(Plugin):
                 """
             )
         )
+        # The following extracts the major version of Java used by the project.
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ "$PROJECT_BASE" == "maven" ]]; then
-                    PROJECT_JAVA_VERSION=$("./mvnw" help:evaluate -Dexpression=project.properties \
+                if [[ "$PROJECT_TOOLING" == "maven" ]]; then
+                    PROJECT_JAVA_MAJOR_VERSION=$("./mvnw" help:evaluate \
+                -Dexpression=project.properties \
                 -q -DforceStdout | grep -oP '<java\\.version>\\K(.*?)(?=</java\\.version>)')
-                elif [[ "$PROJECT_BASE" == "gradle" ]]; then
-                    PROJECT_JAVA_VERSION=$("./gradlew" javaToolchains | grep -oP \
+                elif [[ "$PROJECT_TOOLING" == "gradle" ]]; then
+                    PROJECT_JAVA_MAJOR_VERSION=$("./gradlew" javaToolchains | grep -oP \
                     "Language Version:\\s+\\K(\\d+)")
                 fi
                 """
@@ -147,9 +162,10 @@ class SpringBootPlugin(Plugin):
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ $PROJECT_JAVA_VERSION -gt $SYSTEM_JAVA_MAJOR_VERSION ]]; then
-                    echo "Project requires Java version $PROJECT_JAVA_VERSION, but system Java \
-                version is $SYSTEM_JAVA_MAJOR_VERSION."
+                if [[ $PROJECT_JAVA_MAJOR_VERSION -gt $SYSTEM_JAVA_MAJOR_VERSION ]]; then
+                    echo "Project requires Java version $PROJECT_JAVA_MAJOR_VERSION, but system \
+                Java version is $SYSTEM_JAVA_MAJOR_VERSION."
+                    echo "See how to use the plugin at $DOC_URL."
                     exit 1
                 fi
                 """
@@ -160,35 +176,25 @@ class SpringBootPlugin(Plugin):
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ "$PROJECT_BASE" == "maven" ]]; then
+                if [[ "$PROJECT_TOOLING" == "maven" ]]; then
                     ./mvnw clean install
-                elif [[ "$PROJECT_BASE" == "gradle" ]]; then
+                elif [[ "$PROJECT_TOOLING" == "gradle" ]]; then
                     ./gradlew build
                 fi
                 """
             )
         )
 
-        # Install build
+        # Move binaries to the install directory.
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ "$PROJECT_BASE" == "maven" ]]; then
+                if [[ "$PROJECT_TOOLING" == "maven" ]]; then
                     cp ${CRAFT_PART_BUILD}/target/*.jar ${CRAFT_PART_INSTALL}/
-                elif [[ "$PROJECT_BASE" == "gradle" ]]; then
+                elif [[ "$PROJECT_TOOLING" == "gradle" ]]; then
                     rm ${CRAFT_PART_BUILD}/build/libs/*plain*.jar
                     cp ${CRAFT_PART_BUILD}/build/libs/*.jar ${CRAFT_PART_INSTALL}/
                 fi
-                """
-            )
-        )
-
-        # Install tmp dir (unavailable in bare base)
-        commands.append(
-            textwrap.dedent(
-                """\
-                mkdir -p ${CRAFT_PRIME}/tmp
-                chown 584792 ${CRAFT_PRIME}/tmp
                 """
             )
         )
