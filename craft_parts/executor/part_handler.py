@@ -744,6 +744,7 @@ class PartHandler:
                 )
                 continue
 
+            # Process layers from top to bottom (reversed)
             squasher = _Squasher()
             for part in reversed(parts_with_overlay):
                 logger.debug(
@@ -787,6 +788,7 @@ class PartHandler:
                 )
                 continue
 
+            # Process layers from top to bottom (reversed)
             squasher = _Squasher()
             for part in reversed(parts_with_overlay):
                 logger.debug(
