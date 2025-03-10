@@ -183,4 +183,14 @@ class SpringBootPlugin(Plugin):
             )
         )
 
+        # Install tmp dir (unavailble in bare base)
+        commands.append(
+            textwrap.dedent(
+                """\
+                mkdir -p ${CRAFT_PRIME}/tmp
+                chown 584792 ${CRAFT_PRIME}/tmp
+                """
+            )
+        )
+
         return commands
