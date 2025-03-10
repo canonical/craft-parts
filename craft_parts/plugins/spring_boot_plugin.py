@@ -183,7 +183,7 @@ class SpringBootPlugin(Plugin):
             )
         )
 
-        # Install tmp dir (unavailble in bare base)
+        # Install tmp dir (unavailable in bare base)
         commands.append(
             textwrap.dedent(
                 """\
