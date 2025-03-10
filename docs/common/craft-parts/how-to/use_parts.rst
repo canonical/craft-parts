@@ -22,30 +22,37 @@ define a build order, or completely override any stage of the
 Defining a part
 ===============
 
-A simple part that just packages a simple "hello world" shell script might look like
-this:
+Let's define a simple part that just packages a simple "hello world" shell script.
 
-.. code:: yaml
+First, create the shell script:
 
-   parts:
-     my-part:
-       plugin: dump
-       source: hello.sh
-       source-type: file
+.. code:: shell
 
-A part starts with an arbitrary name, in this case, ``my-part``. They go under the
-top-level ``parts`` key, which can contain as many parts as your package requires. In
-this case, there is only one part.
+   echo "echo 'Hello world!'" >> hello.sh
 
-Next, a source should be specified. The ``source`` key can dynamically handle many
-kinds of inputs, such as tarballs, remote repositories, local directories, or Debian
-packages. In this case, the source is just a single file.
+Next, create a simple part named my-part:
 
-Finally, a plugin should be specified. In this example, the ``dump`` plugin is used to
-simply copy the content of :file:`hello.sh` into the final artifact. A plugin can
-handle much more complex operations if desired though. For example, a plugin could
-invoke an entire build system or create a workspace for offline builds.
+.. literalinclude:: code/use_parts.yaml
+   :language: yaml
+   :end-at: my-part:
 
-For more information on keys available to use within a part, see the :ref:`parts
-reference <part_properties>`.
+This block does two things: it begins the list of all parts in the project, and then
+declares a singular part named "my-part". However, in this form, the the part won't
+do very much. Let's start by declaring a plugin:
+
+.. literalinclude:: code/use_parts.yaml
+   :language: yaml
+   :end-at: plugin: dump
+
+This "dump" plugin is quite simple - it simply takes the source and dumps it directly
+into the staging directory of the project. So, next, you need to give it a source to
+work with:
+
+.. literalinclude:: code/use_parts.yaml
+   :language: yaml
+   :end-at: source-type: file
+
+With this, you have a complete part that packs a :file:`hello.sh` into your project's
+final artifact. For more information on keys available to use within a part, see the
+:ref:`parts reference <part_properties>`.
 
