@@ -134,10 +134,10 @@ class SpringBootPlugin(Plugin):
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ -x "./mvnw" ]]; then
+                if [[ "$PROJECT_BASE" == "maven" ]]; then
                     PROJECT_JAVA_VERSION=$("./mvnw" help:evaluate -Dexpression=project.properties \
                 -q -DforceStdout | grep -oP '<java\\.version>\\K(.*?)(?=</java\\.version>)')
-                elif [[ -x "./gradlew" ]]; then
+                elif [[ "$PROJECT_BASE" == "gradle" ]]; then
                     PROJECT_JAVA_VERSION=$("./gradlew" javaToolchains | grep -oP \
                     "Language Version:\\s+\\K(\\d+)")
                 fi
@@ -160,9 +160,9 @@ class SpringBootPlugin(Plugin):
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ -x "./mvnw" ]]; then
+                if [[ "$PROJECT_BASE" == "maven" ]]; then
                     ./mvnw clean install
-                elif [[ -x "./gradlew" ]]; then
+                elif [[ "$PROJECT_BASE" == "gradle" ]]; then
                     ./gradlew build
                 fi
                 """
@@ -173,9 +173,9 @@ class SpringBootPlugin(Plugin):
         commands.append(
             textwrap.dedent(
                 """\
-                if [[ -x "./mvnw" ]]; then
+                if [[ "$PROJECT_BASE" == "maven" ]]; then
                     cp ${CRAFT_PART_BUILD}/target/*.jar ${CRAFT_PART_INSTALL}/
-                elif [[ -x "./gradlew" ]]; then
+                elif [[ "$PROJECT_BASE" == "gradle" ]]; then
                     rm ${CRAFT_PART_BUILD}/build/libs/*plain*.jar
                     cp ${CRAFT_PART_BUILD}/build/libs/*.jar ${CRAFT_PART_INSTALL}/
                 fi
