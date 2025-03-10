@@ -111,6 +111,6 @@ lightweight JVM, customized for the project.
         after: [build]
 
 For more information about the Jlink plugin, refer to the
-`Jlink plugin documentation <craft_parts_jlink_plugin>_`.
+`Jlink plugin documentation <jlink_plugin.rst>`_.
 
 .. _`spring_boot`: https://spring.io/
