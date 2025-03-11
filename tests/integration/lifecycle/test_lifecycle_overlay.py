@@ -221,9 +221,11 @@ class TestCleaning:
               foo:
                 plugin: dump
                 source: foo
+                overlay-script: echo "test"
               bar:
                 plugin: dump
                 source: bar
+                overlay-script: echo "test"
             """
         )
         Path("foo").mkdir()
@@ -232,9 +234,15 @@ class TestCleaning:
         Path("bar/bar.txt").touch()
 
         parts = yaml.safe_load(parts_yaml)
+        base_layer_dir = new_dir / "base_layer"
+        base_layer_dir.mkdir()
 
         self._lifecycle = craft_parts.LifecycleManager(
-            parts, application_name="test_clean", cache_dir=new_dir
+            parts,
+            application_name="test_clean",
+            cache_dir=new_dir,
+            base_layer_dir=base_layer_dir,
+            base_layer_hash=b"hash",
         )
 
         # pylint: enable=attribute-defined-outside-init
@@ -301,6 +309,9 @@ class TestCleaning:
         foo_state_dir = Path("parts/foo/state")
         bar_state_dir = Path("parts/bar/state")
 
+        assert Path("overlay/stage_overlay").is_file()
+        assert Path("overlay/prime_overlay").is_file()
+
         self._lifecycle.clean(part_names=["foo"])
 
         assert Path("parts/foo/src/foo.txt").is_file() is False
@@ -338,6 +349,9 @@ class TestCleaning:
         step_is_stage_or_later = step >= Step.STAGE
         step_is_prime = step == Step.PRIME
 
+        assert Path("overlay/stage_overlay").is_file()
+        assert Path("overlay/prime_overlay").is_file()
+
         self._lifecycle.clean(step)
 
         assert Path("parts").exists() == step_is_overlay_or_later
@@ -347,7 +361,9 @@ class TestCleaning:
         assert Path("parts/bar/install/bar.txt").exists() == step_is_stage_or_later
         assert Path("stage/foo.txt").exists() == step_is_prime
         assert Path("stage/bar.txt").exists() == step_is_prime
-        assert Path("prime").is_file() is False
+        assert Path("overlay/stage_overlay").exists() == step_is_prime
+        assert Path("overlay/prime_overlay").exists() is False
+        assert Path("prime").exists() is False
 
         all_states = []
         if step_is_overlay_or_later:
