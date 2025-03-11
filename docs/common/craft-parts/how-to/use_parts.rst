@@ -12,7 +12,7 @@ Consequently, all packages will have one or more parts.
 Parts are purposefully flexible to allow for varied and disparate sources. At its
 simplest, a part will locate a project's source code and invoke a
 :ref:`plugin <plugins>` to build the application in the environment. However, you can
-just as easily use a part to to source and extract a binary executable from an RPM file.
+just as easily use a part to source and extract a binary executable from an RPM file.
 It can also download tagged code from a remote repository, pull in dependencies,
 define a build order, or completely override any stage of the
 :ref:`lifecycle <lifecycle>`.
