@@ -277,11 +277,17 @@ class PartHandler:
                     stderr=stderr,
                 )
 
-                # apply overlay-organize
+                # Apply overlay-organize.
+                # Since we have a single overlay_manager we need to provide a
+                # mapping where the only valid source is the overlay_mount_dir
+                # and the destinations are the part's layer dirs in partitions.
                 organize_files(
                     part_name=self._part.name,
                     file_map=self._part.spec.overlay_organize_files,
-                    install_dir_map=self._part.part_layer_dirs,
+                    install_dir_map={
+                        **self._part.part_layer_dirs,
+                        "default": self._part.dirs.overlay_mount_dir,
+                    },
                     overwrite=False,
                 )
 

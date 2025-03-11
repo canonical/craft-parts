@@ -77,7 +77,7 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
 
         p1 = Part(
             "p1",
-            {"plugin": "nil", "overlay-organize": {"foo": "(mypart)/foo"}},
+            {"plugin": "nil", "overlay-organize": {"foo1": "(mypart)/foo1"}},
             partitions=partitions,
         )
         info = ProjectInfo(
@@ -92,8 +92,9 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
         )
 
         p1.part_layer_dir.mkdir(parents=True)
-        file1 = p1.part_layer_dir / "foo"
-        file2 = p1.part_layer_dir / "bar"
+        file1 = p1.overlay_dir / "overlay" / "foo1"
+        file2 = p1.overlay_dir / "overlay" / "bar1"
+        file1.parent.mkdir(parents=True)
 
         file1.touch()
         file2.touch()
@@ -102,7 +103,8 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
 
         assert file1.exists() is False
         assert file2.is_file()
-        assert (p1.part_layer_dirs["mypart"] / "foo").is_file()
+        assert (p1.part_layer_dirs["mypart"] / "foo1").is_file()
+        assert (p1.part_layer_dirs["mypart"] / "bar1").exists() is False
 
     def test_run_overlay_with_filter(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
