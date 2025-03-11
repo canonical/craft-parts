@@ -26,6 +26,7 @@ CMakeLists
 CMakePlugin
 CMakePluginProperties
 CPAN
+CVE
 CallbackHook
 CallbackRegistrationError
 CalledProcessError
@@ -369,6 +370,7 @@ initialized
 iterable
 iojs
 jdk
+jinja
 jre
 js
 json
