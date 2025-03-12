@@ -61,6 +61,21 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If maven is invalid
           and there are no parts named maven-deps.
         """
+        try:
+            mvn_check = self.validate_dependency(
+                dependency="./mvnw",
+                plugin_name="maven",
+                part_dependencies=part_dependencies,
+                argument="--help",
+            )
+            if "usage" not in mvn_check:
+                raise errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason="invalid maven wrapper",
+                )
+        except errors.PluginEnvironmentValidationError:
+            pass
+
         version = self.validate_dependency(
             dependency="mvn",
             plugin_name="maven",
