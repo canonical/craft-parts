@@ -177,6 +177,16 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     return global_environment
 
 
+def _translate_partition_env(partition: str) -> str:
+    """Translate a partition name toa valid env var name chunk.
+
+    :param partition: The partition name
+
+    :returns: The translated name
+    """
+    return partition.upper().translate({ord("-"): "_", ord("/"): "_"})
+
+
 def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     """Get environment variables related to partitions.
 
@@ -194,15 +204,39 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in info.partitions:
-        formatted_partition = partition.upper().translate(
-            {ord("-"): "_", ord("/"): "_"}
-        )
+        formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_STAGE"] = str(
             info.get_stage_dir(partition=partition)
         )
         environment[f"CRAFT_{formatted_partition}_PRIME"] = str(
             info.get_prime_dir(partition=partition)
+        )
+
+    return environment
+
+
+def _get_step_overlay_environment_for_partitions(step_info: StepInfo) -> dict[str, str]:
+    """Get environment variables related to partitions and overlay for a part.
+
+    Assumes the partition feature is enabled.
+
+    :param step_info: Information about the current step.
+
+    :returns: A dictionary containing step environment variables for partitions.
+
+    :raises FeatureError: If the Project does not specify any partitions.
+    """
+    environment: dict[str, str] = {}
+
+    if not step_info.project_info.partitions:
+        raise errors.FeatureError("Partitions enabled but no partitions specified.")
+
+    for partition in step_info.project_info.partitions:
+        formatted_partition = _translate_partition_env(partition)
+
+        environment[f"CRAFT_{formatted_partition}_OVERLAY"] = str(
+            step_info.part_layer_dir
         )
 
     return environment
@@ -217,7 +251,7 @@ def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
     """
     global_environment = _get_global_environment(step_info.project_info)
 
-    return {
+    step_environment = {
         **global_environment,
         "CRAFT_PART_NAME": step_info.part_name,
         "CRAFT_STEP_NAME": getattr(step_info.step, "name", ""),
@@ -227,6 +261,11 @@ def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
         "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
         "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
     }
+
+    if Features().enable_partitions and Features().enable_overlay:
+        step_environment.update(_get_step_overlay_environment_for_partitions(step_info))
+
+    return step_environment
 
 
 def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
