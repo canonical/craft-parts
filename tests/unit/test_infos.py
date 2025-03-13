@@ -357,7 +357,6 @@ def test_part_info(new_dir):
     assert x.part_build_subdir == new_dir / "parts/foo/build"
     assert x.part_install_dir == new_dir / "parts/foo/install"
     assert x.part_state_dir == new_dir / "parts/foo/state"
-    assert x.part_layer_dir == new_dir / "parts/foo/layer"
     assert x.stage_dir == new_dir / "stage"
     assert x.prime_dir == new_dir / "prime"
     assert x.build_attributes == ["bar"]
@@ -516,7 +515,6 @@ def test_step_info(new_dir):
     assert x.part_build_dir == new_dir / "parts/foo/build"
     assert x.part_build_subdir == new_dir / "parts/foo/build"
     assert x.part_install_dir == new_dir / "parts/foo/install"
-    assert x.part_layer_dir == new_dir / "parts/foo/layer"
     assert x.stage_dir == new_dir / "stage"
     assert x.prime_dir == new_dir / "prime"
 

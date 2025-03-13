@@ -93,6 +93,10 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     part_environment = _get_step_environment(step_info)
     paths = [part.part_install_dir, part.stage_dir]
 
+    if Features().enable_partitions and Features().enable_overlay:
+        part_environment.update(_get_step_overlay_environment_for_partitions(part, step_info.partitions))
+
+
     bin_paths = []
     for path in paths:
         bin_paths.extend(os_utils.get_bin_paths(root=path, existing_only=True))
@@ -216,7 +220,7 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     return environment
 
 
-def _get_step_overlay_environment_for_partitions(step_info: StepInfo) -> dict[str, str]:
+def _get_step_overlay_environment_for_partitions(part: Part, partitions: list[str]) -> dict[str, str]:
     """Get environment variables related to partitions and overlay for a part.
 
     Assumes the partition feature is enabled.
@@ -229,14 +233,14 @@ def _get_step_overlay_environment_for_partitions(step_info: StepInfo) -> dict[st
     """
     environment: dict[str, str] = {}
 
-    if not step_info.project_info.partitions:
+    if not partitions:
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
-    for partition in step_info.project_info.partitions:
+    for partition in partitions:
         formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_OVERLAY"] = str(
-            step_info.part_layer_dirs[partition]
+            part.part_layer_dirs[partition]
         )
 
     return environment
@@ -261,9 +265,6 @@ def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
         "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
         "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
     }
-
-    if Features().enable_partitions and Features().enable_overlay:
-        step_environment.update(_get_step_overlay_environment_for_partitions(step_info))
 
     return step_environment
 
