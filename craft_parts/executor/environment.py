@@ -236,7 +236,7 @@ def _get_step_overlay_environment_for_partitions(step_info: StepInfo) -> dict[st
         formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_OVERLAY"] = str(
-            step_info.part_layer_dir
+            step_info.part_layer_dirs[partition]
         )
 
     return environment
