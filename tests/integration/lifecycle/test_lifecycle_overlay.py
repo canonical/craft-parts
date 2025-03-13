@@ -213,7 +213,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning:
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, mocker):
+        mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+
         # pylint: disable=attribute-defined-outside-init
         parts_yaml = textwrap.dedent(
             """
