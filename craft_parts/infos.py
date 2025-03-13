@@ -376,6 +376,7 @@ class PartInfo:
         self._part_install_dir = part.part_install_dir
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
+        self._part_layer_dir = part.part_layer_dir
         self._part_dependencies = part.dependencies
         self.build_attributes = part.spec.build_attributes.copy()
 
@@ -431,6 +432,11 @@ class PartInfo:
     def part_cache_dir(self) -> Path:
         """Return the subdirectory containing this part's cache directory."""
         return self._part_cache_dir
+
+    @property
+    def part_layer_dir(self) -> Path:
+        """Return the subdirectory containing this part's cache directory."""
+        return self._part_layer_dir
 
     @property
     def part_dependencies(self) -> Sequence[str]:
