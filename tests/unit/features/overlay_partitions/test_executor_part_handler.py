@@ -71,13 +71,16 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
         self._mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         # pylint: enable=attribute-defined-outside-init
 
-    def test_run_overlay_organize(self, mocker, new_dir, partitions):
+    def test_run_overlay_script_move_to_partition(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
         mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
 
         p1 = Part(
             "p1",
-            {"plugin": "nil", "overlay-organize": {"foo1": "(mypart)/foo1"}},
+            {
+                "plugin": "nil",
+                "overlay-script": 'mv "$CRAFT_OVERLAY/foo1" "$CRAFT_MYPART_OVERLAY/"',
+            },
             partitions=partitions,
         )
         info = ProjectInfo(
@@ -264,7 +267,7 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
         )
 
         layer_hash = handler._compute_layer_hash(all_parts=False)
-        assert layer_hash.hex() == "a4a95026b752232f5f626c409fac9f3e8d15b456"
+        assert layer_hash.hex() == "80ab51c6c76eb2b6fc01adc3143ebaf2b982ae56"
 
     def test_compute_layer_hash_for_all_parts(self, new_dir, partitions):
         p1 = Part(
@@ -285,7 +288,7 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
         )
 
         layer_hash = handler._compute_layer_hash(all_parts=True)
-        assert layer_hash.hex() == "80595044b014b79932599b1c940eab8a467f9d79"
+        assert layer_hash.hex() == "f4ae5a2ed1b4fd8a7e03f9264ab0f98ed6fd991b"
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -385,8 +388,7 @@ class TestOverlayMigration:
             "p1",
             {
                 "plugin": "nil",
-                "overlay-script": "ls",
-                "overlay-organize": {"bar": "(mypart)/bar"},
+                "overlay-script": 'mv "$CRAFT_OVERLAY/bar" "$CRAFT_MYPART_OVERLAY"',
             },
             partitions=partitions,
         )

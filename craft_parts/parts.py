@@ -69,9 +69,6 @@ class PartSpec(BaseModel):
     build_attributes: list[str] = []
     organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
     overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
-    overlay_organize_files: dict[str, str] = Field(
-        default_factory=dict, alias="overlay-organize"
-    )
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"], alias="stage"
     )
@@ -93,9 +90,7 @@ class PartSpec(BaseModel):
         coerce_numbers_to_str=True,
     )
 
-    @field_validator(
-        "overlay_packages", "overlay_files", "overlay_script", "overlay_organize_files"
-    )
+    @field_validator("overlay_packages", "overlay_files", "overlay_script")
     @classmethod
     def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
         """Check if overlay attributes specified when feature is disabled."""
@@ -179,7 +174,6 @@ class PartSpec(BaseModel):
             self.overlay_packages
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
-            or self.overlay_organize_files
         )
 
     @property
@@ -464,7 +458,6 @@ class Part:
         for fileset_name, fileset, require_inner_path in [
             # organize source entries do not use partitions and
             # organize destination entries do not require an inner path
-            ("overlay-organize", self.spec.overlay_organize_files.values(), False),
             ("organize", self.spec.organize_files.values(), False),
             ("stage", self.spec.stage_files, True),
             ("prime", self.spec.prime_files, True),

@@ -59,7 +59,6 @@ class TestPartSpecs:
             "prime": ["*"],
             "override-pull": "override-pull",
             "overlay-script": "overlay-script",
-            "overlay-organize": {"src3": "dest3"},
             "override-build": "override-build",
             "override-stage": "override-stage",
             "override-prime": "override-prime",
@@ -106,20 +105,18 @@ class TestPartSpecs:
         assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
-        ("packages", "script", "files", "organize", "result"),
+        ("packages", "script", "files", "result"),
         [
-            ([], None, ["*"], {}, False),
-            (["pkg"], None, ["*"], {}, True),
-            ([], "ls", ["*"], {}, True),
-            ([], None, ["-usr/share"], {}, True),
-            ([], None, ["*"], {"src": "dest"}, True),
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
         ],
     )
-    def test_spec_has_overlay(self, packages, script, files, organize, result):
+    def test_spec_has_overlay(self, packages, script, files, result):
         data = {
             "overlay-packages": packages,
             "overlay-script": script,
-            "overlay-organize": organize,
             "overlay": files,
         }
         spec = PartSpec.unmarshal(data)
@@ -324,22 +321,20 @@ class TestPartData:
         assert p.spec.get_scriptlet(step) is None
 
     @pytest.mark.parametrize(
-        ("packages", "script", "files", "organize", "result"),
+        ("packages", "script", "files", "result"),
         [
-            ([], None, ["*"], {}, False),
-            (["pkg"], None, ["*"], {}, True),
-            ([], "ls", ["*"], {}, True),
-            ([], None, ["-usr/share"], {}, True),
-            ([], None, ["*"], {"src": "dest"}, True),
+            ([], None, ["*"], False),
+            (["pkg"], None, ["*"], True),
+            ([], "ls", ["*"], True),
+            ([], None, ["-usr/share"], True),
         ],
     )
-    def test_part_has_overlay(self, packages, script, files, organize, result):
+    def test_part_has_overlay(self, packages, script, files, result):
         p = Part(
             "foo",
             {
                 "overlay-packages": packages,
                 "overlay-script": script,
-                "overlay-organize": organize,
                 "overlay": files,
             },
         )

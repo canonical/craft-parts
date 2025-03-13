@@ -67,12 +67,6 @@ class LayerHash:
 
         hasher = hashlib.sha1()  # noqa: S324
         hasher.update(digest)
-        for key, value in part.spec.overlay_organize_files.items():
-            hasher.update(f"{key}:{value}".encode())
-        digest = hasher.digest()
-
-        hasher = hashlib.sha1()  # noqa: S324
-        hasher.update(digest)
         if part.spec.overlay_script:
             hasher.update(part.spec.overlay_script.encode())
         return cls(hasher.digest())

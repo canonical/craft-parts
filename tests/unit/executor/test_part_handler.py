@@ -123,7 +123,7 @@ class TestPartHandling:
                 "installed-packages": ["hello=2.10"],
                 "installed-snaps": ["snapcraft=6466"],
             },
-            overlay_hash="a3700a380077e2a4306b64628707ad87588040f2",
+            overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
         assert self._mock_mount_overlayfs.mock_calls == []
@@ -191,7 +191,7 @@ class TestPartHandling:
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
-            overlay_hash="a3700a380077e2a4306b64628707ad87588040f2",
+            overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
     def test_run_prime(self, new_dir, mocker):
