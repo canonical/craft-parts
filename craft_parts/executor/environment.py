@@ -94,8 +94,9 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     paths = [part.part_install_dir, part.stage_dir]
 
     if Features().enable_partitions and Features().enable_overlay:
-        part_environment.update(_get_step_overlay_environment_for_partitions(part, step_info.partitions))
-
+        part_environment.update(
+            _get_step_overlay_environment_for_partitions(part, step_info.partitions)
+        )
 
     bin_paths = []
     for path in paths:
@@ -220,7 +221,9 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     return environment
 
 
-def _get_step_overlay_environment_for_partitions(part: Part, partitions: list[str]) -> dict[str, str]:
+def _get_step_overlay_environment_for_partitions(
+    part: Part, partitions: list[str]
+) -> dict[str, str]:
     """Get environment variables related to partitions and overlay for a part.
 
     Assumes the partition feature is enabled.

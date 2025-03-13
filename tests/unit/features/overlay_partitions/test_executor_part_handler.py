@@ -102,7 +102,9 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
         file1.touch()
         file2.touch()
 
-        handler._run_overlay(StepInfo(part_info, Step.OVERLAY), stdout=None, stderr=None)
+        handler._run_overlay(
+            StepInfo(part_info, Step.OVERLAY), stdout=None, stderr=None
+        )
 
         assert file1.exists() is False
         assert file2.is_file()
