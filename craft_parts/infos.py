@@ -19,7 +19,7 @@
 import logging
 import platform
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -377,6 +377,7 @@ class PartInfo:
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
         self._part_layer_dir = part.part_layer_dir
+        self._part_layer_dirs = part.part_layer_dirs
         self._part_dependencies = part.dependencies
         self.build_attributes = part.spec.build_attributes.copy()
 
@@ -437,6 +438,11 @@ class PartInfo:
     def part_layer_dir(self) -> Path:
         """Return the subdirectory containing this part's cache directory."""
         return self._part_layer_dir
+
+    @property
+    def part_layer_dirs(self) -> Mapping[str | None, Path]:
+        """Return a mapping of partition names to layer directories."""
+        return self._part_layer_dirs
 
     @property
     def part_dependencies(self) -> Sequence[str]:
