@@ -183,7 +183,7 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
 
 
 def _translate_partition_env(partition: str) -> str:
-    """Translate a partition name toa valid env var name chunk.
+    """Translate a partition name to a valid env var name chunk.
 
     :param partition: The partition name
 
