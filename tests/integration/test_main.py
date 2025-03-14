@@ -679,6 +679,28 @@ def test_main_strict(mocker):
         "base_layer_dir": None,
         "base_layer_hash": b"",
         "cache_dir": mocker.ANY,
+        "partitions": None,
         "strict_mode": True,
+        "work_dir": ".",
+    }
+
+
+def test_main_partitions(mocker):
+    """Test passing "--partitions" on the command line."""
+    Path("parts.yaml").write_text(parts_yaml)
+    mocker.patch.object(sys, "argv", ["cmd", "--partitions", "default,foo,bar"])
+
+    spied_lcm = mocker.spy(craft_parts.LifecycleManager, name="__init__")
+    main.main()
+
+    kwargs = spied_lcm.call_args[1]
+    assert kwargs == {
+        "application_name": "craft_parts",
+        "base": "",
+        "base_layer_dir": None,
+        "base_layer_hash": b"",
+        "cache_dir": mocker.ANY,
+        "partitions": ["default", "foo", "bar"],
+        "strict_mode": False,
         "work_dir": ".",
     }

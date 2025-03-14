@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from craft_parts import Features, errors
+from craft_parts import Features
 
 
 @pytest.fixture(autouse=True)
@@ -67,14 +67,3 @@ def test_features_set_twice():
         Features(enable_overlay=False)
 
     assert str(raised.value) == "parameters can only be set once"
-
-
-def test_features_mutually_exclusive():
-    """Mutually exclusive features cannot be enabled together."""
-    with pytest.raises(errors.FeatureError) as raised:
-        Features(enable_overlay=True, enable_partitions=True)
-
-    assert raised.value.message == "Cannot enable overlay and partition features."
-    assert raised.value.details == (
-        "Overlay and partition features are mutually exclusive."
-    )

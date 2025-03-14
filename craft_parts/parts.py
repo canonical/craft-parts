@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -346,9 +346,31 @@ class Part:
         return self._part_dir / "layer"
 
     @property
+    def part_layer_dirs(self) -> Mapping[str | None, Path]:
+        """Return a mapping of partition names to layer directories.
+
+        With partitions disabled, the only partition name is ``None``
+        """
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"parts/{self.name}/layer",
+            )
+        )
+
+    @property
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
         return self.dirs.overlay_dir
+
+    @property
+    def overlay_dirs(self) -> Mapping[str | None, Path]:
+        """A mapping of partition name to partition overlay directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.overlay_dirs
 
     @property
     def stage_dir(self) -> Path:

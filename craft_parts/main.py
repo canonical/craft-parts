@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -49,7 +49,11 @@ def main() -> None:
 
     logging.basicConfig(level=log_level)
 
-    craft_parts.Features(enable_overlay=True)
+    features = {"enable_overlay": True}
+    if options.partitions:
+        features["enable_partitions"] = True
+
+    craft_parts.Features(**features)
 
     try:
         _process_parts(options)
@@ -92,6 +96,8 @@ def _process_parts(options: argparse.Namespace) -> None:
         base_layer_hash = b""
         overlay_base = None
 
+    partitions = options.partitions.split(",") if options.partitions else None
+
     lcm = craft_parts.LifecycleManager(
         part_data,
         application_name=options.application_name,
@@ -101,6 +107,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         base=options.base,
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
+        partitions=partitions,
     )
 
     command = options.command if options.command else "prime"
@@ -272,6 +279,12 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="dirname",
         default="",
         help="Set an alternate cache directory location.",
+    )
+    parser.add_argument(
+        "--partitions",
+        metavar="name",
+        default="",
+        help="List of partitions to create.",
     )
     parser.add_argument(
         "-v",
