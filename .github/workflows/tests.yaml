@@ -202,7 +202,9 @@ jobs:
           node-version: 16
       - name: Run integration tests
         run: |
-          make test-integrations
+          sudo -E env PATH=$PATH make test-integrations
+        env:
+          PYTEST_ADDOPTS: "--no-header -vv -rN"
       - name: Run overlay smoke test
         if: ${{ matrix.adjective == 'focal' }}  # TODO: fix this smoke test for jammy
         run: |
