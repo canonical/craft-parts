@@ -10,6 +10,20 @@ New features:
 - Previously, ``source-commit`` could only accept full length (40 character)
   hashes. Now, ``source-commit`` can accept short hashes.
 
+Bug fixes:
+
+- Fix the default behavior of the :ref:`jlink plugin <craft_parts_jlink_plugin>`
+  only finding JAR files in the top-level directory. It now searches all
+  subdirectories too.
+
+2.4.3 (2025-03-11)
+------------------
+
+Bug fixes:
+
+- Address race condition when collecting subprocess output.
+- Update jinja2 dependency to address CVE-2025-27516
+
 2.4.2 (2025-03-04)
 ------------------
 

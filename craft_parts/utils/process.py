@@ -151,6 +151,7 @@ def run(
 
         with closing(BytesIO()) as combined_io:
             while True:
+                finished = proc.poll() is not None
                 try:
                     # Time out if we don't have any event to handle
                     for key, mask in selector.select(0.1):
@@ -164,7 +165,7 @@ def run(
                 except BlockingIOError:
                     pass
 
-                if proc.poll() is not None:
+                if finished:
                     combined = combined_io.getvalue()
                     break
 

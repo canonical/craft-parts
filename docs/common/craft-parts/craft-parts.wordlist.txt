@@ -30,6 +30,7 @@ CMakeLists
 CMakePlugin
 CMakePluginProperties
 CPAN
+CVE
 CallbackHook
 CallbackRegistrationError
 CalledProcessError
@@ -309,6 +310,7 @@ ZipSourceModel
 abcdef
 args
 armv
+artifact
 artifacts
 autogen
 autotools
@@ -385,6 +387,7 @@ iterable
 iojs
 jdeps
 jdk
+jinja
 jlink
 jre
 js
