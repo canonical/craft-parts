@@ -94,9 +94,8 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     paths = [part.part_install_dir, part.stage_dir]
 
     if Features().enable_partitions and Features().enable_overlay:
-        part_environment.update(
-            _get_step_overlay_environment_for_partitions(part, step_info.partitions)
-        )
+        part_environment.update(_get_step_overlay_environment_for_partitions(part, step_info.partitions))
+
 
     bin_paths = []
     for path in paths:
@@ -221,9 +220,7 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     return environment
 
 
-def _get_step_overlay_environment_for_partitions(
-    part: Part, partitions: list[str]
-) -> dict[str, str]:
+def _get_step_overlay_environment_for_partitions(part: Part, partitions: list[str]) -> dict[str, str]:
     """Get environment variables related to partitions and overlay for a part.
 
     Assumes the partition feature is enabled.
@@ -258,7 +255,7 @@ def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
     """
     global_environment = _get_global_environment(step_info.project_info)
 
-    return {
+    step_environment = {
         **global_environment,
         "CRAFT_PART_NAME": step_info.part_name,
         "CRAFT_STEP_NAME": getattr(step_info.step, "name", ""),
@@ -268,6 +265,8 @@ def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
         "CRAFT_PART_BUILD_WORK": str(step_info.part_build_subdir),
         "CRAFT_PART_INSTALL": str(step_info.part_install_dir),
     }
+
+    return step_environment
 
 
 def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
