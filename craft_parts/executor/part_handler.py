@@ -888,7 +888,7 @@ class PartHandler:
         :param step: The step corresponding to the shared directory.
         :param shared_dir: The shared directory to clean.
         """
-        logger.info(f"clean shared dir: {shared_dir} for step: {step}")
+        logger.debug(f"clean shared dir: {shared_dir} for step: {step}")
         part_states = _load_part_states(step, self._part_list)
         overlay_migration_state = states.load_overlay_migration_state(
             self._part.overlay_dirs[partition], step
