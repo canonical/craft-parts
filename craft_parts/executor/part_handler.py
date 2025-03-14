@@ -904,7 +904,6 @@ class PartHandler:
         parts_with_overlay_in_step = _parts_with_overlay_in_step(
             step, part_list=self._part_list
         )
-        logger.info(f"parts_with_overlay_in_step: {parts_with_overlay_in_step}")
 
         # remove overlay data if this is the last part with overlay
         if self._part.has_overlay and len(parts_with_overlay_in_step) == 1:
