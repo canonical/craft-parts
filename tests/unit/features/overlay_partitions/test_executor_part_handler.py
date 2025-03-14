@@ -362,6 +362,7 @@ class TestPartReapplyHandler(test_executor_part_handler.TestPartReapplyHandler):
         self._handler.run_action(Action("foo.txt", Step.PULL))
 
         Path("parts/foo/layer/foo.txt").touch()
+        Path("partitions/mypart/parts/foo/layer").mkdir(parents=True)
         Path("partitions/mypart/parts/foo/layer/foo.txt").touch()
 
         self._handler.run_action(Action("foo", Step.OVERLAY, ActionType.REAPPLY))
@@ -425,6 +426,7 @@ class TestOverlayMigration:
         self._p1_handler._make_dirs()
         self._p2_handler._make_dirs()
         self._p3_handler._make_dirs()
+        p1.part_layer_dirs["mypart"].mkdir(parents=True)
 
         # populate layers
         Path(p1.part_layer_dir, "dir1").mkdir()
