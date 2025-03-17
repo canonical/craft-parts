@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The .NET plugin."""
+"""The new .NET plugin."""
 
 import logging
 from typing import Literal, cast
@@ -28,30 +28,30 @@ from .properties import PluginProperties
 logger = logging.getLogger(__name__)
 
 
-class Dotnet2PluginProperties(PluginProperties, frozen=True):
+class DotnetV2PluginProperties(PluginProperties, frozen=True):
     """The part properties used by the .NET plugin."""
 
-    plugin: Literal["dotnet2"] = "dotnet2"
+    plugin: Literal["dotnet"] = "dotnet"
 
     # Global flags
-    dotnet2_configuration: str = "Release"
-    dotnet2_project: str | None = None
-    dotnet2_self_contained: bool = False
-    dotnet2_verbosity: str = "normal"
-    dotnet2_version: str | None = None
+    dotnet_configuration: str = "Release"
+    dotnet_project: str | None = None
+    dotnet_self_contained: bool = False
+    dotnet_verbosity: str = "normal"
+    dotnet_version: str | None = None
 
     # Restore specific flags
-    dotnet2_restore_sources: list[str] = []
-    dotnet2_restore_configfile: str | None = None
+    dotnet_restore_sources: list[str] = []
+    dotnet_restore_configfile: str | None = None
 
     # Build specific flags
-    dotnet2_build_framework: str | None = None
+    dotnet_build_framework: str | None = None
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
-class Dotnet2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     """Check the execution environment for the Dotnet plugin.
 
     :param part_name: The part whose build environment is being validated.
@@ -68,12 +68,12 @@ class Dotnet2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """
         self.validate_dependency(
             dependency="dotnet",
-            plugin_name="dotnet2",
+            plugin_name="dotnet",
             part_dependencies=part_dependencies,
         )
 
 
-class Dotnet2Plugin(Plugin):
+class DotnetV2Plugin(Plugin):
     """A plugin for .NET projects.
 
     The .NET plugin uses the common plugin keywords as well as those for "sources".
@@ -81,24 +81,24 @@ class Dotnet2Plugin(Plugin):
 
     Global Flags:
 
-    - ``dotnet2-configuration``
+    - ``dotnet-configuration``
       (string)
       The .NET build configuration to use. (Default: "Release").
 
-    - ``dotnet2-project``
+    - ``dotnet-project``
       (string)
       The .NET proj or solution file to build. (Default: ommited).
 
-    - ``dotnet2-self-contained``
+    - ``dotnet-self-contained``
       (bool)
       Build and publish the project as a self-contained application. (Default: False).
 
-    - ``dotnet2-verbosity``
+    - ``dotnet-verbosity``
       (string)
       The verbosity level of the build output. Possible values are q[uiet], m[inimal],
       n[ormal], d[etailed], and diag[nostic]. (Default: "normal").
 
-    - ``dotnet2-version``
+    - ``dotnet-version``
       (string)
       The version of the .NET SDK to download and use. This parameter is optional, so if
       no value is specified, the plugin will assume a .NET SDK is being provided and will
@@ -106,34 +106,34 @@ class Dotnet2Plugin(Plugin):
 
     Restore-specific Flags:
 
-    - ``dotnet2-restore-sources``
+    - ``dotnet-restore-sources``
       (string)
       The URI of the NuGet package sources to use during the restore operation.
       Multiple values can be specified. This setting overrides all of the sources
       specified in the nuget.config files.
       (Default: ommited).
 
-    - ``dotnet2-restore-configfile``
+    - ``dotnet-restore-configfile``
       (string)
       The NuGet configuration file (nuget.config) to use. (Default: ommited).
 
     Build-specific Flags:
 
-    - ``dotnet2-build-framework``
+    - ``dotnet-build-framework``
       (string)
       The target framework to build for. (Default: ommited).
     """
 
-    properties_class = Dotnet2PluginProperties
-    validator_class = Dotnet2PluginEnvironmentValidator
+    properties_class = DotnetV2PluginProperties
+    validator_class = DotnetV2PluginEnvironmentValidator
 
     @override
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
-        options = cast(Dotnet2PluginProperties, self._options)
+        options = cast(DotnetV2PluginProperties, self._options)
 
         # .NET binary provided by the user
-        if "dotnet2-deps" in self._part_info.part_dependencies or options.dotnet2_version is None:
+        if "dotnet-deps" in self._part_info.part_dependencies or options.dotnet_version is None:
             return set()
 
         snap_name = self._generate_snap_name(options)
@@ -152,14 +152,14 @@ class Dotnet2Plugin(Plugin):
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
-        options = cast(Dotnet2PluginProperties, self._options)
+        options = cast(DotnetV2PluginProperties, self._options)
 
         environment = {
             "DOTNET_NOLOGO": "1",
         }
 
         # .NET binary provided by the user
-        if "dotnet2-deps" in self._part_info.part_dependencies:
+        if "dotnet-deps" in self._part_info.part_dependencies:
             return environment
 
         build_on = self._part_info.project_info.arch_build_on
@@ -185,7 +185,7 @@ class Dotnet2Plugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        options = cast(Dotnet2PluginProperties, self._options)
+        options = cast(DotnetV2PluginProperties, self._options)
 
         # Check if version is valid
         self._generate_snap_name(options)
@@ -203,7 +203,7 @@ class Dotnet2Plugin(Plugin):
             raise ValueError(f"Unsupported architecture: {build_for}")
         
         # Validate verbosity
-        if options.dotnet2_verbosity not in ["quiet", "q", "minimal", "m", "normal", "n", "detailed", "d", "diagnostic", "diag"]:
+        if options.dotnet_verbosity not in ["quiet", "q", "minimal", "m", "normal", "n", "detailed", "d", "diagnostic", "diag"]:
             raise ValueError("Invalid verbosity level")
 
         # Restore step
@@ -217,8 +217,8 @@ class Dotnet2Plugin(Plugin):
 
         return [restore_cmd, build_cmd, publish_cmd]
 
-    def _generate_snap_name(self, options: Dotnet2PluginProperties) -> str | None:
-        version = options.dotnet2_version
+    def _generate_snap_name(self, options: DotnetV2PluginProperties) -> str | None:
+        version = options.dotnet_version
         if version is None:
             return None
 
@@ -238,59 +238,59 @@ class Dotnet2Plugin(Plugin):
         snap_name = f"dotnet-sdk-{snap_version}"
         return snap_name
 
-    def _get_restore_command(self, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
+    def _get_restore_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
         restore_cmd = "dotnet restore"
 
-        if options.dotnet2_restore_sources:
-            logger.info(f"Using restore sources: {options.dotnet2_restore_sources}")
-            for source in options.dotnet2_restore_sources:
+        if options.dotnet_restore_sources:
+            logger.info(f"Using restore sources: {options.dotnet_restore_sources}")
+            for source in options.dotnet_restore_sources:
                 restore_cmd += f" --source {source}"
-        if options.dotnet2_restore_configfile:
-            restore_cmd += f" --configfile {options.dotnet2_restore_configfile}"
+        if options.dotnet_restore_configfile:
+            restore_cmd += f" --configfile {options.dotnet_restore_configfile}"
 
-        restore_cmd += f" --verbosity {options.dotnet2_verbosity}"
+        restore_cmd += f" --verbosity {options.dotnet_verbosity}"
         restore_cmd += f" --runtime {dotnet_rid}"
 
-        if options.dotnet2_project:
-            restore_cmd += f" {options.dotnet2_project}"
+        if options.dotnet_project:
+            restore_cmd += f" {options.dotnet_project}"
 
         return restore_cmd
     
-    def _get_build_command(self, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
+    def _get_build_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
         build_cmd = (
             "dotnet build "
-            f"--configuration {options.dotnet2_configuration} "
+            f"--configuration {options.dotnet_configuration} "
             f"--no-restore"
         )
 
-        if options.dotnet2_build_framework:
-            build_cmd += f" --framework {options.dotnet2_build_framework}"
+        if options.dotnet_build_framework:
+            build_cmd += f" --framework {options.dotnet_build_framework}"
 
-        build_cmd += f" --verbosity {options.dotnet2_verbosity}"
+        build_cmd += f" --verbosity {options.dotnet_verbosity}"
 
         # Self contained build
         build_cmd += f" --runtime {dotnet_rid}"
-        build_cmd += f" --self-contained {options.dotnet2_self_contained}"
+        build_cmd += f" --self-contained {options.dotnet_self_contained}"
 
-        if options.dotnet2_project:
-            build_cmd += f" {options.dotnet2_project}"
+        if options.dotnet_project:
+            build_cmd += f" {options.dotnet_project}"
 
         return build_cmd
     
-    def _get_publish_command(self, dotnet_rid: str, options: Dotnet2PluginProperties) -> str:
+    def _get_publish_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
         publish_cmd = (
             "dotnet publish "
-            f"--configuration {options.dotnet2_configuration} "
+            f"--configuration {options.dotnet_configuration} "
             f"--output {self._part_info.part_install_dir} "
-            f"--verbosity {options.dotnet2_verbosity} "
+            f"--verbosity {options.dotnet_verbosity} "
             "--no-restore --no-build"
         )
 
         # Self contained build
         publish_cmd += f" --runtime {dotnet_rid}"
-        publish_cmd += f" --self-contained {options.dotnet2_self_contained}"
+        publish_cmd += f" --self-contained {options.dotnet_self_contained}"
 
-        if options.dotnet2_project:
-            publish_cmd += f" {options.dotnet2_project}"
+        if options.dotnet_project:
+            publish_cmd += f" {options.dotnet_project}"
 
         return publish_cmd

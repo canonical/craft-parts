@@ -20,23 +20,23 @@ from pathlib import Path
 
 import yaml
 from craft_parts import LifecycleManager, Step
-from craft_parts.plugins import dotnet2_plugin
+from craft_parts.plugins import dotnet_v2_plugin
 from overrides import override
 
 
-def test_dotnet2_plugin(new_dir, partitions):
+def test_dotnet_plugin(new_dir, partitions):
     # pylint: disable=line-too-long
     parts_yaml = textwrap.dedent(
         """
         parts:
           foo:
             source: .
-            plugin: dotnet2
-            dotnet2-self-contained: true
+            plugin: dotnet
+            dotnet-self-contained: true
             build-environment:
               - PATH: $CRAFT_STAGE/sdk:$PATH
-            after: [dotnet2-deps]
-          dotnet2-deps:
+            after: [dotnet-deps]
+          dotnet-deps:
             plugin: dump
             source: https://download.visualstudio.microsoft.com/download/pr/d2abdb4c-a96e-4123-9351-e4dd2ea20905/e8010ae2688786ffc1ebca4ebb52f41b/dotnet-sdk-8.0.406-linux-x64.tar.gz
             source-checksum: sha512/d6fdcfebd0df46959f7857cfb3beac7de6c8843515ece28b24802765fd9cfb6c7e9701b320134cb4907322937ab89cae914ddc21bf48b9b6313e9a9af5c1f24a
@@ -84,10 +84,10 @@ def test_dotnet2_plugin(new_dir, partitions):
     assert output == "Hello, World!\n"
 
 
-def test_dotnet2_plugin_no_dotnet(new_dir, partitions, mocker):
+def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
 
-    class FailSpecificCmdValidator(dotnet2_plugin.Dotnet2PluginEnvironmentValidator):
+    class FailSpecificCmdValidator(dotnet_v2_plugin.DotnetV2PluginEnvironmentValidator):
         """A validator that always fails the first time we run `dotnet --version`."""
 
         __already_run = False
@@ -100,16 +100,16 @@ def test_dotnet2_plugin_no_dotnet(new_dir, partitions, mocker):
             return super()._execute(cmd)
 
     mocker.patch.object(
-        dotnet2_plugin.Dotnet2Plugin, "validator_class", FailSpecificCmdValidator
+        dotnet_v2_plugin.DotnetV2Plugin, "validator_class", FailSpecificCmdValidator
     )
 
-    test_dotnet2_plugin(new_dir, partitions)
+    test_dotnet_plugin(new_dir, partitions)
 
 
-def test_dotnet2_plugin_fake_dotnet(new_dir, partitions, mocker):
+def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet is installed."""
 
-    class AlwaysFindDotnetValidator(dotnet2_plugin.Dotnet2PluginEnvironmentValidator):
+    class AlwaysFindDotnetValidator(dotnet_v2_plugin.DotnetV2PluginEnvironmentValidator):
         """A validator that always succeeds the first time running `dotnet --version`."""
 
         __already_run = False
@@ -128,7 +128,7 @@ def test_dotnet2_plugin_fake_dotnet(new_dir, partitions, mocker):
                 self.__class__.__already_run = True
 
     mocker.patch.object(
-        dotnet2_plugin.Dotnet2Plugin, "validator_class", AlwaysFindDotnetValidator
+        dotnet_v2_plugin.DotnetV2Plugin, "validator_class", AlwaysFindDotnetValidator
     )
 
-    test_dotnet2_plugin(new_dir, partitions)
+    test_dotnet_plugin(new_dir, partitions)

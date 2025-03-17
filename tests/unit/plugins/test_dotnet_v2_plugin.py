@@ -19,7 +19,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.dotnet2_plugin import Dotnet2Plugin
+from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
 from pydantic import ValidationError
 
 
@@ -32,8 +32,8 @@ def part_info(new_dir):
 
 
 def test_validate_environment(dependency_fixture, part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
     dotnet = dependency_fixture("dotnet")
 
     validator = plugin.validator_class(
@@ -43,8 +43,8 @@ def test_validate_environment(dependency_fixture, part_info):
 
 
 def test_validate_environment_missing_dotnet(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
@@ -56,8 +56,8 @@ def test_validate_environment_missing_dotnet(part_info):
 
 
 def test_validate_environment_broken_dotnet(dependency_fixture, part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
     dotnet = dependency_fixture("dotnet", broken=True)
 
     validator = plugin.validator_class(
@@ -70,18 +70,18 @@ def test_validate_environment_broken_dotnet(dependency_fixture, part_info):
 
 
 def test_validate_environment_with_dotnet_part(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
     )
-    validator.validate_environment(part_dependencies=["dotnet2-deps"])
+    validator.validate_environment(part_dependencies=["dotnet-deps"])
 
 
 def test_validate_environment_without_dotnet_part(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=properties
@@ -91,7 +91,7 @@ def test_validate_environment_without_dotnet_part(part_info):
 
     assert raised.value.reason == (
         "'dotnet' not found and part 'my-part' does not depend on a part named "
-        "'dotnet2-deps' that would satisfy the dependency"
+        "'dotnet-deps' that would satisfy the dependency"
     )
 
 
@@ -103,19 +103,19 @@ def test_validate_environment_without_dotnet_part(part_info):
     ("10.0", "dotnet-sdk-100"),
 ])
 def test_get_build_snaps(part_info, dotnet_version, expected_snap_name):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
+    properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet2-version": dotnet_version
+            "dotnet-version": dotnet_version
         })
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_snaps() == {expected_snap_name}
 
 
 def test_get_build_packages(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_packages() == set()
 
@@ -129,13 +129,13 @@ def test_get_build_packages(part_info):
     "5.0",
     "5.1",
 ])
-def test_get_build_environment_without_dotnet2_deps_and_invalid_versions(part_info, part_version):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
+def test_get_build_environment_without_dotnet_deps_and_invalid_versions(part_info, part_version):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet2-version": part_version
+            "dotnet-version": part_version
         })
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     with pytest.raises(ValueError) as raised:
         plugin.get_build_environment()
@@ -150,13 +150,13 @@ def test_get_build_environment_without_dotnet2_deps_and_invalid_versions(part_in
     "9.1",
     "10"
 ])
-def test_get_build_environment_without_dotnet2_deps_and_valid_versions(part_info, part_version):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
+def test_get_build_environment_without_dotnet_deps_and_valid_versions(part_info, part_version):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet2-version": part_version
+            "dotnet-version": part_version
         })
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     environment = plugin.get_build_environment()
     assert len(environment) == 3
@@ -166,8 +166,8 @@ def test_get_build_environment_without_dotnet2_deps_and_valid_versions(part_info
 
 
 def test_get_build_commands_default_values(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -207,10 +207,10 @@ def test_get_build_commands_default_values(part_info):
     "Release"
 ])
 def test_get_build_commands_configuration(part_info, configuration):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet2-configuration": configuration}
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-configuration": configuration}
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -249,10 +249,10 @@ def test_get_build_commands_configuration(part_info, configuration):
 
 
 def test_get_build_commands_project(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet2-project": "myproject.csproj"}
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-project": "myproject.csproj"}
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -298,10 +298,10 @@ def test_get_build_commands_project(part_info):
     False
 ])
 def test_get_build_commands_self_contained(part_info, self_contained):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet2-self-contained": self_contained}
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-self-contained": self_contained}
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -352,10 +352,10 @@ def test_get_build_commands_self_contained(part_info, self_contained):
     "diag"
 ])
 def test_get_build_commands_valid_verbosity(part_info, verbosity):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet2-verbosity": verbosity}
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-verbosity": verbosity}
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -394,10 +394,10 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
 
 
 def test_get_build_commands_invalid_verbosity(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet2-verbosity": "invalid"}
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-verbosity": "invalid"}
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     with pytest.raises(ValueError) as raised:
         plugin.get_build_commands()
@@ -411,10 +411,10 @@ def test_get_build_commands_invalid_verbosity(part_info):
     "9.1",
 ])
 def test_get_build_commands_valid_version(part_info, part_version):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet2-version": part_version}
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-version": part_version}
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -462,10 +462,10 @@ def test_get_build_commands_valid_version(part_info, part_version):
     "5.1",
 ])
 def test_get_build_commands_invalid_version(part_info, part_version):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet2-version": part_version}
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-version": part_version}
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     with pytest.raises(ValueError) as raised:
         plugin.get_build_commands()
@@ -474,13 +474,13 @@ def test_get_build_commands_invalid_version(part_info, part_version):
 
 
 def test_get_build_commands_restore_sources(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
+    properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet2-restore-sources": ["source1", "source2"]
+            "dotnet-restore-sources": ["source1", "source2"]
         }
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -521,13 +521,13 @@ def test_get_build_commands_restore_sources(part_info):
 
 
 def test_get_build_commands_restore_configfile(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
+    properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet2-restore-configfile": "configfile"
+            "dotnet-restore-configfile": "configfile"
         }
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -567,13 +567,13 @@ def test_get_build_commands_restore_configfile(part_info):
 
 
 def test_get_build_commands_build_framework(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal(
+    properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet2-build-framework": "net8.0"
+            "dotnet-build-framework": "net8.0"
         }
     )
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     build_commands = plugin.get_build_commands()
     assert len(build_commands) == 3
@@ -614,16 +614,16 @@ def test_get_build_commands_build_framework(part_info):
 
 def test_invalid_parameters():
     with pytest.raises(ValidationError) as raised:
-        Dotnet2Plugin.properties_class.unmarshal({"source": ".", "dotnet2-invalid": True})
+        DotnetV2Plugin.properties_class.unmarshal({"source": ".", "dotnet-invalid": True})
     err = raised.value.errors()
     assert len(err) == 1
-    assert err[0]["loc"] == ("dotnet2-invalid",)
+    assert err[0]["loc"] == ("dotnet-invalid",)
     assert err[0]["type"] == "extra_forbidden"
 
 
 def test_missing_parameters():
     with pytest.raises(ValidationError) as raised:
-        Dotnet2Plugin.properties_class.unmarshal({})
+        DotnetV2Plugin.properties_class.unmarshal({})
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
@@ -631,8 +631,8 @@ def test_missing_parameters():
 
 
 def test_get_out_of_source_build(part_info):
-    properties = Dotnet2Plugin.properties_class.unmarshal({"source": "."})
-    plugin = Dotnet2Plugin(properties=properties, part_info=part_info)
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     assert plugin.get_out_of_source_build() is False
 
