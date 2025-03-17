@@ -293,6 +293,56 @@ def test_get_build_commands_project(part_info):
     assert build_commands[2].strip() == ""
 
 
+def test_get_build_commands_properties(part_info):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "dotnet-properties": {
+                "foo": "bar"
+            }
+        }
+    )
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
+
+    build_commands = plugin.get_build_commands()
+    assert len(build_commands) == 3
+
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
+        "restore",
+        "--verbosity normal",
+        "--runtime linux-x64",
+        "-p:foo=bar"
+    ])
+    assert build_commands[0].strip() == ""
+
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
+        "build",
+        "--configuration Release",
+        "--no-restore",
+        "--verbosity normal",
+        "--runtime linux-x64",
+        "--self-contained False",
+        "-p:foo=bar"
+    ])
+    assert build_commands[1].strip() == ""
+
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
+        "publish",
+        "--configuration Release",
+        f"--output {plugin._part_info.part_install_dir}",
+        "--verbosity normal",
+        "--no-restore",
+        "--no-build",
+        "--runtime linux-x64",
+        "--self-contained False",
+        "-p:foo=bar"
+    ])
+    assert build_commands[2].strip() == ""
+
+
 @pytest.mark.parametrize("self_contained", [
     True,
     False
@@ -473,11 +523,11 @@ def test_get_build_commands_invalid_version(part_info, part_version):
     assert str(raised.value) == "Version must be greater or equal to 6.0"
 
 
-def test_get_build_commands_restore_sources(part_info):
+def test_get_build_commands_restore_configfile(part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet-restore-sources": ["source1", "source2"]
+            "dotnet-restore-configfile": "configfile"
         }
     )
     plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
@@ -488,10 +538,9 @@ def test_get_build_commands_restore_sources(part_info):
     build_commands[0] = _remove_parameter_from_command(build_commands[0], [
         "dotnet",
         "restore",
+        "--configfile configfile",
         "--verbosity normal",
-        "--runtime linux-x64",
-        "--source source1",
-        "--source source2"
+        "--runtime linux-x64"
     ])
     assert build_commands[0] == ""
 
@@ -520,11 +569,13 @@ def test_get_build_commands_restore_sources(part_info):
     assert build_commands[2] == ""
 
 
-def test_get_build_commands_restore_configfile(part_info):
+def test_get_build_commands_restore_properties(part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {
             "source": ".",
-            "dotnet-restore-configfile": "configfile"
+            "dotnet-restore-properties": {
+                "foo": "bar"
+            }
         }
     )
     plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
@@ -535,9 +586,56 @@ def test_get_build_commands_restore_configfile(part_info):
     build_commands[0] = _remove_parameter_from_command(build_commands[0], [
         "dotnet",
         "restore",
-        "--configfile configfile",
         "--verbosity normal",
-        "--runtime linux-x64"
+        "--runtime linux-x64",
+        "-p:foo=bar"
+    ])
+    assert build_commands[0].strip() == ""
+
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
+        "build",
+        "--configuration Release",
+        "--no-restore",
+        "--verbosity normal",
+        "--runtime linux-x64",
+        "--self-contained False"
+    ])
+    assert build_commands[1].strip() == ""
+
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
+        "publish",
+        "--configuration Release",
+        f"--output {plugin._part_info.part_install_dir}",
+        "--verbosity normal",
+        "--no-restore",
+        "--no-build",
+        "--runtime linux-x64",
+        "--self-contained False"
+    ])
+    assert build_commands[2].strip() == ""
+
+
+def test_get_build_commands_restore_sources(part_info):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "dotnet-restore-sources": ["source1", "source2"]
+        }
+    )
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
+
+    build_commands = plugin.get_build_commands()
+    assert len(build_commands) == 3
+
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
+        "restore",
+        "--verbosity normal",
+        "--runtime linux-x64",
+        "--source source1",
+        "--source source2"
     ])
     assert build_commands[0] == ""
 
@@ -610,6 +708,148 @@ def test_get_build_commands_build_framework(part_info):
         "--self-contained False"
     ])
     assert build_commands[2] == ""
+
+
+def test_get_build_commands_restore_configfile(part_info):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "dotnet-restore-configfile": "configfile"
+        }
+    )
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
+
+    build_commands = plugin.get_build_commands()
+    assert len(build_commands) == 3
+
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
+        "restore",
+        "--configfile configfile",
+        "--verbosity normal",
+        "--runtime linux-x64"
+    ])
+    assert build_commands[0] == ""
+
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
+        "build",
+        "--configuration Release",
+        "--no-restore",
+        "--verbosity normal",
+        "--runtime linux-x64",
+        "--self-contained False"
+    ])
+    assert build_commands[1] == ""
+
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
+        "publish",
+        "--configuration Release",
+        f"--output {plugin._part_info.part_install_dir}",
+        "--verbosity normal",
+        "--no-restore",
+        "--no-build",
+        "--runtime linux-x64",
+        "--self-contained False"
+    ])
+    assert build_commands[2] == ""
+
+
+def test_get_build_commands_build_properties(part_info):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "dotnet-build-properties": {
+                "foo": "bar"
+            }
+        }
+    )
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
+
+    build_commands = plugin.get_build_commands()
+    assert len(build_commands) == 3
+
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
+        "restore",
+        "--verbosity normal",
+        "--runtime linux-x64"
+    ])
+    assert build_commands[0].strip() == ""
+
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
+        "build",
+        "--configuration Release",
+        "--no-restore",
+        "--verbosity normal",
+        "--runtime linux-x64",
+        "--self-contained False",
+        "-p:foo=bar"
+    ])
+    assert build_commands[1].strip() == ""
+
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
+        "publish",
+        "--configuration Release",
+        f"--output {plugin._part_info.part_install_dir}",
+        "--verbosity normal",
+        "--no-restore",
+        "--no-build",
+        "--runtime linux-x64",
+        "--self-contained False"
+    ])
+    assert build_commands[2].strip() == ""
+
+
+def test_get_build_commands_publish_properties(part_info):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "dotnet-publish-properties": {
+                "foo": "bar"
+            }
+        }
+    )
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
+
+    build_commands = plugin.get_build_commands()
+    assert len(build_commands) == 3
+
+    build_commands[0] = _remove_parameter_from_command(build_commands[0], [
+        "dotnet",
+        "restore",
+        "--verbosity normal",
+        "--runtime linux-x64"
+    ])
+    assert build_commands[0].strip() == ""
+
+    build_commands[1] = _remove_parameter_from_command(build_commands[1], [
+        "dotnet",
+        "build",
+        "--configuration Release",
+        "--no-restore",
+        "--verbosity normal",
+        "--runtime linux-x64",
+        "--self-contained False"
+    ])
+    assert build_commands[1].strip() == ""
+
+    build_commands[2] = _remove_parameter_from_command(build_commands[2], [
+        "dotnet",
+        "publish",
+        "--configuration Release",
+        f"--output {plugin._part_info.part_install_dir}",
+        "--verbosity normal",
+        "--no-restore",
+        "--no-build",
+        "--runtime linux-x64",
+        "--self-contained False",
+        "-p:foo=bar"
+    ])
+    assert build_commands[2].strip() == ""
 
 
 def test_invalid_parameters():

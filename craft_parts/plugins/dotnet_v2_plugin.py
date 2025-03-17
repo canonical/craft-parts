@@ -36,16 +36,22 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
     # Global flags
     dotnet_configuration: str = "Release"
     dotnet_project: str | None = None
+    dotnet_properties: dict[str, str] = {}
     dotnet_self_contained: bool = False
     dotnet_verbosity: str = "normal"
     dotnet_version: str | None = None
 
     # Restore specific flags
-    dotnet_restore_sources: list[str] = []
     dotnet_restore_configfile: str | None = None
+    dotnet_restore_properties: dict[str, str] = {}
+    dotnet_restore_sources: list[str] = []
 
     # Build specific flags
     dotnet_build_framework: str | None = None
+    dotnet_build_properties: dict[str, str] = {}
+
+    # Publish specific flags
+    dotnet_publish_properties: dict[str, str] = {}
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -251,6 +257,11 @@ class DotnetV2Plugin(Plugin):
         restore_cmd += f" --verbosity {options.dotnet_verbosity}"
         restore_cmd += f" --runtime {dotnet_rid}"
 
+        for prop_name, prop_value in options.dotnet_properties.items():
+            restore_cmd += f" -p:{prop_name}={prop_value}"
+        for prop_name, prop_value in options.dotnet_restore_properties.items():
+            restore_cmd += f" -p:{prop_name}={prop_value}"
+
         if options.dotnet_project:
             restore_cmd += f" {options.dotnet_project}"
 
@@ -272,6 +283,11 @@ class DotnetV2Plugin(Plugin):
         build_cmd += f" --runtime {dotnet_rid}"
         build_cmd += f" --self-contained {options.dotnet_self_contained}"
 
+        for prop_name, prop_value in options.dotnet_properties.items():
+            build_cmd += f" -p:{prop_name}={prop_value}"
+        for prop_name, prop_value in options.dotnet_build_properties.items():
+            build_cmd += f" -p:{prop_name}={prop_value}"
+
         if options.dotnet_project:
             build_cmd += f" {options.dotnet_project}"
 
@@ -289,6 +305,11 @@ class DotnetV2Plugin(Plugin):
         # Self contained build
         publish_cmd += f" --runtime {dotnet_rid}"
         publish_cmd += f" --self-contained {options.dotnet_self_contained}"
+
+        for prop_name, prop_value in options.dotnet_properties.items():
+            publish_cmd += f" -p:{prop_name}={prop_value}"
+        for prop_name, prop_value in options.dotnet_publish_properties.items():
+            publish_cmd += f" -p:{prop_name}={prop_value}"
 
         if options.dotnet_project:
             publish_cmd += f" {options.dotnet_project}"
