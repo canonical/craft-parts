@@ -192,12 +192,17 @@ def test_missing_parameters():
     assert err[0]["type"] == "missing"
 
 
-def test_get_build_commands(part_info):
-    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
+@pytest.mark.parametrize(
+    "use_mvnw, expected_command", [(True, "./mvnw package"), (False, "mvn package")]
+)
+def test_get_build_commands(part_info, use_mvnw, expected_command):
+    properties = MavenPlugin.properties_class.unmarshal(
+        {"source": ".", "use-mvnw": use_mvnw}
+    )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["mvn package", *plugin._get_java_post_build_commands()]
+        [expected_command, *plugin._get_java_post_build_commands()]
     )
 
 
