@@ -18,6 +18,7 @@
 
 import os
 import re
+import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Literal, cast
@@ -38,7 +39,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["maven"] = "maven"
 
     maven_parameters: list[str] = []
-
+    use_mvnw: bool = False
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
@@ -61,11 +62,13 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If maven is invalid
           and there are no parts named maven-deps.
         """
-        try:
+        options = cast(MavenPluginProperties, self._options)
+        if options.use_mvnw:
             mvn_check = self.validate_dependency(
                 dependency="./mvnw",
                 plugin_name="maven",
                 part_dependencies=part_dependencies,
+                # maven wrapper does not have --version
                 argument="--help",
             )
             if "usage" not in mvn_check:
@@ -73,21 +76,113 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     part_name=self._part_name,
                     reason="invalid maven wrapper",
                 )
-        except errors.PluginEnvironmentValidationError:
-            pass
+        else:
+            version = self.validate_dependency(
+                dependency="mvn",
+                plugin_name="maven",
+                part_dependencies=part_dependencies,
+            )
+            if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+                part_dependencies is None or "maven-deps" not in part_dependencies
+            ):
+                raise errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason=f"invalid maven version {version!r}",
+                )
 
-        version = self.validate_dependency(
-            dependency="mvn",
-            plugin_name="maven",
-            part_dependencies=part_dependencies,
-        )
-        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
-            part_dependencies is None or "maven-deps" not in part_dependencies
-        ):
+        try:
+            system_java_version_output = self._execute("java --version")
+            # Java versions < 8 have syntax 1.<version>
+            version_output_match = re.match(
+                "openjdk (1\.(\d+)|(\d+))", system_java_version_output
+            )
+            if version_output_match is None:
+                raise errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason=f"failed to check java version: {system_java_version_output}",
+                )
+            system_java_major_version = version_output_match.group(1)
+        except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
-                reason=f"invalid maven version {version!r}",
+                reason=f"failed to check java version: {err}",
+            ) from err
+
+        maven_executable = "mvnw" if options.use_mvnw else "mvn"
+        effective_pom_path = Path("effective.pom")
+        try:
+            self._execute(
+                # Write to file since writing to stdout without maven info logs require sudo, i.e.
+                # sudo mvn help:effective-pom -q -DforceStdout -doutput=/dev/stdout
+                f"{maven_executable} help:effective-pom -Doutput={effective_pom_path}"
             )
+        except subprocess.CalledProcessError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"failed to generate effective pom: {err}",
+            ) from err
+        project_java_major_version = _parse_project_java_version(effective_pom_path)
+        # if the project Java version cannot be detected, let it try build anyway.
+        if project_java_major_version is None:
+            return
+
+        try:
+            if int(system_java_major_version) < int(project_java_major_version):
+                return
+        except ValueError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"failed to compare java versions: {err}, "
+                f"system: {system_java_major_version}, project: {project_java_major_version}",
+            ) from err
+
+
+def _parse_project_java_version(effective_pom_path: Path) -> str | None:
+    tree = ET.parse(effective_pom_path)
+    root = tree.getroot()
+    java_version_element = root.find(".//{*}java.version")
+    if java_version_element is not None and java_version_element.text:
+        return java_version_element.text
+    plugins_element = root.find(".//{*}plugins")
+    if plugins_element is not None:
+        plugins = plugins_element.findall(".//{*}plugin")
+        for plugin in plugins:
+            if (
+                (maven_compiler_plugin := plugin.find(".//{*}artifactId")) is not None
+                and maven_compiler_plugin.text == "maven-compiler-plugin"
+                and (
+                    maven_compiler_config := maven_compiler_plugin.find(
+                        ".//{*}configuration"
+                    )
+                )
+                is not None
+            ):
+                if (
+                    maven_compiler_target_element := maven_compiler_config.find(
+                        ".//{*}target"
+                    )
+                ) is not None and maven_compiler_target_element.text:
+                    return maven_compiler_target_element.text
+                if (
+                    maven_compiler_source_element := maven_compiler_config.find(
+                        ".//{*}source"
+                    )
+                ) is not None and maven_compiler_source_element.text:
+                    return maven_compiler_source_element.text
+
+    if (
+        maven_compiler_release_element := root.find(".//{*}maven.compiler.release")
+    ) is not None and maven_compiler_release_element.text:
+        return maven_compiler_release_element.text
+    if (
+        maven_compiler_target_element := root.find(".//{*}maven.compiler.target")
+    ) is not None and maven_compiler_target_element.text:
+        return maven_compiler_target_element.text
+    if (
+        maven_compiler_source_element := root.find(".//{*}maven.compiler.source")
+    ) is not None and maven_compiler_source_element.text:
+        return maven_compiler_source_element.text
+    return None
 
 
 class MavenPlugin(JavaPlugin):
