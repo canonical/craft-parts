@@ -16,15 +16,23 @@
 
 import io
 import os
+import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from textwrap import dedent
 from unittest import mock
 
 import pytest
-from craft_parts import Part, PartInfo, ProjectInfo, errors
-from craft_parts.plugins.maven_plugin import MavenPlugin
+from overrides import override
 from pydantic import ValidationError
+
+from craft_parts import Part, PartInfo, ProjectInfo, errors
+from craft_parts.plugins.maven_plugin import (
+    MavenPlugin,
+    MavenPluginEnvironmentValidator,
+    _extract_java_version,
+    _parse_project_java_version,
+)
 
 
 @pytest.fixture
@@ -35,9 +43,51 @@ def part_info(new_dir):
     )
 
 
+@pytest.fixture
+@pytest.mark.usefixtures("write_effective_pom")
+def patch_succeed_cmd_validator(mocker):
+    """Fixture to run successful command via self._execute for Maven plugin Validator."""
+
+    class SuccessfulCmdValidator(MavenPluginEnvironmentValidator):
+        """A validator that always succeeds commands used by Maven plugin environment validator."""
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd == "java --version":
+                return """openjdk 21.0.6 2025-01-21
+OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
+OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
+            if (
+                cmd == "./mvnw help:effective-pom -Doutput=effective.pom"
+                or cmd == "mvn help:effective-pom -Doutput=effective.pom"
+            ):
+                _write_effective_pom()
+                return ""  # the output is not used anywhere since it's written to file
+            return super()._execute(cmd)
+
+    mocker.patch.object(MavenPlugin, "validator_class", SuccessfulCmdValidator)
+
+
+def _write_effective_pom(version=8):
+    Path("effective.pom").write_text(
+        f"""<project>
+  <properties>
+    <java.version>{version}</java.version>
+  </properties>
+</project>"""
+    )
+
+
+@pytest.fixture
+# new_dir fixture is required to chdir into the testing directory
+def write_effective_pom(new_dir):
+    _write_effective_pom()
+
+
 @pytest.mark.parametrize(
     "mvn_version", [("\x1b[1mApache Maven 3.6.3\x1b[m"), ("Apache Maven 3.6.3")]
 )
+@pytest.mark.usefixtures("patch_succeed_cmd_validator")
 def test_validate_environment(dependency_fixture, part_info, mvn_version):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
@@ -90,6 +140,7 @@ def test_validate_environment_invalid_mvn(dependency_fixture, part_info):
     assert raised.value.reason == "invalid maven version ''"
 
 
+@pytest.mark.usefixtures("patch_succeed_cmd_validator")
 def test_validate_environment_with_maven_part(part_info):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
@@ -240,3 +291,255 @@ def _normalize_settings(settings):
             default_namespace="http://maven.apache.org/SETTINGS/1.0.0",
         )
         return f.getvalue() + "\n"
+
+
+@pytest.mark.parametrize(
+    "mvnw_version",
+    [
+        ("\x1b[1mApache Maven 3.6.3 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)\x1b[m"),
+        ("Apache Maven 3.6.3"),
+    ],
+)
+@pytest.mark.usefixtures("patch_succeed_cmd_validator")
+def test_validate_mvnw_environment(
+    dependency_fixture, part_info, mvnw_version, monkeypatch
+):
+    properties = MavenPlugin.properties_class.unmarshal(
+        {"source": ".", "use-mvnw": True}
+    )
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    mvnw = dependency_fixture("mvnw", output=mvnw_version)
+    # mvnw exists in the project directory, not the mock_bin directory created by
+    # dependency_fixture.
+    monkeypatch.chdir(mvnw.parent)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(mvnw.parent)}", properties=properties
+    )
+    validator.validate_environment()
+
+
+def test_validate_environment_java_version_check_fail(
+    dependency_fixture, part_info, mocker
+):
+    class FailingCmdValidator(MavenPluginEnvironmentValidator):
+        """A validator that always fails commands used by Maven plugin environment validator."""
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd == "java --version":
+                return "Invalid java version output"
+            return super()._execute(cmd)
+
+    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    mvn = dependency_fixture("mvn", output="Apache Maven 3.6.3")
+    mocker.patch.object(MavenPlugin, "validator_class", FailingCmdValidator)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(mvn.parent)}", properties=properties
+    )
+
+    with pytest.raises(errors.PluginEnvironmentValidationError) as exc:
+        validator.validate_environment()
+    assert "failed to check java version" in exc.value.reason
+
+
+@pytest.mark.parametrize(
+    "jdk_version", ["openjdk 21.0.6", "openjdk 17.0.1", "openjdk 1.8.1"]
+)
+@pytest.mark.usefixtures("write_effective_pom")
+def test_validate_environment_java_version_check(
+    dependency_fixture, part_info, mocker, jdk_version
+):
+    class CommandValidatorOverride(MavenPluginEnvironmentValidator):
+        """A validator that outputs different versions of jdk."""
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd == "java --version":
+                return jdk_version
+            return super()._execute(cmd)
+
+    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    mvn = dependency_fixture("mvn", output="Apache Maven 3.6.3")
+    mocker.patch.object(MavenPlugin, "validator_class", CommandValidatorOverride)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(mvn.parent)}", properties=properties
+    )
+
+    validator.validate_environment()
+
+
+def test_effective_pom_generation_fail(dependency_fixture, part_info, mocker):
+    class CommandValidatorOverride(MavenPluginEnvironmentValidator):
+        """A validator that raises an error when generating effective-pom."""
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd == "java --version":
+                return "openjdk 21.0.6"
+            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
+                raise subprocess.CalledProcessError(1, cmd)
+            return super()._execute(cmd)
+
+    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    mvn = dependency_fixture("mvn", output="Apache Maven 3.6.3")
+    mocker.patch.object(MavenPlugin, "validator_class", CommandValidatorOverride)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(mvn.parent)}", properties=properties
+    )
+
+    with pytest.raises(errors.PluginEnvironmentValidationError) as exc:
+        validator.validate_environment()
+
+    assert "failed to generate effective pom" in exc.value.reason
+
+
+def test_effective_pom_project_version_not_detected(
+    dependency_fixture, part_info, mocker
+):
+    class CommandValidatorOverride(MavenPluginEnvironmentValidator):
+        """A validator that outputs different versions of jdk."""
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd == "java --version":
+                return "openjdk 21.0.6"
+            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
+                Path("effective.pom").write_text("<project></project>")
+                return ""
+            return super()._execute(cmd)
+
+    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    mvn = dependency_fixture("mvn", output="Apache Maven 3.6.3")
+    mocker.patch.object(MavenPlugin, "validator_class", CommandValidatorOverride)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(mvn.parent)}", properties=properties
+    )
+
+    validator.validate_environment()
+
+
+def test_effective_pom_project_incompatible_version(
+    dependency_fixture, part_info, mocker
+):
+    class CommandValidatorOverride(MavenPluginEnvironmentValidator):
+        """A validator that outputs different versions of jdk."""
+
+        @override
+        def _execute(self, cmd: str) -> str:
+            if cmd == "java --version":
+                return "openjdk 21.0.6"
+            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
+                _write_effective_pom(version=23)
+                return ""
+            return super()._execute(cmd)
+
+    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    mvn = dependency_fixture("mvn", output="Apache Maven 3.6.3")
+    mocker.patch.object(MavenPlugin, "validator_class", CommandValidatorOverride)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(mvn.parent)}", properties=properties
+    )
+
+    with pytest.raises(errors.PluginEnvironmentValidationError) as exc:
+        validator.validate_environment()
+
+    assert "system Java version is less than project Java version" in exc.value.reason
+
+
+@pytest.mark.parametrize(
+    "pom_xml, expected_version",
+    [
+        (
+            """<project>
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
+</project>""",
+            "1.8",
+        ),
+        (
+            """<project>
+  <properties>
+    <java.version>17</java.version>
+  </properties>
+</project>""",
+            "17",
+        ),
+        (
+            """<project>
+  <properties>
+    <java.version>21</java.version>
+  </properties>
+</project>""",
+            "21",
+        ),
+        (
+            """<project>
+  <properties>
+    <java.version>1.8</java.version>
+    <maven.compiler.release>17</maven.compiler.release>
+  </properties>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <release>21</release>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>""",
+            "21",
+        ),
+        (
+            """<project>
+  <properties>
+    <java.version>1.8</java.version>
+    <maven.compiler.release>17</maven.compiler.release>
+  </properties>
+</project>""",
+            "17",
+        ),
+        (
+            """<project>
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
+</project>""",
+            "1.8",
+        ),
+    ],
+)
+def test__parse_project_java_version(tmp_path, pom_xml, expected_version):
+    (test_pom_path := tmp_path / "test.xml").write_text(pom_xml, encoding="utf-8")
+
+    assert _parse_project_java_version(test_pom_path) == expected_version
+
+
+@pytest.mark.parametrize(
+    "version_string, expected_version",
+    [
+        (None, None),
+        ("1.7", "7"),
+        ("1.8", "8"),
+        ("11", "11"),
+        ("17", "17"),
+        ("21", "21"),
+    ],
+)
+def test__extract_java_version(version_string, expected_version):
+    assert _extract_java_version(version_string) == expected_version
