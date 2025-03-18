@@ -2,19 +2,24 @@
 Changelog
 *********
 
-2.7.0 (2025-MM-DDD)
+2.7.0 (2025-03-18)
 -------------------
 
 New features:
 
 - Previously, ``source-commit`` could only accept full length (40 character)
   hashes. Now, ``source-commit`` can accept short hashes.
+- Allow usage of the overlay and partitions features simultaneously. 
 
 Bug fixes:
 
 - Fix the default behavior of the :ref:`jlink plugin <craft_parts_jlink_plugin>`
   only finding JAR files in the top-level directory. It now searches all
   subdirectories too.
+
+.. note::
+
+    2.7.0 includes changes from the 2.4.3 release.
 
 2.4.3 (2025-03-11)
 ------------------
