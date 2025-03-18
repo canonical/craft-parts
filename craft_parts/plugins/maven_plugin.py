@@ -64,37 +64,30 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """
         options = cast(MavenPluginProperties, self._options)
         if options.use_mvnw:
-            mvn_check = self.validate_dependency(
+            version = self.validate_dependency(
                 dependency="./mvnw",
                 plugin_name="maven",
                 part_dependencies=part_dependencies,
-                # maven wrapper does not have --version
-                argument="--help",
             )
-            if "usage" not in mvn_check:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason="invalid maven wrapper",
-                )
         else:
             version = self.validate_dependency(
                 dependency="mvn",
                 plugin_name="maven",
                 part_dependencies=part_dependencies,
             )
-            if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
-                part_dependencies is None or "maven-deps" not in part_dependencies
-            ):
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=f"invalid maven version {version!r}",
-                )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
 
         try:
             system_java_version_output = self._execute("java --version")
             # Java versions < 8 have syntax 1.<version>
             version_output_match = re.match(
-                "openjdk (1\.(\d+)|(\d+))", system_java_version_output
+                r"openjdk (1\.(\d+)|(\d+))", system_java_version_output
             )
             if version_output_match is None:
                 raise errors.PluginEnvironmentValidationError(
