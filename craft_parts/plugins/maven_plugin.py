@@ -105,7 +105,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 reason=f"failed to check java version: {err}",
             ) from err
 
-        maven_executable = "mvnw" if options.use_mvnw else "mvn"
+        maven_executable = "./mvnw" if options.use_mvnw else "mvn"
         effective_pom_path = Path("effective.pom")
         try:
             self._execute(
@@ -125,14 +125,17 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 part_name=self._part_name,
                 reason=f"failed to generate effective pom: {err}",
             ) from err
-        project_java_major_version = _parse_project_java_version(effective_pom_path)
-        # if the project Java version cannot be detected, let it try build anyway.
-        if project_java_major_version is None:
-            return
+        finally:
+            effective_pom_path.unlink(missing_ok=True)
 
         try:
             if int(system_java_major_version) < int(project_java_major_version):
-                return
+                raise errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason="system Java version is less than project Java version."
+                    f"system: {system_java_major_version}, project: {project_java_major_version}",
+                )
+            return
         except ValueError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
