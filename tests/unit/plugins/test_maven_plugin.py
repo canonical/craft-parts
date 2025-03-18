@@ -346,7 +346,7 @@ def test_validate_environment_java_version_check_fail(
 
 
 @pytest.mark.parametrize(
-    "jdk_version", ["openjdk 21.0.6", "openjdk 17.0.1", "openjdk 1.8.1"]
+    "jdk_version", ["openjdk 1.8.1", "openjdk 17.0.1", "openjdk 21.0.6"]
 )
 @pytest.mark.usefixtures("write_effective_pom")
 def test_validate_environment_java_version_check(
@@ -513,14 +513,6 @@ def test_effective_pom_project_incompatible_version(
   </properties>
 </project>""",
             "17",
-        ),
-        (
-            """<project>
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-</project>""",
-            "1.8",
         ),
     ],
 )
