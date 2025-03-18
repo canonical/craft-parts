@@ -113,6 +113,13 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 # sudo mvn help:effective-pom -q -DforceStdout -doutput=/dev/stdout
                 f"{maven_executable} help:effective-pom -Doutput={effective_pom_path}"
             )
+            project_java_major_version = _parse_project_java_version(effective_pom_path)
+            project_java_major_version = _extract_java_version(
+                project_java_major_version
+            )
+            # if the project Java version cannot be detected, let it try build anyway.
+            if project_java_major_version is None:
+                return
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
@@ -135,51 +142,52 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
 
 def _parse_project_java_version(effective_pom_path: Path) -> str | None:
+    """Parse the contents of effective pom XML file.
+
+    The order in which Maven determines the Java version is as follows:
+    1. maven-compiler-plugin's configuration release value
+    2. maven-compiler-plugin's property's release value
+    3. java.version property's value (Spring Boot specific)
+    """
     tree = ET.parse(effective_pom_path)
     root = tree.getroot()
     java_version_element = root.find(".//{*}java.version")
-    if java_version_element is not None and java_version_element.text:
-        return java_version_element.text
+    maven_compiler_release_element = root.find(".//{*}maven.compiler.release")
+    maven_compiler_plugin_release_element = None
     plugins_element = root.find(".//{*}plugins")
     if plugins_element is not None:
         plugins = plugins_element.findall(".//{*}plugin")
         for plugin in plugins:
             if (
-                (maven_compiler_plugin := plugin.find(".//{*}artifactId")) is not None
-                and maven_compiler_plugin.text == "maven-compiler-plugin"
-                and (
-                    maven_compiler_config := maven_compiler_plugin.find(
-                        ".//{*}configuration"
-                    )
-                )
-                is not None
-            ):
+                artifact_id_element := plugin.find(".//{*}artifactId")
+            ) is not None and artifact_id_element.text == "maven-compiler-plugin":
                 if (
-                    maven_compiler_target_element := maven_compiler_config.find(
-                        ".//{*}target"
-                    )
-                ) is not None and maven_compiler_target_element.text:
-                    return maven_compiler_target_element.text
-                if (
-                    maven_compiler_source_element := maven_compiler_config.find(
-                        ".//{*}source"
-                    )
-                ) is not None and maven_compiler_source_element.text:
-                    return maven_compiler_source_element.text
-
+                    release_element := plugin.find(".//{*}release")
+                ) is not None and release_element.text:
+                    maven_compiler_plugin_release_element = release_element
+                    break
     if (
-        maven_compiler_release_element := root.find(".//{*}maven.compiler.release")
-    ) is not None and maven_compiler_release_element.text:
+        maven_compiler_plugin_release_element is not None
+        and maven_compiler_plugin_release_element.text
+    ):
+        return maven_compiler_plugin_release_element.text
+    if (
+        maven_compiler_release_element is not None
+        and maven_compiler_release_element.text
+    ):
         return maven_compiler_release_element.text
-    if (
-        maven_compiler_target_element := root.find(".//{*}maven.compiler.target")
-    ) is not None and maven_compiler_target_element.text:
-        return maven_compiler_target_element.text
-    if (
-        maven_compiler_source_element := root.find(".//{*}maven.compiler.source")
-    ) is not None and maven_compiler_source_element.text:
-        return maven_compiler_source_element.text
+    if java_version_element is not None and java_version_element.text:
+        return java_version_element.text
     return None
+
+
+def _extract_java_version(java_version_output: str | None) -> str | None:
+    if java_version_output is None:
+        return None
+    match = re.match(r"(1\.(\d+)|(\d+))", java_version_output)
+    if not match:
+        return None
+    return match.group(2) or match.group(1)
 
 
 class MavenPlugin(JavaPlugin):
