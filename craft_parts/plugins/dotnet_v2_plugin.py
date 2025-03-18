@@ -183,7 +183,7 @@ class DotnetV2Plugin(Plugin):
         else:
             raise ValueError(f"Unsupported architecture: {build_on}")
 
-        snap_location = f"/snap/{self._generate_snap_name(options)}/current"
+        snap_location = f"/snap/{snap_name}/current"
         dotnet_path = f"{snap_location}/usr/lib/dotnet"
         environment["PATH"] = f"{dotnet_path}:${{PATH}}"
 
