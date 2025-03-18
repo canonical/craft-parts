@@ -74,7 +74,7 @@ class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         """
 
         # Validating only if .NET SDK is being provided by user. Otherwise, the plugin
-        # will make sure there is an SDK available.
+        # will make sure there is an SDK available according to `dotnet-version`.
         has_dotnet_deps = "dotnet-deps" in (part_dependencies or [])
         if has_dotnet_deps:
             self.validate_dependency(
@@ -100,6 +100,11 @@ class DotnetV2Plugin(Plugin):
       (string)
       The .NET proj or solution file to build. (Default: ommited).
 
+    - ``dotnet-properties``
+      (dictionary of strings to strings)
+      The list of MSBuild properties to be used by the restore, build, and publish commands.
+      (Default: empty).
+
     - ``dotnet-self-contained``
       (bool)
       Build and publish the project as a self-contained application. (Default: False).
@@ -124,6 +129,10 @@ class DotnetV2Plugin(Plugin):
       specified in the nuget.config files.
       (Default: ommited).
 
+    - ``dotnet-restore-properties``
+      (dictionary of strings to strings)
+      The list of MSBuild properties to be used by the restore command. (Default: empty).
+
     - ``dotnet-restore-configfile``
       (string)
       The NuGet configuration file (nuget.config) to use. (Default: ommited).
@@ -133,6 +142,16 @@ class DotnetV2Plugin(Plugin):
     - ``dotnet-build-framework``
       (string)
       The target framework to build for. (Default: ommited).
+    
+    - ``dotnet-build-properties``
+      (dictionary of strings to strings)
+      The list of MSBuild properties to be used by the build command. (Default: empty).
+
+    Publish-specific Flags:
+
+    - ``dotnet-publish-properties``
+      (dictionary of strings to strings)
+      The list of MSBuild properties to be used by the publish command. (Default: empty).
     """
 
     properties_class = DotnetV2PluginProperties
