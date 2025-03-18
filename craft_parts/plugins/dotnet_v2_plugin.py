@@ -72,11 +72,16 @@ class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
         """
-        self.validate_dependency(
-            dependency="dotnet",
-            plugin_name="dotnet",
-            part_dependencies=part_dependencies,
-        )
+
+        # Validating only if .NET SDK is being provided by user. Otherwise, the plugin
+        # will make sure there is an SDK available.
+        has_dotnet_deps = "dotnet-deps" in (part_dependencies or [])
+        if has_dotnet_deps:
+            self.validate_dependency(
+                dependency="dotnet",
+                plugin_name="dotnet",
+                part_dependencies=part_dependencies,
+            )
 
 
 class DotnetV2Plugin(Plugin):
