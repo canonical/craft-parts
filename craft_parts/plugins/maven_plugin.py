@@ -94,7 +94,11 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     part_name=self._part_name,
                     reason=f"failed to check java version: {system_java_version_output}",
                 )
-            system_java_major_version = version_output_match.group(1)
+            # match 1.<version> first for Java versions less than or equal to 8. Otherwise,
+            # match <version>.
+            system_java_major_version = version_output_match.group(
+                2
+            ) or version_output_match.group(1)
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
