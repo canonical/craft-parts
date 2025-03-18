@@ -221,7 +221,8 @@ class MavenPlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 
-        mvn_cmd = ["mvn", "package"]
+        mvn_executable = "./mvnw" if options.use_mvnw else "mvn"
+        mvn_cmd = [mvn_executable, "package"]
         if self._use_proxy():
             settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
             _create_settings(settings_path)
