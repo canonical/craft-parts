@@ -208,7 +208,10 @@ class MavenPlugin(JavaPlugin):
     - maven-parameters:
       (list of strings)
       Flags to pass to the build using the maven semantics for parameters.
-
+    - use-mvnw:
+      (boolean)
+      Use the Maven wrapper script (mvnw) instead of the system Maven
+      installation.
     """
 
     properties_class = MavenPluginProperties

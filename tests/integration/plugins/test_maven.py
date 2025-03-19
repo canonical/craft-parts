@@ -18,11 +18,14 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
+
 from craft_parts import LifecycleManager, Step
 
 
-def test_maven_plugin(new_dir, partitions):
+@pytest.mark.parametrize("use_mvnw", [False, True])
+def test_maven_plugin(new_dir, partitions, use_mvnw):
     source_location = Path(__file__).parent / "test_maven"
 
     parts_yaml = textwrap.dedent(
@@ -30,6 +33,7 @@ def test_maven_plugin(new_dir, partitions):
         parts:
           foo:
             plugin: maven
+            use-mvnw: {use_mvnw}
             source: {source_location}
             stage-packages: [default-jre-headless]
         """
