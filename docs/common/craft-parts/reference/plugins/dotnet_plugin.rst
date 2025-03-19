@@ -5,6 +5,10 @@
 
 The ``dotnet`` plugin builds .NET projects using the ``dotnet`` tool.
 
+.. warning::
+    This plugin is only available on ``core22``. If you're on ``core24`` or later,
+    please refer to :ref:`.NET plugin (v2) <craft_parts_dotnet_v2_plugin>`.
+
 Keywords
 --------
 
