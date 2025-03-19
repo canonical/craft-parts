@@ -27,6 +27,11 @@ from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
+_DEBIAN_ARCH_TO_DOTNET_RID: dict[str, str] = {
+    "amd64": "linux-x64",
+    "arm64": "linux-arm64",
+}
+
 
 class DotnetV2PluginProperties(PluginProperties, frozen=True):
     """The part properties used by the .NET plugin."""
@@ -72,7 +77,6 @@ class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
         """
-
         # Validating only if .NET SDK is being provided by user. Otherwise, the plugin
         # will make sure there is an SDK available according to `dotnet-version`.
         options = cast(DotnetV2PluginProperties, self._options)
@@ -98,7 +102,7 @@ class DotnetV2Plugin(Plugin):
 
     - ``dotnet-project``
       (string)
-      The .NET proj or solution file to build. (Default: ommited).
+      The .NET proj or solution file to build. (Default: omitted).
 
     - ``dotnet-properties``
       (dictionary of strings to strings)
@@ -127,7 +131,7 @@ class DotnetV2Plugin(Plugin):
       The URI of the NuGet package sources to use during the restore operation.
       Multiple values can be specified. This setting overrides all of the sources
       specified in the nuget.config files.
-      (Default: ommited).
+      (Default: omitted).
 
     - ``dotnet-restore-properties``
       (dictionary of strings to strings)
@@ -135,14 +139,14 @@ class DotnetV2Plugin(Plugin):
 
     - ``dotnet-restore-configfile``
       (string)
-      The NuGet configuration file (nuget.config) to use. (Default: ommited).
+      The NuGet configuration file (nuget.config) to use. (Default: omitted).
 
     Build-specific Flags:
 
     - ``dotnet-build-framework``
       (string)
-      The target framework to build for. (Default: ommited).
-    
+      The target framework to build for. (Default: omitted).
+
     - ``dotnet-build-properties``
       (dictionary of strings to strings)
       The list of MSBuild properties to be used by the build command. (Default: empty).
@@ -163,10 +167,17 @@ class DotnetV2Plugin(Plugin):
         options = cast(DotnetV2PluginProperties, self._options)
 
         # .NET binary provided by the user
-        if "dotnet-deps" in self._part_info.part_dependencies or options.dotnet_version is None:
+        if (
+            "dotnet-deps" in self._part_info.part_dependencies
+            or options.dotnet_version is None
+        ):
             return set()
 
         snap_name = self._generate_snap_name(options)
+
+        if not snap_name:
+            return set()
+
         logger.info(f"Using .NET SDK content snap: {snap_name}")
 
         build_snaps = set()
@@ -195,10 +206,14 @@ class DotnetV2Plugin(Plugin):
         build_on = self._part_info.project_info.arch_build_on
         snap_name = self._generate_snap_name(options)
 
-        if (build_on == "amd64"):
-            environment["LD_LIBRARY_PATH"] = f"/snap/{snap_name}/current/lib/x86_64-linux-gnu:/snap/{snap_name}/current/usr/lib/x86_64-linux-gnu"
-        elif (build_on == "arm64"):
-            environment["LD_LIBRARY_PATH"] = f"/snap/{snap_name}/current/lib/aarch64-linux-gnu:/snap/{snap_name}/current/usr/lib/aarch64-linux-gnu"
+        if build_on == "amd64":
+            environment["LD_LIBRARY_PATH"] = (
+                f"/snap/{snap_name}/current/lib/x86_64-linux-gnu:/snap/{snap_name}/current/usr/lib/x86_64-linux-gnu"
+            )
+        elif build_on == "arm64":
+            environment["LD_LIBRARY_PATH"] = (
+                f"/snap/{snap_name}/current/lib/aarch64-linux-gnu:/snap/{snap_name}/current/usr/lib/aarch64-linux-gnu"
+            )
         else:
             raise ValueError(f"Unsupported architecture: {build_on}")
 
@@ -206,7 +221,7 @@ class DotnetV2Plugin(Plugin):
         dotnet_path = f"{snap_location}/usr/lib/dotnet"
         environment["PATH"] = f"{dotnet_path}:${{PATH}}"
 
-        logger.info(f"Using environment:")
+        logger.info("Using environment:")
         for key, value in environment.items():
             logger.info(f"  {key}={value}")
 
@@ -220,20 +235,25 @@ class DotnetV2Plugin(Plugin):
         # Check if version is valid
         self._generate_snap_name(options)
 
-        # Runtime identifier
-        _DEBIAN_ARCH_TO_DOTNET_RID = {
-            "amd64": "linux-x64",
-            "arm64": "linux-arm64"
-        }
-
         build_for = self._part_info.project_info.arch_build_for
-        dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for, None)
+        dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for)
 
         if not dotnet_rid:
             raise ValueError(f"Unsupported architecture: {build_for}")
-        
+
         # Validate verbosity
-        if options.dotnet_verbosity not in ["quiet", "q", "minimal", "m", "normal", "n", "detailed", "d", "diagnostic", "diag"]:
+        if options.dotnet_verbosity not in [
+            "quiet",
+            "q",
+            "minimal",
+            "m",
+            "normal",
+            "n",
+            "detailed",
+            "d",
+            "diagnostic",
+            "diag",
+        ]:
             raise ValueError("Invalid verbosity level")
 
         # Restore step
@@ -253,28 +273,34 @@ class DotnetV2Plugin(Plugin):
             return None
 
         # Validate version
-        if len(version.split('.')) == 1:
-            if not version.isdigit() or int(version) < 6:
+        oldest_supported_dotnet_version = 6
+        if len(version.split(".")) == 1:
+            if not version.isdigit() or int(version) < oldest_supported_dotnet_version:
                 raise ValueError("Version must be greater or equal to 6.0")
             snap_version = f"{version}0"
-        elif len(version.split('.')) > 1:
-            major, minor = version.split('.')
-            if not (major.isdigit() and minor.isdigit()) or int(major) < 6:
+        elif len(version.split(".")) > 1:
+            major, minor = version.split(".")
+            if (
+                not (major.isdigit() and minor.isdigit())
+                or int(major) < oldest_supported_dotnet_version
+            ):
                 raise ValueError("Version must be greater or equal to 6.0")
             snap_version = major + minor
         else:
             raise ValueError("Invalid .NET version format")
 
-        snap_name = f"dotnet-sdk-{snap_version}"
-        return snap_name
+        return f"dotnet-sdk-{snap_version}"
 
-    def _get_restore_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
+    def _get_restore_command(
+        self, dotnet_rid: str, options: DotnetV2PluginProperties
+    ) -> str:
         restore_cmd = ["dotnet", "restore"]
 
         if options.dotnet_restore_sources:
             logger.info(f"Using restore sources: {options.dotnet_restore_sources}")
-            for source in options.dotnet_restore_sources:
-                restore_cmd.append(f"--source {source}")
+            restore_cmd.extend(
+                [f"--source {source}" for source in options.dotnet_restore_sources]
+            )
         if options.dotnet_restore_configfile:
             restore_cmd.append(f"--configfile {options.dotnet_restore_configfile}")
 
@@ -290,12 +316,15 @@ class DotnetV2Plugin(Plugin):
             restore_cmd.append(f"{options.dotnet_project}")
 
         return " ".join(restore_cmd)
-    
-    def _get_build_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
+
+    def _get_build_command(
+        self, dotnet_rid: str, options: DotnetV2PluginProperties
+    ) -> str:
         build_cmd = [
-            "dotnet", "build",
+            "dotnet",
+            "build",
             f"--configuration {options.dotnet_configuration}",
-            f"--no-restore"
+            "--no-restore",
         ]
 
         if options.dotnet_build_framework:
@@ -316,14 +345,18 @@ class DotnetV2Plugin(Plugin):
             build_cmd.append(f"{options.dotnet_project}")
 
         return " ".join(build_cmd)
-    
-    def _get_publish_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
+
+    def _get_publish_command(
+        self, dotnet_rid: str, options: DotnetV2PluginProperties
+    ) -> str:
         publish_cmd = [
-            "dotnet", "publish",
+            "dotnet",
+            "publish",
             f"--configuration {options.dotnet_configuration}",
             f"--output {self._part_info.part_install_dir}",
             f"--verbosity {options.dotnet_verbosity}",
-            "--no-restore", "--no-build"
+            "--no-restore",
+            "--no-build",
         ]
 
         # Self contained build

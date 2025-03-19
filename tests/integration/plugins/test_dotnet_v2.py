@@ -109,7 +109,9 @@ def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
 def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet is installed."""
 
-    class AlwaysFindDotnetValidator(dotnet_v2_plugin.DotnetV2PluginEnvironmentValidator):
+    class AlwaysFindDotnetValidator(
+        dotnet_v2_plugin.DotnetV2PluginEnvironmentValidator
+    ):
         """A validator that always succeeds the first time running `dotnet --version`."""
 
         __already_run = False
