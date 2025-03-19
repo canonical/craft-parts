@@ -58,7 +58,7 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
 
 
 class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
-    """Check the execution environment for the Dotnet plugin.
+    """Check the execution environment for the .NET plugin.
 
     :param part_name: The part whose build environment is being validated.
     :param env: A string containing the build step environment setup.
