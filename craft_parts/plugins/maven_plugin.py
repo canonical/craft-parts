@@ -39,7 +39,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["maven"] = "maven"
 
     maven_parameters: list[str] = []
-    use_mvnw: bool = False
+    maven_use_mvnw: bool = False
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
@@ -63,7 +63,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
           and there are no parts named maven-deps.
         """
         options = cast(MavenPluginProperties, self._options)
-        if options.use_mvnw:
+        if options.maven_use_mvnw:
             version = self.validate_dependency(
                 dependency="./mvnw",
                 plugin_name="maven",
@@ -105,7 +105,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 reason=f"failed to check java version: {err}",
             ) from err
 
-        maven_executable = "./mvnw" if options.use_mvnw else "mvn"
+        maven_executable = "./mvnw" if options.maven_use_mvnw else "mvn"
         effective_pom_path = Path("effective.pom")
         try:
             self._execute(
@@ -208,7 +208,7 @@ class MavenPlugin(JavaPlugin):
     - maven-parameters:
       (list of strings)
       Flags to pass to the build using the maven semantics for parameters.
-    - use-mvnw:
+    - maven-use-mvnw:
       (boolean)
       Use the Maven wrapper script (mvnw) instead of the system Maven
       installation.
@@ -232,7 +232,7 @@ class MavenPlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 
-        mvn_executable = "./mvnw" if options.use_mvnw else "mvn"
+        mvn_executable = "./mvnw" if options.maven_use_mvnw else "mvn"
         mvn_cmd = [mvn_executable, "package"]
         if self._use_proxy():
             settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"

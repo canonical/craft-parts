@@ -33,7 +33,7 @@ def test_maven_plugin(new_dir, partitions, use_mvnw):
         parts:
           foo:
             plugin: maven
-            use-mvnw: {use_mvnw}
+            maven-use-mvnw: {use_mvnw}
             source: {source_location}
             stage-packages: [default-jre-headless]
         """
