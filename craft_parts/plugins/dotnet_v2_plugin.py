@@ -269,73 +269,73 @@ class DotnetV2Plugin(Plugin):
         return snap_name
 
     def _get_restore_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
-        restore_cmd = "dotnet restore"
+        restore_cmd = ["dotnet", "restore"]
 
         if options.dotnet_restore_sources:
             logger.info(f"Using restore sources: {options.dotnet_restore_sources}")
             for source in options.dotnet_restore_sources:
-                restore_cmd += f" --source {source}"
+                restore_cmd.append(f"--source {source}")
         if options.dotnet_restore_configfile:
-            restore_cmd += f" --configfile {options.dotnet_restore_configfile}"
+            restore_cmd.append(f"--configfile {options.dotnet_restore_configfile}")
 
-        restore_cmd += f" --verbosity {options.dotnet_verbosity}"
-        restore_cmd += f" --runtime {dotnet_rid}"
+        restore_cmd.append(f"--verbosity {options.dotnet_verbosity}")
+        restore_cmd.append(f"--runtime {dotnet_rid}")
 
         for prop_name, prop_value in options.dotnet_properties.items():
-            restore_cmd += f" -p:{prop_name}={prop_value}"
+            restore_cmd.append(f"-p:{prop_name}={prop_value}")
         for prop_name, prop_value in options.dotnet_restore_properties.items():
-            restore_cmd += f" -p:{prop_name}={prop_value}"
+            restore_cmd.append(f"-p:{prop_name}={prop_value}")
 
         if options.dotnet_project:
-            restore_cmd += f" {options.dotnet_project}"
+            restore_cmd.append(f"{options.dotnet_project}")
 
-        return restore_cmd
+        return " ".join(restore_cmd)
     
     def _get_build_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
-        build_cmd = (
-            "dotnet build "
-            f"--configuration {options.dotnet_configuration} "
+        build_cmd = [
+            "dotnet", "build",
+            f"--configuration {options.dotnet_configuration}",
             f"--no-restore"
-        )
+        ]
 
         if options.dotnet_build_framework:
-            build_cmd += f" --framework {options.dotnet_build_framework}"
+            build_cmd.append(f"--framework {options.dotnet_build_framework}")
 
-        build_cmd += f" --verbosity {options.dotnet_verbosity}"
+        build_cmd.append(f"--verbosity {options.dotnet_verbosity}")
 
         # Self contained build
-        build_cmd += f" --runtime {dotnet_rid}"
-        build_cmd += f" --self-contained {options.dotnet_self_contained}"
+        build_cmd.append(f"--runtime {dotnet_rid}")
+        build_cmd.append(f"--self-contained {options.dotnet_self_contained}")
 
         for prop_name, prop_value in options.dotnet_properties.items():
-            build_cmd += f" -p:{prop_name}={prop_value}"
+            build_cmd.append(f"-p:{prop_name}={prop_value}")
         for prop_name, prop_value in options.dotnet_build_properties.items():
-            build_cmd += f" -p:{prop_name}={prop_value}"
+            build_cmd.append(f"-p:{prop_name}={prop_value}")
 
         if options.dotnet_project:
-            build_cmd += f" {options.dotnet_project}"
+            build_cmd.append(f"{options.dotnet_project}")
 
-        return build_cmd
+        return " ".join(build_cmd)
     
     def _get_publish_command(self, dotnet_rid: str, options: DotnetV2PluginProperties) -> str:
-        publish_cmd = (
-            "dotnet publish "
-            f"--configuration {options.dotnet_configuration} "
-            f"--output {self._part_info.part_install_dir} "
-            f"--verbosity {options.dotnet_verbosity} "
-            "--no-restore --no-build"
-        )
+        publish_cmd = [
+            "dotnet", "publish",
+            f"--configuration {options.dotnet_configuration}",
+            f"--output {self._part_info.part_install_dir}",
+            f"--verbosity {options.dotnet_verbosity}",
+            "--no-restore", "--no-build"
+        ]
 
         # Self contained build
-        publish_cmd += f" --runtime {dotnet_rid}"
-        publish_cmd += f" --self-contained {options.dotnet_self_contained}"
+        publish_cmd.append(f" --runtime {dotnet_rid}")
+        publish_cmd.append(f" --self-contained {options.dotnet_self_contained}")
 
         for prop_name, prop_value in options.dotnet_properties.items():
-            publish_cmd += f" -p:{prop_name}={prop_value}"
+            publish_cmd.append(f" -p:{prop_name}={prop_value}")
         for prop_name, prop_value in options.dotnet_publish_properties.items():
-            publish_cmd += f" -p:{prop_name}={prop_value}"
+            publish_cmd.append(f" -p:{prop_name}={prop_value}")
 
         if options.dotnet_project:
-            publish_cmd += f" {options.dotnet_project}"
+            publish_cmd.append(f" {options.dotnet_project}")
 
-        return publish_cmd
+        return " ".join(publish_cmd)
