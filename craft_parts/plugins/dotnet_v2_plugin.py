@@ -75,8 +75,8 @@ class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         # Validating only if .NET SDK is being provided by user. Otherwise, the plugin
         # will make sure there is an SDK available according to `dotnet-version`.
-        has_dotnet_deps = "dotnet-deps" in (part_dependencies or [])
-        if has_dotnet_deps:
+        options = cast(DotnetV2PluginProperties, self._options)
+        if options.dotnet_version is None:
             self.validate_dependency(
                 dependency="dotnet",
                 plugin_name="dotnet",
