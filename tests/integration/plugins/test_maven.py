@@ -25,8 +25,9 @@ from craft_parts import LifecycleManager, Step
 
 
 @pytest.mark.parametrize("use_mvnw", [False, True])
-def test_maven_plugin(new_dir, partitions, use_mvnw):
+def test_maven_plugin(monkeypatch, new_dir, partitions, use_mvnw):
     source_location = Path(__file__).parent / "test_maven"
+    monkeypatch.chdir(source_location)
 
     parts_yaml = textwrap.dedent(
         f"""
