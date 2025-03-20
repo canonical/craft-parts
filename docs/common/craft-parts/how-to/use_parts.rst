@@ -20,7 +20,7 @@ define a build order, or completely override any stage of the
 .. _how-to-use-parts_defining:
 
 Define a part
-=============
+-------------
 
 To define a part, give it a name and declare its keys. The rest of this section uses a
 part that packs a "Hello, world!" shell script as an example.
