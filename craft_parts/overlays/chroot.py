@@ -332,6 +332,7 @@ _ubuntu_apt_mounts = [
         "/usr/share/ca-certificates/",
         skip_missing=False,
     ),
+    _BindMount("/usr/share/keyrings/", "/usr/share/keyrings/", skip_missing=True),
     _BindMount("/etc/ssl/certs/", "/etc/ssl/certs/", skip_missing=False),
     _BindMount(
         "/etc/ca-certificates.conf", "/etc/ca-certificates.conf", skip_missing=False
