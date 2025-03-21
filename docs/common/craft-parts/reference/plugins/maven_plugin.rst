@@ -46,12 +46,29 @@ package`` is replaced with ``./mvnw package`` command.
 Environment variables
 ---------------------
 
-This plugin reads the ``http_proxy`` and ``https_proxy`` variables from the environment
-to configure Maven proxy access. A comma-separated list of hosts that should not be
-accessed via proxy is read from the ``no_proxy`` environment variable.
+Environment variables can be specified to modify behavior of the build. For the Maven plugin,
+three proxy related environment variables are treated specially. ``http_proxy``, ``https_proxy``
+and ``no_proxy``.
 
-Please refer to `Configuring Apache Maven <https://maven.apache.org/configure.html>`_ for
-a list of environment variables used to configure Maven.
+For a list of environment variables used to configure Maven, please refer to
+`Configuring Apache Maven <https://maven.apache.org/configure.html>`_.
+
+http_proxy
+~~~~~~~~~~
+
+URL to proxy http request to. The value is mapped to the settings file (.parts/.m2/settings.xml)
+under proxy element.
+
+https_proxy
+~~~~~~~~~~
+
+URL to proxy https request to. The value is mapped to the settings file (.parts/.m2/settings.xml)
+under proxy element.
+
+no_proxy
+~~~~~~~~
+
+A comma-separated list of hosts that should be not accessed via proxy.
 
 
 .. _maven-details-begin:
