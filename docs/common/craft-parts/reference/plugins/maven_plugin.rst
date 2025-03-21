@@ -4,8 +4,10 @@ Maven plugin
 ============
 
 The Maven plugin builds Java projects using the Maven build tool.
-This plugin will set the ``JAVA_HOME`` environment variable to the
-path to the latest JDK found in the build environment.
+
+The plugin will check for project Java version compatibility with the build system Java version
+compatibility before executing the build. If an incompatible version is detected, the plugin will
+fail early.
 
 After a successful build, this plugin will:
 
