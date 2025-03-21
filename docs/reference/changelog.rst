@@ -7,7 +7,7 @@ Changelog
 
 New features:
 
-- Maven plugin ``use-mavenw`` paramter now allows for the use of the
+- Maven plugin ``use-mavenw`` parameter now allows for the use of the
   ``mvnw`` wrapper script.
 - Maven plugin now checks for project and build system Java version
   compatibility.

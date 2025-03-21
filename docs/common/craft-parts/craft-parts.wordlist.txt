@@ -377,6 +377,7 @@ golang
 gzipped
 hardcoded
 hg
+http
 https
 humanize
 implementers
@@ -406,6 +407,8 @@ migratable
 mkdirs
 mountpoint
 mountpoints
+mvn
+mvnw
 namespace
 namespaces
 namespaced
