@@ -194,7 +194,7 @@ def test_missing_parameters():
 )
 def test_get_build_commands(part_info, use_mvnw, expected_command):
     properties = MavenPlugin.properties_class.unmarshal(
-        {"source": ".", "use-mvnw": use_mvnw}
+        {"source": ".", "maven-use-mvnw": use_mvnw}
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
@@ -307,7 +307,7 @@ def test_validate_mvnw_environment(
     dependency_fixture, part_info, mvnw_version, monkeypatch
 ):
     properties = MavenPlugin.properties_class.unmarshal(
-        {"source": ".", "use-mvnw": True}
+        {"source": ".", "maven-use-mvnw": True}
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
     mvnw = dependency_fixture("mvnw", output=mvnw_version)
