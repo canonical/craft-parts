@@ -60,7 +60,7 @@ URL to proxy http request to. The value is mapped to the settings file (.parts/.
 under proxy element.
 
 https_proxy
-~~~~~~~~~~
+~~~~~~~~~~~
 
 URL to proxy https request to. The value is mapped to the settings file (.parts/.m2/settings.xml)
 under proxy element.
