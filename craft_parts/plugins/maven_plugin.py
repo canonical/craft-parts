@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
 
+import defusedxml.ElementTree
 from overrides import override
 
 from craft_parts import errors
@@ -151,7 +152,7 @@ def _parse_project_java_version(effective_pom_path: Path) -> str | None:
     2. maven-compiler-plugin's property's release value
     3. java.version property's value (Spring Boot specific)
     """
-    tree = ET.parse(effective_pom_path)
+    tree = defusedxml.ElementTree.parse(effective_pom_path)
     root = tree.getroot()
     java_version_element = root.find(".//{*}java.version")
     maven_compiler_release_element = root.find(".//{*}maven.compiler.release")
