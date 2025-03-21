@@ -25,7 +25,7 @@ from typing import Literal, cast
 from urllib.parse import urlparse
 
 # defusedxml does not contain library stubs or py.typed marker
-import defusedxml.ElementTree  # type: ignore
+import defusedxml.ElementTree  # type: ignore[import-untyped]
 from overrides import override
 
 from craft_parts import errors
