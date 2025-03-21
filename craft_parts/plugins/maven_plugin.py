@@ -161,9 +161,11 @@ def _parse_project_java_version(effective_pom_path: Path) -> str | None:
         plugins = plugins_element.findall(".//{*}plugin")
         for plugin in plugins:
             if (
-                artifact_id_element := plugin.find(".//{*}artifactId")
-            ) is not None and artifact_id_element.text == "maven-compiler-plugin" and (
-                release_element := plugin.find(".//{*}release")) is not None and release_element.text:
+                (artifact_id_element := plugin.find(".//{*}artifactId")) is not None
+                and artifact_id_element.text == "maven-compiler-plugin"
+                and (release_element := plugin.find(".//{*}release")) is not None
+                and release_element.text
+            ):
                 maven_compiler_plugin_release_element = release_element
                 break
     if (

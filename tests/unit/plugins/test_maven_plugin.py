@@ -55,8 +55,9 @@ def patch_succeed_cmd_validator(mocker):
                 return """openjdk 21.0.6 2025-01-21
 OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
-            if (
-                cmd in ("./mvnw help:effective-pom -Doutput=effective.pom","mvn help:effective-pom -Doutput=effective.pom")
+            if cmd in (
+                "./mvnw help:effective-pom -Doutput=effective.pom",
+                "mvn help:effective-pom -Doutput=effective.pom",
             ):
                 _write_effective_pom()
                 return ""  # the output is not used anywhere since it's written to file
