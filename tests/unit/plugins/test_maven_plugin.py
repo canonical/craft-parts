@@ -23,6 +23,9 @@ from textwrap import dedent
 from unittest import mock
 
 import pytest
+from overrides import override
+from pydantic import ValidationError
+
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import (
     MavenPlugin,
@@ -30,8 +33,6 @@ from craft_parts.plugins.maven_plugin import (
     _extract_java_version,
     _parse_project_java_version,
 )
-from overrides import override
-from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -353,7 +354,7 @@ def test_validate_environment_java_version_check_fail(
 )
 @pytest.mark.usefixtures("write_effective_pom")
 def test_validate_environment_java_version_check(
-    dependency_fixture, part_info, mocker, jdk_version
+    dependency_fixture, part_info, mocker, jdk_version: str
 ):
     class CommandValidatorOverride(MavenPluginEnvironmentValidator):
         """A validator that outputs different versions of jdk."""

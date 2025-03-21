@@ -24,7 +24,8 @@ from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
 
-import defusedxml.ElementTree
+# defusedxml does not contain library stubs or py.typed marker
+import defusedxml.ElementTree  # type: ignore
 from overrides import override
 
 from craft_parts import errors
@@ -154,12 +155,15 @@ def _parse_project_java_version(effective_pom_path: Path) -> str | None:
     """
     tree = defusedxml.ElementTree.parse(effective_pom_path)
     root = tree.getroot()
-    java_version_element = root.find(".//{*}java.version")
-    maven_compiler_release_element = root.find(".//{*}maven.compiler.release")
-    maven_compiler_plugin_release_element = None
+    java_version_element: ET.Element | None = root.find(".//{*}java.version")
+    maven_compiler_release_element: ET.Element | None = root.find(
+        ".//{*}maven.compiler.release"
+    )
+    maven_compiler_plugin_release_element: ET.Element | None = None
     plugins_element = root.find(".//{*}plugins")
     if plugins_element is not None:
         plugins = plugins_element.findall(".//{*}plugin")
+        release_element: ET.Element | None
         for plugin in plugins:
             if (
                 (artifact_id_element := plugin.find(".//{*}artifactId")) is not None
