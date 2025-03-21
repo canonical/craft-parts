@@ -23,9 +23,6 @@ from textwrap import dedent
 from unittest import mock
 
 import pytest
-from overrides import override
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import (
     MavenPlugin,
@@ -33,6 +30,8 @@ from craft_parts.plugins.maven_plugin import (
     _extract_java_version,
     _parse_project_java_version,
 )
+from overrides import override
+from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -44,7 +43,6 @@ def part_info(new_dir):
 
 
 @pytest.fixture
-@pytest.mark.usefixtures("write_effective_pom")
 def patch_succeed_cmd_validator(mocker):
     """Fixture to run successful command via self._execute for Maven plugin Validator."""
 
@@ -58,8 +56,7 @@ def patch_succeed_cmd_validator(mocker):
 OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
             if (
-                cmd == "./mvnw help:effective-pom -Doutput=effective.pom"
-                or cmd == "mvn help:effective-pom -Doutput=effective.pom"
+                cmd in ("./mvnw help:effective-pom -Doutput=effective.pom","mvn help:effective-pom -Doutput=effective.pom")
             ):
                 _write_effective_pom()
                 return ""  # the output is not used anywhere since it's written to file
@@ -193,7 +190,7 @@ def test_missing_parameters():
 
 
 @pytest.mark.parametrize(
-    "use_mvnw, expected_command", [(True, "./mvnw package"), (False, "mvn package")]
+    ("use_mvnw", "expected_command"), [(True, "./mvnw package"), (False, "mvn package")]
 )
 def test_get_build_commands(part_info, use_mvnw, expected_command):
     properties = MavenPlugin.properties_class.unmarshal(
@@ -463,7 +460,7 @@ def test_effective_pom_project_incompatible_version(
 
 
 @pytest.mark.parametrize(
-    "pom_xml, expected_version",
+    ("pom_xml", "expected_version"),
     [
         (
             """<project>
@@ -528,7 +525,7 @@ def test__parse_project_java_version(tmp_path, pom_xml, expected_version):
 
 
 @pytest.mark.parametrize(
-    "version_string, expected_version",
+    ("version_string", "expected_version"),
     [
         (None, None),
         ("1.7", "7"),

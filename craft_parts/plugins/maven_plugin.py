@@ -135,7 +135,6 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     reason="system Java version is less than project Java version."
                     f"system: {system_java_major_version}, project: {project_java_major_version}",
                 )
-            return
         except ValueError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
@@ -163,12 +162,10 @@ def _parse_project_java_version(effective_pom_path: Path) -> str | None:
         for plugin in plugins:
             if (
                 artifact_id_element := plugin.find(".//{*}artifactId")
-            ) is not None and artifact_id_element.text == "maven-compiler-plugin":
-                if (
-                    release_element := plugin.find(".//{*}release")
-                ) is not None and release_element.text:
-                    maven_compiler_plugin_release_element = release_element
-                    break
+            ) is not None and artifact_id_element.text == "maven-compiler-plugin" and (
+                release_element := plugin.find(".//{*}release")) is not None and release_element.text:
+                maven_compiler_plugin_release_element = release_element
+                break
     if (
         maven_compiler_plugin_release_element is not None
         and maven_compiler_plugin_release_element.text
