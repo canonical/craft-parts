@@ -34,6 +34,14 @@ maven-parameters
 
 Used to add additional parameters to the ``mvn package`` command line.
 
+maven-use-mvnw
+~~~~~~~~~~~~~~
+**Type:** boolean
+
+Used to determine whether the build should use the project provided Maven
+wrapper (located at ``<project-root>/mvnw``) executable file. The command ``mvn
+package`` is replaced with ``./mvnw package`` command.
+
 
 Environment variables
 ---------------------
