@@ -38,7 +38,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
     plugin: Literal["gradle"] = "gradle"
 
     gradle_parameters: list[str] = []
-    gradle_task: str = ""
+    gradle_task: str = "build"
     gradle_use_gradlew: bool = False
 
     # part properties required by the plugin
@@ -118,26 +118,26 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
     def _get_project_java_major_version(self) -> int:
         options = cast(GradlePluginProperties, self._options)
-        init_script_path = Path("./craft-parts-init-script.gradle")
+        init_script_path = Path("./gradle-plugin-init-script.gradle")
+        task_name = "printProjectJavaVersion"
         init_script_path.write_text(
-            """allprojects {
-    tasks.register('printJavaVersion') {
-        doLast {
+            f"""allprojects {{
+    tasks.register('{task_name}') {{
+        doLast {{
             def systemJavaVersion = JavaLanguageVersion.current()
-            def javaVersion = java.toolchain.languageVersion.orElse(systemJavaVersion).asInt()
-            println "Project Java Version: ${javaVersion}"
-        }
-    }
-}
+            def javaVersion = java.toolchain.languageVersion.\
+orElse(systemJavaVersion).get().asInt()
+            println "Project Java Version: ${{javaVersion}}"
+        }}
+    }}
+}}
 """,
             encoding="utf-8",
         )
         try:
             gradle_executable = "./gradlew" if options.gradle_use_gradlew else "gradle"
             self._execute(f"{gradle_executable} --init-script {init_script_path}")
-            version_output = self._execute(
-                f"{gradle_executable} printProjectJavaVersion"
-            )
+            version_output = self._execute(f"{gradle_executable} {task_name}")
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
@@ -204,7 +204,7 @@ class GradlePlugin(JavaPlugin):
             *self._get_java_post_build_commands(),
         ]
 
-    def _setup_proxy(self):
+    def _setup_proxy(self) -> None:
         no_proxy = os.environ.get("no_proxy", "")
         no_proxy = "|".join(no_proxy.split(",") if no_proxy else [])
         if not any(k in os.environ for k in ("http_proxy", "https_proxy")):
