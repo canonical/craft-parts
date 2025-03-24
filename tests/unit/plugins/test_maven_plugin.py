@@ -530,11 +530,11 @@ def test__parse_project_java_version(tmp_path, pom_xml, expected_version):
     ("version_string", "expected_version"),
     [
         (None, None),
-        ("1.7", "7"),
-        ("1.8", "8"),
-        ("11", "11"),
-        ("17", "17"),
-        ("21", "21"),
+        ("1.7", 7),
+        ("1.8", 8),
+        ("11", 11),
+        ("17", 17),
+        ("21", 21),
     ],
 )
 def test__extract_java_version(version_string, expected_version):
