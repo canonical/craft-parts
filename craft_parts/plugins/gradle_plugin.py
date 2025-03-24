@@ -117,25 +117,27 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             ) from err
 
     def _get_project_java_major_version(self) -> int:
-        Path("./craftparts.build.gradle").write_text(
-            """task printProjectJavaVersion {
-    doLast {
-        def systemJavaVersion = JavaLanguageVersion.current()
-        def javaVersion = java.toolchain.languageVersion.orElse(systemJavaVersion).get().asInt()
-        println "Project Java Version: ${javaVersion}"
+        options = cast(GradlePluginProperties, self._options)
+        init_script_path = Path("./craft-parts-init-script.gradle")
+        init_script_path.write_text(
+            """allprojects {
+    tasks.register('printJavaVersion') {
+        doLast {
+            def systemJavaVersion = JavaLanguageVersion.current()
+            def javaVersion = java.toolchain.languageVersion.orElse(systemJavaVersion).asInt()
+            println "Project Java Version: ${javaVersion}"
+        }
     }
 }
 """,
             encoding="utf-8",
         )
-        with Path("./build.gradle").open("+a") as build_gradle:
-            build_gradle.write(
-                """
-apply from: "./craftparts.build.gradle" // the following line is appended
-"""
-            )
         try:
-            version_output = self._execute("gradle printProjectJavaVersion")
+            gradle_executable = "./gradlew" if options.gradle_use_gradlew else "gradle"
+            self._execute(f"{gradle_executable} --init-script {init_script_path}")
+            version_output = self._execute(
+                f"{gradle_executable} printProjectJavaVersion"
+            )
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
