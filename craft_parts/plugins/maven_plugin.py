@@ -30,7 +30,6 @@ from overrides import override
 
 from craft_parts import errors
 
-from . import validator
 from .java_plugin import JavaPlugin, JavaPluginEnvironmentValidator
 from .properties import PluginProperties
 
