@@ -19,11 +19,13 @@ import textwrap
 from pathlib import Path
 
 import yaml
+
 from craft_parts import LifecycleManager, Step
 
 
-def run_build(new_dir, partitions, application):
+def run_build(monkeypatch, new_dir, partitions, application):
     source_location = Path(__file__).parent / "test_maven"
+    monkeypatch.chdir(source_location)
 
     parts_yaml = textwrap.dedent(
         f"""
@@ -57,7 +59,7 @@ def run_build(new_dir, partitions, application):
     return lf.project_info.prime_dir
 
 
-def test_java_plugin(new_dir, partitions):
+def test_java_plugin(monkeypatch, new_dir, partitions):
     """This test validates that java plugin sets JAVA_HOME.
     The JAVA_HOME should be set according to the following rules:
     - Latest version of Java VM is selected
@@ -67,7 +69,7 @@ def test_java_plugin(new_dir, partitions):
     is set to Java 21.
     """
 
-    prime_dir = run_build(new_dir, partitions, "test_java_plugin")
+    prime_dir = run_build(monkeypatch, new_dir, partitions, "test_java_plugin")
     java_binary = prime_dir / "bin/java"
     assert java_binary.is_file()
 

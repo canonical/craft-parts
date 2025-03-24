@@ -108,7 +108,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             ) from err
 
         maven_executable = "./mvnw" if options.maven_use_mvnw else "mvn"
-        effective_pom_path = Path("effective.pom")
+        effective_pom_path = Path("./effective.pom")
         try:
             self._execute(
                 # Write to file since writing to stdout without maven info logs require sudo, i.e.
