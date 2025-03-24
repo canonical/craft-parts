@@ -81,7 +81,7 @@ class MavenPluginEnvironmentValidator(JavaPluginEnvironmentValidator):
         project_java_major_version = self._get_project_java_major_version()
         # if the project Java version cannot be detected, let it try build anyway.
         if project_java_major_version is None:
-            return None
+            return
 
         if system_java_major_version < project_java_major_version:
             raise errors.PluginEnvironmentValidationError(
