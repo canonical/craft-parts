@@ -23,6 +23,9 @@ from textwrap import dedent
 from unittest import mock
 
 import pytest
+from overrides import override
+from pydantic import ValidationError
+
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import (
     MavenPlugin,
@@ -30,8 +33,6 @@ from craft_parts.plugins.maven_plugin import (
     _extract_java_version,
     _parse_project_java_version,
 )
-from overrides import override
-from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -56,8 +57,8 @@ def patch_succeed_cmd_validator(mocker):
 OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
             if cmd in (
-                "./mvnw help:effective-pom -Doutput=effective.pom",
-                "mvn help:effective-pom -Doutput=effective.pom",
+                "./mvnw help:effective-pom -Doutput=./effective.pom",
+                "mvn help:effective-pom -Doutput=./effective.pom",
             ):
                 _write_effective_pom()
                 return ""  # the output is not used anywhere since it's written to file
@@ -67,7 +68,7 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
 
 
 def _write_effective_pom(version=8):
-    Path("effective.pom").write_text(
+    Path("./effective.pom").write_text(
         f"""<project>
   <properties>
     <java.version>{version}</java.version>
@@ -413,8 +414,8 @@ def test_effective_pom_project_version_not_detected(
         def _execute(self, cmd: str) -> str:
             if cmd == "java --version":
                 return "openjdk 21.0.6"
-            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
-                Path("effective.pom").write_text("<project></project>")
+            if cmd == "mvn help:effective-pom -Doutput=./effective.pom":
+                Path("./effective.pom").write_text("<project></project>")
                 return ""
             return super()._execute(cmd)
 
@@ -440,7 +441,7 @@ def test_effective_pom_project_incompatible_version(
         def _execute(self, cmd: str) -> str:
             if cmd == "java --version":
                 return "openjdk 21.0.6"
-            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
+            if cmd == "mvn help:effective-pom -Doutput=./effective.pom":
                 _write_effective_pom(version=23)
                 return ""
             return super()._execute(cmd)
