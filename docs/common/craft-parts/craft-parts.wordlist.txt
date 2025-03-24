@@ -110,6 +110,7 @@ InvalidSourceType
 Iterable
 JAR
 JavaPlugin
+JavaPluginEnvironmentValidator
 JLink
 JLinkPlugin
 JLinkPluginEnvironmentValidator
