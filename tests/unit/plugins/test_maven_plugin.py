@@ -23,6 +23,9 @@ from textwrap import dedent
 from unittest import mock
 
 import pytest
+from overrides import override
+from pydantic import ValidationError
+
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import (
     MavenPlugin,
@@ -30,8 +33,6 @@ from craft_parts.plugins.maven_plugin import (
     _extract_java_version,
     _parse_project_java_version,
 )
-from overrides import override
-from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -384,7 +385,7 @@ def test_effective_pom_generation_fail(dependency_fixture, part_info, mocker):
         def _execute(self, cmd: str) -> str:
             if cmd == "java --version":
                 return "openjdk 21.0.6"
-            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
+            if cmd == "mvn help:effective-pom -Doutput=./effective.pom":
                 raise subprocess.CalledProcessError(1, cmd)
             return super()._execute(cmd)
 

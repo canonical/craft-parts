@@ -19,6 +19,7 @@ import textwrap
 from pathlib import Path
 
 import yaml
+
 from craft_parts import LifecycleManager, Step
 
 
