@@ -23,9 +23,6 @@ from textwrap import dedent
 from unittest import mock
 
 import pytest
-from overrides import override
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import (
     MavenPlugin,
@@ -33,6 +30,8 @@ from craft_parts.plugins.maven_plugin import (
     _extract_java_version,
     _parse_project_java_version,
 )
+from overrides import override
+from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -57,18 +56,17 @@ def patch_succeed_cmd_validator(mocker):
 OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
             if cmd in (
-                "./mvnw help:effective-pom -Doutput=./effective.pom",
-                "mvn help:effective-pom -Doutput=./effective.pom",
+                "./mvnw help:effective-pom -Doutput=effective.pom",
+                "mvn help:effective-pom -Doutput=effective.pom",
             ):
-                _write_effective_pom()
                 return ""  # the output is not used anywhere since it's written to file
             return super()._execute(cmd)
 
     mocker.patch.object(MavenPlugin, "validator_class", SuccessfulCmdValidator)
 
 
-def _write_effective_pom(version=8):
-    Path("./effective.pom").write_text(
+def _write_effective_pom(version=8, project_path="./"):
+    Path(f"{project_path}/effective.pom").write_text(
         f"""<project>
   <properties>
     <java.version>{version}</java.version>
@@ -78,15 +76,14 @@ def _write_effective_pom(version=8):
 
 
 @pytest.fixture
-# new_dir fixture is required to chdir into the testing directory
 def write_effective_pom(new_dir):
-    _write_effective_pom()
+    _write_effective_pom(project_path=new_dir)
 
 
 @pytest.mark.parametrize(
     "mvn_version", [("\x1b[1mApache Maven 3.6.3\x1b[m"), ("Apache Maven 3.6.3")]
 )
-@pytest.mark.usefixtures("patch_succeed_cmd_validator")
+@pytest.mark.usefixtures("patch_succeed_cmd_validator", "write_effective_pom")
 def test_validate_environment(dependency_fixture, part_info, mvn_version):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
@@ -139,8 +136,8 @@ def test_validate_environment_invalid_mvn(dependency_fixture, part_info):
     assert raised.value.reason == "invalid maven version ''"
 
 
-@pytest.mark.usefixtures("patch_succeed_cmd_validator")
-def test_validate_environment_with_maven_part(part_info):
+@pytest.mark.usefixtures("patch_succeed_cmd_validator", "write_effective_pom")
+def test_validate_environment_with_maven_part(part_info, dependency_fixture):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
@@ -304,7 +301,7 @@ def _normalize_settings(settings):
         ("Apache Maven 3.6.3"),
     ],
 )
-@pytest.mark.usefixtures("patch_succeed_cmd_validator")
+@pytest.mark.usefixtures("patch_succeed_cmd_validator", "write_effective_pom")
 def test_validate_mvnw_environment(
     dependency_fixture, part_info, mvnw_version, monkeypatch
 ):
@@ -312,10 +309,7 @@ def test_validate_mvnw_environment(
         {"source": ".", "maven-use-mvnw": True}
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    mvnw = dependency_fixture("mvnw", output=mvnw_version)
-    # mvnw exists in the project directory, not the mock_bin directory created by
-    # dependency_fixture.
-    monkeypatch.chdir(mvnw.parent)
+    mvnw = dependency_fixture("./mvnw", output=mvnw_version)
 
     validator = plugin.validator_class(
         part_name="my-part", env=f"PATH={str(mvnw.parent)}", properties=properties
@@ -377,6 +371,7 @@ def test_validate_environment_java_version_check(
     validator.validate_environment()
 
 
+@pytest.mark.usefixtures("write_effective_pom")
 def test_effective_pom_generation_fail(dependency_fixture, part_info, mocker):
     class CommandValidatorOverride(MavenPluginEnvironmentValidator):
         """A validator that raises an error when generating effective-pom."""
@@ -385,7 +380,7 @@ def test_effective_pom_generation_fail(dependency_fixture, part_info, mocker):
         def _execute(self, cmd: str) -> str:
             if cmd == "java --version":
                 return "openjdk 21.0.6"
-            if cmd == "mvn help:effective-pom -Doutput=./effective.pom":
+            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
                 raise subprocess.CalledProcessError(1, cmd)
             return super()._execute(cmd)
 
@@ -404,8 +399,9 @@ def test_effective_pom_generation_fail(dependency_fixture, part_info, mocker):
     assert "failed to generate effective pom" in exc.value.reason
 
 
+@pytest.mark.usefixtures("write_effective_pom")
 def test_effective_pom_project_version_not_detected(
-    dependency_fixture, part_info, mocker
+    dependency_fixture, part_info, mocker, new_dir
 ):
     class CommandValidatorOverride(MavenPluginEnvironmentValidator):
         """A validator that outputs different versions of jdk."""
@@ -415,7 +411,7 @@ def test_effective_pom_project_version_not_detected(
             if cmd == "java --version":
                 return "openjdk 21.0.6"
             if cmd == "mvn help:effective-pom -Doutput=./effective.pom":
-                Path("./effective.pom").write_text("<project></project>")
+                Path(f"{new_dir}/effective.pom").write_text("<project></project>")
                 return ""
             return super()._execute(cmd)
 
@@ -431,8 +427,9 @@ def test_effective_pom_project_version_not_detected(
     validator.validate_environment()
 
 
+@pytest.mark.usefixtures("write_effective_pom")
 def test_effective_pom_project_incompatible_version(
-    dependency_fixture, part_info, mocker
+    dependency_fixture, part_info, mocker, new_dir
 ):
     class CommandValidatorOverride(MavenPluginEnvironmentValidator):
         """A validator that outputs different versions of jdk."""
@@ -441,8 +438,8 @@ def test_effective_pom_project_incompatible_version(
         def _execute(self, cmd: str) -> str:
             if cmd == "java --version":
                 return "openjdk 21.0.6"
-            if cmd == "mvn help:effective-pom -Doutput=./effective.pom":
-                _write_effective_pom(version=23)
+            if cmd == "mvn help:effective-pom -Doutput=effective.pom":
+                _write_effective_pom(version=23, project_path=new_dir)
                 return ""
             return super()._execute(cmd)
 

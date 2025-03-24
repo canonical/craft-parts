@@ -100,6 +100,8 @@ class MavenPluginEnvironmentValidator(JavaPluginEnvironmentValidator):
                 # sudo mvn help:effective-pom -q -DforceStdout -doutput=/dev/stdout
                 f"{maven_executable} help:effective-pom -Doutput={effective_pom_path}"
             )
+            project_java_major_version = _parse_project_java_version(effective_pom_path)
+            return _extract_java_version(project_java_major_version)
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
@@ -107,9 +109,6 @@ class MavenPluginEnvironmentValidator(JavaPluginEnvironmentValidator):
             ) from err
         finally:
             effective_pom_path.unlink(missing_ok=True)
-
-        project_java_major_version = _parse_project_java_version(effective_pom_path)
-        return _extract_java_version(project_java_major_version)
 
 
 def _parse_project_java_version(effective_pom_path: Path) -> str | None:
