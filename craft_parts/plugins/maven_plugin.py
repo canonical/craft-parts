@@ -31,7 +31,7 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
-from .java_plugin import JavaPlugin
+from .java_plugin import JavaPlugin, JavaPluginEnvironmentValidator
 from .properties import PluginProperties
 
 
@@ -46,7 +46,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
-class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+class MavenPluginEnvironmentValidator(JavaPluginEnvironmentValidator):
     """Check the execution environment for the maven plugin.
 
     :param part_name: The part whose build environment is being validated.
@@ -65,18 +65,11 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
           and there are no parts named maven-deps.
         """
         options = cast(MavenPluginProperties, self._options)
-        if options.maven_use_mvnw:
-            version = self.validate_dependency(
-                dependency="./mvnw",
-                plugin_name="maven",
-                part_dependencies=part_dependencies,
-            )
-        else:
-            version = self.validate_dependency(
-                dependency="mvn",
-                plugin_name="maven",
-                part_dependencies=part_dependencies,
-            )
+        version = self.validate_dependency(
+            dependency="./mvnw" if options.maven_use_mvnw else "mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
         if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
             part_dependencies is None or "maven-deps" not in part_dependencies
         ):
@@ -85,28 +78,21 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 reason=f"invalid maven version {version!r}",
             )
 
-        try:
-            system_java_version_output = self._execute("java --version")
-            # Java versions < 8 have syntax 1.<version>
-            version_output_match = re.match(
-                r"openjdk (1\.(\d+)|(\d+))", system_java_version_output
-            )
-            if version_output_match is None:
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason=f"failed to check java version: {system_java_version_output}",
-                )
-            # match 1.<version> first for Java versions less than or equal to 8. Otherwise,
-            # match <version>.
-            system_java_major_version = version_output_match.group(
-                2
-            ) or version_output_match.group(1)
-        except subprocess.CalledProcessError as err:
+        system_java_major_version = self._get_system_openjdk_java_major_version()
+        project_java_major_version = self._get_project_java_major_version()
+        # if the project Java version cannot be detected, let it try build anyway.
+        if project_java_major_version is None:
+            return None
+
+        if system_java_major_version < project_java_major_version:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
-                reason=f"failed to check java version: {err}",
-            ) from err
+                reason="system Java version is less than project Java version."
+                f"system: {system_java_major_version}, project: {project_java_major_version}",
+            )
 
+    def _get_project_java_major_version(self) -> int | None:
+        options = cast(MavenPluginProperties, self._options)
         maven_executable = "./mvnw" if options.maven_use_mvnw else "mvn"
         effective_pom_path = Path("./effective.pom")
         try:
@@ -115,13 +101,6 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 # sudo mvn help:effective-pom -q -DforceStdout -doutput=/dev/stdout
                 f"{maven_executable} help:effective-pom -Doutput={effective_pom_path}"
             )
-            project_java_major_version = _parse_project_java_version(effective_pom_path)
-            project_java_major_version = _extract_java_version(
-                project_java_major_version
-            )
-            # if the project Java version cannot be detected, let it try build anyway.
-            if project_java_major_version is None:
-                return
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
@@ -130,19 +109,8 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         finally:
             effective_pom_path.unlink(missing_ok=True)
 
-        try:
-            if int(system_java_major_version) < int(project_java_major_version):
-                raise errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason="system Java version is less than project Java version."
-                    f"system: {system_java_major_version}, project: {project_java_major_version}",
-                )
-        except ValueError as err:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=f"failed to compare java versions: {err}, "
-                f"system: {system_java_major_version}, project: {project_java_major_version}",
-            ) from err
+        project_java_major_version = _parse_project_java_version(effective_pom_path)
+        return _extract_java_version(project_java_major_version)
 
 
 def _parse_project_java_version(effective_pom_path: Path) -> str | None:
@@ -188,13 +156,19 @@ def _parse_project_java_version(effective_pom_path: Path) -> str | None:
     return None
 
 
-def _extract_java_version(java_version_output: str | None) -> str | None:
+def _extract_java_version(java_version_output: str | None) -> int | None:
     if java_version_output is None:
         return None
     match = re.match(r"(1\.(\d+)|(\d+))", java_version_output)
     if not match:
         return None
-    return match.group(2) or match.group(1)
+    try:
+        return int(match.group(2) or match.group(1))
+    except ValueError:
+        raise errors.PluginEnvironmentValidationError(
+            part_name="maven",
+            reason=f"failed to parse java version: {java_version_output}",
+        )
 
 
 class MavenPlugin(JavaPlugin):
