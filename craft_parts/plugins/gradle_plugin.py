@@ -148,7 +148,7 @@ orElse(systemJavaVersion).get().asInt()
         if not version_output_match:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
-                reason=f"failed to get project java version: {version_output}",
+                reason=f"failed to parse project java version: {version_output}",
             )
         try:
             return int(version_output_match.group(1))
