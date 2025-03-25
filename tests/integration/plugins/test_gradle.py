@@ -50,7 +50,7 @@ def test_gradle_plugin(new_dir, partitions, gradle_use_gradlew):
           foo:
             plugin: gradle
             gradle-task: build
-            gradle_use_gradlew: {gradle_use_gradlew}
+            gradle-use-gradlew: {gradle_use_gradlew}
             source: {source_location}
             stage-packages: [default-jre-headless]
         """

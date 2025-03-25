@@ -68,6 +68,7 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             dependency="gradle" if not options.gradle_use_gradlew else "./gradlew",
             plugin_name="gradle",
             part_dependencies=part_dependencies,
+            argument="--version 2>&1",
         )
         if not re.search(r"Gradle (.*)", version) and (
             part_dependencies is None or "gradle-deps" not in part_dependencies
