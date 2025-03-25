@@ -18,17 +18,19 @@
 
 import os
 import re
+import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
 
+# defusedxml does not contain library stubs or py.typed marker
+import defusedxml.ElementTree  # type: ignore[import-untyped]
 from overrides import override
 
 from craft_parts import errors
 
-from . import validator
-from .java_plugin import JavaPlugin
+from .java_plugin import JavaPlugin, JavaPluginEnvironmentValidator
 from .properties import PluginProperties
 
 
@@ -38,12 +40,12 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["maven"] = "maven"
 
     maven_parameters: list[str] = []
-
+    maven_use_mvnw: bool = False
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
-class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+class MavenPluginEnvironmentValidator(JavaPluginEnvironmentValidator):
     """Check the execution environment for the maven plugin.
 
     :param part_name: The part whose build environment is being validated.
@@ -61,8 +63,9 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If maven is invalid
           and there are no parts named maven-deps.
         """
+        options = cast(MavenPluginProperties, self._options)
         version = self.validate_dependency(
-            dependency="mvn",
+            dependency="./mvnw" if options.maven_use_mvnw else "mvn",
             plugin_name="maven",
             part_dependencies=part_dependencies,
         )
@@ -73,6 +76,97 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 part_name=self._part_name,
                 reason=f"invalid maven version {version!r}",
             )
+
+        system_java_major_version = self._get_system_openjdk_java_major_version()
+        project_java_major_version = self._get_project_java_major_version()
+        # if the project Java version cannot be detected, let it try build anyway.
+        if project_java_major_version is None:
+            return
+
+        if system_java_major_version < project_java_major_version:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason="system Java version is less than project Java version."
+                f"system: {system_java_major_version}, project: {project_java_major_version}",
+            )
+
+    def _get_project_java_major_version(self) -> int | None:
+        options = cast(MavenPluginProperties, self._options)
+        maven_executable = "./mvnw" if options.maven_use_mvnw else "mvn"
+        effective_pom_path = Path("./effective.pom")
+        try:
+            self._execute(
+                # Write to file since writing to stdout without maven info logs require sudo, i.e.
+                # sudo mvn help:effective-pom -q -DforceStdout -doutput=/dev/stdout
+                f"{maven_executable} help:effective-pom -Doutput={effective_pom_path}"
+            )
+            project_java_major_version = _parse_project_java_version(effective_pom_path)
+            return _extract_java_version(project_java_major_version)
+        except subprocess.CalledProcessError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"failed to generate effective pom: {err}",
+            ) from err
+        finally:
+            effective_pom_path.unlink(missing_ok=True)
+
+
+def _parse_project_java_version(effective_pom_path: Path) -> str | None:
+    """Parse the contents of effective pom XML file.
+
+    The order in which Maven determines the Java version is as follows:
+    1. maven-compiler-plugin's configuration release value
+    2. maven-compiler-plugin's property's release value
+    3. java.version property's value (Spring Boot specific)
+    """
+    tree = defusedxml.ElementTree.parse(effective_pom_path)
+    root = tree.getroot()
+    java_version_element: ET.Element | None = root.find(".//{*}java.version")
+    maven_compiler_release_element: ET.Element | None = root.find(
+        ".//{*}maven.compiler.release"
+    )
+    maven_compiler_plugin_release_element: ET.Element | None = None
+    plugins_element = root.find(".//{*}plugins")
+    if plugins_element is not None:
+        plugins = plugins_element.findall(".//{*}plugin")
+        release_element: ET.Element | None
+        for plugin in plugins:
+            if (
+                (artifact_id_element := plugin.find(".//{*}artifactId")) is not None
+                and artifact_id_element.text == "maven-compiler-plugin"
+                and (release_element := plugin.find(".//{*}release")) is not None
+                and release_element.text
+            ):
+                maven_compiler_plugin_release_element = release_element
+                break
+    if (
+        maven_compiler_plugin_release_element is not None
+        and maven_compiler_plugin_release_element.text
+    ):
+        return maven_compiler_plugin_release_element.text
+    if (
+        maven_compiler_release_element is not None
+        and maven_compiler_release_element.text
+    ):
+        return maven_compiler_release_element.text
+    if java_version_element is not None and java_version_element.text:
+        return java_version_element.text
+    return None
+
+
+def _extract_java_version(java_version_output: str | None) -> int | None:
+    if java_version_output is None:
+        return None
+    match = re.match(r"(1\.(\d+)|(\d+))", java_version_output)
+    if not match:
+        return None
+    try:
+        return int(match.group(2) or match.group(1))
+    except ValueError:
+        raise errors.PluginEnvironmentValidationError(
+            part_name="maven",
+            reason=f"failed to parse java version: {java_version_output}",
+        )
 
 
 class MavenPlugin(JavaPlugin):
@@ -90,7 +184,10 @@ class MavenPlugin(JavaPlugin):
     - maven-parameters:
       (list of strings)
       Flags to pass to the build using the maven semantics for parameters.
-
+    - maven-use-mvnw:
+      (boolean)
+      Use the Maven wrapper script (mvnw) instead of the system Maven
+      installation.
     """
 
     properties_class = MavenPluginProperties
@@ -111,7 +208,8 @@ class MavenPlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 
-        mvn_cmd = ["mvn", "package"]
+        mvn_executable = "./mvnw" if options.maven_use_mvnw else "mvn"
+        mvn_cmd = [mvn_executable, "package"]
         if self._use_proxy():
             settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
             _create_settings(settings_path)

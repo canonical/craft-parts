@@ -2,6 +2,16 @@
 Changelog
 *********
 
+2.8.0 (2025-03-21)
+-------------------
+
+New features:
+
+- Maven plugin ``maven-use-mvnw`` parameter now allows for the use of the
+  ``mvnw`` wrapper script.
+- Maven plugin now checks for project and build system Java version
+  compatibility.
+
 2.7.0 (2025-03-18)
 -------------------
 
