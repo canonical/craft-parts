@@ -152,8 +152,9 @@ orElse(systemJavaVersion).get().asInt()
             encoding="utf-8",
         )
         try:
-            self._execute(f"{self.gradle_executable} --init-script {init_script_path}")
-            version_output = self._execute(f"{self.gradle_executable} {task_name}")
+            version_output = self._execute(
+                f"{self.gradle_executable} --init-script {init_script_path} {task_name}"
+            )
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
