@@ -41,8 +41,20 @@ from craft_parts import LifecycleManager, Step
 
 
 def test_gradle_plugin(new_dir, monkeypatch, partitions):
+    """Test Gradle plugin with two cases.
+
+    1. When gradlew executable file exists: use gradlew.
+    2. When gradlew executable file does not exist: use system gradle.
+    """
     source_location = Path(__file__).parent / "test_gradle"
     monkeypatch.chdir(source_location)
+
+    _test_gradle_plugin(
+        new_dir=new_dir, source_location=source_location, partitions=partitions
+    )
+
+
+def _test_gradle_plugin(new_dir, source_location, partitions):
 
     parts_yaml = textwrap.dedent(
         f"""
@@ -51,6 +63,7 @@ def test_gradle_plugin(new_dir, monkeypatch, partitions):
             plugin: gradle
             gradle-task: build
             source: {source_location}
+            build-packages: [gradle]
             stage-packages: [default-jre-headless]
         """
     )
