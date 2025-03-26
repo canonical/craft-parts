@@ -226,7 +226,10 @@ def dependency_fixture(new_dir):
 
         :return: path to dependency
         """
-        dependency_bin = Path(new_dir, "mock_bin", name)
+        if name.startswith("./"):
+            dependency_bin = Path(new_dir, name)
+        else:
+            dependency_bin = Path(new_dir, "mock_bin", name)
         dependency_bin.parent.mkdir(exist_ok=True)
         if broken:
             dependency_bin.write_text("#!/bin/sh\nexit 33")
