@@ -49,6 +49,14 @@ def test_gradle_plugin(new_dir, monkeypatch, partitions):
     source_location = Path(__file__).parent / "test_gradle"
     monkeypatch.chdir(source_location)
 
+    # 1. When gradlew executable file exists: use gradlew.
+    _test_gradle_plugin(
+        new_dir=new_dir, source_location=source_location, partitions=partitions
+    )
+
+    (source_location / "gradlew").unlink(missing_ok=True)
+
+    # 2. When gradlew executable file does not exist: use system gradle.
     _test_gradle_plugin(
         new_dir=new_dir, source_location=source_location, partitions=partitions
     )
