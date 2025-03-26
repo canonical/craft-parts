@@ -63,7 +63,7 @@ def _test_gradle_plugin(new_dir, source_location, partitions):
             plugin: gradle
             gradle-task: build
             source: {source_location}
-            build-packages: [gradle]
+            build-packages: [gradle, default-jdk]
             stage-packages: [default-jre-headless]
         """
     )
