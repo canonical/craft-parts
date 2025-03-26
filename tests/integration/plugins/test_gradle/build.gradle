@@ -15,7 +15,6 @@ jar {
             'Main-Class': 'sample.HelloWorld'
         )
     }
-    baseName 'HelloWorld'
 }
 
 tasks.build {
