@@ -72,6 +72,16 @@ BUILD SUCCESSFUL in 395ms
     mocker.patch.object(GradlePlugin, "validator_class", SuccessfulCmdValidator)
 
 
+@pytest.fixture
+def setup_gradlew_file(part_info):
+    """Setup gradlew file to test plugin when project gradlew file exists."""
+    gradlew_file = part_info.part_src_dir / Path("./gradlew")
+    gradlew_file.parent.mkdir(parents=True, exist_ok=True)
+    gradlew_file.touch(exist_ok=True)
+    yield
+    gradlew_file.unlink()
+
+
 @pytest.mark.usefixtures("patch_succeed_cmd_validator")
 def test_validate_environment(dependency_fixture, part_info):
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
@@ -89,14 +99,8 @@ Gradle 4.4.1
     validator.validate_environment()
 
 
-@pytest.mark.parametrize(
-    "use_gradlew, reason",
-    [(True, "'./gradlew' not found"), (False, "'gradle' not found")],
-)
-def test_validate_environment_missing_gradle(part_info, use_gradlew, reason):
-    properties = GradlePlugin.properties_class.unmarshal(
-        {"source": ".", "gradle-use-gradlew": use_gradlew}
-    )
+def test_validate_environment_missing_gradle(part_info):
+    properties = GradlePlugin.properties_class.unmarshal({"source": "."})
     plugin = GradlePlugin(properties=properties, part_info=part_info)
 
     validator = plugin.validator_class(
@@ -106,7 +110,7 @@ def test_validate_environment_missing_gradle(part_info, use_gradlew, reason):
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
-    assert raised.value.reason == reason
+    assert raised.value.reason == "'gradle' not found"
 
 
 def test_validate_environment_gradle_version_missing(part_info, dependency_fixture):
@@ -127,13 +131,14 @@ def test_validate_environment_gradle_version_missing(part_info, dependency_fixtu
     assert "invalid gradle version" in raised.value.reason
 
 
+@pytest.mark.usefixtures("setup_gradlew_file")
 def test_validate_environment_java_version_check_fail(
     mocker, part_info, dependency_fixture
 ):
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
     plugin = GradlePlugin(properties=properties, part_info=part_info)
     gradle = dependency_fixture(
-        "gradle",
+        "./gradlew",
         output="Gradle 4.4.1",
     )
 
@@ -164,7 +169,7 @@ def test_validate_environment_java_version_check_invalid(
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
     plugin = GradlePlugin(properties=properties, part_info=part_info)
     gradle = dependency_fixture(
-        "gradle",
+        "./gradlew",
         output="Gradle 4.4.1",
     )
 
@@ -189,6 +194,7 @@ def test_validate_environment_java_version_check_invalid(
     assert "failed to check java version" in raised.value.reason
 
 
+@pytest.mark.usefixtures("setup_gradlew_file")
 def test_validate_environment_gradle_init_script_fail(
     mocker, part_info, dependency_fixture
 ):
@@ -203,7 +209,7 @@ OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
             if cmd in (
                 "gradle --init-script gradle-plugin-init-script.gradle",
-                "gradlew --init-script gradle-plugin-init-script.gradle",
+                "./gradlew --init-script gradle-plugin-init-script.gradle",
             ):
                 raise subprocess.CalledProcessError(1, cmd, "test error")
             return super()._execute(cmd)
@@ -213,7 +219,7 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
     plugin = GradlePlugin(properties=properties, part_info=part_info)
     gradle = dependency_fixture(
-        "gradle",
+        "./gradlew",
         output="Gradle 4.4.1",
     )
 
@@ -227,6 +233,7 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
     assert "failed to execute project java version check" in raised.value.reason
 
 
+@pytest.mark.usefixtures("setup_gradlew_file")
 def test_validate_environment_gradle_project_version_check_fail(
     mocker, part_info, dependency_fixture
 ):
@@ -236,21 +243,21 @@ def test_validate_environment_gradle_project_version_check_fail(
 
         @override
         def _execute(self, cmd: str) -> str:
-            print(cmd)
             if cmd == "java --version":
                 return """openjdk 21.0.6 2025-01-21
 OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
             if cmd in (
                 "gradle --init-script gradle-plugin-init-script.gradle",
-                "gradlew --init-script gradle-plugin-init-script.gradle",
+                "./gradlew --init-script gradle-plugin-init-script.gradle",
             ):
                 return ""
             if cmd in (
                 "gradle printProjectJavaVersion",
-                "gradlew printProjectJavaVersion",
+                "./gradlew printProjectJavaVersion",
             ):
                 return "Not a valid project Java version output."
+            print(cmd)
             return super()._execute(cmd)
 
     mocker.patch.object(GradlePlugin, "validator_class", FailCmdValidator)
@@ -258,7 +265,7 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
     plugin = GradlePlugin(properties=properties, part_info=part_info)
     gradle = dependency_fixture(
-        "gradle",
+        "./gradlew",
         output="Gradle 4.4.1",
     )
 
@@ -273,19 +280,17 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
 
 
 @pytest.mark.parametrize(
-    ("use_gradlew", "task", "parameters", "expected_command"),
+    ("task", "parameters", "expected_command"),
     [
-        (False, "build", [], "gradle build"),
-        (True, "build", [], "./gradlew build"),
-        (False, "pack", [], "gradle pack"),
-        (False, "pack", ["--parameter=value"], "gradle pack --parameter=value"),
+        ("build", [], "gradle build"),
+        ("pack", [], "gradle pack"),
+        ("pack", ["--parameter=value"], "gradle pack --parameter=value"),
     ],
 )
-def test_get_build_commands(part_info, use_gradlew, task, parameters, expected_command):
+def test_get_build_commands(part_info, task, parameters, expected_command):
     properties = GradlePlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "gradle-use-gradlew": use_gradlew,
             "gradle-task": task,
             "gradle-parameters": parameters,
         }
@@ -297,6 +302,23 @@ def test_get_build_commands(part_info, use_gradlew, task, parameters, expected_c
     )
 
 
+@pytest.mark.usefixtures("setup_gradlew_file")
+def test_get_build_commands_use_gradlew(part_info, dependency_fixture):
+    properties = GradlePlugin.properties_class.unmarshal(
+        {"source": ".", "gradle-task": "build"}
+    )
+    dependency_fixture(
+        "./gradlew",
+        output="Gradle 4.4.1",
+    )
+    plugin = GradlePlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == (
+        ["./gradlew build", *plugin._get_java_post_build_commands()]
+    )
+
+
+@pytest.mark.usefixtures("setup_gradlew_file")
 def test_proxy_settings_configured(part_info, mocker):
     mocker.patch.object(
         os,

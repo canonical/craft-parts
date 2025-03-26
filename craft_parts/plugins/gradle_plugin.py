@@ -24,6 +24,8 @@ from typing import Literal, cast
 from urllib.parse import urlparse
 
 from overrides import override
+from pydantic import model_validator
+from typing_extensions import Self
 
 from craft_parts import errors
 
@@ -39,10 +41,16 @@ class GradlePluginProperties(PluginProperties, frozen=True):
 
     gradle_parameters: list[str] = []
     gradle_task: str = "build"
-    gradle_use_gradlew: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
+
+    @model_validator(mode="after")
+    def gradle_task_defined(self) -> Self:
+        """Gradle task must be defined."""
+        if not self.gradle_task:
+            raise ValueError("Gradle task must be defined")
+        return self
 
 
 class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -51,6 +59,11 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param part_name: The part whose build environment is being validated.
     :param env: A string containing the build step environment setup.
     """
+
+    @property
+    def gradle_executable(self) -> str:
+        """Use gradlew by default if it exists."""
+        return "./gradlew" if Path("./gradlew").exists() else "gradle"
 
     @override
     def validate_environment(
@@ -63,9 +76,8 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If gradle is invalid
           and there are no parts named gradle-deps.
         """
-        options = cast(GradlePluginProperties, self._options)
         version = self.validate_dependency(
-            dependency="gradle" if not options.gradle_use_gradlew else "./gradlew",
+            dependency=self.gradle_executable,
             plugin_name="gradle",
             part_dependencies=part_dependencies,
             argument="--version 2>&1",
@@ -77,6 +89,11 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 part_name=self._part_name,
                 reason=f"invalid gradle version {version!r}",
             )
+
+        # Skip project version check if not using gradlew because the gradle provided by
+        # apt is outdated and cannot run project version check init script.
+        if self.gradle_executable == "gradle":
+            return
 
         system_java_major_version = self._get_system_java_major_version()
         project_java_major_version = self._get_project_java_major_version()
@@ -118,8 +135,7 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             ) from err
 
     def _get_project_java_major_version(self) -> int:
-        options = cast(GradlePluginProperties, self._options)
-        init_script_path = Path("./gradle-plugin-init-script.gradle")
+        init_script_path = Path("gradle-plugin-init-script.gradle")
         task_name = "printProjectJavaVersion"
         init_script_path.write_text(
             f"""allprojects {{
@@ -136,9 +152,8 @@ orElse(systemJavaVersion).get().asInt()
             encoding="utf-8",
         )
         try:
-            gradle_executable = "./gradlew" if options.gradle_use_gradlew else "gradle"
-            self._execute(f"{gradle_executable} --init-script {init_script_path}")
-            version_output = self._execute(f"{gradle_executable} {task_name}")
+            self._execute(f"{self.gradle_executable} --init-script {init_script_path}")
+            version_output = self._execute(f"{self.gradle_executable} {task_name}")
         except subprocess.CalledProcessError as err:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
@@ -181,6 +196,11 @@ class GradlePlugin(JavaPlugin):
     properties_class = GradlePluginProperties
     validator_class = GradlePluginEnvironmentValidator
 
+    @property
+    def gradle_executable(self) -> str:
+        """Use gradlew by default if it exists."""
+        return "./gradlew" if Path("./gradlew").exists() else "gradle"
+
     @override
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
@@ -196,8 +216,7 @@ class GradlePlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(GradlePluginProperties, self._options)
 
-        gradlew_executable = "./gradlew" if options.gradle_use_gradlew else "gradle"
-        gradle_cmd = [gradlew_executable, options.gradle_task]
+        gradle_cmd = [self.gradle_executable, options.gradle_task]
         self._setup_proxy()
 
         return [

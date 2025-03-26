@@ -40,9 +40,9 @@ from craft_parts import LifecycleManager, Step
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-@pytest.mark.parametrize("gradle_use_gradlew", [False, True])
-def test_gradle_plugin(new_dir, partitions, gradle_use_gradlew):
+def test_gradle_plugin(new_dir, monkeypatch, partitions):
     source_location = Path(__file__).parent / "test_gradle"
+    monkeypatch.chdir(source_location)
 
     parts_yaml = textwrap.dedent(
         f"""
@@ -50,7 +50,6 @@ def test_gradle_plugin(new_dir, partitions, gradle_use_gradlew):
           foo:
             plugin: gradle
             gradle-task: build
-            gradle-use-gradlew: {gradle_use_gradlew}
             source: {source_location}
             stage-packages: [default-jre-headless]
         """
