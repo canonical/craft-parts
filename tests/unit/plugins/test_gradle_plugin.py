@@ -20,12 +20,13 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from overrides import override
+
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
 )
-from overrides import override
 
 
 @pytest.fixture
@@ -230,6 +231,8 @@ def test_validate_environment_java_version_check_invalid(
 def test_validate_environment_gradle_init_script_fail(
     mocker, part_info, dependency_fixture
 ):
+    tmp_dir = tempfile.gettempdir()
+
     class FailCmdValidator(GradlePluginEnvironmentValidator):
         """A validator that fails commands used by Gradle plugin environment validator."""
 
@@ -241,7 +244,7 @@ OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
             if (
                 cmd
-                == "./gradlew --init-script /tmp/gradle-plugin-init-script.gradle \
+                == f"./gradlew --init-script {tmp_dir}/gradle-plugin-init-script.gradle \
 gradle-plugin-printProjectJavaVersion 2>&1"
             ):
                 raise subprocess.CalledProcessError(1, cmd, "test error")
