@@ -190,7 +190,7 @@ jobs:
           fi
           echo "::endgroup::"
           echo "::group::JDK"
-          sudo apt-get install -y openjdk-17-jdk openjdk-21-jdk openjdk-8-jdk-headless
+          sudo apt-get install -y openjdk-17-jdk openjdk-21-jdk openjdk-8-jdk-headless tinyproxy
           echo "::endgroup::"
       - name: Install uv
         uses: astral-sh/setup-uv@v4
