@@ -19,6 +19,7 @@
 import os
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
@@ -146,7 +147,9 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             ) from err
 
     def _get_project_java_major_version(self) -> int:
-        init_script_path = Path(f"/tmp/{_PLUGIN_PREFIX}-init-script.gradle")
+        init_script_path = Path(
+            f"{tempfile.gettempdir()}/{_PLUGIN_PREFIX}-init-script.gradle"
+        )
         task_name = f"{_PLUGIN_PREFIX}-printProjectJavaVersion"
         init_script_path.write_text(
             f"""allprojects {{
