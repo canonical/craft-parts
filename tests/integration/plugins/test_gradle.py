@@ -20,7 +20,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from craft_parts import LifecycleManager, Step
 
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
@@ -68,9 +67,6 @@ def test_gradle_plugin_gradlew(new_dir, monkeypatch, partitions, local_proxy_url
     part_name = "foo"
     source_location = Path(__file__).parent / "test_gradle"
     monkeypatch.chdir(source_location)
-    monkeypatch.setenv("http_proxy", local_proxy_url)
-    monkeypatch.setenv("https_proxy", local_proxy_url)
-    monkeypatch.setenv("GRADLE_USER_HOME", f"{new_dir}/parts/{part_name}/build/.gradle")
     parts_yaml = textwrap.dedent(
         f"""
         parts:
@@ -81,6 +77,11 @@ def test_gradle_plugin_gradlew(new_dir, monkeypatch, partitions, local_proxy_url
             gradle-init-script-parameters: [testWrite]
             source: {source_location}
             build-packages: [gradle, openjdk-21-jdk]
+            build-environment:
+                - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
+                - http_proxy: {local_proxy_url}
+                - https_proxy: {local_proxy_url}
+                - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
             stage-packages: [openjdk-21-jdk]
         """
     )
@@ -127,15 +128,19 @@ def setup_gradle_test(monkeypatch):
 
 @pytest.mark.usefixtures("setup_gradle_test")
 def test_gradle_plugin_gradle(new_dir, partitions):
+    part_name = "foo"
     source_location = Path(__file__).parent / "test_gradle"
     parts_yaml = textwrap.dedent(
         f"""
         parts:
-          foo:
+          {part_name}:
             plugin: gradle
             gradle-task: build
             source: {source_location}
             build-packages: [gradle, openjdk-21-jdk]
+            build-environment:
+            - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
+            - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
             stage-packages: [openjdk-21-jdk]
         """
     )
