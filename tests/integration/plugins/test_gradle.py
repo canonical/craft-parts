@@ -120,7 +120,7 @@ def setup_gradle_test(monkeypatch):
     source_location = Path(__file__).parent / "test_gradle"
     monkeypatch.chdir(source_location)
     gradlew_path = source_location / "gradlew"
-    gradlew_path.rename(source_location / "gradlew.backup")
+    gradlew_path = gradlew_path.rename(source_location / "gradlew.backup")
     yield
     gradlew_path.rename(source_location / "gradlew")
 
