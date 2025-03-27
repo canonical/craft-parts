@@ -82,6 +82,16 @@ def setup_gradlew_file(part_info):
     gradlew_file.unlink()
 
 
+@pytest.fixture
+def setup_init_script_file(part_info):
+    """Setup gradle init script file to test plugin when project gradlew init script is passed."""
+    init_script_file = part_info.part_src_dir / "init.gradle"
+    init_script_file.parent.mkdir(parents=True, exist_ok=True)
+    init_script_file.touch(exist_ok=True)
+    yield
+    init_script_file.unlink()
+
+
 @pytest.mark.usefixtures("patch_succeed_cmd_validator")
 def test_validate_environment(dependency_fixture, part_info):
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
@@ -113,7 +123,7 @@ def test_validate_environment_missing_gradle(part_info):
     assert raised.value.reason == "'gradle' not found"
 
 
-def test_validate_environment_gradle_version_missing(part_info, dependency_fixture):
+def test_validate_environment_gradle_version_invalid(part_info, dependency_fixture):
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
     plugin = GradlePlugin(properties=properties, part_info=part_info)
     gradle = dependency_fixture(
@@ -129,6 +139,28 @@ def test_validate_environment_gradle_version_missing(part_info, dependency_fixtu
         validator.validate_environment()
 
     assert "invalid gradle version" in raised.value.reason
+
+
+def test_validate_environment_invalid_init_script_path(part_info, dependency_fixture):
+    properties = GradlePlugin.properties_class.unmarshal(
+        {"source": ".", "gradle-init-script": "not-exists.gradle"}
+    )
+    plugin = GradlePlugin(properties=properties, part_info=part_info)
+    gradle = dependency_fixture(
+        "gradle",
+        output="Gradle 4.4.1",
+    )
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(gradle.parent)}", properties=properties
+    )
+
+    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
+        validator.validate_environment()
+
+    assert (
+        "gradle init script option supplied but file not found" in raised.value.reason
+    )
 
 
 @pytest.mark.usefixtures("setup_gradlew_file")
@@ -207,9 +239,10 @@ def test_validate_environment_gradle_init_script_fail(
                 return """openjdk 21.0.6 2025-01-21
 OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
-            if cmd in (
-                "gradle --init-script gradle-plugin-init-script.gradle",
-                "./gradlew --init-script gradle-plugin-init-script.gradle",
+            if (
+                cmd
+                == "./gradlew --init-script /tmp/gradle-plugin-init-script.gradle \
+gradle-plugin-printProjectJavaVersion 2>&1"
             ):
                 raise subprocess.CalledProcessError(1, cmd, "test error")
             return super()._execute(cmd)
@@ -280,25 +313,37 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
 
 
 @pytest.mark.parametrize(
-    ("task", "parameters", "expected_command"),
+    ("task", "parameters", "init_script", "init_script_params", "expected_commands"),
     [
-        ("build", [], "gradle build"),
-        ("pack", [], "gradle pack"),
-        ("pack", ["--parameter=value"], "gradle pack --parameter=value"),
+        ("build", [], "", [], ["gradle build"]),
+        ("pack", [], "", [], ["gradle pack"]),
+        ("pack", ["--parameter=value"], "", [], ["gradle pack --parameter=value"]),
+        (
+            "pack",
+            [],
+            "init.gradle",
+            [],
+            ["gradle --init-script init.gradle", "gradle pack"],
+        ),
     ],
 )
-def test_get_build_commands(part_info, task, parameters, expected_command):
+@pytest.mark.usefixtures("setup_init_script_file")
+def test_get_build_commands(
+    part_info, task, parameters, init_script, init_script_params, expected_commands
+):
     properties = GradlePlugin.properties_class.unmarshal(
         {
             "source": ".",
             "gradle-task": task,
             "gradle-parameters": parameters,
+            "gradle-init-script": init_script,
+            "gradle-init-script-parameters": init_script_params,
         }
     )
     plugin = GradlePlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        [expected_command, *plugin._get_java_post_build_commands()]
+        [*expected_commands, *plugin._get_java_post_build_commands()]
     )
 
 
@@ -334,7 +379,9 @@ def test_proxy_settings_configured(part_info, mocker):
 
     plugin._setup_proxy()
 
-    gradle_properties = Path("gradle.properties").read_text(encoding="utf-8")
+    gradle_properties = (
+        plugin._part_info.part_build_dir / ".gradle/gradle.properties"
+    ).read_text(encoding="utf-8")
     assert "systemProp.http.proxyHost=test_proxy_http_url.com" in gradle_properties
     assert "systemProp.http.proxyPort=3128" in gradle_properties
     assert "systemProp.http.proxyUser=user" in gradle_properties

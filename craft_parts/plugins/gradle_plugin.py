@@ -33,12 +33,16 @@ from . import validator
 from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
+_PLUGIN_PREFIX = "gradle-plugin"
+
 
 class GradlePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the gradle plugin."""
 
     plugin: Literal["gradle"] = "gradle"
 
+    gradle_init_script: str = ""
+    gradle_init_script_parameters: list[str] = []
     gradle_parameters: list[str] = []
     gradle_task: str = "build"
 
@@ -90,6 +94,13 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 reason=f"invalid gradle version {version!r}",
             )
 
+        options = cast(GradlePluginProperties, self._options)
+        if options.gradle_init_script and not Path(options.gradle_init_script).exists():
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason="gradle init script option supplied but file not found",
+            )
+
         # Skip project version check if not using gradlew because the gradle provided by
         # apt is outdated and cannot run project version check init script.
         if self.gradle_executable == "gradle":
@@ -100,7 +111,7 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         if system_java_major_version < project_java_major_version:
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
-                reason="system Java version is less than project Java version."
+                reason="system Java version is less than project Java version"
                 f"system: {system_java_major_version}, project: {project_java_major_version}",
             )
 
@@ -135,8 +146,8 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             ) from err
 
     def _get_project_java_major_version(self) -> int:
-        init_script_path = Path("gradle-plugin-init-script.gradle")
-        task_name = "printProjectJavaVersion"
+        init_script_path = Path(f"/tmp/{_PLUGIN_PREFIX}-init-script.gradle")
+        task_name = f"{_PLUGIN_PREFIX}-printProjectJavaVersion"
         init_script_path.write_text(
             f"""allprojects {{
     tasks.register('{task_name}') {{
@@ -221,6 +232,7 @@ class GradlePlugin(JavaPlugin):
         self._setup_proxy()
 
         return [
+            *self._get_gradle_init_command(),
             " ".join(gradle_cmd + options.gradle_parameters),
             *self._get_java_post_build_commands(),
         ]
@@ -230,14 +242,19 @@ class GradlePlugin(JavaPlugin):
         no_proxy = "|".join(no_proxy.split(",") if no_proxy else [])
         if not any(k in os.environ for k in ("http_proxy", "https_proxy")):
             return
+
+        gradle_user_home = self._part_info.part_build_dir / ".gradle"
+        gradle_user_home.mkdir(parents=True, exist_ok=True)
+        gradle_properties = gradle_user_home / "gradle.properties"
         for protocol in ("http", "https"):
             env_name = f"{protocol}_proxy"
             if env_name not in os.environ:
                 continue
             proxy_url = urlparse(os.environ[env_name])
 
-            gradle_properties = Path("gradle.properties")
-            with open(gradle_properties, "a+") as gradle_properties_file:
+            with open(
+                gradle_properties, "a+", encoding="utf-8"
+            ) as gradle_properties_file:
                 gradle_properties_file.write(
                     f"""
 systemProp.{protocol}.proxyHost={proxy_url.hostname}
@@ -247,3 +264,14 @@ systemProp.{protocol}.proxyPassword={proxy_url.password}
 systemProp.{protocol}.nonProxyHosts={no_proxy}
 """
                 )
+
+    def _get_gradle_init_command(self) -> list[str]:
+        options = cast(GradlePluginProperties, self._options)
+        if not options.gradle_init_script:
+            return []
+        gradle_cmd = [
+            self.gradle_executable,
+            "--init-script",
+            options.gradle_init_script,
+        ]
+        return [" ".join(gradle_cmd + options.gradle_init_script_parameters)]
