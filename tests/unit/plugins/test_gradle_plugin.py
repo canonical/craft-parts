@@ -20,13 +20,12 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from overrides import override
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
 )
+from overrides import override
 
 
 @pytest.fixture

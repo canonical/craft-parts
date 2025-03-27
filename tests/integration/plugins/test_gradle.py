@@ -20,6 +20,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+
 from craft_parts import LifecycleManager, Step
 
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
@@ -79,8 +80,8 @@ def test_gradle_plugin_gradlew(new_dir, monkeypatch, partitions, local_proxy_url
             gradle-init-script: init.gradle
             gradle-init-script-parameters: [testWrite]
             source: {source_location}
-            build-packages: [gradle, default-jdk]
-            stage-packages: [default-jre-headless]
+            build-packages: [gradle, openjdk-21-jdk]
+            stage-packages: [openjdk-21-jdk]
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -134,8 +135,8 @@ def test_gradle_plugin_gradle(new_dir, partitions):
             plugin: gradle
             gradle-task: build
             source: {source_location}
-            build-packages: [gradle, default-jdk]
-            stage-packages: [default-jre-headless]
+            build-packages: [gradle, openjdk-21-jdk]
+            stage-packages: [openjdk-21-jdk]
         """
     )
     parts = yaml.safe_load(parts_yaml)
