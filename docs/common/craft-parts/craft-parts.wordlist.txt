@@ -92,6 +92,9 @@ GoPluginEnvironmentValidator
 GoPluginProperties
 GoUsePlugin
 GoUsePluginProperties
+GradlePlugin
+GradlePluginEnvironmentValidator
+GradlePluginProperties
 HttpRequestError
 IncompatibleSourceOptions
 InvalidAction
@@ -375,6 +378,7 @@ func
 github
 golang
 gradle
+gradlew
 gzipped
 hardcoded
 hg
@@ -383,6 +387,7 @@ humanize
 implementers
 infos
 ing
+init
 initialized
 iterable
 iojs
