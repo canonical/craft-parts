@@ -150,7 +150,6 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         init_script_path = Path(
             f"{tempfile.gettempdir()}/{_PLUGIN_PREFIX}-init-script.gradle"
         )
-        print(init_script_path)
         task_name = f"{_PLUGIN_PREFIX}-printProjectJavaVersion"
         init_script_path.write_text(
             f"""allprojects {{

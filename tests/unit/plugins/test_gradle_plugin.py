@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -269,6 +270,7 @@ gradle-plugin-printProjectJavaVersion 2>&1"
 def test_validate_environment_gradle_project_version_check_fail(
     mocker, part_info, dependency_fixture
 ):
+    tmp_dir = tempfile.gettempdir()
 
     class FailCmdValidator(GradlePluginEnvironmentValidator):
         """A validator that fails commands used by Gradle plugin environment validator."""
@@ -280,8 +282,8 @@ def test_validate_environment_gradle_project_version_check_fail(
 OpenJDK Runtime Environment (build 21.0.6+7-Ubuntu-124.04.1)
 OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)"""
             if cmd in (
-                "gradle --init-script gradle-plugin-init-script.gradle",
-                "./gradlew --init-script gradle-plugin-init-script.gradle",
+                f"gradle --init-script {tmp_dir}/gradle-plugin-init-script.gradle",
+                f"./gradlew --init-script {tmp_dir}/gradle-plugin-init-script.gradle",
             ):
                 return ""
             if cmd in (
@@ -307,7 +309,6 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
-    assert False
     assert "failed to parse project java version:" in raised.value.reason
 
 
