@@ -289,7 +289,6 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
                 "./gradlew printProjectJavaVersion",
             ):
                 return "Not a valid project Java version output."
-            print(cmd)
             return super()._execute(cmd)
 
     mocker.patch.object(GradlePlugin, "validator_class", FailCmdValidator)
@@ -308,6 +307,7 @@ OpenJDK 64-Bit Server VM (build 21.0.6+7-Ubuntu-124.04.1, mixed mode, sharing)""
     with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
         validator.validate_environment()
 
+    assert False
     assert "failed to parse project java version:" in raised.value.reason
 
 
