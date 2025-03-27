@@ -19,12 +19,13 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from overrides import override
+
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
 )
-from overrides import override
 
 
 @pytest.fixture
@@ -373,8 +374,11 @@ def test_proxy_settings_configured(part_info, mocker):
             "https_proxy": "https://user:password@test_proxy_https_url.com:3128",
         },
     )
+    properties = GradlePlugin.properties_class.unmarshal(
+        {"source": ".", "gradle-task": "build"}
+    )
 
-    plugin = GradlePlugin(properties={"source": "."}, part_info=part_info)
+    plugin = GradlePlugin(properties=properties, part_info=part_info)
 
     plugin._setup_proxy()
 
