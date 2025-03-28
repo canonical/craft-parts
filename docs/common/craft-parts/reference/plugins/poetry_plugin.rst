@@ -3,7 +3,8 @@
 Poetry plugin
 =============
 
-The Poetry plugin can be used for Python projects that use the `Poetry`_ build system.
+The Poetry plugin can be used for Python projects that use the `Poetry
+<https://python-poetry.org>`_ build system.
 
 .. _craft_parts_poetry_plugin-keywords:
 
@@ -20,7 +21,8 @@ poetry-export-extra-args:
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
-Extra arguments to pass at the end of the poetry `export command`_.
+Extra arguments to pass at the end of the poetry `export command
+<https://python-poetry.org/docs/cli/#export>`_.
 
 poetry-pip-extra-args:
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -32,7 +34,9 @@ poetry-with:
 ~~~~~~~~~~~~
 **Type:** list of strings
 
-`Dependency groups`_ to include. By default, only the main dependencies are included.
+`Dependency groups
+<https://python-poetry.org/docs/managing-dependencies#dependency-groups>`_ to include.
+By default, only the main dependencies are included.
 
 .. _craft_parts_poetry_plugin-environment_variables:
 
@@ -40,8 +44,9 @@ Environment variables
 ---------------------
 
 This plugin also sets environment variables in the build environment. User-set
-environment variables will override these values. Users may also set
-`environment variables to configure Poetry`_ using the
+environment variables will override these values. Users may also set `environment
+variables to configure Poetry
+<https://python-poetry.org/docs/configuration/#using-environment-variables>`_ using the
 :ref:`build-environment <build_environment>` key.
 
 PARTS_PYTHON_INTERPRETER

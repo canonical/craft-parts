@@ -30,6 +30,7 @@ CMakeLists
 CMakePlugin
 CMakePluginProperties
 CPAN
+CVE
 CallbackHook
 CallbackRegistrationError
 CalledProcessError
@@ -44,8 +45,10 @@ Config
 ConfigDict
 CopyFileNotFound
 CopyTreeError
+CPATH
 CraftCtl
 Craftctl
+DDD
 DESTDIR
 DNF
 DNFRepository
@@ -307,6 +310,7 @@ ZipSourceModel
 abcdef
 args
 armv
+artifact
 artifacts
 autogen
 autotools
@@ -383,6 +387,7 @@ iterable
 iojs
 jdeps
 jdk
+jinja
 jlink
 jre
 js

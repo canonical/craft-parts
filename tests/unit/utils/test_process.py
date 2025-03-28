@@ -33,7 +33,7 @@ _RUN_TEST_CASES = [
 
 @pytest.mark.parametrize(("out", "err"), _RUN_TEST_CASES)
 def test_run(out, err):
-    result = process.run(["/usr/bin/sh", "-c", f"echo {out};sleep 0;echo {err} >&2"])
+    result = process.run(["/usr/bin/sh", "-c", f"echo {out};sleep 0.1;echo {err} >&2"])
     assert result.returncode == 0
     assert result.stdout == (out + "\n").encode()
     assert result.stderr == (err + "\n").encode()
@@ -82,7 +82,7 @@ def test_run_selector(out, err, new_dir):
         [
             "/usr/bin/sh",
             "-c",
-            f"echo {out};sleep 0;echo {err} >&2; echo -n {out}|socat - UNIX-CONNECT:{new_dir}/test.socket",
+            f"echo {out};sleep 0.1;echo {err} >&2; echo -n {out}|socat - UNIX-CONNECT:{new_dir}/test.socket",
         ],
         selector=selector,
     )

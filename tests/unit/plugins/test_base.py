@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -146,7 +146,7 @@ def test_python_get_find_python_interpreter_commands(
             # look for python3.10
             basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
             echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
-            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null || true)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
@@ -161,12 +161,12 @@ def test_python_get_find_python_interpreter_commands(
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 
@@ -238,7 +238,7 @@ def test_python_get_build_commands(new_dir, python_plugin: FooPythonPlugin):
             # look for python3.10
             basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
             echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
-            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null || true)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
@@ -253,12 +253,12 @@ def test_python_get_build_commands(new_dir, python_plugin: FooPythonPlugin):
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="$(readlink -f "$(which "${{PARTS_PYTHON_INTERPRETER}}")")"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 

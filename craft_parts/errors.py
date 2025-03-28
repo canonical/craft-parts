@@ -513,27 +513,28 @@ class UserExecutionError(PartsError, abc.ABC):
     def details(self) -> str | None:
         """Further details on the error.
 
-        Discards all trace lines that come before the last-executed script line
+        Displays the last three trace lines from the error output.
         """
-        with contextlib.closing(StringIO()) as details_io:
-            if self.stderr is None:
-                return None
+        if self.stderr is None:
+            return None
 
-            stderr = self.stderr.decode("utf-8", errors="replace")
-            stderr_lines = stderr.split("\n")
-            # Find the final command captured in the logs
-            last_command = None
-            for idx, line in enumerate(reversed(stderr_lines)):
-                if line.startswith("+"):
-                    last_command = len(stderr_lines) - idx - 1
+        stderr = self.stderr.decode("utf-8", errors="replace")
+        stderr_lines = list(filter(lambda x: x, stderr.split("\n")))
+
+        # Find the third trace output line
+        anchor_line = 0
+        traced_lines_to_display = 3
+        count = 0
+        for idx, line in enumerate(reversed(stderr_lines)):
+            if line.startswith("+"):
+                count += 1
+                if count > traced_lines_to_display:
+                    anchor_line = -idx
                     break
-            else:
-                # Fallback to printing the whole log
-                last_command = 0
 
-            for line in stderr_lines[last_command:]:
-                if line:
-                    details_io.write(f"\n:: {line}")
+        with contextlib.closing(StringIO()) as details_io:
+            for line in stderr_lines[anchor_line:]:
+                details_io.write(f"\n:: {line}")
 
             return details_io.getvalue()
 

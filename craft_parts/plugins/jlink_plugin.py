@@ -61,6 +61,15 @@ class JLinkPlugin(Plugin):
     properties_class = JLinkPluginProperties
     validator_class = JLinkPluginEnvironmentValidator
 
+    def _get_find_jars_commands(self) -> str:
+        """Return commands for finding all jarfiles."""
+        options = cast(JLinkPluginProperties, self._options)
+        if len(options.jlink_jars) > 0:
+            jars = " ".join(["${CRAFT_STAGE}/" + x for x in options.jlink_jars])
+            return f"PROCESS_JARS={jars}"
+
+        return 'PROCESS_JARS=$(find ${CRAFT_STAGE} -type f -name "*.jar")'
+
     @override
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
@@ -79,8 +88,6 @@ class JLinkPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        options = cast(JLinkPluginProperties, self._options)
-
         commands = []
 
         # Set JAVA_HOME to be used in jlink commands
@@ -106,13 +113,7 @@ class JLinkPlugin(Plugin):
         )
         commands.append("MULTI_RELEASE=${JLINK_VERSION%%.*}")
 
-        # find application jars - either all jars in the staging area
-        # or a list specified in jlink_jars option
-        if len(options.jlink_jars) > 0:
-            jars = " ".join(["${CRAFT_STAGE}/" + x for x in options.jlink_jars])
-            commands.append(f"PROCESS_JARS={jars}")
-        else:
-            commands.append("PROCESS_JARS=$(find ${CRAFT_STAGE} -type f -name *.jar)")
+        commands.append(self._get_find_jars_commands())
 
         # create temp folder
         commands.append("mkdir -p ${CRAFT_PART_BUILD}/tmp")
@@ -125,18 +126,21 @@ class JLinkPlugin(Plugin):
         commands.append("CPATH=.")
         commands.append(
             """
-                find ${CRAFT_PART_BUILD}/tmp -type f -name *.jar | while IFS= read -r file; do
-                    CPATH=$CPATH:${file}
+                for file in $(find "${CRAFT_PART_BUILD}/tmp" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
                 done
-                find ${CRAFT_STAGE} -type f -name *.jar | while IFS= read -r file; do
-                    CPATH=$CPATH:${file}
+                for file in $(find "${CRAFT_STAGE}" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
                 done
             """
         )
         commands.append(
             """if [ "x${PROCESS_JARS}" != "x" ]; then
-                deps=$(${JDEPS} --class-path=${CPATH} -q --recursive  --ignore-missing-deps \
-                    --print-module-deps --multi-release ${MULTI_RELEASE} ${PROCESS_JARS})
+                deps=$(${JDEPS} --print-module-deps -q --recursive \
+                    --ignore-missing-deps \
+                    --multi-release ${MULTI_RELEASE} \
+                    --class-path=${CPATH} \
+                    ${PROCESS_JARS})
                 else
                     deps=java.base
                 fi
