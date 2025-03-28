@@ -54,7 +54,8 @@ Common means of providing ``go`` are:
 Another alternative is to define another part with the name ``go-deps``, and
 declare that the part using the ``go`` plugin comes :ref:`after <after>` the
 ``go-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``go`` executable to be used in the build step. This can be useful,
+stage the ``go`` executable to be used in the
+:doc:`build step</common/craft-parts/explanation/lifecycle>`. This can be useful,
 for example, in cases where a specific, unreleased version of ``go`` is desired
 but unavailable as a snap or an Ubuntu package.
 

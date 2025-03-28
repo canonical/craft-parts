@@ -62,7 +62,8 @@ dependencies the source requires to build are to be provided.
 How it works
 ------------
 
-During the build step the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`
+the plugin performs the following actions:
 
 * Run ``qmake`` in the build directory to setup the ``Makefiles``, the
   project is configured with any ``qmake-parameters`` that might have

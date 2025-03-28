@@ -59,7 +59,8 @@ dependencies the source requires to build are to be provided.
 How it works
 ------------
 
-During the build step the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`
+the plugin performs the following actions:
 
 * If the source does not provide a ``configure`` file, one will be
   generated through the following options:
