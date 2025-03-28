@@ -45,11 +45,13 @@ determine whether the default process is suitable for you.
 Ensure you place the built artefacts in the correct place
 ---------------------------------------------------------
 
-The purpose of the Build step in the `lifecycle`_ is to generate software artefacts
-to be included in the final payload. This is achieved by populating a special
-"install" directory - the contents of this directory will then move forward to
-the Stage and Prime lifecycle steps. A very common mistake when overriding a
-part's Build is failing to place the created artefacts in the correct directory.
+The purpose of the Build step in the
+:doc:`lifecycle</common/craft-parts/explanation/lifecycle>` is to generate
+software artefacts to be included in the final payload. This is achieved by
+populating a special "install" directory - the contents of this directory will
+then move forward to the Stage and Prime lifecycle steps. A very common mistake
+when overriding a part's Build is failing to place the created artefacts in the
+correct directory.
 
 The location of the "install" directory is stored in the ``${CRAFT_PART_INSTALL}``
 environment variable. This variable is set by craft-parts' tooling when calling
@@ -78,5 +80,3 @@ will be placed when ``make install`` is called, and adjust the contents of the
 result in a build error because the artefacts will be installed in a standard
 location like ``/usr/local`` *in the build system*, which is typically an LXD
 instance or a Multipass VM.
-
-.. _lifecycle: /common/craft-parts/explanation/lifecycle.html

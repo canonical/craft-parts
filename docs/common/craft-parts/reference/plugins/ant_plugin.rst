@@ -62,7 +62,8 @@ Dependencies
 
 The plugin expects Ant to be available on the system as the ``ant`` executable, unless
 a part named ``ant-deps`` is defined. In this case, the plugin will assume that this
-part will stage the ``ant`` executable to be used in the `build step`_.
+part will stage the ``ant`` executable to be used in the
+:doc:`build step</common/craft-parts/explanation/lifecycle>`.
 
 Note that the Ant plugin does not make a Java runtime available in the target
 environment. This must be handled by the developer when defining the part, according to
@@ -93,4 +94,3 @@ build, respectively.
         ant-build-targets: [compile, jar]
 
 .. _Apache Ant: https://ant.apache.org/
-.. _build step: /common/craft-parts/explanation/lifecycle.html

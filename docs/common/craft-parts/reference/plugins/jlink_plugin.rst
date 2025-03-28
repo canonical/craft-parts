@@ -93,7 +93,8 @@ Or, by installing the dependencies directly:
 How it works
 ------------
 
-During the `build step`_, the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`,
+the plugin performs the following actions:
 
 * Finds all JAR files in the staging area or selects jars specified in
   ``jlink-jars``.
@@ -105,4 +106,3 @@ During the `build step`_, the plugin performs the following actions:
 
 .. _`jdeps`: https://docs.oracle.com/en/java/javase/21/docs/specs/man/jdeps.html
 .. _`jlink`: https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html
-.. _build step: /common/craft-parts/explanation/lifecycle.html

@@ -44,7 +44,8 @@ Some common means of providing ``dotnet`` are:
 Another alternative is to define another part with the name ``dotnet-deps``, and
 declare that the part using the ``dotnet`` plugin comes :ref:`after <after>` the
 ``dotnet-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``dotnet`` executable to be used in the `build step`_. This can be useful,
+stage the ``dotnet`` executable to be used in the
+:doc:`build step</common/craft-parts/explanation/lifecycle>`. This can be useful,
 for example, in cases where a specific, unreleased version of ``dotnet`` is desired
 but unavailable as a snap or an Ubuntu package.
 
@@ -87,4 +88,3 @@ The following example uses the ``dotnet-sdk`` snap to build an application in
 
 
 .. _Runtime Identifier catalogue: https://learn.microsoft.com/en-us/dotnet/core/rid-catalog
-.. _build step: /common/craft-parts/explanation/lifecycle.html

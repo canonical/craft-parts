@@ -59,7 +59,8 @@ dependencies the source requires to build are to be provided.
 How it works
 ------------
 
-During the `build step`_ the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`
+the plugin performs the following actions:
 
 * If the source does not provide a ``configure`` file, one will be
   generated through the following options:
@@ -109,4 +110,3 @@ The source also requires the following packages to correctly build:
 .. _Autoconf: https://www.gnu.org/software/autoconf/
 .. _Automake: https://www.gnu.org/software/automake/
 .. _GNU Make: https://www.gnu.org/software/make/
-.. _build step: /common/craft-parts/explanation/lifecycle.html

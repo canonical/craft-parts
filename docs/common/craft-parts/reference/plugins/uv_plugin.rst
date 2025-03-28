@@ -95,7 +95,8 @@ For installation instructions, see `uv documentation
 How it works
 ------------
 
-During the `build step`_, the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`,
+the plugin performs the following actions:
 
 * It creates a virtual environment in the ``${CRAFT_PART_INSTALL}`` directory.
 * It uses :command:`uv sync` to install the required Python packages from
@@ -108,5 +109,3 @@ See also
 :ref:`Python plugin <craft_parts_python_plugin>`
 
 :ref:`Poetry plugin <craft_parts_poetry_plugin>`
-
-.. _build step: /common/craft-parts/explanation/lifecycle.html
