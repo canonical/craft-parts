@@ -86,7 +86,7 @@ inclusion of the Python interpreter.
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the `build step`_, the plugin performs the following actions:
 
 * It creates a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
   directory.
@@ -96,3 +96,4 @@ During the build step, the plugin performs the following actions:
 * If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
   files are used to install the dependencies specified by the package itself.
 
+.. _build step: /common/craft-parts/explanation/lifecycle.html

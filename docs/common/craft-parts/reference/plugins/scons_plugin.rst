@@ -39,7 +39,7 @@ The common means of providing ``scons`` is through a
 Another alternative is to define another part with the name ``scons-deps``, and
 declare that the part using the ``scons`` plugin comes :ref:`after <after>` the
 ``scons-deps`` part. In this case, the plugin will assume that this new part will
-provide the ``scons`` executable to be used in the build step. This can be useful,
+provide the ``scons`` executable to be used in the `build step`_. This can be useful,
 for example, in cases where a specific, unreleased version of ``scons`` is desired
 but only possible by either building the tool itself from source or through some
 other custom mechanism.
@@ -75,4 +75,4 @@ sets the ``scons-parameters`` for a ``prefix`` to be set to
 
 
 .. _SCons: https://scons.org/
-
+.. _build step: /common/craft-parts/explanation/lifecycle.html

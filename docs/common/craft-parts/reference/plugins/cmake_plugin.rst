@@ -51,7 +51,7 @@ dependencies the source requires to build are to be provided.
 How it works
 ------------
 
-During the build step the plugin performs the following actions:
+During the `build step`_ the plugin performs the following actions:
 
 * Run ``cmake`` in the build directory referring to the pulled source
   directory (this plugin runs an out of tree build). The preferred
@@ -83,3 +83,4 @@ symbols from the build:
 .. _CMake: https://cmake.org/
 .. _CMAKE_PREFIX_PATH: https://cmake.org/cmake/help/latest/variable/CMAKE_PREFIX_PATH.html
 .. _CMAKE_BUILD_TYPE: https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
+.. _build step: /common/craft-parts/explanation/lifecycle.html

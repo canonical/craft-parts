@@ -103,7 +103,7 @@ that use the Poetry plugin must run ``after`` the ``poetry-deps`` part:
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the `build step`_, the plugin performs the following actions:
 
 1. It creates a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
    directory.
@@ -121,3 +121,4 @@ During the build step, the plugin performs the following actions:
 .. _Dependency groups: https://python-poetry.org/docs/managing-dependencies#dependency-groups
 .. _export command: https://python-poetry.org/docs/cli/#export
 .. _environment variables to configure Poetry: https://python-poetry.org/docs/configuration/#using-environment-variables
+.. _build step: /common/craft-parts/explanation/lifecycle.html

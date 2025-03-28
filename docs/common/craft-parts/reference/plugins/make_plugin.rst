@@ -36,7 +36,7 @@ and the use of ``DESTDIR``.
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the `build step`_, the plugin performs the following actions:
 
 * Call ``make`` with any parameters defined in ``make-parameters``
 * Call ``make install`` with the ``DESTDIR`` set to the installation
@@ -62,3 +62,4 @@ is set using ``make-parameters``:
           - clang
 
 .. _GNU Make: https://www.gnu.org/software/make/
+.. _build step: /common/craft-parts/explanation/lifecycle.html

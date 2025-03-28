@@ -62,7 +62,7 @@ dependencies the source requires to build are to be provided.
 How it works
 ------------
 
-During the build step the plugin performs the following actions:
+During the `build step`_ the plugin performs the following actions:
 
 * Run ``qmake`` in the build directory to setup the ``Makefiles``, the
   project is configured with any ``qmake-parameters`` that might have
@@ -94,3 +94,4 @@ configuration:
 .. _qmake: https://doc.qt.io/qt-6/qmake-manual.html
 .. _project files: https://doc.qt.io/qt-6/qmake-project-files.html
 .. _GNU Make: https://www.gnu.org/software/make/
+.. _build step: /common/craft-parts/explanation/lifecycle.html

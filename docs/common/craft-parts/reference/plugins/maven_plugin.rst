@@ -51,10 +51,11 @@ Dependencies
 
 The plugin expects Maven to be available on the system as the ``mvn`` executable, unless
 a part named ``maven-deps`` is defined. In this case, the plugin will assume that this
-part will stage the ``mvn`` executable to be used in the build step.
+part will stage the ``mvn`` executable to be used in the `build step`_.
 
 Note that the Maven plugin does not make a Java runtime available in the target
 environment. This must be handled by the developer when defining the part, according to
 each application's runtime requirements.
 
 .. _maven-details-end:
+.. _build step: /common/craft-parts/explanation/lifecycle.html

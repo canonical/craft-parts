@@ -58,5 +58,7 @@ Steps
 Steps are used to establish plan targets and in informational data
 structures such as :class:`StepInfo <craft_parts.StepInfo>`. They are
 defined by the :class:`Step <craft_parts.Step>` enumeration, containing
-entries for the lifecycle steps ``PULL``, ``OVERLAY``, ``BUILD``,
+entries for the `lifecycle steps`_ ``PULL``, ``OVERLAY``, ``BUILD``,
 ``STAGE``, and ``PRIME``.
+
+.. _lifecycle steps: /common/craft-parts/explanation/lifecycle.html
