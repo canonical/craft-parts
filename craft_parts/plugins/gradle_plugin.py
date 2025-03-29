@@ -95,100 +95,6 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 reason=f"invalid gradle version {version!r}",
             )
 
-        options = cast(GradlePluginProperties, self._options)
-        if options.gradle_init_script and not Path(options.gradle_init_script).exists():
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason="gradle init script option supplied but file not found",
-            )
-
-        # Skip project version check if not using gradlew because the gradle provided by
-        # apt is outdated and cannot run project version check init script.
-        if self.gradle_executable == "gradle":
-            return
-
-        system_java_major_version = self._get_system_java_major_version()
-        project_java_major_version = self._get_project_java_major_version()
-        if system_java_major_version < project_java_major_version:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason="system Java version is less than project Java version"
-                f"system: {system_java_major_version}, project: {project_java_major_version}",
-            )
-
-    def _get_system_java_major_version(self) -> int:
-        try:
-            system_java_version_output = self._execute("java --version")
-            # Java versions < 8 have syntax 1.<version>
-        except subprocess.CalledProcessError as err:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=f"failed to check java version: {err}",
-            ) from err
-        version_output_match = re.match(
-            r"openjdk (1\.(\d+)|(\d+))", system_java_version_output
-        )
-        if version_output_match is None:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=f"failed to check java version: {system_java_version_output}",
-            )
-        # match 1.<version> first for Java versions less than or equal to 8. Otherwise,
-        # match <version>.
-        system_java_major_version = version_output_match.group(
-            2
-        ) or version_output_match.group(1)
-        try:
-            return int(system_java_major_version)
-        except ValueError as err:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=f"failed to parse java version: {err}",
-            ) from err
-
-    def _get_project_java_major_version(self) -> int:
-        init_script_path = Path(
-            f"{tempfile.gettempdir()}/{_PLUGIN_PREFIX}-init-script.gradle"
-        )
-        task_name = f"{_PLUGIN_PREFIX}-printProjectJavaVersion"
-        init_script_path.write_text(
-            f"""allprojects {{
-    tasks.register('{task_name}') {{
-        doLast {{
-            def systemJavaVersion = JavaLanguageVersion.current()
-            def javaVersion = java.toolchain.languageVersion.\
-orElse(systemJavaVersion).get().asInt()
-            println "Project Java Version: ${{javaVersion}}"
-        }}
-    }}
-}}
-""",
-            encoding="utf-8",
-        )
-        try:
-            version_output = self._execute(
-                f"{self.gradle_executable} --init-script {init_script_path} {task_name} 2>&1"
-            )
-        except subprocess.CalledProcessError as err:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason="failed to execute project java version check",
-            ) from err
-
-        version_output_match = re.search(r"Project Java Version: (\d+)", version_output)
-        if not version_output_match:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=f"failed to parse project java version: {version_output}",
-            )
-        try:
-            return int(version_output_match.group(1))
-        except ValueError as err:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=f"failed to parse project java version: {err}",
-            ) from err
-
 
 class GradlePlugin(JavaPlugin):
     """A plugin to build parts that use Gradle.
@@ -214,7 +120,11 @@ class GradlePlugin(JavaPlugin):
     @property
     def gradle_executable(self) -> str:
         """Use gradlew by default if it exists."""
-        return "./gradlew" if Path("./gradlew").exists() else "gradle"
+        return (
+            "./gradlew"
+            if (self._part_info.part_src_dir / "gradlew").exists()
+            else "gradle"
+        )
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -231,14 +141,95 @@ class GradlePlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(GradlePluginProperties, self._options)
 
+        self._validate_project(options=options)
         gradle_cmd = [self.gradle_executable, options.gradle_task]
         self._setup_proxy()
 
         return [
-            *self._get_gradle_init_command(),
+            *self._get_gradle_init_command(options=options),
             " ".join(gradle_cmd + options.gradle_parameters),
+            # remove gradle-wrapper.jar files
             *self._get_java_post_build_commands(),
         ]
+
+    def _validate_project(self, options: GradlePluginProperties) -> None:
+        if (
+            options.gradle_init_script
+            and not Path(
+                self._part_info.part_src_dir / options.gradle_init_script
+            ).exists()
+        ):
+            raise errors.FeatureError(
+                message="gradle-init-script configured but not found in project",
+                details=(
+                    "See reference documentation for the plugin at "
+                    "https://canonical-craft-parts.readthedocs-hosted.com"
+                    "/en/latest/common/craft-parts/reference/plugins/gradle_plugin.html"
+                ),
+            )
+        # Skip project version check if not using gradlew because the gradle provided by
+        # apt is outdated and cannot run project version check init script.
+        if self.gradle_executable == "gradle":
+            return
+
+        system_java_major_version = self.get_java_version()
+        project_java_major_versions = self._get_project_java_major_version()
+        if not all(
+            system_java_major_version >= project_java_major_version
+            for project_java_major_version in project_java_major_versions
+        ):
+            raise errors.PartSpecificationError(
+                part_name=self._part_info.part_name,
+                message="build Java version is less than project Java version.",
+            )
+
+    def _get_project_java_major_version(self) -> list[int]:
+        """Return the project major version for all projects and subprojects."""
+        init_script_path = Path(
+            f"{tempfile.gettempdir()}/{_PLUGIN_PREFIX}-init-script.gradle"
+        )
+        search_term = "gradle-plugin-java-version-print"
+        init_script_path.write_text(
+            f"""allprojects {{ project ->
+    afterEvaluate {{
+        if (project.hasProperty('java') && \
+project.java.toolchain.languageVersion.getOrElse(false)) {{
+            println "{search_term}: ${{project.java.toolchain.languageVersion.get().asInt()}}"
+        }} else if (project.plugins.hasPlugin('java')) {{
+            def javaVersion = project.targetCompatibility?: project.sourceCompatibility
+            println "{search_term}: ${{javaVersion}}"
+        }} else {{
+            println "version not detected"
+        }}
+    }}
+}}
+""",
+            encoding="utf-8",
+        )
+        try:
+            version_output = subprocess.check_output(
+                f"{self.gradle_executable} --init-script {init_script_path} 2>&1"
+            )
+        except subprocess.CalledProcessError as err:
+            raise errors.PartSpecificationError(
+                part_name=self._part_info.part_name,
+                message="failed to execute project java version check",
+            ) from err
+
+        matches = re.findall(rf"{search_term}: (\d+)", version_output)
+        if not matches:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_info.part_name,
+                reason="project version not detected",
+            )
+
+        try:
+            return [int(match) for match in matches]
+        except ValueError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_info.part_name,
+                reason=f"invalid java version detected: {err}",
+            ) from err
 
     def _setup_proxy(self) -> None:
         no_proxy = os.environ.get("no_proxy", "")
@@ -268,8 +259,7 @@ systemProp.{protocol}.nonProxyHosts={no_proxy}
 """
                 )
 
-    def _get_gradle_init_command(self) -> list[str]:
-        options = cast(GradlePluginProperties, self._options)
+    def _get_gradle_init_command(self, options: GradlePluginProperties) -> list[str]:
         if not options.gradle_init_script:
             return []
         gradle_cmd = [
