@@ -206,9 +206,6 @@ project.java.toolchain.languageVersion.getOrElse(false)) {{
 """,
             encoding="utf-8",
         )
-        import pdb
-
-        pdb.set_trace()
         try:
             version_output = subprocess.check_output(
                 f"{self.gradle_executable} --init-script {init_script_path} 2>&1"
