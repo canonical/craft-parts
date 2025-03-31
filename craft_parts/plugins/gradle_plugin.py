@@ -121,7 +121,7 @@ class GradlePlugin(JavaPlugin):
     def gradle_executable(self) -> str:
         """Use gradlew by default if it exists."""
         return (
-            "./gradlew"
+            f"{self._part_info.part_src_dir}/gradlew"
             if (self._part_info.part_src_dir / "gradlew").exists()
             else "gradle"
         )
