@@ -89,21 +89,8 @@ class JavaPlugin(Plugin):
         if len(candidate_java) > 0:
             best = sorted(candidate_java.keys())[-1]
             env["JAVA_HOME"] = candidate_java[best]
+            env["JAVA_VERSION"] = candidate_java[best]
         return env
-
-    def get_java_version(self) -> int:
-        """Get the Java version to be used."""
-        candidate_java = []
-        for javac in self._find_javac():
-            spec, _ = self._check_java(javac)
-            if spec is not None:
-                candidate_java.append(spec)
-        if not candidate_java:
-            raise errors.PartSpecificationError(
-                part_name=self._part_info.part_name,
-                message="Java was requested but not found.",
-            )
-        return sorted(candidate_java)[-1]
 
     def _get_java_link_commands(self) -> list[str]:
         """Get the bash commands to provide /bin/java symlink."""

@@ -18,8 +18,6 @@
 
 import os
 import re
-import subprocess
-import tempfile
 from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
@@ -34,7 +32,7 @@ from . import validator
 from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
-_PLUGIN_PREFIX = "gradle-plugin"
+GRADLE_PLUGIN_VALIDATOR_FILE = Path(__file__).parent / "gradle_plugin_validator.py"
 
 
 class GradlePluginProperties(PluginProperties, frozen=True):
@@ -94,6 +92,19 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 part_name=self._part_name,
                 reason=f"invalid gradle version {version!r}",
             )
+        options = cast(GradlePluginProperties, self._options)
+        if (
+            options.gradle_init_script
+            and not Path(f"./{options.gradle_init_script}").exists()
+        ):
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=(
+                    "See reference documentation for the plugin at "
+                    "https://canonical-craft-parts.readthedocs-hosted.com"
+                    "/en/latest/common/craft-parts/reference/plugins/gradle_plugin.html"
+                ),
+            )
 
 
 class GradlePlugin(JavaPlugin):
@@ -141,95 +152,25 @@ class GradlePlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(GradlePluginProperties, self._options)
 
-        self._validate_project(options=options)
         gradle_cmd = [self.gradle_executable, options.gradle_task]
         self._setup_proxy()
 
         return [
+            self._get_validate_project_command(options=options),
             *self._get_gradle_init_command(options=options),
             " ".join(gradle_cmd + options.gradle_parameters),
             # remove gradle-wrapper.jar files
             *self._get_java_post_build_commands(),
         ]
 
-    def _validate_project(self, options: GradlePluginProperties) -> None:
-        if (
-            options.gradle_init_script
-            and not Path(
-                self._part_info.part_build_dir / options.gradle_init_script
-            ).exists()
-        ):
-            raise errors.FeatureError(
-                message="gradle-init-script configured but not found in project",
-                details=(
-                    "See reference documentation for the plugin at "
-                    "https://canonical-craft-parts.readthedocs-hosted.com"
-                    "/en/latest/common/craft-parts/reference/plugins/gradle_plugin.html"
-                ),
-            )
-        # Skip project version check if not using gradlew because the gradle provided by
-        # apt is outdated and cannot run project version check init script.
-        if self.gradle_executable == "gradle":
-            return
-
-        system_java_major_version = self.get_java_version()
-        project_java_major_versions = self._get_project_java_major_version()
-        if not all(
-            system_java_major_version >= project_java_major_version
-            for project_java_major_version in project_java_major_versions
-        ):
-            raise errors.PartSpecificationError(
-                part_name=self._part_info.part_name,
-                message="build Java version is less than project Java version.",
-            )
-
-    def _get_project_java_major_version(self) -> list[int]:
-        """Return the project major version for all projects and subprojects."""
-        init_script_path = Path(
-            f"{self._part_info.part_build_dir}/{_PLUGIN_PREFIX}-init-script.gradle"
+    def _get_validate_project_command(self, options: GradlePluginProperties) -> str:
+        part_build_validator_path = (
+            self._part_info.part_build_dir / GRADLE_PLUGIN_VALIDATOR_FILE.name
         )
-        search_term = "gradle-plugin-java-version-print"
-        init_script_path.write_text(
-            f"""allprojects {{ project ->
-    afterEvaluate {{
-        if (project.hasProperty('java') && \
-project.java.toolchain.languageVersion.getOrElse(false)) {{
-            println "{search_term}: ${{project.java.toolchain.languageVersion.get().asInt()}}"
-        }} else if (project.plugins.hasPlugin('java')) {{
-            def javaVersion = project.targetCompatibility?: project.sourceCompatibility
-            println "{search_term}: ${{javaVersion}}"
-        }} else {{
-            println "version not detected"
-        }}
-    }}
-}}
-""",
-            encoding="utf-8",
+        (part_build_validator_path).write_text(
+            GRADLE_PLUGIN_VALIDATOR_FILE.read_text(encoding="utf-8"), encoding="utf-8"
         )
-        try:
-            version_output = subprocess.check_output(
-                f"{self.gradle_executable} --init-script {init_script_path} 2>&1"
-            )
-        except subprocess.CalledProcessError as err:
-            raise errors.PartSpecificationError(
-                part_name=self._part_info.part_name,
-                message="failed to execute project java version check",
-            ) from err
-
-        matches = re.findall(rf"{search_term}: (\d+)", version_output)
-        if not matches:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_info.part_name,
-                reason="project version not detected",
-            )
-
-        try:
-            return [int(match) for match in matches]
-        except ValueError as err:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_info.part_name,
-                reason=f"invalid java version detected: {err}",
-            ) from err
+        return f"python3 {part_build_validator_path}"
 
     def _setup_proxy(self) -> None:
         no_proxy = os.environ.get("no_proxy", "")
