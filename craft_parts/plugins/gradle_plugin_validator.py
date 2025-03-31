@@ -117,6 +117,7 @@ project.java.toolchain.languageVersion.getOrElse(false)) {{
         version_output = subprocess.check_output(
             [f"{build_dir}/gradlew", "--init-script", f"{init_script_path}"],
             stderr=subprocess.PIPE,
+            text=True,
         )
     except subprocess.CalledProcessError as err:
         raise RuntimeError("failed to run version check init script") from err
