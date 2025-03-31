@@ -89,7 +89,7 @@ class JavaPlugin(Plugin):
         if len(candidate_java) > 0:
             best = sorted(candidate_java.keys())[-1]
             env["JAVA_HOME"] = candidate_java[best]
-            env["JAVA_VERSION"] = candidate_java[best]
+            env["JAVA_VERSION"] = best
         return env
 
     def _get_java_link_commands(self) -> list[str]:
