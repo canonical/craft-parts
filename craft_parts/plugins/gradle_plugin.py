@@ -126,14 +126,14 @@ class GradlePlugin(JavaPlugin):
         self._setup_proxy()
 
         return [
-            self._get_validate_project_command(options=options),
+            self._get_validate_project_command(),
             *self._get_gradle_init_command(options=options),
             " ".join(gradle_cmd + options.gradle_parameters),
             # remove gradle-wrapper.jar files
             *self._get_java_post_build_commands(),
         ]
 
-    def _get_validate_project_command(self, options: GradlePluginProperties) -> str:
+    def _get_validate_project_command(self) -> str:
         part_build_validator_path = (
             self._part_info.part_build_dir / GRADLE_PLUGIN_VALIDATOR_FILE.name
         )
