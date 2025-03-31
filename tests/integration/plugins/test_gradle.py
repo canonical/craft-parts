@@ -20,6 +20,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+
 from craft_parts import LifecycleManager, Step
 
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
@@ -63,10 +64,9 @@ ViaProxyName "tinyproxy"
     proc.kill()
 
 
-def test_gradle_plugin_gradlew(new_dir, monkeypatch, partitions, local_proxy_url):
+def test_gradle_plugin_gradlew(new_dir, partitions, local_proxy_url):
     part_name = "foo"
     source_location = Path(__file__).parent / "test_gradle"
-    monkeypatch.chdir(source_location)
     parts_yaml = textwrap.dedent(
         f"""
         parts:
@@ -117,9 +117,8 @@ def _execute_plugin(parts, new_dir, partitions) -> LifecycleManager:
 
 
 @pytest.fixture
-def setup_gradle_test(monkeypatch):
+def setup_gradle_test():
     source_location = Path(__file__).parent / "test_gradle"
-    monkeypatch.chdir(source_location)
     gradlew_path = source_location / "gradlew"
     gradlew_path = gradlew_path.rename(source_location / "gradlew.backup")
     yield
