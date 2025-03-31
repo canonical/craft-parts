@@ -17,7 +17,6 @@
 """The gradle plugin."""
 
 import os
-import re
 from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
@@ -25,8 +24,6 @@ from urllib.parse import urlparse
 from overrides import override
 from pydantic import model_validator
 from typing_extensions import Self
-
-from craft_parts import errors
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -63,11 +60,6 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
-    @property
-    def gradle_executable(self) -> str:
-        """Use gradlew by default if it exists."""
-        return "./gradlew" if Path("./gradlew").exists() else "gradle"
-
     @override
     def validate_environment(
         self, *, part_dependencies: list[str] | None = None
@@ -79,32 +71,10 @@ class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If gradle is invalid
           and there are no parts named gradle-deps.
         """
-        version = self.validate_dependency(
-            dependency=self.gradle_executable,
-            plugin_name="gradle",
-            part_dependencies=part_dependencies,
-            argument="--version 2>&1",
-        )
-        if not re.search(r"Gradle (.*)", version) and (
-            part_dependencies is None or "gradle-deps" not in part_dependencies
-        ):
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=f"invalid gradle version {version!r}",
-            )
-        options = cast(GradlePluginProperties, self._options)
-        if (
-            options.gradle_init_script
-            and not Path(f"./{options.gradle_init_script}").exists()
-        ):
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_name,
-                reason=(
-                    "See reference documentation for the plugin at "
-                    "https://canonical-craft-parts.readthedocs-hosted.com"
-                    "/en/latest/common/craft-parts/reference/plugins/gradle_plugin.html"
-                ),
-            )
+        # We can't check for gradle executable here because if the project uses gradlew, we don't
+        # necessarily need gradle to be installed on the system. We can't check if the project uses
+        # gradlew since the project would not be pulled yet.
+        pass
 
 
 class GradlePlugin(JavaPlugin):
