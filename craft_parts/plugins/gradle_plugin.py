@@ -121,8 +121,8 @@ class GradlePlugin(JavaPlugin):
     def gradle_executable(self) -> str:
         """Use gradlew by default if it exists."""
         return (
-            f"{self._part_info.part_src_dir}/gradlew"
-            if (self._part_info.part_src_dir / "gradlew").exists()
+            f"{self._part_info.part_build_dir}/gradlew"
+            if (self._part_info.part_build_dir / "gradlew").exists()
             else "gradle"
         )
 
@@ -156,7 +156,7 @@ class GradlePlugin(JavaPlugin):
         if (
             options.gradle_init_script
             and not Path(
-                self._part_info.part_src_dir / options.gradle_init_script
+                self._part_info.part_build_dir / options.gradle_init_script
             ).exists()
         ):
             raise errors.FeatureError(
@@ -186,7 +186,7 @@ class GradlePlugin(JavaPlugin):
     def _get_project_java_major_version(self) -> list[int]:
         """Return the project major version for all projects and subprojects."""
         init_script_path = Path(
-            f"{self._part_info.part_src_dir}/{_PLUGIN_PREFIX}-init-script.gradle"
+            f"{self._part_info.part_build_dir}/{_PLUGIN_PREFIX}-init-script.gradle"
         )
         search_term = "gradle-plugin-java-version-print"
         init_script_path.write_text(
@@ -206,6 +206,9 @@ project.java.toolchain.languageVersion.getOrElse(false)) {{
 """,
             encoding="utf-8",
         )
+        import pdb
+
+        pdb.set_trace()
         try:
             version_output = subprocess.check_output(
                 f"{self.gradle_executable} --init-script {init_script_path} 2>&1"
