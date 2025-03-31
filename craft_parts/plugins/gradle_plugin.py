@@ -186,7 +186,7 @@ class GradlePlugin(JavaPlugin):
     def _get_project_java_major_version(self) -> list[int]:
         """Return the project major version for all projects and subprojects."""
         init_script_path = Path(
-            f"{tempfile.gettempdir()}/{_PLUGIN_PREFIX}-init-script.gradle"
+            f"{self._part_info.part_build_dir}/tmp/{_PLUGIN_PREFIX}-init-script.gradle"
         )
         search_term = "gradle-plugin-java-version-print"
         init_script_path.write_text(
