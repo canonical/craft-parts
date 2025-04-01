@@ -190,12 +190,15 @@ def _create_settings(settings_path: Path) -> None:
             ("id", env_name.lower()),
             ("active", "true"),
             ("protocol", protocol),
-            ("host", proxy_url.hostname),
+            ("host", str(proxy_url.hostname)),
             ("port", str(proxy_url.port)),
         ]
-        if proxy_url.username is not None:
+        if proxy_url.username is not None and proxy_url.password is not None:
             proxy_tags.extend(
-                [("username", proxy_url.username), ("password", proxy_url.password)]
+                [
+                    ("username", str(proxy_url.username)),
+                    ("password", str(proxy_url.password)),
+                ]
             )
         proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
 
