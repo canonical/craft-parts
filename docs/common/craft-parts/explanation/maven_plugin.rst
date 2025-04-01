@@ -12,9 +12,8 @@ Maven (mvn) tooling. It is equivalent to running the following command:
 
 
 Plugin parameter ``maven_parameters`` is used to additionally provide any arguments to the mvn
-package command above. ``maven_parameters`` parameter can be used to further configure any command
-line arguments. All values are passed in after the initial ``mvn package`` command, delimited by
-spaces.
+package command above. All values are passed in after the initial ``mvn package`` command
+delimited by spaces.
 
 Another plugin parameter ``maven_use_mvnw`` is used to leverage Maven wrapper files provided by the
 project to run the package command. Initial mvn executable is replaced with project’s mvnw
