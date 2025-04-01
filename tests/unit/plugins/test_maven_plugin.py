@@ -22,10 +22,9 @@ from textwrap import dedent
 from unittest import mock
 
 import pytest
-from pydantic import ValidationError
-
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import MavenPlugin
+from pydantic import ValidationError
 
 
 @pytest.fixture
