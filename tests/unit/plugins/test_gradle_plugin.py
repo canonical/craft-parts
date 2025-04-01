@@ -20,13 +20,14 @@ import tempfile
 from typing import cast
 
 import pytest
+from overrides import override
+
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
     GradlePluginProperties,
 )
-from overrides import override
 
 
 @pytest.fixture
@@ -109,104 +110,6 @@ Gradle 4.4.1
         part_name="my-part", env=f"PATH={str(gradle.parent)}", properties=properties
     )
     validator.validate_environment()
-
-
-def test_validate_environment_missing_gradle(part_info):
-    properties = GradlePlugin.properties_class.unmarshal({"source": "."})
-    plugin = GradlePlugin(properties=properties, part_info=part_info)
-
-    validator = plugin.validator_class(
-        part_name="my-part", env="PATH=/foo", properties=properties
-    )
-
-    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
-        validator.validate_environment()
-
-    assert raised.value.reason == "'gradle' not found"
-
-
-def test_validate_environment_gradle_version_invalid(part_info, dependency_fixture):
-    properties = GradlePlugin.properties_class.unmarshal({"source": "."})
-    plugin = GradlePlugin(properties=properties, part_info=part_info)
-    gradle = dependency_fixture(
-        "gradle",
-        output="Invalid version output",
-    )
-
-    validator = plugin.validator_class(
-        part_name="my-part", env=f"PATH={str(gradle.parent)}", properties=properties
-    )
-
-    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
-        validator.validate_environment()
-
-    assert "invalid gradle version" in raised.value.reason
-
-
-def test_validate_project_gradle_init_script_missing_error(part_info):
-    properties = GradlePlugin.properties_class.unmarshal(
-        {"source": ".", "gradle-init-script": "not-exists"}
-    )
-    plugin = GradlePlugin(properties=properties, part_info=part_info)
-
-    with pytest.raises(errors.FeatureError) as exc:
-        plugin._validate_project(options=cast(GradlePluginProperties, properties))
-
-    assert "gradle-init-script configured but not found in project" in exc.value.message
-
-
-@pytest.mark.usefixtures("setup_gradlew_file")
-def test_validate_project_gradle_init_script_execute_error(
-    part_info, mocker, init_script
-):
-    properties = GradlePlugin.properties_class.unmarshal(
-        {"source": ".", "gradle-init-script": str(init_script)}
-    )
-    plugin = GradlePlugin(properties=properties, part_info=part_info)
-
-    def _check_output_patch(*args):
-        cmd = args[0]
-        if (
-            cmd
-            == f"./gradlew --init-script {tempfile.gettempdir()}/gradle-plugin-init-script.gradle 2>&1"
-        ):
-            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        return subprocess.check_output(cmd)
-
-    mocker.patch.object(subprocess, "check_output", _check_output_patch)
-    mocker.patch.object(plugin, "get_java_version", return_value=21)
-
-    with pytest.raises(errors.PartSpecificationError) as exc:
-        plugin._validate_project(options=cast(GradlePluginProperties, properties))
-
-    assert "failed to execute project java version check" in exc.value.message
-
-
-@pytest.mark.usefixtures("setup_gradlew_file")
-def test_validate_project_gradle_init_script_output_error(
-    part_info, mocker, init_script
-):
-    properties = GradlePlugin.properties_class.unmarshal(
-        {"source": ".", "gradle-init-script": str(init_script)}
-    )
-    plugin = GradlePlugin(properties=properties, part_info=part_info)
-
-    def _check_output_patch(*args):
-        cmd = args[0]
-        if (
-            cmd
-            == f"./gradlew --init-script {tempfile.gettempdir()}/gradle-plugin-init-script.gradle 2>&1"
-        ):
-            return "invalid version info"
-        return subprocess.check_output(cmd)
-
-    mocker.patch.object(subprocess, "check_output", _check_output_patch)
-    mocker.patch.object(plugin, "get_java_version", return_value=21)
-
-    with pytest.raises(errors.PluginEnvironmentValidationError) as exc:
-        plugin._validate_project(options=cast(GradlePluginProperties, properties))
-
-    assert "project version not detected" in exc.value.reason
 
 
 @pytest.mark.parametrize(

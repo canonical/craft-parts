@@ -135,7 +135,6 @@ class GradlePlugin(JavaPlugin):
         ]
 
     def _get_validate_project_command(self) -> str:
-        subprocess.check_output([f"{self._part_info.part_build_dir}/gradlew", "--help"])
         part_build_validator_path = (
             self._part_info.part_build_dir / GRADLE_PLUGIN_VALIDATOR_FILE.name
         )
