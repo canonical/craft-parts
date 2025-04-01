@@ -22,9 +22,10 @@ from textwrap import dedent
 from unittest import mock
 
 import pytest
+from pydantic import ValidationError
+
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import MavenPlugin
-from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -161,6 +162,28 @@ def test_get_build_commands_with_parameters(part_info):
 
     assert plugin.get_build_commands() == (
         ["mvn package -Dprop1=1 -c", *plugin._get_java_post_build_commands()]
+    )
+
+
+def test_get_build_commands_use_mvnw(part_info):
+    properties = MavenPlugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "maven-use-mvnw": True,
+        }
+    )
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == (
+        [
+            """[ -e $"{CRAFT_PART_BUILD}/mvnw"] || \
+echo "mvnw file not found, refer to plugin documentation: \
+https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
+common/craft-parts/reference/plugins/maven_plugin.html
+""",
+            "${CRAFT_PART_BUILD}/mvnw package",
+            *plugin._get_java_post_build_commands(),
+        ]
     )
 
 

@@ -38,6 +38,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["maven"] = "maven"
 
     maven_parameters: list[str] = []
+    maven_use_mvnw: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -61,6 +62,9 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If maven is invalid
           and there are no parts named maven-deps.
         """
+        options = cast(MavenPluginProperties, self._options)
+        if options.maven_use_mvnw:
+            return
         version = self.validate_dependency(
             dependency="mvn",
             plugin_name="maven",
@@ -106,20 +110,41 @@ class MavenPlugin(JavaPlugin):
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @property
+    def _maven_executable(self) -> str:
+        """Return the maven executable to be used for build."""
+        options = cast(MavenPluginProperties, self._options)
+        return "${CRAFT_PART_BUILD}/mvnw" if options.maven_use_mvnw else "mvn"
+
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 
-        mvn_cmd = ["mvn", "package"]
+        mvn_cmd = [self._maven_executable, "package"]
         if self._use_proxy():
             settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
             _create_settings(settings_path)
             mvn_cmd += ["-s", str(settings_path)]
 
         return [
+            *self._get_mvnw_validation_commands(options=options),
             " ".join(mvn_cmd + options.maven_parameters),
             *self._get_java_post_build_commands(),
+        ]
+
+    def _get_mvnw_validation_commands(
+        self, options: MavenPluginProperties
+    ) -> list[str]:
+        """Validate mvnw file before execution."""
+        if not options.maven_use_mvnw:
+            return []
+        return [
+            """[ -e $"{CRAFT_PART_BUILD}/mvnw"] || \
+echo "mvnw file not found, refer to plugin documentation: \
+https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
+common/craft-parts/reference/plugins/maven_plugin.html
+"""
         ]
 
     def _use_proxy(self) -> bool:

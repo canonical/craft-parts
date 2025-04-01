@@ -18,11 +18,26 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
+
 from craft_parts import LifecycleManager, Step
 
 
-def test_maven_plugin(new_dir, partitions):
+@pytest.fixture
+def use_mvnw(request):
+    if request.param:
+        yield request.param
+        return
+    source_location = Path(__file__).parent / "test_maven"
+    mvnw_file = source_location / "mvnw"
+    mvnw_file = mvnw_file.rename("mvnw.backup")
+    yield request.param
+    mvnw_file.rename("mvnw")
+
+
+@pytest.mark.parametrize("use_mvnw", (True, False), indirect=True)
+def test_maven_plugin(new_dir, partitions, use_mvnw):
     source_location = Path(__file__).parent / "test_maven"
 
     parts_yaml = textwrap.dedent(
@@ -32,6 +47,7 @@ def test_maven_plugin(new_dir, partitions):
             plugin: maven
             source: {source_location}
             stage-packages: [default-jre-headless]
+            maven-use-mvnw: {use_mvnw}
         """
     )
     parts = yaml.safe_load(parts_yaml)
