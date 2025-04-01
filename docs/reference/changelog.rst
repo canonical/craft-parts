@@ -2,6 +2,14 @@
 Changelog
 *********
 
+2.8.0 (2025-04-01)
+-------------------
+
+New features:
+
+- Maven plugin ``maven-use-mvnw`` parameter now allows for the use of the
+  ``mvnw`` wrapper script.
+
 2.7.0 (2025-03-18)
 -------------------
 
