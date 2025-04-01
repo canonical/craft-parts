@@ -5,10 +5,6 @@ Maven plugin
 
 The Maven plugin builds Java projects using the Maven build tool.
 
-The plugin will check for project Java version compatibility with the build system Java version
-compatibility before executing the build. If an incompatible version is detected, the plugin will
-fail early.
-
 After a successful build, this plugin will:
 
 .. _craft_parts_maven_plugin_post_build_begin:
@@ -47,8 +43,8 @@ Environment variables
 ---------------------
 
 Environment variables can be specified to modify behavior of the build. For the Maven plugin,
-three proxy related environment variables are treated specially. ``http_proxy``, ``https_proxy``
-and ``no_proxy``.
+three proxy related case insensitive environment variables are treated specially.
+``http_proxy``, ``https_proxy`` and ``no_proxy``.
 
 For a list of environment variables used to configure Maven, please refer to
 `Configuring Apache Maven <https://maven.apache.org/configure.html>`_.
