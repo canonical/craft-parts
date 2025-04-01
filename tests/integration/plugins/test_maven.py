@@ -30,13 +30,17 @@ def use_mvnw(request):
         return
     source_location = Path(__file__).parent / "test_maven"
     mvnw_file = source_location / "mvnw"
-    mvnw_file = mvnw_file.rename("mvnw.backup")
+    mvnw_file = mvnw_file.rename(f"{source_location}/mvnw.backup")
     yield request.param
-    mvnw_file.rename("mvnw")
+    mvnw_file.rename(f"{source_location}/mvnw")
 
 
-@pytest.mark.parametrize("use_mvnw", [True, False], indirect=True)
-def test_maven_plugin(new_dir, partitions, use_mvnw):
+@pytest.mark.parametrize(
+    ("use_mvnw", "stage_packages"),
+    [(True, "[default-jre-headless]"), (False, "[default-jre-headless, maven]")],
+    indirect=["use_mvnw"],
+)
+def test_maven_plugin(new_dir, partitions, use_mvnw, stage_packages):
     source_location = Path(__file__).parent / "test_maven"
 
     parts_yaml = textwrap.dedent(
@@ -45,7 +49,7 @@ def test_maven_plugin(new_dir, partitions, use_mvnw):
           foo:
             plugin: maven
             source: {source_location}
-            stage-packages: [default-jre-headless]
+            stage-packages: {stage_packages}
             maven-use-mvnw: {use_mvnw}
         """
     )

@@ -140,10 +140,10 @@ class MavenPlugin(JavaPlugin):
         if not options.maven_use_mvnw:
             return []
         return [
-            """[ -e $"{CRAFT_PART_BUILD}/mvnw"] || \
+            """[ -e "${CRAFT_PART_BUILD}/mvnw" ] || \
 echo "mvnw file not found, refer to plugin documentation: \
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
-common/craft-parts/reference/plugins/maven_plugin.html
+common/craft-parts/reference/plugins/maven_plugin.html"
 """
         ]
 

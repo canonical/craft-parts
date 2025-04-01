@@ -175,10 +175,10 @@ def test_get_build_commands_use_mvnw(part_info):
 
     assert plugin.get_build_commands() == (
         [
-            """[ -e $"{CRAFT_PART_BUILD}/mvnw"] || \
+            """[ -e "${CRAFT_PART_BUILD}/mvnw" ] || \
 echo "mvnw file not found, refer to plugin documentation: \
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
-common/craft-parts/reference/plugins/maven_plugin.html
+common/craft-parts/reference/plugins/maven_plugin.html"
 """,
             "${CRAFT_PART_BUILD}/mvnw package",
             *plugin._get_java_post_build_commands(),
