@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step
+from craft_parts import LifecycleManager, Step, errors
 
 
 @pytest.fixture
@@ -54,6 +54,34 @@ def test_maven_plugin(new_dir, partitions, use_mvnw, stage_packages):
         """
     )
     parts = yaml.safe_load(parts_yaml)
+    _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
+
+
+def test_maven_plugin_use_maven_wrapper_wrapper_missing(new_dir, partitions, capsys):
+    source_location = Path(__file__).parent / "test_maven"
+    (source_location / "mvnw").unlink(missing_ok=True)
+
+    parts_yaml = textwrap.dedent(
+        f"""
+        parts:
+          foo:
+            plugin: maven
+            source: {source_location}
+            stage-packages: [default-jre-headless]
+            maven-use-mvnw: True
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+    with pytest.raises(errors.PluginBuildError) as exc:
+        _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
+
+    assert "Failed to run the build script for part 'foo'" in exc.value.brief
+    assert (
+        "mvnw file not found, refer to plugin documentation" in capsys.readouterr().err
+    )
+
+
+def _run_maven_test(new_dir, partitions, parts):
     lf = LifecycleManager(
         parts,
         application_name="test_ant",

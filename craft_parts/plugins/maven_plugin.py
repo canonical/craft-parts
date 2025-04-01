@@ -141,9 +141,9 @@ class MavenPlugin(JavaPlugin):
             return []
         return [
             """[ -e "${CRAFT_PART_BUILD}/mvnw" ] || \
-echo "mvnw file not found, refer to plugin documentation: \
+>&2 echo "mvnw file not found, refer to plugin documentation: \
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
-common/craft-parts/reference/plugins/maven_plugin.html"
+common/craft-parts/reference/plugins/maven_plugin.html" && exit 1;
 """
         ]
 
