@@ -57,7 +57,10 @@ def test_maven_plugin(new_dir, partitions, use_mvnw, stage_packages):
     _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
 
 
-def test_maven_plugin_use_maven_wrapper_wrapper_missing(new_dir, partitions, capsys):
+@pytest.mark.parametrize("use_mvnw", [False], indirect=True)
+def test_maven_plugin_use_maven_wrapper_wrapper_missing(
+    capsys, new_dir, partitions, use_mvnw
+):
     source_location = Path(__file__).parent / "test_maven"
     (source_location / "mvnw").unlink(missing_ok=True)
 

@@ -140,18 +140,16 @@ class MavenPlugin(JavaPlugin):
         if not options.maven_use_mvnw:
             return []
         return [
-            """[ -e "${CRAFT_PART_BUILD}/mvnw" ] || \
->&2 echo "mvnw file not found, refer to plugin documentation: \
+            """[ -e ${CRAFT_PART_BUILD}/mvnw ] || {
+>&2 echo 'mvnw file not found, refer to plugin documentation: \
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
-common/craft-parts/reference/plugins/maven_plugin.html" && exit 1;
-"""
+common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
+}"""
         ]
 
     def _use_proxy(self) -> bool:
-        return any(
-            k in os.environ
-            for k in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY")
-        )
+        env_vars_lower = list(map(str.lower, os.environ.keys()))
+        return any(k in env_vars_lower for k in ("http_proxy", "https_proxy"))
 
 
 def _create_settings(settings_path: Path) -> None:
@@ -180,11 +178,13 @@ def _create_settings(settings_path: Path) -> None:
 
     for protocol in ("http", "https"):
         env_name = f"{protocol}_proxy"
-        env_name_upper = env_name.upper()
-        if not any(env in os.environ for env in [env_name_upper, env_name]):
+        case_insensitive_env = dict(
+            map(lambda item: (item[0].lower(), item[1]), os.environ.items())
+        )
+        if env_name not in case_insensitive_env:
             continue
 
-        proxy_url = urlparse(os.environ.get(env_name, os.environ.get(env_name_upper)))
+        proxy_url = urlparse(case_insensitive_env[env_name])
         proxy = ET.Element("proxy")
         proxy_tags = [
             ("id", env_name.lower()),
