@@ -178,9 +178,7 @@ def _create_settings(settings_path: Path) -> None:
 
     for protocol in ("http", "https"):
         env_name = f"{protocol}_proxy"
-        case_insensitive_env = dict(
-            map(lambda item: (item[0].lower(), item[1]), os.environ.items())
-        )
+        case_insensitive_env = {item[0].lower(): item[1] for item in os.environ.items()}
         if env_name not in case_insensitive_env:
             continue
 
