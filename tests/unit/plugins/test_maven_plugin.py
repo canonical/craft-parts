@@ -198,12 +198,17 @@ def test_settings_no_proxy(part_info, new_dir):
         assert settings_path.exists() is False
 
 
-@pytest.mark.parametrize("protocol", ["http", "https"])
+@pytest.mark.parametrize(
+    ("protocol", "expected_protocol"),
+    [("http", "http"), ("https", "https"), ("HTTP", "http"), ("HTTPS", "https")],
+)
 @pytest.mark.parametrize(
     ("no_proxy", "non_proxy_hosts"),
     [(None, "localhost"), ("foo", "foo"), ("foo,bar", "foo|bar")],
 )
-def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
+def test_settings_proxy(
+    part_info, protocol, expected_protocol, no_proxy, non_proxy_hosts
+):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
     settings_path = Path(
@@ -218,9 +223,9 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
           <interactiveMode>false</interactiveMode>
           <proxies>
             <proxy>
-              <id>{protocol}_proxy</id>
+              <id>{expected_protocol}_proxy</id>
               <active>true</active>
-              <protocol>{protocol}</protocol>
+              <protocol>{expected_protocol}</protocol>
               <host>my-proxy-host</host>
               <port>3128</port>
               <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>
@@ -230,7 +235,10 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
         """
     )
 
-    env_dict = {f"{protocol}_proxy": "http://my-proxy-host:3128"}
+    env_dict = {
+        f"{protocol}_proxy": "http://my-proxy-host:3128",
+        f"{protocol}_PROXY": "http://my-proxy-host:3128",
+    }
     if no_proxy:
         env_dict["no_proxy"] = no_proxy
 

@@ -148,7 +148,10 @@ common/craft-parts/reference/plugins/maven_plugin.html" && exit 1;
         ]
 
     def _use_proxy(self) -> bool:
-        return any(k in os.environ for k in ("http_proxy", "https_proxy"))
+        return any(
+            k in os.environ
+            for k in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY")
+        )
 
 
 def _create_settings(settings_path: Path) -> None:
@@ -177,13 +180,14 @@ def _create_settings(settings_path: Path) -> None:
 
     for protocol in ("http", "https"):
         env_name = f"{protocol}_proxy"
-        if env_name not in os.environ:
+        env_name_upper = env_name.upper()
+        if not any(env in os.environ for env in [env_name_upper, env_name]):
             continue
 
-        proxy_url = urlparse(os.environ[env_name])
+        proxy_url = urlparse(os.environ.get(env_name, os.environ.get(env_name_upper)))
         proxy = ET.Element("proxy")
         proxy_tags = [
-            ("id", env_name),
+            ("id", env_name.lower()),
             ("active", "true"),
             ("protocol", protocol),
             ("host", proxy_url.hostname),
