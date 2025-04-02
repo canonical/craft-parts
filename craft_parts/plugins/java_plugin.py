@@ -20,14 +20,55 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import subprocess
 import tempfile
 
 from overrides import override
 
+from craft_parts import errors
+
+from . import validator
 from .base import Plugin
 
 logger = logging.getLogger(__name__)
+
+
+class JavaPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+    """A base class for java-related plugin environment validators.
+
+    Provide common methods to deal with java executable version checking.
+    """
+
+    def _get_system_openjdk_java_major_version(self) -> int:
+        try:
+            system_java_version_output = self._execute("java --version")
+            # Java versions < 8 have syntax 1.<version>
+        except subprocess.CalledProcessError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"failed to check java version: {err}",
+            ) from err
+        version_output_match = re.match(
+            r"openjdk (1\.(\d+)|(\d+))", system_java_version_output
+        )
+        if version_output_match is None:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"failed to check java version: {system_java_version_output}",
+            )
+        # match 1.<version> first for Java versions less than or equal to 8. Otherwise,
+        # match <version>.
+        system_java_major_version = version_output_match.group(
+            2
+        ) or version_output_match.group(1)
+        try:
+            return int(system_java_major_version)
+        except ValueError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"failed to parse java version: {err}",
+            ) from err
 
 
 class JavaPlugin(Plugin):
