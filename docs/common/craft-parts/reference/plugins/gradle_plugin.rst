@@ -29,7 +29,7 @@ gradle-init-script
 **Type:** string
 
 The path to the initialization script to run with ``gradle --init-script <gradle-init-script>``
-command. See `official gradle documentation <https://docs.gradle.org/current/userguide/init_scripts.html>_`
+command. See `official gradle documentation <https://docs.gradle.org/current/userguide/init_scripts.html>`_
 on the init script.
 
 gradle-init-script-paramters
@@ -48,7 +48,7 @@ gradle-task
 ~~~~~~~~~~~
 **Type:** string
 
-The `Gradle task <https://docs.gradle.org/current/userguide/more_about_tasks.html>_` to build the
+The `Gradle task <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_ to build the
 project.
 
 Environment variables
@@ -57,7 +57,7 @@ Environment variables
 Environment variables can be specified to modify the behavior of the build. For the Gradle plugin,
 three proxy environment variables are treated specially: ``http_proxy``, ``https_proxy`` and
 ``no_proxy``. For a list of environment variables used to configure Gradle, please refer to
-`Configuring the build environment <https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables>_`.
+`Configuring the build environment <https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables>`_.
 
 http_proxy
 ~~~~~~~~~~
@@ -98,7 +98,7 @@ Here is a consolidated example of how to use the Gradle plugin.
 
 For possible values of each field, refer to the Gradle documentation.
 
-``gradle-init-script-parameters``: `Initialization Scripts <https://docs.gradle.org/current/userguide/init_scripts.html>_`
-``gradle-parameters``: `Command line interface <https://docs.gradle.org/current/userguide/command_line_interface.html>_`
-``gradle-task``: `Understanding tasks <https://docs.gradle.org/current/userguide/more_about_tasks.html>_`
-``build-environment``: `Configuring the build environment <https://docs.gradle.org/current/userguide/build_environment.html>_`
+``gradle-init-script-parameters``: `Initialization Scripts <https://docs.gradle.org/current/userguide/init_scripts.html>`_
+``gradle-parameters``: `Command line interface <https://docs.gradle.org/current/userguide/command_line_interface.html>`_
+``gradle-task``: `Understanding tasks <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
+``build-environment``: `Configuring the build environment <https://docs.gradle.org/current/userguide/build_environment.html>`_
