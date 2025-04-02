@@ -124,9 +124,7 @@ class GradlePlugin(JavaPlugin):
         ]
 
     def _setup_proxy(self) -> None:
-        case_insensitive_env = dict(
-            map(lambda item: (item[0].lower(), item[1]), os.environ.items())
-        )
+        case_insensitive_env = {item[0].lower(): item[1] for item in os.environ.items()}
         no_proxy = case_insensitive_env.get("no_proxy", "")
         no_proxy = "|".join(no_proxy.split(",") if no_proxy else [])
         if not any(k in case_insensitive_env for k in ("http_proxy", "https_proxy")):

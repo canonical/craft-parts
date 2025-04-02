@@ -15,19 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 import tempfile
-from typing import cast
 
 import pytest
-from overrides import override
-
-from craft_parts import Part, PartInfo, ProjectInfo, errors
+from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
-    GradlePluginProperties,
 )
+from overrides import override
 
 
 @pytest.fixture
