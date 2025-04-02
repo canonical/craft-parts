@@ -223,7 +223,7 @@ source
 **Step:** pull
 
 The location of the source code and data. It can refer to a git
-repository, debian package, zip file, local directory, etc. See
+repository, deb package, zip file, local directory, etc. See
 :ref:`source_type`.
 
 The following example points the source field to a git repository:
