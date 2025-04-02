@@ -47,28 +47,23 @@ class GradlePluginProperties(PluginProperties, frozen=True):
 
     @model_validator(mode="after")
     def gradle_task_defined(self) -> Self:
-        """Gradle task must be defined."""
+        """Gradle task must be defined.
+
+        This check ensures that the user does not override the default value "build" with an
+        empty string.
+        """
         if not self.gradle_task:
             raise ValueError("Gradle task must be defined")
         return self
 
 
 class GradlePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
-    """Check the execution environment for the gradle plugin."""
+    """Check the execution environment for the gradle plugin.
 
-    @override
-    def validate_environment(
-        self, *, part_dependencies: list[str] | None = None
-    ) -> None:
-        """Ensure the environment contains dependencies needed by the plugin.
-
-        :param part_dependencies: A list of the parts this part depends on.
-        :raises PluginEnvironmentValidationError: If gradle is invalid
-          and there are no parts named gradle-deps.
-        """
-        # We can't check for gradle executable here because if the project uses gradlew, we don't
-        # necessarily need gradle to be installed on the system. We can't check if the project uses
-        # gradlew since the project would not be pulled yet.
+    We can't check for gradle executable here because if the project uses gradlew, we don't
+    necessarily need gradle to be installed on the system. We can't check if the project uses
+    gradlew since the project would not be pulled yet.
+    """
 
 
 class GradlePlugin(JavaPlugin):
