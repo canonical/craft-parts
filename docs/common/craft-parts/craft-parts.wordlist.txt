@@ -97,6 +97,7 @@ GradlePluginEnvironmentValidator
 GradlePluginProperties
 HttpRequestError
 IncompatibleSourceOptions
+Initialization
 InvalidAction
 InvalidActionException
 InvalidApplicationName
@@ -382,12 +383,14 @@ gradlew
 gzipped
 hardcoded
 hg
+http
 https
 humanize
 implementers
 infos
 ing
 init
+initialization
 initialized
 iterable
 iojs
