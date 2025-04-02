@@ -32,8 +32,8 @@ The path to the initialization script to run with ``gradle --init-script <gradle
 command. See `official gradle documentation <https://docs.gradle.org/current/userguide/init_scripts.html>`_
 on the init script.
 
-gradle-init-script-paramters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+gradle-init-script-parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
 Used to add additional parameters to the ``gradle --init-script`` command line.
