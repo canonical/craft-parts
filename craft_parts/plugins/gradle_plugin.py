@@ -76,9 +76,11 @@ class GradlePlugin(JavaPlugin):
     'sources' topic for the latter.
 
     Additionally, this plugin uses the following plugin-specific keywords:
+
     - gradle-parameters:
       (list of strings)
       Flags to pass to the build using the gradle semantics for parameters.
+
     """
 
     properties_class = GradlePluginProperties

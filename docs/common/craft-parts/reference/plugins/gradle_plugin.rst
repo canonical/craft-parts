@@ -7,7 +7,7 @@ The Gradle plugin builds Java projects using the Gradle build tool.
 
 After a successful build, this plugin will:
 
-.. _craft_parts_maven_plugin_post_build_begin:
+.. _craft_parts_gradle_plugin_post_build_begin:
 
 * Create ``bin/`` and ``jar/`` directories in ``$CRAFT_PART_INSTALL``.
 * Find the ``java`` executable provided by the part and link it as
@@ -15,7 +15,7 @@ After a successful build, this plugin will:
 * Hard link the ``.jar`` files generated in ``$CRAFT_PART_BUILD`` to 
   ``$CRAFT_PART_INSTALL/jar``.
 
-.. _craft_parts_maven_plugin_post_build_end:
+.. _craft_parts_gradle_plugin_post_build_end:
 
 Keywords
 --------
@@ -57,7 +57,7 @@ Environment variables
 Environment variables can be specified to modify the behavior of the build. For the Gradle plugin,
 three proxy environment variables are treated specially: ``http_proxy``, ``https_proxy`` and
 ``no_proxy``. For a list of environment variables used to configure Gradle, please refer to
-`Configuring the build environment <https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables>`_.
+`Configuring the build environment`_.
 
 http_proxy
 ~~~~~~~~~~
@@ -101,4 +101,6 @@ For possible values of each field, refer to the Gradle documentation.
 ``gradle-init-script-parameters``: `Initialization Scripts <https://docs.gradle.org/current/userguide/init_scripts.html>`_
 ``gradle-parameters``: `Command line interface <https://docs.gradle.org/current/userguide/command_line_interface.html>`_
 ``gradle-task``: `Understanding tasks <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
-``build-environment``: `Configuring the build environment <https://docs.gradle.org/current/userguide/build_environment.html>`_
+``build-environment``: `Configuring the build environment`_
+
+.. _Configuring the build environment: https://docs.gradle.org/current/userguide/build_environment.html
