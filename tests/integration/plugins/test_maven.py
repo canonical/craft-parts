@@ -18,11 +18,47 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
-from craft_parts import LifecycleManager, Step
+from craft_parts import LifecycleManager, Step, errors
 
 
-def test_maven_plugin(new_dir, partitions):
+@pytest.fixture
+def use_mvnw(request):
+    if request.param:
+        yield request.param
+        return
+    source_location = Path(__file__).parent / "test_maven"
+    mvnw_file = source_location / "mvnw"
+    mvnw_file = mvnw_file.rename(f"{source_location}/mvnw.backup")
+    yield request.param
+    mvnw_file.rename(f"{source_location}/mvnw")
+
+
+@pytest.mark.parametrize(
+    ("use_mvnw", "stage_packages"),
+    [(True, "[default-jre-headless]"), (False, "[default-jre-headless, maven]")],
+    indirect=["use_mvnw"],
+)
+def test_maven_plugin(new_dir, partitions, use_mvnw, stage_packages):
+    source_location = Path(__file__).parent / "test_maven"
+
+    parts_yaml = textwrap.dedent(
+        f"""
+        parts:
+          foo:
+            plugin: maven
+            source: {source_location}
+            stage-packages: {stage_packages}
+            maven-use-mvnw: {use_mvnw}
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+    _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
+
+
+@pytest.mark.parametrize("use_mvnw", [False], indirect=True)
+def test_maven_plugin_use_maven_wrapper_wrapper_missing(new_dir, partitions, use_mvnw):
     source_location = Path(__file__).parent / "test_maven"
 
     parts_yaml = textwrap.dedent(
@@ -32,12 +68,20 @@ def test_maven_plugin(new_dir, partitions):
             plugin: maven
             source: {source_location}
             stage-packages: [default-jre-headless]
+            maven-use-mvnw: True
         """
     )
     parts = yaml.safe_load(parts_yaml)
+    with pytest.raises(errors.PluginBuildError) as exc:
+        _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
+
+    assert "Failed to run the build script for part 'foo'" in exc.value.brief
+
+
+def _run_maven_test(new_dir, partitions, parts):
     lf = LifecycleManager(
         parts,
-        application_name="test_ant",
+        application_name="test_maven",
         cache_dir=new_dir,
         work_dir=new_dir,
         partitions=partitions,
