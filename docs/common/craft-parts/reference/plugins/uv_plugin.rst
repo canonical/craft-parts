@@ -95,7 +95,8 @@ For installation instructions, see `uv documentation
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`,
+the plugin performs the following actions:
 
 * It creates a virtual environment in the ``${CRAFT_PART_INSTALL}`` directory.
 * It uses :command:`uv sync` to install the required Python packages from

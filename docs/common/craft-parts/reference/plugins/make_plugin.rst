@@ -36,7 +36,8 @@ and the use of ``DESTDIR``.
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`,
+the plugin performs the following actions:
 
 * Call ``make`` with any parameters defined in ``make-parameters``
 * Call ``make install`` with the ``DESTDIR`` set to the installation

@@ -51,7 +51,8 @@ dependencies the source requires to build are to be provided.
 How it works
 ------------
 
-During the build step the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`
+the plugin performs the following actions:
 
 * Run ``cmake`` in the build directory referring to the pulled source
   directory (this plugin runs an out of tree build). The preferred

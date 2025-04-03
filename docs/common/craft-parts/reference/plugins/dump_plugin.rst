@@ -32,7 +32,8 @@ This plugin has no dependencies.
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`,
+the plugin performs the following actions:
 
 * Check the ``source-type`` keyword to determine the type of the source if
   specified, otherwise, it will try to guess the type based on the ``source``.

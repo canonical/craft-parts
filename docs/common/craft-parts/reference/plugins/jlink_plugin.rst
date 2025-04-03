@@ -93,7 +93,8 @@ Or, by installing the dependencies directly:
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`,
+the plugin performs the following actions:
 
 * Finds all JAR files in the staging area or selects jars specified in
   ``jlink-jars``.
