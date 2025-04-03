@@ -61,6 +61,7 @@ def test_part_permissions(new_dir, mock_chown):
     assert chown_call.owner == 1111
     assert chown_call.group == 2222
 
+
 def test_part_permissions_symlink(new_dir):
     files = Path("files")
     files.mkdir()
@@ -95,5 +96,3 @@ def test_part_permissions_symlink(new_dir):
     actions = lf.plan(Step.PRIME)
     with lf.action_executor() as ctx:
         ctx.execute(actions)
-
-
