@@ -19,13 +19,19 @@
 This plugin copy the content of the Rust repository to the interminient registry.
 """
 
+import sys
 from typing import Literal
 
-import tomli
 from overrides import override
 
 from .base import Plugin
 from .properties import PluginProperties
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    # to be dropped once 3.10 will no longer be supported
+    import tomli as tomllib
 
 CARGO_TOML_TEMPLATE = """
 [source.craft-parts]
@@ -108,8 +114,8 @@ class CargoRegistryPlugin(Plugin):
                 "Cannot use 'cargo-registry' plugin on non-Rust project."
             )
         try:
-            parsed_toml = tomli.loads(cargo_toml.read_text())
-        except tomli.TOMLDecodeError as err:
+            parsed_toml = tomllib.loads(cargo_toml.read_text())
+        except tomllib.TOMLDecodeError as err:
             # to update
             raise RuntimeError(
                 f"Cannot parse Cargo.toml for {self._part_info.part_name!r}"
