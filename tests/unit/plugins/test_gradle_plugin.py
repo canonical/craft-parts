@@ -16,17 +16,15 @@
 
 import os
 import tempfile
-from typing import cast
 
 import pydantic
 import pytest
-from overrides import override
-
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
 )
+from overrides import override
 
 
 @pytest.fixture
