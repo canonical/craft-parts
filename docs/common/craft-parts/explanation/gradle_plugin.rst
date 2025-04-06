@@ -23,9 +23,6 @@ The ``gradle-init-script`` parameter is used to supply any Gradle initialization
 available, to configure the project prior to building. This script is executed via the 
 ``./gradlew --init-script <gradle-init-script>`` command.
 
-The ``gradle-init-script-parameters`` is used to supply any parameters to the Gradle init script.
-This parameter is ignored if the ``gradle-init-script`` parameter is left unspecified.
-
 The plugin is able to detect and apply the following proxy environment variables:
 ``http_proxy``, ``https_proxy`` and ``no_proxy``. These environment variables can be supplied
 through the ``build-environment`` directive. These environment variables will be used to create a

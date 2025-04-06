@@ -32,12 +32,6 @@ The path to the initialization script to run with ``gradle --init-script <gradle
 command. See `official gradle documentation <https://docs.gradle.org/current/userguide/init_scripts.html>`_
 on the init script.
 
-gradle-init-script-parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type:** list of strings
-
-Used to add additional parameters to the ``gradle --init-script`` command line.
-
 gradle-parameters
 ~~~~~~~~~~~~~~~~~
 **Type:** list of strings
@@ -84,9 +78,6 @@ Here is a consolidated example of how to use the Gradle plugin.
     plugin: gradle
     source: .
     gradle-init-script: <path-to-gradle-init-script>
-    gradle-init-script-parameters:
-    - -q
-    - <some-task>
     gradle-parameters:
     - -D<some-parameter>=<some-value>
     gradle-task: build
@@ -98,7 +89,6 @@ Here is a consolidated example of how to use the Gradle plugin.
 
 For possible values of each field, refer to the Gradle documentation.
 
-``gradle-init-script-parameters``: `Initialization Scripts <https://docs.gradle.org/current/userguide/init_scripts.html>`_
 ``gradle-parameters``: `Command line interface <https://docs.gradle.org/current/userguide/command_line_interface.html>`_
 ``gradle-task``: `Understanding tasks <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
 ``build-environment``: `Configuring the build environment`_
