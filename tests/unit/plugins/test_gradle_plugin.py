@@ -16,14 +16,17 @@
 
 import os
 import tempfile
+from typing import cast
 
+import pydantic
 import pytest
+from overrides import override
+
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
 )
-from overrides import override
 
 
 @pytest.fixture
@@ -90,6 +93,13 @@ def init_script(part_info):
     init_script_file.unlink()
 
 
+def test_gradle_task_defined():
+    with pytest.raises(pydantic.ValidationError) as exc:
+        GradlePlugin.properties_class.unmarshal({"source": ".", "gradle-task": ""})
+
+    assert "gradle-task must be defined" in exc.value.errors()[0]["msg"]
+
+
 @pytest.mark.usefixtures("patch_succeed_cmd_validator")
 def test_validate_environment(dependency_fixture, part_info):
     properties = GradlePlugin.properties_class.unmarshal({"source": "."})
@@ -111,21 +121,14 @@ Gradle 4.4.1
     (
         "task",
         "parameters",
-        "init_script_input",
-        "init_script_params",
+        "init_script_path",
         "expected_commands",
     ),
     [
-        ("build", [], "", [], ["gradle build"]),
-        ("pack", [], "", [], ["gradle pack"]),
-        ("pack", ["--parameter=value"], "", [], ["gradle pack --parameter=value"]),
-        (
-            "pack",
-            [],
-            "init.gradle",
-            [],
-            ["gradle --init-script init.gradle", "gradle pack"],
-        ),
+        ("build", [], "", ["gradle build"]),
+        ("pack", [], "", ["gradle pack"]),
+        ("pack", ["--parameter=value"], "", ["gradle pack --parameter=value"]),
+        ("pack", [], "init.gradle", ["gradle pack --init-script init.gradle"]),
     ],
 )
 @pytest.mark.usefixtures("init_script")
@@ -133,17 +136,15 @@ def test_get_build_commands(
     part_info,
     task,
     parameters,
-    init_script_input,
-    init_script_params,
+    init_script_path,
     expected_commands,
 ):
     properties = GradlePlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "gradle-task": task,
+            "gradle-init-script": init_script_path,
             "gradle-parameters": parameters,
-            "gradle-init-script": init_script_input,
-            "gradle-init-script-parameters": init_script_params,
+            "gradle-task": task,
         }
     )
     plugin = GradlePlugin(properties=properties, part_info=part_info)

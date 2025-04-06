@@ -38,7 +38,6 @@ class GradlePluginProperties(PluginProperties, frozen=True):
     plugin: Literal["gradle"] = "gradle"
 
     gradle_init_script: str = ""
-    gradle_init_script_parameters: list[str] = []
     gradle_parameters: list[str] = []
     gradle_task: str = "build"
 
@@ -53,7 +52,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
         empty string.
         """
         if not self.gradle_task:
-            raise ValueError("Gradle task must be defined")
+            raise ValueError("gradle-task must be defined")
         return self
 
 
@@ -114,8 +113,11 @@ class GradlePlugin(JavaPlugin):
         self._setup_proxy()
 
         return [
-            *self._get_gradle_init_command(options=options),
-            " ".join(gradle_cmd + options.gradle_parameters),
+            " ".join(
+                gradle_cmd
+                + self._get_gradle_init_command_args(options=options)
+                + options.gradle_parameters
+            ),
             # remove gradle-wrapper.jar files included in the project if any.
             f'find {self._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
             *self._get_java_post_build_commands(),
@@ -150,12 +152,12 @@ systemProp.{protocol}.nonProxyHosts={no_proxy}
 """
                 )
 
-    def _get_gradle_init_command(self, options: GradlePluginProperties) -> list[str]:
+    def _get_gradle_init_command_args(
+        self, options: GradlePluginProperties
+    ) -> list[str]:
         if not options.gradle_init_script:
             return []
-        gradle_cmd = [
-            self.gradle_executable,
+        return [
             "--init-script",
             options.gradle_init_script,
         ]
-        return [" ".join(gradle_cmd + options.gradle_init_script_parameters)]
