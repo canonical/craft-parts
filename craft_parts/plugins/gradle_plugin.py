@@ -29,8 +29,6 @@ from . import validator
 from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
-GRADLE_PLUGIN_VALIDATOR_FILE = Path(__file__).parent / "gradle_plugin_validator.py"
-
 
 class GradlePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the gradle plugin."""
