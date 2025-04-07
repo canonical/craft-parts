@@ -24,6 +24,8 @@ from typing import Literal
 
 from overrides import override
 
+from craft_parts import errors
+
 from .base import Plugin
 from .properties import PluginProperties
 
@@ -109,24 +111,25 @@ class CargoRegistryPlugin(Plugin):
         """Create a name for the cargo-registry directory based on Cargo.toml."""
         cargo_toml = self._part_info.part_src_subdir / "Cargo.toml"
         if not cargo_toml.exists():
-            # to update
-            raise RuntimeError(
+            raise errors.PartsError(
                 "Cannot use 'cargo-registry' plugin on non-Rust project."
             )
         try:
             parsed_toml = tomllib.loads(cargo_toml.read_text())
         except tomllib.TOMLDecodeError as err:
-            # to update
-            raise RuntimeError(
+            raise errors.PartsError(
                 f"Cannot parse Cargo.toml for {self._part_info.part_name!r}"
             ) from err
         else:
             package_dict = parsed_toml.get("package")
             if not package_dict:
-                # to update
-                raise RuntimeError("Package section is missing in Cargo.toml file")
+                raise errors.PartsError("Package section is missing in Cargo.toml file")
             package_name = package_dict.get("name", self._part_info.part_name)
-            package_version = package_dict.get("version")
+
+            # according to the docs this field is optional since 1.7.5 and defaults to 0.0.0
+            # it is required for publishing crates, so it should be available for most packages
+            # https://doc.rust-lang.org/cargo/reference/manifest.html#the-version-field
+            package_version = package_dict.get("version", "0.0.0")
             return (
                 f"{package_name}-{package_version}" if package_version else package_name
             )
