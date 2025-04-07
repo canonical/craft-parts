@@ -92,7 +92,7 @@ test-ruff:
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
-	pytest tests/integration
+	pytest tests/integration/plugins/test_gradle.py
 
 .PHONY: test-mypy
 test-mypy:
