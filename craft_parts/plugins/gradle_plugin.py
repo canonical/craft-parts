@@ -17,7 +17,6 @@
 """The gradle plugin."""
 
 import os
-from pathlib import Path
 from typing import Literal, cast
 from urllib.parse import urlparse
 
