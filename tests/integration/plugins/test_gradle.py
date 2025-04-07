@@ -101,7 +101,9 @@ def test_gradle_plugin_gradlew(new_dir, partitions, local_proxy_url):
     assert (lf.project_info.dirs.parts_dir / f"{part_name}/build" / "test.txt").exists()
 
 
-@pytest.mark.skip(reason="Current apt provided Gradle (4.4.1) cannot build even with ")
+@pytest.mark.skip(
+    reason="Current apt provided Gradle (4.4.1) is not compatible with provided Java versions"
+)
 @pytest.mark.parametrize("use_gradlew", [False], indirect=True)
 def test_gradle_plugin_gradle(new_dir, partitions, use_gradlew):
     part_name = "foo"
