@@ -112,11 +112,11 @@ def test_gradle_plugin_gradle(new_dir, partitions, use_gradlew):
             plugin: gradle
             gradle-task: build
             source: {source_location}
-            build-packages: [gradle, openjdk-21-jdk]
+            build-packages: [gradle, openjdk-8-jdk-headless]
             build-environment:
-            - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
+            - JAVA_HOME: /usr/lib/jvm/java-8-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
             - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
-            stage-packages: [openjdk-21-jdk]
+            stage-packages: [openjdk-8-jdk-headless]
         """
     )
     parts = yaml.safe_load(parts_yaml)
