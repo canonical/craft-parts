@@ -1,0 +1,138 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2025 Canonical Ltd.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import pathlib
+import textwrap
+
+from py import path
+import pytest
+import yaml
+from craft_parts import LifecycleManager, Step, errors
+from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.parts import Part
+from craft_parts.plugins.go_plugin import GoPlugin
+from pydantic import ValidationError
+
+
+@pytest.fixture
+def part_info(new_dir):
+    return PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+
+
+@pytest.fixture
+def cargo_project(new_dir: path.LocalPath) -> pathlib.Path:
+    (new_dir / "Cargo.toml").write_text(
+        textwrap.dedent(
+            """
+            [package]
+            name = "craft-core"
+            version = "1.2.4"
+            """
+        ),
+        encoding="utf-8",
+    )
+    return pathlib.Path(new_dir)
+
+
+def test_cargo_registry(
+    new_dir: path.LocalPath, cargo_project: pathlib.Path, partitions
+) -> None:
+    """Test cargo registry plugin"""
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+          craft-core:
+            source: .
+            plugin: cargo-registry
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_cargo_registry",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    cargo_registry = pathlib.Path(new_dir) / "cargo-registry"
+    part_registry_entry = cargo_registry / "craft-core-1.2.4"
+    assert cargo_registry.is_dir(), "Cargo registry directory should be created."
+    assert part_registry_entry.is_dir(), "Part registry entry should be created."
+
+    assert (part_registry_entry / ".cargo-checksum.json").read_text() == '{"files":{}}'
+
+    configuration_file = pathlib.Path(new_dir) / "cargo" / "config.toml"
+    assert configuration_file.exists(), "config.toml should be created"
+    assert configuration_file.read_text() == textwrap.dedent(
+        f"""
+        [source.craft-parts]
+        directory = "{new_dir}/cargo-registry"
+
+        [source.apt]
+        directory = "/usr/share/cargo/registry"
+
+        [source.crates-io]
+        replace-with = "craft-parts"
+        """
+    )
+
+
+def test_cargo_registry_multiple(new_dir: path.LocalPath, partitions):
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+          librust-cf-if:
+            source: https://github.com/rust-lang/cfg-if.git
+            source-tag: 1.0.0
+            plugin: cargo-registry
+          librust-zerocopy:
+            source: https://github.com/google/zerocopy.git
+            source-tag: v0.8.24
+            plugin: cargo-registry
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+    lf = LifecycleManager(
+        parts,
+        application_name="test_cargo_registry",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    cargo_registry = pathlib.Path(new_dir) / "cargo-registry"
+    assert cargo_registry.is_dir(), "Cargo registry directory should be created."
+
+    part_registry_entry = cargo_registry / "cfg-if-1.0.0"
+    assert part_registry_entry.is_dir(), "Part registry entry should be created."
+    assert (part_registry_entry / ".cargo-checksum.json").read_text() == '{"files":{}}'
+
+    part_registry_entry = cargo_registry / "zerocopy-0.8.24"
+    assert part_registry_entry.is_dir(), "Part registry entry should be created."
+    assert (part_registry_entry / ".cargo-checksum.json").read_text() == '{"files":{}}'
