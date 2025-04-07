@@ -71,9 +71,8 @@ def test_gradle_plugin_gradlew(new_dir, partitions, local_proxy_url):
         parts:
           {part_name}:
             plugin: gradle
-            gradle-task: build
+            gradle-task: testWrite build
             gradle-init-script: init.gradle
-            gradle-init-script-parameters: [testWrite]
             source: {source_location}
             build-packages: [gradle, openjdk-21-jdk]
             build-environment:
