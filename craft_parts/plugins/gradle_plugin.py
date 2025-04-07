@@ -111,12 +111,11 @@ class GradlePlugin(JavaPlugin):
         self._setup_proxy()
 
         return [
-            "gradle --version",
             " ".join(
                 gradle_cmd
                 + self._get_gradle_init_command_args(options=options)
                 + options.gradle_parameters
-                + ["--debug"]
+                + ["-Dorg.gradle.java.home=${JAVA_HOME}"]
             ),
             # remove gradle-wrapper.jar files included in the project if any.
             f'find {self._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
