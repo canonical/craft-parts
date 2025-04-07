@@ -16,7 +16,7 @@
 
 """The cargo-registry plugin.
 
-This plugin copy the content of the Rust repository to the interminient registry.
+This plugin copy the content of the Rust repository to the local crates registry.
 """
 
 import sys
