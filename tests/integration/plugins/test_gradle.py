@@ -101,6 +101,7 @@ def test_gradle_plugin_gradlew(new_dir, partitions, local_proxy_url):
     assert (lf.project_info.dirs.parts_dir / f"{part_name}/build" / "test.txt").exists()
 
 
+@pytest.mark.skip(reason="Current apt provided Gradle (4.4.1) cannot build even with ")
 @pytest.mark.parametrize("use_gradlew", [False], indirect=True)
 def test_gradle_plugin_gradle(new_dir, partitions, use_gradlew):
     part_name = "foo"
@@ -112,11 +113,11 @@ def test_gradle_plugin_gradle(new_dir, partitions, use_gradlew):
             plugin: gradle
             gradle-task: build
             source: {source_location}
-            build-packages: [gradle, openjdk-8-jdk-headless]
+            build-packages: [gradle, openjdk-11-jdk]
             build-environment:
-            - JAVA_HOME: /usr/lib/jvm/java-8-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
+            - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
             - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
-            stage-packages: [openjdk-8-jdk-headless]
+            stage-packages: [openjdk-11-jdk]
         """
     )
     parts = yaml.safe_load(parts_yaml)
