@@ -20,6 +20,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+
 from craft_parts import LifecycleManager, Step
 from craft_parts.infos import ProjectInfo
 
@@ -138,9 +139,11 @@ def test_gradle_plugin_gradle(new_dir, partitions, use_gradlew):
 def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
     prime_dir = project_info.prime_dir
     java_binary = Path(prime_dir, "bin", "java")
+    jar_file = Path(prime_dir, "jar", "test_gradle-1.0.jar")
     assert java_binary.is_file()
+    assert jar_file.is_file()
 
     output = subprocess.check_output(
-        [str(java_binary), "-jar", f"{prime_dir}/jar/build-1.0.jar"], text=True
+        [str(java_binary), "-jar", f"{prime_dir}/jar/test_gradle-1.0.jar"], text=True
     )
     assert output.strip() == "Hello from Gradle-built Java"

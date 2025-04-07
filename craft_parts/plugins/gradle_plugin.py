@@ -112,8 +112,7 @@ class GradlePlugin(JavaPlugin):
 
         return [
             " ".join(
-                [f"{self.gradle_executable} --version", "echo $JAVA_HOME"]
-                + gradle_cmd
+                gradle_cmd
                 + self._get_gradle_init_command_args(options=options)
                 + options.gradle_parameters
             ),
