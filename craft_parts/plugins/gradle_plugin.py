@@ -17,6 +17,7 @@
 """The gradle plugin."""
 
 import os
+from textwrap import dedent
 from typing import Literal, cast
 from urllib.parse import urlparse
 
@@ -140,13 +141,15 @@ class GradlePlugin(JavaPlugin):
                 gradle_properties, "a+", encoding="utf-8"
             ) as gradle_properties_file:
                 gradle_properties_file.write(
-                    f"""
-systemProp.{protocol}.proxyHost={proxy_url.hostname}
-systemProp.{protocol}.proxyPort={proxy_url.port}
-systemProp.{protocol}.proxyUser={proxy_url.username}
-systemProp.{protocol}.proxyPassword={proxy_url.password}
-systemProp.{protocol}.nonProxyHosts={no_proxy}
-"""
+                    dedent(
+                        f"""\
+                        systemProp.{protocol}.proxyHost={proxy_url.hostname}
+                        systemProp.{protocol}.proxyPort={proxy_url.port}
+                        systemProp.{protocol}.proxyUser={proxy_url.username}
+                        systemProp.{protocol}.proxyPassword={proxy_url.password}
+                        systemProp.{protocol}.nonProxyHosts={no_proxy}
+                        """
+                    )
                 )
 
     def _get_gradle_init_command_args(
