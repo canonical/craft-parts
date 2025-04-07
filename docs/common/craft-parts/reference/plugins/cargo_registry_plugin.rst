@@ -30,7 +30,7 @@ During the build step the plugin performs the following actions:
 
 * Setup a local `cargo registry`_ if it has not been setup;
 * Copy sources from ``<source-dir>`` to the local cargo registry dir;
-* Add a `.cargo-checksum.json` file to satisfy registry requirements;
+* Add a ``.cargo-checksum.json`` file to satisfy registry requirements;
 
 Examples
 --------
