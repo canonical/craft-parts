@@ -264,3 +264,6 @@ jobs:
           test -f work/prime/etc/ssh/.wh..wh.opq && echo "/etc/ssh"
           echo "--- prime files:"
           find work/prime
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
