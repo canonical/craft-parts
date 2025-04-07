@@ -19,7 +19,7 @@ import textwrap
 
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step
+from craft_parts import LifecycleManager, Step, errors
 from py import path
 
 
@@ -85,6 +85,37 @@ def test_cargo_registry(
         replace-with = "craft-parts"
         """
     )
+
+
+def test_cargo_registry_on_non_rust_sources(
+    new_dir: path.LocalPath, partitions
+) -> None:
+    """Test cargo registry plugin"""
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          craft-core:
+            source: .
+            plugin: cargo-registry
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_cargo_registry",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with pytest.raises(
+        errors.PartsError,
+        match="Cannot use 'cargo-registry' plugin on non-Rust project.",
+    ):
+        with lf.action_executor() as ctx:
+            ctx.execute(actions)
 
 
 def test_cargo_registry_multiple(new_dir: path.LocalPath, partitions):
