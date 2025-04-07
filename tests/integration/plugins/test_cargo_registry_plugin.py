@@ -17,29 +17,17 @@
 import pathlib
 import textwrap
 
-from py import path
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step, errors
-from craft_parts.infos import PartInfo, ProjectInfo
-from craft_parts.parts import Part
-from craft_parts.plugins.go_plugin import GoPlugin
-from pydantic import ValidationError
-
-
-@pytest.fixture
-def part_info(new_dir):
-    return PartInfo(
-        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
-        part=Part("my-part", {}),
-    )
+from craft_parts import LifecycleManager, Step
+from py import path
 
 
 @pytest.fixture
 def cargo_project(new_dir: path.LocalPath) -> pathlib.Path:
     (new_dir / "Cargo.toml").write_text(
         textwrap.dedent(
-            """
+            """\
             [package]
             name = "craft-core"
             version = "1.2.4"
@@ -55,7 +43,7 @@ def test_cargo_registry(
 ) -> None:
     """Test cargo registry plugin"""
     parts_yaml = textwrap.dedent(
-        """
+        """\
         parts:
           craft-core:
             source: .
@@ -86,7 +74,7 @@ def test_cargo_registry(
     configuration_file = pathlib.Path(new_dir) / "cargo" / "config.toml"
     assert configuration_file.exists(), "config.toml should be created"
     assert configuration_file.read_text() == textwrap.dedent(
-        f"""
+        f"""\
         [source.craft-parts]
         directory = "{new_dir}/cargo-registry"
 
@@ -101,7 +89,7 @@ def test_cargo_registry(
 
 def test_cargo_registry_multiple(new_dir: path.LocalPath, partitions):
     parts_yaml = textwrap.dedent(
-        """
+        """\
         parts:
           librust-cf-if:
             source: https://github.com/rust-lang/cfg-if.git

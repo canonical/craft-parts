@@ -33,7 +33,7 @@ else:
     # to be dropped once 3.10 will no longer be supported
     import tomli as tomllib
 
-CARGO_TOML_TEMPLATE = """
+CARGO_TOML_TEMPLATE = """\
 [source.craft-parts]
 directory = "{registry_dir}"
 
