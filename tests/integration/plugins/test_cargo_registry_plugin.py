@@ -55,8 +55,8 @@ def test_cargo_registry(
     lf = LifecycleManager(
         parts,
         application_name="test_cargo_registry",
-        cache_dir=new_dir,
-        work_dir=new_dir,
+        cache_dir=pathlib.Path(new_dir),
+        work_dir=pathlib.Path(new_dir),
         partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
@@ -104,8 +104,8 @@ def test_cargo_registry_on_non_rust_sources(
     lf = LifecycleManager(
         parts,
         application_name="test_cargo_registry",
-        cache_dir=new_dir,
-        work_dir=new_dir,
+        cache_dir=pathlib.Path(new_dir),
+        work_dir=pathlib.Path(new_dir),
         partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
@@ -136,8 +136,8 @@ def test_cargo_registry_multiple(new_dir: path.LocalPath, partitions):
     lf = LifecycleManager(
         parts,
         application_name="test_cargo_registry",
-        cache_dir=new_dir,
-        work_dir=new_dir,
+        cache_dir=pathlib.Path(new_dir),
+        work_dir=pathlib.Path(new_dir),
         partitions=partitions,
     )
     actions = lf.plan(Step.PRIME)
