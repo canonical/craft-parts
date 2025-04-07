@@ -1,0 +1,8 @@
+allprojects {
+    tasks.register('testWrite') {
+        doLast {
+            def outputFile = new File("${System.getProperty('user.dir')}/test.txt")
+            outputFile.text = "hello world"
+        }
+    }
+}
