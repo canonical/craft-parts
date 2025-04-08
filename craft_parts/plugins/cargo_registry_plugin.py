@@ -130,6 +130,4 @@ class CargoRegistryPlugin(Plugin):
             # it is required for publishing crates, so it should be available for most packages
             # https://doc.rust-lang.org/cargo/reference/manifest.html#the-version-field
             package_version = package_dict.get("version", "0.0.0")
-            return (
-                f"{package_name}-{package_version}" if package_version else package_name
-            )
+            return f"{package_name}-{package_version}"
