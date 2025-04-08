@@ -59,9 +59,6 @@ class CargoRegistryPlugin(Plugin):
 
     properties_class = CargoRegistryPluginProperties
 
-    # to check with the team
-    # supports_strict_mode = True  # noqa: ERA001
-
     @override
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
