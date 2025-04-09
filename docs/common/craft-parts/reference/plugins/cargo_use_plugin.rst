@@ -18,8 +18,7 @@ and :ref:`sources <part-properties-sources>` keywords.
 Dependencies
 ------------
 
-The are no additional dependencies required by a plugin as it works similarly 
-to :ref:`Dump plugin <craft_parts_dump_plugin>`.
+The ``cargo-use`` plugin has no dependencies.
 
 .. _cargo-use-details-end:
 
@@ -35,7 +34,7 @@ During the build step the plugin performs the following actions:
 Examples
 --------
 
-The following snippet declares a parts named ``librust-cfg-if`` using the ``cargo-use`` plugin and
+The following snippet declares a part named ``librust-cfg-if`` using the ``cargo-use`` plugin and
 a ``hello`` part that declares this ``cfg-if``` in its ``Cargo.toml`` project file 
 using the ``rust`` plugin.
 Correct ordering is achieved with the use of the ``after`` keyword in the ``hello`` part.
