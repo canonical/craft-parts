@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The cargo-registry plugin.
+"""The cargo-use plugin.
 
 This plugin copy the content of the Rust repository to the local crates registry.
 """
@@ -47,17 +47,17 @@ replace-with = "craft-parts"
 """
 
 
-class CargoRegistryPluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the cargo-registry plugin."""
+class CargoUsePluginProperties(PluginProperties, frozen=True):
+    """The part properties used by the cargo-use plugin."""
 
-    plugin: Literal["cargo-registry"] = "cargo-registry"
+    plugin: Literal["cargo-use"] = "cargo-use"
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
-class CargoRegistryPlugin(Plugin):
+class CargoUsePlugin(Plugin):
     """Copy the content of the Rust repository and ."""
 
-    properties_class = CargoRegistryPluginProperties
+    properties_class = CargoUsePluginProperties
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -109,7 +109,7 @@ class CargoRegistryPlugin(Plugin):
         cargo_toml = self._part_info.part_src_subdir / "Cargo.toml"
         if not cargo_toml.exists():
             raise errors.PartsError(
-                "Cannot use 'cargo-registry' plugin on non-Rust project."
+                "Cannot use 'cargo-use' plugin on non-Rust project."
             )
         try:
             parsed_toml = tomllib.loads(cargo_toml.read_text())

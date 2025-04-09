@@ -21,7 +21,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.cargo_registry_plugin import CargoRegistryPlugin
+from craft_parts.plugins.cargo_use_plugin import CargoUsePlugin
 from pydantic import ValidationError
 from pyfakefs import fake_filesystem
 
@@ -73,20 +73,20 @@ def fake_rust_project(
 
 
 @pytest.fixture
-def plugin(part_info: PartInfo) -> CargoRegistryPlugin:
-    properties = CargoRegistryPlugin.properties_class.unmarshal({"source": "."})
-    return CargoRegistryPlugin(properties=properties, part_info=part_info)
+def plugin(part_info: PartInfo) -> CargoUsePlugin:
+    properties = CargoUsePlugin.properties_class.unmarshal({"source": "."})
+    return CargoUsePlugin(properties=properties, part_info=part_info)
 
 
-def test_get_build_snaps(plugin: CargoRegistryPlugin):
+def test_get_build_snaps(plugin: CargoUsePlugin):
     assert plugin.get_build_snaps() == set()
 
 
-def test_get_build_packages(plugin: CargoRegistryPlugin):
+def test_get_build_packages(plugin: CargoUsePlugin):
     assert plugin.get_build_packages() == set()
 
 
-def test_get_build_environment(plugin: CargoRegistryPlugin):
+def test_get_build_environment(plugin: CargoUsePlugin):
     assert plugin.get_build_environment() == {}
 
 
@@ -96,7 +96,7 @@ def get_build_commands(target_directory: pathlib.Path) -> list[str]:
 
 @pytest.mark.usefixtures("fake_rust_project")
 def test_get_build_commands(
-    plugin: CargoRegistryPlugin,
+    plugin: CargoUsePlugin,
     part_info: PartInfo,
     project_name: str,
     project_version: str,
@@ -125,7 +125,7 @@ def test_get_build_commands(
 
 
 def test_get_build_commands_name_fallback(
-    plugin: CargoRegistryPlugin,
+    plugin: CargoUsePlugin,
     part_info: PartInfo,
     project_version: str,
 ):
@@ -152,7 +152,7 @@ def test_get_build_commands_name_fallback(
 
 
 def test_get_build_commands_version_fallback(
-    plugin: CargoRegistryPlugin,
+    plugin: CargoUsePlugin,
     part_info: PartInfo,
     project_name: str,
 ):
@@ -179,7 +179,7 @@ def test_get_build_commands_version_fallback(
 
 
 def test_get_build_commands_incorrect_cargo_toml(
-    plugin: CargoRegistryPlugin,
+    plugin: CargoUsePlugin,
     part_info: PartInfo,
 ):
     part_info.part_src_dir.mkdir(parents=True)
@@ -193,7 +193,7 @@ def test_get_build_commands_incorrect_cargo_toml(
 
 
 def test_get_build_commands_non_parsable_cargo_toml(
-    plugin: CargoRegistryPlugin,
+    plugin: CargoUsePlugin,
     part_info: PartInfo,
 ):
     part_info.part_src_dir.mkdir(parents=True)
@@ -207,7 +207,7 @@ def test_get_build_commands_non_parsable_cargo_toml(
 
 
 def test_get_build_commands_missing_cargo_toml(
-    plugin: CargoRegistryPlugin,
+    plugin: CargoUsePlugin,
 ):
     with pytest.raises(
         errors.PartsError,
@@ -218,7 +218,7 @@ def test_get_build_commands_missing_cargo_toml(
 
 def test_invalid_parameters():
     with pytest.raises(ValidationError) as raised:
-        CargoRegistryPlugin.properties_class.unmarshal(
+        CargoUsePlugin.properties_class.unmarshal(
             {"source": ".", "cargo-registry-invalid": True}
         )
     err = raised.value.errors()
@@ -229,12 +229,12 @@ def test_invalid_parameters():
 
 def test_missing_parameters():
     with pytest.raises(ValidationError) as raised:
-        CargoRegistryPlugin.properties_class.unmarshal({})
+        CargoUsePlugin.properties_class.unmarshal({})
     err = raised.value.errors()
     assert len(err) == 1
     assert err[0]["loc"] == ("source",)
     assert err[0]["type"] == "missing"
 
 
-def test_get_out_of_source_build(plugin: CargoRegistryPlugin):
+def test_get_out_of_source_build(plugin: CargoUsePlugin):
     assert plugin.get_out_of_source_build() is False

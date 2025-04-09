@@ -223,17 +223,17 @@ def test_rust_plugin_workspace(new_dir, partitions):
     assert output == "hello world\n"
 
 
-def test_rust_plugin_with_cargo_registry(new_dir, partitions):
-    source_location = Path(__file__).parent / "test_cargo_registry"
+def test_rust_plugin_with_cargo_use(new_dir, partitions):
+    source_location = Path(__file__).parent / "test_cargo_use"
     parts_yaml = textwrap.dedent(
         f"""\
         parts:
           librust-cfg-if:
             source: https://github.com/rust-lang/cfg-if.git
             source-tag: 1.0.0
-            plugin: cargo-registry
+            plugin: cargo-use
 
-          cargo-registry:
+          cargo-use:
             after: [librust-cfg-if]
             plugin: rust
             build-environment:
@@ -254,7 +254,7 @@ def test_rust_plugin_with_cargo_registry(new_dir, partitions):
     with lifecycle.action_executor() as ctx:
         ctx.execute(actions)
 
-    binary = Path(lifecycle.project_info.prime_dir, "bin", "test_cargo_registry")
+    binary = Path(lifecycle.project_info.prime_dir, "bin", "test_cargo_use")
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "hello registry!\n"

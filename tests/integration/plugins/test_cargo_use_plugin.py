@@ -38,7 +38,7 @@ def cargo_project(new_dir: path.LocalPath) -> pathlib.Path:
     return pathlib.Path(new_dir)
 
 
-def test_cargo_registry(
+def test_cargo_use(
     new_dir: path.LocalPath, cargo_project: pathlib.Path, partitions
 ) -> None:
     """Test cargo registry plugin"""
@@ -47,14 +47,14 @@ def test_cargo_registry(
         parts:
           craft-core:
             source: .
-            plugin: cargo-registry
+            plugin: cargo-use
         """
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
         parts,
-        application_name="test_cargo_registry",
+        application_name="test_cargo_use",
         cache_dir=pathlib.Path(new_dir),
         work_dir=pathlib.Path(new_dir),
         partitions=partitions,
@@ -87,23 +87,21 @@ def test_cargo_registry(
     )
 
 
-def test_cargo_registry_on_non_rust_sources(
-    new_dir: path.LocalPath, partitions
-) -> None:
+def test_cargo_use_on_non_rust_sources(new_dir: path.LocalPath, partitions) -> None:
     """Test cargo registry plugin"""
     parts_yaml = textwrap.dedent(
         """\
         parts:
           craft-core:
             source: .
-            plugin: cargo-registry
+            plugin: cargo-use
         """
     )
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
         parts,
-        application_name="test_cargo_registry",
+        application_name="test_cargo_use",
         cache_dir=pathlib.Path(new_dir),
         work_dir=pathlib.Path(new_dir),
         partitions=partitions,
@@ -112,30 +110,30 @@ def test_cargo_registry_on_non_rust_sources(
 
     with pytest.raises(
         errors.PartsError,
-        match="Cannot use 'cargo-registry' plugin on non-Rust project.",
+        match="Cannot use 'cargo-use' plugin on non-Rust project.",
     ):
         with lf.action_executor() as ctx:
             ctx.execute(actions)
 
 
-def test_cargo_registry_multiple(new_dir: path.LocalPath, partitions):
+def test_cargo_use_multiple(new_dir: path.LocalPath, partitions):
     parts_yaml = textwrap.dedent(
         """\
         parts:
           librust-cf-if:
             source: https://github.com/rust-lang/cfg-if.git
             source-tag: 1.0.0
-            plugin: cargo-registry
+            plugin: cargo-use
           librust-zerocopy:
             source: https://github.com/google/zerocopy.git
             source-tag: v0.8.24
-            plugin: cargo-registry
+            plugin: cargo-use
         """
     )
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
         parts,
-        application_name="test_cargo_registry",
+        application_name="test_cargo_use",
         cache_dir=pathlib.Path(new_dir),
         work_dir=pathlib.Path(new_dir),
         partitions=partitions,
