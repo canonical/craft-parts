@@ -211,7 +211,7 @@ def test_get_build_commands_missing_cargo_toml(
 ):
     with pytest.raises(
         errors.PartsError,
-        match="Cannot use 'cargo-registry' plugin on non-Rust project.",
+        match="Cannot use 'cargo-use' plugin on non-Rust project.",
     ):
         plugin.get_build_commands()
 
@@ -219,11 +219,11 @@ def test_get_build_commands_missing_cargo_toml(
 def test_invalid_parameters():
     with pytest.raises(ValidationError) as raised:
         CargoUsePlugin.properties_class.unmarshal(
-            {"source": ".", "cargo-registry-invalid": True}
+            {"source": ".", "cargo-use-invalid": True}
         )
     err = raised.value.errors()
     assert len(err) == 1
-    assert err[0]["loc"] == ("cargo-registry-invalid",)
+    assert err[0]["loc"] == ("cargo-use-invalid",)
     assert err[0]["type"] == "extra_forbidden"
 
 
