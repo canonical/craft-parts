@@ -19,6 +19,7 @@
 This plugin copy the content of the Rust repository to the local crates registry.
 """
 
+import shutil
 import sys
 from typing import Literal
 
@@ -32,7 +33,7 @@ from .properties import PluginProperties
 if sys.version_info >= (3, 11):
     import tomllib
 else:
-    # to be dropped once 3.10 will no longer be supported
+    # Python 3.10 compatibility
     import tomli as tomllib
 
 CARGO_TOML_TEMPLATE = """\
@@ -87,7 +88,9 @@ class CargoUsePlugin(Plugin):
         registry_dir.mkdir(exist_ok=True)
 
         part_registry_target = registry_dir / self._get_cargo_registry_dir_name()
-        part_registry_target.mkdir(exist_ok=True)
+        if part_registry_target.exists():
+            shutil.rmtree(part_registry_target)
+        part_registry_target.mkdir()
 
         cargo_config = self._part_info.work_dir / "cargo/config.toml"
         if not cargo_config.exists():
