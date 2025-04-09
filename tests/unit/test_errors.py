@@ -325,7 +325,7 @@ def test_plugin_build_error():
         err.resolution
         == "Check the build output and verify the project can work with the 'go' plugin."
     )
-    assert err.doc_slug == "/reference/plugins.html"
+    assert err.doc_slug == "/reference/plugins"
 
 
 def test_invalid_control_api_call():

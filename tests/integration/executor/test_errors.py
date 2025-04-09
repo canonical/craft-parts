@@ -80,4 +80,4 @@ def test_plugin_build_errors(new_dir, partitions):
             :: ./hello.go:9:9: undefined: fmt.Printfs
             Check the build output and verify the project can work with the 'go' plugin."""
     )
-    assert raised.value.doc_slug == "/reference/plugins.html"
+    assert raised.value.doc_slug == "/reference/plugins"
