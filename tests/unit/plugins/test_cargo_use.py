@@ -124,6 +124,27 @@ def test_get_build_commands(
     )
 
 
+@pytest.mark.usefixtures("fake_rust_project")
+def test_get_build_commands_is_reentrant(
+    plugin: CargoUsePlugin,
+    part_info: PartInfo,
+    project_name: str,
+    project_version: str,
+):
+    cargo_registry_dir = (
+        part_info.work_dir / "cargo-registry" / f"{project_name}-{project_version}"
+    )
+
+    assert not (part_info.work_dir / "cargo" / "config.toml").exists()
+
+    cargo_registry_dir.mkdir(parents=True)
+    previous_file = cargo_registry_dir / "some_previous_file"
+    previous_file.touch()
+
+    assert plugin.get_build_commands() == get_build_commands(cargo_registry_dir)
+    assert not previous_file.exists(), "Plugin should clean previous registry entry"
+
+
 def test_get_build_commands_name_fallback(
     plugin: CargoUsePlugin,
     part_info: PartInfo,

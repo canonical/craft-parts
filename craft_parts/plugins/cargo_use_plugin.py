@@ -89,6 +89,8 @@ class CargoUsePlugin(Plugin):
 
         part_registry_target = registry_dir / self._get_cargo_registry_dir_name()
         if part_registry_target.exists():
+            # as we don't track files we have to delete previous content
+            # to avoid conflicts on rebuild
             shutil.rmtree(part_registry_target)
         part_registry_target.mkdir()
 
