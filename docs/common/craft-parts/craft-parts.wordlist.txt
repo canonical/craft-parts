@@ -34,8 +34,8 @@ CVE
 CallbackHook
 CallbackRegistrationError
 CalledProcessError
-CargoRegistryPlugin
-CargoRegistryPluginProperties
+CargoUsePlugin
+CargoUsePluginProperties
 CentOS
 Changelog
 Charmcraft
