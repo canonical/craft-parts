@@ -2,6 +2,14 @@
 Changelog
 *********
 
+2.7.1 (2025-04-09)
+-------------------
+
+Bug fixes:
+
+- Fix the link to the plugins documentation in error outputs.
+
+
 2.7.0 (2025-03-18)
 -------------------
 
