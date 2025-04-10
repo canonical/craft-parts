@@ -2,6 +2,15 @@
 Changelog
 *********
 
+2.8.0 (2025-04-10)
+-------------------
+
+New features:
+
+- Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
+  a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
+
+
 2.7.0 (2025-03-18)
 -------------------
 
