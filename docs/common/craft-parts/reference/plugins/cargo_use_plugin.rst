@@ -56,7 +56,7 @@ these parts, ensuring that ``librust-cfg-if`` is processed first.
         plugin: rust
         source: .
         after:
-        - librust-cfg-if
+          - librust-cfg-if
 
 
 .. _Rust: https://doc.rust-lang.org/stable/
