@@ -804,6 +804,7 @@ class SandboxMountError(SandboxError):
 
         super().__init__(brief=brief)
 
+
 class SandboxUnmountError(SandboxError):
     """Failed to unmount an overlay filesystem.
 
@@ -817,6 +818,7 @@ class SandboxUnmountError(SandboxError):
         brief = f"Failed to unmount {mountpoint}: {message}"
 
         super().__init__(brief=brief)
+
 
 class SandboxExecutionError(SandboxError):
     """Failed to execute in a chroot environment."""
