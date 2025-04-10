@@ -9,6 +9,7 @@ submodules:
     - docs/sphinx-resources
 
 sphinx:
+  builder: dirhtml
   configuration: docs/conf.py
   fail_on_warning: true
 
