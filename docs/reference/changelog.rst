@@ -2,8 +2,17 @@
 Changelog
 *********
 
+2.7.1 (2025-XX-XX)
+------------------
+
+Documentation:
+
+- Fix an issue where the documentation was hosting pages at URLs that contained the
+  ``.html`` extension. This regression was causing links to the site to break.
+
+
 2.7.0 (2025-03-18)
--------------------
+------------------
 
 New features:
 
