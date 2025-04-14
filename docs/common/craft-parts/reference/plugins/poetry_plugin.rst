@@ -108,7 +108,8 @@ that use the Poetry plugin must run ``after`` the ``poetry-deps`` part:
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+During the :doc:`build step</common/craft-parts/explanation/lifecycle>`,
+the plugin performs the following actions:
 
 1. It creates a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
    directory.
@@ -121,3 +122,8 @@ During the build step, the plugin performs the following actions:
 5. It runs :command:`pip check` to ensure the virtual environment is consistent.
 
 .. _craft_parts_poetry_links:
+
+.. _Poetry: https://python-poetry.org
+.. _Dependency groups: https://python-poetry.org/docs/managing-dependencies#dependency-groups
+.. _export command: https://python-poetry.org/docs/cli/#export
+.. _environment variables to configure Poetry: https://python-poetry.org/docs/configuration/#using-environment-variables

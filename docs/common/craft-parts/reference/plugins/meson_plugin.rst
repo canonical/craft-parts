@@ -33,7 +33,8 @@ typically be provisioned via ``build-packages`` or ``build-snaps``.
 Another alternative is to define another part with the name ``meson-deps``, and
 declare that the part using the ``meson`` plugin comes :ref:`after <after>` the
 ``meson-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``meson`` and ``ninja`` executables to be used in the build step.
+stage the ``meson`` and ``ninja`` executables to be used in the
+:doc:`build step</common/craft-parts/explanation/lifecycle>`.
 This can be useful, for example, in cases where specific, unreleased versions of
 the tools are desired but unavailable as a snap or an Ubuntu package.
 
