@@ -29,6 +29,7 @@ from pydantic import model_validator
 from typing_extensions import Self
 
 from craft_parts.errors import InvalidArchitecture
+from craft_parts.utils.os_utils import OsRelease
 
 from . import validator
 from .base import Plugin
@@ -273,6 +274,18 @@ class NpmPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         cmd = []
         options = cast(NpmPluginProperties, self._options)
+        need_fix_symlinks = OsRelease().version_id() == "24.04"
+        if need_fix_symlinks:
+            cmd += [
+                dedent(
+                    """\
+                for dir in lib bin; do
+                    mkdir -p ${CRAFT_PART_INSTALL}/usr/${dir}
+                    ln -s usr/${dir} ${CRAFT_PART_INSTALL}/${dir}
+                done
+                """
+                )
+            ]
         if options.npm_include_node:
             arch = self._get_architecture()
             version = options.npm_node_version
@@ -301,7 +314,7 @@ class NpmPlugin(Plugin):
             cmd += [
                 dedent(
                     f"""\
-                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
+                tar -{"h" if need_fix_symlinks else ""}xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
                     --no-same-owner --strip-components=1
                 """
                 ),
