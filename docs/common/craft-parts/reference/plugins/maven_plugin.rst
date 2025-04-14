@@ -3,7 +3,22 @@
 Maven plugin
 ============
 
-The Maven plugin builds Java projects using the Maven build tool.
+
+Maven plugin is a plugin that simplifies building and packaging Jars for projects that use the
+Maven (mvn) tooling. It is equivalent to running the following command:
+
+.. code-block:: shell
+    
+    mvn package
+
+
+Plugin parameter ``maven_parameters`` is used to additionally provide any arguments to the mvn
+package command above. All values are passed in after the initial ``mvn package`` command
+delimited by spaces.
+
+Another plugin parameter ``maven_use_mvnw`` is used to leverage Maven wrapper files provided by the
+project to run the package command. Initial mvn executable is replaced with project’s mvnw
+executable file, resulting in ``./mvnw package`` command.
 
 After a successful build, this plugin will:
 
@@ -42,8 +57,8 @@ package`` is replaced with ``./mvnw package`` command.
 Environment variables
 ---------------------
 
-Environment variables can be specified to modify behavior of the build. For the Maven plugin,
-three proxy related case insensitive environment variables are treated specially.
+Environment variables can be specified to modify behavior of the build. Three proxy related case
+insensitive environment variables are treated specially.
 ``http_proxy``, ``https_proxy`` and ``no_proxy``.
 
 For a list of environment variables used to configure Maven, please refer to
