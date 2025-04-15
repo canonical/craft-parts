@@ -2,6 +2,13 @@
 Changelog
 *********
 
+2.9.0 (2025-MM-DD)
+------------------
+
+New features:
+
+- Add ``backstage`` and ``part/export`` directories for plugin use.
+
 2.8.0 (2025-04-10)
 -------------------
 
