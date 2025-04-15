@@ -36,12 +36,12 @@ apt-noble = [
     "python-apt~=2.7.0;sys_platform=='linux'",
 ]
 apt-oracular = [
-    # 2.9 for Oracular+
-    "python-apt~=2.9.0;sys_platform=='linux'",
+    # 2.9 for Oracular
+    "python-apt~=2.9.0,<2.9.9;sys_platform=='linux'",
 ]
 apt-plucky = [
     # While Plucky is in development, it should use the latest
-    "python-apt>=2.9.0;sys_platform=='linux'",
+    "python-apt>=2.9.9;sys_platform=='linux'",
 ]
 docs = [
     "canonical-sphinx",
