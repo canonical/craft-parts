@@ -102,7 +102,9 @@ def test_get_build_commands(
     project_version: str,
 ):
     cargo_registry_dir = (
-        part_info.work_dir / "cargo-registry" / f"{project_name}-{project_version}"
+        part_info.part_export_dir
+        / "cargo-registry"
+        / f"{project_name}-{project_version}"
     )
 
     assert not (part_info.work_dir / "cargo" / "config.toml").exists()
@@ -113,7 +115,7 @@ def test_get_build_commands(
     ).read_text() == textwrap.dedent(
         f"""\
         [source.craft-parts]
-        directory = "{part_info.work_dir / "cargo-registry"}"
+        directory = "{part_info.project_info.dirs.backstage_dir / "cargo-registry"}"
 
         [source.apt]
         directory = "/usr/share/cargo/registry"
@@ -132,7 +134,9 @@ def test_get_build_commands_is_reentrant(
     project_version: str,
 ):
     cargo_registry_dir = (
-        part_info.work_dir / "cargo-registry" / f"{project_name}-{project_version}"
+        part_info.part_export_dir
+        / "cargo-registry"
+        / f"{project_name}-{project_version}"
     )
 
     assert not (part_info.work_dir / "cargo" / "config.toml").exists()
@@ -163,7 +167,9 @@ def test_get_build_commands_name_fallback(
     project_name = part_info.part_name
 
     cargo_registry_dir = (
-        part_info.work_dir / "cargo-registry" / f"{project_name}-{project_version}"
+        part_info.part_export_dir
+        / "cargo-registry"
+        / f"{project_name}-{project_version}"
     )
 
     assert not (part_info.work_dir / "cargo" / "config.toml").exists()
@@ -190,7 +196,9 @@ def test_get_build_commands_version_fallback(
     project_version = "0.0.0"
 
     cargo_registry_dir = (
-        part_info.work_dir / "cargo-registry" / f"{project_name}-{project_version}"
+        part_info.part_export_dir
+        / "cargo-registry"
+        / f"{project_name}-{project_version}"
     )
 
     assert not (part_info.work_dir / "cargo" / "config.toml").exists()

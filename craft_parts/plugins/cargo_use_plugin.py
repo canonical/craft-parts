@@ -84,15 +84,20 @@ class CargoUsePlugin(Plugin):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         workspace_dir = self._part_info.work_dir
-        registry_dir = workspace_dir / "cargo-registry"
-        registry_dir.mkdir(exist_ok=True)
+        registry_dir = (
+            self._part_info.project_info.dirs.backstage_dir / "cargo-registry"
+        )
 
-        part_registry_target = registry_dir / self._get_cargo_registry_dir_name()
+        part_registry_target = (
+            self._part_info.part_export_dir
+            / "cargo-registry"
+            / self._get_cargo_registry_dir_name()
+        )
         if part_registry_target.exists():
             # as we don't track files we have to delete previous content
             # to avoid conflicts on rebuild
             shutil.rmtree(part_registry_target)
-        part_registry_target.mkdir()
+        part_registry_target.mkdir(parents=True)
 
         cargo_config = self._part_info.work_dir / "cargo/config.toml"
         if not cargo_config.exists():

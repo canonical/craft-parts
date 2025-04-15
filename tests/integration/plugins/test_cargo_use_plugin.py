@@ -64,7 +64,7 @@ def test_cargo_use(
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    cargo_registry = pathlib.Path(new_dir) / "cargo-registry"
+    cargo_registry = lf.project_info.dirs.backstage_dir / "cargo-registry"
     part_registry_entry = cargo_registry / "craft-core-1.2.4"
     assert cargo_registry.is_dir(), "Cargo registry directory should be created."
     assert part_registry_entry.is_dir(), "Part registry entry should be created."
@@ -76,7 +76,7 @@ def test_cargo_use(
     assert configuration_file.read_text() == textwrap.dedent(
         f"""\
         [source.craft-parts]
-        directory = "{new_dir}/cargo-registry"
+        directory = "{cargo_registry}"
 
         [source.apt]
         directory = "/usr/share/cargo/registry"
@@ -143,7 +143,7 @@ def test_cargo_use_multiple(new_dir: path.LocalPath, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    cargo_registry = pathlib.Path(new_dir) / "cargo-registry"
+    cargo_registry = lf.project_info.dirs.backstage_dir / "cargo-registry"
     assert cargo_registry.is_dir(), "Cargo registry directory should be created."
 
     part_registry_entry = cargo_registry / "cfg-if-1.0.0"
