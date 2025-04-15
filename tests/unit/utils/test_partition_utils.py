@@ -50,10 +50,17 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
         ["default", "mypart"],
         ["default", "mypart1"],
         ["default", "my-part"],
+        ["default", "mypart", "mypart2"],
+        ["default", "mypart2", "mypart"],
         ["default", "mypart", "test/foo"],
+        ["default", "mypart", "test/mypart"],
         ["default", "mypart", "test1/foo2"],
         ["default", "mypart", "test/foo-bar"],
         ["default", "mypart", "test1/foo-bar2"],
+        ["default", "mypart", "test1/foo/bar2"],
+        ["default", "test1/mypart", "test1/mypart2"],
+        ["default", "test/foo-bar", "test/foo-baz"],
+        ["default", "test/foo-bar-baz", "test/foo-bar"],
     ],
 )
 def test_validate_partitions_success_feature_enabled(partitions):
@@ -72,25 +79,45 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (["default", "!!!"], "Partition '!!!' is invalid."),
         (["default", "-"], "Partition '-' is invalid."),
         (["default", "woop-"], "Partition 'woop-' is invalid."),
+        (["default", "woop."], "Partition 'woop.' is invalid."),
+        (["default", "/"], "Namespaced partition '/' is invalid."),
         (["default", "test/!!!"], "Namespaced partition 'test/!!!' is invalid."),
         (["default", "test/-"], "Namespaced partition 'test/-' is invalid."),
         (["default", "te-st/foo"], "Namespaced partition 'te-st/foo' is invalid."),
         (
             ["default", "test", "test/foo"],
-            "Partition 'test' conflicts with the namespace of partition 'test/foo'",
+            "Partition name conflicts:\n- 'test', 'test/foo'",
+        ),
+        (
+            ["default", "test/foo/bar", "test/foo"],
+            ("Partition name conflicts:\n- 'test/foo', 'test/foo/bar'"),
+        ),
+        (
+            ["default", "test/foo", "test/foo/bar"],
+            ("Partition name conflicts:\n- 'test/foo', 'test/foo/bar'"),
         ),
         (
             ["default", "test-foo", "test/foo"],
-            (
-                "Namespaced partition 'test/foo' conflicts with hyphenated partition "
-                "'test-foo'."
-            ),
+            ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
         ),
         (
             ["default", "test/foo", "test-foo"],
+            ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
+        ),
+        (
+            [
+                "default",
+                "test",
+                "test/foo/bar/baz",
+                "test/foo-bar/baz",
+                "test/foo/bar-baz",
+                "qux/baz",
+                "qux-baz",
+            ],
             (
-                "Namespaced partition 'test/foo' conflicts with hyphenated partition "
-                "'test-foo'."
+                "Partition name conflicts:\n"
+                "- 'test', 'test/foo-bar/baz', 'test/foo/bar-baz', 'test/foo/bar/baz'\n"
+                "- 'qux-baz', 'qux/baz'"
             ),
         ),
     ],

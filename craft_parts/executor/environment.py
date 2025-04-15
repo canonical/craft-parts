@@ -93,6 +93,11 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     part_environment = _get_step_environment(step_info)
     paths = [part.part_install_dir, part.stage_dir]
 
+    if Features().enable_partitions and Features().enable_overlay:
+        part_environment.update(
+            _get_step_overlay_environment_for_partitions(part, step_info.partitions)
+        )
+
     bin_paths = []
     for path in paths:
         bin_paths.extend(os_utils.get_bin_paths(root=path, existing_only=True))
@@ -179,6 +184,16 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     return global_environment
 
 
+def _translate_partition_env(partition: str) -> str:
+    """Translate a partition name to a valid env var name chunk.
+
+    :param partition: The partition name
+
+    :returns: The translated name
+    """
+    return partition.upper().translate({ord("-"): "_", ord("/"): "_"})
+
+
 def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     """Get environment variables related to partitions.
 
@@ -196,15 +211,41 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in info.partitions:
-        formatted_partition = partition.upper().translate(
-            {ord("-"): "_", ord("/"): "_"}
-        )
+        formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_STAGE"] = str(
             info.get_stage_dir(partition=partition)
         )
         environment[f"CRAFT_{formatted_partition}_PRIME"] = str(
             info.get_prime_dir(partition=partition)
+        )
+
+    return environment
+
+
+def _get_step_overlay_environment_for_partitions(
+    part: Part, partitions: list[str]
+) -> dict[str, str]:
+    """Get environment variables related to partitions and overlay for a part.
+
+    Assumes the partition feature is enabled.
+
+    :param step_info: Information about the current step.
+
+    :returns: A dictionary containing step environment variables for partitions.
+
+    :raises FeatureError: If the Project does not specify any partitions.
+    """
+    environment: dict[str, str] = {}
+
+    if not partitions:
+        raise errors.FeatureError("Partitions enabled but no partitions specified.")
+
+    for partition in partitions:
+        formatted_partition = _translate_partition_env(partition)
+
+        environment[f"CRAFT_{formatted_partition}_OVERLAY"] = str(
+            part.part_layer_dirs[partition]
         )
 
     return environment

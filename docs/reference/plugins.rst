@@ -18,6 +18,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/dump_plugin.rst
    /common/craft-parts/reference/plugins/go_plugin.rst
    /common/craft-parts/reference/plugins/go_use_plugin.rst
+   /common/craft-parts/reference/plugins/jlink_plugin.rst
    /common/craft-parts/reference/plugins/make_plugin.rst
    /common/craft-parts/reference/plugins/maven_plugin.rst
    /common/craft-parts/reference/plugins/meson_plugin.rst
@@ -26,6 +27,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/poetry_plugin.rst
    /common/craft-parts/reference/plugins/python_plugin.rst
    /common/craft-parts/reference/plugins/qmake_plugin.rst
+   /common/craft-parts/reference/plugins/cargo_use_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
    /common/craft-parts/reference/plugins/scons_plugin.rst
    /common/craft-parts/reference/plugins/uv_plugin.rst

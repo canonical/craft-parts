@@ -82,13 +82,20 @@ def test_get_build_packages(part_info):
     }
 
 
-def test_get_build_environment(part_info):
+@pytest.mark.parametrize(
+    "cargo_registry", [False, True], ids=["without_registry", "with_registry"]
+)
+def test_get_build_environment(part_info, *, cargo_registry: bool):
+    expected_env = {"PATH": "${HOME}/.cargo/bin:${PATH}"}
+
+    if cargo_registry:
+        (part_info.work_dir / "cargo-registry").mkdir()
+        expected_env["CARGO_HOME"] = str(part_info.work_dir / "cargo")
+
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_environment() == {
-        "PATH": "${CARGO_HOME}/bin:${HOME}/.cargo/bin:${PATH}"
-    }
+    assert plugin.get_build_environment() == expected_env
 
 
 def test_get_build_commands_default(part_info):

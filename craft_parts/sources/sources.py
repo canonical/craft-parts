@@ -173,6 +173,7 @@ def get_source_handler(
             source=part.spec.source,
             part_src_dir=part.part_src_dir,
             source_checksum=part.spec.source_checksum,
+            source_channel=part.spec.source_channel,
             source_branch=part.spec.source_branch,
             source_tag=part.spec.source_tag,
             source_depth=part.spec.source_depth,

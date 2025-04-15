@@ -119,6 +119,8 @@ assert len(PARTITION_PATHS) == len(
         ("(is/a)/partition", True),
         ("(look/ma-n0-hands)", True),
         ("(foo/bar)/baz/qux", True),
+        ("(is/a/valid)/partition", True),
+        ("(is/not/a)partition", False),
         ("(not/a)partition", False),
         ("(NOT/a)partition", False),
         ("(not/A)partition", False),
@@ -130,8 +132,6 @@ assert len(PARTITION_PATHS) == len(
         ("(not/a-)partition", False),
         ("(not/-a)partition", False),
         ("(nota/-)partition", False),
-        ("(is/not/a)partition", False),
-        ("(is/not/a)/partition", False),
     ],
 )
 def test_has_partition(full_path, expected):

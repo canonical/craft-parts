@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -379,7 +379,7 @@ class TestPartReapplyHandler:
     def test_reapply_overlay(self):
         self._handler.run_action(Action("foo.txt", Step.PULL))
 
-        Path("parts/foo/layer/foo").touch()
+        Path("parts/foo/layer/foo.txt").touch()
 
         self._handler.run_action(Action("foo", Step.OVERLAY, ActionType.REAPPLY))
 

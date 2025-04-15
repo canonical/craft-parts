@@ -1,4 +1,8 @@
 ARGS
+FOO
+BAR
+BAZ
+QUX
 ActionProperties
 ActionType
 AfterValidator
@@ -29,9 +33,12 @@ CMakeLists
 CMakePlugin
 CMakePluginProperties
 CPAN
+CVE
 CallbackHook
 CallbackRegistrationError
 CalledProcessError
+CargoUsePlugin
+CargoUsePluginProperties
 CentOS
 Changelog
 Charmcraft
@@ -43,8 +50,10 @@ Config
 ConfigDict
 CopyFileNotFound
 CopyTreeError
+CPATH
 CraftCtl
 Craftctl
+DDD
 DESTDIR
 DNF
 DNFRepository
@@ -104,7 +113,12 @@ InvalidSourceOption
 InvalidSourceOptions
 InvalidSourceType
 Iterable
+JAR
 JavaPlugin
+JLink
+JLinkPlugin
+JLinkPluginEnvironmentValidator
+JLinkPluginProperties
 JSON
 LDFLAGS
 LLVM
@@ -148,6 +162,7 @@ NpmPlugin
 NpmPluginEnvironmentValidator
 NpmPluginProperties
 OCI
+OpenJDK
 OSError
 OsRelease
 OsReleaseCodenameError
@@ -281,6 +296,7 @@ Unmark
 Unmount
 UnpackError
 Unregister
+UserExecutionError
 UvPlugin
 UvPluginEnvironmentValidator
 UvPluginProperties
@@ -305,6 +321,8 @@ artifacts
 autogen
 autotools
 backend
+bar
+baz
 behavior
 bool
 boolean
@@ -317,6 +335,7 @@ chmod
 chroot
 chrooted
 classmethod
+classpath
 classvar
 cli
 cls
@@ -372,13 +391,17 @@ ing
 initialized
 iterable
 iojs
+jdeps
 jdk
+jinja
+jlink
 jre
 js
 json
 kwargs
 ldflags
 lifecycle
+linkers
 linters
 lto
 lts
@@ -401,6 +424,7 @@ oci
 ok
 onboarding
 opencontainers
+openjdk
 organization
 organize
 organized
@@ -412,6 +436,7 @@ packahe
 param
 params
 pc
+pcfiledir
 pkgconfig
 pre
 prepend
@@ -424,6 +449,7 @@ pypi
 pyproject
 qmake
 qualname
+qux
 readthedocs
 recognized
 reorganize
@@ -474,6 +500,7 @@ txt
 ubuntu
 umount
 unbuilt
+unix
 unixsocket
 unmark
 unmarshal

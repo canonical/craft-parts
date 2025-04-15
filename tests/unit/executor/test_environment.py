@@ -131,6 +131,80 @@ def test_generate_step_environment_build(new_dir):
     )
 
 
+def test_generate_step_environment_build_features(
+    new_dir, enable_all_features, partitions
+):
+    p1 = Part(
+        "p1",
+        {"build-environment": [{"PART_ENVVAR": "from_part"}]},
+        partitions=partitions,
+    )
+    info = ProjectInfo(
+        arch="arm64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        partitions=partitions,
+    )
+    part_info = PartInfo(project_info=info, part=p1)
+    step_info = StepInfo(part_info=part_info, step=Step.PULL)
+    props = plugins.PluginProperties()
+    plugin = FooPlugin(properties=props, part_info=part_info)
+    step_info.global_environment["APP_GLOBAL_ENVVAR"] = "from_app"
+    step_info.step_environment["APP_STEP_ENVVAR"] = "from_app"
+
+    env = environment.generate_step_environment(
+        part=p1, plugin=plugin, step_info=step_info
+    )
+
+    assert env == textwrap.dedent(
+        f"""\
+        # Environment
+        ## Application environment
+        export APP_GLOBAL_ENVVAR="from_app"
+        export APP_STEP_ENVVAR="from_app"
+        ## Part environment
+        export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
+        export CRAFT_TARGET_ARCH="arm64"
+        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_FOR="arm64"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
+        export CRAFT_PARALLEL_BUILD_COUNT="1"
+        export CRAFT_PROJECT_DIR="{new_dir}"
+        export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
+        export CRAFT_DEFAULT_STAGE="{new_dir}/stage"
+        export CRAFT_DEFAULT_PRIME="{new_dir}/prime"
+        export CRAFT_MYPART_STAGE="{new_dir}/partitions/mypart/stage"
+        export CRAFT_MYPART_PRIME="{new_dir}/partitions/mypart/prime"
+        export CRAFT_YOURPART_STAGE="{new_dir}/partitions/yourpart/stage"
+        export CRAFT_YOURPART_PRIME="{new_dir}/partitions/yourpart/prime"
+        export CRAFT_STAGE="{new_dir}/stage"
+        export CRAFT_PRIME="{new_dir}/prime"
+        export CRAFT_PROJECT_NAME="test-project"
+        export CRAFT_PART_NAME="p1"
+        export CRAFT_STEP_NAME="PULL"
+        export CRAFT_PART_SRC="{new_dir}/parts/p1/src"
+        export CRAFT_PART_SRC_WORK="{new_dir}/parts/p1/src"
+        export CRAFT_PART_BUILD="{new_dir}/parts/p1/build"
+        export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
+        export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
+        export CRAFT_DEFAULT_OVERLAY="{new_dir}/parts/p1/layer"
+        export CRAFT_MYPART_OVERLAY="{new_dir}/partitions/mypart/parts/p1/layer"
+        export CRAFT_YOURPART_OVERLAY="{new_dir}/partitions/yourpart/parts/p1/layer"
+        export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
+        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
+        ## Plugin environment
+        ## User environment
+        export PART_ENVVAR="from_part"
+        """
+    )
+
+
 def test_generate_step_environment_no_project_name(new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
@@ -427,3 +501,76 @@ def test_get_global_environment(new_dir, partitions, invalid_vars):
 
     actual = environment._get_global_environment(info)
     assert invalid_vars.isdisjoint(actual.keys())
+
+
+def test_get_global_environment_partitions(
+    new_dir, enable_partitions_feature, partitions
+):
+    """Test that get_global_environment doesn't include partitions when disabled."""
+    work_dir = "/work"
+    info = ProjectInfo(
+        project_dirs=ProjectDirs(work_dir=work_dir, partitions=partitions),
+        arch="arm64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        work_dir=work_dir,
+        partitions=partitions,
+    )
+
+    assert environment._get_global_environment(info) == {
+        "CRAFT_ARCH_BUILD_FOR": "arm64",
+        "CRAFT_ARCH_BUILD_ON": "amd64",
+        "CRAFT_ARCH_TRIPLET": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON": "x86_64-linux-gnu",
+        "CRAFT_DEFAULT_PRIME": f"{work_dir}/prime",
+        "CRAFT_DEFAULT_STAGE": f"{work_dir}/stage",
+        "CRAFT_MYPART_PRIME": f"{work_dir}/partitions/mypart/prime",
+        "CRAFT_MYPART_STAGE": f"{work_dir}/partitions/mypart/stage",
+        "CRAFT_YOURPART_PRIME": f"{work_dir}/partitions/yourpart/prime",
+        "CRAFT_YOURPART_STAGE": f"{work_dir}/partitions/yourpart/stage",
+        "CRAFT_PARALLEL_BUILD_COUNT": "1",
+        "CRAFT_PRIME": f"{work_dir}/prime",
+        "CRAFT_PROJECT_DIR": f"{new_dir}",
+        "CRAFT_PROJECT_NAME": "test-project",
+        "CRAFT_STAGE": f"{work_dir}/stage",
+        "CRAFT_TARGET_ARCH": "arm64",
+    }
+
+
+def test_get_global_environment_partitions_overlay(
+    new_dir, enable_all_features, partitions
+):
+    """Test that get_global_environment doesn't include partitions when disabled."""
+    work_dir = "/work"
+    info = ProjectInfo(
+        project_dirs=ProjectDirs(work_dir=work_dir, partitions=partitions),
+        arch="arm64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        project_name="test-project",
+        work_dir=work_dir,
+        partitions=partitions,
+    )
+
+    assert environment._get_global_environment(info) == {
+        "CRAFT_ARCH_BUILD_FOR": "arm64",
+        "CRAFT_ARCH_BUILD_ON": "amd64",
+        "CRAFT_ARCH_TRIPLET": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_FOR": "aarch64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON": "x86_64-linux-gnu",
+        "CRAFT_DEFAULT_PRIME": f"{work_dir}/prime",
+        "CRAFT_DEFAULT_STAGE": f"{work_dir}/stage",
+        "CRAFT_MYPART_PRIME": f"{work_dir}/partitions/mypart/prime",
+        "CRAFT_MYPART_STAGE": f"{work_dir}/partitions/mypart/stage",
+        "CRAFT_YOURPART_PRIME": f"{work_dir}/partitions/yourpart/prime",
+        "CRAFT_YOURPART_STAGE": f"{work_dir}/partitions/yourpart/stage",
+        "CRAFT_OVERLAY": f"{work_dir}/overlay/overlay",
+        "CRAFT_PARALLEL_BUILD_COUNT": "1",
+        "CRAFT_PRIME": f"{work_dir}/prime",
+        "CRAFT_PROJECT_DIR": f"{new_dir}",
+        "CRAFT_PROJECT_NAME": "test-project",
+        "CRAFT_STAGE": f"{work_dir}/stage",
+        "CRAFT_TARGET_ARCH": "arm64",
+    }

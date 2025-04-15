@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2022,2024 Canonical Ltd.
+# Copyright 2016-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,10 +21,9 @@ import functools
 import json
 import logging
 import os
-import subprocess
+import selectors
+import socket
 import tempfile
-import textwrap
-import time
 from pathlib import Path
 from typing import TextIO
 
@@ -34,7 +33,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils, process
+from craft_parts.utils import process
 
 from . import filesets
 from .filesets import Fileset
@@ -156,7 +155,7 @@ class StepHandler:
             _create_and_run_script(
                 build_commands,
                 script_path=self._part.part_run_dir.absolute() / "build.sh",
-                build_environment_script_path=build_environment_script_path,
+                environment_script_path=build_environment_script_path,
                 cwd=self._part.part_build_subdir,
                 stdout=self._stdout,
                 stderr=self._stderr,
@@ -294,70 +293,69 @@ class StepHandler:
         :param work_dir: the directory where the script will be executed.
         """
         with tempfile.TemporaryDirectory() as tempdir:
-            call_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "function_call")
-            )
-            feedback_fifo = file_utils.NonBlockingRWFifo(
-                os.path.join(tempdir, "call_feedback")
-            )
+            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")
+            ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            ctl_socket.bind(ctl_socket_path)
+            ctl_socket.listen(1)
 
-            script = textwrap.dedent(
-                f"""\
-                set -euo pipefail
-                export PARTS_CALL_FIFO={call_fifo.path}
-                export PARTS_FEEDBACK_FIFO={feedback_fifo.path}
+            selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)
 
-                {self._env}
+            environment = f"export PARTS_CTL_SOCKET={ctl_socket_path}\n" + self._env
+            environment_script_path = Path(tempdir) / "scriptlet_environment.sh"
+            environment_script_path.write_text(environment)
+            environment_script_path.chmod(0o644)
 
-                set -x
-                {scriptlet}"""
-            )
-
-            # FIXME: refactor ctl protocol server
-
-            with tempfile.TemporaryFile(mode="w+") as script_file:
-                print(script, file=script_file)
-                script_file.flush()
-                script_file.seek(0)
-                process = subprocess.Popen(  # pylint: disable=consider-using-with
-                    ["/bin/bash"],
-                    stdin=script_file,
+            try:
+                _create_and_run_script(
+                    [scriptlet],
+                    script_path=Path(tempdir) / "scriptlet.sh",
                     cwd=work_dir,
                     stdout=self._stdout,
                     stderr=self._stderr,
+                    environment_script_path=environment_script_path,
+                    selector=selector,
                 )
-
-            status = None
-            try:
-                while status is None:
-                    function_call = call_fifo.read()
-                    if not function_call:
-                        status = process.poll()
-                        time.sleep(0.1)  # Don't loop TOO busily
-                        continue
-
-                    # Handle the function and send feedback to caller.
-                    try:
-                        retval = self._handle_control_api(
-                            step, scriptlet_name, function_call.strip()
-                        )
-                        feedback_fifo.write(f"OK {retval!s}\n" if retval else "OK\n")
-                    except errors.PartsError as error:
-                        feedback_fifo.write(f"ERR {error!s}\n")
-
-            except Exception as error:
-                logger.debug("scriptlet execution failed: %s", error)
-                raise
-            finally:
-                call_fifo.close()
-                feedback_fifo.close()
-
-            if process.returncode != 0:
+            except process.ProcessError as process_error:
                 raise errors.ScriptletRunError(
                     part_name=self._part.name,
                     scriptlet_name=scriptlet_name,
-                    exit_code=status,
+                    exit_code=process_error.result.returncode,
+                    stderr=process_error.result.stderr,
+                ) from process_error
+            finally:
+                ctl_socket.close()
+
+    def _ctl_server_selector(
+        self, step: Step, scriptlet_name: str, stream: socket.socket
+    ) -> selectors.BaseSelector:
+        selector = selectors.SelectSelector()
+
+        def accept(sock: socket.socket, _mask: int) -> None:
+            conn, addr = sock.accept()
+            selector.register(conn, selectors.EVENT_READ, read)
+
+        def read(conn: socket.socket, _mask: int) -> None:
+            data = conn.recv(1024)
+            logger.debug(f"ctl server received: {data!s}")
+            if not data:
+                selector.unregister(conn)
+                conn.close()
+                return
+
+            try:
+                retval = self._handle_control_api(
+                    step, scriptlet_name, data.decode("utf-8")
                 )
+                conn.send((f"OK {retval!s}\n" if retval else "OK\n").encode())
+            except errors.PluginBuildError:
+                # If craftctl default raises PluginBuildError, pass it upwards.
+                raise
+            except errors.PartsError as error:
+                conn.send(f"ERR {error!s}\n".encode())
+
+        selector.register(stream, selectors.EVENT_READ, accept)
+
+        return selector
 
     def _handle_control_api(
         self, step: Step, scriptlet_name: str, function_call: str
@@ -466,15 +464,16 @@ def _create_and_run_script(
     cwd: Path,
     stdout: Stream,
     stderr: Stream,
-    build_environment_script_path: Path | None = None,
+    environment_script_path: Path | None = None,
+    selector: selectors.BaseSelector | None = None,
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
         print("#!/bin/bash", file=run_file)
         print("set -euo pipefail", file=run_file)
 
-        if build_environment_script_path:
-            print(f"source {build_environment_script_path}", file=run_file)
+        if environment_script_path:
+            print(f"source {environment_script_path}", file=run_file)
 
         print("set -x", file=run_file)
 
@@ -484,4 +483,11 @@ def _create_and_run_script(
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
 
-    process.run([script_path], cwd=cwd, stdout=stdout, stderr=stderr, check=True)
+    process.run(
+        [script_path],
+        cwd=cwd,
+        stdout=stdout,
+        stderr=stderr,
+        check=True,
+        selector=selector,
+    )

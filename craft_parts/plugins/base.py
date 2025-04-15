@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2024 Canonical Ltd.
+# Copyright 2020-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -164,7 +164,7 @@ class BasePythonPlugin(Plugin):
             # look for python3.10
             basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
             echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
-            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null || true)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
@@ -179,12 +179,12 @@ class BasePythonPlugin(Plugin):
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="{python_interpreter}"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 
