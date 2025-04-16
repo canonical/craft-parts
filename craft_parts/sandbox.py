@@ -36,41 +36,41 @@ logger = logging.getLogger(__name__)
 SWAPPER_SUFFIX = "REAL"
 
 
-class FileSwapper:
-    """File swapper to temporarily replace a file with another."""
+class FileContentReplacer:
+    """File content replacer to temporarily replace a file with another."""
 
     _target: Path
-    _base_path: Path
+    _root: Path
     _content: str
 
     def __init__(self, target: Path, content: str) -> None:
         self._target = target
         self._content = content
 
-    def _swapped(self) -> Path:
+    def _replaced_file(self) -> Path:
         """Path of the swapped file."""
-        return self._base_path / Path(f"{self._target}.{SWAPPER_SUFFIX}")
+        return self._root / Path(f"{self._target}.{SWAPPER_SUFFIX}")
 
-    def swap(self, base_path: Path) -> None:
+    def replace(self, root: Path) -> None:
         """Backup the target file and replace it with the provided content."""
-        self._base_path = base_path
-        target = base_path / self._target
+        self._root = root
+        target = root / self._target
         if not target.exists() or not target.is_file():
             return
         os.rename(
             target,
-            self._swapped(),
+            self._replaced_file(),
         )
         with target.open("w") as f:
             f.write(self._content)
 
     def restore(self) -> None:
         """Restore the swapped file."""
-        if not self._swapped().exists() or not self._swapped().is_file():
+        if not self._replaced_file().exists() or not self._replaced_file().is_file():
             return
         os.replace(
-            self._swapped(),
-            self._base_path / self._target,
+            self._replaced_file(),
+            self._root / self._target,
         )
 
 
@@ -80,7 +80,7 @@ class Diversion:
     _dpkg_divert: str = "dpkg-divert"
     _target: Path
     _target_diverted: Path
-    _base_path: Path
+    _root: Path
 
     def __init__(
         self,
@@ -93,14 +93,14 @@ class Diversion:
         """Define common diversion arguments."""
         return [
             "--local",
-            f"--root={self._base_path}",
+            f"--root={self._root}",
             "--rename",
             str(self._target),
         ]
 
-    def divert(self, base_path: Path) -> None:
+    def divert(self, root: Path) -> None:
         """Divert the target."""
-        self._base_path = base_path
+        self._root = root
         command = [
             self._dpkg_divert,
             "--divert",
@@ -109,7 +109,7 @@ class Diversion:
         ]
         os_utils.process_run(command, logger.debug)
 
-    def undivert(self) -> None:
+    def restore(self) -> None:
         """Remove the diversion.
 
         Trying to remove a non-existent diversion will not return an error.
@@ -144,10 +144,10 @@ class Mount:
         if options:
             self._options = options
 
-    def mount(self, base_path: Path) -> None:
+    def mount(self, root: Path) -> None:
         """Mount the mountpoint.
 
-        :param base_path: path to mount the mountpoint under.
+        :param root: path to mount the mountpoint under.
         """
         args: list[str] = []
         if self._options:
@@ -155,7 +155,7 @@ class Mount:
         if self._fstype:
             args.append(f"-t{self._fstype}")
 
-        self._mountpoint = base_path / self._relative_mountpoint.lstrip("/")
+        self._mountpoint = root / self._relative_mountpoint.lstrip("/")
         pid = os.getpid()
         if not self._mountpoint.exists():
             raise errors.SandboxMountError(
@@ -240,11 +240,11 @@ echo
 echo "Warning: Fake initctl called, doing nothing"
 """
 
-_default_swaps: tuple[FileSwapper, ...] = (
-    FileSwapper(
+_default_replaced_files: tuple[FileContentReplacer, ...] = (
+    FileContentReplacer(
         target=Path("/sbin/start-stop-daemon"), content=_start_stop_daemon_content
     ),
-    FileSwapper(target=Path("/sbin/initctl"), content=_initctl_content),
+    FileContentReplacer(target=Path("/sbin/initctl"), content=_initctl_content),
 )
 
 
@@ -253,7 +253,7 @@ class Sandbox:
 
     _mounts: Sequence[Mount]
     _diversions: Sequence[Diversion]
-    _swaps: Sequence[FileSwapper]
+    _swaps: Sequence[FileContentReplacer]
     _root: Path
 
     def __init__(
@@ -262,11 +262,11 @@ class Sandbox:
         root: Path,
         mounts: Sequence[Mount] | None = _default_mounts,
         diversions: Sequence[Diversion] | None = _default_diversions,
-        swaps: Sequence[FileSwapper] | None = _default_swaps,
+        file_replacements: Sequence[FileContentReplacer] | None = _default_replaced_files,
         # Extend enable adding mounts/diversions/swaps to the default ones
         extend_mounts: Sequence[Mount] | None = None,
         extend_diversions: Sequence[Diversion] | None = None,
-        extend_swaps: Sequence[FileSwapper] | None = None,
+        extend_file_replacements: Sequence[FileContentReplacer] | None = None,
     ) -> None:
         self._root = root
         self._mounts = mounts
@@ -275,21 +275,21 @@ class Sandbox:
         self._diversions = diversions
         if extend_diversions:
             self._diversions.extend(extend_diversions)
-        self._swaps = swaps
-        if extend_swaps:
-            self._swaps.extend(extend_swaps)
+        self._file_replacements = file_replacements
+        if extend_file_replacements:
+            self._file_replacements.extend(extend_file_replacements)
 
     def _setup_mounts(self) -> None:
         for entry in self._mounts:
-            entry.mount(base_path=self._root)
+            entry.mount(root=self._root)
 
     def _setup_diversions(self) -> None:
         for entry in self._diversions:
-            entry.divert(base_path=self._root)
+            entry.divert(root=self._root)
 
-    def _setup_swaps(self) -> None:
-        for entry in self._swaps:
-            entry.swap(base_path=self._root)
+    def _setup_file_replacements(self) -> None:
+        for entry in self._file_replacements:
+            entry.replace(root=self._root)
 
     def _setup(self) -> None:
         """Sandbox preparation."""
@@ -297,7 +297,7 @@ class Sandbox:
 
         self._setup_mounts()
         self._setup_diversions()
-        self._setup_swaps()
+        self._setup_file_replacements()
 
         logger.debug("sandbox setup complete")
 
@@ -338,10 +338,10 @@ class Sandbox:
 
     def _cleanup_diversions(self) -> None:
         for entry in self._diversions:
-            entry.undivert()
+            entry.restore()
 
-    def _cleanup_swaps(self) -> None:
-        for entry in self._swaps:
+    def _cleanup_file_replacements(self) -> None:
+        for entry in self._file_replacements:
             entry.restore()
 
     def _cleanup(self) -> None:
@@ -349,7 +349,7 @@ class Sandbox:
         logger.debug("cleanup the sandbox: %r", self._root)
         self._cleanup_processes()
         self._cleanup_diversions()
-        self._cleanup_swaps()
+        self._cleanup_file_replacements()
         self._cleanup_mounts()
 
     def execute(
