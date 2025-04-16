@@ -60,3 +60,39 @@ def test_part_permissions(new_dir, mock_chown):
     chown_call = mock_chown[str(Path("prime/bar/2.txt").resolve())]
     assert chown_call.owner == 1111
     assert chown_call.group == 2222
+
+
+def test_part_permissions_symlink(new_dir):
+    files = Path("files")
+    files.mkdir()
+
+    (files / "1.txt").touch()
+    (files / "bar").mkdir()
+    (files / "bar/2.txt").touch()
+    (files / "sym-1.txt").symlink_to(f"{files}/1.txt", target_is_directory=False)
+    (files / "sym-bar").symlink_to(f"{files}/bar", target_is_directory=True)
+
+    parts_yaml = textwrap.dedent(
+        f"""
+        parts:
+          my-part:
+            plugin: dump
+            source: files
+            permissions:
+              - path: sym-1.txt
+                owner: {os.getuid()}
+                group: {os.getgid()}
+              - path: sym-bar
+                owner: {os.getuid()}
+                group: {os.getgid()}
+        """
+    )
+
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", cache_dir=new_dir
+    )
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
