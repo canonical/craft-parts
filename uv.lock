@@ -357,7 +357,7 @@ apt-oracular = [
     { name = "python-apt", version = "2.9.0+ubuntu1", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "sys_platform == 'linux'" },
 ]
 apt-plucky = [
-    { name = "python-apt", version = "2.9.0+ubuntu1", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "sys_platform == 'linux'" },
+    { name = "python-apt", version = "2.9.9", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "sys_platform == 'linux'" },
 ]
 dev = [
     { name = "autoflake" },
@@ -452,8 +452,8 @@ requires-dist = [
     { name = "pytest-subprocess", marker = "extra == 'dev'" },
     { name = "python-apt", marker = "sys_platform == 'linux' and extra == 'apt-jammy'", specifier = "~=2.4.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" },
     { name = "python-apt", marker = "sys_platform == 'linux' and extra == 'apt-noble'", specifier = "~=2.7.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" },
-    { name = "python-apt", marker = "sys_platform == 'linux' and extra == 'apt-oracular'", specifier = "~=2.9.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" },
-    { name = "python-apt", marker = "sys_platform == 'linux' and extra == 'apt-plucky'", specifier = ">=2.9.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" },
+    { name = "python-apt", marker = "sys_platform == 'linux' and extra == 'apt-oracular'", specifier = "~=2.9.0,<2.9.9", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" },
+    { name = "python-apt", marker = "sys_platform == 'linux' and extra == 'apt-plucky'", specifier = ">=2.9.9", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" },
     { name = "pyxdg" },
     { name = "pyyaml" },
     { name = "requests", specifier = ">=2.32,<3.0" },
@@ -1278,6 +1278,17 @@ wheels = [
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.0+ubuntu1-cp313-cp313-manylinux_2_40_ppc64le.whl" },
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.0+ubuntu1-cp313-cp313-manylinux_2_40_s390x.whl" },
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.0+ubuntu1-cp313-cp313-manylinux_2_40_x86_64.whl" },
+]
+
+[[package]]
+name = "python-apt"
+version = "2.9.9"
+source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }
+wheels = [
+    { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.9-cp310-cp310-manylinux_2_41_x86_64.whl" },
+    { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.9-cp311-cp311-manylinux_2_41_x86_64.whl" },
+    { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.9-cp312-cp312-manylinux_2_41_x86_64.whl" },
+    { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.9-cp313-cp313-manylinux_2_41_x86_64.whl" },
 ]
 
 [[package]]
