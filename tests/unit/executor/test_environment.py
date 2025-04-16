@@ -172,6 +172,7 @@ def test_generate_step_environment_build_features(
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export CARGO_HOME="{new_dir}/cargo"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_DEFAULT_STAGE="{new_dir}/stage"
         export CRAFT_DEFAULT_PRIME="{new_dir}/prime"
@@ -519,6 +520,7 @@ def test_get_global_environment_partitions(
     )
 
     assert environment._get_global_environment(info) == {
+        "CARGO_HOME": f"{work_dir}/cargo",
         "CRAFT_ARCH_BUILD_FOR": "arm64",
         "CRAFT_ARCH_BUILD_ON": "amd64",
         "CRAFT_ARCH_TRIPLET": "aarch64-linux-gnu",
@@ -555,6 +557,7 @@ def test_get_global_environment_partitions_overlay(
     )
 
     assert environment._get_global_environment(info) == {
+        "CARGO_HOME": f"{work_dir}/cargo",
         "CRAFT_ARCH_BUILD_FOR": "arm64",
         "CRAFT_ARCH_BUILD_ON": "amd64",
         "CRAFT_ARCH_TRIPLET": "aarch64-linux-gnu",
