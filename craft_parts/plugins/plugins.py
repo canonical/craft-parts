@@ -22,7 +22,6 @@ from typing import TYPE_CHECKING, Any
 from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
-from .cargo_package_plugin import CargoPackagePlugin
 from .cargo_use_plugin import CargoUsePlugin
 from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
@@ -55,7 +54,6 @@ PluginType = type[Plugin]
 _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "ant": AntPlugin,
     "autotools": AutotoolsPlugin,
-    "cargo-package": CargoPackagePlugin,
     "cargo-use": CargoUsePlugin,
     "cmake": CMakePlugin,
     "dotnet": DotnetPlugin,

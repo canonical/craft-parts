@@ -369,6 +369,7 @@ class Part:
         """Return the overlay directory."""
         return self.dirs.overlay_dir
 
+    @property
     def overlay_dirs(self) -> Mapping[str | None, Path]:
         """A mapping of partition name to partition overlay directory.
 

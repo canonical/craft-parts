@@ -34,7 +34,7 @@ if sys.version_info >= (3, 11):
     import tomllib
 else:
     # Python 3.10 compatibility
-    import tomli as tomllib
+    import tomli as tomllib  # type: ignore[import-not-found]
 
 CARGO_TOML_TEMPLATE = """\
 [source.craft-parts]
@@ -83,7 +83,6 @@ class CargoUsePlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        workspace_dir = self._part_info.work_dir
         registry_dir = (
             self._part_info.project_info.dirs.backstage_dir / "cargo-registry"
         )
