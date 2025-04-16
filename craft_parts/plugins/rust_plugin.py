@@ -217,6 +217,11 @@ class RustPlugin(Plugin):
         variables = {
             "PATH": "${HOME}/.cargo/bin:${PATH}",
         }
+
+        registry_dir = self._part_info.work_dir / "cargo-registry"
+        if registry_dir.exists():
+            variables["CARGO_HOME"] = str(self._part_info.work_dir / "cargo")
+
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
             # add a forced override to ignore the toolchain file

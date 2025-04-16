@@ -2,13 +2,16 @@
 Changelog
 *********
 
-2.8.0 (2025-04-01)
+2.8.0 (2025-04-10)
 -------------------
 
 New features:
 
 - With the new ``maven-use-mvnw`` key in the Maven plugin, you can enable your
   project's ``mvnw`` wrapper script.
+- Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
+  a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
+
 
 2.7.0 (2025-03-18)
 -------------------
