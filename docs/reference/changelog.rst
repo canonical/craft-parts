@@ -7,8 +7,8 @@ Changelog
 
 New features:
 
-- Maven plugin ``maven-use-mvnw`` parameter now allows for the use of the
-  ``mvnw`` wrapper script.
+- With the new ``maven-use-mvnw`` key in the Maven plugin, you can enable your
+  project's ``mvnw`` wrapper script.
 
 2.7.0 (2025-03-18)
 -------------------

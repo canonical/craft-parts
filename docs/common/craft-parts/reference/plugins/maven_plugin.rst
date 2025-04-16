@@ -12,13 +12,13 @@ Maven (mvn) tooling. It is equivalent to running the following command:
     mvn package
 
 
-Plugin parameter ``maven_parameters`` is used to additionally provide any arguments to the mvn
-package command above. All values are passed in after the initial ``mvn package`` command
-delimited by spaces.
+The ``maven-parameters`` key passes arguments to the ``mvn package`` command. The
+parameter can also configure any command-line arguments. All values are passed after the
+initial package command, delimited by spaces.
 
-Another plugin parameter ``maven_use_mvnw`` is used to leverage Maven wrapper files provided by the
-project to run the package command. Initial mvn executable is replaced with project’s mvnw
-executable file, resulting in ``./mvnw package`` command.
+The ``maven-use-mvnw`` key leverages Maven wrapper files provided by the project to run
+the package command. It replaces the default Maven executable with the project's
+``mvnw`` file, to where the package command becomes ``./mvnw package``.
 
 After a successful build, this plugin will:
 
@@ -49,17 +49,20 @@ maven-use-mvnw
 ~~~~~~~~~~~~~~
 **Type:** boolean
 
-Used to determine whether the build should use the project provided Maven
-wrapper (located at ``<project-root>/mvnw``) executable file. The command ``mvn
-package`` is replaced with ``./mvnw package`` command.
+Used to determine whether the build should use the Maven wrapper provided by the project
+at ``<project-root>/mvnw``. If turned on, the project command is replaced with ``./mvnw
+package``.
 
 
 Environment variables
 ---------------------
 
-Environment variables can be specified to modify behavior of the build. Three proxy related case
-insensitive environment variables are treated specially.
-``http_proxy``, ``https_proxy`` and ``no_proxy``.
+Environment variables can be specified to modify the behavior of the build. Three
+proxy-related, case-insensitive environment variables are treated specially:
+
+- ``http_proxy``
+- ``https_proxy``
+- ``no_proxy``
 
 For a list of environment variables used to configure Maven, please refer to
 `Configuring Apache Maven <https://maven.apache.org/configure.html>`_.
@@ -67,14 +70,14 @@ For a list of environment variables used to configure Maven, please refer to
 http_proxy
 ~~~~~~~~~~
 
-URL to proxy http request to. The value is mapped to the settings file (.parts/.m2/settings.xml)
-under proxy element.
+URL to proxy HTTP request to. The value is mapped to the settings file
+(``.parts/.m2/settings.xml``) under the proxy element.
 
 https_proxy
 ~~~~~~~~~~~
 
-URL to proxy https request to. The value is mapped to the settings file (.parts/.m2/settings.xml)
-under proxy element.
+URL to proxy HTTPS request to. The value is mapped to the settings file
+(``.parts/.m2/settings.xml``) under the proxy element.
 
 no_proxy
 ~~~~~~~~
