@@ -24,6 +24,9 @@ BeforeValidator
 BuildPackageNotFound
 BuildPackagesNotInstalled
 BuildState
+CargoPackagePlugin
+CargoPackagePluginEnvironmentValidator
+CargoPackagePluginProperties
 CLI
 CMake
 CMakeLists
@@ -268,6 +271,7 @@ SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 SSL
+StageContents
 StageFilesConflict
 StagePackageNotFound
 StageState

@@ -163,7 +163,8 @@ jobs:
           sudo apt install -y ninja-build cmake scons qt5-qmake p7zip \
                               autoconf automake autopoint gcc git gperf help2man libtool texinfo \
                               curl findutils pkg-config rpm \
-                              findutils python3-dev python3-venv
+                              findutils python3-dev python3-venv \
+                              cargo rustc
           echo "::endgroup::"
           echo "::group::dotnet removal"
           # Ensure we don't have dotnet installed, to properly test dotnet-deps

@@ -33,6 +33,8 @@ class TestStageState:
             "files": set(),
             "directories": set(),
             "overlay-hash": None,
+            "backstage-directories": set(),
+            "backstage-files": set(),
         }
 
     def test_marshal_unmarshal(self):
@@ -42,6 +44,8 @@ class TestStageState:
             "files": {"a"},
             "directories": {"b"},
             "overlay-hash": "6f7665726c61792d68617368",
+            "backstage-directories": set(),
+            "backstage-files": set(),
         }
 
         state = StageState.unmarshal(state_data)

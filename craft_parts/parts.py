@@ -302,6 +302,11 @@ class Part:
         return self._part_dir / "install"
 
     @property
+    def part_export_dir(self) -> Path:
+        """Return the subdirectory to install internal part build artifacts."""
+        return self._part_dir / "export"
+
+    @property
     def part_install_dirs(self) -> Mapping[str | None, Path]:
         """Return a mapping of partition names to install directories.
 
@@ -371,6 +376,11 @@ class Part:
         If partitions are disabled, the only key is ``None``.
         """
         return self.dirs.overlay_dirs
+
+    @property
+    def backstage_dir(self) -> Path:
+        """Return the backstage area containing internal artifacts from all parts."""
+        return self.dirs.backstage_dir
 
     @property
     def stage_dir(self) -> Path:

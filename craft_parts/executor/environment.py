@@ -150,7 +150,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
 def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     """Add project and part information variables to the environment.
 
-    :param step_info: Information about the current step.
+    :param info: Information about the project.
 
     :return: A dictionary containing environment variables and values.
     """
@@ -165,6 +165,8 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
         "CRAFT_ARCH_TRIPLET_BUILD_FOR": info.arch_triplet_build_for,
         "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(info.project_dir),
+        # Build system configurations for the project.
+        "CARGO_HOME": str(info.dirs.work_dir / "cargo"),
     }
 
     if Features().enable_overlay:

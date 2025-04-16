@@ -76,6 +76,8 @@ class TestStepStates:
             "files": {"a"},
             "directories": {"b"},
             "overlay-hash": "6f7665726c61792d68617368",
+            "backstage-directories": {"*"},
+            "backstage-files": set(),
         }
         state_file = Path("parts/foo/state/stage")
         state_file.parent.mkdir(parents=True, exist_ok=True)
