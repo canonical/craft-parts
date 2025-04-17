@@ -154,7 +154,7 @@ A part's plugin can add its own set of environment variables or expand on
 build-related flags.
 
 The ``build-environment`` key can be used to either override the default
-environment variables or define new ones. Here is a basic example that overrides
+environment variables or define new ones. The following example overrides
 default flags and searches for libraries in a non-standard path:
 
 .. code-block:: yaml
