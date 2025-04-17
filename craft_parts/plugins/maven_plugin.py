@@ -114,7 +114,7 @@ class MavenPlugin(JavaPlugin):
     def _maven_executable(self) -> str:
         """Return the maven executable to be used for build."""
         options = cast(MavenPluginProperties, self._options)
-        return "${CRAFT_PART_BUILD}/mvnw" if options.maven_use_mvnw else "mvn"
+        return "${CRAFT_PART_BUILD_WORK}/mvnw" if options.maven_use_wrapper else "mvn"
 
     @override
     def get_build_commands(self) -> list[str]:
@@ -140,7 +140,7 @@ class MavenPlugin(JavaPlugin):
         if not options.maven_use_mvnw:
             return []
         return [
-            """[ -e ${CRAFT_PART_BUILD}/mvnw ] || {
+            """[ -e ${CRAFT_PART_BUILD_WORK}/mvnw ] || {
 >&2 echo 'mvnw file not found, refer to plugin documentation: \
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
 common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
