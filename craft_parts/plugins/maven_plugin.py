@@ -185,17 +185,17 @@ def _create_settings(settings_path: Path) -> None:
         proxy_url = urlparse(case_insensitive_env[env_name])
         proxy = ET.Element("proxy")
         proxy_tags = [
-            ("id", env_name.lower()),
+            ("id", env_name),
             ("active", "true"),
             ("protocol", protocol),
-            ("host", str(proxy_url.hostname)),
-            ("port", str(proxy_url.port)),
+            ("host", proxy_url.hostname),
+            ("port", proxy_url.port),
         ]
         if proxy_url.username is not None and proxy_url.password is not None:
             proxy_tags.extend(
                 [
-                    ("username", str(proxy_url.username)),
-                    ("password", str(proxy_url.password)),
+                    ("username", proxy_url.username),
+                    ("password", proxy_url.password),
                 ]
             )
         proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
