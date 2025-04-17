@@ -251,7 +251,7 @@ class DotnetV2Plugin(Plugin):
             )
         else:
             raise ValueError(
-                f"Unsupported architecture {build_on!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}."
+                f"Unsupported architecture {build_on!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
             )
 
         snap_location = f"/snap/{snap_name}/current"
@@ -277,7 +277,7 @@ class DotnetV2Plugin(Plugin):
 
         if not dotnet_rid:
             raise ValueError(
-                f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}."
+                f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
             )
 
         # Restore step
