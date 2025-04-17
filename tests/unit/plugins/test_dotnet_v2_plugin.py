@@ -40,12 +40,16 @@ def part_info(new_dir):
         "9.1",
         "10",
         "10.0",
-    ])
+    ],
+)
 def test_parameter_valid_dotnet_version(part_info, dotnet_version):
-    properties = DotnetV2Plugin.properties_class.unmarshal({"source": ".", "dotnet-version": dotnet_version})
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-version": dotnet_version}
+    )
     plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
-    assert plugin != None
+    assert plugin
+
 
 @pytest.mark.parametrize(
     "dotnet_version",
@@ -56,10 +60,13 @@ def test_parameter_valid_dotnet_version(part_info, dotnet_version):
         "3.1",
         "abc",
         "9.1a",
-    ])
+    ],
+)
 def test_parameter_invalid_dotnet_version(dotnet_version):
     with pytest.raises(ValidationError) as raised:
-        DotnetV2Plugin.properties_class.unmarshal({"source": ".", "dotnet-version": dotnet_version})
+        DotnetV2Plugin.properties_class.unmarshal(
+            {"source": ".", "dotnet-version": dotnet_version}
+        )
 
     assert raised
 
@@ -67,28 +74,28 @@ def test_parameter_invalid_dotnet_version(dotnet_version):
 @pytest.mark.parametrize(
     "dotnet_verbosity",
     [
-        "quiet", "q",
-        "minimal", "m",
-        "normal", "n",
-        "detailed", "d",
-        "diagnostic", "diag",
-    ])
+        "quiet",
+        "q",
+        "minimal",
+        "m",
+        "normal",
+        "n",
+        "detailed",
+        "d",
+        "diagnostic",
+        "diag",
+    ],
+)
 def test_parameter_valid_dotnet_verbosity(part_info, dotnet_verbosity):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-verbosity": dotnet_verbosity}
     )
     plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
-    assert plugin != None
+    assert plugin
 
 
-@pytest.mark.parametrize(
-    "dotnet_verbosity",
-    [
-        "quietly",
-        "invalid",
-        "blah"
-    ])
+@pytest.mark.parametrize("dotnet_verbosity", ["quietly", "invalid", "blah"])
 def test_parameter_invalid_dotnet_verbosity(dotnet_verbosity):
     with pytest.raises(ValidationError) as raised:
         DotnetV2Plugin.properties_class.unmarshal(

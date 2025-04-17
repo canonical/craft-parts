@@ -18,10 +18,11 @@
 
 import logging
 import re
-import pydantic
-
 from typing import Literal, cast
+
+import pydantic
 from overrides import override
+
 from craft_parts.utils.formatting_utils import humanize_list
 
 from . import validator
@@ -47,11 +48,17 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
     dotnet_properties: dict[str, str] = {}
     dotnet_self_contained: bool = False
     dotnet_verbosity: Literal[
-        "quiet", "q",
-        "minimal", "m",
-        "normal", "n",
-        "detailed", "d",
-        "diagnostic", "diag"] = "normal"
+        "quiet",
+        "q",
+        "minimal",
+        "m",
+        "normal",
+        "n",
+        "detailed",
+        "d",
+        "diagnostic",
+        "diag",
+    ] = "normal"
     dotnet_version: str | None = None
 
     # Restore specific flags
@@ -80,9 +87,9 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
         """
         if value is None or value == "none":
             return value
-        
+
         # Match either single digit (e.g. "8") or major.minor format (e.g. "8.0")
-        pattern = r'^(\d+)(?:\.(\d+))?$'
+        pattern = r"^(\d+)(?:\.(\d+))?$"
         match = re.match(pattern, value)
 
         oldest_supported_dotnet_version = 6
@@ -243,7 +250,9 @@ class DotnetV2Plugin(Plugin):
                 f"/snap/{snap_name}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON:/snap/{snap_name}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON"
             )
         else:
-            raise ValueError(f"Unsupported architecture {build_on!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}.")
+            raise ValueError(
+                f"Unsupported architecture {build_on!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}."
+            )
 
         snap_location = f"/snap/{snap_name}/current"
         dotnet_path = f"{snap_location}/usr/lib/dotnet"
@@ -267,7 +276,9 @@ class DotnetV2Plugin(Plugin):
         dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for)
 
         if not dotnet_rid:
-            raise ValueError(f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}.")
+            raise ValueError(
+                f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}."
+            )
 
         # Restore step
         restore_cmd = self._get_restore_command(dotnet_rid, options)
