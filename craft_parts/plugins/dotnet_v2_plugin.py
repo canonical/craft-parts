@@ -17,9 +17,12 @@
 """The new .NET plugin."""
 
 import logging
-from typing import Literal, cast
+import re
+import pydantic
 
+from typing import Literal, cast
 from overrides import override
+from craft_parts.utils.formatting_utils import humanize_list
 
 from . import validator
 from .base import Plugin
@@ -39,11 +42,16 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
     plugin: Literal["dotnet"] = "dotnet"
 
     # Global flags
-    dotnet_configuration: str = "Release"
+    dotnet_configuration: Literal["Debug", "Release"] = "Release"
     dotnet_project: str | None = None
     dotnet_properties: dict[str, str] = {}
     dotnet_self_contained: bool = False
-    dotnet_verbosity: str = "normal"
+    dotnet_verbosity: Literal[
+        "quiet", "q",
+        "minimal", "m",
+        "normal", "n",
+        "detailed", "d",
+        "diagnostic", "diag"] = "normal"
     dotnet_version: str | None = None
 
     # Restore specific flags
@@ -60,6 +68,30 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
+
+    @pydantic.field_validator("dotnet_version")
+    @classmethod
+    def validate_dotnet_version(cls, value: str | None) -> str | None:
+        """Validate the dotnet-version property.
+
+        :param value: The value to validate.
+
+        :return: The validated value.
+        """
+        if value is None or value == "none":
+            return value
+        
+        # Match either single digit (e.g. "8") or major.minor format (e.g. "8.0")
+        pattern = r'^(\d+)(?:\.(\d+))?$'
+        match = re.match(pattern, value)
+
+        oldest_supported_dotnet_version = 6
+        if match:
+            major = int(match.group(1))
+            if major >= oldest_supported_dotnet_version:
+                return value
+
+        raise ValueError(f"Invalid dotnet-version {value!r}")
 
 
 class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -206,16 +238,12 @@ class DotnetV2Plugin(Plugin):
         build_on = self._part_info.project_info.arch_build_on
         snap_name = self._generate_snap_name(options)
 
-        if build_on == "amd64":
+        if build_on in _DEBIAN_ARCH_TO_DOTNET_RID:
             environment["LD_LIBRARY_PATH"] = (
-                f"/snap/{snap_name}/current/lib/x86_64-linux-gnu:/snap/{snap_name}/current/usr/lib/x86_64-linux-gnu"
-            )
-        elif build_on == "arm64":
-            environment["LD_LIBRARY_PATH"] = (
-                f"/snap/{snap_name}/current/lib/aarch64-linux-gnu:/snap/{snap_name}/current/usr/lib/aarch64-linux-gnu"
+                f"/snap/{snap_name}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON:/snap/{snap_name}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON"
             )
         else:
-            raise ValueError(f"Unsupported architecture: {build_on}")
+            raise ValueError(f"Unsupported architecture {build_on!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}.")
 
         snap_location = f"/snap/{snap_name}/current"
         dotnet_path = f"{snap_location}/usr/lib/dotnet"
@@ -239,22 +267,7 @@ class DotnetV2Plugin(Plugin):
         dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for)
 
         if not dotnet_rid:
-            raise ValueError(f"Unsupported architecture: {build_for}")
-
-        # Validate verbosity
-        if options.dotnet_verbosity not in [
-            "quiet",
-            "q",
-            "minimal",
-            "m",
-            "normal",
-            "n",
-            "detailed",
-            "d",
-            "diagnostic",
-            "diag",
-        ]:
-            raise ValueError("Invalid verbosity level")
+            raise ValueError(f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), "and")}.")
 
         # Restore step
         restore_cmd = self._get_restore_command(dotnet_rid, options)
@@ -272,22 +285,13 @@ class DotnetV2Plugin(Plugin):
         if version is None:
             return None
 
-        # Validate version
-        oldest_supported_dotnet_version = 6
-        if len(version.split(".")) == 1:
-            if not version.isdigit() or int(version) < oldest_supported_dotnet_version:
-                raise ValueError("Version must be greater or equal to 6.0")
+        version_split = version.split(".")
+
+        if len(version_split) == 1:
             snap_version = f"{version}0"
-        elif len(version.split(".")) > 1:
-            major, minor = version.split(".")
-            if (
-                not (major.isdigit() and minor.isdigit())
-                or int(major) < oldest_supported_dotnet_version
-            ):
-                raise ValueError("Version must be greater or equal to 6.0")
-            snap_version = major + minor
         else:
-            raise ValueError("Invalid .NET version format")
+            major, minor = version.split(".")
+            snap_version = major + minor
 
         return f"dotnet-sdk-{snap_version}"
 
