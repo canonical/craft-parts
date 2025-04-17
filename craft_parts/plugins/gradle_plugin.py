@@ -87,8 +87,8 @@ class GradlePlugin(JavaPlugin):
     def gradle_executable(self) -> str:
         """Use gradlew by default if it exists."""
         return (
-            f"{self._part_info.part_build_dir}/gradlew"
-            if (self._part_info.part_build_dir / "gradlew").exists()
+            f"{self._part_info.part_build_subdir}/gradlew"
+            if (self._part_info.part_build_subdir / "gradlew").exists()
             else "gradle"
         )
 
@@ -117,7 +117,7 @@ class GradlePlugin(JavaPlugin):
                 + options.gradle_parameters
             ),
             # remove gradle-wrapper.jar files included in the project if any.
-            f'find {self._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
+            f'find {self._part_info.part_build_subdir} -name "gradle-wrapper.jar" -type f -delete',
             *self._get_java_post_build_commands(),
         ]
 
@@ -128,7 +128,7 @@ class GradlePlugin(JavaPlugin):
         if not any(k in case_insensitive_env for k in ("http_proxy", "https_proxy")):
             return
 
-        gradle_user_home = self._part_info.part_build_dir / ".gradle"
+        gradle_user_home = self._part_info.part_build_subdir / ".gradle"
         gradle_user_home.mkdir(parents=True, exist_ok=True)
         gradle_properties = gradle_user_home / "gradle.properties"
         for protocol in ("http", "https"):
