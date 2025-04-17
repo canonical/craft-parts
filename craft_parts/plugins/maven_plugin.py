@@ -189,7 +189,7 @@ def _create_settings(settings_path: Path) -> None:
             ("active", "true"),
             ("protocol", protocol),
             ("host", proxy_url.hostname),
-            ("port", proxy_url.port),
+            ("port", str(proxy_url.port)),
         ]
         if proxy_url.username is not None and proxy_url.password is not None:
             proxy_tags.extend(
