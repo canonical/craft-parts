@@ -168,7 +168,7 @@ def test_get_build_commands_use_mvnw(part_info):
     properties = MavenPlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "maven-use-mvnw": True,
+            "maven-use-wrapper": True,
         }
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)

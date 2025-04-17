@@ -16,7 +16,7 @@ The ``maven-parameters`` key passes arguments to the ``mvn package`` command. Th
 parameter can also configure any command-line arguments. All values are passed after the
 initial package command, delimited by spaces.
 
-The ``maven-use-mvnw`` key leverages Maven wrapper files provided by the project to run
+The ``maven-use-wrapper`` key leverages Maven wrapper files provided by the project to run
 the package command. It replaces the default Maven executable with the project's
 ``mvnw`` file, to where the package command becomes ``./mvnw package``.
 
@@ -45,8 +45,8 @@ maven-parameters
 
 Used to add additional parameters to the ``mvn package`` command line.
 
-maven-use-mvnw
-~~~~~~~~~~~~~~
+maven-use-wrapper
+~~~~~~~~~~~~~~~~~
 **Type:** boolean
 
 Used to determine whether the build should use the Maven wrapper provided by the project

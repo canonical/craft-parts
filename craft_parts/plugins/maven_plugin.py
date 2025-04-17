@@ -38,7 +38,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["maven"] = "maven"
 
     maven_parameters: list[str] = []
-    maven_use_mvnw: bool = False
+    maven_use_wrapper: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -63,7 +63,7 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
           and there are no parts named maven-deps.
         """
         options = cast(MavenPluginProperties, self._options)
-        if options.maven_use_mvnw:
+        if options.maven_use_wrapper:
             return
         version = self.validate_dependency(
             dependency="mvn",
@@ -137,7 +137,7 @@ class MavenPlugin(JavaPlugin):
         self, options: MavenPluginProperties
     ) -> list[str]:
         """Validate mvnw file before execution."""
-        if not options.maven_use_mvnw:
+        if not options.maven_use_wrapper:
             return []
         return [
             """[ -e ${CRAFT_PART_BUILD_WORK}/mvnw ] || {

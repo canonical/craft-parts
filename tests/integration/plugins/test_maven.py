@@ -50,7 +50,7 @@ def test_maven_plugin(new_dir, partitions, use_mvnw, stage_packages):
             plugin: maven
             source: {source_location}
             stage-packages: {stage_packages}
-            maven-use-mvnw: {use_mvnw}
+            maven-use-wrapper: {use_mvnw}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -68,7 +68,7 @@ def test_maven_plugin_use_maven_wrapper_wrapper_missing(new_dir, partitions, use
             plugin: maven
             source: {source_location}
             stage-packages: [default-jre-headless]
-            maven-use-mvnw: True
+            maven-use-wrapper: True
         """
     )
     parts = yaml.safe_load(parts_yaml)
