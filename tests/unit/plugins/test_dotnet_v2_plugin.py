@@ -31,6 +31,73 @@ def part_info(new_dir):
     )
 
 
+@pytest.mark.parametrize(
+    "dotnet_version",
+    [
+        "8",
+        "8.0",
+        "9",
+        "9.1",
+        "10",
+        "10.0",
+    ])
+def test_parameter_valid_dotnet_version(part_info, dotnet_version):
+    properties = DotnetV2Plugin.properties_class.unmarshal({"source": ".", "dotnet-version": dotnet_version})
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
+
+    assert plugin != None
+
+@pytest.mark.parametrize(
+    "dotnet_version",
+    [
+        "8.",
+        "8a",
+        "0.8.0",
+        "3.1",
+        "abc",
+        "9.1a",
+    ])
+def test_parameter_invalid_dotnet_version(dotnet_version):
+    with pytest.raises(ValidationError) as raised:
+        DotnetV2Plugin.properties_class.unmarshal({"source": ".", "dotnet-version": dotnet_version})
+
+    assert raised
+
+
+@pytest.mark.parametrize(
+    "dotnet_verbosity",
+    [
+        "quiet", "q",
+        "minimal", "m",
+        "normal", "n",
+        "detailed", "d",
+        "diagnostic", "diag",
+    ])
+def test_parameter_valid_dotnet_verbosity(part_info, dotnet_verbosity):
+    properties = DotnetV2Plugin.properties_class.unmarshal(
+        {"source": ".", "dotnet-verbosity": dotnet_verbosity}
+    )
+    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
+
+    assert plugin != None
+
+
+@pytest.mark.parametrize(
+    "dotnet_verbosity",
+    [
+        "quietly",
+        "invalid",
+        "blah"
+    ])
+def test_parameter_invalid_dotnet_verbosity(dotnet_verbosity):
+    with pytest.raises(ValidationError) as raised:
+        DotnetV2Plugin.properties_class.unmarshal(
+            {"source": ".", "dotnet-verbosity": dotnet_verbosity}
+        )
+
+    assert raised
+
+
 def test_validate_environment(dependency_fixture, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
@@ -119,34 +186,6 @@ def test_get_build_packages(part_info):
     plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_packages() == set()
-
-
-@pytest.mark.parametrize(
-    "part_version",
-    [
-        "2",
-        "2.2",
-        "3",
-        "3.1",
-        "5",
-        "5.0",
-        "5.1",
-    ],
-)
-def test_get_build_environment_without_dotnet_deps_and_invalid_versions(
-    part_info, part_version
-):
-    properties = DotnetV2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet-version": part_version}
-    )
-    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
-
-    with pytest.raises(
-        ValueError, match="Version must be greater or equal to 6.0"
-    ) as raised:
-        plugin.get_build_environment()
-
-    assert raised
 
 
 @pytest.mark.parametrize("part_version", ["8", "8.0", "9", "9.1", "10"])
@@ -472,18 +511,6 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
     assert build_commands[2] == ""
 
 
-def test_get_build_commands_invalid_verbosity(part_info):
-    properties = DotnetV2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet-verbosity": "invalid"}
-    )
-    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
-
-    with pytest.raises(ValueError, match="Invalid verbosity level") as raised:
-        plugin.get_build_commands()
-
-    assert raised
-
-
 @pytest.mark.parametrize(
     "part_version",
     [
@@ -536,24 +563,6 @@ def test_get_build_commands_valid_version(part_info, part_version):
         ],
     )
     assert build_commands[2] == ""
-
-
-@pytest.mark.parametrize(
-    "part_version",
-    ["2", "2.2", "3", "3.1", "5", "5.0", "5.1"],
-)
-def test_get_build_commands_invalid_version(part_info, part_version):
-    properties = DotnetV2Plugin.properties_class.unmarshal(
-        {"source": ".", "dotnet-version": part_version}
-    )
-    plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
-
-    with pytest.raises(
-        ValueError, match="Version must be greater or equal to 6.0"
-    ) as raised:
-        plugin.get_build_commands()
-
-    assert raised
 
 
 def test_get_build_commands_restore_properties(part_info):
