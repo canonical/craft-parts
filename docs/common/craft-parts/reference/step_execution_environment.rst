@@ -144,3 +144,25 @@ if they exist:
 - ``$CRAFT_STAGE/usr/local/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig``
 - ``$CRAFT_STAGE/usr/local/share/pkgconfig``
 
+
+.. _plugin-variables:
+
+Plugin variables
+----------------
+
+A part's plugin can add its own set of environment variables or expand on
+build-related flags.
+
+The ``build-environment`` key can be used to either override the default
+environment variables or define new ones. The following example overrides
+default flags and searches for libraries in a non-standard path:
+
+.. code-block:: yaml
+
+    parts:
+      hello-part:
+        source: gnu-hello.tar.gz
+        plugin: autotools
+        build-environment:
+          - CFLAGS: "$CFLAGS -O3"  # add -O3 to the existing flags
+          - LDFLAGS: "-L$CRAFT_STAGE/non-standard/lib"
