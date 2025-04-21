@@ -505,7 +505,7 @@ class UserExecutionError(PartsError, abc.ABC):
     ) -> None:
         self.stderr = stderr
         super().__init__(
-            brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
+            brief=brief, resolution=resolution, doc_slug="/reference/plugins/"
         )
 
     @property
