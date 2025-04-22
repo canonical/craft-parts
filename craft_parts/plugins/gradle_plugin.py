@@ -33,11 +33,15 @@ from .properties import PluginProperties
 class GradlePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the gradle plugin.
 
-    Attributes:
-        gradle_init_script: The script to run before build script is executed.
-        gradle_parameters: Extra arguments to pass along to Gradle task execution.
-        gradle_task: The task to run to build the project.
-
+    - gradle_init_script:
+      (string)
+      The path to init script to run before build script is executed.
+    - gradle_parameters:
+      (list of strings)
+      Extra arguments to pass along to Gradle task execution.
+    - gradle_task:
+      (string)
+      The task to run to build the project.
     """
 
     plugin: Literal["gradle"] = "gradle"
