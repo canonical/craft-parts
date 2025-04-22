@@ -7,7 +7,7 @@ Changelog
 
 New features:
 
-- Add Gradle plugin.
+- Add a :ref:`Gradle plugin <craft_parts_gradle_plugin>`.
 
 2.7.0 (2025-03-18)
 -------------------

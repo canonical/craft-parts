@@ -11,15 +11,15 @@ Gradle (gradle) tooling. It is equivalent to running the following command:
     gradle <gradle-task> # or `./gradlew <gradle-task>` if gradlew file is provided by the project
 
 
-The plugin parameter ``gradle_parameters`` is used to additionally provide any arguments to the
-``gradle <gradle-task>`` command above. The ``gradle_parameters`` parameter can be used to further
+The plugin key ``gradle_parameters`` is used to additionally provide any arguments to the
+``gradle <gradle-task>`` command above. The ``gradle_parameters`` key can be used to further
 configure any command line arguments. All values are passed in after the initial
 ``gradle <gradle-task>`` command, delimited by spaces.
 
-The ``gradle-task`` parameter is used to supply the build task. The task should build a JAR
+The ``gradle-task`` key is used to supply the build task. The task should build a JAR
 artifact within the project directory.
 
-The ``gradle-init-script`` parameter is used to supply any Gradle initialization script if
+The ``gradle-init-script`` key is used to supply any Gradle initialization script if
 available, to configure the project prior to building. This script is executed via the 
 ``./gradlew --init-script <gradle-init-script>`` command.
 

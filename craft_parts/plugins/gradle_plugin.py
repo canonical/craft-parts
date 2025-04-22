@@ -81,12 +81,12 @@ class GradlePlugin(JavaPlugin):
 
     Additionally, this plugin uses the following plugin-specific keywords:
 
+    - gradle-init-script:
+      (list of strings)
+      Path to the Gradle init script to use during build task execution.
     - gradle-parameters:
       (list of strings)
       Flags to pass to the build using the gradle semantics for parameters.
-    - gradle_parameters:
-      (list of strings)
-      Extra arguments to pass along to Gradle task execution.
     - gradle_task:
       (string)
       The task to run to build the project.
