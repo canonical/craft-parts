@@ -2,15 +2,32 @@
 Changelog
 *********
 
-2.8.0 (2025-04-02)
+2.9.0 (2025-04-02)
 ------------------
 
 New features:
 
 - Add a :ref:`Gradle plugin <craft_parts_gradle_plugin>`.
 
-2.7.0 (2025-03-18)
+2.8.1 (2025-XX-XX)
+------------------
+
+Documentation:
+
+- Fix an issue where the documentation was hosting pages at URLs that contained the
+  ``.html`` extension. This regression was causing links to the site to break.
+
+2.8.0 (2025-04-10)
 -------------------
+
+New features:
+
+- Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
+  a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
+
+
+2.7.0 (2025-03-18)
+------------------
 
 New features:
 
