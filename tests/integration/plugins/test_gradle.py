@@ -52,7 +52,7 @@ ViaProxyName "tinyproxy"
 @pytest.fixture
 def testing_source_dir(new_dir):
     source_location = Path(__file__).parent / "test_gradle"
-    shutil.copytree(source_location, new_dir)
+    shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
     return new_dir
 
 
