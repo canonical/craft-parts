@@ -9,6 +9,14 @@ New features:
 
 - Add ``backstage`` and ``part/export`` directories for plugin use.
 
+2.8.1 (2025-XX-XX)
+------------------
+
+Documentation:
+
+- Fix an issue where the documentation was hosting pages at URLs that contained the
+  ``.html`` extension. This regression was causing links to the site to break.
+
 2.8.0 (2025-04-10)
 -------------------
 
@@ -19,7 +27,7 @@ New features:
 
 
 2.7.0 (2025-03-18)
--------------------
+------------------
 
 New features:
 
