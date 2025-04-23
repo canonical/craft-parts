@@ -24,37 +24,43 @@ Overlays
 
 When :ref:`overlays <overlays>` are enabled, Craft Parts calculates a checksum
 for each part's overlay layer to track when changes are made. The checksums are
-generated using the sha1 algorithm from the `hashlib
+generated using the SHA1 algorithm from the `hashlib
 <https://docs.python.org/3/library/hashlib.html>`_ library.
 
+Sources
+-------
+
 Downloading repositories
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-For parts that source a git repository, `git <https://git-scm.com/>`_ is used to
-clone the repository. Git uses SSH or HTTPS to communicate with the remote
-repository, depending on the URL provided.
+When a part sources a remote Git repository, Craft Parts uses `Git
+<https://git-scm.com/>`_ to clone it. Depending on the URL provided, Git uses either SSH
+or HTTPS as the secure communication protocol.
 
-Downloading sources
--------------------
+Downloading source files
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-For parts that source a deb, rpm, snap, tar, zip, or 7z file, the files are
-downloaded using the Requests library.
+When a part sources a ``.deb``, ``.rpm``, ``.snap``, ``.tar``, ``.zip``, or ``.7z``
+file, Craft Parts calls the Requests library to download it.
 
 The integrity of these files can be verified using a
 :ref:`checksum <source_checksum>`. The checksum is verified using hashlib, so all
-`algorithms available
+`algorithms available to the hashlib library
 <https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_
-to the hashlib library can be used.
+can be used.
+
+Dependencies
+------------
 
 Downloading system packages
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 System dependencies are downloaded and verified using snapd,
-`apt <https://wiki.debian.org/AptCLI>`_, `dnf <https://dnf.readthedocs.io>`_, and
-`yum <http://yum.baseurl.org>`_.
+`Apt <https://wiki.debian.org/AptCLI>`_, `DNF <https://dnf.readthedocs.io>`_, and
+`Yum <http://yum.baseurl.org>`_.
 
 Downloading build dependencies
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :ref:`Plugins <plugins>` use build tools to download and verify build dependencies.
 Some plugins can provision their own build tools, while others require the build
@@ -65,45 +71,45 @@ build tools and which build tools are used to download and verify dependencies.
   :header-rows: 1
 
   * - Plugin
-    - Method of provisioning the build tools
     - Build tools used
+    - Method of provisioning the build tools
 
   * - :ref:`Cargo Use <craft_parts_cargo_use_plugin>`
 
       :ref:`Rust <craft_parts_rust_plugin>`
-    - `rustup <https://rustup.rs>`_
     - `Cargo <https://doc.rust-lang.org/stable/cargo/>`_
+    - `rustup <https://rustup.rs>`_
 
   * - :ref:`dotnet <craft_parts_dotnet_plugin>`
-    - not provisioned
     - `dotnet SDK <https://dotnet.microsoft.com>`_
+    - not provisioned
 
   * - :ref:`Go <craft_parts_go_plugin>`
 
       :ref:`Go Use <craft_parts_go_use_plugin>`
-    - not provisioned
     - `Go toolchain <https://go.dev/ref/mod>`_
+    - not provisioned
 
   * - :ref:`Maven <craft_parts_maven_plugin>`
-    - not provisioned
     - `Maven <https://maven.apache.org>`_
+    - not provisioned
 
   * - :ref:`Meson <craft_parts_meson_plugin>`
-    - not provisioned
     - `Meson <https://mesonbuild.com>`_
+    - not provisioned
 
   * - :ref:`NPM <craft_parts_npm_plugin>`
-    - Requests library and `curl <https://curl.se/>`_
     - `npm <https://www.npmjs.com/>`_
+    - Requests library and `curl <https://curl.se/>`_
 
   * - :ref:`Poetry <craft_parts_poetry_plugin>`
-    - not provisioned
     - `Poetry <https://python-poetry.org>`_
+    - not provisioned
 
   * - :ref:`Python <craft_parts_python_plugin>`
-    - not provisioned
     - `pip <https://pip.pypa.io>`_
+    - not provisioned
 
   * - :ref:`uv <craft_parts_uv_plugin>`
-    - not provisioned
     - `uv <https://docs.astral.sh/uv>`_
+    - not provisioned
