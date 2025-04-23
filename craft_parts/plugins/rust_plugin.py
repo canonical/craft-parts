@@ -215,10 +215,12 @@ class RustPlugin(Plugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         variables = {
-            "PATH": "${CARGO_HOME}/bin:${HOME}/.cargo/bin:${PATH}",
+            "PATH": "${HOME}/.cargo/bin:${PATH}",
         }
 
-        registry_dir = self._part_info.work_dir / "cargo-registry"
+        registry_dir = (
+            self._part_info.project_info.dirs.backstage_dir / "cargo-registry"
+        )
         if registry_dir.exists():
             variables["CARGO_HOME"] = str(self._part_info.work_dir / "cargo")
 

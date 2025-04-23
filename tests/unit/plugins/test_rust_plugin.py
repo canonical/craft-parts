@@ -84,10 +84,12 @@ def test_get_build_packages(part_info):
     "cargo_registry", [False, True], ids=["without_registry", "with_registry"]
 )
 def test_get_build_environment(part_info, *, cargo_registry: bool):
-    expected_env = {"PATH": "${CARGO_HOME}/bin:${HOME}/.cargo/bin:${PATH}"}
+    expected_env = {"PATH": "${HOME}/.cargo/bin:${PATH}"}
 
     if cargo_registry:
-        (part_info.work_dir / "cargo-registry").mkdir()
+        (part_info.project_info.dirs.backstage_dir / "cargo-registry").mkdir(
+            parents=True
+        )
         expected_env["CARGO_HOME"] = str(part_info.work_dir / "cargo")
 
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
