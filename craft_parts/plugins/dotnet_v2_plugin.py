@@ -265,12 +265,9 @@ class DotnetV2Plugin(Plugin):
         return environment
 
     @override
-    def get_build_commands(self) -> list[str]:
-        """Return a list of commands to run during the build step."""
+    def get_pull_commands(self) -> list[str]:
+        """Return a list of commands to run during the pull step."""
         options = cast(DotnetV2PluginProperties, self._options)
-
-        # Check if version is valid
-        self._generate_snap_name(options)
 
         build_for = self._part_info.project_info.arch_build_for
         dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for)
@@ -283,13 +280,28 @@ class DotnetV2Plugin(Plugin):
         # Restore step
         restore_cmd = self._get_restore_command(dotnet_rid, options)
 
+        return [restore_cmd]
+
+    @override
+    def get_build_commands(self) -> list[str]:
+        """Return a list of commands to run during the build step."""
+        options = cast(DotnetV2PluginProperties, self._options)
+
+        build_for = self._part_info.project_info.arch_build_for
+        dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for)
+
+        if not dotnet_rid:
+            raise ValueError(
+                f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
+            )
+
         # Build step
         build_cmd = self._get_build_command(dotnet_rid, options)
 
         # Publish step
         publish_cmd = self._get_publish_command(dotnet_rid, options)
 
-        return [restore_cmd, build_cmd, publish_cmd]
+        return [build_cmd, publish_cmd]
 
     def _generate_snap_name(self, options: DotnetV2PluginProperties) -> str | None:
         version = options.dotnet_version
