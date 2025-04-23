@@ -203,7 +203,8 @@ def test_get_pull_commands_default_values(part_info):
     assert len(pull_commands) == 1
 
     pull_commands[0] = _remove_parameter_from_command(
-        pull_commands[0], ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"]
+        pull_commands[0],
+        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
     )
     assert pull_commands[0] == ""
 
