@@ -29,7 +29,7 @@ bracex==2.5.post1
     #   wcmatch
 canonical-sphinx==0.1.0
     # via -r requirements.txt
-canonical-sphinx-extensions==0.0.23
+canonical-sphinx-extensions==0.0.27
     # via
     #   -r requirements.txt
     #   canonical-sphinx
@@ -100,7 +100,7 @@ linkify-it-py==2.0.3
     # via
     #   -r requirements.txt
     #   canonical-sphinx
-lxml==5.3.0
+lxml==5.3.2
     # via
     #   -c (workspace)
     #   -r requirements.txt
@@ -128,7 +128,7 @@ mdurl==0.1.2
     # via
     #   -r requirements.txt
     #   markdown-it-py
-myst-parser==4.0.0
+myst-parser==4.0.1
     # via
     #   -r requirements.txt
     #   canonical-sphinx
@@ -260,7 +260,7 @@ sphinx-notfound-page==1.0.4
     #   canonical-sphinx
 sphinx-pydantic==0.1.1
     # via -r requirements.txt
-sphinx-reredirects==0.1.5
+sphinx-reredirects==0.1.6
     # via
     #   -r requirements.txt
     #   canonical-sphinx
@@ -324,11 +324,11 @@ urllib3==2.3.0
     #   -r requirements.txt
     #   requests
     #   requests-unixsocket2
-uvicorn==0.34.0
+uvicorn==0.34.2
     # via
     #   -r requirements.txt
     #   sphinx-autobuild
-watchfiles==1.0.4
+watchfiles==1.0.5
     # via
     #   -r requirements.txt
     #   sphinx-autobuild
