@@ -50,6 +50,7 @@ CopyTreeError
 CPATH
 CraftCtl
 Craftctl
+Cryptographic
 DDD
 DESTDIR
 DNF
@@ -344,6 +345,7 @@ config
 cp
 craftctl
 crafter
+cryptographic
 ctl
 customization
 cwd
@@ -378,6 +380,7 @@ github
 golang
 gzipped
 hardcoded
+hashlib
 hg
 http
 https
@@ -458,6 +461,7 @@ rsync
 runtime
 rustc
 rustup
+sanitized
 schemas
 scons
 scriptlet
@@ -485,6 +489,7 @@ subprocess
 subprocesses
 subtree
 summarized
+summarizes
 svn
 symlink
 symlinks
@@ -501,6 +506,7 @@ umount
 unbuilt
 unix
 unixsocket
+unixsockets
 unmark
 unmarshal
 unmount
@@ -509,6 +515,7 @@ unregister
 unregistering
 uri
 url
+urllib
 utilizing
 utils
 uv
