@@ -245,14 +245,9 @@ class DotnetV2Plugin(Plugin):
         build_on = self._part_info.project_info.arch_build_on
         snap_name = self._generate_snap_name(options)
 
-        if build_on in _DEBIAN_ARCH_TO_DOTNET_RID:
-            environment["LD_LIBRARY_PATH"] = (
-                f"/snap/{snap_name}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON:/snap/{snap_name}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON"
-            )
-        else:
-            raise ValueError(
-                f"Unsupported architecture {build_on!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
-            )
+        _, lib_path = self._get_dotnet_platform_info(build_on, snap_name)
+        if lib_path:
+            environment["LD_LIBRARY_PATH"] = lib_path
 
         snap_location = f"/snap/{snap_name}/current"
         dotnet_path = f"{snap_location}/usr/lib/dotnet"
@@ -270,12 +265,7 @@ class DotnetV2Plugin(Plugin):
         options = cast(DotnetV2PluginProperties, self._options)
 
         build_for = self._part_info.project_info.arch_build_for
-        dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for)
-
-        if not dotnet_rid:
-            raise ValueError(
-                f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
-            )
+        dotnet_rid, _ = self._get_dotnet_platform_info(build_for)
 
         # Restore step
         restore_cmd = self._get_restore_command(dotnet_rid, options)
@@ -288,12 +278,7 @@ class DotnetV2Plugin(Plugin):
         options = cast(DotnetV2PluginProperties, self._options)
 
         build_for = self._part_info.project_info.arch_build_for
-        dotnet_rid = _DEBIAN_ARCH_TO_DOTNET_RID.get(build_for)
-
-        if not dotnet_rid:
-            raise ValueError(
-                f"Unsupported architecture {build_for!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
-            )
+        dotnet_rid, _ = self._get_dotnet_platform_info(build_for)
 
         # Build step
         build_cmd = self._get_build_command(dotnet_rid, options)
@@ -399,3 +384,26 @@ class DotnetV2Plugin(Plugin):
             publish_cmd.append(f" {options.dotnet_project}")
 
         return " ".join(publish_cmd)
+
+    def _get_dotnet_platform_info(
+        self, arch: str, snap_name: str | None = None
+    ) -> tuple[str, str | None]:
+        """Get the .NET RID and library path for the given architecture.
+
+        :param arch: The architecture to get the info for.
+        :param snap_name: The name of the snap containing the .NET SDK.
+
+        :return: A tuple containing the .NET RID and the LD_LIBRARY_PATH value.
+
+        :raises ValueError: If the architecture is not supported.
+        """
+        if arch in _DEBIAN_ARCH_TO_DOTNET_RID:
+            rid = _DEBIAN_ARCH_TO_DOTNET_RID[arch]
+            lib_path = None
+            if snap_name:
+                lib_path = f"/snap/{snap_name}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON:/snap/{snap_name}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON"
+            return rid, lib_path
+        else:
+            raise ValueError(
+                f"Unsupported architecture {arch!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
+            )
