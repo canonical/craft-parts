@@ -81,9 +81,13 @@ def test_gradle_plugin_gradlew(
             source: {testing_source_dir}
             build-packages: [gradle, openjdk-21-jdk]
             build-environment:
+                  # This is just because the test environment has multiple java versions and will
+                  # use default-jre if unspecified.
                 - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
                 - http_proxy: {local_proxy_url}
                 - https_proxy: {local_proxy_url}
+                  # Set GRADLE_USER_HOME dir to the according part's build .gradle dir to avoid
+                  # interfering with other tests.
                 - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
             stage-packages: [openjdk-21-jdk]
         """
