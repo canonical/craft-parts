@@ -16,3 +16,4 @@ can be used, and the lifecycle of the different steps performed on them.
    /common/craft-parts/explanation/overlays
    /common/craft-parts/explanation/dump_plugin
    /common/craft-parts/explanation/gradle_plugin
+   Cryptographic technology <cryptography>
