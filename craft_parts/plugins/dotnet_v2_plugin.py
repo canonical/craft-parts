@@ -403,7 +403,7 @@ class DotnetV2Plugin(Plugin):
             if snap_name:
                 lib_path = f"/snap/{snap_name}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON:/snap/{snap_name}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON"
             return rid, lib_path
-        else:
-            raise ValueError(
-                f"Unsupported architecture {arch!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
-            )
+
+        raise ValueError(
+            f"Unsupported architecture {arch!r}. Supported architectures are {humanize_list(_DEBIAN_ARCH_TO_DOTNET_RID.keys(), 'and')}."
+        )
