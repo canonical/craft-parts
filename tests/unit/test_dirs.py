@@ -59,7 +59,9 @@ def test_dirs_work_dir_resolving(partitions):
 @pytest.mark.usefixtures("enable_partitions_feature")
 @given(
     partitions=strategies.lists(
-        strategies.text(strategies.sampled_from(string.ascii_lowercase), min_size=1),
+        strategies.text(
+            strategies.sampled_from(string.ascii_lowercase), min_size=1
+        ).filter(lambda x: x != "default"),
         min_size=1,
         unique=True,
     )
