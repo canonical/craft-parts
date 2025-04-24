@@ -28,7 +28,7 @@ from craft_parts import LifecycleManager, Step, errors
 def testing_source_dir(new_dir):
     source_location = Path(__file__).parent / "test_maven"
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
-    return new_dir
+    return Path(new_dir)
 
 
 @pytest.fixture
@@ -37,6 +37,8 @@ def use_maven_wrapper(request, testing_source_dir):
         yield request.param
         return
     (testing_source_dir / "mvnw").unlink(missing_ok=True)
+    yield request.param
+    return
 
 
 @pytest.mark.parametrize(
