@@ -401,7 +401,10 @@ class DotnetV2Plugin(Plugin):
             rid = _DEBIAN_ARCH_TO_DOTNET_RID[arch]
             lib_path = None
             if snap_name:
-                lib_path = f"/snap/{snap_name}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON:/snap/{snap_name}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_ON"
+                lib_path = (
+                    f"/snap/{snap_name}/current/lib/{self._part_info.project_info.arch_triplet_build_on}:"
+                    f"/snap/{snap_name}/current/usr/lib/{self._part_info.project_info.arch_triplet_build_on}"
+                )
             return rid, lib_path
 
         raise ValueError(
