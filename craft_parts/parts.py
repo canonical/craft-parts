@@ -382,6 +382,7 @@ class Part:
         """Return the backstage area containing internal artifacts from all parts."""
         return self.dirs.backstage_dir
 
+    @property
     def stage_dir(self) -> Path:
         """Return the staging area containing the installed files from all parts.
 

@@ -31,6 +31,12 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
+class MigrationContents(BaseModel):
+    """Files and directories migrated."""
+
+    files: set[str] = set()
+    directories: set[str] = set()
+
 class MigrationState(BaseModel):
     """State information collected when migrating steps.
 
@@ -41,6 +47,7 @@ class MigrationState(BaseModel):
 
     files: set[str] = set()
     directories: set[str] = set()
+    partitions_contents: dict[str, MigrationContents] = {}
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "MigrationState":
@@ -67,6 +74,26 @@ class MigrationState(BaseModel):
         filepath.parent.mkdir(parents=True, exist_ok=True)
         yaml_data = yaml.safe_dump(self.model_dump())
         os_utils.TimedWriter.write_text(filepath, yaml_data)
+
+    def contents(self, partition: str | None) -> tuple[set[str], set[str]] | None:
+        """Return contents for a given partition."""
+        if not partition or partition == "default":
+            return self.files, self.directories
+        if self.partitions_contents.get(partition):
+            return self.partitions_contents.get(
+                partition
+            ).files, self.partitions_contents.get(partition).directories
+
+        return None
+
+    def add(
+        self, *, files: set[str] | None = None, directories: set[str] | None = None
+    ) -> None:
+        """Add files and directories to migrated contents."""
+        if files:
+            self.files |= files
+        if directories:
+            self.directories |= directories
 
 
 class StepState(MigrationState, ABC):
