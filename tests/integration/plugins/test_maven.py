@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import shutil
 import subprocess
 import textwrap
 from pathlib import Path
@@ -24,15 +25,18 @@ from craft_parts import LifecycleManager, Step, errors
 
 
 @pytest.fixture
-def use_mvnw(request):
+def testing_source_dir(new_dir):
+    source_location = Path(__file__).parent / "test_maven"
+    shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
+    return new_dir
+
+
+@pytest.fixture
+def use_gradlew(request, testing_source_dir):
     if request.param:
         yield request.param
         return
-    source_location = Path(__file__).parent / "test_maven"
-    mvnw_file = source_location / "mvnw"
-    mvnw_file = mvnw_file.rename(f"{source_location}/mvnw.backup")
-    yield request.param
-    mvnw_file.rename(f"{source_location}/mvnw")
+    (testing_source_dir / "mvnw").unlink(missing_ok=True)
 
 
 @pytest.mark.parametrize(
@@ -40,15 +44,15 @@ def use_mvnw(request):
     [(True, "[default-jre-headless]"), (False, "[default-jre-headless, maven]")],
     indirect=["use_mvnw"],
 )
-def test_maven_plugin(new_dir, partitions, use_mvnw, stage_packages):
-    source_location = Path(__file__).parent / "test_maven"
-
+def test_maven_plugin(
+    new_dir, testing_source_dir, partitions, use_mvnw, stage_packages
+):
     parts_yaml = textwrap.dedent(
         f"""
         parts:
           foo:
             plugin: maven
-            source: {source_location}
+            source: {testing_source_dir}
             stage-packages: {stage_packages}
             maven-use-wrapper: {use_mvnw}
         """
