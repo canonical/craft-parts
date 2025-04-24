@@ -65,16 +65,14 @@ def test_maven_plugin(
 
 @pytest.mark.parametrize("use_maven_wrapper", [False], indirect=True)
 def test_maven_plugin_use_maven_wrapper_wrapper_missing(
-    new_dir, partitions, use_maven_wrapper
+    new_dir, partitions, testing_source_dir, use_maven_wrapper
 ):
-    source_location = Path(__file__).parent / "test_maven"
-
     parts_yaml = textwrap.dedent(
         f"""
         parts:
           foo:
             plugin: maven
-            source: {source_location}
+            source: {testing_source_dir}
             stage-packages: [default-jre-headless]
             maven-use-wrapper: True
         """
