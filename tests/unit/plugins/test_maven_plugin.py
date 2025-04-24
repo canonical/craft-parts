@@ -164,7 +164,7 @@ def test_get_build_commands_with_parameters(part_info):
     )
 
 
-def test_get_build_commands_use_mvnw(part_info):
+def test_get_build_commands_use_maven_wrapper(part_info):
     properties = MavenPlugin.properties_class.unmarshal(
         {
             "source": ".",

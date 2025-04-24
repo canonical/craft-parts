@@ -32,7 +32,7 @@ def testing_source_dir(new_dir):
 
 
 @pytest.fixture
-def use_gradlew(request, testing_source_dir):
+def use_maven_wrapper(request, testing_source_dir):
     if request.param:
         yield request.param
         return
@@ -40,12 +40,12 @@ def use_gradlew(request, testing_source_dir):
 
 
 @pytest.mark.parametrize(
-    ("use_mvnw", "stage_packages"),
+    ("use_maven_wrapper", "stage_packages"),
     [(True, "[default-jre-headless]"), (False, "[default-jre-headless, maven]")],
-    indirect=["use_mvnw"],
+    indirect=["use_maven_wrapper"],
 )
 def test_maven_plugin(
-    new_dir, testing_source_dir, partitions, use_mvnw, stage_packages
+    new_dir, testing_source_dir, partitions, use_maven_wrapper, stage_packages
 ):
     parts_yaml = textwrap.dedent(
         f"""
@@ -54,15 +54,17 @@ def test_maven_plugin(
             plugin: maven
             source: {testing_source_dir}
             stage-packages: {stage_packages}
-            maven-use-wrapper: {use_mvnw}
+            maven-use-wrapper: {use_maven_wrapper}
         """
     )
     parts = yaml.safe_load(parts_yaml)
     _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
 
 
-@pytest.mark.parametrize("use_mvnw", [False], indirect=True)
-def test_maven_plugin_use_maven_wrapper_wrapper_missing(new_dir, partitions, use_mvnw):
+@pytest.mark.parametrize("use_maven_wrapper", [False], indirect=True)
+def test_maven_plugin_use_maven_wrapper_wrapper_missing(
+    new_dir, partitions, use_maven_wrapper
+):
     source_location = Path(__file__).parent / "test_maven"
 
     parts_yaml = textwrap.dedent(
