@@ -10,7 +10,7 @@ help: ## Show this help.
 autoformat: ## Run automatic code formatters.
 	autoflake --remove-all-unused-imports --ignore-init-module-imports -ri $(SOURCES)
 	ruff check --fix $(SOURCES)
-	black $(SOURCES)
+	ruff format $(SOURCES)
 
 .PHONY: clean
 clean: ## Clean artifacts from building, testing, etc.
@@ -67,15 +67,15 @@ install: clean ## Install python package.
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-codespell test-ruff test-mypy test-pydocstyle test-pyright ## Run all linting tests
+lint: test-codespell test-ruff test-mypy test-pydocstyle test-pyright ## Run all linting tests
 
 .PHONY: release
 release: dist ## Release with twine.
 	twine upload dist/*
 
 .PHONY: test-black
-test-black:
-	black --check --diff $(SOURCES)
+test-black: test-ruff
+	@echo "\033[0;31mWARNING\033[0m: Switched from black to ruff"
 
 .PHONY: test-codespell
 test-codespell:
@@ -86,9 +86,10 @@ test-flake8:
 	echo "\033[0;31mWARNING\033[0m: Did you mean to run \`make ruff\`?"
 	flake8 $(SOURCES)
 
-.PHONY: test-ruff
-test-ruff:
+.PHONY: test-ruff lint-ruff
+test-ruff lint-ruff:
 	ruff check $(SOURCES)
+	ruff format --diff $(SOURCES)
 
 .PHONY: test-integrations
 test-integrations: ## Run integration tests.
