@@ -218,7 +218,9 @@ class RustPlugin(Plugin):
             "PATH": "${HOME}/.cargo/bin:${PATH}",
         }
 
-        registry_dir = self._part_info.work_dir / "cargo-registry"
+        registry_dir = (
+            self._part_info.project_info.dirs.backstage_dir / "cargo-registry"
+        )
         if registry_dir.exists():
             variables["CARGO_HOME"] = str(self._part_info.work_dir / "cargo")
 

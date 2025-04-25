@@ -27,6 +27,9 @@ from .step_state import StepState, validate_hex_string
 class StageState(StepState):
     """Context information for the stage step."""
 
+    backstage_files: set[str] = set()
+    backstage_directories: set[str] = set()
+
     overlay_hash: Annotated[
         str | None, pydantic.BeforeValidator(validate_hex_string)
     ] = None
