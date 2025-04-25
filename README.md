@@ -46,7 +46,7 @@ The following are required to run integration tests (it is a default target for 
 sudo snap install chisel --candidate
 sudo apt install ninja-build cmake scons qt5-qmake p7zip rpm \
                  autoconf automake autopoint gcc git gperf help2man libtool texinfo \
-                 pkg-config
+                 pkg-config tinyproxy
 ```
 
 Create virtual environment to develop in and activate it:
