@@ -22,6 +22,8 @@ Documentation:
 
 New features:
 
+- With the new ``maven-use-wrapper`` key in the Maven plugin, you can enable 
+  your project's ``mvnw`` wrapper script.
 - Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
   a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
 
