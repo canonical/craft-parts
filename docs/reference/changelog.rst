@@ -2,6 +2,13 @@
 Changelog
 *********
 
+2.9.0 (2025-04-02)
+------------------
+
+New features:
+
+- Add a :ref:`Gradle plugin <craft_parts_gradle_plugin>`.
+
 2.8.1 (2025-XX-XX)
 ------------------
 
