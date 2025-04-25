@@ -121,10 +121,30 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
-        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.RERUN,
+            reason="'source' property changed",
+        ),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -154,16 +174,36 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         # fmt: off
-        Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.UPDATE,
+            reason="source changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.UPDATE,
+            reason="'PULL' step changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="'BUILD' step changed"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RERUN,
+            reason="'BUILD' step changed",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]

@@ -16,7 +16,6 @@
 
 """The Meson plugin."""
 
-
 import logging
 import shlex
 from typing import Literal, cast

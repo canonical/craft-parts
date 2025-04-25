@@ -123,7 +123,10 @@ def test_uv_plugin_override_get_system_interpreter(
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
 def test_uv_plugin_no_system_interpreter(
-    new_dir, partitions, uv_parts_simple, remove_symlinks: bool  # noqa: FBT001
+    new_dir,
+    partitions,
+    uv_parts_simple,
+    remove_symlinks: bool,  # noqa: FBT001
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 

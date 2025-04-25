@@ -59,9 +59,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the staged file is the one that was staged last
-        assert (
-            Path(stage_dir, "foo").read_text() == "installed"
-        ), "Expected staging to allow overwriting of already-staged files"
+        assert Path(stage_dir, "foo").read_text() == "installed", (
+            "Expected staging to allow overwriting of already-staged files"
+        )
 
     def test_migrate_files_supports_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
@@ -89,13 +89,13 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlink was preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to still be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to still be a symlink."
+        )
 
-        assert (
-            os.readlink(os.path.join(stage_dir, "bar")) == "foo"
-        ), "Expected migrated 'bar' to point to 'foo'"
+        assert os.readlink(os.path.join(stage_dir, "bar")) == "foo", (
+            "Expected migrated 'bar' to point to 'foo'"
+        )
 
     def test_migrate_files_preserves_symlink_file(self, partitions):
         install_dir = Path("install")
@@ -119,9 +119,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
     def test_migrate_files_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
@@ -176,12 +176,12 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
-        assert Path(
-            stage_dir, "a/bar"
-        ).is_symlink(), "Expected migrated 'a/bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
+        assert Path(stage_dir, "a/bar").is_symlink(), (
+            "Expected migrated 'a/bar' to be a symlink."
+        )
 
     def test_migrate_files_preserves_symlink_empty_dir(self, partitions):
         install_dir = Path("install")
@@ -206,9 +206,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
     def test_migrate_files_preserves_symlink_nonempty_dir(self, partitions):
         install_dir = Path("install")
@@ -235,9 +235,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
     def test_migrate_files_preserves_symlink_nested_dir(self, partitions):
         install_dir = Path("install")
@@ -263,13 +263,13 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
-        assert os.path.islink(
-            os.path.join("stage", "a", "bar")
-        ), "Expected migrated 'a/bar' to be a symlink."
+        assert os.path.islink(os.path.join("stage", "a", "bar")), (
+            "Expected migrated 'a/bar' to be a symlink."
+        )
 
     def test_migrate_files_supports_follow_symlinks(self, partitions):
         install_dir = Path("install")
@@ -297,12 +297,12 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlink was preserved
-        assert (
-            Path(stage_dir, "bar").is_symlink() is False
-        ), "Expected migrated 'bar' to no longer be a symlink."
-        assert (
-            Path(stage_dir, "bar").read_text() == "installed"
-        ), "Expected migrated 'bar' to be a copy of 'foo'"
+        assert Path(stage_dir, "bar").is_symlink() is False, (
+            "Expected migrated 'bar' to no longer be a symlink."
+        )
+        assert Path(stage_dir, "bar").read_text() == "installed", (
+            "Expected migrated 'bar' to be a copy of 'foo'"
+        )
 
     def test_migrate_files_preserves_file_mode(self, partitions):
         install_dir = Path("install")

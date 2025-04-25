@@ -69,7 +69,6 @@ dev = [  # TODO: Remove this once we've switched CI to uv
 
     # Project-specific linting
     "autoflake",
-    "black",
     "codespell",
     "pydocstyle",
     "tox",
