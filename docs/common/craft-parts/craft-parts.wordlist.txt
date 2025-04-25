@@ -420,6 +420,8 @@ migratable
 mkdirs
 mountpoint
 mountpoints
+mvn
+mvnw
 namespace
 namespaces
 namespaced

@@ -164,6 +164,28 @@ def test_get_build_commands_with_parameters(part_info):
     )
 
 
+def test_get_build_commands_use_maven_wrapper(part_info):
+    properties = MavenPlugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "maven-use-wrapper": True,
+        }
+    )
+    plugin = MavenPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == (
+        [
+            """[ -e ${CRAFT_PART_BUILD_WORK}/mvnw ] || {
+>&2 echo 'mvnw file not found, refer to plugin documentation: \
+https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
+common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
+}""",
+            "${CRAFT_PART_BUILD_WORK}/mvnw package",
+            *plugin._get_java_post_build_commands(),
+        ]
+    )
+
+
 def test_settings_no_proxy(part_info, new_dir):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
@@ -176,12 +198,17 @@ def test_settings_no_proxy(part_info, new_dir):
         assert settings_path.exists() is False
 
 
-@pytest.mark.parametrize("protocol", ["http", "https"])
+@pytest.mark.parametrize(
+    ("protocol", "expected_protocol"),
+    [("http", "http"), ("https", "https"), ("HTTP", "http"), ("HTTPS", "https")],
+)
 @pytest.mark.parametrize(
     ("no_proxy", "non_proxy_hosts"),
     [(None, "localhost"), ("foo", "foo"), ("foo,bar", "foo|bar")],
 )
-def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
+def test_settings_proxy(
+    part_info, protocol, expected_protocol, no_proxy, non_proxy_hosts
+):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
     settings_path = Path(
@@ -196,9 +223,9 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
           <interactiveMode>false</interactiveMode>
           <proxies>
             <proxy>
-              <id>{protocol}_proxy</id>
+              <id>{expected_protocol}_proxy</id>
               <active>true</active>
-              <protocol>{protocol}</protocol>
+              <protocol>{expected_protocol}</protocol>
               <host>my-proxy-host</host>
               <port>3128</port>
               <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>
@@ -208,7 +235,10 @@ def test_settings_proxy(part_info, protocol, no_proxy, non_proxy_hosts):
         """
     )
 
-    env_dict = {f"{protocol}_proxy": "http://my-proxy-host:3128"}
+    env_dict = {
+        f"{protocol}_proxy": "http://my-proxy-host:3128",
+        f"{protocol}_PROXY": "http://my-proxy-host:3128",
+    }
     if no_proxy:
         env_dict["no_proxy"] = no_proxy
 
