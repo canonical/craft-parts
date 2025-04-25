@@ -150,7 +150,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
 def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     """Add project and part information variables to the environment.
 
-    :param step_info: Information about the current step.
+    :param info: Information about the project.
 
     :return: A dictionary containing environment variables and values.
     """

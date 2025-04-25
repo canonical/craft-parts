@@ -281,6 +281,9 @@ class TestCleaning:
               foo:
                 plugin: dump
                 source: foo
+                override-build: |
+                  craftctl default
+                  touch $CRAFT_PART_INSTALL/../export/export_file
               bar:
                 plugin: dump
                 source: bar
@@ -307,6 +310,7 @@ class TestCleaning:
         return [
             Path("parts/foo/src/foo.txt"),
             Path("parts/foo/install/foo.txt"),
+            Path("parts/foo/export/export_file"),
             Path("stage/foo.txt"),
             Path("prime/foo.txt"),
         ]
@@ -361,10 +365,15 @@ class TestCleaning:
         assert sorted(state_dir.rglob("*")) == [
             state_dir / file for file in state_files
         ]
+        assert Path("parts").exists()
+        assert Path("backstage").exists()
+        assert Path("stage").exists()
+        assert Path("prime").exists()
 
         self._lifecycle.clean()
 
         assert Path("parts").exists() is False
+        assert Path("backstage").exists() is False
         assert Path("stage").exists() is False
         assert Path("prime").exists() is False
 
@@ -414,6 +423,7 @@ class TestCleaning:
         assert Path("parts/bar/src/bar.txt").exists() == step_is_overlay_or_later
         assert Path("parts/foo/install/foo.txt").exists() == step_is_stage_or_later
         assert Path("parts/bar/install/bar.txt").exists() == step_is_stage_or_later
+        assert Path("backstage/export_file").exists() == step_is_prime
         assert Path("stage/foo.txt").exists() == step_is_prime
         assert Path("stage/bar.txt").exists() == step_is_prime
         assert Path("prime").is_file() is False
