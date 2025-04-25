@@ -133,7 +133,7 @@ class TestPluginCMakePlugin:
         assert plugin.get_build_commands() == [
             (
                 f'cmake "{plugin._part_info.part_src_dir}" -G "Unix Makefiles" '
-                f'{" ".join(cmake_parameters)}'
+                f"{' '.join(cmake_parameters)}"
             ),
             f"cmake --build . -- -j{plugin._part_info.parallel_build_count}",
             (

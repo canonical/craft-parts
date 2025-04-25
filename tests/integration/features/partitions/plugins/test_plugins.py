@@ -17,7 +17,6 @@
 # Allow redefinition in order to include parent tests below.
 # mypy: disable-error-code="no-redef"
 
-
 # These wildcard imports make pytest run any non-overridden plugin tests here.
 # pylint: disable=wildcard-import, unused-import, function-redefined, unused-wildcard-import
 # pyright: reportGeneralTypeIssues=false

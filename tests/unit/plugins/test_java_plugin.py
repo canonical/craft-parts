@@ -31,7 +31,6 @@ def part_info(new_dir):
 
 
 def test_java_plugin_no_java(part_info, mocker):
-
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
@@ -44,7 +43,6 @@ def test_java_plugin_no_java(part_info, mocker):
 
 
 def test_java_plugin_jre_not_17(part_info, mocker):
-
     orig_check_java = JavaPlugin._check_java
 
     def _check_java(self, javac: str):

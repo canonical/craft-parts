@@ -238,8 +238,7 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
                 os.rmdir(migrated_directory)
         except FileNotFoundError:
             logger.warning(
-                "Attempted to remove directory '%s', but it didn't exist. "
-                "Skipping...",
+                "Attempted to remove directory '%s', but it didn't exist. Skipping...",
                 each_dir,
             )
 

@@ -56,9 +56,7 @@ def mock_validator(monkeypatch):
     ],
 )
 def test_validate_rust_channel(rust_channel):
-    RustPluginProperties.validate_rust_channel(
-        rust_channel
-    )  # pyright: ignore[reportCallIssue]
+    RustPluginProperties.validate_rust_channel(rust_channel)  # pyright: ignore[reportCallIssue]
 
 
 def test_get_build_snaps(fake_process: pytest_subprocess.FakeProcess, part_info):

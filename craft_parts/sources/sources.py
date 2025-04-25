@@ -207,7 +207,8 @@ def _get_source_handler_class(
 
 
 def get_source_type_from_uri(
-    source: str, ignore_errors: bool = False  # noqa: FBT001, FBT002
+    source: str,
+    ignore_errors: bool = False,  # noqa: FBT001, FBT002
 ) -> str:
     """Return the source type based on the given source URI.
 

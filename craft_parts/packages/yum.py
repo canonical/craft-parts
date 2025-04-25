@@ -41,9 +41,7 @@ class YUMRepository(BaseRepository):
         )
 
     @classmethod
-    def get_package_libraries(
-        cls, package_name: str
-    ) -> set[str]:  # pylint: disable=unused-argument
+    def get_package_libraries(cls, package_name: str) -> set[str]:  # pylint: disable=unused-argument
         """Return a list of libraries in package_name.
 
         XXX: method left out of YUMRepository's MVP; cannot return a sane default so

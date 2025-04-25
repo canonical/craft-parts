@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for partition utilities."""
+
 from pathlib import Path, PurePosixPath
 
 import pytest
@@ -93,12 +94,12 @@ PARTITION_EXPECTED_INNER_PATHS = [
 ]
 
 # Prevent us from adding nonmatching paths for tests below.
-assert len(PARTITION_PATHS) == len(
-    PARTITION_EXPECTED_PARTITIONS
-), "Expected partition paths and input partition paths need to match 1:1"
-assert len(PARTITION_PATHS) == len(
-    PARTITION_EXPECTED_INNER_PATHS
-), "Expected partition paths and input partition paths need to match 1:1"
+assert len(PARTITION_PATHS) == len(PARTITION_EXPECTED_PARTITIONS), (
+    "Expected partition paths and input partition paths need to match 1:1"
+)
+assert len(PARTITION_PATHS) == len(PARTITION_EXPECTED_INNER_PATHS), (
+    "Expected partition paths and input partition paths need to match 1:1"
+)
 
 
 @pytest.mark.parametrize(

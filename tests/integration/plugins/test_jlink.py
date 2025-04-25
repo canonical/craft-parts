@@ -172,7 +172,6 @@ def test_jlink_plugin_bad_java_home(new_dir, partitions):
 
 
 def test_jlink_plugin_java_home(new_dir, partitions):
-
     parts_yaml = textwrap.dedent(
         """
         parts:

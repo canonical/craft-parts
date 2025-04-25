@@ -240,7 +240,10 @@ class XAttributeError(PartsError):
     """
 
     def __init__(
-        self, key: str, path: str, is_write: bool = False  # noqa: FBT001, FBT002
+        self,
+        key: str,
+        path: str,
+        is_write: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         self.key = key
         self.path = path

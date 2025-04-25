@@ -305,7 +305,7 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
 
         local_snap_info = snap_pkg.get_local_snap_info()
         if local_snap_info:
-            snaps_installed.append(f'{snap_pkg.name}={local_snap_info["revision"]}')
+            snaps_installed.append(f"{snap_pkg.name}={local_snap_info['revision']}")
     return snaps_installed
 
 
@@ -341,7 +341,7 @@ def get_snapd_socket_path_template() -> str:
 
 
 def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[bytes]:
-    slug = f'snaps/{parse.quote(snap_name, safe="")}/file'
+    slug = f"snaps/{parse.quote(snap_name, safe='')}/file"
     url = get_snapd_socket_path_template().format(slug)
     try:
         snap_file: requests.Response = requests_unixsocket.get(url)
@@ -352,7 +352,7 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[by
 
 
 def _get_local_snap_info(snap_name: str) -> dict[str, Any]:
-    slug = f'snaps/{parse.quote(snap_name, safe="")}'
+    slug = f"snaps/{parse.quote(snap_name, safe='')}"
     url = get_snapd_socket_path_template().format(slug)
     try:
         snap_info = requests_unixsocket.get(url)
@@ -385,4 +385,4 @@ def get_installed_snaps() -> list[str]:
         local_snaps = snap_info.json()["result"]
     except exceptions.ConnectionError:
         local_snaps = []
-    return [f'{snap["name"]}={snap["revision"]}' for snap in local_snaps]
+    return [f"{snap['name']}={snap['revision']}" for snap in local_snaps]

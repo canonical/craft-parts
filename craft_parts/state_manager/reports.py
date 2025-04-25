@@ -77,7 +77,7 @@ class OutdatedReport:
         if not reasons:
             return ""
 
-        return f'{formatting_utils.humanize_list(reasons, "and", "{}")} changed'
+        return f"{formatting_utils.humanize_list(reasons, 'and', '{}')} changed"
 
 
 class DirtyReport:
@@ -153,6 +153,6 @@ class DirtyReport:
         if not reasons:
             return ""
 
-        return f'{formatting_utils.humanize_list(reasons, "and", "{}")} changed'
+        return f"{formatting_utils.humanize_list(reasons, 'and', '{}')} changed"
 
     # pylint: enable=too-many-branches
