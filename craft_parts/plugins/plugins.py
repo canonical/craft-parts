@@ -28,6 +28,7 @@ from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
 from .go_use_plugin import GoUsePlugin
+from .gradle_plugin import GradlePlugin
 from .jlink_plugin import JLinkPlugin
 from .make_plugin import MakePlugin
 from .maven_plugin import MavenPlugin
@@ -60,6 +61,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "dump": DumpPlugin,
     "go": GoPlugin,
     "go-use": GoUsePlugin,
+    "gradle": GradlePlugin,
     "jlink": JLinkPlugin,
     "make": MakePlugin,
     "maven": MavenPlugin,
