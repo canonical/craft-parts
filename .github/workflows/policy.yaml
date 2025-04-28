@@ -1,0 +1,8 @@
+name: Policy
+on: [pull_request]
+
+jobs:
+  company:
+    uses: lengau/starflow/.github/workflows/corporate-policy.yaml@work/check-policy
+  team:
+    uses: lengau/starflow/.github/workflows/team-policy.yaml@work/check-policy
