@@ -239,7 +239,10 @@ class DotnetV2Plugin(Plugin):
         }
 
         # .NET binary provided by the user
-        if "dotnet-deps" in self._part_info.part_dependencies:
+        if (
+            "dotnet-deps" in self._part_info.part_dependencies
+            or options.dotnet_version is None
+        ):
             return environment
 
         build_on = self._part_info.project_info.arch_build_on
