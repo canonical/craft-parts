@@ -260,8 +260,8 @@ class DotnetV2Plugin(Plugin):
         return environment
 
     @override
-    def get_pull_commands(self) -> list[str]:
-        """Return a list of commands to run during the pull step."""
+    def get_build_commands(self) -> list[str]:
+        """Return a list of commands to run during the build step."""
         options = cast(DotnetV2PluginProperties, self._options)
 
         build_for = self._part_info.project_info.arch_build_for
@@ -270,23 +270,13 @@ class DotnetV2Plugin(Plugin):
         # Restore step
         restore_cmd = self._get_restore_command(dotnet_rid, options)
 
-        return [restore_cmd]
-
-    @override
-    def get_build_commands(self) -> list[str]:
-        """Return a list of commands to run during the build step."""
-        options = cast(DotnetV2PluginProperties, self._options)
-
-        build_for = self._part_info.project_info.arch_build_for
-        dotnet_rid, _ = self._get_dotnet_platform_info(build_for)
-
         # Build step
         build_cmd = self._get_build_command(dotnet_rid, options)
 
         # Publish step
         publish_cmd = self._get_publish_command(dotnet_rid, options)
 
-        return [build_cmd, publish_cmd]
+        return [restore_cmd, build_cmd, publish_cmd]
 
     def _generate_snap_name(self, options: DotnetV2PluginProperties) -> str | None:
         version = options.dotnet_version
