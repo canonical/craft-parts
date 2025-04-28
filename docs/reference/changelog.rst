@@ -2,27 +2,20 @@
 Changelog
 *********
 
-2.10.0 (2025-MM-DD)
--------------------
-
-- Add ``backstage`` and ``part/export`` directories for plugin use.
-
-For a complete list of commits, check out the `2.10.0`_ release on GitHub.
-
-2.9.0 (2025-04-02)
+2.9.0 (2025-04-28)
 ------------------
 
 New features:
 
 - Add a :ref:`Gradle plugin <craft_parts_gradle_plugin>`.
-
-2.8.1 (2025-XX-XX)
-------------------
+- Add ``backstage`` and ``part/export`` directories for plugin use.
 
 Documentation:
 
 - Fix an issue where the documentation was hosting pages at URLs that contained the
   ``.html`` extension. This regression was causing links to the site to break.
+
+For a complete list of commits, check out the `2.9.0`_ release on GitHub.
 
 2.8.0 (2025-04-10)
 -------------------
@@ -863,7 +856,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
-.. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
+.. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
 .. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
 .. _2.3.1: https://github.com/canonical/craft-parts/releases/tag/2.3.1
