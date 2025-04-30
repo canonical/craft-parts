@@ -2,6 +2,13 @@
 Changelog
 *********
 
+2.9.1 (2025-MM-DD)
+------------------
+
+Fixes:
+
+- Update the uv plugin to work with uv 0.7.0 and up.
+
 2.9.0 (2025-04-28)
 ------------------
 
