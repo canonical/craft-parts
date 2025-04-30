@@ -71,8 +71,17 @@ class UvPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             dependency="uv",
             plugin_name=self._options.plugin,
             part_dependencies=part_dependencies,
-            argument="version",
+            argument="self version",
         )
+        # Fallback behavior for uv<0.7.0
+        if version.startswith("error: unrecognized subcommand"):
+            version = self.validate_dependency(
+                dependency="uv",
+                plugin_name=self._options.plugin,
+                part_dependencies=part_dependencies,
+                argument="version",
+            )
+
         if not version.startswith("uv") and (
             part_dependencies is None or "uv-deps" not in part_dependencies
         ):
