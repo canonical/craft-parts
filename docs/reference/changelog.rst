@@ -2,6 +2,15 @@
 Changelog
 *********
 
+2.4.4 (2025-05-01)
+------------------
+
+Bug fixes:
+
+- Fix the uv plugin breaking with uv 0.7
+
+For a complete list of commits, check out the `2.4.4`_ release on GitHub.
+
 2.4.3 (2025-03-11)
 ------------------
 
@@ -9,6 +18,8 @@ Bug fixes:
 
 - Address race condition when collecting subprocess output.
 - Update jinja2 dependency to address CVE-2025-27516
+
+For a complete list of commits, check out the `2.4.3`_ release on GitHub.
 
 2.4.2 (2025-03-04)
 ------------------
@@ -759,6 +770,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
+.. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
 .. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
 .. _2.3.0: https://github.com/canonical/craft-parts/releases/tag/2.3.0
