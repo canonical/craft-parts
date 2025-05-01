@@ -2,6 +2,15 @@
 Changelog
 *********
 
+2.7.1 (2025-05-01)
+------------------
+
+Bug fixes:
+
+- Fix the uv plugin breaking with uv 0.7
+
+For a complete list of commits, check out the `2.7.1`_ release on GitHub.
+
 2.7.0 (2025-03-18)
 -------------------
 
@@ -830,6 +839,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.7.1: https://github.com/canonical/craft-parts/releases/tag/2.7.1
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
 .. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
 .. _2.3.1: https://github.com/canonical/craft-parts/releases/tag/2.3.1
