@@ -77,9 +77,19 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         # fmt: off
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.RUN, reason="required to overlay 'foobar'"),
+        Action(
+            "foo",
+            Step.OVERLAY,
+            action_type=ActionType.RUN,
+            reason="required to overlay 'foobar'",
+        ),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", Step.OVERLAY, action_type=ActionType.RUN, reason="required to overlay 'foobar'"),
+        Action(
+            "bar",
+            Step.OVERLAY,
+            action_type=ActionType.RUN,
+            reason="required to overlay 'foobar'",
+        ),
         Action("foobar", Step.OVERLAY),
         Action("foobar", Step.BUILD),
         Action("foobar", Step.STAGE),
@@ -134,11 +144,36 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
-        Action("foo", Step.OVERLAY, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.RERUN,
+            reason="'source' property changed",
+        ),
+        Action(
+            "foo",
+            Step.OVERLAY,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -156,7 +191,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+        Action(
+            "foobar", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -171,20 +208,52 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         # fmt: off
-        Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.UPDATE,
+            reason="source changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", step=Step.OVERLAY, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
-        Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            step=Step.OVERLAY,
+            action_type=ActionType.UPDATE,
+            reason="'PULL' step changed",
+        ),
+        Action(
+            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
+        Action(
+            "foobar",
+            step=Step.OVERLAY,
+            action_type=ActionType.SKIP,
+            reason="already ran",
+        ),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.UPDATE,
+            reason="'PULL' step changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="'BUILD' step changed"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RERUN,
+            reason="'BUILD' step changed",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
@@ -198,9 +267,18 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foobar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+        Action(
+            "foo", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
+        Action(
+            "bar", step=Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"
+        ),
+        Action(
+            "foobar",
+            step=Step.OVERLAY,
+            action_type=ActionType.SKIP,
+            reason="already ran",
+        ),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
@@ -213,7 +291,9 @@ def test_basic_lifecycle_actions(new_dir, mocker):
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning:
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, mocker):
+        mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+
         # pylint: disable=attribute-defined-outside-init
         parts_yaml = textwrap.dedent(
             """
@@ -221,9 +301,11 @@ class TestCleaning:
               foo:
                 plugin: dump
                 source: foo
+                overlay-script: echo "test"
               bar:
                 plugin: dump
                 source: bar
+                overlay-script: echo "test"
             """
         )
         Path("foo").mkdir()
@@ -232,9 +314,15 @@ class TestCleaning:
         Path("bar/bar.txt").touch()
 
         parts = yaml.safe_load(parts_yaml)
+        base_layer_dir = new_dir / "base_layer"
+        base_layer_dir.mkdir()
 
         self._lifecycle = craft_parts.LifecycleManager(
-            parts, application_name="test_clean", cache_dir=new_dir
+            parts,
+            application_name="test_clean",
+            cache_dir=new_dir,
+            base_layer_dir=base_layer_dir,
+            base_layer_hash=b"hash",
         )
 
         # pylint: enable=attribute-defined-outside-init
@@ -301,6 +389,9 @@ class TestCleaning:
         foo_state_dir = Path("parts/foo/state")
         bar_state_dir = Path("parts/bar/state")
 
+        assert Path("overlay/stage_overlay").is_file()
+        assert Path("overlay/prime_overlay").is_file()
+
         self._lifecycle.clean(part_names=["foo"])
 
         assert Path("parts/foo/src/foo.txt").is_file() is False
@@ -338,6 +429,9 @@ class TestCleaning:
         step_is_stage_or_later = step >= Step.STAGE
         step_is_prime = step == Step.PRIME
 
+        assert Path("overlay/stage_overlay").is_file()
+        assert Path("overlay/prime_overlay").is_file()
+
         self._lifecycle.clean(step)
 
         assert Path("parts").exists() == step_is_overlay_or_later
@@ -347,7 +441,9 @@ class TestCleaning:
         assert Path("parts/bar/install/bar.txt").exists() == step_is_stage_or_later
         assert Path("stage/foo.txt").exists() == step_is_prime
         assert Path("stage/bar.txt").exists() == step_is_prime
-        assert Path("prime").is_file() is False
+        assert Path("overlay/stage_overlay").exists() == step_is_prime
+        assert Path("overlay/prime_overlay").exists() is False
+        assert Path("prime").exists() is False
 
         all_states = []
         if step_is_overlay_or_later:

@@ -9,11 +9,12 @@ Part properties
 
 after
 -----
-**Type:** array of unique strings with at least 1 item
+**Type:** list[string]
 
 **Step:** build
 
 Specifies a list of parts that a given part will be built *after*.
+The array must contain at least one item.
 
 .. ifconfig:: project in ("Snapcraft",)
 
@@ -31,7 +32,7 @@ Specifies a list of parts that a given part will be built *after*.
 
 build-environment
 -----------------
-**Type:** build-environment-grammar
+**Type:** list[dict[string, string]]
 
 **Step:** build
 
@@ -50,7 +51,7 @@ a list of key-value pairs.
 
 build-packages
 --------------
-**Type:** grammar-array
+**Type:** list[string]
 
 **Step:** build
 
@@ -63,7 +64,7 @@ executables that the part needs during the build process.
 
 build-snaps
 -----------
-**Type:** grammar-array
+**Type:** list[string]
 
 **Step:** build
 
@@ -78,9 +79,9 @@ select different versions.
 
 organize
 --------
-**Type:** ordered dictionary mapping strings to strings
+**Type:** dict[string, string]
 
-**Step:** stage
+**Step:** build
 
 Describes how files in the building area should be represented in the staging
 area.
@@ -206,19 +207,20 @@ The plugin used to build the part. Available plugins include the following:
 
 prime
 -----
-**Type:** array of unique strings with at least 1 item
+**Type:** list[string]
 
 **Step:** prime
 
 The files to copy from the staging area to the priming area,
-see :ref:`filesets_specifying_paths`.
+see :ref:`filesets_specifying_paths`. The list must contain
+at least one item.
 
 .. _part-properties-sources:
 .. _source:
 
 source
 ------
-**Type:** grammar-string
+**Type:** string
 
 **Step:** pull
 
@@ -285,7 +287,7 @@ The subdirectory in the unpacked sources where builds will occur.
 
 source-submodules
 -----------------
-**Type:** array of unique strings with 0 or more items
+**Type:** list[string]
 
 **Step:** pull
 
@@ -306,7 +308,7 @@ from a repository.
 
 source-type
 -----------
-**Type:** one of "deb", "file", "git", "local", "rpm", "snap", "tar", "zip"
+**Type:** one of ``deb | file | git | local | rpm | snap | tar | zip``
 
 **Step:** pull
 
@@ -318,18 +320,19 @@ found in the :mod:`craft_parts.sources` file.
 
 stage
 -----
-**Type:** array of unique strings with at least 1 item
+**Type:** list[string]
 
 **Step:** stage
 
 The files to copy from the building area to the staging area,
-see :ref:`filesets_specifying_paths`.
+see :ref:`filesets_specifying_paths`. The list must contain
+at least one item.
 
 .. _stage_packages:
 
 stage-packages
 --------------
-**Type:** grammar-array
+**Type:** list[string]
 
 **Step:** stage
 
@@ -350,7 +353,7 @@ same stage-packages field.
 
 stage-snaps
 -----------
-**Type:** grammar-array
+**Type:** list[string]
 
 **Step:** stage
 

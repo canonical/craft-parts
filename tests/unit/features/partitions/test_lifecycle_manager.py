@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for the lifecycle manager with the partitions feature."""
+
 import sys
 import textwrap
 from string import ascii_lowercase, digits
@@ -295,8 +296,7 @@ class TestPartitionsSupport:
         with pytest.raises(
             errors.FeatureError,
             match=(
-                r"Partition '[\w-]*' conflicts with the "
-                r"namespace of partition '[\w/-]*'.*"
+                r"Partition name conflicts:\n[\w\s/\-,']*\nHyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.\nThis operation cannot be executed"
             ),
         ):
             lifecycle_manager.LifecycleManager(

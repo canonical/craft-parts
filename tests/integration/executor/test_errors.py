@@ -74,9 +74,10 @@ def test_plugin_build_errors(new_dir, partitions):
         """\
             Failed to run the build script for part 'foo'.
 
+            :: + go mod download all
             :: + go install -p 1 ./...
             :: # example.com/hello
             :: ./hello.go:9:9: undefined: fmt.Printfs
             Check the build output and verify the project can work with the 'go' plugin."""
     )
-    assert raised.value.doc_slug == "/reference/plugins.html"
+    assert raised.value.doc_slug == "/reference/plugins/"

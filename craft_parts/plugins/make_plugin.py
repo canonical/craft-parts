@@ -88,6 +88,6 @@ class MakePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         return [
             self._get_make_command(),
-            f'{self._get_make_command(target="install")} '
+            f"{self._get_make_command(target='install')} "
             f'DESTDIR="{self._part_info.part_install_dir}"',
         ]

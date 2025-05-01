@@ -11,6 +11,58 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.4.4`_ release on GitHub.
 
+2.9.1 (2025-05-01)
+------------------
+
+Fixes:
+
+- Update the uv plugin to work with uv 0.7.0 and up.
+
+2.9.0 (2025-04-28)
+------------------
+
+New features:
+
+- Add a :ref:`Gradle plugin <craft_parts_gradle_plugin>`.
+- Add ``backstage`` and ``part/export`` directories for plugin use.
+
+Documentation:
+
+- Fix an issue where the documentation was hosting pages at URLs that contained the
+  ``.html`` extension. This regression was causing links to the site to break.
+
+For a complete list of commits, check out the `2.9.0`_ release on GitHub.
+
+2.8.0 (2025-04-10)
+-------------------
+
+New features:
+
+- With the new ``maven-use-wrapper`` key in the Maven plugin, you can enable 
+  your project's ``mvnw`` wrapper script.
+- Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
+  a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
+
+
+2.7.0 (2025-03-18)
+------------------
+
+New features:
+
+- Previously, ``source-commit`` could only accept full length (40 character)
+  hashes. Now, ``source-commit`` can accept short hashes.
+- Allow usage of the overlay and partitions features simultaneously. 
+
+Bug fixes:
+
+- Fix the default behavior of the :ref:`jlink plugin <craft_parts_jlink_plugin>`
+  only finding JAR files in the top-level directory. It now searches all
+  subdirectories too.
+
+.. note::
+
+    2.7.0 includes changes from the 2.4.3 release.
+
 2.4.3 (2025-03-11)
 ------------------
 
@@ -31,12 +83,64 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.4.2`_ release on GitHub.
 
+2.6.2 (2025-02-20)
+------------------
+
+Bug fixes:
+
+- Fix handling and propagation of Python plugin error messages.
+
+2.6.1 (2025-02-12)
+------------------
+
+Bug fixes:
+
+- Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
+- Fix Jdeps parameter ordering in the 
+  :ref:`jlink plugin<craft_parts_jlink_plugin>`.
+
+2.3.1 (2025-02-07)
+------------------
+
+Bug fixes:
+
+- Allow for a non-specific system Python interpreter when using the
+  :ref:`uv plugin<craft_parts_uv_plugin>`.
+
+For a complete list of commits, check out the `2.3.1`_ release on GitHub.
+
+2.6.0 (2025-02-06)
+------------------
+
+New features:
+
+- Partition names can include slashes.
+
+Bug fixes:
+
+- Allow for a non-specific system Python interpreter when using the
+  :ref:`uv plugin<craft_parts_uv_plugin>`.
+
+2.5.0 (2025-01-30)
+------------------
+
+New features:
+
+- Add the :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up
+  Java runtime.
+
 2.4.1 (2025-01-24)
 ------------------
 
 Bug fixes:
 
 - Preserve the ``pcfiledir`` tag in ``pkgconfig`` files.
+
+Documentation:
+
+- Reorganise and improve the :ref:`craft_parts_step_execution_environment`
+  reference, including example values and documentation of additional
+  environment variables.
 
 2.4.0 (2025-01-23)
 ------------------
@@ -770,10 +874,12 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
 .. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
 .. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
 .. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
+.. _2.3.1: https://github.com/canonical/craft-parts/releases/tag/2.3.1
 .. _2.3.0: https://github.com/canonical/craft-parts/releases/tag/2.3.0
 .. _2.2.2: https://github.com/canonical/craft-parts/releases/tag/2.2.2
 .. _2.2.1: https://github.com/canonical/craft-parts/releases/tag/2.2.1

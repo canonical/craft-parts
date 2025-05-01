@@ -38,6 +38,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["maven"] = "maven"
 
     maven_parameters: list[str] = []
+    maven_use_wrapper: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -61,6 +62,9 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If maven is invalid
           and there are no parts named maven-deps.
         """
+        options = cast(MavenPluginProperties, self._options)
+        if options.maven_use_wrapper:
+            return
         version = self.validate_dependency(
             dependency="mvn",
             plugin_name="maven",
@@ -90,7 +94,9 @@ class MavenPlugin(JavaPlugin):
     - maven-parameters:
       (list of strings)
       Flags to pass to the build using the maven semantics for parameters.
-
+    - maven-use-wrapper:
+      (boolean)
+      Whether to use project's Maven wrapper (mvnw) to execute the build.
     """
 
     properties_class = MavenPluginProperties
@@ -106,24 +112,46 @@ class MavenPlugin(JavaPlugin):
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @property
+    def _maven_executable(self) -> str:
+        """Return the maven executable to be used for build."""
+        options = cast(MavenPluginProperties, self._options)
+        return "${CRAFT_PART_BUILD_WORK}/mvnw" if options.maven_use_wrapper else "mvn"
+
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 
-        mvn_cmd = ["mvn", "package"]
+        mvn_cmd = [self._maven_executable, "package"]
         if self._use_proxy():
             settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
             _create_settings(settings_path)
             mvn_cmd += ["-s", str(settings_path)]
 
         return [
+            *self._get_mvnw_validation_commands(options=options),
             " ".join(mvn_cmd + options.maven_parameters),
             *self._get_java_post_build_commands(),
         ]
 
+    def _get_mvnw_validation_commands(
+        self, options: MavenPluginProperties
+    ) -> list[str]:
+        """Validate mvnw file before execution."""
+        if not options.maven_use_wrapper:
+            return []
+        return [
+            """[ -e ${CRAFT_PART_BUILD_WORK}/mvnw ] || {
+>&2 echo 'mvnw file not found, refer to plugin documentation: \
+https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
+common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
+}"""
+        ]
+
     def _use_proxy(self) -> bool:
-        return any(k in os.environ for k in ("http_proxy", "https_proxy"))
+        env_vars_lower = list(map(str.lower, os.environ.keys()))
+        return any(k in env_vars_lower for k in ("http_proxy", "https_proxy"))
 
 
 def _create_settings(settings_path: Path) -> None:
@@ -152,10 +180,11 @@ def _create_settings(settings_path: Path) -> None:
 
     for protocol in ("http", "https"):
         env_name = f"{protocol}_proxy"
-        if env_name not in os.environ:
+        case_insensitive_env = {item[0].lower(): item[1] for item in os.environ.items()}
+        if env_name not in case_insensitive_env:
             continue
 
-        proxy_url = urlparse(os.environ[env_name])
+        proxy_url = urlparse(case_insensitive_env[env_name])
         proxy = ET.Element("proxy")
         proxy_tags = [
             ("id", env_name),
@@ -164,9 +193,12 @@ def _create_settings(settings_path: Path) -> None:
             ("host", proxy_url.hostname),
             ("port", str(proxy_url.port)),
         ]
-        if proxy_url.username is not None:
+        if proxy_url.username is not None and proxy_url.password is not None:
             proxy_tags.extend(
-                [("username", proxy_url.username), ("password", proxy_url.password)]
+                [
+                    ("username", proxy_url.username),
+                    ("password", proxy_url.password),
+                ]
             )
         proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
 

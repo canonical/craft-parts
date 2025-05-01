@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Operations with platform-specific package repositories."""
+
 from typing import TYPE_CHECKING
 
 from . import errors, snaps

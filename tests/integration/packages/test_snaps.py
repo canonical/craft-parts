@@ -48,7 +48,6 @@ def test_get_installed_snaps_success():
     ],
 )
 def test_download_snaps_success(new_path: pathlib.Path, snaps_list: Sequence[str]):
-
     snaps.download_snaps(snaps_list=snaps_list, directory=new_path)
 
     for snap in snaps_list:

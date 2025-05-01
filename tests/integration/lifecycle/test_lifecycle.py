@@ -121,10 +121,30 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     assert actions == [
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
-        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.RERUN,
+            reason="'source' property changed",
+        ),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RUN,
+            reason="required to build 'bar'",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         # fmt: on
     ]
     with lf.action_executor() as ctx:
@@ -154,16 +174,36 @@ def test_basic_lifecycle_actions(new_dir, partitions, mocker):
     actions = lf.plan(Step.BUILD)
     assert actions == [
         # fmt: off
-        Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.PULL,
+            action_type=ActionType.UPDATE,
+            reason="source changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed",
-               properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[])),
+        Action(
+            "foo",
+            Step.BUILD,
+            action_type=ActionType.UPDATE,
+            reason="'PULL' step changed",
+            properties=ActionProperties(changed_files=["a.tar.gz"], changed_dirs=[]),
+        ),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="'BUILD' step changed"),
-        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="stage for part 'foo' changed"),
+        Action(
+            "foo",
+            Step.STAGE,
+            action_type=ActionType.RERUN,
+            reason="'BUILD' step changed",
+        ),
+        Action(
+            "bar",
+            Step.BUILD,
+            action_type=ActionType.RERUN,
+            reason="stage for part 'foo' changed",
+        ),
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
@@ -241,6 +281,9 @@ class TestCleaning:
               foo:
                 plugin: dump
                 source: foo
+                override-build: |
+                  craftctl default
+                  touch $CRAFT_PART_INSTALL/../export/export_file
               bar:
                 plugin: dump
                 source: bar
@@ -267,6 +310,7 @@ class TestCleaning:
         return [
             Path("parts/foo/src/foo.txt"),
             Path("parts/foo/install/foo.txt"),
+            Path("parts/foo/export/export_file"),
             Path("stage/foo.txt"),
             Path("prime/foo.txt"),
         ]
@@ -321,10 +365,15 @@ class TestCleaning:
         assert sorted(state_dir.rglob("*")) == [
             state_dir / file for file in state_files
         ]
+        assert Path("parts").exists()
+        assert Path("backstage").exists()
+        assert Path("stage").exists()
+        assert Path("prime").exists()
 
         self._lifecycle.clean()
 
         assert Path("parts").exists() is False
+        assert Path("backstage").exists() is False
         assert Path("stage").exists() is False
         assert Path("prime").exists() is False
 
@@ -374,6 +423,7 @@ class TestCleaning:
         assert Path("parts/bar/src/bar.txt").exists() == step_is_overlay_or_later
         assert Path("parts/foo/install/foo.txt").exists() == step_is_stage_or_later
         assert Path("parts/bar/install/bar.txt").exists() == step_is_stage_or_later
+        assert Path("backstage/export_file").exists() == step_is_prime
         assert Path("stage/foo.txt").exists() == step_is_prime
         assert Path("stage/bar.txt").exists() == step_is_prime
         assert Path("prime").is_file() is False

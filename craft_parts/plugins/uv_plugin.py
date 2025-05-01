@@ -72,6 +72,7 @@ class UvPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             plugin_name=self._options.plugin,
             part_dependencies=part_dependencies,
         )
+
         if not version.startswith("uv") and (
             part_dependencies is None or "uv-deps" not in part_dependencies
         ):
