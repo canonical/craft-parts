@@ -18,6 +18,8 @@
 
 from collections.abc import Sequence
 
+import humanize
+
 from craft_parts.errors import PartsError
 from craft_parts.utils import formatting_utils
 
@@ -57,7 +59,7 @@ class PackagesNotFound(PackagesError):
 
     def __init__(self, packages: Sequence[str]) -> None:
         self.packages = packages
-        missing_pkgs = formatting_utils.humanize_list(packages, "and")
+        missing_pkgs = humanize.natural_list([repr(pkg) for pkg in sorted(packages)])
         brief = f"Failed to find installation candidate for packages: {missing_pkgs}."
         resolution = (
             "Make sure the repository configuration and package names are correct."

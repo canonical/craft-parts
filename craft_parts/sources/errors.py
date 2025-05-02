@@ -18,6 +18,8 @@
 
 from collections.abc import Sequence
 
+import humanize
+
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
 
@@ -74,7 +76,7 @@ class InvalidSourceOptions(SourceError):
     def __init__(self, *, source_type: str, options: list[str]) -> None:
         self.source_type = source_type
         self.options = options
-        humanized_options = formatting_utils.humanize_list(options, "and")
+        humanized_options = humanize.natural_list([repr(opt) for opt in sorted(options)])
         brief = (
             f"Failed to pull source: {humanized_options} cannot be used "
             f"with a {source_type} source."
@@ -94,7 +96,7 @@ class IncompatibleSourceOptions(SourceError):
     def __init__(self, source_type: str, options: list[str]) -> None:
         self.source_type = source_type
         self.options = options
-        humanized_options = formatting_utils.humanize_list(options, "and")
+        humanized_options = humanize.natural_list([repr(opt) for opt in sorted(options)])
         brief = (
             f"Failed to pull source: cannot specify both {humanized_options} "
             f"for a {source_type} source."
