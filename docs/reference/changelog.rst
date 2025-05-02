@@ -2,6 +2,16 @@
 Changelog
 *********
 
+2.10.0 (2025-xx-xx)
+-------------------
+
+Documentation:
+
+- Revise the :doc:`craftctl how-to guide
+  </common/craft-parts/how-to/customize-the-build-with-craftctl>` to better reflect how
+  it can be used to override parts in apps.
+
+
 2.9.1 (2025-05-01)
 ------------------
 
