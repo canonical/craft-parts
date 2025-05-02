@@ -19,7 +19,7 @@ import textwrap
 from pathlib import Path
 
 import yaml
-from craft_parts import LifecycleManager, Step
+from craft_parts import LifecycleManager, Step, plugins
 from craft_parts.plugins import dotnet_v2_plugin
 from overrides import override
 
@@ -70,9 +70,13 @@ def test_dotnet_plugin(new_dir, partitions):
 
     Path("hello.cs").write_text('Console.WriteLine("Hello, World!");')
 
+    plugins.unregister("dotnet")
+    plugins.register({"dotnet": dotnet_v2_plugin.DotnetV2Plugin})
+
     lf = LifecycleManager(
         parts, application_name="test_dotnet", cache_dir=new_dir, partitions=partitions
     )
+
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
