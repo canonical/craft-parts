@@ -254,7 +254,7 @@ sphinx-jsonschema==1.19.1
     #   sphinx-pydantic
 sphinx-lint==1.0.0
     # via -r requirements.txt
-sphinx-notfound-page==1.0.4
+sphinx-notfound-page==1.1.0
     # via
     #   -r requirements.txt
     #   canonical-sphinx
