@@ -100,7 +100,7 @@ linkify-it-py==2.0.3
     # via
     #   -r requirements.txt
     #   canonical-sphinx
-lxml==5.3.0
+lxml==5.4.0
     # via
     #   -c (workspace)
     #   -r requirements.txt
