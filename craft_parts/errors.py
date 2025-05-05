@@ -787,3 +787,47 @@ class PartitionNotFound(PartitionUsageError):
             partitions=partitions,
             error_list=[],
         )
+
+
+class SandboxError(PartsError):
+    """Base class for sandbox handler errors."""
+
+
+class SandboxMountError(SandboxError):
+    """Failed to mount in the sandbox.
+
+    :param mountpoint: The filesystem mount point.
+    :param message: The error message.
+    """
+
+    def __init__(self, mountpoint: str, message: str) -> None:
+        self.mountpoint = mountpoint
+        self.message = message
+        brief = f"Failed to mount on {mountpoint}: {message}"
+
+        super().__init__(brief=brief)
+
+
+class SandboxUnmountError(SandboxError):
+    """Failed to unmount an overlay filesystem.
+
+    :param mountpoint: The filesystem mount point.
+    :param message: The error message.
+    """
+
+    def __init__(self, mountpoint: str, message: str) -> None:
+        self.mountpoint = mountpoint
+        self.message = message
+        brief = f"Failed to unmount {mountpoint}: {message}"
+
+        super().__init__(brief=brief)
+
+
+class SandboxExecutionError(SandboxError):
+    """Failed to execute in a chroot environment."""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        brief = f"Sandbox environment execution error: {message}"
+
+        super().__init__(brief=brief)
