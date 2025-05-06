@@ -101,6 +101,7 @@ override:
 .. code-block:: yaml
     :caption: Project file
 
+    version: "1.0"
     adopt-info: gnome-text-editor
     parts:
       gnome-text-editor:
