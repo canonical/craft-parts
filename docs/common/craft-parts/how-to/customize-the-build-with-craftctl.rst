@@ -15,7 +15,7 @@ Declare an override key
 
 You can customize the lifecycle steps for any part in your |artifact|. Overriding the
 step is achieved through the part ``override-*`` keys, which execute a scriplet at that
-step. The scriptlet is executed with ``/bin/sh``.
+step. The scriptlet is executed with ``/bin/bash``.
 
 If an override key is declared at all, it entirely replaces the step's normal behavior.
 Instead, whatever code in the key, even no code, is executed.
@@ -80,8 +80,6 @@ You can also retrieve the current value of a project key, with:
 
     craftctl get <key>
 
-.. TODO: In Snapcraft, the ``version`` and ``grade`` keys are supported.
-
 For example, if you want to set the ``version`` key of |artifact-indefinite| to the
 latest Git tag in a part's source, declare this override:
 
@@ -95,11 +93,6 @@ latest Git tag in a part's source, declare this override:
         override-pull: |
           craftctl default
           craftctl set version=$(git describe --tags --abbrev=10)
-
-.. important:
-
-    .. To incorporate retrieved metadata correctly, ensure that ``adopt-info`` points to
-    the part that runs ``craftctl set``. Without this, snap metadata won't update.
 
 For another example, let's say |artifact-indefinite| has a manually-set version number
 in the project file. To append the latest Git commit hash to the version, declare this
@@ -151,7 +144,7 @@ lifecycle execution is finished::
       aex.execute(actions)
 
   version = lf.project_info.get_project_variable("version")
-  print(f"Version is version")
+  print(f"Version is {version}")
 
 Execution of this example results in::
 
