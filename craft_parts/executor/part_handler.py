@@ -946,6 +946,8 @@ class PartHandler:
 
         logger.debug("priming overlay files")
 
+        consolidated_states: dict[str, MigrationState] = {}
+
         # Process parts in each partition.
         for src_partition in self._part_info.partitions or (None,):
             prime_overlay_state_path = states.get_overlay_migration_state_path(
@@ -969,35 +971,55 @@ class PartHandler:
                     part.name,
                 )
                 squasher.migrate(
-                    refdir=part.part_layer_dirs[src_partition],
+                    refdir=part.stage_dirs[src_partition],
                     srcdir=part.stage_dirs[src_partition],
                     destdirs=part.prime_dirs,
                     permissions=part.spec.permissions,
                 )
+            consolidate_states(
+                consolidated_states=consolidated_states,
+                src_partition=src_partition,
+                migrated_files=squasher.migrated_files,
+                migrated_directories=squasher.migrated_directories,
+            )
+
             if src_partition == DEFAULT_PARTITION:
                 for entry in prototype_layout:
                     self._clean_dangling_whiteouts(
                         self._part_info.prime_dirs[entry.partition],
-                        squasher.migrated_files[entry.partition],
-                        squasher.migrated_directories[entry.partition],
+                        set(squasher.migrated_files[entry.partition]),
+                        set(squasher.migrated_directories[entry.partition]),
                     )
-                    prime_overlay_state_path = states.get_overlay_migration_state_path(
-                        self._part.overlay_dirs[entry.partition], Step.PRIME
-                    )
-                    logger.debug(f"writting state to {prime_overlay_state_path}")
-                    state = squasher.get_partial_state_for(partition=entry.partition)
-                    state.write(prime_overlay_state_path)
             else:
                 self._clean_dangling_whiteouts(
                     self._part_info.prime_dirs[src_partition],
-                    squasher.migrated_files[src_partition],
-                    squasher.migrated_directories[src_partition],
+                    set(squasher.migrated_files[src_partition]),
+                    set(squasher.migrated_directories[src_partition]),
                 )
-                prime_overlay_state_path = states.get_overlay_migration_state_path(
-                    self._part.overlay_dirs[src_partition], Step.PRIME
+
+        self._write_overlay_migration_states(consolidated_states, Step.PRIME)
+
+    def _write_overlay_migration_states(
+        self, consolidated_states: dict[str, MigrationState], step: Step
+    ) -> None:
+        for src_partition in self._part_info.partitions or (None,):
+            step_overlay_state_path = states.get_overlay_migration_state_path(
+                self._part.overlay_dirs[src_partition],
+                step,
+            )
+
+            if step_overlay_state_path.exists():
+                logger.debug(
+                    "%s overlay migration state exists, not migrating overlay data",
+                    step.name,
                 )
-                state = squasher.get_partial_state_for(partition=src_partition)
-                state.write(prime_overlay_state_path)
+                continue
+            logger.debug(
+                "write state for %s partition layer to %s",
+                src_partition,
+                step.name,
+            )
+            consolidated_states[src_partition].write(step_overlay_state_path)
 
     def _clean_dangling_whiteouts(
         self, prime_dir: Path, migrated_files: set[str], migrated_dirs: set[str]
