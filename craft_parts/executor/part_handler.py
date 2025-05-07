@@ -202,7 +202,7 @@ class _Squasher:
                 dirs=self.migrated_directories[partition],
             )
         return MigrationState(
-            contents={
+            partitions_contents={
                 partition: MigrationContents(
                     files=self.migrated_files[partition],
                     dirs=self.migrated_directories[partition],
@@ -426,7 +426,7 @@ class PartHandler:
         return states.OverlayState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            contents=partitions_contents,
+            partitions_contents=partitions_contents,
             files=contents.partitions_contents.get(DEFAULT_PARTITION).files,
             dirs=contents.partitions_contents.get(DEFAULT_PARTITION).dirs,
         )
@@ -548,7 +548,6 @@ class PartHandler:
         # parameters if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
-        logger.debug(f"contents.partitions_contents: {contents.partitions_contents}")
         migration_partitions_contents: dict[str, MigrationContents] = {
             p: MigrationContents(files=c.files, directories=c.dirs)
             for p, c in contents.partitions_contents.items()
@@ -558,7 +557,7 @@ class PartHandler:
         return states.StageState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            contents=migration_partitions_contents,
+            partitions_contents=migration_partitions_contents,
             files=contents.partitions_contents[DEFAULT_PARTITION].files,
             dirs=contents.partitions_contents[DEFAULT_PARTITION].dirs,
             overlay_hash=overlay_hash.hex(),
@@ -617,7 +616,7 @@ class PartHandler:
         return states.PrimeState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            contents=migration_partitions_contents,
+            partitions_contents=migration_partitions_contents,
             files=contents.partitions_contents[DEFAULT_PARTITION].files,
             dirs=contents.partitions_contents[DEFAULT_PARTITION].dirs,
             primed_stage_packages=primed_stage_packages,
