@@ -903,7 +903,7 @@ class PartHandler:
             # parameters is migrated.
             if stage_overlay_state_path.exists():
                 logger.debug(
-                    "stage overlay migration state exists, not migrating overlay data"
+                    f"stage overlay migration state exists, not migrating overlay data for partition {src_partition}"
                 )
                 continue
 
@@ -921,47 +921,17 @@ class PartHandler:
                     srcdir=part.part_layer_dirs[src_partition],
                     destdirs=part.stage_dirs,
                 )
-            for partition, files in squasher.migrated_files.items():
-                dst_files = set(files.values())
-                if not consolidated_states.get(partition):
-                    consolidated_states[partition] = MigrationState()
-                if partition == src_partition:
-                    consolidated_states[partition].add(files=dst_files)
-                else:
-                    consolidated_states[partition].add_to(
-                        partition=partition, files=dst_files
-                    )
-            for partition, directories in squasher.migrated_directories.items():
-                dst_dirs = set(directories.values())
-                if not consolidated_states.get(partition):
-                    consolidated_states[partition] = MigrationState()
-                if partition == src_partition:
-                    consolidated_states[partition].add(directories=dst_dirs)
-                else:
-                    consolidated_states[partition].add_to(
-                        partition=partition, directories=dst_dirs
-                    )
+
+            consolidate_states(
+                consolidated_states=consolidated_states,
+                src_partition=src_partition,
+                migrated_files=squasher.migrated_files,
+                migrated_directories=squasher.migrated_directories,
+            )
 
         logger.debug(f"consolidated states: {consolidated_states}")
         # Write consolidated states once
-        for src_partition in self._part_info.partitions or (None,):
-            stage_overlay_state_path = states.get_overlay_migration_state_path(
-                self._part.overlay_dirs[src_partition], Step.STAGE
-            )
-
-            # Overlay data is migrated to stage only when the first part declaring overlay
-            # parameters is migrated.
-            if stage_overlay_state_path.exists():
-                logger.debug(
-                    "stage overlay migration state exists, not migrating overlay data"
-                )
-                continue
-            logger.debug(
-                "write state for %s partition part %r layer to stage",
-                src_partition,
-                part.name,
-            )
-            consolidated_states[src_partition].write(stage_overlay_state_path)
+        self._write_overlay_migration_states(consolidated_states, Step.STAGE)
 
     def _migrate_overlay_files_to_prime(self) -> None:
         """Prime overlay files and create state.
@@ -1439,3 +1409,30 @@ def _get_primed_stage_packages(
             if stage_package:
                 primed_stage_packages.add(stage_package)
     return primed_stage_packages
+
+
+def consolidate_states(
+    consolidated_states: dict[str, MigrationState],
+    src_partition: str,
+    migrated_files: dict[str, _Migrated_Contents],
+    migrated_directories: dict[str, _Migrated_Contents],
+) -> None:
+    """Consolidate migrated files into MirationStates."""
+    for partition, files in migrated_files.items():
+        dst_files = set(files.values())
+        if not consolidated_states.get(partition):
+            consolidated_states[partition] = MigrationState()
+        if partition == src_partition:
+            consolidated_states[partition].add(files=dst_files)
+        else:
+            consolidated_states[partition].add_to(partition=partition, files=dst_files)
+    for partition, directories in migrated_directories.items():
+        dst_dirs = set(directories.values())
+        if not consolidated_states.get(partition):
+            consolidated_states[partition] = MigrationState()
+        if partition == src_partition:
+            consolidated_states[partition].add(directories=dst_dirs)
+        else:
+            consolidated_states[partition].add_to(
+                partition=partition, directories=dst_dirs
+            )

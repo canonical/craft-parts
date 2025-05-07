@@ -108,7 +108,7 @@ class MigrationState(BaseModel):
         if files:
             self.partitions_contents[partition].files |= files
         if directories:
-            self.partitions_contents[partition].files |= directories
+            self.partitions_contents[partition].directories |= directories
 
 
 class StepState(MigrationState, ABC):
