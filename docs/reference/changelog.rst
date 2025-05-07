@@ -2,6 +2,17 @@
 Changelog
 *********
 
+2.10.0 (2025-05-06)
+-------------------
+
+Documentation:
+
+- Revise the :doc:`craftctl how-to guide
+  </common/craft-parts/how-to/customise-the-build-with-craftctl>` to better reflect how
+  it can be used to override parts in apps.
+  
+For a complete list of commits, check out the `2.10.0`_ release on GitHub.
+
 2.4.4 (2025-05-01)
 ------------------
 
@@ -874,6 +885,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
 .. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
 .. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
 .. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
