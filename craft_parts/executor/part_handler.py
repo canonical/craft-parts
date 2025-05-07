@@ -99,12 +99,16 @@ prototype_layout: list[LayoutItem] = [
 ]
 
 
+# map the source path to the destination path in the partition
+_Migrated_Contents = dict[str, str]
+
+
 class _Squasher:
     """A helper to squash layers and migrate layered content."""
 
     def __init__(self, partition: str, layout: list[LayoutItem] | None = None) -> None:
-        self.migrated_files: dict[str, set[str]] = {partition: set()}
-        self.migrated_directories: dict[str, set[str]] = {partition: set()}
+        self.migrated_files: dict[str, _Migrated_Contents] = {partition: {}}
+        self.migrated_directories: dict[str, _Migrated_Contents] = {partition: {}}
         self._src_partition = partition
         self._layout: list[LayoutItem] = [LayoutItem(partition=partition, mount="/")]
         if layout:
@@ -126,17 +130,16 @@ class _Squasher:
             # Distribute content into partitions according to the layout
             for entry in self._layout:
                 # Only migrate content from the subdirectory indicated by the layout entry
-                rel_path = entry.mount.lstrip("/")
-                refdir_sub = refdir / rel_path
-                srcdir_sub = srcdir / rel_path
+                sub_path = entry.mount.lstrip("/")
 
-                # Migrate to the target partition indicated by the layout entry
+                # Migrate to the destination partition indicated by the layout entry
                 dst_partition = entry.partition
 
                 self._migrate(
-                    refdir=refdir_sub,
-                    srcdir=srcdir_sub,
+                    refdir=refdir,
+                    srcdir=srcdir,
                     destdir=destdirs[dst_partition],
+                    sub_path=sub_path,
                     dst_partition=dst_partition,
                     permissions=permissions,
                 )
@@ -146,6 +149,7 @@ class _Squasher:
                 refdir=refdir,
                 srcdir=srcdir,
                 destdir=destdirs[self._src_partition],
+                sub_path="",
                 dst_partition=self._src_partition,
                 permissions=permissions,
             )
@@ -155,6 +159,7 @@ class _Squasher:
         refdir: Path,
         srcdir: Path,
         destdir: Path,
+        sub_path: str,
         dst_partition: str,
         permissions: list[Permissions] | None = None,
     ) -> None:
@@ -164,7 +169,7 @@ class _Squasher:
         later store it in the proper state.
         """
         visible_files, visible_dirs = overlays.visible_in_layer(
-            refdir,
+            refdir / sub_path,
             destdir,
         )
         logger.debug(f"excluding already migrated files: {self.all_migrated_files()}")
@@ -177,18 +182,24 @@ class _Squasher:
         layer_files, layer_dirs = migration.migrate_files(
             files=visible_files,
             dirs=visible_dirs,
-            srcdir=srcdir,
+            srcdir=srcdir / sub_path,
             destdir=destdir,
             oci_translation=True,
             permissions=permissions,
         )
         if dst_partition not in self.migrated_files:
-            self.migrated_files[dst_partition] = set()
-        self.migrated_files[dst_partition] |= layer_files
+            self.migrated_files[dst_partition] = {}
+
+        for f in layer_files:
+            src_path = str(Path(sub_path) / f)
+            self.migrated_files[dst_partition][src_path] = f
 
         if dst_partition not in self.migrated_directories:
-            self.migrated_directories[dst_partition] = set()
-        self.migrated_directories[dst_partition] |= layer_dirs
+            self.migrated_directories[dst_partition] = {}
+
+        for f in layer_dirs:
+            src_path = str(Path(sub_path) / f)
+            self.migrated_directories[dst_partition][src_path] = f
 
     def get_partial_state_for(self, partition: str) -> MigrationState:
         """Get the migration state for the given partition.
@@ -198,30 +209,36 @@ class _Squasher:
         """
         if partition is DEFAULT_PARTITION:
             return MigrationState(
-                files=self.migrated_files[partition],
-                dirs=self.migrated_directories[partition],
+                files=set(self.migrated_files[partition]),
+                dirs=set(self.migrated_directories[partition]),
             )
         return MigrationState(
             partitions_contents={
                 partition: MigrationContents(
-                    files=self.migrated_files[partition],
-                    dirs=self.migrated_directories[partition],
+                    files=set(self.migrated_files[partition]),
+                    dirs=set(self.migrated_directories[partition]),
                 )
             },
         )
 
     def all_migrated_files(self) -> set[str]:
-        """Merge lists of files migrated to every partitions."""
+        """Merge lists of files migrated to every partitions.
+
+        Return a list of paths relative to the source partition.
+        """
         migrated_files: set[str] = set()
         for m in self.migrated_files.values():
-            migrated_files |= m
+            migrated_files |= set(m)
         return migrated_files
 
     def all_migrated_directories(self) -> set[str]:
-        """Merge lists of directories migrated to every partitions."""
+        """Merge lists of directories migrated to every partitions.
+
+        Return a list of paths relative to the source partition.
+        """
         migrated_directories: set[str] = set()
         for m in self.migrated_directories.values():
-            migrated_directories |= m
+            migrated_directories |= set(m)
         return migrated_directories
 
 
@@ -862,6 +879,11 @@ class PartHandler:
         Files and directories are migrated from overlay to stage based on a
         list of visible overlay entries, converting overlayfs whiteout files
         and opaque dirs to OCI.
+
+        Files and directories can be migrated from the default partition to
+        any other partition. In the state stored in the workdir files/dirs
+        moved between partitions are tracked in the destination, with a path
+        relative to the destination.
         """
         parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
         if self._part not in parts_with_overlay:
@@ -900,22 +922,24 @@ class PartHandler:
                     destdirs=part.stage_dirs,
                 )
             for partition, files in squasher.migrated_files.items():
+                dst_files = set(files.values())
                 if not consolidated_states.get(partition):
                     consolidated_states[partition] = MigrationState()
                 if partition == src_partition:
-                    consolidated_states[partition].add(files=files)
+                    consolidated_states[partition].add(files=dst_files)
                 else:
                     consolidated_states[partition].add_to(
-                        partition=partition, files=files
+                        partition=partition, files=dst_files
                     )
             for partition, directories in squasher.migrated_directories.items():
+                dst_dirs = set(directories.values())
                 if not consolidated_states.get(partition):
                     consolidated_states[partition] = MigrationState()
                 if partition == src_partition:
-                    consolidated_states[partition].add(directories=directories)
+                    consolidated_states[partition].add(directories=dst_dirs)
                 else:
                     consolidated_states[partition].add_to(
-                        partition=partition, directories=directories
+                        partition=partition, directories=dst_dirs
                     )
 
         logger.debug(f"consolidated states: {consolidated_states}")
