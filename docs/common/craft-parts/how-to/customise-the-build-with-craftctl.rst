@@ -2,19 +2,19 @@
 .. |artifact| replace:: artifact
 .. |artifact-indefinite| replace:: an artifact
 
-Customize the build with craftctl
+Customise the build with craftctl
 =================================
 
 |app| ships with craftctl, a utility for executing steps in parts. When defining a part,
-you can use it to customize the part's files and build environment before and after a
+you can use it to customise the part's files and build environment before and after a
 step.
 
 
 Declare an override key
 -----------------------
 
-You can customize the lifecycle steps for any part in your |artifact|. Overriding the
-step is achieved through the part ``override-*`` keys, which execute a scriplet at that
+You can customise the lifecycle steps for any part in your |artifact|. Overriding the
+step is achieved through the part ``override-*`` keys, which execute a scriptlet at that
 step. The scriptlet is executed with ``/bin/bash``.
 
 If an override key is declared at all, it entirely replaces the step's normal behavior.
@@ -38,7 +38,7 @@ Override a step
 Craftctl comes in most handy when when you need to tweak files or settings before or
 after executing a step.
 
-To specify where the regular step behavior occurs inside the scriplet, call it with the
+To specify where the regular step behavior occurs inside the scriptlet, call it with the
 special ``craftctl default`` command. Using that command as an anchor point, alter the build files or environment with other commands before or after it.
 
 .. admonition:: Don't forget to execute the step
