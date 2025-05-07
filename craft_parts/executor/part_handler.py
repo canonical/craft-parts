@@ -92,7 +92,7 @@ class LayoutItem:
 DEFAULT_PARTITION = "default"
 
 # Define a harcoded layout to prototype
-# Items in the list must be ordered by mount depth
+# Items in the list must be ordered by mount depth, deeper first.
 prototype_layout: list[LayoutItem] = [
     LayoutItem(partition="volume/pc/efi", mount="/boot/efi/"),
     LayoutItem(partition=DEFAULT_PARTITION, mount="/"),
@@ -200,26 +200,6 @@ class _Squasher:
         for f in layer_dirs:
             src_path = str(Path(sub_path) / f)
             self.migrated_directories[dst_partition][src_path] = f
-
-    def get_partial_state_for(self, partition: str) -> MigrationState:
-        """Get the migration state for the given partition.
-
-        The returned state is a partial one, only listing contents
-        migrated by this squasher.
-        """
-        if partition is DEFAULT_PARTITION:
-            return MigrationState(
-                files=set(self.migrated_files[partition]),
-                dirs=set(self.migrated_directories[partition]),
-            )
-        return MigrationState(
-            partitions_contents={
-                partition: MigrationContents(
-                    files=set(self.migrated_files[partition]),
-                    dirs=set(self.migrated_directories[partition]),
-                )
-            },
-        )
 
     def all_migrated_files(self) -> set[str]:
         """Merge lists of files migrated to every partitions.
@@ -924,7 +904,6 @@ class PartHandler:
 
             consolidate_states(
                 consolidated_states=consolidated_states,
-                src_partition=src_partition,
                 migrated_files=squasher.migrated_files,
                 migrated_directories=squasher.migrated_directories,
             )
@@ -978,7 +957,6 @@ class PartHandler:
                 )
             consolidate_states(
                 consolidated_states=consolidated_states,
-                src_partition=src_partition,
                 migrated_files=squasher.migrated_files,
                 migrated_directories=squasher.migrated_directories,
             )
@@ -1435,26 +1413,18 @@ def _get_primed_stage_packages(
 
 def consolidate_states(
     consolidated_states: dict[str, MigrationState],
-    src_partition: str,
     migrated_files: dict[str, _Migrated_Contents],
     migrated_directories: dict[str, _Migrated_Contents],
 ) -> None:
-    """Consolidate migrated files into MirationStates."""
+    """Consolidate migrated files into MigrationStates."""
     for partition, files in migrated_files.items():
         dst_files = set(files.values())
         if not consolidated_states.get(partition):
             consolidated_states[partition] = MigrationState()
-        if partition == src_partition:
-            consolidated_states[partition].add(files=dst_files)
-        else:
-            consolidated_states[partition].add_to(partition=partition, files=dst_files)
+        consolidated_states[partition].add(files=dst_files)
+
     for partition, directories in migrated_directories.items():
         dst_dirs = set(directories.values())
         if not consolidated_states.get(partition):
             consolidated_states[partition] = MigrationState()
-        if partition == src_partition:
-            consolidated_states[partition].add(directories=dst_dirs)
-        else:
-            consolidated_states[partition].add_to(
-                partition=partition, directories=dst_dirs
-            )
+        consolidated_states[partition].add(directories=dst_dirs)
