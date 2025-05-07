@@ -95,21 +95,6 @@ class MigrationState(BaseModel):
         if directories:
             self.directories |= directories
 
-    def add_to(
-        self,
-        partition: str,
-        *,
-        files: set[str] | None = None,
-        directories: set[str] | None = None,
-    ) -> None:
-        """Add files and directories to migrated contents."""
-        if not self.partitions_contents.get(partition):
-            self.partitions_contents[partition] = MigrationContents()
-        if files:
-            self.partitions_contents[partition].files |= files
-        if directories:
-            self.partitions_contents[partition].directories |= directories
-
 
 class StepState(MigrationState, ABC):
     """Contextual information collected when a step is executed.

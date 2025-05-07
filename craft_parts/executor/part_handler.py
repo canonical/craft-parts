@@ -604,7 +604,7 @@ class PartHandler:
         else:
             primed_stage_packages = set()
 
-        migration_partitions_contents: dict[str, MigrationContents] = {
+        non_default_partitions_contents: dict[str, MigrationContents] = {
             p: MigrationContents(files=c.files, directories=c.dirs)
             for p, c in contents.partitions_contents.items()
             if p is not DEFAULT_PARTITION
@@ -613,7 +613,7 @@ class PartHandler:
         return states.PrimeState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            partitions_contents=migration_partitions_contents,
+            partitions_contents=non_default_partitions_contents,
             files=contents.partitions_contents[DEFAULT_PARTITION].files,
             dirs=contents.partitions_contents[DEFAULT_PARTITION].dirs,
             primed_stage_packages=primed_stage_packages,
