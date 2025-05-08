@@ -147,6 +147,7 @@ def clean_shared_area(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
+    partition: str,
 ) -> None:
     """Clean files added by a part to a shared directory.
 
@@ -161,22 +162,35 @@ def clean_shared_area(
         return
 
     state = part_states[part_name]
-    files = state.files
-    directories = state.directories
+    files: set[str] = set()
+    directories: set[str] = set()
+
+    if state.contents(partition=partition):
+        files, directories = state.contents(partition=partition)
 
     # We want to make sure we don't remove a file or directory that's
     # being used by another part. So we'll examine the state for all parts
     # in the project and leave any files or directories found to be in
     # common.
     for other_name, other_state in part_states.items():
-        if other_state and other_name != part_name:
-            files -= other_state.files
-            directories -= other_state.directories
+        if (
+            other_state
+            and other_name != part_name
+            and other_state.contents(partition=partition)
+        ):
+            other_files, other_directories = other_state.contents(partition=partition)
+            files -= other_files
+            directories -= other_directories
 
     # If overlay has been migrated, also take overlay files into account
-    if overlay_migration_state:
-        files -= overlay_migration_state.files
-        directories -= overlay_migration_state.directories
+    if overlay_migration_state and overlay_migration_state.contents(
+        partition=partition
+    ):
+        overlay_files, overlay_directories = overlay_migration_state.contents(
+            partition=partition
+        )
+        files -= overlay_files
+        directories -= overlay_directories
 
     # Finally, clean the files and directories that are specific to this
     # part.
@@ -210,6 +224,7 @@ def clean_shared_overlay(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
+    partition: str,
 ) -> None:
     """Remove migrated overlay files from a shared directory.
 
@@ -222,14 +237,20 @@ def clean_shared_overlay(
     if not overlay_migration_state:
         return
 
-    files = overlay_migration_state.files
-    directories = overlay_migration_state.directories
+    files: set[str] = set()
+    directories: set[str] = set()
+
+    if overlay_migration_state.contents(partition=partition):
+        files, directories = overlay_migration_state.contents(partition=partition)
 
     # Don't remove entries that also belong to a part.
     for other_state in part_states.values():
-        if other_state:
-            files -= other_state.files
-            directories -= other_state.directories
+        if other_state and other_state.contents(partition=partition):
+            other_part_files, other_part_directories = other_state.contents(
+                partition=partition
+            )
+            files -= other_part_files
+            directories -= other_part_directories
 
     _clean_migrated_files(files, directories, shared_dir)
 
