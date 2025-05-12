@@ -130,8 +130,6 @@ jobs:
           - os: ubuntu-24.04
             python-version: "3.12"
             adjective: noble
-    env:
-      TMPDIR: "{{ runner.temp }}"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -198,6 +196,8 @@ jobs:
         with:
           node-version: 16
       - name: Run integration tests
+        env:
+          TMPDIR: ${{ runner.temp }}
         run: |
           make test-integrations
       - name: Run overlay smoke test
