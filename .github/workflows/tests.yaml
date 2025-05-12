@@ -130,6 +130,8 @@ jobs:
           - os: ubuntu-24.04
             python-version: "3.12"
             adjective: noble
+    env:
+      TMPDIR: "{{ runner.temp }}"
 
     runs-on: ${{ matrix.os }}
     steps:
