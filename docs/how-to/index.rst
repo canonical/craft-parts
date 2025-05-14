@@ -6,8 +6,8 @@ How-to guides
 .. toctree::
    :maxdepth: 1
 
-   Use parts </common/craft-parts/how-to/use_parts>
-   Use the craftctl tool </common/craft-parts/how-to/craftctl>
+   Use parts <use_parts>
+   /common/craft-parts/how-to/customise-the-build-with-craftctl
    Use craft-parts from the command-line <cli_tool>
    Override a part's default build behavior </common/craft-parts/how-to/override_build>
    Create a plugin <create_plugin>

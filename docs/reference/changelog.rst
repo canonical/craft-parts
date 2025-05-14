@@ -2,27 +2,47 @@
 Changelog
 *********
 
-2.10.0 (2025-MM-DD)
+2.10.0 (2025-05-06)
 -------------------
 
-- Add ``backstage`` and ``part/export`` directories for plugin use.
+Documentation:
 
+- Revise the :doc:`craftctl how-to guide
+  </common/craft-parts/how-to/customise-the-build-with-craftctl>` to better reflect how
+  it can be used to override parts in apps.
+  
 For a complete list of commits, check out the `2.10.0`_ release on GitHub.
 
-2.9.0 (2025-04-02)
+2.4.4 (2025-05-01)
+------------------
+
+Bug fixes:
+
+- Fix the uv plugin breaking with uv 0.7
+
+For a complete list of commits, check out the `2.4.4`_ release on GitHub.
+
+2.9.1 (2025-05-01)
+------------------
+
+Fixes:
+
+- Update the uv plugin to work with uv 0.7.0 and up.
+
+2.9.0 (2025-04-28)
 ------------------
 
 New features:
 
 - Add a :ref:`Gradle plugin <craft_parts_gradle_plugin>`.
-
-2.8.1 (2025-XX-XX)
-------------------
+- Add ``backstage`` and ``part/export`` directories for plugin use.
 
 Documentation:
 
 - Fix an issue where the documentation was hosting pages at URLs that contained the
   ``.html`` extension. This regression was causing links to the site to break.
+
+For a complete list of commits, check out the `2.9.0`_ release on GitHub.
 
 2.8.0 (2025-04-10)
 -------------------
@@ -62,6 +82,8 @@ Bug fixes:
 
 - Address race condition when collecting subprocess output.
 - Update jinja2 dependency to address CVE-2025-27516
+
+For a complete list of commits, check out the `2.4.3`_ release on GitHub.
 
 2.4.2 (2025-03-04)
 ------------------
@@ -865,6 +887,9 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _Poetry: https://python-poetry.org
 
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
+.. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
+.. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
+.. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
 .. _2.4.0: https://github.com/canonical/craft-parts/releases/tag/2.4.0
 .. _2.3.1: https://github.com/canonical/craft-parts/releases/tag/2.3.1
