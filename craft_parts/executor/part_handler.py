@@ -91,7 +91,7 @@ class LayoutItem:
 
 DEFAULT_PARTITION = "default"
 
-# Define a harcoded layout to prototype
+# Define a hardcoded layout to prototype
 # Items in the list must be ordered by mount depth, deeper first.
 prototype_layout: list[LayoutItem] = [
     LayoutItem(partition="volume/pc/efi", mount="/boot/efi/"),
