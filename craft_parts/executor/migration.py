@@ -243,7 +243,7 @@ def clean_shared_overlay(
     if overlay_migration_state.contents(partition=partition):
         files, directories = overlay_migration_state.contents(partition=partition)
 
-    # Don't remove entries that also belong to a part.
+    # Don't remove entries that also belong to a part in this partition
     for other_state in part_states.values():
         if other_state and other_state.contents(partition=partition):
             other_part_files, other_part_directories = other_state.contents(
