@@ -172,12 +172,12 @@ class _Squasher:
             refdir / sub_path,
             destdir,
         )
-        logger.debug(f"excluding already migrated files: {self.all_migrated_files()}")
-        visible_files = visible_files - self.all_migrated_files()
+        logger.debug(f"excluding already migrated files: {self._all_migrated_files}")
+        visible_files = visible_files - self._all_migrated_files
         logger.debug(
-            f"excluding already migrated dirs: {self.all_migrated_directories()}"
+            f"excluding already migrated dirs: {self._all_migrated_directories}"
         )
-        visible_dirs = visible_dirs - self.all_migrated_directories()
+        visible_dirs = visible_dirs - self._all_migrated_directories
 
         layer_files, layer_dirs = migration.migrate_files(
             files=visible_files,
@@ -201,7 +201,8 @@ class _Squasher:
             src_path = str(Path(sub_path) / f)
             self.migrated_directories[dst_partition][src_path] = f
 
-    def all_migrated_files(self) -> set[str]:
+    @property
+    def _all_migrated_files(self) -> set[str]:
         """Merge lists of files migrated to every partitions.
 
         Return a list of paths relative to the source partition.
@@ -211,7 +212,8 @@ class _Squasher:
             migrated_files |= set(m)
         return migrated_files
 
-    def all_migrated_directories(self) -> set[str]:
+    @property
+    def _all_migrated_directories(self) -> set[str]:
         """Merge lists of directories migrated to every partitions.
 
         Return a list of paths relative to the source partition.
@@ -425,7 +427,7 @@ class PartHandler:
             project_options=step_info.project_options,
             partitions_contents=partitions_contents,
             files=contents.partitions_contents.get(DEFAULT_PARTITION).files,
-            dirs=contents.partitions_contents.get(DEFAULT_PARTITION).dirs,
+            directories=contents.partitions_contents.get(DEFAULT_PARTITION).dirs,
         )
 
     def _run_build(
@@ -556,7 +558,7 @@ class PartHandler:
             project_options=step_info.project_options,
             partitions_contents=migration_partitions_contents,
             files=contents.partitions_contents[DEFAULT_PARTITION].files,
-            dirs=contents.partitions_contents[DEFAULT_PARTITION].dirs,
+            directories=contents.partitions_contents[DEFAULT_PARTITION].dirs,
             overlay_hash=overlay_hash.hex(),
             backstage_files=contents.partitions_contents[
                 DEFAULT_PARTITION
@@ -615,7 +617,7 @@ class PartHandler:
             project_options=step_info.project_options,
             partitions_contents=non_default_partitions_contents,
             files=contents.partitions_contents[DEFAULT_PARTITION].files,
-            dirs=contents.partitions_contents[DEFAULT_PARTITION].dirs,
+            directories=contents.partitions_contents[DEFAULT_PARTITION].dirs,
             primed_stage_packages=primed_stage_packages,
         )
 
