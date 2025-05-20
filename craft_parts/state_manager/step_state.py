@@ -37,6 +37,7 @@ class MigrationContents(BaseModel):
     files: set[str] = set()
     directories: set[str] = set()
 
+
 class MigrationState(BaseModel):
     """State information collected when migrating steps.
 
@@ -79,10 +80,9 @@ class MigrationState(BaseModel):
         """Return contents for a given partition."""
         if not partition or partition == "default":
             return self.files, self.directories
-        if self.partitions_contents.get(partition):
-            return self.partitions_contents.get(
-                partition
-            ).files, self.partitions_contents.get(partition).directories
+        partition_content = self.partitions_contents.get(partition)
+        if partition_content:
+            return partition_content.files, partition_content.directories
 
         return None
 
