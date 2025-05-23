@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2022 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 
 import pydantic
 
-from craft_parts import errors
+from craft_parts import Layouts, errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -108,6 +108,7 @@ class ProjectInfo:
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
     :param partitions: A list of partitions.
+    :param layouts: A dict of layouts.
     """
 
     def __init__(  # noqa: PLR0913
@@ -124,6 +125,7 @@ class ProjectInfo:
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
         partitions: list[str] | None = None,
+        layouts: Layouts | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
         **custom_args: Any,  # custom passthrough args
@@ -148,6 +150,7 @@ class ProjectInfo:
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
         self._partitions = partitions
+        self._layouts = layouts
         self._custom_args = custom_args
         self._base_layer_dir = base_layer_dir
         self._base_layer_hash = base_layer_hash
@@ -264,6 +267,11 @@ class ProjectInfo:
     def partitions(self) -> list[str] | None:
         """Return the project's partitions."""
         return self._partitions
+
+    @property
+    def layouts(self) -> Layouts | None:
+        """Return the project's layouts."""
+        return self._layouts
 
     @property
     def base_layer_dir(self) -> Path | None:

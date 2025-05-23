@@ -34,7 +34,7 @@ from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
 import craft_parts.errors
-from craft_parts import ActionType, Step
+from craft_parts import ActionType, Layouts, Step
 
 
 def main() -> None:
@@ -98,6 +98,12 @@ def _process_parts(options: argparse.Namespace) -> None:
 
     partitions = options.partitions.split(",") if options.partitions else None
 
+    layouts_data = None
+    if options.layouts:
+        with open(options.layouts) as opt_layouts_file:
+            filesystems_data = yaml.safe_load(opt_layouts_file)
+            layouts_data = filesystems_data.get("filesystems")
+
     lcm = craft_parts.LifecycleManager(
         part_data,
         application_name=options.application_name,
@@ -108,6 +114,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
         partitions=partitions,
+        layouts=layouts_data,
     )
 
     command = options.command if options.command else "prime"
@@ -285,6 +292,11 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="name",
         default="",
         help="List of partitions to create.",
+    )
+    parser.add_argument(
+        "--layouts",
+        metavar="layouts",
+        help="The layouts file.",
     )
     parser.add_argument(
         "-v",
