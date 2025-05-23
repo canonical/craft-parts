@@ -40,24 +40,24 @@ def validate_layouts(layouts: dict[str, Any] | None) -> None:
     If layouts are defined then both partition and overlay features must
     be enabled.
     A layout dict must only have a single "default" entry.
-
+    The first entry in default must map the '/' mount.
     """
     if not layouts:
         return
 
     if (
         not features.Features().enable_partitions
-        or not features.Features().enable_partitions
+        or not features.Features().enable_overlay
     ):
         raise errors.FeatureError(
             "Filesystems are defined but partition feature or overlay feature are not enabled."
         )
 
-    if len(layouts) != 1:
-        raise errors.FeatureError("Only a single filesystem can be defined.")
+    if len(layouts) > 1:
+        raise errors.FeatureError("One and only one filesystem must be defined.")
 
     default_layout = layouts.get("default")
-    if not default_layout:
+    if default_layout is None:
         raise errors.FeatureError("A 'default' filesystem must be defined.")
 
     if len(default_layout) == 0:
