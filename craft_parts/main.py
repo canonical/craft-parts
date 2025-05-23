@@ -56,7 +56,7 @@ def main() -> None:
     craft_parts.Features(**features)
 
     try:
-        _process_parts(options)
+        _process_inputs(options)
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -77,7 +77,7 @@ def main() -> None:
         sys.exit(5)
 
 
-def _process_parts(options: argparse.Namespace) -> None:
+def _process_inputs(options: argparse.Namespace) -> None:
     with open(options.file) as opt_file:
         part_data = yaml.safe_load(opt_file)
 
@@ -98,6 +98,12 @@ def _process_parts(options: argparse.Namespace) -> None:
 
     partitions = options.partitions.split(",") if options.partitions else None
 
+    layouts_data = None
+    if options.layouts:
+        with open(options.layouts) as opt_layouts_file:
+            filesystems_data = yaml.safe_load(opt_layouts_file)
+            layouts_data = filesystems_data.get("filesystems")
+
     lcm = craft_parts.LifecycleManager(
         part_data,
         application_name=options.application_name,
@@ -108,6 +114,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
         partitions=partitions,
+        layouts=layouts_data,
     )
 
     command = options.command if options.command else "prime"
@@ -285,6 +292,11 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="name",
         default="",
         help="List of partitions to create.",
+    )
+    parser.add_argument(
+        "--layouts",
+        metavar="layouts",
+        help="The layouts file.",
     )
     parser.add_argument(
         "-v",
