@@ -147,7 +147,7 @@ class LifecycleManager:
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
             partitions=partitions,
-            layouts=layouts,
+            layouts=cast(Layouts, layouts),
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,
             **custom_args,

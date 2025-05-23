@@ -34,7 +34,7 @@ from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
 import craft_parts.errors
-from craft_parts import ActionType, Layouts, Step
+from craft_parts import ActionType, Step
 
 
 def main() -> None:
@@ -56,7 +56,7 @@ def main() -> None:
     craft_parts.Features(**features)
 
     try:
-        _process_parts(options)
+        _process_inputs(options)
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -77,7 +77,7 @@ def main() -> None:
         sys.exit(5)
 
 
-def _process_parts(options: argparse.Namespace) -> None:
+def _process_inputs(options: argparse.Namespace) -> None:
     with open(options.file) as opt_file:
         part_data = yaml.safe_load(opt_file)
 

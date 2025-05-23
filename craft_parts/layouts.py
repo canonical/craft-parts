@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Filesystems model."""
+"""Layouts models."""
 
 from typing import Annotated, Any, Literal
 
@@ -65,5 +65,3 @@ class LayoutItem(BaseModel):
 Layout = Annotated[UniqueList[LayoutItem], Field(min_length=1)]
 
 Layouts = SingleEntryDict[Literal["default"], Layout]
-
-# class Layouts(BaseModel):
