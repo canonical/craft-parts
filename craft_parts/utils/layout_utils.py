@@ -31,7 +31,7 @@ def validate_layout(data: list[dict[str, Any]]) -> None:
     layout = [LayoutItem.unmarshal(item) for item in data]
 
     if layout[0].mount != "/":
-        raise TypeError("A filesystem first entry must map the '/' mount.")
+        raise ValueError("A filesystem first entry must map the '/' mount.")
 
 
 def validate_layouts(layouts: dict[str, Any] | None) -> None:
