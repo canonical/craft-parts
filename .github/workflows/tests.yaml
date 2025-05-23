@@ -117,7 +117,7 @@ jobs:
       - name: Setup Tox environments
         run: tox run -m unit-tests --notest
       - name: Unit tests
-        run: .tox/.tox/bin/tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.platform }}.json -m unit-tests
+        run: .tox/.tox/bin/tox run --skip-pkg-install --no-list-dependencies --result-json results/tox-${{ matrix.os }}.json -m unit-tests
         env:
           PYTEST_ADDOPTS: "--no-header -vv -rN"
   tests:
