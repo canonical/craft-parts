@@ -391,6 +391,7 @@ dev = [
 ]
 docs = [
     { name = "canonical-sphinx" },
+    { name = "setuptools" },
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
     { name = "sphinx-lint" },
@@ -459,6 +460,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32,<3.0" },
     { name = "requests-mock", marker = "extra == 'dev'" },
     { name = "requests-unixsocket2", specifier = ">=0.4.0" },
+    { name = "setuptools", marker = "extra == 'docs'" },
     { name = "sphinx", marker = "extra == 'docs'" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'" },
     { name = "sphinx-lint", marker = "extra == 'docs'" },
@@ -1549,6 +1551,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/11/23/cd8f566de444a137bc1ee5795e47069a947e60810ba4152886fe5308e1b7/rpds_py-0.22.3-pp310-pypy310_pp73-musllinux_1_2_i686.whl", hash = "sha256:e35ba67d65d49080e8e5a1dd40101fccdd9798adb9b050ff670b7d74fa41c566", size = 583780 },
     { url = "https://files.pythonhosted.org/packages/8d/63/79c3602afd14d501f751e615a74a59040328da5ef29ed5754ae80d236b84/rpds_py-0.22.3-pp310-pypy310_pp73-musllinux_1_2_x86_64.whl", hash = "sha256:26fd7cac7dd51011a245f29a2cc6489c4608b5a8ce8d75661bb4a1066c52dfbe", size = 553619 },
     { url = "https://files.pythonhosted.org/packages/9f/2e/c5c1689e80298d4e94c75b70faada4c25445739d91b94c211244a3ed7ed1/rpds_py-0.22.3-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:177c7c0fce2855833819c98e43c262007f42ce86651ffbb84f37883308cb0e7d", size = 233338 },
+]
+
+[[package]]
+name = "setuptools"
+version = "80.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/d2/ec1acaaff45caed5c2dedb33b67055ba9d4e96b091094df90762e60135fe/setuptools-80.8.0.tar.gz", hash = "sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257", size = 1319720 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/29/93c53c098d301132196c3238c312825324740851d77a8500a2462c0fd888/setuptools-80.8.0-py3-none-any.whl", hash = "sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0", size = 1201470 },
 ]
 
 [[package]]
