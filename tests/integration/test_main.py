@@ -35,6 +35,15 @@ parts_yaml = textwrap.dedent(
 """
 )
 
+layouts_yaml = textwrap.dedent(
+    """
+    filesystems:
+      default:
+      - mount: "/"
+        device: "foo"
+"""
+)
+
 plan_steps = [
     "Pull foo\nPull bar\n",
     "Overlay foo\nOverlay bar\n",
@@ -701,6 +710,64 @@ def test_main_partitions(mocker):
         "base_layer_hash": b"",
         "cache_dir": mocker.ANY,
         "partitions": ["default", "foo", "bar"],
+        "strict_mode": False,
+        "work_dir": ".",
+    }
+
+
+def test_main_unreadable_layouts_file(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("layouts.yaml").touch()
+    Path("layouts.yaml").chmod(0o111)
+
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--layouts", "layouts.yaml"]
+    )
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 1
+
+    out, err = capfd.readouterr()
+    assert err == "Error: layouts.yaml: Permission denied.\n"
+    assert out == ""
+
+
+def test_main_invalid_layouts_file(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("layouts.yaml").write_text("not yaml data")
+
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--layouts", "layouts.yaml"]
+    )
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 4
+
+    out, err = capfd.readouterr()
+    assert err == "Error: layouts definition must be a dictionary\n"
+    assert out == ""
+
+
+def test_main_layouts(mocker):
+    """Test passing "--layouts" on the command line."""
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("layouts.yaml").write_text(layouts_yaml)
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--partitions", "default,foo", "--layouts", "layouts.yaml"]
+    )
+
+    spied_lcm = mocker.spy(craft_parts.LifecycleManager, name="__init__")
+    main.main()
+
+    kwargs = spied_lcm.call_args[1]
+    assert kwargs == {
+        "application_name": "craft_parts",
+        "base": "",
+        "base_layer_dir": None,
+        "base_layer_hash": b"",
+        "cache_dir": mocker.ANY,
+        "partitions": ["default", "foo"],
+        "layouts": {"default": [{"mount": "/", "device": "foo"}]},
         "strict_mode": False,
         "work_dir": ".",
     }
