@@ -18,7 +18,8 @@ from copy import deepcopy
 
 import pydantic
 import pytest
-from craft_parts.layouts import Layout, LayoutItem
+from craft_parts import errors
+from craft_parts.layouts import Layout, LayoutItem, validate_layouts
 
 
 def test_layout_item_marshal_unmarshal():
@@ -127,3 +128,29 @@ def test_layout_unmarshal_invalid(data, error_regex):
         match=error_regex,
     ):
         Layout.unmarshal(data)
+
+
+@pytest.mark.parametrize("layouts", [None])
+def test_validate_layouts_success_feature_disabled(layouts):
+    validate_layouts(layouts)
+
+
+@pytest.mark.usefixtures("enable_all_features")
+@pytest.mark.parametrize(
+    ("layouts", "message"),
+    [
+        (
+            {"test": "test", "test2": "test"},
+            "Exactly one filesystem must be defined.",
+        ),
+        (
+            {"test": "test"},
+            "'default' filesystem missing.",
+        ),
+    ],
+)
+def test_validate_layouts_failure_feature_enabled(layouts, message):
+    with pytest.raises(errors.LayoutError) as exc_info:
+        validate_layouts(layouts)
+
+    assert exc_info.value.brief == message

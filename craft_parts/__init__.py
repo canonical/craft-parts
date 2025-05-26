@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ from . import plugins
 from .actions import Action, ActionProperties, ActionType
 from .dirs import ProjectDirs
 from .errors import PartsError
-from .layouts import Layout, Layouts
+from .layouts import Layout, Layouts, validate_layout
 from .executor import expand_environment
 from .features import Features
 from .infos import PartInfo, ProjectInfo, StepInfo
@@ -65,6 +65,7 @@ __all__ = [
     "plugins",
     "expand_environment",
     "validate_part",
+    "validate_layout",
     "part_has_overlay",
     "part_has_slices",
     "part_has_chisel_as_build_snap",
