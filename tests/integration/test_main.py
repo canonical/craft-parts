@@ -722,9 +722,7 @@ def test_main_unreadable_layouts_file(mocker, capfd):
     Path("layouts.yaml").touch()
     Path("layouts.yaml").chmod(0o111)
 
-    mocker.patch.object(
-        sys, "argv", ["cmd", "--layouts", "layouts.yaml"]
-    )
+    mocker.patch.object(sys, "argv", ["cmd", "--layouts", "layouts.yaml"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 1
@@ -738,9 +736,7 @@ def test_main_invalid_layouts_file(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
     Path("layouts.yaml").write_text("not yaml data")
 
-    mocker.patch.object(
-        sys, "argv", ["cmd", "--layouts", "layouts.yaml"]
-    )
+    mocker.patch.object(sys, "argv", ["cmd", "--layouts", "layouts.yaml"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 4
