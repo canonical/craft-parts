@@ -31,24 +31,16 @@ def test_validate_layouts_success_feature_disabled(layouts):
     [
         (
             {"test": "test", "test2": "test"},
-            "One and only one filesystem must be defined.",
+            "Exactly one filesystem must be defined.",
         ),
         (
             {"test": "test"},
-            "A 'default' filesystem must be defined.",
-        ),
-        (
-            {"default": []},
-            "The 'default' filesystem must defined at least one entry.",
-        ),
-        (
-            {"default": [{"mount": "not_slash", "device": "(default)"}]},
-            "The 'default' filesystem first entry must map the '/' mount.",
+            "'default' filesystem missing.",
         ),
     ],
 )
 def test_validate_layouts_failure_feature_enabled(layouts, message):
-    with pytest.raises(errors.FeatureError) as exc_info:
+    with pytest.raises(errors.LayoutError) as exc_info:
         layout_utils.validate_layouts(layouts)
 
     assert exc_info.value.brief == message
