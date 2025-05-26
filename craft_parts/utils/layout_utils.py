@@ -18,7 +18,7 @@
 from typing import Any
 
 from craft_parts import errors, features
-from craft_parts.layouts import LayoutItem
+from craft_parts.layouts import Layout, LayoutItem
 
 
 def validate_layout(data: list[dict[str, Any]]) -> None:
@@ -49,25 +49,22 @@ def validate_layouts(layouts: dict[str, Any] | None) -> None:
         not features.Features().enable_partitions
         or not features.Features().enable_overlay
     ):
-        raise errors.FeatureError(
-            "Filesystems are defined but partition feature or overlay feature are not enabled."
+        raise errors.LayoutError(
+            brief="Missing features to use Filesystems",
+            details="Filesystems are defined but partition feature or overlay feature are not enabled.",
         )
 
     if len(layouts) > 1:
-        raise errors.FeatureError("One and only one filesystem must be defined.")
+        raise errors.LayoutError(
+            brief="Exactly one filesystem must be defined.",
+            resolution="Define a single entry in the filesystems section of the project file.",
+        )
 
     default_layout = layouts.get("default")
     if default_layout is None:
-        raise errors.FeatureError("A 'default' filesystem must be defined.")
-
-    if len(default_layout) == 0:
-        raise errors.FeatureError(
-            "The 'default' filesystem must defined at least one entry."
+        raise errors.LayoutError(
+            brief="'default' filesystem missing.",
+            resolution="Define a 'default' entry in the filesystems section.",
         )
 
-    default_layout_obj = LayoutItem.unmarshal(default_layout[0])
-
-    if default_layout_obj.mount != "/":
-        raise errors.FeatureError(
-            "The 'default' filesystem first entry must map the '/' mount."
-        )
+    Layout.unmarshal(default_layout)

@@ -18,7 +18,7 @@ from copy import deepcopy
 
 import pydantic
 import pytest
-from craft_parts.layouts import LayoutItem
+from craft_parts.layouts import Layout, LayoutItem
 
 
 def test_layout_item_marshal_unmarshal():
@@ -33,7 +33,7 @@ def test_layout_item_marshal_unmarshal():
     assert spec.marshal() == data_copy
 
 
-def test_unmarshal_not_dict():
+def test_layout_item_unmarshal_not_dict():
     with pytest.raises(TypeError) as raised:
         LayoutItem.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
     assert str(raised.value) == "layout item data is not a dictionary"
@@ -58,9 +58,72 @@ def test_unmarshal_not_dict():
         ),
     ],
 )
-def test_unmarshal_empty_entries(data, error_regex):
+def test_layout_item_unmarshal_empty_entries(data, error_regex):
     with pytest.raises(
         pydantic.ValidationError,
         match=error_regex,
     ):
         LayoutItem.unmarshal(data)
+
+
+def test_layout_marshal_unmarshal():
+    data = [
+        {
+            "mount": "/",
+            "device": "foo",
+        },
+        {
+            "mount": "/bar",
+            "device": "baz",
+        },
+    ]
+
+    data_copy = deepcopy(data)
+    spec = Layout.unmarshal(data)
+
+    assert spec.marshal() == data_copy
+
+
+def test_layout_unmarshal_not_list():
+    with pytest.raises(TypeError) as raised:
+        Layout.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
+    assert str(raised.value) == "layout data is not a list"
+
+
+@pytest.mark.parametrize(
+    ("data", "error_regex"),
+    [
+        (
+            [],
+            r"1 validation error for Layout\n\s+Value should have at least 1 item after validation, not 0",
+        ),
+        (
+            [
+                {
+                    "mount": "/",
+                    "device": "foo",
+                },
+                {
+                    "mount": "/",
+                    "device": "foo",
+                },
+            ],
+            r"1 validation error for Layout\n\s+Value error, Duplicate values in list",
+        ),
+        (
+            [
+                {
+                    "mount": "/foo",
+                    "device": "foo",
+                },
+            ],
+            r"1 validation error for Layout\n\s+Value error, A filesystem first entry must map the '/' mount",
+        ),
+    ],
+)
+def test_layout_unmarshal_invalid(data, error_regex):
+    with pytest.raises(
+        pydantic.ValidationError,
+        match=error_regex,
+    ):
+        Layout.unmarshal(data)
