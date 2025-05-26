@@ -108,7 +108,7 @@ class Layout(RootModel):
         :return: The newly created list.
 
         """
-        return self.model_dump(by_alias=True)
+        return cast(list[dict[str, Any]], self.model_dump(by_alias=True))
 
 
 Layouts = SingleEntryDict[Literal["default"], Layout]
