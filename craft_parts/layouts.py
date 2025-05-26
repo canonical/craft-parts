@@ -102,10 +102,10 @@ class Layout(RootModel):
 
         return Layout(root=[LayoutItem.unmarshal(item) for item in data])
 
-    def marshal(self) -> dict[str, Any]:
-        """Create a dictionary containing the layout item data.
+    def marshal(self) -> list[dict[str, Any]]:
+        """Create a list containing the layout data.
 
-        :return: The newly created dictionary.
+        :return: The newly created list.
 
         """
         return self.model_dump(by_alias=True)
