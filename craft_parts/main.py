@@ -102,6 +102,8 @@ def _process_inputs(options: argparse.Namespace) -> None:
     if options.layouts:
         with open(options.layouts) as opt_layouts_file:
             filesystems_data = yaml.safe_load(opt_layouts_file)
+            if not isinstance(filesystems_data, dict):
+                raise TypeError("layouts definition must be a dictionary")
             layouts_data = filesystems_data.get("filesystems")
 
     lcm = craft_parts.LifecycleManager(
