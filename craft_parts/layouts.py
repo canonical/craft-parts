@@ -20,6 +20,7 @@ from typing import Annotated, Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
+from craft_parts import errors, features
 from craft_parts.constraints import SingleEntryDict, UniqueList
 
 
@@ -112,3 +113,47 @@ class Layout(RootModel):
 
 
 Layouts = SingleEntryDict[Literal["default"], Layout]
+
+
+def validate_layout(data: list[dict[str, Any]]) -> None:
+    """Validate a layout.
+
+    :param data: The layout data to validate.
+    """
+    Layout.unmarshal(data)
+
+
+def validate_layouts(layouts: dict[str, Any] | None) -> None:
+    """Validate the layouts section.
+
+    If layouts are defined then both partition and overlay features must
+    be enabled.
+    A layout dict must only have a single "default" entry.
+    The first entry in default must map the '/' mount.
+    """
+    if not layouts:
+        return
+
+    if (
+        not features.Features().enable_partitions
+        or not features.Features().enable_overlay
+    ):
+        raise errors.LayoutError(
+            brief="Missing features to use Filesystems",
+            details="Filesystems are defined but partition feature or overlay feature are not enabled.",
+        )
+
+    if len(layouts) > 1:
+        raise errors.LayoutError(
+            brief="Exactly one filesystem must be defined.",
+            resolution="Define a single entry in the filesystems section of the project file.",
+        )
+
+    default_layout = layouts.get("default")
+    if default_layout is None:
+        raise errors.LayoutError(
+            brief="'default' filesystem missing.",
+            resolution="Define a 'default' entry in the filesystems section.",
+        )
+
+    validate_layout(default_layout)

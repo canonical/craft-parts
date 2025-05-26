@@ -30,12 +30,11 @@ from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
-from craft_parts.layouts import Layouts
+from craft_parts.layouts import Layouts, validate_layouts
 from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
-from craft_parts.utils.layout_utils import validate_layouts
 from craft_parts.utils.partition_utils import validate_partition_names
 
 
