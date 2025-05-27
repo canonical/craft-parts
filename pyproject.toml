@@ -91,6 +91,7 @@ dev = [  # TODO: Remove this once we've switched CI to uv
     "types-requests",
     "types-setuptools",
 ]
+tics = ["flake8", "pylint"]
 
 [tool.uv]
 constraint-dependencies = [
