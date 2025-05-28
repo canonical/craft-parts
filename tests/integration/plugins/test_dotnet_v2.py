@@ -32,7 +32,10 @@ def test_dotnet_plugin(new_dir, partitions):
     plugins.register({"dotnet": dotnet_v2_plugin.DotnetV2Plugin})
 
     lf = LifecycleManager(
-        parts, application_name="test_dotnet_v2", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_dotnet_v2",
+        cache_dir=new_dir,
+        partitions=partitions,
     )
 
     actions = lf.plan(Step.PRIME)
