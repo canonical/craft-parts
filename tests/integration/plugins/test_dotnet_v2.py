@@ -20,14 +20,13 @@ from pathlib import Path
 import yaml
 from craft_parts import LifecycleManager, Step, plugins
 from craft_parts.plugins import dotnet_v2_plugin
-from overrides import override
 
 
 def test_dotnet_plugin(new_dir, partitions):
     yaml_path = Path(__file__).parent / "test_dotnet_v2"
     with open(yaml_path / "parts.yaml") as file:
         parts = yaml.safe_load(file)
-        parts['parts']['foo']['source'] = str(yaml_path)
+        parts["parts"]["foo"]["source"] = str(yaml_path)
 
     plugins.unregister("dotnet")
     plugins.register({"dotnet": dotnet_v2_plugin.DotnetV2Plugin})
@@ -49,14 +48,14 @@ def test_dotnet_plugin(new_dir, partitions):
 
 def test_dotnet_plugin_no_dotnet(new_dir, partitions, fp):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
-    fp.allow_unregistered(True)
+    fp.allow_unregistered(allow=True)
     fp.register_subprocess(["dotnet", "--version"], returncode=127)
     test_dotnet_plugin(new_dir, partitions)
 
 
 def test_dotnet_plugin_fake_dotnet(new_dir, partitions, fp):
     """Test the dotnet plugin while pretending dotnet is installed."""
-    fp.allow_unregistered(True)
+    fp.allow_unregistered(allow=True)
     # First call fails
     fp.register_subprocess(
         ["dotnet", "--version"],

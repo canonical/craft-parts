@@ -16,9 +16,9 @@
 
 """The new .NET plugin."""
 
-from enum import Enum
 import logging
 import re
+from enum import Enum
 from typing import Literal, cast
 
 import pydantic
@@ -40,12 +40,14 @@ _DEBIAN_ARCH_TO_DOTNET_RID: dict[str, str] = {
 
 class DotnetConfiguration(str, Enum):
     """The .NET build configuration."""
+
     DEBUG = "Debug"
     RELEASE = "Release"
 
 
 class DotnetVerbosity(str, Enum):
     """The .NET build verbosity level."""
+
     QUIET = "quiet"
     QUIET_SHORT = "q"
     MINIMAL = "minimal"
