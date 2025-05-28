@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
-import textwrap
 from pathlib import Path
 
 import yaml
@@ -25,56 +24,16 @@ from overrides import override
 
 
 def test_dotnet_plugin(new_dir, partitions):
-    # pylint: disable=line-too-long
-    parts_yaml = textwrap.dedent(
-        """
-        parts:
-          foo:
-            source: .
-            plugin: dotnet
-            dotnet-self-contained: true
-            build-environment:
-              - PATH: $CRAFT_STAGE/sdk:$PATH
-            after: [dotnet-deps]
-          dotnet-deps:
-            plugin: dump
-            source: https://download.visualstudio.microsoft.com/download/pr/d2abdb4c-a96e-4123-9351-e4dd2ea20905/e8010ae2688786ffc1ebca4ebb52f41b/dotnet-sdk-8.0.406-linux-x64.tar.gz
-            source-checksum: sha512/d6fdcfebd0df46959f7857cfb3beac7de6c8843515ece28b24802765fd9cfb6c7e9701b320134cb4907322937ab89cae914ddc21bf48b9b6313e9a9af5c1f24a
-            override-build: |
-              # TODO: find out why this is a problem with "organize".XS
-              cp --archive --link --no-dereference . $CRAFT_PART_INSTALL/sdk
-            prime:
-              - -sdk
-        """
-    )
-    # pylint: enable=line-too-long
-    parts = yaml.safe_load(parts_yaml)
-
-    Path("dotnet.csproj").write_text(
-        textwrap.dedent(
-            """
-            <Project Sdk="Microsoft.NET.Sdk">
-
-              <PropertyGroup>
-                <OutputType>Exe</OutputType>
-                <TargetFramework>net8.0</TargetFramework>
-                <ImplicitUsings>enable</ImplicitUsings>
-                <Nullable>enable</Nullable>
-                <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
-              </PropertyGroup>
-
-            </Project>
-            """
-        )
-    )
-
-    Path("hello.cs").write_text('Console.WriteLine("Hello, World!");')
+    yaml_path = Path(__file__).parent / "test_dotnet_v2"
+    with open(yaml_path / "parts.yaml") as file:
+        parts = yaml.safe_load(file)
+        parts['parts']['foo']['source'] = str(yaml_path)
 
     plugins.unregister("dotnet")
     plugins.register({"dotnet": dotnet_v2_plugin.DotnetV2Plugin})
 
     lf = LifecycleManager(
-        parts, application_name="test_dotnet", cache_dir=new_dir, partitions=partitions
+        parts, application_name="test_dotnet_v2", cache_dir=new_dir, partitions=partitions
     )
 
     actions = lf.plan(Step.PRIME)

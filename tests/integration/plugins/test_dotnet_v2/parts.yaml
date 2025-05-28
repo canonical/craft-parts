@@ -1,0 +1,19 @@
+parts:
+  foo:
+    source: .
+    plugin: dotnet
+    dotnet-self-contained: true
+    dotnet-configuration: "Release"
+    dotnet-verbosity: "minimal"
+    build-environment:
+      - PATH: $CRAFT_STAGE/sdk:$PATH
+    after: [dotnet-deps]
+  dotnet-deps:
+    plugin: dump
+    source: https://download.visualstudio.microsoft.com/download/pr/d2abdb4c-a96e-4123-9351-e4dd2ea20905/e8010ae2688786ffc1ebca4ebb52f41b/dotnet-sdk-8.0.406-linux-x64.tar.gz
+    source-checksum: sha512/d6fdcfebd0df46959f7857cfb3beac7de6c8843515ece28b24802765fd9cfb6c7e9701b320134cb4907322937ab89cae914ddc21bf48b9b6313e9a9af5c1f24a
+    override-build: |
+      # TODO: find out why this is a problem with "organize".XS
+      cp --archive --link --no-dereference . $CRAFT_PART_INSTALL/sdk
+    prime:
+      - -sdk
