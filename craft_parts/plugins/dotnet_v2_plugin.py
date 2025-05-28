@@ -16,6 +16,7 @@
 
 """The new .NET plugin."""
 
+from enum import Enum
 import logging
 import re
 from typing import Literal, cast
@@ -37,28 +38,37 @@ _DEBIAN_ARCH_TO_DOTNET_RID: dict[str, str] = {
 }
 
 
+class DotnetConfiguration(str, Enum):
+    """The .NET build configuration."""
+    DEBUG = "Debug"
+    RELEASE = "Release"
+
+
+class DotnetVerbosity(str, Enum):
+    """The .NET build verbosity level."""
+    QUIET = "quiet"
+    QUIET_SHORT = "q"
+    MINIMAL = "minimal"
+    MINIMAL_SHORT = "m"
+    NORMAL = "normal"
+    NORMAL_SHORT = "n"
+    DETAILED = "detailed"
+    DETAILED_SHORT = "d"
+    DIAGNOSTIC = "diagnostic"
+    DIAGNOSTIC_SHORT = "diag"
+
+
 class DotnetV2PluginProperties(PluginProperties, frozen=True):
     """The part properties used by the .NET plugin."""
 
     plugin: Literal["dotnet"] = "dotnet"
 
     # Global flags
-    dotnet_configuration: Literal["Debug", "Release"] = "Release"
+    dotnet_configuration: DotnetConfiguration = DotnetConfiguration.RELEASE
     dotnet_project: str | None = None
     dotnet_properties: dict[str, str] = {}
     dotnet_self_contained: bool = False
-    dotnet_verbosity: Literal[
-        "quiet",
-        "q",
-        "minimal",
-        "m",
-        "normal",
-        "n",
-        "detailed",
-        "d",
-        "diagnostic",
-        "diag",
-    ] = "normal"
+    dotnet_verbosity: DotnetVerbosity = DotnetVerbosity.NORMAL
     dotnet_version: str | None = None
 
     # Restore specific flags
@@ -309,7 +319,7 @@ class DotnetV2Plugin(Plugin):
         if options.dotnet_restore_configfile:
             restore_cmd.append(f"--configfile {options.dotnet_restore_configfile}")
 
-        restore_cmd.append(f"--verbosity {options.dotnet_verbosity}")
+        restore_cmd.append(f"--verbosity {options.dotnet_verbosity.value}")
         restore_cmd.append(f"--runtime {dotnet_rid}")
 
         for prop_name, prop_value in options.dotnet_properties.items():
@@ -328,14 +338,14 @@ class DotnetV2Plugin(Plugin):
         build_cmd = [
             "dotnet",
             "build",
-            f"--configuration {options.dotnet_configuration}",
+            f"--configuration {options.dotnet_configuration.value}",
             "--no-restore",
         ]
 
         if options.dotnet_build_framework:
             build_cmd.append(f"--framework {options.dotnet_build_framework}")
 
-        build_cmd.append(f"--verbosity {options.dotnet_verbosity}")
+        build_cmd.append(f"--verbosity {options.dotnet_verbosity.value}")
 
         # Self contained build
         build_cmd.append(f"--runtime {dotnet_rid}")
@@ -357,9 +367,9 @@ class DotnetV2Plugin(Plugin):
         publish_cmd = [
             "dotnet",
             "publish",
-            f"--configuration {options.dotnet_configuration}",
+            f"--configuration {options.dotnet_configuration.value}",
             f"--output {self._part_info.part_install_dir}",
-            f"--verbosity {options.dotnet_verbosity}",
+            f"--verbosity {options.dotnet_verbosity.value}",
             "--no-restore",
             "--no-build",
         ]
