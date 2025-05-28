@@ -84,7 +84,7 @@ class FilesystemMount(RootModel):
     ) -> list[FilesystemMountItem]:
         """Make sure the first item in the list maps the '/' mount."""
         if value[0].mount != "/":
-            raise ValueError("A filesystem first entry must map the '/' mount.")
+            raise ValueError("The first entry in a filesystem must map the '/' mount.")
         return value
 
     @classmethod
