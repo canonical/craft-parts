@@ -98,13 +98,13 @@ def _process_inputs(options: argparse.Namespace) -> None:
 
     partitions = options.partitions.split(",") if options.partitions else None
 
-    layouts_data = None
-    if options.layouts:
-        with open(options.layouts) as opt_layouts_file:
-            filesystems_data = yaml.safe_load(opt_layouts_file)
+    filesystem_mounts_data = None
+    if options.filesystem_mounts:
+        with open(options.filesystem_mounts) as opt_filesystem_mounts_file:
+            filesystems_data = yaml.safe_load(opt_filesystem_mounts_file)
             if not isinstance(filesystems_data, dict):
-                raise TypeError("layouts definition must be a dictionary")
-            layouts_data = filesystems_data.get("filesystems")
+                raise TypeError("filesystem_mounts definition must be a dictionary")
+            filesystem_mounts_data = filesystems_data.get("filesystems")
 
     lcm = craft_parts.LifecycleManager(
         part_data,
@@ -116,7 +116,7 @@ def _process_inputs(options: argparse.Namespace) -> None:
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
         partitions=partitions,
-        layouts=layouts_data,
+        filesystem_mounts=filesystem_mounts_data,
     )
 
     command = options.command if options.command else "prime"
@@ -296,9 +296,9 @@ def _parse_arguments() -> argparse.Namespace:
         help="List of partitions to create.",
     )
     parser.add_argument(
-        "--layouts",
-        metavar="layouts",
-        help="The layouts file.",
+        "--filesystem-mounts",
+        metavar="filesystem_mounts",
+        help="The filesystem mounts file.",
     )
     parser.add_argument(
         "-v",

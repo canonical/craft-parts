@@ -35,7 +35,7 @@ parts_yaml = textwrap.dedent(
 """
 )
 
-layouts_yaml = textwrap.dedent(
+filesystem_mounts_yaml = textwrap.dedent(
     """
     filesystems:
       default:
@@ -217,7 +217,7 @@ def test_main_alternative_work_dir(mocker, capfd):
     assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
 
 
-@pytest.mark.parametrize("opt", ["--f", "--file"])
+@pytest.mark.parametrize("opt", ["-f", "--file"])
 def test_main_alternative_parts_file(mocker, capfd, opt):
     Path("other.yaml").write_text(parts_yaml)
 
@@ -688,7 +688,7 @@ def test_main_strict(mocker):
         "base_layer_dir": None,
         "base_layer_hash": b"",
         "cache_dir": mocker.ANY,
-        "layouts": None,
+        "filesystem_mounts": None,
         "partitions": None,
         "strict_mode": True,
         "work_dir": ".",
@@ -710,48 +710,60 @@ def test_main_partitions(mocker):
         "base_layer_dir": None,
         "base_layer_hash": b"",
         "cache_dir": mocker.ANY,
-        "layouts": None,
+        "filesystem_mounts": None,
         "partitions": ["default", "foo", "bar"],
         "strict_mode": False,
         "work_dir": ".",
     }
 
 
-def test_main_unreadable_layouts_file(mocker, capfd):
+def test_main_unreadable_filesystem_mounts_file(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
-    Path("layouts.yaml").touch()
-    Path("layouts.yaml").chmod(0o111)
+    Path("filesystem_mounts.yaml").touch()
+    Path("filesystem_mounts.yaml").chmod(0o111)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--layouts", "layouts.yaml"])
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--filesystem-mounts", "filesystem_mounts.yaml"]
+    )
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 1
 
     out, err = capfd.readouterr()
-    assert err == "Error: layouts.yaml: Permission denied.\n"
+    assert err == "Error: filesystem_mounts.yaml: Permission denied.\n"
     assert out == ""
 
 
-def test_main_invalid_layouts_file(mocker, capfd):
+def test_main_invalid_filesystem_mounts_file(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
-    Path("layouts.yaml").write_text("not yaml data")
+    Path("filesystem_mounts.yaml").write_text("not yaml data")
 
-    mocker.patch.object(sys, "argv", ["cmd", "--layouts", "layouts.yaml"])
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--filesystem-mounts", "filesystem_mounts.yaml"]
+    )
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 4
 
     out, err = capfd.readouterr()
-    assert err == "Error: layouts definition must be a dictionary\n"
+    assert err == "Error: filesystem_mounts definition must be a dictionary\n"
     assert out == ""
 
 
-def test_main_layouts(mocker):
-    """Test passing "--layouts" on the command line."""
+def test_main_filesystem_mounts(mocker):
+    """Test passing "--filesystem-mounts" on the command line."""
     Path("parts.yaml").write_text(parts_yaml)
-    Path("layouts.yaml").write_text(layouts_yaml)
+    Path("filesystem_mounts.yaml").write_text(filesystem_mounts_yaml)
     mocker.patch.object(
-        sys, "argv", ["cmd", "--partitions", "default,foo", "--layouts", "layouts.yaml"]
+        sys,
+        "argv",
+        [
+            "cmd",
+            "--partitions",
+            "default,foo",
+            "--filesystem-mounts",
+            "filesystem_mounts.yaml",
+        ],
     )
 
     spied_lcm = mocker.spy(craft_parts.LifecycleManager, name="__init__")
@@ -765,7 +777,7 @@ def test_main_layouts(mocker):
         "base_layer_hash": b"",
         "cache_dir": mocker.ANY,
         "partitions": ["default", "foo"],
-        "layouts": {"default": [{"mount": "/", "device": "foo"}]},
+        "filesystem_mounts": {"default": [{"mount": "/", "device": "foo"}]},
         "strict_mode": False,
         "work_dir": ".",
     }

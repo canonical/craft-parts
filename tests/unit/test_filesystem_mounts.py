@@ -19,10 +19,14 @@ from copy import deepcopy
 import pydantic
 import pytest
 from craft_parts import errors
-from craft_parts.layouts import Layout, LayoutItem, validate_layouts
+from craft_parts.filesystem_mounts import (
+    FilesystemMount,
+    FilesystemMountItem,
+    validate_filesystem_mounts,
+)
 
 
-def test_layout_item_marshal_unmarshal():
+def test_filesystem_mount_item_marshal_unmarshal():
     data = {
         "mount": "/",
         "device": "(default)",
@@ -30,14 +34,14 @@ def test_layout_item_marshal_unmarshal():
 
     data_copy = deepcopy(data)
 
-    spec = LayoutItem.unmarshal(data)
+    spec = FilesystemMountItem.unmarshal(data)
     assert spec.marshal() == data_copy
 
 
-def test_layout_item_unmarshal_not_dict():
+def test_filesystem_mount_item_unmarshal_not_dict():
     with pytest.raises(TypeError) as raised:
-        LayoutItem.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "layout item data is not a dictionary"
+        FilesystemMountItem.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
+    assert str(raised.value) == "filesystem_mount item data is not a dictionary"
 
 
 @pytest.mark.parametrize(
@@ -48,26 +52,26 @@ def test_layout_item_unmarshal_not_dict():
                 "mount": "",
                 "device": "(default)",
             },
-            r"1 validation error for LayoutItem\nmount\n\s+String should have at least 1 character",
+            r"1 validation error for FilesystemMountItem\nmount\n\s+String should have at least 1 character",
         ),
         (
             {
                 "mount": "/",
                 "device": "",
             },
-            r"1 validation error for LayoutItem\ndevice\n\s+String should have at least 1 character",
+            r"1 validation error for FilesystemMountItem\ndevice\n\s+String should have at least 1 character",
         ),
     ],
 )
-def test_layout_item_unmarshal_empty_entries(data, error_regex):
+def test_filesystem_mount_item_unmarshal_empty_entries(data, error_regex):
     with pytest.raises(
         pydantic.ValidationError,
         match=error_regex,
     ):
-        LayoutItem.unmarshal(data)
+        FilesystemMountItem.unmarshal(data)
 
 
-def test_layout_marshal_unmarshal():
+def test_filesystem_mount_marshal_unmarshal():
     data = [
         {
             "mount": "/",
@@ -80,15 +84,15 @@ def test_layout_marshal_unmarshal():
     ]
 
     data_copy = deepcopy(data)
-    spec = Layout.unmarshal(data)
+    spec = FilesystemMount.unmarshal(data)
 
     assert spec.marshal() == data_copy
 
 
-def test_layout_unmarshal_not_list():
+def test_filesystem_mount_unmarshal_not_list():
     with pytest.raises(TypeError) as raised:
-        Layout.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "layout data is not a list"
+        FilesystemMount.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
+    assert str(raised.value) == "filesystem_mount data is not a list"
 
 
 @pytest.mark.parametrize(
@@ -96,7 +100,7 @@ def test_layout_unmarshal_not_list():
     [
         (
             [],
-            r"1 validation error for Layout\n\s+Value should have at least 1 item after validation, not 0",
+            r"1 validation error for FilesystemMount\n\s+Value should have at least 1 item after validation, not 0",
         ),
         (
             [
@@ -109,7 +113,7 @@ def test_layout_unmarshal_not_list():
                     "device": "foo",
                 },
             ],
-            r"1 validation error for Layout\n\s+Value error, Duplicate values in list",
+            r"1 validation error for FilesystemMount\n\s+Value error, Duplicate values in list",
         ),
         (
             [
@@ -118,26 +122,26 @@ def test_layout_unmarshal_not_list():
                     "device": "foo",
                 },
             ],
-            r"1 validation error for Layout\n\s+Value error, A filesystem first entry must map the '/' mount",
+            r"1 validation error for FilesystemMount\n\s+Value error, A filesystem first entry must map the '/' mount",
         ),
     ],
 )
-def test_layout_unmarshal_invalid(data, error_regex):
+def test_filesystem_mount_unmarshal_invalid(data, error_regex):
     with pytest.raises(
         pydantic.ValidationError,
         match=error_regex,
     ):
-        Layout.unmarshal(data)
+        FilesystemMount.unmarshal(data)
 
 
-@pytest.mark.parametrize("layouts", [None])
-def test_validate_layouts_success_feature_disabled(layouts):
-    validate_layouts(layouts)
+@pytest.mark.parametrize("filesystem_mounts", [None])
+def test_validate_filesystem_mounts_success_feature_disabled(filesystem_mounts):
+    validate_filesystem_mounts(filesystem_mounts)
 
 
 @pytest.mark.usefixtures("enable_all_features")
 @pytest.mark.parametrize(
-    ("layouts", "message"),
+    ("filesystem_mounts", "message"),
     [
         (
             {"test": "test", "test2": "test"},
@@ -149,8 +153,8 @@ def test_validate_layouts_success_feature_disabled(layouts):
         ),
     ],
 )
-def test_validate_layouts_failure_feature_enabled(layouts, message):
-    with pytest.raises(errors.LayoutError) as exc_info:
-        validate_layouts(layouts)
+def test_validate_filesystem_mounts_failure_feature_enabled(filesystem_mounts, message):
+    with pytest.raises(errors.FilesystemMountError) as exc_info:
+        validate_filesystem_mounts(filesystem_mounts)
 
     assert exc_info.value.brief == message
