@@ -23,10 +23,10 @@ from craft_parts.plugins import dotnet_v2_plugin
 
 
 def test_dotnet_plugin(new_dir, partitions):
-    yaml_path = Path(__file__).parent / "test_dotnet_v2"
-    with open(yaml_path / "parts.yaml") as file:
+    project_path = Path(__file__).parent / "test_dotnet_v2"
+    with open(project_path / "parts.yaml") as file:
         parts = yaml.safe_load(file)
-        parts["parts"]["foo"]["source"] = str(yaml_path)
+        parts["parts"]["foo"]["source"] = str(project_path)
 
     plugins.unregister("dotnet")
     plugins.register({"dotnet": dotnet_v2_plugin.DotnetV2Plugin})
