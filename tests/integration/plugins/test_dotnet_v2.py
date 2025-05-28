@@ -47,53 +47,25 @@ def test_dotnet_plugin(new_dir, partitions):
     assert output == "Hello, World!\n"
 
 
-def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
+def test_dotnet_plugin_no_dotnet(new_dir, partitions, fp):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
-
-    class FailSpecificCmdValidator(dotnet_v2_plugin.DotnetV2PluginEnvironmentValidator):
-        """A validator that always fails the first time we run `dotnet --version`."""
-
-        __already_run = False
-
-        @override
-        def _execute(self, cmd: str) -> str:
-            if cmd == "dotnet --version" and not self.__already_run:
-                self.__class__.__already_run = True
-                raise subprocess.CalledProcessError(127, cmd)
-            return super()._execute(cmd)
-
-    mocker.patch.object(
-        dotnet_v2_plugin.DotnetV2Plugin, "validator_class", FailSpecificCmdValidator
-    )
-
+    fp.allow_unregistered(True)
+    fp.register_subprocess(["dotnet", "--version"], returncode=127)
     test_dotnet_plugin(new_dir, partitions)
 
 
-def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
+def test_dotnet_plugin_fake_dotnet(new_dir, partitions, fp):
     """Test the dotnet plugin while pretending dotnet is installed."""
-
-    class AlwaysFindDotnetValidator(
-        dotnet_v2_plugin.DotnetV2PluginEnvironmentValidator
-    ):
-        """A validator that always succeeds the first time running `dotnet --version`."""
-
-        __already_run = False
-
-        @override
-        def _execute(self, cmd: str) -> str:
-            if cmd != "dotnet --version":
-                return super()._execute(cmd)
-            try:
-                return super()._execute(cmd)
-            except subprocess.CalledProcessError:
-                if self.__already_run:
-                    raise
-                return ""
-            finally:
-                self.__class__.__already_run = True
-
-    mocker.patch.object(
-        dotnet_v2_plugin.DotnetV2Plugin, "validator_class", AlwaysFindDotnetValidator
+    fp.allow_unregistered(True)
+    # First call fails
+    fp.register_subprocess(
+        ["dotnet", "--version"],
+        returncode=127,
+    )
+    # Second call succeeds
+    fp.register_subprocess(
+        ["dotnet", "--version"],
+        stdout="6.0.0",
     )
 
     test_dotnet_plugin(new_dir, partitions)
