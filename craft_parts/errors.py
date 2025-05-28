@@ -789,8 +789,8 @@ class PartitionNotFound(PartitionUsageError):
         )
 
 
-class LayoutError(PartsError):
-    """Errors related to layouts."""
+class FilesystemMountError(PartsError):
+    """Errors related to filesystem mounts."""
 
     def __init__(
         self,

@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 
 import pydantic
 
-from craft_parts import Layouts, errors
+from craft_parts import FilesystemMounts, errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -108,7 +108,7 @@ class ProjectInfo:
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
     :param partitions: A list of partitions.
-    :param layouts: A dict of layouts.
+    :param filesystem_mounts: A dict of filesystem_mounts.
     """
 
     def __init__(  # noqa: PLR0913
@@ -125,7 +125,7 @@ class ProjectInfo:
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
         partitions: list[str] | None = None,
-        layouts: Layouts | None = None,
+        filesystem_mounts: FilesystemMounts | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
         **custom_args: Any,  # custom passthrough args
@@ -150,7 +150,7 @@ class ProjectInfo:
         self._project_vars_part_name = project_vars_part_name
         self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
         self._partitions = partitions
-        self._layouts = layouts
+        self._filesystem_mounts = filesystem_mounts
         self._custom_args = custom_args
         self._base_layer_dir = base_layer_dir
         self._base_layer_hash = base_layer_hash
@@ -269,9 +269,9 @@ class ProjectInfo:
         return self._partitions
 
     @property
-    def layouts(self) -> Layouts | None:
-        """Return the project's layouts."""
-        return self._layouts
+    def filesystem_mounts(self) -> FilesystemMounts | None:
+        """Return the project's filesystem mounts."""
+        return self._filesystem_mounts
 
     @property
     def base_layer_dir(self) -> Path | None:
