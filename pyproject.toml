@@ -24,6 +24,7 @@ dependencies = [
     "requests-unixsocket2>=0.4.0",
     "requests>=2.32,<3.0",
     "tomli >= 1.1.0 ; python_version < '3.11'",
+    "defusedxml>=0.7.1",
 ]
 
 [project.optional-dependencies]
