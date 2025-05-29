@@ -78,6 +78,8 @@ linkcheck_ignore = [
     "https://crates.io/",
     # Ignore releases, since we'll include the next release before it exists.
     "https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
+    # returns a 403 from GitHub CI
+    "https://rsync.samba.org",
 ]
 
 rst_epilog = """
