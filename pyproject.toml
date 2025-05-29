@@ -45,6 +45,8 @@ apt-plucky = [
 ]
 docs = [
     "canonical-sphinx",
+    "setuptools",  # Missing from sphinxcontrib-details-directive,
+    # see https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
