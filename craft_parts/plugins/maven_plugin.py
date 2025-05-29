@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2023,2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,14 +18,12 @@
 
 import os
 import re
-import xml.etree.ElementTree as ET
-from pathlib import Path
 from typing import Literal, cast
-from urllib.parse import urlparse
 
 from overrides import override
 
 from craft_parts import errors
+from craft_parts.utils import maven_utils
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -126,7 +124,7 @@ class MavenPlugin(JavaPlugin):
         mvn_cmd = [self._maven_executable, "package"]
         if self._use_proxy():
             settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
-            _create_settings(settings_path)
+            maven_utils.create_settings(settings_path)
             mvn_cmd += ["-s", str(settings_path)]
 
         return [
@@ -152,72 +150,3 @@ common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
     def _use_proxy(self) -> bool:
         env_vars_lower = list(map(str.lower, os.environ.keys()))
         return any(k in env_vars_lower for k in ("http_proxy", "https_proxy"))
-
-
-def _create_settings(settings_path: Path) -> None:
-    """Create a Maven configuration file.
-
-    The settings file contains additional configuration for Maven, such
-    as proxy parameters.
-
-    :param settings_path: the location the settings file will be created.
-    """
-    settings = ET.Element(
-        "settings",
-        attrib={
-            "xmlns": "http://maven.apache.org/SETTINGS/1.0.0",
-            "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "xsi:schemaLocation": (
-                "http://maven.apache.org/SETTINGS/1.0.0 "
-                "http://maven.apache.org/xsd/settings-1.0.0.xsd"
-            ),
-        },
-    )
-    element = ET.Element("interactiveMode")
-    element.text = "false"
-    settings.append(element)
-    proxies = ET.Element("proxies")
-
-    for protocol in ("http", "https"):
-        env_name = f"{protocol}_proxy"
-        case_insensitive_env = {item[0].lower(): item[1] for item in os.environ.items()}
-        if env_name not in case_insensitive_env:
-            continue
-
-        proxy_url = urlparse(case_insensitive_env[env_name])
-        proxy = ET.Element("proxy")
-        proxy_tags = [
-            ("id", env_name),
-            ("active", "true"),
-            ("protocol", protocol),
-            ("host", proxy_url.hostname),
-            ("port", str(proxy_url.port)),
-        ]
-        if proxy_url.username is not None and proxy_url.password is not None:
-            proxy_tags.extend(
-                [
-                    ("username", proxy_url.username),
-                    ("password", proxy_url.password),
-                ]
-            )
-        proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
-
-        for tag, text in proxy_tags:
-            element = ET.Element(tag)
-            element.text = text
-            proxy.append(element)
-
-        proxies.append(proxy)
-
-    settings.append(proxies)
-    tree = ET.ElementTree(settings)
-    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-
-    with settings_path.open("w") as file:
-        tree.write(file, encoding="unicode")
-        file.write("\n")
-
-
-def _get_no_proxy_string() -> str:
-    no_proxy = [k.strip() for k in os.environ.get("no_proxy", "localhost").split(",")]
-    return "|".join(no_proxy)
