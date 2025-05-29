@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 import re
 import subprocess
 import textwrap
@@ -56,14 +57,7 @@ def test_go_workspace_use(new_dir, partitions, go_version):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    go_work = (new_dir / "parts" / "go.work").read_text(encoding="utf-8")
-    assert go_work == textwrap.dedent(
-        f"""\
-        go {go_version}
-
-        use {new_dir}/parts/go-flags/src
-        """
-    )
+    assert (new_dir / "backstage" / "go-use" / "go-flags").exists()
 
 
 def test_go_workspace_use_multiple(new_dir, partitions, go_version):
@@ -92,14 +86,5 @@ def test_go_workspace_use_multiple(new_dir, partitions, go_version):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    go_work = (new_dir / "parts" / "go.work").read_text(encoding="utf-8")
-    assert go_work == textwrap.dedent(
-        f"""\
-        go {go_version}
-
-        use (
-        \t{new_dir}/parts/go-flags/src
-        \t{new_dir}/parts/go-starlark/src
-        )
-        """
-    )
+    assert (new_dir / "backstage" / "go-use" / "go-flags").exists()
+    assert (new_dir / "backstage" / "go-use" / "go-starlark").exists()

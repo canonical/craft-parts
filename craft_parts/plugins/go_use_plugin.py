@@ -75,30 +75,10 @@ class GoUsePlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        # Set the go workspace directory to live at the root of all parts.
-        workspace_dir = self._part_info.project_info.dirs.parts_dir
-        workspace = workspace_dir / "go.work"
-
-        # We do not want this implementation detail exposed in the run script
-        if not workspace.exists():
-            logger.debug(f"Init go workspace at {workspace}")
-            try:
-                subprocess.run(
-                    ["go", "work", "init"],
-                    capture_output=True,
-                    check=True,
-                    cwd=workspace_dir,
-                )
-            except subprocess.CalledProcessError as call_error:
-                logger.debug(
-                    f"Workspace init failed {call_error!r} "
-                    f"stdout: {call_error.stdout!r} "
-                    f"stderr: {call_error.stderr}"
-                )
-                raise errors.PluginBuildError(
-                    part_name=self._part_info.part_name, plugin_name="go-use"
-                )
-
+        dest_dir = (
+            self._part_info.part_export_dir / "go-use" / self._part_info.part_name
+        )
         return [
-            f"go work use {self._part_info.part_src_subdir}",
+            f"mkdir -p {dest_dir}",
+            f"ln -s {self._part_info.part_build_subdir} {dest_dir}",
         ]
