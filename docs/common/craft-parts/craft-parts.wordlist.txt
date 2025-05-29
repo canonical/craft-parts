@@ -63,9 +63,11 @@ DEVNULL
 DirtyReport
 DotPluginEnvironmentValidator
 Dotnet
+DotnetConfiguration
 DotnetPlugin
 DotnetPluginProperties
 DotnetV
+DotnetVerbosity
 DummyRepository
 DumpPlugin
 DumpPluginProperties
@@ -487,6 +489,7 @@ schemas
 scons
 scriptlet
 scriptlets
+sdk
 setuptools
 sevenzip
 sha
