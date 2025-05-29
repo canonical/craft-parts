@@ -5,8 +5,9 @@
 
 The ``dotnet`` plugin builds .NET projects using the ``dotnet`` tool.
 
-.. warning::
-    This plugin has been superseded by :ref:`.NET plugin (v2) <craft_parts_dotnet_v2_plugin>`.
+.. admonition:: Legacy plugin
+
+    This plugin is superseded by the :ref:`craft_parts_dotnet_v2_plugin`.
 
 Keywords
 --------

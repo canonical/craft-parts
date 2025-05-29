@@ -63,7 +63,6 @@ New features:
 - Previously, ``source-commit`` could only accept full length (40 character)
   hashes. Now, ``source-commit`` can accept short hashes.
 - Allow usage of the overlay and partitions features simultaneously.
-- New :ref:`.NET plugin (v2) <craft_parts_dotnet_v2_plugin>`.
 
 Bug fixes:
 
