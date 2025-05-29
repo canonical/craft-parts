@@ -24,20 +24,16 @@ from pydantic import ValidationError
 
 
 @pytest.fixture
-def part_info(new_dir):
-    return PartInfo(
-        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
-        part=Part("my-part", {}),
-    )
+def project_info(new_dir):
+    return ProjectInfo(application_name="test", cache_dir=new_dir)
 
 
 @pytest.fixture
-def go_workspace(part_info):
-    part_info._project_info.dirs.parts_dir.mkdir()
-    go_workspace = part_info._project_info.dirs.parts_dir / "go.work"
-    go_workspace.touch()
-    yield
-    go_workspace.unlink()
+def part_info(project_info):
+    return PartInfo(
+        project_info=project_info,
+        part=Part("my-part", {}),
+    )
 
 
 def test_validate_environment(dependency_fixture, part_info):
@@ -202,12 +198,56 @@ def test_get_build_commands_go_generate(part_info):
     ]
 
 
-@pytest.mark.usefixtures("go_workspace")
-def test_get_build_commands_go_workspace_use(part_info):
-    properties = GoPlugin.properties_class.unmarshal({"source": "."})
+@pytest.mark.parametrize(
+    "part_data",
+    [
+        pytest.param({"source": "."}, id="basic"),
+        pytest.param(
+            {"source": ".", "source-subdir": "my/subdir"},
+            id="subdir",
+        ),
+        pytest.param(
+            {"source": ".", "after": ["irrelevant"]}, id="irrelevant-dependency"
+        ),
+    ],
+)
+def test_get_build_commands_go_use(project_info, part_data):
+    properties = GoPlugin.properties_class.unmarshal(part_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
+    (part_info.backstage_dir / "go-use" / "some-go-dep").mkdir(parents=True)
+
     assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_build_dir}",
+        "go work init .",
+        "go work use .",
+        'go install -p "1"  ./...',
+    ]
+
+
+@pytest.mark.parametrize(
+    "part_data",
+    [
+        pytest.param({"source": ".", "after": ["some-go-dep"]}, id="after-go-use"),
+    ],
+)
+def test_get_build_commands_go_use_with_go_dependency(project_info, part_data):
+    properties = GoPlugin.properties_class.unmarshal(part_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    dependency_backstage = part_info.backstage_dir / "go-use" / "some-go-dep"
+    dependency_backstage.mkdir(parents=True)
+
+    assert plugin.get_build_commands() == [
+        "go work init .",
+        "go work use .",
+        f"go work use {dependency_backstage}",
         'go install -p "1"  ./...',
     ]

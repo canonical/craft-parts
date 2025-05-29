@@ -127,7 +127,11 @@ class GoPlugin(Plugin):
             setup_cmds = [
                 "go work init .",
                 "go work use .",
-                *(f"go work use {dep_part}" for dep_part in dependencies_dir.iterdir()),
+                *(
+                    f"go work use {dependencies_dir}/{dep_part}"
+                    for dep_part in self._part_info.part_dependencies
+                    if (dependencies_dir / dep_part).exists()
+                ),
             ]
         else:
             setup_cmds = ["go mod download all"]

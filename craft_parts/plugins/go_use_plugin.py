@@ -17,12 +17,9 @@
 """The Go Use plugin."""
 
 import logging
-import subprocess
 from typing import Literal
 
 from overrides import override
-
-from craft_parts import errors
 
 from .base import Plugin
 from .go_plugin import GoPluginEnvironmentValidator

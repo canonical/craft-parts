@@ -31,15 +31,6 @@ def part_info(new_dir):
     )
 
 
-@pytest.fixture
-def go_workspace(part_info):
-    part_info._project_info.dirs.parts_dir.mkdir()
-    go_workspace = part_info._project_info.dirs.parts_dir / "go.work"
-    go_workspace.touch()
-    yield go_workspace
-    go_workspace.unlink()
-
-
 def test_validate_environment(dependency_fixture, part_info):
     properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
     plugin = GoUsePlugin(properties=properties, part_info=part_info)
@@ -155,51 +146,17 @@ def test_get_out_of_source_build(part_info):
     assert plugin.get_out_of_source_build() is True
 
 
-def test_get_build_commands(mocker, part_info, go_workspace):
+@pytest.mark.parametrize(
+    "part_data", [{"source": "."}, {"source": ".", "source-subdir": "my/subdir"}]
+)
+def test_get_build_commands(mocker, part_info, part_data):
     """Test that go work is created and that work.go is created."""
-    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    properties = GoUsePlugin.properties_class.unmarshal(part_data)
     plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
-    # Let the plugin set it up
-    go_workspace.unlink()
-    run_mock = mocker.patch(
-        "subprocess.run", side_effect=lambda *args, **kwargs: go_workspace.touch()
-    )
+    dest_dir = part_info.part_export_dir / "go-use" / part_info.part_name
 
     assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_src_subdir}",
+        f"mkdir -p {dest_dir}",
+        f"ln -s {part_info.part_build_subdir} {dest_dir}",
     ]
-    run_mock.assert_called_once_with(
-        ["go", "work", "init"], capture_output=True, check=True, cwd=go_workspace.parent
-    )
-
-
-@pytest.mark.usefixtures("go_workspace")
-def test_get_build_commands_workspace_in_use(mocker, part_info):
-    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoUsePlugin(properties=properties, part_info=part_info)
-
-    run_mock = mocker.patch("subprocess.run")
-
-    assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_src_subdir}",
-    ]
-    run_mock.assert_not_called()
-
-
-@pytest.mark.usefixtures("go_workspace")
-def test_get_build_commands_subdir(mocker, new_dir):
-    part_spec = {"source": ".", "source-subdir": "my/subdir"}
-    part_info = PartInfo(
-        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
-        part=Part("my-part", part_spec),
-    )
-    properties = GoUsePlugin.properties_class.unmarshal(part_spec)
-    plugin = GoUsePlugin(properties=properties, part_info=part_info)
-
-    run_mock = mocker.patch("subprocess.run")
-
-    assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_src_subdir}",
-    ]
-    run_mock.assert_not_called()
