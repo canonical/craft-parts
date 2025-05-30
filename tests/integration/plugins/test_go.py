@@ -19,8 +19,10 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
+from craft_parts.errors import PluginBuildError
 
 
 def test_go_plugin(new_dir, partitions, mocker):
@@ -117,11 +119,11 @@ def test_go_generate(new_dir, partitions):
     assert output == "This is a generated line\n"
 
 
-def test_go_workspace_use(new_dir, partitions):
+def test_go_use(new_dir, partitions):
     # Ensure we're not using cached sources
-    subprocess.run(["go", "clean", "-modcache"])
-
     source_location = Path(__file__).parent / "test_go_workspace"
+
+    (new_dir / "go-cache").mkdir()
 
     parts_yaml = textwrap.dedent(
         f"""
@@ -146,6 +148,7 @@ def test_go_workspace_use(new_dir, partitions):
               - GO111MODULE: "on"
               - GOPROXY: "off"
               - GOFLAGS: "-json"
+              - GOMODCACHE: {new_dir / "go-cache"}
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -166,3 +169,81 @@ def test_go_workspace_use(new_dir, partitions):
 
     output = subprocess.check_output([str(binary), "--say=hello"], text=True)
     assert output == "hello\n"
+
+
+@pytest.mark.parametrize(
+    "parts_yaml_template",
+    [
+        textwrap.dedent(
+            """\
+            parts:
+              # Intentionally missing the part for the sys package
+              go-flags:
+                source: https://github.com/jessevdk/go-flags.git
+                plugin: go-use
+                source-tag: v1.6.1
+                build-environment:
+                - GOPROXY: "off"
+              hello:
+                after:
+                - go-flags
+                plugin: go
+                source: {source_location}
+                build-environment:
+                - GO111MODULE: "on"
+                - GOPROXY: "off"
+                - GOFLAGS: "-json"
+                - GOMODCACHE: {go_cache}
+            """
+        ),
+        textwrap.dedent(
+            """\
+            parts:
+              sys:
+                source: https://go.googlesource.com/sys
+                source-type: git
+                plugin: go-use
+              go-flags:
+                source: https://github.com/jessevdk/go-flags.git
+                plugin: go-use
+                source-tag: v1.6.1
+                build-environment:
+                - GOPROXY: "off"
+              hello:
+                after:
+                # Intentionally missing sys dependency
+                - go-flags
+                plugin: go
+                source: {source_location}
+                build-environment:
+                - GO111MODULE: "on"
+                - GOPROXY: "off"
+                - GOFLAGS: "-json"
+                - GOMODCACHE: {go_cache}
+            """
+        ),
+    ],
+)
+def test_go_use_incomplete_parts(new_dir, partitions, parts_yaml_template: str):
+    # Ensure we're not using cached sources
+    source_location = Path(__file__).parent / "test_go_workspace"
+
+    go_cache = new_dir / "go-cache"
+    go_cache.mkdir()
+
+    parts_yaml = parts_yaml_template.format(
+        source_location=source_location, go_cache=go_cache
+    )
+    parts = yaml.safe_load(parts_yaml)
+    lf = LifecycleManager(
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        with pytest.raises(PluginBuildError) as exc_info:
+            ctx.execute(actions)
