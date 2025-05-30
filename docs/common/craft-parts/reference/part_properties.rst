@@ -180,7 +180,7 @@ The plugin used to build the part. Available plugins include the following:
 +-----------+-----------------------+
 | cmake     | `CMake`_              |
 +-----------+-----------------------+
-| dotnet    | `.Net`_               |
+| dotnet    | `.NET`_               |
 +-----------+-----------------------+
 | dump      | Simple file unpacking |
 +-----------+-----------------------+
@@ -399,7 +399,7 @@ The ``plugin`` and ``parse-info`` keys apply to all steps.
 .. _`Go`: https://go.dev/
 .. _`Make`: https://www.gnu.org/software/make/manual/make.html
 .. _`Meson`: https://mesonbuild.com/
-.. _`.Net`: https://github.com/dotnet/core
+.. _`.NET`: https://github.com/dotnet/core
 .. _`NPM`: https://www.npmjs.com/
 .. _`Python package`: https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
 .. _`SCons`: https://scons.org/
