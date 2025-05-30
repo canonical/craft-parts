@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import subprocess
 import textwrap
 from pathlib import Path
@@ -117,21 +118,34 @@ def test_go_generate(new_dir, partitions):
 
 
 def test_go_workspace_use(new_dir, partitions):
+    # Ensure we're not using cached sources
+    subprocess.run(["go", "clean", "-modcache"])
+
     source_location = Path(__file__).parent / "test_go_workspace"
 
     parts_yaml = textwrap.dedent(
         f"""
         parts:
+          sys:
+            source: https://go.googlesource.com/sys
+            source-type: git
+            plugin: go-use
           go-flags:
             source: https://github.com/jessevdk/go-flags.git
             plugin: go-use
+            source-tag: v1.6.1
+            build-environment:
+              - GOPROXY: "off"
           hello:
             after:
             - go-flags
+            - sys
             plugin: go
             source: {source_location}
             build-environment:
               - GO111MODULE: "on"
+              - GOPROXY: "off"
+              - GOFLAGS: "-json"
         """
     )
     parts = yaml.safe_load(parts_yaml)
