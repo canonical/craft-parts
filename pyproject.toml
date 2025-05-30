@@ -40,8 +40,10 @@ apt-oracular = [
     "python-apt~=2.9.0,<2.9.9;sys_platform=='linux'",
 ]
 apt-plucky = [
-    # While Plucky is in development, it should use the latest
-    "python-apt>=2.9.9;sys_platform=='linux'",
+    "python-apt~=2.9.9;sys_platform=='linux'",
+]
+apt-questing = [
+    "python-apt~=3.0.0;sys_platform=='linux'",
 ]
 docs = [
     "canonical-sphinx",
@@ -154,6 +156,7 @@ conflicts = [
         { extra = "apt-noble" },
         { extra = "apt-oracular" },
         { extra = "apt-plucky" },
+        { extra = "apt-questing" },
     ]
 ]
 
