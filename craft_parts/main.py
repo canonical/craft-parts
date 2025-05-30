@@ -56,7 +56,7 @@ def main() -> None:
     craft_parts.Features(**features)
 
     try:
-        _process_parts(options)
+        _process_inputs(options)
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -77,7 +77,7 @@ def main() -> None:
         sys.exit(5)
 
 
-def _process_parts(options: argparse.Namespace) -> None:
+def _process_inputs(options: argparse.Namespace) -> None:
     with open(options.file) as opt_file:
         part_data = yaml.safe_load(opt_file)
 
@@ -98,6 +98,14 @@ def _process_parts(options: argparse.Namespace) -> None:
 
     partitions = options.partitions.split(",") if options.partitions else None
 
+    filesystem_mounts_data = None
+    if options.filesystem_mounts:
+        with open(options.filesystem_mounts) as opt_filesystem_mounts_file:
+            filesystems_data = yaml.safe_load(opt_filesystem_mounts_file)
+            if not isinstance(filesystems_data, dict):
+                raise TypeError("filesystem_mounts definition must be a dictionary")
+            filesystem_mounts_data = filesystems_data.get("filesystems")
+
     lcm = craft_parts.LifecycleManager(
         part_data,
         application_name=options.application_name,
@@ -108,6 +116,7 @@ def _process_parts(options: argparse.Namespace) -> None:
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
         partitions=partitions,
+        filesystem_mounts=filesystem_mounts_data,
     )
 
     command = options.command if options.command else "prime"
@@ -285,6 +294,11 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="name",
         default="",
         help="List of partitions to create.",
+    )
+    parser.add_argument(
+        "--filesystem-mounts",
+        metavar="filesystem_mounts",
+        help="The filesystem mounts file.",
     )
     parser.add_argument(
         "-v",

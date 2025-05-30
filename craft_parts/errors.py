@@ -787,3 +787,16 @@ class PartitionNotFound(PartitionUsageError):
             partitions=partitions,
             error_list=[],
         )
+
+
+class FilesystemMountError(PartsError):
+    """Errors related to filesystem mounts."""
+
+    def __init__(
+        self,
+        brief: str,
+        *,
+        details: str | None = None,
+        resolution: str | None = None,
+    ) -> None:
+        super().__init__(brief=brief, details=details, resolution=resolution)
