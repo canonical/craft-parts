@@ -41,7 +41,7 @@ def test_filesystem_mount_item_marshal_unmarshal():
 def test_filesystem_mount_item_unmarshal_not_dict():
     with pytest.raises(TypeError) as raised:
         FilesystemMountItem.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "filesystem_mount item data is not a dictionary"
+    assert str(raised.value) == "filesystem item entry is not a dictionary"
 
 
 @pytest.mark.parametrize(
@@ -92,12 +92,16 @@ def test_filesystem_mount_marshal_unmarshal():
 def test_filesystem_mount_unmarshal_not_list():
     with pytest.raises(TypeError) as raised:
         FilesystemMount.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "filesystem_mount data is not a list"
+    assert str(raised.value) == "filesystem entry is not a list"
 
 
 @pytest.mark.parametrize(
     ("data", "error_regex"),
     [
+        (
+            False,
+            r"filesystem entry is not a list",
+        ),
         (
             [],
             r"1 validation error for FilesystemMount\n\s+Value should have at least 1 item after validation, not 0",
@@ -128,7 +132,7 @@ def test_filesystem_mount_unmarshal_not_list():
 )
 def test_filesystem_mount_unmarshal_invalid(data, error_regex):
     with pytest.raises(
-        pydantic.ValidationError,
+        (pydantic.ValidationError, TypeError),
         match=error_regex,
     ):
         FilesystemMount.unmarshal(data)
@@ -168,6 +172,16 @@ def test_validate_filesystem_mounts_success_feature_disabled(filesystem_mounts):
             },
             "Filesystem validation failed.",
             "- String should have at least 1 character in field 'device'",
+        ),
+        (
+            {"default": False},
+            "Filesystem validation failed.",
+            "filesystem entry is not a list",
+        ),
+        (
+            {"default": [False]},
+            "Filesystem validation failed.",
+            "filesystem item entry is not a dictionary",
         ),
         (
             {

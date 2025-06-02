@@ -67,7 +67,7 @@ class FilesystemMountItem(BaseModel):
         :raise TypeError: If data is not a dictionary.
         """
         if not isinstance(data, dict):
-            raise TypeError("filesystem_mount item data is not a dictionary")
+            raise TypeError("filesystem item entry is not a dictionary")
 
         return cls.model_validate(data)
 
@@ -113,7 +113,7 @@ class FilesystemMount(RootModel):
         :raise pydantic.ValidationError: If the data fails validation.
         """
         if not isinstance(data, list):
-            raise TypeError("filesystem_mount data is not a list")
+            raise TypeError("filesystem entry is not a list")
 
         return cls.model_validate(
             [FilesystemMountItem.unmarshal(item) for item in data]
@@ -181,4 +181,9 @@ def validate_filesystem_mounts(filesystem_mounts: dict[str, Any] | None) -> None
     except ValidationError as err:
         raise errors.FilesystemMountError.from_validation_error(
             error_list=err.errors(),
+        ) from err
+    except TypeError as err:
+        raise errors.FilesystemMountError(
+            brief="Filesystem validation failed.",
+            details=str(err),
         ) from err
