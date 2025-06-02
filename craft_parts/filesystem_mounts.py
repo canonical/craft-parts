@@ -110,6 +110,7 @@ class FilesystemMount(RootModel):
         :return: The newly created object.
 
         :raise TypeError: If data is not a list.
+        :raise pydantic.ValidationError: If the data fails validation.
         """
         if not isinstance(data, list):
             raise TypeError("filesystem_mount data is not a list")
