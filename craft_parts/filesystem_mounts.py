@@ -16,6 +16,7 @@
 
 """FilesystemMounts models."""
 
+from collections.abc import Iterator
 from typing import Annotated, Any, Literal, cast
 
 from pydantic import (
@@ -83,6 +84,9 @@ class FilesystemMount(RootModel):
     """FilesystemMount defines the order in which devices should be mounted."""
 
     root: Annotated[UniqueList[FilesystemMountItem], Field(min_length=1)]
+
+    def __iter__(self) -> Iterator[FilesystemMountItem]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return iter(self.root)
 
     @field_validator("root", mode="after")
     @classmethod
