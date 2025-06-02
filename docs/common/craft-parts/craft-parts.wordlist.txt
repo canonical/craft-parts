@@ -85,6 +85,7 @@ FilesetConflict
 FilesetError
 Filesets
 FilesystemMount
+FilesystemMountError
 FilesystemMountItem
 ProcessError
 ProcessResult
