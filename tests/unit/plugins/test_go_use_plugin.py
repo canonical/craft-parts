@@ -157,6 +157,6 @@ def test_get_build_commands(mocker, part_info, part_data):
     dest_dir = part_info.part_export_dir / "go-use" / part_info.part_name
 
     assert plugin.get_build_commands() == [
-        f"mkdir -p {part_info.part_export_dir}/go-use",
-        f"ln -s {part_info.part_src_subdir} {dest_dir}",
+        f"mkdir -p '{part_info.part_export_dir}/go-use'",
+        f"ln -sf '{part_info.part_src_subdir}' '{dest_dir}'",
     ]

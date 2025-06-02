@@ -128,7 +128,7 @@ class GoPlugin(Plugin):
                 "go work init .",
                 "go work use .",
                 *(
-                    f"go work use {dependencies_dir}/{dep_part}"
+                    f"go work use '{dependencies_dir}/{dep_part}'"
                     for dep_part in self._part_info.part_dependencies
                     if (dependencies_dir / dep_part).exists()
                 ),

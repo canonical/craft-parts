@@ -248,6 +248,6 @@ def test_get_build_commands_go_use_with_go_dependency(project_info, part_data):
     assert plugin.get_build_commands() == [
         "go work init .",
         "go work use .",
-        f"go work use {dependency_backstage}",
+        f"go work use '{dependency_backstage}'",
         'go install -p "1"  ./...',
     ]
