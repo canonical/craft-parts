@@ -122,10 +122,11 @@ class MavenPlugin(JavaPlugin):
         options = cast(MavenPluginProperties, self._options)
 
         mvn_cmd = [self._maven_executable, "package"]
-        if self._use_proxy():
-            settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
-            maven_utils.create_settings(settings_path)
-            mvn_cmd += ["-s", str(settings_path)]
+
+        # Build Maven configuration file to potentially set proxy settings
+        settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
+        maven_utils.create_settings(settings_path)
+        mvn_cmd += ["-s", str(settings_path)]
 
         return [
             *self._get_mvnw_validation_commands(options=options),

@@ -73,8 +73,6 @@ class MavenUsePlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        # TODO: Proxy both by extracting maven_plugin._create_settings
-
         # Create temporary Maven settings. Each of these settings does the following:
         # <localRepository> configures where Maven will publish built artifacts
         # <mirrors> allows us to override the "central" repository, Maven's equivalent to Python's PyPI.
@@ -85,7 +83,7 @@ class MavenUsePlugin(Plugin):
         settings_file = cast("Path", self._part_info.work_dir) / "settings.xml"
 
         local_repository = ET.Element("localRepository")
-        local_repository.text = str(self._part_info.part_export_dir)
+        local_repository.text = str(self._part_info.part_export_dir / "maven-use")
 
         debian_mirror = ET.Element("mirror")
         debian_mirror_tags = [
@@ -102,7 +100,7 @@ class MavenUsePlugin(Plugin):
         craft_repository_tags = [
             ("id", "craft"),
             ("name", "craft packages"),
-            ("url", f"file://{self._part_info.backstage_dir}"),
+            ("url", f"file://{self._part_info.backstage_dir}/maven-use"),
         ]
         maven_utils.add_xml_tags(craft_repository, craft_repository_tags)
         repositories = ET.Element("repositories")

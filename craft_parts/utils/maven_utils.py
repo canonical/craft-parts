@@ -46,37 +46,41 @@ def create_settings(
     element = ET.Element("interactiveMode")
     element.text = "false"
     settings.append(element)
-    proxies = ET.Element("proxies")
 
-    for protocol in ("http", "https"):
-        env_name = f"{protocol}_proxy"
-        case_insensitive_env = {item[0].lower(): item[1] for item in os.environ.items()}
-        if env_name not in case_insensitive_env:
-            continue
+    if _proxy_needed():
+        proxies = ET.Element("proxies")
 
-        proxy_url = urlparse(case_insensitive_env[env_name])
-        proxy = ET.Element("proxy")
-        proxy_tags = [
-            ("id", env_name),
-            ("active", "true"),
-            ("protocol", protocol),
-            ("host", str(proxy_url.hostname)),
-            ("port", str(proxy_url.port)),
-        ]
-        if proxy_url.username is not None and proxy_url.password is not None:
-            proxy_tags.extend(
-                [
-                    ("username", proxy_url.username),
-                    ("password", proxy_url.password),
-                ]
-            )
-        proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
+        for protocol in ("http", "https"):
+            env_name = f"{protocol}_proxy"
+            case_insensitive_env = {
+                item[0].lower(): item[1] for item in os.environ.items()
+            }
+            if env_name not in case_insensitive_env:
+                continue
 
-        add_xml_tags(proxy, proxy_tags)
+            proxy_url = urlparse(case_insensitive_env[env_name])
+            proxy = ET.Element("proxy")
+            proxy_tags = [
+                ("id", env_name),
+                ("active", "true"),
+                ("protocol", protocol),
+                ("host", str(proxy_url.hostname)),
+                ("port", str(proxy_url.port)),
+            ]
+            if proxy_url.username is not None and proxy_url.password is not None:
+                proxy_tags.extend(
+                    [
+                        ("username", proxy_url.username),
+                        ("password", proxy_url.password),
+                    ]
+                )
+            proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
 
-        proxies.append(proxy)
+            add_xml_tags(proxy, proxy_tags)
 
-    settings.append(proxies)
+            proxies.append(proxy)
+
+        settings.append(proxies)
 
     if extra_elements is not None:
         for element in extra_elements:
@@ -102,3 +106,9 @@ def add_xml_tags(element: ET.Element, tags: list[tuple[str, str]]) -> ET.Element
         inner_ele.text = text
         element.append(inner_ele)
     return element
+
+
+def _proxy_needed() -> bool:
+    """Determine whether or not to use proxy settings for Maven."""
+    env_vars_lower = list(map(str.lower, os.environ.keys()))
+    return any(k in env_vars_lower for k in ("http_proxy", "https_proxy"))
