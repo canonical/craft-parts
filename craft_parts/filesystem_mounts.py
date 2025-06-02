@@ -18,7 +18,14 @@
 
 from typing import Annotated, Any, Literal, cast
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    ValidationError,
+    field_validator,
+)
 
 from craft_parts import errors, features
 from craft_parts.constraints import SingleEntryDict, UniqueList
@@ -61,7 +68,7 @@ class FilesystemMountItem(BaseModel):
         if not isinstance(data, dict):
             raise TypeError("filesystem_mount item data is not a dictionary")
 
-        return FilesystemMountItem(**data)
+        return cls.model_validate(data)
 
     def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the filesystem_mount item data.
@@ -103,8 +110,8 @@ class FilesystemMount(RootModel):
         if not isinstance(data, list):
             raise TypeError("filesystem_mount data is not a list")
 
-        return FilesystemMount(
-            root=[FilesystemMountItem.unmarshal(item) for item in data]
+        return cls.model_validate(
+            [FilesystemMountItem.unmarshal(item) for item in data]
         )
 
     def marshal(self) -> list[dict[str, Any]]:
@@ -123,6 +130,8 @@ def validate_filesystem_mount(data: list[dict[str, Any]]) -> None:
     """Validate a filesystem_mount.
 
     :param data: The filesystem mount data to validate.
+
+    :raises: ValueError if the filesystem mount is not valid.
     """
     FilesystemMount.unmarshal(data)
 
@@ -134,6 +143,8 @@ def validate_filesystem_mounts(filesystem_mounts: dict[str, Any] | None) -> None
     be enabled.
     A filesystem_mounts dict must only have a single "default" entry.
     The first entry in default must map the '/' mount.
+
+    :raises: FilesystemMountError if the filesystem mounts are not valid.
     """
     if not filesystem_mounts:
         return
@@ -160,4 +171,9 @@ def validate_filesystem_mounts(filesystem_mounts: dict[str, Any] | None) -> None
             resolution="Define a 'default' entry in the filesystems section.",
         )
 
-    validate_filesystem_mount(default_filesystem_mount)
+    try:
+        validate_filesystem_mount(default_filesystem_mount)
+    except ValidationError as err:
+        raise errors.FilesystemMountError.from_validation_error(
+            error_list=err.errors(),
+        ) from err

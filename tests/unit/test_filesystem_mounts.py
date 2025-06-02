@@ -122,7 +122,7 @@ def test_filesystem_mount_unmarshal_not_list():
                     "device": "foo",
                 },
             ],
-            r"1 validation error for FilesystemMount\n\s+Value error, A filesystem first entry must map the '/' mount",
+            r"1 validation error for FilesystemMount\n\s+Value error, The first entry in a filesystem must map the '/' mount.",
         ),
     ],
 )
@@ -141,20 +141,53 @@ def test_validate_filesystem_mounts_success_feature_disabled(filesystem_mounts):
 
 @pytest.mark.usefixtures("enable_all_features")
 @pytest.mark.parametrize(
-    ("filesystem_mounts", "message"),
+    ("filesystem_mounts", "brief", "details"),
     [
         (
             {"test": "test", "test2": "test"},
             "Exactly one filesystem must be defined.",
+            None,
         ),
         (
             {"test": "test"},
             "'default' filesystem missing.",
+            None,
+        ),
+        (
+            {
+                "default": [
+                    {
+                        "mount": "/a",
+                        "device": "",
+                    },
+                    {
+                        "mount": "/",
+                        "device": "",
+                    },
+                ]
+            },
+            "Filesystem validation failed.",
+            "- String should have at least 1 character in field 'device'",
+        ),
+        (
+            {
+                "default": [
+                    {
+                        "mount": "/a",
+                        "device": "foo",
+                    }
+                ]
+            },
+            "Filesystem validation failed.",
+            "- Value error, The first entry in a filesystem must map the '/' mount. in field ''",
         ),
     ],
 )
-def test_validate_filesystem_mounts_failure_feature_enabled(filesystem_mounts, message):
+def test_validate_filesystem_mounts_failure_feature_enabled(
+    filesystem_mounts, brief, details
+):
     with pytest.raises(errors.FilesystemMountError) as exc_info:
         validate_filesystem_mounts(filesystem_mounts)
 
-    assert exc_info.value.brief == message
+    assert exc_info.value.brief == brief
+    assert exc_info.value.details == details
