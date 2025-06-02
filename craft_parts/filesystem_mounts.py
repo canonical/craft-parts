@@ -85,7 +85,7 @@ class FilesystemMount(RootModel):
 
     root: Annotated[UniqueList[FilesystemMountItem], Field(min_length=1)]
 
-    def __iter__(self) -> Iterator[FilesystemMountItem]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __iter__(self) -> Iterator[FilesystemMountItem]:  # type: ignore[override]
         return iter(self.root)
 
     @field_validator("root", mode="after")
