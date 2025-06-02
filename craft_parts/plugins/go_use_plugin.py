@@ -76,6 +76,6 @@ class GoUsePlugin(Plugin):
             self._part_info.part_export_dir / "go-use" / self._part_info.part_name
         )
         return [
-            f"mkdir -p {dest_dir.parent}",
-            f"ln -s {self._part_info.part_src_subdir} {dest_dir}",
+            f'mkdir -p "{dest_dir.parent}"',
+            f"ln -sf {self._part_info.part_src_subdir} {dest_dir}",
         ]
