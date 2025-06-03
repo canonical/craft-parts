@@ -51,7 +51,7 @@ from craft_parts.utils import file_utils, os_utils
 from . import filesets, migration
 from .environment import generate_step_environment
 from .organize import organize_files
-from .step_handler import StepContents, StepHandler, Stream
+from .step_handler import StagePartitionContents, StepContents, StepHandler, Stream
 
 logger = logging.getLogger(__name__)
 
@@ -91,16 +91,16 @@ class _Squasher:
     def __init__(
         self, partition: str | None, filesystem_mount: FilesystemMount | None = None
     ) -> None:
-        if not partition:
-            partition = DEFAULT_PARTITION
-        self.migrated_files: dict[str, _Migrated_Contents] = {partition: {}}
-        self.migrated_directories: dict[str, _Migrated_Contents] = {partition: {}}
+        self.migrated_files: dict[str | None, _Migrated_Contents] = {partition: {}}
+        self.migrated_directories: dict[str | None, _Migrated_Contents] = {
+            partition: {}
+        }
         self._src_partition = partition
         self._filesystem_mount: FilesystemMount = FilesystemMount(
-            root=[FilesystemMountItem(mount="/", device=partition)]
+            root=[FilesystemMountItem(mount="/", device=DEFAULT_PARTITION)]
         )
         if filesystem_mount:
-            self._filesystem_mount: FilesystemMount = filesystem_mount
+            self._filesystem_mount = filesystem_mount
 
     def migrate(
         self,
@@ -112,17 +112,19 @@ class _Squasher:
         """Migrate layered content from a partition to destination directories.
 
         If the source partition is the default one, content can be distributed to other
-        partitions using the provided layout.
+        partitions using the provided filesystem mounts.
         """
-        if self._src_partition == DEFAULT_PARTITION:
-            # Distribute content into partitions according to the layout
-            for entry in self._filesystem_mount:
-                # Only migrate content from the subdirectory indicated by the layout entry
+        if self._src_partition in (None, DEFAULT_PARTITION):
+            # Distribute content into partitions according to the filesystem mounts
+            for entry in reversed(self._filesystem_mount):
+                # Only migrate content from the subdirectory indicated by the filesystem mounts
+                # entry
+                print(entry)
                 sub_path = entry.mount.lstrip("/")
 
-                # Migrate to the destination partition indicated by the layout entry
                 dst_partition = entry.device
 
+                # Migrate to the destination partition indicated by the filesystem mounts entry
                 self._migrate(
                     refdir=refdir,
                     srcdir=srcdir,
@@ -132,7 +134,7 @@ class _Squasher:
                     permissions=permissions,
                 )
         else:
-            # Ignore the layout and migrate from/to the same partition
+            # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
                 refdir=refdir,
                 srcdir=srcdir,
@@ -148,7 +150,7 @@ class _Squasher:
         srcdir: Path,
         destdir: Path,
         sub_path: str,
-        dst_partition: str,
+        dst_partition: str | None,
         permissions: list[Permissions] | None = None,
     ) -> None:
         """Actually migrate content from a source to a destination.
@@ -410,12 +412,20 @@ class PartHandler:
         layer_hash = self._compute_layer_hash(all_parts=False)
         layer_hash.save(self._part)
 
+        default_files: set[str] = set()
+        default_directories: set[str] = set()
+
+        default_contents = contents.partitions_contents.get(DEFAULT_PARTITION)
+        if default_contents:
+            default_files = default_contents.files
+            default_directories = default_contents.dirs
+
         return states.OverlayState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             partitions_contents=partitions_contents,
-            files=contents.partitions_contents.get(DEFAULT_PARTITION).files,
-            directories=contents.partitions_contents.get(DEFAULT_PARTITION).dirs,
+            files=default_files,
+            directories=default_directories,
         )
 
     def _run_build(
@@ -541,6 +551,16 @@ class PartHandler:
             if p is not DEFAULT_PARTITION
         }
 
+        default_backstage_files: set[str] = set()
+        default_backstage_directories: set[str] = set()
+
+        default_contents = cast(
+            StagePartitionContents, contents.partitions_contents.get(DEFAULT_PARTITION)
+        )
+        if default_contents:
+            default_backstage_files = default_contents.backstage_files
+            default_backstage_directories = default_contents.backstage_dirs
+
         return states.StageState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
@@ -548,12 +568,8 @@ class PartHandler:
             files=contents.partitions_contents[DEFAULT_PARTITION].files,
             directories=contents.partitions_contents[DEFAULT_PARTITION].dirs,
             overlay_hash=overlay_hash.hex(),
-            backstage_files=contents.partitions_contents[
-                DEFAULT_PARTITION
-            ].backstage_files,
-            backstage_directories=contents.partitions_contents[
-                DEFAULT_PARTITION
-            ].backstage_dirs,
+            backstage_files=default_backstage_files,
+            backstage_directories=default_backstage_directories,
         )
 
     def _run_prime(
@@ -861,7 +877,7 @@ class PartHandler:
 
         logger.debug("staging overlay files")
 
-        consolidated_states: dict[str, MigrationState] = {}
+        consolidated_states: dict[str | None, MigrationState] = {}
 
         # process parts in each partition
         for src_partition in self._part_info.partitions or (None,):
@@ -877,10 +893,11 @@ class PartHandler:
                 )
                 continue
 
-            # Process layers from top to bottom (reversed)
             squasher = _Squasher(
-                partition=src_partition, filesystem_mount=prototype_layout
+                partition=src_partition,
+                filesystem_mount=self._part_info.default_filesystem_mount,
             )
+            # Process layers from top to bottom (reversed)
             for part in reversed(parts_with_overlay):
                 logger.debug(
                     "migrate %s partition part %r layer to stage",
@@ -916,7 +933,7 @@ class PartHandler:
 
         logger.debug("priming overlay files")
 
-        consolidated_states: dict[str, MigrationState] = {}
+        consolidated_states: dict[str | None, MigrationState] = {}
 
         # Process parts in each partition.
         for src_partition in self._part_info.partitions or (None,):
@@ -932,8 +949,11 @@ class PartHandler:
                 )
                 continue
 
-            # Process layers from top to bottom (reversed)
-            squasher = _Squasher(partition=src_partition, filesystem_mount=prototype_layout)
+            squasher = _Squasher(
+                # Process layers from top to bottom (reversed)
+                partition=src_partition,
+                filesystem_mount=self._part_info.default_filesystem_mount,
+            )
             for part in reversed(parts_with_overlay):
                 logger.debug(
                     "migrate %s partition part %r layer to prime",
@@ -954,11 +974,11 @@ class PartHandler:
             )
 
             if src_partition == DEFAULT_PARTITION:
-                for entry in prototype_layout:
+                for entry in self._part_info.default_filesystem_mount:
                     self._clean_dangling_whiteouts(
-                        self._part_info.prime_dirs[entry.partition],
-                        set(squasher.migrated_files[entry.partition]),
-                        set(squasher.migrated_directories[entry.partition]),
+                        self._part_info.prime_dirs[entry.device],
+                        set(squasher.migrated_files[entry.device]),
+                        set(squasher.migrated_directories[entry.device]),
                     )
             else:
                 self._clean_dangling_whiteouts(
@@ -970,7 +990,7 @@ class PartHandler:
         self._write_overlay_migration_states(consolidated_states, Step.PRIME)
 
     def _write_overlay_migration_states(
-        self, consolidated_states: dict[str, MigrationState], step: Step
+        self, consolidated_states: dict[str | None, MigrationState], step: Step
     ) -> None:
         for src_partition in self._part_info.partitions or (None,):
             step_overlay_state_path = states.get_overlay_migration_state_path(
@@ -1403,9 +1423,9 @@ def _get_primed_stage_packages(
 
 
 def consolidate_states(
-    consolidated_states: dict[str, MigrationState],
-    migrated_files: dict[str, _Migrated_Contents],
-    migrated_directories: dict[str, _Migrated_Contents],
+    consolidated_states: dict[str | None, MigrationState],
+    migrated_files: dict[str | None, _Migrated_Contents],
+    migrated_directories: dict[str | None, _Migrated_Contents],
 ) -> None:
     """Consolidate migrated files into MigrationStates."""
     for partition, files in migrated_files.items():

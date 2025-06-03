@@ -147,7 +147,7 @@ def clean_shared_area(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
-    partition: str,
+    partition: str | None,
 ) -> None:
     """Clean files added by a part to a shared directory.
 
@@ -222,7 +222,7 @@ def clean_shared_overlay(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
-    partition: str,
+    partition: str | None,
 ) -> None:
     """Remove migrated overlay files from a shared directory.
 
