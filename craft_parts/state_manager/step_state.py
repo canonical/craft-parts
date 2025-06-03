@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Self
 
 from craft_parts.infos import ProjectVar
@@ -48,7 +48,7 @@ class MigrationState(BaseModel):
 
     files: set[str] = set()
     directories: set[str] = set()
-    partitions_contents: dict[str, MigrationContents] = {}
+    partitions_contents: dict[str, MigrationContents] = Field(default_factory=dict)
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "MigrationState":
