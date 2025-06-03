@@ -29,7 +29,7 @@ from typing_extensions import Protocol
 
 from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
-from craft_parts.filesystem_mounts import FilesystemMount, FilesystemMountItem
+from craft_parts.filesystem_mounts import FilesystemMount
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
