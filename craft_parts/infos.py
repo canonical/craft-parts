@@ -283,7 +283,7 @@ class ProjectInfo:
                 return default_filesytem_mount
 
         return FilesystemMount(
-            root=[FilesystemMountItem(mount="/", device="(default)")]
+            root=[FilesystemMountItem(mount="/", device="default")]
         )
 
     @property
