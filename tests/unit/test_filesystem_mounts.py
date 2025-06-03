@@ -29,7 +29,7 @@ from craft_parts.filesystem_mounts import (
 def test_filesystem_mount_item_marshal_unmarshal():
     data = {
         "mount": "/",
-        "device": "(default)",
+        "device": "default",
     }
 
     data_copy = deepcopy(data)
