@@ -1,6 +1,20 @@
-*********
 Changelog
-*********
+=========
+
+.. changelog template:
+
+  .. _release-X.Y.Z:
+
+  X.Y.Z (YYYY-MM-DD)
+  ------------------
+
+  New features:
+
+  Bug fixes:
+
+  Documentation:
+
+  For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 .. _release-2.11.0:
 
