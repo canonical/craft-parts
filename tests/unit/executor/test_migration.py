@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2024 Canonical Ltd.
+# Copyright 2016-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -477,23 +477,26 @@ class TestHelpers:
         assert bar_path.is_file()
 
         # TODO: also test files shared with overlay
-
-        migration.clean_shared_area(
-            part_name="p1",
-            shared_dir=p1.stage_dir,
-            part_states=part_states,
-            overlay_migration_state=None,
-        )
+        for partition in partitions or (None,):
+            migration.clean_shared_area(
+                part_name="p1",
+                shared_dir=p1.stage_dir,
+                part_states=part_states,
+                overlay_migration_state=None,
+                partition=partition,
+            )
 
         assert foo_path.is_file()  # remains, it's shared with p2
         assert bar_path.is_file()
 
-        migration.clean_shared_area(
-            part_name="p2",
-            shared_dir=p2.stage_dir,
-            part_states=part_states,
-            overlay_migration_state=None,
-        )
+        for partition in partitions or (None,):
+            migration.clean_shared_area(
+                part_name="p2",
+                shared_dir=p2.stage_dir,
+                part_states=part_states,
+                overlay_migration_state=None,
+                partition=partition,
+            )
 
         assert not foo_path.exists()
         assert not bar_path.exists()
