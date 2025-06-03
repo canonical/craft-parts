@@ -261,6 +261,13 @@ class TestStepHandlerBuiltins:
             backstage_files={"foo", "subdir/bar"},
             backstage_dirs={"subdir"},
         )
+        for partition in partitions:
+            if partition == "default":
+                continue
+            step_contents.partitions_contents[partition] = StagePartitionContents(
+                files=set(), dirs=set()
+            )
+
         assert result == step_contents
 
     def test_run_builtin_prime(self, new_dir, partitions):
@@ -284,6 +291,12 @@ class TestStepHandlerBuiltins:
         step_contents.partitions_contents["default"] = StepPartitionContents(
             files={"subdir/bar", "foo"}, dirs={"subdir"}
         )
+        for partition in partitions:
+            if partition == "default":
+                continue
+            step_contents.partitions_contents[partition] = StepPartitionContents(
+                files=set(), dirs=set()
+            )
 
         assert result == step_contents
 
