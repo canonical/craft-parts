@@ -92,9 +92,7 @@ class _Squasher:
         self, partition: str | None, filesystem_mount: FilesystemMount | None = None
     ) -> None:
         self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
-        self.migrated_directories: dict[str | None, _MigratedContents] = {
-            partition: {}
-        }
+        self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}
         self._src_partition = partition
         if filesystem_mount:
             self._filesystem_mount = filesystem_mount
