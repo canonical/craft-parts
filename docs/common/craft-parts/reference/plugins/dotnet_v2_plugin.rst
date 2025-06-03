@@ -32,7 +32,7 @@ dotnet-project
 ^^^^^^^^^^^^^^
 **Type:** string
 
-**Default:** ``None``
+**Default:** Unset
 
 The path to the solution or project file to build, relative to the root of the
 snap source. If a path isn't specified, MSBuild will search the root of the
@@ -82,7 +82,7 @@ dotnet-version
 ^^^^^^^^^^^^^^
 **Type:** string
 
-**Default:** ``None``
+**Default:** Unset
 
 Sets the .NET version to build the project with. By setting this key, the
 plugin will download the necessary .NET SDK content snap and use it to build
@@ -100,7 +100,7 @@ dotnet-restore-configfile
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 **Type:** string
 
-**Default:** ``None``
+**Default:** Unset
 
 A path to the NuGet configuration file (nuget.config) to use. If specified,
 only the settings from this file will be used. If not specified, the hierarchy
@@ -136,7 +136,7 @@ dotnet-build-framework
 
 **Type:** string
 
-**Default:** ``None``
+**Default:** Unset
 
 Compiles for a specific `framework`_. The framework must be defined in the
 `project file`_. Examples: ``net7.0``, ``net462``.
@@ -221,7 +221,7 @@ During the build step the plugin performs the following actions:
 Examples
 --------
 
-The following example uses the ``dotnet`` plugin to build an application with
+The following example uses the .NET (v2) plugin to build an application with
 .NET 8 using the debug configuration, generating assets that are
 self-contained.
 
