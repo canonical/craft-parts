@@ -172,7 +172,7 @@ class FilesystemMounts(RootModel):
         :raise TypeError: If data is not a dictionary.
         """
         if not isinstance(data, dict):
-            raise TypeError("filesystem item entry is not a dictionary")
+            raise TypeError("filesystems is not a dictionary")
 
         return cls.model_validate(data)
 
