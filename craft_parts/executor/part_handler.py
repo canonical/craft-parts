@@ -119,9 +119,7 @@ class _Squasher:
             for entry in reversed(self._filesystem_mount):
                 # Only migrate content from the subdirectory indicated by the filesystem mounts
                 # entry
-                print(entry)
                 sub_path = entry.mount.lstrip("/")
-
                 dst_partition = entry.device
 
                 # Migrate to the destination partition indicated by the filesystem mounts entry

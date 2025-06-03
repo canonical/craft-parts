@@ -60,10 +60,13 @@ class StagePartitionContents(StepPartitionContents):
     backstage_dirs: set[str] = dataclasses.field(default_factory=set)
 
 
+@dataclasses.dataclass()
 class StepContents:
     """Contents mapped to partitions."""
 
-    partitions_contents: dict[str, StepPartitionContents | StagePartitionContents] = {}
+    partitions_contents: dict[str, StepPartitionContents | StagePartitionContents] = (
+        dataclasses.field(default_factory=dict)
+    )
 
     def __init__(
         self, *, partitions: list[str] | None = None, stage: bool = False
