@@ -103,10 +103,15 @@ class JavaPlugin(Plugin):
     def _get_jar_link_commands(self) -> list[str]:
         """Get the bash commands to provide ${CRAFT_STAGE}/jars."""
         # pylint: disable=line-too-long
+        exclude = self._part_info.part_build_subdir / ".parts"
         return [
             "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
             "mkdir -p ${CRAFT_PART_INSTALL}/jar",
-            r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
+            (
+                r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" '
+                f'-not -path "{exclude}/*" '
+                r"-exec ln {} ${CRAFT_PART_INSTALL}/jar \;"
+            ),
         ]
         # pylint: enable=line-too-long
 

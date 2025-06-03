@@ -28,6 +28,7 @@ from overrides import override
 from craft_parts import errors
 
 from . import validator
+from ._maven_util import create_maven_settings, update_pom
 from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
@@ -124,10 +125,29 @@ class MavenPlugin(JavaPlugin):
         options = cast(MavenPluginProperties, self._options)
 
         mvn_cmd = [self._maven_executable, "package"]
-        if self._use_proxy():
-            settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
-            _create_settings(settings_path)
-            mvn_cmd += ["-s", str(settings_path)]
+        # if self._use_proxy():
+        #     settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
+        #     _create_settings(settings_path)
+
+        # The assumption here is: if this part has dependencies, *and* the backstage
+        # has a maven repository, we want to use only local dependencies (and not the
+        # main maven online repository). This means both setting the local debian repo
+        # as a mirror of 'central', and updating the versions of dependencies and
+        # plugins to use what's available locally.
+        dependencies = self._part_info.part_dependencies
+        craft_repo = (self._part_info.backstage_dir / "maven-use").is_dir()
+        is_offline = dependencies and craft_repo
+
+        settings_path = create_maven_settings(
+            part_info=self._part_info, set_mirror=is_offline
+        )
+        mvn_cmd += ["-s", str(settings_path)]
+
+        update_pom(
+            part_info=self._part_info,
+            add_distribution=True,
+            update_versions=is_offline,
+        )
 
         return [
             *self._get_mvnw_validation_commands(options=options),
