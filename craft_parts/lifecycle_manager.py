@@ -129,6 +129,9 @@ class LifecycleManager:
 
         validate_partition_names(partitions)
         validate_filesystem_mounts(filesystem_mounts)
+        filesystem_mounts_obj: FilesystemMounts | None = None
+        if filesystem_mounts:
+            filesystem_mounts_obj = FilesystemMounts.unmarshal(filesystem_mounts)
 
         packages.Repository.configure(application_package_name)
 
@@ -146,7 +149,7 @@ class LifecycleManager:
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
             partitions=partitions,
-            filesystem_mounts=cast(FilesystemMounts, filesystem_mounts),
+            filesystem_mounts=filesystem_mounts_obj,
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,
             **custom_args,
