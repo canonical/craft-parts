@@ -88,6 +88,9 @@ class FilesystemMount(RootModel):
     def __iter__(self) -> Iterator[FilesystemMountItem]:  # type: ignore[override]
         return iter(self.root)
 
+    def __reversed__(self) -> Iterator[FilesystemMountItem]:
+        return reversed(self.root)
+
     @field_validator("root", mode="after")
     @classmethod
     def first_maps_to_slash(
