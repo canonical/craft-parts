@@ -2,6 +2,8 @@
 Changelog
 *********
 
+.. _release-2.11.0:
+
 2.11.0 (2025-06-04)
 -------------------
 
@@ -16,6 +18,8 @@ Documentation:
 
 For a complete list of commits, check out the `2.11.0`_ release on GitHub.
 
+.. _release-2.10.0:
+
 2.10.0 (2025-05-06)
 -------------------
 
@@ -24,8 +28,10 @@ Documentation:
 - Revise the :doc:`craftctl how-to guide
   </common/craft-parts/how-to/customise-the-build-with-craftctl>` to better reflect how
   it can be used to override parts in apps.
-  
+
 For a complete list of commits, check out the `2.10.0`_ release on GitHub.
+
+.. _release-2.4.4:
 
 2.4.4 (2025-05-01)
 ------------------
@@ -36,6 +42,8 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.4.4`_ release on GitHub.
 
+.. _release-2.9.1:
+
 2.9.1 (2025-05-01)
 ------------------
 
@@ -44,6 +52,8 @@ Bug fixes:
 - Update the uv plugin to work with uv 0.7.0 and up.
 
 For a complete list of commits, check out the `2.9.1`_ release on GitHub.
+
+.. _release-2.9.0:
 
 2.9.0 (2025-04-28)
 ------------------
@@ -60,6 +70,8 @@ Documentation:
 
 For a complete list of commits, check out the `2.9.0`_ release on GitHub.
 
+.. _release-2.8.0:
+
 2.8.0 (2025-04-10)
 -------------------
 
@@ -70,6 +82,8 @@ New features:
 - Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
   a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
 
+
+.. _release-2.7.0:
 
 2.7.0 (2025-03-18)
 ------------------
@@ -90,6 +104,8 @@ Bug fixes:
 
     2.7.0 includes changes from the 2.4.3 release.
 
+.. _release-2.4.3:
+
 2.4.3 (2025-03-11)
 ------------------
 
@@ -99,6 +115,8 @@ Bug fixes:
 - Update jinja2 dependency to address CVE-2025-27516
 
 For a complete list of commits, check out the `2.4.3`_ release on GitHub.
+
+.. _release-2.4.2:
 
 2.4.2 (2025-03-04)
 ------------------
@@ -110,12 +128,16 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.4.2`_ release on GitHub.
 
+.. _release-2.6.2:
+
 2.6.2 (2025-02-20)
 ------------------
 
 Bug fixes:
 
 - Fix handling and propagation of Python plugin error messages.
+
+.. _release-2.6.1:
 
 2.6.1 (2025-02-12)
 ------------------
@@ -126,6 +148,8 @@ Bug fixes:
 - Fix Jdeps parameter ordering in the 
   :ref:`jlink plugin<craft_parts_jlink_plugin>`.
 
+.. _release-2.3.1:
+
 2.3.1 (2025-02-07)
 ------------------
 
@@ -135,6 +159,8 @@ Bug fixes:
   :ref:`uv plugin<craft_parts_uv_plugin>`.
 
 For a complete list of commits, check out the `2.3.1`_ release on GitHub.
+
+.. _release-2.6.0:
 
 2.6.0 (2025-02-06)
 ------------------
@@ -148,6 +174,8 @@ Bug fixes:
 - Allow for a non-specific system Python interpreter when using the
   :ref:`uv plugin<craft_parts_uv_plugin>`.
 
+.. _release-2.5.0:
+
 2.5.0 (2025-01-30)
 ------------------
 
@@ -155,6 +183,8 @@ New features:
 
 - Add the :ref:`jlink plugin<craft_parts_jlink_plugin>` for setting up
   Java runtime.
+
+.. _release-2.4.1:
 
 2.4.1 (2025-01-24)
 ------------------
@@ -168,6 +198,8 @@ Documentation:
 - Reorganise and improve the :ref:`craft_parts_step_execution_environment`
   reference, including example values and documentation of additional
   environment variables.
+
+.. _release-2.4.0:
 
 2.4.0 (2025-01-23)
 ------------------
@@ -185,6 +217,8 @@ Documentation:
 - Add missing links to GitHub releases.
 
 For a complete list of commits, check out the `2.4.0`_ release on GitHub.
+
+.. _release-2.3.0:
 
 2.3.0 (2025-01-20)
 ------------------
@@ -207,6 +241,8 @@ Documentation:
 
 For a complete list of commits, check out the `2.3.0`_ release on GitHub.
 
+.. _release-2.2.2:
+
 2.2.2 (2025-01-13)
 ------------------
 
@@ -215,6 +251,8 @@ Documentation:
 - Add a cross-reference target for Poetry external links.
 
 For a complete list of commits, check out the `2.2.2`_ release on GitHub.
+
+.. _release-2.2.1:
 
 2.2.1 (2024-12-19)
 ------------------
@@ -225,6 +263,8 @@ Bug fixes:
   :ref:`uv plugin<craft_parts_uv_plugin>`.
 
 For a complete list of commits, check out the `2.2.1`_ release on GitHub.
+
+.. _release-2.2.0:
 
 2.2.0 (2024-12-16)
 ------------------
@@ -267,6 +307,8 @@ Documentation:
 
 For a complete list of commits, check out the `2.2.0`_ release on GitHub.
 
+.. _release-2.1.4:
+
 2.1.4 (2024-12-04)
 ------------------
 
@@ -276,6 +318,8 @@ Bug fixes:
   installed on the system would give an error.
 
 For a complete list of commits, check out the `2.1.4`_ release on GitHub.
+
+.. _release-2.1.3:
 
 2.1.3 (2024-11-20)
 ------------------
@@ -295,6 +339,8 @@ Documentation:
 
 For a complete list of commits, check out the `2.1.3`_ release on GitHub.
 
+.. _release-2.1.2:
+
 2.1.2 (2024-10-04)
 ------------------
 
@@ -313,6 +359,8 @@ Documentation:
 
 For a complete list of commits, check out the `2.1.2`_ release on GitHub.
 
+.. _release-1.25.3:
+
 1.25.3 (2024-09-27)
 -------------------
 
@@ -321,12 +369,16 @@ For a complete list of commits, check out the `2.1.2`_ release on GitHub.
 
 For a complete list of commits, check out the `1.25.3`_ release on GitHub.
 
+.. _release-2.1.1:
+
 2.1.1 (2024-09-13)
 ------------------
 
 - This release brings the bug fix from ``1.33.1`` into the ``2.1.x`` series.
 
 For a complete list of commits, check out the `2.1.1`_ release on GitHub.
+
+.. _release-1.33.1:
 
 1.33.1 (2024-09-13)
 -------------------
@@ -335,6 +387,8 @@ For a complete list of commits, check out the `2.1.1`_ release on GitHub.
   executed in separate runs.
 
 For a complete list of commits, check out the `1.33.1`_ release on GitHub.
+
+.. _release-2.1.0:
 
 2.1.0 (2024-09-09)
 ------------------
@@ -352,6 +406,8 @@ Bug fixes:
   into a non-default partition.
 
 For a complete list of commits, check out the `2.1.0`_ release on GitHub.
+
+.. _release-2.0.0:
 
 2.0.0 (2024-08-08)
 ------------------
@@ -375,17 +431,23 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 
+.. _release-1.34.0:
+
 1.34.0 (2024-08-01)
 -------------------
 - Allow numbers in partitions, partition namespaces, and namespaced partitions.
 - Add documentation for chisel and the overlay step
 - Improve README onboarding
 
+.. _release-1.33.0:
+
 1.33.0 (2024-07-02)
 -------------------
 
 - Add doc slugs for errors during build, linking to plugin docs
 - Add docs for partitions
+
+.. _release-1.32.0:
 
 1.32.0 (2024-06-24)
 -------------------
@@ -397,6 +459,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Fix a behavior where apt packages would be fetched when the user was
   not a superuser
 - Fix list of ignored packages in core24 bases when fetching stage-packages
+
+.. _release-1.31.0:
 
 1.31.0 (2024-05-16)
 -------------------
@@ -419,16 +483,22 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
   - Add meson plugin reference
   - Documentation fixes
 
+.. _release-1.30.1:
+
 1.30.1 (2024-06-21)
 -------------------
 
 - Fix list of ignored packages in core24 bases when fetching stage-packages
+
+.. _release-1.30.0:
 
 1.30.0 (2024-05-16)
 -------------------
 
 - Add support for armv8l
 - Add support for unregistering plugins
+
+.. _release-1.29.0:
 
 1.29.0 (2024-03-20)
 -------------------
@@ -437,15 +507,21 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Add documentation linters
 - Rework bundling of shared docs
 
+.. _release-1.28.1:
+
 1.28.1 (2024-03-19)
 -------------------
 
 - Fix organize directories
 
+.. _release-1.28.0:
+
 1.28.0 (2024-03-13)
 -------------------
 
 - Add namespaced partitions support
+
+.. _release-1.27.0:
 
 1.27.0 (2024-03-07)
 -------------------
@@ -456,11 +532,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Use rustup snap in the Rust plugin
 - Update documentation
 
+.. _release-1.26.2:
+
 1.26.2 (2024-02-07)
 -------------------
 
 - Fix default setting in aliased part fields
 - Fix proxy setting in ant plugin
+
+.. _release-1.26.1:
 
 1.26.1 (2023-12-13)
 -------------------
@@ -468,12 +548,16 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Fix chisel slice normalization
 - Address sphinx warnings
 
+.. _release-1.26.0:
+
 1.26.0 (2023-11-21)
 -------------------
 
 - Documentation updates
 - Build system, requirements and CI updates
 - Misc unit test fixes and updates
+
+.. _release-1.25.2:
 
 1.25.2 (2023-10-24)
 -------------------
@@ -483,10 +567,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Fix validation of part dependency names
 - Fix expansion of environment variables
 
+.. _release-1.25.1:
+
 1.25.1 (2023-09-12)
 -------------------
 
 - Remove direct dependency to python-apt tarball
+
+.. _release-1.25.0:
 
 1.25.0 (2023-09-08)
 -------------------
@@ -496,11 +584,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Add the ability to install virtual workspace crates for the Rust plugin
 - Add the option to enable LTO for the Rust plugin
 
+.. _release-1.24.1:
+
 1.24.1 (2023-08-25)
 -------------------
 
 - Don't write log information in overlays (workaround for `craft-cli
   issue #172`_)
+
+.. _release-1.24.0:
 
 1.24.0 (2023-08-24)
 -------------------
@@ -511,10 +603,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Add bootstrap parameters to autotools plugin
 - Documentation updates
 
+.. _release-1.23.1:
+
 1.23.1 (2023-08-15)
 -------------------
 
 - Only load project variables in adopting part
+
+.. _release-1.23.0:
 
 1.23.0 (2023-07-06)
 -------------------
@@ -522,6 +618,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Improve interpreter version detection in the Python plugin
 - Fix and improve documentation
 - Pin Pydantic to version 1.x
+
+.. _release-1.22.0:
 
 1.22.0 (2023-06-25)
 -------------------
@@ -532,16 +630,22 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Build system updates
 - Documentation updates
 
+.. _release-1.21.1:
+
 1.21.1 (2023-06-09)
 -------------------
 
 - Revert subdir changes in pull and build steps
+
+.. _release-1.21.0:
 
 1.21.0 (2023-05-20)
 -------------------
 
 - Add callback to explicitly list base packages
 - Add callback to configure overlay package layer
+
+.. _release-1.20.0:
 
 1.20.0 (2023-05-15)
 -------------------
@@ -553,26 +657,36 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Tox and packaging updates
 - Documentation updates
 
+.. _release-1.19.8:
+
 1.19.8 (2024-09-24)
 -------------------
 
 - Replace requests-unixsocket with requests-unixsocket2
 - Bump minimum Python version to 3.8 (required for requests-unixsocket2)
 
+.. _release-1.19.7:
+
 1.19.7 (2023-08-09)
 -------------------
 
 - Only load project variables in adopting part
+
+.. _release-1.19.6:
 
 1.19.6 (2023-06-09)
 -------------------
 
 - Revert subdir changes in pull and build steps
 
+.. _release-1.19.5:
+
 1.19.5 (2023-05-23)
 -------------------
 
 - Revert pyproject.toml change (breaks semantic versioning)
+
+.. _release-1.19.4:
 
 1.19.4 (2023-05-19)
 -------------------
@@ -580,21 +694,29 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Backport support for pyproject.toml projects from 1.20.0
 - Backport pull and build steps subdir from 1.20.0
 
+.. _release-1.19.3:
+
 1.19.3 (2023-04-30)
 -------------------
 
 - Fix plugin properties state in planning phase
+
+.. _release-1.19.2:
 
 1.19.2 (2023-04-24)
 -------------------
 
 - Fix ignored files exclusion in local source
 
+.. _release-1.19.1:
+
 1.19.1 (2023-04-18)
 -------------------
 
 - Allow git+ssh in git source type
 - Loosen pydantic dependency
+
+.. _release-1.19.0:
 
 1.19.0 (2023-03-20)
 -------------------
@@ -609,25 +731,35 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Documentation updates
 - OsRelease code cleanup
 
+.. _release-1.18.4:
+
 1.18.4 (2023-03-09)
 -------------------
 
 - Make chroot /dev mount private
+
+.. _release-1.18.3:
 
 1.18.3 (2023-02-27)
 -------------------
 
 - Fix pip path in Python plugin
 
+.. _release-1.18.2:
+
 1.18.2 (2023-02-24)
 -------------------
 
 - Refactor Python plugin for subclassing
 
+.. _release-1.18.1:
+
 1.18.1 (2023-02-10)
 -------------------
 
 - Fix ignore patterns in local sources
+
+.. _release-1.18.0:
 
 1.18.0 (2023-01-19)
 -------------------
@@ -641,10 +773,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Improve missing local source error message
 - Documentation fixes and updates
 
+.. _release-1.17.1:
+
 1.17.1 (2022-11-23)
 -------------------
 
 - Allow plus symbol in git url scheme
+
+.. _release-1.17.0:
 
 1.17.0 (2022-11-14)
 -------------------
@@ -653,6 +789,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Remove hardcoded ubuntu version in chisel call
 - Add plain file source handler
 - Pass build attributes and state to post-step callback
+
+.. _release-1.16.0:
 
 1.16.0 (2022-10-20)
 -------------------
@@ -663,10 +801,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Generate separate environment setup file
 - Make changed file list available to plugins
 
+.. _release-1.15.1:
+
 1.15.1 (2022-10-14)
 -------------------
 
 - Fix device nodes in overlay base image
+
+.. _release-1.15.0:
 
 1.15.0 (2022-10-11)
 -------------------
@@ -674,20 +816,28 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Add support to chisel slices
 - Add ``go-generate`` property to the go plugin
 
+.. _release-1.14.2:
+
 1.14.2 (2022-09-22)
 -------------------
 
 - Fix pypi release package
+
+.. _release-1.14.1:
 
 1.14.1 (2022-09-21)
 -------------------
 
 - Fix stage/prime filter combination
 
+.. _release-1.14.0:
+
 1.14.0 (2022-09-09)
 -------------------
 
 - Add API call to validate parts
+
+.. _release-1.13.0:
 
 1.13.0 (2022-09-05)
 -------------------
@@ -697,11 +847,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Add source download request timeout
 - Remove unnecessary overlay whiteout files
 
+.. _release-1.12.1:
+
 1.12.1 (2022-08-19)
 -------------------
 
 - Revert changes to install prefix in cmake plugin to prevent
   stable base incompatibilities
+
+.. _release-1.12.0:
 
 1.12.0 (2022-08-12)
 -------------------
@@ -709,10 +863,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Set install prefix in the cmake plugin
 - Fix prefix path in the cmake plugin
 
+.. _release-1.11.0:
+
 1.11.0 (2022-08-12)
 -------------------
 
 - Add API call to list registered plugins
+
+.. _release-1.10.2:
 
 1.10.2 (2022-08-03)
 -------------------
@@ -720,11 +878,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Fix git source format error when cloning using depth
 - Use host architecture when installing stage packages
 
+.. _release-1.10.1:
+
 1.10.1 (2022-07-29)
 -------------------
 
 - Change staged snap pkgconfig prefix normalization to be predictable
   regardless of the path used for destructive mode packing
+
+.. _release-1.10.0:
 
 1.10.0 (2022-07-28)
 -------------------
@@ -733,6 +895,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Normalize file copy functions signatures
 - Fix pkgconfig prefix in staged snaps
 
+.. _release-1.9.0:
+
 1.9.0 (2022-07-14)
 ------------------
 
@@ -740,11 +904,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Apt installer changed to collect installed package versions after the
   installation
 
+.. _release-1.8.1:
+
 1.8.1 (2022-07-05)
 ------------------
 
 - Fix execution of empty scriptlets
 - List primed stage packages only if deb stage packages are defined
+
+.. _release-1.8.0:
 
 1.8.0 (2022-06-30)
 ------------------
@@ -753,17 +921,23 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Add lifecycle manager methods to obtain pull state assets and the list
   of primed stage packages
 
+.. _release-1.7.2:
+
 1.7.2 (2022-06-14)
 ------------------
 
 - Fix git repository updates
 - Fix stage packages removal on build update
 
+.. _release-1.7.1:
+
 1.7.1 (2022-05-21)
 ------------------
 
 - Fix stdout leak during snap package installation
 - Fix plugin validation dependencies
+
+.. _release-1.7.0:
 
 1.7.0 (2022-05-20)
 ------------------
@@ -776,10 +950,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Make plugin options available in plugin environment validator
 - Fix readthedocs documentation generation
 
+.. _release-1.6.1:
+
 1.6.1 (2022-05-02)
 ------------------
 
 - Fix stage package symlink normalization
+
+.. _release-1.6.0:
 
 1.6.0 (2022-04-29)
 ------------------
@@ -788,10 +966,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Clean up source provisioning
 - Fix project variable setting for skipped parts
 
+.. _release-1.5.1:
+
 1.5.1 (2022-04-25)
 ------------------
 
 - Fix extra build snaps installation
+
+.. _release-1.5.0:
 
 1.5.0 (2022-04-25)
 ------------------
@@ -802,16 +984,22 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Export symbols needed by application-defined plugins
 - Refactor plugin environment validation
 
+.. _release-1.4.2:
+
 1.4.2 (2022-04-01)
 ------------------
 
 - Fix craftctl error handling
 - Fix long recursions in dirty step verification
 
+.. _release-1.4.1:
+
 1.4.1 (2022-03-30)
 ------------------
 
 - Fix project variable adoption scope
+
+.. _release-1.4.0:
 
 1.4.0 (2022-03-24)
 ------------------
@@ -822,11 +1010,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Update craftctl commands
 - Update step execution environment variables
 
+.. _release-1.3.0:
+
 1.3.0 (2022-03-05)
 ------------------
 
 - Add meson plugin
 - Adjustments in git source tests
+
+.. _release-1.2.0:
 
 1.2.0 (2022-03-01)
 ------------------
@@ -835,6 +1027,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Fix source type specification
 - Fix testing in Python 3.10
 - Address issues found by linters
+
+.. _release-1.1.2:
 
 1.1.2 (2022-02-07)
 ------------------
@@ -846,10 +1040,14 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Unpin pylint dependency version
 - Remove unused requirements files
 
+.. _release-1.1.1:
+
 1.1.1 (2022-01-05)
 ------------------
 
 - Pin pydantic and pydantic-yaml dependency versions
+
+.. _release-1.1.0:
 
 1.1.0 (2021-12-08)
 ------------------
@@ -860,11 +1058,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Add go plugin
 - Add dotnet plugin
 
+.. _release-1.0.4:
+
 1.0.4 (2021-11-10)
 ------------------
 
 - Declare additional public API names
 - Add git source handler
+
+.. _release-1.0.3:
 
 1.0.3 (2021-10-19)
 ------------------
@@ -875,11 +1077,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Use Bash as script interpreter instead of /bin/sh to stay compatible
   with Snapcraft V2 plugins
 
+.. _release-1.0.2:
+
 1.0.2 (2021-09-16)
 ------------------
 
 - Fix local source updates causing removal of build artifacts and new
   files created in ``override-pull``
+
+.. _release-1.0.1:
 
 1.0.1 (2021-09-13)
 ------------------
@@ -891,6 +1097,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 - Change CLI tool ``--debug`` option to ``--trace`` to be consistent
   with craft tools
 
+
+.. _release-1.0.0:
 
 1.0.0 (2021-08-05)
 ------------------
