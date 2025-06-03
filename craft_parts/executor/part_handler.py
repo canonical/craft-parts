@@ -82,7 +82,7 @@ class _UpdateHandler(Protocol):
 DEFAULT_PARTITION = "default"
 
 # map the source path to the destination path in the partition
-_Migrated_Contents = dict[str, str]
+_MigratedContents = dict[str, str]
 
 
 class _Squasher:
@@ -91,8 +91,8 @@ class _Squasher:
     def __init__(
         self, partition: str | None, filesystem_mount: FilesystemMount | None = None
     ) -> None:
-        self.migrated_files: dict[str | None, _Migrated_Contents] = {partition: {}}
-        self.migrated_directories: dict[str | None, _Migrated_Contents] = {
+        self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
+        self.migrated_directories: dict[str | None, _MigratedContents] = {
             partition: {}
         }
         self._src_partition = partition
@@ -1415,8 +1415,8 @@ def _get_primed_stage_packages(
 
 def consolidate_states(
     consolidated_states: dict[str | None, MigrationState],
-    migrated_files: dict[str | None, _Migrated_Contents],
-    migrated_directories: dict[str | None, _Migrated_Contents],
+    migrated_files: dict[str | None, _MigratedContents],
+    migrated_directories: dict[str | None, _MigratedContents],
 ) -> None:
     """Consolidate migrated files into MigrationStates."""
     for partition, files in migrated_files.items():
