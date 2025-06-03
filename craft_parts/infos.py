@@ -282,9 +282,7 @@ class ProjectInfo:
             if default_filesytem_mount:
                 return default_filesytem_mount
 
-        return FilesystemMount(
-            root=[FilesystemMountItem(mount="/", device="default")]
-        )
+        return FilesystemMount(root=[FilesystemMountItem(mount="/", device="default")])
 
     @property
     def base_layer_dir(self) -> Path | None:
