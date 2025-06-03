@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,11 @@ from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
 from craft_parts.executor.part_handler import PartHandler
-from craft_parts.executor.step_handler import StageContents, StepContents
+from craft_parts.executor.step_handler import (
+    StagePartitionContents,
+    StepContents,
+    StepPartitionContents,
+)
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
@@ -178,9 +182,16 @@ class TestPartHandling:
         assert self._mock_mount_overlayfs.mock_calls == []
 
     def test_run_stage(self, mocker):
+        mock_step_contents = StepContents(stage=True, partitions=["default"])
+        mock_step_contents.partitions_contents["default"] = StagePartitionContents(
+            files={"file"},
+            dirs={"dir"},
+            backstage_files={"back_file"},
+            backstage_dirs={"back_dir"},
+        )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_stage",
-            return_value=StageContents({"file"}, {"dir"}, {"back_file"}, {"back_dir"}),
+            return_value=mock_step_contents,
         )
 
         state = self._handler._run_stage(
@@ -197,9 +208,14 @@ class TestPartHandling:
         )
 
     def test_run_prime(self, new_dir, mocker):
+        mock_step_contents = StepContents(partitions=["default"])
+        mock_step_contents.partitions_contents["default"] = StepPartitionContents(
+            files={"file"},
+            dirs={"dir"},
+        )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
-            return_value=StepContents({"file"}, {"dir"}),
+            return_value=mock_step_contents,
         )
         mocker.patch("os.getxattr", return_value=b"pkg")
         mocker.patch("pathlib.Path.exists", return_value=True)
@@ -227,9 +243,14 @@ class TestPartHandling:
         )
 
     def test_run_prime_dont_track_packages(self, mocker):
+        mock_step_contents = StepContents(partitions=["default"])
+        mock_step_contents.partitions_contents["default"] = StepPartitionContents(
+            files={"file"},
+            dirs={"dir"},
+        )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
-            return_value=StepContents({"file"}, {"dir"}),
+            return_value=mock_step_contents,
         )
         mocker.patch("os.getxattr", return_value=b"pkg")
 

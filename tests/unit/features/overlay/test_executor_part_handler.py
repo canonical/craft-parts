@@ -21,7 +21,7 @@ from craft_parts import errors
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import part_handler
 from craft_parts.executor.part_handler import PartHandler
-from craft_parts.executor.step_handler import StageContents
+from craft_parts.executor.step_handler import StagePartitionContents, StepContents
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
@@ -165,9 +165,16 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         assert self._mock_mount_overlayfs.mock_calls == []
 
     def test_run_stage(self, mocker):
+        mock_step_contents = StepContents(stage=True)
+        mock_step_contents.partitions_contents["default"] = StagePartitionContents(
+            files={"file"},
+            dirs={"dir"},
+            backstage_files={"back_file"},
+            backstage_dirs={"back_dir"},
+        )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_stage",
-            return_value=StageContents({"file"}, {"dir"}, {"back_file"}, {"back_dir"}),
+            return_value=mock_step_contents,
         )
 
         state = self._handler._run_stage(

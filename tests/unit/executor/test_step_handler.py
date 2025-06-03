@@ -22,7 +22,12 @@ import pytest
 from craft_parts import errors, plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
-from craft_parts.executor.step_handler import StageContents, StepContents, StepHandler
+from craft_parts.executor.step_handler import (
+    StagePartitionContents,
+    StepContents,
+    StepHandler,
+    StepPartitionContents,
+)
 from craft_parts.infos import (
     _DEB_TO_TRIPLET,
     PartInfo,
@@ -249,12 +254,14 @@ class TestStepHandlerBuiltins:
         )
         result = sh.run_builtin()
 
-        assert result == StageContents(
+        step_contents = StepContents(stage=True)
+        step_contents.partitions_contents["default"] = StagePartitionContents(
             files={"subdir/bar", "foo"},
             dirs={"subdir"},
             backstage_files={"foo", "subdir/bar"},
             backstage_dirs={"subdir"},
         )
+        assert result == step_contents
 
     def test_run_builtin_prime(self, new_dir, partitions):
         Path("parts/p1/install").mkdir(parents=True)
@@ -273,8 +280,12 @@ class TestStepHandlerBuiltins:
             partitions=partitions,
         )
         result = sh.run_builtin()
+        step_contents = StepContents()
+        step_contents.partitions_contents["default"] = StepPartitionContents(
+            files={"subdir/bar", "foo"}, dirs={"subdir"}
+        )
 
-        assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
+        assert result == step_contents
 
     def test_run_builtin_invalid(self, new_dir):
         sh = _step_handler_for_step(
