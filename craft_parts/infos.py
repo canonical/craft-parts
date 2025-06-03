@@ -27,6 +27,7 @@ import pydantic
 
 from craft_parts import FilesystemMounts, errors
 from craft_parts.dirs import ProjectDirs
+from craft_parts.filesystem_mounts import FilesystemMount, FilesystemMountItem
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -272,6 +273,18 @@ class ProjectInfo:
     def filesystem_mounts(self) -> FilesystemMounts | None:
         """Return the project's filesystem mounts."""
         return self._filesystem_mounts
+
+    @property
+    def default_filesystem_mount(self) -> FilesystemMount:
+        """Return the project's default filesystem mount."""
+        if self._filesystem_mounts:
+            default_filesytem_mount = self._filesystem_mounts.get("default")
+            if default_filesytem_mount:
+                return default_filesytem_mount
+
+        return FilesystemMount(
+            root=[FilesystemMountItem(mount="/", device="(default)")]
+        )
 
     @property
     def base_layer_dir(self) -> Path | None:
