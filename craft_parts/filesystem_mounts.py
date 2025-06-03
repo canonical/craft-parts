@@ -53,6 +53,12 @@ class FilesystemMountItem(BaseModel):
 
         return False
 
+    @field_validator("device", mode="after")
+    @classmethod
+    def strip_parenthesis(cls, value: str) -> str:
+        """Strip parenthesis until a better integration with partitions."""
+        return value.strip("()")
+
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "FilesystemMountItem":
         """Create and populate a new ``FilesystemMountItem`` object from dictionary data.
