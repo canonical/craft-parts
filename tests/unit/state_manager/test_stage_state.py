@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,7 @@ class TestStageState:
             "overlay-hash": None,
             "backstage-directories": set(),
             "backstage-files": set(),
+            "partitions-contents": {},
         }
 
     def test_marshal_unmarshal(self):
@@ -46,6 +47,7 @@ class TestStageState:
             "overlay-hash": "6f7665726c61792d68617368",
             "backstage-directories": set(),
             "backstage-files": set(),
+            "partitions-contents": {},
         }
 
         state = StageState.unmarshal(state_data)

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ class TestPrimeState:
             "directories": set(),
             "dependency-paths": set(),
             "primed-stage-packages": set(),
+            "partitions-contents": {},
         }
 
     def test_marshal_unmarshal(self):
@@ -43,6 +44,7 @@ class TestPrimeState:
             "directories": {"b"},
             "dependency-paths": {"c"},
             "primed-stage-packages": {"d"},
+            "partitions-contents": {},
         }
 
         state = PrimeState.unmarshal(state_data)
