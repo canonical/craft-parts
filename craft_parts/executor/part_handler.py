@@ -96,9 +96,6 @@ class _Squasher:
             partition: {}
         }
         self._src_partition = partition
-        self._filesystem_mount: FilesystemMount = FilesystemMount(
-            root=[FilesystemMountItem(mount="/", device=DEFAULT_PARTITION)]
-        )
         if filesystem_mount:
             self._filesystem_mount = filesystem_mount
 
@@ -114,7 +111,7 @@ class _Squasher:
         If the source partition is the default one, content can be distributed to other
         partitions using the provided filesystem mounts.
         """
-        if self._src_partition in (None, DEFAULT_PARTITION):
+        if self._src_partition == DEFAULT_PARTITION:
             # Distribute content into partitions according to the filesystem mounts
             for entry in reversed(self._filesystem_mount):
                 # Only migrate content from the subdirectory indicated by the filesystem mounts
