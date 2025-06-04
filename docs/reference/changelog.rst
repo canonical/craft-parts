@@ -2,6 +2,20 @@
 Changelog
 *********
 
+2.11.0 (2025-06-04)
+-------------------
+
+New features:
+
+- Add the :ref:`craft_parts_dotnet_v2_plugin`.
+- The :ref:`craft_parts_go_use_plugin` uses the ``backstage`` directory.
+
+Documentation:
+
+- Move :ref:`how-to-use-parts` out of the common directory.
+
+For a complete list of commits, check out the `2.11.0`_ release on GitHub.
+
 2.10.0 (2025-05-06)
 -------------------
 
@@ -25,9 +39,11 @@ For a complete list of commits, check out the `2.4.4`_ release on GitHub.
 2.9.1 (2025-05-01)
 ------------------
 
-Fixes:
+Bug fixes:
 
 - Update the uv plugin to work with uv 0.7.0 and up.
+
+For a complete list of commits, check out the `2.9.1`_ release on GitHub.
 
 2.9.0 (2025-04-28)
 ------------------
@@ -885,7 +901,9 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.11.0: https://github.com/canonical/craft-parts/releases/tag/2.11.0
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
+.. _2.9.1: https://github.com/canonical/craft-parts/releases/tag/2.9.1
 .. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
 .. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
 .. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
