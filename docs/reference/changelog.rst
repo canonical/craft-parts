@@ -78,7 +78,7 @@ New features:
 
 - Previously, ``source-commit`` could only accept full length (40 character)
   hashes. Now, ``source-commit`` can accept short hashes.
-- Allow usage of the overlay and partitions features simultaneously. 
+- Allow usage of the overlay and partitions features simultaneously.
 
 Bug fixes:
 
