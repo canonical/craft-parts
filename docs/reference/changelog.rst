@@ -7,7 +7,7 @@ Unreleased
 
 Documentation:
 
-- Expand the :doc:`uv plugin reference </common/craft-parts/reference/plugins/uv_plugin>`
+- Expand the :ref:`uv plugin reference <craft_parts_uv_plugin>`
   to include more details on how to install uv.
 
 2.10.0 (2025-05-06)

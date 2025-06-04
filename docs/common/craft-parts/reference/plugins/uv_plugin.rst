@@ -92,7 +92,7 @@ to allow flexibility in the choice of version.
 One way of providing ``uv`` is the ``astral-uv`` snap,
 declared as a ``build-snap`` from the desired channel.
 
-Another alternative is to define another part with the name ``uv-deps``,
+An alternative method is to define a part with the name ``uv-deps``,
 and declare that the part using the ``uv`` plugin comes :ref:`after <after>` the
 ``uv-deps`` part. In this case, the plugin will assume that this new part will
 stage the ``uv`` executable to be used in the build step.
