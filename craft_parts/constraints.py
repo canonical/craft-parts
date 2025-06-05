@@ -22,6 +22,7 @@ from typing import Annotated, TypeVar
 from pydantic import AfterValidator, BeforeValidator, Field
 
 T = TypeVar("T")
+Tv = TypeVar("Tv")
 
 
 def _validate_list_is_unique(value: list[T]) -> list[T]:
@@ -56,3 +57,8 @@ RelativePathStr = Annotated[
 ]
 
 UniqueList = Annotated[list[T], AfterValidator(_validate_list_is_unique)]
+
+SingleEntryDict = Annotated[
+    dict[T, Tv],
+    Field(min_length=1, max_length=1),
+]
