@@ -53,13 +53,11 @@ class FilesystemMountItem(BaseModel):
 
         return False
 
-
     @field_validator("device", mode="after")
     @classmethod
     def strip_parenthesis(cls, value: str) -> str:
         """Strip parenthesis until a better integration with partitions."""
         return value.strip("()")
-
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "FilesystemMountItem":
@@ -78,7 +76,6 @@ class FilesystemMountItem(BaseModel):
             raise TypeError("Filesystem input data must be a dictionary.")
 
         return cls.model_validate(data)
-
 
     def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the filesystem_mount item data.
@@ -100,7 +97,6 @@ class FilesystemMount(RootModel):
     def __reversed__(self) -> Iterator[FilesystemMountItem]:
         return reversed(self.root)
 
-
     @field_validator("root", mode="after")
     @classmethod
     def first_maps_to_slash(
@@ -110,7 +106,6 @@ class FilesystemMount(RootModel):
         if value[0].mount != "/":
             raise ValueError("The first entry in a filesystem must map the '/' mount.")
         return value
-
 
     @classmethod
     def unmarshal(cls, data: list[dict[str, Any]]) -> "FilesystemMount":
@@ -132,7 +127,6 @@ class FilesystemMount(RootModel):
         return cls.model_validate(
             [FilesystemMountItem.unmarshal(item) for item in data]
         )
-
 
     def marshal(self) -> list[dict[str, Any]]:
         """Create a list containing the filesystem_mount data.
