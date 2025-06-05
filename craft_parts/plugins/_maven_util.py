@@ -182,6 +182,10 @@ def _set_version(
 
     version_element = element.find("version", namespaces)
     current_version = version_element.text
+
+    if current_version == new_version:
+        return
+
     version_element.text = new_version
     comment = ET.Comment(
         f"Version updated by craft-parts from '{current_version}' to '{new_version}'"
