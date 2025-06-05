@@ -78,6 +78,7 @@ def update_pom(
     pom_xml = part_info.part_build_subdir / "pom.xml"
 
     if not pom_xml.is_file():
+        # TODO: this fails in tests; log instead?
         raise errors.PartsError("'pom.xml' does not exist")
 
     tree = ET.parse(pom_xml)
@@ -90,7 +91,7 @@ def update_pom(
 
     if add_distribution:
         # Add a distributionManagement element, to tell "maven deploy" to deploy the
-        # artifacts (jars and poms) to the export dir.
+        # artifacts (jars, poms, etc) to the export dir.
         distribution_dir = part_info.part_export_dir / "maven-use"
         distribution_element = ET.fromstring(
             DISTRIBUTION_REPO_TEMPLATE.format(repo_uri=distribution_dir.as_uri())
@@ -108,6 +109,7 @@ def update_pom(
                 if versions:
                     _set_version(dependency, namespaces, next(iter(versions)))
                 else:
+                    # TODO: raise a good error here
                     print("problem")
         if (build := project.find("build", namespaces)) and (
             plugins := build.find("plugins", namespaces)
@@ -118,6 +120,7 @@ def update_pom(
                 if versions:
                     _set_version(plugin, namespaces, next(iter(versions)))
                 else:
+                    # TODO: raise a good error here
                     print("problem")
 
     tree.write(pom_xml)

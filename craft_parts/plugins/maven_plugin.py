@@ -125,6 +125,8 @@ class MavenPlugin(JavaPlugin):
         options = cast(MavenPluginProperties, self._options)
 
         mvn_cmd = [self._maven_executable, "package"]
+
+        # TODO: Need to re-add the proxy settings (with new xml approach)
         # if self._use_proxy():
         #     settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
         #     _create_settings(settings_path)
@@ -136,17 +138,17 @@ class MavenPlugin(JavaPlugin):
         # plugins to use what's available locally.
         dependencies = self._part_info.part_dependencies
         craft_repo = (self._part_info.backstage_dir / "maven-use").is_dir()
-        is_offline = dependencies and craft_repo
+        self_contained = dependencies and craft_repo
 
         settings_path = create_maven_settings(
-            part_info=self._part_info, set_mirror=is_offline
+            part_info=self._part_info, set_mirror=self_contained
         )
         mvn_cmd += ["-s", str(settings_path)]
 
         update_pom(
             part_info=self._part_info,
             add_distribution=True,
-            update_versions=is_offline,
+            update_versions=self_contained,
         )
 
         return [

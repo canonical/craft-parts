@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import os
 import re
 from typing import Literal, cast
 
@@ -94,9 +93,8 @@ class MavenUsePlugin(JavaPlugin):
     @property
     def _maven_executable(self) -> str:
         """Return the maven executable to be used for build."""
+        # TODO: check if 'mvnw' exists, or default to 'mvn'
         return "mvn"
-        options = cast(MavenUsePluginProperties, self._options)
-        return "${CRAFT_PART_BUILD_WORK}/mvnw" if options.maven_use_wrapper else "mvn"
 
     @override
     def get_build_commands(self) -> list[str]:
@@ -104,13 +102,8 @@ class MavenUsePlugin(JavaPlugin):
         options = cast(MavenUsePluginProperties, self._options)
 
         mvn_cmd = [self._maven_executable, "deploy"]
-        # if self._use_proxy():
-        #     settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
-        #     _create_settings(settings_path)
-        #     mvn_cmd += ["-s", str(settings_path)]
-        # settings_path = self._part_info.part_build_subdir / ".parts/.m2/settings.xml"
-        # local_repo = self._part_info.part_build_subdir / ".parts/.m2/repository"
-        # craft_repo = self._part_info.backstage_dir
+
+        # "set_mirror" should depend on "build-attributes: self-contained"
         settings_path = create_maven_settings(
             part_info=self._part_info, set_mirror=True
         )
@@ -121,25 +114,5 @@ class MavenUsePlugin(JavaPlugin):
         )
 
         return [
-            # *self._get_mvnw_validation_commands(options=options),
             " ".join(mvn_cmd + options.maven_use_parameters),
-            # *self._get_java_post_build_commands(),
         ]
-
-    def _get_mvnw_validation_commands(
-        self, options: MavenUsePluginProperties
-    ) -> list[str]:
-        """Validate mvnw file before execution."""
-        if not options.maven_use_wrapper:
-            return []
-        return [
-            """[ -e ${CRAFT_PART_BUILD_WORK}/mvnw ] || {
->&2 echo 'mvnw file not found, refer to plugin documentation: \
-https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
-common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
-}"""
-        ]
-
-    def _use_proxy(self) -> bool:
-        env_vars_lower = list(map(str.lower, os.environ.keys()))
-        return any(k in env_vars_lower for k in ("http_proxy", "https_proxy"))
