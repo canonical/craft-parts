@@ -53,11 +53,13 @@ class FilesystemMountItem(BaseModel):
 
         return False
 
+
     @field_validator("device", mode="after")
     @classmethod
     def strip_parenthesis(cls, value: str) -> str:
         """Strip parenthesis until a better integration with partitions."""
         return value.strip("()")
+
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "FilesystemMountItem":
@@ -73,9 +75,10 @@ class FilesystemMountItem(BaseModel):
         :raise TypeError: If data is not a dictionary.
         """
         if not isinstance(data, dict):
-            raise TypeError("filesystem item entry is not a dictionary")
+            raise TypeError("Filesystem input data must be a dictionary.")
 
         return cls.model_validate(data)
+
 
     def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the filesystem_mount item data.
@@ -97,6 +100,7 @@ class FilesystemMount(RootModel):
     def __reversed__(self) -> Iterator[FilesystemMountItem]:
         return reversed(self.root)
 
+
     @field_validator("root", mode="after")
     @classmethod
     def first_maps_to_slash(
@@ -106,6 +110,7 @@ class FilesystemMount(RootModel):
         if value[0].mount != "/":
             raise ValueError("The first entry in a filesystem must map the '/' mount.")
         return value
+
 
     @classmethod
     def unmarshal(cls, data: list[dict[str, Any]]) -> "FilesystemMount":
@@ -122,11 +127,12 @@ class FilesystemMount(RootModel):
         :raise pydantic.ValidationError: If the data fails validation.
         """
         if not isinstance(data, list):
-            raise TypeError("filesystem entry is not a list")
+            raise TypeError("Filesystem entry must be a list.")
 
         return cls.model_validate(
             [FilesystemMountItem.unmarshal(item) for item in data]
         )
+
 
     def marshal(self) -> list[dict[str, Any]]:
         """Create a list containing the filesystem_mount data.
@@ -138,7 +144,7 @@ class FilesystemMount(RootModel):
 
 
 class FilesystemMounts(RootModel):
-    """FilesystemMounts defines list of FilesystemMount."""
+    """FilesystemMounts defines a list of FilesystemMount objects."""
 
     root: SingleEntryDict[Literal["default"], FilesystemMount]
 
@@ -214,13 +220,13 @@ def validate_filesystem_mounts(filesystem_mounts: dict[str, Any] | None) -> None
     ):
         raise errors.FilesystemMountError(
             brief="Missing features to use filesystems",
-            details="Filesystems are defined but partition feature or overlay feature are not enabled.",
+            resolution="Enable both the partition and overlay features.",
         )
 
     if len(filesystem_mounts) > 1:
         raise errors.FilesystemMountError(
-            brief="Exactly one filesystem must be defined.",
-            resolution="Define a single entry in the filesystems section of the project file.",
+            brief="Only one filesystem can be defined.",
+            resolution="Reduce the filesystems section to a single entry.",
         )
 
     default_filesystem_mount = filesystem_mounts.get("default")

@@ -154,3 +154,7 @@ dmypy.json
 parts/
 stage/
 prime/
+
+# .NET build directories
+**/bin/
+**/obj/

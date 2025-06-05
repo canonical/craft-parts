@@ -42,7 +42,7 @@ def test_filesystem_mount_item_marshal_unmarshal():
 def test_filesystem_mount_item_unmarshal_not_dict():
     with pytest.raises(TypeError) as raised:
         FilesystemMountItem.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "filesystem item entry is not a dictionary"
+    assert str(raised.value) == "Filesystem input data must be a dictionary."
 
 
 @pytest.mark.parametrize(
@@ -93,7 +93,7 @@ def test_filesystem_mount_marshal_unmarshal():
 def test_filesystem_mount_unmarshal_not_list():
     with pytest.raises(TypeError) as raised:
         FilesystemMount.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "filesystem entry is not a list"
+    assert str(raised.value) == "Filesystem entry must be a list."
 
 
 @pytest.mark.parametrize(
@@ -101,7 +101,7 @@ def test_filesystem_mount_unmarshal_not_list():
     [
         (
             False,
-            r"filesystem entry is not a list",
+            r"Filesystem entry must be a list.",
         ),
         (
             [],
@@ -150,7 +150,7 @@ def test_validate_filesystem_mounts_success_feature_disabled(filesystem_mounts):
     [
         (
             {"test": "test", "test2": "test"},
-            "Exactly one filesystem must be defined.",
+            "Only one filesystem can be defined.",
             None,
         ),
         (
@@ -177,12 +177,12 @@ def test_validate_filesystem_mounts_success_feature_disabled(filesystem_mounts):
         (
             {"default": False},
             "Filesystem validation failed.",
-            "filesystem entry is not a list",
+            "Filesystem entry must be a list.",
         ),
         (
             {"default": [False]},
             "Filesystem validation failed.",
-            "filesystem item entry is not a dictionary",
+            "Filesystem input data must be a dictionary.",
         ),
         (
             {
