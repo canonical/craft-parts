@@ -87,6 +87,10 @@ Fileset
 FilesetConflict
 FilesetError
 Filesets
+FilesystemMount
+FilesystemMounts
+FilesystemMountError
+FilesystemMountItem
 ProcessError
 ProcessResult
 GenerateJsonSchema
@@ -150,6 +154,7 @@ MesonPlugin
 MesonPluginEnvironmentValidator
 MesonPluginProperties
 MigrationState
+MaxLen
 MinLen
 Multipass
 NOOP
