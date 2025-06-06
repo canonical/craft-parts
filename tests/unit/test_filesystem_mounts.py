@@ -22,6 +22,7 @@ from craft_parts import errors
 from craft_parts.filesystem_mounts import (
     FilesystemMount,
     FilesystemMountItem,
+    FilesystemMounts,
     validate_filesystem_mounts,
 )
 
@@ -29,7 +30,7 @@ from craft_parts.filesystem_mounts import (
 def test_filesystem_mount_item_marshal_unmarshal():
     data = {
         "mount": "/",
-        "device": "(default)",
+        "device": "default",
     }
 
     data_copy = deepcopy(data)
@@ -205,3 +206,56 @@ def test_validate_filesystem_mounts_failure_feature_enabled(
 
     assert exc_info.value.brief == brief
     assert exc_info.value.details == details
+
+
+def test_filesystem_mounts_marshal_unmarshal():
+    data = {
+        "default": [
+            {
+                "mount": "/",
+                "device": "default",
+            }
+        ]
+    }
+
+    data_copy = deepcopy(data)
+
+    spec = FilesystemMounts.unmarshal(data)
+    assert spec.marshal() == data_copy
+
+
+def test_filesystem_mounts_unmarshal_not_dict():
+    with pytest.raises(TypeError) as raised:
+        FilesystemMounts.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
+    assert str(raised.value) == "filesystems is not a dictionary"
+
+
+def test_filesystem_mounts_iterable():
+    data = {
+        "default": [
+            {
+                "mount": "/",
+                "device": "default",
+            }
+        ]
+    }
+
+    filesystem_mounts = FilesystemMounts.unmarshal(data)
+    for f in filesystem_mounts:
+        print(f)
+
+
+def test_filesystem_mounts_get():
+    data = {
+        "default": [
+            {
+                "mount": "/",
+                "device": "foo",
+            }
+        ]
+    }
+
+    filesystem_mounts = FilesystemMounts.unmarshal(data)
+    assert filesystem_mounts.get("default") == FilesystemMount(
+        root=[FilesystemMountItem(mount="/", device="foo")]
+    )
