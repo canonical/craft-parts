@@ -32,6 +32,14 @@ For a complete list of commits, check out the `2.12.0`_ release on GitHub.
 
 .. _release-2.11.0:
 
+Unreleased
+----------
+
+Documentation:
+
+- Expand the :ref:`uv plugin reference <craft_parts_uv_plugin>`
+  to include more details on how to install uv.
+
 2.11.0 (2025-06-04)
 -------------------
 

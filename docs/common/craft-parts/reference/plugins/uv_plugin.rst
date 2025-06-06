@@ -86,7 +86,16 @@ versions.
 Dependencies
 ------------
 
-uv must already be installed on the build system in order to use this plugin.
+The uv plugin needs the ``uv`` executable but does not provision it by itself,
+to allow flexibility in the choice of version.
+
+One way of providing ``uv`` is the ``astral-uv`` snap,
+declared as a ``build-snap`` from the desired channel.
+
+An alternative method is to define a part with the name ``uv-deps``,
+and declare that the part using the ``uv`` plugin comes :ref:`after <after>` the
+``uv-deps`` part. In this case, the plugin will assume that this new part will
+stage the ``uv`` executable to be used in the build step.
 For installation instructions, see `uv documentation
 <https://docs.astral.sh/uv/getting-started/installation/>`_.
 
