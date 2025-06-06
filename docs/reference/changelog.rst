@@ -24,7 +24,7 @@ Changelog
 New features:
 
 - Add a :class:`~craft_parts.FilesystemMount` model and a ``filesystem_mounts``
-  parameter to the :class:`~craft_parts.LifecycleManager`. A future release will use
+  parameter to the :doc:`/reference/lifecycle_manager`. A future release will use
   filesystem mounts to distribute content between partitions when migrating from the
   overlay step.
 
