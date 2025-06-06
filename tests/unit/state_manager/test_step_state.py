@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@ class TestMigrationState:
         assert state.marshal() == {
             "files": set(),
             "directories": set(),
+            "partitions_contents": {},
         }
 
     def test_marshal_data(self):
@@ -40,12 +41,14 @@ class TestMigrationState:
         assert state.marshal() == {
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
+            "partitions_contents": {},
         }
 
     def test_unmarshal(self):
         data = {
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
+            "partitions_contents": {},
         }
         state = step_state.MigrationState.unmarshal(data)
         assert state.marshal() == data
@@ -78,6 +81,7 @@ class TestStepState:
             "project-options": {},
             "files": set(),
             "directories": set(),
+            "partitions-contents": {},
         }
 
     def test_marshal_data(self):
@@ -96,6 +100,7 @@ class TestStepState:
             "project-options": {"number": 42},
             "files": {"a"},
             "directories": {"b"},
+            "partitions-contents": {},
         }
 
     def test_ignore_additional_data(self):
@@ -105,6 +110,7 @@ class TestStepState:
             "project-options": {},
             "files": set(),
             "directories": set(),
+            "partitions-contents": {},
         }
 
 
