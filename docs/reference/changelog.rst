@@ -23,9 +23,10 @@ Changelog
 
 New features:
 
-- Add a ``FilesystemMount`` model and a ``filesystem_mount`` parameter to the
-  ``LifecycleManager``. A future release will use filesystem mounts to distribute
-  content between partitions when migrating from the overlay step.
+- Add a :class:`~craft_parts.FilesystemMount` model and a ``filesystem_mounts``
+  parameter to the :class:`~craft_parts.LifecycleManager`. A future release will use
+  filesystem mounts to distribute content between partitions when migrating from the
+  overlay step.
 
 For a complete list of commits, check out the `2.12.0`_ release on GitHub.
 
