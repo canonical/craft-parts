@@ -16,6 +16,19 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.12.0:
+
+2.12.0 (2025-06-06)
+-------------------
+
+New features:
+
+- Add a ``FilesystemMount`` model and a ``filesystem_mount`` parameter to the
+  ``LifecycleManager``. A future release will use filesystem mounts to distribute
+  content between partitions when migrating from the overlay step.
+
+For a complete list of commits, check out the `2.12.0`_ release on GitHub.
+
 .. _release-2.11.0:
 
 2.11.0 (2025-06-04)
@@ -1123,6 +1136,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.12.0: https://github.com/canonical/craft-parts/releases/tag/2.12.0
 .. _2.11.0: https://github.com/canonical/craft-parts/releases/tag/2.11.0
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
 .. _2.9.1: https://github.com/canonical/craft-parts/releases/tag/2.9.1
