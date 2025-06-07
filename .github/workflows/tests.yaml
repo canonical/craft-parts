@@ -192,7 +192,7 @@ jobs:
           sudo apt-get install -y openjdk-17-jdk openjdk-21-jdk openjdk-8-jdk-headless openjdk-11-jdk tinyproxy gradle
           echo "::endgroup::"
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v6
         with:
           version: "0.5.7"
       - name: specify node version
