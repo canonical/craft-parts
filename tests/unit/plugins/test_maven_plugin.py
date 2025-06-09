@@ -23,6 +23,7 @@ from unittest import mock
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo, errors
+from craft_parts.plugins._maven_util import create_maven_settings
 from craft_parts.plugins.maven_plugin import MavenPlugin
 from pydantic import ValidationError
 
@@ -33,6 +34,12 @@ def part_info(new_dir):
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
+
+
+def get_settings_path(plugin: MavenPlugin) -> Path:
+    build_dir = plugin._part_info.part_build_dir
+
+    return build_dir / ".parts/.m2/settings.xml"
 
 
 @pytest.mark.parametrize(
@@ -144,9 +151,10 @@ def test_missing_parameters():
 def test_get_build_commands(part_info):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
+    settings_path = get_settings_path(plugin)
 
     assert plugin.get_build_commands() == (
-        ["mvn package", *plugin._get_java_post_build_commands()]
+        [f"mvn package -s {settings_path}", *plugin._get_java_post_build_commands()]
     )
 
 
@@ -158,9 +166,13 @@ def test_get_build_commands_with_parameters(part_info):
         }
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
+    settings_path = get_settings_path(plugin)
 
     assert plugin.get_build_commands() == (
-        ["mvn package -Dprop1=1 -c", *plugin._get_java_post_build_commands()]
+        [
+            f"mvn package -s {settings_path} -Dprop1=1 -c",
+            *plugin._get_java_post_build_commands(),
+        ]
     )
 
 
@@ -172,6 +184,7 @@ def test_get_build_commands_use_maven_wrapper(part_info):
         }
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
+    settings_path = get_settings_path(plugin)
 
     assert plugin.get_build_commands() == (
         [
@@ -180,7 +193,7 @@ def test_get_build_commands_use_maven_wrapper(part_info):
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
 common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 }""",
-            "${CRAFT_PART_BUILD_WORK}/mvnw package",
+            f"${{CRAFT_PART_BUILD_WORK}}/mvnw package -s {settings_path}",
             *plugin._get_java_post_build_commands(),
         ]
     )
@@ -189,13 +202,13 @@ common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 def test_settings_no_proxy(part_info, new_dir):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    settings_path = Path(new_dir / "parts/my-part/build/.parts/.m2/settings.xml")
 
     with mock.patch.dict(os.environ, {}):
-        assert plugin.get_build_commands() == (
-            ["mvn package", *plugin._get_java_post_build_commands()]
-        )
-        assert settings_path.exists() is False
+        settings_path = create_maven_settings(part_info=plugin._part_info)
+
+    # The proxies field is always created, but should expect there to not be any
+    # "proxy" tags within the proxies field.
+    assert "<proxy>" not in settings_path.read_text()
 
 
 @pytest.mark.parametrize(
@@ -224,11 +237,13 @@ def test_settings_proxy(
           <proxies>
             <proxy>
               <id>{expected_protocol}_proxy</id>
-              <active>true</active>
               <protocol>{expected_protocol}</protocol>
               <host>my-proxy-host</host>
               <port>3128</port>
               <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>
+              <username>username</username>
+              <password>hunter7</password>
+              <active>true</active>
             </proxy>
           </proxies>
         </settings>
@@ -236,8 +251,8 @@ def test_settings_proxy(
     )
 
     env_dict = {
-        f"{protocol}_proxy": "http://my-proxy-host:3128",
-        f"{protocol}_PROXY": "http://my-proxy-host:3128",
+        f"{protocol}_proxy": "http://username:hunter7@my-proxy-host:3128",
+        f"{protocol}_PROXY": "http://username:hunter7@my-proxy-host:3128",
     }
     if no_proxy:
         env_dict["no_proxy"] = no_proxy
