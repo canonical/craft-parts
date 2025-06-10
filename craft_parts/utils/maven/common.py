@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 
 from craft_parts import infos
 
-from ._maven_xml import (
+from ._xml import (
     PROXIES_TEMPLATE,
     PROXY_CREDENTIALS_TEMPLATE,
     PROXY_TEMPLATE,
@@ -84,6 +84,12 @@ def _get_proxy_config() -> str:
         proxies.append(proxy_element)
 
     return PROXIES_TEMPLATE.format(proxies="\n".join(proxies))
+
+
+def needs_proxy_config() -> bool:
+    """Determine whether or not proxy configuration is necessary for Maven."""
+    proxy_vars = ["http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"]
+    return any(key in os.environ for key in proxy_vars)
 
 
 def _get_no_proxy_string() -> str:

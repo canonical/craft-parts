@@ -23,8 +23,8 @@ from unittest import mock
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo, errors
-from craft_parts.plugins._maven_util import create_maven_settings
 from craft_parts.plugins.maven_plugin import MavenPlugin
+from craft_parts.utils.maven import create_maven_settings
 from pydantic import ValidationError
 
 
@@ -34,12 +34,6 @@ def part_info(new_dir):
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
-
-
-def get_settings_path(plugin: MavenPlugin) -> Path:
-    build_dir = plugin._part_info.part_build_dir
-
-    return build_dir / ".parts/.m2/settings.xml"
 
 
 @pytest.mark.parametrize(
@@ -151,10 +145,9 @@ def test_missing_parameters():
 def test_get_build_commands(part_info):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    settings_path = get_settings_path(plugin)
 
     assert plugin.get_build_commands() == (
-        [f"mvn package -s {settings_path}", *plugin._get_java_post_build_commands()]
+        ["mvn package", *plugin._get_java_post_build_commands()]
     )
 
 
@@ -166,11 +159,10 @@ def test_get_build_commands_with_parameters(part_info):
         }
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    settings_path = get_settings_path(plugin)
 
     assert plugin.get_build_commands() == (
         [
-            f"mvn package -s {settings_path} -Dprop1=1 -c",
+            "mvn package -Dprop1=1 -c",
             *plugin._get_java_post_build_commands(),
         ]
     )
@@ -184,7 +176,6 @@ def test_get_build_commands_use_maven_wrapper(part_info):
         }
     )
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    settings_path = get_settings_path(plugin)
 
     assert plugin.get_build_commands() == (
         [
@@ -193,7 +184,7 @@ def test_get_build_commands_use_maven_wrapper(part_info):
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
 common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 }""",
-            f"${{CRAFT_PART_BUILD_WORK}}/mvnw package -s {settings_path}",
+            "${CRAFT_PART_BUILD_WORK}/mvnw package",
             *plugin._get_java_post_build_commands(),
         ]
     )

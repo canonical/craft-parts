@@ -22,7 +22,7 @@ from typing import Literal, cast
 from overrides import override
 
 from craft_parts import errors
-from craft_parts.plugins._maven_util import create_maven_settings
+from craft_parts.utils.maven import create_maven_settings, needs_proxy_config
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -119,9 +119,12 @@ class MavenPlugin(JavaPlugin):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
-        settings_path = create_maven_settings(part_info=self._part_info)
 
-        mvn_cmd = [self._maven_executable, "package", "-s", str(settings_path)]
+        mvn_cmd = [self._maven_executable, "package"]
+
+        if needs_proxy_config():
+            settings_path = create_maven_settings(part_info=self._part_info)
+            mvn_cmd.extend(["-s", str(settings_path)])
 
         return [
             *self._get_mvnw_validation_commands(options=options),
