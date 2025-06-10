@@ -18,7 +18,7 @@ import os
 from unittest import mock
 
 import pytest
-from craft_parts.utils.maven import needs_proxy_config
+from craft_parts.utils.maven.common import _needs_proxy_config
 
 
 @pytest.mark.parametrize(
@@ -34,4 +34,4 @@ from craft_parts.utils.maven import needs_proxy_config
 )
 def test_needs_proxy_config(proxy_var: str, *, expected: bool) -> None:
     with mock.patch.dict(os.environ, {proxy_var: "foo"}):
-        assert needs_proxy_config() == expected
+        assert _needs_proxy_config() == expected

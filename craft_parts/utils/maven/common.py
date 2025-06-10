@@ -28,14 +28,23 @@ from ._xml import (
 )
 
 
-def create_maven_settings(*, part_info: infos.PartInfo) -> Path:
+def create_maven_settings(*, part_info: infos.PartInfo) -> Path | None:
     """Create a Maven configuration file.
 
     The settings file contains additional configuration for Maven, such
     as proxy parameters.
 
+    If it detects that no configuration is necessary, it will return None
+    and do nothing.
+
     :param part_info: The part info for the part invoking Maven.
+
+    :return: Returns a Path object to the settings file if one is created,
+        otherwise None.
     """
+    if not _needs_proxy_config():
+        return None
+
     settings_path = part_info.part_build_subdir / ".parts/.m2/settings.xml"
     settings_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -86,7 +95,7 @@ def _get_proxy_config() -> str:
     return PROXIES_TEMPLATE.format(proxies="\n".join(proxies))
 
 
-def needs_proxy_config() -> bool:
+def _needs_proxy_config() -> bool:
     """Determine whether or not proxy configuration is necessary for Maven."""
     proxy_vars = ["http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"]
     return any(key in os.environ for key in proxy_vars)

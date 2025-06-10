@@ -14,9 +14,8 @@
 
 """Common Maven utilities."""
 
-from .common import create_maven_settings, needs_proxy_config
+from .common import create_maven_settings
 
 __all__ = [
     "create_maven_settings",
-    "needs_proxy_config",
 ]

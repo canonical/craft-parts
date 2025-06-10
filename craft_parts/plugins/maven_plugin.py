@@ -122,8 +122,7 @@ class MavenPlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "package"]
 
-        if needs_proxy_config():
-            settings_path = create_maven_settings(part_info=self._part_info)
+        if settings_path := create_maven_settings(part_info=self._part_info):
             mvn_cmd.extend(["-s", str(settings_path)])
 
         return [
