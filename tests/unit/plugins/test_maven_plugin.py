@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2023-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ from unittest import mock
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo, errors
 from craft_parts.plugins.maven_plugin import MavenPlugin
+from craft_parts.utils.maven import create_maven_settings
 from pydantic import ValidationError
 
 
@@ -160,7 +161,10 @@ def test_get_build_commands_with_parameters(part_info):
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["mvn package -Dprop1=1 -c", *plugin._get_java_post_build_commands()]
+        [
+            "mvn package -Dprop1=1 -c",
+            *plugin._get_java_post_build_commands(),
+        ]
     )
 
 
@@ -189,25 +193,47 @@ common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 def test_settings_no_proxy(part_info, new_dir):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
-    settings_path = Path(new_dir / "parts/my-part/build/.parts/.m2/settings.xml")
 
+    # The standard Maven plugin with no configuration options should not
+    # produce a settings file if there aren't any proxies configured
     with mock.patch.dict(os.environ, {}):
-        assert plugin.get_build_commands() == (
-            ["mvn package", *plugin._get_java_post_build_commands()]
+        assert (
+            create_maven_settings(part_info=plugin._part_info, set_mirror=False) is None
         )
-        assert settings_path.exists() is False
 
 
 @pytest.mark.parametrize(
     ("protocol", "expected_protocol"),
-    [("http", "http"), ("https", "https"), ("HTTP", "http"), ("HTTPS", "https")],
+    [
+        pytest.param("http_proxy", "http", id="http"),
+        pytest.param("HTTP_PROXY", "http", id="HTTP"),
+        pytest.param("https_proxy", "https", id="https"),
+        pytest.param("HTTPS_PROXY", "https", id="HTTPS"),
+    ],
 )
 @pytest.mark.parametrize(
     ("no_proxy", "non_proxy_hosts"),
     [(None, "localhost"), ("foo", "foo"), ("foo,bar", "foo|bar")],
 )
+@pytest.mark.parametrize(
+    ("credentials", "credentials_xml"),
+    [
+        pytest.param(
+            "username:hunter7@",
+            "<username>username</username>\n<password>hunter7</password>\n",
+            id="with-creds",
+        ),
+        pytest.param("", "", id="no-creds"),
+    ],
+)
 def test_settings_proxy(
-    part_info, protocol, expected_protocol, no_proxy, non_proxy_hosts
+    part_info: PartInfo,
+    protocol: str,
+    expected_protocol: str,
+    no_proxy: str | None,
+    non_proxy_hosts: str,
+    credentials: str,
+    credentials_xml: str,
 ):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
@@ -224,11 +250,12 @@ def test_settings_proxy(
           <proxies>
             <proxy>
               <id>{expected_protocol}_proxy</id>
-              <active>true</active>
               <protocol>{expected_protocol}</protocol>
               <host>my-proxy-host</host>
               <port>3128</port>
               <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>
+              {credentials_xml}
+              <active>true</active>
             </proxy>
           </proxies>
         </settings>
@@ -236,8 +263,7 @@ def test_settings_proxy(
     )
 
     env_dict = {
-        f"{protocol}_proxy": "http://my-proxy-host:3128",
-        f"{protocol}_PROXY": "http://my-proxy-host:3128",
+        protocol: f"http://{credentials}my-proxy-host:3128",
     }
     if no_proxy:
         env_dict["no_proxy"] = no_proxy

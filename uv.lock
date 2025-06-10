@@ -1,6 +1,11 @@
 version = 1
 revision = 2
 requires-python = ">=3.10"
+resolution-markers = [
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
+    "python_full_version < '3.11'",
+]
 conflicts = [[
     { package = "craft-parts", extra = "apt-jammy" },
     { package = "craft-parts", extra = "apt-noble" },
@@ -42,6 +47,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ee/67/531ea369ba64dcff5ec9c3402f9f51bf748cec26dde048a2f973a4eea7f5/annotated_types-0.7.0.tar.gz", hash = "sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89", size = 16081, upload-time = "2024-05-20T21:33:25.928Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl", hash = "sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53", size = 13643, upload-time = "2024-05-20T21:33:24.1Z" },
+]
+
+[[package]]
+name = "astroid"
+version = "3.3.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-noble') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-plucky' and extra == 'extra-11-craft-parts-apt-questing')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/c2/9b2de9ed027f9fe5734a6c0c0a601289d796b3caaf1e372e23fa88a73047/astroid-3.3.10.tar.gz", hash = "sha256:c332157953060c6deb9caa57303ae0d20b0fbdb2e59b4a4f2a6ba49d0a7961ce", size = 398941, upload-time = "2025-05-10T13:33:10.405Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/15/58/5260205b9968c20b6457ed82f48f9e3d6edf2f1f95103161798b73aeccf0/astroid-3.3.10-py3-none-any.whl", hash = "sha256:104fb9cb9b27ea95e847a94c003be03a9e039334a8ebca5ee27dafaf5c5711eb", size = 275388, upload-time = "2025-05-10T13:33:08.391Z" },
 ]
 
 [[package]]
@@ -394,12 +411,17 @@ dev = [
 ]
 docs = [
     { name = "canonical-sphinx" },
+    { name = "setuptools" },
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
     { name = "sphinx-lint" },
     { name = "sphinx-pydantic" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-details-directive" },
+]
+tics = [
+    { name = "flake8" },
+    { name = "pylint" },
 ]
 
 [package.dev-dependencies]
@@ -439,6 +461,7 @@ requires-dist = [
     { name = "canonical-sphinx", marker = "extra == 'docs'" },
     { name = "codespell", marker = "extra == 'dev'" },
     { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = "~=7.4" },
+    { name = "flake8", marker = "extra == 'tics'" },
     { name = "hypothesis", marker = "extra == 'dev'" },
     { name = "jsonschema", marker = "extra == 'dev'" },
     { name = "mypy", extras = ["reports"], marker = "extra == 'dev'", specifier = "~=1.14.1" },
@@ -446,6 +469,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pydocstyle", marker = "extra == 'dev'" },
     { name = "pyfakefs", marker = "extra == 'dev'", specifier = "~=5.3" },
+    { name = "pylint", marker = "extra == 'tics'" },
     { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.391" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "~=8.0" },
     { name = "pytest-check", marker = "extra == 'dev'", specifier = "<2.5.0" },
@@ -459,9 +483,10 @@ requires-dist = [
     { name = "python-apt", marker = "sys_platform == 'linux' and extra == 'apt-questing'", specifier = "~=3.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" },
     { name = "pyxdg" },
     { name = "pyyaml" },
-    { name = "requests", specifier = ">=2.32,<3.0" },
+    { name = "requests", specifier = ">=2.32.4,<3.0" },
     { name = "requests-mock", marker = "extra == 'dev'" },
     { name = "requests-unixsocket2", specifier = ">=0.4.0" },
+    { name = "setuptools", marker = "extra == 'docs'" },
     { name = "sphinx", marker = "extra == 'docs'" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'" },
     { name = "sphinx-lint", marker = "extra == 'docs'" },
@@ -481,7 +506,7 @@ requires-dist = [
     { name = "types-setuptools", marker = "extra == 'dev'" },
     { name = "yamllint", marker = "extra == 'dev'", specifier = "~=1.34" },
 ]
-provides-extras = ["apt-jammy", "apt-noble", "apt-oracular", "apt-plucky", "apt-questing", "docs", "dev"]
+provides-extras = ["apt-jammy", "apt-noble", "apt-oracular", "apt-plucky", "apt-questing", "docs", "dev", "tics"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -511,6 +536,15 @@ dev = [
     { name = "types-requests" },
     { name = "types-setuptools" },
     { name = "yamllint", specifier = "~=1.35" },
+]
+
+[[package]]
+name = "dill"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/80/630b4b88364e9a8c8c5797f4602d0f76ef820909ee32f0bacb9f90654042/dill-0.4.0.tar.gz", hash = "sha256:0633f1d2df477324f53a895b02c901fb961bdbf65a17122586ea7019292cbcf0", size = 186976, upload-time = "2025-04-16T00:41:48.867Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/3d/9373ad9c56321fdab5b41197068e1d8c25883b3fea29dd361f9b55116869/dill-0.4.0-py3-none-any.whl", hash = "sha256:44f54bf6412c2c8464c14e8243eb163690a9800dbe2c367330883b19c7561049", size = 119668, upload-time = "2025-04-16T00:41:47.671Z" },
 ]
 
 [[package]]
@@ -547,6 +581,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/9d/db/3ef5bb276dae18d6ec2124224403d1d67bccdbefc17af4cc8f553e341ab1/filelock-3.16.1.tar.gz", hash = "sha256:c249fbfcd5db47e5e2d6d62198e565475ee65e4831e2561c8e313fa7eb961435", size = 18037, upload-time = "2024-09-17T19:02:01.779Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/f8/feced7779d755758a52d1f6635d990b8d98dc0a29fa568bbe0625f18fdf3/filelock-3.16.1-py3-none-any.whl", hash = "sha256:2082e5703d51fbf98ea75855d9d5527e33d8ff23099bec374a134febee6946b0", size = 16163, upload-time = "2024-09-17T19:02:00.268Z" },
+]
+
+[[package]]
+name = "flake8"
+version = "7.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mccabe" },
+    { name = "pycodestyle" },
+    { name = "pyflakes" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e7/c4/5842fc9fc94584c455543540af62fd9900faade32511fab650e9891ec225/flake8-7.2.0.tar.gz", hash = "sha256:fa558ae3f6f7dbf2b4f22663e5343b6b6023620461f8d4ff2019ef4b5ee70426", size = 48177, upload-time = "2025-03-29T20:08:39.329Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/5c/0627be4c9976d56b1217cb5187b7504e7fd7d3503f8bfd312a04077bd4f7/flake8-7.2.0-py2.py3-none-any.whl", hash = "sha256:93b92ba5bdb60754a6da14fa3b93a9361fd00a59632ada61fd7b130436c40343", size = 57786, upload-time = "2025-03-29T20:08:37.902Z" },
 ]
 
 [[package]]
@@ -615,6 +663,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d7/4b/cbd8e699e64a6f16ca3a8220661b5f83792b3017d0f79807cb8708d33913/iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3", size = 4646, upload-time = "2023-01-07T11:08:11.254Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/a6/62565a6e1cf69e10f5727360368e451d4b7f58beeac6173dc9db836a5b46/iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374", size = 5892, upload-time = "2023-01-07T11:08:09.864Z" },
+]
+
+[[package]]
+name = "isort"
+version = "6.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/21/1e2a441f74a653a144224d7d21afe8f4169e6c7c20bb13aec3a2dc3815e0/isort-6.0.1.tar.gz", hash = "sha256:1cb5df28dfbc742e490c5e41bad6da41b805b0a8be7bc93cd0fb2a8a890ac450", size = 821955, upload-time = "2025-02-26T21:13:16.955Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/11/114d0a5f4dabbdcedc1125dee0888514c3c3b16d3e9facad87ed96fad97c/isort-6.0.1-py3-none-any.whl", hash = "sha256:2dc5d7f65c9678d94c88dfc29161a320eec67328bc97aad576874cb4be1e9615", size = 94186, upload-time = "2025-02-26T21:13:14.911Z" },
 ]
 
 [[package]]
@@ -830,6 +887,15 @@ wheels = [
 ]
 
 [[package]]
+name = "mccabe"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/ff/0ffefdcac38932a54d2b5eed4e0ba8a408f215002cd178ad1df0f2806ff8/mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325", size = 9658, upload-time = "2022-01-24T01:14:51.113Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/1a/1f68f9ba0c207934b35b86a8ca3aad8395a3d6dd7921c0686e23853ff5a9/mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e", size = 7350, upload-time = "2022-01-24T01:14:49.62Z" },
+]
+
+[[package]]
 name = "mdit-py-plugins"
 version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -983,6 +1049,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pycodestyle"
+version = "2.13.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/6e/1f4a62078e4d95d82367f24e685aef3a672abfd27d1a868068fed4ed2254/pycodestyle-2.13.0.tar.gz", hash = "sha256:c8415bf09abe81d9c7f872502a6eee881fbe85d8763dd5b9924bb0a01d67efae", size = 39312, upload-time = "2025-03-29T17:33:30.669Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/be/b00116df1bfb3e0bb5b45e29d604799f7b91dd861637e4d448b4e09e6a3e/pycodestyle-2.13.0-py2.py3-none-any.whl", hash = "sha256:35863c5974a271c7a726ed228a14a4f6daf49df369d8c50cd9a6f58a5e143ba9", size = 31424, upload-time = "2025-03-29T17:33:29.405Z" },
+]
+
+[[package]]
 name = "pydantic"
 version = "2.10.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1094,11 +1169,11 @@ wheels = [
 
 [[package]]
 name = "pyflakes"
-version = "3.2.0"
+version = "3.3.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/57/f9/669d8c9c86613c9d568757c7f5824bd3197d7b1c6c27553bc5618a27cce2/pyflakes-3.2.0.tar.gz", hash = "sha256:1c61603ff154621fb2a9172037d84dca3500def8c8b630657d1701f026f8af3f", size = 63788, upload-time = "2024-01-05T00:28:47.703Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/af/cc/1df338bd7ed1fa7c317081dcf29bf2f01266603b301e6858856d346a12b3/pyflakes-3.3.2.tar.gz", hash = "sha256:6dfd61d87b97fba5dcfaaf781171ac16be16453be6d816147989e7f6e6a9576b", size = 64175, upload-time = "2025-03-31T13:21:20.34Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/d7/f1b7db88d8e4417c5d47adad627a93547f44bdc9028372dbd2313f34a855/pyflakes-3.2.0-py2.py3-none-any.whl", hash = "sha256:84b5be138a2dfbb40689ca07e2152deb896a65c3a3e24c251c5c62489568074a", size = 62725, upload-time = "2024-01-05T00:28:45.903Z" },
+    { url = "https://files.pythonhosted.org/packages/15/40/b293a4fa769f3b02ab9e387c707c4cbdc34f073f945de0386107d4e669e6/pyflakes-3.3.2-py2.py3-none-any.whl", hash = "sha256:5039c8339cbb1944045f4ee5466908906180f13cc99cc9949348d10f82a5c32a", size = 63164, upload-time = "2025-03-31T13:21:18.503Z" },
 ]
 
 [[package]]
@@ -1108,6 +1183,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7c/2d/c3338d48ea6cc0feb8446d8e6937e1408088a72a39937982cc6111d17f84/pygments-2.19.1.tar.gz", hash = "sha256:61c16d2a8576dc0649d9f39e089b5f02bcd27fba10d8fb4dcc28173f7a45151f", size = 4968581, upload-time = "2025-01-06T17:26:30.443Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/0b/9fcc47d19c48b59121088dd6da2488a49d5f72dacf8262e2790a1d2c7d15/pygments-2.19.1-py3-none-any.whl", hash = "sha256:9ea1544ad55cecf4b8242fab6dd35a93bbce657034b0611ee383099054ab6d8c", size = 1225293, upload-time = "2025-01-06T17:26:25.553Z" },
+]
+
+[[package]]
+name = "pylint"
+version = "3.3.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "astroid" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-noble') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-plucky' and extra == 'extra-11-craft-parts-apt-questing')" },
+    { name = "dill" },
+    { name = "isort" },
+    { name = "mccabe" },
+    { name = "platformdirs" },
+    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-noble') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-plucky' and extra == 'extra-11-craft-parts-apt-questing')" },
+    { name = "tomlkit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/e4/83e487d3ddd64ab27749b66137b26dc0c5b5c161be680e6beffdc99070b3/pylint-3.3.7.tar.gz", hash = "sha256:2b11de8bde49f9c5059452e0c310c079c746a0a8eeaa789e5aa966ecc23e4559", size = 1520709, upload-time = "2025-05-04T17:07:51.089Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/83/bff755d09e31b5d25cc7fdc4bf3915d1a404e181f1abf0359af376845c24/pylint-3.3.7-py3-none-any.whl", hash = "sha256:43860aafefce92fca4cf6b61fe199cdc5ae54ea28f9bf4cd49de267b5195803d", size = 522565, upload-time = "2025-05-04T17:07:48.714Z" },
 ]
 
 [[package]]
@@ -1215,6 +1309,11 @@ wheels = [
 name = "python-apt"
 version = "2.4.0+ubuntu4"
 source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }
+resolution-markers = [
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
+    "python_full_version < '3.11'",
+]
 wheels = [
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.4.0+ubuntu4-cp310-cp310-manylinux_2_35_aarch64.whl" },
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.4.0+ubuntu4-cp310-cp310-manylinux_2_35_ppc64le.whl" },
@@ -1239,6 +1338,11 @@ wheels = [
 name = "python-apt"
 version = "2.7.7+ubuntu3"
 source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }
+resolution-markers = [
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
+    "python_full_version < '3.11'",
+]
 wheels = [
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.7.7+ubuntu3-cp310-cp310-manylinux_2_39_aarch64.whl" },
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.7.7+ubuntu3-cp310-cp310-manylinux_2_39_ppc64le.whl" },
@@ -1263,6 +1367,11 @@ wheels = [
 name = "python-apt"
 version = "2.9.0+ubuntu1"
 source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }
+resolution-markers = [
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
+    "python_full_version < '3.11'",
+]
 wheels = [
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.0+ubuntu1-cp310-cp310-manylinux_2_40_aarch64.whl" },
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.0+ubuntu1-cp310-cp310-manylinux_2_40_ppc64le.whl" },
@@ -1287,6 +1396,11 @@ wheels = [
 name = "python-apt"
 version = "2.9.9"
 source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }
+resolution-markers = [
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
+    "python_full_version < '3.11'",
+]
 wheels = [
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.9-cp310-cp310-manylinux_2_41_x86_64.whl" },
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-2.9.9-cp311-cp311-manylinux_2_41_x86_64.whl" },
@@ -1298,6 +1412,11 @@ wheels = [
 name = "python-apt"
 version = "3.0.0"
 source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }
+resolution-markers = [
+    "python_full_version >= '3.12'",
+    "python_full_version == '3.11.*'",
+    "python_full_version < '3.11'",
+]
 wheels = [
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-3.0.0-cp310-cp310-manylinux_2_41_x86_64.whl" },
     { url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/python-apt/python_apt-3.0.0-cp311-cp311-manylinux_2_41_x86_64.whl" },
@@ -1443,7 +1562,7 @@ wheels = [
 
 [[package]]
 name = "requests"
-version = "2.32.3"
+version = "2.32.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -1451,9 +1570,9 @@ dependencies = [
     { name = "idna" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/70/2bf7780ad2d390a8d301ad0b550f1581eadbd9a20f896afe06353c2a2913/requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760", size = 131218, upload-time = "2024-05-29T15:37:49.536Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/0a/929373653770d8a0d7ea76c37de6e41f11eb07559b103b1c02cafb3f7cf8/requests-2.32.4.tar.gz", hash = "sha256:27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422", size = 135258, upload-time = "2025-06-09T16:43:07.34Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl", hash = "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6", size = 64928, upload-time = "2024-05-29T15:37:47.027Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/e4/56027c4a6b4ae70ca9de302488c5ca95ad4a39e190093d6c1a8ace08341b/requests-2.32.4-py3-none-any.whl", hash = "sha256:27babd3cda2a6d50b30443204ee89830707d396671944c998b5975b031ac2b2c", size = 64847, upload-time = "2025-06-09T16:43:05.728Z" },
 ]
 
 [[package]]
@@ -1564,6 +1683,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/11/23/cd8f566de444a137bc1ee5795e47069a947e60810ba4152886fe5308e1b7/rpds_py-0.22.3-pp310-pypy310_pp73-musllinux_1_2_i686.whl", hash = "sha256:e35ba67d65d49080e8e5a1dd40101fccdd9798adb9b050ff670b7d74fa41c566", size = 583780, upload-time = "2024-12-04T15:33:48.247Z" },
     { url = "https://files.pythonhosted.org/packages/8d/63/79c3602afd14d501f751e615a74a59040328da5ef29ed5754ae80d236b84/rpds_py-0.22.3-pp310-pypy310_pp73-musllinux_1_2_x86_64.whl", hash = "sha256:26fd7cac7dd51011a245f29a2cc6489c4608b5a8ce8d75661bb4a1066c52dfbe", size = 553619, upload-time = "2024-12-04T15:33:50.449Z" },
     { url = "https://files.pythonhosted.org/packages/9f/2e/c5c1689e80298d4e94c75b70faada4c25445739d91b94c211244a3ed7ed1/rpds_py-0.22.3-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:177c7c0fce2855833819c98e43c262007f42ce86651ffbb84f37883308cb0e7d", size = 233338, upload-time = "2024-12-04T15:33:51.954Z" },
+]
+
+[[package]]
+name = "setuptools"
+version = "80.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/d2/ec1acaaff45caed5c2dedb33b67055ba9d4e96b091094df90762e60135fe/setuptools-80.8.0.tar.gz", hash = "sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257", size = 1319720 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/29/93c53c098d301132196c3238c312825324740851d77a8500a2462c0fd888/setuptools-80.8.0-py3-none-any.whl", hash = "sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0", size = 1201470 },
 ]
 
 [[package]]
@@ -1812,6 +1940,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/b9/1ed31d167be802da0fc95020d04cd27b7d7065cc6fbefdd2f9186f60d7bd/tomli-2.2.1-cp313-cp313-win32.whl", hash = "sha256:d3f5614314d758649ab2ab3a62d4f2004c825922f9e370b29416484086b264ec", size = 98724, upload-time = "2024-11-27T22:38:32.837Z" },
     { url = "https://files.pythonhosted.org/packages/c7/32/b0963458706accd9afcfeb867c0f9175a741bf7b19cd424230714d722198/tomli-2.2.1-cp313-cp313-win_amd64.whl", hash = "sha256:a38aa0308e754b0e3c67e344754dff64999ff9b513e691d0e786265c93583c69", size = 109383, upload-time = "2024-11-27T22:38:34.455Z" },
     { url = "https://files.pythonhosted.org/packages/6e/c2/61d3e0f47e2b74ef40a68b9e6ad5984f6241a942f7cd3bbfbdbd03861ea9/tomli-2.2.1-py3-none-any.whl", hash = "sha256:cb55c73c5f4408779d0cf3eef9f762b9c9f147a77de7b258bef0a5628adc85cc", size = 14257, upload-time = "2024-11-27T22:38:35.385Z" },
+]
+
+[[package]]
+name = "tomlkit"
+version = "0.13.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/18/0bbf3884e9eaa38819ebe46a7bd25dcd56b67434402b66a58c4b8e552575/tomlkit-0.13.3.tar.gz", hash = "sha256:430cf247ee57df2b94ee3fbe588e71d362a941ebb545dec29b53961d61add2a1", size = 185207, upload-time = "2025-06-05T07:13:44.947Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/75/8539d011f6be8e29f339c42e633aae3cb73bffa95dd0f9adec09b9c58e85/tomlkit-0.13.3-py3-none-any.whl", hash = "sha256:c89c649d79ee40629a9fda55f8ace8c6a1b42deb912b2a8fd8d942ddadb606b0", size = 38901, upload-time = "2025-06-05T07:13:43.546Z" },
 ]
 
 [[package]]

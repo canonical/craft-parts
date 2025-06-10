@@ -22,7 +22,7 @@ dependencies = [
     "pyxdg",
     "PyYAML",
     "requests-unixsocket2>=0.4.0",
-    "requests>=2.32,<3.0",
+    "requests>=2.32.4,<3.0",
     "tomli >= 1.1.0 ; python_version < '3.11'",
 ]
 
@@ -47,6 +47,8 @@ apt-questing = [
 ]
 docs = [
     "canonical-sphinx",
+    "setuptools",  # Missing from sphinxcontrib-details-directive,
+    # see https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
