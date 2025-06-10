@@ -16,15 +16,15 @@
 
 """Craft a project from several parts."""
 
-from . import plugins
-from .actions import Action, ActionProperties, ActionType
-from .dirs import ProjectDirs
-from .errors import PartsError
 from .filesystem_mounts import (
     FilesystemMount,
     FilesystemMounts,
     validate_filesystem_mount,
 )
+from . import plugins
+from .actions import Action, ActionProperties, ActionType
+from .dirs import ProjectDirs
+from .errors import PartsError
 from .executor import expand_environment
 from .features import Features
 from .infos import PartInfo, ProjectInfo, StepInfo
