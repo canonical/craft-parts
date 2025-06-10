@@ -22,7 +22,7 @@ from typing import Literal, cast
 from overrides import override
 
 from craft_parts import errors
-from craft_parts.utils.maven import create_maven_settings, needs_proxy_config
+from craft_parts.utils.maven import create_maven_settings
 
 from . import validator
 from .java_plugin import JavaPlugin
