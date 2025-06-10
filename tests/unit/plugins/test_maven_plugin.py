@@ -202,14 +202,36 @@ def test_settings_no_proxy(part_info, new_dir):
 
 @pytest.mark.parametrize(
     ("protocol", "expected_protocol"),
-    [("http", "http"), ("https", "https"), ("HTTP", "http"), ("HTTPS", "https")],
+    [
+        pytest.param("http_proxy", "http", id="http"),
+        pytest.param("HTTP_PROXY", "http", id="HTTP"),
+        pytest.param("https_proxy", "https", id="https"),
+        pytest.param("HTTPS_PROXY", "https", id="HTTPS"),
+    ],
 )
 @pytest.mark.parametrize(
     ("no_proxy", "non_proxy_hosts"),
     [(None, "localhost"), ("foo", "foo"), ("foo,bar", "foo|bar")],
 )
+@pytest.mark.parametrize(
+    ("credentials", "credentials_xml"),
+    [
+        pytest.param(
+            "username:hunter7@",
+            "<username>username</username>\n<password>hunter7</password>\n",
+            id="with-creds",
+        ),
+        pytest.param("", "", id="no-creds"),
+    ],
+)
 def test_settings_proxy(
-    part_info, protocol, expected_protocol, no_proxy, non_proxy_hosts
+    part_info: PartInfo,
+    protocol: str,
+    expected_protocol: str,
+    no_proxy: str | None,
+    non_proxy_hosts: str,
+    credentials: str,
+    credentials_xml: str,
 ):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
@@ -230,8 +252,7 @@ def test_settings_proxy(
               <host>my-proxy-host</host>
               <port>3128</port>
               <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>
-              <username>username</username>
-              <password>hunter7</password>
+              {credentials_xml}
               <active>true</active>
             </proxy>
           </proxies>
@@ -240,8 +261,7 @@ def test_settings_proxy(
     )
 
     env_dict = {
-        f"{protocol}_proxy": "http://username:hunter7@my-proxy-host:3128",
-        f"{protocol}_PROXY": "http://username:hunter7@my-proxy-host:3128",
+        protocol: f"http://{credentials}my-proxy-host:3128",
     }
     if no_proxy:
         env_dict["no_proxy"] = no_proxy
