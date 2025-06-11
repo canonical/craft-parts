@@ -18,14 +18,12 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
 SOURCE_DIR = Path(__file__).parent / "test_maven_use"
 
 
-@pytest.mark.slow
 def test_maven_use_plugin(new_dir, partitions, monkeypatch, caplog):
     caplog.set_level(logging.DEBUG)
     project_dir = Path(new_dir) / "project"
