@@ -60,7 +60,7 @@ class StagePartitionContents(StepPartitionContents):
     backstage_dirs: set[str] = dataclasses.field(default_factory=set)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(init=False)
 class StepContents:
     """Contents mapped to partitions."""
 
