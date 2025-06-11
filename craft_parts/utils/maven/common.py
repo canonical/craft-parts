@@ -301,7 +301,7 @@ def _find_element(
     :raises _MavenXMLError: if the needle can't be found.
     :return: The discovered element.
     """
-    if needle := element.find(path, namespaces):
+    if (needle := element.find(path, namespaces)) is not None:
         return needle
 
     raise _MavenXMLError(message=f"Could not parse {path}.")
@@ -317,7 +317,7 @@ def _get_element_text(element: ET.Element) -> str:
     :raises _MavenXMLError: if there is no text field.
     :return: The content of the text field.
     """
-    if text := element.text:
+    if (text := element.text) is not None:
         return text
 
     raise _MavenXMLError(message=f"No text field found on {element.tag}.")
