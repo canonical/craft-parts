@@ -954,7 +954,7 @@ class PartHandler:
                     part.name,
                 )
                 squasher.migrate(
-                    refdir=part.stage_dirs[src_partition],
+                    refdir=part.part_layer_dirs[src_partition],
                     srcdir=part.stage_dirs[src_partition],
                     destdirs=part.prime_dirs,
                     permissions=part.spec.permissions,
