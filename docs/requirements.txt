@@ -180,7 +180,7 @@ regex==2024.11.6
     #   -c (workspace)
     #   -r requirements.txt
     #   sphinx-lint
-requests==2.32.3
+requests==2.32.4
     # via
     #   -r requirements.txt
     #   canonical-sphinx-extensions
@@ -189,7 +189,7 @@ requests==2.32.3
     #   sphinx-jsonschema
 requests-unixsocket2==0.4.2
     # via -r requirements.txt
-setuptools==75.7.0
+setuptools==78.1.1
     # via -r requirements.txt
 six==1.17.0
     # via

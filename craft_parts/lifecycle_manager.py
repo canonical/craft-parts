@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ from craft_parts import errors, executor, packages, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
+from craft_parts.filesystem_mounts import FilesystemMounts, validate_filesystem_mounts
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
@@ -82,6 +83,7 @@ class LifecycleManager:
         must contain one or more lowercase alphanumeric characters or hyphens
         ("-"), and may not begin or end with a hyphen.  Namespace names must
         consist of only lowercase alphanumeric characters.
+    :param filesystem_mounts: A dict of filesystem_mounts to apply when migrating files.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
@@ -108,6 +110,7 @@ class LifecycleManager:
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
         partitions: list[str] | None = None,
+        filesystem_mounts: dict[str, Any] | None = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -125,6 +128,7 @@ class LifecycleManager:
             raise ValueError("parts definition is missing")
 
         validate_partition_names(partitions)
+        validate_filesystem_mounts(filesystem_mounts)
 
         packages.Repository.configure(application_package_name)
 
@@ -142,6 +146,7 @@ class LifecycleManager:
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
             partitions=partitions,
+            filesystem_mounts=cast(FilesystemMounts, filesystem_mounts),
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,
             **custom_args,

@@ -55,7 +55,7 @@ clean-html: clean-doc
 	+$(MAKE) html
 
 spelling: clean-html
-	. $(VENV) ; python3 -m pyspelling -c sphinx-resources/.sphinx/spellingcheck.yaml
+	. $(VENV) ; python3 -m pyspelling -c sphinx-resources/.sphinx/spellingcheck.yaml -j $(shell nproc)
 
 linkcheck:
 	. $(VENV) ; $(SPHINXBUILD) -c . -b linkcheck  "$(SOURCEDIR)" "$(BUILDDIR)"

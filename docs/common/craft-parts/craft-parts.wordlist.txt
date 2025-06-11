@@ -63,8 +63,11 @@ DEVNULL
 DirtyReport
 DotPluginEnvironmentValidator
 Dotnet
+DotnetConfiguration
 DotnetPlugin
 DotnetPluginProperties
+DotnetV
+DotnetVerbosity
 DummyRepository
 DumpPlugin
 DumpPluginProperties
@@ -84,6 +87,10 @@ Fileset
 FilesetConflict
 FilesetError
 Filesets
+FilesystemMount
+FilesystemMounts
+FilesystemMountError
+FilesystemMountItem
 ProcessError
 ProcessResult
 GenerateJsonSchema
@@ -135,6 +142,7 @@ LifecycleManager
 LocalSource
 LocalSourceModel
 LogProgress
+MSBuild
 MakePlugin
 MakePluginProperties
 Makefile
@@ -146,6 +154,7 @@ MesonPlugin
 MesonPluginEnvironmentValidator
 MesonPluginProperties
 MigrationState
+MaxLen
 MinLen
 Multipass
 NOOP
@@ -163,6 +172,7 @@ Normalize
 NpmPlugin
 NpmPluginEnvironmentValidator
 NpmPluginProperties
+NuGet
 OCI
 OpenJDK
 OSError
@@ -291,6 +301,7 @@ TimedWriter
 Tox
 TypeError
 URI
+URIs
 URL's
 Umount
 UndefinedPlugin
@@ -347,6 +358,7 @@ codename
 commandline
 confictling
 config
+configfile
 cp
 craftctl
 crafter
@@ -359,6 +371,7 @@ defs
 deps
 destdir
 dev
+diag
 dir
 dirs
 distro
@@ -370,6 +383,7 @@ dotnet
 dst
 emacs
 env
+etailed
 executables
 fd
 filepath
@@ -395,6 +409,7 @@ humanize
 implementers
 infos
 ing
+inimal
 init
 initialization
 initialized
@@ -430,7 +445,9 @@ nano
 noop
 normalization
 normalize
+nostic
 npm
+nuget
 oci
 ok
 onboarding
@@ -440,6 +457,7 @@ organization
 organize
 organized
 organizing
+ormal
 os
 overlayfs
 packageName
@@ -453,6 +471,7 @@ pre
 prepend
 prepended
 prepending
+proj
 py
 pydantic
 pylint
@@ -475,6 +494,7 @@ schemas
 scons
 scriptlet
 scriptlets
+sdk
 setuptools
 sevenzip
 sha
@@ -511,6 +531,7 @@ toolchains
 toplevel
 txt
 ubuntu
+uiet
 umount
 unbuilt
 unix

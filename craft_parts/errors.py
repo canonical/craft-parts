@@ -787,3 +787,65 @@ class PartitionNotFound(PartitionUsageError):
             partitions=partitions,
             error_list=[],
         )
+
+
+class FilesystemMountError(PartsError):
+    """Errors related to filesystem mounts."""
+
+    def __init__(
+        self,
+        brief: str,
+        *,
+        details: str | None = None,
+        resolution: str | None = None,
+    ) -> None:
+        super().__init__(brief=brief, details=details, resolution=resolution)
+
+    @classmethod
+    def from_validation_error(
+        cls, *, error_list: list["ErrorDict"]
+    ) -> "FilesystemMountError":
+        """Create a FilesystemMountError from a pydantic error list.
+
+        :param error_list: A list of dictionaries containing pydantic error definitions.
+        """
+        formatted_errors: list[str] = []
+
+        for error in error_list:
+            loc = error.get("loc")
+            msg = error.get("msg")
+
+            if not msg or not isinstance(loc, tuple):
+                continue
+
+            field = cls._format_loc(loc)
+            if msg == "field required":
+                formatted_errors.append(f"- field {field!r} is required")
+            elif msg == "extra fields not permitted":
+                formatted_errors.append(f"- extra field {field!r} not permitted")
+            else:
+                formatted_errors.append(f"- {msg} in field {field!r}")
+
+        return cls(
+            brief="Filesystem validation failed.", details="\n".join(formatted_errors)
+        )
+
+    @classmethod
+    def _format_loc(cls, loc: "Loc") -> str:
+        """Format location."""
+        loc_parts = []
+        for loc_part in loc:
+            if isinstance(loc_part, str):
+                loc_parts.append(loc_part)
+            elif isinstance(loc_part, int):
+                # Integer indicates an index. Go back and fix up previous part.
+                previous_part = loc_parts.pop()
+                previous_part += f"[{loc_part}]"
+                loc_parts.append(previous_part)
+            else:
+                raise TypeError(f"unhandled loc: {loc_part}")
+
+        loc_str = ".".join(loc_parts)
+
+        # Filter out internal __root__ detail.
+        return loc_str.replace(".__root__", "")
