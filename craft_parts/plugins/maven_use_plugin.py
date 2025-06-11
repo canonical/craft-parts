@@ -25,6 +25,7 @@ from overrides import override
 
 from craft_parts import errors
 from craft_parts.utils.maven import create_maven_settings, update_pom
+from craft_parts.utils.maven.common import MavenXMLError
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -109,9 +110,15 @@ class MavenUsePlugin(JavaPlugin):
         )
         mvn_cmd += ["-s", str(settings_path)]
 
-        update_pom(
-            part_info=self._part_info, add_distribution=True, update_versions=True
-        )
+        try:
+            update_pom(
+                part_info=self._part_info, add_distribution=True, update_versions=True
+            )
+        except MavenXMLError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_info.part_name,
+                reason=f"Encountered error while parsing 'pom.xml': {err.message}",
+            )
 
         return [
             " ".join(mvn_cmd + options.maven_use_parameters),

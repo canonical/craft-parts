@@ -189,8 +189,9 @@ def update_pom(
                 if versions:
                     _set_version(dependency, namespaces, next(iter(versions)))
                 else:
-                    # TODO: raise a good error here
-                    print("problem")
+                    raise MavenXMLError(
+                        message=f"Dependency {dep.artifact_id} has no specified version."
+                    )
         if (build := project.find("build", namespaces)) and (
             plugins := build.find("plugins", namespaces)
         ):
@@ -200,8 +201,9 @@ def update_pom(
                 if versions:
                     _set_version(plugin, namespaces, next(iter(versions)))
                 else:
-                    # TODO: raise a good error here
-                    print("problem")
+                    raise MavenXMLError(
+                        message=f"Dependency {dep.artifact_id} has no specified version."
+                    )
 
     tree.write(pom_xml)
 
@@ -283,7 +285,9 @@ def _set_version(
 
 
 @dataclass
-class _MavenXMLError(BaseException):
+class MavenXMLError(BaseException):
+    """An error encountered while parsing XML for Maven projects."""
+
     message: str
 
 
@@ -304,7 +308,7 @@ def _find_element(
     if (needle := element.find(path, namespaces)) is not None:
         return needle
 
-    raise _MavenXMLError(message=f"Could not parse {path}.")
+    raise MavenXMLError(message=f"Could not parse {path}.")
 
 
 def _get_element_text(element: ET.Element) -> str:
@@ -320,4 +324,4 @@ def _get_element_text(element: ET.Element) -> str:
     if (text := element.text) is not None:
         return text
 
-    raise _MavenXMLError(message=f"No text field found on {element.tag}.")
+    raise MavenXMLError(message=f"No text field found on {element.tag}.")
