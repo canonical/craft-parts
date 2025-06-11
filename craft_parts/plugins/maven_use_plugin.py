@@ -24,9 +24,9 @@ from typing import Literal, cast
 from overrides import override
 
 from craft_parts import errors
+from craft_parts.utils.maven import create_maven_settings, update_pom
 
 from . import validator
-from ._maven_util import create_maven_settings, update_pom
 from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
@@ -75,7 +75,7 @@ class MavenUsePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
 
 class MavenUsePlugin(JavaPlugin):
-    """ """
+    """The Maven use plugin."""
 
     properties_class = MavenUsePluginProperties
     validator_class = MavenUsePluginEnvironmentValidator

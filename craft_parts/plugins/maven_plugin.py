@@ -122,11 +122,6 @@ class MavenPlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "package"]
 
-        # TODO: Need to re-add the proxy settings (with new xml approach)
-        # if self._use_proxy():
-        #     settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
-        #     _create_settings(settings_path)
-
         # The assumption here is: if this part has dependencies, *and* the backstage
         # has a maven repository, we want to use only local dependencies (and not the
         # main maven online repository). This means both setting the local debian repo
@@ -134,7 +129,7 @@ class MavenPlugin(JavaPlugin):
         # plugins to use what's available locally.
         dependencies = self._part_info.part_dependencies
         craft_repo = (self._part_info.backstage_dir / "maven-use").is_dir()
-        self_contained = dependencies and craft_repo
+        self_contained = bool(dependencies and craft_repo)
 
         if settings_path := create_maven_settings(
             part_info=self._part_info, set_mirror=self_contained

@@ -23,10 +23,11 @@ from pathlib import Path
 from typing import cast
 from urllib.parse import urlparse
 
-from craft_parts import infos
+from craft_parts import errors, infos
 
 from ._xml import (
     CRAFT_REPO_TEMPLATE,
+    DISTRIBUTION_REPO_TEMPLATE,
     LOCAL_REPO_TEMPLATE,
     MIRROR_REPO,
     PROXIES_TEMPLATE,
@@ -142,17 +143,29 @@ def _get_no_proxy_string() -> str:
 def update_pom(
     *, part_info: infos.PartInfo, add_distribution: bool, update_versions: bool
 ) -> None:
+    """Update the POM file of a Maven project.
+
+    :param part_info: Information about the invoking part.
+    :param add_distribution: Whether or not to configure the `mvn deploy` location.
+    :param update_versions: Whether or not to patch version numbers with what is
+        actually available.
+    """
     pom_xml = part_info.part_build_subdir / "pom.xml"
 
     if not pom_xml.is_file():
         # TODO: this fails in tests; log instead?
         raise errors.PartsError("'pom.xml' does not exist")
 
-    tree = ET.parse(pom_xml)
+    tree = ET.parse(pom_xml)  # noqa: S314, unsafe parsing with xml
 
     project = tree.getroot()
-    namespace = re.search("{(.*)}", project.tag).group(1)
-    namespaces = {"": namespace}
+    namespace = re.search("{(.*)}", project.tag)
+    if namespace is None:
+        raise errors.PluginEnvironmentValidationError(
+            part_name=part_info.part_name,
+            reason="'pom.xml' could not be parsed: Unable to detect namespace.",
+        )
+    namespaces = {"": namespace.group(1)}
     for prefix, uri in namespaces.items():
         ET.register_namespace(prefix, uri)
 
@@ -160,7 +173,7 @@ def update_pom(
         # Add a distributionManagement element, to tell "maven deploy" to deploy the
         # artifacts (jars, poms, etc) to the export dir.
         distribution_dir = part_info.part_export_dir / "maven-use"
-        distribution_element = ET.fromstring(
+        distribution_element = ET.fromstring(  # noqa: S314, unsafe parsing with xml
             DISTRIBUTION_REPO_TEMPLATE.format(repo_uri=distribution_dir.as_uri())
         )
 
@@ -195,6 +208,8 @@ def update_pom(
 
 @dataclass
 class MavenArtifact:
+    """A dataclass for Maven artifacts."""
+
     group_id: str
     artifact_id: str
     version: str
@@ -205,7 +220,7 @@ GroupDict = dict[str, ArtifactDict]
 
 
 def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
-    result = GroupDict()
+    result: GroupDict = GroupDict()
 
     search_locations = [
         part_info.backstage_dir / "maven-use",
@@ -224,7 +239,7 @@ def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
 
 
 def _read_artifact(pom: Path) -> MavenArtifact:
-    tree = ET.parse(pom)
+    tree = ET.parse(pom)  # noqa: S314, unsafe parsing with xml
     project = tree.getroot()
     namespaces = {}
     if match := re.search("{(.*)}", project.tag):
@@ -234,9 +249,9 @@ def _read_artifact(pom: Path) -> MavenArtifact:
 
 
 def _from_element(element: ET.Element, namespaces: dict[str, str]) -> MavenArtifact:
-    group_id = element.find("groupId", namespaces).text
-    artifact_id = element.find("artifactId", namespaces).text
-    version = element.find("version", namespaces).text
+    group_id = _get_element_text(_find_element(element, "groupId", namespaces))
+    artifact_id = _get_element_text(_find_element(element, "artifactId", namespaces))
+    version = _get_element_text(_find_element(element, "version", namespaces))
 
     return MavenArtifact(group_id, artifact_id, version)
 
@@ -244,11 +259,11 @@ def _from_element(element: ET.Element, namespaces: dict[str, str]) -> MavenArtif
 def _set_version(
     element: ET.Element, namespaces: dict[str, str], new_version: str
 ) -> None:
-    group_id = element.find("groupId", namespaces).text
-    artifact_id = element.find("artifactId", namespaces).text
+    group_id = _get_element_text(_find_element(element, "groupId", namespaces))
+    artifact_id = _get_element_text(_find_element(element, "artifactId", namespaces))
 
-    version_element = element.find("version", namespaces)
-    current_version = version_element.text
+    version_element = _find_element(element, "version", namespaces)
+    current_version = _get_element_text(version_element)
 
     if current_version == new_version:
         return
@@ -265,3 +280,44 @@ def _set_version(
         new_version,
     )
     element.append(comment)
+
+
+@dataclass
+class _MavenXMLError(BaseException):
+    message: str
+
+
+def _find_element(
+    element: ET.Element, path: str, namespaces: dict[str, str]
+) -> ET.Element:
+    """Find a field within an element.
+
+    This is equivalent to `element.find(path, namespaces)`, except that
+    an exception is raised if the needle isn't found to reduce boilerplate.
+
+    :param element: The haystack to search.
+    :param path: The needle to find in the haystack.
+    :param namespaces: A mapping of namespaces to use during the search.
+    :raises _MavenXMLError: if the needle can't be found.
+    :return: The discovered element.
+    """
+    if needle := element.find(path, namespaces):
+        return needle
+
+    raise _MavenXMLError(message=f"Could not parse {path}.")
+
+
+def _get_element_text(element: ET.Element) -> str:
+    """Extract the text field from an element.
+
+    This is equivalent to `element.text`, except that an exception is
+    raised if the text field is empty to reduce boilerplate.
+
+    :param element: The element to read from.
+    :raises _MavenXMLError: if there is no text field.
+    :return: The content of the text field.
+    """
+    if text := element.text:
+        return text
+
+    raise _MavenXMLError(message=f"No text field found on {element.tag}.")
