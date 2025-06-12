@@ -161,9 +161,8 @@ def update_pom(
     project = tree.getroot()
     namespace = re.search("{(.*)}", project.tag)
     if namespace is None:
-        raise errors.PluginEnvironmentValidationError(
-            part_name=part_info.part_name,
-            reason="'pom.xml' could not be parsed: Unable to detect namespace.",
+        raise MavenXMLError(
+            message="Unable to detect namespace",
         )
     namespaces = {"": namespace.group(1)}
     for prefix, uri in namespaces.items():
