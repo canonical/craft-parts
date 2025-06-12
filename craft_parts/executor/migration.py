@@ -238,7 +238,9 @@ def clean_shared_overlay(
     files: set[str] = set()
     directories: set[str] = set()
 
-    overlay_contents = overlay_migration_state.contents(partition=partition)
+    # This overlay migration state is coming from a partition, so content
+    # is recorded in top-level files/directories keys, not in partition_contents key
+    overlay_contents = overlay_migration_state.contents(partition=None)
 
     if overlay_contents:
         files, directories = overlay_contents
