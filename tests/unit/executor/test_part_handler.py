@@ -35,6 +35,7 @@ from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.state_manager import states
+from craft_parts.state_manager.step_state import MigrationState
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
@@ -1018,3 +1019,88 @@ class TestHelpers:
     def test_remove_non_existent(self):
         # this should not raise and exception
         part_handler._remove(Path("not_here"))
+
+    @pytest.mark.parametrize(
+        ("consolidated_states", "migrated_files", "migrated_directories", "result"),
+        [
+            (
+                {},
+                {None: {"a": "a"}},
+                {None: {"b": "b"}},
+                {
+                    None: MigrationState(
+                        files={"a"},
+                        directories={"b"},
+                    )
+                },
+            ),
+            (
+                {
+                    "default": MigrationState(
+                        files={"foo"},
+                        directories={"bar"},
+                    )
+                },
+                {"default": {"a-key": "a-value", "c-key": "c-value"}},
+                {"default": {"b-key": "b-value"}},
+                {
+                    "default": MigrationState(
+                        files={"foo", "a-value", "c-value"},
+                        directories={"bar", "b-value"},
+                    )
+                },
+            ),
+            (
+                {
+                    "partition-a": MigrationState(
+                        files={"foo"},
+                        directories={"bar"},
+                    )
+                },
+                {"default": {"a": "a"}},
+                {"default": {"b": "b"}},
+                {
+                    "default": MigrationState(
+                        files={"a"},
+                        directories={"b"},
+                    ),
+                    "partition-a": MigrationState(
+                        files={"foo"},
+                        directories={"bar"},
+                    ),
+                },
+            ),
+            (
+                {
+                    "partition-a": MigrationState(
+                        files={"foo"},
+                        directories={"bar"},
+                    )
+                },
+                {"partition-b": {"a": "a"}},
+                {"partition-c": {"b": "b"}},
+                {
+                    "partition-c": MigrationState(
+                        directories={"b"},
+                    ),
+                    "partition-a": MigrationState(
+                        files={"foo"},
+                        directories={"bar"},
+                    ),
+                    "partition-b": MigrationState(
+                        files={"a"},
+                    ),
+                },
+            ),
+        ],
+    )
+    def test_consolidated_states(
+        self, consolidated_states, migrated_files, migrated_directories, result
+    ):
+        part_handler.consolidate_states(
+            consolidated_states=consolidated_states,
+            migrated_files=migrated_files,
+            migrated_directories=migrated_directories,
+        )
+
+        assert consolidated_states == result
