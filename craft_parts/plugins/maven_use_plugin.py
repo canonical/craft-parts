@@ -94,8 +94,8 @@ class MavenUsePlugin(JavaPlugin):
     @property
     def _maven_executable(self) -> str:
         """Return the maven executable to be used for build."""
-        # TODO: check if 'mvnw' exists, or default to 'mvn'
-        return "mvn"
+        mvnw = self._part_info.part_build_subdir / "mvnw"
+        return str(mvnw) if mvnw.is_file() else "mvn"
 
     @override
     def get_build_commands(self) -> list[str]:
