@@ -909,7 +909,6 @@ class PartHandler:
                 migrated_directories=squasher.migrated_directories,
             )
 
-        logger.debug(f"consolidated states: {consolidated_states}")
         # Write consolidated states once
         self._write_overlay_migration_states(consolidated_states, Step.STAGE)
 
@@ -996,11 +995,6 @@ class PartHandler:
                     step.name,
                 )
                 continue
-            logger.debug(
-                "write state for %s partition layer to %s",
-                src_partition,
-                step.name,
-            )
             consolidated_states[src_partition].write(step_overlay_state_path)
 
     def _clean_dangling_whiteouts(
