@@ -197,7 +197,9 @@ def test_settings_no_proxy(part_info, new_dir):
     # The standard Maven plugin with no configuration options should not
     # produce a settings file if there aren't any proxies configured
     with mock.patch.dict(os.environ, {}):
-        assert create_maven_settings(part_info=plugin._part_info) is None
+        assert (
+            create_maven_settings(part_info=plugin._part_info, set_mirror=False) is None
+        )
 
 
 @pytest.mark.parametrize(

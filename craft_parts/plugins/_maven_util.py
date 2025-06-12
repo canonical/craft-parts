@@ -1,3 +1,5 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
 # Copyright 2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
@@ -15,128 +17,59 @@
 """Utilities for Maven projects and settings."""
 
 import logging
-import os
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
-from urllib.parse import urlparse
 
-from craft_parts import infos
-
-from ._xml import (
+from craft_parts import errors, infos
+from craft_parts.plugins._maven_xml import (
     CRAFT_REPO_TEMPLATE,
+    DISTRIBUTION_REPO_TEMPLATE,
     LOCAL_REPO_TEMPLATE,
     MIRROR_REPO,
-    PROXIES_TEMPLATE,
-    PROXY_CREDENTIALS_TEMPLATE,
-    PROXY_TEMPLATE,
     SETTINGS_TEMPLATE,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def create_maven_settings(
-    *, part_info: infos.PartInfo, set_mirror: bool
-) -> Path | None:
+def create_maven_settings(*, part_info: infos.PartInfo, set_mirror: bool) -> Path:
     """Create a Maven configuration file.
 
     The settings file contains additional configuration for Maven, such
     as proxy parameters.
 
-    If it detects that no configuration is necessary, it will return None
-    and do nothing.
-
-    :param part_info: The part info for the part invoking Maven.
-
-    :return: Returns a Path object to the settings file if one is created,
-        otherwise None.
+    :param settings_path: the location the settings file will be created.
     """
-    # Short-circuit exit if no config is needed
-    if not (_needs_proxy_config() or set_mirror):
-        return None
-
     settings_path = part_info.part_build_subdir / ".parts/.m2/settings.xml"
+    local_repo = part_info.part_build_subdir / ".parts/.m2/repository"
+    backstage_repo = part_info.backstage_dir / "maven-use"
+
     settings_path.parent.mkdir(parents=True, exist_ok=True)
 
-    proxies_element = _get_proxy_config() if _needs_proxy_config() else ""
+    # This is the local repository used by maven to store downloaded & generated
+    # artifacts
+    local_element = LOCAL_REPO_TEMPLATE.format(repo_dir=local_repo)
 
+    craft_element = ""
+    if backstage_repo.is_dir():
+        # This is the shared repository in the backstage
+        craft_element = CRAFT_REPO_TEMPLATE.format(repo_uri=backstage_repo.as_uri())
+
+    mirror_element = ""
     if set_mirror:
-        local_repo = part_info.part_build_subdir / ".parts/.m2/repository"
-        backstage_repo = cast("Path", part_info.backstage_dir) / "maven-use"
-
-        if backstage_repo.is_dir():
-            # This is the shared repository in the backstage
-            craft_element = CRAFT_REPO_TEMPLATE.format(repo_uri=backstage_repo.as_uri())
-        else:
-            craft_element = ""
-
-        local_element = LOCAL_REPO_TEMPLATE.format(repo_dir=local_repo)
         mirror_element = MIRROR_REPO
-    else:
-        craft_element = local_element = mirror_element = ""
 
     settings_xml = SETTINGS_TEMPLATE.format(
-        local_repository_element=local_element,
-        craft_repository_element=craft_element,
-        mirror_repository_element=mirror_element,
-        proxies_element=proxies_element,
+        localRepositoryElement=local_element,
+        craftRepositoryElement=craft_element,
+        mirrorRepositoryElement=mirror_element,
     )
 
     settings_path.write_text(settings_xml)
 
     return settings_path
-
-
-def _get_proxy_config() -> str:
-    """Generate an XML string for proxy configurations.
-
-    Reads the environment for information on desired proxy settings and
-    transforms those variables into Maven XML settings entries.
-    """
-    # Transform all environment variables to their lowercase form to support HTTPS_PROXY
-    # vs. https_proxy and such
-    case_insensitive_env = {item[0].lower(): item[1] for item in os.environ.items()}
-
-    proxies: list[str] = []
-    for protocol in ["http", "https"]:
-        env_name = f"{protocol}_proxy"
-        if env_name not in case_insensitive_env:
-            continue
-
-        proxy_url = urlparse(case_insensitive_env[env_name])
-        if proxy_url.username is not None and proxy_url.password is not None:
-            credentials = PROXY_CREDENTIALS_TEMPLATE.format(
-                username=proxy_url.username, password=proxy_url.password
-            )
-        else:
-            credentials = ""
-
-        proxy_element = PROXY_TEMPLATE.format(
-            id=env_name,
-            protocol=protocol,
-            host=proxy_url.hostname,
-            port=proxy_url.port,
-            credentials=credentials,
-            non_proxy_hosts=_get_no_proxy_string(),
-        )
-
-        proxies.append(proxy_element)
-
-    return PROXIES_TEMPLATE.format(proxies="\n".join(proxies))
-
-
-def _needs_proxy_config() -> bool:
-    """Determine whether or not proxy configuration is necessary for Maven."""
-    proxy_vars = ["http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"]
-    return any(key in os.environ for key in proxy_vars)
-
-
-def _get_no_proxy_string() -> str:
-    no_proxy = [k.strip() for k in os.environ.get("no_proxy", "localhost").split(",")]
-    return "|".join(no_proxy)
 
 
 def update_pom(

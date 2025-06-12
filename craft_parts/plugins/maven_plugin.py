@@ -22,7 +22,7 @@ from typing import Literal, cast
 from overrides import override
 
 from craft_parts import errors
-from craft_parts.utils.maven import create_maven_settings
+from craft_parts.utils.maven import create_maven_settings, update_pom
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -122,8 +122,31 @@ class MavenPlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "package"]
 
-        if settings_path := create_maven_settings(part_info=self._part_info):
+        # TODO: Need to re-add the proxy settings (with new xml approach)
+        # if self._use_proxy():
+        #     settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
+        #     _create_settings(settings_path)
+
+        # The assumption here is: if this part has dependencies, *and* the backstage
+        # has a maven repository, we want to use only local dependencies (and not the
+        # main maven online repository). This means both setting the local debian repo
+        # as a mirror of 'central', and updating the versions of dependencies and
+        # plugins to use what's available locally.
+        dependencies = self._part_info.part_dependencies
+        craft_repo = (self._part_info.backstage_dir / "maven-use").is_dir()
+        self_contained = dependencies and craft_repo
+
+        if settings_path := create_maven_settings(
+            part_info=self._part_info, set_mirror=self_contained
+        ):
             mvn_cmd.extend(["-s", str(settings_path)])
+
+        if self_contained:
+            update_pom(
+                part_info=self._part_info,
+                add_distribution=True,
+                update_versions=self_contained,
+            )
 
         return [
             *self._get_mvnw_validation_commands(options=options),
