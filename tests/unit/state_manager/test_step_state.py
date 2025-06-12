@@ -53,6 +53,107 @@ class TestMigrationState:
         state = step_state.MigrationState.unmarshal(data)
         assert state.marshal() == data
 
+    @pytest.mark.parametrize(
+        ("state", "partition", "contents"),
+        [
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                "foo",
+                ({"bar"}, {"baz"}),
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                None,
+                ({"a", "b", "c"}, {"d", "e", "f"}),
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                "default",
+                ({"a", "b", "c"}, {"d", "e", "f"}),
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                "qux",
+                None,
+            ),
+        ],
+    )
+    def test_contents(self, state, partition, contents):
+        assert state.contents(partition=partition) == contents
+
+    @pytest.mark.parametrize(
+        ("state", "files", "directories", "result_files", "result_directories"),
+        [
+            (
+                step_state.MigrationState(
+                    files={"a"},
+                    directories={"b"},
+                ),
+                {"foo"},
+                {"bar"},
+                {"a", "foo"},
+                {"b", "bar"},
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a"},
+                    directories={"b"},
+                ),
+                None,
+                None,
+                {"a"},
+                {"b"},
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "c"},
+                    directories={"b", "c"},
+                ),
+                {"c"},
+                {"c"},
+                {"a", "c"},
+                {"b", "c"},
+            ),
+        ],
+    )
+    def test_add(self, state, files, directories, result_files, result_directories):
+        state.add(files=files, directories=directories)
+
+        assert state.files == result_files
+        assert state.directories == result_directories
+
 
 class SomeStepState(step_state.StepState):
     """A concrete step state implementing abstract methods."""
