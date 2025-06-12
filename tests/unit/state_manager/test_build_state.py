@@ -45,7 +45,7 @@ class TestBuildState:
             "files": {"a"},
             "directories": {"b"},
             "overlay-hash": "6f7665726c61792d68617368",
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
 
         state = BuildState.unmarshal(state_data)

@@ -41,7 +41,7 @@ class TestStepStates:
             "directories": {"b"},
             "outdated-files": ["a"],
             "outdated-dirs": ["b"],
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
         state_file = Path("parts/foo/state/pull")
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -60,7 +60,7 @@ class TestStepStates:
             "files": {"a"},
             "directories": {"b"},
             "overlay-hash": "6f7665726c61792d68617368",
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
         state_file = Path("parts/foo/state/build")
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -80,7 +80,7 @@ class TestStepStates:
             "overlay-hash": "6f7665726c61792d68617368",
             "backstage-directories": {"*"},
             "backstage-files": set(),
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
         state_file = Path("parts/foo/state/stage")
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -99,7 +99,7 @@ class TestStepStates:
             "directories": {"b"},
             "dependency-paths": {"c"},
             "primed-stage-packages": {"d"},
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
         state_file = Path("parts/foo/state/prime")
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -133,7 +133,12 @@ class TestMigrationStates:
         state_data = {
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
-            "partitions_contents": {},
+            "partitions_contents": {
+                "foo": {
+                    "files": {"g", "h"},
+                    "directories": {"i", "j"},
+                }
+            },
         }
         state_file = states.get_overlay_migration_state_path(Path("overlay"), step)
         state_file.parent.mkdir(parents=True, exist_ok=True)

@@ -46,7 +46,7 @@ class TestPullState:
             "directories": {"b"},
             "outdated-files": ["a"],
             "outdated-dirs": ["b"],
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
 
         state = PullState.unmarshal(state_data)

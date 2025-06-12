@@ -47,7 +47,7 @@ class TestStageState:
             "overlay-hash": "6f7665726c61792d68617368",
             "backstage-directories": set(),
             "backstage-files": set(),
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
 
         state = StageState.unmarshal(state_data)

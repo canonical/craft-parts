@@ -44,7 +44,7 @@ class TestPrimeState:
             "directories": {"b"},
             "dependency-paths": {"c"},
             "primed-stage-packages": {"d"},
-            "partitions-contents": {},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
 
         state = PrimeState.unmarshal(state_data)
