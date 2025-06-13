@@ -902,7 +902,7 @@ class PartHandler:
                     destdirs=part.stage_dirs,
                 )
 
-            consolidate_states(
+            _consolidate_states(
                 consolidated_states=consolidated_states,
                 migrated_files=squasher.migrated_files,
                 migrated_directories=squasher.migrated_directories,
@@ -958,7 +958,7 @@ class PartHandler:
                     permissions=part.spec.permissions,
                 )
 
-            consolidate_states(
+            _consolidate_states(
                 consolidated_states=consolidated_states,
                 migrated_files=squasher.migrated_files,
                 migrated_directories=squasher.migrated_directories,
@@ -1404,7 +1404,7 @@ def _get_primed_stage_packages(
     return primed_stage_packages
 
 
-def consolidate_states(
+def _consolidate_states(
     consolidated_states: dict[str | None, MigrationState],
     migrated_files: dict[str | None, _MigratedContents],
     migrated_directories: dict[str | None, _MigratedContents],

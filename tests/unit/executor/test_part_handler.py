@@ -1097,7 +1097,7 @@ class TestHelpers:
     def test_consolidated_states(
         self, consolidated_states, migrated_files, migrated_directories, result
     ):
-        part_handler.consolidate_states(
+        part_handler._consolidate_states(
             consolidated_states=consolidated_states,
             migrated_files=migrated_files,
             migrated_directories=migrated_directories,
