@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@ class TestPullState:
             "directories": set(),
             "outdated-files": None,
             "outdated-dirs": None,
+            "partitions-contents": {},
         }
 
     def test_marshal_unmarshal(self):
@@ -45,6 +46,7 @@ class TestPullState:
             "directories": {"b"},
             "outdated-files": ["a"],
             "outdated-dirs": ["b"],
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
 
         state = PullState.unmarshal(state_data)

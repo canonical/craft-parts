@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@ class TestMigrationState:
         assert state.marshal() == {
             "files": set(),
             "directories": set(),
+            "partitions_contents": {},
         }
 
     def test_marshal_data(self):
@@ -40,15 +41,118 @@ class TestMigrationState:
         assert state.marshal() == {
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
+            "partitions_contents": {},
         }
 
     def test_unmarshal(self):
         data = {
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
+            "partitions_contents": {},
         }
         state = step_state.MigrationState.unmarshal(data)
         assert state.marshal() == data
+
+    @pytest.mark.parametrize(
+        ("state", "partition", "contents"),
+        [
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                "foo",
+                ({"bar"}, {"baz"}),
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                None,
+                ({"a", "b", "c"}, {"d", "e", "f"}),
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                "default",
+                ({"a", "b", "c"}, {"d", "e", "f"}),
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "b", "c"},
+                    directories={"d", "e", "f"},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={"bar"}, directories={"baz"}
+                        )
+                    },
+                ),
+                "qux",
+                None,
+            ),
+        ],
+    )
+    def test_contents(self, state, partition, contents):
+        assert state.contents(partition=partition) == contents
+
+    @pytest.mark.parametrize(
+        ("state", "files", "directories", "result_files", "result_directories"),
+        [
+            (
+                step_state.MigrationState(
+                    files={"a"},
+                    directories={"b"},
+                ),
+                {"foo"},
+                {"bar"},
+                {"a", "foo"},
+                {"b", "bar"},
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a"},
+                    directories={"b"},
+                ),
+                None,
+                None,
+                {"a"},
+                {"b"},
+            ),
+            (
+                step_state.MigrationState(
+                    files={"a", "c"},
+                    directories={"b", "c"},
+                ),
+                {"c"},
+                {"c"},
+                {"a", "c"},
+                {"b", "c"},
+            ),
+        ],
+    )
+    def test_add(self, state, files, directories, result_files, result_directories):
+        state.add(files=files, directories=directories)
+
+        assert state.files == result_files
+        assert state.directories == result_directories
 
 
 class SomeStepState(step_state.StepState):
@@ -78,6 +182,7 @@ class TestStepState:
             "project-options": {},
             "files": set(),
             "directories": set(),
+            "partitions-contents": {},
         }
 
     def test_marshal_data(self):
@@ -96,6 +201,7 @@ class TestStepState:
             "project-options": {"number": 42},
             "files": {"a"},
             "directories": {"b"},
+            "partitions-contents": {},
         }
 
     def test_ignore_additional_data(self):
@@ -105,6 +211,7 @@ class TestStepState:
             "project-options": {},
             "files": set(),
             "directories": set(),
+            "partitions-contents": {},
         }
 
 
