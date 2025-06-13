@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,10 +17,11 @@
 
 import itertools
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
 from craft_parts import errors, features
+from craft_parts.partitions import PartitionList
 
 # Allow alphanumeric characters, hyphens and slashes, not starting or ending
 # with a hyphen or a slash
@@ -212,30 +213,36 @@ def _namespace_conflicts(a: str, b: str) -> bool:
 
 
 def get_partition_dir_map(
-    base_dir: Path, partitions: Iterable[str] | None, suffix: str = ""
+    base_dir: Path, partitions: PartitionList | None, suffix: str = ""
 ) -> dict[str | None, Path]:
     """Return a mapping of partition directories.
 
     The default partition maps to directories in the base_dir.
     All other partitions map to directories in `partitions/<partition-name>`.
+    Aliased partitions map to their concrete partition dirs.
 
     If no partitions are provided, return a mapping of `None` to `base_dir/suffix`.
 
     :param base_dir: Base directory.
-    :param partitions: An iterable of partition names.
+    :param partitions: A PartitionList object mapping aliases to concrete partition names.
     :param suffix: String containing the subdirectory to map to inside
         each partition.
 
     :returns: A mapping of partition names to paths.
     """
     if partitions:
-        return {
+        dir_map: dict[str | None, Path] = {
             "default": base_dir / suffix,
-            **{
-                partition: base_dir / "partitions" / partition / suffix
-                for partition in partitions
-                if partition != "default"
-            },
         }
+
+        for alias, partition in partitions.items():
+            if alias == "default":
+                # Already set in the dictionary
+                continue
+            if partition == "default":
+                dir_map.update({alias: base_dir / suffix})
+            else:
+                dir_map.update({alias: base_dir / "partitions" / partition / suffix})
+        return dir_map
 
     return {None: base_dir / suffix}

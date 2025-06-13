@@ -396,7 +396,7 @@ class PartHandler:
             files, dirs = filesets.migratable_filesets(
                 overlay_fileset,
                 str(destdir),
-                "default" if self._part_info.partitions else None,
+                "default" if self._part_info.concrete_partitions else None,
             )
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
         else:
@@ -659,7 +659,7 @@ class PartHandler:
             env=step_env,
             stdout=stdout,
             stderr=stderr,
-            partitions=self._part_info.partitions,
+            partitions=self._part_info.concrete_partitions,
         )
 
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
@@ -846,7 +846,7 @@ class PartHandler:
     ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         # delete partition layer dirs, if any
-        for partition in self._part_info.partitions or (None,):
+        for partition in self._part_info.concrete_partitions or (None,):
             _remove(self._part.part_layer_dirs[partition])
 
         self._run_overlay(step_info, stdout=stdout, stderr=stderr)
@@ -872,7 +872,7 @@ class PartHandler:
         consolidated_states: dict[str | None, MigrationState] = {}
 
         # process parts in each partition
-        for src_partition in self._part_info.partitions or (None,):
+        for src_partition in self._part_info.concrete_partitions or (None,):
             stage_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[src_partition], Step.STAGE
             )
@@ -926,7 +926,7 @@ class PartHandler:
         consolidated_states: dict[str | None, MigrationState] = {}
 
         # Process each partition.
-        for partition in self._part_info.partitions or (None,):
+        for partition in self._part_info.concrete_partitions or (None,):
             prime_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[partition], Step.PRIME
             )
@@ -979,7 +979,7 @@ class PartHandler:
     def _write_overlay_migration_states(
         self, consolidated_states: dict[str | None, MigrationState], step: Step
     ) -> None:
-        for src_partition in self._part_info.partitions or (None,):
+        for src_partition in self._part_info.concrete_partitions or (None,):
             step_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[src_partition],
                 step,
@@ -1048,7 +1048,7 @@ class PartHandler:
 
     def _clean_overlay(self) -> None:
         """Remove the current part' s layer data and verification hash."""
-        for partition in self._part_info.partitions or (None,):
+        for partition in self._part_info.concrete_partitions or (None,):
             _remove(self._part.part_layer_dirs[partition])
         _remove(self._part.part_state_dir / "layer_hash")
 

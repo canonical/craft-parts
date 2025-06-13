@@ -32,6 +32,7 @@ from craft_parts.features import Features
 from craft_parts.filesystem_mounts import FilesystemMounts, validate_filesystem_mounts
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
+from craft_parts.partitions import PartitionList
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
@@ -135,7 +136,19 @@ class LifecycleManager:
 
         packages.Repository.configure(application_package_name)
 
-        project_dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
+        # Alias mechanism only used to alias the default partition for now
+        partition_aliases = get_default_alias(filesystem_mounts_obj)
+
+        partition_list: PartitionList | None = None
+        if partitions:
+            partition_list = PartitionList(
+                concrete_partitions=partitions, aliases=partition_aliases
+            )
+
+        project_dirs = ProjectDirs(
+            work_dir=work_dir,
+            partitions=partition_list,
+        )
 
         project_info = ProjectInfo(
             application_name=application_name,
@@ -148,7 +161,7 @@ class LifecycleManager:
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
-            partitions=partitions,
+            partitions=partition_list,
             filesystem_mounts=filesystem_mounts_obj,
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,
@@ -161,7 +174,7 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part = _build_part(name, spec, project_dirs, strict_mode, partitions)
+            part = _build_part(name, spec, project_dirs, strict_mode, partition_list)
             _validate_part_dependencies(part, parts_data)
             part_list.append(part)
 
@@ -311,7 +324,7 @@ def _build_part(
     spec: dict[str, Any],
     project_dirs: ProjectDirs,
     strict_plugins: bool,  # noqa: FBT001
-    partitions: list[str] | None,
+    partitions: PartitionList | None,
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -370,3 +383,15 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
+
+
+def get_default_alias(
+    filesystem_mounts: FilesystemMounts | None,
+) -> dict[str, str] | None:
+    """Get the partition name aliased to default."""
+    if not filesystem_mounts:
+        return None
+    default_filesystem_mount = filesystem_mounts.get("default")
+    if not default_filesystem_mount:
+        return None
+    return {default_filesystem_mount[0].device: "default"}

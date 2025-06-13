@@ -28,6 +28,7 @@ import pydantic
 from craft_parts import FilesystemMounts, errors
 from craft_parts.dirs import ProjectDirs
 from craft_parts.filesystem_mounts import FilesystemMount, FilesystemMountItem
+from craft_parts.partitions import PartitionList
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -125,7 +126,7 @@ class ProjectInfo:
         project_name: str | None = None,
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
-        partitions: list[str] | None = None,
+        partitions: PartitionList | None = None,
         filesystem_mounts: FilesystemMounts | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
@@ -265,9 +266,18 @@ class ProjectInfo:
         }
 
     @property
-    def partitions(self) -> list[str] | None:
-        """Return the project's partitions."""
-        return self._partitions
+    def aliases_or_partitions(self) -> list[str] | None:
+        """Return the project's partitions alias as partitions."""
+        if self._partitions:
+            return self._partitions.aliases_or_partitions
+        return None
+
+    @property
+    def concrete_partitions(self) -> list[str] | None:
+        """Return the project's concrete partitions."""
+        if self._partitions:
+            return self._partitions.concrete_partitions
+        return None
 
     @property
     def filesystem_mounts(self) -> FilesystemMounts | None:

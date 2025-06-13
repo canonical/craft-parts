@@ -95,7 +95,9 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
 
     if Features().enable_partitions and Features().enable_overlay:
         part_environment.update(
-            _get_step_overlay_environment_for_partitions(part, step_info.partitions)
+            _get_step_overlay_environment_for_partitions(
+                part, step_info.concrete_partitions
+            )
         )
 
     bin_paths = []
@@ -205,10 +207,10 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     """
     environment: dict[str, str] = {}
 
-    if not info.partitions:
+    if not info.aliases_or_partitions:
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
-    for partition in info.partitions:
+    for partition in info.aliases_or_partitions:
         formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_STAGE"] = str(

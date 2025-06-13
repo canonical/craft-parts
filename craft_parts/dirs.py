@@ -16,10 +16,10 @@
 
 """Definitions for project directories."""
 
-from collections.abc import Sequence
 from pathlib import Path
 
 from craft_parts.errors import PartitionNotFound, PartitionUsageError
+from craft_parts.partitions import PartitionList
 from craft_parts.utils import partition_utils
 
 
@@ -43,10 +43,9 @@ class ProjectDirs:
     def __init__(
         self,
         *,
-        partitions: Sequence[str] | None = None,
+        partitions: PartitionList | None = None,
         work_dir: Path | str = ".",
     ) -> None:
-        partition_utils.validate_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
         self.parts_dir = self.work_dir / "parts"
@@ -58,18 +57,18 @@ class ProjectDirs:
         self.backstage_dir = self.work_dir / "backstage"
         self.prime_dir = self.work_dir / "prime"
         if partitions:
-            self._partitions: Sequence[str] | None = partitions
+            partition_utils.validate_partition_names(partitions.concrete_partitions)
+            self._partitions: PartitionList | None = partitions
             self.partition_dir: Path | None = self.work_dir / "partitions"
         else:
             self._partitions = None
             self.partition_dir = None
-
         self.overlay_dirs = self._get_partition_dirs(partitions, "overlay")
         self.stage_dirs = self._get_partition_dirs(partitions, "stage")
         self.prime_dirs = self._get_partition_dirs(partitions, "prime")
 
     def _get_partition_dirs(
-        self, partitions: Sequence[str] | None, dirname: str
+        self, partitions: PartitionList | None, dirname: str
     ) -> dict[str | None, Path]:
         return partition_utils.get_partition_dir_map(
             base_dir=self.work_dir, partitions=partitions, suffix=dirname

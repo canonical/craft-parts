@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pytest
 from craft_parts import Features
+from craft_parts.partitions import PartitionList
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -26,7 +27,10 @@ def setup():
 
 
 @pytest.fixture(
-    params=[["default"], ["default", "mypart", "yourpart", "our/special-part"]]
+    params=[
+        PartitionList(["default"]),
+        PartitionList(["default", "mypart", "yourpart", "our/special-part"]),
+    ]
 )
 def partitions(request, setup):
     """Parametrized fixture to get various partition names.

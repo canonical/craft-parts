@@ -19,6 +19,7 @@ from textwrap import dedent, indent
 import pytest
 import pytest_check  # type: ignore[import]
 from craft_parts import ProjectDirs, errors
+from craft_parts.partitions import PartitionList
 from craft_parts.parts import Part
 from craft_parts.utils.partition_utils import get_partition_dir_map
 
@@ -116,9 +117,9 @@ class TestPartPartitionUsage:
     """Test usage of partitions in parts."""
 
     @pytest.fixture
-    def partition_list(self):
+    def partition_list(self) -> PartitionList:
         """Return a list of partitions, 'default' and 'kernel'."""
-        return ["default", "kernel", "a/b", "a/c-d", "f00d", "ha-ha"]
+        return PartitionList(["default", "kernel", "a/b", "a/c-d", "f00d", "ha-ha"])
 
     @pytest.fixture
     def valid_fileset(self):

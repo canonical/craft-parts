@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 from craft_parts import errors
+from craft_parts.partitions import PartitionList
 from craft_parts.utils import partition_utils
 
 
@@ -133,7 +134,9 @@ def test_validate_partitions_failure_feature_enabled(partitions, message):
 def test_get_partitions_dir_map(new_dir, suffix):
     """Get a map of partitions directories."""
     dir_map = partition_utils.get_partition_dir_map(
-        base_dir=new_dir, partitions=["default", "a", "b/c-d"], suffix=suffix
+        base_dir=new_dir,
+        partitions=PartitionList(["default", "a", "b/c-d"]),
+        suffix=suffix,
     )
 
     assert dir_map == {
@@ -147,7 +150,7 @@ def test_get_partitions_dir_map(new_dir, suffix):
 def test_get_partitions_dir_map_default_only(new_dir, suffix):
     """Get a partition map for only the default partition."""
     dir_map = partition_utils.get_partition_dir_map(
-        base_dir=new_dir, partitions=["default"], suffix=suffix
+        base_dir=new_dir, partitions=PartitionList(["default"]), suffix=suffix
     )
 
     assert dir_map == {"default": Path(new_dir) / suffix}
@@ -161,3 +164,27 @@ def test_get_partitions_dir_map_no_partitions(new_dir, suffix):
     )
 
     assert dir_map == {None: Path(new_dir) / suffix}
+
+
+def test_get_partitions_dir_map_aliases(new_dir):
+    suffix = "foo"
+    """Get a map of partitions directories."""
+    dir_map = partition_utils.get_partition_dir_map(
+        base_dir=new_dir,
+        partitions=PartitionList(
+            ["default", "a", "b/c-d"],
+            aliases={
+                "bar": "default",
+                "baz": "a",
+            },
+        ),
+        suffix=suffix,
+    )
+
+    assert dir_map == {
+        "default": Path(new_dir) / suffix,
+        "a": Path(new_dir) / "partitions/a" / suffix,
+        "b/c-d": Path(new_dir) / "partitions/b/c-d" / suffix,
+        "bar": Path(new_dir) / suffix,
+        "baz": Path(new_dir) / "partitions/a" / suffix,
+    }
