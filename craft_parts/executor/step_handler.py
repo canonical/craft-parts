@@ -227,6 +227,7 @@ class StepHandler:
                     destdir=self._part.dirs.get_stage_dir(partition),
                     fixup_func=pkgconfig_fixup,
                 )
+                # Backstage content is managed only in the default partition
                 if partition == "default":
                     backstage_files, backstage_dirs = migrate_files(
                         files=backstage_files,
