@@ -51,7 +51,13 @@ from craft_parts.utils import file_utils, os_utils
 from . import filesets, migration
 from .environment import generate_step_environment
 from .organize import organize_files
-from .step_handler import StagePartitionContents, StepContents, StepHandler, Stream
+from .step_handler import (
+    StagePartitionContents,
+    StepContents,
+    StepHandler,
+    StepPartitionContents,
+    Stream,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -405,20 +411,16 @@ class PartHandler:
         layer_hash = self._compute_layer_hash(all_parts=False)
         layer_hash.save(self._part)
 
-        default_files: set[str] = set()
-        default_directories: set[str] = set()
-
-        default_contents = contents.partitions_contents.get(DEFAULT_PARTITION)
-        if default_contents:
-            default_files = default_contents.files
-            default_directories = default_contents.dirs
+        default_contents = contents.partitions_contents.get(
+            DEFAULT_PARTITION, StepPartitionContents()
+        )
 
         return states.OverlayState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             partitions_contents=partitions_contents,
-            files=default_files,
-            directories=default_directories,
+            files=default_contents.files,
+            directories=default_contents.dirs,
         )
 
     def _run_build(
@@ -544,15 +546,12 @@ class PartHandler:
             if p is not DEFAULT_PARTITION
         }
 
-        default_backstage_files: set[str] = set()
-        default_backstage_directories: set[str] = set()
-
         default_contents = cast(
-            StagePartitionContents, contents.partitions_contents.get(DEFAULT_PARTITION)
+            StagePartitionContents,
+            contents.partitions_contents.get(
+                DEFAULT_PARTITION, StagePartitionContents()
+            ),
         )
-        if default_contents:
-            default_backstage_files = default_contents.backstage_files
-            default_backstage_directories = default_contents.backstage_dirs
 
         return states.StageState(
             part_properties=self._part_properties,
@@ -561,8 +560,8 @@ class PartHandler:
             files=contents.partitions_contents[DEFAULT_PARTITION].files,
             directories=contents.partitions_contents[DEFAULT_PARTITION].dirs,
             overlay_hash=overlay_hash.hex(),
-            backstage_files=default_backstage_files,
-            backstage_directories=default_backstage_directories,
+            backstage_files=default_contents.backstage_files,
+            backstage_directories=default_contents.backstage_dirs,
         )
 
     def _run_prime(
