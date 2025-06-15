@@ -16,3 +16,24 @@ These variable names will contain the (optional) namespace, partition name, and 
   $CRAFT_COMPONENT_BAR_BAZ_PRIME -> partitions/component/bar-baz/prime
 
 (Note that the hyphen in the partition ``component/bar-baz`` is converted to an underscore in the corresponding variable names.)
+
+Partition/Overlay-specific output directory environment variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If overlay is enabled too, additional environment variables will be created for use during step processing and execution of user-defined scriptlets.
+
+These variable names will contain the (optional) namespace, partition name, and lifecycle step, formatted as ``CRAFT_[<namespace>_]<partition>_OVERLAY``. The values of these variables will be the directory that corresponds to that partition, step **and** part.  For instance, if the defined partitions are ``default``, ``kernel``, and ``component/bar-baz``, and the provided configuration define two parts ``my-part`` and ``another-part``, the following environment variables will be created:
+
+When handling ``my-part``::
+
+  $CRAFT_OVERLAY                   -> overlay
+  $CRAFT_DEFAULT_OVERLAY           -> overlay
+  $CRAFT_KERNEL_OVERLAY            -> partitions/kernel/my-part/layer
+  $CRAFT_COMPONENT_BAR_BAZ_OVERLAY -> partitions/component/bar-baz/my-part/layer
+
+When handling ``another-part``::
+
+  $CRAFT_OVERLAY                   -> overlay
+  $CRAFT_DEFAULT_OVERLAY           -> overlay
+  $CRAFT_KERNEL_OVERLAY            -> partitions/kernel/another-part/layer
+  $CRAFT_COMPONENT_BAR_BAZ_OVERLAY -> partitions/component/bar-baz/another-part/layer
