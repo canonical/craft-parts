@@ -22,7 +22,6 @@ from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.maven_use_plugin import MavenUsePlugin
-from craft_parts.utils.maven.common import update_pom
 
 
 @pytest.fixture
