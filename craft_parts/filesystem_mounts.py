@@ -16,7 +16,7 @@
 
 """FilesystemMounts models."""
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from typing import Annotated, Any, Literal, cast
 
 from pydantic import (
@@ -53,6 +53,12 @@ class FilesystemMountItem(BaseModel):
 
         return False
 
+    @field_validator("device", mode="after")
+    @classmethod
+    def strip_parenthesis(cls, value: str) -> str:
+        """Strip parenthesis until a better integration with partitions."""
+        return value.strip("()")
+
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "FilesystemMountItem":
         """Create and populate a new ``FilesystemMountItem`` object from dictionary data.
@@ -87,6 +93,9 @@ class FilesystemMount(RootModel):
 
     def __iter__(self) -> Iterator[FilesystemMountItem]:  # type: ignore[override]
         return iter(self.root)
+
+    def __reversed__(self) -> Iterator[FilesystemMountItem]:
+        return reversed(self.root)
 
     @field_validator("root", mode="after")
     @classmethod
@@ -128,7 +137,52 @@ class FilesystemMount(RootModel):
         return cast(list[dict[str, Any]], self.model_dump(by_alias=True))
 
 
-FilesystemMounts = SingleEntryDict[Literal["default"], FilesystemMount]
+class FilesystemMounts(RootModel):
+    """FilesystemMounts defines list of FilesystemMount."""
+
+    root: SingleEntryDict[Literal["default"], FilesystemMount]
+
+    def __iter__(self) -> Iterator[Literal["default"]]:  # type: ignore[override]
+        return iter(self.root)
+
+    def __getitem__(self, item: Literal["default"]) -> FilesystemMount | None:
+        return self.root.get(item)
+
+    def get(
+        self, key: Literal["default"], default: FilesystemMount | None = None
+    ) -> FilesystemMount | None:
+        """Return a specific item of the underlying dict."""
+        return self.root.get(key, default)
+
+    def items(self) -> Iterable[tuple[Literal["default"], FilesystemMount]]:
+        """Return items of the underlying dict."""
+        return self.root.items()
+
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> "FilesystemMounts":
+        """Create and populate a new ``FilesystemMounts`` object from dictionary data.
+
+        The unmarshal method validates entries in the input dictionary, populating
+        the corresponding fields in the data object.
+
+        :param data: The dictionary data to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("filesystems is not a dictionary")
+
+        return cls.model_validate(data)
+
+    def marshal(self) -> dict[str, Any]:
+        """Create a dictionary containing the filesystem_mounts data.
+
+        :return: The newly created dictionary.
+
+        """
+        return self.model_dump(by_alias=True)  # type: ignore[no-any-return]
 
 
 def validate_filesystem_mount(data: list[dict[str, Any]]) -> None:
