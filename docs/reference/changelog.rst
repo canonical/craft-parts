@@ -16,6 +16,20 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-X.Y.Z:
+
+X.Y.Z (2025-MM-DD)
+------------------
+
+New features:
+
+- The ``maven-use`` plugin has been added.
+
+Documentation:
+
+- Expand the :ref:`uv plugin reference <craft_parts_uv_plugin>`
+  to include more details on how to install uv.
+
 .. _release-2.12.0:
 
 2.12.0 (2025-06-06)
@@ -31,14 +45,6 @@ New features:
 For a complete list of commits, check out the `2.12.0`_ release on GitHub.
 
 .. _release-2.11.0:
-
-Unreleased
-----------
-
-Documentation:
-
-- Expand the :ref:`uv plugin reference <craft_parts_uv_plugin>`
-  to include more details on how to install uv.
 
 2.11.0 (2025-06-04)
 -------------------
