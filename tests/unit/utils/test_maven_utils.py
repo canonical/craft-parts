@@ -17,6 +17,7 @@
 import io
 import os
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 from typing import cast
@@ -27,14 +28,17 @@ from craft_parts import Part
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.utils.maven.common import (
     MavenArtifact,
+    MavenPlugin,
     MavenXMLError,
     _find_element,
     _get_available_version,
     _get_element_text,
+    _get_existing_artifacts,
     _get_no_proxy_string,
     _needs_proxy_config,
     _set_version,
     create_maven_settings,
+    update_pom,
 )
 
 
@@ -311,3 +315,254 @@ def test_get_available_version(
         )
         is expected
     )
+
+
+@dataclass
+class TestArtifact:
+    """Utility class for testing `_get_existing_artifacts`."""
+
+    group_id: str
+    artifact_id: str
+    version: str
+
+    def to_pom(self, repository: Path):
+        pom_template = """\
+        <project>
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>{group}</groupId>
+          <artifactId>{artifact}</artifactId>
+          <version>{version}</version>
+        </project>
+        """
+
+        pom_dir = repository / (self.group_id.replace(".", "/")) / self.version
+        pom_dir.mkdir(parents=True, exist_ok=True)
+
+        pom_file = pom_dir / f"{self.artifact_id}.pom"
+        pom_file.write_text(
+            pom_template.format(
+                group=self.group_id, artifact=self.artifact_id, version=self.version
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    ("artifacts"),
+    [
+        pytest.param(
+            [
+                TestArtifact("org.starcraft", "test", "1.0.0"),
+            ],
+            id="simple",
+        ),
+        pytest.param(
+            [
+                TestArtifact("org.starcraft", "test", "1.0.0"),
+                TestArtifact("org.notcraft", "is_even", "1.0.2"),
+            ],
+            id="multi-group",
+        ),
+        pytest.param(
+            [
+                TestArtifact("org.starcraft", "test1", "1.0.0"),
+                TestArtifact("org.starcraft", "test2", "1.0.0"),
+            ],
+            id="multi-artifact",
+        ),
+        pytest.param(
+            [
+                TestArtifact("org.starcraft", "test", "1.0.0"),
+                TestArtifact("org.starcraft", "test", "1.0.1"),
+            ],
+            id="multi-version",
+        ),
+    ],
+)
+def test_get_existing_artifacts(
+    part_info: PartInfo, artifacts: list[TestArtifact]
+) -> None:
+    backstage = cast("Path", part_info.backstage_dir) / "maven-use"
+    backstage.mkdir(parents=True)
+
+    # Generate a test backstage directory
+    for artifact in artifacts:
+        artifact.to_pom(backstage)
+
+    result = _get_existing_artifacts(part_info)
+
+    # Validate contents of the discovered packages
+    for artifact in artifacts:
+        group = result.get(artifact.group_id)
+        assert group is not None
+
+        art = group.get(artifact.artifact_id)
+        assert art is not None
+
+        assert artifact.version in art
+
+
+def test_maven_artifact_from_element() -> None:
+    element = ET.fromstring("""\
+        <dependency>
+            <groupId>org.starcraft</groupId>
+            <artifactId>test</artifactId>
+            <version>X.Y.Z</version>
+        </dependency>
+        """)  # noqa: S314
+
+    art = MavenArtifact.from_element(element, {})
+
+    assert art.group_id == "org.starcraft"
+    assert art.artifact_id == "test"
+    assert art.version == "X.Y.Z"
+
+
+def test_maven_plugin_from_element_no_group() -> None:
+    element = ET.fromstring("""\
+        <dependency>
+            <artifactId>test</artifactId>
+            <version>X.Y.Z</version>
+        </dependency>
+        """)  # noqa: S314
+
+    plugin = MavenPlugin.from_element(element, {})
+
+    assert plugin.group_id == "org.apache.maven.plugins"
+    assert plugin.artifact_id == "test"
+    assert plugin.version == "X.Y.Z"
+
+
+def test_maven_artifact_from_pom(tmp_path: Path) -> None:
+    pom = """\
+        <project>
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>org.starcraft</groupId>
+          <artifactId>test</artifactId>
+          <version>X.Y.Z</version>
+        </project>
+    """
+    pom_file = tmp_path / "test.pom"
+    pom_file.write_text(pom)
+
+    art = MavenArtifact.from_pom(pom_file)
+
+    assert art.group_id == "org.starcraft"
+    assert art.artifact_id == "test"
+    assert art.version == "X.Y.Z"
+
+
+def test_maven_artifact_update_versions() -> None:
+    project_xml = dedent("""\
+        <project>
+            <dependencies>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test1</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test2</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+            </dependencies>
+        </project>
+    """)
+    project = ET.fromstring(project_xml)  # noqa: S314
+
+    existing = {
+        "org.starcraft": {
+            "test1": {"1.0.1"},
+            "test2": {"1.0.2"},
+        }
+    }
+
+    MavenArtifact.update_versions(project, {}, existing)
+
+    assert ET.tostring(project).decode("utf8") == dedent("""\
+        <project>
+            <dependencies>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test1</artifactId>
+                    <version>1.0.1</version>
+                <!--Version updated by craft-parts from '1.0.0' to '1.0.1'--></dependency>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test2</artifactId>
+                    <version>1.0.2</version>
+                <!--Version updated by craft-parts from '1.0.0' to '1.0.2'--></dependency>
+            </dependencies>
+        </project>""")
+
+
+@pytest.mark.usefixtures("new_dir")
+def test_update_pom_no_pom(part_info: PartInfo) -> None:
+    with pytest.raises(MavenXMLError, match="does not exist"):
+        update_pom(part_info=part_info, add_distribution=False, update_versions=False)
+
+
+def test_update_pom_add_distribution(part_info: PartInfo) -> None:
+    project_xml = dedent("""\
+        <project>
+            <dependencies>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test1</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test2</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+            </dependencies>
+        </project>
+    """)
+
+    part_info.part_build_subdir.mkdir(parents=True)
+    pom_xml = part_info.part_build_subdir / "pom.xml"
+    pom_xml.write_text(project_xml)
+
+    update_pom(part_info=part_info, add_distribution=True, update_versions=False)
+
+    # Make sure the distribution tag was added
+    assert "<distributionManagement>" in pom_xml.read_text()
+    # Make sure it is still valid XML
+    ET.parse(pom_xml)  # noqa: S314
+
+
+def test_update_pom_update_versions(part_info: PartInfo) -> None:
+    project_xml = dedent("""\
+        <project>
+            <dependencies>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test1</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test2</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+            </dependencies>
+        </project>
+    """)
+
+    part_info.part_build_subdir.mkdir(parents=True)
+    pom_xml = part_info.part_build_subdir / "pom.xml"
+    pom_xml.write_text(project_xml)
+
+    with (
+        mock.patch(
+            "craft_parts.utils.maven.common.MavenArtifact.update_versions"
+        ) as mock_artifact,
+        mock.patch(
+            "craft_parts.utils.maven.common.MavenPlugin.update_versions"
+        ) as mock_plugin,
+    ):
+        update_pom(part_info=part_info, add_distribution=False, update_versions=True)
+
+    mock_artifact.assert_called_once()
+    mock_plugin.assert_called_once()
