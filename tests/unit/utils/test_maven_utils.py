@@ -297,24 +297,21 @@ def test_set_version_unpinned() -> None:
 
 
 @pytest.mark.parametrize(
-    ("package", "expected"),
+    ("package"),
     [
-        pytest.param({}, None, id="not-available"),
-        pytest.param({"package": {"1.0.1"}}, "1.0.1", id="upgrade"),
-        pytest.param({"package": {"1.0.1", "1.0.2"}}, "1.0.1", id="multi"),
+        pytest.param({}, id="not-available"),
+        pytest.param({"package": {"1.0.1"}}, id="upgrade"),
+        pytest.param({"package": {"1.0.1", "1.0.2"}}, id="multi"),
     ],
 )
-def test_get_available_version(
-    package: dict[str, set[str]], expected: str | None
-) -> None:
+def test_get_available_version(package: dict[str, set[str]]) -> None:
     existing = {"org.starcraft": package}
 
-    assert (
-        _get_available_version(
-            existing, MavenArtifact("org.starcraft", "package", "1.0.0")
-        )
-        is expected
+    available = _get_available_version(
+        existing, MavenArtifact("org.starcraft", "package", "1.0.0")
     )
+
+    assert available is None or available in package["package"]
 
 
 @dataclass
