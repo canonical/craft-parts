@@ -212,6 +212,17 @@ class MavenArtifact:
         return cls(group_id, artifact_id, version)
 
     @classmethod
+    def from_pom(cls, pom: Path) -> Self:
+        """Create a MavenArtifact from a pom file."""
+        tree = ET.parse(pom)  # noqa: S314, unsafe parsing with xml
+        project = tree.getroot()
+        namespaces = {}
+        if match := re.search("{(.*)}", project.tag):
+            namespace = match.group(1)
+            namespaces = {"": namespace}
+        return cls.from_element(project, namespaces)
+
+    @classmethod
     def _collect_elements(
         cls, project: ET.Element, namespaces: dict[str, str]
     ) -> list[ET.Element]:
@@ -290,30 +301,12 @@ def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
         if not loc.is_dir():
             continue
         for pom in loc.glob("**/*.pom"):
-            art = _read_artifact(pom)
+            art = MavenArtifact.from_pom(pom)
             group_artifacts = result.setdefault(art.group_id, {})
             versions = group_artifacts.setdefault(art.artifact_id, set())
             versions.add(art.version)
 
     return result
-
-
-def _read_artifact(pom: Path) -> MavenArtifact:
-    tree = ET.parse(pom)  # noqa: S314, unsafe parsing with xml
-    project = tree.getroot()
-    namespaces = {}
-    if match := re.search("{(.*)}", project.tag):
-        namespace = match.group(1)
-        namespaces = {"": namespace}
-    return _from_element(project, namespaces)
-
-
-def _from_element(element: ET.Element, namespaces: dict[str, str]) -> MavenArtifact:
-    group_id = _get_element_text(_find_element(element, "groupId", namespaces))
-    artifact_id = _get_element_text(_find_element(element, "artifactId", namespaces))
-    version = _get_element_text(_find_element(element, "version", namespaces))
-
-    return MavenArtifact(group_id, artifact_id, version)
 
 
 def _get_available_version(
