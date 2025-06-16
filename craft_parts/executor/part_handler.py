@@ -1156,6 +1156,17 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> list[str]:
         logger.debug("part build snaps: %s", build_snaps)
         all_snaps.extend(build_snaps)
 
+    if part.spec.source:
+        source_handler = sources.get_source_handler(
+            part.part_cache_dir, part, project_dirs=part.dirs
+        )
+
+        if source_handler is not None:
+            source_build_snaps = source_handler.get_snaps_for_source()
+            if source_build_snaps:
+                logger.debug("source build snaps: %s", source_build_snaps)
+                all_snaps.extend(source_build_snaps)
+
     plugin_build_snaps = plugin.get_build_snaps()
     if plugin_build_snaps:
         logger.debug("plugin build snaps: %s", plugin_build_snaps)
