@@ -23,6 +23,8 @@ from pathlib import Path
 from typing import cast
 from urllib.parse import urlparse
 
+from typing_extensions import Self, override
+
 from craft_parts import errors, infos
 
 from ._xml import (
@@ -37,6 +39,9 @@ from ._xml import (
 )
 
 logger = logging.getLogger(__name__)
+
+ArtifactDict = dict[str, set[str]]
+GroupDict = dict[str, ArtifactDict]
 
 
 def create_maven_settings(
@@ -160,11 +165,9 @@ def update_pom(
 
     project = tree.getroot()
     namespace = re.search("{(.*)}", project.tag)
-    if namespace is None:
-        raise MavenXMLError(
-            message="Unable to detect namespace",
-        )
-    namespaces = {"": namespace.group(1)}
+
+    # Older pom files may not contain a namespace
+    namespaces = {"": namespace.group(1)} if namespace else {}
     for prefix, uri in namespaces.items():
         ET.register_namespace(prefix, uri)
 
@@ -181,28 +184,8 @@ def update_pom(
     existing = _get_existing_artifacts(part_info)
 
     if update_versions:
-        if dependencies := project.find("dependencies", namespaces):
-            for dependency in dependencies.findall("dependency", namespaces):
-                dep = _from_element(dependency, namespaces)
-                versions = existing.get(dep.group_id, {}).get(dep.artifact_id, set())
-                if versions:
-                    _set_version(dependency, namespaces, next(iter(versions)))
-                else:
-                    raise MavenXMLError(
-                        message=f"Dependency {dep.artifact_id} has no specified version."
-                    )
-        if (build := project.find("build", namespaces)) and (
-            plugins := build.find("plugins", namespaces)
-        ):
-            for plugin in plugins.findall("plugin", namespaces):
-                dep = _from_element(plugin, namespaces)
-                versions = existing.get(dep.group_id, {}).get(dep.artifact_id, set())
-                if versions:
-                    _set_version(plugin, namespaces, next(iter(versions)))
-                else:
-                    raise MavenXMLError(
-                        message=f"Dependency {dep.artifact_id} has no specified version."
-                    )
+        MavenArtifact.update_versions(project, namespaces, existing)
+        MavenPlugin.update_versions(project, namespaces, existing)
 
     tree.write(pom_xml)
 
@@ -215,9 +198,85 @@ class MavenArtifact:
     artifact_id: str
     version: str
 
+    field_name: str = "Dependency"
 
-ArtifactDict = dict[str, set[str]]
-GroupDict = dict[str, ArtifactDict]
+    @classmethod
+    def from_element(cls, element: ET.Element, namespaces: dict[str, str]) -> Self:
+        """Create a MavenArtifact from an XML artifact element."""
+        group_id = _get_element_text(_find_element(element, "groupId", namespaces))
+        artifact_id = _get_element_text(
+            _find_element(element, "artifactId", namespaces)
+        )
+        version = _get_element_text(_find_element(element, "version", namespaces))
+
+        return cls(group_id, artifact_id, version)
+
+    @classmethod
+    def _collect_elements(
+        cls, project: ET.Element, namespaces: dict[str, str]
+    ) -> list[ET.Element]:
+        if dependencies := project.find("dependencies", namespaces):
+            return dependencies.findall("dependency", namespaces)
+
+        return []
+
+    @classmethod
+    def update_versions(
+        cls, project: ET.Element, namespaces: dict[str, str], existing: GroupDict
+    ) -> None:
+        """Update all of the versions for this project as necessary."""
+        for dependency in cls._collect_elements(project, namespaces):
+            dep = cls.from_element(dependency, namespaces)
+            if new_version := _get_available_version(existing, dep):
+                _set_version(dependency, namespaces, new_version)
+            else:
+                logger.debug(
+                    f"{cls.field_name} {dep.artifact_id} has no available version, skipping."
+                )
+
+
+@dataclass
+class MavenPlugin(MavenArtifact):
+    """A dataclass for Maven plugins.
+
+    These are different because plugins have a default groupId.
+    """
+
+    field_name: str = "Plugin"
+
+    @classmethod
+    @override
+    def from_element(cls, element: ET.Element, namespaces: dict[str, str]) -> Self:
+        """Create a MavenPlugin from an XML plugin element.
+
+        If no groupId is found, 'org.apache.maven.plugins' will be used.
+
+        For more information on the default plugin group, see:
+        https://maven.apache.org/guides/mini/guide-configuring-plugins.html
+        """
+        if group_id_element := element.find("groupId", namespaces):
+            group_id = _get_element_text(group_id_element)
+        else:
+            group_id = "org.apache.maven.plugins"
+
+        artifact_id = _get_element_text(
+            _find_element(element, "artifactId", namespaces)
+        )
+        version = _get_element_text(_find_element(element, "version", namespaces))
+
+        return cls(group_id, artifact_id, version)
+
+    @classmethod
+    @override
+    def _collect_elements(
+        cls, project: ET.Element, namespaces: dict[str, str]
+    ) -> list[ET.Element]:
+        if (build := project.find("build", namespaces)) and (
+            plugins := build.find("plugins", namespaces)
+        ):
+            return plugins.findall("plugin", namespaces)
+
+        return []
 
 
 def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
@@ -257,13 +316,35 @@ def _from_element(element: ET.Element, namespaces: dict[str, str]) -> MavenArtif
     return MavenArtifact(group_id, artifact_id, version)
 
 
+def _get_available_version(
+    existing: GroupDict, dependency: MavenArtifact
+) -> str | None:
+    versions = existing.get(dependency.group_id, {}).get(dependency.artifact_id, set())
+    return next(iter(versions))
+
+
 def _set_version(
     element: ET.Element, namespaces: dict[str, str], new_version: str
 ) -> None:
     group_id = _get_element_text(_find_element(element, "groupId", namespaces))
     artifact_id = _get_element_text(_find_element(element, "artifactId", namespaces))
 
-    version_element = _find_element(element, "version", namespaces)
+    version_element = element.find("version", namespaces)
+
+    # If no version is specified at all, always set it
+    if version_element is None:
+        new_version_element = ET.Element(tag="version", text=new_version)
+        element.append(new_version_element)
+        comment = ET.Comment(f"Version set by craft-parts to '{new_version}'")
+        element.append(comment)
+        logger.debug(
+            "Setting version of '%s.%s' to '%s'",
+            group_id,
+            artifact_id,
+            new_version,
+        )
+        return
+
     current_version = _get_element_text(version_element)
 
     if current_version == new_version:
