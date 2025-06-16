@@ -99,8 +99,8 @@ def test_get_build_packages(plugin: MavenUsePlugin) -> None:
     assert plugin.get_build_packages() == set()
 
 
-def test_get_build_environment(plugin: MavenUsePlugin) -> None:
-    assert plugin.get_build_environment() == {}
+# Note - test_get_build_environment is intentionally not tested as it is
+# inherited from the Java plugin and is tested there already
 
 
 @pytest.mark.parametrize(
@@ -148,10 +148,17 @@ def test_get_maven_executable(plugin: MavenUsePlugin, *, create_mvnw: bool) -> N
     assert plugin._maven_executable == expected
 
 
-def test_bad_pom(plugin: MavenUsePlugin) -> None:
+def test_bad_dependency(plugin: MavenUsePlugin) -> None:
     plugin._part_info.part_build_subdir.mkdir(parents=True)
     pom = plugin._part_info.part_build_subdir / "pom.xml"
-    pom.write_text("<project></project>")
+    pom.write_text("""
+        <project>
+            <dependencies>
+                <dependency>
+                </dependency>
+            </dependencies>
+        </project>
+    """)
     with pytest.raises(
         errors.PluginEnvironmentValidationError,
         match=r"Encountered error while parsing 'pom\.xml'",
