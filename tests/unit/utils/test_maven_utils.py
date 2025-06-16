@@ -19,14 +19,21 @@ import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from textwrap import dedent
+from typing import cast
 from unittest import mock
 
 import pytest
 from craft_parts import Part
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.utils.maven.common import (
+    MavenArtifact,
+    MavenXMLError,
+    _find_element,
+    _get_available_version,
+    _get_element_text,
     _get_no_proxy_string,
     _needs_proxy_config,
+    _set_version,
     create_maven_settings,
 )
 
@@ -60,6 +67,11 @@ def part_info(new_dir: Path) -> PartInfo:
     )
 
 
+@pytest.fixture
+def settings_path(part_info: PartInfo) -> Path:
+    return part_info.part_build_subdir / ".parts/.m2/settings.xml"
+
+
 @pytest.mark.parametrize(
     ("env", "expected"),
     [
@@ -80,7 +92,7 @@ def test_get_no_proxy_string(env: dict[str, str], expected: str) -> None:
 
 
 def test_create_settings_no_change(
-    part_info: PartInfo, monkeypatch: pytest.MonkeyPatch
+    part_info: PartInfo, settings_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
         "craft_parts.utils.maven.common._needs_proxy_config", lambda: False
@@ -89,7 +101,7 @@ def test_create_settings_no_change(
     # Ensure no path is returned
     assert create_maven_settings(part_info=part_info, set_mirror=False) is None
     # Ensure that the settings file was not made
-    assert not (part_info.part_build_subdir / ".parts/.m2/settings.xml").is_file()
+    assert not settings_path.is_file()
 
 
 def _normalize_settings(settings):
@@ -133,18 +145,55 @@ def _normalize_settings(settings):
         pytest.param("", "", id="no-creds"),
     ],
 )
-def test_settings_proxy(
+@pytest.mark.parametrize(
+    ("set_mirror"),
+    [pytest.param(True, id="mirror"), pytest.param(False, id="no-mirror")],
+)
+def test_create_settings(
     part_info: PartInfo,
+    settings_path: Path,
     protocol: str,
     expected_protocol: str,
     no_proxy: str | None,
     non_proxy_hosts: str,
     credentials: str,
     credentials_xml: str,
+    *,
+    set_mirror: bool,
 ):
-    settings_path = Path(
-        part_info._dirs.parts_dir / "my-part/build/.parts/.m2/settings.xml"
-    )
+    if set_mirror:
+        backstage = cast("Path", part_info.backstage_dir) / "maven-use"
+        backstage.mkdir(parents=True)
+        set_mirror_content = dedent(
+            f"""\
+            <profiles>
+                <profile>
+                <id>craft</id>
+                <repositories>
+                    <repository>
+                        <id>craft</id>
+                        <name>Craft-managed intermediate repository</name>
+                        <url>{backstage.as_uri()}</url>
+                    </repository>
+                </repositories>
+                </profile>
+            </profiles>
+            <activeProfiles>
+                <activeProfile>craft</activeProfile>
+            </activeProfiles>
+            <mirrors>
+                <mirror>
+                <id>debian</id>
+                <mirrorOf>central</mirrorOf>
+                <name>Mirror Repository from Debian packages</name>
+                <url>file:///usr/share/maven-repo</url>
+                </mirror>
+            </mirrors>
+            <localRepository>{part_info.part_build_subdir / ".parts/.m2/repository"}</localRepository>
+            """
+        )
+    else:
+        set_mirror_content = ""
 
     expected_content = dedent(
         f"""\
@@ -163,6 +212,7 @@ def test_settings_proxy(
               <active>true</active>
             </proxy>
           </proxies>
+          {set_mirror_content}
         </settings>
         """
     )
@@ -174,8 +224,90 @@ def test_settings_proxy(
         env_dict["no_proxy"] = no_proxy
 
     with mock.patch.dict(os.environ, env_dict):
-        create_maven_settings(part_info=part_info, set_mirror=False)
+        create_maven_settings(part_info=part_info, set_mirror=set_mirror)
         assert settings_path.exists()
         assert _normalize_settings(settings_path.read_text()) == _normalize_settings(
             expected_content
         )
+
+
+def test_find_element() -> None:
+    element = ET.fromstring("<foo><bar>Howdy!</bar></foo>")  # noqa: S314
+
+    find_result = _find_element(element, "bar", {})
+    assert find_result is not None
+    assert find_result.text == "Howdy!"
+
+    with pytest.raises(MavenXMLError, match="Could not parse"):
+        _find_element(element, "nope", {})
+
+
+def test_get_element_text() -> None:
+    element = ET.fromstring("<bar>Howdy!</bar>")  # noqa: S314
+
+    assert _get_element_text(element) == "Howdy!"
+
+    element = ET.fromstring("<foo><bar>Howdy!</bar></foo>")  # noqa: S314
+
+    with pytest.raises(MavenXMLError, match="No text field"):
+        _get_element_text(element)
+
+
+def test_set_version_upgrade() -> None:
+    dependency = """\
+        <dependency>
+            <groupId>org.starcraft</groupId>
+            <artifactId>test</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    """
+
+    dep_element = ET.fromstring(dependency)  # noqa: S314
+
+    _set_version(dep_element, {}, "1.0.1")
+
+    version = _find_element(dep_element, "version", {})
+    assert _get_element_text(version) == "1.0.1"
+
+    assert b"Version updated by craft-parts from '1.0.0' to '1.0.1'" in ET.tostring(
+        dep_element
+    )
+
+
+def test_set_version_unpinned() -> None:
+    dependency = """\
+        <dependency>
+            <groupId>org.starcraft</groupId>
+            <artifactId>test</artifactId>
+        </dependency>
+    """
+
+    dep_element = ET.fromstring(dependency)  # noqa: S314
+
+    _set_version(dep_element, {}, "1.0.1")
+
+    version = _find_element(dep_element, "version", {})
+    assert _get_element_text(version) == "1.0.1"
+
+    assert b"Version set by craft-parts to '1.0.1'" in ET.tostring(dep_element)
+
+
+@pytest.mark.parametrize(
+    ("package", "expected"),
+    [
+        pytest.param({}, None, id="not-available"),
+        pytest.param({"package": {"1.0.1"}}, "1.0.1", id="upgrade"),
+        pytest.param({"package": {"1.0.1", "1.0.2"}}, "1.0.1", id="multi"),
+    ],
+)
+def test_get_available_version(
+    package: dict[str, set[str]], expected: str | None
+) -> None:
+    existing = {"org.starcraft": package}
+
+    assert (
+        _get_available_version(
+            existing, MavenArtifact("org.starcraft", "package", "1.0.0")
+        )
+        is expected
+    )

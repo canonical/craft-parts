@@ -319,8 +319,11 @@ def _from_element(element: ET.Element, namespaces: dict[str, str]) -> MavenArtif
 def _get_available_version(
     existing: GroupDict, dependency: MavenArtifact
 ) -> str | None:
-    versions = existing.get(dependency.group_id, {}).get(dependency.artifact_id, set())
-    return next(iter(versions))
+    if versions := existing.get(dependency.group_id, {}).get(
+        dependency.artifact_id, set()
+    ):
+        return next(iter(versions))
+    return None
 
 
 def _set_version(
@@ -333,7 +336,8 @@ def _set_version(
 
     # If no version is specified at all, always set it
     if version_element is None:
-        new_version_element = ET.Element(tag="version", text=new_version)
+        new_version_element = ET.Element("version")
+        new_version_element.text = new_version
         element.append(new_version_element)
         comment = ET.Comment(f"Version set by craft-parts to '{new_version}'")
         element.append(comment)
@@ -351,6 +355,7 @@ def _set_version(
         return
 
     version_element.text = new_version
+
     comment = ET.Comment(
         f"Version updated by craft-parts from '{current_version}' to '{new_version}'"
     )
@@ -369,6 +374,9 @@ class MavenXMLError(BaseException):
     """An error encountered while parsing XML for Maven projects."""
 
     message: str
+
+    def __str__(self) -> str:
+        return self.message
 
 
 def _find_element(
