@@ -25,7 +25,7 @@ from urllib.parse import urlparse
 
 from typing_extensions import Self, override
 
-from craft_parts import errors, infos
+from craft_parts import infos
 
 from ._xml import (
     CRAFT_REPO_TEMPLATE,
@@ -158,8 +158,7 @@ def update_pom(
     pom_xml = part_info.part_build_subdir / "pom.xml"
 
     if not pom_xml.is_file():
-        # TODO: this fails in tests; log instead?
-        raise errors.PartsError("'pom.xml' does not exist")
+        raise MavenXMLError("'pom.xml' does not exist")
 
     tree = ET.parse(pom_xml)  # noqa: S314, unsafe parsing with xml
 
