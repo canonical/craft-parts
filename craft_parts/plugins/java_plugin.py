@@ -109,9 +109,9 @@ class JavaPlugin(Plugin):
             "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
             "mkdir -p ${CRAFT_PART_INSTALL}/jar",
             (
-                r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" '
+                r'find "${CRAFT_PART_BUILD}/" -iname "*.jar" '
                 f'-not -path "{exclude}/*" '
-                r"-exec ln {} ${CRAFT_PART_INSTALL}/jar \;"
+                r'-exec ln {} "${CRAFT_PART_INSTALL}/jar" \;'
             ),
         ]
         # pylint: enable=line-too-long

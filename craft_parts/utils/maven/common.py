@@ -56,6 +56,7 @@ def create_maven_settings(
     and do nothing.
 
     :param part_info: The part info for the part invoking Maven.
+    :param set_mirror: Whether to configure for a local build.
 
     :return: Returns a Path object to the settings file if one is created,
         otherwise None.
@@ -152,7 +153,7 @@ def update_pom(
 
     :param part_info: Information about the invoking part.
     :param add_distribution: Whether or not to configure the `mvn deploy` location.
-    :param update_versions: Whether or not to patch version numbers with what is
+    :param self_contained: Whether or not to patch version numbers with what is
         actually available.
     """
     pom_xml = part_info.part_build_subdir / "pom.xml"

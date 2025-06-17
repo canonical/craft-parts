@@ -105,7 +105,6 @@ class MavenUsePlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "deploy"]
 
-        # Should depend on a build-attribute in parts
         self_contained = True
 
         settings_path = create_maven_settings(
