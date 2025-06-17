@@ -496,7 +496,7 @@ def test_maven_artifact_update_versions() -> None:
 @pytest.mark.usefixtures("new_dir")
 def test_update_pom_no_pom(part_info: PartInfo) -> None:
     with pytest.raises(MavenXMLError, match="does not exist"):
-        update_pom(part_info=part_info, add_distribution=False, update_versions=False)
+        update_pom(part_info=part_info, add_distribution=False, self_contained=False)
 
 
 def test_update_pom_add_distribution(part_info: PartInfo) -> None:
