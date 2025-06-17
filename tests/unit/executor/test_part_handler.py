@@ -881,6 +881,7 @@ class TestPackages:
                 "source": "source",
                 "source-type": "git",
                 "build-packages": ["pkg1"],
+                "build-snaps": ["foo", "bar"],
             },
             partitions=partitions,
         )
@@ -897,7 +898,7 @@ class TestPackages:
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
 
-        assert handler.build_snaps == ["test-snap"]
+        assert sorted(handler.build_snaps) == sorted(["test-snap", "foo", "bar"])
 
 
 class TestFileFilter:
