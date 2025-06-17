@@ -888,8 +888,8 @@ class TestPackages:
         git_source_mock = mocker.patch(
             "craft_parts.sources.git_source.GitSource.get_pull_snaps"
         )
-
         git_source_mock.return_value = {"test-snap"}
+
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
