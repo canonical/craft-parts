@@ -83,8 +83,8 @@ def add_aliases(partitions: dict[str, str], aliases: dict[str, str]) -> dict[str
     - no value is a known key (no circular dependency)
     """
     for key, val in aliases.items():
-        if key in partitions.values():
-            raise ValueError(f"alias {key} cannot be a concrete partition")
+        # if key in partitions.values():
+        #     raise ValueError(f"alias {key} cannot be a concrete partition")
         if val not in partitions:
             raise ValueError(f"alias {key} pointing to a unknown {val} partition")
         if val in aliases:
