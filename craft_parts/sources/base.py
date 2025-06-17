@@ -192,7 +192,7 @@ class SourceHandler(abc.ABC):
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
-    def get_snaps_for_source(self) -> set[str]:
+    def get_pull_snaps(self) -> set[str]:
         """Return a list of snaps needed for handling this source type."""
         return set()
 

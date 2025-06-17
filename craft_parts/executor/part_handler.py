@@ -1162,7 +1162,7 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> list[str]:
         )
 
         if source_handler is not None:
-            source_build_snaps = source_handler.get_snaps_for_source()
+            source_build_snaps = source_handler.get_pull_snaps()
             if source_build_snaps:
                 logger.debug("source build snaps: %s", source_build_snaps)
                 all_snaps.extend(source_build_snaps)
