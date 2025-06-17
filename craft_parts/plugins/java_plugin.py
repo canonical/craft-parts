@@ -103,6 +103,7 @@ class JavaPlugin(Plugin):
     def _get_jar_link_commands(self) -> list[str]:
         """Get the bash commands to provide ${CRAFT_STAGE}/jars."""
         # pylint: disable=line-too-long
+        # Don't use the jars downloaded by Maven in the local repository
         exclude = self._part_info.part_build_subdir / ".parts"
         return [
             "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",

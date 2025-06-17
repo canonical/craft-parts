@@ -146,7 +146,7 @@ def _get_no_proxy_string() -> str:
 
 
 def update_pom(
-    *, part_info: infos.PartInfo, add_distribution: bool, update_versions: bool
+    *, part_info: infos.PartInfo, add_distribution: bool, self_contained: bool
 ) -> None:
     """Update the POM file of a Maven project.
 
@@ -182,7 +182,7 @@ def update_pom(
 
     existing = _get_existing_artifacts(part_info)
 
-    if update_versions:
+    if self_contained:
         MavenArtifact.update_versions(project, namespaces, existing)
         MavenPlugin.update_versions(project, namespaces, existing)
 
@@ -225,10 +225,11 @@ class MavenArtifact:
     def _collect_elements(
         cls, project: ET.Element, namespaces: dict[str, str]
     ) -> list[ET.Element]:
-        if dependencies := project.find("dependencies", namespaces):
-            return dependencies.findall("dependency", namespaces)
+        dependencies = project.find("dependencies", namespaces)
+        if dependencies is None:
+            return []
 
-        return []
+        return dependencies.findall("dependency", namespaces)
 
     @classmethod
     def update_versions(
@@ -264,7 +265,8 @@ class MavenPlugin(MavenArtifact):
         For more information on the default plugin group, see:
         https://maven.apache.org/guides/mini/guide-configuring-plugins.html
         """
-        if group_id_element := element.find("groupId", namespaces):
+        group_id_element = element.find("groupId", namespaces)
+        if group_id_element is not None:
             group_id = _get_element_text(group_id_element)
         else:
             group_id = "org.apache.maven.plugins"
@@ -281,12 +283,15 @@ class MavenPlugin(MavenArtifact):
     def _collect_elements(
         cls, project: ET.Element, namespaces: dict[str, str]
     ) -> list[ET.Element]:
-        if (build := project.find("build", namespaces)) and (
-            plugins := build.find("plugins", namespaces)
-        ):
-            return plugins.findall("plugin", namespaces)
+        build = project.find("build", namespaces)
+        if build is None:
+            return []
 
-        return []
+        plugins = build.find("plugins", namespaces)
+        if plugins is None:
+            return []
+
+        return plugins.findall("plugin", namespaces)
 
 
 def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:

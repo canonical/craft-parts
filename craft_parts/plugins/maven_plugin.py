@@ -140,7 +140,7 @@ class MavenPlugin(JavaPlugin):
             update_pom(
                 part_info=self._part_info,
                 add_distribution=True,
-                update_versions=self_contained,
+                self_contained=True,
             )
 
         return [

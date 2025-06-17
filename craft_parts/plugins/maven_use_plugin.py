@@ -65,8 +65,9 @@ class MavenUsePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             dependency="mvn",
             plugin_name="maven",
             part_dependencies=part_dependencies,
+            argument="--batch-mode --version",
         )
-        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+        if not re.match(r"Apache Maven ", version) and (
             part_dependencies is None or "maven-use-deps" not in part_dependencies
         ):
             raise errors.PluginEnvironmentValidationError(
@@ -104,15 +105,19 @@ class MavenUsePlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "deploy"]
 
-        # "set_mirror" should depend on "build-attributes: self-contained"
+        # Should depend on a build-attribute in parts
+        self_contained = True
+
         settings_path = create_maven_settings(
-            part_info=self._part_info, set_mirror=True
+            part_info=self._part_info, set_mirror=self_contained
         )
         mvn_cmd += ["-s", str(settings_path)]
 
         try:
             update_pom(
-                part_info=self._part_info, add_distribution=True, update_versions=True
+                part_info=self._part_info,
+                add_distribution=True,
+                self_contained=self_contained,
             )
         except MavenXMLError as err:
             raise errors.PluginEnvironmentValidationError(
