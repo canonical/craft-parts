@@ -32,6 +32,7 @@ from .gradle_plugin import GradlePlugin
 from .jlink_plugin import JLinkPlugin
 from .make_plugin import MakePlugin
 from .maven_plugin import MavenPlugin
+from .maven_use_plugin import MavenUsePlugin
 from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
 from .npm_plugin import NpmPlugin
@@ -65,6 +66,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "jlink": JLinkPlugin,
     "make": MakePlugin,
     "maven": MavenPlugin,
+    "maven-use": MavenUsePlugin,
     "meson": MesonPlugin,
     "nil": NilPlugin,
     "npm": NpmPlugin,

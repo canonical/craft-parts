@@ -22,7 +22,11 @@ SETTINGS_TEMPLATE = dedent("""\
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
         <interactiveMode>false</interactiveMode>
+
         {proxies_element}
+        {craft_repository_element}
+        {mirror_repository_element}
+        {local_repository_element}
     </settings>
 """)
 
@@ -47,4 +51,48 @@ PROXY_TEMPLATE = dedent("""\
 PROXY_CREDENTIALS_TEMPLATE = dedent("""\
     <username>{username}</username>
     <password>{password}</password>
+""")
+
+LOCAL_REPO_TEMPLATE = dedent("""\
+    <localRepository>{repo_dir}</localRepository>
+""")
+
+CRAFT_REPO_TEMPLATE = dedent("""\
+    <profiles>
+      <profile>
+        <id>craft</id>
+        <repositories>
+          <repository>
+            <id>craft</id>
+            <name>Craft-managed intermediate repository</name>
+            <url>{repo_uri}</url>
+          </repository>
+        </repositories>
+      </profile>
+    </profiles>
+
+    <activeProfiles>
+      <activeProfile>craft</activeProfile>
+    </activeProfiles>
+""")
+
+MIRROR_REPO = dedent("""\
+  <mirrors>
+        <mirror>
+            <id>debian</id>
+            <mirrorOf>central</mirrorOf>
+            <name>Mirror Repository from Debian packages</name>
+            <url>file:///usr/share/maven-repo</url>
+        </mirror>
+  </mirrors>
+""")
+
+DISTRIBUTION_REPO_TEMPLATE = dedent("""\
+    <distributionManagement>
+        <repository>
+        <id>craft</id>
+        <name>Craft-managed intermediate repository</name>
+        <url>{repo_uri}</url>
+        </repository>
+    </distributionManagement>
 """)

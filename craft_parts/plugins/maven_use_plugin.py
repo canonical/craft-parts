@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2025 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The maven plugin."""
+"""The maven-use plugin."""
+
+from __future__ import annotations
 
 import re
 from typing import Literal, cast
@@ -23,25 +25,25 @@ from overrides import override
 
 from craft_parts import errors
 from craft_parts.utils.maven import create_maven_settings, update_pom
+from craft_parts.utils.maven.common import MavenXMLError
 
 from . import validator
 from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
 
-class MavenPluginProperties(PluginProperties, frozen=True):
+class MavenUsePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the maven plugin."""
 
-    plugin: Literal["maven"] = "maven"
+    plugin: Literal["maven-use"] = "maven-use"
 
-    maven_parameters: list[str] = []
-    maven_use_wrapper: bool = False
+    maven_use_parameters: list[str] = []
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
 
-class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+class MavenUsePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     """Check the execution environment for the maven plugin.
 
     :param part_name: The part whose build environment is being validated.
@@ -59,9 +61,6 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If maven is invalid
           and there are no parts named maven-deps.
         """
-        options = cast(MavenPluginProperties, self._options)
-        if options.maven_use_wrapper:
-            return
         version = self.validate_dependency(
             dependency="mvn",
             plugin_name="maven",
@@ -76,28 +75,11 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             )
 
 
-class MavenPlugin(JavaPlugin):
-    """A plugin to build parts that use Maven.
+class MavenUsePlugin(JavaPlugin):
+    """The Maven use plugin."""
 
-    The Maven build system is commonly used to build Java projects. This
-    plugin requires a pom.xml in the root of the source tree.
-
-    This plugin uses the common plugin keywords as well as those for "sources".
-    For more information check the 'plugins' topic for the former and the
-    'sources' topic for the latter.
-
-    Additionally, this plugin uses the following plugin-specific keywords:
-
-    - maven-parameters:
-      (list of strings)
-      Flags to pass to the build using the maven semantics for parameters.
-    - maven-use-wrapper:
-      (boolean)
-      Whether to use project's Maven wrapper (mvnw) to execute the build.
-    """
-
-    properties_class = MavenPluginProperties
-    validator_class = MavenPluginEnvironmentValidator
+    properties_class = MavenUsePluginProperties
+    validator_class = MavenUsePluginEnvironmentValidator
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -112,53 +94,35 @@ class MavenPlugin(JavaPlugin):
     @property
     def _maven_executable(self) -> str:
         """Return the maven executable to be used for build."""
-        options = cast(MavenPluginProperties, self._options)
-        return "${CRAFT_PART_BUILD_WORK}/mvnw" if options.maven_use_wrapper else "mvn"
+        mvnw = self._part_info.part_build_subdir / "mvnw"
+        return str(mvnw) if mvnw.is_file() else "mvn"
 
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        options = cast(MavenPluginProperties, self._options)
+        options = cast(MavenUsePluginProperties, self._options)
 
-        mvn_cmd = [self._maven_executable, "package"]
+        mvn_cmd = [self._maven_executable, "deploy"]
 
-        # The assumption here is: if this part has dependencies, *and* the backstage
-        # has a maven repository, we want to use only local dependencies (and not the
-        # main maven online repository). This means both setting the local debian repo
-        # as a mirror of 'central', and updating the versions of dependencies and
-        # plugins to use what's available locally.
-        dependencies = self._part_info.part_dependencies
-        craft_repo = (self._part_info.backstage_dir / "maven-use").is_dir()
-        self_contained = bool(dependencies and craft_repo)
+        self_contained = True
 
-        if settings_path := create_maven_settings(
+        settings_path = create_maven_settings(
             part_info=self._part_info, set_mirror=self_contained
-        ):
-            mvn_cmd.extend(["-s", str(settings_path)])
+        )
+        mvn_cmd += ["-s", str(settings_path)]
 
-        if self_contained:
+        try:
             update_pom(
                 part_info=self._part_info,
                 add_distribution=True,
-                self_contained=True,
+                self_contained=self_contained,
+            )
+        except MavenXMLError as err:
+            raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_info.part_name,
+                reason=f"Encountered error while parsing 'pom.xml': {err.message}",
             )
 
         return [
-            *self._get_mvnw_validation_commands(options=options),
-            " ".join(mvn_cmd + options.maven_parameters),
-            *self._get_java_post_build_commands(),
-        ]
-
-    def _get_mvnw_validation_commands(
-        self, options: MavenPluginProperties
-    ) -> list[str]:
-        """Validate mvnw file before execution."""
-        if not options.maven_use_wrapper:
-            return []
-        return [
-            """[ -e ${CRAFT_PART_BUILD_WORK}/mvnw ] || {
->&2 echo 'mvnw file not found, refer to plugin documentation: \
-https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
-common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
-}"""
+            " ".join(mvn_cmd + options.maven_use_parameters),
         ]

@@ -14,8 +14,6 @@
 
 """Common Maven utilities."""
 
-from .common import create_maven_settings
+from .common import create_maven_settings, update_pom
 
-__all__ = [
-    "create_maven_settings",
-]
+__all__ = ["create_maven_settings", "update_pom"]
