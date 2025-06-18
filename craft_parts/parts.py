@@ -208,7 +208,7 @@ class PartSpec(BaseModel):
           - Description
         * - ``deb``
           - Debian package
-        * - ``file``
+        * - ``local``
           - Local file
         * - ``git``
           - Git repository
