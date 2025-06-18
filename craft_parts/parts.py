@@ -96,7 +96,7 @@ class PartSpec(BaseModel):
         examples=["main", "hotfix/2.10"],
     )
     """If the source is a Git repository, this key specifies the target branch.
-    
+
     During the pull step, the part fetches the repository from the earliest
     available commit up to the tip of this branch.
 
@@ -104,7 +104,7 @@ class PartSpec(BaseModel):
 
     This key is mutually incompatible with ``source-commit`` and ``source-tag``.
     """
-    
+
     source_commit: str = Field(
         default="",
         description="The target commit for Git sources.",
@@ -265,7 +265,7 @@ class PartSpec(BaseModel):
         examples=["[ed]"],
     )
     """The packages to install in the part's overlay filesystem.
-    
+
     During the overlay step, these packages are installed into the part's overlay
     filesystem using the base layer's package manager.
     """
