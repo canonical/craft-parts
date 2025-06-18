@@ -10,6 +10,7 @@ Documentation:
 - Revise the :doc:`craftctl how-to guide
   </common/craft-parts/how-to/customise-the-build-with-craftctl>` to better reflect how
   it can be used to override parts in apps.
+- Document the fields in the ``PartSpec`` and ``Permissions`` models.
   
 For a complete list of commits, check out the `2.10.0`_ release on GitHub.
 
