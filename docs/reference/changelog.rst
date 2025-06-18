@@ -16,10 +16,10 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-.. _release-X.Y.Z:
+.. _release-2.13.0:
 
-X.Y.Z (2025-MM-DD)
-------------------
+2.13.0 (2025-06-18)
+-------------------
 
 New features:
 
