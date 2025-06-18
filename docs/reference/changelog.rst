@@ -2,6 +2,15 @@
 Changelog
 *********
 
+2.10.1 (2025-06-18)
+-------------------
+
+Documentation:
+
+- Document the fields in the ``PartSpec`` and ``Permissions`` models.
+
+For a complete list of commits, check out the `2.10.1`_ release on GitHub.
+
 2.10.0 (2025-05-06)
 -------------------
 
@@ -885,6 +894,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.10.1: https://github.com/canonical/craft-parts/releases/tag/2.10.1
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
 .. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
 .. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4

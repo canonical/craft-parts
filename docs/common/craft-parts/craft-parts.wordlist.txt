@@ -2,7 +2,10 @@ ARGS
 FOO
 BAR
 BAZ
+GID
+POSIX
 QUX
+UID
 ActionProperties
 ActionType
 AfterValidator
@@ -410,6 +413,7 @@ json
 kwargs
 ldflags
 lifecycle
+lifecycles
 linkers
 linters
 lto
@@ -421,6 +425,7 @@ migratable
 mkdirs
 mountpoint
 mountpoints
+multithreading
 mvn
 mvnw
 namespace
