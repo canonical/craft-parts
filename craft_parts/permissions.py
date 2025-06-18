@@ -57,7 +57,7 @@ class Permissions(BaseModel):
         default=None,
         description="The numeric user ID (UID) of the desired owner on the host system.",
     )
-    """The numberic user ID (UID) of the desired owner on the host system.
+    """The numeric user ID (UID) of the desired owner on the host system.
 
     This entry is required if the permissions contain a ``group`` entry.
     """

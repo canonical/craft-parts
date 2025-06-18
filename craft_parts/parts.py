@@ -80,7 +80,7 @@ class PartSpec(BaseModel):
     )
     """The checksum of the downloaded source, to ensure integrity.
 
-    During the pull step, the part compes the checksum against that of the downloaded
+    During the pull step, the part compares the checksum against that of the downloaded
     files.
 
     Checksums can be generated with any of the hashing algorithms supported by Python's
@@ -397,7 +397,7 @@ class PartSpec(BaseModel):
     override_pull: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the pull step.",
-        examples=["|\ncraftctl pull\nrm $CRAFT_PART_SRC/pyproject.toml"],
+        examples=["|\ncraftctl default\nrm $CRAFT_PART_SRC/pyproject.toml"],
     )
     """The commands to run instead of the default behavior of the pull step.
 
@@ -469,7 +469,7 @@ class PartSpec(BaseModel):
     """The ownership and permission settings for a set of files in the part's prime
     directory.
 
-    The files at ``path`` will be assigned an  ``owner`` and a ``group``, with the read,
+    The files at ``path`` will be assigned an ``owner`` and a ``group``, with the read,
     write, and execute permissions of each being determined by the value of ``mode``.
     """
 
