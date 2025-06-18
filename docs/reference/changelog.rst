@@ -23,7 +23,7 @@ X.Y.Z (2025-MM-DD)
 
 New features:
 
-- The ``maven-use`` plugin has been added.
+- Add the maven-use plugin.
 
 Documentation:
 
@@ -119,7 +119,7 @@ For a complete list of commits, check out the `2.9.0`_ release on GitHub.
 
 New features:
 
-- With the new ``maven-use-wrapper`` key in the Maven plugin, you can enable 
+- With the new ``maven-use-wrapper`` key in the Maven plugin, you can enable
   your project's ``mvnw`` wrapper script.
 - Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
   a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
@@ -187,7 +187,7 @@ Bug fixes:
 Bug fixes:
 
 - Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
-- Fix Jdeps parameter ordering in the 
+- Fix Jdeps parameter ordering in the
   :ref:`jlink plugin<craft_parts_jlink_plugin>`.
 
 .. _release-2.3.1:
