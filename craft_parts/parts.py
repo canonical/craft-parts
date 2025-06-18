@@ -76,7 +76,9 @@ class PartSpec(BaseModel):
     source_checksum: str = Field(
         default="",
         description="The checksum of the downloaded source, to ensure integrity.",
-        examples=["sha256/1451d01ee3a21100340aed867d0b799f46f0b1749680028d38c3f5d0128fb8a7"],
+        examples=[
+            "sha256/1451d01ee3a21100340aed867d0b799f46f0b1749680028d38c3f5d0128fb8a7"
+        ],
     )
     """The checksum of the downloaded source, to ensure integrity.
 
@@ -143,7 +145,7 @@ class PartSpec(BaseModel):
     source_subdir: str = Field(
         default="",
         description="The subdirectory of the unpacked source where the build will occur.",
-        examples=["src", "demo_nodes_cpp"]
+        examples=["src", "demo_nodes_cpp"],
     )
     """The subdirectory of the unpacked source where the build will occur.
 
@@ -413,7 +415,9 @@ class PartSpec(BaseModel):
     overlay_script: str | None = Field(
         default=None,
         description="The commands to run after the part's overlay packages are installed.",
-        examples=["|\nrm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*\nrm -f ${CRAFT_OVERLAY}/usr/bin/emacs*\nrm -f ${CRAFT_OVERLAY}/bin/nano"],
+        examples=[
+            "|\nrm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*\nrm -f ${CRAFT_OVERLAY}/usr/bin/emacs*\nrm -f ${CRAFT_OVERLAY}/bin/nano"
+        ],
     )
     """The commands to run after the part's overlay packages are installed.
 
@@ -424,7 +428,9 @@ class PartSpec(BaseModel):
     override_build: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
-        examples=["|\ncd cmd/webhook\nmkdir $CRAFT_PART_INSTALL/ko-app\ngo build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."],
+        examples=[
+            "|\ncd cmd/webhook\nmkdir $CRAFT_PART_INSTALL/ko-app\ngo build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."
+        ],
     )
     """The commands to run instead of the default behavior of the build step.
 
@@ -438,7 +444,9 @@ class PartSpec(BaseModel):
     override_stage: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the stage step.",
-        examples=['|\ncraftctl default\nchown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'],
+        examples=[
+            '|\ncraftctl default\nchown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'
+        ],
     )
     """The commands to run instead of the default behavior of the stage step.
 
@@ -452,7 +460,9 @@ class PartSpec(BaseModel):
     override_prime: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the prime step.",
-        examples=["|\ncraftctl default\nmkdir -p $CRAFT_PRIME/var/lib/mysql\nmkdir -p $CRAFT_PRIME/var/lib/mysqld"],
+        examples=[
+            "|\ncraftctl default\nmkdir -p $CRAFT_PRIME/var/lib/mysql\nmkdir -p $CRAFT_PRIME/var/lib/mysqld"
+        ],
     )
     """The commands to run instead of the default behavior of the prime step.
 
@@ -466,7 +476,9 @@ class PartSpec(BaseModel):
     permissions: list[Permissions] = Field(
         default=[],
         description="The ownership and permission settings for a set of files in the part's prime directory.",
-        examples=['[{owner: 2000, group: 2000}, {path: srv/indico/start-indico.sh, mode: "544"}, {path: etc/, mode: "755"}]'],
+        examples=[
+            '[{owner: 2000, group: 2000}, {path: srv/indico/start-indico.sh, mode: "544"}, {path: etc/, mode: "755"}]'
+        ],
     )
     """The ownership and permission settings for a set of files in the part's prime
     directory.
