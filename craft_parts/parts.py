@@ -208,8 +208,6 @@ class PartSpec(BaseModel):
           - Description
         * - ``deb``
           - Debian package
-        * - ``local``
-          - Local file
         * - ``git``
           - Git repository
         * - ``rpm``
@@ -220,6 +218,10 @@ class PartSpec(BaseModel):
           - Tarball archive
         * - ``zip``
           - ZIP file
+        * - ``local``
+          - Local directory or file in the project directory
+        * - ``file``
+          - A "plain" file retrieved from the internet
 
     """
 
