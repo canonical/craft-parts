@@ -47,40 +47,431 @@ from craft_parts.utils.path_utils import get_partition_and_path
 class PartSpec(BaseModel):
     """The part specification data."""
 
-    plugin: str | None = None
-    source: str | None = None
-    source_checksum: str = ""
+    plugin: str | None = Field(
+        default=None,
+        description="The plugin to build the part with.",
+        examples=["python", "dump"],
+    )
+    """The plugin to build the part with.
+
+    During the build step, the plugin prepares the part's files with the build system
+    of its language or framework.
+
+    For more details on plugin-specific keys and dependencies, see `Plugins
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/reference/plugins/>`_.
+    """
+
+    source: str | None = Field(
+        default=None,
+        description="The location of the source files for the part.",
+        examples=[".", "https://github.com/canonical/dqlite"],
+    )
+    """The location of the source files for the part.
+
+    During the pull step, these files are placed in the part's build environment.
+
+    Enter either an HTTP/HTTPS URL or the path to the local project directory.
+    """
+
+    source_checksum: str = Field(
+        default="",
+        description="The checksum of the downloaded source, to ensure integrity.",
+        examples=["sha256/1451d01ee3a21100340aed867d0b799f46f0b1749680028d38c3f5d0128fb8a7"],
+    )
+    """The checksum of the downloaded source, to ensure integrity.
+
+    During the pull step, the part compes the checksum against that of the downloaded
+    files.
+
+    Checksums can be generated with any of the hashing algorithms supported by Python's
+    `hashlib
+    <https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_.
+    """
+
     source_channel: str | None = None
-    source_branch: str = ""
-    source_commit: str = ""
-    source_depth: int = 0
-    source_subdir: str = ""
-    source_submodules: list[str] | None = None
-    source_tag: str = ""
-    source_type: str = ""
-    disable_parallel: bool = False
-    after: list[str] = []
-    overlay_packages: list[str] = []
-    stage_snaps: list[str] = []
-    stage_packages: list[str] = []
-    build_snaps: list[str] = []
-    build_packages: list[str] = []
-    build_environment: list[dict[str, str]] = []
+
+    source_branch: str = Field(
+        default="",
+        description="The target branch for Git sources.",
+        examples=["main", "hotfix/2.10"],
+    )
+    """If the source is a Git repository, this key specifies the target branch.
+    
+    During the pull step, the part fetches the repository from the earliest
+    available commit up to the tip of this branch.
+
+    The commit history can be truncated by specifying a ``source-depth``.
+
+    This key is mutually incompatible with ``source-commit`` and ``source-tag``.
+    """
+    
+    source_commit: str = Field(
+        default="",
+        description="The target commit for Git sources.",
+        examples=["36086af03fc4941a8ac219648ce77401743f3ae0"],
+    )
+    """If the source is a Git repository, this key specifies the target commit.
+    Both short and long SHA hashes are supported.
+
+    During the pull step, the part fetches the repository from the earliest available
+    commit up to this commit.
+
+    The commit history can be truncated by specifying a ``source-depth``.
+
+    This key is mutually incompatible with ``source-branch`` and ``source-tag``.
+    """
+
+    source_depth: int = Field(
+        default=0,
+        description="The commit depth to fetch for Git sources.",
+        examples=["1"],
+    )
+    """If the source is a Git repository, this key specifies how far back in the
+    commit history to fetch.
+
+    During the pull step, the part fetches the repository from the specified commit
+    up to the target commit, the target tag, or the tip of the target branch.
+
+    Equivalent to the
+    :literalref:`--depth<https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---depthdepth>`
+    parameter of ``git fetch``.
+
+    If unset, the part fetches the full repository history up to the target commit, the
+    target tag, or the tip of the target branch.
+    """
+
+    source_subdir: str = Field(
+        default="",
+        description="The subdirectory of the unpacked source where the build will occur.",
+        examples=["src", "demo_nodes_cpp"]
+    )
+    """The subdirectory of the unpacked source where the build will occur.
+
+    During the pull step, the build will be restricted to the specified path.
+
+    If unset, the build can access the entire file tree of the source.
+    """
+
+    source_submodules: list[str] | None = Field(
+        default=None,
+        description="The registered submodules to fetch from Git sources.",
+        examples=["[third_party/googletest, third_party/jsoncpp]", "[libbpf]"],
+    )
+    """If the source is a Git repository, this key specifies the registered Git
+    submodules that the project also needs.
+
+    During the pull step, the part fetches these submodules.
+
+    Equivalent to the
+    :literalref:`--recurse-submodules<https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-code--recurse-submodulesltpathspecgtcode>`
+    parameter of ``git clone``.
+
+    If unset, the part will fetch all of the repository's submodules.
+    """
+
+    source_tag: str = Field(
+        default="",
+        description="The target tag for Git sources.",
+        examples=["1.0.1"],
+    )
+    """If the source is a Git repository, this key specifies the target tag.
+
+    During the pull step, the part fetches the repository from the earliest available
+    commit up to the commit with this tag.
+
+    The commit history can be truncated by specifying a ``source-depth``.
+
+    This key is mutually incompatible with ``source-branch`` and ``source-commit``.
+    """
+
+    source_type: str = Field(
+        default="",
+        description="The format of the part's source.",
+        examples=["git", "local"],
+    )
+    """The format of the part's source.
+
+    During the pull step, the part expects the source to behave like the specified
+    format.
+
+    If unset, the part attempts to auto-detect the format.
+
+    Supported formats include container types like ``.tar`` files and Debian packages,
+    version-controlled directories like Git repositories, and local files.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``deb``
+          - Debian package
+        * - ``file``
+          - Local file
+        * - ``git``
+          - Git repository
+        * - ``rpm``
+          - Red Hat package
+        * - ``snap``
+          - Snap container format
+        * - ``tar``
+          - Tarball archive
+        * - ``zip``
+          - ZIP file
+
+    """
+
+    disable_parallel: bool = Field(
+        default=False,
+        description="Whether to disable CPU multithreading during the build step.",
+        examples=["true"],
+    )
+    """Whether to disable CPU multithreading during the build step.
+
+    If unset, the build defaults to multithreading.
+    """
+
+    after: list[str] = Field(
+        default=[],
+        description="The parts to process before starting this part's build.",
+        examples=["[build-deps, daemon]"],
+    )
+    """The parts to process before starting this part's build.
+
+    During the build step, this part waits for all of the listed parts to reach the
+    stage step before it begins building.
+
+    The purpose of this key is to stagger the part processing order so that
+    interrelated parts can provide data to each other.
+
+    When this key is set, the part queue follows modified rules during the lifecycle:
+
+    * Parts are processed alphabetically by name.
+    * When the build reaches a part that another depends on, the dependent part will
+      only start its build and stage steps after the initial part finishes its stage
+      step.
+    * After the string of dependent parts completes their lifecycles, the queue
+      continues to the next part in alphabetical order.
+
+    """
+
+    overlay_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the part's overlay filesystem.",
+        examples=["[ed]"],
+    )
+    """The packages to install in the part's overlay filesystem.
+    
+    During the overlay step, these packages are installed into the part's overlay
+    filesystem using the base layer's package manager.
+    """
+
+    stage_snaps: list[str] = Field(
+        default=[],
+        description="The snaps to include in the stage environment.",
+        examples=["[go/1.17, chisel/latest/candidate, mir-kiosk-x11]"],
+    )
+    """During the stage step, these snaps are included in the stage environment.
+
+    Entries can be in one of three formats:
+
+    * ``<snap-name>``
+    * ``<snap-name>/<channel-name>``
+    * ``<snap-name>/<channel-name>/<version-name>``
+
+    If an entry contains no version or channel, ``latest/stable`` is used.
+    """
+
+    stage_packages: list[str] = Field(
+        default=[],
+        description="The packages or Chisel slices to include in the stage environment.",
+        examples=["[curl, libxml2]"],
+    )
+    """During the stage step, these packages are included in the stage environment
+    alongside the build artifacts.
+
+    Chisel slices can be listed using the ``<package-name>_<slice-name>`` syntax.
+
+    Listing both packages and slices in the same ``stage-packages`` key is not
+    currently supported.
+    """
+
+    build_snaps: list[str] = Field(
+        default=[],
+        description="The snaps to install in the build environment.",
+        examples=["[go/latest/stable, node/stable]"],
+    )
+    """The snaps to install during the build step, before the build starts. The part
+    makes them available in the build environment.
+
+    Entries can be listed in one of three formats.
+
+    * ``<snap-name>``
+    * ``<snap-name>/<channel-name>``
+    * ``<snap-name>/<channel-name>/<version-name>``
+
+    If no version or channel is provided, ``latest/stable`` is used.
+    """
+
+    build_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the build environment.",
+        examples=["[git, libffi-dev, libssl-dev]"],
+    )
+    """The packages to install during the build step, before the build starts. The part
+    installs them into the build environment using the host's native package manager.
+
+    Build packages must be listed by their name on the host system.
+    """
+
+    build_environment: list[dict[str, str]] = Field(
+        default=[],
+        description="The environment variables to define for the build step, as key-value pairs.",
+        examples=['[{MESSAGE: "Hello world!"}, {NAME: "Craft Parts"}]'],
+    )
+
     build_attributes: list[str] = []
-    organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
-    overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
+
+    organize_files: dict[str, str] = Field(
+        default_factory=dict,
+        alias="organize",
+        description="A map of files from the build directory to their destinations in the stage directory.",
+        examples=["{hello.py: bin/hello}"],
+    )
+    """A map of files from the build directory to their destinations in the stage
+    directory.
+
+    Each pair of source and destination paths is represented as a nested key of the form
+    ``<source-path>: <destination-path>``.
+
+    At the end of the build step, the files at the source paths are copied to
+    their destination paths in the stage directory.
+    """
+
+    overlay_files: list[str] = Field(
+        default_factory=lambda: ["*"],
+        alias="overlay",
+        description="The files to copy from the part's overly filesystem to the stage directory.",
+        examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
+    )
+    """The files to copy from the part's overlay filesystem to the stage directory.
+
+    For more details on file paths, see `Specifying paths
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/explanation/filesets/#filesets-specifying-paths>`_.
+    """
+
     stage_files: list[RelativePathStr] = Field(
-        default_factory=lambda: ["*"], alias="stage"
+        default_factory=lambda: ["*"],
+        alias="stage",
+        description="The files to copy from the build directory to the stage directory.",
+        examples=["[usr/bin/*, usr/share]", "[-usr, zfsutils-linux]"],
     )
+    """During the stage step, any specified files are copied from the build directory to
+    the stage directory.
+
+    Paths support wildcards (``*``) and must be relative to the working directory where
+    they will be used.
+
+    For more details on file paths, see `Specifying paths
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/explanation/filesets/#filesets-specifying-paths>`_.
+    """
+
     prime_files: list[RelativePathStr] = Field(
-        default_factory=lambda: ["*"], alias="prime"
+        default_factory=lambda: ["*"],
+        alias="prime",
+        description="",
+        examples=["[usr/lib/*/qt6/plugins/tls/*, -usr/share/thumbnailers]"],
     )
-    override_pull: str | None = None
-    overlay_script: str | None = None
-    override_build: str | None = None
-    override_stage: str | None = None
-    override_prime: str | None = None
-    permissions: list[Permissions] = []
+    """During the prime step, any specified files are copied from the stage directory
+    to the final payload.
+
+    Paths support wildcards (``*``) and must be relative to the working directory where
+    they will be used.
+
+    For more details on file paths, see `Specifying paths
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/explanation/filesets/#filesets-specifying-paths>`_.
+    """
+
+    override_pull: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the pull step.",
+        examples=["|\ncraftctl pull\nrm $CRAFT_PART_SRC/pyproject.toml"],
+    )
+    """The commands to run instead of the default behavior of the pull step.
+
+    The standard pull step actions can be performed by calling ``craftctl default``.
+
+    For more details on overriding lifecycle steps and using craftctl, see
+    `Override a step
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_.
+    """
+
+    overlay_script: str | None = Field(
+        default=None,
+        description="The commands to run after the part's overlay packages are installed.",
+        examples=["|\nrm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*\nrm -f ${CRAFT_OVERLAY}/usr/bin/emacs*\nrm -f ${CRAFT_OVERLAY}/bin/nano"],
+    )
+    """The commands to run after the part's overlay packages are installed.
+
+    If unset, the part's overlay filesystem will only contain the packages specified
+    in ``overlay-packages``.
+    """
+
+    override_build: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the build step.",
+        examples=["|\ncd cmd/webhook\nmkdir $CRAFT_PART_INSTALL/ko-app\ngo build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."],
+    )
+    """The commands to run instead of the default behavior of the build step.
+
+    The standard build step actions can be performed by calling ``craftctl default``.
+
+    For more details on overriding lifecycle steps and using craftctl, see
+    `Override a step
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_.
+    """
+
+    override_stage: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the stage step.",
+        examples=['|\ncraftctl default\nchown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'],
+    )
+    """The commands to run instead of the default behavior of the stage step.
+
+    The standard stage step actions can be performed by calling ``craftctl default``.
+
+    For more details on overriding lifecycle steps and using craftctl, see
+    `Override a step
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_
+    """
+
+    override_prime: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the prime step.",
+        examples=["|\ncraftctl default\nmkdir -p $CRAFT_PRIME/var/lib/mysql\nmkdir -p $CRAFT_PRIME/var/lib/mysqld"],
+    )
+    """The commands to run instead of the default behavior of the prime step.
+
+    The standard prime step actions can be performed by calling ``craftctl default``.
+
+    For more details on overriding lifecycle steps and using craftctl, see
+    `Override a step
+    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_
+    """
+
+    permissions: list[Permissions] = Field(
+        default=[],
+        description="The ownership and permission settings for a set of files in the part's prime directory.",
+        examples=['[{owner: 2000, group: 2000}, {path: srv/indico/start-indico.sh, mode: "544"}, {path: etc/, mode: "755"}]'],
+    )
+    """The ownership and permission settings for a set of files in the part's prime
+    directory.
+
+    The files at ``path`` will be assigned an  ``owner`` and a ``group``, with the read,
+    write, and execute permissions of each being determined by the value of ``mode``.
+    """
 
     model_config = ConfigDict(
         validate_assignment=True,

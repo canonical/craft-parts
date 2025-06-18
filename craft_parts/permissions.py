@@ -21,7 +21,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class Permissions(BaseModel):
@@ -42,10 +42,49 @@ class Permissions(BaseModel):
 
     """
 
-    path: str = "*"
-    owner: int | None = None
-    group: int | None = None
-    mode: str | None = None
+    path: str = Field(
+        default="*",
+        description="The file path, relative to the prime directory, being assigned permissions.",
+    )
+    """The file path, relative to the prime directory, being assigned permissions.
+
+    Wildcards (``*``) are supported.
+
+    If unset, the permissions will be assigned to every file in the prime directory.
+    """
+
+    owner: int | None = Field(
+        default=None,
+        description="The numeric user ID (UID) of the desired owner on the host system.",
+    )
+    """The numberic user ID (UID) of the desired owner on the host system.
+
+    This entry is required if the permissions contain a ``group`` entry.
+    """
+
+    group: int | None = Field(
+        default=None,
+        description="The numeric group (GID) of the desired owner group on the host system.",
+    )
+    """The numeric group ID (GID) of the desired owner group on the host system.
+
+    This entry is required if the permissions contain an ``owner`` entry.
+    """
+
+    mode: str | None = Field(
+        default=None,
+        description="The numeric representation of the file's read, write, and execute permissions.",
+    )
+    """The numeric representation of the file's read, write, and execute permissions.
+
+    This entry must be assigned an octal number, enclosed in double-quotation marks
+    (``"``), for each defined path.
+
+    This value should align with the POSIX specification for file permissions, just like
+    one would use when calling ``chmod``. For more detail on octal file permissions, see
+    the `chmod command reference
+    <https://pubs.opengroup.org/onlinepubs/9699919799/utilities/chmod.html>`_.
+    """
 
     # pylint: disable=no-self-argument
     @model_validator(mode="before")
