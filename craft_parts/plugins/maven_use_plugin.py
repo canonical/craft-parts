@@ -65,10 +65,9 @@ class MavenUsePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             dependency="mvn",
             plugin_name="maven",
             part_dependencies=part_dependencies,
-            argument="--batch-mode --version",
         )
-        if not re.match(r"Apache Maven ", version) and (
-            part_dependencies is None or "maven-use-deps" not in part_dependencies
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
         ):
             raise errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
