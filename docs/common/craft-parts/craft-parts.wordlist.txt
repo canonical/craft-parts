@@ -147,9 +147,14 @@ MakePlugin
 MakePluginProperties
 Makefile
 Makefiles
+MavenArtifact
 MavenPlugin
 MavenPluginEnvironmentValidator
 MavenPluginProperties
+MavenUsePlugin
+MavenUsePluginEnvironmentValidator
+MavenUsePluginProperties
+MavenXMLError
 MesonPlugin
 MesonPluginEnvironmentValidator
 MesonPluginProperties
@@ -334,7 +339,9 @@ abcdef
 args
 armv
 artifact
+artifactId
 artifacts
+apache
 autogen
 autotools
 backend
@@ -370,6 +377,7 @@ cryptographic
 ctl
 customization
 cwd
+dataclass
 dataset
 defs
 deps
@@ -403,10 +411,12 @@ github
 golang
 gradle
 gradlew
+groupId
 gzipped
 hardcoded
 hashlib
 hg
+html
 http
 https
 humanize
