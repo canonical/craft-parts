@@ -98,13 +98,11 @@ class _Squasher:
     def __init__(
         self,
         partition: str | None,
-        partitions: PartitionList,
         filesystem_mount: FilesystemMount | None = None,
     ) -> None:
         self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
         self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}
         self._src_partition = partition
-        self._partitions = partitions
         if filesystem_mount:
             self._filesystem_mount = filesystem_mount
 
@@ -126,8 +124,7 @@ class _Squasher:
                 # Only migrate content from the subdirectory indicated by the filesystem mounts
                 # entry
                 sub_path = entry.mount.lstrip("/")
-                # Resolve the device name to the concrete partition name
-                dst_partition = self._partitions.get(entry.device)
+                dst_partition = entry.device
 
                 # Migrate to the destination partition indicated by the filesystem mounts entry
                 self._migrate(
@@ -877,6 +874,9 @@ class PartHandler:
 
         consolidated_states: dict[str | None, MigrationState] = {}
 
+        logger.debug(
+            f"XXXXXXXXXXXXX self._part_info.concrete_partitions {self._part_info.concrete_partitions}"
+        )
         # process parts in each partition
         for src_partition in self._part_info.concrete_partitions or (None,):
             stage_overlay_state_path = states.get_overlay_migration_state_path(
@@ -893,7 +893,6 @@ class PartHandler:
 
             squasher = _Squasher(
                 partition=src_partition,
-                partitions=self._part_info._partitions,
                 filesystem_mount=self._part_info.default_filesystem_mount,
             )
             # Process layers from top to bottom (reversed)
@@ -915,6 +914,7 @@ class PartHandler:
                 migrated_directories=squasher.migrated_directories,
             )
 
+        logger.debug(f"consolidated_states: {consolidated_states}")
         # Write consolidated states once
         self._write_overlay_migration_states(consolidated_states, Step.STAGE)
 

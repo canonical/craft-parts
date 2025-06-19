@@ -137,7 +137,7 @@ class LifecycleManager:
         packages.Repository.configure(application_package_name)
 
         # Alias mechanism only used to alias the default partition for now
-        partition_aliases = get_default_alias(filesystem_mounts_obj)
+        partition_aliases = extract_resolve_default_alias(filesystem_mounts_obj)
 
         partition_list: PartitionList | None = None
         if partitions:
@@ -385,13 +385,22 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
             raise errors.InvalidPartName(name)
 
 
-def get_default_alias(
+def extract_resolve_default_alias(
     filesystem_mounts: FilesystemMounts | None,
 ) -> dict[str, str] | None:
-    """Get the partition name aliased to default."""
+    """Get the partition name aliased to default.
+
+    Also resolve the alias to only have concrete partitions in FilesystemMounts.
+    """
     if not filesystem_mounts:
         return None
     default_filesystem_mount = filesystem_mounts.get("default")
     if not default_filesystem_mount:
         return None
-    return {default_filesystem_mount[0].device: "default"}
+    aliases = {default_filesystem_mount[0].device: "default"}
+
+    # Resolve the alias
+    default_filesystem_mount[0].device = "default"
+    filesystem_mounts.update({"default": default_filesystem_mount})
+
+    return aliases

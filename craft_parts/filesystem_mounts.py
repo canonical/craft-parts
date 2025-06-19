@@ -157,6 +157,10 @@ class FilesystemMounts(RootModel):
         """Return a specific item of the underlying dict."""
         return self.root.get(key, default)
 
+    def update(self, item: dict[Literal["default"], FilesystemMount]) -> None:
+        """Update an item of the underlying dict."""
+        self.root.update(item)
+
     def items(self) -> Iterable[tuple[Literal["default"], FilesystemMount]]:
         """Return items of the underlying dict."""
         return self.root.items()
