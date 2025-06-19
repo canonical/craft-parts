@@ -35,6 +35,7 @@ from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
+from craft_parts.partitions import PartitionList
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
 from craft_parts.permissions import Permissions
 from craft_parts.plugins import Plugin
@@ -95,11 +96,15 @@ class _Squasher:
     """A helper to squash layers and migrate layered content."""
 
     def __init__(
-        self, partition: str | None, filesystem_mount: FilesystemMount | None = None
+        self,
+        partition: str | None,
+        partitions: PartitionList,
+        filesystem_mount: FilesystemMount | None = None,
     ) -> None:
         self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
         self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}
         self._src_partition = partition
+        self._partitions = partitions
         if filesystem_mount:
             self._filesystem_mount = filesystem_mount
 
@@ -121,7 +126,8 @@ class _Squasher:
                 # Only migrate content from the subdirectory indicated by the filesystem mounts
                 # entry
                 sub_path = entry.mount.lstrip("/")
-                dst_partition = entry.device
+                # Resolve the device name to the concrete partition name
+                dst_partition = self._partitions.get(entry.device)
 
                 # Migrate to the destination partition indicated by the filesystem mounts entry
                 self._migrate(
@@ -887,6 +893,7 @@ class PartHandler:
 
             squasher = _Squasher(
                 partition=src_partition,
+                partitions=self._part_info._partitions,
                 filesystem_mount=self._part_info.default_filesystem_mount,
             )
             # Process layers from top to bottom (reversed)

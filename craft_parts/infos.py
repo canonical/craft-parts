@@ -265,6 +265,12 @@ class ProjectInfo:
             "project_vars": self._project_vars,
         }
 
+    def get_partition(self, name: str) -> str | None:
+        """Return the project's concrete partitions."""
+        if self._partitions:
+            return self._partitions.get(name)
+        return None
+
     @property
     def aliases_or_partitions(self) -> list[str] | None:
         """Return the project's partitions alias as partitions."""
