@@ -9,6 +9,11 @@ Changelog
   ------------------
 
   New features:
+  
+  - Use the default :class:`~craft_parts.FilesystemMount` to distribute content
+    between partitions when migrating content from the overlay.
+  - Track migrated content per partition in the default state file via a new
+    ``partitions_contents`` field in :class:`~craft_parts.MigrationState`.
 
   Bug fixes:
 
