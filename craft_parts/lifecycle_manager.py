@@ -142,7 +142,7 @@ class LifecycleManager:
         partition_list: PartitionList | None = None
         if partitions:
             partition_list = PartitionList(
-                concrete_partitions=partitions, aliases=partition_aliases
+                partitions=partitions, aliases=partition_aliases
             )
 
         project_dirs = ProjectDirs(

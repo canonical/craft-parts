@@ -279,7 +279,7 @@ class ProjectInfo:
         return None
 
     @property
-    def concrete_partitions(self) -> list[str] | None:
+    def partitions(self) -> list[str] | None:
         """Return the project's concrete partitions."""
         if self._partitions:
             return self._partitions.concrete_partitions

@@ -22,26 +22,26 @@ from collections.abc import Iterable, Iterator
 class PartitionList:
     """List of partitions and aliases.
 
-    PartitionList wraps a dict with alias or partition names as keys and
-    concrete partition names as values.
+    Wraps a dict with alias or partition names as keys and concrete partition names
+    as values.
 
     Example map:
     {
       "default":"default",
-      "volume/pc/efi":"volume/pc/efi",
-      "volume/pc/rootfs":"default",
+      "foo/bar":"foo/bar",
+      "baz":"default",
     }
     """
 
     def __init__(
         self,
-        concrete_partitions: list[str] | None,
+        partitions: list[str] | None,
         *,
         aliases: dict[str, str] | None = None,
     ) -> None:
         self._partitions: dict[str, str] = {}
-        if concrete_partitions:
-            self._partitions.update({el: el for el in concrete_partitions})
+        if partitions:
+            self._partitions.update({el: el for el in partitions})
         if aliases:
             self._partitions = add_aliases(partitions=self._partitions, aliases=aliases)
 

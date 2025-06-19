@@ -207,7 +207,7 @@ class Executor:
         if action.step == Step.STAGE:
             check_for_stage_collisions(
                 part_list=self._part_list,
-                partitions=self._project_info.concrete_partitions,
+                partitions=self._project_info.partitions,
             )
 
         handler = self._create_part_handler(part)

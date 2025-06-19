@@ -96,7 +96,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     if Features().enable_partitions and Features().enable_overlay:
         part_environment.update(
             _get_step_overlay_environment_for_partitions(
-                part, step_info.concrete_partitions
+                part, step_info.partitions
             )
         )
 
