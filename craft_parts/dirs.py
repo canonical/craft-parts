@@ -57,7 +57,7 @@ class ProjectDirs:
         self.backstage_dir = self.work_dir / "backstage"
         self.prime_dir = self.work_dir / "prime"
         if partitions:
-            partition_utils.validate_partition_names(partitions.concrete_partitions)
+            partition_utils.validate_partition_names(partitions.aliases_or_partitions)
             self._partitions: PartitionList | None = partitions
             self.partition_dir: Path | None = self.work_dir / "partitions"
         else:
