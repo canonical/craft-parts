@@ -63,6 +63,7 @@ class ProjectDirs:
         else:
             self._partitions = None
             self.partition_dir = None
+
         self.overlay_dirs = self._get_partition_dirs(partitions, "overlay")
         self.stage_dirs = self._get_partition_dirs(partitions, "stage")
         self.prime_dirs = self._get_partition_dirs(partitions, "prime")

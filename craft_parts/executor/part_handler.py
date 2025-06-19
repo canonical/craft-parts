@@ -910,7 +910,6 @@ class PartHandler:
                 migrated_directories=squasher.migrated_directories,
             )
 
-        logger.debug(f"consolidated_states: {consolidated_states}")
         # Write consolidated states once
         self._write_overlay_migration_states(consolidated_states, Step.STAGE)
 
