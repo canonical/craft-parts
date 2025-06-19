@@ -230,19 +230,22 @@ def get_partition_dir_map(
 
     :returns: A mapping of partition names to paths.
     """
-    if partitions:
-        dir_map: dict[str | None, Path] = {
-            "default": base_dir / suffix,
-        }
+    if partitions is None:
+        return {None: base_dir / suffix}
 
-        for alias, partition in partitions.items():
-            if alias == "default":
-                # Already set in the dictionary
-                continue
-            if partition == "default":
-                dir_map.update({alias: base_dir / suffix})
-            else:
-                dir_map.update({alias: base_dir / "partitions" / partition / suffix})
-        return dir_map
+    dir_map: dict[str | None, Path] = {
+        "default": base_dir / suffix,
+    }
 
-    return {None: base_dir / suffix}
+    for alias, partition in partitions.items():
+        if alias == "default":
+            # Already set in the dictionary
+            continue
+
+        partition_path = base_dir / "partitions" / partition / suffix
+        if partition == "default":
+            partition_path = base_dir / suffix
+
+        dir_map.update({alias: partition_path})
+
+    return dir_map
