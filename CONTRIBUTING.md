@@ -1,7 +1,6 @@
 # Contributing
 
-Craft Parts has a community from all over the world, and the Craft Parts team welcomes
-all contributions.
+Craft Parts has a community from all over the world, and we welcome all contributions.
 
 All contributors should become familiar with this guide. It outlines the expectations
 and practices for participating in the project.
@@ -91,8 +90,8 @@ All significant work in Craft Parts should be tied to an existing issue or ticke
 
 If you'd like to add a small feature or fix, check the project's GitHub issues to see if
 others have reported it. If they have, look into the current status of the topic. If no
-one else is working on it, add a comment stating that you'd like to take it on, and the
-Craft Parts team will assign it to you.
+one else is working on it, add a comment stating that you'd like to take it on, and a
+Craft Parts maintainer will assign it to you.
 
 If there's a large feature or fix you'd like to work on, contact us and the rest of the
 community on the Craft Parts Matrix channel. It's possible that work on it has been
@@ -105,18 +104,15 @@ If you're ever in doubt about developments in the project, ask!
 
 Craft Parts has a parallel stream of materially rewarding work in the form of bounties.
 At the Starcraft team's discretion, high-value GitHub issues are allocated monetary
-bounties. A bounty is paid when the solution is merged into the codebase and its
-implementation meets all business and technical specifications outlined in the ticket.
-Multiple contributors can work on a bounty, but it will be awarded to the first accepted
-solution. To keep things fair, you can work on only one bounty at a time.
+bounties.
 
-If you're interested in bounties, enroll in the [GitHub Sponsors
+If you'd like to engage in bounties, first enroll in the [GitHub Sponsors
 program](https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors).
 
-To show interest in a bounty, provide a rough solution plan for it in a comment on its
-GitHub issue. The Craft Parts maintainers review all proposals for technical soundness.
-If your proposal is accepted, they will assign you to the bounty pool, after which you
-can begin work.
+To show interest in a particular bounty, submit a high-level solution plan as a comment
+on its issue. The Craft Parts maintainers will review it for technical soundness. If
+your proposal is accepted, they will assign you to the bounty pool, after which you can
+begin work.
 
 ### Create a feature branch
 
