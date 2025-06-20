@@ -37,7 +37,7 @@ from craft_parts.constraints import RelativePathStr
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.packages import platform
-from craft_parts.partitions import PartitionList
+from craft_parts.partitions import PartitionMap
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
@@ -219,7 +219,7 @@ class Part:
         *,
         project_dirs: ProjectDirs | None = None,
         plugin_properties: "PluginProperties | None" = None,
-        partitions: PartitionList | None = None,
+        partitions: PartitionMap | None = None,
     ) -> None:
         self._partitions = partitions
         if not isinstance(data, dict):

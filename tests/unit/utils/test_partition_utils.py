@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 from craft_parts import errors
-from craft_parts.partitions import PartitionList
+from craft_parts.partitions import PartitionMap
 from craft_parts.utils import partition_utils
 
 
@@ -135,7 +135,7 @@ def test_get_partitions_dir_map(new_dir, suffix):
     """Get a map of partitions directories."""
     dir_map = partition_utils.get_partition_dir_map(
         base_dir=new_dir,
-        partitions=PartitionList(["default", "a", "b/c-d"]),
+        partitions=PartitionMap(["default", "a", "b/c-d"]),
         suffix=suffix,
     )
 
@@ -150,7 +150,7 @@ def test_get_partitions_dir_map(new_dir, suffix):
 def test_get_partitions_dir_map_default_only(new_dir, suffix):
     """Get a partition map for only the default partition."""
     dir_map = partition_utils.get_partition_dir_map(
-        base_dir=new_dir, partitions=PartitionList(["default"]), suffix=suffix
+        base_dir=new_dir, partitions=PartitionMap(["default"]), suffix=suffix
     )
 
     assert dir_map == {"default": Path(new_dir) / suffix}
@@ -171,7 +171,7 @@ def test_get_partitions_dir_map_aliases(new_dir):
     """Get a map of partitions directories."""
     dir_map = partition_utils.get_partition_dir_map(
         base_dir=new_dir,
-        partitions=PartitionList(
+        partitions=PartitionMap(
             ["default", "a", "b/c-d"],
             aliases={
                 "bar": "default",

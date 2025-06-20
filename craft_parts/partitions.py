@@ -19,8 +19,8 @@
 from collections.abc import Iterable, Iterator
 
 
-class PartitionList:
-    """List of partitions and aliases.
+class PartitionMap:
+    """Dict of partitions and aliases.
 
     Wraps a dict with alias or partition names as keys and concrete partition names
     as values.
@@ -70,7 +70,7 @@ class PartitionList:
 
     @property
     def aliases_or_partitions(self) -> list[str]:
-        """Return a list of concrete partitions."""
+        """Return a list of aliases and concrete partitions."""
         return list(self._partitions.keys())
 
 

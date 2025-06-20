@@ -19,7 +19,7 @@
 from pathlib import Path
 
 from craft_parts.errors import PartitionNotFound, PartitionUsageError
-from craft_parts.partitions import PartitionList
+from craft_parts.partitions import PartitionMap
 from craft_parts.utils import partition_utils
 
 
@@ -43,7 +43,7 @@ class ProjectDirs:
     def __init__(
         self,
         *,
-        partitions: PartitionList | None = None,
+        partitions: PartitionMap | None = None,
         work_dir: Path | str = ".",
     ) -> None:
         self.project_dir = Path().expanduser().resolve()
@@ -58,7 +58,7 @@ class ProjectDirs:
         self.prime_dir = self.work_dir / "prime"
         if partitions:
             partition_utils.validate_partition_names(partitions.aliases_or_partitions)
-            self._partitions: PartitionList | None = partitions
+            self._partitions: PartitionMap | None = partitions
             self.partition_dir: Path | None = self.work_dir / "partitions"
         else:
             self._partitions = None
@@ -69,7 +69,7 @@ class ProjectDirs:
         self.prime_dirs = self._get_partition_dirs(partitions, "prime")
 
     def _get_partition_dirs(
-        self, partitions: PartitionList | None, dirname: str
+        self, partitions: PartitionMap | None, dirname: str
     ) -> dict[str | None, Path]:
         return partition_utils.get_partition_dir_map(
             base_dir=self.work_dir, partitions=partitions, suffix=dirname

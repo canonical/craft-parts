@@ -21,7 +21,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from craft_parts import errors, features
-from craft_parts.partitions import PartitionList
+from craft_parts.partitions import PartitionMap
 
 # Allow alphanumeric characters, hyphens and slashes, not starting or ending
 # with a hyphen or a slash
@@ -213,7 +213,7 @@ def _namespace_conflicts(a: str, b: str) -> bool:
 
 
 def get_partition_dir_map(
-    base_dir: Path, partitions: PartitionList | None, suffix: str = ""
+    base_dir: Path, partitions: PartitionMap | None, suffix: str = ""
 ) -> dict[str | None, Path]:
     """Return a mapping of partition directories.
 
