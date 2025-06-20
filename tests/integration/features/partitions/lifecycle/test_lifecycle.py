@@ -165,26 +165,8 @@ class TestCleaning:
         [
             Step.PULL,
             Step.BUILD,
-            pytest.param(
-                Step.STAGE,
-                marks=pytest.mark.xfail(
-                    reason=(
-                        "Cleaning shared directories with the same file in multiple "
-                        "partitions is not working."
-                    ),
-                    strict=True,
-                ),
-            ),
-            pytest.param(
-                Step.PRIME,
-                marks=pytest.mark.xfail(
-                    reason=(
-                        "Cleaning shared directories with the same file in multiple "
-                        "partitions is not working."
-                    ),
-                    strict=True,
-                ),
-            ),
+            Step.STAGE,
+            Step.PRIME,
         ],
     )
     def test_clean_step(self, step, foo_files):
@@ -227,10 +209,6 @@ class TestCleaning:
 
         assert list(state_dir.rglob("*")) == []
 
-    @pytest.mark.xfail(
-        reason="Cleaning shared directories with the same file in multiple partitions is not working.",
-        strict=True,
-    )
     def test_clean_part(self, foo_files, bar_files, state_files):
         """Clean a part."""
         actions = self._lifecycle.plan(Step.PRIME)

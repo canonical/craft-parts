@@ -28,6 +28,12 @@ New features:
 - Track migrated content per partition in the default state file via a new
   ``partitions_contents`` field in :class:`~craft_parts.MigrationState`.
 
+Bug fixes:
+
+- Rely on the migrated content tracked per partition in state files to properly
+  clean shared areas (stage and prime directories) in partitions. Also make sure
+  to account for content coming from the overlay.
+
 .. _release-2.13.0:
 
 2.13.0 (2025-06-18)
