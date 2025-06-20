@@ -16,17 +16,17 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-  .. _release-2.14.0:
+.. _release-2.14.0:
 
-  2.14.0 (2025-MM-DD)
-  ------------------
+2.14.0 (2025-MM-DD)
+------------------
 
-  New features:
-  
-  - Use the default :class:`~craft_parts.FilesystemMount` to distribute content
-    between partitions when migrating content from the overlay.
-  - Track migrated content per partition in the default state file via a new
-    ``partitions_contents`` field in :class:`~craft_parts.MigrationState`.
+New features:
+
+- Use the default :class:`~craft_parts.FilesystemMount` to distribute content
+  between partitions when migrating content from the overlay.
+- Track migrated content per partition in the default state file via a new
+  ``partitions_contents`` field in :class:`~craft_parts.MigrationState`.
 
 .. _release-2.13.0:
 
