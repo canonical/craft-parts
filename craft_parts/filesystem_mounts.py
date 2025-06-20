@@ -97,6 +97,9 @@ class FilesystemMount(RootModel):
     def __reversed__(self) -> Iterator[FilesystemMountItem]:
         return reversed(self.root)
 
+    def __getitem__(self, item: int) -> FilesystemMountItem:
+        return self.root[item]
+
     @field_validator("root", mode="after")
     @classmethod
     def first_maps_to_slash(
@@ -153,6 +156,10 @@ class FilesystemMounts(RootModel):
     ) -> FilesystemMount | None:
         """Return a specific item of the underlying dict."""
         return self.root.get(key, default)
+
+    def update(self, item: dict[Literal["default"], FilesystemMount]) -> None:
+        """Update an item of the underlying dict."""
+        self.root.update(item)
 
     def items(self) -> Iterable[tuple[Literal["default"], FilesystemMount]]:
         """Return items of the underlying dict."""

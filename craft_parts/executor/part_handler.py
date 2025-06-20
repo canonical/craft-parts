@@ -95,7 +95,9 @@ class _Squasher:
     """A helper to squash layers and migrate layered content."""
 
     def __init__(
-        self, partition: str | None, filesystem_mount: FilesystemMount | None = None
+        self,
+        partition: str | None,
+        filesystem_mount: FilesystemMount | None = None,
     ) -> None:
         self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
         self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}

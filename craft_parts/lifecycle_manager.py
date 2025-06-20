@@ -32,6 +32,7 @@ from craft_parts.features import Features
 from craft_parts.filesystem_mounts import FilesystemMounts, validate_filesystem_mounts
 from craft_parts.infos import ProjectInfo
 from craft_parts.overlays import LayerHash
+from craft_parts.partitions import PartitionMap
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
@@ -109,7 +110,7 @@ class LifecycleManager:
         base_layer_hash: bytes | None = None,
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
-        partitions: list[str] | None = None,
+        partitions: PartitionMap | None = None,
         filesystem_mounts: dict[str, Any] | None = None,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
@@ -127,7 +128,8 @@ class LifecycleManager:
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
-        validate_partition_names(partitions)
+        if partitions:
+            validate_partition_names(partitions.aliases_or_partitions)
         validate_filesystem_mounts(filesystem_mounts)
         filesystem_mounts_obj: FilesystemMounts | None = None
         if filesystem_mounts:
@@ -135,7 +137,13 @@ class LifecycleManager:
 
         packages.Repository.configure(application_package_name)
 
-        project_dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
+        # Alias mechanism only used to alias the default partition for now
+        resolve_default_alias(filesystem_mounts_obj)
+
+        project_dirs = ProjectDirs(
+            work_dir=work_dir,
+            partitions=partitions,
+        )
 
         project_info = ProjectInfo(
             application_name=application_name,
@@ -311,7 +319,7 @@ def _build_part(
     spec: dict[str, Any],
     project_dirs: ProjectDirs,
     strict_plugins: bool,  # noqa: FBT001
-    partitions: list[str] | None,
+    partitions: PartitionMap | None,
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
@@ -370,3 +378,16 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
+
+
+def resolve_default_alias(
+    filesystem_mounts: FilesystemMounts | None,
+) -> None:
+    """Resolve the alias to only have concrete partitions in FilesystemMounts."""
+    if not filesystem_mounts:
+        return
+    default_filesystem_mount = filesystem_mounts.get("default")
+    if not default_filesystem_mount:
+        return
+    default_filesystem_mount[0].device = "default"
+    filesystem_mounts.update({"default": default_filesystem_mount})
