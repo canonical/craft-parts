@@ -38,6 +38,7 @@ from craft_parts.state_manager import states
 from craft_parts.state_manager.step_state import MigrationState
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
+from pytest_mock import MockerFixture
 
 # pylint: disable=too-many-lines
 
@@ -891,6 +892,35 @@ class TestPackages:
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
         assert handler.build_snaps == ["word-salad"]
+
+    def test_get_build_snaps_with_source_type(
+        self, new_dir: Path, partitions: list[str] | None, mocker: MockerFixture
+    ) -> None:
+        p1 = Part(
+            "p1",
+            {
+                "plugin": "make",
+                "source": "source",
+                "source-type": "git",
+                "build-packages": ["pkg1"],
+                "build-snaps": ["foo", "bar"],
+            },
+            partitions=partitions,
+        )
+
+        git_source_mock = mocker.patch(
+            "craft_parts.sources.git_source.GitSource.get_pull_snaps"
+        )
+        git_source_mock.return_value = {"test-snap"}
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(info, p1)
+        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        assert sorted(handler.build_snaps) == sorted(["test-snap", "foo", "bar"])
 
 
 class TestFileFilter:
