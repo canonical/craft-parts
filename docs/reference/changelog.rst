@@ -27,6 +27,8 @@ New features:
   between partitions when migrating content from the overlay.
 - Track migrated content per partition in the default state file via a new
   ``partitions_contents`` field in :class:`~craft_parts.MigrationState`.
+- Support source types specifying a list of snaps necessary for pulling a
+  source.
 
 Bug fixes:
 
