@@ -27,16 +27,16 @@ incorporated into the repository.
 
 ### Open source license
 
-Starcraft is licensed under [GPL-3.0](LICENSE).
+Craft Parts is licensed under [LGPL-3.0](LICENSE).
 
 ## Report an issue or open a request
 
 If you find a bug or feature gap in Craft Parts, look for it on the [project's GitHub
-issues](https://github.com/canonical/Craft Parts/issues) first. If you have fresh input,
+issues](https://github.com/canonical/craft-parts/issues) first. If you have fresh input,
 add your voice to the issue.
 
 If the bug or feature doesn't have an issue, we invite you to [open
-one](https://github.com/canonical/Craft Parts/issues/new/choose).
+one](https://github.com/canonical/craft-parts/issues/new/choose).
 
 ## Set up for development
 
@@ -44,24 +44,26 @@ Craft Parts uses a forking, feature-based workflow. Most work on Craft Parts occ
 people's local systems, and is heavily terminal-dependent. Remote testing and building
 is provided on GitHub for continuous integration and delivery.
 
-Start by [creating a personal fork](https://github.com/canonical/Craft Parts/fork) of
+Start by [creating a personal fork](https://github.com/canonical/craft-parts/fork) of
 the repository on GitHub.
 
-Next, on your host system, clone the project:
+Next, on your host system, clone your fork:
 
 ```bash
-git clone git@github.com/canonical/craft-parts.git --recurse-submodules
+git clone git@github.com/<username>/craft-parts.git --recurse-submodules
 ```
 
-Inside the project directory, set up the . Ubuntu 22.04 is assumed in the rest of this setup:
+Inside the project directory, set up the dependencies. Ubuntu 24.04 is assumed in the
+rest of this setup:
 
 ```bash
-make install
-sudo apt install libapt-pkg-dev intltool fuse-overlayfs python3.10-venv python3-dev gcc g++ make
+sudo apt install libapt-pkg-dev intltool fuse-overlayfs python3-venv python3-dev \
+            gcc g++ make ninja-build cmake scons tox qt5-qmake p7zip rpm autoconf \
+            automake autopoint git gperf help2man libtool texinfo pkg-config \
+            tinyproxy dpkg-dev socat maven python3-poetry openjdk-17-jdk \
+            openjdk-21-jdk openjdk-8-jdk-headless openjdk-11-jdk gradle
 sudo snap install chisel --candidate
-sudo apt install ninja-build cmake scons qt5-qmake p7zip rpm \
-                 autoconf automake autopoint gcc git gperf help2man libtool texinfo \
-                 pkg-config tinyproxy
+sudo snap install go astral-uv node
 ```
 
 Create the virtual environment and install the required Python packages:
@@ -93,10 +95,11 @@ others have reported it. If they have, look into the current status of the topic
 one else is working on it, add a comment stating that you'd like to take it on, and a
 Craft Parts maintainer will assign it to you.
 
-If there's a large feature or fix you'd like to work on, contact us and the rest of the
-community on the Craft Parts Matrix channel. It's possible that work on it has been
-started, or that it fits into an existing plan. Often, you will save time and effort by
-checking for prior work.
+If there's a large feature or fix you'd like to work on, contact the team and the
+community in the [Starcraft Matrix
+channel](https://matrix.to/#/!fcfzhmtmKApekMQcxX:ubuntu.com?via=ubuntu.com&via=matrix.org).
+It's possible that work on it has been started, or that it fits into an existing plan.
+Often, you will save time and effort by checking for prior work.
 
 If you're ever in doubt about developments in the project, ask!
 
@@ -126,7 +129,6 @@ If you're making a change to a current release, run:
 ```bash
 git checkout hotfix/<current-release>
 git pull
-make setup
 ```
 
 If you're contributing to multiple releases or the next major release, run:
@@ -134,7 +136,6 @@ If you're contributing to multiple releases or the next major release, run:
 ```bash
 git checkout main
 git pull
-make setup
 ```
 
 Next, create a new branch against your chosen base. The new branch name should be brief,
@@ -161,7 +162,7 @@ Once you've made the changes to the code and you're ready to test it, start by
 committing:
 
 ```bash
-git add .
+git add -Av
 git commit
 ```
 
@@ -203,20 +204,14 @@ done browsing, press `Q` to exit the interactive log.
 > - docs  
 > - chore
 
-Committing triggers the pre-commit hook, which runs the automatic code formatter and the
-faster linters.
-
-If any of the files are reformatted, your commit was cancelled. Don't forget to restage
-the modified files with `git add .` and commit again for it to stick.
-
 ### Test the change
 
 Test early and often, especially before you plan to open a pull request.
 
-Run the full test suite, which includes integration and unit tests:
+Run the integration and unit tests:
 
 ```bash
-make test
+make test-units && make test-integrations
 ```
 
 Running all tests can take a very long time, in some cases an hour.
@@ -230,29 +225,23 @@ make coverage
 There are also special tests that are feature-specific. Run `make help` to view all of
 them.
 
-If in your work you add or update a project dependency, lock it with:
-
-```bash
-make freeze-requirements
-```
-
 ### Document
 
 Craft Parts has frequent documentation updates to both its user guide and its developer
 material.
 
-Document feature changes and fixes in `changelog.rst`.
+Document feature changes and fixes in [`changelog.rst`](docs/reference/changelog.rst).
 
 For all documentation updates, build the site locally with:
 
 ```bash
-make docs
+tox -f build-docs
 ```
 
 Use the special documentation linter to check for errors:
 
 ```bash
-make lint-docs
+tox -f lint-docs
 ```
 
 ### Push the branch and open a PR
@@ -263,7 +252,7 @@ Once your work is committed to your branch, push it to your fork:
 git push -u origin <branch-name>
 ```
 
-Finally, [open a PR](https://github.com/canonical/Craft Parts/compare) for it on GitHub.
+Finally, [open a PR](https://github.com/canonical/craft-parts/compare) for it on GitHub.
 If your branch has one commit, GitHub will title the PR after it. If your branch has
 more than one commit, name the PR after the most significant. Once open, reviewers are
 assigned automatically to your work.
