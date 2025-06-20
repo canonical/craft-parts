@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@ class TestBuildState:
             "files": set(),
             "directories": set(),
             "overlay-hash": None,
+            "partitions-contents": {},
         }
 
     def test_marshal_unmarshal(self):
@@ -44,6 +45,7 @@ class TestBuildState:
             "files": {"a"},
             "directories": {"b"},
             "overlay-hash": "6f7665726c61792d68617368",
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
 
         state = BuildState.unmarshal(state_data)

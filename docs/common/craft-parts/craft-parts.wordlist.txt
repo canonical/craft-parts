@@ -158,7 +158,9 @@ MavenXMLError
 MesonPlugin
 MesonPluginEnvironmentValidator
 MesonPluginProperties
+MigrationContents
 MigrationState
+MigrationStates
 MaxLen
 MinLen
 Multipass
@@ -293,9 +295,11 @@ StageFilesConflict
 StagePackageNotFound
 StageState
 StateManager
+StagePartitionContents
 StepContents
 StepHandler
 StepInfo
+StepPartitionContents
 StepState
 Submodules
 Subpackages
