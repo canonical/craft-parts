@@ -34,6 +34,17 @@ Bug fixes:
   clean shared areas (stage and prime directories) in partitions. Also make sure
   to account for content coming from the overlay.
 
+.. _release-2.10.1:
+
+2.10.1 (2025-06-18)
+-------------------
+
+Documentation:
+
+- Document the fields in the ``PartSpec`` and ``Permissions`` models.
+
+For a complete list of commits, check out the `2.10.1`_ release on GitHub.
+
 .. _release-2.13.0:
 
 2.13.0 (2025-06-18)
@@ -47,6 +58,8 @@ Documentation:
 
 - Expand the :ref:`uv plugin reference <craft_parts_uv_plugin>`
   to include more details on how to install uv.
+
+For a complete list of commits, check out the `2.13.0`_ release on GitHub.
 
 .. _release-2.12.0:
 
@@ -1169,8 +1182,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.13.0: https://github.com/canonical/craft-parts/releases/tag/2.13.0
 .. _2.12.0: https://github.com/canonical/craft-parts/releases/tag/2.12.0
 .. _2.11.0: https://github.com/canonical/craft-parts/releases/tag/2.11.0
+.. _2.10.1: https://github.com/canonical/craft-parts/releases/tag/2.10.1
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
 .. _2.9.1: https://github.com/canonical/craft-parts/releases/tag/2.9.1
 .. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
