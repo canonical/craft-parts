@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.14.0:
 
-2.14.0 (2025-MM-DD)
+2.14.0 (2025-06-20)
 -------------------
 
 New features:
@@ -33,6 +33,12 @@ Bug fixes:
 - Rely on the migrated content tracked per partition in state files to properly
   clean shared areas (stage and prime directories) in partitions. Also make sure
   to account for content coming from the overlay.
+
+.. note::
+
+    2.14.0 includes changes from the 2.10.1 release.
+
+For a complete list of commits, check out the `2.14.0`_ release on GitHub.
 
 .. _release-2.10.1:
 
@@ -1182,6 +1188,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.14.0: https://github.com/canonical/craft-parts/releases/tag/2.14.0
 .. _2.13.0: https://github.com/canonical/craft-parts/releases/tag/2.13.0
 .. _2.12.0: https://github.com/canonical/craft-parts/releases/tag/2.12.0
 .. _2.11.0: https://github.com/canonical/craft-parts/releases/tag/2.11.0
