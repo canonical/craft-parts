@@ -16,6 +16,38 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.14.0:
+
+2.14.0 (2025-MM-DD)
+-------------------
+
+New features:
+
+- Use the default :class:`~craft_parts.FilesystemMount` to distribute content
+  between partitions when migrating content from the overlay.
+- Track migrated content per partition in the default state file via a new
+  ``partitions_contents`` field in :class:`~craft_parts.MigrationState`.
+
+Bug fixes:
+
+- Rely on the migrated content tracked per partition in state files to properly
+  clean shared areas (stage and prime directories) in partitions. Also make sure
+  to account for content coming from the overlay.
+
+.. _release-2.13.0:
+
+2.13.0 (2025-06-18)
+-------------------
+
+New features:
+
+- Add the maven-use plugin.
+
+Documentation:
+
+- Expand the :ref:`uv plugin reference <craft_parts_uv_plugin>`
+  to include more details on how to install uv.
+
 .. _release-2.12.0:
 
 2.12.0 (2025-06-06)
@@ -31,14 +63,6 @@ New features:
 For a complete list of commits, check out the `2.12.0`_ release on GitHub.
 
 .. _release-2.11.0:
-
-Unreleased
-----------
-
-Documentation:
-
-- Expand the :ref:`uv plugin reference <craft_parts_uv_plugin>`
-  to include more details on how to install uv.
 
 2.11.0 (2025-06-04)
 -------------------
@@ -113,7 +137,7 @@ For a complete list of commits, check out the `2.9.0`_ release on GitHub.
 
 New features:
 
-- With the new ``maven-use-wrapper`` key in the Maven plugin, you can enable 
+- With the new ``maven-use-wrapper`` key in the Maven plugin, you can enable
   your project's ``mvnw`` wrapper script.
 - Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
   a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
@@ -181,7 +205,7 @@ Bug fixes:
 Bug fixes:
 
 - Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
-- Fix Jdeps parameter ordering in the 
+- Fix Jdeps parameter ordering in the
   :ref:`jlink plugin<craft_parts_jlink_plugin>`.
 
 .. _release-2.3.1:
