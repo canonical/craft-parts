@@ -35,6 +35,10 @@ Bug fixes:
   clean shared areas (stage and prime directories) in partitions. Also make sure
   to account for content coming from the overlay.
 
+Documentation:
+
+- Update the contribution guidelines and move them to ``CONTRIBUTING.md``.
+
 2.14.0 includes changes from the 2.10.1 release.
 
 For a complete list of commits, check out the `2.14.0`_ release on GitHub.
