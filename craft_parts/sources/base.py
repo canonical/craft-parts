@@ -192,6 +192,10 @@ class SourceHandler(abc.ABC):
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
+    def get_pull_snaps(self) -> set[str]:
+        """Return the set of snaps needed for handling this source type."""
+        return set()
+
     @classmethod
     def _run(cls, command: list[str], **kwargs: Any) -> None:
         try:
