@@ -77,4 +77,7 @@ def test_maven_use_plugin(new_dir, partitions, monkeypatch, caplog):
         assert f"Updating version of '{artifact}' from '{old}' to '{new}'" in log
 
     # Check that missing versions are filled in by what's available
-    assert f"Setting version of 'org.apache.maven.plugins.maven-shade-plugin' to '{shaded_version}'" in log
+    assert (
+        f"Setting version of 'org.apache.maven.plugins.maven-shade-plugin' to '{shaded_version}'"
+        in log
+    )
