@@ -414,6 +414,21 @@ def test_maven_artifact_from_element() -> None:
     assert art.version == "X.Y.Z"
 
 
+def test_maven_artifact_from_element_no_version() -> None:
+    element = ET.fromstring("""\
+        <dependency>
+            <groupId>org.starcraft</groupId>
+            <artifactId>test</artifactId>
+        </dependency>
+        """)  # noqa: S314
+
+    art = MavenArtifact.from_element(element, {})
+
+    assert art.group_id == "org.starcraft"
+    assert art.artifact_id == "test"
+    assert art.version == None
+
+
 def test_maven_plugin_from_element_no_group() -> None:
     element = ET.fromstring("""\
         <dependency>

@@ -27,8 +27,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <!-- invalid version on purpose - must be replaced with the archive one -->
-        <version>X.Y.Z</version>
+        <!-- omitted version on purpose - must be replaced with the archive one -->
         <executions>
           <execution>
             <phase>package</phase>

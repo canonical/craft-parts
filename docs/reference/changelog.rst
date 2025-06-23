@@ -16,6 +16,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+X.Y.Z (2025-MM-DD)
+------------------
+
+Bug fixes:
+
+- With the maven-use plugin, do not raise errors if versions are not specified
+  in a project's :file:`pom.xml`.
+
 .. _release-2.14.0:
 
 2.14.0 (2025-06-20)
