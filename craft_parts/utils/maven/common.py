@@ -203,7 +203,6 @@ class MavenArtifact:
     @classmethod
     def from_element(cls, element: ET.Element, namespaces: dict[str, str]) -> Self:
         """Create a MavenArtifact from an XML artifact element."""
-
         # We can always just set the version if it's missing, so don't raise
         try:
             version = _get_element_text(_find_element(element, "version", namespaces))
@@ -272,7 +271,6 @@ class MavenPlugin(MavenArtifact):
         For more information on the default plugin group, see:
         https://maven.apache.org/guides/mini/guide-configuring-plugins.html
         """
-
         # We can always just set the version if it's missing, so don't raise
         try:
             group_id_element = _find_element(element, "groupId", namespaces)

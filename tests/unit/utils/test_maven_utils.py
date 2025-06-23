@@ -426,7 +426,7 @@ def test_maven_artifact_from_element_no_version() -> None:
 
     assert art.group_id == "org.starcraft"
     assert art.artifact_id == "test"
-    assert art.version == None
+    assert art.version is None
 
 
 def test_maven_plugin_from_element_no_group() -> None:
