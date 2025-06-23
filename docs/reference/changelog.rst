@@ -16,6 +16,14 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+X.Y.Z (2025-MM-DD)
+------------------
+
+New features:
+
+- Improve the error message when encountering invalid XML in the maven-use
+  plugin.
+
 .. _release-2.14.0:
 
 2.14.0 (2025-06-20)
