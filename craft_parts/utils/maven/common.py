@@ -394,7 +394,14 @@ def _find_element(
     if (needle := element.find(path, namespaces)) is not None:
         return needle
 
-    raise MavenXMLError(message=f"Could not parse {path}.")
+    ET.indent(element)
+    raise MavenXMLError(message=
+        (
+            f"Could not find path {path!r} in the following XML element:\n"
+            f"{ET.tostring(element).decode(errors='replace')}\n"
+            "Validate the file and try again"
+        )
+    )
 
 
 def _get_element_text(element: ET.Element) -> str:
@@ -410,4 +417,11 @@ def _get_element_text(element: ET.Element) -> str:
     if (text := element.text) is not None:
         return text
 
-    raise MavenXMLError(message=f"No text field found on {element.tag}.")
+    ET.indent(element)
+    raise MavenXMLError(message=
+        (
+            f"No text field found on {element.tag!r} in the following XML element:\n"
+            f"{ET.tostring(element).decode(errors='replace')}\n"
+            "Validate the file and try again"
+        )
+    )

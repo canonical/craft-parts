@@ -242,7 +242,14 @@ def test_find_element() -> None:
     assert find_result is not None
     assert find_result.text == "Howdy!"
 
-    with pytest.raises(MavenXMLError, match="Could not parse"):
+    expected_error = dedent("""\
+        Could not find path 'nope' in the following XML element:
+        <foo>
+          <bar>Howdy!</bar>
+        </foo>
+        Validate the file and try again"""
+    )
+    with pytest.raises(MavenXMLError, match=expected_error):
         _find_element(element, "nope", {})
 
 
@@ -253,7 +260,14 @@ def test_get_element_text() -> None:
 
     element = ET.fromstring("<foo><bar>Howdy!</bar></foo>")  # noqa: S314
 
-    with pytest.raises(MavenXMLError, match="No text field"):
+    expected_error = dedent("""\
+        No text field found on 'foo' in the following XML element:
+        <foo>
+          <bar>Howdy!</bar>
+        </foo>
+        Validate the file and try again"""
+    )
+    with pytest.raises(MavenXMLError, match=expected_error):
         _get_element_text(element)
 
 
