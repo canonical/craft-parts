@@ -395,8 +395,8 @@ def _find_element(
         return needle
 
     ET.indent(element)
-    raise MavenXMLError(message=
-        (
+    raise MavenXMLError(
+        message=(
             f"Could not find path {path!r} in the following XML element:\n"
             f"{ET.tostring(element).decode(errors='replace')}\n"
             "Validate the file and try again"
@@ -418,8 +418,8 @@ def _get_element_text(element: ET.Element) -> str:
         return text
 
     ET.indent(element)
-    raise MavenXMLError(message=
-        (
+    raise MavenXMLError(
+        message=(
             f"No text field found on {element.tag!r} in the following XML element:\n"
             f"{ET.tostring(element).decode(errors='replace')}\n"
             "Validate the file and try again"

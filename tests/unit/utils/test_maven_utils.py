@@ -247,8 +247,7 @@ def test_find_element() -> None:
         <foo>
           <bar>Howdy!</bar>
         </foo>
-        Validate the file and try again"""
-    )
+        Validate the file and try again""")
     with pytest.raises(MavenXMLError, match=expected_error):
         _find_element(element, "nope", {})
 
@@ -265,8 +264,7 @@ def test_get_element_text() -> None:
         <foo>
           <bar>Howdy!</bar>
         </foo>
-        Validate the file and try again"""
-    )
+        Validate the file and try again""")
     with pytest.raises(MavenXMLError, match=expected_error):
         _get_element_text(element)
 
