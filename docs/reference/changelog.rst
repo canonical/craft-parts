@@ -24,6 +24,8 @@ Bug fixes:
 
 - With the maven-use plugin, don't raise errors if dependency versions aren't specified
   in the software's :file:`pom.xml` file.
+- With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
+  ``<distributionManagement>`` tags.
 
 .. _release-2.14.0:
 
