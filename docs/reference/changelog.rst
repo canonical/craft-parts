@@ -21,8 +21,8 @@ X.Y.Z (2025-MM-DD)
 
 New features:
 
-- Improve the error message when encountering invalid XML in the maven-use
-  plugin.
+- Make the error message more detailed and traceable when the maven-use plugin 
+  encounters invalid XML in the software's ``pom.xml`` file.
 
 .. _release-2.14.0:
 
