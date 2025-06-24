@@ -393,9 +393,10 @@ class MavenXMLError(BaseException):
     """An error encountered while parsing XML for Maven projects."""
 
     message: str
+    details: str | None = None
 
     def __str__(self) -> str:
-        return self.message
+        return f"{self.message}\n{self.details}"
 
 
 def _find_element(
@@ -409,19 +410,15 @@ def _find_element(
     :param element: The haystack to search.
     :param path: The needle to find in the haystack.
     :param namespaces: A mapping of namespaces to use during the search.
-    :raises _MavenXMLError: if the needle can't be found.
+    :raises MavenXMLError: if the needle can't be found.
     :return: The discovered element.
     """
     if (needle := element.find(path, namespaces)) is not None:
         return needle
 
-    ET.indent(element)
     raise MavenXMLError(
-        message=(
-            f"Could not find path {path!r} in the following XML element:\n"
-            f"{ET.tostring(element).decode(errors='replace')}\n"
-            "Validate the file and try again"
-        )
+        message=f"Could not find path {path!r} in element {element.tag!r}",
+        details=f"Could not find path {path!r} in the following XML element:\n{_format_xml_str(element)}",
     )
 
 
@@ -438,11 +435,13 @@ def _get_element_text(element: ET.Element) -> str:
     if (text := element.text) is not None:
         return text
 
-    ET.indent(element)
     raise MavenXMLError(
-        message=(
-            f"No text field found on {element.tag!r} in the following XML element:\n"
-            f"{ET.tostring(element).decode(errors='replace')}\n"
-            "Validate the file and try again"
-        )
+        message=f"No text field found on {element.tag!r}",
+        details=f"No text field found on {element.tag!r} in the following XML element:\n{_format_xml_str(element)}",
     )
+
+
+def _format_xml_str(element: ET.Element) -> str:
+    """Get a nicely-formatted string for displaying an XML element."""
+    ET.indent(element)
+    return ET.tostring(element).decode(errors="replace")

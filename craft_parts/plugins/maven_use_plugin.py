@@ -118,9 +118,10 @@ class MavenUsePlugin(JavaPlugin):
                 self_contained=self_contained,
             )
         except MavenXMLError as err:
-            raise errors.PluginEnvironmentValidationError(
-                part_name=self._part_info.part_name,
-                reason=f"Encountered error while parsing 'pom.xml': {err.message}",
+            raise errors.PartsError(
+                brief=f"Plugin configuration failed for part {self._part_info.part_name}: {err.message}",
+                details=err.details,
+                resolution="Check that the 'pom.xml' file is valid.",
             )
 
         return [
