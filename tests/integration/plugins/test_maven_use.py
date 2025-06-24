@@ -70,8 +70,14 @@ def test_maven_use_plugin(new_dir, partitions, monkeypatch, caplog):
     expected_bumps = [
         ("org.starcraft.add", "2.0.0", "2.2.0"),
         ("org.starcraft.print-addition", "1.0.0", "1.1.0"),
-        ("org.apache.maven.plugins.maven-shade-plugin", "X.Y.Z", shaded_version),
     ]
 
+    # Check that versions are adjusted as necessary
     for artifact, old, new in expected_bumps:
         assert f"Updating version of '{artifact}' from '{old}' to '{new}'" in log
+
+    # Check that missing versions are filled in by what's available
+    assert (
+        f"Setting version of 'org.apache.maven.plugins.maven-shade-plugin' to '{shaded_version}'"
+        in log
+    )

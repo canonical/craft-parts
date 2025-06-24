@@ -196,18 +196,23 @@ class MavenArtifact:
 
     group_id: str
     artifact_id: str
-    version: str
+    version: str | None
 
     field_name: str = "Dependency"
 
     @classmethod
     def from_element(cls, element: ET.Element, namespaces: dict[str, str]) -> Self:
         """Create a MavenArtifact from an XML artifact element."""
+        # We can always just set the version if it's missing, so don't raise
+        try:
+            version = _get_element_text(_find_element(element, "version", namespaces))
+        except MavenXMLError:
+            version = None
+
         group_id = _get_element_text(_find_element(element, "groupId", namespaces))
         artifact_id = _get_element_text(
             _find_element(element, "artifactId", namespaces)
         )
-        version = _get_element_text(_find_element(element, "version", namespaces))
 
         return cls(group_id, artifact_id, version)
 
@@ -266,16 +271,22 @@ class MavenPlugin(MavenArtifact):
         For more information on the default plugin group, see:
         https://maven.apache.org/guides/mini/guide-configuring-plugins.html
         """
-        group_id_element = element.find("groupId", namespaces)
-        if group_id_element is not None:
-            group_id = _get_element_text(group_id_element)
-        else:
+        # We can always just set the version if it's missing, so don't raise
+        try:
+            group_id_element = _find_element(element, "groupId", namespaces)
+        except MavenXMLError:
             group_id = "org.apache.maven.plugins"
+        else:
+            group_id = _get_element_text(group_id_element)
+
+        try:
+            version = _get_element_text(_find_element(element, "version", namespaces))
+        except MavenXMLError:
+            version = None
 
         artifact_id = _get_element_text(
             _find_element(element, "artifactId", namespaces)
         )
-        version = _get_element_text(_find_element(element, "version", namespaces))
 
         return cls(group_id, artifact_id, version)
 
@@ -309,7 +320,11 @@ def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
             art = MavenArtifact.from_pom(pom)
             group_artifacts = result.setdefault(art.group_id, {})
             versions = group_artifacts.setdefault(art.artifact_id, set())
-            versions.add(art.version)
+
+            # Note on cast: technically we can't guarantee that this is a string.
+            # However, in this case, if it is "None" then this is an error that should
+            # be caught and reported by Maven rather than craft parts.
+            versions.add(cast("str", art.version))
 
     return result
 
