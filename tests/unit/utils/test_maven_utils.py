@@ -40,6 +40,7 @@ from craft_parts.utils.maven.common import (
     create_maven_settings,
     update_pom,
 )
+from craft_parts.utils.maven._xml import DISTRIBUTION_REPO_TEMPLATE
 
 
 @pytest.mark.parametrize(
@@ -577,12 +578,21 @@ def test_update_pom_multiple_add_distribution(part_info: PartInfo) -> None:
     update_pom(part_info=part_info, add_distribution=True, self_contained=False)
 
     pom_xml_contents = pom_xml.read_text()
-    # Make sure only one distributionManagement tag is present
+    # Only one distributionManagement tag is present
     assert pom_xml_contents.count("<distributionManagement>") == 1
-    # Make sure it's the new distributionManagement
+    # The old distributionManagement is gone
     assert "foo" not in pom_xml_contents
-    # Make sure it is still valid XML
-    ET.parse(pom_xml)  # noqa: S314
+    # It is still valid XML
+    tree = ET.parse(pom_xml)  # noqa: S314
+
+    # The new distributionManagement is in place
+    project = tree.getroot()
+    distro_element = cast("ET.Element", project.find("distributionManagement"))
+    distro_repo = distro_element.find("repository")
+    assert distro_repo is not None
+    distro_id = distro_repo.find("id")
+    assert distro_id is not None
+    assert distro_id.text == "craft"
 
 
 def test_update_pom_self_contained(part_info: PartInfo) -> None:

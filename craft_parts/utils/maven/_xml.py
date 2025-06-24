@@ -89,7 +89,6 @@ MIRROR_REPO = dedent("""\
 
 DISTRIBUTION_REPO_TEMPLATE = dedent("""\
     <distributionManagement>
-        <!-- Added by the maven-use plugin -->
         <repository>
         <id>craft</id>
         <name>Craft-managed intermediate repository</name>
