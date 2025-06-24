@@ -943,6 +943,9 @@ class PartHandler:
                 self._part.overlay_dirs[partition], Step.STAGE
             )
             if not stage_overlay_migration_state:
+                logger.debug(
+                    f"stage overlay migration state does not exist, so no overlay content was migrated to stage for partition {partition}, so no overlay content to prime."
+                )
                 continue
 
             srcdir = self._part.dirs.get_stage_dir(partition)
