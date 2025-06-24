@@ -162,7 +162,7 @@ def test_bad_dependency(plugin: MavenUsePlugin) -> None:
 
     err_re = re.compile(
         r"Plugin configuration failed for part my-part:.*Check that the 'pom\.xml' file is valid\.",
-        flags=re.S,
+        flags=re.DOTALL,
     )
     with pytest.raises(errors.PartsError, match=err_re):
         plugin.get_build_commands()
