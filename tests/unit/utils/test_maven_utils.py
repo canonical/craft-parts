@@ -514,6 +514,14 @@ def test_update_pom_no_pom(part_info: PartInfo) -> None:
         update_pom(part_info=part_info, add_distribution=False, self_contained=False)
 
 
+def create_project(part_info: PartInfo, project_xml: str) -> Path:
+    part_info.part_build_subdir.mkdir(parents=True)
+    pom_xml = part_info.part_build_subdir / "pom.xml"
+    pom_xml.write_text(project_xml)
+
+    return pom_xml
+
+
 def test_update_pom_add_distribution(part_info: PartInfo) -> None:
     project_xml = dedent("""\
         <project>
@@ -532,9 +540,7 @@ def test_update_pom_add_distribution(part_info: PartInfo) -> None:
         </project>
     """)
 
-    part_info.part_build_subdir.mkdir(parents=True)
-    pom_xml = part_info.part_build_subdir / "pom.xml"
-    pom_xml.write_text(project_xml)
+    pom_xml = create_project(part_info, project_xml)
 
     update_pom(part_info=part_info, add_distribution=True, self_contained=False)
 
@@ -542,6 +548,50 @@ def test_update_pom_add_distribution(part_info: PartInfo) -> None:
     assert "<distributionManagement>" in pom_xml.read_text()
     # Make sure it is still valid XML
     ET.parse(pom_xml)  # noqa: S314
+
+
+def test_update_pom_multiple_add_distribution(part_info: PartInfo) -> None:
+    """Make sure that pre-existing distributionManagement tags are overwritten."""
+
+    project_xml = dedent("""\
+        <project>
+            <dependencies>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test1</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test2</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+            </dependencies>
+
+            <distributionManagement>foo</distributionManagement>
+        </project>
+    """)
+
+    pom_xml = create_project(part_info, project_xml)
+
+    update_pom(part_info=part_info, add_distribution=True, self_contained=False)
+
+    pom_xml_contents = pom_xml.read_text()
+    # Only one distributionManagement tag is present
+    assert pom_xml_contents.count("<distributionManagement>") == 1
+    # The old distributionManagement is gone
+    assert "foo" not in pom_xml_contents
+    # It is still valid XML
+    tree = ET.parse(pom_xml)  # noqa: S314
+
+    # The new distributionManagement is in place
+    project = tree.getroot()
+    distro_element = cast("ET.Element", project.find("distributionManagement"))
+    distro_repo = distro_element.find("repository")
+    assert distro_repo is not None
+    distro_id = distro_repo.find("id")
+    assert distro_id is not None
+    assert distro_id.text == "craft"
 
 
 def test_update_pom_self_contained(part_info: PartInfo) -> None:
@@ -562,9 +612,7 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
         </project>
     """)
 
-    part_info.part_build_subdir.mkdir(parents=True)
-    pom_xml = part_info.part_build_subdir / "pom.xml"
-    pom_xml.write_text(project_xml)
+    create_project(part_info, project_xml)
 
     with (
         mock.patch(

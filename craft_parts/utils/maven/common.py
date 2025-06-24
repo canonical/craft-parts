@@ -179,6 +179,12 @@ def update_pom(
             DISTRIBUTION_REPO_TEMPLATE.format(repo_uri=distribution_dir.as_uri())
         )
 
+        # Remove the existing distributionManagement tag if present.
+        # This is okay because we only need to "distribute" to the backstage directory,
+        # so any other project-specific config is irrelevant to this build.
+        if (existing := project.find("distributionManagement", namespaces)) is not None:
+            project.remove(existing)
+
         project.append(distribution_element)
 
     existing = _get_existing_artifacts(part_info)
