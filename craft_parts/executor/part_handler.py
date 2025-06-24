@@ -108,7 +108,6 @@ class _Squasher:
         refdir: Path,
         srcdir: Path,
         destdirs: Mapping[str | None, Path],
-        permissions: list[Permissions] | None = None,
     ) -> None:
         """Migrate layered content from a partition to destination directories.
 
@@ -130,7 +129,6 @@ class _Squasher:
                     destdir=destdirs[dst_partition],
                     sub_path=sub_path,
                     dst_partition=dst_partition,
-                    permissions=permissions,
                 )
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
@@ -140,7 +138,6 @@ class _Squasher:
                 destdir=destdirs[self._src_partition],
                 sub_path="",
                 dst_partition=self._src_partition,
-                permissions=permissions,
             )
 
     def _migrate(
@@ -150,7 +147,6 @@ class _Squasher:
         destdir: Path,
         sub_path: str,
         dst_partition: str | None,
-        permissions: list[Permissions] | None = None,
     ) -> None:
         """Actually migrate content from a source to a destination.
 
@@ -174,7 +170,6 @@ class _Squasher:
             srcdir=srcdir / sub_path,
             destdir=destdir,
             oci_translation=True,
-            permissions=permissions,
         )
         if dst_partition not in self.migrated_files:
             self.migrated_files[dst_partition] = {}
