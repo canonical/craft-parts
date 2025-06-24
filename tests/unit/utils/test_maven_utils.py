@@ -40,7 +40,6 @@ from craft_parts.utils.maven.common import (
     create_maven_settings,
     update_pom,
 )
-from craft_parts.utils.maven._xml import DISTRIBUTION_REPO_TEMPLATE
 
 
 @pytest.mark.parametrize(
