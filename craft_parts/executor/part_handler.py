@@ -984,17 +984,18 @@ class PartHandler:
         Do not write state if no overlay content was migrated for a partition.
         Do not overwrite an existing migration state file.
         """
+        for partition in self._part_info.partitions or (None,):
             step_overlay_state_path = states.get_overlay_migration_state_path(
-                self._part.overlay_dirs[src_partition],
+                self._part.overlay_dirs[partition],
                 step,
             )
             if step_overlay_state_path.exists():
                 logger.debug(
-                    "%s overlay migration state exists, not migrating overlay data",
+                    "%s overlay migration state exists, not overwriting migrated overlay data",
                     step.name,
                 )
                 continue
-            state = consolidated_states.get(src_partition)
+            state = consolidated_states.get(partition)
             if state:
                 state.write(step_overlay_state_path)
 
