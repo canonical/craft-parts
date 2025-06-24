@@ -22,8 +22,8 @@ X.Y.Z (2025-MM-DD)
 
 Bug fixes:
 
-- With the maven-use plugin, do not raise errors if versions are not specified
-  in a project's :file:`pom.xml`.
+- With the maven-use plugin, don't raise errors if dependency versions aren't specified
+  in the software's :file:`pom.xml` file.
 
 .. _release-2.14.0:
 
