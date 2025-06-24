@@ -21,8 +21,15 @@ X.Y.Z (2025-MM-DD)
 
 New features:
 
-- Make the error message more detailed and traceable when the maven-use plugin 
+- Make the error message more detailed and traceable when the maven-use plugin
   encounters invalid XML in the software's ``pom.xml`` file.
+
+Bug fixes:
+
+- With the maven-use plugin, don't raise errors if dependency versions aren't specified
+  in the software's :file:`pom.xml` file.
+- With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
+  ``<distributionManagement>`` tags.
 
 .. _release-2.14.0:
 
