@@ -36,7 +36,6 @@ from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
-from craft_parts.permissions import Permissions
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import (
     MigrationContents,
