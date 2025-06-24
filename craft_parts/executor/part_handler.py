@@ -979,7 +979,11 @@ class PartHandler:
     def _write_overlay_migration_states(
         self, consolidated_states: dict[str | None, MigrationState], step: Step
     ) -> None:
-        for src_partition in self._part_info.partitions or (None,):
+        """Write a overlay migration state for each partition with overlay content.
+
+        Do not write state if no overlay content was migrated for a partition.
+        Do not overwrite an existing migration state file.
+        """
             step_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[src_partition],
                 step,
