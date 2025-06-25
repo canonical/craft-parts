@@ -167,8 +167,8 @@ git commit
 ```
 
 Format the commit message according to the [Conventional
-Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. For our example of the
-sync method, an appropriate commit title would be:
+Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. For the sanitizer
+example, an appropriate commit title would be:
 
 ```
 feat: add text sanitizer
@@ -190,8 +190,7 @@ done browsing, press `Q` to exit the interactive log.
 > commit. This can happen with test and docs, which can be used as either types or
 > scopes.
 > 
-> Run down the following list and take note of which commits your change fit. Select the
-> type that's ranked highest:
+> Run down the following list and select the highest-ranked type that fits your change:
 > 
 > - ci  
 > - build  
