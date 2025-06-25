@@ -15,6 +15,7 @@
 """Unit tests for the Maven use plugin."""
 
 from pathlib import Path
+import re
 from textwrap import dedent
 
 import pytest
@@ -158,8 +159,10 @@ def test_bad_dependency(plugin: MavenUsePlugin) -> None:
             </dependencies>
         </project>
     """)
-    with pytest.raises(
-        errors.PluginEnvironmentValidationError,
-        match=r"Encountered error while parsing 'pom\.xml'",
-    ):
+
+    err_re = re.compile(
+        r"Plugin configuration failed for part my-part:.*Check that the 'pom\.xml' file is valid\.",
+        flags=re.DOTALL,
+    )
+    with pytest.raises(errors.PartsError, match=err_re):
         plugin.get_build_commands()

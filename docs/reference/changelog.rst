@@ -16,9 +16,13 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-
 X.Y.Z (2025-MM-DD)
 ------------------
+
+New features:
+
+- Make the error message more detailed and traceable when the maven-use plugin
+  encounters invalid XML in the software's ``pom.xml`` file.
 
 Bug fixes:
 
