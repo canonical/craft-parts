@@ -122,19 +122,12 @@ class MavenPlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "package"]
 
-        # The assumption here is: if this part has dependencies, *and* the backstage
-        # has a maven repository, we want to use only local dependencies (and not the
-        # main maven online repository). This means both setting the local debian repo
-        # as a mirror of 'central', and updating the versions of dependencies and
-        # plugins to use what's available locally.
-        dependencies = self._part_info.part_dependencies
-        craft_repo = (self._part_info.backstage_dir / "maven-use").is_dir()
-        self_contained = bool(dependencies and craft_repo)
+        self_contained = self._is_self_contained()
 
-        if settings_path := create_maven_settings(
+        settings_path = create_maven_settings(
             part_info=self._part_info, set_mirror=self_contained
-        ):
-            mvn_cmd.extend(["-s", str(settings_path)])
+        )
+        mvn_cmd.extend(["-s", str(settings_path)])
 
         if self_contained:
             update_pom(

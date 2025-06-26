@@ -95,19 +95,6 @@ def test_get_no_proxy_string(env: dict[str, str], expected: str) -> None:
         assert _get_no_proxy_string() == expected
 
 
-def test_create_settings_no_change(
-    part_info: PartInfo, settings_path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(
-        "craft_parts.utils.maven.common._needs_proxy_config", lambda: False
-    )
-
-    # Ensure no path is returned
-    assert create_maven_settings(part_info=part_info, set_mirror=False) is None
-    # Ensure that the settings file was not made
-    assert not settings_path.is_file()
-
-
 def _normalize_settings(settings):
     with io.StringIO(settings) as f:
         tree = ET.parse(f)  # noqa: S314
@@ -165,26 +152,11 @@ def test_create_settings(
     *,
     set_mirror: bool,
 ):
+    backstage = cast("Path", part_info.backstage_dir) / "maven-use"
+    backstage.mkdir(parents=True)
     if set_mirror:
-        backstage = cast("Path", part_info.backstage_dir) / "maven-use"
-        backstage.mkdir(parents=True)
         set_mirror_content = dedent(
-            f"""\
-            <profiles>
-                <profile>
-                <id>craft</id>
-                <repositories>
-                    <repository>
-                        <id>craft</id>
-                        <name>Craft-managed intermediate repository</name>
-                        <url>{backstage.as_uri()}</url>
-                    </repository>
-                </repositories>
-                </profile>
-            </profiles>
-            <activeProfiles>
-                <activeProfile>craft</activeProfile>
-            </activeProfiles>
+            """\
             <mirrors>
                 <mirror>
                 <id>debian</id>
@@ -193,7 +165,6 @@ def test_create_settings(
                 <url>file:///usr/share/maven-repo</url>
                 </mirror>
             </mirrors>
-            <localRepository>{part_info.part_build_subdir / ".parts/.m2/repository"}</localRepository>
             """
         )
     else:
@@ -216,7 +187,23 @@ def test_create_settings(
               <active>true</active>
             </proxy>
           </proxies>
-          {set_mirror_content}
+            <profiles>
+                <profile>
+                <id>craft</id>
+                <repositories>
+                    <repository>
+                        <id>craft</id>
+                        <name>Craft-managed intermediate repository</name>
+                        <url>{backstage.as_uri()}</url>
+                    </repository>
+                </repositories>
+                </profile>
+            </profiles>
+            <activeProfiles>
+                <activeProfile>craft</activeProfile>
+            </activeProfiles>
+            {set_mirror_content}
+            <localRepository>{part_info.part_build_subdir / ".parts/.m2/repository"}</localRepository>
         </settings>
         """
     )
