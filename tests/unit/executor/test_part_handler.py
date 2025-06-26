@@ -200,6 +200,7 @@ class TestPartHandling:
             StepInfo(self._part_info, Step.STAGE), stdout=None, stderr=None
         )
         assert state == states.StageState(
+            partition="default",
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
             files={"file"},
@@ -237,6 +238,7 @@ class TestPartHandling:
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
         )
         assert state == states.PrimeState(
+            partition="default",
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
             files={"file"},
@@ -260,6 +262,7 @@ class TestPartHandling:
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
         )
         assert state == states.PrimeState(
+            partition="default",
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
             files={"file"},
@@ -941,7 +944,7 @@ class TestFileFilter:
     def test_apply_file_filter_empty(self, new_dir, partitions):
         fileset = filesets.Fileset([])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default" if partitions else None
+            fileset, str(self._destdir), "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -957,7 +960,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default" if partitions else None
+            fileset, str(self._destdir), "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -973,7 +976,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_dir(self, new_dir, partitions):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default" if partitions else None
+            fileset, str(self._destdir), "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -988,7 +991,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file4", "-dir3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default" if partitions else None
+            fileset, str(self._destdir), "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1004,7 +1007,7 @@ class TestFileFilter:
     def test_apply_file_filter_keep_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default" if partitions else None
+            fileset, str(self._destdir), "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1067,6 +1070,7 @@ class TestHelpers:
             (
                 {
                     "default": MigrationState(
+                        partition="default",
                         files={"foo"},
                         directories={"bar"},
                     )
@@ -1075,6 +1079,7 @@ class TestHelpers:
                 {"default": {"b-key": "b-value"}},
                 {
                     "default": MigrationState(
+                        partition="default",
                         files={"foo", "a-value", "c-value"},
                         directories={"bar", "b-value"},
                     )
@@ -1083,6 +1088,7 @@ class TestHelpers:
             (
                 {
                     "partition-a": MigrationState(
+                        partition="partition-a",
                         files={"foo"},
                         directories={"bar"},
                     )
@@ -1091,10 +1097,12 @@ class TestHelpers:
                 {"default": {"b": "b"}},
                 {
                     "default": MigrationState(
+                        partition="default",
                         files={"a"},
                         directories={"b"},
                     ),
                     "partition-a": MigrationState(
+                        partition="partition-a",
                         files={"foo"},
                         directories={"bar"},
                     ),
@@ -1103,6 +1111,7 @@ class TestHelpers:
             (
                 {
                     "partition-a": MigrationState(
+                        partition="partition-a",
                         files={"foo"},
                         directories={"bar"},
                     )
@@ -1111,13 +1120,16 @@ class TestHelpers:
                 {"partition-c": {"b": "b"}},
                 {
                     "partition-c": MigrationState(
+                        partition="partition-c",
                         directories={"b"},
                     ),
                     "partition-a": MigrationState(
+                        partition="partition-a",
                         files={"foo"},
                         directories={"bar"},
                     ),
                     "partition-b": MigrationState(
+                        partition="partition-b",
                         files={"a"},
                     ),
                 },

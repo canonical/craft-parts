@@ -116,7 +116,10 @@ class _Squasher:
         If the source partition is the default one, content can be distributed to other
         partitions using the provided filesystem mounts.
         """
-        if self._src_partition == self._default_partition:
+        if (
+            self._src_partition is not None
+            and self._src_partition == self._default_partition
+        ):
             # Distribute content into partitions according to the filesystem mounts
             for entry in reversed(self._filesystem_mount):
                 # Only migrate content from the subdirectory indicated by the filesystem mounts
@@ -545,21 +548,21 @@ class PartHandler:
             if not self._part_info.is_default_partition(p)
         }
 
+        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
         default_contents = cast(
             StagePartitionContents,
             contents.partitions_contents.get(
-                self._part_info.default_partition, StagePartitionContents()
+                default_partition, StagePartitionContents()
             ),
         )
 
         return states.StageState(
+            partition=default_partition,
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             partitions_contents=migration_partitions_contents,
-            files=contents.partitions_contents[self._part_info.default_partition].files,
-            directories=contents.partitions_contents[
-                self._part_info.default_partition
-            ].dirs,
+            files=contents.partitions_contents[default_partition].files,
+            directories=contents.partitions_contents[default_partition].dirs,
             overlay_hash=overlay_hash.hex(),
             backstage_files=default_contents.backstage_files,
             backstage_directories=default_contents.backstage_dirs,
@@ -609,14 +612,15 @@ class PartHandler:
             if not self._part_info.is_default_partition(p)
         }
 
+        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
+
         return states.PrimeState(
+            partition=default_partition,
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             partitions_contents=non_default_partitions_contents,
-            files=contents.partitions_contents[self._part_info.default_partition].files,
-            directories=contents.partitions_contents[
-                self._part_info.default_partition
-            ].dirs,
+            files=contents.partitions_contents[default_partition].files,
+            directories=contents.partitions_contents[default_partition].dirs,
             primed_stage_packages=primed_stage_packages,
         )
 
@@ -965,7 +969,10 @@ class PartHandler:
                 files=migrated_files, directories=migrated_dirs
             )
 
-            if partition == self._part_info.default_partition:
+            if (
+                partition is not None
+                and partition == self._part_info.default_partition
+            ):
                 for entry in self._part_info.default_filesystem_mount:
                     self._clean_dangling_whiteouts(
                         self._part_info.prime_dirs[entry.device],

@@ -27,6 +27,7 @@ class TestPullState:
     def test_marshal_empty(self):
         state = PullState()
         assert state.marshal() == {
+            "partition": None,
             "assets": {},
             "part-properties": {},
             "project-options": {},
@@ -39,6 +40,7 @@ class TestPullState:
 
     def test_marshal_unmarshal(self):
         state_data = {
+            "partition": "default",
             "assets": {"stage-packages": ["foo"]},
             "part-properties": {"plugin": "nil"},
             "project-options": {"target_arch": "amd64"},
