@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023-2024 Canonical Ltd.
+# Copyright 2023-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -44,7 +44,9 @@ def _has_partition(path: PurePath | str) -> bool:
     return bool(HAS_PARTITION_REGEX.match(str(path)))
 
 
-def get_partition_and_path(path: FlexiblePath) -> PartitionPathPair:
+def get_partition_and_path(
+    path: FlexiblePath, default_partition: str
+) -> PartitionPathPair:
     """Break a partition path into the partition and the child path.
 
     If the path begins with a partition, that is used. Otherwise, the default
@@ -64,7 +66,7 @@ def get_partition_and_path(path: FlexiblePath) -> PartitionPathPair:
         partition, inner_path = _split_partition_and_inner_path(str_path)
         return PartitionPathPair(partition.strip("()"), path.__class__(inner_path))
 
-    return PartitionPathPair("default", path)
+    return PartitionPathPair(default_partition, path)
 
 
 def _split_partition_and_inner_path(str_path: str) -> tuple[str, str]:

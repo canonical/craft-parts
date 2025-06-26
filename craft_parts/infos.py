@@ -270,6 +270,22 @@ class ProjectInfo:
         return self._partitions
 
     @property
+    def default_partition(self) -> str | None:
+        """Get the "default" partition from a partition list."""
+        if self._partitions:
+            return self._partitions[0]
+        return None
+
+    def is_default_partition(self, partition: str | None) -> bool:
+        """Check if given partition is the default one."""
+        if self._partitions is None and partition is None:
+            return True
+        if self._partitions is not None:
+            return partition == self._partitions[0]
+
+        return False
+
+    @property
     def filesystem_mounts(self) -> FilesystemMounts | None:
         """Return the project's filesystem mounts."""
         return self._filesystem_mounts

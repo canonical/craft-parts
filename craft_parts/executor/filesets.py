@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021,2024 Canonical Ltd.
+# Copyright 2015-2021,2024-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ from glob import iglob
 
 from craft_parts import errors, features
 from craft_parts.utils import path_utils
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 
 class Fileset:
@@ -30,7 +31,13 @@ class Fileset:
     Filepaths to exclude begin with a hyphen.
     """
 
-    def __init__(self, entries: list[str], *, name: str = "") -> None:
+    def __init__(
+        self,
+        entries: list[str],
+        *,
+        name: str = "",
+        default_partition: str = DEFAULT_PARTITION,
+    ) -> None:
         """Initialize a fileset.
 
         If the partition feature is enabled, files in the default partition are
@@ -44,7 +51,10 @@ class Fileset:
         """
         self._name = name
         self._validate_entries(entries)
-        self._list: list[str] = [_normalize_entry(entry) for entry in entries]
+        self._default_partition = default_partition
+        self._list: list[str] = [
+            _normalize_entry(entry, self._default_partition) for entry in entries
+        ]
 
     def __repr__(self) -> str:
         return f"Fileset({self._list!r}, name={self._name!r})"
@@ -74,7 +84,7 @@ class Fileset:
 
         :param item: The item to remove.
         """
-        self._list.remove(_normalize_entry(item))
+        self._list.remove(_normalize_entry(item, self._default_partition))
 
     def combine(self, other: "Fileset") -> None:
         """Combine the entries in this fileset with entries from another fileset.
@@ -117,7 +127,10 @@ class Fileset:
 
 
 def migratable_filesets(
-    fileset: Fileset, srcdir: str, partition: str | None = None
+    fileset: Fileset,
+    srcdir: str,
+    default_partition: str,
+    partition: str | None = None,
 ) -> tuple[set[str], set[str]]:
     """Determine the files to migrate from a directory based on a fileset.
 
@@ -127,7 +140,7 @@ def migratable_filesets(
 
     :return: A tuple containing the set of files and the set of directories to migrate.
     """
-    includes, excludes = _get_file_list(fileset, partition)
+    includes, excludes = _get_file_list(fileset, partition, default_partition)
 
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
@@ -168,7 +181,7 @@ def migratable_filesets(
 
 
 def _get_file_list(
-    fileset: Fileset, partition: str | None
+    fileset: Fileset, partition: str | None, default_partition: str
 ) -> tuple[list[str], list[str]]:
     """Split a fileset to obtain include and exclude file filters.
 
@@ -215,14 +228,18 @@ def _get_file_list(
     # only include files for the partition
     processed_includes: list[str] = []
     for file in includes:
-        file_partition, file_inner_path = path_utils.get_partition_and_path(file)
+        file_partition, file_inner_path = path_utils.get_partition_and_path(
+            file, default_partition
+        )
         if file_partition == partition:
             processed_includes.append(str(file_inner_path))
 
     # only exclude files for the partition
     processed_excludes: list[str] = []
     for file in excludes:
-        file_partition, file_inner_path = path_utils.get_partition_and_path(file)
+        file_partition, file_inner_path = path_utils.get_partition_and_path(
+            file, default_partition
+        )
         if file_partition == partition:
             processed_excludes.append(str(file_inner_path))
 
@@ -309,7 +326,7 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     return os.path.relpath(filename_abspath, base_directory)
 
 
-def _normalize_entry(entry: str) -> str:
+def _normalize_entry(entry: str, default_partition: str) -> str:
     """Normalize an entry to begin with a partition, if partitions are enabled.
 
     If partitions are enabled, `foo` will be normalized to `(default)/foo`.
@@ -322,7 +339,9 @@ def _normalize_entry(entry: str) -> str:
     # split file into an optional prefix (a hyphen character) and the file
     split_file = (entry[0], entry[1:]) if entry[0] == "-" else ("", entry)
 
-    partition, inner_path = path_utils.get_partition_and_path(split_file[1])
+    partition, inner_path = path_utils.get_partition_and_path(
+        split_file[1], default_partition
+    )
 
     if partition:
         return f"{split_file[0]}({partition})/{inner_path}"

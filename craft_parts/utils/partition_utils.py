@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,7 +17,7 @@
 
 import itertools
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
 from craft_parts import errors, features
@@ -34,12 +34,13 @@ PARTITION_INVALID_MSG = (
     "hyphens and slashes, and may not begin or end with a hyphen or a slash."
 )
 
+DEFAULT_PARTITION = "default"
+
 
 def validate_partition_names(partitions: Sequence[str] | None) -> None:
     """Validate the partition feature set.
 
     If the partition feature is enabled, then:
-      - the first partition must be "default"
       - each partition name must contain only lowercase alphanumeric characters
         hyphens and slashes, but not begin or end with a hyphen or a slash
       - partitions are unique
@@ -65,9 +66,6 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
         raise errors.FeatureError(
             "Partition feature is enabled but no partitions are defined."
         )
-
-    if partitions[0] != "default":
-        raise errors.FeatureError("First partition must be 'default'.")
 
     if len(partitions) != len(set(partitions)):
         raise errors.FeatureError("Partitions must be unique.")
@@ -212,7 +210,7 @@ def _namespace_conflicts(a: str, b: str) -> bool:
 
 
 def get_partition_dir_map(
-    base_dir: Path, partitions: Iterable[str] | None, suffix: str = ""
+    base_dir: Path, partitions: Sequence[str] | None, suffix: str = ""
 ) -> dict[str | None, Path]:
     """Return a mapping of partition directories.
 
@@ -230,11 +228,10 @@ def get_partition_dir_map(
     """
     if partitions:
         return {
-            "default": base_dir / suffix,
+            partitions[0]: base_dir / suffix,
             **{
                 partition: base_dir / "partitions" / partition / suffix
-                for partition in partitions
-                if partition != "default"
+                for partition in partitions[1:]
             },
         }
 
