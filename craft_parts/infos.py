@@ -30,6 +30,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.filesystem_mounts import FilesystemMount, FilesystemMountItem
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 if TYPE_CHECKING:
     from craft_parts.state_manager import states
@@ -278,7 +279,9 @@ class ProjectInfo:
 
     def is_default_partition(self, partition: str | None) -> bool:
         """Check if given partition is the default one."""
-        if self._partitions is None and partition is None:
+        if self._partitions is None and (
+            partition is None or partition == DEFAULT_PARTITION
+        ):
             return True
         if self._partitions is not None:
             return partition == self._partitions[0]

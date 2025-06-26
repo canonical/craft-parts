@@ -79,7 +79,7 @@ class MigrationState(BaseModel):
 
     def contents(self, partition: str | None) -> tuple[set[str], set[str]] | None:
         """Return migrated contents for a given partition."""
-        if not partition or partition == self.partition:
+        if partition is None or partition == self.partition:
             return self.files, self.directories
         partition_content = self.partitions_contents.get(partition)
         if partition_content:

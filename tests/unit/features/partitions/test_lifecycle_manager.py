@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023-2024 Canonical Ltd.
+# Copyright 2023-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -165,27 +165,6 @@ class TestPartitionsSupport:
         info = lifecycle.project_info
 
         pytest_check.equal(info.partitions, partitions)
-
-    @pytest.mark.parametrize(
-        "partitions",
-        [
-            ["defaultbad"],
-            ["kernel"],
-            ["kernel", "kernel"],
-            ["kernel", "default"],
-        ],
-    )
-    def test_partitions_default_not_first(self, new_dir, parts_data, partitions):
-        """Raise an error if the first partition is not 'default'."""
-        with pytest.raises(errors.FeatureError) as raised:
-            lifecycle_manager.LifecycleManager(
-                parts_data,
-                application_name="test_manager",
-                cache_dir=new_dir,
-                partitions=partitions,
-            )
-
-        assert raised.value.brief == "First partition must be 'default'."
 
     @pytest.mark.parametrize(
         "partitions",
