@@ -933,6 +933,7 @@ class PartHandler:
                 )
                 continue
 
+            # Read the STAGE overlay migration state to know what was migrated from the overlay
             stage_overlay_migration_state = states.load_overlay_migration_state(
                 self._part.overlay_dirs[partition], Step.STAGE
             )
@@ -942,14 +943,11 @@ class PartHandler:
                 )
                 continue
 
-            srcdir = self._part.dirs.get_stage_dir(partition)
-            destdir = self._part.dirs.get_prime_dir(partition)
-
             migrated_files, migrated_dirs = migration.migrate_files(
                 files=stage_overlay_migration_state.files,
                 dirs=stage_overlay_migration_state.directories,
-                srcdir=srcdir,
-                destdir=destdir,
+                srcdir=self._part.dirs.get_stage_dir(partition),
+                destdir=self._part.dirs.get_prime_dir(partition),
                 permissions=self._part.spec.permissions,
             )
 
