@@ -33,7 +33,7 @@ Bug fixes:
 
 Documentation:
 
-- Update the :ref:`part-properties` reference with the content added in `#1129
+- Update the :ref:`part_properties` reference with the content added in `#1129
   <https://github.com/canonical/craft-parts/pull/1129>`_.
 
 .. _release-2.14.0:

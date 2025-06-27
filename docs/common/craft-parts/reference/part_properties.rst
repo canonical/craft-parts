@@ -118,7 +118,7 @@ build environment.
 
 .. kitbash-field:: parts.PartSpec build_snaps
 
-.. _override-build:
+.. _override_build:
 
 .. kitbash-field:: parts.PartSpec override_build
 
