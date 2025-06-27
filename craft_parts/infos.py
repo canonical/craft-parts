@@ -25,9 +25,13 @@ from typing import TYPE_CHECKING, Any
 
 import pydantic
 
-from craft_parts import FilesystemMounts, errors
+from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
-from craft_parts.filesystem_mounts import FilesystemMount, FilesystemMountItem
+from craft_parts.filesystem_mounts import (
+    FilesystemMount,
+    FilesystemMountItem,
+    FilesystemMounts,
+)
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
