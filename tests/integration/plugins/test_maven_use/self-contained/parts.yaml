@@ -4,8 +4,6 @@ parts:
     source: java-dep-parent
 
   java-dep-add:
-    after:
-      - java-dep-parent
     plugin: maven-use
     source: java-dep-add
     build-attributes:
@@ -14,6 +12,7 @@ parts:
   java-dep-print-addition:
     after:
       - java-dep-add
+      - java-dep-parent
     plugin: maven-use
     source: java-dep-print-addition
     build-attributes:
