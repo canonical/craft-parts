@@ -1,5 +1,10 @@
-
 parts:
+  java-dep-parent:
+    plugin: maven-use
+    source: java-dep-parent
+    build-attributes:
+      - self-contained
+
   java-dep-add:
     plugin: maven-use
     source: java-dep-add
@@ -9,6 +14,7 @@ parts:
   java-dep-print-addition:
     after:
       - java-dep-add
+      - java-dep-parent
     plugin: maven-use
     source: java-dep-print-addition
     build-attributes:
