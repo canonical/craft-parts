@@ -4,7 +4,7 @@ Part properties
 ===============
 
 This reference describes the purpose and usage of all keys that can be declared for
-a part, separated by the build step they influence.
+a part.
 
 
 Top-level keys
@@ -20,8 +20,8 @@ Top-level keys
 Pull step keys
 --------------
 
-Pull step keys define the part's external dependencies and how they are retrieved
-from the given location.
+The following keys define the part's external dependencies and how they are retrieved
+from the declared location.
 
 .. _part-properties-sources:
 
@@ -71,10 +71,11 @@ from the given location.
 Overlay step keys
 -----------------
 
-For craft applications that support filesystem overlays, the overlay step keys modify
-the part's overlay layer and determine how its contents are represented in the stage
+For craft applications that support filesystem overlays, the following keys modify the
+part's overlay layer and determine how the layer's contents are represented in the stage
 directory.
 
+For more details on the overlay step, see :ref:`Overlay step <overlays>`.
 
 .. _overlay_files:
 
@@ -94,7 +95,7 @@ directory.
 Build step keys
 ---------------
 
-Build step keys modify the behavior of the build step and the contents of the part's
+The following keys modify the build step's behavior and the contents of the part's
 build environment.
 
 .. _after:
@@ -131,8 +132,8 @@ build environment.
 Stage step keys
 ---------------
 
-Stage step keys modify the behavior of the stage step and determine how files from the
-build directory are represented in the stage directory.
+The following keys modify the stage step's behavior and determine how files from the
+part's build directory are represented in the stage directory.
 
 .. _stage:
 
@@ -157,8 +158,8 @@ build directory are represented in the stage directory.
 Prime step keys
 ---------------
 
-Prime step keys modify the behavior of the prime step and determine how the contents of
-the stage directory are are reflected in the final payload.
+The following keys modify the prime step's behavior and determine how the contents
+of the stage directory are reflected in the final payload.
 
 .. _prime:
 
