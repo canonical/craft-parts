@@ -47,6 +47,7 @@ apt-questing = [
 ]
 docs = [
     "canonical-sphinx",
+    "pydantic-kitbash==0.0.5",
     "setuptools",  # Missing from sphinxcontrib-details-directive,
     # see https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "sphinx",
