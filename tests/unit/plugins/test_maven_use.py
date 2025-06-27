@@ -14,8 +14,8 @@
 
 """Unit tests for the Maven use plugin."""
 
-from pathlib import Path
 import re
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
