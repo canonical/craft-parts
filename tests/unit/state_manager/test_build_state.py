@@ -28,6 +28,7 @@ class TestBuildState:
     def test_marshal_empty(self):
         state = BuildState()
         assert state.marshal() == {
+            "partition": None,
             "assets": {},
             "part-properties": {},
             "project-options": {},
@@ -39,6 +40,7 @@ class TestBuildState:
 
     def test_marshal_unmarshal(self):
         state_data = {
+            "partition": "default",
             "assets": {"build-packages": ["foo"]},
             "part-properties": {"plugin": "nil"},
             "project-options": {"target_arch": "amd64"},

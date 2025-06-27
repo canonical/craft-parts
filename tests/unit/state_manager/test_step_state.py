@@ -28,6 +28,7 @@ class TestMigrationState:
     def test_marshal_empty(self):
         state = step_state.MigrationState()
         assert state.marshal() == {
+            "partition": None,
             "files": set(),
             "directories": set(),
             "partitions_contents": {},
@@ -35,10 +36,12 @@ class TestMigrationState:
 
     def test_marshal_data(self):
         state = step_state.MigrationState(
+            partition="foo",
             files={"a", "b", "c"},
             directories={"d", "e", "f"},
         )
         assert state.marshal() == {
+            "partition": "foo",
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
             "partitions_contents": {},
@@ -46,6 +49,7 @@ class TestMigrationState:
 
     def test_unmarshal(self):
         data = {
+            "partition": "foo",
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
             "partitions_contents": {},
@@ -58,6 +62,7 @@ class TestMigrationState:
         [
             (
                 step_state.MigrationState(
+                    partition=None,
                     files={"a", "b", "c"},
                     directories={"d", "e", "f"},
                     partitions_contents={
@@ -71,6 +76,7 @@ class TestMigrationState:
             ),
             (
                 step_state.MigrationState(
+                    partition=None,
                     files={"a", "b", "c"},
                     directories={"d", "e", "f"},
                     partitions_contents={
@@ -84,6 +90,7 @@ class TestMigrationState:
             ),
             (
                 step_state.MigrationState(
+                    partition="default",
                     files={"a", "b", "c"},
                     directories={"d", "e", "f"},
                     partitions_contents={
@@ -178,6 +185,7 @@ class TestStepState:
     def test_marshal_empty(self):
         state = SomeStepState()
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {},
             "project-options": {},
             "files": set(),
@@ -197,6 +205,7 @@ class TestStepState:
             directories={"b"},
         )
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {"name": "foo"},
             "project-options": {"number": 42},
             "files": {"a"},
@@ -207,6 +216,7 @@ class TestStepState:
     def test_ignore_additional_data(self):
         state = SomeStepState(extra="something")  # type: ignore[reportGeneralTypeIssues]
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {},
             "project-options": {},
             "files": set(),

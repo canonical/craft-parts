@@ -181,6 +181,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             StepInfo(self._part_info, Step.STAGE), stdout=None, stderr=None
         )
         assert state == states.StageState(
+            partition="default",
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
             files={"file"},

@@ -34,6 +34,7 @@ class TestStepStates:
 
     def test_load_pull_state(self):
         state_data = {
+            "partition": None,
             "assets": {"stage-packages": ["foo"]},
             "part-properties": {"plugin": "nil"},
             "project-options": {"target_arch": "amd64"},
@@ -54,6 +55,7 @@ class TestStepStates:
 
     def test_load_build_state(self):
         state_data = {
+            "partition": None,
             "assets": {"build-packages": ["foo"]},
             "part-properties": {"plugin": "nil"},
             "project-options": {"target_arch": "amd64"},
@@ -73,6 +75,7 @@ class TestStepStates:
 
     def test_load_stage_state(self):
         state_data = {
+            "partition": None,
             "part-properties": {"plugin": "nil"},
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
@@ -93,6 +96,7 @@ class TestStepStates:
 
     def test_load_prime_state(self):
         state_data = {
+            "partition": None,
             "part-properties": {"plugin": "nil"},
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
@@ -131,6 +135,7 @@ class TestMigrationStates:
     @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
     def test_load_overlay_migration_state(self, step):
         state_data = {
+            "partition": "foo",
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
             "partitions_contents": {

@@ -28,6 +28,7 @@ class TestStageState:
     def test_marshal_empty(self):
         state = StageState()
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {},
             "project-options": {},
             "files": set(),
@@ -40,6 +41,7 @@ class TestStageState:
 
     def test_marshal_unmarshal(self):
         state_data = {
+            "partition": "default",
             "part-properties": {"plugin": "nil"},
             "project-options": {"target_arch": "amd64"},
             "files": {"a"},
