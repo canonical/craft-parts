@@ -31,6 +31,11 @@ Bug fixes:
 - With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
   ``<distributionManagement>`` tags.
 
+Documentation:
+
+- Update the :ref:`part-properties` reference with the content added in `#1129
+  <https://github.com/canonical/craft-parts/pull/1129>`_.
+
 .. _release-2.14.0:
 
 2.14.0 (2025-06-20)
