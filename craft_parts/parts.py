@@ -1160,4 +1160,6 @@ def _get_part_spec(data: dict[str, Any]) -> PartSpec:
 
     # validate common part properties
     part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
+    plugins.validate_build_attributes(spec, plugin_name=plugin_name)
+
     return PartSpec(**part_spec)

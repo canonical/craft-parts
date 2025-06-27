@@ -416,3 +416,14 @@ class TestPluginProperties:
                 },
             )
         assert raised.value.part_name == "bar"
+
+    def test_unsupported_build_attributes(self, new_dir):
+        with pytest.raises(errors.UnsupportedBuildAttributesError):
+            self._get_manager(
+                new_dir,
+                all_parts={
+                    "parts": {
+                        "bar": {"plugin": "nil", "build-attributes": ["self-contained"]}
+                    }
+                },
+            )

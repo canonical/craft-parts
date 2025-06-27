@@ -849,3 +849,19 @@ class FilesystemMountError(PartsError):
 
         # Filter out internal __root__ detail.
         return loc_str.replace(".__root__", "")
+
+
+class UnsupportedBuildAttributesError(PartsError):
+    """Use of build-attributes that a plugin does not support."""
+
+    def __init__(self, unsupported: set[str], plugin_name: str) -> None:
+        noun = "build-attribute" if len(unsupported) == 1 else "build-attribute."
+        message = (
+            f"Plugin {plugin_name!r} does not support"
+            f" the {sorted(unsupported)!r} {noun}."
+        )
+
+        super().__init__(
+            brief=message,
+            resolution=f"Remove the {noun}, or use a different plugin.",
+        )

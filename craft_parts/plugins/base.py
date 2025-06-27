@@ -91,6 +91,15 @@ class Plugin(abc.ABC):
         """
         self._action_properties = deepcopy(action_properties)
 
+    @classmethod
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports.
+
+        By default, a plugin supports no build attributes at all. Subclasses must
+        override this to declare support for specific attributes.
+        """
+        return set()
+
 
 class BasePythonPlugin(Plugin):
     """A base class for Python plugins.

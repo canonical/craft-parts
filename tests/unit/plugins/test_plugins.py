@@ -13,10 +13,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import re
 
 import pytest
-from craft_parts import plugins
+from craft_parts import errors, plugins
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import nil_plugin
@@ -198,3 +198,28 @@ class TestHelpers:
 
         # make sure we don't destroy original data
         assert data == old_data
+
+    @pytest.mark.parametrize(
+        "parts_data",
+        [
+            pytest.param({}, id="no build attribute"),
+            pytest.param(
+                {"build-attributes": ["self-contained"]}, id="valid self-contained"
+            ),
+            pytest.param(
+                {"build-attributes": ["fake-attribute"]}, id="unknown attribute"
+            ),
+        ],
+    )
+    def test_validate_build_attributes_ok(self, parts_data):
+        plugins.validate_build_attributes(parts_data, plugin_name="maven")
+
+    def test_validate_build_attributes_error(self):
+        parts_data = {"build-attributes": ["self-contained"]}
+        expected_message = re.escape(
+            "Plugin 'nil' does not support the ['self-contained'] build-attribute."
+        )
+        with pytest.raises(
+            errors.UnsupportedBuildAttributesError, match=expected_message
+        ):
+            plugins.validate_build_attributes(parts_data, plugin_name="nil")
