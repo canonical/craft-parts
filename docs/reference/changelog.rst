@@ -23,7 +23,7 @@ New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
   encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the `parent` tag on a :file:`pom.xml` file with the maven-use plugin.
+- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use plugin.
 
 Bug fixes:
 
