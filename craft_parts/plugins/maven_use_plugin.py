@@ -104,7 +104,7 @@ class MavenUsePlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "deploy"]
 
-        self_contained = True
+        self_contained = self._is_self_contained()
 
         settings_path = create_maven_settings(
             part_info=self._part_info, set_mirror=self_contained

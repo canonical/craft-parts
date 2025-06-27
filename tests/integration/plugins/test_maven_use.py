@@ -24,10 +24,40 @@ from craft_parts import LifecycleManager, Step
 SOURCE_DIR = Path(__file__).parent / "test_maven_use"
 
 
-def test_maven_use_plugin(new_dir, partitions, monkeypatch, caplog):
+def test_maven_use_plugin(new_dir, partitions, monkeypatch):
+    project_dir = Path(new_dir) / "project"
+    shutil.copytree(SOURCE_DIR / "simple", project_dir)
+    monkeypatch.chdir(project_dir)
+    work_dir = Path(new_dir)
+    parts_yaml = (project_dir / "parts.yaml").read_text()
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts,
+        application_name="simple",
+        cache_dir=new_dir,
+        work_dir=work_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # Check that jar and pom and where "deployed" to the backstage
+    backstage = lf.project_info.backstage_dir
+
+    expected_jar = backstage / "maven-use/org/starcraft/add/2.2.0/add-2.2.0.jar"
+    assert expected_jar.is_file()
+
+    expected_pom = backstage / "maven-use/org/starcraft/add/2.2.0/add-2.2.0.pom"
+    assert expected_pom.is_file()
+
+
+def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplog):
     caplog.set_level(logging.DEBUG)
     project_dir = Path(new_dir) / "project"
-    shutil.copytree(SOURCE_DIR, project_dir)
+    shutil.copytree(SOURCE_DIR / "self-contained", project_dir)
     monkeypatch.chdir(project_dir)
     work_dir = Path(new_dir)
     parts_yaml = (project_dir / "parts.yaml").read_text()
