@@ -23,6 +23,10 @@ New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
   encounters invalid XML in the software's ``pom.xml`` file.
+- Add the ``self-contained`` build-attribute. This attribute declares that a plugin's
+  build must be done without accessing resources outside the build system (like the
+  Internet), and as such requires explicit plugin support. Currently the ``maven`` and
+  ``maven-use`` support this attribute.
 
 Bug fixes:
 

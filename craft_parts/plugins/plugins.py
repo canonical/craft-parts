@@ -19,6 +19,8 @@
 import copy
 from typing import TYPE_CHECKING, Any
 
+from craft_parts import errors
+
 from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
@@ -48,8 +50,10 @@ if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
     from craft_parts import infos, parts
 
-
 PluginType = type[Plugin]
+
+# build-attributes that require plugin support.
+PLUGINS_BUILD_ATTRIBUTES = {"self-contained"}
 
 
 # Plugin registry by plugin API version
@@ -154,3 +158,20 @@ def extract_part_properties(
     """
     prefix = f"{plugin_name}-"
     return {k: v for k, v in data.items() if not k.startswith(prefix)}
+
+
+def validate_build_attributes(data: dict[str, Any], *, plugin_name: str) -> None:
+    """Validate that the build-attributes are compatible with the plugin."""
+    plugin_class = get_plugin_class(plugin_name)
+    build_attributes = data.get("build-attributes", [])
+
+    # Plugin-related build attributes requested by the user
+    user_attributes = {
+        attr for attr in build_attributes if attr in PLUGINS_BUILD_ATTRIBUTES
+    }
+
+    # build attributes that the plugin itself supports
+    plugin_attributes = plugin_class.supported_build_attributes()
+
+    if unsupported := user_attributes - plugin_attributes:
+        raise errors.UnsupportedBuildAttributesError(unsupported, plugin_name)
