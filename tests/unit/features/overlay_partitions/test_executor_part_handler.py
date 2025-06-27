@@ -644,8 +644,8 @@ class TestOverlayMigrationFilesystems:
         shutil.rmtree(self._p2_handler._part.part_layer_dir)
         self._p2_handler._part.part_layer_dir.mkdir()
 
-        _run_step_migration(self._p1_handler, Step.PRIME)
-        _run_step_migration(self._p2_handler, Step.PRIME)
+        _run_step_migration(self._p1_handler, step)
+        _run_step_migration(self._p2_handler, step)
 
         default_overlay_state_path = Path(f"overlay/{step_dir}_overlay")
         mypart_overlay_state_path = Path(
