@@ -633,8 +633,12 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
         mock.patch(
             "craft_parts.utils.maven.common.MavenPlugin.update_versions"
         ) as mock_plugin,
+        mock.patch(
+            "craft_parts.utils.maven.common.MavenParent.update_versions"
+        ) as mock_parent
     ):
         update_pom(part_info=part_info, add_distribution=False, self_contained=True)
 
     mock_artifact.assert_called_once()
     mock_plugin.assert_called_once()
+    mock_parent.assert_called_once()

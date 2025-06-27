@@ -192,6 +192,9 @@ def update_pom(
     if self_contained:
         MavenArtifact.update_versions(project, namespaces, existing)
         MavenPlugin.update_versions(project, namespaces, existing)
+        if "java-dep-print-add" in str(pom_xml):
+            pass
+        MavenParent.update_versions(project, namespaces, existing)
 
     tree.write(pom_xml)
 
@@ -256,6 +259,22 @@ class MavenArtifact:
                 logger.debug(
                     f"{cls.field_name} {dep.artifact_id} has no available version, skipping."
                 )
+
+
+@dataclass
+class MavenParent(MavenArtifact):
+    """A dataclass for the Maven parent tag."""
+
+    field_name: str = "Parent"
+
+    @classmethod
+    @override
+    def _collect_elements(cls, project: ET.Element, namespaces: dict[str, str]) -> list[ET.Element]:
+        parent = project.find("parent", namespaces)
+        if parent is None:
+            return []
+        return [parent]
+
 
 
 @dataclass
