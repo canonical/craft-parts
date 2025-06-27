@@ -16,11 +16,6 @@
 
 """Craft a project from several parts."""
 
-from .filesystem_mounts import (
-    FilesystemMount,
-    FilesystemMounts,
-    validate_filesystem_mount,
-)
 from . import plugins
 from .actions import Action, ActionProperties, ActionType
 from .dirs import ProjectDirs
@@ -56,8 +51,6 @@ __all__ = [
     "Action",
     "ActionProperties",
     "ActionType",
-    "FilesystemMount",
-    "FilesystemMounts",
     "ProjectDirs",
     "PartsError",
     "ProjectInfo",
@@ -69,7 +62,6 @@ __all__ = [
     "plugins",
     "expand_environment",
     "validate_part",
-    "validate_filesystem_mount",
     "part_has_overlay",
     "part_has_slices",
     "part_has_chisel_as_build_snap",
