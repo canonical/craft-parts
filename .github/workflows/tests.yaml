@@ -189,7 +189,7 @@ jobs:
           fi
           echo "::endgroup::"
           echo "::group::JDK"
-          sudo apt-get install -y openjdk-17-jdk openjdk-21-jdk openjdk-8-jdk-headless openjdk-11-jdk tinyproxy gradle
+          sudo apt-get install -y default-jdk openjdk-17-jdk openjdk-21-jdk openjdk-8-jdk-headless openjdk-11-jdk tinyproxy gradle
           echo "::endgroup::"
           echo "::group::Maven"
           sudo apt-get install maven libmaven-resources-plugin-java libmaven-compiler-plugin-java \

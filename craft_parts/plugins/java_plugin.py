@@ -128,3 +128,6 @@ class JavaPlugin(Plugin):
             ${CRAFT_PART_INSTALL}/jar.
         """
         return self._get_java_link_commands() + self._get_jar_link_commands()
+
+    def _is_self_contained(self) -> bool:
+        return "self-contained" in self._part_info.build_attributes

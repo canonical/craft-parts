@@ -134,16 +134,19 @@ def test_missing_parameters():
     assert err[0]["type"] == "missing"
 
 
-def test_get_build_commands(part_info):
+def test_get_build_commands(part_info, maven_settings_path):
     properties = MavenPlugin.properties_class.unmarshal({"source": "."})
     plugin = MavenPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == (
-        ["mvn package", *plugin._get_java_post_build_commands()]
+        [
+            f"mvn package -s {maven_settings_path}",
+            *plugin._get_java_post_build_commands(),
+        ]
     )
 
 
-def test_get_build_commands_with_parameters(part_info):
+def test_get_build_commands_with_parameters(part_info, maven_settings_path):
     properties = MavenPlugin.properties_class.unmarshal(
         {
             "source": ".",
@@ -154,13 +157,13 @@ def test_get_build_commands_with_parameters(part_info):
 
     assert plugin.get_build_commands() == (
         [
-            "mvn package -Dprop1=1 -c",
+            f"mvn package -s {maven_settings_path} -Dprop1=1 -c",
             *plugin._get_java_post_build_commands(),
         ]
     )
 
 
-def test_get_build_commands_use_maven_wrapper(part_info):
+def test_get_build_commands_use_maven_wrapper(part_info, maven_settings_path):
     properties = MavenPlugin.properties_class.unmarshal(
         {
             "source": ".",
@@ -176,7 +179,7 @@ def test_get_build_commands_use_maven_wrapper(part_info):
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
 common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 }""",
-            "${CRAFT_PART_BUILD_WORK}/mvnw package",
+            "${CRAFT_PART_BUILD_WORK}/mvnw package" + f" -s {maven_settings_path}",
             *plugin._get_java_post_build_commands(),
         ]
     )

@@ -13,26 +13,30 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 import pytest
-from craft_parts.infos import PartInfo, ProjectInfo
-from craft_parts.parts import Part
+from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts.plugins import PluginProperties
 from craft_parts.plugins.java_plugin import JavaPlugin
-from craft_parts.plugins.maven_plugin import MavenPlugin
+from overrides import override
 
 
-@pytest.fixture
-def part_info(new_dir):
-    return PartInfo(
-        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
-        part=Part("my-part", {}),
-    )
+class DummyJavaPlugin(JavaPlugin):
+    @override
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    @override
+    def get_build_packages(self) -> set[str]:
+        return set()
+
+    @override
+    def get_build_commands(self) -> list[str]:
+        return []
 
 
 def test_java_plugin_no_java(part_info, mocker):
-    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
-    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    properties = PluginProperties.unmarshal({"source": "."})
+    plugin = DummyJavaPlugin(properties=properties, part_info=part_info)
 
     def _check_java(self, javac: str):
         return None, ""
@@ -52,8 +56,29 @@ def test_java_plugin_jre_not_17(part_info, mocker):
 
     mocker.patch.object(JavaPlugin, "_check_java", _check_java)
 
-    properties = MavenPlugin.properties_class.unmarshal({"source": "."})
-    plugin = MavenPlugin(properties=properties, part_info=part_info)
+    properties = PluginProperties.unmarshal({"source": "."})
+    plugin = DummyJavaPlugin(properties=properties, part_info=part_info)
     env = plugin.get_build_environment()
     assert len(env) == 1
     assert "17" in env["JAVA_HOME"]
+
+
+@pytest.mark.parametrize(
+    ("part_properties", "expected_self_contained"),
+    [({}, False), ({"build-attributes": ["self-contained"]}, True)],
+)
+def test_java_plugin_self_contained(part_properties, expected_self_contained, new_dir):
+    cache_dir = new_dir / "cache"
+    cache_dir.mkdir()
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="testcraft",
+            cache_dir=cache_dir,
+        ),
+        part=Part("my-part", part_properties),
+    )
+
+    properties = PluginProperties.unmarshal(part_properties)
+    plugin = DummyJavaPlugin(properties=properties, part_info=part_info)
+
+    assert plugin._is_self_contained() == expected_self_contained
