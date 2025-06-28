@@ -23,7 +23,7 @@ beautifulsoup4==4.12.3
     #   canonical-sphinx-extensions
     #   furo
     #   pyspelling
-bracex==2.5.post1
+bracex==2.6
     # via
     #   -r requirements.txt
     #   wcmatch
