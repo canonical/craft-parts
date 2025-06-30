@@ -100,6 +100,7 @@ def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplo
     expected_bumps = [
         ("org.starcraft.add", "2.0.0", "2.2.0"),
         ("org.starcraft.print-addition", "1.0.0", "1.1.0"),
+        ("org.starcraft.parent", "1.1.0", "1.0.0")
     ]
 
     # Check that versions are adjusted as necessary
