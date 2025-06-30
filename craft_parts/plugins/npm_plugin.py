@@ -23,7 +23,6 @@ import re
 from textwrap import dedent
 from typing import Any, Literal, cast
 
-import requests
 from overrides import override
 from pydantic import model_validator
 from typing_extensions import Self
@@ -163,6 +162,8 @@ class NpmPlugin(Plugin):
         :return: The list of Node.js releases.
         """
         logging.info("Fetching Node.js release index...")
+        import requests
+
         resp = requests.get("https://nodejs.org/dist/index.json", timeout=10)
         resp.raise_for_status()
         versions: list[dict[str, Any]] = resp.json()

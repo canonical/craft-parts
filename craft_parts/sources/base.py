@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 import pydantic
-import requests
 from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
@@ -300,6 +299,7 @@ class FileSourceHandler(SourceHandler):
         if url_utils.get_url_scheme(self.source) == "ftp":
             raise NotImplementedError("ftp download not implemented")
 
+        import requests
         try:
             request = requests.get(
                 self.source, stream=True, allow_redirects=True, timeout=3600

@@ -24,16 +24,19 @@ import subprocess
 import sys
 from collections.abc import Iterator, Sequence
 from typing import (
+    TYPE_CHECKING,
     Any,
     cast,
 )
 from urllib import parse
 
-import requests
 import requests_unixsocket  # type: ignore[import]
 from requests import exceptions
 
 from . import errors
+
+if TYPE_CHECKING:
+    from requests.models import Response
 
 # pylint: disable=line-too-long
 _STORE_ASSERTION = [
@@ -344,7 +347,7 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[by
     slug = f"snaps/{parse.quote(snap_name, safe='')}/file"
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_file: requests.Response = requests_unixsocket.get(url)
+        snap_file: Response = requests_unixsocket.get(url)
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_file.raise_for_status()

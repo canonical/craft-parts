@@ -18,7 +18,7 @@
 
 from typing import TYPE_CHECKING
 
-from . import errors, snaps
+from . import errors
 from .normalize import fix_pkg_config
 from .platform import is_deb_based, is_dnf_based, is_yum_based
 
