@@ -118,13 +118,13 @@ build environment.
 
 .. kitbash-field:: parts.PartSpec build_snaps
 
-.. _reference-part-properties-override-build:
-
-.. kitbash-field:: parts.PartSpec override_build
-
 .. _reference-part-properties-organize:
 
 .. kitbash-field:: parts.PartSpec organize_files
+
+.. _reference-part-properties-override-build:
+
+.. kitbash-field:: parts.PartSpec override_build
 
 
 .. _reference-part-properties-stage-step-keys:
