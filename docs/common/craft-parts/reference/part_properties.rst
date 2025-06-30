@@ -224,7 +224,34 @@ source
 
 **Step:** pull
 
-The location of the source code and data.
+The location of the source code and data. It can refer to a git
+repository, deb package, zip file, local directory, etc. See
+:ref:`source_type`.
+
+The following example points the source field to a git repository:
+
+.. code:: yaml
+
+   source: https://github.com/canonical/rockcraft.git
+
+.. note::
+
+   Note that, in case of git, any of the `git url formats`_ is
+   supported.
+
+On the other hand, a local directory can also be declared as the
+source:
+
+.. code:: yaml
+
+   source: ./my-directory
+
+Any other file formats would be declared the same way, for example
+a zip file:
+
+.. code:: yaml
+
+   source: ./my-directory/my-file.zip
 
 .. _source_branch:
 
@@ -403,3 +430,4 @@ The ``plugin`` and ``parse-info`` keys apply to all steps.
 .. _`NPM`: https://www.npmjs.com/
 .. _`Python package`: https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
 .. _`SCons`: https://scons.org/
+.. _`git url formats`: https://git-scm.com/docs/git-clone#_git_urls
