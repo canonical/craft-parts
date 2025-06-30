@@ -33,8 +33,7 @@ Bug fixes:
 
 Documentation:
 
-- Update the :ref:`part_properties` reference with the content added in `#1129
-  <https://github.com/canonical/craft-parts/pull/1129>`_.
+- Document the updated and rewritten ``PartSpec`` model in the :ref:`part_properties`.
 
 .. _release-2.14.0:
 

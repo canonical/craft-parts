@@ -24,13 +24,6 @@ author = "Canonical Group Ltd"
 
 copyright = "2023-%s, %s" % (datetime.date.today().year, author)
 
-# Add directories to sys path to simplify kitbash arguments
-project_dir = pathlib.Path(__file__).parents[1].resolve()
-sys.path.insert(0, str(project_dir.absolute()))
-
-model_dir = (project_dir / "craft_parts").resolve()
-sys.path.append(str(model_dir.absolute()))
-
 # region Configuration for canonical-sphinx
 ogp_site_url = "https://canonical-craft-parts.readthedocs-hosted.com/"
 ogp_site_name = project
@@ -116,6 +109,13 @@ github_repository = "craft-parts"
 
 # endregion
 
+# region Automated documentation
+
+project_dir = pathlib.Path(__file__).parents[1].resolve()
+sys.path.insert(0, str(project_dir.absolute()))
+
+model_dir = (project_dir / "craft_parts").resolve()
+sys.path.append(str(model_dir.absolute()))
 
 def run_apidoc(_):
     import os
@@ -142,3 +142,5 @@ def setup(app):
 
     logger = logging.getLogger("sphinx.sphinx_autodoc_typehints")
     logger.addFilter(filter_errordict_warnings)
+
+# endregion

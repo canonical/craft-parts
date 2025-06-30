@@ -127,7 +127,7 @@ supports. For example, the :py:mod:`cmake plugin <craft_parts.plugins.cmake_plug
 
 .. ifconfig:: project in ("Snapcraft",)
 
-   The `build_attributes` property allows a number of standard
+   The ``build_attributes`` property allows a number of standard
    customisations to be applied to the build. Some of these are used to address
    issues that occur in specific situations; others, such as ``debug`` are
    generally useful.

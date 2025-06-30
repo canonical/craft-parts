@@ -10,12 +10,12 @@ a part.
 Top-level keys
 --------------
 
-.. _part-properties-plugin:
+.. _reference-part-properties-plugin:
 
 .. kitbash-field:: parts.PartSpec plugin
 
 
-.. _pull_step_keys:
+.. _reference-pull-step-keys:
 
 Pull step keys
 --------------
@@ -23,50 +23,50 @@ Pull step keys
 The following keys define the part's external dependencies and how they are retrieved
 from the declared location.
 
-.. _part-properties-sources:
+.. _reference-part-properties-sources:
 
-.. _source:
+.. _reference-part-properties-source:
 
 .. kitbash-field:: parts.PartSpec source
 
-.. _source_type:
+.. _reference-part-properties-source-type:
 
 .. kitbash-field:: parts.PartSpec source_type
 
-.. _source_checksum:
+.. _reference-part-properties-source-checksum:
 
 .. kitbash-field:: parts.PartSpec source_checksum
 
-.. _source_branch:
+.. _reference-part-properties-source-branch:
 
 .. kitbash-field:: parts.PartSpec source_branch
 
-.. _source_tag:
+.. _reference-part-properties-source-tag:
 
 .. kitbash-field:: parts.PartSpec source_tag
 
-.. _source_commit:
+.. _reference-part-properties-source-commit:
 
 .. kitbash-field:: parts.PartSpec source_commit
 
-.. _source_depth:
+.. _reference-part-properties-source-depth:
 
 .. kitbash-field:: parts.PartSpec source_depth
 
-.. _source_submodules:
+.. _reference-part-properties-source-submodules:
 
 .. kitbash-field:: parts.PartSpec source_submodules
 
-.. _source_subdir:
+.. _reference-part-properties-source-subdir:
 
 .. kitbash-field:: parts.PartSpec source_subdir
 
-.. _override_pull:
+.. _reference-part-properties-override-pull:
 
 .. kitbash-field:: parts.PartSpec override_pull
 
 
-.. _overlay_step_keys:
+.. _reference-part-properties-overlay-step-keys:
 
 Overlay step keys
 -----------------
@@ -77,20 +77,20 @@ directory.
 
 For more details on the overlay step, see :ref:`Overlay step <overlays>`.
 
-.. _overlay_files:
+.. _reference-part-properties-overlay-files:
 
 .. kitbash-field:: parts.PartSpec overlay_files
 
-.. _overlay_packages:
+.. _reference-part-properties-overlay-packages:
 
 .. kitbash-field:: parts.PartSpec overlay_packages
 
-.. _overlay_script:
+.. _reference-part-properties-overlay-script:
 
 .. kitbash-field:: parts.PartSpec overlay_script
 
 
-.. _build_step_keys:
+.. _reference-part-properties-build-step-keys:
 
 Build step keys
 ---------------
@@ -98,36 +98,36 @@ Build step keys
 The following keys modify the build step's behavior and the contents of the part's
 build environment.
 
-.. _after:
+.. _reference-part-properties-after:
 
 .. kitbash-field:: parts.PartSpec after
 
-.. _disable_parallel:
+.. _reference-part-properties-disable-parallel:
 
 .. kitbash-field:: parts.PartSpec disable_parallel
 
-.. _build_environment:
+.. _reference-part-properties-build-environment:
 
 .. kitbash-field:: parts.PartSpec build_environment
 
-.. _build_packages:
+.. _reference-part-properties-build-packages:
 
 .. kitbash-field:: parts.PartSpec build_packages
 
-.. _build_snaps:
+.. _reference-part-properties-build-snaps:
 
 .. kitbash-field:: parts.PartSpec build_snaps
 
-.. _override_build:
+.. _reference-part-properties-override-build:
 
 .. kitbash-field:: parts.PartSpec override_build
 
-.. _organize:
+.. _reference-part-properties-organize:
 
 .. kitbash-field:: parts.PartSpec organize_files
 
 
-.. _stage_step_keys:
+.. _reference-part-properties-stage-step-keys:
 
 Stage step keys
 ---------------
@@ -135,25 +135,25 @@ Stage step keys
 The following keys modify the stage step's behavior and determine how files from the
 part's build directory are represented in the stage directory.
 
-.. _stage:
+.. _reference-part-properties-stage:
 
 .. kitbash-field:: parts.PartSpec stage_files
     :override-type: list[str]
 
-.. _stage_packages:
+.. _reference-part-properties-stage-packages:
 
 .. kitbash-field:: parts.PartSpec stage_packages
 
-.. _stage_snaps:
+.. _reference-part-properties-stage-snaps:
 
 .. kitbash-field:: parts.PartSpec stage_snaps
 
-.. _override_stage:
+.. _reference-part-properties-override-stage:
 
 .. kitbash-field:: parts.PartSpec override_stage
 
 
-.. _prime_step_keys:
+.. _reference-part-properties-prime-step-keys:
 
 Prime step keys
 ---------------
@@ -161,22 +161,22 @@ Prime step keys
 The following keys modify the prime step's behavior and determine how the contents
 of the stage directory are reflected in the final payload.
 
-.. _prime:
+.. _reference-part-properties-prime:
 
 .. kitbash-field:: parts.PartSpec prime_files
     :override-type: list[str]
 
-.. _override-prime:
+.. _reference-part-properties-override-prime:
 
 .. kitbash-field:: parts.PartSpec override_prime
 
 
-.. _permissions_keys:
+.. _reference-part-properties-permissions-keys:
 
 Permissions keys
 ----------------
 
-.. _permissions:
+.. _reference-part-properties-permissions:
 
 .. kitbash-field:: parts.PartSpec permissions
 
