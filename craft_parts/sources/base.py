@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 import pydantic
-import requests
 from overrides import overrides
 
 from craft_parts.dirs import ProjectDirs
@@ -281,6 +280,8 @@ class FileSourceHandler(SourceHandler):
 
         :param filepath: the destination file to download to.
         """
+        import requests
+
         if filepath is None:
             self._file = Path(self.part_src_dir, os.path.basename(self.source))
         else:

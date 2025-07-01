@@ -20,8 +20,10 @@ import logging
 import os
 import urllib.parse
 import urllib.request
+from typing import TYPE_CHECKING
 
-import requests
+if TYPE_CHECKING:
+    from requests import Response
 
 from craft_parts.utils import os_utils
 
@@ -39,7 +41,7 @@ def is_url(url: str) -> bool:
 
 
 def download_request(
-    request: requests.Response,
+    request: "Response",
     destination: str,
     message: str | None = None,
     total_read: int = 0,

@@ -24,14 +24,14 @@ import subprocess
 import sys
 from collections.abc import Iterator, Sequence
 from typing import (
+    TYPE_CHECKING,
     Any,
     cast,
 )
 from urllib import parse
 
-import requests
-import requests_unixsocket  # type: ignore[import]
-from requests import exceptions
+if TYPE_CHECKING:
+    from requests import Response
 
 from . import errors
 
@@ -111,6 +111,8 @@ class SnapPackage:
 
         Validity of the results are determined by checking self.installed.
         """
+        from requests import exceptions
+
         if self._is_installed is None:
             with contextlib.suppress(exceptions.HTTPError):
                 self._local_snap_info = _get_local_snap_info(self.name)
@@ -119,6 +121,8 @@ class SnapPackage:
 
     def get_store_snap_info(self) -> dict[str, Any] | None:
         """Return a store payload for the snap."""
+        from requests import exceptions
+
         if self._is_in_store is None:
             # Some environments timeout often, like the armv7 testing
             # infrastructure. Given that constraint, we add some retry
@@ -341,10 +345,13 @@ def get_snapd_socket_path_template() -> str:
 
 
 def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[bytes]:
+    import requests_unixsocket
+    from requests import exceptions
+
     slug = f"snaps/{parse.quote(snap_name, safe='')}/file"
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_file: requests.Response = requests_unixsocket.get(url)
+        snap_file: Response = requests_unixsocket.get(url)
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_file.raise_for_status()
@@ -352,6 +359,9 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[by
 
 
 def _get_local_snap_info(snap_name: str) -> dict[str, Any]:
+    import requests_unixsocket
+    from requests import exceptions
+
     slug = f"snaps/{parse.quote(snap_name, safe='')}"
     url = get_snapd_socket_path_template().format(slug)
     try:
@@ -365,6 +375,8 @@ def _get_local_snap_info(snap_name: str) -> dict[str, Any]:
 def _get_store_snap_info(snap_name: str) -> dict[str, Any]:
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
+    import requests_unixsocket
+
     slug = f"find?{parse.urlencode({'name': snap_name})}"
     url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
@@ -377,6 +389,9 @@ def get_installed_snaps() -> list[str]:
 
     :return: a list of "name=revision" for the snaps installed.
     """
+    import requests_unixsocket
+    from requests import exceptions
+
     slug = "snaps"
     url = get_snapd_socket_path_template().format(slug)
     try:
