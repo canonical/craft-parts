@@ -217,7 +217,7 @@ class TestHelpers:
     def test_validate_build_attributes_error(self):
         parts_data = {"build-attributes": ["self-contained"]}
         expected_message = re.escape(
-            "Plugin 'nil' does not support the ['self-contained'] build-attribute."
+            "Plugin 'nil' does not support the ['self-contained'] build attribute."
         )
         with pytest.raises(
             errors.UnsupportedBuildAttributesError, match=expected_message

@@ -855,7 +855,7 @@ class UnsupportedBuildAttributesError(PartsError):
     """Use of build-attributes that a plugin does not support."""
 
     def __init__(self, unsupported: set[str], plugin_name: str) -> None:
-        noun = "build-attribute" if len(unsupported) == 1 else "build-attribute."
+        noun = "build attribute" if len(unsupported) == 1 else "build attributes"
         message = (
             f"Plugin {plugin_name!r} does not support"
             f" the {sorted(unsupported)!r} {noun}."
