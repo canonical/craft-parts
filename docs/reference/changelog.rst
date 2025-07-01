@@ -31,6 +31,9 @@ Bug fixes:
   in the software's :file:`pom.xml` file.
 - With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
   ``<distributionManagement>`` tags.
+- Do not expose :class:`~craft_parts.FilesystemMount` and other related classes/functions
+  in the top-level module. It is unused outside of the library and added ~150-200ms to
+  import time.
 
 .. _release-2.14.0:
 
