@@ -24,6 +24,7 @@ New features:
 - Add the ``self-contained`` build attribute, which constrains a part's build to the
   local build environment. This attribute requires explicit plugin support and can
   currently be declared for parts using the Maven and Maven-use plugins.
+- Add methods to let MavenPlugin subclasses extend the default behavior of the plugin.
 
 Bug fixes:
 

@@ -16,6 +16,7 @@
 
 """The maven plugin."""
 
+import pathlib
 import re
 from typing import Literal, cast
 
@@ -132,13 +133,14 @@ class MavenPlugin(JavaPlugin):
         if self_contained:
             update_pom(
                 part_info=self._part_info,
-                add_distribution=True,
+                deploy_to=self._get_deploy_dir(),
                 self_contained=True,
             )
 
         return [
             *self._get_mvnw_validation_commands(options=options),
             " ".join(mvn_cmd + options.maven_parameters),
+            *self._get_extra_maven_commands(settings_path),
             *self._get_java_post_build_commands(),
         ]
 
@@ -155,6 +157,24 @@ https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
 common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 }"""
         ]
+
+    def _get_deploy_dir(self) -> pathlib.Path | None:
+        """Get the path that "mvn deploy" should write to.
+
+        The default implementation returns None, which means that no deploying should
+        happen.
+        """
+        return None
+
+    def _get_extra_maven_commands(self, settings_path: pathlib.Path) -> list[str]:  # noqa: ARG002
+        """Get the commands that should be executed after "mvn package".
+
+        The default implementation is empty - this method is provided as a "hook" for
+        subclasses.
+
+        :param settings_path: The settings file that Maven commands should use.
+        """
+        return []
 
     @classmethod
     @override

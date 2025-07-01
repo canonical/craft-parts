@@ -114,7 +114,7 @@ class MavenUsePlugin(JavaPlugin):
         try:
             update_pom(
                 part_info=self._part_info,
-                add_distribution=True,
+                deploy_to=self._part_info.part_export_dir,
                 self_contained=self_contained,
             )
         except MavenXMLError as err:

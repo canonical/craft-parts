@@ -136,12 +136,13 @@ def _get_no_proxy_string() -> str:
 
 
 def update_pom(
-    *, part_info: infos.PartInfo, add_distribution: bool, self_contained: bool
+    *, part_info: infos.PartInfo, deploy_to: Path | None, self_contained: bool
 ) -> None:
     """Update the POM file of a Maven project.
 
     :param part_info: Information about the invoking part.
-    :param add_distribution: Whether or not to configure the `mvn deploy` location.
+    :param deploy_to: The path to configure the `mvn deploy` location. If None, no path
+        is configured.
     :param self_contained: Whether or not to patch version numbers with what is
         actually available.
     """
@@ -160,10 +161,10 @@ def update_pom(
     for prefix, uri in namespaces.items():
         ET.register_namespace(prefix, uri)
 
-    if add_distribution:
+    if deploy_to is not None:
         # Add a distributionManagement element, to tell "maven deploy" to deploy the
         # artifacts (jars, poms, etc) to the export dir.
-        distribution_dir = part_info.part_export_dir / "maven-use"
+        distribution_dir = deploy_to / "maven-use"
         distribution_element = ET.fromstring(  # noqa: S314, unsafe parsing with xml
             DISTRIBUTION_REPO_TEMPLATE.format(repo_uri=distribution_dir.as_uri())
         )
