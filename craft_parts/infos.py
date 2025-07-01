@@ -279,9 +279,9 @@ class ProjectInfo:
 
     def is_default_partition(self, partition: str | None) -> bool:
         """Check if given partition is the default one."""
-        if self._partitions is None and (
-            partition is None or partition == DEFAULT_PARTITION
-        ):
+        if partition == DEFAULT_PARTITION:
+            return True
+        if self._partitions is None and partition is None:
             return True
         if self._partitions is not None:
             return partition == self._partitions[0]
