@@ -30,6 +30,9 @@ Bug fixes:
 
 - With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven 
   plugins when the project indirectly depends on one.
+- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
+  in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
+  the import time of downstream applications.
 
 Documentation:
 
