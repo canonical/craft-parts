@@ -20,12 +20,10 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from typing_extensions import Self, override
-
-from craft_parts import infos
 
 from ._xml import (
     CRAFT_REPO_TEMPLATE,
@@ -38,13 +36,16 @@ from ._xml import (
     SETTINGS_TEMPLATE,
 )
 
+if TYPE_CHECKING:
+    from craft_parts.infos import PartInfo
+
 logger = logging.getLogger(__name__)
 
 ArtifactDict = dict[str, set[str]]
 GroupDict = dict[str, ArtifactDict]
 
 
-def create_maven_settings(*, part_info: infos.PartInfo, set_mirror: bool) -> Path:
+def create_maven_settings(*, part_info: "PartInfo", set_mirror: bool) -> Path:
     """Create a Maven configuration file.
 
     The settings file contains additional configuration for Maven, such
@@ -136,7 +137,7 @@ def _get_no_proxy_string() -> str:
 
 
 def update_pom(
-    *, part_info: infos.PartInfo, add_distribution: bool, self_contained: bool
+    *, part_info: "PartInfo", add_distribution: bool, self_contained: bool
 ) -> None:
     """Update the POM file of a Maven project.
 
@@ -319,7 +320,7 @@ class MavenPlugin(MavenArtifact):
         return plugins.findall("plugin", namespaces)
 
 
-def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
+def _get_existing_artifacts(part_info: "PartInfo") -> GroupDict:
     result: GroupDict = GroupDict()
 
     search_locations = [

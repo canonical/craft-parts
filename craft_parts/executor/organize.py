@@ -27,17 +27,20 @@ import os
 import shutil
 from collections.abc import Mapping
 from glob import iglob
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def organize_files(
     *,
     part_name: str,
     file_map: dict[str, str],
-    install_dir_map: Mapping[str | None, Path],
+    install_dir_map: Mapping[str | None, "Path"],
     overwrite: bool,
 ) -> None:
     """Rearrange files for part staging.
