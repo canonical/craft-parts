@@ -166,6 +166,18 @@ class TestPartitionsSupport:
 
         pytest_check.equal(info.partitions, partitions)
 
+    def test_partitions_default_not_first(self, new_dir, parts_data):
+        """Raise an error if the a partition other than the first one is named 'default'."""
+        with pytest.raises(errors.FeatureError) as raised:
+            lifecycle_manager.LifecycleManager(
+                parts_data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                partitions=["kernel", "foo", "default"],
+            )
+
+        assert raised.value.brief == "Only the first partition can be named 'default'."
+
     @pytest.mark.parametrize(
         "partitions",
         [

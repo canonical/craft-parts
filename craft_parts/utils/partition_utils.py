@@ -44,6 +44,7 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
       - each partition name must contain only lowercase alphanumeric characters
         hyphens and slashes, but not begin or end with a hyphen or a slash
       - partitions are unique
+      - only the first partition can be named "default"
 
     Namespaced partitions can also be validated in addition to regular (or
     'non-namespaced') partitions. The format is `<namespace>/<partition>`.
@@ -69,6 +70,12 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
 
     if len(partitions) != len(set(partitions)):
         raise errors.FeatureError("Partitions must be unique.")
+
+    for partition in partitions[1:]:
+        if partition == DEFAULT_PARTITION:
+            raise errors.FeatureError(
+                "Only the first partition can be named 'default'."
+            )
 
     _validate_partition_naming_convention(partitions)
     _validate_partitions_conflicts(partitions)
