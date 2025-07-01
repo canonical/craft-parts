@@ -917,7 +917,7 @@ class PartHandler:
 
         logger.debug("priming overlay files")
 
-        consolidated_states: dict[str | None, MigrationState] = {}
+        migration_states: dict[str | None, MigrationState] = {}
 
         # Process each partition.
         for partition in self._part_info.partitions or (None,):
@@ -951,7 +951,7 @@ class PartHandler:
                 permissions=self._part.spec.permissions,
             )
 
-            consolidated_states[partition] = MigrationState(
+            migration_states[partition] = MigrationState(
                 files=migrated_files, directories=migrated_dirs
             )
 
@@ -969,7 +969,7 @@ class PartHandler:
                     migrated_dirs,
                 )
 
-        self._write_overlay_migration_states(consolidated_states, Step.PRIME)
+        self._write_overlay_migration_states(migration_states, Step.PRIME)
 
     def _write_overlay_migration_states(
         self, consolidated_states: dict[str | None, MigrationState], step: Step
