@@ -31,6 +31,7 @@ from pathlib import Path
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 
 def organize_files(
@@ -44,6 +45,8 @@ def organize_files(
     """Rearrange files for part staging.
 
     If partitions are enabled, source filepaths must be in the default partition.
+    The default partition can be referenced by the provided default_partition name
+    or by the DEFAULT_PARTITION value.
 
     :param part_name: The name of the part to organize files for.
     :param file_map: A mapping of source filepaths to destination filepaths.
@@ -62,7 +65,10 @@ def organize_files(
             key, default_partition
         )
 
-        if src_partition and src_partition != default_partition:
+        if src_partition and src_partition not in [
+            default_partition,
+            DEFAULT_PARTITION,
+        ]:
             raise errors.FileOrganizeError(
                 part_name=part_name,
                 message=(
@@ -70,6 +76,10 @@ def organize_files(
                     f"Files can only be organized from the {default_partition!r} partition"
                 ),
             )
+        # Replace default partition default name with alias name to allow
+        # using (default) in paths even with aliased default partition
+        if src_partition == DEFAULT_PARTITION:
+            src_partition = default_partition
 
         src = os.path.join(install_dir_map[src_partition], src_inner_path)
 
@@ -79,6 +89,11 @@ def organize_files(
             file_map[key].lstrip("/"),
             default_partition,
         )
+
+        # Replace default partition default name with alias name to allow
+        # using (default) in paths even with aliased default partition
+        if dst_partition == DEFAULT_PARTITION:
+            dst_partition = default_partition
 
         dst = os.path.join(install_dir_map[dst_partition], dst_inner_path)
 
