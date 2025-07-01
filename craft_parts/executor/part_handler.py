@@ -969,10 +969,7 @@ class PartHandler:
                 files=migrated_files, directories=migrated_dirs
             )
 
-            if (
-                partition is not None
-                and partition == self._part_info.default_partition
-            ):
+            if partition is not None and partition == self._part_info.default_partition:
                 for entry in self._part_info.default_filesystem_mount:
                     self._clean_dangling_whiteouts(
                         self._part_info.prime_dirs[entry.device],
