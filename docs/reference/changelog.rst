@@ -16,8 +16,10 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-X.Y.Z (2025-MM-DD)
-------------------
+.. _release-2.15.0:
+
+2.15.0 (2025-07-02)
+-------------------
 
 New features:
 
@@ -37,6 +39,8 @@ Bug fixes:
   prime step. Instead of relying on the content of the overlay, gather the list of
   files and directories from the stage directory and the state of the stage
   migration.
+  
+For a complete list of commits, check out the `2.15.0`_ release on GitHub.
 
 .. _release-2.14.0:
 
@@ -1213,6 +1217,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.15.0: https://github.com/canonical/craft-parts/releases/tag/2.15.0
 .. _2.14.0: https://github.com/canonical/craft-parts/releases/tag/2.14.0
 .. _2.13.0: https://github.com/canonical/craft-parts/releases/tag/2.13.0
 .. _2.12.0: https://github.com/canonical/craft-parts/releases/tag/2.12.0
