@@ -25,6 +25,8 @@ from typing import TYPE_CHECKING
 
 from overrides import override
 
+from craft_parts.utils.formatting_utils import humanize_list
+
 if TYPE_CHECKING:
     from pydantic.error_wrappers import ErrorDict, Loc
 
@@ -849,3 +851,17 @@ class FilesystemMountError(PartsError):
 
         # Filter out internal __root__ detail.
         return loc_str.replace(".__root__", "")
+
+
+class UnsupportedBuildAttributesError(PartsError):
+    """Use of build-attributes that a plugin does not support."""
+
+    def __init__(self, unsupported: set[str], plugin_name: str) -> None:
+        noun = "build attribute" if len(unsupported) == 1 else "build attributes"
+        humanized = humanize_list(unsupported, "and")
+        message = f"Plugin {plugin_name!r} does not support the {humanized} {noun}."
+
+        super().__init__(
+            brief=message,
+            resolution=f"Remove the {noun}, or use a different plugin.",
+        )

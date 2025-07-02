@@ -16,6 +16,22 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+2.16.0 (2025-MM-DD)
+-------------------
+
+New features:
+
+- Add the ``self-contained`` build attribute, which constrains a part's build to the
+  local build environment. This attribute requires explicit plugin support and can
+  currently be declared for parts using the Maven and Maven-use plugins.
+
+Bug fixes:
+
+Documentation:
+
+For a complete list of commits, check out the `2.16.0`_ release on GitHub.
+
+
 .. _release-2.15.0:
 
 2.15.0 (2025-07-02)
@@ -1215,6 +1231,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.16.0: https://github.com/canonical/craft-parts/releases/tag/2.16.0
 .. _2.15.0: https://github.com/canonical/craft-parts/releases/tag/2.15.0
 .. _2.14.0: https://github.com/canonical/craft-parts/releases/tag/2.14.0
 .. _2.13.0: https://github.com/canonical/craft-parts/releases/tag/2.13.0

@@ -127,3 +127,9 @@ class MavenUsePlugin(JavaPlugin):
         return [
             " ".join(mvn_cmd + options.maven_use_parameters),
         ]
+
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}

@@ -1159,5 +1159,6 @@ def _get_part_spec(data: dict[str, Any]) -> PartSpec:
     plugin_class.properties_class.unmarshal(spec)
 
     # validate common part properties
-    part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
+    part_spec = plugins.validate_and_extract(spec, plugin_name=plugin_name)
+
     return PartSpec(**part_spec)
