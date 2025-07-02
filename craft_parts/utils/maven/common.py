@@ -320,6 +320,8 @@ class MavenPlugin(MavenArtifact):
         cls, project: ET.Element, namespaces: dict[str, str]
     ) -> list[ET.Element]:
         all_plugins = []
+
+        # Get plugins declared at <build><plugins>
         try:
             build = _find_element(project, "build", namespaces)
             plugins = _find_element(build, "plugins", namespaces)
@@ -327,6 +329,7 @@ class MavenPlugin(MavenArtifact):
         except MavenXMLError:
             pass
 
+        # Get plugins declared at <build><pluginManagement><plugins>
         try:
             build = _find_element(project, "build", namespaces)
             plugin_mgmt = _find_element(build, "pluginManagement", namespaces)
@@ -399,28 +402,26 @@ class MavenPlugin(MavenArtifact):
     def _get_plugins_ele(
         cls, project: ET.Element, namespaces: dict[str, str]
     ) -> ET.Element:
-        try:
-            build = _find_element(project, "build", namespaces)
-        except MavenXMLError:
-            build = ET.Element("build")
-            project.append(build)
-            ET.indent(project, level=0)
-
-        try:
-            plugin_mgmt = _find_element(build, "pluginManagement", namespaces)
-        except MavenXMLError:
-            plugin_mgmt = ET.Element("pluginManagement")
-            build.append(plugin_mgmt)
-            ET.indent(build, level=1)
-
-        try:
-            plugins = _find_element(plugin_mgmt, "plugins", namespaces)
-        except MavenXMLError:
-            plugins = ET.Element("plugins")
-            plugin_mgmt.append(plugins)
-            ET.indent(plugin_mgmt, level=2)
-
+        build = _find_or_create_ele(project, "build", namespaces)
+        ET.indent(build, level=0)
+        plugin_mgmt = _find_or_create_ele(build, "pluginManagement", namespaces)
+        ET.indent(plugin_mgmt, level=1)
+        plugins = _find_or_create_ele(plugin_mgmt, "plugins", namespaces)
+        ET.indent(plugins, level=2)
         return plugins
+
+
+def _find_or_create_ele(
+    element: ET.Element, tag: str, namespaces: dict[str, str]
+) -> ET.Element:
+    """Find a subelement within a given element."""
+    try:
+        result = _find_element(element, tag, namespaces)
+    except MavenXMLError:
+        result = ET.Element(tag)
+        element.append(result)
+
+    return result
 
 
 def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
