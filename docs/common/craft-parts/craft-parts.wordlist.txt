@@ -151,6 +151,7 @@ MakePluginProperties
 Makefile
 Makefiles
 MavenArtifact
+MavenParent
 MavenPlugin
 MavenPluginEnvironmentValidator
 MavenPluginProperties

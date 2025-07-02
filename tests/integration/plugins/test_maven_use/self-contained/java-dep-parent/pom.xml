@@ -3,31 +3,11 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.starcraft</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.1.0</version>
-    </parent>
-
+    <artifactId>parent</artifactId>
     <groupId>org.starcraft</groupId>
-    <artifactId>print-addition</artifactId>
-    <packaging>jar</packaging>
-    <version>1.1.0</version>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.starcraft</groupId>
-            <artifactId>add</artifactId>
-            <!-- the built version of org.starcraft.add is 2.2.0, so this must be replaced -->
-            <version>2.0.0</version>
-        </dependency>
-    </dependencies>
-
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    
     <build>
         <plugins>
             <plugin>
