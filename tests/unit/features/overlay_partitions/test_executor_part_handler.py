@@ -14,15 +14,19 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 from craft_parts import errors
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor.part_handler import PartHandler
+from craft_parts.filesystem_mounts import FilesystemMounts
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
+from craft_parts.state_manager.states import MigrationState
 from craft_parts.steps import Step
 
 from tests.unit.features.overlay import test_executor_part_handler
@@ -532,6 +536,168 @@ class TestOverlayMigration:
         # clean part data
         self._p3_handler.clean_step(step)
         assert Path(f"{step_dir}/file1").exists() is False
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestOverlayMigrationFilesystems:
+    """Overlay migration to stage and prime test cases with a non-default filesystems."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir, partitions):
+        # pylint: disable=attribute-defined-outside-init
+        filesystem_mounts = FilesystemMounts.unmarshal(
+            {
+                "default": [
+                    {
+                        "mount": "/",
+                        "device": "default",
+                    },
+                    {
+                        "mount": "/foo",
+                        "device": "mypart",
+                    },
+                ]
+            }
+        )
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
+        p2 = Part(
+            "p2", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
+
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+            filesystem_mounts=filesystem_mounts,
+        )
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1, p2], base_layer_dir=None
+        )
+
+        self._p1_handler = PartHandler(
+            p1,
+            part_info=PartInfo(info, p1),
+            part_list=[p1, p2],
+            overlay_manager=ovmgr,
+        )
+        self._p2_handler = PartHandler(
+            p2,
+            part_info=PartInfo(info, p2),
+            part_list=[p1, p2],
+            overlay_manager=ovmgr,
+        )
+
+        self._p1_handler._make_dirs()
+        self._p2_handler._make_dirs()
+
+        # populate layers
+        Path(p1.part_layer_dir, "dir1").mkdir()
+        Path(p1.part_layer_dir, "dir1/a").touch()
+        Path(p1.part_layer_dir, "foo").mkdir()
+        Path(p1.part_layer_dir, "foo/bar").touch()
+
+        Path(p2.part_layer_dir, "dir1").mkdir()
+        Path(p2.part_layer_dir, "dir1/baz").touch()
+        Path(p2.part_layer_dir, "foo").mkdir()
+        Path(p2.part_layer_dir, "foo/qux").touch()
+
+    @pytest.mark.parametrize(
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_write_overlay_migration_states(self, step, step_dir):
+        _run_step_migration(self._p1_handler, step)
+        _run_step_migration(self._p2_handler, step)
+
+        default_overlay_state_path = Path(f"overlay/{step_dir}_overlay")
+        mypart_overlay_state_path = Path(
+            f"partitions/mypart/overlay/{step_dir}_overlay"
+        )
+        yourpart_overlay_state_path = Path(
+            f"partitions/yourpart/overlay/{step_dir}_overlay"
+        )
+
+        assert default_overlay_state_path.exists()
+        assert mypart_overlay_state_path.exists()
+        assert yourpart_overlay_state_path.exists()
+
+        default_overlay_state = _load_migration_state(default_overlay_state_path)
+        mypart_overlay_state = _load_migration_state(mypart_overlay_state_path)
+        yourpart_overlay_state = _load_migration_state(yourpart_overlay_state_path)
+
+        assert default_overlay_state.files == {"dir1/a", "dir1/baz"}
+        assert default_overlay_state.directories == {"dir1", "foo"}
+        assert mypart_overlay_state.files == {"bar", "qux"}
+        assert mypart_overlay_state.directories == set()
+        assert yourpart_overlay_state.files == set()
+        assert yourpart_overlay_state.directories == set()
+
+    @pytest.mark.parametrize(
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_write_overlay_migration_empty_states(self, step, step_dir):
+        # Empty the layers, so nothing will be staged nor primed
+        # from the overlay
+        shutil.rmtree(self._p1_handler._part.part_layer_dir)
+        self._p1_handler._part.part_layer_dir.mkdir()
+        shutil.rmtree(self._p2_handler._part.part_layer_dir)
+        self._p2_handler._part.part_layer_dir.mkdir()
+
+        _run_step_migration(self._p1_handler, step)
+        _run_step_migration(self._p2_handler, step)
+
+        default_overlay_state_path = Path(f"overlay/{step_dir}_overlay")
+        mypart_overlay_state_path = Path(
+            f"partitions/mypart/overlay/{step_dir}_overlay"
+        )
+        yourpart_overlay_state_path = Path(
+            f"partitions/yourpart/overlay/{step_dir}_overlay"
+        )
+
+        assert default_overlay_state_path.exists()
+        assert mypart_overlay_state_path.exists()
+        assert yourpart_overlay_state_path.exists()
+
+        default_overlay_state = _load_migration_state(default_overlay_state_path)
+        mypart_overlay_state = _load_migration_state(mypart_overlay_state_path)
+        yourpart_overlay_state = _load_migration_state(yourpart_overlay_state_path)
+
+        assert default_overlay_state.files == set()
+        assert default_overlay_state.directories == set()
+        assert mypart_overlay_state.files == set()
+        assert mypart_overlay_state.directories == set()
+        assert yourpart_overlay_state.files == set()
+        assert yourpart_overlay_state.directories == set()
+
+    @pytest.mark.parametrize(
+        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+    )
+    def test_clean_stage_overlay_multiple_parts_with_partitions(self, step, step_dir):
+        _run_step_migration(self._p1_handler, step)
+        _run_step_migration(self._p2_handler, step)
+
+        assert Path(f"{step_dir}/dir1/a").exists()
+        # File bar was successfully distributed to mypart
+        assert Path(f"partitions/mypart/{step_dir}/bar").exists()
+        assert Path(f"{step_dir}/foo").exists()
+        assert Path(f"{step_dir}/dir1/baz").exists()
+        assert Path(f"partitions/mypart/{step_dir}/qux").exists()
+
+        self._p1_handler.clean_step(step)
+        self._p2_handler.clean_step(step)
+        assert Path(f"{step_dir}/dir1/a").exists() is False
+        assert Path(f"partitions/mypart/{step_dir}/bar").exists() is False
+        assert Path(f"{step_dir}/foo").exists() is False
+        assert Path(f"{step_dir}/dir1/baz").exists() is False
+        assert Path(f"partitions/mypart/{step_dir}/qux").exists() is False
+
+
+def _load_migration_state(state_path: Path) -> MigrationState:
+    with open(state_path) as yaml_file:
+        state_data = yaml.safe_load(yaml_file)
+
+    return MigrationState.unmarshal(state_data)
 
 
 def _run_step_migration(handler: PartHandler, step: Step) -> None:
