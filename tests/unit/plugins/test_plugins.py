@@ -34,6 +34,7 @@ from craft_parts.plugins.plugins import (
     PythonPlugin,
     QmakePlugin,
     RustPlugin,
+    validate_build_attributes,
 )
 
 
@@ -212,14 +213,14 @@ class TestHelpers:
         ],
     )
     def test_validate_build_attributes_ok(self, parts_data):
-        plugins.validate_build_attributes(parts_data, plugin_name="maven")
+        validate_build_attributes(parts_data, plugin_name="maven")
 
     def test_validate_build_attributes_error(self):
         parts_data = {"build-attributes": ["self-contained"]}
         expected_message = re.escape(
-            "Plugin 'nil' does not support the ['self-contained'] build attribute."
+            "Plugin 'nil' does not support the 'self-contained' build attribute."
         )
         with pytest.raises(
             errors.UnsupportedBuildAttributesError, match=expected_message
         ):
-            plugins.validate_build_attributes(parts_data, plugin_name="nil")
+            validate_build_attributes(parts_data, plugin_name="nil")

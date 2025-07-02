@@ -25,7 +25,7 @@ from .plugins import (
     register,
     unregister,
     unregister_all,
-    validate_build_attributes,
+    validate_and_extract,
 )
 from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
@@ -41,5 +41,5 @@ __all__ = [
     "register",
     "unregister",
     "unregister_all",
-    "validate_build_attributes",
+    "validate_and_extract",
 ]

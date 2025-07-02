@@ -175,3 +175,15 @@ def validate_build_attributes(data: dict[str, Any], *, plugin_name: str) -> None
 
     if unsupported := user_attributes - plugin_attributes:
         raise errors.UnsupportedBuildAttributesError(unsupported, plugin_name)
+
+
+def validate_and_extract(data: dict[str, Any], *, plugin_name: str) -> dict[str, Any]:
+    """Validate plugin-related attributes and extract common part properties.
+
+    :param data: A dictionary containing all part properties.
+    :param plugin_name: The name of the plugin.
+
+    :return: A dictionary containing only common part properties.
+    """
+    validate_build_attributes(data, plugin_name=plugin_name)
+    return extract_part_properties(data, plugin_name=plugin_name)
