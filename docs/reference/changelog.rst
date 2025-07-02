@@ -16,6 +16,14 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+X.Y.Z (2025-MM-DD)
+------------------
+
+Bug fixes:
+
+- With the maven-use plugin, fix Maven plugin versioning errors when indirectly depending
+  on a plugin.
+
 .. _release-2.15.0:
 
 2.15.0 (2025-07-02)
@@ -33,13 +41,11 @@ Bug fixes:
   in the software's :file:`pom.xml` file.
 - With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
   ``<distributionManagement>`` tags.
-- With the maven-use plugin, fix Maven plugin versioning errors when indirectly depending
-  on a plugin.
 - Fix content migration when using :class:`~craft_parts.FilesystemMount` during the
   prime step. Instead of relying on the content of the overlay, gather the list of
   files and directories from the stage directory and the state of the stage
   migration.
-  
+
 For a complete list of commits, check out the `2.15.0`_ release on GitHub.
 
 .. _release-2.14.0:
