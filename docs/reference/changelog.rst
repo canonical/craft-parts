@@ -31,6 +31,10 @@ Bug fixes:
   in the software's :file:`pom.xml` file.
 - With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
   ``<distributionManagement>`` tags.
+- Fix content migration when using :class:`~craft_parts.FilesystemMount` during the
+  prime step. Instead of relying on the content of the overlay, gather the list of
+  files and directories from the stage directory and the state of the stage
+  migration.
 
 .. _release-2.14.0:
 
