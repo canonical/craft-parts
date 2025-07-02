@@ -304,17 +304,27 @@ def test_set_version_unpinned() -> None:
     ],
 )
 def test_get_available_version(package: dict[str, set[str]]) -> None:
-    existing = {"org.starcraft": package}
+    artifacts = {
+        MavenArtifact(
+            artifact_id="package",
+            group_id="org.starcraft",
+            packaging_type="jar",
+            version=version,
+        )
+        for version in package.get("package", set())
+    }
+    existing = {"org.starcraft": {"package": artifacts}}
 
     available = _get_available_version(
-        existing, MavenArtifact("org.starcraft", "package", "1.0.0")
+        existing,
+        MavenArtifact("org.starcraft", "package", "1.0.0", packaging_type="jar"),
     )
 
     assert available is None or available in package["package"]
 
 
 @dataclass
-class TestArtifact:
+class FakeArtifact:
     """Utility class for testing `_get_existing_artifacts`."""
 
     group_id: str
@@ -347,35 +357,35 @@ class TestArtifact:
     [
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test", "1.0.0"),
+                FakeArtifact("org.starcraft", "test", "1.0.0"),
             ],
             id="simple",
         ),
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test", "1.0.0"),
-                TestArtifact("org.notcraft", "is_even", "1.0.2"),
+                FakeArtifact("org.starcraft", "test", "1.0.0"),
+                FakeArtifact("org.notcraft", "is_even", "1.0.2"),
             ],
             id="multi-group",
         ),
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test1", "1.0.0"),
-                TestArtifact("org.starcraft", "test2", "1.0.0"),
+                FakeArtifact("org.starcraft", "test1", "1.0.0"),
+                FakeArtifact("org.starcraft", "test2", "1.0.0"),
             ],
             id="multi-artifact",
         ),
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test", "1.0.0"),
-                TestArtifact("org.starcraft", "test", "1.0.1"),
+                FakeArtifact("org.starcraft", "test", "1.0.0"),
+                FakeArtifact("org.starcraft", "test", "1.0.1"),
             ],
             id="multi-version",
         ),
     ],
 )
 def test_get_existing_artifacts(
-    part_info: PartInfo, artifacts: list[TestArtifact]
+    part_info: PartInfo, artifacts: list[FakeArtifact]
 ) -> None:
     backstage = cast("Path", part_info.backstage_dir) / "maven-use"
     backstage.mkdir(parents=True)
@@ -394,7 +404,7 @@ def test_get_existing_artifacts(
         art = group.get(artifact.artifact_id)
         assert art is not None
 
-        assert artifact.version in art
+        assert any(a.version == artifact.version for a in art)
 
 
 def test_maven_artifact_from_element() -> None:
@@ -443,6 +453,113 @@ def test_maven_plugin_from_element_no_group() -> None:
     assert plugin.version == "X.Y.Z"
 
 
+def test_maven_plugin_get_plugins() -> None:
+    plugin1 = MavenArtifact(
+        group_id="org.starcraft.plugins",
+        artifact_id="plugin1",
+        version="1.0.0",
+        packaging_type="maven-plugin",
+    )
+    plugin2 = MavenArtifact(
+        group_id="org.starcraft.plugins",
+        artifact_id="plugin2",
+        version="1.0.0",
+        packaging_type="maven-plugin",
+    )
+    plugin3 = MavenArtifact(
+        group_id="org.starcraft.mixed",
+        artifact_id="plugin3",
+        version="1.0.0",
+        packaging_type="maven-plugin",
+    )
+    dep1 = MavenArtifact(
+        group_id="org.starcraft.mixed",
+        artifact_id="dep1",
+        version="1.0.0",
+        packaging_type="jar",
+    )
+    dep2 = MavenArtifact(
+        group_id="org.starcraft.deps",
+        artifact_id="dep2",
+        version="1.0.0",
+        packaging_type="jar",
+    )
+    dep3 = MavenArtifact(
+        group_id="org.starcraft.deps",
+        artifact_id="dep3",
+        version="1.0.0",
+        packaging_type="jar",
+    )
+    existing = {
+        "org.starcraft.plugins": {
+            plugin1.artifact_id: {plugin1},
+            plugin2.artifact_id: {plugin2},
+        },
+        "org.starcraft.mixed": {
+            plugin3.artifact_id: {plugin3},
+            dep1.artifact_id: {dep1},
+        },
+        "org.starcraft.deps": {
+            dep2.artifact_id: {dep2},
+            dep3.artifact_id: {dep3},
+        },
+    }
+    expected = {plugin1, plugin2, plugin3}
+
+    assert MavenPlugin._get_existing_plugins(existing) == expected
+
+
+def test_maven_plugin_set_remaining_plugins() -> None:
+    remaining_plugins = [
+        MavenArtifact(
+            group_id="org.starcraft.plugins",
+            artifact_id="plugin1",
+            version="1.0.0",
+            packaging_type="maven-plugin",
+        ),
+        MavenArtifact(
+            group_id="org.starcraft.plugins",
+            artifact_id="plugin2",
+            version="1.0.0",
+            packaging_type="maven-plugin",
+        ),
+    ]
+    project = ET.fromstring(  # noqa: S314
+        dedent("""\
+        <project>
+          <build>
+          <foo>Don't delete me!</foo>
+          </build>
+        </project>""")
+    )
+    expected = dedent("""\
+        <project>
+          <build>
+            <foo>Don't delete me!</foo>
+            <pluginManagement>
+              <plugins>
+                <plugin>
+                  <artifactId>plugin1</artifactId>
+                  <groupId>org.starcraft.plugins</groupId>
+                  <version>1.0.0</version>
+                </plugin>
+                <plugin>
+                  <artifactId>plugin2</artifactId>
+                  <groupId>org.starcraft.plugins</groupId>
+                  <version>1.0.0</version>
+                </plugin>
+              </plugins>
+            </pluginManagement>
+          </build>
+        </project>""")
+
+    # Force remaining_plugins to be a list to keep its ordered property
+    # This keeps the test reproducible
+    MavenPlugin._set_remaining_plugins(remaining_plugins, project, {})  # type: ignore[reportArgumentType]
+
+    assert ET.tostring(project).decode(errors="replace") == expected
+
+
 def test_maven_artifact_from_pom(tmp_path: Path) -> None:
     pom = """\
         <project>
@@ -465,26 +582,35 @@ def test_maven_artifact_from_pom(tmp_path: Path) -> None:
 def test_maven_artifact_update_versions() -> None:
     project_xml = dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-            </dependencies>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+          </dependencies>
         </project>
     """)
     project = ET.fromstring(project_xml)  # noqa: S314
 
+    base_artifact_params = {"group_id": "org.starcraft", "packaging_type": "jar"}
     existing = {
         "org.starcraft": {
-            "test1": {"1.0.1"},
-            "test2": {"1.0.2"},
+            "test1": {
+                MavenArtifact(
+                    **base_artifact_params, artifact_id="test1", version="1.0.1"
+                )
+            },
+            "test2": {
+                MavenArtifact(
+                    **base_artifact_params, artifact_id="test2", version="1.0.2"
+                )
+            },
         }
     }
 
@@ -492,18 +618,20 @@ def test_maven_artifact_update_versions() -> None:
 
     assert ET.tostring(project).decode("utf8") == dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.1</version>
-                <!--Version updated by craft-parts from '1.0.0' to '1.0.1'--></dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.2</version>
-                <!--Version updated by craft-parts from '1.0.0' to '1.0.2'--></dependency>
-            </dependencies>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.1</version>
+              <!--Version updated by craft-parts from '1.0.0' to '1.0.1'-->
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.2</version>
+              <!--Version updated by craft-parts from '1.0.0' to '1.0.2'-->
+            </dependency>
+          </dependencies>
         </project>""")
 
 

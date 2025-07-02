@@ -32,6 +32,7 @@ from ._xml import (
     DISTRIBUTION_REPO_TEMPLATE,
     LOCAL_REPO_TEMPLATE,
     MIRROR_REPO,
+    PLUGIN_TEMPLATE,
     PROXIES_TEMPLATE,
     PROXY_CREDENTIALS_TEMPLATE,
     PROXY_TEMPLATE,
@@ -40,8 +41,10 @@ from ._xml import (
 
 logger = logging.getLogger(__name__)
 
-ArtifactDict = dict[str, set[str]]
+ArtifactDict = dict[str, set["MavenArtifact"]]
 GroupDict = dict[str, ArtifactDict]
+
+# { group: name: {artifacts}}
 
 
 def create_maven_settings(*, part_info: infos.PartInfo, set_mirror: bool) -> Path:
@@ -183,16 +186,18 @@ def update_pom(
         MavenPlugin.update_versions(project, namespaces, existing)
         MavenParent.update_versions(project, namespaces, existing)
 
+    ET.indent(tree)
     tree.write(pom_xml)
 
 
-@dataclass
+@dataclass(frozen=True)
 class MavenArtifact:
     """A dataclass for Maven artifacts."""
 
     group_id: str
     artifact_id: str
     version: str | None
+    packaging_type: str | None
 
     field_name: str = "Dependency"
 
@@ -205,12 +210,20 @@ class MavenArtifact:
         except MavenXMLError:
             version = None
 
+        # Attempt to read a packaging type
+        try:
+            packaging = _get_element_text(
+                _find_element(element, "packaging", namespaces)
+            )
+        except MavenXMLError:
+            packaging = None
+
         group_id = _get_element_text(_find_element(element, "groupId", namespaces))
         artifact_id = _get_element_text(
             _find_element(element, "artifactId", namespaces)
         )
 
-        return cls(group_id, artifact_id, version)
+        return cls(group_id, artifact_id, version, packaging)
 
     @classmethod
     def from_pom(cls, pom: Path) -> Self:
@@ -248,7 +261,7 @@ class MavenArtifact:
                 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class MavenParent(MavenArtifact):
     """A dataclass for the Maven parent tag."""
 
@@ -265,7 +278,7 @@ class MavenParent(MavenArtifact):
         return [parent]
 
 
-@dataclass
+@dataclass(frozen=True)
 class MavenPlugin(MavenArtifact):
     """A dataclass for Maven plugins.
 
@@ -301,22 +314,114 @@ class MavenPlugin(MavenArtifact):
             _find_element(element, "artifactId", namespaces)
         )
 
-        return cls(group_id, artifact_id, version)
+        return cls(group_id, artifact_id, version, "maven-plugin")
 
     @classmethod
     @override
     def _collect_elements(
         cls, project: ET.Element, namespaces: dict[str, str]
     ) -> list[ET.Element]:
-        build = project.find("build", namespaces)
-        if build is None:
-            return []
+        all_plugins = []
+        try:
+            build = _find_element(project, "build", namespaces)
+            plugins = _find_element(build, "plugins", namespaces)
+            all_plugins.extend(plugins.findall("plugin", namespaces))
+        except MavenXMLError:
+            pass
 
-        plugins = build.find("plugins", namespaces)
-        if plugins is None:
-            return []
+        try:
+            build = _find_element(project, "build", namespaces)
+            plugin_mgmt = _find_element(build, "pluginManagement", namespaces)
+            plugins = _find_element(plugin_mgmt, "plugins", namespaces)
+            all_plugins.extend(plugins.findall("plugin", namespaces))
+        except MavenXMLError:
+            pass
 
-        return plugins.findall("plugin", namespaces)
+        return all_plugins
+
+    @classmethod
+    @override
+    def update_versions(
+        cls, project: ET.Element, namespaces: dict[str, str], existing: GroupDict
+    ) -> None:
+        declared_plugins = cls._collect_elements(project, namespaces)
+        existing_plugins = cls._get_existing_plugins(existing)
+
+        # Patch the declared plugins
+        patched_plugins: set[MavenArtifact] = set()
+        for plugin_ele in declared_plugins:
+            plugin = MavenPlugin.from_element(plugin_ele, namespaces)
+            if (version := _get_available_version(existing, plugin)) is not None:
+                _set_version(plugin_ele, namespaces, version)
+                patched_plugins.add(plugin)
+            else:
+                logger.warning(
+                    "Plugin '%s.%s' is declared, but is not available",
+                    plugin.group_id,
+                    plugin.artifact_id,
+                )
+
+        # Explicitly declare the version of every other plugin on disk to be safe
+        remaining_plugins = existing_plugins - patched_plugins
+        cls._set_remaining_plugins(remaining_plugins, project, namespaces)
+
+    @classmethod
+    def _get_existing_plugins(cls, existing: GroupDict) -> set[MavenArtifact]:
+        """Get a list of every plugin on disk."""
+        existing_plugins: set[MavenArtifact] = set()
+        for group in existing.values():
+            for arts in group.values():
+                for art in arts:
+                    if art.packaging_type == "maven-plugin":
+                        existing_plugins.add(art)
+                        break
+        return existing_plugins
+
+    @classmethod
+    def _set_remaining_plugins(
+        cls,
+        remaining_plugins: set[MavenArtifact],
+        project: ET.Element,
+        namespaces: dict[str, str],
+    ) -> None:
+        """Append remaining plugin dependency entries to a project."""
+        plugins_ele = cls._get_plugins_ele(project, namespaces)
+        for plugin in remaining_plugins:
+            plugin_str = PLUGIN_TEMPLATE.format(
+                artifact_id=plugin.artifact_id,
+                group_id=plugin.group_id,
+                version=plugin.version,
+            )
+            plugin_ele = ET.fromstring(plugin_str)  # noqa: S314
+            plugins_ele.append(plugin_ele)
+            ET.indent(plugins_ele, level=3)
+
+    @classmethod
+    def _get_plugins_ele(
+        cls, project: ET.Element, namespaces: dict[str, str]
+    ) -> ET.Element:
+        try:
+            build = _find_element(project, "build", namespaces)
+        except MavenXMLError:
+            build = ET.Element("build")
+            project.append(build)
+            ET.indent(project, level=0)
+
+        try:
+            plugin_mgmt = _find_element(build, "pluginManagement", namespaces)
+        except MavenXMLError:
+            plugin_mgmt = ET.Element("pluginManagement")
+            build.append(plugin_mgmt)
+            ET.indent(build, level=1)
+
+        try:
+            plugins = _find_element(plugin_mgmt, "plugins", namespaces)
+        except MavenXMLError:
+            plugins = ET.Element("plugins")
+            plugin_mgmt.append(plugins)
+            ET.indent(plugin_mgmt, level=2)
+
+        return plugins
 
 
 def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
@@ -337,7 +442,7 @@ def _get_existing_artifacts(part_info: infos.PartInfo) -> GroupDict:
             # Note on cast: technically we can't guarantee that this is a string.
             # However, in this case, if it is "None" then this is an error that should
             # be caught and reported by Maven rather than craft parts.
-            versions.add(cast("str", art.version))
+            versions.add(art)
 
     return result
 
@@ -348,7 +453,7 @@ def _get_available_version(
     if versions := existing.get(dependency.group_id, {}).get(
         dependency.artifact_id, set()
     ):
-        return next(iter(versions))
+        return next(iter(versions)).version
     return None
 
 
@@ -393,6 +498,7 @@ def _set_version(
         new_version,
     )
     element.append(comment)
+    ET.indent(element, level=2)
 
 
 @dataclass
