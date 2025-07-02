@@ -344,6 +344,7 @@ class MavenPlugin(MavenArtifact):
     def update_versions(
         cls, project: ET.Element, namespaces: dict[str, str], existing: GroupDict
     ) -> None:
+        """Update all of the versions for this project as necessary."""
         declared_plugins = cls._collect_elements(project, namespaces)
         existing_plugins = cls._get_existing_plugins(existing)
 
