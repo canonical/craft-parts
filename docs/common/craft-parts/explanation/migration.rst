@@ -1,4 +1,4 @@
-.. _lifecycle:
+.. _migration:
 
 **************
 File migration
