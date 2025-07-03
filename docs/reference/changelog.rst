@@ -28,10 +28,12 @@ New features:
 
 Bug fixes:
 
+- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven 
+  plugins when the project indirectly depends on one.
+
 Documentation:
 
 For a complete list of commits, check out the `2.16.0`_ release on GitHub.
-
 
 .. _release-2.15.0:
 
@@ -54,7 +56,7 @@ Bug fixes:
   prime step. Instead of relying on the content of the overlay, gather the list of
   files and directories from the stage directory and the state of the stage
   migration.
-  
+
 For a complete list of commits, check out the `2.15.0`_ release on GitHub.
 
 .. _release-2.14.0:
