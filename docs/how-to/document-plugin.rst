@@ -33,7 +33,7 @@ Keywords
 
 A sequence of subsections specifying the keywords provided by the plugin and
 describe how the plugin uses them using the same format for keywords used in
-the :ref:`part_properties` reference.
+the :ref:`reference-part-properties` reference.
 
 For example:
 

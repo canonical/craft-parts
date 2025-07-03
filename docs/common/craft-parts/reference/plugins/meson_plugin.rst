@@ -11,9 +11,9 @@ binaries in ``$CRAFT_PART_INSTALL``.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
-plugin-specific keywords:
+In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
+following plugin-specific keywords:
 
 meson_parameters
 ~~~~~~~~~~~~~~~~
@@ -26,16 +26,17 @@ for a list of valid options.
 Dependencies
 ------------
 
-The plugin needs the ``meson`` executable to configure the project, and the
-``ninja`` executable to build it. These are not installed by default but can
-typically be provisioned via ``build-packages`` or ``build-snaps``.
+The plugin needs the ``meson`` executable to configure the project, and the ``ninja``
+executable to build it. These are not installed by default but can typically be
+provisioned via ``build-packages`` or ``build-snaps``.
 
-Another alternative is to define another part with the name ``meson-deps``, and
-declare that the part using the ``meson`` plugin comes :ref:`after <after>` the
-``meson-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``meson`` and ``ninja`` executables to be used in the build step.
-This can be useful, for example, in cases where specific, unreleased versions of
-the tools are desired but unavailable as a snap or an Ubuntu package.
+Another alternative is to define another part with the name ``meson-deps``, and declare
+that the part using the ``meson`` plugin comes :ref:`after
+<reference-part-properties-after>` the ``meson-deps`` part. In this case, the plugin
+will assume that this new part will stage the ``meson`` and ``ninja`` executables to be
+used in the build step. This can be useful, for example, in cases where specific,
+unreleased versions of the tools are desired but unavailable as a snap or an Ubuntu
+package.
 
 How it works
 ------------

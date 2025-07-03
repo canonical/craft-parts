@@ -16,6 +16,8 @@
 
 import datetime
 import logging
+import pathlib
+import sys
 
 project = "Craft Parts"
 author = "Canonical Group Ltd"
@@ -33,6 +35,7 @@ html_context = {
 
 extensions = [
     "canonical_sphinx",
+    "pydantic_kitbash",
 ]
 # endregion
 
@@ -106,6 +109,13 @@ github_repository = "craft-parts"
 
 # endregion
 
+# region Automated documentation
+
+project_dir = pathlib.Path(__file__).parents[1].resolve()
+sys.path.insert(0, str(project_dir.absolute()))
+
+model_dir = (project_dir / "craft_parts").resolve()
+sys.path.append(str(model_dir.absolute()))
 
 def run_apidoc(_):
     import os
@@ -132,3 +142,5 @@ def setup(app):
 
     logger = logging.getLogger("sphinx.sphinx_autodoc_typehints")
     logger.addFilter(filter_errordict_warnings)
+
+# endregion

@@ -10,8 +10,8 @@ The uv plugin can be used for Python projects that use the uv build tool.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the
+In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
 following plugin-specific keywords:
 
 uv-extras
@@ -86,18 +86,17 @@ versions.
 Dependencies
 ------------
 
-The uv plugin needs the ``uv`` executable but does not provision it by itself,
-to allow flexibility in the choice of version.
+The uv plugin needs the ``uv`` executable but does not provision it by itself, to allow
+flexibility in the choice of version.
 
-One way of providing ``uv`` is the ``astral-uv`` snap,
-declared as a ``build-snap`` from the desired channel.
+One way of providing ``uv`` is the ``astral-uv`` snap, declared as a ``build-snap`` from
+the desired channel.
 
-An alternative method is to define a part with the name ``uv-deps``,
-and declare that the part using the ``uv`` plugin comes :ref:`after <after>` the
-``uv-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``uv`` executable to be used in the build step.
-For installation instructions, see `uv documentation
-<https://docs.astral.sh/uv/getting-started/installation/>`_.
+An alternative method is to define a part with the name ``uv-deps``, and declare that
+the part using the ``uv`` plugin comes :ref:`after <reference-part-properties-after>`
+the ``uv-deps`` part. In this case, the plugin will assume that this new part will stage
+the ``uv`` executable to be used in the build step. For installation instructions, see
+`uv documentation <https://docs.astral.sh/uv/getting-started/installation/>`_.
 
 .. _uv-details-end:
 

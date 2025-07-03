@@ -20,9 +20,9 @@ After a successful build, this plugin will:
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
-plugin-specific keywords:
+In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
+following plugin-specific keywords:
 
 gradle-init-script
 ~~~~~~~~~~~~~~~~~~

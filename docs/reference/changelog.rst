@@ -59,6 +59,11 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.15.0`_ release on GitHub.
 
+Documentation:
+
+- Document the updated and rewritten ``PartSpec`` model in the
+  :ref:`reference-part-properties` reference.
+
 .. _release-2.14.0:
 
 2.14.0 (2025-06-20)

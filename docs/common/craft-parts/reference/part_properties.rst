@@ -1,405 +1,159 @@
-.. Ideally, this would be automatically generated.
-
-.. _part_properties:
+.. _reference-part-properties:
 
 Part properties
 ===============
 
-.. _after:
+This reference describes the purpose and usage of all keys that can be declared for
+a part.
 
-after
------
-**Type:** list[string]
 
-**Step:** build
+Top-level keys
+--------------
 
-Specifies a list of parts that a given part will be built *after*.
-The array must contain at least one item.
+.. kitbash-field:: parts.PartSpec plugin
+    :label: reference-part-properties-plugin
 
-.. ifconfig:: project in ("Snapcraft",)
 
-   .. _build_attributes:
+.. _reference-pull-step-keys:
 
-   build-attributes
-   ----------------
-   **Type:** array of unique strings with at least 1 item from "core22-step-dependencies", "enable-patchelf", "no-patchelf", "no-install", "debug", "keep-execstack".
+Pull step keys
+--------------
 
-   **Step:** build
+The following keys define the part's external dependencies and how they are retrieved
+from the declared location.
 
-   The customisations to apply to the build.
+.. kitbash-field:: parts.PartSpec source
+    :label: reference-part-properties-source
 
-.. _build_environment:
+.. kitbash-field:: parts.PartSpec source_type
+    :label: reference-part-properties-source-type
 
-build-environment
+.. kitbash-field:: parts.PartSpec source_checksum
+    :label: reference-part-properties-source-checksum
+
+.. kitbash-field:: parts.PartSpec source_branch
+    :label: reference-part-properties-source-branch
+
+.. kitbash-field:: parts.PartSpec source_tag
+    :label: reference-part-properties-source-tag
+
+.. kitbash-field:: parts.PartSpec source_commit
+    :label: reference-part-properties-source-commit
+
+.. kitbash-field:: parts.PartSpec source_depth
+    :label: reference-part-properties-source-depth
+
+.. kitbash-field:: parts.PartSpec source_submodules
+    :label: reference-part-properties-source-submodules
+
+.. kitbash-field:: parts.PartSpec source_subdir
+    :label: reference-part-properties-source-subdir
+
+.. kitbash-field:: parts.PartSpec override_pull
+    :label: reference-part-properties-override-pull
+
+
+.. _reference-part-properties-overlay-step-keys:
+
+Overlay step keys
 -----------------
-**Type:** list[dict[string, string]]
 
-**Step:** build
+For craft applications that support filesystem overlays, the following keys modify the
+part's overlay layer and determine how the layer's contents are represented in the stage
+directory.
 
-The environment variables to be defined in the build environment specified as
-a list of key-value pairs.
+For more details on the overlay step, see :ref:`Overlay step <overlays>`.
 
-**Example:**
+.. kitbash-field:: parts.PartSpec overlay_files
+    :label: reference-part-properties-overlay-files
 
-.. code:: yaml
+.. kitbash-field:: parts.PartSpec overlay_packages
+    :label: reference-part-properties-overlay-packages
 
-   build-environment:
-     - MESSAGE: "Hello world"
-     - NAME: "Craft Parts"
+.. kitbash-field:: parts.PartSpec overlay_script
+    :label: reference-part-properties-overlay-script
 
-.. _build_packages:
 
-build-packages
---------------
-**Type:** list[string]
+.. _reference-part-properties-build-step-keys:
 
-**Step:** build
-
-The system packages to be installed in the build environment before the build
-is performed. These are installed using the host's native package manager,
-such as :command:`apt` or :command:`dnf`, and they provide libraries and
-executables that the part needs during the build process.
-
-.. _build_snaps:
-
-build-snaps
------------
-**Type:** list[string]
-
-**Step:** build
-
-The snaps to be installed in the build environment before the build is
-performed. These provide libraries and executables that the part needs during
-the build process. They take the form of ``<snap>/<version>/<channel>``,
-``<snap>/<channel>`` or just ``<snap>``. For example, the ``node`` snap could be
-specified as ``node/18/stable``, ``node/latest/stable`` or ``node/stable`` to
-select different versions.
-
-.. _organize:
-
-organize
---------
-**Type:** dict[string, string]
-
-**Step:** build
-
-Describes how files in the building area should be represented in the staging
-area.
-
-In the following example, the ``hello.py`` file in the build area is copied
-to the ``bin`` directory in the staging area and renamed to ``hello``:
-
-.. code:: yaml
-
-   organize:
-     hello.py: bin/hello
-
-If partitions are in use by the application, they may be referenced by prepending the partition name, surrounded by parentheses, to the destination path.  Only the destination path may specify a partition; source paths always reference the ``default`` partition.  Omitting the partition name in the destination path causes the file to be copied to the ``default`` partition.
-
-The following example is exactly equivalent to the above example:
-
-.. code:: yaml
-
-   organize:
-     hello.py: (default)/bin/hello
-
-In this example, the file is instead copied to the application-defined ``boot`` partition:
-
-.. code:: yaml
-
-   organize:
-     vmlinuz-6.2.0-39-generic: (boot)/vmlinuz
-
-.. _override_build:
-
-override-build
---------------
-**Type:** string
-
-**Step:** pull
-
-A string containing commands to be run in a shell instead of performing those
-defined by the plugin for the build step.
-
-override-prime
---------------
-**Type:** string
-
-**Step:** pull
-
-A string containing commands to be run in a shell instead of performing the
-standard actions for the prime step.
-
-.. _override_pull:
-
-override-pull
--------------
-**Type:** string
-
-**Step:** pull
-
-A string containing commands to be run in a shell instead of performing the
-standard actions for the pull step.
-
-.. Possibly mention the use of | at the start of the value and the type of
-   shell and its options.
-
-.. _override_stage:
-
-override-stage
---------------
-**Type:** string
-
-**Step:** pull
-
-A string containing commands to be run in a shell instead of performing the
-standard actions for the stage step.
-
-parse-info
-----------
-**Type:** string
-
-**Step:** all
-
-.. _part-properties-plugin:
-
-plugin
-------
-**Type:** string
-
-**Step:** all steps
-
-The plugin used to build the part. Available plugins include the following:
-
-+-----------+-----------------------+
-| **Name**  | **Note**              |
-+===========+=======================+
-| ant       | `Apache Ant`_         |
-+-----------+-----------------------+
-| autotools | `Autotools`_          |
-+-----------+-----------------------+
-| cmake     | `CMake`_              |
-+-----------+-----------------------+
-| dotnet    | `.NET`_               |
-+-----------+-----------------------+
-| dump      | Simple file unpacking |
-+-----------+-----------------------+
-| go        | `Go`_                 |
-+-----------+-----------------------+
-| make      | `Make`_               |
-+-----------+-----------------------+
-| maven     | `Apache Maven`_       |
-+-----------+-----------------------+
-| meson     | `Meson`_              |
-+-----------+-----------------------+
-| nil       | No default actions    |
-+-----------+-----------------------+
-| npm       | `NPM`_                |
-+-----------+-----------------------+
-| python    | `Python package`_     |
-+-----------+-----------------------+
-| rust      | Rust with `Cargo`_    |
-+-----------+-----------------------+
-| scons     | `SCons`_              |
-+-----------+-----------------------+
-
-.. _prime:
-
-prime
------
-**Type:** list[string]
-
-**Step:** prime
-
-The files to copy from the staging area to the priming area,
-see :ref:`filesets_specifying_paths`. The list must contain
-at least one item.
-
-.. _part-properties-sources:
-.. _source:
-
-source
-------
-**Type:** string
-
-**Step:** pull
-
-The location of the source code and data.
-
-.. _source_branch:
-
-source-branch
--------------
-**Type:** string
-
-**Step:** pull
-
-The branch in the source repository to use when pulling the source code.
-
-.. _source_checksum:
-
-source-checksum
+Build step keys
 ---------------
-**Type:** string
 
-**Step:** pull
+The following keys modify the build step's behavior and the contents of the part's
+build environment.
 
-For plugins that use files, this key contains a checksum value to be compared
-against the checksum of the downloaded file.
+.. kitbash-field:: parts.PartSpec after
+    :label: reference-part-properties-after
 
-.. _source_commit:
+.. kitbash-field:: parts.PartSpec disable_parallel
+    :label: reference-part-properties-disable-parallel
 
-source-commit
--------------
-**Type:** string
+.. kitbash-field:: parts.PartSpec build_environment
+    :label: reference-part-properties-build-environment
 
-**Step:** pull
+.. kitbash-field:: parts.PartSpec build_packages
+    :label: reference-part-properties-build-packages
 
-The commit to use to select a particular revision of the source code obtained
-from a repository.
+.. kitbash-field:: parts.PartSpec build_snaps
+    :label: reference-part-properties-build-snaps
 
-.. _source_depth:
+.. kitbash-field:: parts.PartSpec organize_files
+    :label: reference-part-properties-organize
 
-source-depth
-------------
-**Type:** integer
+.. kitbash-field:: parts.PartSpec override_build
+    :label: reference-part-properties-override-build
 
-**Step:** pull
 
-The number of commits in a repository's history that should be fetched instead
-of the complete history.
+.. _reference-part-properties-stage-step-keys:
 
-.. _source_subdir:
+Stage step keys
+---------------
 
-source-subdir
--------------
-**Type:** string
+The following keys modify the stage step's behavior and determine how files from the
+part's build directory are represented in the stage directory.
 
-**Step:** pull
+.. kitbash-field:: parts.PartSpec stage_files
+    :override-type: list[str]
+    :label: reference-part-properties-stage
 
-The subdirectory in the unpacked sources where builds will occur.
+.. kitbash-field:: parts.PartSpec stage_packages
+    :label: reference-part-properties-stage-packages
 
-.. note:: This key restricts the build to the subdirectory specified,
-          preventing access to files in the parent directory and elsewhere in
-          the file system directory structure.
+.. kitbash-field:: parts.PartSpec stage_snaps
+    :label: reference-part-properties-stage-snaps
 
-.. _source_submodules:
+.. kitbash-field:: parts.PartSpec override_stage
+    :label: reference-part-properties-override-stage
 
-source-submodules
------------------
-**Type:** list[string]
 
-**Step:** pull
+.. _reference-part-properties-prime-step-keys:
 
-The submodules to fetch in the source repository.
+Prime step keys
+---------------
 
-.. _source_tag:
+The following keys modify the prime step's behavior and determine how the contents
+of the stage directory are reflected in the final payload.
 
-source-tag
-----------
-**Type:** string
+.. kitbash-field:: parts.PartSpec prime_files
+    :override-type: list[str]
+    :label: reference-part-properties-prime
 
-**Step:** pull
+.. kitbash-field:: parts.PartSpec override_prime
+    :label: reference-part-properties-override-prime
 
-The tag to use to select a particular revision of the source code obtained
-from a repository.
 
-.. _source_type:
+.. _reference-part-properties-permissions-keys:
 
-source-type
------------
-**Type:** one of ``deb | file | git | local | rpm | snap | tar | zip``
+Permissions keys
+----------------
 
-**Step:** pull
+.. kitbash-field:: parts.PartSpec permissions
+    :label: reference-part-properties-permissions
 
-The type of container for the source code. If not specified, Craft Parts will
-attempt to auto-detect the source type. A list of supported formats can be
-found in the :mod:`craft_parts.sources` file.
+.. kitbash-field:: permissions.Permissions path
 
-.. _stage:
+.. kitbash-field:: permissions.Permissions owner
 
-stage
------
-**Type:** list[string]
+.. kitbash-field:: permissions.Permissions group
 
-**Step:** stage
-
-The files to copy from the building area to the staging area,
-see :ref:`filesets_specifying_paths`. The list must contain
-at least one item.
-
-.. _stage_packages:
-
-stage-packages
---------------
-**Type:** list[string]
-
-**Step:** stage
-
-The packages to install in the staging area for deployment with the build
-products. These provide libraries and executables to support the deployed
-part.
-
-This keyword also support  supports
-`Chisel <https://github.com/canonical/chisel>`_ slices.
-
-To install a package slice instead of the whole package, simply follow the
-Chisel convention *<packageName>_<sliceName>*.
-
-NOTE: at the moment, it is not possible to mix packages and slices in the
-same stage-packages field.
-
-.. _stage_snaps:
-
-stage-snaps
------------
-**Type:** list[string]
-
-**Step:** stage
-
-The snaps to install in the staging area for deployment with the build
-products. These provide libraries and executables to support the deployed
-part.
-
-Summary of keys and steps
--------------------------
-
-The following table shows the keys that are used in each build step.
-The ``plugin`` and ``parse-info`` keys apply to all steps.
-
-+-------------------+-------------------+-------------------+----------------+
-| Pull              | Build             | Stage             | Prime          |
-+===================+===================+===================+================+
-| source            | after             | stage             | prime          |
-+-------------------+-------------------+-------------------+----------------+
-| source-checksum   | build-attributes  | stage-snaps       |                |
-+-------------------+-------------------+-------------------+----------------+
-| source-branch     | build-environment | stage-packages    |                |
-+-------------------+-------------------+-------------------+----------------+
-| source-commit     | build-packages    |                   |                |
-+-------------------+-------------------+-------------------+----------------+
-| source-depth      | build-snaps       |                   |                |
-+-------------------+-------------------+-------------------+----------------+
-| source-submodules | organize          |                   |                |
-+-------------------+-------------------+-------------------+----------------+
-| source-subdir     |                   |                   |                |
-+-------------------+-------------------+-------------------+----------------+
-| source-tag        |                   |                   |                |
-+-------------------+-------------------+-------------------+----------------+
-| source-type       |                   |                   |                |
-+-------------------+-------------------+-------------------+----------------+
-| override-pull     | override-build    | override-stage    | override-prime |
-+-------------------+-------------------+-------------------+----------------+
-
-.. _`Apache Ant`: https://ant.apache.org/
-.. _`Apache Maven`: https://maven.apache.org/
-.. _`Autotools`: https://www.gnu.org/software/automake/
-.. _`Cargo`: https://crates.io/
-.. _`CMake`: https://cmake.org/
-.. _`Go`: https://go.dev/
-.. _`Make`: https://www.gnu.org/software/make/manual/make.html
-.. _`Meson`: https://mesonbuild.com/
-.. _`.NET`: https://github.com/dotnet/core
-.. _`NPM`: https://www.npmjs.com/
-.. _`Python package`: https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
-.. _`SCons`: https://scons.org/
+.. kitbash-field:: permissions.Permissions mode

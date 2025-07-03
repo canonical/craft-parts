@@ -16,8 +16,8 @@ any of the following things:
 Keywords
 --------
 
-This plugin uses the common :ref:`plugin <part-properties-plugin>` keywords as
-well as those for :ref:`sources <part-properties-sources>`.
+This plugin uses the common :ref:`plugin <reference-part-properties-plugin>` keywords as
+well as those for :ref:`sources <reference-part-properties-source>`.
 
 Additionally, this plugin provides the plugin-specific keywords defined in the
 following sections.
