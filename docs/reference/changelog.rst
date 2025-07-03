@@ -21,8 +21,8 @@ X.Y.Z (2025-MM-DD)
 
 Bug fixes:
 
-- With the maven-use plugin, fix Maven plugin versioning errors when indirectly depending
-  on a plugin.
+- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven 
+  plugins when the project indirectly depends on one.
 
 .. _release-2.15.0:
 
