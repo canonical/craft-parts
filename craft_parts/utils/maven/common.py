@@ -404,11 +404,11 @@ class MavenPlugin(MavenArtifact):
         cls, project: ET.Element, namespaces: dict[str, str]
     ) -> ET.Element:
         build = _find_or_create_ele(project, "build", namespaces)
-        ET.indent(build, level=0)
+        ET.indent(project, level=0)
         plugin_mgmt = _find_or_create_ele(build, "pluginManagement", namespaces)
-        ET.indent(plugin_mgmt, level=1)
+        ET.indent(build, level=1)
         plugins = _find_or_create_ele(plugin_mgmt, "plugins", namespaces)
-        ET.indent(plugins, level=2)
+        ET.indent(plugin_mgmt, level=2)
         return plugins
 
 
