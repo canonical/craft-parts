@@ -16,9 +16,10 @@
 
 """Helpers to handle part environment setting."""
 
+from __future__ import annotations
+
 import io
 import logging
-from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, cast
 
 from craft_parts import errors
@@ -27,15 +28,18 @@ from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from craft_parts.infos import ProjectInfo, StepInfo
     from craft_parts.parts import Part
     from craft_parts.plugins import Plugin
+
 
 logger = logging.getLogger(__name__)
 
 
 def generate_step_environment(
-    *, part: "Part", plugin: "Plugin", step_info: "StepInfo"
+    *, part: Part, plugin: Plugin, step_info: StepInfo
 ) -> str:
     """Generate an environment to use during step execution.
 
@@ -84,9 +88,7 @@ def generate_step_environment(
         return run_environment.getvalue()
 
 
-def _basic_environment_for_part(
-    part: "Part", *, step_info: "StepInfo"
-) -> dict[str, str]:
+def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str, str]:
     """Return the built-in part environment.
 
     :param part: The part to get environment information from.
@@ -151,7 +153,7 @@ def _basic_environment_for_part(
     return part_environment
 
 
-def _get_global_environment(info: "ProjectInfo") -> dict[str, str]:
+def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     """Add project and part information variables to the environment.
 
     :param info: Information about the project.
@@ -196,7 +198,7 @@ def _translate_partition_env(partition: str) -> str:
     return partition.upper().translate({ord("-"): "_", ord("/"): "_"})
 
 
-def _get_environment_for_partitions(info: "ProjectInfo") -> dict[str, str]:
+def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     """Get environment variables related to partitions.
 
     Assumes the partition feature is enabled.
@@ -226,7 +228,7 @@ def _get_environment_for_partitions(info: "ProjectInfo") -> dict[str, str]:
 
 
 def _get_step_overlay_environment_for_partitions(
-    part: "Part", partitions: list[str]
+    part: Part, partitions: list[str]
 ) -> dict[str, str]:
     """Get environment variables related to partitions and overlay for a part.
 
@@ -253,7 +255,7 @@ def _get_step_overlay_environment_for_partitions(
     return environment
 
 
-def _get_step_environment(step_info: "StepInfo") -> dict[str, str]:
+def _get_step_environment(step_info: StepInfo) -> dict[str, str]:
     """Add project and part information variables to the environment.
 
     :param step_info: Information about the current step.
@@ -288,7 +290,7 @@ def _combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
 
 
 def expand_environment(
-    data: dict[str, Any], *, info: "ProjectInfo", skip: list[str] | None = None
+    data: dict[str, Any], *, info: ProjectInfo, skip: list[str] | None = None
 ) -> None:
     """Replace global variables with their values.
 

@@ -14,6 +14,8 @@
 
 """Utilities for Maven projects and settings."""
 
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -46,7 +48,7 @@ ArtifactDict = dict[str, set["MavenArtifact"]]
 GroupDict = dict[str, ArtifactDict]
 
 
-def create_maven_settings(*, part_info: "PartInfo", set_mirror: bool) -> Path:
+def create_maven_settings(*, part_info: PartInfo, set_mirror: bool) -> Path:
     """Create a Maven configuration file.
 
     The settings file contains additional configuration for Maven, such
@@ -138,7 +140,7 @@ def _get_no_proxy_string() -> str:
 
 
 def update_pom(
-    *, part_info: "PartInfo", deploy_to: Path | None, self_contained: bool
+    *, part_info: PartInfo, deploy_to: Path | None, self_contained: bool
 ) -> None:
     """Update the POM file of a Maven project.
 
@@ -426,7 +428,7 @@ def _find_or_create_ele(
     return result
 
 
-def _get_existing_artifacts(part_info: "PartInfo") -> GroupDict:
+def _get_existing_artifacts(part_info: PartInfo) -> GroupDict:
     result: GroupDict = GroupDict()
 
     search_locations = [
