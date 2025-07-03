@@ -114,7 +114,7 @@ class MavenUsePlugin(JavaPlugin):
         try:
             update_pom(
                 part_info=self._part_info,
-                add_distribution=True,
+                deploy_to=self._part_info.part_export_dir,
                 self_contained=self_contained,
             )
         except MavenXMLError as err:
@@ -127,3 +127,9 @@ class MavenUsePlugin(JavaPlugin):
         return [
             " ".join(mvn_cmd + options.maven_use_parameters),
         ]
+
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}
