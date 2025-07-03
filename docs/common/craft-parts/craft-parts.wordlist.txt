@@ -322,6 +322,7 @@ Unmark
 Unmount
 UnpackError
 Unregister
+UnsupportedBuildAttributesError
 UserExecutionError
 UvPlugin
 UvPluginEnvironmentValidator

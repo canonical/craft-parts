@@ -638,7 +638,7 @@ def test_maven_artifact_update_versions() -> None:
 @pytest.mark.usefixtures("new_dir")
 def test_update_pom_no_pom(part_info: PartInfo) -> None:
     with pytest.raises(MavenXMLError, match="does not exist"):
-        update_pom(part_info=part_info, add_distribution=False, self_contained=False)
+        update_pom(part_info=part_info, deploy_to=None, self_contained=False)
 
 
 def create_project(part_info: PartInfo, project_xml: str) -> Path:
@@ -649,7 +649,7 @@ def create_project(part_info: PartInfo, project_xml: str) -> Path:
     return pom_xml
 
 
-def test_update_pom_add_distribution(part_info: PartInfo) -> None:
+def test_update_pom_deploy_to(part_info: PartInfo) -> None:
     project_xml = dedent("""\
         <project>
             <dependencies>
@@ -669,7 +669,9 @@ def test_update_pom_add_distribution(part_info: PartInfo) -> None:
 
     pom_xml = create_project(part_info, project_xml)
 
-    update_pom(part_info=part_info, add_distribution=True, self_contained=False)
+    update_pom(
+        part_info=part_info, deploy_to=part_info.part_export_dir, self_contained=False
+    )
 
     # Make sure the distribution tag was added
     assert "<distributionManagement>" in pom_xml.read_text()
@@ -677,7 +679,7 @@ def test_update_pom_add_distribution(part_info: PartInfo) -> None:
     ET.parse(pom_xml)  # noqa: S314
 
 
-def test_update_pom_multiple_add_distribution(part_info: PartInfo) -> None:
+def test_update_pom_multiple_deploy_to(part_info: PartInfo) -> None:
     """Make sure that pre-existing distributionManagement tags are overwritten."""
 
     project_xml = dedent("""\
@@ -701,7 +703,9 @@ def test_update_pom_multiple_add_distribution(part_info: PartInfo) -> None:
 
     pom_xml = create_project(part_info, project_xml)
 
-    update_pom(part_info=part_info, add_distribution=True, self_contained=False)
+    update_pom(
+        part_info=part_info, deploy_to=part_info.part_export_dir, self_contained=False
+    )
 
     pom_xml_contents = pom_xml.read_text()
     # Only one distributionManagement tag is present
@@ -752,7 +756,7 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
             "craft_parts.utils.maven.common.MavenParent.update_versions"
         ) as mock_parent,
     ):
-        update_pom(part_info=part_info, add_distribution=False, self_contained=True)
+        update_pom(part_info=part_info, deploy_to=None, self_contained=True)
 
     mock_artifact.assert_called_once()
     mock_plugin.assert_called_once()
