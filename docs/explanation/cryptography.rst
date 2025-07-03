@@ -43,11 +43,11 @@ Downloading source files
 When a part sources a ``.deb``, ``.rpm``, ``.snap``, ``.tar``, ``.zip``, or ``.7z``
 file, Craft Parts calls the Requests library to download it.
 
-The integrity of these files can be verified using a
-:ref:`checksum <source_checksum>`. The checksum is verified using hashlib, so all
-`algorithms available to the hashlib library
-<https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_
-can be used.
+The integrity of these files can be verified using a :ref:`checksum
+<reference-part-properties-source-checksum>`. The checksum is verified using hashlib, so
+all `algorithms available to the hashlib library
+<https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_ can be
+used.
 
 Dependencies
 ------------

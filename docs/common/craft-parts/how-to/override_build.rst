@@ -11,7 +11,7 @@ plugin generates code that calls ``make; make install`` at build-time.
 
 For cases where a given project being built does *not* follow the typical path,
 craft-parts provides a way to declare the build commands for a specific part
-via the :ref:`override_build` keyword.
+via the :ref:`reference-part-properties-override-build` keyword.
 
 Typical reasons for using ``override-build`` include:
 

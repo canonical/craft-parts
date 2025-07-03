@@ -15,12 +15,12 @@ directory, a remote repository, or a URL. Common use cases include:
 Keywords
 --------
 
-This plugin uses the common :ref:`plugin <part-properties-plugin>` keywords as
-well as those for :ref:`sources <part-properties-sources>`.
+This plugin uses the common :ref:`plugin <reference-part-properties-plugin>` keywords as
+well as those for :ref:`sources <reference-part-properties-source>`.
 
-You must specify at least the :ref:`source <source>` keyword.
-The :ref:`source-type <source_type>` keyword is optional, but recommended, as it
-is used to specify how the source should be handled.
+You must specify at least the :ref:`source <reference-part-properties-source>` keyword.
+The :ref:`source-type <reference-part-properties-source-type>` keyword is optional, but
+recommended, as it is used to specify how the source should be handled.
 
 
 Dependencies

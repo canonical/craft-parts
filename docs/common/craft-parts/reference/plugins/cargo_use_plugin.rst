@@ -10,8 +10,8 @@ It affects all Rust parts in a project.
 Keywords
 --------
 
-The plugin provides the common :ref:`plugin <part-properties-plugin>`
-and :ref:`sources <part-properties-sources>` keywords.
+The plugin provides the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`source <reference-part-properties-source>` keywords.
 
 .. _cargo-use-details-begin:
 

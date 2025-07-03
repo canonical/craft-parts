@@ -85,7 +85,8 @@ directory containing the artefacts from the *build* step. These are used to
 specify the files and directories to migrate to the *stage* and *prime* steps.
 
 The contents of the filesets for these steps are specified using the
-:ref:`stage` and :ref:`prime` properties when defining a part.
+:ref:`reference-part-properties-stage` and :ref:`reference-part-properties-prime`
+properties when defining a part.
 
 The order in which paths are defined in a fileset is not important. The paths
 are collected so that all files and directories to be included are first

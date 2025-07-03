@@ -12,9 +12,9 @@ The ``dotnet`` plugin builds .NET projects using the ``dotnet`` tool.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
-plugin-specific keywords:
+In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
+following plugin-specific keywords:
 
 dotnet-build-configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,25 +37,25 @@ executables unless set.
 Dependencies
 ------------
 
-The .NET plugin needs the ``dotnet`` executable to build programs but does not
-provision it by itself, to allow flexibility in the choice of compiler version.
+The .NET plugin needs the ``dotnet`` executable to build programs but does not provision
+it by itself, to allow flexibility in the choice of compiler version.
 
 Some common means of providing ``dotnet`` are:
 
 * The ``dotnet8`` Ubuntu package, declared as a ``build-package``.
 * The ``dotnet-sdk`` snap, declared as a ``build-snap`` from the desired channel.
 
-Another alternative is to define another part with the name ``dotnet-deps``, and
-declare that the part using the ``dotnet`` plugin comes :ref:`after <after>` the
-``dotnet-deps`` part. In this case, the plugin will assume that this new part will
-stage the ``dotnet`` executable to be used in the build step. This can be useful,
-for example, in cases where a specific, unreleased version of ``dotnet`` is desired
-but unavailable as a snap or an Ubuntu package.
+Another alternative is to define another part with the name ``dotnet-deps``, and declare
+that the part using the ``dotnet`` plugin comes :ref:`after
+<reference-part-properties-after>` the ``dotnet-deps`` part. In this case, the plugin
+will assume that this new part will stage the ``dotnet`` executable to be used in the
+build step. This can be useful, for example, in cases where a specific, unreleased
+version of ``dotnet`` is desired but unavailable as a snap or an Ubuntu package.
 
-Finally, whether the resulting built artefact will need the presence of the .NET
-runtime to execute depends on the value of the
-``dotnet-self-contained-runtime-identifier`` property: self-contained builds
-bundle the necessary portions of the runtime in the generated executable.
+Finally, whether the resulting built artefact will need the presence of the .NET runtime
+to execute depends on the value of the ``dotnet-self-contained-runtime-identifier``
+property: self-contained builds bundle the necessary portions of the runtime in the
+generated executable.
 
 .. _dotnet-details-end:
 

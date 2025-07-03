@@ -11,9 +11,9 @@ binaries in ``$CRAFT_PART_INSTALL``.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
-plugin-specific keywords:
+In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
+following plugin-specific keywords:
 
 scons-parameters
 ~~~~~~~~~~~~~~~~
@@ -30,19 +30,19 @@ This plugin sets ``DESTDIR`` to ``$CRAFT_PART_INSTALL``.
 Dependencies
 ------------
 
-The SCons plugin needs the ``scons`` executable to build, but does not
-provision it by itself.
+The SCons plugin needs the ``scons`` executable to build, but does not provision it by
+itself.
 
-The common means of providing ``scons`` is through a
-:ref:`build-packages <build_packages>` entry which for Ubuntu, would be ``scons``.
+The common means of providing ``scons`` is through a :ref:`build-packages
+<reference-part-properties-build-packages>` entry which for Ubuntu, would be ``scons``.
 
-Another alternative is to define another part with the name ``scons-deps``, and
-declare that the part using the ``scons`` plugin comes :ref:`after <after>` the
-``scons-deps`` part. In this case, the plugin will assume that this new part will
-provide the ``scons`` executable to be used in the build step. This can be useful,
-for example, in cases where a specific, unreleased version of ``scons`` is desired
-but only possible by either building the tool itself from source or through some
-other custom mechanism.
+Another alternative is to define another part with the name ``scons-deps``, and declare
+that the part using the ``scons`` plugin comes :ref:`after
+<reference-part-properties-after>` the ``scons-deps`` part. In this case, the plugin
+will assume that this new part will provide the ``scons`` executable to be used in the
+build step. This can be useful, for example, in cases where a specific, unreleased
+version of ``scons`` is desired but only possible by either building the tool itself
+from source or through some other custom mechanism.
 
 
 How it works
@@ -54,13 +54,13 @@ During the build step the plugin performs the following actions:
 * Run ``scons install`` with any ``scons-parameters`` that might have been set,
   the ``DESTDIR`` environment variable would affect the final installation path.
 
-Examples
---------
+Example
+-------
 
-The following snippet declares a part using the ``scons`` plugin. It
-sets the ``scons-parameters`` for a ``prefix`` to be set to
-``/usr``. To ``scons`` executable dependency is satisfied with
-:ref:`build-packages <build_packages>`:
+The following snippet declares a part using the ``scons`` plugin. It sets the
+``scons-parameters`` for a ``prefix`` to be set to ``/usr``. To ``scons`` executable
+dependency is satisfied with :ref:`build-packages
+<reference-part-properties-build-packages>`:
 
 .. code-block:: yaml
 

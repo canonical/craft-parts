@@ -1,41 +1,39 @@
 .. _craft_parts_jlink_plugin:
 
 JLink plugin
-=============
+============
 
-The `JLink <jlink_>`_ plugin can be used for Java projects where
-you would want to deploy a Java runtime specific for your application
-or install a minimal Java runtime.
+The `JLink <jlink_>`_ plugin can be used for Java projects where you would want to
+deploy a Java runtime specific for your application or install a minimal Java runtime.
 
 
 Keywords
 --------
 
-This plugin uses the common :ref:`plugin <part-properties-plugin>` keywords as
-well as those for :ref:`sources <part-properties-sources>`.
+This plugin uses the common :ref:`plugin <reference-part-properties-plugin>` keywords as
+well as those for :ref:`sources <reference-part-properties-source>`.
 
-Additionally, this plugin provides the plugin-specific keywords defined in the
-following sections.
+Additionally, this plugin provides the plugin-specific keywords defined in the following
+sections.
 
 jlink-jars
 ~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
-List of paths to your application's JAR files. If not specified, the plugin
-will find all JAR files in the staging area.
+List of paths to your application's JAR files. If not specified, the plugin will find
+all JAR files in the staging area.
 
 Dependencies
 ------------
 
-The plugin expects OpenJDK to be available on the system and to contain
-the ``jlink`` executable. OpenJDK can be defined as a
-``build-package`` in the part using ``jlink`` plugin.
-Another alternative is to define another part with the name
-``jlink-deps``, and declare that the part using the
-``jlink`` plugin comes :ref:`after <after>` the ``jlink-deps`` part.
+The plugin expects OpenJDK to be available on the system and to contain the ``jlink``
+executable. OpenJDK can be defined as a ``build-package`` in the part using ``jlink``
+plugin. Another alternative is to define another part with the name ``jlink-deps``, and
+declare that the part using the ``jlink`` plugin comes :ref:`after
+<reference-part-properties-after>` the ``jlink-deps`` part.
 
-If the system has multiple OpenJDK installations available, one
-must be selected by setting the ``JAVA_HOME`` environment variable.
+If the system has multiple OpenJDK installations available, one must be selected by
+setting the ``JAVA_HOME`` environment variable.
 
 .. code-block:: yaml
 

@@ -10,8 +10,8 @@ to the :ref:`craft_parts_dotnet_plugin`.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the
+In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
 following plugin-specific keywords:
 
 .. _craft_parts_dotnet_v2_plugin-global_flags:
@@ -169,35 +169,34 @@ format of ``-p:<Key>=<Value>``.
 Dependencies
 ------------
 
-The .NET plugin needs the dotnet CLI tool to build programs. The plugin
-will provision it by itself if
-:ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is set.
+The .NET plugin needs the dotnet CLI tool to build programs. The plugin will provision
+it by itself if :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is set.
 
 If not, some common means of providing the dotnet tool are:
 
-* A .NET SDK package available from the Ubuntu archive, declared as a
-  ``build-package``. Example: `dotnet-sdk-8.0`_.
-* A .NET SDK content snap, declared as a ``build-snap`` from the desired
-  channel. Example: `dotnet-sdk-80`_.
+* A .NET SDK package available from the Ubuntu archive, declared as a ``build-package``.
+  Example: `dotnet-sdk-8.0`_.
+* A .NET SDK content snap, declared as a ``build-snap`` from the desired channel.
+  Example: `dotnet-sdk-80`_.
 
-Another alternative is to define a separate part called ``dotnet-deps``
-and have the part using the .NET plugin (v2) build :ref:`after <after>` the
-``dotnet-deps`` part. In this case, the plugin assumes that ``dotnet-deps``
-will stage the dotnet CLI tool to be used during build. This can be useful in
-cases where a specific, unreleased version of .NET is desired but unavailable
-as a snap or Ubuntu package.
+Another alternative is to define a separate part called ``dotnet-deps`` and have the
+part using the .NET plugin (v2) build :ref:`after <reference-part-properties-after>` the
+``dotnet-deps`` part. In this case, the plugin assumes that ``dotnet-deps`` will stage
+the dotnet CLI tool to be used during build. This can be useful in cases where a
+specific, unreleased version of .NET is desired but unavailable as a snap or Ubuntu
+package.
 
-This plugin validates the presence of .NET by running ``dotnet --version``.
-Therefore, it assumes that the dotnet executable is visible in the PATH. To
-achieve that, make sure to append the location of the staged .NET SDK from
-``dotnet-deps`` to the PATH using the :ref:`build-environment
-<build_environment>` key in your application part.
+This plugin validates the presence of .NET by running ``dotnet --version``. Therefore,
+it assumes that the dotnet executable is visible in the PATH. To achieve that, make sure
+to append the location of the staged .NET SDK from ``dotnet-deps`` to the PATH using the
+:ref:`build-environment <reference-part-properties-build-environment>` key in your
+application part.
 
-Finally, whether the resulting build artifact will also need a
-.NET runtime installed in the snap environment depends on the value of the
-:ref:`craft_parts_dotnet_v2_plugin-dotnet_self_contained` property:
-self-contained builds bundle the runtime in the generated executable and
-don't require a global .NET Runtime installed in the system.
+Finally, whether the resulting build artifact will also need a .NET runtime installed in
+the snap environment depends on the value of the
+:ref:`craft_parts_dotnet_v2_plugin-dotnet_self_contained` property: self-contained
+builds bundle the runtime in the generated executable and don't require a global .NET
+Runtime installed in the system.
 
 .. _craft_parts_dotnet_v2_plugin-details-end:
 

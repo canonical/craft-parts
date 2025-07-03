@@ -33,8 +33,8 @@ Bug fixes:
 
 Documentation:
 
-- Document the updated and rewritten ``PartSpec`` model in the :ref:`part_properties`
-  reference.
+- Document the updated and rewritten ``PartSpec`` model in the
+  :ref:`reference-part-properties` reference.
 
 .. _release-2.14.0:
 
