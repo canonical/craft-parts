@@ -36,7 +36,6 @@ from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
 from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
-from craft_parts.permissions import Permissions
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import (
     MigrationContents,
@@ -108,7 +107,6 @@ class _Squasher:
         refdir: Path,
         srcdir: Path,
         destdirs: Mapping[str | None, Path],
-        permissions: list[Permissions] | None = None,
     ) -> None:
         """Migrate layered content from a partition to destination directories.
 
@@ -130,7 +128,6 @@ class _Squasher:
                     destdir=destdirs[dst_partition],
                     sub_path=sub_path,
                     dst_partition=dst_partition,
-                    permissions=permissions,
                 )
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
@@ -140,7 +137,6 @@ class _Squasher:
                 destdir=destdirs[self._src_partition],
                 sub_path="",
                 dst_partition=self._src_partition,
-                permissions=permissions,
             )
 
     def _migrate(
@@ -150,7 +146,6 @@ class _Squasher:
         destdir: Path,
         sub_path: str,
         dst_partition: str | None,
-        permissions: list[Permissions] | None = None,
     ) -> None:
         """Actually migrate content from a source to a destination.
 
@@ -174,7 +169,6 @@ class _Squasher:
             srcdir=srcdir / sub_path,
             destdir=destdir,
             oci_translation=True,
-            permissions=permissions,
         )
         if dst_partition not in self.migrated_files:
             self.migrated_files[dst_partition] = {}
@@ -914,9 +908,8 @@ class PartHandler:
     def _migrate_overlay_files_to_prime(self) -> None:
         """Prime overlay files and create state.
 
-        Files and directories are migrated from stage to prime based on a list
-        of visible overlay entries, including OCI-compatible whiteout files and
-        opaque directories.
+        Files and directories are migrated from stage to prime, including
+        OCI-compatible whiteout files and opaque directories.
         """
         parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
         if self._part not in parts_with_overlay:
@@ -924,77 +917,81 @@ class PartHandler:
 
         logger.debug("priming overlay files")
 
-        consolidated_states: dict[str | None, MigrationState] = {}
+        migration_states: dict[str | None, MigrationState] = {}
 
-        # Process parts in each partition.
-        for src_partition in self._part_info.partitions or (None,):
+        # Process each partition.
+        for partition in self._part_info.partitions or (None,):
             prime_overlay_state_path = states.get_overlay_migration_state_path(
-                self._part.overlay_dirs[src_partition], Step.PRIME
+                self._part.overlay_dirs[partition], Step.PRIME
             )
 
             # Overlay data is migrated to prime only when the first part declaring overlay
             # parameters is migrated.
             if prime_overlay_state_path.exists():
                 logger.debug(
-                    f"prime overlay migration state exists, not migrating overlay data for partition {src_partition}"
+                    f"prime overlay migration state exists, not migrating overlay data for partition {partition}"
                 )
                 continue
 
-            squasher = _Squasher(
-                # Process layers from top to bottom (reversed)
-                partition=src_partition,
-                filesystem_mount=self._part_info.default_filesystem_mount,
+            # Read the STAGE overlay migration state to know what was migrated from the overlay
+            stage_overlay_migration_state = states.load_overlay_migration_state(
+                self._part.overlay_dirs[partition], Step.STAGE
             )
-            for part in reversed(parts_with_overlay):
+            if not stage_overlay_migration_state:
                 logger.debug(
-                    "migrate %s partition part %r layer to prime",
-                    src_partition,
-                    part.name,
+                    f"stage overlay migration state does not exist, so no overlay content was migrated to stage for partition {partition}, so no overlay content to prime."
                 )
-                squasher.migrate(
-                    refdir=part.part_layer_dirs[src_partition],
-                    srcdir=part.stage_dirs[src_partition],
-                    destdirs=part.prime_dirs,
-                    permissions=part.spec.permissions,
-                )
+                continue
 
-            _consolidate_states(
-                consolidated_states=consolidated_states,
-                migrated_files=squasher.migrated_files,
-                migrated_directories=squasher.migrated_directories,
+            migrated_files, migrated_dirs = migration.migrate_files(
+                files=stage_overlay_migration_state.files,
+                dirs=stage_overlay_migration_state.directories,
+                srcdir=self._part.dirs.get_stage_dir(partition),
+                destdir=self._part.dirs.get_prime_dir(partition),
+                permissions=self._part.spec.permissions,
             )
 
-            if src_partition == DEFAULT_PARTITION:
+            migration_states[partition] = MigrationState(
+                files=migrated_files, directories=migrated_dirs
+            )
+
+            if partition == DEFAULT_PARTITION:
                 for entry in self._part_info.default_filesystem_mount:
                     self._clean_dangling_whiteouts(
                         self._part_info.prime_dirs[entry.device],
-                        set(squasher.migrated_files[entry.device]),
-                        set(squasher.migrated_directories[entry.device]),
+                        migrated_files,
+                        migrated_dirs,
                     )
             else:
                 self._clean_dangling_whiteouts(
-                    self._part_info.prime_dirs[src_partition],
-                    set(squasher.migrated_files[src_partition]),
-                    set(squasher.migrated_directories[src_partition]),
+                    self._part_info.prime_dirs[partition],
+                    migrated_files,
+                    migrated_dirs,
                 )
 
-        self._write_overlay_migration_states(consolidated_states, Step.PRIME)
+        self._write_overlay_migration_states(migration_states, Step.PRIME)
 
     def _write_overlay_migration_states(
         self, consolidated_states: dict[str | None, MigrationState], step: Step
     ) -> None:
-        for src_partition in self._part_info.partitions or (None,):
+        """Write an overlay migration state for each partition with overlay content.
+
+        Do not overwrite an existing migration state file.
+        """
+        for partition in self._part_info.partitions or (None,):
             step_overlay_state_path = states.get_overlay_migration_state_path(
-                self._part.overlay_dirs[src_partition],
+                self._part.overlay_dirs[partition],
                 step,
             )
             if step_overlay_state_path.exists():
                 logger.debug(
-                    "%s overlay migration state exists, not migrating overlay data",
+                    "%s overlay migration state exists, not overwriting migrated overlay data",
                     step.name,
                 )
                 continue
-            consolidated_states[src_partition].write(step_overlay_state_path)
+            state = consolidated_states.get(partition)
+            if state:
+                state.write(step_overlay_state_path)
 
     def _clean_dangling_whiteouts(
         self, prime_dir: Path, migrated_files: set[str], migrated_dirs: set[str]

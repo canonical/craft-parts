@@ -16,6 +16,7 @@
 
 """The maven plugin."""
 
+import pathlib
 import re
 from typing import Literal, cast
 
@@ -122,30 +123,24 @@ class MavenPlugin(JavaPlugin):
 
         mvn_cmd = [self._maven_executable, "package"]
 
-        # The assumption here is: if this part has dependencies, *and* the backstage
-        # has a maven repository, we want to use only local dependencies (and not the
-        # main maven online repository). This means both setting the local debian repo
-        # as a mirror of 'central', and updating the versions of dependencies and
-        # plugins to use what's available locally.
-        dependencies = self._part_info.part_dependencies
-        craft_repo = (self._part_info.backstage_dir / "maven-use").is_dir()
-        self_contained = bool(dependencies and craft_repo)
+        self_contained = self._is_self_contained()
 
-        if settings_path := create_maven_settings(
+        settings_path = create_maven_settings(
             part_info=self._part_info, set_mirror=self_contained
-        ):
-            mvn_cmd.extend(["-s", str(settings_path)])
+        )
+        mvn_cmd.extend(["-s", str(settings_path)])
 
         if self_contained:
             update_pom(
                 part_info=self._part_info,
-                add_distribution=True,
+                deploy_to=self._get_deploy_dir(),
                 self_contained=True,
             )
 
         return [
             *self._get_mvnw_validation_commands(options=options),
             " ".join(mvn_cmd + options.maven_parameters),
+            *self._get_extra_maven_commands(settings_path),
             *self._get_java_post_build_commands(),
         ]
 
@@ -162,3 +157,27 @@ https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
 common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 }"""
         ]
+
+    def _get_deploy_dir(self) -> pathlib.Path | None:
+        """Get the path that "mvn deploy" should write to.
+
+        The default implementation returns None, which means that no deploying should
+        happen.
+        """
+        return None
+
+    def _get_extra_maven_commands(self, settings_path: pathlib.Path) -> list[str]:  # noqa: ARG002
+        """Get the commands that should be executed after "mvn package".
+
+        The default implementation is empty - this method is provided as a "hook" for
+        subclasses.
+
+        :param settings_path: The settings file that Maven commands should use.
+        """
+        return []
+
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}

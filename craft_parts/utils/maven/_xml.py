@@ -96,3 +96,11 @@ DISTRIBUTION_REPO_TEMPLATE = dedent("""\
         </repository>
     </distributionManagement>
 """)
+
+PLUGIN_TEMPLATE = dedent("""\
+    <plugin>
+        <artifactId>{artifact_id}</artifactId>
+        <groupId>{group_id}</groupId>
+        <version>{version}</version>
+    </plugin>
+""")

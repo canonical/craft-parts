@@ -1,0 +1,8 @@
+
+parts:
+  java-dep-add:
+    plugin: maven-use
+    source: java-dep-add
+    build-packages:
+      - maven
+      - default-jdk

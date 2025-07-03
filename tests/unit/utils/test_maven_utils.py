@@ -95,19 +95,6 @@ def test_get_no_proxy_string(env: dict[str, str], expected: str) -> None:
         assert _get_no_proxy_string() == expected
 
 
-def test_create_settings_no_change(
-    part_info: PartInfo, settings_path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(
-        "craft_parts.utils.maven.common._needs_proxy_config", lambda: False
-    )
-
-    # Ensure no path is returned
-    assert create_maven_settings(part_info=part_info, set_mirror=False) is None
-    # Ensure that the settings file was not made
-    assert not settings_path.is_file()
-
-
 def _normalize_settings(settings):
     with io.StringIO(settings) as f:
         tree = ET.parse(f)  # noqa: S314
@@ -165,26 +152,11 @@ def test_create_settings(
     *,
     set_mirror: bool,
 ):
+    backstage = cast("Path", part_info.backstage_dir) / "maven-use"
+    backstage.mkdir(parents=True)
     if set_mirror:
-        backstage = cast("Path", part_info.backstage_dir) / "maven-use"
-        backstage.mkdir(parents=True)
         set_mirror_content = dedent(
-            f"""\
-            <profiles>
-                <profile>
-                <id>craft</id>
-                <repositories>
-                    <repository>
-                        <id>craft</id>
-                        <name>Craft-managed intermediate repository</name>
-                        <url>{backstage.as_uri()}</url>
-                    </repository>
-                </repositories>
-                </profile>
-            </profiles>
-            <activeProfiles>
-                <activeProfile>craft</activeProfile>
-            </activeProfiles>
+            """\
             <mirrors>
                 <mirror>
                 <id>debian</id>
@@ -193,7 +165,6 @@ def test_create_settings(
                 <url>file:///usr/share/maven-repo</url>
                 </mirror>
             </mirrors>
-            <localRepository>{part_info.part_build_subdir / ".parts/.m2/repository"}</localRepository>
             """
         )
     else:
@@ -216,7 +187,23 @@ def test_create_settings(
               <active>true</active>
             </proxy>
           </proxies>
-          {set_mirror_content}
+            <profiles>
+                <profile>
+                <id>craft</id>
+                <repositories>
+                    <repository>
+                        <id>craft</id>
+                        <name>Craft-managed intermediate repository</name>
+                        <url>{backstage.as_uri()}</url>
+                    </repository>
+                </repositories>
+                </profile>
+            </profiles>
+            <activeProfiles>
+                <activeProfile>craft</activeProfile>
+            </activeProfiles>
+            {set_mirror_content}
+            <localRepository>{part_info.part_build_subdir / ".parts/.m2/repository"}</localRepository>
         </settings>
         """
     )
@@ -317,17 +304,27 @@ def test_set_version_unpinned() -> None:
     ],
 )
 def test_get_available_version(package: dict[str, set[str]]) -> None:
-    existing = {"org.starcraft": package}
+    artifacts = {
+        MavenArtifact(
+            artifact_id="package",
+            group_id="org.starcraft",
+            packaging_type="jar",
+            version=version,
+        )
+        for version in package.get("package", set())
+    }
+    existing = {"org.starcraft": {"package": artifacts}}
 
     available = _get_available_version(
-        existing, MavenArtifact("org.starcraft", "package", "1.0.0")
+        existing,
+        MavenArtifact("org.starcraft", "package", "1.0.0", packaging_type="jar"),
     )
 
     assert available is None or available in package["package"]
 
 
 @dataclass
-class TestArtifact:
+class FakeArtifact:
     """Utility class for testing `_get_existing_artifacts`."""
 
     group_id: str
@@ -360,35 +357,35 @@ class TestArtifact:
     [
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test", "1.0.0"),
+                FakeArtifact("org.starcraft", "test", "1.0.0"),
             ],
             id="simple",
         ),
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test", "1.0.0"),
-                TestArtifact("org.notcraft", "is_even", "1.0.2"),
+                FakeArtifact("org.starcraft", "test", "1.0.0"),
+                FakeArtifact("org.notcraft", "is_even", "1.0.2"),
             ],
             id="multi-group",
         ),
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test1", "1.0.0"),
-                TestArtifact("org.starcraft", "test2", "1.0.0"),
+                FakeArtifact("org.starcraft", "test1", "1.0.0"),
+                FakeArtifact("org.starcraft", "test2", "1.0.0"),
             ],
             id="multi-artifact",
         ),
         pytest.param(
             [
-                TestArtifact("org.starcraft", "test", "1.0.0"),
-                TestArtifact("org.starcraft", "test", "1.0.1"),
+                FakeArtifact("org.starcraft", "test", "1.0.0"),
+                FakeArtifact("org.starcraft", "test", "1.0.1"),
             ],
             id="multi-version",
         ),
     ],
 )
 def test_get_existing_artifacts(
-    part_info: PartInfo, artifacts: list[TestArtifact]
+    part_info: PartInfo, artifacts: list[FakeArtifact]
 ) -> None:
     backstage = cast("Path", part_info.backstage_dir) / "maven-use"
     backstage.mkdir(parents=True)
@@ -407,7 +404,7 @@ def test_get_existing_artifacts(
         art = group.get(artifact.artifact_id)
         assert art is not None
 
-        assert artifact.version in art
+        assert any(a.version == artifact.version for a in art)
 
 
 def test_maven_artifact_from_element() -> None:
@@ -456,6 +453,113 @@ def test_maven_plugin_from_element_no_group() -> None:
     assert plugin.version == "X.Y.Z"
 
 
+def test_maven_plugin_get_plugins() -> None:
+    plugin1 = MavenArtifact(
+        group_id="org.starcraft.plugins",
+        artifact_id="plugin1",
+        version="1.0.0",
+        packaging_type="maven-plugin",
+    )
+    plugin2 = MavenArtifact(
+        group_id="org.starcraft.plugins",
+        artifact_id="plugin2",
+        version="1.0.0",
+        packaging_type="maven-plugin",
+    )
+    plugin3 = MavenArtifact(
+        group_id="org.starcraft.mixed",
+        artifact_id="plugin3",
+        version="1.0.0",
+        packaging_type="maven-plugin",
+    )
+    dep1 = MavenArtifact(
+        group_id="org.starcraft.mixed",
+        artifact_id="dep1",
+        version="1.0.0",
+        packaging_type="jar",
+    )
+    dep2 = MavenArtifact(
+        group_id="org.starcraft.deps",
+        artifact_id="dep2",
+        version="1.0.0",
+        packaging_type="jar",
+    )
+    dep3 = MavenArtifact(
+        group_id="org.starcraft.deps",
+        artifact_id="dep3",
+        version="1.0.0",
+        packaging_type="jar",
+    )
+    existing = {
+        "org.starcraft.plugins": {
+            plugin1.artifact_id: {plugin1},
+            plugin2.artifact_id: {plugin2},
+        },
+        "org.starcraft.mixed": {
+            plugin3.artifact_id: {plugin3},
+            dep1.artifact_id: {dep1},
+        },
+        "org.starcraft.deps": {
+            dep2.artifact_id: {dep2},
+            dep3.artifact_id: {dep3},
+        },
+    }
+    expected = {plugin1, plugin2, plugin3}
+
+    assert MavenPlugin._get_existing_plugins(existing) == expected
+
+
+def test_maven_plugin_set_remaining_plugins() -> None:
+    remaining_plugins = [
+        MavenArtifact(
+            group_id="org.starcraft.plugins",
+            artifact_id="plugin1",
+            version="1.0.0",
+            packaging_type="maven-plugin",
+        ),
+        MavenArtifact(
+            group_id="org.starcraft.plugins",
+            artifact_id="plugin2",
+            version="1.0.0",
+            packaging_type="maven-plugin",
+        ),
+    ]
+    project = ET.fromstring(  # noqa: S314
+        dedent("""\
+        <project>
+          <build>
+          <foo>Don't delete me!</foo>
+          </build>
+        </project>""")
+    )
+    expected = dedent("""\
+        <project>
+          <build>
+            <foo>Don't delete me!</foo>
+            <pluginManagement>
+              <plugins>
+                <plugin>
+                  <artifactId>plugin1</artifactId>
+                  <groupId>org.starcraft.plugins</groupId>
+                  <version>1.0.0</version>
+                </plugin>
+                <plugin>
+                  <artifactId>plugin2</artifactId>
+                  <groupId>org.starcraft.plugins</groupId>
+                  <version>1.0.0</version>
+                </plugin>
+              </plugins>
+            </pluginManagement>
+          </build>
+        </project>""")
+
+    # Force remaining_plugins to be a list to keep its ordered property
+    # This keeps the test reproducible
+    MavenPlugin._set_remaining_plugins(remaining_plugins, project, {})  # type: ignore[reportArgumentType, arg-type]
+
+    assert ET.tostring(project).decode(errors="replace") == expected
+
+
 def test_maven_artifact_from_pom(tmp_path: Path) -> None:
     pom = """\
         <project>
@@ -478,26 +582,35 @@ def test_maven_artifact_from_pom(tmp_path: Path) -> None:
 def test_maven_artifact_update_versions() -> None:
     project_xml = dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-            </dependencies>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+          </dependencies>
         </project>
     """)
     project = ET.fromstring(project_xml)  # noqa: S314
 
+    base_artifact_params = {"group_id": "org.starcraft", "packaging_type": "jar"}
     existing = {
         "org.starcraft": {
-            "test1": {"1.0.1"},
-            "test2": {"1.0.2"},
+            "test1": {
+                MavenArtifact(
+                    **base_artifact_params, artifact_id="test1", version="1.0.1"
+                )
+            },
+            "test2": {
+                MavenArtifact(
+                    **base_artifact_params, artifact_id="test2", version="1.0.2"
+                )
+            },
         }
     }
 
@@ -505,25 +618,27 @@ def test_maven_artifact_update_versions() -> None:
 
     assert ET.tostring(project).decode("utf8") == dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.1</version>
-                <!--Version updated by craft-parts from '1.0.0' to '1.0.1'--></dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.2</version>
-                <!--Version updated by craft-parts from '1.0.0' to '1.0.2'--></dependency>
-            </dependencies>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.1</version>
+              <!--Version updated by craft-parts from '1.0.0' to '1.0.1'-->
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.2</version>
+              <!--Version updated by craft-parts from '1.0.0' to '1.0.2'-->
+            </dependency>
+          </dependencies>
         </project>""")
 
 
 @pytest.mark.usefixtures("new_dir")
 def test_update_pom_no_pom(part_info: PartInfo) -> None:
     with pytest.raises(MavenXMLError, match="does not exist"):
-        update_pom(part_info=part_info, add_distribution=False, self_contained=False)
+        update_pom(part_info=part_info, deploy_to=None, self_contained=False)
 
 
 def create_project(part_info: PartInfo, project_xml: str) -> Path:
@@ -534,7 +649,7 @@ def create_project(part_info: PartInfo, project_xml: str) -> Path:
     return pom_xml
 
 
-def test_update_pom_add_distribution(part_info: PartInfo) -> None:
+def test_update_pom_deploy_to(part_info: PartInfo) -> None:
     project_xml = dedent("""\
         <project>
             <dependencies>
@@ -554,7 +669,9 @@ def test_update_pom_add_distribution(part_info: PartInfo) -> None:
 
     pom_xml = create_project(part_info, project_xml)
 
-    update_pom(part_info=part_info, add_distribution=True, self_contained=False)
+    update_pom(
+        part_info=part_info, deploy_to=part_info.part_export_dir, self_contained=False
+    )
 
     # Make sure the distribution tag was added
     assert "<distributionManagement>" in pom_xml.read_text()
@@ -562,7 +679,7 @@ def test_update_pom_add_distribution(part_info: PartInfo) -> None:
     ET.parse(pom_xml)  # noqa: S314
 
 
-def test_update_pom_multiple_add_distribution(part_info: PartInfo) -> None:
+def test_update_pom_multiple_deploy_to(part_info: PartInfo) -> None:
     """Make sure that pre-existing distributionManagement tags are overwritten."""
 
     project_xml = dedent("""\
@@ -586,7 +703,9 @@ def test_update_pom_multiple_add_distribution(part_info: PartInfo) -> None:
 
     pom_xml = create_project(part_info, project_xml)
 
-    update_pom(part_info=part_info, add_distribution=True, self_contained=False)
+    update_pom(
+        part_info=part_info, deploy_to=part_info.part_export_dir, self_contained=False
+    )
 
     pom_xml_contents = pom_xml.read_text()
     # Only one distributionManagement tag is present
@@ -633,8 +752,12 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
         mock.patch(
             "craft_parts.utils.maven.common.MavenPlugin.update_versions"
         ) as mock_plugin,
+        mock.patch(
+            "craft_parts.utils.maven.common.MavenParent.update_versions"
+        ) as mock_parent,
     ):
-        update_pom(part_info=part_info, add_distribution=False, self_contained=True)
+        update_pom(part_info=part_info, deploy_to=None, self_contained=True)
 
     mock_artifact.assert_called_once()
     mock_plugin.assert_called_once()
+    mock_parent.assert_called_once()

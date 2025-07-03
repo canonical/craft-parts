@@ -1,14 +1,24 @@
-
 parts:
+  java-dep-parent:
+    plugin: maven-use
+    source: java-dep-parent
+    build-attributes:
+      - self-contained
+
   java-dep-add:
     plugin: maven-use
     source: java-dep-add
+    build-attributes:
+      - self-contained
 
   java-dep-print-addition:
     after:
       - java-dep-add
+      - java-dep-parent
     plugin: maven-use
     source: java-dep-print-addition
+    build-attributes:
+      - self-contained
 
   java-main-part:
     after:
@@ -23,3 +33,5 @@ parts:
       - libmaven-deploy-plugin-java
       - libmaven-shade-plugin-java
       - libsurefire-java
+    build-attributes:
+      - self-contained

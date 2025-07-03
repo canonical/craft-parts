@@ -14,14 +14,13 @@
 
 """Unit tests for the Maven use plugin."""
 
-from pathlib import Path
 import re
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
 from craft_parts import errors
-from craft_parts.infos import PartInfo, ProjectInfo
-from craft_parts.parts import Part
+from craft_parts.infos import PartInfo
 from craft_parts.plugins.maven_use_plugin import MavenUsePlugin
 
 
@@ -30,19 +29,6 @@ def fake_project_dir(new_dir: Path) -> Path:
     project_dir = new_dir / Path("cargo-project")
     project_dir.mkdir(parents=True, exist_ok=False)
     return project_dir
-
-
-@pytest.fixture
-def part_info(new_dir: Path) -> PartInfo:
-    cache_dir = new_dir / "cache"
-    cache_dir.mkdir()
-    return PartInfo(
-        project_info=ProjectInfo(
-            application_name="testcraft",
-            cache_dir=cache_dir,
-        ),
-        part=Part("my-part", {}),
-    )
 
 
 @pytest.fixture
@@ -110,13 +96,13 @@ def test_get_build_packages(plugin: MavenUsePlugin) -> None:
 )
 @pytest.mark.usefixtures("fake_maven_project")
 def test_get_build_commands(
-    plugin: MavenUsePlugin, new_dir: Path, *, create_mvnw: bool
+    plugin: MavenUsePlugin, maven_settings_path: Path, *, create_mvnw: bool
 ) -> None:
     if create_mvnw:
         (plugin._part_info.part_build_subdir / "mvnw").touch()
 
     assert plugin.get_build_commands() == [
-        f"{plugin._maven_executable} deploy -s {new_dir / 'parts/my-part/build/.parts/.m2/settings.xml'}"
+        f"{plugin._maven_executable} deploy -s {maven_settings_path}"
     ]
 
 
@@ -148,6 +134,7 @@ def test_get_maven_executable(plugin: MavenUsePlugin, *, create_mvnw: bool) -> N
     assert plugin._maven_executable == expected
 
 
+@pytest.mark.usefixtures("set_self_contained")
 def test_bad_dependency(plugin: MavenUsePlugin) -> None:
     plugin._part_info.part_build_subdir.mkdir(parents=True)
     pom = plugin._part_info.part_build_subdir / "pom.xml"

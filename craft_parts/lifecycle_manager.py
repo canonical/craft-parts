@@ -354,7 +354,7 @@ def _build_part(
     except ValueError as err:
         raise errors.PartSpecificationError(part_name=name, message=str(err)) from err
 
-    part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
+    part_spec = plugins.validate_and_extract(spec, plugin_name=plugin_name)
 
     # initialize part and unmarshal part specs
     return Part(

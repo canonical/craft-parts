@@ -151,6 +151,7 @@ MakePluginProperties
 Makefile
 Makefiles
 MavenArtifact
+MavenParent
 MavenPlugin
 MavenPluginEnvironmentValidator
 MavenPluginProperties
@@ -321,6 +322,7 @@ Unmark
 Unmount
 UnpackError
 Unregister
+UnsupportedBuildAttributesError
 UserExecutionError
 UvPlugin
 UvPluginEnvironmentValidator
