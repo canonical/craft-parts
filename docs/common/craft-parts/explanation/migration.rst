@@ -37,7 +37,7 @@ In the following diagram, files are represented as circles with letters. The
 green circles correspond to files from part 1, while blue circles represent
 files originating from part 2.
 
-.. image:: /common/craft-parts/images/simple_migration.png
+.. image:: /common/craft-parts/images/simple_migration.svg
 
 Files ``A`` and ``B`` originate from part 1, while files ``C`` and ``D``
 originate from part 2. They are staged into a common area, and then migrated
@@ -58,7 +58,7 @@ When the partitions feature is enabled, files can be organized from a part's
 install directory to a different partition. In this case, files are migrated
 to the partition's specific stage and prime directories.
 
-.. image:: /common/craft-parts/images/partition_migration.png
+.. image:: /common/craft-parts/images/partition_migration.svg
 
 When partitions are used, an operation to remove or migrate files from a
 specific part happens across all partitions. In this example, if files from
@@ -75,7 +75,7 @@ install directory and the overlay area. In the diagram, files from the overlay
 are represented as squares, and files from the build install are represented
 as circles.
 
-.. image:: /common/craft-parts/images/overlay_migration.png
+.. image:: /common/craft-parts/images/overlay_migration.svg
 
 If overlays are used, it's important to note that the files originating from
 the overlay form a set that are moved or deleted as a group. In the example
@@ -94,7 +94,7 @@ When both partitions and overlays are enabled, files from overlay can be moved
 to other partitions using mount maps. This operation also generates a migration
 state to keep track of the files originating part.
 
-.. image:: /common/craft-parts/images/partition_overlay_migration.png
+.. image:: /common/craft-parts/images/partition_overlay_migration.svg
 
 The same constraints for overlay file removal and migration apply, extended to
 all partitions. In the example above, if files from part 1 are to be removed from
