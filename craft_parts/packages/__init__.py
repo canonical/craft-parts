@@ -30,21 +30,21 @@ if TYPE_CHECKING:
 
 def _get_repository_for_platform() -> type["BaseRepository"]:
     if is_deb_based():
-        from .deb import Ubuntu
+        from .deb import Ubuntu  # noqa: PLC0415
 
         return Ubuntu
 
     if is_yum_based():
-        from .yum import YUMRepository
+        from .yum import YUMRepository  # noqa: PLC0415
 
         return YUMRepository
 
     if is_dnf_based():
-        from .dnf import DNFRepository
+        from .dnf import DNFRepository  # noqa: PLC0415
 
         return DNFRepository
 
-    from .base import DummyRepository
+    from .base import DummyRepository  # noqa: PLC0415
 
     return DummyRepository
 
