@@ -24,7 +24,7 @@ from craft_parts.parts import Part
 logger = logging.getLogger(__name__)
 
 
-class LayerHash:  # noqa: PLW1641
+class LayerHash:
     """The layer validation hash for a part."""
 
     def __init__(self, layer_hash: bytes) -> None:
