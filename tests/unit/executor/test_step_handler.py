@@ -66,7 +66,7 @@ def _step_handler_for_step(
     part: Part,
     dirs: ProjectDirs,
     plugin_class: type[plugins.Plugin] = FooPlugin,
-    partitions: set[str] | None = None,
+    partitions: list[str] | None = None,
 ) -> StepHandler:
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()

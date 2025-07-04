@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2023 Canonical Ltd.
+# Copyright 2016-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -46,6 +46,7 @@ class MigrationState(BaseModel):
     files from shared areas on step cleanup.
     """
 
+    partition: str | None = None
     files: set[str] = set()
     directories: set[str] = set()
     partitions_contents: dict[str, MigrationContents] = Field(default_factory=dict)
@@ -78,7 +79,7 @@ class MigrationState(BaseModel):
 
     def contents(self, partition: str | None) -> tuple[set[str], set[str]] | None:
         """Return migrated contents for a given partition."""
-        if not partition or partition == "default":
+        if partition is None or partition == self.partition:
             return self.files, self.directories
         partition_content = self.partitions_contents.get(partition)
         if partition_content:

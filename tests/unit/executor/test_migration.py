@@ -48,7 +48,10 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -74,7 +77,10 @@ class TestFileMigration:
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
@@ -108,7 +114,10 @@ class TestFileMigration:
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -136,7 +145,10 @@ class TestFileMigration:
         Path("install", bin_path).symlink_to("usr/bin")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["-usr"]), "install", partition
+            Fileset(["-usr"]),
+            "install",
+            default_partition="default",
+            partition=partition,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -165,6 +177,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -195,6 +208,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -224,6 +238,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -252,7 +267,10 @@ class TestFileMigration:
         Path(install_dir, "a/b/xfile").write_text("installed")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -282,7 +300,10 @@ class TestFileMigration:
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
@@ -323,6 +344,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migration.migrate_files(
@@ -357,6 +379,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migration.migrate_files(
@@ -421,7 +444,12 @@ class TestFileMigrationErrors:
     def test_migratable_filesets_partition_defined_error(self):
         """Error if the partition feature is disabled and a partition is provided."""
         with pytest.raises(errors.FeatureError) as raised:
-            filesets.migratable_filesets(Fileset(["*"]), "install", partition="default")
+            filesets.migratable_filesets(
+                Fileset(["*"]),
+                "install",
+                default_partition="default",
+                partition="default",
+            )
 
         assert features.Features().enable_partitions is False
         assert (
@@ -472,6 +500,8 @@ class TestHelpers:
             handler2.run_action(Action("p2", step))
 
         part_states = part_handler._load_part_states(Step.STAGE, part_list=[p1, p2])
+        print(f"partitions: {partitions}")
+        print(f"part_states: {part_states}")
 
         assert foo_path.is_file()
         assert bar_path.is_file()
