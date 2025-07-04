@@ -98,10 +98,10 @@ migration state to keep track of the files originating part.
 .. image:: /common/craft-parts/images/partition_overlay_migration.svg
 
 The same constraints for overlay file removal and migration apply, extended to
-all partitions. In the example above, if files from part 1 are to be removed from
-stage, files ``A`` and ``B`` are removed, but file ``E`` is only removed when
-part 2 files are also removed (because overlay files can only be removed at the 
-same time).
+all partitions. In the example above, if files from part 1 are to be removed
+from stage, files A and B are removed, but file E is only removed when part 2
+files are also removed, because overlay files can only be removed at the same
+time.
 
 Migration tracking information in the case with partitions and overlays is
 obtained from the part's install directories across partitions, overlay migration,
