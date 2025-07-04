@@ -41,9 +41,9 @@ files from part 1, while blue circles represent files from part 2.
 
 .. image:: /common/craft-parts/images/simple_migration.svg
 
-Files ``A`` and ``B`` originate from part 1, while files ``C`` and ``D``
+Files A and B originate from part 1, while files C and D
 originate from part 2. They are staged into a common area, and then migrated
-to the prime directory. Note that file ``D`` is filtered out when priming, and
+to the prime directory. Note that file D is filtered out when priming, and
 is not part of the final primed contents. The migration tracking state for parts
 1 and 2 is obtained from the contents of each of the parts' install directories
 while they're still separate (marked with red ellipses in the diagram).
