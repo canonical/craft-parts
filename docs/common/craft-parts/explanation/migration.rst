@@ -1,4 +1,4 @@
-.. _migration:
+.. _explanation-file-migration:
 
 **************
 File migration
