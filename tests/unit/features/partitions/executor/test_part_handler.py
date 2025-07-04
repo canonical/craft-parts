@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -138,7 +138,7 @@ class TestFileFilter(test_part_handler.TestFileFilter):
 
         for partition in partitions:
             files, dirs = filesets.migratable_filesets(
-                fileset, str(self._destdir / partition), partition
+                fileset, str(self._destdir / partition), "default", partition
             )
             part_handler._apply_file_filter(
                 filter_files=files, filter_dirs=dirs, destdir=self._destdir / partition

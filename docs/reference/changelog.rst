@@ -16,7 +16,9 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-2.16.0 (2025-MM-DD)
+.. _release-2.16.0:
+
+2.16.0 (2025-07-04)
 -------------------
 
 New features:
@@ -25,6 +27,8 @@ New features:
   local build environment. This attribute requires explicit plugin support and can
   currently be declared for parts using the Maven and Maven-use plugins.
 - Add methods to let MavenPlugin subclasses extend the default behavior of the plugin.
+- Accept a custom name as the first partition in the partition list provided
+  to the lifecycle, and use it to name the default partition.
 
 Bug fixes:
 
@@ -35,6 +39,8 @@ Bug fixes:
   the import time of downstream applications.
 
 Documentation:
+
+- Update the documentation on part properties using pydantic-kitbash.
 
 For a complete list of commits, check out the `2.16.0`_ release on GitHub.
 

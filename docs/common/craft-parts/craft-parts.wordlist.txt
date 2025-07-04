@@ -449,6 +449,7 @@ linkers
 linters
 lto
 lts
+kitbash
 mcraft
 md
 metaclass

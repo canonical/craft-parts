@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021,2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -82,7 +82,10 @@ def _check_for_stage_collisions_per_partition(
         stage_fileset = filesets.Fileset(stage_files, name="stage")
         srcdir = str(part.part_install_dirs[partition])
         part_files, part_directories = filesets.migratable_filesets(
-            stage_fileset, srcdir, partition
+            stage_fileset,
+            srcdir,
+            part.default_partition,
+            partition,
         )
         part_contents = part_files | part_directories
 

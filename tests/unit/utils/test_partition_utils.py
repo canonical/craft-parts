@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2024 Canonical Ltd.
+# Copyright 2024-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -50,17 +50,17 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
         ["default", "mypart"],
         ["default", "mypart1"],
         ["default", "my-part"],
-        ["default", "mypart", "mypart2"],
-        ["default", "mypart2", "mypart"],
-        ["default", "mypart", "test/foo"],
-        ["default", "mypart", "test/mypart"],
-        ["default", "mypart", "test1/foo2"],
-        ["default", "mypart", "test/foo-bar"],
-        ["default", "mypart", "test1/foo-bar2"],
-        ["default", "mypart", "test1/foo/bar2"],
-        ["default", "test1/mypart", "test1/mypart2"],
-        ["default", "test/foo-bar", "test/foo-baz"],
-        ["default", "test/foo-bar-baz", "test/foo-bar"],
+        ["mypart", "mypart2"],
+        ["mypart2", "mypart"],
+        ["mypart", "test/foo"],
+        ["mypart", "test/mypart"],
+        ["mypart", "test1/foo2"],
+        ["mypart", "test/foo-bar"],
+        ["mypart", "test1/foo-bar2"],
+        ["mypart", "test1/foo/bar2"],
+        ["test1/mypart", "test1/mypart2"],
+        ["test/foo-bar", "test/foo-baz"],
+        ["test/foo-bar-baz", "test/foo-bar"],
     ],
 )
 def test_validate_partitions_success_feature_enabled(partitions):
@@ -73,7 +73,6 @@ def test_validate_partitions_success_feature_enabled(partitions):
     ("partitions", "message"),
     [
         ([], "Partition feature is enabled but no partitions are defined."),
-        (["lol"], "First partition must be 'default'."),
         (["default", "default"], "Partitions must be unique."),
         (["default", "test/foo", "test/foo"], "Partitions must be unique."),
         (["default", "!!!"], "Partition '!!!' is invalid."),
@@ -133,11 +132,11 @@ def test_validate_partitions_failure_feature_enabled(partitions, message):
 def test_get_partitions_dir_map(new_dir, suffix):
     """Get a map of partitions directories."""
     dir_map = partition_utils.get_partition_dir_map(
-        base_dir=new_dir, partitions=["default", "a", "b/c-d"], suffix=suffix
+        base_dir=new_dir, partitions=["foo", "a", "b/c-d"], suffix=suffix
     )
 
     assert dir_map == {
-        "default": Path(new_dir) / suffix,
+        "foo": Path(new_dir) / suffix,
         "a": Path(new_dir) / "partitions/a" / suffix,
         "b/c-d": Path(new_dir) / "partitions/b/c-d" / suffix,
     }
@@ -147,10 +146,10 @@ def test_get_partitions_dir_map(new_dir, suffix):
 def test_get_partitions_dir_map_default_only(new_dir, suffix):
     """Get a partition map for only the default partition."""
     dir_map = partition_utils.get_partition_dir_map(
-        base_dir=new_dir, partitions=["default"], suffix=suffix
+        base_dir=new_dir, partitions=["foo"], suffix=suffix
     )
 
-    assert dir_map == {"default": Path(new_dir) / suffix}
+    assert dir_map == {"foo": Path(new_dir) / suffix}
 
 
 @pytest.mark.parametrize("suffix", ["", "sub/sub/dir"])

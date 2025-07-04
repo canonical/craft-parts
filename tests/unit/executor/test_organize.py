@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021,2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -191,6 +191,7 @@ def organize_and_assert(
                 file_map=organize_map,
                 install_dir_map=install_dirs,
                 overwrite=overwrite,
+                default_partition="default",
             )
         assert re.match(expected_message, str(raised.value)) is not None
 
@@ -200,6 +201,7 @@ def organize_and_assert(
             file_map=organize_map,
             install_dir_map=install_dirs,
             overwrite=overwrite,
+            default_partition="default",
         )
         expected = cast(list[tuple[list[str], str]], expected)
         for expect in expected:

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023-2024 Canonical Ltd.
+# Copyright 2023-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -144,7 +144,9 @@ def test_has_partition(full_path, expected):
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class):
     """Test that when partitions are disabled this is a no-op."""
-    actual_partition, actual_inner_path = get_partition_and_path(path_class(path))
+    actual_partition, actual_inner_path = get_partition_and_path(
+        path_class(path), "default"
+    )
 
     assert actual_partition is None
     assert actual_inner_path == path_class(path)
@@ -156,7 +158,7 @@ def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class
 @pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_glob(path, path_class):
     expected = path_class(path)
-    actual_partition, actual_inner_path = get_partition_and_path(expected)
+    actual_partition, actual_inner_path = get_partition_and_path(expected, "default")
 
     assert actual_partition == "default"
     assert actual_inner_path == expected
@@ -167,9 +169,11 @@ def test_get_partition_compatible_filepath_glob(path, path_class):
 @pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_non_partition(path, path_class):
     """Non-partitioned paths get a default partition."""
-    actual_partition, actual_inner_path = get_partition_and_path(path_class(path))
+    actual_partition, actual_inner_path = get_partition_and_path(
+        path_class(path), "foo"
+    )
 
-    assert actual_partition == "default"
+    assert actual_partition == "foo"
     assert actual_inner_path == path_class(path)
     assert isinstance(actual_inner_path, path_class)
 
@@ -187,7 +191,9 @@ ZIPPED_PARTITIONS = zip(
 def test_get_partition_compatible_filepath_partition(partition_paths, path_class):
     """Non-partitioned paths match their given partition."""
     path, expected_partition, expected_inner_path = partition_paths
-    actual_partition, actual_inner_path = get_partition_and_path(path_class(path))
+    actual_partition, actual_inner_path = get_partition_and_path(
+        path_class(path), "foo"
+    )
 
     assert actual_partition == expected_partition
     assert actual_inner_path == path_class(expected_inner_path)
