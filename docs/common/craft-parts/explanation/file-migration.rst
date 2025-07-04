@@ -21,17 +21,20 @@ ownership in shared areas, mapping each file to its originating part.
 Migration tracking
 ------------------
 
-The list of files belonging to a part is necessary when files are migrated
-from a shared directory, or when files from a specific part must be removed
-from a directory containing files from different parts. This mapping is
-obtained when migrating files from part-specific directories, and is called
-the *migration tracking state*.
+Parts typically contain files pulled from sources or generated during the
+build process. Up to the build step files belonging to each part are kept
+in separate directories, but once they are staged they share a common
+area in the filesystem. To further migrate or remove files from a shared
+directory containing files from different parts, it is necessary to know
+which files belong to each part. This mapping is obtained when files are
+initially migrated files from part-specific directories, and is called the
+*migration tracking state*.
 
 
 Simple file migration
 ---------------------
 
-During the execution of a the lifcycle, files from the part's install directory
+During the execution of the lifcycle, files from the part's install directory
 are migrated to the stage area and from there to prime. In the following diagram,
 files are represented as circles with letters. The green circles correspond to
 files from part 1, while blue circles represent files from part 2.
@@ -50,18 +53,18 @@ removed from stage or prime, the migration tracking state contains the list
 of files to migrate or remove.
 
 
-File migration using partitions
--------------------------------
+File migration with partitions
+------------------------------
 
-When the partitions feature is enabled, files can be organized from a part's
 install directory to a different partition. In this case, files are migrated
-to the partition's specific stage and prime directories.
+When the partitions feature is in use, files can be organized from a part's
+to the partition's own stage and prime directories.
 
 .. image:: /common/craft-parts/images/partition_migration.svg
 
 When partitions are used, an operation to remove or migrate files from a
 specific part happens across all partitions. In this example, if files from
-part 1 are to be removed from prime, files ``A`` and ``B`` will be deleted.
+part 1 are to be removed from prime, files A and B will be deleted.
 For that, separate migration tracking states are obtained from all parts in
 all partitions.
 
@@ -84,14 +87,14 @@ containing overlay files are removed. Conversely, when files are migrated, the
 entire set of overlay files is migrated along with the first part that contains
 overlay files.
 
-Note that if a part depends on another part, cleaning the latter will also
-cause the former to be cleaned.
+If a part depends on another part, cleaning the latter will also cause the
+former to be cleaned.
 
 
-File migration using partitions and overlays
---------------------------------------------
+File migration with partitions and overlays
+-------------------------------------------
 
-When both the partition and overlays features are enabled, files from overlay can
+When both partition and overlays are in use, files from overlay can
 be moved to other partitions using mount maps. This operation also generates a
 migration state to keep track of the files originating part.
 
@@ -103,15 +106,6 @@ from stage, files A and B are removed, but file E is only removed when part 2
 files are also removed, because overlay files can only be removed at the same
 time.
 
-Migration tracking information in the case with partitions and overlays is
+With partitions and overlays, migration tracking information is
 obtained from the part's install directories across partitions, overlay migration,
 and overlay mounts.
-
-
-Migration tracking and lifecycle states
----------------------------------------
-
-Migration tracking don't affect lifecycle planning and exist entirely on the
-executor phase of the lifecycle run, and are distinct from the lifecycle states
-controlled by the lifecycle's State Manager. Migration tracking information must
-not be accessed during the planning phase.
