@@ -16,7 +16,9 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-2.16.0 (2025-MM-DD)
+.. _release-2.16.0:
+
+2.16.0 (2025-07-04)
 -------------------
 
 New features:
@@ -37,6 +39,8 @@ Bug fixes:
   the import time of downstream applications.
 
 Documentation:
+
+- Update the documentation on part properties using pydantic-kitbash.
 
 For a complete list of commits, check out the `2.16.0`_ release on GitHub.
 
