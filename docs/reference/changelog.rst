@@ -25,6 +25,8 @@ New features:
   local build environment. This attribute requires explicit plugin support and can
   currently be declared for parts using the Maven and Maven-use plugins.
 - Add methods to let MavenPlugin subclasses extend the default behavior of the plugin.
+- Accept a custom name as the first partition in the partition list provided
+  to the lifecycle, and use it to name the default partition.
 
 Bug fixes:
 
