@@ -4,11 +4,11 @@
 File migration
 **************
 
-During the lifecycle execution, files resulting from building a part
+During the part lifecycle, files resulting from building a part
 are transferred from that part's install directory to a shared stage
 directory, and from there to the prime directory. The process of moving
-content between steps during the lifecycle is referred to as "migration".
-Not all files from a step are necessarily migrated — users can apply
+files between steps during the lifecycle is referred to as *migration*.
+Not all files from a step are necessarily migrated — crafters can apply
 filters to exclude certain files, or specify which ones should proceed
 to the next step.
 
