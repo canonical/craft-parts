@@ -25,7 +25,7 @@ The list of files belonging to a part is necessary when files are migrated
 from a shared directory, or when files from a specific part must be removed
 from a directory containing files from different parts. This mapping is
 obtained when migrating files from part-specific directories, and is called
-the "migration tracking state".
+the *migration tracking state*.
 
 
 Simple file migration
