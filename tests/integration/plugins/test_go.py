@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
 import textwrap
 from pathlib import Path
@@ -245,5 +244,5 @@ def test_go_use_incomplete_parts(new_dir, partitions, parts_yaml_template: str):
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
-        with pytest.raises(PluginBuildError) as exc_info:
+        with pytest.raises(PluginBuildError):
             ctx.execute(actions)

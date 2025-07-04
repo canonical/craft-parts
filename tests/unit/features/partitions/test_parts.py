@@ -289,7 +289,7 @@ class TestPartPartitionUsage:
             "prime": misused_fileset,
         }
 
-        with pytest.warns(Warning) as warning:
+        with pytest.warns(errors.PartitionUsageWarning) as warning:
             Part("a", part_data, partitions=partition_list)
 
         partition_warning = warning.list[0].message
@@ -328,7 +328,7 @@ class TestPartPartitionUsage:
             "prime": misused_fileset,
         }
 
-        with pytest.warns(Warning) as warning:
+        with pytest.warns(errors.PartitionUsageWarning) as warning:
             Part("a", part_data, partitions=partition_list)
 
         partition_warning = warning.list[0].message
