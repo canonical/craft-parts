@@ -19,7 +19,8 @@ from typing import Literal
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
-from craft_parts.plugins.base import BasePythonPlugin, PluginProperties
+from craft_parts.plugins.base import BasePythonPlugin
+from craft_parts.plugins.properties import PluginProperties
 from overrides import override
 
 

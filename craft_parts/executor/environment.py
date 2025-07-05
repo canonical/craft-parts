@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2023 Canonical Ltd.
+# Copyright 2020-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,18 +16,24 @@
 
 """Helpers to handle part environment setting."""
 
+from __future__ import annotations
+
 import io
 import logging
-from collections.abc import Iterable
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from craft_parts import errors
 from craft_parts.features import Features
-from craft_parts.infos import ProjectInfo, StepInfo
-from craft_parts.parts import Part
-from craft_parts.plugins import Plugin
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from craft_parts.infos import ProjectInfo, StepInfo
+    from craft_parts.parts import Part
+    from craft_parts.plugins import Plugin
+
 
 logger = logging.getLogger(__name__)
 

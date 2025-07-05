@@ -17,8 +17,7 @@
 """The Go plugin."""
 
 import logging
-import pathlib
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from overrides import override
 
@@ -27,6 +26,9 @@ from craft_parts import errors
 from . import validator
 from .base import Plugin
 from .properties import PluginProperties
+
+if TYPE_CHECKING:
+    import pathlib
 
 logger = logging.getLogger(__name__)
 
