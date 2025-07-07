@@ -107,7 +107,6 @@ class _Squasher:
 
     def migrate(
         self,
-        refdir: Path,
         srcdir: Path,
         destdirs: Mapping[str | None, Path],
     ) -> None:
@@ -129,7 +128,6 @@ class _Squasher:
 
                 # Migrate to the destination partition indicated by the filesystem mounts entry
                 self._migrate(
-                    refdir=refdir,
                     srcdir=srcdir,
                     destdir=destdirs[dst_partition],
                     sub_path=sub_path,
@@ -138,7 +136,6 @@ class _Squasher:
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
-                refdir=refdir,
                 srcdir=srcdir,
                 destdir=destdirs[self._src_partition],
                 sub_path="",
@@ -147,7 +144,6 @@ class _Squasher:
 
     def _migrate(
         self,
-        refdir: Path,
         srcdir: Path,
         destdir: Path,
         sub_path: str,
@@ -159,7 +155,7 @@ class _Squasher:
         later store it in the proper state.
         """
         visible_files, visible_dirs = overlays.visible_in_layer(
-            refdir / sub_path,
+            srcdir / sub_path,
             destdir,
         )
         logger.debug(f"excluding already migrated files: {self._all_migrated_files}")
@@ -905,7 +901,6 @@ class PartHandler:
                     part.name,
                 )
                 squasher.migrate(
-                    refdir=part.part_layer_dirs[src_partition],
                     srcdir=part.part_layer_dirs[src_partition],
                     destdirs=part.stage_dirs,
                 )
