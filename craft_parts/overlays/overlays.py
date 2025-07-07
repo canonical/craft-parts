@@ -45,6 +45,11 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[st
     visible_dirs: set[str] = set()
 
     logger.debug("check layer visibility in %s", lower_dir)
+
+    # If the upper dir is opaque everything is hidden
+    if is_oci_opaque_dir(upper_dir):
+        return visible_files, visible_dirs
+
     for root, directories, files in os.walk(lower_dir, topdown=True):
         for file_name in files:
             path = Path(root, file_name)
