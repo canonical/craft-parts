@@ -7,14 +7,12 @@ The ``dotnet`` plugin builds .NET projects using the ``dotnet`` tool.
 
 .. admonition:: Legacy plugin
 
-    This plugin is superseded by the :ref:`craft_parts_dotnet_v2_plugin`.
+    This plugin is superseded by the .NET plugin (v2).
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 dotnet-build-configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,11 +44,11 @@ Some common means of providing ``dotnet`` are:
 * The ``dotnet-sdk`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``dotnet-deps``, and declare
-that the part using the ``dotnet`` plugin comes :ref:`after
-<reference-part-properties-after>` the ``dotnet-deps`` part. In this case, the plugin
-will assume that this new part will stage the ``dotnet`` executable to be used in the
-build step. This can be useful, for example, in cases where a specific, unreleased
-version of ``dotnet`` is desired but unavailable as a snap or an Ubuntu package.
+that the part using the ``dotnet`` plugin comes after the ``dotnet-deps`` part through
+the ``after`` key. In this case, the plugin will assume that this new part will stage
+the ``dotnet`` executable to be used in the build step. This can be useful, for example,
+in cases where a specific, unreleased version of ``dotnet`` is desired but unavailable
+as a snap or an Ubuntu package.
 
 Finally, whether the resulting built artefact will need the presence of the .NET runtime
 to execute depends on the value of the ``dotnet-self-contained-runtime-identifier``

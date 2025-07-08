@@ -27,6 +27,14 @@ New features:
   ``maven-use`` directory.
 - Add support for multi-module Maven projects with the Maven or maven-use plugin.
 
+Documentation:
+
+- Remove all intralinking in common docs. This prevents issues where downstream apps
+  that reuse these docs run into page dependency issues when a linked doc isn't
+  published.
+- Remove instances of "Craft Parts" in common docs and replace with substitution strings
+  where appropriate.
+
 .. _release-2.16.0:
 
 2.16.0 (2025-07-04)

@@ -8,12 +8,10 @@ The SCons plugin builds projects using SCons_.
 After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 scons-parameters
 ~~~~~~~~~~~~~~~~
@@ -33,16 +31,15 @@ Dependencies
 The SCons plugin needs the ``scons`` executable to build, but does not provision it by
 itself.
 
-The common means of providing ``scons`` is through a :ref:`build-packages
-<reference-part-properties-build-packages>` entry which for Ubuntu, would be ``scons``.
+The common means of providing ``scons`` is through a ``build-packages`` entry which for
+Ubuntu, would be ``scons``.
 
 Another alternative is to define another part with the name ``scons-deps``, and declare
-that the part using the ``scons`` plugin comes :ref:`after
-<reference-part-properties-after>` the ``scons-deps`` part. In this case, the plugin
-will assume that this new part will provide the ``scons`` executable to be used in the
-build step. This can be useful, for example, in cases where a specific, unreleased
-version of ``scons`` is desired but only possible by either building the tool itself
-from source or through some other custom mechanism.
+that the part using the ``scons`` plugin comes after the ``scons-deps`` part with the
+``after`` key. In this case, the plugin will assume that this new part will provide the
+``scons`` executable to be used in the build step. This can be useful, for example, in
+cases where a specific, unreleased version of ``scons`` is desired but only possible by
+either building the tool itself from source or through some other custom mechanism.
 
 
 How it works
@@ -59,8 +56,7 @@ Example
 
 The following snippet declares a part using the ``scons`` plugin. It sets the
 ``scons-parameters`` for a ``prefix`` to be set to ``/usr``. To ``scons`` executable
-dependency is satisfied with :ref:`build-packages
-<reference-part-properties-build-packages>`:
+dependency is satisfied by the ``build-packages`` key.
 
 .. code-block:: yaml
 
@@ -75,4 +71,3 @@ dependency is satisfied with :ref:`build-packages
 
 
 .. _SCons: https://scons.org/
-
