@@ -1,0 +1,32 @@
+
+# This project needs binaries built by the "binaries_source" project
+parts:
+  java-dep-add:
+    plugin: maven-use
+    source: java-dep-add
+    build-attributes:
+      - self-contained
+
+  java-dep-print-addition:
+    after:
+      - java-dep-add
+    plugin: maven-use
+    source: java-dep-print-addition
+    build-attributes:
+      - self-contained
+
+  java-main-part:
+    after:
+      - java-dep-print-addition
+    plugin: maven
+    source: java-main-part
+    build-packages:
+      - libmaven-resources-plugin-java
+      - libmaven-compiler-plugin-java
+      - libmaven-jar-plugin-java
+      - libmaven-install-plugin-java
+      - libmaven-deploy-plugin-java
+      - libmaven-shade-plugin-java
+      - libsurefire-java
+    build-attributes:
+      - self-contained

@@ -16,6 +16,7 @@
 
 import io
 import os
+import shutil
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
@@ -761,3 +762,29 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
     mock_artifact.assert_called_once()
     mock_plugin.assert_called_once()
     mock_parent.assert_called_once()
+
+
+def test_update_pom_file(part_info: PartInfo, tmp_path: Path) -> None:
+    project_xml = dedent("""\
+        <project>
+            <groupId>org.starcraft</groupId>
+            <artifactId>test1</artifactId>
+            <version>1.0.0</version>
+        </project>
+    """)
+
+    root_pom = create_project(part_info, project_xml)
+    new_pom = tmp_path / "artifact.pom"
+    new_pom.write_text(project_xml)
+
+    deploy_to = tmp_path / "deploy"
+    update_pom(
+        part_info=part_info, deploy_to=deploy_to, self_contained=False, pom_file=new_pom
+    )
+
+    # Check that the root xml file is untouched
+    assert root_pom.read_text() == project_xml
+
+    # Check that the pom file passed as parameter is updated
+    expected_repo = f"file://{deploy_to}"
+    assert expected_repo in new_pom.read_text()

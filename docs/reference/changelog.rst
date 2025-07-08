@@ -16,6 +16,16 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.17.0:
+
+2.17.0 (2025-07-DD)
+-------------------
+
+New features:
+
+- The maven-use plugin will now directly process Maven artifacts contained
+  inside a top-level "maven-use" directory in the source.
+
 .. _release-2.16.0:
 
 2.16.0 (2025-07-04)
@@ -1248,6 +1258,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.17.0: https://github.com/canonical/craft-parts/releases/tag/2.17.0
 .. _2.16.0: https://github.com/canonical/craft-parts/releases/tag/2.16.0
 .. _2.15.0: https://github.com/canonical/craft-parts/releases/tag/2.15.0
 .. _2.14.0: https://github.com/canonical/craft-parts/releases/tag/2.14.0

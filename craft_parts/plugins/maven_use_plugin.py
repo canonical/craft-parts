@@ -100,6 +100,9 @@ class MavenUsePlugin(JavaPlugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        if self._use_binaries():
+            return self._get_binaries_commands()
+
         options = cast(MavenUsePluginProperties, self._options)
 
         mvn_cmd = [self._maven_executable, "deploy"]
@@ -133,3 +136,31 @@ class MavenUsePlugin(JavaPlugin):
     def supported_build_attributes(cls) -> set[str]:
         """Return the build attributes that this plugin supports."""
         return {"self-contained"}
+
+    def _use_binaries(self) -> bool:
+        """Whether the build should consume binaries directly, or build from source."""
+        maven_use = self._part_info.part_build_subdir / "maven-use"
+        return maven_use.is_dir()
+
+    def _get_binaries_commands(self) -> list[str]:
+        """Get the commands needed to "build" the source from pre-built binaries."""
+        maven_use = self._part_info.part_build_subdir / "maven-use"
+
+        self_contained = self._is_self_contained()
+        try:
+            for pom_file in maven_use.glob("**/*.pom"):
+                update_pom(
+                    part_info=self._part_info,
+                    deploy_to=None,
+                    self_contained=self_contained,
+                    pom_file=pom_file,
+                )
+        except MavenXMLError as err:
+            raise errors.PartsError(
+                brief=f"Plugin configuration failed for part {self._part_info.part_name}: {err.message}",
+                details=err.details,
+                resolution="Check that the 'pom.xml' file is valid.",
+            )
+
+        export_dir = self._part_info.part_export_dir
+        return [f'cp --archive --link --no-dereference ./maven-use "{export_dir}"']
