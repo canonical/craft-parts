@@ -4,9 +4,9 @@ Filesets
 ========
 
 Filesets are named collections of files and directories that can be migrated
-between steps in the process of :ref:`building a part <parts>`. They are used
+between steps in the process of building a part. They are used
 within Craft Parts to collect and filter the files and directories a part
-needs in its *stage* and *prime* processing :ref:`steps <lifecycle>`.
+needs in its *stage* and *prime* processing steps.
 
 Tools that depend on Craft Parts can use filesets to simplify and automate
 migration of files and directories between build steps. Users of those tools
@@ -84,9 +84,8 @@ Built-in filesets for the *stage* and *prime* steps are both applied to the
 directory containing the artefacts from the *build* step. These are used to
 specify the files and directories to migrate to the *stage* and *prime* steps.
 
-The contents of the filesets for these steps are specified using the
-:ref:`reference-part-properties-stage` and :ref:`reference-part-properties-prime`
-properties when defining a part.
+The contents of the filesets for these steps are specified using the ``stage`` and
+``prime`` keys when defining a part.
 
 The order in which paths are defined in a fileset is not important. The paths
 are collected so that all files and directories to be included are first

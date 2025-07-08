@@ -7,12 +7,10 @@ The uv plugin can be used for Python projects that use the uv build tool.
 
 .. _craft_parts_uv_plugin-keywords:
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 uv-extras
 ~~~~~~~~~
@@ -93,10 +91,10 @@ One way of providing ``uv`` is the ``astral-uv`` snap, declared as a ``build-sna
 the desired channel.
 
 An alternative method is to define a part with the name ``uv-deps``, and declare that
-the part using the ``uv`` plugin comes :ref:`after <reference-part-properties-after>`
-the ``uv-deps`` part. In this case, the plugin will assume that this new part will stage
-the ``uv`` executable to be used in the build step. For installation instructions, see
-`uv documentation <https://docs.astral.sh/uv/getting-started/installation/>`_.
+the part using the ``uv`` plugin comes after the ``uv-deps`` part with the ``after``
+key. In this case, the plugin will assume that this new part will stage the ``uv``
+executable to be used in the build step. For installation instructions, see `uv
+documentation <https://docs.astral.sh/uv/getting-started/installation/>`_.
 
 .. _uv-details-end:
 
@@ -108,11 +106,3 @@ During the build step, the plugin performs the following actions:
 * It creates a virtual environment in the ``${CRAFT_PART_INSTALL}`` directory.
 * It uses :command:`uv sync` to install the required Python packages from
   the provided :file:`uv.lock` file.
-
-
-See also
---------
-
-:ref:`Python plugin <craft_parts_python_plugin>`
-
-:ref:`Poetry plugin <craft_parts_poetry_plugin>`

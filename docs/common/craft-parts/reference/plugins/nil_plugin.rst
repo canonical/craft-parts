@@ -8,19 +8,14 @@ are required.
 
 Common cases include:
 
-- Adding only :ref:`stage-packages <reference-part-properties-stage-packages>` in a
-  discrete part
-- Building source for when there is no suitable plugin with :ref:`override-build
-  <reference-part-properties-override-build>`.
+- Adding only staging packages in a discrete part
+- Building source for when there is no suitable plugin with the ``override-build`` key.
 
 
-Keywords
---------
+Keys
+----
 
-This plugin uses the common :ref:`plugin <reference-part-properties-plugin>` keywords as
-well as those for :ref:`sources <reference-part-properties-source>`.
-
-This plugin in itself has no requirement.
+This plugin has no unique keys.
 
 Dependencies
 ------------
@@ -31,14 +26,14 @@ This plugin has no dependencies.
 How it works
 ------------
 
-This plugin does nothing. It serves as a *noop* when there is a need to only use native
-:ref:`part properties <reference-part-properties>`.
+This plugin does nothing. It serves as a *noop* when there is a need to only use default
+part properties.
 
 Examples
 --------
 
 The following snippet declares a part using the ``nil`` plugin to fetch and unpack
-``hello`` defined in :ref:`stage-packages <reference-part-properties-stage-packages>`:
+``hello`` defined in the ``stage-packages`` key:
 
 .. code-block:: yaml
 
