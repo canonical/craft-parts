@@ -24,7 +24,7 @@ Changelog
 
 Bug fixes:
 
-- Properly apply the top-level whiteout opaque dir file (``.wh..wh..opq``) when
+- Properly apply top-level whiteout opaque directory files (``.wh..wh..opq``) when
   staging content.
 
 For a complete list of commits, check out the `2.17.0`_ release on GitHub.
