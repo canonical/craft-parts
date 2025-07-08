@@ -329,3 +329,25 @@ def filter_dangling_whiteouts(
                 whiteouts.add(opaque_marker)
 
     return whiteouts
+
+
+def filter_all_whiteouts(
+    files: set[str],
+) -> set[str]:
+    """List and filer all whiteout files.
+
+    Found whiteout files are to be removed from the provided sets of files.
+
+    :param files: The set of files to be verified.
+    :return: The set of filtered out whiteout files.
+    """
+    whiteouts: set[str] = set()
+
+    # Remove whiteout files if no backing file exists in the base dir.
+    for file in list(files):
+        if overlays.is_oci_whiteout(Path(file)):
+            logger.debug("filter whiteout file '%s'", file)
+            files.remove(file)
+            whiteouts.add(file)
+
+    return whiteouts

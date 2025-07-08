@@ -630,6 +630,7 @@ class TestFilterWhiteouts:
             "a/.wh.bar.txt",
             "b/baz.txt",
             "b/.wh..wh..opq",
+            ".wh..wh..opq",
         }
         dirs = {"a", "b", "c"}
 
@@ -644,5 +645,6 @@ class TestFilterWhiteouts:
             "a/.wh.bar.txt",
             "b/baz.txt",
             "b/.wh..wh..opq",
+            ".wh..wh..opq",
         }
         assert dirs == {"a", "b", "c"}

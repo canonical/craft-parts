@@ -115,14 +115,24 @@ def is_oci_opaque_dir(path: Path) -> bool:
     return oci_opaque_dir(path).exists()
 
 
-def is_oci_whiteout_file(path: Path) -> bool:
+def is_oci_whiteout(path: Path) -> bool:
     """Verify if the given path corresponds to an OCI whiteout file.
 
     :param path: The path of the file to verify.
 
     :returns: Whether the given path is an OCI whiteout file.
     """
-    return path.name.startswith(".wh.") and path.name != ".wh..wh..opq"
+    return path.name.startswith(".wh.")
+
+
+def is_oci_whiteout_file(path: Path) -> bool:
+    """Verify if the given path corresponds to an OCI whiteout file hiding a file.
+
+    :param path: The path of the file to verify.
+
+    :returns: Whether the given path is an OCI whiteout file hiding a file.
+    """
+    return is_oci_whiteout(path) and path.name != ".wh..wh..opq"
 
 
 def oci_whiteout(path: Path) -> Path:
