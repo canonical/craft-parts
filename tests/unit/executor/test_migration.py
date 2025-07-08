@@ -648,3 +648,31 @@ class TestFilterWhiteouts:
             ".wh..wh..opq",
         }
         assert dirs == {"a", "b", "c"}
+
+    def test_filter_all_whiteouts(self):
+        """Expect all whiteout files to be removed."""
+        files = {
+            "f1",
+            "f2",
+            "f3",
+            ".wh.foo.txt",
+            "a/.wh.bar.txt",
+            "b/baz.txt",
+            "b/.wh..wh..opq",
+            ".wh..wh..opq",
+        }
+
+        whiteouts = migration.filter_all_whiteouts(files)
+
+        assert files == {
+            "f1",
+            "f2",
+            "f3",
+            "b/baz.txt",
+        }
+        assert whiteouts == {
+            ".wh.foo.txt",
+            "a/.wh.bar.txt",
+            "b/.wh..wh..opq",
+            ".wh..wh..opq",
+        }
