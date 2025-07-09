@@ -378,6 +378,7 @@ configfile
 cp
 craftctl
 crafter
+crafters
 cryptographic
 ctl
 customization
