@@ -26,6 +26,8 @@ Bug fixes:
 
 - Properly apply top-level whiteout opaque directory files (``.wh..wh..opq``) when
   staging content.
+- Partitions other than the default one are not applied on a base layer, so remove
+  all whiteout files in them.
 
 For a complete list of commits, check out the `2.17.0`_ release on GitHub.
 
