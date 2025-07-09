@@ -1185,6 +1185,7 @@ class PartHandler:
             self._part.part_run_dir,
             *self._part.stage_dirs.values(),
             *self._part.prime_dirs.values(),
+            *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
