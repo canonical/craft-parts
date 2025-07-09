@@ -768,15 +768,18 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
     ("namespace", "expected"),
     [
         pytest.param("", {}, id="none"),
-        pytest.param('xmlns="https://example.com"', {"": "https://example.com"}, id="some")
-    ]
+        pytest.param(
+            'xmlns="https://example.com"', {"": "https://example.com"}, id="some"
+        ),
+    ],
 )
 def test_get_namespaces(namespace: str, expected: dict[str, str]) -> None:
     project = ET.fromstring(  # noqa: S314
-    f"""
+        f"""
         <project {namespace}>
         </project>
-    """)
+    """
+    )
 
     namespaces = _get_namespaces(project)
 

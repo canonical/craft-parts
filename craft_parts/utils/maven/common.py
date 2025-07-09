@@ -171,11 +171,12 @@ def update_pom(
             # Remove the existing distributionManagement tag if present.
             # This is okay because we only need to "distribute" to the backstage directory,
             # so any other project-specific config is irrelevant to this build.
-            if (existing_distmgmt := project.find("distributionManagement", namespaces)) is not None:
+            if (
+                existing_distmgmt := project.find("distributionManagement", namespaces)
+            ) is not None:
                 project.remove(existing_distmgmt)
 
             project.append(distribution_element)
-
 
         if self_contained:
             MavenArtifact.update_versions(project, namespaces, existing)
@@ -451,9 +452,7 @@ def _get_available_version(
     return None
 
 
-def _set_version(
-    element: ET.Element, namespaces: Namespaces, new_version: str
-) -> None:
+def _set_version(element: ET.Element, namespaces: Namespaces, new_version: str) -> None:
     group_id = _get_element_text(_find_element(element, "groupId", namespaces))
     artifact_id = _get_element_text(_find_element(element, "artifactId", namespaces))
 
@@ -586,12 +585,17 @@ def _get_poms(part_info: PartInfo, existing: GroupDict) -> list[Path]:
     logger.debug(
         "Discovered poms for part '%s': [%s]",
         part_info.part_name,
-        ", ".join([str(path.relative_to(part_info.part_build_subdir)) for path in poms])
+        ", ".join(
+            [str(path.relative_to(part_info.part_build_subdir)) for path in poms]
+        ),
     )
 
     return poms
 
-def _recurse_submodules(parent_pom: Path, all_poms: list[Path], existing: GroupDict) -> None:
+
+def _recurse_submodules(
+    parent_pom: Path, all_poms: list[Path], existing: GroupDict
+) -> None:
     """Recursively find submodule poms and add them to the existing artifacts."""
     tree = ET.parse(parent_pom)  # noqa: S314, unsafe parsing with xml
     project = tree.getroot()
