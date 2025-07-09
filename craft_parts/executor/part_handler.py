@@ -1146,6 +1146,33 @@ class PartHandler:
             )
             overlay_migration_state_path.unlink()
 
+    def _symlink_alias_to_default(self) -> None:
+        """Create directory and symlinks for the alias of the default partition.
+
+        These symlinks are never consumed by craft-parts. They are created to help
+        users debugging a build.
+        """
+        if not self._part_info.is_default_partition_aliased:
+            return
+        default_partition = self._part_info.default_partition
+        logger.debug(f"Create symlinks for {default_partition}")
+        partition_dir = self._part.dirs.work_dir / "partitions" / default_partition
+        partition_dir.mkdir(parents=True, exist_ok=True)
+
+        for src, dst in [
+            (self._part_info.stage_dir, partition_dir / "stage"),
+            (self._part_info.prime_dir, partition_dir / "prime"),
+            (self._part_info.overlay_dir, partition_dir / "overlay"),
+            (self._part_info.parts_dir, partition_dir / "parts"),
+        ]:
+            if dst.exists():
+                continue
+            os.symlink(
+                src,
+                dst,
+                target_is_directory=True,
+            )
+
     def _make_dirs(self) -> None:
         dirs = [
             self._part.part_src_dir,
@@ -1161,6 +1188,8 @@ class PartHandler:
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
+
+        self._symlink_alias_to_default()
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.
