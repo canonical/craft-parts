@@ -34,6 +34,7 @@ from craft_parts.utils.maven.common import (
     _get_available_version,
     _get_element_text,
     _get_existing_artifacts,
+    _get_namespaces,
     _get_no_proxy_string,
     _needs_proxy_config,
     _set_version,
@@ -761,3 +762,22 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
     mock_artifact.assert_called_once()
     mock_plugin.assert_called_once()
     mock_parent.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("namespace", "expected"),
+    [
+        pytest.param("", {}, id="none"),
+        pytest.param('xmlns="https://example.com"', {"": "https://example.com"}, id="some")
+    ]
+)
+def test_get_namespaces(namespace: str, expected: dict[str, str]) -> None:
+    project = ET.fromstring(  # noqa: S314
+    f"""
+        <project {namespace}>
+        </project>
+    """)
+
+    namespaces = _get_namespaces(project)
+
+    assert namespaces == expected

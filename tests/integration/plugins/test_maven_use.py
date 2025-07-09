@@ -18,6 +18,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
@@ -112,3 +113,51 @@ def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplo
         f"Setting version of 'org.apache.maven.plugins.maven-shade-plugin' to '{shaded_version}'"
         in log
     )
+
+
+def test_maven_use_with_modules(
+    new_dir: Path,
+    partitions: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    project_dir = Path(new_dir) / "project"
+    shutil.copytree(SOURCE_DIR / "multi-module", project_dir)
+    monkeypatch.chdir(project_dir)
+    work_dir = Path(new_dir)
+    parts_yaml = (project_dir / "parts.yaml").read_text()
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        work_dir=work_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    jar_dir = lf.project_info.prime_dir / "jar"
+    jars = {i.name for i in jar_dir.iterdir()}
+    # Only the two jars produced by the main part
+    # (the shade plugin creates the "original-*" one)
+    assert jars == {"hello-world-0.1.0.jar", "original-hello-world-0.1.0.jar"}
+
+    jar = jar_dir / "hello-world-0.1.0.jar"
+    assert jar.is_file()
+
+    output = subprocess.check_output(["java", "-jar", str(jar)], text=True)
+    assert output == "Hello!\n"
+
+    log = caplog.text
+    assert "Setting version of 'org.starcraft.subsubmod' to '1.0.0'" in log
+
+    assert (
+        "Discovered poms for part 'java-dep-top': [pom.xml, java-dep-submod/pom.xml, java-dep-submod/java-dep-subsubmod/pom.xml]"
+        in log
+    )
+    assert "Discovered poms for part 'java-main-part': [pom.xml]" in log

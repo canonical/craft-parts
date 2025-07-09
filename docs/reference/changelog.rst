@@ -16,6 +16,17 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+X.X.X (2025-MM-DD)
+------------------
+
+New features:
+
+- Add support for multi-module Maven projects with the maven-use plugin.
+
+Bug fixes:
+
+Documentation:
+
 .. _release-2.16.0:
 
 2.16.0 (2025-07-04)
@@ -32,7 +43,7 @@ New features:
 
 Bug fixes:
 
-- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven 
+- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven
   plugins when the project indirectly depends on one.
 - Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
   in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
