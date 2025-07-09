@@ -281,6 +281,13 @@ class ProjectInfo:
             return self._partitions[0]
         return None
 
+    @property
+    def is_default_partition_aliased(self) -> bool:
+        """Check if the default partition is aliased."""
+        return (
+            self._partitions is not None and self.default_partition != DEFAULT_PARTITION
+        )
+
     def is_default_partition(self, partition: str | None) -> bool:
         """Check if given partition is the default one."""
         if partition == DEFAULT_PARTITION:

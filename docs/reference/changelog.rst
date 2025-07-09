@@ -16,6 +16,21 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.19.0:
+
+2.19.0 (2025-MM-DD)
+------------------
+
+New features:
+
+- When the default partition is aliased, create symlinks in the ``partitions``
+  directory to the lifecycle directories in the working directory. The links are
+  intended to help users during debugging. For example,
+  ``/root/partitions/<partition-id>/stage`` in the container filesystem is linked
+  to ``/root/stage``.
+
+For a complete list of commits, check out the `2.19.0`_ release on GitHub.
+
 .. _release-2.18.0:
 
 2.18.0 (2025-07-14)
@@ -1287,6 +1302,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.19.0: https://github.com/canonical/craft-parts/releases/tag/2.19.0
 .. _2.18.0: https://github.com/canonical/craft-parts/releases/tag/2.18.0
 .. _2.17.0: https://github.com/canonical/craft-parts/releases/tag/2.17.0
 .. _2.16.0: https://github.com/canonical/craft-parts/releases/tag/2.16.0
