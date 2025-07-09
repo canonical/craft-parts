@@ -190,3 +190,17 @@ class TestVisibility:
         files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
         assert files == {"a", "dir1/b", "dir1/c"}
         assert dirs == {"dir1"}
+
+    def test_visible_in_layer_root_whited_out_file(self, new_dir):
+        Path("upper_dir/.wh.a").touch()
+
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
+        assert files == {"dir1/b", "dir1/c"}
+        assert dirs == {"dir1"}
+
+    def test_visible_in_layer_root_opaque_dir(self, new_dir):
+        Path("upper_dir/.wh..wh..opq").touch()
+
+        files, dirs = overlays.visible_in_layer(Path("lower_dir"), Path("upper_dir"))
+        assert files == set()
+        assert dirs == set()
