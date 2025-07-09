@@ -25,7 +25,7 @@ Changelog
 New features:
 
 - When the default partition is aliased, create symlinks in the ``partitions``
-  directory to the default directories at the root of the workdir.
+  directory to the default directories at the root of the working directory.
 
 For a complete list of commits, check out the `2.17.0`_ release on GitHub.
 
