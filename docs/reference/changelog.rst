@@ -16,6 +16,19 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.17.0:
+
+2.17.0 (2025-MM-DD)
+-------------------
+
+New features:
+
+- When the default partition is aliased, create symlinks in the ``partitions``
+  directory to the default directories at the root of the workdir.
+
+For a complete list of commits, check out the `2.17.0`_ release on GitHub.
+
 .. _release-2.16.0:
 
 2.16.0 (2025-07-04)
