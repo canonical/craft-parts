@@ -34,7 +34,7 @@ initially migrated files from part-specific directories, and is called the
 Simple file migration
 ---------------------
 
-During the execution of the lifcycle, files from the part's install directory
+During the execution of the lifecycle, files from the part's install directory
 are migrated to the stage area and from there to prime. In the following diagram,
 files are represented as circles with letters. The green circles correspond to
 files from part 1, while blue circles represent files from part 2.
