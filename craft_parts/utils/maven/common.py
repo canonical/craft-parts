@@ -152,7 +152,7 @@ def update_pom(
     poms = _get_poms(part_info, existing)
 
     # We should at least have a single pom file
-    if len(poms) == 0 or not poms[0].is_file():
+    if not poms or not poms[0].is_file():
         raise MavenXMLError("'pom.xml' does not exist'")
 
     for pom in poms:
