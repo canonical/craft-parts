@@ -23,8 +23,8 @@ Changelog
 
 New features:
 
-- The maven-use plugin will now directly process Maven artifacts contained
-  inside a top-level "maven-use" directory in the source.
+- The maven-use plugin now processes Maven artifacts placed in the source's top-level
+  ``maven-use`` directory.
 
 .. _release-2.16.0:
 

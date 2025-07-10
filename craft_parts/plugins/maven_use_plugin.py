@@ -159,7 +159,6 @@ class MavenUsePlugin(JavaPlugin):
             raise errors.PartsError(
                 brief=f"Plugin configuration failed for part {self._part_info.part_name}: {err.message}",
                 details=err.details,
-                resolution="Check that the 'pom.xml' file is valid.",
             )
 
         export_dir = self._part_info.part_export_dir

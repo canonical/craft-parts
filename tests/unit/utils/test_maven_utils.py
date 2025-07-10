@@ -650,6 +650,32 @@ def create_project(part_info: PartInfo, project_xml: str) -> Path:
     return pom_xml
 
 
+def test_update_pom_comment(part_info: PartInfo) -> None:
+    project_xml = dedent("""\
+        <project>
+            <dependencies>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test1</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.starcraft</groupId>
+                    <artifactId>test2</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+            </dependencies>
+        </project>
+    """)
+
+    pom_xml = create_project(part_info, project_xml)
+
+    update_pom(part_info=part_info, deploy_to=None, self_contained=False)
+
+    expected_comment = "<!--This project was modified by craft-parts-->"
+    assert expected_comment in pom_xml.read_text()
+
+
 def test_update_pom_deploy_to(part_info: PartInfo) -> None:
     project_xml = dedent("""\
         <project>
