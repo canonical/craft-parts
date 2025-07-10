@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.17.0:
 
-2.17.0 (2025-07-DD)
+2.17.0 (2025-07-11)
 -------------------
 
 New features:
@@ -972,7 +972,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 -------------------
 
 - Add support to chisel slices
-- Add ``go-generate`` property to the go plugin
+- Add ``go-generate`` key to the go plugin
 
 .. _release-1.14.2:
 

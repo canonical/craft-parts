@@ -23,7 +23,7 @@ Describing a part
 
 Each part contains all the required information about a specific component, and is
 organised like a dictionary. Each piece of information is accessed by name using a
-property.
+key.
 
 Generally, each part includes information about the following:
 
@@ -41,7 +41,7 @@ Each of these are described in the following sections.
 Source
 ~~~~~~
 
-The source for a part is described using the ``source`` property. This specifies a
+The source for a part is described using the ``source`` key. This specifies a
 location where the source code or other information is to be *pulled* from. This may be
 a repository on a remote server, a directory on the build host, or some other location.
 
@@ -56,7 +56,7 @@ formats can be found in the :mod:`craft_parts.sources` file. These include repos
 types, such as ``git``, archive formats such as ``zip``, and ``local`` for files in the
 local file system.
 
-If the source type represents a file, the ``source-checksum`` property can be used to
+If the source type represents a file, the ``source-checksum`` key can be used to
 provide a checksum value to be compared against the checksum of the downloaded file.
 
 Parts with source types that describe repositories can also use additional properties to
@@ -101,7 +101,7 @@ For example, a part that is built against the SDL 2 libraries could include the
 Build process
 ~~~~~~~~~~~~~
 
-Each part specifies the name of a *plugin* using the ``plugin`` property to describe how
+Each part specifies the name of a *plugin* using the ``plugin`` key to describe how
 it should be built. The available plugins are provided by the modules in the
 :py:mod:`craft_parts.plugins` package.
 
@@ -119,7 +119,7 @@ how :command:`cmake` is used in the build process.
 
 .. ifconfig:: project in ("Snapcraft",)
 
-   The ``build_attributes`` property allows a number of standard customisations to be
+   The ``build_attributes`` key allows a number of standard customisations to be
    applied to the build. Some of these are used to address issues that occur in specific
    situations; others, such as ``debug`` are generally useful.
 
@@ -154,7 +154,7 @@ to be deployed with the part are specified using the ``stage-snaps`` and
    with deb packages. 
 
 In the final *prime* step, the files needed for deployment are copied from the staging
-area to the priming area. During this step the ``prime`` property is typically used to
+area to the priming area. During this step the ``prime`` key is typically used to
 exclude files in the staging area that are not required at run-time. This is especially
 useful for multi-part projects that include their own compilers or development tools.
 
@@ -165,7 +165,7 @@ Defining the build order
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 If a part depends on other parts in a project as build dependencies then it can use the
-``after`` key to define this relationship. This property specifies a list containing the
+``after`` key to define this relationship. This key specifies a list containing the
 names of parts that it will be built after. The parts in the list will be *built and
 staged* before the part is built.
 
