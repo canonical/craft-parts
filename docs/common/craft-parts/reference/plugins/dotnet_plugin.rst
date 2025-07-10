@@ -26,7 +26,7 @@ dotnet-self-contained-runtime-identifier
 
 Create a self contained .NET application using the specified Runtime Identifier.
 See the `Runtime Identifier catalogue`_ for a list of possible values. This
-property has no default value, meaning that it won't create self-contained
+key has no default value, meaning that it won't create self-contained
 executables unless set.
 
 
@@ -52,7 +52,7 @@ as a snap or an Ubuntu package.
 
 Finally, whether the resulting built artefact will need the presence of the .NET runtime
 to execute depends on the value of the ``dotnet-self-contained-runtime-identifier``
-property: self-contained builds bundle the necessary portions of the runtime in the
+key. Self-contained builds bundle the necessary portions of the runtime in the
 generated executable.
 
 .. _dotnet-details-end:
@@ -63,7 +63,7 @@ How it works
 During the build step the plugin performs the following actions:
 
 * Call ``dotnet build -c <config>`` where ``<config>`` is the value of the
-  ``dotnet-build-configuration`` property.
+  ``dotnet-build-configuration`` key.
 * Call ``dotnet publish`` to install the generated assets into ``${CRAFT_PART_INSTALL}``,
   optionally passing the value of ``dotnet-self-contained-runtime-identifier`` if
   set.
