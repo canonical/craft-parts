@@ -566,7 +566,9 @@ def _get_namespaces(project: ET.Element) -> Namespaces:
     return namespaces
 
 
-def _get_poms(base_pom: Path | None, part_info: PartInfo, existing: GroupDict) -> list[Path]:
+def _get_poms(
+    base_pom: Path | None, part_info: PartInfo, existing: GroupDict
+) -> list[Path]:
     """Get a list of poms on a project.
 
     Each submodule is added to the list of existing artifacts because Maven's build

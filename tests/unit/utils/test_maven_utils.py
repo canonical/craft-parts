@@ -821,13 +821,31 @@ def test_get_namespaces(namespace: str, expected: dict[str, str]) -> None:
 
 def test_insert_into_existing(monkeypatch: pytest.MonkeyPatch, new_dir: Path) -> None:
     existing = GroupDict()
-    test1 = MavenArtifact(group_id="org.starcraft", artifact_id="test1", version="1.0.0", packaging_type=None)
-    test2 = MavenArtifact(group_id="org.starcraft", artifact_id="test2", version="0.1.0", packaging_type=None)
-    test3_v1 = MavenArtifact(group_id="org.snarfcraft", artifact_id="test3", version="1.0.0", packaging_type=None)
-    test3_v2 = MavenArtifact(group_id="org.snarfcraft", artifact_id="test3", version="2.0.0", packaging_type=None)
-    artifacts = [
-        test1, test2, test3_v1, test3_v2
-    ]
+    test1 = MavenArtifact(
+        group_id="org.starcraft",
+        artifact_id="test1",
+        version="1.0.0",
+        packaging_type=None,
+    )
+    test2 = MavenArtifact(
+        group_id="org.starcraft",
+        artifact_id="test2",
+        version="0.1.0",
+        packaging_type=None,
+    )
+    test3_v1 = MavenArtifact(
+        group_id="org.snarfcraft",
+        artifact_id="test3",
+        version="1.0.0",
+        packaging_type=None,
+    )
+    test3_v2 = MavenArtifact(
+        group_id="org.snarfcraft",
+        artifact_id="test3",
+        version="2.0.0",
+        packaging_type=None,
+    )
+    artifacts = [test1, test2, test3_v1, test3_v2]
 
     # The mocking here bypasses the need to write a real pom to the disk, instead just
     # forcing the artifact to be returned from `from_pom`
@@ -838,11 +856,15 @@ def test_insert_into_existing(monkeypatch: pytest.MonkeyPatch, new_dir: Path) ->
     assert existing.get("org.snarfcraft") == {"test3": {test3_v1, test3_v2}}
 
 
-
 def test_get_poms(part_info: PartInfo, caplog) -> None:
     caplog.set_level(logging.DEBUG)
     existing = GroupDict()
-    sentinel_art = MavenArtifact(group_id="org.starcraft", artifact_id="survivor", version="1.0.0", packaging_type=None)
+    sentinel_art = MavenArtifact(
+        group_id="org.starcraft",
+        artifact_id="survivor",
+        version="1.0.0",
+        packaging_type=None,
+    )
     _insert_into_existing(existing, sentinel_art)
 
     # Declare a project with three submodules
@@ -912,7 +934,10 @@ def test_get_poms(part_info: PartInfo, caplog) -> None:
     poms = _get_poms(None, part_info, existing)
 
     assert sorted(poms) == sorted([top_pom, single_pom, nested_pom, egg_pom])
-    assert "The pom 'pom.xml' declares a submodule at 'idonotexist', but this submodule could not be found." in caplog.text
+    assert (
+        "The pom 'pom.xml' declares a submodule at 'idonotexist', but this submodule could not be found."
+        in caplog.text
+    )
 
 
 def test_update_pom_file(part_info: PartInfo, tmp_path: Path) -> None:
