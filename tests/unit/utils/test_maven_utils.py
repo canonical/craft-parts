@@ -934,6 +934,19 @@ def test_get_poms(part_info: PartInfo, caplog) -> None:
     poms = _get_poms(None, part_info, existing)
 
     assert sorted(poms) == sorted([top_pom, single_pom, nested_pom, egg_pom])
+    expected_existing = {
+        "org.starcraft": {
+            "survivor": {sentinel_art},
+            "single": {MavenArtifact.from_pom(single_pom)},
+            "nested": {MavenArtifact.from_pom(nested_pom)},
+            "egg": {MavenArtifact.from_pom(egg_pom)},
+        }
+    }
+    assert existing == expected_existing
+    assert (
+        "Discovered poms for part 'my-part': [pom.xml, single/pom.xml, nested/pom.xml, egg/pom.xml]"
+        in caplog.text
+    )
     assert (
         "The pom 'pom.xml' declares a submodule at 'idonotexist', but this submodule could not be found."
         in caplog.text
