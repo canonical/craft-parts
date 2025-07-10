@@ -18,6 +18,7 @@
 
 import sys
 import textwrap
+import time
 from pathlib import Path
 from typing import Any
 from unittest.mock import ANY, call
@@ -287,6 +288,30 @@ class TestLifecycleManager:
                 **self._lcm_kwargs,
             )
         assert "p1" in str(exc.value)
+
+    def test_get_prime_state_timestamp(self, new_dir, mock_available_plugins):
+        data = {
+            "parts": {
+                "foo": {"plugin": "strict"},
+                "bar": {"plugin": "strict"},
+            },
+        }
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            strict_mode=True,
+            **self._lcm_kwargs,
+        )
+
+        state = states.PrimeState()
+        state.write(Path(new_dir, "parts/foo/state/prime"))
+        time.sleep(0.5)
+        state.write(Path(new_dir, "parts/bar/state/prime"))
+        expected_time = Path("parts/bar/state/prime").stat().st_mtime_ns
+
+        actual_time = lf.get_prime_state_timestamp()
+        assert actual_time == expected_time
 
 
 class TestOverlayDisabled:
