@@ -820,7 +820,7 @@ def test_get_namespaces(namespace: str, expected: dict[str, str]) -> None:
 
 
 def test_insert_into_existing(monkeypatch: pytest.MonkeyPatch, new_dir: Path) -> None:
-    existing = GroupDict()
+    existing: GroupDict = GroupDict()
     test1 = MavenArtifact(
         group_id="org.starcraft",
         artifact_id="test1",
@@ -858,7 +858,7 @@ def test_insert_into_existing(monkeypatch: pytest.MonkeyPatch, new_dir: Path) ->
 
 def test_get_poms(part_info: PartInfo, caplog) -> None:
     caplog.set_level(logging.DEBUG)
-    existing = GroupDict()
+    existing: GroupDict = GroupDict()
     sentinel_art = MavenArtifact(
         group_id="org.starcraft",
         artifact_id="survivor",

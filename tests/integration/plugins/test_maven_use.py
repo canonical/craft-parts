@@ -157,18 +157,18 @@ def test_maven_use_with_modules(
     assert "Discovered poms for part 'java-main-part': [pom.xml]" in log
 
     maven_repo = lf.project_info.dirs.backstage_dir / "maven-use"
-    dirs: set[str] = set()
-    jars: set[str] = set()
+    bs_dirs: set[str] = set()
+    bs_jars: set[str] = set()
     # python>=3.12 needed for Path.walk()
     for node in maven_repo.rglob("*"):
         rel_node = str(node.relative_to(maven_repo))
         if node.is_dir():
-            dirs.add(rel_node)
+            bs_dirs.add(rel_node)
         elif node.suffix == ".jar":
-            jars.add(rel_node)
+            bs_jars.add(rel_node)
 
     # What we built, and nothing more, should be in the backstage
-    assert dirs == {
+    assert bs_dirs == {
         "org",
         "org/starcraft",
         "org/starcraft/top",
@@ -178,7 +178,7 @@ def test_maven_use_with_modules(
         "org/starcraft/subsubmod",
         "org/starcraft/subsubmod/1.0.0",
     }
-    assert jars == {"org/starcraft/subsubmod/1.0.0/subsubmod-1.0.0.jar"}
+    assert bs_jars == {"org/starcraft/subsubmod/1.0.0/subsubmod-1.0.0.jar"}
 
 
 @pytest.fixture
