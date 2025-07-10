@@ -151,10 +151,6 @@ def update_pom(
     existing = _get_existing_artifacts(part_info)
     poms = _get_poms(part_info, existing)
 
-    # We should at least have a single pom file
-    if not poms or not poms[0].is_file():
-        raise MavenXMLError("'pom.xml' does not exist'")
-
     for pom in poms:
         tree = ET.parse(pom)  # noqa: S314, unsafe parsing with xml
         project = tree.getroot()
@@ -435,9 +431,7 @@ def _get_existing_artifacts(part_info: PartInfo) -> GroupDict:
             continue
         for pom in loc.glob("**/*.pom"):
             art = MavenArtifact.from_pom(pom)
-            group_artifacts = result.setdefault(art.group_id, {})
-            versions = group_artifacts.setdefault(art.artifact_id, set())
-            versions.add(art)
+            _insert_into_existing(result, art)
 
     return result
 
@@ -567,11 +561,10 @@ def _get_poms(part_info: PartInfo, existing: GroupDict) -> list[Path]:
     """Get a list of poms on a project.
 
     Each submodule is added to the list of existing artifacts because Maven's build
-    will put them into the backstage as they are built. If a build somehow fails
-    due to one of these missing from the backstage, it is due to a malformed pom.xml.
-
-    It does not matter what order the submodules are parsed because Maven itself
-    is not invoked until every pom has been patched.
+    process will determine the correct order to build dependencies before their
+    consuming binaries need them - we do not need to figure this out ourselves. If
+    a build somehow fails due to one of these missing from the backstage, it is due
+    to a malformed pom.xml.
     """
     poms: list[Path] = []
 
@@ -580,7 +573,7 @@ def _get_poms(part_info: PartInfo, existing: GroupDict) -> list[Path]:
         raise MavenXMLError("'pom.xml' does not exist")
     poms.append(base_pom)
 
-    _recurse_submodules(base_pom, poms, existing)
+    _recurse_submodules(part_info, base_pom, poms, existing)
 
     logger.debug(
         "Discovered poms for part '%s': [%s]",
@@ -594,7 +587,7 @@ def _get_poms(part_info: PartInfo, existing: GroupDict) -> list[Path]:
 
 
 def _recurse_submodules(
-    parent_pom: Path, all_poms: list[Path], existing: GroupDict
+    part_info: PartInfo, parent_pom: Path, all_poms: list[Path], existing: GroupDict
 ) -> None:
     """Recursively find submodule poms and add them to the existing artifacts."""
     tree = ET.parse(parent_pom)  # noqa: S314, unsafe parsing with xml
@@ -611,14 +604,29 @@ def _recurse_submodules(
     for module in modules.findall("module", namespaces):
         # - Append it to the list of poms that need patching
         path_str = _get_element_text(module)
-        pom_path = parent_pom.parent / path_str / "pom.xml"
+        pom_path = (parent_pom.parent / path_str / "pom.xml").resolve()
+
+        # - Validate that it is a legitimate dependency file, but only warn if not
+        if not pom_path.is_file():
+            logger.debug(
+                "The pom '%s' declares a submodule at '%s', but this submodule could not be found.",
+                parent_pom.relative_to(part_info.part_build_subdir),
+                path_str,
+            )
+            return
+
         all_poms.append(pom_path)
 
         # - Add it to the list of existing artifacts
         art = MavenArtifact.from_pom(pom_path)
-        group_artifacts = existing.setdefault(art.group_id, {})
-        versions = group_artifacts.setdefault(art.artifact_id, set())
-        versions.add(art)
+        _insert_into_existing(existing, art)
 
         # - Recurse on its pom.xml for more submodules
-        _recurse_submodules(pom_path, all_poms, existing)
+        _recurse_submodules(part_info, pom_path, all_poms, existing)
+
+
+def _insert_into_existing(existing: GroupDict, art: MavenArtifact) -> None:
+    """Insert a pom file into the list of existing artifacts."""
+    group_artifacts = existing.setdefault(art.group_id, {})
+    versions = group_artifacts.setdefault(art.artifact_id, set())
+    versions.add(art)

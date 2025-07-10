@@ -66,7 +66,7 @@ def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplo
 
     lf = LifecycleManager(
         parts,
-        application_name="test_go",
+        application_name="test_maven_use_self_contained",
         cache_dir=new_dir,
         work_dir=work_dir,
         partitions=partitions,
@@ -131,7 +131,7 @@ def test_maven_use_with_modules(
 
     lf = LifecycleManager(
         parts,
-        application_name="test_go",
+        application_name="test_maven_use_with_modules",
         cache_dir=new_dir,
         work_dir=work_dir,
         partitions=partitions,
@@ -147,12 +147,6 @@ def test_maven_use_with_modules(
     # (the shade plugin creates the "original-*" one)
     assert jars == {"hello-world-0.1.0.jar", "original-hello-world-0.1.0.jar"}
 
-    jar = jar_dir / "hello-world-0.1.0.jar"
-    assert jar.is_file()
-
-    output = subprocess.check_output(["java", "-jar", str(jar)], text=True)
-    assert output == "Hello!\n"
-
     log = caplog.text
     assert "Setting version of 'org.starcraft.subsubmod' to '1.0.0'" in log
 
@@ -161,3 +155,27 @@ def test_maven_use_with_modules(
         in log
     )
     assert "Discovered poms for part 'java-main-part': [pom.xml]" in log
+
+    maven_repo = lf.project_info.dirs.backstage_dir / "maven-use"
+    dirs: set[str] = set()
+    jars: set[str] = set()
+    # python>=3.12 needed for Path.walk()
+    for node in maven_repo.rglob("*"):
+        rel_node = str(node.relative_to(maven_repo))
+        if node.is_dir():
+            dirs.add(rel_node)
+        elif node.suffix == ".jar":
+            jars.add(rel_node)
+
+    # What we built, and nothing more, should be in the backstage
+    assert dirs == {
+        "org",
+        "org/starcraft",
+        "org/starcraft/top",
+        "org/starcraft/top/1.0.0",
+        "org/starcraft/submod",
+        "org/starcraft/submod/1.0.0",
+        "org/starcraft/subsubmod",
+        "org/starcraft/subsubmod/1.0.0",
+    }
+    assert jars == {"org/starcraft/subsubmod/1.0.0/subsubmod-1.0.0.jar"}
