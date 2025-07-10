@@ -4,8 +4,8 @@
 Including local files and remote resources
 ******************************************
 
-Craft Parts provides the built-in Dump plugin for all kinds of projects that need to
-include local files and remote resources as is. This plugin uses the ``source`` key in
+The Dump plugin is handy for all kinds of projects that need to
+include local files and remote resources as-is. This plugin uses the ``source`` key in
 the part to download, unpack, and copy files and directories from the given source to
 the build environment, then do some organizing if needed, and include them in the final
 payload.

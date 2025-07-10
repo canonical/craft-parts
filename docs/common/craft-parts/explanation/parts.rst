@@ -3,20 +3,19 @@
 Parts
 =====
 
-In the Craft Parts framework, parts are descriptions of the components to be built and
-prepared for deployment in a payload, either individually or as part of a larger project
-containing many components.
+A *part* is a description of the components to be built and prepared for deployment in a
+payload, either individually or as part of a larger project containing many components.
 
-When the Craft Parts framework is used to process a part on behalf of a tool or library,
-it performs some or all of the steps described in the parts lifecycle: *pull*, *overlay*, *build*, *stage* and *prime*.
+When a part is processed, it performs some or all of the steps described in the parts
+lifecycle: *pull*, *overlay*, *build*, *stage* and *prime*.
 
-Not all of these steps may be needed for every use case, and tools that use the Craft
-Parts framework can skip those that are not appropriate for their purposes.
+Not all of these steps may be needed for every use case, and some tools can skip steps
+that aren't appropriate for their purposes.
 
-Tools like `Snapcraft`_ and `Charmcraft`_ that use the concepts of parts to describe a
-build process typically accept specifications of parts in YAML format. This allows each
-part to be described in a convenient, mostly-declarative format. Libraries that use
-parts may use the underlying data structures to describe them.
+Tools that use parts to describe a build process typically accept specifications of
+parts in YAML format. This allows each part to be described in a convenient,
+mostly-declarative format. Libraries that use parts may use the underlying data
+structures to describe them.
 
 Describing a part
 -----------------
