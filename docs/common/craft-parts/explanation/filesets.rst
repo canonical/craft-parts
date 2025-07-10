@@ -1,3 +1,5 @@
+.. |app| replace:: Craft Parts
+
 .. _filesets_explanation:
 
 Filesets
@@ -5,10 +7,10 @@ Filesets
 
 Filesets are named collections of files and directories that can be migrated
 between steps in the process of building a part. They are used
-within Craft Parts to collect and filter the files and directories a part
+within |app| to collect and filter the files and directories a part
 needs in its *stage* and *prime* processing steps.
 
-Tools that depend on Craft Parts can use filesets to simplify and automate
+Tools that depend on |app| can use filesets to simplify and automate
 migration of files and directories between build steps. Users of those tools
 may need to know about filesets if they need to adjust the contents of the
 packages that the tools produce.
@@ -16,7 +18,7 @@ packages that the tools produce.
 Fileset names
 -------------
 
-Internally, Craft Parts uses the ``overlay``, ``stage`` and ``prime`` filesets
+Internally, |app| uses the ``overlay``, ``stage`` and ``prime`` filesets
 to migrate files from all parts into the corresponding steps. For example,
 the *stage* fileset refers to all the files and directories that will be moved
 into the staging area ready for the *stage* step to be run.
