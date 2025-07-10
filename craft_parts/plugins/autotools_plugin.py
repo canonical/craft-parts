@@ -31,6 +31,7 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
 
     autotools_configure_parameters: list[str] = []
     autotools_bootstrap_parameters: list[str] = []
+    autotools_parallel: bool = True
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -101,11 +102,16 @@ class AutotoolsPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        options = cast(AutotoolsPluginProperties, self._options)
         return [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
             f"[ ! -f ./configure ] && [ -f ./bootstrap ] && {self._get_bootstrap_command()}",
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
-            f"make -j{self._part_info.parallel_build_count}",
+            (
+                f"make -j{self._part_info.parallel_build_count}"
+                if options.autotools_parallel
+                else "make"
+            ),
             f'make install DESTDIR="{self._part_info.part_install_dir}"',
         ]
