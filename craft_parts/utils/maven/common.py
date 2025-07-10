@@ -137,7 +137,11 @@ def _get_no_proxy_string() -> str:
 
 
 def update_pom(
-    *, part_info: infos.PartInfo, deploy_to: Path | None, self_contained: bool
+    *,
+    part_info: infos.PartInfo,
+    deploy_to: Path | None,
+    self_contained: bool,
+    pom_file: Path | None = None,
 ) -> None:
     """Update the POM file of a Maven project.
 
@@ -146,11 +150,16 @@ def update_pom(
         is configured.
     :param self_contained: Whether or not to patch version numbers with what is
         actually available.
+    :param pom_file: The optional Maven POM file to update. If ``None``, the function
+        will try to use ``pom.xml`` on the part's build subdir.
     """
-    pom_xml = part_info.part_build_subdir / "pom.xml"
+    if pom_file is not None:
+        pom_xml = pom_file
+    else:
+        pom_xml = part_info.part_build_subdir / "pom.xml"
 
-    if not pom_xml.is_file():
-        raise MavenXMLError("'pom.xml' does not exist")
+        if not pom_xml.is_file():
+            raise MavenXMLError("'pom.xml' does not exist")
 
     tree = ET.parse(pom_xml)  # noqa: S314, unsafe parsing with xml
 
@@ -185,6 +194,9 @@ def update_pom(
         MavenPlugin.update_versions(project, namespaces, existing)
         MavenParent.update_versions(project, namespaces, existing)
 
+    # Add a comment to record the fact that this was modified by use
+    comment = ET.Comment("This project was modified by craft-parts")
+    project.insert(0, comment)
     ET.indent(tree)
     tree.write(pom_xml)
 

@@ -18,6 +18,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
@@ -112,3 +113,81 @@ def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplo
         f"Setting version of 'org.apache.maven.plugins.maven-shade-plugin' to '{shaded_version}'"
         in log
     )
+
+
+@pytest.fixture
+def prepare_binaries(new_dir, partitions, monkeypatch):
+    """Run a project that builds a set of Maven artifacts."""
+
+    def run(target_dir):
+        project_dir = Path(new_dir) / "binaries_source"
+        shutil.copytree(SOURCE_DIR / "from_binaries/binaries_source", project_dir)
+        monkeypatch.chdir(project_dir)
+        work_dir = Path(new_dir / "binaries_source_work")
+        parts_yaml = (project_dir / "parts.yaml").read_text()
+        parts = yaml.safe_load(parts_yaml)
+
+        lf = LifecycleManager(
+            parts,
+            application_name="binaries_source",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            partitions=partitions,
+        )
+        actions = lf.plan(Step.BUILD)
+
+        with lf.action_executor() as ctx:
+            ctx.execute(actions)
+
+        # Copy the generated/deployed artifacts to the location of the project where they
+        # will be consumed in a new lifecycle.
+        parts_dir = lf.project_info.parts_dir
+        for dep in ("java-dep-add", "java-dep-print-addition"):
+            # Copy the part's "export" dir, which contains the deployed artifact, to
+            # the new project's source dir
+            export_dir = parts_dir / dep / "export"
+            assert export_dir.is_dir()
+            target_dep_dir = target_dir / dep
+            shutil.copytree(export_dir, target_dep_dir)
+
+            # Remove the checksum files, because the original poms will need to be
+            # fixed in the new project
+            for digest in ("md5", "sha1"):
+                for name in target_dir.glob(f"**/*.{digest}"):
+                    name.unlink()
+
+    return run
+
+
+def test_maven_use_from_binaries(new_dir, partitions, monkeypatch, prepare_binaries):
+    """Test the maven-use plugin when consuming directly from binaries.
+
+    The test runs two lifecycles: the first one, called in ``prepare_binaries()``,
+    builds Maven artifacts for two Java projects, which are then used as dependencies
+    in the second lifecycle.
+    """
+    project_dir = Path(new_dir) / "binaries_consume"
+    shutil.copytree(SOURCE_DIR / "from_binaries/binaries_consume", project_dir)
+
+    prepare_binaries(project_dir)
+
+    monkeypatch.chdir(project_dir)
+    work_dir = Path(new_dir / "binaries_consume_work")
+    parts_yaml = (project_dir / "parts.yaml").read_text()
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts,
+        application_name="binaries_consume",
+        cache_dir=new_dir,
+        work_dir=work_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    jar = lf.project_info.prime_dir / "jar/hello-world-0.1.0.jar"
+    output = subprocess.check_output(["java", "-jar", str(jar)], text=True)
+    assert output == "1 plus 1 equals 2\n"

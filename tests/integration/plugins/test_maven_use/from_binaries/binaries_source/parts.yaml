@@ -1,0 +1,15 @@
+
+# This project builds Maven binaries that are then used in the "binaries_consume" project
+parts:
+  java-dep-add:
+    plugin: maven-use
+    source: java-dep-add
+
+  java-dep-print-addition:
+    after:
+      - java-dep-add
+    plugin: maven-use
+    source: java-dep-print-addition
+    build-packages:
+      - maven
+      - default-jdk
