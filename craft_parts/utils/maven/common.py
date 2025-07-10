@@ -626,7 +626,7 @@ def _recurse_submodules(
                 parent_pom.relative_to(part_info.part_build_subdir),
                 path_str,
             )
-            return
+            continue
 
         all_poms.append(pom_path)
 

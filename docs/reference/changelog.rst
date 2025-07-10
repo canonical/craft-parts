@@ -25,7 +25,7 @@ New features:
 
 - The maven-use plugin now processes Maven artifacts placed in the source's top-level
   ``maven-use`` directory.
-- Add support for multi-module Maven projects with the maven-use plugin.
+- Add support for multi-module Maven projects with the Maven or maven-use plugin.
 
 .. _release-2.16.0:
 
