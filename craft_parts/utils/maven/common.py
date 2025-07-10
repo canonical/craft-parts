@@ -138,7 +138,11 @@ def _get_no_proxy_string() -> str:
 
 
 def update_pom(
-    *, part_info: PartInfo, deploy_to: Path | None, self_contained: bool
+    *,
+    part_info: PartInfo,
+    deploy_to: Path | None,
+    self_contained: bool,
+    pom_file: Path | None = None,
 ) -> None:
     """Update the POM file of a Maven project.
 
@@ -147,9 +151,11 @@ def update_pom(
         is configured.
     :param self_contained: Whether or not to patch version numbers with what is
         actually available.
+    :param pom_file: The optional Maven POM file to update. If ``None``, the function
+        will try to use ``pom.xml`` on the part's build subdir.
     """
     existing = _get_existing_artifacts(part_info)
-    poms = _get_poms(part_info, existing)
+    poms = _get_poms(pom_file, part_info, existing)
 
     for pom in poms:
         tree = ET.parse(pom)  # noqa: S314, unsafe parsing with xml
@@ -179,6 +185,9 @@ def update_pom(
             MavenPlugin.update_versions(project, namespaces, existing)
             MavenParent.update_versions(project, namespaces, existing)
 
+        # Add a comment to record the fact that this was modified by use
+        comment = ET.Comment("This project was modified by craft-parts")
+        project.insert(0, comment)
         ET.indent(tree)
         tree.write(pom)
 
@@ -557,7 +566,7 @@ def _get_namespaces(project: ET.Element) -> Namespaces:
     return namespaces
 
 
-def _get_poms(part_info: PartInfo, existing: GroupDict) -> list[Path]:
+def _get_poms(base_pom: Path | None, part_info: PartInfo, existing: GroupDict) -> list[Path]:
     """Get a list of poms on a project.
 
     Each submodule is added to the list of existing artifacts because Maven's build
@@ -568,7 +577,9 @@ def _get_poms(part_info: PartInfo, existing: GroupDict) -> list[Path]:
     """
     poms: list[Path] = []
 
-    base_pom = part_info.part_build_subdir / "pom.xml"
+    if base_pom is None:
+        base_pom = part_info.part_build_subdir / "pom.xml"
+
     if not base_pom.is_file():
         raise MavenXMLError("'pom.xml' does not exist")
     poms.append(base_pom)
