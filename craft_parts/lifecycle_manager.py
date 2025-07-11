@@ -293,6 +293,17 @@ class LifecycleManager:
 
         return sorted(state.primed_stage_packages)
 
+    def get_prime_state_timestamp(self) -> int | None:
+        """Obtain the most recent prime state timestamp from all parts."""
+        times: list[int] = []
+        for part in self._part_list:
+            time = states.get_state_file_timestamp(part, Step.PRIME)
+            if time:
+                times.append(time)
+        if not time:
+            return None
+        return max(times)  # Return the most recent timestamp.
+
 
 def _ensure_overlay_supported() -> None:
     """Overlay is only supported in Linux and requires superuser privileges."""
