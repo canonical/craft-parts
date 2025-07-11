@@ -15,8 +15,8 @@
 """Unit tests for the Maven plugin utilities."""
 
 import io
+import logging
 import os
-import shutil
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +28,7 @@ import pytest
 from craft_parts import Part
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.utils.maven.common import (
+    GroupDict,
     MavenArtifact,
     MavenPlugin,
     MavenXMLError,
@@ -35,7 +36,10 @@ from craft_parts.utils.maven.common import (
     _get_available_version,
     _get_element_text,
     _get_existing_artifacts,
+    _get_namespaces,
     _get_no_proxy_string,
+    _get_poms,
+    _insert_into_existing,
     _needs_proxy_config,
     _set_version,
     create_maven_settings,
@@ -324,15 +328,16 @@ def test_get_available_version(package: dict[str, set[str]]) -> None:
     assert available is None or available in package["package"]
 
 
-@dataclass
-class FakeArtifact:
-    """Utility class for testing `_get_existing_artifacts`."""
+@dataclass(frozen=True)
+class FakeArtifact(MavenArtifact):
+    """Utility class for testing Maven artifacts"""
 
     group_id: str
     artifact_id: str
     version: str
+    packaging_type: str | None = None
 
-    def to_pom(self, repository: Path):
+    def to_pom(self, repository: Path) -> Path:
         pom_template = """\
         <project>
           <modelVersion>4.0.0</modelVersion>
@@ -351,6 +356,8 @@ class FakeArtifact:
                 group=self.group_id, artifact=self.artifact_id, version=self.version
             )
         )
+
+        return pom_file
 
 
 @pytest.mark.parametrize(
@@ -790,6 +797,162 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
     mock_parent.assert_called_once()
 
 
+@pytest.mark.parametrize(
+    ("namespace", "expected"),
+    [
+        pytest.param("", {}, id="none"),
+        pytest.param(
+            'xmlns="https://example.com"', {"": "https://example.com"}, id="some"
+        ),
+    ],
+)
+def test_get_namespaces(namespace: str, expected: dict[str, str]) -> None:
+    project = ET.fromstring(  # noqa: S314
+        f"""
+        <project {namespace}>
+        </project>
+    """
+    )
+
+    namespaces = _get_namespaces(project)
+
+    assert namespaces == expected
+
+
+def test_insert_into_existing(monkeypatch: pytest.MonkeyPatch, new_dir: Path) -> None:
+    existing: GroupDict = GroupDict()
+    test1 = MavenArtifact(
+        group_id="org.starcraft",
+        artifact_id="test1",
+        version="1.0.0",
+        packaging_type=None,
+    )
+    test2 = MavenArtifact(
+        group_id="org.starcraft",
+        artifact_id="test2",
+        version="0.1.0",
+        packaging_type=None,
+    )
+    test3_v1 = MavenArtifact(
+        group_id="org.snarfcraft",
+        artifact_id="test3",
+        version="1.0.0",
+        packaging_type=None,
+    )
+    test3_v2 = MavenArtifact(
+        group_id="org.snarfcraft",
+        artifact_id="test3",
+        version="2.0.0",
+        packaging_type=None,
+    )
+    artifacts = [test1, test2, test3_v1, test3_v2]
+
+    # The mocking here bypasses the need to write a real pom to the disk, instead just
+    # forcing the artifact to be returned from `from_pom`
+    for artifact in artifacts:
+        _insert_into_existing(existing, artifact)
+
+    assert existing.get("org.starcraft") == {"test1": {test1}, "test2": {test2}}
+    assert existing.get("org.snarfcraft") == {"test3": {test3_v1, test3_v2}}
+
+
+def test_get_poms(part_info: PartInfo, caplog) -> None:
+    caplog.set_level(logging.DEBUG)
+    existing: GroupDict = GroupDict()
+    sentinel_art = MavenArtifact(
+        group_id="org.starcraft",
+        artifact_id="survivor",
+        version="1.0.0",
+        packaging_type=None,
+    )
+    _insert_into_existing(existing, sentinel_art)
+
+    # Declare a project with three submodules
+    # "single" will be a simple submodule with no children of its own
+    # "nested" will have a submodule of its own
+    # "idonotexist", well, doesn't exist
+    top_art = """
+        <project>
+            <artifactId>top</artifactId>
+            <groupId>org.starcraft</groupId>
+            <version>1.0.0</version>
+
+            <modules>
+                <module>single</module>
+                <module>nested</module>
+                <module>idonotexist</module>
+            </modules>
+        </project>
+    """
+    single_art = """
+        <project>
+            <artifactId>single</artifactId>
+            <groupId>org.starcraft</groupId>
+            <version>1.0.0</version>
+        </project>
+    """
+    nested_art = """
+        <project>
+            <artifactId>nested</artifactId>
+            <groupId>org.starcraft</groupId>
+            <version>1.0.0</version>
+
+            <modules>
+                <module>../egg</module>
+            </modules>
+        </project>
+    """
+    egg_art = """
+        <project>
+            <artifactId>egg</artifactId>
+            <groupId>org.starcraft</groupId>
+            <version>1.0.0</version>
+        </project>
+    """
+    # An artifact that is not a submodule of anything and should not be discovered
+    orphan_art = """
+        <project>
+            <artifactId>orphan</artifactId>
+            <groupId>org.starcraft</groupId>
+            <version>1.0.0</version>
+        </project>
+    """
+
+    def _write_pom(art_name: str, art: str) -> Path:
+        proj_dir = Path(part_info.part_build_subdir / art_name)
+        proj_dir.mkdir(parents=True, exist_ok=True)
+        pom = proj_dir / "pom.xml"
+        pom.write_text(art)
+        return pom
+
+    top_pom = _write_pom(".", top_art)
+    single_pom = _write_pom("single", single_art)
+    nested_pom = _write_pom("nested", nested_art)
+    egg_pom = _write_pom("egg", egg_art)
+    _write_pom("orphan", orphan_art)
+
+    poms = _get_poms(None, part_info, existing)
+
+    assert sorted(poms) == sorted([top_pom, single_pom, nested_pom, egg_pom])
+    expected_existing = {
+        "org.starcraft": {
+            "survivor": {sentinel_art},
+            "single": {MavenArtifact.from_pom(single_pom)},
+            "nested": {MavenArtifact.from_pom(nested_pom)},
+            "egg": {MavenArtifact.from_pom(egg_pom)},
+        }
+    }
+    assert existing == expected_existing
+    assert (
+        "Discovered poms for part 'my-part': [pom.xml, single/pom.xml, nested/pom.xml, egg/pom.xml]"
+        in caplog.text
+    )
+    assert (
+        "The pom 'pom.xml' declares a submodule at 'idonotexist', but this submodule could not be found."
+        in caplog.text
+    )
+
+
 def test_update_pom_file(part_info: PartInfo, tmp_path: Path) -> None:
     project_xml = dedent("""\
         <project>
@@ -800,7 +963,7 @@ def test_update_pom_file(part_info: PartInfo, tmp_path: Path) -> None:
     """)
 
     root_pom = create_project(part_info, project_xml)
-    new_pom = tmp_path / "artifact.pom"
+    new_pom = part_info.part_build_subdir / "artifact.pom"
     new_pom.write_text(project_xml)
 
     deploy_to = tmp_path / "deploy"

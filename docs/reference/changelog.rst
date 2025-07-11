@@ -25,6 +25,7 @@ New features:
 
 - The maven-use plugin now processes Maven artifacts placed in the source's top-level
   ``maven-use`` directory.
+- Add support for multi-module Maven projects with the Maven or maven-use plugin.
 
 .. _release-2.16.0:
 
@@ -42,7 +43,7 @@ New features:
 
 Bug fixes:
 
-- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven 
+- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven
   plugins when the project indirectly depends on one.
 - Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
   in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
