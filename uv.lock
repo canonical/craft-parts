@@ -474,7 +474,7 @@ requires-dist = [
     { name = "pylint", marker = "extra == 'tics'" },
     { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.391" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "~=8.0" },
-    { name = "pytest-check", marker = "extra == 'dev'", specifier = "<2.5.0" },
+    { name = "pytest-check", marker = "extra == 'dev'", specifier = "<2.5.4" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = "~=5.0" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = "~=3.12" },
     { name = "pytest-subprocess", marker = "extra == 'dev'" },
@@ -1275,14 +1275,15 @@ wheels = [
 
 [[package]]
 name = "pytest-check"
-version = "2.4.1"
+version = "2.5.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-noble') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-plucky' and extra == 'extra-11-craft-parts-apt-questing')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/15/d3/178a723f0420cf4e06fb6ddf43fc1ec68c1d0d4ea3db1ecf8f6df21b345f/pytest_check-2.4.1.tar.gz", hash = "sha256:5224efcef059bf7f0cda253f8d0f62704b4819ff48c93f51c675aea6a014f650", size = 28933, upload-time = "2024-08-28T04:53:36.394Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7b/f8/58aa6cf0af7bc261c4606c28582258e76cec398a7d8bdc2e82de51039f84/pytest_check-2.5.3.tar.gz", hash = "sha256:2357d7df77c395d30c0c4957724fdfce1a75ea8bc9eb2308c0ffe56f62ac70ca", size = 27422, upload-time = "2025-04-04T01:44:43.188Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/25/465756acbb66db47ad40e0be6b457d8644c7b9f882b2ff7f5e92dde07915/pytest_check-2.4.1-py3-none-any.whl", hash = "sha256:74f38938183880d9921aeb85662437d2b13e1e053e1bed7d186d54613d3068c7", size = 13789, upload-time = "2024-08-28T04:53:35.026Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/29/d3fbd683c50aeb93d79377c904179c82f01f9f656299deb89328ab85b0a2/pytest_check-2.5.3-py3-none-any.whl", hash = "sha256:354685dfa63e714a20aa62b61c4d30d5acfa30891319df9046f59af653c3b9ba", size = 15998, upload-time = "2025-04-04T01:44:41.951Z" },
 ]
 
 [[package]]
