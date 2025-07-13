@@ -16,6 +16,25 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.17.0:
+
+2.17.0 (2025-07-11)
+-------------------
+
+New features:
+
+- The maven-use plugin now processes Maven artifacts placed in the source's top-level
+  ``maven-use`` directory.
+- Add support for multi-module Maven projects with the Maven or maven-use plugin.
+
+Documentation:
+
+- Remove all intralinking in common docs. This prevents issues where downstream apps
+  that reuse these docs run into page dependency issues when a linked doc isn't
+  published.
+- Remove instances of "Craft Parts" in common docs and replace with substitution strings
+  where appropriate.
+
 .. _release-2.16.0:
 
 2.16.0 (2025-07-04)
@@ -32,7 +51,7 @@ New features:
 
 Bug fixes:
 
-- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven 
+- With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven
   plugins when the project indirectly depends on one.
 - Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
   in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
@@ -953,7 +972,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 -------------------
 
 - Add support to chisel slices
-- Add ``go-generate`` property to the go plugin
+- Add ``go-generate`` key to the go plugin
 
 .. _release-1.14.2:
 
@@ -1248,6 +1267,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.17.0: https://github.com/canonical/craft-parts/releases/tag/2.17.0
 .. _2.16.0: https://github.com/canonical/craft-parts/releases/tag/2.16.0
 .. _2.15.0: https://github.com/canonical/craft-parts/releases/tag/2.15.0
 .. _2.14.0: https://github.com/canonical/craft-parts/releases/tag/2.14.0

@@ -7,14 +7,12 @@ The ``dotnet`` plugin builds .NET projects using the ``dotnet`` tool.
 
 .. admonition:: Legacy plugin
 
-    This plugin is superseded by the :ref:`craft_parts_dotnet_v2_plugin`.
+    This plugin is superseded by the .NET plugin (v2).
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 dotnet-build-configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,7 +26,7 @@ dotnet-self-contained-runtime-identifier
 
 Create a self contained .NET application using the specified Runtime Identifier.
 See the `Runtime Identifier catalogue`_ for a list of possible values. This
-property has no default value, meaning that it won't create self-contained
+key has no default value, meaning that it won't create self-contained
 executables unless set.
 
 
@@ -46,15 +44,15 @@ Some common means of providing ``dotnet`` are:
 * The ``dotnet-sdk`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``dotnet-deps``, and declare
-that the part using the ``dotnet`` plugin comes :ref:`after
-<reference-part-properties-after>` the ``dotnet-deps`` part. In this case, the plugin
-will assume that this new part will stage the ``dotnet`` executable to be used in the
-build step. This can be useful, for example, in cases where a specific, unreleased
-version of ``dotnet`` is desired but unavailable as a snap or an Ubuntu package.
+that the part using the ``dotnet`` plugin comes after the ``dotnet-deps`` part through
+the ``after`` key. In this case, the plugin will assume that this new part will stage
+the ``dotnet`` executable to be used in the build step. This can be useful, for example,
+in cases where a specific, unreleased version of ``dotnet`` is desired but unavailable
+as a snap or an Ubuntu package.
 
 Finally, whether the resulting built artefact will need the presence of the .NET runtime
 to execute depends on the value of the ``dotnet-self-contained-runtime-identifier``
-property: self-contained builds bundle the necessary portions of the runtime in the
+key. Self-contained builds bundle the necessary portions of the runtime in the
 generated executable.
 
 .. _dotnet-details-end:
@@ -65,7 +63,7 @@ How it works
 During the build step the plugin performs the following actions:
 
 * Call ``dotnet build -c <config>`` where ``<config>`` is the value of the
-  ``dotnet-build-configuration`` property.
+  ``dotnet-build-configuration`` key.
 * Call ``dotnet publish`` to install the generated assets into ``${CRAFT_PART_INSTALL}``,
   optionally passing the value of ``dotnet-self-contained-runtime-identifier`` if
   set.

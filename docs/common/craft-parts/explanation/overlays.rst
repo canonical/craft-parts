@@ -59,7 +59,7 @@ Each layer's checksum is derived from the combination of the layer's properties
 and the checksum of the layer below it. As a result, a change to any layer will
 require the recalculation of the overlay for all layers above it, and an
 update to the base layer results in the recalculation of all overlays. The
-order of layers is determined by the :ref:`part_processing_order`.
+order of layers is determined by the part processing order.
 
 Filesystem Mutations
 ====================

@@ -1,28 +1,27 @@
-****************************
-Overriding the default build
-****************************
+.. |app| replace:: Craft Parts
 
-Craft-parts provides built-in :ref:`plugins <plugins>` for a number of
-different programming languages, frameworks, and build tools. Since it's not
-possible to support *every* possible configuration and scenario for each of
-these technologies, each plugin emits a series of build commands to reproduce
-what is most typically done for the given domain; for instance, the ``make``
+Override the default build
+==========================
+
+|app| provides plugins for a number of different programming languages, frameworks, and
+build tools. Since it's not possible to support *every* possible configuration and
+scenario for each of these technologies, each plugin emits a series of build commands to
+reproduce what is most typically done for the given domain; for instance, the ``make``
 plugin generates code that calls ``make; make install`` at build-time.
 
 For cases where a given project being built does *not* follow the typical path,
-craft-parts provides a way to declare the build commands for a specific part
-via the :ref:`reference-part-properties-override-build` keyword.
+|app| provides a way to declare the build commands for a specific part
+via the ``override-build`` key.
 
 Typical reasons for using ``override-build`` include:
 
 * Having to run commands before or after the plugin's default commands;
 * Building a project that uses a technology (programming language, framework, or
-  build tool) that is not supported by craft-part's :ref:`default plugins <plugins>`;
-* More generally, using the ``nil`` plugin (which has no default build
+  build tool) that is not supported by the default |app| plugins;
+* More generally, using the Nil plugin (which has no default build
   commands).
 
-Follow these steps to ensure a successful build, and see also a general
-description of the :ref:`build_process`.
+Follow these steps to ensure a successful build.
 
 Determine that you *do* need to use ``override-build``
 ------------------------------------------------------
@@ -52,7 +51,7 @@ the Stage and Prime lifecycle steps. A very common mistake when overriding a
 part's Build is failing to place the created artefacts in the correct directory.
 
 The location of the "install" directory is stored in the ``${CRAFT_PART_INSTALL}``
-environment variable. This variable is set by craft-parts' tooling when calling
+environment variable. This variable is set by |app| tooling when calling
 the script contained in ``override-build``. Therefore, in many cases the build
 script can simply call the project's build tool with ``${CRAFT_PART_INSTALL}`` as
 the output directory. Some examples:

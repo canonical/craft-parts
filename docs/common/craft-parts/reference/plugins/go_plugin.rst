@@ -9,12 +9,10 @@ build, this plugin will install the generated binaries in
 ``$CRAFT_PART_INSTALL/bin``.
 
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 go-buildtags
 ~~~~~~~~~~~~
@@ -52,11 +50,11 @@ Common means of providing ``go`` are:
 * The ``go`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``go-deps``, and declare
-that the part using the ``go`` plugin comes :ref:`after
-<reference-part-properties-after>` the ``go-deps`` part. In this case, the plugin will
-assume that this new part will stage the ``go`` executable to be used in the build step.
-This can be useful, for example, in cases where a specific, unreleased version of ``go``
-is desired but unavailable as a snap or an Ubuntu package.
+that the part using the ``go`` plugin comes after the ``go-deps`` part through the
+``after`` key. In this case, the plugin will assume that this new part will stage the
+``go`` executable to be used in the build step. This can be useful, for example, in
+cases where a specific, unreleased version of ``go`` is desired but unavailable as a
+snap or an Ubuntu package.
 
 .. _go-details-end:
 
@@ -65,9 +63,9 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* If a `go workspace`_ has been setup by use of the :ref:`go-use <craft_parts_go_use_plugin>`
-  plugin,
-  call ``go work use <build-dir>`` to add the source for the part to the workspace;
+* If a `go workspace`_ has been setup by use of the :ref:`go-use
+  <craft_parts_go_use_plugin>` plugin, call ``go work use <build-dir>`` to add the
+  source for the part to the workspace;
 * If not operating in the context of  a `go workspace`_, call ``go mod download all``
   to find and download all necessary modules;
 * Call ``go generate <item>`` for each item in ``go-generate``;
