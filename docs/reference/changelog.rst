@@ -16,6 +16,14 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.18.0:
+
+2.18.0 (2025-MM-DD)
+-------------------
+
+New features:
+- The autotools plugin now has a ``parallel`` parameter to enable parallel make execution.
+
 .. _release-2.17.0:
 
 2.17.0 (2025-07-11)
