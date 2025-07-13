@@ -154,7 +154,7 @@ class JLinkPlugin(Plugin):
         )
         extra_modules = self._get_extra_module_list()
         if len(extra_modules) > 0:
-            commands.append(f"deps=${{deps}},${extra_modules}")
+            commands.append(f"deps=${{deps}},{extra_modules}")
         commands.append("INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}")
 
         commands.append(
