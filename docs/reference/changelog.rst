@@ -22,8 +22,7 @@ Changelog
 -------------------
 
 New features:
-- The jlink plugin now has a ``jlink-add-modules`` parameter to add additional
-  modules to OpenJDK image.
+- The jlink plugin now has a ``jlink-add-modules`` parameter to add additional modules to OpenJDK image.
 
 .. _release-2.17.0:
 
