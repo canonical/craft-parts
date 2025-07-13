@@ -16,6 +16,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.18.0:
+
+2.18.0 (2025-MM-DD)
+-------------------
+
+New features:
+- The jlink plugin now has a ``jlink-add-modules`` parameter to add additional
+  modules to OpenJDK image.
+
 .. _release-2.17.0:
 
 2.17.0 (2025-07-11)
