@@ -41,6 +41,8 @@ New features:
 - Add the ``get_prime_state_timestamp`` method to the
   :doc:`lifecycle manager </reference/lifecycle_manager>`. This method provides
   the timestamp at which the prime directory was last modified.
+- The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
+  modules to OpenJDK image.
 
 Bug fixes:
 
