@@ -295,14 +295,12 @@ class LifecycleManager:
 
     def get_prime_state_timestamp(self) -> int | None:
         """Obtain the most recent prime state timestamp from all parts."""
-        times: list[int] = []
+        most_recent = 0
         for part in self._part_list:
             timestamp = states.get_state_file_timestamp(part, Step.PRIME)
-            if timestamp:
-                times.append(timestamp)
-        if not times:
-            return None
-        return max(times)  # Return the most recent timestamp.
+            if timestamp and timestamp > most_recent:
+                most_recent = timestamp
+        return most_recent or None
 
 
 def _ensure_overlay_supported() -> None:
