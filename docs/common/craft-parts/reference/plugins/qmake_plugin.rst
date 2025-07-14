@@ -9,12 +9,10 @@ by processing the `project files`_ files to be run with using `GNU Make`_.
 After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 qmake-parameters
 ~~~~~~~~~~~~~~~~
@@ -46,7 +44,7 @@ Sets the Qt major version. The default is Qt 5, set to 6 for Qt 6 projects.
 Environment variables
 ---------------------
 
-The plugin sets the QT_SELECT environment variable to :ref:`qmake-major-version`.
+The plugin sets the ``QT_SELECT`` environment variable to :ref:`qmake-major-version`.
 
 
 Dependencies

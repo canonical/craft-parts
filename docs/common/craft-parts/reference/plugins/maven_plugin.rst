@@ -32,12 +32,10 @@ After a successful build, this plugin will:
 
 .. _craft_parts_maven_plugin_post_build_end:
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 maven-parameters
 ~~~~~~~~~~~~~~~~

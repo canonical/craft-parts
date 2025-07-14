@@ -8,14 +8,10 @@ The Poetry plugin can be used for Python projects that use the `Poetry
 
 .. _craft_parts_poetry_plugin-keywords:
 
-Keywords
---------
+Keys
+----
 
-This plugin uses the common :ref:`plugin <reference-part-properties-plugin>` keywords as
-well as those for :ref:`sources <reference-part-properties-source>`.
-
-Additionally, this plugin provides the plugin-specific keywords defined in the
-following sections.
+This plugin provides the following unique keys.
 
 poetry-export-extra-args:
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,7 +43,7 @@ This plugin also sets environment variables in the build environment. User-set
 environment variables will override these values. Users may also set `environment
 variables to configure Poetry
 <https://python-poetry.org/docs/configuration/#using-environment-variables>`_ using the
-:ref:`build-environment <reference-part-properties-build-environment>` key.
+``build-environment`` key.
 
 PARTS_PYTHON_INTERPRETER
 ~~~~~~~~~~~~~~~~~~~~~~~~

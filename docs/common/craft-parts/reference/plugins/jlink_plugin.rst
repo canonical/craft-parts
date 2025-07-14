@@ -7,14 +7,10 @@ The `JLink <jlink_>`_ plugin can be used for Java projects where you would want 
 deploy a Java runtime specific for your application or install a minimal Java runtime.
 
 
-Keywords
---------
+Keys
+----
 
-This plugin uses the common :ref:`plugin <reference-part-properties-plugin>` keywords as
-well as those for :ref:`sources <reference-part-properties-source>`.
-
-Additionally, this plugin provides the plugin-specific keywords defined in the following
-sections.
+This plugin provides the following unique keys.
 
 jlink-jars
 ~~~~~~~~~~~~~~~~~~
@@ -29,8 +25,8 @@ Dependencies
 The plugin expects OpenJDK to be available on the system and to contain the ``jlink``
 executable. OpenJDK can be defined as a ``build-package`` in the part using ``jlink``
 plugin. Another alternative is to define another part with the name ``jlink-deps``, and
-declare that the part using the ``jlink`` plugin comes :ref:`after
-<reference-part-properties-after>` the ``jlink-deps`` part.
+declare that the part using the ``jlink`` plugin comes after the ``jlink-deps`` part
+through the ``after`` key.
 
 If the system has multiple OpenJDK installations available, one must be selected by
 setting the ``JAVA_HOME`` environment variable.

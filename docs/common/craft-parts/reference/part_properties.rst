@@ -62,8 +62,6 @@ For craft applications that support filesystem overlays, the following keys modi
 part's overlay layer and determine how the layer's contents are represented in the stage
 directory.
 
-For more details on the overlay step, see :ref:`Overlay step <overlays>`.
-
 .. kitbash-field:: parts.PartSpec overlay_files
     :label: reference-part-properties-overlay-files
 

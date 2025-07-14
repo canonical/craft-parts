@@ -5,14 +5,12 @@
 
 The .NET plugin (v2) builds .NET projects using the `dotnet
 <https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet>`_ tool. It's the successor
-to the :ref:`craft_parts_dotnet_plugin`.
+to the .NET plugin.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 .. _craft_parts_dotnet_v2_plugin-global_flags:
 
@@ -89,7 +87,7 @@ plugin will download the necessary .NET SDK content snap and use it to build
 the application.
 
 See the :ref:`craft_parts_dotnet_v2_plugin-details-begin` section for a more
-detailed explanation of this property.
+detailed explanation of this key.
 
 .. _craft_parts_dotnet_v2_plugin-restore_flags:
 
@@ -180,21 +178,19 @@ If not, some common means of providing the dotnet tool are:
   Example: `dotnet-sdk-80`_.
 
 Another alternative is to define a separate part called ``dotnet-deps`` and have the
-part using the .NET plugin (v2) build :ref:`after <reference-part-properties-after>` the
-``dotnet-deps`` part. In this case, the plugin assumes that ``dotnet-deps`` will stage
-the dotnet CLI tool to be used during build. This can be useful in cases where a
-specific, unreleased version of .NET is desired but unavailable as a snap or Ubuntu
-package.
+part using the .NET plugin (v2) build after the ``dotnet-deps`` part with the
+``after`` key. In this case, the plugin assumes that ``dotnet-deps`` will stage the
+dotnet CLI tool to be used during build. This can be useful in cases where a specific,
+unreleased version of .NET is desired but unavailable as a snap or Ubuntu package.
 
 This plugin validates the presence of .NET by running ``dotnet --version``. Therefore,
 it assumes that the dotnet executable is visible in the PATH. To achieve that, make sure
 to append the location of the staged .NET SDK from ``dotnet-deps`` to the PATH using the
-:ref:`build-environment <reference-part-properties-build-environment>` key in your
-application part.
+``build-environment`` key in your application part.
 
 Finally, whether the resulting build artifact will also need a .NET runtime installed in
 the snap environment depends on the value of the
-:ref:`craft_parts_dotnet_v2_plugin-dotnet_self_contained` property: self-contained
+:ref:`craft_parts_dotnet_v2_plugin-dotnet_self_contained` key. Self-contained
 builds bundle the runtime in the generated executable and don't require a global .NET
 Runtime installed in the system.
 

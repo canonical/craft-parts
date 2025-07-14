@@ -16,12 +16,10 @@ sequence seen in most GNU projects.
 After a successful build, this plugin will install the generated binaries in
 ``$CRAFT_PART_INSTALL``.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 autotools-bootstrap-parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
