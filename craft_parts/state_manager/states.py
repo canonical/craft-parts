@@ -125,3 +125,11 @@ def get_overlay_migration_state_path(state_dir: Path, step: Step) -> Path:
         return state_dir / "prime_overlay"
 
     raise RuntimeError(f"no overlay migration state in step {step!r}")
+
+
+def get_state_file_timestamp(part: Part, step: Step) -> int | None:
+    """Return the modification time of the state file for the given path and step."""
+    state_path = get_step_state_path(part, step)
+    if not state_path.is_file():
+        return None
+    return state_path.stat().st_mtime_ns
