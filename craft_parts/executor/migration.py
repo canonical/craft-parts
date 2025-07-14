@@ -334,7 +334,7 @@ def filter_dangling_whiteouts(
 def filter_all_whiteouts(
     files: set[str],
 ) -> set[str]:
-    """List and filer all whiteout files.
+    """List and filter all whiteout files.
 
     Found whiteout files are to be removed from the provided sets of files.
 
