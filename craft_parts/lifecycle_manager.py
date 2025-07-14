@@ -297,9 +297,9 @@ class LifecycleManager:
         """Obtain the most recent prime state timestamp from all parts."""
         times: list[int] = []
         for part in self._part_list:
-            time = states.get_state_file_timestamp(part, Step.PRIME)
-            if time:
-                times.append(time)
+            timestamp = states.get_state_file_timestamp(part, Step.PRIME)
+            if timestamp:
+                times.append(timestamp)
         if not times:
             return None
         return max(times)  # Return the most recent timestamp.
