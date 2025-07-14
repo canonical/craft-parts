@@ -18,13 +18,12 @@ from __future__ import annotations
 
 import logging
 import os
-import re
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
+from lxml import etree
 from typing_extensions import Self, override
 
 from ._xml import (
@@ -46,7 +45,19 @@ logger = logging.getLogger(__name__)
 
 ArtifactDict = dict[str, set["MavenArtifact"]]
 GroupDict = dict[str, ArtifactDict]
-Namespaces = dict[str, str]
+Namespaces = dict[str | None, str]
+
+_XML_PARSER = etree.XMLParser(
+    # Attempt to recover if an error is encountered
+    recover=True,
+    # Entities can resolve into zip-bomb-like packages, so ignore them
+    resolve_entities=False,
+    # Removing blank text allows the `pretty_printing` kwarg to work later
+    remove_blank_text=True,
+    # Just no
+    no_network = True,
+    remove_comments=False,
+)
 
 
 def create_maven_settings(*, part_info: PartInfo, set_mirror: bool) -> Path:
@@ -161,7 +172,7 @@ def update_pom(
     poms = _get_poms(pom_file, part_info, existing)
 
     for pom in poms:
-        tree = ET.parse(pom)  # noqa: S314, unsafe parsing with xml
+        tree = etree.parse(pom, parser=_XML_PARSER)
         project = tree.getroot()
         namespaces = _get_namespaces(project)
 
@@ -169,8 +180,9 @@ def update_pom(
             # Add a distributionManagement element, to tell "maven deploy" to deploy the
             # artifacts (jars, poms, etc) to the export dir.
             distribution_dir = deploy_to / "maven-use"
-            distribution_element = ET.fromstring(  # noqa: S314, unsafe parsing with xml
-                DISTRIBUTION_REPO_TEMPLATE.format(repo_uri=distribution_dir.as_uri())
+            distribution_element = etree.fromstring(
+                DISTRIBUTION_REPO_TEMPLATE.format(repo_uri=distribution_dir.as_uri()),
+                parser=_XML_PARSER,
             )
 
             # Remove the existing distributionManagement tag if present.
@@ -189,10 +201,9 @@ def update_pom(
             MavenParent.update_versions(project, namespaces, existing)
 
         # Add a comment to record the fact that this was modified by use
-        comment = ET.Comment("This project was modified by craft-parts")
+        comment = etree.Comment("This project was modified by craft-parts")
         project.insert(0, comment)
-        ET.indent(tree)
-        tree.write(pom)
+        tree.write(pom, pretty_print=True)
 
 
 @dataclass(frozen=True)
@@ -207,7 +218,7 @@ class MavenArtifact:
     field_name: str = "Dependency"
 
     @classmethod
-    def from_element(cls, element: ET.Element, namespaces: Namespaces) -> Self:
+    def from_element(cls, element: etree._Element, namespaces: Namespaces) -> Self:
         """Create a MavenArtifact from an XML artifact element."""
         # We can always just set the version if it's missing, so don't raise
         try:
@@ -233,18 +244,15 @@ class MavenArtifact:
     @classmethod
     def from_pom(cls, pom: Path) -> Self:
         """Create a MavenArtifact from a pom file."""
-        tree = ET.parse(pom)  # noqa: S314, unsafe parsing with xml
+        tree = etree.parse(pom, parser=_XML_PARSER)
         project = tree.getroot()
-        namespaces = {}
-        if match := re.search("{(.*)}", project.tag):
-            namespace = match.group(1)
-            namespaces = {"": namespace}
+        namespaces = _get_namespaces(project)
         return cls.from_element(project, namespaces)
 
     @classmethod
     def _collect_elements(
-        cls, project: ET.Element, namespaces: Namespaces
-    ) -> list[ET.Element]:
+        cls, project: etree._Element, namespaces: Namespaces
+    ) -> list[etree._Element]:
         dependencies = project.find("dependencies", namespaces)
         if dependencies is None:
             return []
@@ -253,7 +261,7 @@ class MavenArtifact:
 
     @classmethod
     def update_versions(
-        cls, project: ET.Element, namespaces: Namespaces, existing: GroupDict
+        cls, project: etree._Element, namespaces: Namespaces, existing: GroupDict
     ) -> None:
         """Update all of the versions for this project as necessary."""
         for dependency in cls._collect_elements(project, namespaces):
@@ -275,8 +283,8 @@ class MavenParent(MavenArtifact):
     @classmethod
     @override
     def _collect_elements(
-        cls, project: ET.Element, namespaces: Namespaces
-    ) -> list[ET.Element]:
+        cls, project: etree._Element, namespaces: Namespaces
+    ) -> list[etree._Element]:
         parent = project.find("parent", namespaces)
         if parent is None:
             return []
@@ -294,7 +302,7 @@ class MavenPlugin(MavenArtifact):
 
     @classmethod
     @override
-    def from_element(cls, element: ET.Element, namespaces: Namespaces) -> Self:
+    def from_element(cls, element: etree._Element, namespaces: Namespaces) -> Self:
         """Create a MavenPlugin from an XML plugin element.
 
         If no groupId is found, 'org.apache.maven.plugins' will be used.
@@ -324,8 +332,8 @@ class MavenPlugin(MavenArtifact):
     @classmethod
     @override
     def _collect_elements(
-        cls, project: ET.Element, namespaces: Namespaces
-    ) -> list[ET.Element]:
+        cls, project: etree._Element, namespaces: Namespaces
+    ) -> list[etree._Element]:
         all_plugins = []
 
         # Get plugins declared at <build><plugins>
@@ -350,7 +358,7 @@ class MavenPlugin(MavenArtifact):
     @classmethod
     @override
     def update_versions(
-        cls, project: ET.Element, namespaces: Namespaces, existing: GroupDict
+        cls, project: etree._Element, namespaces: Namespaces, existing: GroupDict
     ) -> None:
         """Update all of the versions for this project as necessary."""
         declared_plugins = cls._collect_elements(project, namespaces)
@@ -390,7 +398,7 @@ class MavenPlugin(MavenArtifact):
     def _set_remaining_plugins(
         cls,
         remaining_plugins: set[MavenArtifact],
-        project: ET.Element,
+        project: etree._Element,
         namespaces: Namespaces,
     ) -> None:
         """Append remaining plugin dependency entries to a project."""
@@ -401,31 +409,26 @@ class MavenPlugin(MavenArtifact):
                 group_id=plugin.group_id,
                 version=plugin.version,
             )
-            plugin_ele = ET.fromstring(plugin_str)  # noqa: S314
+            plugin_ele = etree.fromstring(plugin_str, parser=_XML_PARSER)
             plugins_ele.append(plugin_ele)
-            ET.indent(plugins_ele, level=3)
 
     @classmethod
     def _get_plugins_ele(
-        cls, project: ET.Element, namespaces: Namespaces
-    ) -> ET.Element:
+        cls, project: etree._Element, namespaces: Namespaces
+    ) -> etree._Element:
         build = _find_or_create_ele(project, "build", namespaces)
-        ET.indent(project, level=0)
         plugin_mgmt = _find_or_create_ele(build, "pluginManagement", namespaces)
-        ET.indent(build, level=1)
-        plugins = _find_or_create_ele(plugin_mgmt, "plugins", namespaces)
-        ET.indent(plugin_mgmt, level=2)
-        return plugins
+        return _find_or_create_ele(plugin_mgmt, "plugins", namespaces)
 
 
 def _find_or_create_ele(
-    element: ET.Element, tag: str, namespaces: Namespaces
-) -> ET.Element:
+    element: etree._Element, tag: str, namespaces: Namespaces
+) -> etree._Element:
     """Find a subelement within a given element."""
     try:
         result = _find_element(element, tag, namespaces)
     except MavenXMLError:
-        result = ET.Element(tag)
+        result = etree.Element(tag)
         element.append(result)
 
     return result
@@ -458,7 +461,9 @@ def _get_available_version(
     return None
 
 
-def _set_version(element: ET.Element, namespaces: Namespaces, new_version: str) -> None:
+def _set_version(
+    element: etree._Element, namespaces: Namespaces, new_version: str
+) -> None:
     group_id = _get_element_text(_find_element(element, "groupId", namespaces))
     artifact_id = _get_element_text(_find_element(element, "artifactId", namespaces))
 
@@ -466,11 +471,11 @@ def _set_version(element: ET.Element, namespaces: Namespaces, new_version: str) 
 
     # If no version is specified at all, always set it
     if version_element is None:
-        new_version_element = ET.Element("version")
+        new_version_element = etree.Element("version")
         new_version_element.text = new_version
-        element.append(new_version_element)
-        comment = ET.Comment(f"Version set by craft-parts to '{new_version}'")
+        comment = etree.Comment(f"Version set by craft-parts to '{new_version}'")
         element.append(comment)
+        element.append(new_version_element)
         logger.debug(
             "Setting version of '%s.%s' to '%s'",
             group_id,
@@ -486,7 +491,7 @@ def _set_version(element: ET.Element, namespaces: Namespaces, new_version: str) 
 
     version_element.text = new_version
 
-    comment = ET.Comment(
+    comment = etree.Comment(
         f"Version updated by craft-parts from '{current_version}' to '{new_version}'"
     )
     logger.debug(
@@ -496,8 +501,7 @@ def _set_version(element: ET.Element, namespaces: Namespaces, new_version: str) 
         current_version,
         new_version,
     )
-    element.append(comment)
-    ET.indent(element, level=2)
+    version_element.addprevious(comment)
 
 
 @dataclass
@@ -512,8 +516,8 @@ class MavenXMLError(BaseException):
 
 
 def _find_element(
-    element: ET.Element, path: str, namespaces: dict[str, str]
-) -> ET.Element:
+    element: etree._Element, path: str, namespaces: Namespaces
+) -> etree._Element:
     """Find a field within an element.
 
     This is equivalent to `element.find(path, namespaces)`, except that
@@ -534,7 +538,7 @@ def _find_element(
     )
 
 
-def _get_element_text(element: ET.Element) -> str:
+def _get_element_text(element: etree._Element) -> str:
     """Extract the text field from an element.
 
     This is equivalent to `element.text`, except that an exception is
@@ -553,19 +557,23 @@ def _get_element_text(element: ET.Element) -> str:
     )
 
 
-def _format_xml_str(element: ET.Element) -> str:
+def _format_xml_str(element: etree._Element) -> str:
     """Get a nicely-formatted string for displaying an XML element."""
-    ET.indent(element)
-    return ET.tostring(element).decode(errors="replace")
+    return etree.tostring(element, pretty_print=True).decode(errors="replace")
 
 
-def _get_namespaces(project: ET.Element) -> Namespaces:
+def _get_namespaces(project: etree._Element) -> Namespaces:
     """Find and register the first XML namespace."""
-    namespace = re.search("{(.*)}", project.tag)
-    # Older pom files may not contain a namespace
-    namespaces = {"": namespace.group(1)} if namespace else {}
+    namespaces = project.nsmap
     for prefix, uri in namespaces.items():
-        ET.register_namespace(prefix, uri)
+        try:
+            etree.register_namespace(prefix or "default", uri)
+        # Some pom files, such as those found in the apt package libbsh-java, have malformed
+        # namespace URIs. Ignoring the error allows everything else to work, so just catch
+        # this particular case and move on.
+        except ValueError as ve:  # noqa: PERF203
+            if "Invalid namespace URI" in str(ve):
+                pass
     return namespaces
 
 
@@ -606,7 +614,7 @@ def _recurse_submodules(
     part_info: PartInfo, parent_pom: Path, all_poms: list[Path], existing: GroupDict
 ) -> None:
     """Recursively find submodule poms and add them to the existing artifacts."""
-    tree = ET.parse(parent_pom)  # noqa: S314, unsafe parsing with xml
+    tree = etree.parse(parent_pom, parser=_XML_PARSER)
     project = tree.getroot()
     namespaces = _get_namespaces(project)
 
