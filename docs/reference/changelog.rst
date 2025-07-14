@@ -23,7 +23,9 @@ Changelog
 
 New features:
 
-- Add a method to the ``LifecycleManager`` to obtain the prime state timestamp.
+- Add the ``get_prime_state_timestamp`` method to the
+  :doc:`lifecycle manager </reference/lifecycle_manager>`. This method provides
+  the timestamp at which the prime directory was last modified.
 
 Bug fixes:
 
