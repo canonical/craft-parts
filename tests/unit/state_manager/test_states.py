@@ -132,7 +132,7 @@ class TestStepStates:
         p1 = Part("p1", {})
         state_file = Path("parts/p1/state", step.name.lower())
 
-        Path("parts/p1/state").mkdir(parents=True)
+        state_file.parent.mkdir(parents=True)
         state_file.touch()
         expected_time = state_file.stat().st_mtime_ns
 
