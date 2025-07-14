@@ -20,17 +20,19 @@ import contextlib
 import itertools
 import logging
 from dataclasses import dataclass
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from craft_parts import parts, sources, steps
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, ProjectVar
 from craft_parts.parts import Part
-from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
 
 from .reports import Dependency, DirtyReport, OutdatedReport
 from .states import PullState, StepState, get_step_state_path, load_step_state
+
+if TYPE_CHECKING:
+    from craft_parts.sources import SourceHandler
 
 logger = logging.getLogger(__name__)
 
