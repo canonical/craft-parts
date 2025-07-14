@@ -127,6 +127,23 @@ class TestStepStates:
         states.remove(p1, step)
         assert state_file.exists() is False
 
+    @pytest.mark.parametrize("step", list(Step))
+    def test_get_state_file_timestamp(self, step):
+        p1 = Part("p1", {})
+        state_file = Path("parts/p1/state", step.name.lower())
+
+        state_file.parent.mkdir(parents=True)
+        state_file.touch()
+        expected_time = state_file.stat().st_mtime_ns
+
+        actual_time = states.get_state_file_timestamp(p1, step)
+        assert actual_time == expected_time
+
+    def test_get_state_file_timestamp_no_file(self):
+        p1 = Part("p1", {})
+        timestamp = states.get_state_file_timestamp(p1, Step.PRIME)
+        assert timestamp is None
+
 
 @pytest.mark.usefixtures("new_dir")
 class TestMigrationStates:
