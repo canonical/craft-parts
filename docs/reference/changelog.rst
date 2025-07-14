@@ -18,8 +18,14 @@ Changelog
 
 .. _release-2.18.0:
 
-2.18.0 (2025-MM-DD)
+2.18.0 (2025-07-14)
 -------------------
+
+New features:
+
+- Add the ``get_prime_state_timestamp`` method to the
+  :doc:`lifecycle manager </reference/lifecycle_manager>`. This method provides
+  the timestamp at which the prime directory was last modified.
 
 Bug fixes:
 
