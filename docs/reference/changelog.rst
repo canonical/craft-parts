@@ -18,8 +18,12 @@ Changelog
 
 .. _release-2.18.0:
 
-2.18.0 (2025-MM-DD)
+2.18.0 (2025-07-14)
 -------------------
+
+New features:
+
+- Add a method to the ``LifecycleManager`` to obtain the prime state timestamp.
 
 Bug fixes:
 
