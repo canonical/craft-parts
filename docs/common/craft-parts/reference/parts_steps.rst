@@ -2,9 +2,8 @@
 Parts and Steps
 ***************
 
-Parts and steps are the basic data types craft-parts works with. Together, they
-define the lifecycle of a project (i.e. how to process each step of each part in
-order to obtain the final primed result).
+Parts and steps define the lifecycle of a project, or in other words, how to process
+each step of each part in order to obtain the final primed result.
 
 Parts
 =====

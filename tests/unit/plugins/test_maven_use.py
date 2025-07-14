@@ -153,3 +153,28 @@ def test_bad_dependency(plugin: MavenUsePlugin) -> None:
     )
     with pytest.raises(errors.PartsError, match=err_re):
         plugin.get_build_commands()
+
+
+def test_get_build_commands_from_binaries(plugin: MavenUsePlugin) -> None:
+    project_xml = dedent("""\
+        <project>
+            <groupId>org.starcraft</groupId>
+            <artifactId>test1</artifactId>
+            <version>1.0.0</version>
+        </project>
+    """)
+    maven_use_dir = plugin._part_info.part_build_subdir / "maven-use"
+    maven_use_dir.mkdir(parents=True)
+    fake_pom = maven_use_dir / "fake.pom"
+    fake_pom.write_text(project_xml)
+
+    build_commands = plugin.get_build_commands()
+
+    # Check that the list build commands is just a copy (like the dump plugin)
+    export_dir = plugin._part_info.part_export_dir
+    assert build_commands == [
+        f'cp --archive --link --no-dereference ./maven-use "{export_dir}"'
+    ]
+
+    # Check that the pom file in the "maven-use/" directory was updated
+    assert "This project was modified by craft-parts" in fake_pom.read_text()

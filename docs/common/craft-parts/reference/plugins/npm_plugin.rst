@@ -5,22 +5,19 @@ NPM Plugin
 
 The NPM plugin can be used for Node.js projects that use NPM (or Yarn) as the package manager.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords (see :ref:`common part 
-properties <reference-part-properties>`), this plugin provides the following 
-plugin-specific keywords:
+This plugin provides the following unique keys.
 
 npm-include-node
 ~~~~~~~~~~~~~~~~
 **Type:** boolean
 **Default:** False
 
-When set to ``true``, the plugin downloads and includes the 
-Node.js binaries and its dependencies in the resulting package.
-If ``npm-include-node`` is ``true``, then :ref:`npm-node-version` must be defined.
+When set to ``true``, the plugin downloads and includes the Node.js binaries and its
+dependencies in the resulting package. If ``npm-include-node`` is ``true``, then
+``npm-node-version`` must also be defined.
 
 .. _npm-node-version:
 

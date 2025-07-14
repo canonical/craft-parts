@@ -8,12 +8,10 @@ The Meson plugin configures projects using Meson_ and builds them using Ninja_.
 After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 meson_parameters
 ~~~~~~~~~~~~~~~~
@@ -31,12 +29,11 @@ executable to build it. These are not installed by default but can typically be
 provisioned via ``build-packages`` or ``build-snaps``.
 
 Another alternative is to define another part with the name ``meson-deps``, and declare
-that the part using the ``meson`` plugin comes :ref:`after
-<reference-part-properties-after>` the ``meson-deps`` part. In this case, the plugin
-will assume that this new part will stage the ``meson`` and ``ninja`` executables to be
-used in the build step. This can be useful, for example, in cases where specific,
-unreleased versions of the tools are desired but unavailable as a snap or an Ubuntu
-package.
+that the part using the ``meson`` plugin comes after the ``meson-deps`` part through the
+``after`` key. In this case, the plugin will assume that this new part will stage the
+``meson`` and ``ninja`` executables to be used in the build step. This can be useful,
+for example, in cases where specific, unreleased versions of the tools are desired but
+unavailable as a snap or an Ubuntu package.
 
 How it works
 ------------

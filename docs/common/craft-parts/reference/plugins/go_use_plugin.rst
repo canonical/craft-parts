@@ -7,12 +7,10 @@ The Go Use plugin allows for setting up a `go workspace`_ for `Go`_ modules. It 
 a companion plugin meant to be used with the :ref:`Go plugin <craft_parts_go_plugin>`.
 Use of this plugin sets up ``go.work`` and affects all parts.
 
-Keywords
---------
+Keys
+----
 
-There are no additional keywords to the the common :ref:`plugin
-<reference-part-properties-plugin>` and :ref:`source <reference-part-properties-source>`
-keywords.
+This plugin has no unique keys.
 
 .. _go-use-details-begin:
 
@@ -28,11 +26,11 @@ Common means of providing ``go`` are:
 * The ``go`` snap, declared as a ``build-snap`` from the desired channel.
 
 Another alternative is to define another part with the name ``go-deps``, and declare
-that the part using the ``go`` plugin comes :ref:`after
-<reference-part-properties-after>` the ``go-deps`` part. In this case, the plugin will
-assume that this new part will stage the ``go`` executable to be used in the build step.
-This can be useful, for example, in cases where a specific, unreleased version of ``go``
-is desired but unavailable as a snap or an Ubuntu package.
+that the part using the ``go`` plugin comes after the ``go-deps`` part through the
+``after`` key. In this case, the plugin will assume that this new part will stage the
+``go`` executable to be used in the build step. This can be useful, for example, in
+cases where a specific, unreleased version of ``go`` is desired but unavailable as a
+snap or an Ubuntu package.
 
 .. _go-use-details-end:
 
@@ -49,7 +47,7 @@ Examples
 
 The following snippet declares a parts named ``go-flags`` using the ``go-use`` plugin and
 a ``hello`` part that declares this ``go-flags``` in its ``go.mod`` using the ``go`` plugin.
-Correct ordering is achieved with the use of the ``after`` keyword in the ``hello`` part.
+Correct ordering is achieved with the use of the ``after`` key in the ``hello`` part.
 
 .. code-block:: yaml
 

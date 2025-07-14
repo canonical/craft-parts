@@ -13,14 +13,10 @@ any of the following things:
 
 .. _craft_parts_python_plugin-keywords:
 
-Keywords
---------
+Keys
+----
 
-This plugin uses the common :ref:`plugin <reference-part-properties-plugin>` keywords as
-well as those for :ref:`sources <reference-part-properties-source>`.
-
-Additionally, this plugin provides the plugin-specific keywords defined in the
-following sections.
+This plugin provides the following unique keys.
 
 python-requirements
 ~~~~~~~~~~~~~~~~~~~
@@ -92,7 +88,6 @@ During the build step, the plugin performs the following actions:
   directory.
 * It uses :command:`pip` to install the required Python packages as configured
   in the ``python-requirements``, ``python-constraints`` and
-  ``python-packages`` keywords.
+  ``python-packages`` keys.
 * If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
   files are used to install the dependencies specified by the package itself.
-

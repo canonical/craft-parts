@@ -8,12 +8,10 @@ build with `GNU Make`_. After a successful build, this plugin will run
 the ``install`` ``Makefile`` target with ``DESTDIR`` set to
 ``$CRAFT_PART_INSTALL``.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 make-parameters
 ~~~~~~~~~~~~~~~

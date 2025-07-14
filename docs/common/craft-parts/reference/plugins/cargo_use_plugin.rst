@@ -7,11 +7,10 @@ The Cargo Use plugin sets up a local `cargo registry`_ for `Rust`_ crates. It's
 a companion plugin meant to be used with the :ref:`Rust plugin <craft_parts_rust_plugin>`.
 It affects all Rust parts in a project.
 
-Keywords
---------
+Keys
+----
 
-The plugin provides the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords.
+This plugin provides the following unique keys.
 
 .. _cargo-use-details-begin:
 
@@ -40,7 +39,7 @@ The first is named ``librust-cfg-if`` and uses the ``cargo-use`` plugin.
 
 The second, the app of the pair, is named ``hello`` and uses the ``rust`` plugin. The
 app's source has ``cfg-if`` as a dependency, which is why the ``librust-cfg-if`` part is
-needed. The ``after`` keyword in the ``hello`` part establishes the correct ordering of
+needed. The ``after`` key in the ``hello`` part establishes the correct ordering of
 these parts, ensuring that ``librust-cfg-if`` is processed first.
 
 .. code-block:: yaml

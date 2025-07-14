@@ -71,7 +71,10 @@ instance/
 .scrapy
 
 # Sphinx documentation
+docs/.sphinx
 docs/_build/
+docs/_static/
+docs/_templates/
 docs/spelling/
 
 # PyBuilder

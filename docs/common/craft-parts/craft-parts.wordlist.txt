@@ -378,6 +378,7 @@ configfile
 cp
 craftctl
 crafter
+crafters
 cryptographic
 ctl
 customization
@@ -426,6 +427,7 @@ http
 https
 humanize
 implementers
+intralinking
 infos
 ing
 inimal

@@ -5,12 +5,10 @@ Rust plugin
 
 The Rust plugin can be used for Rust projects that use the Cargo build system.
 
-Keywords
---------
+Keys
+----
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`source <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keywords:
+This plugin provides the following unique keys.
 
 rust-channel
 ~~~~~~~~~~~~
@@ -52,7 +50,7 @@ rust-no-default-features
 If this option is set to ``true``, the default features specified by the project
 will be ignored.
 
-You can then use the :ref:`rust-features` keyword to specify any features you wish to override.
+You can then use the :ref:`rust-features` key to specify any features you wish to override.
 
 rust-path
 ~~~~~~~~~
