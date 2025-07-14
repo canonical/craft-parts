@@ -300,7 +300,7 @@ class LifecycleManager:
             time = states.get_state_file_timestamp(part, Step.PRIME)
             if time:
                 times.append(time)
-        if not time:
+        if not times:
             return None
         return max(times)  # Return the most recent timestamp.
 
