@@ -313,6 +313,24 @@ class TestLifecycleManager:
         actual_time = lf.get_prime_state_timestamp()
         assert actual_time == expected_time
 
+    def test_get_prime_state_timestamp_no_files(self, new_dir, mock_available_plugins):
+        data = {
+            "parts": {
+                "foo": {"plugin": "strict"},
+                "bar": {"plugin": "strict"},
+            },
+        }
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            strict_mode=True,
+            **self._lcm_kwargs,
+        )
+
+        actual_time = lf.get_prime_state_timestamp()
+        assert actual_time is None
+
 
 class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
