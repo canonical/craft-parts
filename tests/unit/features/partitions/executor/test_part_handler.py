@@ -151,3 +151,8 @@ class TestFileFilter(test_part_handler.TestFileFilter):
 @pytest.mark.usefixtures("new_dir")
 class TestHelpers(test_part_handler.TestHelpers):
     """Test helpers with partitions enabled."""
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestDirs(test_part_handler.TestDirs):
+    """Test project dirs handling."""
