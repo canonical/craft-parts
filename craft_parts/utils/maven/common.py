@@ -55,7 +55,7 @@ _XML_PARSER = etree.XMLParser(
     # Removing blank text allows the `pretty_printing` kwarg to work later
     remove_blank_text=True,
     # Just no
-    no_network = True,
+    no_network=True,
     remove_comments=False,
 )
 

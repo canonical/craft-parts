@@ -208,7 +208,9 @@ def test_create_settings(
         assert settings_path.exists()
         generated = etree.parse(settings_path, parser=_XML_PARSER).getroot()
         expected = etree.fromstring(expected_content, parser=_XML_PARSER)
-        assert etree.tostring(generated, pretty_print=True) == etree.tostring(expected, pretty_print=True)
+        assert etree.tostring(generated, pretty_print=True) == etree.tostring(
+            expected, pretty_print=True
+        )
 
 
 def test_find_element() -> None:
