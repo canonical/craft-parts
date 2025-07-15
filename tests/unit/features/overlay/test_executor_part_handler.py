@@ -681,3 +681,8 @@ class TestHelpers(test_part_handler.TestHelpers):
 
         res = part_handler._parts_with_overlay_in_step(step, part_list=[p1, p2, p3, p4])
         assert res == [p2, p3, p4]
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestDirs(test_part_handler.TestDirs):
+    """Test project dirs handling."""
