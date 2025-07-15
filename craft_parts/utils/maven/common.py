@@ -52,7 +52,7 @@ _XML_PARSER = etree.XMLParser(
     recover=True,
     # Entities can resolve into zip-bomb-like packages, so ignore them
     resolve_entities=False,
-    # Removing blank text allows the `pretty_printing` kwarg to work later
+    # Removing blank text allows the `pretty_print` kwarg to work later
     remove_blank_text=True,
     # Just no
     no_network=True,
