@@ -19,21 +19,22 @@
 from __future__ import annotations
 
 import abc
-import pathlib
 import textwrap
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from overrides import override
 
-from craft_parts.actions import ActionProperties
-
-from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
+    import pathlib
+
     from craft_parts import infos
+    from craft_parts.actions import ActionProperties
+
+    from .properties import PluginProperties
 
 
 class Plugin(abc.ABC):
