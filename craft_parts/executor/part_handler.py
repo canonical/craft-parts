@@ -107,7 +107,6 @@ class _Squasher:
 
     def migrate(
         self,
-        refdir: Path,
         srcdir: Path,
         destdirs: Mapping[str | None, Path],
     ) -> None:
@@ -129,7 +128,6 @@ class _Squasher:
 
                 # Migrate to the destination partition indicated by the filesystem mounts entry
                 self._migrate(
-                    refdir=refdir,
                     srcdir=srcdir,
                     destdir=destdirs[dst_partition],
                     sub_path=sub_path,
@@ -138,7 +136,6 @@ class _Squasher:
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
-                refdir=refdir,
                 srcdir=srcdir,
                 destdir=destdirs[self._src_partition],
                 sub_path="",
@@ -147,7 +144,6 @@ class _Squasher:
 
     def _migrate(
         self,
-        refdir: Path,
         srcdir: Path,
         destdir: Path,
         sub_path: str,
@@ -159,7 +155,7 @@ class _Squasher:
         later store it in the proper state.
         """
         visible_files, visible_dirs = overlays.visible_in_layer(
-            refdir / sub_path,
+            srcdir / sub_path,
             destdir,
         )
         logger.debug(f"excluding already migrated files: {self._all_migrated_files}")
@@ -905,7 +901,6 @@ class PartHandler:
                     part.name,
                 )
                 squasher.migrate(
-                    refdir=part.part_layer_dirs[src_partition],
                     srcdir=part.part_layer_dirs[src_partition],
                     destdirs=part.stage_dirs,
                 )
@@ -965,23 +960,24 @@ class PartHandler:
                 permissions=self._part.spec.permissions,
             )
 
-            migration_states[partition] = MigrationState(
-                files=migrated_files, directories=migrated_dirs
-            )
-
-            if partition is not None and partition == self._part_info.default_partition:
-                for entry in self._part_info.default_filesystem_mount:
-                    self._clean_dangling_whiteouts(
-                        self._part_info.prime_dirs[entry.device],
-                        migrated_files,
-                        migrated_dirs,
-                    )
-            else:
+            if self._part_info.is_default_partition(partition):
+                # The default partition is the only one that will be applied on top
+                # of the base layer, so clean dangling whiteouts
                 self._clean_dangling_whiteouts(
                     self._part_info.prime_dirs[partition],
                     migrated_files,
                     migrated_dirs,
                 )
+            else:
+                # Other partitions are not applied on a base layer, clean all whiteouts
+                self._clean_all_whiteouts(
+                    self._part_info.prime_dirs[partition],
+                    migrated_files,
+                )
+
+            migration_states[partition] = MigrationState(
+                files=migrated_files, directories=migrated_dirs
+            )
 
         self._write_overlay_migration_states(migration_states, Step.PRIME)
 
@@ -1014,7 +1010,16 @@ class PartHandler:
         dangling_whiteouts = migration.filter_dangling_whiteouts(
             migrated_files, migrated_dirs, base_dir=self._overlay_manager.base_layer_dir
         )
-        for whiteout in dangling_whiteouts:
+        self._clean_whiteouts(prime_dir, dangling_whiteouts)
+
+    def _clean_all_whiteouts(self, prime_dir: Path, migrated_files: set[str]) -> None:
+        """Clean up all whiteout files."""
+        all_whiteouts = migration.filter_all_whiteouts(migrated_files)
+        self._clean_whiteouts(prime_dir, all_whiteouts)
+
+    def _clean_whiteouts(self, prime_dir: Path, whiteouts: set[str]) -> None:
+        """Clean up whiteout files."""
+        for whiteout in whiteouts:
             primed_whiteout = prime_dir / whiteout
             try:
                 primed_whiteout.unlink()

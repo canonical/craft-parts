@@ -14,18 +14,18 @@
 
 """Utilities for Maven projects and settings."""
 
+from __future__ import annotations
+
 import logging
 import os
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from typing_extensions import Self, override
-
-from craft_parts.infos import PartInfo
 
 from ._xml import (
     CRAFT_REPO_TEMPLATE,
@@ -38,6 +38,9 @@ from ._xml import (
     PROXY_TEMPLATE,
     SETTINGS_TEMPLATE,
 )
+
+if TYPE_CHECKING:
+    from craft_parts.infos import PartInfo
 
 logger = logging.getLogger(__name__)
 

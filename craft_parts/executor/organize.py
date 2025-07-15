@@ -22,16 +22,21 @@ the key represents the path of a file inside the part and the value
 represents how the file is going to be staged.
 """
 
+from __future__ import annotations
+
 import contextlib
 import os
 import shutil
-from collections.abc import Mapping
 from glob import iglob
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from pathlib import Path
 
 
 def organize_files(

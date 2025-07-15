@@ -21,6 +21,7 @@ from .overlay_fs import is_opaque_dir, is_whiteout_file
 from .overlay_manager import LayerMount, OverlayManager, PackageCacheMount
 from .overlays import (
     is_oci_opaque_dir,
+    is_oci_whiteout,
     is_oci_whiteout_file,
     oci_opaque_dir,
     oci_whited_out_file,
