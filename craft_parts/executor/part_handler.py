@@ -588,6 +588,7 @@ class PartHandler:
         )
 
         self._migrate_overlay_files_to_prime()
+        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
         if (
             self._part.spec.stage_packages
@@ -596,7 +597,7 @@ class PartHandler:
         ):
             prime_dirs = list(self._part.prime_dirs.values())
             primed_stage_packages = _get_primed_stage_packages(
-                contents.partitions_contents[DEFAULT_PARTITION].files,
+                contents.partitions_contents[default_partition].files,
                 prime_dirs=prime_dirs,
             )
         else:
@@ -607,8 +608,6 @@ class PartHandler:
             for p, c in contents.partitions_contents.items()
             if not self._part_info.is_default_partition(p)
         }
-
-        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
         return states.PrimeState(
             partition=default_partition,
