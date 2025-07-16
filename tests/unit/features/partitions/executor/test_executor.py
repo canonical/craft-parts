@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -43,13 +44,14 @@ class TestExecutor:
         p2 = Part("p2", {"plugin": "nil"}, partitions=partitions)
         self._make_files(p2.part_install_dirs.values(), "part2-install-file")
 
+        base_dir = Path(new_dir)
         stage_dirs = get_partition_dir_map(
-            base_dir=Path(new_dir), partitions=partitions, suffix="stage"
+            base_dir=base_dir, partitions=partitions, suffix="stage"
         ).values()
         self._make_files(stage_dirs, "staged-file")
 
         prime_dirs = get_partition_dir_map(
-            base_dir=Path(new_dir), partitions=partitions, suffix="prime"
+            base_dir=base_dir, partitions=partitions, suffix="prime"
         ).values()
         self._make_files(prime_dirs, "primed-file")
 
@@ -67,6 +69,26 @@ class TestExecutor:
         info = ProjectInfo(
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
+
+        # Create symlinks if default partition aliased
+        if info.is_default_partition_aliased:
+            info.alias_partition_dir.mkdir(parents=True, exist_ok=True)
+            os.symlink(
+                base_dir / "stage",
+                info.stage_alias_symlink,
+                target_is_directory=True,
+            )
+            os.symlink(
+                base_dir / "prime",
+                info.prime_alias_symlink,
+                target_is_directory=True,
+            )
+            os.symlink(
+                base_dir / "parts",
+                info.parts_alias_symlink,
+                target_is_directory=True,
+            )
+
         e = Executor(project_info=info, part_list=[p1, p2])
         e.clean(Step.PULL)
 
@@ -84,6 +106,14 @@ class TestExecutor:
         assert all(
             (prime_dir / "primed-file").exists() is False for prime_dir in prime_dirs
         )
+
+        # Test symlinks for alias to default partition
+        if info.stage_alias_symlink:
+            assert info.stage_alias_symlink.exists() is False
+        if info.prime_alias_symlink:
+            assert info.prime_alias_symlink.exists() is False
+        if info.parts_alias_symlink:
+            assert info.parts_alias_symlink.exists() is False
 
     def test_clean_part(self, new_dir, partitions):
         """Clean a part with partitions enabled."""
