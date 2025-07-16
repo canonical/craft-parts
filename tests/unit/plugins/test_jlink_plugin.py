@@ -53,6 +53,16 @@ def test_jlink_plugin_jar_files(part_info):
     assert "PROCESS_JARS=${CRAFT_STAGE}/foo.jar" in plugin.get_build_commands()
 
 
+def test_jlink_plugin_add_modules(part_info):
+    """Validate setting of jlink version."""
+    properties = JLinkPlugin.properties_class.unmarshal(
+        {"source": ".", "jlink-add-modules": ["jdk.crypto.ec", "jdk.desktop"]}
+    )
+    plugin = JLinkPlugin(properties=properties, part_info=part_info)
+
+    assert "deps=${deps},jdk.crypto.ec,jdk.desktop" in plugin.get_build_commands()
+
+
 def test_jlink_plugin_find_jars(part_info, tmp_path):
     """Ensure all jar files are found when not specified in options"""
     (tmp_path / "file1.jar").touch()

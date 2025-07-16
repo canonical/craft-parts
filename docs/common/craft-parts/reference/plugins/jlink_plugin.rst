@@ -19,6 +19,12 @@ jlink-jars
 List of paths to your application's JAR files. If not specified, the plugin will find
 all JAR files in the staging area.
 
+jlink-add-modules
+~~~~~~~~~~~~~~~~~~
+**Type:** list of strings
+
+Additional modules to include in the OpenJDK image.
+
 Dependencies
 ------------
 
