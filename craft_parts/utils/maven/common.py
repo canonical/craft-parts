@@ -573,7 +573,8 @@ def _get_namespaces(project: etree._Element) -> Namespaces:
         # this particular case and move on.
         except ValueError as ve:  # noqa: PERF203
             if "Invalid namespace URI" in str(ve):
-                pass
+                continue
+            raise
     return namespaces
 
 
