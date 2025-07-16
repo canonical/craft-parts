@@ -230,7 +230,7 @@ class TestPartHandling:
         mock_step_contents = StepContents(partitions=partitions)
         mock_step_contents.partitions_contents[default_partition] = (
             StepPartitionContents(
-                files={"file"},
+                files={"file", "pkg_file"},
                 dirs={"dir"},
             )
         )
@@ -250,7 +250,19 @@ class TestPartHandling:
             return_value=mock_step_contents,
         )
         mocker.patch("os.getxattr", return_value=b"pkg")
-        mocker.patch("pathlib.Path.exists", return_value=True)
+
+        original_exists = Path.exists
+
+        def mocked_exists(self: Path):
+            if self.name == "pkg_file":
+                return True
+            return original_exists(self)
+
+        mocker.patch(
+            "craft_parts.executor.part_handler.Path.exists",
+            side_effect=mocked_exists,
+            autospec=True,
+        )
 
         ovmgr = OverlayManager(
             project_info=self._project_info, part_list=[self._part], base_layer_dir=None
@@ -270,7 +282,7 @@ class TestPartHandling:
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
+            files={"file", "pkg_file"},
             directories={"dir"},
             partitions_contents=partitions_migration_contents,
             primed_stage_packages={"pkg"},
