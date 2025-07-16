@@ -253,14 +253,14 @@ class TestPartHandling:
 
         original_exists = Path.exists
 
-        def mocked_exists(self: Path):
+        def stub_exists(self: Path):
             if self.name == "pkg_file":
                 return True
             return original_exists(self)
 
         mocker.patch(
             "craft_parts.executor.part_handler.Path.exists",
-            side_effect=mocked_exists,
+            side_effect=stub_exists,
             autospec=True,
         )
 
