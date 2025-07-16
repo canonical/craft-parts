@@ -160,6 +160,10 @@ class Executor:
             for prime_dir in self._project_info.prime_dirs.values():
                 if prime_dir.exists():
                     shutil.rmtree(prime_dir)
+            # remove default partition alias symlink
+            prime_alias_symlink = self._project_info.prime_alias_symlink
+            if prime_alias_symlink:
+                prime_alias_symlink.unlink(missing_ok=True)
 
             if initial_step <= Step.STAGE:
                 for stage_dir in self._project_info.stage_dirs.values():
@@ -167,9 +171,18 @@ class Executor:
                         shutil.rmtree(stage_dir)
                 if self._project_info.backstage_dir.exists():
                     shutil.rmtree(self._project_info.backstage_dir)
+                # remove default partition alias symlink
+                stage_alias_symlink = self._project_info.stage_alias_symlink
+                if stage_alias_symlink:
+                    stage_alias_symlink.unlink(missing_ok=True)
 
-            if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
-                shutil.rmtree(self._project_info.parts_dir)
+            if initial_step <= Step.PULL:
+                if self._project_info.parts_dir.exists():
+                    shutil.rmtree(self._project_info.parts_dir)
+                # remove default partition alias symlink
+                parts_alias_symlink = self._project_info.parts_alias_symlink
+                if parts_alias_symlink:
+                    parts_alias_symlink.unlink(missing_ok=True)
 
             if (
                 initial_step <= Step.BUILD

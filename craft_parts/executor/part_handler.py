@@ -1155,16 +1155,22 @@ class PartHandler:
             return
         default_partition = self._part_info.default_partition
         logger.debug("Create symlinks for %s", default_partition)
-        partition_dir = self._part.dirs.work_dir / "partitions" / default_partition
-        partition_dir.mkdir(parents=True, exist_ok=True)
+        self._part_info.alias_partition_dir.mkdir(parents=True, exist_ok=True)
 
         for src, dst in [
-            (self._part_info.stage_dir, partition_dir / "stage"),
-            (self._part_info.prime_dir, partition_dir / "prime"),
-            (self._part_info.overlay_dir, partition_dir / "overlay"),
-            (self._part_info.parts_dir, partition_dir / "parts"),
+            (self._part_info.parts_dir, self._part_info.parts_alias_symlink),
+            (self._part_info.stage_dir, self._part_info.stage_alias_symlink),
+            (self._part_info.prime_dir, self._part_info.prime_alias_symlink),
+            (self._part_info.overlay_dir, self._part_info.overlay_alias_symlink),
         ]:
             if dst.exists():
+                if not dst.is_symlink():
+                    # Between two runs of the lifecycle, the default partition alias name
+                    # can be changed to a previously concrete partition by the user.
+                    raise RuntimeError(
+                        f"cannot create symlinks {dst}, a concrete directory already exists."
+                    )
+                # The symlink already exists
                 continue
             os.symlink(
                 src,
