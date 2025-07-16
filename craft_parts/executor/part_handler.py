@@ -1154,7 +1154,7 @@ class PartHandler:
         if not self._part_info.is_default_partition_aliased:
             return
         default_partition = self._part_info.default_partition
-        logger.debug(f"Create symlinks for {default_partition}")
+        logger.debug("Create symlinks for %s", default_partition)
         partition_dir = self._part.dirs.work_dir / "partitions" / default_partition
         partition_dir.mkdir(parents=True, exist_ok=True)
 

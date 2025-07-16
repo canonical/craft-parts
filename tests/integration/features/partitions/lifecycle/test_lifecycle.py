@@ -375,4 +375,4 @@ def test_partition_symlinks_default_partition(new_dir):
     with lifecycle.action_executor() as ctx:
         ctx.execute(actions)
 
-    assert next(Path("partitions").walk())[1].sort() == ["binaries", "docs"]
+    assert sorted(next(Path("partitions").walk())[1]) == ["binaries", "docs"]
