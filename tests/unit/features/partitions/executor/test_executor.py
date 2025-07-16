@@ -72,20 +72,20 @@ class TestExecutor:
 
         # Create symlinks if default partition aliased
         if info.is_default_partition_aliased:
-            info.alias_partition_dir.mkdir(parents=True, exist_ok=True)
+            info.alias_partition_dir.mkdir(parents=True, exist_ok=True)  # pyright: ignore[reportOptionalMemberAccess]
             os.symlink(
                 base_dir / "stage",
-                info.stage_alias_symlink,
+                info.stage_alias_symlink,  # type: ignore[reportArgumentType]
                 target_is_directory=True,
             )
             os.symlink(
                 base_dir / "prime",
-                info.prime_alias_symlink,
+                info.prime_alias_symlink,  # type: ignore[reportArgumentType]
                 target_is_directory=True,
             )
             os.symlink(
                 base_dir / "parts",
-                info.parts_alias_symlink,
+                info.parts_alias_symlink,  # type: ignore[reportArgumentType]
                 target_is_directory=True,
             )
 
