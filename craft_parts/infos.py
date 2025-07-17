@@ -307,22 +307,22 @@ class ProjectInfo:
     @property
     def stage_alias_symlink(self) -> Path | None:
         """Stage directory for the default alias partition."""
-        if self.alias_partition_dir:
-            return self.alias_partition_dir / "stage"
+        if alias_partition_dir := self.alias_partition_dir:
+            return alias_partition_dir / "stage"
         return None
 
     @property
     def prime_alias_symlink(self) -> Path | None:
         """Prime directory for the default alias partition."""
-        if self.alias_partition_dir:
-            return self.alias_partition_dir / "prime"
+        if alias_partition_dir := self.alias_partition_dir:
+            return alias_partition_dir / "prime"
         return None
 
     @property
     def overlay_alias_symlink(self) -> Path | None:
         """Overlay directory for the default alias partition."""
-        if self.alias_partition_dir:
-            return self.alias_partition_dir / "overlay"
+        if alias_partition_dir := self.alias_partition_dir:
+            return alias_partition_dir / "overlay"
         return None
 
     def is_default_partition(self, partition: str | None) -> bool:
