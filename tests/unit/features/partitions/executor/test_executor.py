@@ -36,7 +36,7 @@ class TestExecutor:
             directory.mkdir(parents=True)
             (directory / filename).touch()
 
-    def test_clean(self, new_dir, partitions):
+    def test_clean(self, new_path, partitions):
         """Clean a project with partitions enabled."""
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         self._make_files(p1.part_install_dirs.values(), "part1-install-file")
@@ -44,14 +44,13 @@ class TestExecutor:
         p2 = Part("p2", {"plugin": "nil"}, partitions=partitions)
         self._make_files(p2.part_install_dirs.values(), "part2-install-file")
 
-        base_dir = Path(new_dir)
         stage_dirs = get_partition_dir_map(
-            base_dir=base_dir, partitions=partitions, suffix="stage"
+            base_dir=new_path, partitions=partitions, suffix="stage"
         ).values()
         self._make_files(stage_dirs, "staged-file")
 
         prime_dirs = get_partition_dir_map(
-            base_dir=base_dir, partitions=partitions, suffix="prime"
+            base_dir=new_path, partitions=partitions, suffix="prime"
         ).values()
         self._make_files(prime_dirs, "primed-file")
 
@@ -67,24 +66,24 @@ class TestExecutor:
         assert all((prime_dir / "primed-file").exists() for prime_dir in prime_dirs)
 
         info = ProjectInfo(
-            application_name="test", cache_dir=new_dir, partitions=partitions
+            application_name="test", cache_dir=new_path, partitions=partitions
         )
 
         # Create symlinks if default partition aliased
         if info.is_default_partition_aliased:
             info.alias_partition_dir.mkdir(parents=True, exist_ok=True)  # pyright: ignore[reportOptionalMemberAccess]
             os.symlink(
-                base_dir / "stage",
+                new_path / "stage",
                 info.stage_alias_symlink,  # type: ignore[reportArgumentType]
                 target_is_directory=True,
             )
             os.symlink(
-                base_dir / "prime",
+                new_path / "prime",
                 info.prime_alias_symlink,  # type: ignore[reportArgumentType]
                 target_is_directory=True,
             )
             os.symlink(
-                base_dir / "parts",
+                new_path / "parts",
                 info.parts_alias_symlink,  # type: ignore[reportArgumentType]
                 target_is_directory=True,
             )
@@ -108,12 +107,18 @@ class TestExecutor:
         )
 
         # Test symlinks for alias to default partition
-        if info.stage_alias_symlink:
-            assert info.stage_alias_symlink.exists() is False
-        if info.prime_alias_symlink:
-            assert info.prime_alias_symlink.exists() is False
-        if info.parts_alias_symlink:
-            assert info.parts_alias_symlink.exists() is False
+        assert (
+            info.stage_alias_symlink is None
+            or info.stage_alias_symlink.exists() is False
+        )
+        assert (
+            info.prime_alias_symlink is None
+            or info.prime_alias_symlink.exists() is False
+        )
+        assert (
+            info.parts_alias_symlink is None
+            or info.parts_alias_symlink.exists() is False
+        )
 
     def test_clean_part(self, new_dir, partitions):
         """Clean a part with partitions enabled."""
