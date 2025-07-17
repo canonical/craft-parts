@@ -20,6 +20,11 @@ from collections.abc import Iterator
 import pytest
 from craft_parts import Action, Step
 from craft_parts.executor import filesets, part_handler
+from craft_parts.executor.errors import EnvironmentChangedError
+from craft_parts.executor.part_handler import PartHandler
+from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.overlays import OverlayManager
+from craft_parts.parts import Part
 
 from tests.unit.executor import test_part_handler
 
@@ -156,3 +161,39 @@ class TestHelpers(test_part_handler.TestHelpers):
 @pytest.mark.usefixtures("new_dir")
 class TestDirs(test_part_handler.TestDirs):
     """Test project dirs handling."""
+
+    def test_makedirs_swap_partitions(self, new_dir):
+        partitions = ["mypart", "yourpart", "our/special-part"]
+
+        def setup_handler(partitions) -> PartHandler:
+            part = Part(
+                "foo",
+                {
+                    "plugin": "nil",
+                    "source": ".",
+                },
+                partitions=partitions,
+            )
+            info = ProjectInfo(
+                application_name="test", cache_dir=new_dir, partitions=partitions
+            )
+            part_info = PartInfo(info, part)
+            ovmgr = OverlayManager(
+                project_info=info, part_list=[part], base_layer_dir=None
+            )
+            return PartHandler(
+                part,
+                part_info=part_info,
+                part_list=[part],
+                overlay_manager=ovmgr,
+            )
+
+        handler = setup_handler(partitions)
+        handler._make_dirs()
+
+        # swap firt 2 partitions
+        partitions = ["yourpart", "mypart", "our/special-part"]
+        handler = setup_handler(partitions)
+
+        with pytest.raises(EnvironmentChangedError):
+            handler._make_dirs()
