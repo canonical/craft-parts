@@ -14,10 +14,8 @@
 
 """Unit tests for the Maven plugin utilities."""
 
-import io
 import logging
 import os
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
@@ -28,10 +26,12 @@ import pytest
 from craft_parts import Part
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.utils.maven.common import (
+    _XML_PARSER,
     GroupDict,
     MavenArtifact,
     MavenPlugin,
     MavenXMLError,
+    Namespaces,
     _find_element,
     _get_available_version,
     _get_element_text,
@@ -45,6 +45,7 @@ from craft_parts.utils.maven.common import (
     create_maven_settings,
     update_pom,
 )
+from lxml import etree
 
 
 @pytest.mark.parametrize(
@@ -98,23 +99,6 @@ def settings_path(part_info: PartInfo) -> Path:
 def test_get_no_proxy_string(env: dict[str, str], expected: str) -> None:
     with mock.patch.dict(os.environ, env):
         assert _get_no_proxy_string() == expected
-
-
-def _normalize_settings(settings):
-    with io.StringIO(settings) as f:
-        tree = ET.parse(f)  # noqa: S314
-    for element in tree.iter():
-        if element.text is not None and element.text.isspace():
-            element.text = None
-        if element.tail is not None and element.tail.isspace():
-            element.tail = None
-    with io.StringIO() as f:
-        tree.write(
-            f,
-            encoding="unicode",
-            default_namespace="http://maven.apache.org/SETTINGS/1.0.0",
-        )
-        return f.getvalue() + "\n"
 
 
 @pytest.mark.parametrize(
@@ -192,23 +176,23 @@ def test_create_settings(
               <active>true</active>
             </proxy>
           </proxies>
-            <profiles>
-                <profile>
-                <id>craft</id>
-                <repositories>
-                    <repository>
-                        <id>craft</id>
-                        <name>Craft-managed intermediate repository</name>
-                        <url>{backstage.as_uri()}</url>
-                    </repository>
-                </repositories>
-                </profile>
-            </profiles>
-            <activeProfiles>
-                <activeProfile>craft</activeProfile>
-            </activeProfiles>
-            {set_mirror_content}
-            <localRepository>{part_info.part_build_subdir / ".parts/.m2/repository"}</localRepository>
+          <profiles>
+            <profile>
+              <id>craft</id>
+              <repositories>
+                <repository>
+                  <id>craft</id>
+                  <name>Craft-managed intermediate repository</name>
+                  <url>{backstage.as_uri()}</url>
+                </repository>
+              </repositories>
+            </profile>
+          </profiles>
+          <activeProfiles>
+            <activeProfile>craft</activeProfile>
+          </activeProfiles>
+          {set_mirror_content}
+          <localRepository>{part_info.part_build_subdir / ".parts/.m2/repository"}</localRepository>
         </settings>
         """
     )
@@ -222,13 +206,15 @@ def test_create_settings(
     with mock.patch.dict(os.environ, env_dict):
         create_maven_settings(part_info=part_info, set_mirror=set_mirror)
         assert settings_path.exists()
-        assert _normalize_settings(settings_path.read_text()) == _normalize_settings(
-            expected_content
+        generated = etree.parse(settings_path, parser=_XML_PARSER).getroot()
+        expected = etree.fromstring(expected_content, parser=_XML_PARSER)
+        assert etree.tostring(generated, pretty_print=True) == etree.tostring(
+            expected, pretty_print=True
         )
 
 
 def test_find_element() -> None:
-    element = ET.fromstring("<foo><bar>Howdy!</bar></foo>")  # noqa: S314
+    element = etree.fromstring("<foo><bar>Howdy!</bar></foo>", parser=_XML_PARSER)
 
     find_result = _find_element(element, "bar", {})
     assert find_result is not None
@@ -245,11 +231,11 @@ def test_find_element() -> None:
 
 
 def test_get_element_text() -> None:
-    element = ET.fromstring("<bar>Howdy!</bar>")  # noqa: S314
+    element = etree.fromstring("<bar>Howdy!</bar>", parser=_XML_PARSER)
 
     assert _get_element_text(element) == "Howdy!"
 
-    element = ET.fromstring("<foo><bar>Howdy!</bar></foo>")  # noqa: S314
+    element = etree.fromstring("<foo><bar>Howdy!</bar></foo>", parser=_XML_PARSER)
 
     expected_error = dedent("""\
         No text field found on 'foo'
@@ -264,20 +250,20 @@ def test_get_element_text() -> None:
 def test_set_version_upgrade() -> None:
     dependency = """\
         <dependency>
-            <groupId>org.starcraft</groupId>
-            <artifactId>test</artifactId>
-            <version>1.0.0</version>
+          <groupId>org.starcraft</groupId>
+          <artifactId>test</artifactId>
+          <version>1.0.0</version>
         </dependency>
     """
 
-    dep_element = ET.fromstring(dependency)  # noqa: S314
+    dep_element = etree.fromstring(dependency, parser=_XML_PARSER)
 
     _set_version(dep_element, {}, "1.0.1")
 
     version = _find_element(dep_element, "version", {})
     assert _get_element_text(version) == "1.0.1"
 
-    assert b"Version updated by craft-parts from '1.0.0' to '1.0.1'" in ET.tostring(
+    assert b"Version updated by craft-parts from '1.0.0' to '1.0.1'" in etree.tostring(
         dep_element
     )
 
@@ -285,19 +271,19 @@ def test_set_version_upgrade() -> None:
 def test_set_version_unpinned() -> None:
     dependency = """\
         <dependency>
-            <groupId>org.starcraft</groupId>
-            <artifactId>test</artifactId>
+          <groupId>org.starcraft</groupId>
+          <artifactId>test</artifactId>
         </dependency>
     """
 
-    dep_element = ET.fromstring(dependency)  # noqa: S314
+    dep_element = etree.fromstring(dependency, parser=_XML_PARSER)
 
     _set_version(dep_element, {}, "1.0.1")
 
     version = _find_element(dep_element, "version", {})
     assert _get_element_text(version) == "1.0.1"
 
-    assert b"Version set by craft-parts to '1.0.1'" in ET.tostring(dep_element)
+    assert b"Version set by craft-parts to '1.0.1'" in etree.tostring(dep_element)
 
 
 @pytest.mark.parametrize(
@@ -416,13 +402,16 @@ def test_get_existing_artifacts(
 
 
 def test_maven_artifact_from_element() -> None:
-    element = ET.fromstring("""\
+    element = etree.fromstring(
+        """\
         <dependency>
-            <groupId>org.starcraft</groupId>
-            <artifactId>test</artifactId>
-            <version>X.Y.Z</version>
+          <groupId>org.starcraft</groupId>
+          <artifactId>test</artifactId>
+          <version>X.Y.Z</version>
         </dependency>
-        """)  # noqa: S314
+        """,
+        parser=_XML_PARSER,
+    )
 
     art = MavenArtifact.from_element(element, {})
 
@@ -432,12 +421,15 @@ def test_maven_artifact_from_element() -> None:
 
 
 def test_maven_artifact_from_element_no_version() -> None:
-    element = ET.fromstring("""\
+    element = etree.fromstring(
+        """\
         <dependency>
-            <groupId>org.starcraft</groupId>
-            <artifactId>test</artifactId>
+          <groupId>org.starcraft</groupId>
+          <artifactId>test</artifactId>
         </dependency>
-        """)  # noqa: S314
+        """,
+        parser=_XML_PARSER,
+    )
 
     art = MavenArtifact.from_element(element, {})
 
@@ -447,12 +439,12 @@ def test_maven_artifact_from_element_no_version() -> None:
 
 
 def test_maven_plugin_from_element_no_group() -> None:
-    element = ET.fromstring("""\
+    element = etree.fromstring("""\
         <dependency>
-            <artifactId>test</artifactId>
-            <version>X.Y.Z</version>
+          <artifactId>test</artifactId>
+          <version>X.Y.Z</version>
         </dependency>
-        """)  # noqa: S314
+        """)
 
     plugin = MavenPlugin.from_element(element, {})
 
@@ -532,13 +524,14 @@ def test_maven_plugin_set_remaining_plugins() -> None:
             packaging_type="maven-plugin",
         ),
     ]
-    project = ET.fromstring(  # noqa: S314
+    project = etree.fromstring(
         dedent("""\
         <project>
           <build>
           <foo>Don't delete me!</foo>
           </build>
-        </project>""")
+        </project>"""),
+        parser=_XML_PARSER,
     )
     expected = dedent("""\
         <project>
@@ -559,13 +552,16 @@ def test_maven_plugin_set_remaining_plugins() -> None:
               </plugins>
             </pluginManagement>
           </build>
-        </project>""")
+        </project>
+        """)
 
     # Force remaining_plugins to be a list to keep its ordered property
     # This keeps the test reproducible
     MavenPlugin._set_remaining_plugins(remaining_plugins, project, {})  # type: ignore[reportArgumentType, arg-type]
 
-    assert ET.tostring(project).decode(errors="replace") == expected
+    assert (
+        etree.tostring(project, pretty_print=True).decode(errors="replace") == expected
+    )
 
 
 def test_maven_artifact_from_pom(tmp_path: Path) -> None:
@@ -604,7 +600,7 @@ def test_maven_artifact_update_versions() -> None:
           </dependencies>
         </project>
     """)
-    project = ET.fromstring(project_xml)  # noqa: S314
+    project = etree.fromstring(project_xml, parser=_XML_PARSER)
 
     base_artifact_params = {"group_id": "org.starcraft", "packaging_type": "jar"}
     existing = {
@@ -624,23 +620,24 @@ def test_maven_artifact_update_versions() -> None:
 
     MavenArtifact.update_versions(project, {}, existing)
 
-    assert ET.tostring(project).decode("utf8") == dedent("""\
+    assert etree.tostring(project, pretty_print=True).decode("utf8") == dedent("""\
         <project>
           <dependencies>
             <dependency>
               <groupId>org.starcraft</groupId>
               <artifactId>test1</artifactId>
-              <version>1.0.1</version>
               <!--Version updated by craft-parts from '1.0.0' to '1.0.1'-->
+              <version>1.0.1</version>
             </dependency>
             <dependency>
               <groupId>org.starcraft</groupId>
               <artifactId>test2</artifactId>
-              <version>1.0.2</version>
               <!--Version updated by craft-parts from '1.0.0' to '1.0.2'-->
+              <version>1.0.2</version>
             </dependency>
           </dependencies>
-        </project>""")
+        </project>
+        """)
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -660,18 +657,18 @@ def create_project(part_info: PartInfo, project_xml: str) -> Path:
 def test_update_pom_comment(part_info: PartInfo) -> None:
     project_xml = dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-            </dependencies>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+          </dependencies>
         </project>
     """)
 
@@ -686,18 +683,18 @@ def test_update_pom_comment(part_info: PartInfo) -> None:
 def test_update_pom_deploy_to(part_info: PartInfo) -> None:
     project_xml = dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-            </dependencies>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+          </dependencies>
         </project>
     """)
 
@@ -710,7 +707,7 @@ def test_update_pom_deploy_to(part_info: PartInfo) -> None:
     # Make sure the distribution tag was added
     assert "<distributionManagement>" in pom_xml.read_text()
     # Make sure it is still valid XML
-    ET.parse(pom_xml)  # noqa: S314
+    etree.parse(pom_xml, parser=_XML_PARSER)
 
 
 def test_update_pom_multiple_deploy_to(part_info: PartInfo) -> None:
@@ -718,20 +715,19 @@ def test_update_pom_multiple_deploy_to(part_info: PartInfo) -> None:
 
     project_xml = dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-            </dependencies>
-
-            <distributionManagement>foo</distributionManagement>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+          </dependencies>
+          <distributionManagement>foo</distributionManagement>
         </project>
     """)
 
@@ -747,11 +743,11 @@ def test_update_pom_multiple_deploy_to(part_info: PartInfo) -> None:
     # The old distributionManagement is gone
     assert "foo" not in pom_xml_contents
     # It is still valid XML
-    tree = ET.parse(pom_xml)  # noqa: S314
+    tree = etree.parse(pom_xml, parser=_XML_PARSER)
 
     # The new distributionManagement is in place
     project = tree.getroot()
-    distro_element = cast("ET.Element", project.find("distributionManagement"))
+    distro_element = cast("etree._Element", project.find("distributionManagement"))
     distro_repo = distro_element.find("repository")
     assert distro_repo is not None
     distro_id = distro_repo.find("id")
@@ -762,18 +758,18 @@ def test_update_pom_multiple_deploy_to(part_info: PartInfo) -> None:
 def test_update_pom_self_contained(part_info: PartInfo) -> None:
     project_xml = dedent("""\
         <project>
-            <dependencies>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test1</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.starcraft</groupId>
-                    <artifactId>test2</artifactId>
-                    <version>1.0.0</version>
-                </dependency>
-            </dependencies>
+          <dependencies>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test1</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
+              <groupId>org.starcraft</groupId>
+              <artifactId>test2</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+          </dependencies>
         </project>
     """)
 
@@ -802,16 +798,17 @@ def test_update_pom_self_contained(part_info: PartInfo) -> None:
     [
         pytest.param("", {}, id="none"),
         pytest.param(
-            'xmlns="https://example.com"', {"": "https://example.com"}, id="some"
+            ' xmlns="https://example.com"', {None: "https://example.com"}, id="some"
         ),
     ],
 )
-def test_get_namespaces(namespace: str, expected: dict[str, str]) -> None:
-    project = ET.fromstring(  # noqa: S314
+def test_get_namespaces(namespace: str, expected: Namespaces) -> None:
+    project = etree.fromstring(
         f"""
-        <project {namespace}>
+        <project{namespace}>
         </project>
-    """
+        """,
+        parser=_XML_PARSER,
     )
 
     namespaces = _get_namespaces(project)
@@ -873,48 +870,48 @@ def test_get_poms(part_info: PartInfo, caplog) -> None:
     # "idonotexist", well, doesn't exist
     top_art = """
         <project>
-            <artifactId>top</artifactId>
-            <groupId>org.starcraft</groupId>
-            <version>1.0.0</version>
+          <artifactId>top</artifactId>
+          <groupId>org.starcraft</groupId>
+          <version>1.0.0</version>
 
-            <modules>
-                <module>single</module>
-                <module>nested</module>
-                <module>idonotexist</module>
-            </modules>
+          <modules>
+            <module>single</module>
+            <module>nested</module>
+            <module>idonotexist</module>
+          </modules>
         </project>
     """
     single_art = """
         <project>
-            <artifactId>single</artifactId>
-            <groupId>org.starcraft</groupId>
-            <version>1.0.0</version>
+          <artifactId>single</artifactId>
+          <groupId>org.starcraft</groupId>
+          <version>1.0.0</version>
         </project>
     """
     nested_art = """
         <project>
-            <artifactId>nested</artifactId>
-            <groupId>org.starcraft</groupId>
-            <version>1.0.0</version>
+          <artifactId>nested</artifactId>
+          <groupId>org.starcraft</groupId>
+          <version>1.0.0</version>
 
-            <modules>
-                <module>../egg</module>
-            </modules>
+          <modules>
+            <module>../egg</module>
+          </modules>
         </project>
     """
     egg_art = """
         <project>
-            <artifactId>egg</artifactId>
-            <groupId>org.starcraft</groupId>
-            <version>1.0.0</version>
+          <artifactId>egg</artifactId>
+          <groupId>org.starcraft</groupId>
+          <version>1.0.0</version>
         </project>
     """
     # An artifact that is not a submodule of anything and should not be discovered
     orphan_art = """
         <project>
-            <artifactId>orphan</artifactId>
-            <groupId>org.starcraft</groupId>
-            <version>1.0.0</version>
+          <artifactId>orphan</artifactId>
+          <groupId>org.starcraft</groupId>
+          <version>1.0.0</version>
         </project>
     """
 
@@ -956,9 +953,9 @@ def test_get_poms(part_info: PartInfo, caplog) -> None:
 def test_update_pom_file(part_info: PartInfo, tmp_path: Path) -> None:
     project_xml = dedent("""\
         <project>
-            <groupId>org.starcraft</groupId>
-            <artifactId>test1</artifactId>
-            <version>1.0.0</version>
+          <groupId>org.starcraft</groupId>
+          <artifactId>test1</artifactId>
+          <version>1.0.0</version>
         </project>
     """)
 
