@@ -50,6 +50,7 @@ from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 from . import filesets, migration
 from .environment import generate_step_environment
+from .errors import EnvironmentChangedError
 from .organize import organize_files
 from .step_handler import (
     StagePartitionContents,
@@ -1167,7 +1168,7 @@ class PartHandler:
                 if not dst.is_symlink():
                     # Between two runs of the lifecycle, the default partition alias name
                     # can be changed to a previously concrete partition by the user.
-                    raise RuntimeError(
+                    raise EnvironmentChangedError(
                         f"cannot create symlinks {dst}, a concrete directory already exists."
                     )
                 # The symlink already exists
