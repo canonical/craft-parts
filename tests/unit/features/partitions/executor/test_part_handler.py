@@ -191,7 +191,7 @@ class TestDirs(test_part_handler.TestDirs):
         handler = setup_handler(partitions)
         handler._make_dirs()
 
-        # swap firt 2 partitions
+        # swap first 2 partitions
         partitions = ["yourpart", "mypart", "our/special-part"]
         handler = setup_handler(partitions)
 
