@@ -316,3 +316,63 @@ def test_track_stage_packages_with_partitions(new_dir):
 
     name_only = [p.split("=")[0] for p in packages]
     assert "hello" in name_only
+
+
+def test_partition_symlinks_non_default_partition(new_dir):
+    partitions = ["foo", "binaries", "docs"]
+    parts_yaml = textwrap.dedent(
+        """
+            parts:
+              foo:
+                plugin: nil
+            """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_track_stage_packages_with_partitions",
+        cache_dir=new_dir,
+        partitions=partitions,
+        track_stage_packages=True,
+    )
+
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    foo_partition_dir = Path("partitions/foo")
+
+    for d in ["parts", "overlay", "prime", "stage"]:
+        foo_dir = Path(foo_partition_dir / d)
+        assert foo_dir.exists()
+        assert foo_dir.is_symlink()
+        assert foo_dir.readlink() == Path(d).resolve()
+
+
+def test_partition_symlinks_default_partition(new_dir):
+    partitions = ["default", "binaries", "docs"]
+    parts_yaml = textwrap.dedent(
+        """
+            parts:
+              foo:
+                plugin: nil
+            """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_track_stage_packages_with_partitions",
+        cache_dir=new_dir,
+        partitions=partitions,
+        track_stage_packages=True,
+    )
+
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert sorted(next(Path("partitions").walk())[1]) == ["binaries", "docs"]

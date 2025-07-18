@@ -281,6 +281,50 @@ class ProjectInfo:
             return self._partitions[0]
         return None
 
+    @property
+    def is_default_partition_aliased(self) -> bool:
+        """Check if the default partition is aliased."""
+        return (
+            self._partitions is not None and self.default_partition != DEFAULT_PARTITION
+        )
+
+    @property
+    def alias_partition_dir(self) -> Path | None:
+        """Partition directory for the default alias partition."""
+        if not self.is_default_partition_aliased:
+            return None
+        if not self.default_partition:
+            return None
+        return self._dirs.work_dir / "partitions" / self.default_partition
+
+    @property
+    def parts_alias_symlink(self) -> Path | None:
+        """Parts directory for the default alias partition."""
+        if self.alias_partition_dir:
+            return self.alias_partition_dir / "parts"
+        return None
+
+    @property
+    def stage_alias_symlink(self) -> Path | None:
+        """Stage directory for the default alias partition."""
+        if alias_partition_dir := self.alias_partition_dir:
+            return alias_partition_dir / "stage"
+        return None
+
+    @property
+    def prime_alias_symlink(self) -> Path | None:
+        """Prime directory for the default alias partition."""
+        if alias_partition_dir := self.alias_partition_dir:
+            return alias_partition_dir / "prime"
+        return None
+
+    @property
+    def overlay_alias_symlink(self) -> Path | None:
+        """Overlay directory for the default alias partition."""
+        if alias_partition_dir := self.alias_partition_dir:
+            return alias_partition_dir / "overlay"
+        return None
+
     def is_default_partition(self, partition: str | None) -> bool:
         """Check if given partition is the default one."""
         if partition == DEFAULT_PARTITION:

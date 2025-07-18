@@ -20,7 +20,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import part_handler
-from craft_parts.executor.part_handler import PartHandler
+from craft_parts.executor.part_handler import MigrationContents, PartHandler
 from craft_parts.executor.step_handler import StagePartitionContents, StepContents
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
@@ -164,14 +164,28 @@ class TestPartHandling(test_part_handler.TestPartHandling):
 
         assert self._mock_mount_overlayfs.mock_calls == []
 
-    def test_run_stage(self, mocker):
+    def test_run_stage(self, mocker, partitions):
         mock_step_contents = StepContents(stage=True)
-        mock_step_contents.partitions_contents["default"] = StagePartitionContents(
-            files={"file"},
-            dirs={"dir"},
-            backstage_files={"back_file"},
-            backstage_dirs={"back_dir"},
+        default_partition = partitions[0] if partitions is not None else "default"
+        mock_step_contents.partitions_contents[default_partition] = (
+            StagePartitionContents(
+                files={"file"},
+                dirs={"dir"},
+                backstage_files={"back_file"},
+                backstage_dirs={"back_dir"},
+            )
         )
+        partitions_migration_contents = {}
+        if partitions is not None:
+            for p in partitions[1:]:
+                mock_step_contents.partitions_contents[p] = StagePartitionContents(
+                    files=set(),
+                    dirs=set(),
+                )
+                partitions_migration_contents[p] = MigrationContents(
+                    files=set(),
+                    directories=set(),
+                )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_stage",
             return_value=mock_step_contents,
@@ -181,11 +195,12 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             StepInfo(self._part_info, Step.STAGE), stdout=None, stderr=None
         )
         assert state == states.StageState(
-            partition="default",
+            partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
+            partitions_contents=partitions_migration_contents,
             backstage_files={"back_file"},
             backstage_directories={"back_dir"},
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
@@ -681,3 +696,8 @@ class TestHelpers(test_part_handler.TestHelpers):
 
         res = part_handler._parts_with_overlay_in_step(step, part_list=[p1, p2, p3, p4])
         assert res == [p2, p3, p4]
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestDirs(test_part_handler.TestDirs):
+    """Test project dirs handling."""

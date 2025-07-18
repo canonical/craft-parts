@@ -74,6 +74,7 @@ DotnetVerbosity
 DummyRepository
 DumpPlugin
 DumpPluginProperties
+EnvironmentChangedError
 ErrorDict
 ExecutionContext
 FeatureError

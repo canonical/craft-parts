@@ -255,16 +255,15 @@ class TestStepHandlerBuiltins:
         result = sh.run_builtin()
 
         step_contents = StepContents(stage=True)
-        step_contents.partitions_contents["default"] = StagePartitionContents(
+        default_partition = partitions[0] if partitions else "default"
+        step_contents.partitions_contents[default_partition] = StagePartitionContents(
             files={"subdir/bar", "foo"},
             dirs={"subdir"},
             backstage_files={"foo", "subdir/bar"},
             backstage_dirs={"subdir"},
         )
         if partitions:
-            for partition in partitions:
-                if partition == "default":
-                    continue
+            for partition in partitions[1:]:
                 step_contents.partitions_contents[partition] = StagePartitionContents(
                     files=set(), dirs=set()
                 )
@@ -289,13 +288,12 @@ class TestStepHandlerBuiltins:
         )
         result = sh.run_builtin()
         step_contents = StepContents()
-        step_contents.partitions_contents["default"] = StepPartitionContents(
+        default_partition = partitions[0] if partitions else "default"
+        step_contents.partitions_contents[default_partition] = StepPartitionContents(
             files={"subdir/bar", "foo"}, dirs={"subdir"}
         )
         if partitions:
-            for partition in partitions:
-                if partition == "default":
-                    continue
+            for partition in partitions[1:]:
                 step_contents.partitions_contents[partition] = StepPartitionContents(
                     files=set(), dirs=set()
                 )
