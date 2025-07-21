@@ -18,4 +18,4 @@
 
 
 class EnvironmentChangedError(RuntimeError):
-    """Environment between two lifecycle execution changed."""
+    """Environment between two lifecycle executions changed."""
