@@ -50,6 +50,7 @@ from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 from . import filesets, migration
 from .environment import generate_step_environment
+from .errors import EnvironmentChangedError
 from .organize import organize_files
 from .step_handler import (
     StagePartitionContents,
@@ -588,6 +589,7 @@ class PartHandler:
         )
 
         self._migrate_overlay_files_to_prime()
+        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
         if (
             self._part.spec.stage_packages
@@ -596,7 +598,7 @@ class PartHandler:
         ):
             prime_dirs = list(self._part.prime_dirs.values())
             primed_stage_packages = _get_primed_stage_packages(
-                contents.partitions_contents[DEFAULT_PARTITION].files,
+                contents.partitions_contents[default_partition].files,
                 prime_dirs=prime_dirs,
             )
         else:
@@ -607,8 +609,6 @@ class PartHandler:
             for p, c in contents.partitions_contents.items()
             if not self._part_info.is_default_partition(p)
         }
-
-        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
         return states.PrimeState(
             partition=default_partition,
@@ -1146,6 +1146,39 @@ class PartHandler:
             )
             overlay_migration_state_path.unlink()
 
+    def _symlink_alias_to_default(self) -> None:
+        """Create directory and symlinks for the alias of the default partition.
+
+        These symlinks are never consumed by craft-parts. They are created to help
+        users debugging a build.
+        """
+        if not self._part_info.is_default_partition_aliased:
+            return
+        default_partition = self._part_info.default_partition
+        logger.debug("Create symlinks for %s", default_partition)
+        self._part_info.alias_partition_dir.mkdir(parents=True, exist_ok=True)
+
+        for src, dst in [
+            (self._part_info.parts_dir, self._part_info.parts_alias_symlink),
+            (self._part_info.stage_dir, self._part_info.stage_alias_symlink),
+            (self._part_info.prime_dir, self._part_info.prime_alias_symlink),
+            (self._part_info.overlay_dir, self._part_info.overlay_alias_symlink),
+        ]:
+            if dst.exists():
+                if not dst.is_symlink():
+                    # Between two runs of the lifecycle, the default partition alias name
+                    # can be changed to a previously concrete partition by the user.
+                    raise EnvironmentChangedError(
+                        f"cannot create symlinks {dst}, a concrete directory already exists."
+                    )
+                # The symlink already exists
+                continue
+            os.symlink(
+                src,
+                dst,
+                target_is_directory=True,
+            )
+
     def _make_dirs(self) -> None:
         dirs = [
             self._part.part_src_dir,
@@ -1158,9 +1191,12 @@ class PartHandler:
             self._part.part_run_dir,
             *self._part.stage_dirs.values(),
             *self._part.prime_dirs.values(),
+            *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
+
+        self._symlink_alias_to_default()
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.

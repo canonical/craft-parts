@@ -724,3 +724,8 @@ class TestFileFilter(test_executor_part_handler.TestFileFilter):
 @pytest.mark.usefixtures("new_dir")
 class TestHelpers(test_executor_part_handler.TestHelpers):
     """Verify helper functions."""
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestDirs(test_executor_part_handler.TestDirs):
+    """Test project dirs handling."""

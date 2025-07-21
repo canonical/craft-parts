@@ -25,7 +25,7 @@ import pytest_check  # type: ignore[import]
 from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
-from craft_parts.executor.part_handler import PartHandler
+from craft_parts.executor.part_handler import MigrationContents, PartHandler
 from craft_parts.executor.step_handler import (
     StagePartitionContents,
     StepContents,
@@ -183,14 +183,28 @@ class TestPartHandling:
 
         assert self._mock_mount_overlayfs.mock_calls == []
 
-    def test_run_stage(self, mocker):
-        mock_step_contents = StepContents(stage=True, partitions=["default"])
-        mock_step_contents.partitions_contents["default"] = StagePartitionContents(
-            files={"file"},
-            dirs={"dir"},
-            backstage_files={"back_file"},
-            backstage_dirs={"back_dir"},
+    def test_run_stage(self, mocker, partitions):
+        default_partition = partitions[0] if partitions is not None else "default"
+        mock_step_contents = StepContents(stage=True, partitions=partitions)
+        mock_step_contents.partitions_contents[default_partition] = (
+            StagePartitionContents(
+                files={"file"},
+                dirs={"dir"},
+                backstage_files={"back_file"},
+                backstage_dirs={"back_dir"},
+            )
         )
+        partitions_migration_contents = {}
+        if partitions is not None:
+            for p in partitions[1:]:
+                mock_step_contents.partitions_contents[p] = StagePartitionContents(
+                    files=set(),
+                    dirs=set(),
+                )
+                partitions_migration_contents[p] = MigrationContents(
+                    files=set(),
+                    directories=set(),
+                )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_stage",
             return_value=mock_step_contents,
@@ -200,28 +214,55 @@ class TestPartHandling:
             StepInfo(self._part_info, Step.STAGE), stdout=None, stderr=None
         )
         assert state == states.StageState(
-            partition="default",
+            partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
+            partitions_contents=partitions_migration_contents,
             backstage_files={"back_file"},
             backstage_directories={"back_dir"},
             overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
-    def test_run_prime(self, new_dir, mocker):
-        mock_step_contents = StepContents(partitions=["default"])
-        mock_step_contents.partitions_contents["default"] = StepPartitionContents(
-            files={"file"},
-            dirs={"dir"},
+    def test_run_prime(self, new_dir, mocker, partitions):
+        default_partition = partitions[0] if partitions is not None else "default"
+        mock_step_contents = StepContents(partitions=partitions)
+        mock_step_contents.partitions_contents[default_partition] = (
+            StepPartitionContents(
+                files={"file", "pkg_file"},
+                dirs={"dir"},
+            )
         )
+        partitions_migration_contents = {}
+        if partitions is not None:
+            for p in partitions[1:]:
+                mock_step_contents.partitions_contents[p] = StepPartitionContents(
+                    files=set(),
+                    dirs=set(),
+                )
+                partitions_migration_contents[p] = MigrationContents(
+                    files=set(),
+                    directories=set(),
+                )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=mock_step_contents,
         )
         mocker.patch("os.getxattr", return_value=b"pkg")
-        mocker.patch("pathlib.Path.exists", return_value=True)
+
+        original_exists = Path.exists
+
+        def stub_exists(self: Path):
+            if self.name == "pkg_file":
+                return True
+            return original_exists(self)
+
+        mocker.patch(
+            "craft_parts.executor.part_handler.Path.exists",
+            side_effect=stub_exists,
+            autospec=True,
+        )
 
         ovmgr = OverlayManager(
             project_info=self._project_info, part_list=[self._part], base_layer_dir=None
@@ -238,20 +279,35 @@ class TestPartHandling:
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
         )
         assert state == states.PrimeState(
-            partition="default",
+            partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
+            files={"file", "pkg_file"},
             directories={"dir"},
+            partitions_contents=partitions_migration_contents,
             primed_stage_packages={"pkg"},
         )
 
-    def test_run_prime_dont_track_packages(self, mocker):
-        mock_step_contents = StepContents(partitions=["default"])
-        mock_step_contents.partitions_contents["default"] = StepPartitionContents(
-            files={"file"},
-            dirs={"dir"},
+    def test_run_prime_dont_track_packages(self, mocker, partitions):
+        default_partition = partitions[0] if partitions is not None else "default"
+        mock_step_contents = StepContents(partitions=partitions)
+        mock_step_contents.partitions_contents[default_partition] = (
+            StepPartitionContents(
+                files={"file"},
+                dirs={"dir"},
+            )
         )
+        partitions_migration_contents = {}
+        if partitions is not None:
+            for p in partitions[1:]:
+                mock_step_contents.partitions_contents[p] = StagePartitionContents(
+                    files=set(),
+                    dirs=set(),
+                )
+                partitions_migration_contents[p] = MigrationContents(
+                    files=set(),
+                    directories=set(),
+                )
         mocker.patch(
             "craft_parts.executor.step_handler.StepHandler._builtin_prime",
             return_value=mock_step_contents,
@@ -262,11 +318,12 @@ class TestPartHandling:
             StepInfo(self._part_info, Step.PRIME), stdout=None, stderr=None
         )
         assert state == states.PrimeState(
-            partition="default",
+            partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
             files={"file"},
             directories={"dir"},
+            partitions_contents=partitions_migration_contents,
             primed_stage_packages=set(),
         )
 
@@ -1146,3 +1203,46 @@ class TestHelpers:
         )
 
         assert consolidated_states == result
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestDirs:
+    """Test project dirs handling."""
+
+    def test_makedirs(self, new_dir, partitions):
+        part = Part(
+            "foo",
+            {
+                "plugin": "nil",
+                "source": ".",
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        part_info = PartInfo(info, part)
+        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        handler._make_dirs()
+
+        for i, p in enumerate(partitions or (None,)):
+            partition_dir = Path(".")
+            if p and p != "default":
+                partition_dir = Path("partitions", p)
+
+            for d in ["parts", "overlay", "prime", "stage"]:
+                sub_dir = partition_dir / d
+
+                assert sub_dir.exists()
+                # Test directories for the first entry, aliasing the default partition,
+                # are symlinks targeting the default directories.
+                if i == 0 and p is not None and p != "default":
+                    assert sub_dir.is_symlink()
+                    assert sub_dir.readlink() == Path(d).resolve()
