@@ -22,8 +22,9 @@ attribute on all parts using the Maven or Maven Use plugin, Maven will only use
 locally-available projects as dependencies, creating an offline build of that artifact.
 
 With the ``self-contained`` attribute, Maven Use may additionally rewrite the version
-specification of any dependencies based on what is actually available on-disk. This
-behavior can be avoided by having the exact version already present at build time.
+specification of any project dependencies based on what is actually available on-disk.
+This behavior can be avoided by having the exact version already present at build time,
+such as by building it in a previous part with the Maven Use plugin.
 
 .. _maven_use_self-contained_end:
 
