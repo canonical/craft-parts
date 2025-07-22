@@ -3,9 +3,8 @@
 Maven Use plugin
 ================
 
-The Maven Use plugin allows for setting up a `Maven repository`_ for `Maven`_-based
-projects. It is a companion plugin meant to be used with the
-:ref:`craft_parts_maven_plugin`.
+The Maven Use plugin allows a `Maven repository`_ to be set up for `Maven`_-based
+projects when used alongside the :ref:`craft_parts_maven_plugin`.
 
 Keys
 ----
@@ -21,10 +20,10 @@ This plugin supports the ``self-contained`` build attribute. By declaring this
 attribute on all parts using the Maven or Maven Use plugin, Maven will only use
 locally-available projects as dependencies, creating an offline build of that artifact.
 
-With the ``self-contained`` attribute, Maven Use may additionally rewrite the version
-specification of any project dependencies based on what is actually available on-disk.
-This behavior can be avoided by having the exact version already present at build time,
-such as by building it in a previous part with the Maven Use plugin.
+With the ``self-contained`` attribute, Maven Use may rewrite the version specification
+of project dependencies based on what is locally available. This can be avoided by
+provisioning the specified version prior to build time — for example, by building it
+with the Maven Use plugin in an earlier part.
 
 .. _maven_use_self-contained_end:
 
@@ -34,12 +33,12 @@ Dependencies
 ------------
 
 The Maven plugin needs the ``mvn`` executable to build Maven projects but does not
-provision it by itself, to allow flexibility in the choice of compiler version.
+provision it by itself, to allow flexibility in the choice of version.
 
 To provide ``mvn``, one can either specify the ``maven`` Ubuntu package as a
-``build-package``, or define a ``maven-deps`` part. In the case of the latter, all
-parts using Maven should declare that they come after the ``maven-deps`` part. In this
-case, the plugin will assume that this new part will stage the ``maven`` executable to
+``build-package`` or define a ``maven-deps`` part. In the latter case, all
+parts using Maven should declare that they come after the ``maven-deps`` part. The
+plugin will then assume that the ``maven-deps`` part staged the ``mvn`` executable to
 be used in the build step. This can be useful, for example, in cases where a specific,
 unreleased version of Maven is desired but unavailable as a snap or Ubuntu package.
 
@@ -50,12 +49,12 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Create a Maven settings file that configures proxy settings, points to the local
-  Maven repository created by Craft Parts, and optionally disables network connections
-  when using the ``self-contained`` build attribute.
+* Creates a Maven settings file that configures proxy settings, points to the local
+  Maven repository created by Craft Parts, and, if the ``self-contained`` build
+  attribute is declared, disables network connections.
 * Updates the :file:`pom.xml` file for project from the ``source`` key to tell Maven to
   deploy the final artifact to the local repository.
-* Call ``maven deploy`` to build and deploy the project to the local repository.
+* Calls ``maven deploy`` to build and deploy the project to the local repository.
 
 Examples
 --------
