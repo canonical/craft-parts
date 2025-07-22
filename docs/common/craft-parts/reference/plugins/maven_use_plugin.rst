@@ -52,8 +52,8 @@ During the build step the plugin performs the following actions:
 * Creates a Maven settings file that configures proxy settings, points to the local
   Maven repository created by Craft Parts, and, if the ``self-contained`` build
   attribute is declared, disables network connections.
-* Updates any :file:`pom.xml` files for project from the ``source`` key to tell Maven
-  to deploy the final artifacts to the local repository.
+* Updates any of the project's :file:`pom.xml` files to deploy the final artifacts to
+  the local repository.
 * Calls ``maven deploy`` to build and deploy the project to the local repository.
 
 Examples
