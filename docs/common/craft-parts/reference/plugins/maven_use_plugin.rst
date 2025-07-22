@@ -33,7 +33,7 @@ Dependencies
 ------------
 
 The Maven plugin needs the ``mvn`` executable to build Maven projects but does not
-provision it by itself, to allow flexibility in the choice of version.
+provision it to allow flexibility in the choice of version.
 
 To provide ``mvn``, one can either specify the ``maven`` Ubuntu package as a
 ``build-package`` or define a ``maven-deps`` part. In the latter case, all
