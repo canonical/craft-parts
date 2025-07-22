@@ -16,9 +16,9 @@ This plugin has no unique keys.
 Attributes
 ----------
 
-This plugin supports the ``self-contained`` build attribute. By declaring this
-attribute on all parts using the Maven or Maven Use plugin, Maven will only use
-locally-available projects as dependencies, creating an offline build of that artifact.
+This plugin supports the ``self-contained`` build attribute. When declared on all parts
+using the Maven or Maven Use plugin, this attribute restricts Maven builds to the local
+build environment by sourcing their dependencies locally.
 
 With the ``self-contained`` attribute, Maven Use may rewrite the version specification
 of project dependencies based on what is locally available. This can be avoided by
@@ -52,8 +52,8 @@ During the build step the plugin performs the following actions:
 * Creates a Maven settings file that configures proxy settings, points to the local
   Maven repository created by Craft Parts, and, if the ``self-contained`` build
   attribute is declared, disables network connections.
-* Updates the :file:`pom.xml` file for project from the ``source`` key to tell Maven to
-  deploy the final artifact to the local repository.
+* Updates any :file:`pom.xml` files for project from the ``source`` key to tell Maven
+  to deploy the final artifacts to the local repository.
 * Calls ``maven deploy`` to build and deploy the project to the local repository.
 
 Examples
