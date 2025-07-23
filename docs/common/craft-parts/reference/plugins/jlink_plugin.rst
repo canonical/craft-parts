@@ -19,7 +19,7 @@ jlink-jars
 List of paths to your application's JAR files. If not specified, the plugin will find
 all JAR files in the staging area.
 
-jlink-add-modules
+jlink-extra-modules
 ~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 

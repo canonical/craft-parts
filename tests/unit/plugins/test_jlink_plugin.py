@@ -56,7 +56,7 @@ def test_jlink_plugin_jar_files(part_info):
 def test_jlink_plugin_add_modules(part_info):
     """Validate setting of jlink version."""
     properties = JLinkPlugin.properties_class.unmarshal(
-        {"source": ".", "jlink-add-modules": ["jdk.crypto.ec", "jdk.desktop"]}
+        {"source": ".", "jlink-extra-modules": ["jdk.crypto.ec", "jdk.desktop"]}
     )
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 

@@ -98,7 +98,7 @@ def test_jlink_plugin_add_modules(new_dir, partitions):
                 plugin: jlink
                 source: .
                 jlink-jars: ["test.jar"]
-                jlink-add-modules: ["jdk.crypto.ec", "java.sql"]
+                jlink-extra-modules: ["jdk.crypto.ec", "java.sql"]
                 after: ["stage-jar"]
             stage-jar:
                 plugin: dump

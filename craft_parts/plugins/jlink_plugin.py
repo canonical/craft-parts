@@ -30,7 +30,7 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["jlink"] = "jlink"
     jlink_jars: list[str] = []
-    jlink_add_modules: list[str] = []
+    jlink_extra_modules: list[str] = []
 
 
 class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):
@@ -74,7 +74,7 @@ class JLinkPlugin(Plugin):
     def _get_extra_module_list(self) -> str:
         """Return additional modules."""
         options = cast(JLinkPluginProperties, self._options)
-        return ",".join([x.strip() for x in options.jlink_add_modules])
+        return ",".join([x.strip() for x in options.jlink_extra_modules])
 
     @override
     def get_build_packages(self) -> set[str]:
