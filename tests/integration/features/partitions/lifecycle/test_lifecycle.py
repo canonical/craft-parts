@@ -17,6 +17,7 @@
 # Allow redefinition in order to include parent tests below.
 # mypy: disable-error-code="no-redef"
 
+import os
 import textwrap
 from itertools import chain
 from pathlib import Path
@@ -375,4 +376,4 @@ def test_partition_symlinks_default_partition(new_dir):
     with lifecycle.action_executor() as ctx:
         ctx.execute(actions)
 
-    assert sorted(next(Path("partitions").walk())[1]) == ["binaries", "docs"]
+    assert sorted(next(os.walk(Path("partitions")))[1]) == ["binaries", "docs"]
