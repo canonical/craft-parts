@@ -165,7 +165,7 @@ class PartSpec(BaseModel):
     During the pull step, the part fetches these submodules.
 
     Equivalent to the
-    :literalref:`--recurse-submodules<https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-code--recurse-submodulesltpathspecgtcode>`
+    :literalref:`--recurse-submodules<https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---recurse-submodulespathspec>`
     parameter of ``git clone``.
 
     If unset, the part will fetch all of the repository's submodules.
