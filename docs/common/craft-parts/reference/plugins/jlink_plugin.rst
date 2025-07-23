@@ -13,14 +13,14 @@ Keys
 This plugin provides the following unique keys.
 
 jlink-jars
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
 List of paths to your application's JAR files. If not specified, the plugin will find
 all JAR files in the staging area.
 
 jlink-extra-modules
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 **Type:** list of strings
 
 Additional modules to include in the OpenJDK image.
