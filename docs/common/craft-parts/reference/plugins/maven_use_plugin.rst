@@ -3,8 +3,10 @@
 Maven Use plugin
 ================
 
-The Maven Use plugin allows a `Maven repository`_ to be set up for `Maven`_-based
-projects when used alongside the :ref:`craft_parts_maven_plugin`.
+The Maven Use plugin packages a `Maven`_-based project for use by other plugins using
+the Maven Use plugin or :ref:`craft_parts_maven_plugin`. It differs from the Maven
+plugin in that it deploys the artifact to an internal `Maven repository`_ instead of
+placing it in the final output.
 
 Keys
 ----
@@ -16,11 +18,12 @@ This plugin has no unique keys.
 Attributes
 ----------
 
-This plugin supports the ``self-contained`` build attribute. When declared on all parts
-using the Maven or Maven Use plugin, this attribute restricts Maven builds to the local
-build environment by sourcing their dependencies locally.
+This plugin supports the ``self-contained`` build attribute. Using this attribute will
+disable the default `Maven Central repository`_ for every dependency including plugins.
+All necessary dependencies will then need to be provided either as build packages or in
+earlier parts.
 
-With the ``self-contained`` attribute, Maven Use may rewrite the version specification
+When using this attribute, Maven Use may rewrite the version specification
 of project dependencies based on what is locally available. This can be avoided by
 provisioning the specified version prior to build time — for example, by building it
 with the Maven Use plugin in an earlier part.
@@ -59,10 +62,33 @@ During the build step the plugin performs the following actions:
 Examples
 --------
 
+The following snippet declares a part named ``java-dep`` using the ``maven-use`` plugin
+and a ``java-main`` part. The ``java-main`` part depends on the contents of
+``java-dep`` to build. Correct ordering is achieved with the use of the ``after`` key in
+the ``java-main`` part.
+
+.. code-block::
+
+    parts:
+      java-dep:
+        source: dep/
+        plugin: maven-use
+        build-packages:
+          - maven
+      java-main:
+        source: main/
+        plugin: maven
+        build-packages:
+          - maven
+        after:
+          - java-dep
+
 The following snippet declares a part named ``java-jacoco`` using the ``maven-use``
-plugin and a ``java-main`` part. The ``java-main`` part declares a dependency on the
-``jacoco-maven-plugin`` in its :file:`pom.xml` file. Correct ordering is achieved with
-the use of the ``after`` key in the ``java-main`` part.
+plugin and a ``java-main`` part. This build is done using the ``self-contained``
+build attribute to control what Maven downloads for the build. The ``java-main`` part
+declares a dependency on the ``jacoco-maven-plugin`` in its :file:`pom.xml` file. As
+with the previous example, correct ordering is achieved with the use of the ``after``
+key in the ``java-main`` part.
 
 .. code-block:: yaml
 
@@ -72,13 +98,18 @@ the use of the ``after`` key in the ``java-main`` part.
         plugin: maven-use
         build-packages:
           - maven
+        build-attributes:
+          - self-contained
       java-main:
         source: .
         plugin: maven
         build-packages:
           - maven
+        build-attributes:
+          - self-contained
         after:
           - java-jacoco
 
 .. _Maven repository: https://maven.apache.org/guides/introduction/introduction-to-repositories.html
 .. _Maven: https://maven.apache.org/index.html
+.. _Maven Central repository: https://central.sonatype.com/
