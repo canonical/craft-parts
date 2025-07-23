@@ -24,6 +24,7 @@ from craft_parts import errors
 from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
+from .bazel_plugin import BazelPlugin
 from .cargo_use_plugin import CargoUsePlugin
 from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
@@ -60,6 +61,7 @@ PLUGINS_BUILD_ATTRIBUTES = {"self-contained"}
 _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "ant": AntPlugin,
     "autotools": AutotoolsPlugin,
+    "bazel": BazelPlugin,
     "cargo-use": CargoUsePlugin,
     "cmake": CMakePlugin,
     "dotnet": DotnetPlugin,

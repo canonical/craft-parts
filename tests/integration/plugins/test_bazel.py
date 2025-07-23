@@ -24,7 +24,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 
-def test_bazel_plugin(new_dir, partitions):
+def test_bazel_plugin_with_bazel_deps(new_dir, partitions):
     # Set up a minimal Bazel project
     source_dir = Path(__file__).parent / "test_bazel"
     source_dir.mkdir(exist_ok=True)
@@ -49,14 +49,36 @@ def test_bazel_plugin(new_dir, partitions):
             """
         )
     )
+    (source_dir / "MODULE.bazel").write_text(
+        textwrap.dedent(
+            """
+            module(
+                name = "test_bazel_module",
+                version = "0.1.0",
+            )
+            """
+        )
+    )
 
     parts_yaml = textwrap.dedent(
         f"""
         parts:
+          bazel-deps:
+            plugin: nil
+            override-build: |
+              curl -L -o $CRAFT_PART_INSTALL/bazelisk https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+              chmod +x $CRAFT_PART_INSTALL/bazelisk
+              ln -sf $CRAFT_PART_INSTALL/bazelisk $CRAFT_PART_INSTALL/bazel
+            stage:
+              - bazel
+              - bazelisk
           foo:
             plugin: bazel
             source: {source_dir}
+            after: [bazel-deps]
             bazel-targets: [//:hello_bazel]
+            build-environment:
+              - PATH: $CRAFT_STAGE:$PATH
         """
     )
     parts = yaml.safe_load(parts_yaml)
