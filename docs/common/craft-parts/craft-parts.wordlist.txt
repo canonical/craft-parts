@@ -202,6 +202,7 @@ OverlayMountError
 OverlayPackageNotFound
 OverlayPermissionError
 OverlayPlatformError
+OverlayStageConflict
 OverlayState
 OverlayUnmountError
 Overlayfs
@@ -295,6 +296,7 @@ SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 SSL
+StageCandidate
 StageContents
 StageFilesConflict
 StagePackageNotFound

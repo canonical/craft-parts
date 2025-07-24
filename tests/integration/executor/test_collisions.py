@@ -13,13 +13,117 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import re
+import textwrap
 from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 from craft_parts import LifecycleManager, Step
-from craft_parts.errors import PartFilesConflict
+from craft_parts.errors import OverlayStageConflict, PartFilesConflict
+
+# Different cases of part declarations that must result in a conflict between files
+# being staged from the regular build, and from the overlay.
+OVERLAY_COLLISION_SCENARIOS = {
+    "simple": {
+        # Part A has a file in its install dir, part B overlays the same file
+        "yaml": textwrap.dedent("""
+            parts:
+              A:
+                plugin: nil
+                override-build: |
+                  echo "from part A" >> $CRAFT_PART_INSTALL/conflict.txt
+              B:
+                plugin: nil
+                overlay-script: |
+                  echo "from part B" >> $CRAFT_OVERLAY/conflict.txt
+              """),
+        "regular_part": "A",
+        "overlay_part": "B",
+    },
+    "simple after": {
+        # Part A has a file in its install dir, part B overlays the same file; part A
+        # comes explicitly *after* B.
+        "yaml": textwrap.dedent("""
+            parts:
+              A:
+                after: [B]
+                plugin: nil
+                override-build: |
+                  echo "from part A" >> $CRAFT_PART_INSTALL/conflict.txt
+              B:
+                plugin: nil
+                overlay-script: |
+                  echo "from part B" >> $CRAFT_OVERLAY/conflict.txt
+              """),
+        "regular_part": "A",
+        "overlay_part": "B",
+    },
+    "two overlay parts": {
+        # Part A has a file in its install dir, part B overlays the same file, but
+        # part C comes *after* B and also overlays the file (hiding the one in B)
+        "yaml": textwrap.dedent("""
+            parts:
+              A:
+                plugin: nil
+                override-build: |
+                  echo "from part A" >> $CRAFT_PART_INSTALL/conflict.txt
+              B:
+                plugin: nil
+                overlay-script: |
+                  echo "from part B" >> $CRAFT_OVERLAY/conflict.txt
+              C:
+                after: [B]
+                plugin: nil
+                overlay-script: |
+                  echo "from part C" >> $CRAFT_OVERLAY/conflict.txt
+              """),
+        "regular_part": "A",
+        "overlay_part": "C",
+    },
+    "three overlay parts": {
+        # Similar to "two overlay parts", but the part D that overwrites the conflicting
+        # file is "further away" from part B on the overlay stack
+        "yaml": textwrap.dedent("""
+            parts:
+              A:
+                plugin: nil
+                override-build: |
+                  echo "from part A" >> $CRAFT_PART_INSTALL/conflict.txt
+              B:
+                plugin: nil
+                overlay-script: |
+                  echo "from part B" >> $CRAFT_OVERLAY/conflict.txt
+              C:
+                after: [B]
+                plugin: nil
+                overlay-script: |
+                  echo "from part C" >> $CRAFT_OVERLAY/not-a-conflict.txt
+              D:
+                after: [C]
+                plugin: nil
+                overlay-script: |
+                  echo "from part D" >> $CRAFT_OVERLAY/conflict.txt
+              """),
+        "regular_part": "A",
+        "overlay_part": "D",
+    },
+    "same part": {
+        # Part A has a file in its install dir, and overlays the same file
+        "yaml": textwrap.dedent("""
+            parts:
+              A:
+                plugin: nil
+                override-build: |
+                  echo "from BUILD" >> $CRAFT_PART_INSTALL/conflict.txt
+                overlay-script: |
+                  echo "from OVERLAY" >> $CRAFT_OVERLAY/conflict.txt
+              """),
+        "regular_part": "A",
+        "overlay_part": "A",
+    },
+}
 
 
 class TestCollisions:
@@ -91,3 +195,42 @@ class TestCollisions:
                 "Parts 'part2' and 'part1' list the following files, but with different contents or permissions:\n"
                 "    file"
             )
+
+    @pytest.mark.usefixtures(
+        "mock_overlay_support_prerequisites", "add_overlay_feature"
+    )
+    @pytest.mark.parametrize("scenario", list(OVERLAY_COLLISION_SCENARIOS.keys()))
+    def test_overlay_conflicts(self, new_dir, partitions, scenario):
+        data = OVERLAY_COLLISION_SCENARIOS[scenario]
+        parts_yaml = data["yaml"]
+        regular_part = data["regular_part"]
+        overlay_part = data["overlay_part"]
+
+        base_dir = Path("base")
+        base_dir.mkdir()
+
+        parts = yaml.safe_load(parts_yaml)
+        lf = LifecycleManager(
+            parts,
+            application_name="test_layers",
+            cache_dir=new_dir,
+            base_layer_dir=base_dir,
+            base_layer_hash=b"hash",
+            partitions=partitions,
+        )
+
+        actions = lf.plan(Step.PRIME)
+
+        partition_message = ""
+        if partitions:
+            partition_message = " for the 'default' partition"
+
+        expected_message = re.escape(
+            f"Part {regular_part!r} and the overlay of part {overlay_part!r} "
+            f"list the following files{partition_message}, "
+            "but with different contents or permissions:"
+        )
+
+        with pytest.raises(OverlayStageConflict, match=expected_message):
+            with lf.action_executor() as ctx:
+                ctx.execute(actions)
