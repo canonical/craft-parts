@@ -4,7 +4,7 @@ Maven Use plugin
 ================
 
 The Maven Use plugin packages a `Maven`_-based project for use by other plugins using
-the Maven Use plugin or :ref:`craft_parts_maven_plugin`. It differs from the Maven
+the Maven Use plugin or the :ref:`craft_parts_maven_plugin`. It differs from the Maven
 plugin in that it deploys the artifact to an internal `Maven repository`_ instead of
 placing it in the final output.
 
