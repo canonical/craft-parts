@@ -37,6 +37,7 @@ from craft_parts.infos import (
 )
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 from tests.unit.common_plugins import StrictTestPlugin
 
@@ -158,20 +159,26 @@ class TestStepHandlerBuiltins:
         deb = _get_host_architecture()
         triplet = _DEB_TO_TRIPLET[deb]
         if partitions is not None:
-            partition_script_lines = [
-                f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
-                f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
+            default_partition = partitions[0]
+            partition_script_lines = []
+            if default_partition != DEFAULT_PARTITION:
+                partition_script_lines = [
+                    f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
+                    f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
+                ]
+
+            partition_script_lines += [
+                f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/stage"',
+                f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/prime"',
                 *itertools.chain.from_iterable(
                     zip(
                         [
                             f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/partitions/{p}/stage"'
-                            for p in partitions
-                            if p != "default"
+                            for p in partitions[1:]
                         ],
                         [
                             f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/partitions/{p}/prime"'
-                            for p in partitions
-                            if p != "default"
+                            for p in partitions[1:]
                         ],
                     )
                 ),

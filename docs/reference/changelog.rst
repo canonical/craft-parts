@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.19.0:
 
-2.19.0 (2025-MM-DD)
+2.19.0 (2025-07-24)
 -------------------
 
 New features:
@@ -28,6 +28,13 @@ New features:
   intended to help users during debugging. For example,
   ``/root/partitions/<partition-id>/stage`` in the container filesystem is linked
   to ``/root/stage``.
+
+Bug fixes:
+
+- The ``--recurse-submodules`` link in the ``source-submodules`` docstring
+  no longer produces a linkcheck error.
+- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition 
+  is aliased.
 
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
 
