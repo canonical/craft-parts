@@ -16,16 +16,6 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-.. _release-2.20.0:
-
-2.20.0 (2025-MM-DD)
-------------------
-
-Bug fixes:
-
-- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition 
-  is aliased.
-
 .. _release-2.19.0:
 
 2.19.0 (2025-MM-DD)
@@ -43,6 +33,8 @@ Bug fixes:
 
 - The ``--recurse-submodules`` link in the ``source-submodules`` docstring
   no longer produces a linkcheck error.
+- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition 
+  is aliased.
 
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
 
