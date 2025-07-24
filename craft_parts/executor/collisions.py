@@ -21,7 +21,9 @@ import os
 import pathlib
 from dataclasses import dataclass
 
-from craft_parts import errors, permissions
+from craft_parts.overlays import overlay_fs
+
+from craft_parts import errors, overlays, permissions
 from craft_parts.features import Features
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
@@ -72,6 +74,8 @@ class StageCandidate:
     source_dir: pathlib.Path
     # The permissions that apply to ``contents``
     permissions: list[Permissions]
+    # Whether this set comes from a part's overlay (used for error reporting)
+    is_overlay: bool
 
 
 def _get_candidate_from_install_dir(
@@ -97,11 +101,81 @@ def _get_candidate_from_install_dir(
         contents=part_contents,
         source_dir=part.part_install_dirs[partition],
         permissions=part.spec.permissions,
+        is_overlay=False,
     )
 
 
-def _check_for_stage_collisions_per_partition(
+def _get_overlay_layer_contents(source: pathlib.Path) -> tuple[set[str], set[str]]:
+    """Get the files and directories from a directory, relative to that directory."""
+    visible_files: set[pathlib.Path] = set()
+    visible_dirs: set[pathlib.Path] = set()
+    for root, directories, files in os.walk(source, topdown=True):
+        for file_name in files:
+            path = pathlib.Path(root, file_name)
+            # A whiteout file means that the file is to be removed from the stack, and
+            # so won't conflict with incoming files from install dirs.
+            if not overlay_fs.is_whiteout_file(path):
+                visible_files.add(path)
+
+        for directory in directories:
+            path = pathlib.Path(root, directory)
+            if path.is_symlink():
+                visible_files.add(path)
+            else:
+                visible_dirs.add(path)
+
+    return (
+        {str(f.relative_to(source)) for f in visible_files},
+        {str(d.relative_to(source)) for d in visible_dirs},
+    )
+
+
+def _get_candidates_from_overlay(
     part_list: list[Part], partition: str | None
+) -> list[StageCandidate]:
+    """Get candidate contents coming from the overlay.
+
+    If overlays are not enabled, this function returns an empty list; otherwise, the
+    function computes the contents that each overlay-enabled part in ``part_list`` wants
+    to stage from the overlay, taking into account the overlay visibility.
+    """
+    if not Features().enable_overlay:
+        return []
+
+    candidates = []
+    parts_with_overlay = [p for p in part_list if p.has_overlay]
+    for i, part in enumerate(parts_with_overlay):
+        part_layer_dir = part.part_layer_dirs[partition]
+
+        # Start with all files and directories from that part's layer...
+        files, dirs = _get_overlay_layer_contents(part_layer_dir)
+
+        # ... and progressively remove the items that are hidden by "higher" layers.
+        for upper_part in parts_with_overlay[i + 1 :]:
+            upper_layer_dir = upper_part.part_layer_dirs[partition]
+            visible_files, visible_dirs = overlays.visible_in_layer(
+                part_layer_dir,
+                upper_layer_dir,
+            )
+            files &= visible_files
+            dirs &= visible_dirs
+
+        candidates.append(
+            StageCandidate(
+                part_name=part.name,
+                contents=files | dirs,
+                permissions=[],
+                source_dir=part_layer_dir,
+                is_overlay=True,
+            )
+        )
+
+    return candidates
+
+
+def _check_for_stage_collisions_per_partition(
+    part_list: list[Part],
+    partition: str | None,
 ) -> None:
     """Verify whether parts have conflicting files for a stage directory in a partition.
 
@@ -113,14 +187,20 @@ def _check_for_stage_collisions_per_partition(
 
     :raises PartConflictError: If conflicts are found.
     """
-    all_candidates: list[StageCandidate] = []
+    # Start by describing the candidates from the overlay, since by definition they
+    # don't conflict with each other.
+    all_candidates: list[StageCandidate] = _get_candidates_from_overlay(
+        part_list, partition
+    )
 
     for part in part_list:
         candidate = _get_candidate_from_install_dir(part, partition)
         if candidate is None:
             continue
 
-        # Scan previous candidates for collisions.
+        # Scan previous candidates for collisions. Since ``all_candidates`` contains
+        # candidates from the overlay, this will also check for collisions between
+        # install dirs and layers.
         for other_candidate in all_candidates:
             # Our files that are also in a different part.
             common = candidate.contents & other_candidate.contents
@@ -142,6 +222,13 @@ def _check_for_stage_collisions_per_partition(
                     conflict_files.append(item)
 
             if conflict_files:
+                if other_candidate.is_overlay:
+                    raise errors.OverlayStageConflict(
+                        part_name=candidate.part_name,
+                        overlay_part_name=other_candidate.part_name,
+                        conflicting_files=conflict_files,
+                        partition=partition,
+                    )
                 raise errors.PartFilesConflict(
                     part_name=candidate.part_name,
                     other_part_name=other_candidate.part_name,

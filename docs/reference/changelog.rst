@@ -26,6 +26,13 @@ New features:
 - The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
   modules to OpenJDK image.
 
+Bug fixes:
+
+- Files and directories produced during the Build step are now correctly checked for
+  collisions with Overlay contents during staging. Conflicts can be resolved by using
+  the :ref:`stage <reference-part-properties-stage>` and
+  :ref:`overlay <reference-part-properties-overlay-files>` keys.
+
 For a complete list of commits, check out the `2.20.0`_ release on GitHub.
 
 .. _release-2.19.0:

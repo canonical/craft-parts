@@ -249,6 +249,60 @@ class TestCollisions:
         assert raised.value.part_name == "part2"
         assert raised.value.conflicting_files == ["2"]
 
+    @pytest.fixture
+    def overlay_part0(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part0",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "conflict.txt").write_text("regular contents")
+        return part
+
+    @pytest.fixture
+    def overlay_part1(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part1",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "conflict.txt").write_text("from part1 overlay")
+        return part
+
+    @pytest.fixture
+    def overlay_part2(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part2",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "conflict.txt").write_text("regular contents")
+        return part
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_collisions_between_install_and_overlay(
+        self, overlay_part0, overlay_part1, partitions
+    ):
+        """Files have different contents."""
+        with pytest.raises(errors.OverlayStageConflict):
+            check_for_stage_collisions([overlay_part0, overlay_part1], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_no_collisions_between_install_and_overlay(
+        self, overlay_part0, overlay_part2, partitions
+    ):
+        """Files have same contents."""
+        check_for_stage_collisions([overlay_part0, overlay_part2], partitions)
+
 
 class TestCollisionsPartitionError:
     def test_partitions_defined_but_not_enabled(self, tmpdir):
