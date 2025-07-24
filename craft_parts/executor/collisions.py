@@ -18,7 +18,8 @@
 
 import filecmp
 import os
-from typing import Any
+import pathlib
+from dataclasses import dataclass
 
 from craft_parts import errors, permissions
 from craft_parts.features import Features
@@ -59,6 +60,46 @@ def check_for_stage_collisions(
         _check_for_stage_collisions_per_partition(part_list, partition)
 
 
+@dataclass
+class StageCandidate:
+    """Representation of a set of files and directories that want to be staged."""
+
+    # Name of the part that produced these files and directories
+    part_name: str
+    # The actual files and directories, relative to ``source_dir``
+    contents: set[str]
+    # The directory that contains ``contents``
+    source_dir: pathlib.Path
+    # The permissions that apply to ``contents``
+    permissions: list[Permissions]
+
+
+def _get_candidate_from_install_dir(
+    part: Part, partition: str | None
+) -> StageCandidate | None:
+    """Create a StageCandidate from a part's install dir contents."""
+    stage_files = part.spec.stage_files
+    if not stage_files:
+        return None
+
+    stage_fileset = filesets.Fileset(stage_files, name="stage")
+    srcdir = str(part.part_install_dirs[partition])
+    part_files, part_directories = filesets.migratable_filesets(
+        stage_fileset,
+        srcdir,
+        part.default_partition,
+        partition,
+    )
+    part_contents = part_files | part_directories
+
+    return StageCandidate(
+        part_name=part.name,
+        contents=part_contents,
+        source_dir=part.part_install_dirs[partition],
+        permissions=part.spec.permissions,
+    )
+
+
 def _check_for_stage_collisions_per_partition(
     part_list: list[Part], partition: str | None
 ) -> None:
@@ -72,39 +113,29 @@ def _check_for_stage_collisions_per_partition(
 
     :raises PartConflictError: If conflicts are found.
     """
-    all_parts_files: dict[str, dict[str, Any]] = {}
-    for part in part_list:
-        stage_files = part.spec.stage_files
-        if not stage_files:
+    all_candidates: list[StageCandidate] = []
+
+    for part_ in part_list:
+        candidate = _get_candidate_from_install_dir(part_, partition)
+        if candidate is None:
             continue
 
-        # Gather our own files up.
-        stage_fileset = filesets.Fileset(stage_files, name="stage")
-        srcdir = str(part.part_install_dirs[partition])
-        part_files, part_directories = filesets.migratable_filesets(
-            stage_fileset,
-            srcdir,
-            part.default_partition,
-            partition,
-        )
-        part_contents = part_files | part_directories
-
         # Scan previous parts for collisions.
-        for other_part_name, other_part_files in all_parts_files.items():
+        for other_candidate in all_candidates:
             # Our files that are also in a different part.
-            common = part_contents & other_part_files["files"]
+            common = candidate.contents & other_candidate.contents
 
             conflict_files = []
             for file in common:
-                this = os.path.join(part.part_install_dirs[partition], file)
-                other = os.path.join(other_part_files["installdir"], file)
+                this = os.path.join(candidate.source_dir, file)
+                other = os.path.join(other_candidate.source_dir, file)
 
                 permissions_this = permissions.filter_permissions(
-                    file, part.spec.permissions
+                    file, candidate.permissions
                 )
 
                 permissions_other = permissions.filter_permissions(
-                    file, other_part_files["part"].spec.permissions
+                    file, other_candidate.permissions
                 )
 
                 if paths_collide(this, other, permissions_this, permissions_other):
@@ -112,18 +143,14 @@ def _check_for_stage_collisions_per_partition(
 
             if conflict_files:
                 raise errors.PartFilesConflict(
-                    part_name=part.name,
-                    other_part_name=other_part_name,
+                    part_name=candidate.part_name,
+                    other_part_name=other_candidate.part_name,
                     conflicting_files=conflict_files,
                     partition=partition,
                 )
 
         # And add our files to the list.
-        all_parts_files[part.name] = {
-            "files": part_contents,
-            "installdir": part.part_install_dirs[partition],
-            "part": part,
-        }
+        all_candidates.append(candidate)
 
 
 def paths_collide(
