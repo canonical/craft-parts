@@ -449,6 +449,38 @@ class PartFilesConflict(PartsError):
         super().__init__(brief=brief, details=details)
 
 
+class OverlayStageConflict(PartsError):
+    """A conflict between contents to be overlaid and to be staged from the build step."""
+
+    def __init__(
+        self,
+        *,
+        part_name: str,
+        overlay_part_name: str,
+        conflicting_files: list[str],
+        partition: str | None = None,
+    ) -> None:
+        self.part_name = part_name
+        self.overlay_part_name = overlay_part_name
+        self.conflicting_files = conflicting_files
+        self.partition = partition
+
+        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        file_paths = "\n".join(sorted(indented_conflicting_files))
+        partition_info = f" for the {partition!r} partition" if partition else ""
+        brief = (
+            "Failed to stage: parts list the same file "
+            "with different contents or permissions."
+        )
+        details = (
+            f"Part {part_name!r} and the overlay of part {overlay_part_name!r} list the following "
+            f"files{partition_info}, but with different contents or permissions:\n"
+            f"{file_paths}"
+        )
+
+        super().__init__(brief=brief, details=details)
+
+
 class StageFilesConflict(PartsError):
     """Files from a part conflict with files already being staged.
 
