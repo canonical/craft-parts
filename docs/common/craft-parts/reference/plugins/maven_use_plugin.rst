@@ -83,8 +83,8 @@ must be staged. This dependency is handled by declaring that ``java-main`` must 
           - java-dep
 
 The following snippet declares two parts: ``java-jacoco``, which uses the ``maven-use``
-and ``java-main``. To restrict access to the Maven Central repository, both parts
-declare the ``self-contained`` build attribute. The :file:`pom.xml` file of
+plugin, and ``java-main``. To restrict access to the Maven Central repository, both
+parts declare the ``self-contained`` build attribute. The :file:`pom.xml` file of
 ``java-main`` declares ``java-jacoco`` as a dependency, which is handled by declaring
 that ``java-main`` must build ``after`` the ``java-jacoco`` part.
 
