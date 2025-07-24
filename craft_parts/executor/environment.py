@@ -256,7 +256,7 @@ def _get_step_overlay_environment_for_partitions(
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in partitions:
-        # Create CRAFT_DEFAULT_* var for the default partition
+        # CRAFT_DEFAULT_* var for the default partition
         if is_default_partition(partitions, partition):
             environment[
                 f"CRAFT_{_translate_partition_env(DEFAULT_PARTITION)}_OVERLAY"
