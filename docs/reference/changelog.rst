@@ -29,6 +29,11 @@ New features:
   ``/root/partitions/<partition-id>/stage`` in the container filesystem is linked
   to ``/root/stage``.
 
+Bug fixes:
+
+- The ``--recurse-submodules`` link in the ``source-submodules`` docstring
+  no longer produces a linkcheck error.
+
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
 
 .. _release-2.18.0:

@@ -448,6 +448,7 @@ kwargs
 ldflags
 lifecycle
 lifecycles
+linkcheck
 linkers
 linters
 lto
