@@ -31,8 +31,8 @@ New features:
 
 Bug fixes:
 
-- Fix the URL to git ``--recurse-submodule`` option documentation to workaround a
-  linkcheck bug.
+- The ``--recurse-submodules`` link in the ``source-submodules`` docstring
+  no longer produces a linkcheck error.
 
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
 
