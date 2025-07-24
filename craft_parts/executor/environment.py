@@ -26,6 +26,7 @@ from craft_parts import errors
 from craft_parts.features import Features
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION, is_default_partition
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -215,6 +216,15 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in info.partitions:
+        # CRAFT_DEFAULT_* vars for the default partition
+        if info.is_default_partition(partition):
+            formatted_default = _translate_partition_env(DEFAULT_PARTITION)
+            environment[f"CRAFT_{formatted_default}_STAGE"] = str(
+                info.get_stage_dir(partition=partition)
+            )
+            environment[f"CRAFT_{formatted_default}_PRIME"] = str(
+                info.get_prime_dir(partition=partition)
+            )
         formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_STAGE"] = str(
@@ -246,6 +256,12 @@ def _get_step_overlay_environment_for_partitions(
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in partitions:
+        # Create CRAFT_DEFAULT_* var for the default partition
+        if is_default_partition(partitions, partition):
+            environment[
+                f"CRAFT_{_translate_partition_env(DEFAULT_PARTITION)}_OVERLAY"
+            ] = str(part.part_layer_dirs[partition])
+
         formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_OVERLAY"] = str(
