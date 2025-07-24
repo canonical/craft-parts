@@ -243,3 +243,15 @@ def get_partition_dir_map(
         }
 
     return {None: base_dir / suffix}
+
+
+def is_default_partition(partitions: list[str] | None, partition: str | None) -> bool:
+    """Check if given partition is the default one in the given partition list."""
+    if partition == DEFAULT_PARTITION:
+        return True
+    if partitions is None and partition is None:
+        return True
+    if partitions is not None:
+        return partition == partitions[0]
+
+    return False
