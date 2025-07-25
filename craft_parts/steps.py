@@ -97,8 +97,8 @@ def dependency_prerequisite_step(step: Step) -> Step | None:
     return step
 
 
-def pop_dependency_prerequisite_step(step: Step) -> Step | None:
-    """Obtain the step a given step may depend on if depending on an overlay poppulating part.
+def ovl_bootstrap_dependency_prerequisite_step(step: Step) -> Step | None:
+    """Obtain the step a given step may depend on when depending on a part bootstraping the overlay.
 
     :returns: The prerequisite step.
     """
