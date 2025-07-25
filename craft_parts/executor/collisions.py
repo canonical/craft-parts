@@ -115,31 +115,31 @@ def _check_for_stage_collisions_per_partition(
     """
     all_candidates: list[StageCandidate] = []
 
-    for part_ in part_list:
-        candidate = _get_candidate_from_install_dir(part_, partition)
+    for part in part_list:
+        candidate = _get_candidate_from_install_dir(part, partition)
         if candidate is None:
             continue
 
-        # Scan previous parts for collisions.
+        # Scan previous candidates for collisions.
         for other_candidate in all_candidates:
             # Our files that are also in a different part.
             common = candidate.contents & other_candidate.contents
 
             conflict_files = []
-            for file in common:
-                this = os.path.join(candidate.source_dir, file)
-                other = os.path.join(other_candidate.source_dir, file)
+            for item in common:
+                this = os.path.join(candidate.source_dir, item)
+                other = os.path.join(other_candidate.source_dir, item)
 
                 permissions_this = permissions.filter_permissions(
-                    file, candidate.permissions
+                    item, candidate.permissions
                 )
 
                 permissions_other = permissions.filter_permissions(
-                    file, other_candidate.permissions
+                    item, other_candidate.permissions
                 )
 
                 if paths_collide(this, other, permissions_this, permissions_other):
-                    conflict_files.append(file)
+                    conflict_files.append(item)
 
             if conflict_files:
                 raise errors.PartFilesConflict(
@@ -149,7 +149,7 @@ def _check_for_stage_collisions_per_partition(
                     partition=partition,
                 )
 
-        # And add our files to the list.
+        # And add our candidate to the list.
         all_candidates.append(candidate)
 
 
