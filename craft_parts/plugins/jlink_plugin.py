@@ -30,6 +30,7 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["jlink"] = "jlink"
     jlink_jars: list[str] = []
+    jlink_extra_modules: list[str] = []
 
 
 class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):
@@ -69,6 +70,11 @@ class JLinkPlugin(Plugin):
             return f"PROCESS_JARS={jars}"
 
         return 'PROCESS_JARS=$(find ${CRAFT_STAGE} -type f -name "*.jar")'
+
+    def _get_extra_module_list(self) -> str:
+        """Return additional modules."""
+        options = cast(JLinkPluginProperties, self._options)
+        return ",".join([x.strip() for x in options.jlink_extra_modules])
 
     @override
     def get_build_packages(self) -> set[str]:
@@ -146,6 +152,9 @@ class JLinkPlugin(Plugin):
                 fi
             """
         )
+        extra_modules = self._get_extra_module_list()
+        if len(extra_modules) > 0:
+            commands.append(f"deps=${{deps}},{extra_modules}")
         commands.append("INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}")
 
         commands.append(
