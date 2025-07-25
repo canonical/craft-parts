@@ -24,7 +24,9 @@ from craft_parts import errors, features
 
 # Allow alphanumeric characters, hyphens and slashes, not starting or ending
 # with a hyphen or a slash
-VALID_PARTITION_REGEX = re.compile(r"(?!-|/)[a-z0-9-/]+(?<!-|/)", re.ASCII)
+VALID_PARTITION_REGEX = re.compile(
+    r"(?!-|/)(?P<partition_name>[a-z0-9-/]+)(?<!-|/)", re.ASCII
+)
 VALID_NAMESPACED_PARTITION_REGEX = re.compile(
     r"[a-z0-9]+/" + VALID_PARTITION_REGEX.pattern, re.ASCII
 )
@@ -35,6 +37,7 @@ PARTITION_INVALID_MSG = (
 )
 
 DEFAULT_PARTITION = "default"
+OVERLAY_IDENTIFIER = "overlay"
 
 
 def validate_partition_names(partitions: Sequence[str] | None) -> None:
@@ -88,7 +91,10 @@ def _is_valid_partition_name(partition: str) -> bool:
 
     :returns: true if the namespaced partition is valid
     """
-    return bool(re.fullmatch(VALID_PARTITION_REGEX, partition))
+    m = re.fullmatch(VALID_PARTITION_REGEX, partition)
+    if not m:
+        return False
+    return m.group("partition_name") != OVERLAY_IDENTIFIER
 
 
 def _is_valid_namespaced_partition_name(partition: str) -> bool:

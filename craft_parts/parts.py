@@ -40,7 +40,11 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION, get_partition_dir_map
+from craft_parts.utils.partition_utils import (
+    DEFAULT_PARTITION,
+    OVERLAY_IDENTIFIER,
+    get_partition_dir_map,
+)
 from craft_parts.utils.path_utils import get_partition_and_path
 
 
@@ -915,7 +919,8 @@ class Part:
         """Check if partitions are properly used in a fileset.
 
         If a filepath begins with a parentheses, then the text inside the parentheses
-        must be a valid partition. This is an error.
+        must be a valid partition. This is an error except if the text reference the
+        overlay.
 
         Some filesets must specify a path to avoid ambiguity. For example, the
         following is not allowed:
@@ -950,7 +955,10 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) not in self._partitions:
+                if (
+                    str(partition) not in self._partitions
+                    and str(partition) != OVERLAY_IDENTIFIER
+                ):
                     error_list.append(
                         f"    unknown partition {partition!r} in {filepath!r}"
                     )
@@ -958,7 +966,10 @@ class Part:
                 match = re.match(possible_partition_pattern, filepath)
                 if match:
                     partition = match.group("possible_partition")
-                    if partition in self._partitions:
+                    if (
+                        partition in self._partitions
+                        and str(partition) != OVERLAY_IDENTIFIER
+                    ):
                         warning_list.append(
                             f"    misused partition {partition!r} in {filepath!r}"
                         )

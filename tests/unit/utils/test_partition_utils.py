@@ -79,6 +79,7 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (["default", "-"], "Partition '-' is invalid."),
         (["default", "woop-"], "Partition 'woop-' is invalid."),
         (["default", "woop."], "Partition 'woop.' is invalid."),
+        (["default", "overlay"], "Partition 'overlay' is invalid."),
         (["default", "/"], "Namespaced partition '/' is invalid."),
         (["default", "test/!!!"], "Namespaced partition 'test/!!!' is invalid."),
         (["default", "test/-"], "Namespaced partition 'test/-' is invalid."),
