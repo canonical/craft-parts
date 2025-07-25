@@ -1084,7 +1084,7 @@ def part_dependencies(
 def part_dependencies_overlay_bootstrap(
     part: Part, *, part_list: list[Part]
 ) -> set[Part]:
-    """Return a set of all the parts upon which the named part depends and bootstraping the overlay.
+    """Return a set of all the parts upon which the named part depends and bootstrapping the overlay.
 
     :param part: The dependent part.
 

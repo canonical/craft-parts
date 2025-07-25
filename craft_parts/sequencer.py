@@ -216,7 +216,7 @@ class Sequencer:
         return None
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
-        # Process dependencies bootstraping the overlay
+        # Process dependencies bootstrapping the overlay
         prerequisite_step_bootstrap_ovl = (
             steps.ovl_bootstrap_dependency_prerequisite_step(step)
         )
