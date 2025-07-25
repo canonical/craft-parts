@@ -295,6 +295,7 @@ SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 SSL
+StageCandidate
 StageContents
 StageFilesConflict
 StagePackageNotFound
