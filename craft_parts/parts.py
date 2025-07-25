@@ -848,6 +848,14 @@ class Part:
             return self._partitions[0]
         return DEFAULT_PARTITION
 
+    @property
+    def is_overlay_populating(self) -> bool:
+        """Placeholder property indicating if the part populate the overlay.
+
+        Must be replaced with a proper heuristic checking the `organize` entries.
+        """
+        return "populate-overlay" in self.name
+
     def _check_partition_feature(self) -> None:
         """Check if the partitions feature is properly used.
 
@@ -1071,6 +1079,22 @@ def part_dependencies(
             )
 
     return dependencies
+
+
+def part_dependencies_overlay_populating(
+    part: Part, *, part_list: list[Part]
+) -> set[Part]:
+    """Return a set of all the parts upon which the named part depends and populating the overlay.
+
+    :param part: The dependent part.
+
+    :returns: The set of parts the given part depends on.
+    """
+    dependency_names = set(part.dependencies)
+
+    return {
+        p for p in part_list if p.name in dependency_names and p.is_overlay_populating
+    }
 
 
 def has_overlay_visibility(

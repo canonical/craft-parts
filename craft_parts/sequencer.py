@@ -216,11 +216,35 @@ class Sequencer:
         return None
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
+        pop_prerequisite_step = steps.pop_dependency_prerequisite_step(step)
+        logger.debug(f"############# pop_prerequisite_step: {pop_prerequisite_step}")
+        if pop_prerequisite_step:
+            all_overlay_populating_deps = parts.part_dependencies_overlay_populating(
+                part, part_list=self._part_list
+            )
+            logger.debug(
+                f"############# all_overlay_populating_deps: {all_overlay_populating_deps}"
+            )
+
+            pop_deps = {
+                p
+                for p in all_overlay_populating_deps
+                if self._sm.should_step_run(p, pop_prerequisite_step)
+            }
+            for dep in pop_deps:
+                self._add_all_actions(
+                    target_step=pop_prerequisite_step,
+                    part_names=[dep.name],
+                    reason=f"required to {_step_verb[step]} {part.name!r}",
+                )
+
         prerequisite_step = steps.dependency_prerequisite_step(step)
         if not prerequisite_step:
             return
+        logger.debug(f"prerequisite_step: {prerequisite_step}")
 
         all_deps = parts.part_dependencies(part, part_list=self._part_list)
+        logger.debug(f"############# all_deps: {all_deps}")
         deps = {p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)}
         for dep in deps:
             self._add_all_actions(
@@ -237,7 +261,9 @@ class Sequencer:
         reason: str | None = None,
         rerun: bool = False,
     ) -> None:
+        logger.debug(f"############# _process_dependencies for: {part}")
         self._process_dependencies(part, step)
+        logger.debug(f"############# procesed dependencies for: {part}")
 
         if step == Step.OVERLAY:
             # Make sure all previous layers are in place before we add a new

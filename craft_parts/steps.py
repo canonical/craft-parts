@@ -95,3 +95,17 @@ def dependency_prerequisite_step(step: Step) -> Step | None:
         return Step.STAGE
 
     return step
+
+
+def pop_dependency_prerequisite_step(step: Step) -> Step | None:
+    """Obtain the step a given step may depend on if depending on an overlay poppulating part.
+
+    :returns: The prerequisite step.
+    """
+    if step < Step.OVERLAY:
+        return None
+
+    if step <= Step.BUILD:
+        return Step.BUILD
+
+    return step
