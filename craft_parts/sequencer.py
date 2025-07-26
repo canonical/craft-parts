@@ -216,11 +216,29 @@ class Sequencer:
         return None
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
+        # Process dependencies bootstrapping the overlay
+        prerequisite_step_bootstrap_ovl = (
+            steps.ovl_bootstrap_dependency_prerequisite_step(step)
+        )
+        if prerequisite_step_bootstrap_ovl:
+            all_overlay_init_deps = parts.part_dependencies_overlay_bootstrap(
+                part, part_list=self._part_list
+            )
+            self._add_deps_actions(
+                part, step, all_overlay_init_deps, prerequisite_step_bootstrap_ovl
+            )
+
+        # Process regular dependencies
         prerequisite_step = steps.dependency_prerequisite_step(step)
         if not prerequisite_step:
             return
 
         all_deps = parts.part_dependencies(part, part_list=self._part_list)
+        self._add_deps_actions(part, step, all_deps, prerequisite_step)
+
+    def _add_deps_actions(
+        self, part: Part, step: Step, all_deps: set[Part], prerequisite_step: Step
+    ) -> None:
         deps = {p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)}
         for dep in deps:
             self._add_all_actions(
