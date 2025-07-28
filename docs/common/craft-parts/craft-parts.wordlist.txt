@@ -13,6 +13,7 @@ AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
 AptCache
+AreaPathPair
 Autoconf
 Automake
 Autotools
@@ -224,7 +225,6 @@ PartSpec
 PartSpecificationError
 PartitionError
 PartitionNotFound
-PartitionPathPair
 PartitionUsageError
 PartitionUsageWarning
 PartsError
