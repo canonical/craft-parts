@@ -175,6 +175,7 @@ def test_get_area_compatible_filepath_non_partition(path, path_class):
     assert actual_inner_path == path_class(path)
     assert isinstance(actual_inner_path, path_class)
 
+
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 @pytest.mark.usefixtures("enable_overlay_feature")
 def test_get_area_compatible_filepath_enabled_overlay(path_class):
