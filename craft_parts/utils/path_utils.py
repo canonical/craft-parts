@@ -49,7 +49,7 @@ def get_area_and_path(path: FlexiblePath, default_partition: str) -> AreaPathPai
 
     If the path begins with an area, that is used. Otherwise, the default
     partition is used.
-    If partitions or overlay feature is not enabled, the area will be None.
+    If partitions and overlay feature are not enabled, the area will be None.
     An area can either be a partition or the overlay.
 
     :param path: The filepath to parse.

@@ -20,6 +20,7 @@ import os
 from glob import iglob
 
 from craft_parts import errors, features
+from craft_parts.features import Features
 from craft_parts.utils import path_utils
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
@@ -343,7 +344,7 @@ def _normalize_entry(entry: str, default_partition: str) -> str:
         split_file[1], default_partition
     )
 
-    if partition:
+    if Features().enable_partitions:
         return f"{split_file[0]}({partition})/{inner_path}"
 
     return entry
