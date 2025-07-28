@@ -16,6 +16,18 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release 2.20.0:
+
+2.20.0 (2025-)
+--------------
+
+New features:
+
+- The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
+  modules to OpenJDK image.
+
+For a complete list of commits, check out the `2.20.0`_ release on GitHub.
+
 .. _release-2.19.0:
 
 2.19.0 (2025-07-24)
@@ -48,8 +60,6 @@ New features:
 - Add the ``get_prime_state_timestamp`` method to the
   :doc:`lifecycle manager </reference/lifecycle_manager>`. This method provides
   the timestamp at which the prime directory was last modified.
-- The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
-  modules to OpenJDK image.
 
 Bug fixes:
 
@@ -1311,6 +1321,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.20.0: https://github.com/canonical/craft-parts/releases/tag/2.20.0
 .. _2.19.0: https://github.com/canonical/craft-parts/releases/tag/2.19.0
 .. _2.18.0: https://github.com/canonical/craft-parts/releases/tag/2.18.0
 .. _2.17.0: https://github.com/canonical/craft-parts/releases/tag/2.17.0
