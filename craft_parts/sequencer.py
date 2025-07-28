@@ -65,8 +65,13 @@ class Sequencer:
 
         self._overlay_viewers: set[Part] = set()
         for part in part_list:
-            if parts.has_overlay_visibility(
-                part, viewers=self._overlay_viewers, part_list=part_list
+            if (
+                parts.has_overlay_visibility(
+                    part, viewers=self._overlay_viewers, part_list=part_list
+                )
+                and not part.bootstrap_overlay
+                # Exclude the part bootstraping the overlay to avoid infinite
+                # recursion.
             ):
                 self._overlay_viewers.add(part)
 

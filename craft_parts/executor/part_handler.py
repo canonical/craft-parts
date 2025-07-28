@@ -46,7 +46,7 @@ from craft_parts.state_manager import (
 from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION, OVERLAY_IDENTIFIER
 
 from . import filesets, migration
 from .environment import generate_step_environment
@@ -457,6 +457,32 @@ class PartHandler:
                     stdout=stdout,
                     stderr=stderr,
                 )
+
+                # Organize the installed files as requested. We do this in the build step for
+                # two reasons:
+                #
+                #   1. So cleaning and re-running the stage step works even if `organize` is
+                #      used
+                #   2. So collision detection takes organization into account, i.e. we can use
+                #      organization to get around file collisions between parts when staging.
+                #
+                # If `update` is true, we give permission to overwrite files that already exist.
+                # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
+                # files brought in from stage-packages, but in the case of updating build, we
+                # want the part to have the ability to organize over the files it organized last
+                # time around. We can be confident that this won't overwrite anything else,
+                # because to do so would require changing the `organize` keyword, which will
+                # make the build step dirty and require a clean instead of an update.
+
+                dst_map = cast(dict, self._part.part_install_dirs).copy()
+                dst_map[OVERLAY_IDENTIFIER] = self._part.overlay_mount_dir
+                organize_files(
+                    part_name=self._part.name,
+                    file_map=self._part.spec.organize_files,
+                    dst_dir_map=dst_map,
+                    overwrite=update,
+                    default_partition=step_info.default_partition,
+                )
         else:
             self._run_step(
                 step_info=step_info,
@@ -465,29 +491,13 @@ class PartHandler:
                 stdout=stdout,
                 stderr=stderr,
             )
-
-        # Organize the installed files as requested. We do this in the build step for
-        # two reasons:
-        #
-        #   1. So cleaning and re-running the stage step works even if `organize` is
-        #      used
-        #   2. So collision detection takes organization into account, i.e. we can use
-        #      organization to get around file collisions between parts when staging.
-        #
-        # If `update` is true, we give permission to overwrite files that already exist.
-        # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
-        # files brought in from stage-packages, but in the case of updating build, we
-        # want the part to have the ability to organize over the files it organized last
-        # time around. We can be confident that this won't overwrite anything else,
-        # because to do so would require changing the `organize` keyword, which will
-        # make the build step dirty and require a clean instead of an update.
-        organize_files(
-            part_name=self._part.name,
-            file_map=self._part.spec.organize_files,
-            install_dir_map=self._part.part_install_dirs,
-            overwrite=update,
-            default_partition=step_info.default_partition,
-        )
+            organize_files(
+                part_name=self._part.name,
+                file_map=self._part.spec.organize_files,
+                dst_dir_map=self._part.part_install_dirs,
+                overwrite=update,
+                default_partition=step_info.default_partition,
+            )
 
         assets = {
             "build-packages": self.build_packages,
@@ -500,6 +510,7 @@ class PartHandler:
         # to ensure proper build step invalidation of parts that can see the overlay
         # filesystem if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
+        overlay_hash.save(self._part)
 
         return states.BuildState(
             part_properties=self._part_properties,

@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION, OVERLAY_IDENTIFIER
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -43,7 +43,7 @@ def organize_files(
     *,
     part_name: str,
     file_map: dict[str, str],
-    install_dir_map: Mapping[str | None, Path],
+    dst_dir_map: Mapping[str | None, Path],
     overwrite: bool,
     default_partition: str,
 ) -> None:
@@ -66,45 +66,47 @@ def organize_files(
         the default partition.
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
-        src_partition, src_inner_path = path_utils.get_area_and_path(
-            key, default_partition
-        )
+        src_area, src_inner_path = path_utils.get_area_and_path(key, default_partition)
 
-        if src_partition and src_partition not in [
+        if src_area and src_area not in [
             default_partition,
             DEFAULT_PARTITION,
         ]:
+            area_string = f"{src_area!r} partition"
+            if src_area == OVERLAY_IDENTIFIER:
+                area_string = "overlay"
             raise errors.FileOrganizeError(
                 part_name=part_name,
                 message=(
-                    f"Cannot organize files from {src_partition!r} partition. "
+                    f"Cannot organize files from {area_string}. "
                     f"Files can only be organized from the {default_partition!r} partition"
                 ),
             )
+
         # Replace default partition default name with alias name to allow
         # using (default) in paths even with aliased default partition
-        if src_partition == DEFAULT_PARTITION:
-            src_partition = default_partition
+        if src_area == DEFAULT_PARTITION:
+            src_area = default_partition
 
-        src = os.path.join(install_dir_map[src_partition], src_inner_path)
+        src = os.path.join(dst_dir_map[src_area], src_inner_path)
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        dst_partition, dst_inner_path = path_utils.get_area_and_path(
+        dst_area, dst_inner_path = path_utils.get_area_and_path(
             file_map[key].lstrip("/"),
             default_partition,
         )
 
         # Replace default partition default name with alias name to allow
         # using (default) in paths even with aliased default partition
-        if dst_partition == DEFAULT_PARTITION:
-            dst_partition = default_partition
+        if dst_area == DEFAULT_PARTITION:
+            dst_area = default_partition
 
-        dst = os.path.join(install_dir_map[dst_partition], dst_inner_path)
+        dst = os.path.join(dst_dir_map[dst_area], dst_inner_path)
 
         # prefix the partition to the log-friendly version of the destination
-        if dst_partition and dst_partition != default_partition:
-            dst_string = f"({dst_partition})/{dst_inner_path}"
+        if dst_area and dst_area != default_partition:
+            dst_string = f"({dst_area})/{dst_inner_path}"
         else:
             dst_string = str(dst_inner_path)
 

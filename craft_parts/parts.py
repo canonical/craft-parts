@@ -779,6 +779,11 @@ class Part:
         return self.dirs.overlay_dir
 
     @property
+    def overlay_mount_dir(self) -> Path:
+        """Return the overlay mount directory."""
+        return self.dirs.overlay_mount_dir
+
+    @property
     def overlay_dirs(self) -> Mapping[str | None, Path]:
         """A mapping of partition name to partition overlay directory.
 
@@ -1120,7 +1125,7 @@ def has_overlay_visibility(
 
     :return: Whether the part has overlay visibility.
     """
-    if (viewers and part in viewers) or part.has_overlay:
+    if (viewers and part in viewers) or part.has_overlay or part.bootstrap_overlay:
         return True
 
     if not part.spec.after:
