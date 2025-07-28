@@ -70,7 +70,7 @@ class Sequencer:
                     part, viewers=self._overlay_viewers, part_list=part_list
                 )
                 and not part.bootstrap_overlay
-                # Exclude the part bootstraping the overlay to avoid infinite
+                # Exclude the part bootstrapping the overlay to avoid infinite
                 # recursion.
             ):
                 self._overlay_viewers.add(part)
