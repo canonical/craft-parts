@@ -20,9 +20,9 @@ from pathlib import Path, PurePosixPath
 import pytest
 from craft_parts.errors import FeatureError
 from craft_parts.utils.path_utils import (
-    _has_partition,
-    _split_partition_and_inner_path,
-    get_partition_and_path,
+    _has_area,
+    _split_area_and_inner_path,
+    get_area_and_path,
 )
 
 PATH_CLASSES = [Path, PurePosixPath, str]
@@ -133,20 +133,20 @@ assert len(PARTITION_PATHS) == len(PARTITION_EXPECTED_INNER_PATHS), (
         ("(not/a-)partition", False),
         ("(not/-a)partition", False),
         ("(nota/-)partition", False),
+        # overlay area
+        ("(overlay)/", True),
     ],
 )
-def test_has_partition(full_path, expected):
+def test_has_area(full_path, expected):
     """Test that the partition regex has the expected results."""
-    assert _has_partition(full_path) == expected
+    assert _has_area(full_path) == expected
 
 
 @pytest.mark.parametrize("path", NON_PARTITION_PATHS + PARTITION_PATHS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class):
+def test_get_area_compatible_filepath_disabled_passthrough(path, path_class):
     """Test that when partitions are disabled this is a no-op."""
-    actual_partition, actual_inner_path = get_partition_and_path(
-        path_class(path), "default"
-    )
+    actual_partition, actual_inner_path = get_area_and_path(path_class(path), "default")
 
     assert actual_partition is None
     assert actual_inner_path == path_class(path)
@@ -156,9 +156,9 @@ def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class
 @pytest.mark.parametrize("path", ["*"])
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 @pytest.mark.usefixtures("enable_partitions_feature")
-def test_get_partition_compatible_filepath_glob(path, path_class):
+def test_get_area_compatible_filepath_glob(path, path_class):
     expected = path_class(path)
-    actual_partition, actual_inner_path = get_partition_and_path(expected, "default")
+    actual_partition, actual_inner_path = get_area_and_path(expected, "default")
 
     assert actual_partition == "default"
     assert actual_inner_path == expected
@@ -167,14 +167,23 @@ def test_get_partition_compatible_filepath_glob(path, path_class):
 @pytest.mark.parametrize("path", NON_PARTITION_PATHS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 @pytest.mark.usefixtures("enable_partitions_feature")
-def test_get_partition_compatible_filepath_non_partition(path, path_class):
+def test_get_area_compatible_filepath_non_partition(path, path_class):
     """Non-partitioned paths get a default partition."""
-    actual_partition, actual_inner_path = get_partition_and_path(
-        path_class(path), "foo"
-    )
+    actual_partition, actual_inner_path = get_area_and_path(path_class(path), "foo")
 
     assert actual_partition == "foo"
     assert actual_inner_path == path_class(path)
+    assert isinstance(actual_inner_path, path_class)
+
+@pytest.mark.parametrize("path_class", PATH_CLASSES)
+@pytest.mark.usefixtures("enable_overlay_feature")
+def test_get_area_compatible_filepath_enabled_overlay(path_class):
+    a_path = "(overlay)/a-path"
+    """Test that when overlay is enabled this is executing."""
+    actual_area, actual_inner_path = get_area_and_path(path_class(a_path), "foo")
+
+    assert actual_area == "overlay"
+    assert actual_inner_path == path_class("a-path")
     assert isinstance(actual_inner_path, path_class)
 
 
@@ -188,12 +197,10 @@ ZIPPED_PARTITIONS = zip(
 @pytest.mark.parametrize("partition_paths", ZIPPED_PARTITIONS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 @pytest.mark.usefixtures("enable_partitions_feature")
-def test_get_partition_compatible_filepath_partition(partition_paths, path_class):
+def test_get_area_compatible_filepath_partition(partition_paths, path_class):
     """Non-partitioned paths match their given partition."""
     path, expected_partition, expected_inner_path = partition_paths
-    actual_partition, actual_inner_path = get_partition_and_path(
-        path_class(path), "foo"
-    )
+    actual_partition, actual_inner_path = get_area_and_path(path_class(path), "foo")
 
     assert actual_partition == expected_partition
     assert actual_inner_path == path_class(expected_inner_path)
@@ -203,6 +210,6 @@ def test_get_partition_compatible_filepath_partition(partition_paths, path_class
 def test_split_partition_and_inner_path_error():
     """Raise an error if the filepath does not begin with a partition."""
     with pytest.raises(FeatureError) as raised:
-        _split_partition_and_inner_path("how?")
+        _split_area_and_inner_path("how?")
 
-    assert raised.value.brief == "Filepath 'how?' does not begin with a partition."
+    assert raised.value.brief == "Filepath 'how?' does not begin with an area."

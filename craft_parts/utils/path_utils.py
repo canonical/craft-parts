@@ -26,67 +26,66 @@ from craft_parts.utils import partition_utils
 
 FlexiblePath = TypeVar("FlexiblePath", PurePath, str)
 
-# regex for a path beginning with a (partition), like "(boot)/bin/sh"
-HAS_PARTITION_REGEX = re.compile(
-    r"^(\(" + partition_utils.VALID_PARTITION_REGEX.pattern + r"\))(/.*)?$"
+# regex for a path beginning with a (area), like "(boot)/bin/sh"
+HAS_AREA_REGEX = re.compile(
+    r"^\(" + partition_utils.VALID_AREA_REGEX.pattern + r"\)(/.*)?$"
 )
 
 
-class PartitionPathPair(NamedTuple):
-    """A pair containing a partition name and a path."""
+class AreaPathPair(NamedTuple):
+    """A pair containing an area name and a path."""
 
-    partition: str | None
+    area: str | None
     path: PurePath | str
 
 
-def _has_partition(path: PurePath | str) -> bool:
-    """Check whether a path has an explicit partition."""
-    return bool(HAS_PARTITION_REGEX.match(str(path)))
+def _has_area(path: PurePath | str) -> bool:
+    """Check whether a path has an explicit area."""
+    return bool(HAS_AREA_REGEX.match(str(path)))
 
 
-def get_partition_and_path(
-    path: FlexiblePath, default_partition: str
-) -> PartitionPathPair:
-    """Break a partition path into the partition and the child path.
+def get_area_and_path(path: FlexiblePath, default_partition: str) -> AreaPathPair:
+    """Break an area path into the area and the child path.
 
-    If the path begins with a partition, that is used. Otherwise, the default
+    If the path begins with an area, that is used. Otherwise, the default
     partition is used.
-    If partitions are not enabled, the partition will be None.
+    If partitions or overlay feature is not enabled, the area will be None.
+    An area can either be a partition or the overlay.
 
     :param path: The filepath to parse.
 
-    :returns: A tuple of (partition, filepath)
+    :returns: A tuple of (area, filepath)
     """
-    if not Features().enable_partitions:
-        return PartitionPathPair(None, path)
+    if not Features().enable_partitions and not Features().enable_overlay:
+        return AreaPathPair(None, path)
 
     str_path = str(path)
 
-    if _has_partition(str_path):
-        partition, inner_path = _split_partition_and_inner_path(str_path)
-        return PartitionPathPair(partition.strip("()"), path.__class__(inner_path))
+    if _has_area(str_path):
+        area, inner_path = _split_area_and_inner_path(str_path)
+        return AreaPathPair(area, path.__class__(inner_path))
 
-    return PartitionPathPair(default_partition, path)
+    return AreaPathPair(default_partition, path)
 
 
-def _split_partition_and_inner_path(str_path: str) -> tuple[str, str]:
-    """Split a path with a partition into a partition and inner path.
+def _split_area_and_inner_path(str_path: str) -> tuple[str, str]:
+    """Split a path with an area into the area and inner path.
 
-    :param str_path: A string of the filepath beginning with a partition to split.
+    :param str_path: A string of the filepath beginning with an area to split.
 
-    :returns: A tuple containing the partition and inner path. If there is no inner
+    :returns: A tuple containing the area and inner path. If there is no inner
     path, the second element will be an empty string.
 
-    :raises FeatureError: If `str_path` does not begin with a partition.
+    :raises FeatureError: If `str_path` does not begin with an area.
     """
-    match = re.match(HAS_PARTITION_REGEX, str_path)
+    match = re.match(HAS_AREA_REGEX, str_path)
 
     if not match:
-        raise FeatureError(f"Filepath {str_path!r} does not begin with a partition.")
+        raise FeatureError(f"Filepath {str_path!r} does not begin with an area.")
 
-    partition, inner_path = match.groups()
+    area, inner_path = match.groups()
 
-    # remove all forward slashes between the partition and the inner path
+    # remove all forward slashes between the area and the inner path
     inner_path = (inner_path or "").lstrip("/")
 
-    return partition, inner_path
+    return area, inner_path

@@ -228,7 +228,7 @@ def _get_file_list(
     # only include files for the partition
     processed_includes: list[str] = []
     for file in includes:
-        file_partition, file_inner_path = path_utils.get_partition_and_path(
+        file_partition, file_inner_path = path_utils.get_area_and_path(
             file, default_partition
         )
         if file_partition == partition:
@@ -237,7 +237,7 @@ def _get_file_list(
     # only exclude files for the partition
     processed_excludes: list[str] = []
     for file in excludes:
-        file_partition, file_inner_path = path_utils.get_partition_and_path(
+        file_partition, file_inner_path = path_utils.get_area_and_path(
             file, default_partition
         )
         if file_partition == partition:
@@ -339,7 +339,7 @@ def _normalize_entry(entry: str, default_partition: str) -> str:
     # split file into an optional prefix (a hyphen character) and the file
     split_file = (entry[0], entry[1:]) if entry[0] == "-" else ("", entry)
 
-    partition, inner_path = path_utils.get_partition_and_path(
+    partition, inner_path = path_utils.get_area_and_path(
         split_file[1], default_partition
     )
 

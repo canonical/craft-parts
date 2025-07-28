@@ -66,7 +66,7 @@ def organize_files(
         the default partition.
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
-        src_partition, src_inner_path = path_utils.get_partition_and_path(
+        src_partition, src_inner_path = path_utils.get_area_and_path(
             key, default_partition
         )
 
@@ -90,7 +90,7 @@ def organize_files(
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        dst_partition, dst_inner_path = path_utils.get_partition_and_path(
+        dst_partition, dst_inner_path = path_utils.get_area_and_path(
             file_map[key].lstrip("/"),
             default_partition,
         )

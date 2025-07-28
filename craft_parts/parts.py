@@ -45,7 +45,7 @@ from craft_parts.utils.partition_utils import (
     OVERLAY_IDENTIFIER,
     get_partition_dir_map,
 )
-from craft_parts.utils.path_utils import get_partition_and_path
+from craft_parts.utils.path_utils import get_area_and_path
 
 
 class PartSpec(BaseModel):
@@ -975,7 +975,7 @@ class Part:
                         )
 
             if require_inner_path:
-                _, inner_path = get_partition_and_path(filepath, self.default_partition)
+                _, inner_path = get_area_and_path(filepath, self.default_partition)
                 if not inner_path:
                     error_list.append(
                         f"    no path specified after partition in {filepath!r}"
