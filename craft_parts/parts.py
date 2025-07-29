@@ -858,7 +858,7 @@ class Part:
         return DEFAULT_PARTITION
 
     @property
-    def bootstrap_overlay(self) -> bool:
+    def is_bootstrap_overlay(self) -> bool:
         """Placeholder property indicating if the part bootstraps the overlay.
 
         Must be replaced with a proper heuristic checking the `organize` entries.
@@ -1097,10 +1097,10 @@ def part_dependencies(
     return dependencies
 
 
-def part_dependencies_overlay_bootstrap(
+def dependencies_that_bootstrap_overlay(
     part: Part, *, part_list: list[Part]
 ) -> set[Part]:
-    """Return a set of all the parts upon which the named part depends and bootstrapping the overlay.
+    """Return a set of all the parts upon which the named part depends and that are bootstrapping the overlay.
 
     :param part: The dependent part.
 
@@ -1108,7 +1108,9 @@ def part_dependencies_overlay_bootstrap(
     """
     dependency_names = set(part.dependencies)
 
-    return {p for p in part_list if p.name in dependency_names and p.bootstrap_overlay}
+    return {
+        p for p in part_list if p.name in dependency_names and p.is_bootstrap_overlay
+    }
 
 
 def has_overlay_visibility(
@@ -1125,7 +1127,7 @@ def has_overlay_visibility(
 
     :return: Whether the part has overlay visibility.
     """
-    if (viewers and part in viewers) or part.has_overlay or part.bootstrap_overlay:
+    if (viewers and part in viewers) or part.has_overlay or part.is_bootstrap_overlay:
         return True
 
     if not part.spec.after:

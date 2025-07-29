@@ -450,53 +450,22 @@ class PartHandler:
         # Perform the build step
         if has_overlay_visibility(self._part, part_list=self._part_list):
             with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                self._run_step(
-                    step_info=step_info,
-                    scriptlet_name="override-build",
-                    work_dir=self._part.part_build_dir,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
-
-                # Organize the installed files as requested. We do this in the build step for
-                # two reasons:
-                #
-                #   1. So cleaning and re-running the stage step works even if `organize` is
-                #      used
-                #   2. So collision detection takes organization into account, i.e. we can use
-                #      organization to get around file collisions between parts when staging.
-                #
-                # If `update` is true, we give permission to overwrite files that already exist.
-                # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
-                # files brought in from stage-packages, but in the case of updating build, we
-                # want the part to have the ability to organize over the files it organized last
-                # time around. We can be confident that this won't overwrite anything else,
-                # because to do so would require changing the `organize` keyword, which will
-                # make the build step dirty and require a clean instead of an update.
-
                 dst_map = cast(dict, self._part.part_install_dirs).copy()
                 dst_map[OVERLAY_IDENTIFIER] = self._part.overlay_mount_dir
-                organize_files(
-                    part_name=self._part.name,
-                    file_map=self._part.spec.organize_files,
-                    dst_dir_map=dst_map,
-                    overwrite=update,
-                    default_partition=step_info.default_partition,
+                self._do_run_build_organize(
+                    step_info,
+                    stdout=stdout,
+                    stderr=stderr,
+                    update=update,
+                    dst_map=dst_map,
                 )
         else:
-            self._run_step(
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=self._part.part_build_dir,
+            self._do_run_build_organize(
+                step_info,
                 stdout=stdout,
                 stderr=stderr,
-            )
-            organize_files(
-                part_name=self._part.name,
-                file_map=self._part.spec.organize_files,
-                dst_dir_map=self._part.part_install_dirs,
-                overwrite=update,
-                default_partition=step_info.default_partition,
+                update=update,
+                dst_map=self._part.part_install_dirs,
             )
 
         assets = {
@@ -517,6 +486,46 @@ class PartHandler:
             project_options=step_info.project_options,
             assets=assets,
             overlay_hash=overlay_hash.hex(),
+        )
+
+    def _do_run_build_organize(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+        update: bool = False,
+        dst_map: Mapping[str | None, Path],
+    ) -> None:
+        """Execute the build step and organize the content."""
+        self._run_step(
+            step_info=step_info,
+            scriptlet_name="override-build",
+            work_dir=self._part.part_build_dir,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        # Organize the installed files as requested. We do this in the build step for
+        # two reasons:
+        #
+        #   1. So cleaning and re-running the stage step works even if `organize` is
+        #      used
+        #   2. So collision detection takes organization into account, i.e. we can use
+        #      organization to get around file collisions between parts when staging.
+        #
+        # If `update` is true, we give permission to overwrite files that already exist.
+        # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
+        # files brought in from stage-packages, but in the case of updating build, we
+        # want the part to have the ability to organize over the files it organized last
+        # time around. We can be confident that this won't overwrite anything else,
+        # because to do so would require changing the `organize` keyword, which will
+        # make the build step dirty and require a clean instead of an update.
+        organize_files(
+            part_name=self._part.name,
+            file_map=self._part.spec.organize_files,
+            dst_dir_map=dst_map,
+            overwrite=update,
+            default_partition=step_info.default_partition,
         )
 
     def _run_stage(

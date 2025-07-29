@@ -69,7 +69,7 @@ class Sequencer:
                 parts.has_overlay_visibility(
                     part, viewers=self._overlay_viewers, part_list=part_list
                 )
-                and not part.bootstrap_overlay
+                and not part.is_bootstrap_overlay
                 # Exclude the part bootstrapping the overlay to avoid infinite
                 # recursion.
             ):
@@ -226,7 +226,7 @@ class Sequencer:
             steps.ovl_bootstrap_dependency_prerequisite_step(step)
         )
         if prerequisite_step_bootstrap_ovl:
-            all_overlay_init_deps = parts.part_dependencies_overlay_bootstrap(
+            all_overlay_init_deps = parts.dependencies_that_bootstrap_overlay(
                 part, part_list=self._part_list
             )
             self._add_deps_actions(
