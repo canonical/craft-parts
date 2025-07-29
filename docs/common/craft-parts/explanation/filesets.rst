@@ -66,6 +66,17 @@ a path with the ``-`` character, as in these examples:
 The second example selects and discards gzipped files in all nested directories
 inside the :file:`usr/share` directory.
 
+Hidden files
+~~~~~~~~~~~~
+
+Top-level files and directories starting with ``.`` are not staged by
+default. To stage these hidden files, list them in the stage fileset. To
+stage all files, both visible and hidden, add the corresponding wildcards
+to the stage fileset:
+
+* :file:`"*"`
+* :file:`".*"`
+
 Partitions
 ^^^^^^^^^^
 
