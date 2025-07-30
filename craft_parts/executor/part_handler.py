@@ -103,6 +103,7 @@ class _Squasher:
         self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}
         self._src_partition = partition
         self._default_partition = default_partition
+        self._sub_paths_distributed: set[str] = set()
         if filesystem_mount:
             self._filesystem_mount = filesystem_mount
 
@@ -126,6 +127,7 @@ class _Squasher:
                 # entry
                 sub_path = entry.mount.lstrip("/")
                 dst_partition = entry.device
+                logger.debug(f"distribute content to {dst_partition}")
 
                 # Migrate to the destination partition indicated by the filesystem mounts entry
                 self._migrate(
@@ -134,6 +136,8 @@ class _Squasher:
                     sub_path=sub_path,
                     dst_partition=dst_partition,
                 )
+                if len(sub_path) > 0:
+                    self._sub_paths_distributed.add(sub_path)
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
@@ -165,10 +169,16 @@ class _Squasher:
             f"excluding already migrated dirs: {self._all_migrated_directories}"
         )
         visible_dirs = visible_dirs - self._all_migrated_directories
+        logger.debug(f"visible_files after exclusion: {visible_files}")
+        logger.debug(f"visible_dirs after exclusion: {visible_dirs}")
+
+        files, dirs = self._filter_already_distributed(visible_files, visible_dirs)
+        logger.debug(f"files after all exclusion: {files}")
+        logger.debug(f"dirs after all exclusion: {dirs}")
 
         layer_files, layer_dirs = migration.migrate_files(
-            files=visible_files,
-            dirs=visible_dirs,
+            files=files,
+            dirs=dirs,
             srcdir=srcdir / sub_path,
             destdir=destdir,
             oci_translation=True,
@@ -186,6 +196,32 @@ class _Squasher:
         for f in layer_dirs:
             src_path = str(Path(sub_path) / f)
             self.migrated_directories[dst_partition][src_path] = f
+
+    def _filter_already_distributed(
+        self, visible_files: set[str], visible_dirs: set[str]
+    ) -> tuple[set[str], set[str]]:
+        """Exclude files in sub path already distributed to another partition."""
+        files: set[str] = set()
+        dirs: set[str] = set()
+        if self._sub_paths_distributed:
+            logger.debug(f"_sub_paths_distributed: {self._sub_paths_distributed}")
+            for f in visible_files.copy():
+                for d in self._sub_paths_distributed:
+                    logger.debug(f"checking if file {f} is relative to: {d}")
+                    if not Path(f).is_relative_to(Path(d)) or Path(f) == Path(d):
+                        logger.debug(f"keeping file {f}")
+                        files.add(f)
+                    else:
+                        logger.debug(f"ignoring file {f}")
+            for f in visible_dirs.copy():
+                for d in self._sub_paths_distributed:
+                    logger.debug(f"checking if dir {f} is relative to: {d}")
+                    if not Path(f).is_relative_to(Path(d)) or Path(f) == Path(d):
+                        logger.debug(f"keeping dir {f}")
+                        dirs.add(f)
+                    else:
+                        logger.debug(f"ignoring dir {f}")
+        return files, dirs
 
     @property
     def _all_migrated_files(self) -> set[str]:
