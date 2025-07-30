@@ -169,12 +169,9 @@ class _Squasher:
             f"excluding already migrated dirs: {self._all_migrated_directories}"
         )
         visible_dirs = visible_dirs - self._all_migrated_directories
-        logger.debug(f"visible_files after exclusion: {visible_files}")
-        logger.debug(f"visible_dirs after exclusion: {visible_dirs}")
 
+        logger.debug("excluding content distributed to other partitions")
         files, dirs = self._filter_already_distributed(visible_files, visible_dirs)
-        logger.debug(f"files after all exclusion: {files}")
-        logger.debug(f"dirs after all exclusion: {dirs}")
 
         layer_files, layer_dirs = migration.migrate_files(
             files=files,
@@ -203,24 +200,18 @@ class _Squasher:
         """Exclude files in sub path already distributed to another partition."""
         files: set[str] = set()
         dirs: set[str] = set()
-        if self._sub_paths_distributed:
-            logger.debug(f"_sub_paths_distributed: {self._sub_paths_distributed}")
-            for f in visible_files.copy():
-                for d in self._sub_paths_distributed:
-                    logger.debug(f"checking if file {f} is relative to: {d}")
-                    if not Path(f).is_relative_to(Path(d)) or Path(f) == Path(d):
-                        logger.debug(f"keeping file {f}")
-                        files.add(f)
-                    else:
-                        logger.debug(f"ignoring file {f}")
-            for f in visible_dirs.copy():
-                for d in self._sub_paths_distributed:
-                    logger.debug(f"checking if dir {f} is relative to: {d}")
-                    if not Path(f).is_relative_to(Path(d)) or Path(f) == Path(d):
-                        logger.debug(f"keeping dir {f}")
-                        dirs.add(f)
-                    else:
-                        logger.debug(f"ignoring dir {f}")
+        if not self._sub_paths_distributed:
+            return visible_files, visible_dirs
+        for f in visible_files.copy():
+            for d in self._sub_paths_distributed:
+                if not Path(f).is_relative_to(Path(d)) or Path(f) == Path(d):
+                    logger.debug(f"keeping file {f}")
+                    files.add(f)
+        for f in visible_dirs.copy():
+            for d in self._sub_paths_distributed:
+                if not Path(f).is_relative_to(Path(d)) or Path(f) == Path(d):
+                    logger.debug(f"keeping dir {f}")
+                    dirs.add(f)
         return files, dirs
 
     @property
