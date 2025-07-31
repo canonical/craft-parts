@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import textwrap
 from pathlib import Path
 
@@ -24,27 +23,13 @@ import yaml
 from craft_parts import Action, ActionType, Step
 
 
-@pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_feature):
-    return
+# This fixture also enables the overlay Feature.
+pytestmark = pytest.mark.usefixtures("mock_overlay_support_prerequisites")
 
 
 @pytest.fixture
 def fake_call(mocker):
     return mocker.patch("subprocess.check_call")
-
-
-@pytest.fixture(autouse=True)
-def mock_overlay_support_prerequisites(mocker):
-    mocker.patch.object(sys, "platform", "linux")
-    mocker.patch("os.geteuid", return_value=0)
-    mock_refresh = mocker.patch(
-        "craft_parts.overlays.OverlayManager.refresh_packages_list"
-    )
-    yield
-    # Make sure that refresh_packages_list() was *not* called, as it's an expensive call that
-    # overlays without packages do not need.
-    assert not mock_refresh.called
 
 
 class TestOverlayLayerOrder:

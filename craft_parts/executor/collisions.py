@@ -107,26 +107,26 @@ def _get_candidate_from_install_dir(
 
 def _get_overlay_layer_contents(source: pathlib.Path) -> tuple[set[str], set[str]]:
     """Get the files and directories from a directory, relative to that directory."""
-    visible_files: set[pathlib.Path] = set()
-    visible_dirs: set[pathlib.Path] = set()
+    concrete_files: set[pathlib.Path] = set()
+    concrete_dirs: set[pathlib.Path] = set()
     for root, directories, files in os.walk(source, topdown=True):
         for file_name in files:
             path = pathlib.Path(root, file_name)
             # A whiteout file means that the file is to be removed from the stack, and
             # so won't conflict with incoming files from install dirs.
             if not overlay_fs.is_whiteout_file(path):
-                visible_files.add(path)
+                concrete_files.add(path)
 
         for directory in directories:
             path = pathlib.Path(root, directory)
             if path.is_symlink():
-                visible_files.add(path)
+                concrete_files.add(path)
             else:
-                visible_dirs.add(path)
+                concrete_dirs.add(path)
 
     return (
-        {str(f.relative_to(source)) for f in visible_files},
-        {str(d.relative_to(source)) for d in visible_dirs},
+        {str(f.relative_to(source)) for f in concrete_files},
+        {str(d.relative_to(source)) for d in concrete_dirs},
     )
 
 
@@ -185,7 +185,9 @@ def _check_for_stage_collisions_per_partition(
     :param partition: If the partitions feature is enabled, then the name of the
         partition containing the stage directory to check.
 
-    :raises PartConflictError: If conflicts are found.
+    :raises PartConflictError: If conflicts between build content are found.
+    :raises OverlayStageConflict: If conflicts between build and overlay content are
+      found.
     """
     # Start by describing the candidates from the overlay, since by definition they
     # don't conflict with each other.

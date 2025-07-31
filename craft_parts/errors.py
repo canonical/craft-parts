@@ -450,7 +450,7 @@ class PartFilesConflict(PartsError):
 
 
 class OverlayStageConflict(PartsError):
-    """A conflict between contents to be overlaid and to be staged from the build step."""
+    """A conflict between contents to be staged from the overlay and from the build step."""
 
     def __init__(
         self,
@@ -469,7 +469,7 @@ class OverlayStageConflict(PartsError):
         file_paths = "\n".join(sorted(indented_conflicting_files))
         partition_info = f" for the {partition!r} partition" if partition else ""
         brief = (
-            "Failed to stage: parts list the same file "
+            "Failed to stage: parts list the same file or directory "
             "with different contents or permissions."
         )
         details = (
