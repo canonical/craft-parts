@@ -28,9 +28,9 @@ New features:
 
 Bug fixes:
 
-- Files and directories produced during the Build step are now correctly checked for
-  collisions with Overlay contents during staging. Conflicts can be resolved by using
-  the :ref:`stage <reference-part-properties-stage>` and
+- Files and directories produced during the build step are now correctly checked for
+  collisions with overlay contents during the staging step. Conflicts can be resolved 
+  with the :ref:`stage <reference-part-properties-stage>` and
   :ref:`overlay <reference-part-properties-overlay-files>` keys.
 
 For a complete list of commits, check out the `2.20.0`_ release on GitHub.
