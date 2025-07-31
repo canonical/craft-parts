@@ -166,12 +166,6 @@ class _Squasher:
             srcdir / sub_path,
             destdir,
         )
-        logger.debug(f"excluding already migrated files: {self._all_migrated_files}")
-        visible_files = visible_files - self._all_migrated_files
-        logger.debug(
-            f"excluding already migrated dirs: {self._all_migrated_directories}"
-        )
-        visible_dirs = visible_dirs - self._all_migrated_directories
 
         logger.debug("excluding content distributed to other partitions")
         files = self._filter_already_distributed(visible_files)
@@ -212,28 +206,6 @@ class _Squasher:
             if not is_distributed:
                 contents.add(content)
         return contents
-
-    @property
-    def _all_migrated_files(self) -> set[str]:
-        """Merge lists of files migrated to every partitions.
-
-        Return a list of paths relative to the source partition.
-        """
-        migrated_files: set[str] = set()
-        for m in self.migrated_files.values():
-            migrated_files |= set(m)
-        return migrated_files
-
-    @property
-    def _all_migrated_directories(self) -> set[str]:
-        """Merge lists of directories migrated to every partitions.
-
-        Return a list of paths relative to the source partition.
-        """
-        migrated_directories: set[str] = set()
-        for m in self.migrated_directories.values():
-            migrated_directories |= set(m)
-        return migrated_directories
 
 
 class PartHandler:
