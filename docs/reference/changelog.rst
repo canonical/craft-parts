@@ -26,6 +26,11 @@ New features:
 - The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
   modules to OpenJDK image.
 
+Documentation:
+
+- Remove all intralinking in the ``PartSpec`` model's docstrings. This allows downstream
+  apps that consume these docstrings to provide their own internal references.
+
 For a complete list of commits, check out the `2.20.0`_ release on GitHub.
 
 .. _release-2.19.0:
