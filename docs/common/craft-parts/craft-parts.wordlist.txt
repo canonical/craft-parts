@@ -400,6 +400,7 @@ distros
 dl
 dnf
 docstring
+docstrings
 dotnet
 dst
 emacs
@@ -542,6 +543,7 @@ subdirectories
 subdirectory
 subkey
 submodules
+subpath
 subprocess
 subprocesses
 subtree

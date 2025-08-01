@@ -32,6 +32,14 @@ Bug fixes:
   collisions with overlay contents during the staging step. Conflicts can be resolved 
   with the :ref:`stage <reference-part-properties-stage>` and
   :ref:`overlay <reference-part-properties-overlay-files>` keys.
+- When content is staged to partitions from the overlay of the default partition,
+  properly ignore content already migrated.
+
+Documentation:
+
+- Remove all intralinking in the ``PartSpec`` model's docstrings. This allows
+  downstream apps that consume these docstrings to provide their own internal
+  references.
 
 For a complete list of commits, check out the `2.20.0`_ release on GitHub.
 
