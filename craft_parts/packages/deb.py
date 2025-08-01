@@ -674,12 +674,14 @@ class Ubuntu(BaseRepository):
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
+        # Fix a runtime warning from apt not liking to write to directories it
+        # doesn't own
         try:
             shutil.chown(deb_cache_dir, user="_apt")
         except (LookupError, PermissionError) as err:
             # LookupError: user `_apt` not found
             # PermissionError: non root run, such as unit tests
-            logger.debug(f"Cannot chown {deb_cache_dir!r} to _apt: {err!s}")
+            logger.debug(f"Cannot chown '{deb_cache_dir}' to _apt: {err!s}")
 
         installed: set[str] = set()
 
