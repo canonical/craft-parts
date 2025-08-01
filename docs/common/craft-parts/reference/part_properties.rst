@@ -10,7 +10,9 @@ a part.
 Top-level keys
 --------------
 
-.. kitbash-field:: parts.PartSpec plugin
+.. py:currentmodule:: craft_parts.parts
+
+.. kitbash-field:: PartSpec plugin
     :label: reference-part-properties-plugin
 
 
@@ -22,34 +24,34 @@ Pull step keys
 The following keys define the part's external dependencies and how they are retrieved
 from the declared location.
 
-.. kitbash-field:: parts.PartSpec source
+.. kitbash-field:: PartSpec source
     :label: reference-part-properties-source
 
-.. kitbash-field:: parts.PartSpec source_type
+.. kitbash-field:: PartSpec source_type
     :label: reference-part-properties-source-type
 
-.. kitbash-field:: parts.PartSpec source_checksum
+.. kitbash-field:: PartSpec source_checksum
     :label: reference-part-properties-source-checksum
 
-.. kitbash-field:: parts.PartSpec source_branch
+.. kitbash-field:: PartSpec source_branch
     :label: reference-part-properties-source-branch
 
-.. kitbash-field:: parts.PartSpec source_tag
+.. kitbash-field:: PartSpec source_tag
     :label: reference-part-properties-source-tag
 
-.. kitbash-field:: parts.PartSpec source_commit
+.. kitbash-field:: PartSpec source_commit
     :label: reference-part-properties-source-commit
 
-.. kitbash-field:: parts.PartSpec source_depth
+.. kitbash-field:: PartSpec source_depth
     :label: reference-part-properties-source-depth
 
-.. kitbash-field:: parts.PartSpec source_submodules
+.. kitbash-field:: PartSpec source_submodules
     :label: reference-part-properties-source-submodules
 
-.. kitbash-field:: parts.PartSpec source_subdir
+.. kitbash-field:: PartSpec source_subdir
     :label: reference-part-properties-source-subdir
 
-.. kitbash-field:: parts.PartSpec override_pull
+.. kitbash-field:: PartSpec override_pull
     :label: reference-part-properties-override-pull
 
 
@@ -62,13 +64,13 @@ For craft applications that support filesystem overlays, the following keys modi
 part's overlay layer and determine how the layer's contents are represented in the stage
 directory.
 
-.. kitbash-field:: parts.PartSpec overlay_files
+.. kitbash-field:: PartSpec overlay_files
     :label: reference-part-properties-overlay-files
 
-.. kitbash-field:: parts.PartSpec overlay_packages
+.. kitbash-field:: PartSpec overlay_packages
     :label: reference-part-properties-overlay-packages
 
-.. kitbash-field:: parts.PartSpec overlay_script
+.. kitbash-field:: PartSpec overlay_script
     :label: reference-part-properties-overlay-script
 
 
@@ -80,25 +82,25 @@ Build step keys
 The following keys modify the build step's behavior and the contents of the part's
 build environment.
 
-.. kitbash-field:: parts.PartSpec after
+.. kitbash-field:: PartSpec after
     :label: reference-part-properties-after
 
-.. kitbash-field:: parts.PartSpec disable_parallel
+.. kitbash-field:: PartSpec disable_parallel
     :label: reference-part-properties-disable-parallel
 
-.. kitbash-field:: parts.PartSpec build_environment
+.. kitbash-field:: PartSpec build_environment
     :label: reference-part-properties-build-environment
 
-.. kitbash-field:: parts.PartSpec build_packages
+.. kitbash-field:: PartSpec build_packages
     :label: reference-part-properties-build-packages
 
-.. kitbash-field:: parts.PartSpec build_snaps
+.. kitbash-field:: PartSpec build_snaps
     :label: reference-part-properties-build-snaps
 
-.. kitbash-field:: parts.PartSpec organize_files
+.. kitbash-field:: PartSpec organize_files
     :label: reference-part-properties-organize
 
-.. kitbash-field:: parts.PartSpec override_build
+.. kitbash-field:: PartSpec override_build
     :label: reference-part-properties-override-build
 
 
@@ -110,17 +112,17 @@ Stage step keys
 The following keys modify the stage step's behavior and determine how files from the
 part's build directory are represented in the stage directory.
 
-.. kitbash-field:: parts.PartSpec stage_files
+.. kitbash-field:: PartSpec stage_files
     :override-type: list[str]
     :label: reference-part-properties-stage
 
-.. kitbash-field:: parts.PartSpec stage_packages
+.. kitbash-field:: PartSpec stage_packages
     :label: reference-part-properties-stage-packages
 
-.. kitbash-field:: parts.PartSpec stage_snaps
+.. kitbash-field:: PartSpec stage_snaps
     :label: reference-part-properties-stage-snaps
 
-.. kitbash-field:: parts.PartSpec override_stage
+.. kitbash-field:: PartSpec override_stage
     :label: reference-part-properties-override-stage
 
 
@@ -132,11 +134,11 @@ Prime step keys
 The following keys modify the prime step's behavior and determine how the contents
 of the stage directory are reflected in the final payload.
 
-.. kitbash-field:: parts.PartSpec prime_files
+.. kitbash-field:: PartSpec prime_files
     :override-type: list[str]
     :label: reference-part-properties-prime
 
-.. kitbash-field:: parts.PartSpec override_prime
+.. kitbash-field:: PartSpec override_prime
     :label: reference-part-properties-override-prime
 
 
@@ -145,13 +147,15 @@ of the stage directory are reflected in the final payload.
 Permissions keys
 ----------------
 
-.. kitbash-field:: parts.PartSpec permissions
+.. kitbash-field:: PartSpec permissions
     :label: reference-part-properties-permissions
 
-.. kitbash-field:: permissions.Permissions path
+.. py:currentmodule:: craft_parts.permissions
 
-.. kitbash-field:: permissions.Permissions owner
+.. kitbash-field:: Permissions path
 
-.. kitbash-field:: permissions.Permissions group
+.. kitbash-field:: Permissions owner
 
-.. kitbash-field:: permissions.Permissions mode
+.. kitbash-field:: Permissions group
+
+.. kitbash-field:: Permissions mode

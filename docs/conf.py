@@ -114,9 +114,6 @@ github_repository = "craft-parts"
 project_dir = pathlib.Path(__file__).parents[1].resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
-model_dir = (project_dir / "craft_parts").resolve()
-sys.path.append(str(model_dir.absolute()))
-
 def run_apidoc(_):
     import os
     import sys
