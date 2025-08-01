@@ -26,6 +26,11 @@ New features:
 - The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
   modules to OpenJDK image.
 
+Bug fixes:
+
+- When content is distributed to partitions from the overlay of the default partition,
+  properly ignore content already migrated.
+
 For a complete list of commits, check out the `2.20.0`_ release on GitHub.
 
 .. _release-2.19.0:
