@@ -399,6 +399,7 @@ distros
 dl
 dnf
 docstring
+docstrings
 dotnet
 dst
 emacs
