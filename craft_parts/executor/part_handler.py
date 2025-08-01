@@ -103,6 +103,7 @@ class _Squasher:
         self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}
         self._src_partition = partition
         self._default_partition = default_partition
+        self._distributed_paths: set[Path] = set()
         if filesystem_mount:
             self._filesystem_mount = filesystem_mount
 
@@ -124,8 +125,11 @@ class _Squasher:
             for entry in reversed(self._filesystem_mount):
                 # Only migrate content from the subdirectory indicated by the filesystem mounts
                 # entry
-                sub_path = entry.mount.lstrip("/")
+                sub_path = Path(entry.mount.lstrip("/"))
                 dst_partition = entry.device
+                logger.debug(
+                    "distribute content to %s, under %s", dst_partition, sub_path
+                )
 
                 # Migrate to the destination partition indicated by the filesystem mounts entry
                 self._migrate(
@@ -134,12 +138,15 @@ class _Squasher:
                     sub_path=sub_path,
                     dst_partition=dst_partition,
                 )
+                # If the sub path was really a sub path, record it.
+                if sub_path != Path("."):
+                    self._distributed_paths.add(sub_path)
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
                 srcdir=srcdir,
                 destdir=destdirs[self._src_partition],
-                sub_path="",
+                sub_path=Path(""),
                 dst_partition=self._src_partition,
             )
 
@@ -147,7 +154,7 @@ class _Squasher:
         self,
         srcdir: Path,
         destdir: Path,
-        sub_path: str,
+        sub_path: Path,
         dst_partition: str | None,
     ) -> None:
         """Actually migrate content from a source to a destination.
@@ -159,16 +166,14 @@ class _Squasher:
             srcdir / sub_path,
             destdir,
         )
-        logger.debug(f"excluding already migrated files: {self._all_migrated_files}")
-        visible_files = visible_files - self._all_migrated_files
-        logger.debug(
-            f"excluding already migrated dirs: {self._all_migrated_directories}"
-        )
-        visible_dirs = visible_dirs - self._all_migrated_directories
+
+        logger.debug("excluding content distributed to other partitions")
+        files = self._filter_already_distributed(visible_files)
+        dirs = self._filter_already_distributed(visible_dirs)
 
         layer_files, layer_dirs = migration.migrate_files(
-            files=visible_files,
-            dirs=visible_dirs,
+            files=files,
+            dirs=dirs,
             srcdir=srcdir / sub_path,
             destdir=destdir,
             oci_translation=True,
@@ -177,37 +182,30 @@ class _Squasher:
             self.migrated_files[dst_partition] = {}
 
         for f in layer_files:
-            src_path = str(Path(sub_path) / f)
+            src_path = str(sub_path / f)
             self.migrated_files[dst_partition][src_path] = f
 
         if dst_partition not in self.migrated_directories:
             self.migrated_directories[dst_partition] = {}
 
         for f in layer_dirs:
-            src_path = str(Path(sub_path) / f)
+            src_path = str(sub_path / f)
             self.migrated_directories[dst_partition][src_path] = f
 
-    @property
-    def _all_migrated_files(self) -> set[str]:
-        """Merge lists of files migrated to every partitions.
+    def _filter_already_distributed(self, visible_contents: set[str]) -> set[str]:
+        """Filter files in paths already distributed to other partitions."""
+        if not self._distributed_paths:
+            return visible_contents
+        contents: set[str] = set()
+        for content in visible_contents:
+            is_distributed = any(
+                migration.already_distributed(Path(content), distributed_path)
+                for distributed_path in self._distributed_paths
+            )
 
-        Return a list of paths relative to the source partition.
-        """
-        migrated_files: set[str] = set()
-        for m in self.migrated_files.values():
-            migrated_files |= set(m)
-        return migrated_files
-
-    @property
-    def _all_migrated_directories(self) -> set[str]:
-        """Merge lists of directories migrated to every partitions.
-
-        Return a list of paths relative to the source partition.
-        """
-        migrated_directories: set[str] = set()
-        for m in self.migrated_directories.values():
-            migrated_directories |= set(m)
-        return migrated_directories
+            if not is_distributed:
+                contents.add(content)
+        return contents
 
 
 class PartHandler:

@@ -350,3 +350,8 @@ def filter_all_whiteouts(
             whiteouts.add(file)
 
     return whiteouts
+
+
+def already_distributed(item: Path, sub_path: Path) -> bool:
+    """Check if a file/dir is or is under a subpath already distributed to another partition."""
+    return item.is_relative_to(sub_path) and item != sub_path

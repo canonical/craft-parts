@@ -541,6 +541,7 @@ subdirectories
 subdirectory
 subkey
 submodules
+subpath
 subprocess
 subprocesses
 subtree
