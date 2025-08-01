@@ -674,6 +674,8 @@ class Ubuntu(BaseRepository):
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
+        logger.debug("Files already in deb cache:")
+        logger.debug(f"{list(deb_cache_dir.iterdir())}")
         # Fix a runtime warning from apt not liking to write to directories it
         # doesn't own
         try:
