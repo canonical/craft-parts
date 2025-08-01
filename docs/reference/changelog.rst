@@ -26,6 +26,11 @@ New features:
 - The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
   modules to OpenJDK image.
 
+Bug fixes:
+
+- When content is staged to partitions from the overlay of the default partition,
+  properly ignore content already migrated.
+
 Documentation:
 
 - Remove all intralinking in the ``PartSpec`` model's docstrings. This allows downstream
