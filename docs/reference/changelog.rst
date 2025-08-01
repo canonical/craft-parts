@@ -28,7 +28,7 @@ New features:
 
 Bug fixes:
 
-- When content is distributed to partitions from the overlay of the default partition,
+- When content is staged to partitions from the overlay of the default partition,
   properly ignore content already migrated.
 
 For a complete list of commits, check out the `2.20.0`_ release on GitHub.

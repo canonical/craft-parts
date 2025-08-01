@@ -541,7 +541,7 @@ class TestOverlayMigration:
 
 
 def create_overlay_whiteout(name: Path) -> None:
-    """Create a overlayfs whiteout file.
+    """Create an overlayfs whiteout file.
     This is a character device file, with major and minor number set to 0.
     """
     os.mknod(name, stat.S_IFCHR, os.makedev(0, 0))
