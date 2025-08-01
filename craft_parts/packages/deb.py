@@ -682,6 +682,8 @@ class Ubuntu(BaseRepository):
             # LookupError: user `_apt` not found
             # PermissionError: non root run, such as unit tests
             logger.debug(f"Cannot chown '{deb_cache_dir}' to _apt: {err!s}")
+        else:
+            logger.debug(f"Set ownership of '{deb_cache_dir}' to _apt")
 
         installed: set[str] = set()
 
