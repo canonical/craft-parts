@@ -46,7 +46,7 @@ from craft_parts.state_manager import (
 from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION, OVERLAY_IDENTIFIER
 
 from . import filesets, migration
 from .environment import generate_step_environment
@@ -448,22 +448,61 @@ class PartHandler:
         # Perform the build step
         if has_overlay_visibility(self._part, part_list=self._part_list):
             with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                self._run_step(
-                    step_info=step_info,
-                    scriptlet_name="override-build",
-                    work_dir=self._part.part_build_dir,
+                dst_map = cast(dict, self._part.part_install_dirs).copy()
+                dst_map[OVERLAY_IDENTIFIER] = self._part.overlay_mount_dir
+                self._do_run_build_organize(
+                    step_info,
                     stdout=stdout,
                     stderr=stderr,
+                    update=update,
+                    dst_map=dst_map,
                 )
         else:
-            self._run_step(
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=self._part.part_build_dir,
+            self._do_run_build_organize(
+                step_info,
                 stdout=stdout,
                 stderr=stderr,
+                update=update,
+                dst_map=self._part.part_install_dirs,
             )
 
+        assets = {
+            "build-packages": self.build_packages,
+            "build-snaps": self.build_snaps,
+        }
+        assets.update(_get_machine_manifest())
+
+        # Overlay integrity is checked based by the hash of its last (topmost) layer,
+        # so we compute it for all parts. The overlay hash is added to the build state
+        # to ensure proper build step invalidation of parts that can see the overlay
+        # filesystem if overlay contents change.
+        overlay_hash = self._compute_layer_hash(all_parts=True)
+        overlay_hash.save(self._part)
+
+        return states.BuildState(
+            part_properties=self._part_properties,
+            project_options=step_info.project_options,
+            assets=assets,
+            overlay_hash=overlay_hash.hex(),
+        )
+
+    def _do_run_build_organize(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+        update: bool = False,
+        dst_map: Mapping[str | None, Path],
+    ) -> None:
+        """Execute the build step and organize the content."""
+        self._run_step(
+            step_info=step_info,
+            scriptlet_name="override-build",
+            work_dir=self._part.part_build_dir,
+            stdout=stdout,
+            stderr=stderr,
+        )
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:
         #
@@ -482,28 +521,9 @@ class PartHandler:
         organize_files(
             part_name=self._part.name,
             file_map=self._part.spec.organize_files,
-            install_dir_map=self._part.part_install_dirs,
+            dst_dir_map=dst_map,
             overwrite=update,
             default_partition=step_info.default_partition,
-        )
-
-        assets = {
-            "build-packages": self.build_packages,
-            "build-snaps": self.build_snaps,
-        }
-        assets.update(_get_machine_manifest())
-
-        # Overlay integrity is checked based by the hash of its last (topmost) layer,
-        # so we compute it for all parts. The overlay hash is added to the build state
-        # to ensure proper build step invalidation of parts that can see the overlay
-        # filesystem if overlay contents change.
-        overlay_hash = self._compute_layer_hash(all_parts=True)
-
-        return states.BuildState(
-            part_properties=self._part_properties,
-            project_options=step_info.project_options,
-            assets=assets,
-            overlay_hash=overlay_hash.hex(),
         )
 
     def _run_stage(

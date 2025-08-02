@@ -189,7 +189,7 @@ def organize_and_assert(
             organize_files(
                 part_name="part-name",
                 file_map=organize_map,
-                install_dir_map=install_dirs,
+                dst_dir_map=install_dirs,
                 overwrite=overwrite,
                 default_partition="default",
             )
@@ -199,7 +199,7 @@ def organize_and_assert(
         organize_files(
             part_name="part-name",
             file_map=organize_map,
-            install_dir_map=install_dirs,
+            dst_dir_map=install_dirs,
             overwrite=overwrite,
             default_partition="default",
         )

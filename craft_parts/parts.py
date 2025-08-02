@@ -40,8 +40,12 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION, get_partition_dir_map
-from craft_parts.utils.path_utils import get_partition_and_path
+from craft_parts.utils.partition_utils import (
+    DEFAULT_PARTITION,
+    OVERLAY_IDENTIFIER,
+    get_partition_dir_map,
+)
+from craft_parts.utils.path_utils import get_area_and_path
 
 
 class PartSpec(BaseModel):
@@ -745,6 +749,11 @@ class Part:
         return self.dirs.overlay_dir
 
     @property
+    def overlay_mount_dir(self) -> Path:
+        """Return the overlay mount directory."""
+        return self.dirs.overlay_mount_dir
+
+    @property
     def overlay_dirs(self) -> Mapping[str | None, Path]:
         """A mapping of partition name to partition overlay directory.
 
@@ -818,6 +827,14 @@ class Part:
             return self._partitions[0]
         return DEFAULT_PARTITION
 
+    @property
+    def is_bootstrap_overlay(self) -> bool:
+        """Placeholder property indicating if the part bootstraps the overlay.
+
+        Must be replaced with a proper heuristic checking the `organize` entries.
+        """
+        return "bootstrap-overlay" in self.name
+
     def _check_partition_feature(self) -> None:
         """Check if the partitions feature is properly used.
 
@@ -877,7 +894,8 @@ class Part:
         """Check if partitions are properly used in a fileset.
 
         If a filepath begins with a parentheses, then the text inside the parentheses
-        must be a valid partition. This is an error.
+        must be a valid partition. This is an error except if the text reference the
+        overlay.
 
         Some filesets must specify a path to avoid ambiguity. For example, the
         following is not allowed:
@@ -912,7 +930,10 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) not in self._partitions:
+                if (
+                    str(partition) not in self._partitions
+                    and str(partition) != OVERLAY_IDENTIFIER
+                ):
                     error_list.append(
                         f"    unknown partition {partition!r} in {filepath!r}"
                     )
@@ -920,13 +941,16 @@ class Part:
                 match = re.match(possible_partition_pattern, filepath)
                 if match:
                     partition = match.group("possible_partition")
-                    if partition in self._partitions:
+                    if (
+                        partition in self._partitions
+                        and str(partition) != OVERLAY_IDENTIFIER
+                    ):
                         warning_list.append(
                             f"    misused partition {partition!r} in {filepath!r}"
                         )
 
             if require_inner_path:
-                _, inner_path = get_partition_and_path(filepath, self.default_partition)
+                _, inner_path = get_area_and_path(filepath, self.default_partition)
                 if not inner_path:
                     error_list.append(
                         f"    no path specified after partition in {filepath!r}"
@@ -1043,6 +1067,22 @@ def part_dependencies(
     return dependencies
 
 
+def dependencies_that_bootstrap_overlay(
+    part: Part, *, part_list: list[Part]
+) -> set[Part]:
+    """Return a set of all the parts upon which the named part depends and that are bootstrapping the overlay.
+
+    :param part: The dependent part.
+
+    :returns: The set of parts the given part depends on.
+    """
+    dependency_names = set(part.dependencies)
+
+    return {
+        p for p in part_list if p.name in dependency_names and p.is_bootstrap_overlay
+    }
+
+
 def has_overlay_visibility(
     part: Part, *, part_list: list[Part], viewers: set[Part] | None = None
 ) -> bool:
@@ -1057,7 +1097,7 @@ def has_overlay_visibility(
 
     :return: Whether the part has overlay visibility.
     """
-    if (viewers and part in viewers) or part.has_overlay:
+    if (viewers and part in viewers) or part.has_overlay or part.is_bootstrap_overlay:
         return True
 
     if not part.spec.after:
