@@ -174,7 +174,7 @@ If you're making a change to a current release, run:
 ```bash
 git fetch upstream
 git checkout -b <new-branch-name> upstream/hotfix/<current-release>
-make setup
+pip install -e .[dev,docs]
 ```
 
 If you're contributing to multiple releases or the next major release, run:
@@ -183,7 +183,7 @@ If you're contributing to multiple releases or the next major release, run:
 git checkout main
 git pull upstream main
 git checkout -b <new-branch-name>
-make setup
+pip install -e .[dev,docs]
 ```
 
 The new branch name should be brief, at no more than 80 characters. Format your branch
