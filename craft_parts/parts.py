@@ -387,7 +387,11 @@ class PartSpec(BaseModel):
     override_pull: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the pull step.",
-        examples=["|\ncraftctl default\nrm $CRAFT_PART_SRC/pyproject.toml"],
+        examples=[
+            """|
+              craftctl default
+              rm $CRAFT_PART_SRC/pyproject.toml"""
+        ],
     )
     """The commands to run instead of the default behavior of the pull step.
 
@@ -398,7 +402,10 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run after the part's overlay packages are installed.",
         examples=[
-            "|\nrm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*\nrm -f ${CRAFT_OVERLAY}/usr/bin/emacs*\nrm -f ${CRAFT_OVERLAY}/bin/nano"
+            """|
+              rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+              rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+              rm -f ${CRAFT_OVERLAY}/bin/nano"""
         ],
     )
     """The commands to run after the part's overlay packages are installed.
@@ -411,7 +418,10 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
         examples=[
-            "|\ncd cmd/webhook\nmkdir $CRAFT_PART_INSTALL/ko-app\ngo build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."
+            """|
+              cd cmd/webhook
+              mkdir $CRAFT_PART_INSTALL/ko-app
+              go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
         ],
     )
     """The commands to run instead of the default behavior of the build step.
@@ -423,7 +433,9 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the stage step.",
         examples=[
-            '|\ncraftctl default\nchown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'
+            '''|
+              craftctl default
+              chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
         ],
     )
     """The commands to run instead of the default behavior of the stage step.
@@ -435,7 +447,10 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the prime step.",
         examples=[
-            "|\ncraftctl default\nmkdir -p $CRAFT_PRIME/var/lib/mysql\nmkdir -p $CRAFT_PRIME/var/lib/mysqld"
+            """|
+              craftctl default
+              mkdir -p $CRAFT_PRIME/var/lib/mysql
+              mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
         ],
     )
     """The commands to run instead of the default behavior of the prime step.
