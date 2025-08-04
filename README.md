@@ -46,10 +46,6 @@ Craft Parts is released under the [LGPL-3.0 license](LICENSE).
 
 © 2021-2025 Canonical Ltd.
 
-# Documentation
-
-https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
-
 [rtd-badge]: https://readthedocs.com/projects/canonical-craft-parts/badge/?version=latest
 [rtd-latest]: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
