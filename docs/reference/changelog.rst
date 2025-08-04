@@ -18,8 +18,8 @@ Changelog
 
 .. _release 2.20.0:
 
-2.20.0 (2025-)
---------------
+2.20.0 (2025-08-04)
+-------------------
 
 New features:
 
@@ -37,6 +37,8 @@ Bug fixes:
 
 Documentation:
 
+- Add a reference page for the :ref:`craft_parts_maven_use_plugin`.
+- Add an explanation of how hidden files are handled in :ref:`filesets_explanation`.
 - Remove all intralinking in the ``PartSpec`` model's docstrings. This allows
   downstream apps that consume these docstrings to provide their own internal
   references.
