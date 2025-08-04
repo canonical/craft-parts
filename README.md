@@ -54,5 +54,5 @@ https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 [rtd-latest]: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [ruff-site]: https://github.com/astral-sh/ruff
-[codecov-badge]: https://codecov.io/github/canonical/craft-parts/coverage.svg?branch=master
-[codecov-status]: https://codecov.io/github/canonical/craft-parts?branch=master
+[codecov-badge]: https://codecov.io/github/canonical/craft-parts/coverage.svg?branch=main
+[codecov-status]: https://codecov.io/github/canonical/craft-parts?branch=main
