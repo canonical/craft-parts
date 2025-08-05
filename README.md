@@ -4,21 +4,16 @@
 [![Codecov Status][codecov-badge]][codecov-status]
 [![Code Style][ruff-badge]][ruff-site]
 
-Craft Parts provides the *parts* mechanism for all Starcraft applications.
-
-Parts provide a way to obtain data from many different sources, process it in various
-ways, and prepare a filesystem subtree suitable for software packaging.
-
-Parts can also be downloaded and built [directly from the command
-line](https://canonical-craft-parts.readthedocs-hosted.com/latest/how-to/cli_tool/) for
-experimentation.
+Craft Parts supports the *parts* mechanism common to all craft applications. It
+provides a declarative way to obtain, process, and organize data from different sources
+before it is packaged into the final artifact.
 
 This library is most useful for app developers in the Starcraft family.
 
 ## Documentation
 
-The [Craft Parts documentation][rtd-latest] provides guidance about
-understanding and using the library.
+The [Craft Parts documentation][rtd-latest] describes the library's key components and
+provides guidance on its usage.
 
 ## Community and support
 
