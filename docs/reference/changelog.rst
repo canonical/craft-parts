@@ -16,6 +16,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release 2.20.1:
+
+2.20.1 (2025-08-05)
+-------------------
+
+Bug fixes:
+
+- Multiline examples in Pydantic models are no longer highly indented.
+
 .. _release 2.20.0:
 
 2.20.0 (2025-08-04)
