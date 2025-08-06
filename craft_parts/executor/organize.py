@@ -146,11 +146,18 @@ def organize_files(
 
             if os.path.isdir(dst) and overwrite:
                 real_dst = os.path.join(dst, os.path.basename(src))
+                if real_dst == src:
+                    # Trying to organize a file to the same place, skipping
+                    continue
                 if os.path.isdir(real_dst):
                     shutil.rmtree(real_dst)
                 else:
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(real_dst)
 
+            real_dst = os.path.join(dst, os.path.basename(src))
+            if real_dst == src:
+                # Trying to organize a file to the same place, skipping
+                continue
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.move(src, dst)

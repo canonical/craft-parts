@@ -55,6 +55,13 @@ from craft_parts.executor.organize import organize_files
             },
             "expected": [(["bin"], ""), (["bar", "basefoo", "foo"], "bin")],
         },
+        # organize_to_itself
+        {
+            "setup_dirs": ["bardir"],
+            "setup_files": ["bardir/foo"],
+            "organize_map": {"bardir/*": "bardir/"},
+            "expected": [(["bardir"], ""), (["foo"], "bardir")],
+        },
         # leading_slash_in_value
         {
             "setup_files": ["foo"],
