@@ -55,13 +55,6 @@ from craft_parts.executor.organize import organize_files
             },
             "expected": [(["bin"], ""), (["bar", "basefoo", "foo"], "bin")],
         },
-        # organize_to_itself
-        {
-            "setup_dirs": ["bardir"],
-            "setup_files": ["bardir/foo"],
-            "organize_map": {"bardir/*": "bardir/"},
-            "expected": [(["bardir"], ""), (["foo"], "bardir")],
-        },
         # leading_slash_in_value
         {
             "setup_files": ["foo"],
@@ -136,6 +129,26 @@ from craft_parts.executor.organize import organize_files
                 (["dir"], "nested"),
                 (["foo"], os.path.join("nested", "dir")),
             ],
+        },
+        # organize a file to itself
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"foo": "foo"},
+            "expected": [(["foo"], "")],
+        },
+        # organize a set with a file to itself
+        {
+            "setup_dirs": ["bardir"],
+            "setup_files": ["bardir/foo"],
+            "organize_map": {"bardir/*": "bardir/"},
+            "expected": [(["bardir"], ""), (["foo"], "bardir")],
+        },
+        # organize from subdirs to itself
+        {
+            "setup_dirs": ["foodir", "foodir/bardir"],
+            "setup_files": ["foodir/bardir/foo"],
+            "organize_map": {"**/bardir/*": "bardir/"},
+            "expected": [(["bardir", "foodir"], ""), (["foo"], "bardir")],
         },
     ],
 )

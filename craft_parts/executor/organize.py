@@ -85,8 +85,11 @@ def organize_files(
                 shutil.rmtree(src)
                 continue
 
-            # Organize a file to a file
+            # Organize a "not dir" to a "not dir"
             if os.path.isfile(dst):
+                if dst == src:
+                    # Trying to organize a file to the same place, skipping
+                    continue
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(dst)
@@ -109,22 +112,19 @@ def organize_files(
                         ),
                     )
 
-            # Organize a file to a dir
-            if os.path.isdir(dst) and overwrite:
+            # Organize a "not dir" to a dir
+            if os.path.isdir(dst):
                 real_dst = os.path.join(dst, os.path.basename(src))
                 if real_dst == src:
                     # Trying to organize a file to the same place, skipping
                     continue
-                if os.path.isdir(real_dst):
-                    shutil.rmtree(real_dst)
-                else:
-                    with contextlib.suppress(FileNotFoundError):
-                        os.remove(real_dst)
+                if overwrite:
+                    if os.path.isdir(real_dst):
+                        shutil.rmtree(real_dst)
+                    else:
+                        with contextlib.suppress(FileNotFoundError):
+                            os.remove(real_dst)
 
-            real_dst = os.path.join(dst, os.path.basename(src))
-            if real_dst == src:
-                # Trying to organize a file to the same place, skipping
-                continue
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.move(src, dst)
 
