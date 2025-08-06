@@ -66,47 +66,10 @@ def organize_files(
         the default partition.
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
-        src_partition, src_inner_path = path_utils.get_partition_and_path(
-            key, default_partition
+        src = get_src_path(key, part_name, install_dir_map, default_partition)
+        dst, dst_string = get_dst_path(
+            key, file_map, install_dir_map, default_partition
         )
-
-        if src_partition and src_partition not in [
-            default_partition,
-            DEFAULT_PARTITION,
-        ]:
-            raise errors.FileOrganizeError(
-                part_name=part_name,
-                message=(
-                    f"Cannot organize files from {src_partition!r} partition. "
-                    f"Files can only be organized from the {default_partition!r} partition"
-                ),
-            )
-        # Replace default partition default name with alias name to allow
-        # using (default) in paths even with aliased default partition
-        if src_partition == DEFAULT_PARTITION:
-            src_partition = default_partition
-
-        src = os.path.join(install_dir_map[src_partition], src_inner_path)
-
-        # Remove the leading slash so the path actually joins
-        # Also trailing slash is significant, be careful if using pathlib!
-        dst_partition, dst_inner_path = path_utils.get_partition_and_path(
-            file_map[key].lstrip("/"),
-            default_partition,
-        )
-
-        # Replace default partition default name with alias name to allow
-        # using (default) in paths even with aliased default partition
-        if dst_partition == DEFAULT_PARTITION:
-            dst_partition = default_partition
-
-        dst = os.path.join(install_dir_map[dst_partition], dst_inner_path)
-
-        # prefix the partition to the log-friendly version of the destination
-        if dst_partition and dst_partition != default_partition:
-            dst_string = f"({dst_partition})/{dst_inner_path}"
-        else:
-            dst_string = str(dst_inner_path)
 
         sources = iglob(src, recursive=True)
 
@@ -116,11 +79,13 @@ def organize_files(
         for src in sources:
             src_count += 1
 
+            # Organize a dir to a dir
             if os.path.isdir(src) and "*" not in key:
                 file_utils.link_or_copy_tree(src, dst)
                 shutil.rmtree(src)
                 continue
 
+            # Organize a file to a file
             if os.path.isfile(dst):
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
@@ -144,6 +109,7 @@ def organize_files(
                         ),
                     )
 
+            # Organize a file to a dir
             if os.path.isdir(dst) and overwrite:
                 real_dst = os.path.join(dst, os.path.basename(src))
                 if real_dst == src:
@@ -161,3 +127,61 @@ def organize_files(
                 continue
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.move(src, dst)
+
+
+def get_src_path(
+    key: str,
+    part_name: str,
+    install_dir_map: Mapping[str | None, Path],
+    default_partition: str,
+) -> str:
+    """Return the full path for a relative source."""
+    src_partition, src_inner_path = path_utils.get_partition_and_path(
+        key, default_partition
+    )
+
+    if src_partition and src_partition not in [
+        default_partition,
+        DEFAULT_PARTITION,
+    ]:
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"Cannot organize files from {src_partition!r} partition. "
+                f"Files can only be organized from the {default_partition!r} partition"
+            ),
+        )
+    # Replace default partition default name with alias name to allow
+    # using (default) in paths even with aliased default partition
+    if src_partition == DEFAULT_PARTITION:
+        src_partition = default_partition
+
+    return os.path.join(install_dir_map[src_partition], src_inner_path)
+
+
+def get_dst_path(
+    key: str,
+    file_map: dict[str, str],
+    install_dir_map: Mapping[str | None, Path],
+    default_partition: str,
+) -> tuple[str, str]:
+    """Return the full destination path and log-friendly representation of a destination."""
+    # Remove the leading slash so the path actually joins
+    # Also trailing slash is significant, be careful if using pathlib!
+    dst_partition, dst_inner_path = path_utils.get_partition_and_path(
+        file_map[key].lstrip("/"),
+        default_partition,
+    )
+
+    # Replace default partition default name with alias name to allow
+    # using (default) in paths even with aliased default partition
+    if dst_partition == DEFAULT_PARTITION:
+        dst_partition = default_partition
+
+    # prefix the partition to the log-friendly version of the destination
+    if dst_partition and dst_partition != default_partition:
+        dst_string = f"({dst_partition})/{dst_inner_path}"
+    else:
+        dst_string = str(dst_inner_path)
+
+    return os.path.join(install_dir_map[dst_partition], dst_inner_path), dst_string
