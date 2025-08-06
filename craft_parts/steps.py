@@ -95,3 +95,17 @@ def dependency_prerequisite_step(step: Step) -> Step | None:
         return Step.STAGE
 
     return step
+
+
+def ovl_bootstrap_dependency_prerequisite_step(step: Step) -> Step | None:
+    """Obtain the step a given step may depend on when depending on a part bootstrapping the overlay.
+
+    :returns: The prerequisite step.
+    """
+    if step < Step.OVERLAY:
+        return None
+
+    if step <= Step.BUILD:
+        return Step.BUILD
+
+    return step

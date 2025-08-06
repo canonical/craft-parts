@@ -46,6 +46,17 @@ from tests.unit.executor.test_organize import organize_and_assert
                 r"Files can only be organized from the 'default' partition.*"
             ),
         },
+        # Raise an error for files sourced from the overlay
+        {
+            "organize_map": {
+                "(overlay)/foo": "(our/special-part)/foo1",
+            },
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*Cannot organize files from overlay. "
+                r"Files can only be organized from the 'default' partition.*"
+            ),
+        },
         # Files that should have the same name in two different partitions
         {
             "setup_files": ["foo", "bar"],
@@ -207,6 +218,7 @@ def test_organize(new_dir, data):
         "yourpart": new_dir / "partitions/yourpart/parts/part-name/install",
         "our/special-part": new_dir
         / "partitions/our/special-part/parts/part-name/install",
+        "overlay": new_dir / "overlay/overlay",
     }
 
     organize_and_assert(

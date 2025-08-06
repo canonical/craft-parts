@@ -13,6 +13,7 @@ AntPlugin
 AntPluginEnvironmentValidator
 AntPluginProperties
 AptCache
+AreaPathPair
 Autoconf
 Automake
 Autotools
@@ -225,7 +226,6 @@ PartSpec
 PartSpecificationError
 PartitionError
 PartitionNotFound
-PartitionPathPair
 PartitionUsageError
 PartitionUsageWarning
 PartsError
@@ -488,6 +488,7 @@ organized
 organizing
 ormal
 os
+ovl
 overlayfs
 packageName
 packahe
