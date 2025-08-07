@@ -157,6 +157,7 @@ def test_organize(new_dir, data):
         tmp_path=new_dir,
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
@@ -170,6 +171,7 @@ def test_organize(new_dir, data):
         tmp_path=new_dir,
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
@@ -179,11 +181,42 @@ def test_organize(new_dir, data):
     )
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        # organize a symlink to its target
+        {
+            "setup_files": ["foo"],
+            "setup_symlinks": [("foo-link", "foo")],
+            "organize_map": {"foo-link": "foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize file 'foo-link' to 'foo', but 'foo' already exists.*"
+            ),
+        },
+    ],
+)
+def test_organize_no_overwrite(new_dir, data):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
+        organize_map=data["organize_map"],
+        expected=data["expected"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
 def organize_and_assert(
     *,
     tmp_path: Path,
     setup_dirs,
     setup_files,
+    setup_symlinks: list[tuple[str, str]],
     organize_map,
     expected: list[Any],
     expected_message,
@@ -199,6 +232,11 @@ def organize_and_assert(
 
     for file_entry in setup_files:
         (install_dir / file_entry).touch()
+
+    for symlink_entry, symlink_target in setup_symlinks:
+        symlink_path = install_dir / symlink_entry
+        if not symlink_path.is_symlink():
+            symlink_path.symlink_to(install_dir / symlink_target)
 
     if overwrite and expected_overwrite is not None:
         expected = expected_overwrite
