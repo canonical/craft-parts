@@ -85,7 +85,7 @@ def organize_files(
                 shutil.rmtree(src)
                 continue
 
-            # Organize a "not dir" to a "not dir"
+            # Organize a "not dir" (file, character device, etc.) to a "not dir"
             if os.path.isfile(dst):
                 if dst == src:
                     # Trying to organize a file to the same place, skipping
