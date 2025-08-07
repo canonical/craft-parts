@@ -185,6 +185,9 @@ def test_organize(new_dir, data):
     "data",
     [
         # organize a symlink to its target
+        # Running this test with overwrite=True would delete the target
+        # and replace it with the symlink, effectively pointing at itself.
+        # This is the current behavior but might not be the intended one.
         {
             "setup_files": ["foo"],
             "setup_symlinks": [("foo-link", "foo")],
