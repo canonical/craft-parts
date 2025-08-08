@@ -97,6 +97,14 @@ class MigrationState(BaseModel):
             self.directories |= directories
 
 
+class ProjectOptions(BaseModel):
+    application_name: str
+    arch_triplet: str
+    target_arch: str
+    project_vars: dict[str, ProjectVar]
+    project_vars_part_name: str
+
+
 class StepState(MigrationState, ABC):
     """Contextual information collected when a step is executed.
 
@@ -106,7 +114,7 @@ class StepState(MigrationState, ABC):
     """
 
     part_properties: dict[str, Any] = {}
-    project_options: dict[str, Any] = {}
+    project_options: ProjectOptions = {}
     model_config = ConfigDict(
         validate_assignment=True,
         extra="ignore",
@@ -115,20 +123,20 @@ class StepState(MigrationState, ABC):
         populate_by_name=True,
     )
 
-    @model_validator(mode="after")
-    def _coerce_project_vars(self) -> Self:
-        """Coerce project_vars options to ProjectVar types."""
-        # FIXME: add proper type definition for project_options so that
-        # ProjectVar can be created by pydantic during model unmarshaling.
-        if self.project_options:
-            pvars = self.project_options.get("project_vars")
-            if pvars:
-                for key, val in pvars.items():
-                    self.project_options["project_vars"][key] = (
-                        ProjectVar.model_validate(val)
-                    )
+    # @model_validator(mode="after")
+    # def _coerce_project_vars(self) -> Self:
+    #     """Coerce project_vars options to ProjectVar types."""
+    #     # FIXME: add proper type definition for project_options so that
+    #     # ProjectVar can be created by pydantic during model unmarshaling.
+    #     if self.project_options:
+    #         pvars = self.project_options.get("project_vars")
+    #         if pvars:
+    #             for key, val in pvars.items():
+    #                 self.project_options["project_vars"][key] = (
+    #                     ProjectVar.model_validate(val)
+    #                 )
 
-        return self
+    #     return self
 
     @abstractmethod
     def properties_of_interest(

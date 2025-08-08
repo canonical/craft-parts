@@ -58,12 +58,12 @@ def load_step_state(part: Part, step: Step) -> StepState | None:
     #
     # FIXME: add proper type definition for project_options so that
     # ProjectVar can be created by pydantic during model unmarshaling.
-    options = state_data.get("project-options")
-    if options:
-        pvars = options.get("project_vars")
-        if pvars:
-            for key, val in pvars.items():
-                state_data["project-options"]["project_vars"][key] = ProjectVar(**val)
+    # options = state_data.get("project-options")
+    # if options:
+    #     pvars = options.get("project_vars")
+    #     if pvars:
+    #         for key, val in pvars.items():
+    #             state_data["project-options"]["project_vars"][key] = ProjectVar(**val)
 
     state_class: type[StepState]
 
