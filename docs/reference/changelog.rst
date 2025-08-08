@@ -24,8 +24,9 @@ Changelog
 
 Bug fixes:
 
-- When organizing files, ignore implicit requests (resulting from glob expansion)
-  to organize a file to itself. 
+- `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
+  were used in an ``organize`` source path, an error would occur if files mapped to
+  themselves. These cases are now ignored.
 
 For a complete list of commits, check out the `2.20.1`_ release on GitHub.
 
