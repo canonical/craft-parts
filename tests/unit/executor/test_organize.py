@@ -197,6 +197,16 @@ def test_organize(new_dir, data):
                 r".*trying to organize file 'foo-link' to 'foo', but 'foo' already exists.*"
             ),
         },
+        # organize a file under a symlinked directory to the symlink target
+        {
+            "setup_files": ["foo"],
+            "setup_symlinks": [("bardir", ".")],
+            "organize_map": {"bardir/foo": "foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize file 'bardir/foo' to 'foo', but 'foo' already exists.*"
+            ),
+        },
     ],
 )
 def test_organize_no_overwrite(new_dir, data):
