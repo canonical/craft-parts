@@ -87,7 +87,7 @@ def organize_files(
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
             if os.path.isfile(dst):
-                if dst == src:
+                if os.path.abspath(dst) == os.path.abspath(src):
                     # Trying to organize a file to the same place, skipping
                     continue
                 if overwrite and src_count <= 1:
@@ -115,7 +115,7 @@ def organize_files(
             # Organize a "not dir" to a dir
             if os.path.isdir(dst):
                 real_dst = os.path.join(dst, os.path.basename(src))
-                if real_dst == src:
+                if os.path.abspath(real_dst) == os.path.abspath(src):
                     # Trying to organize a file to the same place, skipping
                     continue
                 if overwrite:

@@ -136,6 +136,13 @@ from craft_parts.executor.organize import organize_files
             "organize_map": {"foo": "foo"},
             "expected": [(["foo"], "")],
         },
+        # organize a file to itself with different path
+        {
+            "setup_dirs": ["bardir"],
+            "setup_files": ["foo"],
+            "organize_map": {"bardir/../foo": "foo"},
+            "expected": [(["bardir", "foo"], "")],
+        },
         # organize a set with a file to itself
         {
             "setup_dirs": ["bardir"],
@@ -205,6 +212,16 @@ def test_organize(new_dir, data):
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize file 'bardir/foo' to 'foo', but 'foo' already exists.*"
+            ),
+        },
+        # organize a file under a symlinked directory to the symlink target
+        {
+            "setup_files": ["foo"],
+            "setup_symlinks": [("bardir", ".")],
+            "organize_map": {"foo": "bardir/foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize file 'foo' to 'bardir/foo', but 'bardir/foo' already exists.*"
             ),
         },
     ],
