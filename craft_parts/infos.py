@@ -21,7 +21,7 @@ import platform
 import re
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import pydantic
 
@@ -432,6 +432,20 @@ class ProjectInfo:
 
         if name not in self._project_vars:
             raise ValueError(f"{name!r} not in project variables")
+
+
+class ProjectOptions(pydantic.BaseModel):
+    application_name: str
+    arch_triplet: str
+    target_arch: str
+    project_vars: dict[str, ProjectVar]
+    project_vars_part_name: str
+
+
+    @classmethod
+    def from_project_info(cls, project_info: ProjectInfo) -> Self:
+        return cls.model_validate(ProjectInfo.project_options)
+
 
 
 class PartInfo:

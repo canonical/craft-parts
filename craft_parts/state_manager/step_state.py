@@ -97,14 +97,6 @@ class MigrationState(BaseModel):
             self.directories |= directories
 
 
-class ProjectOptions(BaseModel):
-    application_name: str
-    arch_triplet: str
-    target_arch: str
-    project_vars: dict[str, ProjectVar]
-    project_vars_part_name: str
-
-
 class StepState(MigrationState, ABC):
     """Contextual information collected when a step is executed.
 
