@@ -130,6 +130,33 @@ from craft_parts.executor.organize import organize_files
                 (["foo"], os.path.join("nested", "dir")),
             ],
         },
+        # organize a file to itself
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"foo": "foo"},
+            "expected": [(["foo"], "")],
+        },
+        # organize a file to itself with different path
+        {
+            "setup_dirs": ["bardir"],
+            "setup_files": ["foo"],
+            "organize_map": {"bardir/../foo": "foo"},
+            "expected": [(["bardir", "foo"], "")],
+        },
+        # organize a set with a file to itself
+        {
+            "setup_dirs": ["bardir"],
+            "setup_files": ["bardir/foo"],
+            "organize_map": {"bardir/*": "bardir/"},
+            "expected": [(["bardir"], ""), (["foo"], "bardir")],
+        },
+        # organize from subdirs to itself
+        {
+            "setup_dirs": ["foodir", "foodir/bardir"],
+            "setup_files": ["foodir/bardir/foo"],
+            "organize_map": {"**/bardir/*": "bardir/"},
+            "expected": [(["bardir", "foodir"], ""), (["foo"], "bardir")],
+        },
     ],
 )
 def test_organize(new_dir, data):
@@ -137,6 +164,7 @@ def test_organize(new_dir, data):
         tmp_path=new_dir,
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
@@ -150,6 +178,7 @@ def test_organize(new_dir, data):
         tmp_path=new_dir,
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
@@ -159,11 +188,65 @@ def test_organize(new_dir, data):
     )
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        # organize a symlink to its target
+        # Running this test with overwrite=True would delete the target
+        # and replace it with the symlink, effectively pointing at itself.
+        # This is the current behavior but might not be the intended one.
+        {
+            "setup_files": ["foo"],
+            "setup_symlinks": [("foo-link", "foo")],
+            "organize_map": {"foo-link": "foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize file 'foo-link' to 'foo', but 'foo' already exists.*"
+            ),
+        },
+        # organize a file under a symlinked directory to the symlink target
+        {
+            "setup_files": ["foo"],
+            "setup_symlinks": [("bardir", ".")],
+            "organize_map": {"bardir/foo": "foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize file 'bardir/foo' to 'foo', but 'foo' already exists.*"
+            ),
+        },
+        # organize a file under a symlinked directory to the symlink target
+        {
+            "setup_files": ["foo"],
+            "setup_symlinks": [("bardir", ".")],
+            "organize_map": {"foo": "bardir/foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize file 'foo' to 'bardir/foo', but 'bardir/foo' already exists.*"
+            ),
+        },
+    ],
+)
+def test_organize_no_overwrite(new_dir, data):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
+        organize_map=data["organize_map"],
+        expected=data["expected"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
 def organize_and_assert(
     *,
     tmp_path: Path,
     setup_dirs,
     setup_files,
+    setup_symlinks: list[tuple[str, str]],
     organize_map,
     expected: list[Any],
     expected_message,
@@ -179,6 +262,11 @@ def organize_and_assert(
 
     for file_entry in setup_files:
         (install_dir / file_entry).touch()
+
+    for symlink_entry, symlink_target in setup_symlinks:
+        symlink_path = install_dir / symlink_entry
+        if not symlink_path.is_symlink():
+            symlink_path.symlink_to(install_dir / symlink_target)
 
     if overwrite and expected_overwrite is not None:
         expected = expected_overwrite
