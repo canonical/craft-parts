@@ -301,7 +301,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via
     #   -r requirements.txt
     #   sphinx
-sphinxext-opengraph==0.9.1
+sphinxext-opengraph==0.12.0
     # via
     #   -r requirements.txt
     #   canonical-sphinx
