@@ -439,13 +439,11 @@ class ProjectOptions(pydantic.BaseModel):
     arch_triplet: str
     target_arch: str
     project_vars: dict[str, ProjectVar]
-    project_vars_part_name: str
-
+    project_vars_part_name: str | None
 
     @classmethod
     def from_project_info(cls, project_info: ProjectInfo) -> Self:
-        return cls.model_validate(ProjectInfo.project_options)
-
+        return cls.model_validate(project_info.project_options)
 
 
 class PartInfo:

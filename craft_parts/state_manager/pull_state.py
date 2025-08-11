@@ -20,6 +20,7 @@ from typing import Any
 
 from overrides import override
 
+from craft_parts.infos import ProjectOptions
 from .step_state import StepState
 
 
@@ -84,7 +85,7 @@ class PullState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
+        self, project_options: ProjectOptions
     ) -> dict[str, Any]:
         """Return relevant project options concerning this step.
 
@@ -93,5 +94,5 @@ class PullState(StepState):
         :return: A dictionary containing project options of interest.
         """
         return {
-            "project_vars_part_name": project_options.get("project_vars_part_name"),
+            "project_vars_part_name": project_options.project_vars_part_name,
         }
