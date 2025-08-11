@@ -32,7 +32,7 @@ class TestBuildState:
             "partition": None,
             "assets": {},
             "part-properties": {},
-            "project-options": None,
+            "project-options": ProjectOptions().model_dump(),
             "files": set(),
             "directories": set(),
             "overlay-hash": None,
@@ -130,7 +130,7 @@ class TestBuildStateChanges:
 
     def test_project_option_changes(self, project_options):
         state = BuildState(project_options=project_options)
-        assert state.diff_project_options_of_interest({}) == set()
+        assert state.diff_project_options_of_interest(ProjectOptions()) == set()
 
     def test_extra_property_changes(self, properties):
         augmented_properties = {**properties, "extra-property": "foo"}

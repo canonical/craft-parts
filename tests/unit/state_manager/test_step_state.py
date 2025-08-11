@@ -188,7 +188,13 @@ class TestStepState:
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},
-            "project-options": None,
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": set(),
             "directories": set(),
             "partitions-contents": {},
@@ -224,7 +230,13 @@ class TestStepState:
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},
-            "project-options": None,
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": set(),
             "directories": set(),
             "partitions-contents": {},

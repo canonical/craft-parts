@@ -21,7 +21,7 @@ import platform
 import re
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Optional, Self
 
 import pydantic
 
@@ -435,11 +435,11 @@ class ProjectInfo:
 
 
 class ProjectOptions(pydantic.BaseModel):
-    application_name: str
-    arch_triplet: str
-    target_arch: str
-    project_vars: dict[str, ProjectVar]
-    project_vars_part_name: str | None
+    application_name: str = ""
+    arch_triplet: str = ""
+    target_arch: str = ""
+    project_vars: dict[str, ProjectVar] = {}
+    project_vars_part_name: Optional[str] = None
 
     @classmethod
     def from_project_info(cls, project_info: ProjectInfo) -> Self:

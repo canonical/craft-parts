@@ -105,7 +105,7 @@ class StepState(MigrationState, ABC):
     """
 
     part_properties: dict[str, Any] = {}
-    project_options: ProjectOptions | None = None
+    project_options: ProjectOptions =  ProjectOptions()
     model_config = ConfigDict(
         validate_assignment=True,
         extra="ignore",
@@ -152,7 +152,7 @@ class StepState(MigrationState, ABC):
         )
 
     def diff_project_options_of_interest(
-        self, other_project_options: ProjectOptions | None
+        self, other_project_options: ProjectOptions
     ) -> set[str]:
         """Return project options that differ.
 
@@ -165,8 +165,8 @@ class StepState(MigrationState, ABC):
            the project options stored in this state.
         """
         return _get_differing_keys(
-            self.project_options_of_interest(self.project_options or {}),
-            self.project_options_of_interest(other_project_options or {}),
+            self.project_options_of_interest(self.project_options),
+            self.project_options_of_interest(other_project_options),
         )
 
     @classmethod
