@@ -31,7 +31,7 @@ class TestStageState:
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": None,
             "files": set(),
             "directories": set(),
             "overlay-hash": None,

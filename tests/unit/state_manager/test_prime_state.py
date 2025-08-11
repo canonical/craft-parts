@@ -30,7 +30,7 @@ class TestPrimeState:
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": None,
             "files": set(),
             "directories": set(),
             "dependency-paths": set(),
@@ -42,7 +42,13 @@ class TestPrimeState:
         state_data = {
             "partition": "default",
             "part-properties": {"plugin": "nil"},
-            "project-options": {"target_arch": "amd64"},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "amd64",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": {"a"},
             "directories": {"b"},
             "dependency-paths": {"c"},
