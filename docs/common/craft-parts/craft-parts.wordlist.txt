@@ -133,6 +133,7 @@ JLinkPlugin
 JLinkPluginEnvironmentValidator
 JLinkPluginProperties
 JSON
+KeyError
 LDFLAGS
 LLVM
 LTO
@@ -248,6 +249,8 @@ ProjectDirs
 ProjectInfo
 ProjectOptions
 ProjectVar
+ProjectVarInfo
+ProjectVars
 PullError
 PullState
 PurePath

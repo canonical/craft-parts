@@ -16,12 +16,13 @@
 
 """Project, part and step information classes."""
 
+from __future__ import annotations
+
 import logging
 import platform
 import re
-from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pydantic
 from typing_extensions import Self
@@ -33,13 +34,14 @@ from craft_parts.filesystem_mounts import (
     FilesystemMountItem,
     FilesystemMounts,
 )
-from craft_parts.parts import Part
-from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION, is_default_partition
 
 if TYPE_CHECKING:
-    from craft_parts.state_manager import states
+    from collections.abc import Sequence
 
+    from craft_parts.parts import Part
+    from craft_parts.state_manager import states
+    from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
 
@@ -86,10 +88,213 @@ _var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class ProjectVar(pydantic.BaseModel):
-    """Project variables that can be updated using craftctl."""
+    """A project variable that can be updated using craftctl."""
 
     value: str
     updated: bool = False
+
+
+class ProjectVarInfo(pydantic.RootModel):
+    """Project variables that can be updated using craftctl.
+
+    This class wraps a nested dictionary of project variables.
+    Data is accessed with structured paths.
+    """
+
+    root: dict[str, ProjectVar | ProjectVarInfo]
+    """A nested dictionary of ProjectVars."""
+
+    def __getitem__(self, item: str) -> ProjectVar | ProjectVarInfo:
+        return self.root[item]
+
+    def __setitem__(self, key: str, value: ProjectVar | ProjectVarInfo) -> None:
+        self.root[key] = value
+
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> ProjectVarInfo:
+        """Create and populate a new ProjectVarInfo object from a dict.
+
+        The unmarshal method validates entries in the input dict, populating
+        the corresponding fields in the data object.
+
+        :param data: The dict to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dict.
+        :raise pydantic.ValidationError: If the data fails validation.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("Project variable info must be a dictionary.")
+
+        return cls.model_validate(data)
+
+    def marshal(self) -> dict[str, Any]:
+        """Create a dictionary containing the project var info data.
+
+        :return: The newly created dictionary.
+        """
+        return cast(dict[str, Any], self.model_dump(by_alias=True))
+
+    def has_key(self, *keys: str) -> bool:
+        """Check if a key exists.
+
+        :param keys: A structured path to the value.
+
+        :returns: True if the key exists in the dictionary.
+
+        :raises KeyError: If no keys are provided.
+        """
+        logger.debug(f"Checking if {ProjectVarInfo._format_keys(*keys)!r} exists.")
+        self._validate_keys(*keys)
+
+        try:
+            self.get(*keys)
+        except (KeyError, ValueError):
+            logger.debug(f"{ProjectVarInfo._format_keys(*keys)!r} doesn't exist.")
+            return False
+
+        logger.debug(f"{ProjectVarInfo._format_keys(*keys)!r} exists.")
+        return True
+
+    def get(self, *keys: str) -> ProjectVar:
+        """Get the ProjectVar at a given path.
+
+        :param keys: A structured path to the value.
+
+        :returns: The value for the key.
+
+        :raises KeyError: If an item in the path doesn't exist.
+        :raises KeyError: If an item in the path isn't a dictionary.
+        :raises KeyError: If no keys are provided.
+        :raises ValueError: If the keys don't lead to a ProjectVar.
+        """
+        logger.debug(f"Getting value for {ProjectVarInfo._format_keys(*keys)!r}.")
+        self._validate_keys(*keys)
+
+        try:
+            value = self._get(*keys, data=self)
+        except (ValueError, KeyError) as err:
+            raise type(err)(
+                f"Failed to get value for {ProjectVarInfo._format_keys(*keys)!r}: {err.args[0]}"
+            ) from err
+
+        logger.debug(
+            f"Got {value.value!r} (updated={value.updated}) for {ProjectVarInfo._format_keys(*keys)!r}."
+        )
+        return value
+
+    def _get(self, *keys: str, data: ProjectVarInfo) -> ProjectVar:
+        """Recursive helper to get a ProjectVar from a nested dictionary.
+
+        :param keys: A structured path to the value. At least one key must be provided.
+        :param data: The dictionary to recurse into.
+
+        :returns: The value for the key.
+
+        :raises KeyError: If an item in the path doesn't exist.
+        :raises KeyError: If an item in the path isn't a dictionary.
+        :raises ValueError: If the keys don't lead to a ProjectVar.
+        """
+        key, *remaining = keys
+
+        try:
+            data_at_key = data[key]
+        except KeyError as err:
+            raise KeyError(f"{key!r} doesn't exist.") from err
+
+        if len(keys) == 1:
+            if not isinstance(data_at_key, ProjectVar):
+                raise ValueError("value isn't a ProjectVar.")
+            return data_at_key
+
+        if not isinstance(data_at_key, ProjectVarInfo):
+            raise KeyError(f"can't traverse into node at {key!r}.")
+
+        return self._get(*remaining, data=data_at_key)
+
+    def set(self, *keys: str, value: str, overwrite: bool = False) -> None:
+        """Set a ProjectVar at a given path.
+
+        :param keys: A structured path to the value.
+        :param value: The value to set.
+        :param overwrite: Allow overwriting existing values.
+
+        :raises KeyError: If an item in the path isn't a dictionary.
+        :raises KeyError: If no keys are provided.
+        :raises ValueError: If the ProjectVar has already been updated and 'overwrite' is false.
+        :raises ValueError: If the keys don't lead to a ProjectVar.
+        """
+        logger.debug(f"Setting {ProjectVarInfo._format_keys(*keys)!r} to {value!r}.")
+        self._validate_keys(*keys)
+
+        try:
+            self._set(*keys, data=self, value=value, overwrite=overwrite)
+        except (KeyError, ValueError) as err:
+            raise type(err)(
+                f"Failed to set {ProjectVarInfo._format_keys(*keys)!r} to {value!r}: {err.args[0]}"
+            ) from err
+
+        logger.debug(f"Set {ProjectVarInfo._format_keys(*keys)!r} to {value!r}.")
+
+    def _set(
+        self,
+        *keys: str,
+        data: ProjectVarInfo,
+        value: str,
+        overwrite: bool,
+    ) -> None:
+        """Recursive helper to set a ProjectVar in a nested dictionary.
+
+        :param keys: A structured path to the value. At least one key must be provided.
+        :param data: The data structure to recurse into.
+        :param value: The value to set.
+        :param overwrite: Allow overwriting existing values.
+
+        :raises KeyError: If an item in the path isn't a dictionary.
+        :raises ValueError: If the ProjectVar has already been updated and 'overwrite' is false.
+        :raises ValueError: If the keys don't lead to a ProjectVar.
+        """
+        key, *remaining = keys
+
+        try:
+            data_at_key = data[key]
+        except KeyError as err:
+            raise KeyError(f"{key!r} doesn't exist.") from err
+
+        if len(keys) == 1:
+            if not isinstance(data_at_key, ProjectVar):
+                raise ValueError("value isn't a ProjectVar.")
+
+            if data_at_key.updated:
+                if overwrite:
+                    logger.debug(f"Overwriting updated value {data_at_key.value!r}.")
+                else:
+                    raise ValueError(
+                        f"key {key!r} already exists and overwrite is false."
+                    )
+
+            data_at_key.updated = True
+            data_at_key.value = value
+            return
+
+        if not isinstance(data_at_key, ProjectVarInfo):
+            raise KeyError(f"can't traverse into node at {key!r}.")
+
+        self._set(*remaining, data=data_at_key, value=value, overwrite=overwrite)
+
+    def _validate_keys(self, *keys: str) -> None:
+        """Validate the keys.
+
+        :raises KeyError: If no keys are provided.
+        """
+        if not keys:
+            raise KeyError("No keys provided.")
+
+    @staticmethod
+    def _format_keys(*keys: str) -> str:
+        """Format keys in dot notation."""
+        return ".".join(keys)
 
 
 # pylint: disable-next=too-many-instance-attributes,too-many-public-methods
