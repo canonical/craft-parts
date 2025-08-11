@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager.pull_state import PullState
 
 
@@ -30,7 +31,7 @@ class TestPullState:
             "partition": None,
             "assets": {},
             "part-properties": {},
-            "project-options": {},
+            "project-options": None,
             "files": set(),
             "directories": set(),
             "outdated-files": None,
@@ -43,7 +44,13 @@ class TestPullState:
             "partition": "default",
             "assets": {"stage-packages": ["foo"]},
             "part-properties": {"plugin": "nil"},
-            "project-options": {"target_arch": "amd64"},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "amd64",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": {"a"},
             "directories": {"b"},
             "outdated-files": ["a"],
@@ -68,9 +75,13 @@ class TestPullStatePersist:
         state = PullState(
             assets={"stage-packages": ["foo"]},
             part_properties=properties,
-            project_options={
-                "target_arch": "amd64",
-            },
+            project_options=ProjectOptions(
+                application_name="",
+                arch_triplet="",
+                target_arch="amd64",
+                project_vars={},
+                project_vars_part_name=None,
+            ),
             files={"a"},
             directories={"b"},
         )

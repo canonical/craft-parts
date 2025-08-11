@@ -22,8 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-from typing_extensions import Self
+from pydantic import BaseModel, ConfigDict, Field
 
 from craft_parts.infos import ProjectOptions, ProjectVar
 from craft_parts.utils import os_utils
@@ -153,7 +152,7 @@ class StepState(MigrationState, ABC):
         )
 
     def diff_project_options_of_interest(
-        self, other_project_options: ProjectOptions
+        self, other_project_options: ProjectOptions | None
     ) -> set[str]:
         """Return project options that differ.
 
@@ -166,8 +165,8 @@ class StepState(MigrationState, ABC):
            the project options stored in this state.
         """
         return _get_differing_keys(
-            self.project_options_of_interest(self.project_options),
-            self.project_options_of_interest(other_project_options),
+            self.project_options_of_interest(self.project_options or {}),
+            self.project_options_of_interest(other_project_options or {}),
         )
 
     @classmethod

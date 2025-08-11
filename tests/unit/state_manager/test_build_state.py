@@ -19,6 +19,7 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager.build_state import BuildState
 
 
@@ -31,7 +32,7 @@ class TestBuildState:
             "partition": None,
             "assets": {},
             "part-properties": {},
-            "project-options": {},
+            "project-options": None,
             "files": set(),
             "directories": set(),
             "overlay-hash": None,
@@ -43,7 +44,13 @@ class TestBuildState:
             "partition": "default",
             "assets": {"build-packages": ["foo"]},
             "part-properties": {"plugin": "nil"},
-            "project-options": {"target_arch": "amd64"},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "amd64",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": {"a"},
             "directories": {"b"},
             "overlay-hash": "6f7665726c61792d68617368",
@@ -76,9 +83,13 @@ class TestBuildStatePersist:
         state = BuildState(
             assets={"build-packages": ["foo"]},
             part_properties=properties,
-            project_options={
-                "target_arch": "amd64",
-            },
+            project_options=ProjectOptions(
+                application_name="",
+                arch_triplet="",
+                target_arch="amd64",
+                project_vars={},
+                project_vars_part_name=None,
+            ),
             files={"a"},
             directories={"b"},
         )

@@ -19,6 +19,7 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager.stage_state import StageState
 
 
@@ -77,9 +78,13 @@ class TestStageStatePersist:
     def test_write(self, properties):
         state = StageState(
             part_properties=properties,
-            project_options={
-                "target_arch": "amd64",
-            },
+            project_options=ProjectOptions(
+                application_name="",
+                arch_triplet="",
+                target_arch="amd64",
+                project_vars={},
+                project_vars_part_name=None,
+            ),
             files={"a"},
             directories={"b"},
         )

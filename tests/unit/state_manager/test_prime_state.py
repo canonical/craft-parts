@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager.states import PrimeState
 
 
@@ -65,9 +66,13 @@ class TestPrimeStatePersist:
     def test_write(self, properties):
         state = PrimeState(
             part_properties=properties,
-            project_options={
-                "target_arch": "amd64",
-            },
+            project_options=ProjectOptions(
+                application_name="",
+                arch_triplet="",
+                target_arch="amd64",
+                project_vars={},
+                project_vars_part_name=None,
+            ),
             files={"a"},
             directories={"b"},
             dependency_paths={"c"},

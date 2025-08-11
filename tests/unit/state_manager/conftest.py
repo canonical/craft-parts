@@ -18,6 +18,7 @@ from typing import Any
 
 import pytest
 
+from craft_parts.infos import ProjectOptions
 
 @pytest.fixture
 def properties() -> dict[str, Any]:
@@ -50,8 +51,11 @@ def properties() -> dict[str, Any]:
 
 
 @pytest.fixture
-def project_options() -> dict[str, Any]:
-    return {
-        "application-name": "test",
-        "target-arch": "amd64",
-    }
+def project_options() -> ProjectOptions:
+    return ProjectOptions(
+        application_name="test",
+        arch_triplet="",
+        target_arch="amd64",
+        project_vars={},
+        project_vars_part_name=None,
+    )
