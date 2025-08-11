@@ -81,7 +81,7 @@ class StageState(StepState):
     ) -> dict[str, Any]:
         """Return relevant project options concerning this step.
 
-        :param project_options: A dictionary containing all project options.
+        :param project_options: A ``ProjectOptions`` instance.
 
         :return: A dictionary containing project options of interest.
         """
