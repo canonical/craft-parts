@@ -281,10 +281,7 @@ class TestStateChanges:
         state = SomeStepState(project_options=ProjectOptions())
 
         # relevant project options didn't change
-        assert (
-            state.diff_project_options_of_interest(ProjectOptions())
-            == set()
-        )
+        assert state.diff_project_options_of_interest(ProjectOptions()) == set()
 
         # relevant project options changed
         assert state.diff_project_options_of_interest(

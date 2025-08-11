@@ -20,6 +20,7 @@ import pytest
 
 from craft_parts.infos import ProjectOptions
 
+
 @pytest.fixture
 def properties() -> dict[str, Any]:
     return {
