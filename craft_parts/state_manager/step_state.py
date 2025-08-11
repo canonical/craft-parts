@@ -106,7 +106,7 @@ class StepState(MigrationState, ABC):
     """
 
     part_properties: dict[str, Any] = {}
-    project_options: ProjectOptions
+    project_options: ProjectOptions | None = None
     model_config = ConfigDict(
         validate_assignment=True,
         extra="ignore",
