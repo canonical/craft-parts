@@ -201,25 +201,18 @@ class TestStepState:
         }
 
     def test_marshal_data(self):
-        project_options = ProjectOptions(
-            application_name="",
-            arch_triplet="",
-            target_arch="",
-            project_vars={},
-            project_vars_part_name=None,
-        )
         state = SomeStepState(
             part_properties={
                 "name": "foo",
             },
-            project_options=project_options,
+            project_options=ProjectOptions(),
             files={"a"},
             directories={"b"},
         )
         assert state.marshal() == {
             "partition": None,
             "part-properties": {"name": "foo"},
-            "project-options": project_options.model_dump(),
+            "project-options": ProjectOptions().model_dump(),
             "files": {"a"},
             "directories": {"b"},
             "partitions-contents": {},
@@ -252,13 +245,7 @@ class TestStepStatePersist:
             part_properties={
                 "name": "foo",
             },
-            project_options=ProjectOptions(
-                application_name="",
-                arch_triplet="",
-                target_arch="",
-                project_vars={},
-                project_vars_part_name=None,
-            ),
+            project_options=ProjectOptions(),
             files={"a"},
             directories={"b"},
         )
@@ -291,31 +278,18 @@ class TestStateChanges:
         assert state.diff_properties_of_interest({"name": "bob"}) == {"name"}
 
     def test_project_options_changes(self):
-        project_options = ProjectOptions(
-            application_name="",
-            arch_triplet="",
-            target_arch="",
-            project_vars={},
-            project_vars_part_name=None,
-        )
-        state = SomeStepState(project_options=project_options)
+        state = SomeStepState(project_options=ProjectOptions())
 
         # relevant project options didn't change
         assert (
-            state.diff_project_options_of_interest(project_options)
+            state.diff_project_options_of_interest(ProjectOptions())
             == set()
         )
 
         # relevant project options changed
-        other_project_options = ProjectOptions(
-            application_name="",
-            arch_triplet="",
-            target_arch="different",
-            project_vars={},
-            project_vars_part_name=None,
-        )
         assert state.diff_project_options_of_interest(
-            other_project_options) == {"target_arch"}
+            ProjectOptions(target_arch="different")
+        ) == {"target_arch"}
 
 
 class TestHelpers:
