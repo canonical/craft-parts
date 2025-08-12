@@ -17,7 +17,6 @@
 from typing import Any
 
 import pytest
-
 from craft_parts.infos import ProjectOptions
 
 

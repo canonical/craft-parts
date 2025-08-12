@@ -21,10 +21,9 @@ import os
 import pathlib
 from dataclasses import dataclass
 
-from craft_parts.overlays import overlay_fs
-
 from craft_parts import errors, overlays, permissions
 from craft_parts.features import Features
+from craft_parts.overlays import overlay_fs
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
 

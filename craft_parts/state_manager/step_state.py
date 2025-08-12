@@ -24,7 +24,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from craft_parts.infos import ProjectOptions, ProjectVar
+from craft_parts.infos import ProjectOptions
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)

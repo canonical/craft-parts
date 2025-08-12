@@ -21,6 +21,7 @@ from typing import Any
 from overrides import override
 
 from craft_parts.infos import ProjectOptions
+
 from .step_state import StepState
 
 
