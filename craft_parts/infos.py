@@ -22,9 +22,9 @@ import re
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-from typing_extensions import Self
 
 import pydantic
+from typing_extensions import Self
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
