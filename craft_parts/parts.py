@@ -447,8 +447,8 @@ class PartSpec(BaseModel):
                 '''\
                 |
                 craftctl default
-                chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh'''
-            )    
+                chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            )
         ],
     )
     """The commands to run instead of the default behavior of the stage step.
