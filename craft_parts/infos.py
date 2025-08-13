@@ -443,7 +443,7 @@ class ProjectOptions(pydantic.BaseModel):
     :param arch_triplet: Concatenated cpu-vendor-os platform.
     :param target_arch: The architecture to build for.
     :param project_vars: A dictionary containing the project variables.
-    :param project_Vars_part_name: Project variables can be set only if
+    :param project_vars_part_name: Project variables can be set only if
         the part name matches this name.
     """
 
