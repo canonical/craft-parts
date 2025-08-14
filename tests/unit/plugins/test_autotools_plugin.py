@@ -117,11 +117,11 @@ class TestPluginAutotools:
             'make install DESTDIR="/tmp"',
         ]
 
-    def test_get_build_commands_no_parallel(self, new_dir):
+    def test_get_build_commands_disable_parallel(self, new_dir):
         properties = AutotoolsPlugin.properties_class.unmarshal(
             {
                 "source": ".",
-                "autotools-parallel": "false",
+                "disable-parallel": "true",
             },
         )
 

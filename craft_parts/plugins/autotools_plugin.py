@@ -109,9 +109,9 @@ class AutotoolsPlugin(Plugin):
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
             (
-                f"make -j{self._part_info.parallel_build_count}"
-                if options.autotools_parallel
-                else "make"
+                "make"
+                if options.disable_parallel
+                else f"make -j{self._part_info.parallel_build_count}"
             ),
             f'make install DESTDIR="{self._part_info.part_install_dir}"',
         ]
