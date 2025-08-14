@@ -94,14 +94,15 @@ wheels = [
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.12.3"
+version = "4.13.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "soupsieve" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/ca/824b1195773ce6166d388573fc106ce56d4a805bd7427b624e063596ec58/beautifulsoup4-4.12.3.tar.gz", hash = "sha256:74e3d1928edc070d21748185c46e3fb33490f22f52a3addee9aee0f4f7781051", size = 581181, upload-time = "2024-01-17T16:53:17.902Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/e4/0c4c39e18fd76d6a628d4dd8da40543d136ce2d1752bd6eeeab0791f4d6b/beautifulsoup4-4.13.4.tar.gz", hash = "sha256:dbb3c4e1ceae6aefebdaf2423247260cd062430a410e38c66f2baa50a8437195", size = 621067, upload-time = "2025-04-15T17:05:13.836Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/fe/e8c672695b37eecc5cbf43e1d0638d88d66ba3a44c4d321c796f4e59167f/beautifulsoup4-4.12.3-py3-none-any.whl", hash = "sha256:b80878c9f40111313e55da8ba20bdba06d8fa3969fc68304167741bbf9e082ed", size = 147925, upload-time = "2024-01-17T16:53:12.779Z" },
+    { url = "https://files.pythonhosted.org/packages/50/cd/30110dc0ffcf3b131156077b90e9f60ed75711223f306da4db08eff8403b/beautifulsoup4-4.13.4-py3-none-any.whl", hash = "sha256:9bbbb14bfde9d79f38b8cd5f8c7c85f4b8f2523190ebed90e950a8dea4cb1c4b", size = 187285, upload-time = "2025-04-15T17:05:12.221Z" },
 ]
 
 [[package]]
@@ -355,6 +356,7 @@ toml = [
 name = "craft-parts"
 source = { editable = "." }
 dependencies = [
+    { name = "lxml" },
     { name = "overrides" },
     { name = "pydantic" },
     { name = "pyxdg" },
@@ -401,6 +403,7 @@ dev = [
     { name = "types-colorama" },
     { name = "types-docutils" },
     { name = "types-jsonschema" },
+    { name = "types-lxml" },
     { name = "types-pillow" },
     { name = "types-pygments" },
     { name = "types-pytz" },
@@ -446,6 +449,7 @@ dev = [
     { name = "types-colorama" },
     { name = "types-docutils" },
     { name = "types-jsonschema" },
+    { name = "types-lxml" },
     { name = "types-pillow" },
     { name = "types-pygments" },
     { name = "types-pytz" },
@@ -465,10 +469,11 @@ requires-dist = [
     { name = "flake8", marker = "extra == 'tics'" },
     { name = "hypothesis", marker = "extra == 'dev'" },
     { name = "jsonschema", marker = "extra == 'dev'" },
+    { name = "lxml", specifier = ">=5.3.0" },
     { name = "mypy", extras = ["reports"], marker = "extra == 'dev'", specifier = "~=1.14.1" },
     { name = "overrides", specifier = "!=7.6.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pydantic-kitbash", marker = "extra == 'docs'", specifier = "==0.0.6" },
+    { name = "pydantic-kitbash", marker = "extra == 'docs'", specifier = "==0.0.7" },
     { name = "pydocstyle", marker = "extra == 'dev'" },
     { name = "pyfakefs", marker = "extra == 'dev'", specifier = "~=5.3" },
     { name = "pylint", marker = "extra == 'tics'" },
@@ -500,6 +505,7 @@ requires-dist = [
     { name = "types-colorama", marker = "extra == 'dev'" },
     { name = "types-docutils", marker = "extra == 'dev'" },
     { name = "types-jsonschema", marker = "extra == 'dev'" },
+    { name = "types-lxml", marker = "extra == 'dev'", specifier = ">=2025.3.30" },
     { name = "types-pillow", marker = "extra == 'dev'" },
     { name = "types-pygments", marker = "extra == 'dev'" },
     { name = "types-pytz", marker = "extra == 'dev'" },
@@ -531,6 +537,7 @@ dev = [
     { name = "types-colorama" },
     { name = "types-docutils" },
     { name = "types-jsonschema" },
+    { name = "types-lxml", specifier = ">=2025.3.30" },
     { name = "types-pillow" },
     { name = "types-pygments" },
     { name = "types-pytz" },
@@ -538,6 +545,15 @@ dev = [
     { name = "types-requests" },
     { name = "types-setuptools" },
     { name = "yamllint", specifier = "~=1.35" },
+]
+
+[[package]]
+name = "cssselect"
+version = "1.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/0a/c3ea9573b1dc2e151abfe88c7fe0c26d1892fe6ed02d0cdb30f0d57029d5/cssselect-1.3.0.tar.gz", hash = "sha256:57f8a99424cfab289a1b6a816a43075a4b00948c86b4dcf3ef4ee7e15f7ab0c7", size = 42870, upload-time = "2025-03-10T09:30:29.638Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/58/257350f7db99b4ae12b614a36256d9cc870d71d9e451e79c2dc3b23d7c3c/cssselect-1.3.0-py3-none-any.whl", hash = "sha256:56d1bf3e198080cc1667e137bc51de9cadfca259f03c2d4e09037b3e01e30f0d", size = 18786, upload-time = "2025-03-10T09:30:28.048Z" },
 ]
 
 [[package]]
@@ -1150,7 +1166,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-kitbash"
-version = "0.0.6"
+version = "0.0.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -1158,9 +1174,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/c0/48066291bb9db968d42d6419fa666be077c893d17cdca0eac44cedb2e3d1/pydantic_kitbash-0.0.6.tar.gz", hash = "sha256:60b18ce727f06b6c5a3f8db5675bb6c423449bb59832c3e04cfef4b1568a84e9", size = 124406, upload-time = "2025-07-03T19:24:33.841Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/b9/630281fa690b2449e70d59ce221c91d9633571c4a7c2dcd8469a59a8c7cc/pydantic_kitbash-0.0.7.tar.gz", hash = "sha256:14eda8a87401b09d746e1ad4157248d8c0d1841803bf609600143e567a687551", size = 131893, upload-time = "2025-08-01T16:26:32.107Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/4e/4f492ee0d832eb9d8ebd9915e35bff6fd09d658bc6fdb1f31d70495492cf/pydantic_kitbash-0.0.6-py3-none-any.whl", hash = "sha256:e16fa65ebfebe7d295e9b476641e253e02b18686e52bedc2ec65c46421d9875d", size = 13156, upload-time = "2025-07-03T19:24:32.342Z" },
+    { url = "https://files.pythonhosted.org/packages/56/05/4a05fbb8f72ae86060430e55349e1d504ee73973e9a767aeb9ecaf85a447/pydantic_kitbash-0.0.7-py3-none-any.whl", hash = "sha256:4ab60369cb8b3cbf289724df295a514bb309d2cb669d1d0c6d1eafaacf530ec5", size = 13645, upload-time = "2025-08-01T16:26:29.879Z" },
 ]
 
 [[package]]
@@ -2009,6 +2025,15 @@ wheels = [
 ]
 
 [[package]]
+name = "types-html5lib"
+version = "1.1.11.20250708"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/3b/1f5ba4358cfc1421cced5cdb9d2b08b4b99e4f9a41da88ce079f6d1a7bf1/types_html5lib-1.1.11.20250708.tar.gz", hash = "sha256:24321720fdbac71cee50d5a4bec9b7448495b7217974cffe3fcf1ede4eef7afe", size = 16799, upload-time = "2025-07-08T03:13:53.14Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/50/5fc23cf647eee23acdd337c8150861d39980cf11f33dd87f78e87d2a4bad/types_html5lib-1.1.11.20250708-py3-none-any.whl", hash = "sha256:bb898066b155de7081cb182179e2ded31b9e0e234605e2cb46536894e68a6954", size = 22913, upload-time = "2025-07-08T03:13:52.098Z" },
+]
+
+[[package]]
 name = "types-jsonschema"
 version = "4.23.0.20241208"
 source = { registry = "https://pypi.org/simple" }
@@ -2018,6 +2043,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ad/e6/9e5cd771687086844caa43dbb211ec0d1cfa899d17c110f3220efcd46e83/types_jsonschema-4.23.0.20241208.tar.gz", hash = "sha256:e8b15ad01f290ecf6aea53f93fbdf7d4730e4600313e89e8a7f95622f7e87b7c", size = 14770, upload-time = "2024-12-08T03:02:21.995Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/91/64/4b2fba8b7cb0104ba013f2a1bf6f39a98e927e14befe1ef947d373b25218/types_jsonschema-4.23.0.20241208-py3-none-any.whl", hash = "sha256:87934bd9231c99d8eff94cacfc06ba668f7973577a9bd9e1f9de957c5737313e", size = 15021, upload-time = "2024-12-08T03:02:20.528Z" },
+]
+
+[[package]]
+name = "types-lxml"
+version = "2025.3.30"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "cssselect" },
+    { name = "types-html5lib" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-noble') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-jammy' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-oracular') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-noble' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-plucky') or (extra == 'extra-11-craft-parts-apt-oracular' and extra == 'extra-11-craft-parts-apt-questing') or (extra == 'extra-11-craft-parts-apt-plucky' and extra == 'extra-11-craft-parts-apt-questing')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/84/01/9e45ccd26ca36982ef505174a6e5f661abb68565fa27c77d2e56a3f0e9f5/types_lxml-2025.3.30.tar.gz", hash = "sha256:ea4da0d2b61a73e114e14e2dcca1f62671182d80016a483369c553a24ba8f163", size = 152963, upload-time = "2025-03-29T22:29:04.497Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0d/a4/97b5427717f6499bdc093228b695e7ff8a2972c9e47e2492c30a21cc85e0/types_lxml-2025.3.30-py3-none-any.whl", hash = "sha256:310b0ddf9e2104c8684362445808adf8a2cf41cf102d4ea0d16ced413cc46f66", size = 93216, upload-time = "2025-03-29T22:29:02.091Z" },
 ]
 
 [[package]]

@@ -56,9 +56,6 @@ class PartSpec(BaseModel):
 
     During the build step, the plugin prepares the part's files with the build system
     of its language or framework.
-
-    For more details on plugin-specific keys and dependencies, see `Plugins
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/reference/plugins/>`_.
     """
 
     source: str | None = Field(
@@ -165,7 +162,7 @@ class PartSpec(BaseModel):
     During the pull step, the part fetches these submodules.
 
     Equivalent to the
-    :literalref:`--recurse-submodules<https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-code--recurse-submodulesltpathspecgtcode>`
+    :literalref:`--recurse-submodules<https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---recurse-submodulespathspec>`
     parameter of ``git clone``.
 
     If unset, the part will fetch all of the repository's submodules.
@@ -360,11 +357,6 @@ class PartSpec(BaseModel):
         description="The files to copy from the part's overly filesystem to the stage directory.",
         examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
     )
-    """The files to copy from the part's overlay filesystem to the stage directory.
-
-    For more details on file paths, see `Specifying paths
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/explanation/filesets/#filesets-specifying-paths>`_.
-    """
 
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"],
@@ -377,9 +369,6 @@ class PartSpec(BaseModel):
 
     Paths support wildcards (``*``) and must be relative to the working directory where
     they will be used.
-
-    For more details on file paths, see `Specifying paths
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/explanation/filesets/#filesets-specifying-paths>`_.
     """
 
     prime_files: list[RelativePathStr] = Field(
@@ -393,30 +382,30 @@ class PartSpec(BaseModel):
 
     Paths support wildcards (``*``) and must be relative to the working directory where
     they will be used.
-
-    For more details on file paths, see `Specifying paths
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/explanation/filesets/#filesets-specifying-paths>`_.
     """
 
     override_pull: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the pull step.",
-        examples=["|\ncraftctl default\nrm $CRAFT_PART_SRC/pyproject.toml"],
+        examples=[
+            """|
+              craftctl default
+              rm $CRAFT_PART_SRC/pyproject.toml"""
+        ],
     )
     """The commands to run instead of the default behavior of the pull step.
 
     The standard pull step actions can be performed by calling ``craftctl default``.
-
-    For more details on overriding lifecycle steps and using craftctl, see
-    `Override a step
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_.
     """
 
     overlay_script: str | None = Field(
         default=None,
         description="The commands to run after the part's overlay packages are installed.",
         examples=[
-            "|\nrm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*\nrm -f ${CRAFT_OVERLAY}/usr/bin/emacs*\nrm -f ${CRAFT_OVERLAY}/bin/nano"
+            """|
+              rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+              rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+              rm -f ${CRAFT_OVERLAY}/bin/nano"""
         ],
     )
     """The commands to run after the part's overlay packages are installed.
@@ -429,48 +418,44 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
         examples=[
-            "|\ncd cmd/webhook\nmkdir $CRAFT_PART_INSTALL/ko-app\ngo build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."
+            """|
+              cd cmd/webhook
+              mkdir $CRAFT_PART_INSTALL/ko-app
+              go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
         ],
     )
     """The commands to run instead of the default behavior of the build step.
 
     The standard build step actions can be performed by calling ``craftctl default``.
-
-    For more details on overriding lifecycle steps and using craftctl, see
-    `Override a step
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_.
     """
 
     override_stage: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the stage step.",
         examples=[
-            '|\ncraftctl default\nchown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'
+            '''|
+              craftctl default
+              chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
         ],
     )
     """The commands to run instead of the default behavior of the stage step.
 
     The standard stage step actions can be performed by calling ``craftctl default``.
-
-    For more details on overriding lifecycle steps and using craftctl, see
-    `Override a step
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_
     """
 
     override_prime: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the prime step.",
         examples=[
-            "|\ncraftctl default\nmkdir -p $CRAFT_PRIME/var/lib/mysql\nmkdir -p $CRAFT_PRIME/var/lib/mysqld"
+            """|
+              craftctl default
+              mkdir -p $CRAFT_PRIME/var/lib/mysql
+              mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
         ],
     )
     """The commands to run instead of the default behavior of the prime step.
 
     The standard prime step actions can be performed by calling ``craftctl default``.
-
-    For more details on overriding lifecycle steps and using craftctl, see
-    `Override a step
-    <https://canonical-craft-parts.readthedocs-hosted.com/latest/common/craft-parts/how-to/customise-the-build-with-craftctl/#override-a-step>`_
     """
 
     permissions: list[Permissions] = Field(

@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import shutil
+import stat
 from pathlib import Path
 
 import pytest
@@ -538,6 +540,13 @@ class TestOverlayMigration:
         assert Path(f"{step_dir}/file1").exists() is False
 
 
+def create_overlay_whiteout(name: Path) -> None:
+    """Create an overlayfs whiteout file.
+    This is a character device file, with major and minor number set to 0.
+    """
+    os.mknod(name, stat.S_IFCHR, os.makedev(0, 0))
+
+
 @pytest.mark.usefixtures("new_dir")
 class TestOverlayMigrationFilesystems:
     """Overlay migration to stage and prime test cases with a non-default filesystems."""
@@ -593,15 +602,24 @@ class TestOverlayMigrationFilesystems:
         self._p2_handler._make_dirs()
 
         # populate layers
-        Path(p1.part_layer_dir, "dir1").mkdir()
+        # Layer p1
+        Path(p1.part_layer_dir, "dir1/dir2").mkdir(parents=True)
         Path(p1.part_layer_dir, "dir1/a").touch()
+        b_relative = "dir1/dir2/b"
+        Path(p1.part_layer_dir, b_relative).touch()
         Path(p1.part_layer_dir, "foo").mkdir()
         Path(p1.part_layer_dir, "foo/bar").touch()
+        bla_relative = "foo/bla"
+        Path(p1.part_layer_dir, "foo/bla").touch()
 
-        Path(p2.part_layer_dir, "dir1").mkdir()
+        # Layer p2
+        Path(p2.part_layer_dir, "dir1/dir2").mkdir(parents=True)
         Path(p2.part_layer_dir, "dir1/baz").touch()
         Path(p2.part_layer_dir, "foo").mkdir()
         Path(p2.part_layer_dir, "foo/qux").touch()
+        # Simulate bla and b being deleted from this layer
+        create_overlay_whiteout(Path(p2.part_layer_dir, bla_relative))
+        create_overlay_whiteout(Path(p2.part_layer_dir, b_relative))
 
     @pytest.mark.parametrize(
         ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
@@ -626,9 +644,14 @@ class TestOverlayMigrationFilesystems:
         mypart_overlay_state = _load_migration_state(mypart_overlay_state_path)
         yourpart_overlay_state = _load_migration_state(yourpart_overlay_state_path)
 
-        assert default_overlay_state.files == {"dir1/a", "dir1/baz"}
-        assert default_overlay_state.directories == {"dir1", "foo"}
-        assert mypart_overlay_state.files == {"bar", "qux"}
+        assert default_overlay_state.files == {"dir1/a", "dir1/baz", "dir1/dir2/.wh.b"}
+        assert default_overlay_state.directories == {"dir1", "dir1/dir2", "foo"}
+
+        my_part_overlay_expected_files = {"bar", "qux"}
+        # Whiteout files are kept in stage but not in prime for non-default partitions
+        if step == Step.STAGE:
+            my_part_overlay_expected_files.update({".wh.bla"})
+        assert mypart_overlay_state.files == my_part_overlay_expected_files
         assert mypart_overlay_state.directories == set()
         assert yourpart_overlay_state.files == set()
         assert yourpart_overlay_state.directories == set()
@@ -724,3 +747,8 @@ class TestFileFilter(test_executor_part_handler.TestFileFilter):
 @pytest.mark.usefixtures("new_dir")
 class TestHelpers(test_executor_part_handler.TestHelpers):
     """Verify helper functions."""
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestDirs(test_executor_part_handler.TestDirs):
+    """Test project dirs handling."""

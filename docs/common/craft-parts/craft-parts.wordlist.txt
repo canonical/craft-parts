@@ -74,6 +74,7 @@ DotnetVerbosity
 DummyRepository
 DumpPlugin
 DumpPluginProperties
+EnvironmentChangedError
 ErrorDict
 ExecutionContext
 FeatureError
@@ -201,6 +202,7 @@ OverlayMountError
 OverlayPackageNotFound
 OverlayPermissionError
 OverlayPlatformError
+OverlayStageConflict
 OverlayState
 OverlayUnmountError
 Overlayfs
@@ -294,6 +296,7 @@ SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 SSL
+StageCandidate
 StageContents
 StageFilesConflict
 StagePackageNotFound
@@ -397,6 +400,7 @@ distros
 dl
 dnf
 docstring
+docstrings
 dotnet
 dst
 emacs
@@ -447,6 +451,7 @@ kwargs
 ldflags
 lifecycle
 lifecycles
+linkcheck
 linkers
 linters
 lto
@@ -538,6 +543,7 @@ subdirectories
 subdirectory
 subkey
 submodules
+subpath
 subprocess
 subprocesses
 subtree

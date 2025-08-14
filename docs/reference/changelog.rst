@@ -16,13 +16,74 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-.. _release-2.19.0:
 
-2.19.0 (2025-MM-DD)
+.. _release-2.20.1:
+
+2.20.1 (2025-MM-DD)
 -------------------
 
 New features:
-- The autotools plugin now has a ``parallel`` parameter to enable parallel make execution.
+
+- The autotools plugin now supports 'disable-parallel' parameter.
+
+Bug fixes:
+
+- `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
+  were used in an ``organize`` source path, an error would occur if files mapped to
+  themselves. These cases are now ignored.
+
+For a complete list of commits, check out the `2.20.1`_ release on GitHub.
+
+.. _release 2.20.0:
+
+2.20.0 (2025-08-04)
+-------------------
+
+New features:
+
+- The jlink plugin now has a ``jlink-extra-modules`` parameter to add additional
+  modules to OpenJDK image.
+
+Bug fixes:
+
+- Files and directories produced during the build step are now correctly checked for
+  collisions with overlay contents during the staging step. Conflicts can be resolved
+  with the :ref:`stage <reference-part-properties-stage>` and
+  :ref:`overlay <reference-part-properties-overlay-files>` keys.
+- When content is staged to partitions from the overlay of the default partition,
+  properly ignore content already migrated.
+
+Documentation:
+
+- Add a reference page for the :ref:`craft_parts_maven_use_plugin`.
+- Add an explanation of how hidden files are handled in :ref:`filesets_explanation`.
+- Remove all intralinking in the ``PartSpec`` model's docstrings. This allows
+  downstream apps that consume these docstrings to provide their own internal
+  references.
+
+For a complete list of commits, check out the `2.20.0`_ release on GitHub.
+
+.. _release-2.19.0:
+
+2.19.0 (2025-07-24)
+-------------------
+
+New features:
+
+- When the default partition is aliased, create symlinks in the ``partitions``
+  directory to the lifecycle directories in the working directory. The links are
+  intended to help users during debugging. For example,
+  ``/root/partitions/<partition-id>/stage`` in the container filesystem is linked
+  to ``/root/stage``.
+
+Bug fixes:
+
+- The ``--recurse-submodules`` link in the ``source-submodules`` docstring
+  no longer produces a linkcheck error.
+- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition
+  is aliased.
+
+For a complete list of commits, check out the `2.19.0`_ release on GitHub.
 
 .. _release-2.18.0:
 
@@ -1295,6 +1356,9 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1
+.. _2.20.0: https://github.com/canonical/craft-parts/releases/tag/2.20.0
+.. _2.19.0: https://github.com/canonical/craft-parts/releases/tag/2.19.0
 .. _2.18.0: https://github.com/canonical/craft-parts/releases/tag/2.18.0
 .. _2.17.0: https://github.com/canonical/craft-parts/releases/tag/2.17.0
 .. _2.16.0: https://github.com/canonical/craft-parts/releases/tag/2.16.0

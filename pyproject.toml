@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "lxml>=5.3.0",
     "overrides!=7.6.0",
     "pydantic>=2.0.0",
     "pyxdg",
@@ -47,7 +48,7 @@ apt-questing = [
 ]
 docs = [
     "canonical-sphinx",
-    "pydantic-kitbash==0.0.6",
+    "pydantic-kitbash==0.0.7",
     "setuptools",  # Missing from sphinxcontrib-details-directive,
     # see https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "sphinx",
@@ -95,6 +96,7 @@ dev = [  # TODO: Remove this once we've switched CI to uv
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
+    "types-lxml>=2025.3.30",
 ]
 tics = ["flake8", "pylint"]
 
@@ -128,20 +130,17 @@ dev-dependencies = [
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
-
     # Project-specific linting
     "autoflake",
     "black",
     "codespell",
     "pydocstyle",
-
     # Testing
     "hypothesis",
     "jsonschema",
     "pytest-check",
     "pytest-subprocess",
     "requests-mock",
-
     # Type checking
     "types-colorama",
     "types-docutils",
@@ -152,6 +151,7 @@ dev-dependencies = [
     "types-PyYAML",
     "types-requests",
     "types-setuptools",
+    "types-lxml>=2025.3.30",
 ]
 conflicts = [
     [
