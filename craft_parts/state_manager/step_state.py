@@ -22,10 +22,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-from typing_extensions import Self
+from pydantic import BaseModel, ConfigDict, Field
 
-from craft_parts.infos import ProjectVar
+from craft_parts.infos import ProjectOptions
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
@@ -106,7 +105,7 @@ class StepState(MigrationState, ABC):
     """
 
     part_properties: dict[str, Any] = {}
-    project_options: dict[str, Any] = {}
+    project_options: ProjectOptions = ProjectOptions()
     model_config = ConfigDict(
         validate_assignment=True,
         extra="ignore",
@@ -114,21 +113,6 @@ class StepState(MigrationState, ABC):
         alias_generator=lambda s: s.replace("_", "-"),
         populate_by_name=True,
     )
-
-    @model_validator(mode="after")
-    def _coerce_project_vars(self) -> Self:
-        """Coerce project_vars options to ProjectVar types."""
-        # FIXME: add proper type definition for project_options so that
-        # ProjectVar can be created by pydantic during model unmarshaling.
-        if self.project_options:
-            pvars = self.project_options.get("project_vars")
-            if pvars:
-                for key, val in pvars.items():
-                    self.project_options["project_vars"][key] = (
-                        ProjectVar.model_validate(val)
-                    )
-
-        return self
 
     @abstractmethod
     def properties_of_interest(
@@ -141,7 +125,7 @@ class StepState(MigrationState, ABC):
 
     @abstractmethod
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
+        self, project_options: ProjectOptions
     ) -> dict[str, Any]:
         """Return relevant project options concerning this step."""
 
@@ -168,7 +152,7 @@ class StepState(MigrationState, ABC):
         )
 
     def diff_project_options_of_interest(
-        self, other_project_options: dict[str, Any]
+        self, other_project_options: ProjectOptions
     ) -> set[str]:
         """Return project options that differ.
 

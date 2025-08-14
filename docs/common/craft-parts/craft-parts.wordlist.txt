@@ -246,6 +246,7 @@ Prepend
 PrimeState
 ProjectDirs
 ProjectInfo
+ProjectOptions
 ProjectVar
 PullError
 PullState
@@ -379,6 +380,7 @@ confictling
 config
 configfile
 cp
+cpu
 craftctl
 crafter
 crafters

@@ -439,7 +439,7 @@ class TestFileMigration:
             assert call.group == 2222
 
     @pytest.mark.parametrize(
-        ["filters", "filemap"],
+        ("filters", "filemap"),
         [
             (
                 ["*"],
@@ -466,7 +466,7 @@ class TestFileMigration:
         install_dir.mkdir()
         stage_dir.mkdir()
 
-        for file in filemap.keys():
+        for file in filemap:
             filepath = Path(install_dir, file)
             filepath.parent.mkdir(exist_ok=True)
             filepath.touch()
