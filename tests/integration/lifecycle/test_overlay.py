@@ -22,7 +22,6 @@ import pytest
 import yaml
 from craft_parts import Action, ActionType, Step
 
-
 # This fixture also enables the overlay Feature.
 pytestmark = pytest.mark.usefixtures("mock_overlay_support_prerequisites")
 

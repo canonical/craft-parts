@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pydantic
+from typing_extensions import Self
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -432,6 +433,33 @@ class ProjectInfo:
 
         if name not in self._project_vars:
             raise ValueError(f"{name!r} not in project variables")
+
+
+class ProjectOptions(pydantic.BaseModel):
+    """A collection of project-wide options.
+
+    :param application_name: A unique identifier for the application using
+        Craft Parts.
+    :param arch_triplet: Concatenated cpu-vendor-os platform.
+    :param target_arch: The architecture to build for.
+    :param project_vars: A dictionary containing the project variables.
+    :param project_vars_part_name: Project variables can be set only if
+        the part name matches this name.
+    """
+
+    application_name: str = ""
+    arch_triplet: str = ""
+    target_arch: str = ""
+    project_vars: dict[str, ProjectVar] = {}
+    project_vars_part_name: str | None = None
+
+    @classmethod
+    def from_project_info(cls, project_info: ProjectInfo) -> Self:
+        """Construct a ProjectOptions instance from a ProjectInfo instance.
+
+        :param project_info: The project information.
+        """
+        return cls.model_validate(project_info.project_options)
 
 
 class PartInfo:
