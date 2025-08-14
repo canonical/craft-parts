@@ -31,7 +31,7 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
 
     autotools_configure_parameters: list[str] = []
     autotools_bootstrap_parameters: list[str] = []
-    autotools_parallel: bool = True
+    disable_parallel: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
