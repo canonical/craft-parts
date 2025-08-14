@@ -38,13 +38,6 @@ autotools-configure-parameters
 configure flags to pass to the build such as those shown by running
 ``./configure --help``.
 
-autotools-parallel
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type:** boolean
-**Default:** True
-
-Use ``-j<njobs>`` parameter with make.
-
 Environment variables
 ---------------------
 
@@ -68,14 +61,14 @@ During the build step the plugin performs the following actions:
 
 * If the source does not provide a ``configure`` file, one will be
   generated through the following options:
-
+  
   1. If an ``autogen.sh`` file is found in the sources it will be run
      with ``NOCONFIGURE`` set to generate a ``configure`` file;
   2. Alternatively, if a ``bootstrap`` file is found in the sources,
      it will run the ``bootstrap`` with any set
      ``autotools-bootstrap-parameters`` without *configuring* the
      project;
-
+     
 * Call ``configure`` with any set ``autotools-configure-parameters``;
 * Call ``make`` to build;
 * Call ``make install`` with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
