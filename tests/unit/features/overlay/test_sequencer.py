@@ -76,7 +76,7 @@ def test_sequencer_run_step(step, state_class, new_dir):
     # check if states were updated
     props = PartSpec.unmarshal({"stage": ["pkg"]})
     assert state.part_properties == props.marshal()
-    assert state.project_options == {
+    assert state.project_options.model_dump() == {
         "application_name": "test",
         "arch_triplet": "aarch64-linux-gnu",
         "target_arch": "arm64",
@@ -134,7 +134,7 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
     # check if states were updated
     props = PartSpec.unmarshal({"stage": ["pkg"]})
     assert state.part_properties == props.marshal()
-    assert state.project_options == {
+    assert state.project_options.model_dump() == {
         "application_name": "test",
         "arch_triplet": "aarch64-linux-gnu",
         "target_arch": "arm64",
