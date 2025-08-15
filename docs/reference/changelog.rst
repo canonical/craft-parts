@@ -16,6 +16,22 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.20.1:
+
+2.20.1 (2025-08-18)
+-------------------
+
+Bug fixes:
+
+- `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
+  were used in an ``organize`` source path, an error would occur if files mapped to
+  themselves. These cases are now ignored.
+- `#1207 <https://github.com/canonical/craft-parts/issues/1207>`_ Overlay directories
+  were not properly cleaned up.
+
+For a complete list of commits, check out the `2.20.1`_ release on GitHub.
+
 .. _release 2.20.0:
 
 2.20.0 (2025-08-04)
@@ -1338,6 +1354,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1
 .. _2.20.0: https://github.com/canonical/craft-parts/releases/tag/2.20.0
 .. _2.19.0: https://github.com/canonical/craft-parts/releases/tag/2.19.0
 .. _2.18.0: https://github.com/canonical/craft-parts/releases/tag/2.18.0
