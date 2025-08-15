@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
@@ -59,7 +59,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Set up Python
@@ -113,7 +113,7 @@ jobs:
       - name: specify node version
         uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 22
       - name: Setup Tox environments
         run: tox run -m unit-tests --notest
       - name: Unit tests
@@ -134,7 +134,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Clean up hosted runner
@@ -197,13 +197,13 @@ jobs:
             libmaven-shade-plugin-java libsurefire-java
           echo "::endgroup::"
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v6
         with:
           version: "0.5.7"
       - name: specify node version
         uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 22
       - name: Run integration tests
         run: |
           make test-integrations
