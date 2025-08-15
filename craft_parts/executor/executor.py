@@ -191,6 +191,11 @@ class Executor:
             ):
                 shutil.rmtree(self._project_info.partition_dir)
 
+            if initial_step <= Step.OVERLAY:
+                for overlay in self._project_info.dirs.overlay_dirs.values():
+                    if overlay.exists():
+                        overlay.rmdir()
+
     def _run_action(
         self,
         action: Action,
