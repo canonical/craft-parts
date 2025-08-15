@@ -19,7 +19,7 @@ Changelog
 
 .. _release-2.20.1:
 
-2.20.1 (2025-MM-DD)
+2.20.1 (2025-08-18)
 -------------------
 
 Bug fixes:
@@ -27,6 +27,8 @@ Bug fixes:
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
+- `#1207 <https://github.com/canonical/craft-parts/issues/1207>`_ Overlay directories
+  were not properly cleaned up.
 
 For a complete list of commits, check out the `2.20.1`_ release on GitHub.
 
