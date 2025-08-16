@@ -22,6 +22,10 @@ Changelog
 2.20.1 (2025-MM-DD)
 -------------------
 
+New features:
+
+- The autotools plugin now supports 'disable-parallel' parameter.
+
 Bug fixes:
 
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
@@ -43,7 +47,7 @@ New features:
 Bug fixes:
 
 - Files and directories produced during the build step are now correctly checked for
-  collisions with overlay contents during the staging step. Conflicts can be resolved 
+  collisions with overlay contents during the staging step. Conflicts can be resolved
   with the :ref:`stage <reference-part-properties-stage>` and
   :ref:`overlay <reference-part-properties-overlay-files>` keys.
 - When content is staged to partitions from the overlay of the default partition,
@@ -76,7 +80,7 @@ Bug fixes:
 
 - The ``--recurse-submodules`` link in the ``source-submodules`` docstring
   no longer produces a linkcheck error.
-- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition 
+- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition
   is aliased.
 
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
