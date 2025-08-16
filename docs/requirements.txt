@@ -187,7 +187,7 @@ requests==2.32.4
     #   requests-unixsocket2
     #   sphinx
     #   sphinx-jsonschema
-requests-unixsocket2==0.4.2
+requests-unixsocket2==1.0.0
     # via -r requirements.txt
 setuptools==78.1.1
     # via -r requirements.txt
