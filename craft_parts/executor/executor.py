@@ -194,7 +194,7 @@ class Executor:
             if initial_step <= Step.OVERLAY:
                 for overlay in self._project_info.dirs.overlay_dirs.values():
                     if overlay.exists():
-                        overlay.rmdir()
+                        shutil.rmtree(overlay)
 
     def _run_action(
         self,
