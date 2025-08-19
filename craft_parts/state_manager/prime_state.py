@@ -83,5 +83,7 @@ class PrimeState(StepState):
         :return: A dictionary containing project options of interest.
         """
         return {
-            "project_vars_part_name": project_options.project_vars_part_name,
+            "project_vars": project_options.project_vars.marshal_one_attribute(
+                "part-name"
+            )
         }

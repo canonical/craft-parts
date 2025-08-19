@@ -210,11 +210,9 @@ class Executor:
             logger.debug("Skip execution of %s (because %s)", action, action.reason)
             # update project variables if action is skipped
             if action.project_vars:
-                for var, pvar in action.project_vars.items():
-                    if pvar.updated:
-                        self._project_info.set_project_var(
-                            var, pvar.value, raw_write=True, part_name=action.part_name
-                        )
+                self._project_info.project_vars.update_from(
+                    action.project_vars, action.part_name
+                )
             return
 
         if action.step == Step.STAGE:
