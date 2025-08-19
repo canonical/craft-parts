@@ -32,6 +32,16 @@ from craft_parts.infos import (
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
+pytestmark = [
+    pytest.mark.filterwarnings(
+        "ignore:Using deprecated API to define project variables."
+    ),
+    pytest.mark.filterwarnings(
+        "ignore:Using deprecated property 'project_vars_part_name'."
+    ),
+]
+
+
 _MOCK_NATIVE_ARCH = "arm64"
 
 LINUX_ARCHS = [
@@ -81,8 +91,13 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         "arch_triplet": tc_triplet,
         "target_arch": tc_target_arch,
         "project_vars_part_name": "adopt",
-        "project_vars": {"a": ProjectVar(value="b")},
+        "project_vars": ProjectVarInfo.unmarshal(
+            {"a": {"value": "b", "part-name": "adopt"}}
+        ),
     }
+    assert x.project_vars == ProjectVarInfo.unmarshal(
+        {"a": ProjectVar(value="b", part_name="adopt").marshal()}
+    )
     assert x.project_vars_part_name == "adopt"
     assert x.global_environment == {}
 
@@ -141,7 +156,9 @@ def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
         "arch_triplet": tc_triplet,
         "target_arch": tc_target_arch,
         "project_vars_part_name": "adopt",
-        "project_vars": {"a": ProjectVar(value="b")},
+        "project_vars": ProjectVarInfo.unmarshal(
+            {"a": ProjectVar(value="b", part_name="adopt").marshal()}
+        ),
     }
     assert x.global_environment == {}
 
@@ -191,98 +208,261 @@ def test_project_info_invalid_custom_args():
     assert str(raised.value) == "'ProjectInfo' has no attribute 'custom1'"
 
 
-def test_project_info_set_project_var():
+@pytest.mark.parametrize(
+    ("kwargs", "project_vars"),
+    [
+        pytest.param(
+            {
+                "project_vars": ProjectVarInfo.unmarshal(
+                    {"var": ProjectVar(value="foo").marshal()}
+                ),
+            },
+            ProjectVarInfo.unmarshal({"var": ProjectVar(value="foo").marshal()}),
+            id="no part name",
+        ),
+        pytest.param(
+            {
+                "project_vars": ProjectVarInfo.unmarshal(
+                    {"var": ProjectVar(value="foo", part_name="part1").marshal()}
+                ),
+            },
+            ProjectVarInfo.unmarshal(
+                {"var": ProjectVar(value="foo", part_name="part1").marshal()}
+            ),
+            id="with part name",
+        ),
+        pytest.param(
+            {"project_vars": {"var": "foo"}},
+            ProjectVarInfo.unmarshal({"var": ProjectVar(value="foo").marshal()}),
+            id="deprecated api with no part name",
+        ),
+        pytest.param(
+            {"project_vars": {"var": "foo"}, "project_vars_part_name": "part1"},
+            ProjectVarInfo.unmarshal(
+                {"var": ProjectVar(value="foo", part_name="part1").marshal()}
+            ),
+            id="deprecated api with part name",
+        ),
+    ],
+)
+def test_project_info_init(kwargs, project_vars):
+    """Initialize project variables with the current and deprecated APIs."""
+    info = ProjectInfo(application_name="test", cache_dir=Path(), **kwargs)
+
+    assert info.project_options["project_vars"] == project_vars
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_set_project_var(path):
+    """Set a project variable."""
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar").marshal(),
+                },
+            }
+        ),
     )
 
-    info.set_project_var("var", "bar")
-    assert info.get_project_var("var", raw_read=True) == "bar"
+    info.set_project_var(path, "baz")
+
+    assert info.get_project_var(path, raw_read=True) == "baz"
 
 
-def test_project_info_set_project_raw_write():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_set_project_raw_write(path):
+    """Force-set a project variable with 'raw-write'."""
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar").marshal(),
+                },
+            }
+        ),
     )
 
-    info.set_project_var("var", "bar")
-    info.set_project_var("var", "bar", raw_write=True)
+    info.set_project_var(path, "baz")
+    info.set_project_var(path, "baz", raw_write=True)
+
     with pytest.raises(RuntimeError) as raised:
-        info.set_project_var("var", "bar")
+        info.set_project_var(path, "bar")
 
-    assert str(raised.value) == "variable 'var' can be set only once"
+    assert str(raised.value) == f"variable {path!r} can be set only once"
 
 
-def test_project_info_set_project_var_bad_name():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("bad-name", id="top level"),
+        pytest.param("bad.bad-name", id="nested"),
+        pytest.param(".bad-name", id="starts with dot"),
+        pytest.param("0bad-name", id="starts with digit"),
+    ],
+)
+def test_project_info_set_project_var_bad_name(path):
+    """Error on invalid project variable names."""
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
     with pytest.raises(ValueError) as raised:  # noqa: PT011
-        info.set_project_var("bad-name", "foo")
-    assert str(raised.value) == "'bad-name' is not a valid variable name"
+        info.set_project_var(path, "foo")
+    assert str(raised.value) == f"{path!r} is not a valid variable name"
 
 
-def test_project_info_set_project_var_part_name():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_set_project_var_part_name(path):
+    """Set a project variable from its part."""
     info = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        project_vars_part_name="part1",
-        project_vars={"var": "foo"},
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo", part_name="part1").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar", part_name="part1").marshal(),
+                },
+            }
+        ),
     )
 
-    info.set_project_var("var", "bar", part_name="part1")
-    assert info.get_project_var("var", raw_read=True) == "bar"
+    info.set_project_var(path, "baz", part_name="part1")
+    assert info.get_project_var(path, raw_read=True) == "baz"
 
 
-def test_project_info_set_project_var_no_part_name():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_set_project_var_no_part_name(path):
+    """Error when setting a variable that has no part, from a part."""
     info = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        project_vars={"var": "foo"},
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar").marshal(),
+                },
+            }
+        ),
     )
 
     with pytest.raises(RuntimeError) as raised:
-        info.set_project_var("var", "bar", part_name="part2")
+        info.set_project_var(path, "baz", part_name="part2")
 
     assert str(raised.value) == (
-        "variable 'var' can only be set in a part that adopts external metadata"
+        f"variable {path!r} can only be set in a part that adopts external metadata"
     )
 
 
-def test_project_info_set_project_var_other_part_name():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_set_project_var_other_part_name(path):
+    """Error when setting a variable from the wrong part."""
     info = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        project_vars_part_name="part1",
-        project_vars={"var": "foo"},
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo", part_name="part1").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar", part_name="part1").marshal(),
+                },
+            }
+        ),
     )
 
     with pytest.raises(RuntimeError) as raised:
-        info.set_project_var("var", "bar", part_name="part2")
+        info.set_project_var(path, "bar", part_name="part2")
 
-    assert str(raised.value) == "variable 'var' can only be set in part 'part1'"
+    assert str(raised.value) == f"variable {path!r} can only be set in part 'part1'"
 
 
-def test_project_info_set_project_var_no_part_name_raw():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_set_project_var_no_part_name_raw(path):
+    """Force-set a project variable with no part, from a part."""
     info = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        project_vars={"var": "foo"},
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar").marshal(),
+                },
+            }
+        ),
     )
 
-    info.set_project_var("var", "bar", part_name="part2", raw_write=True)
-    assert info.get_project_var("var", raw_read=True) == "bar"
+    info.set_project_var(path, "baz", part_name="part2", raw_write=True)
+    assert info.get_project_var(path, raw_read=True) == "baz"
 
 
-def test_project_info_set_project_var_other_part_name_raw():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_set_project_var_other_part_name_raw(path):
+    """Force-set a project variable with a part, from a different part."""
     info = ProjectInfo(
         application_name="test",
         cache_dir=Path(),
-        project_vars_part_name="part1",
-        project_vars={"var": "foo"},
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo", part_name="part1").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar", part_name="part1").marshal(),
+                },
+            }
+        ),
     )
 
-    info.set_project_var("var", "bar", part_name="part2", raw_write=True)
-    assert info.get_project_var("var", raw_read=True) == "bar"
+    info.set_project_var(path, "baz", part_name="part2", raw_write=True)
+
+    assert info.get_project_var(path, raw_read=True) == "baz"
 
 
 def test_project_info_set_invalid_project_vars():
@@ -291,14 +471,6 @@ def test_project_info_set_invalid_project_vars():
     with pytest.raises(ValueError) as raised:  # noqa: PT011
         info.set_project_var("var", "bar")
     assert str(raised.value) == "'var' not in project variables"
-
-
-def test_project_info_get_project_var_bad_name():
-    info = ProjectInfo(application_name="test", cache_dir=Path())
-
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
-        info.get_project_var("bad-name")
-    assert str(raised.value) == "'bad-name' is not a valid variable name"
 
 
 def test_project_info_default():
@@ -311,33 +483,62 @@ def test_project_info_cache_dir_resolving():
     assert info.cache_dir == Path.home() / "y"
 
 
-def test_project_info_get_project_var():
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_get_project_var(path):
+    """Get a project variable with raw_read."""
     info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
+        application_name="test",
+        cache_dir=Path(),
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar").marshal(),
+                },
+            }
+        ),
     )
 
-    info.set_project_var("var", "bar")
-    assert info.get_project_var("var", raw_read=True) == "bar"
+    info.set_project_var(path, "baz")
+    value = info.get_project_var(path, raw_read=True)
+
+    assert value == "baz"
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("a", id="top level"),
+        pytest.param("b.c", id="nested"),
+    ],
+)
+def test_project_info_get_project_var_during_lifecycle(path):
+    """Error when getting a project var before the lifecycle completes."""
+    info = ProjectInfo(
+        application_name="test",
+        cache_dir=Path(),
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "a": ProjectVar(value="foo").marshal(),
+                "b": {
+                    "c": ProjectVar(value="bar").marshal(),
+                },
+            }
+        ),
+    )
+
+    info.set_project_var(path, "baz")
     with pytest.raises(RuntimeError) as raised:
-        info.get_project_var("var")
+        info.get_project_var(path)
 
     assert str(raised.value) == (
-        "cannot consume variable 'var' during lifecycle execution"
-    )
-
-
-def test_project_info_consume_project_var_during_lifecycle():
-    info = ProjectInfo(
-        application_name="test", cache_dir=Path(), project_vars={"var": "foo"}
-    )
-
-    info.set_project_var("var", "bar")
-    assert info.get_project_var("var", raw_read=True) == "bar"
-    with pytest.raises(RuntimeError) as raised:
-        info.get_project_var("var")
-
-    assert str(raised.value) == (
-        "cannot consume variable 'var' during lifecycle execution"
+        f"cannot consume variable {path!r} during lifecycle execution"
     )
 
 
@@ -712,6 +913,7 @@ class TestProjectVarInfo:
             "e": {
                 "value": "value3",
                 "updated": False,
+                "part-name": "part3",
             },
         }
 
@@ -720,21 +922,24 @@ class TestProjectVarInfo:
 
         assert new_data == {
             "a": {
-                "b": {
-                    "value": "value1",
-                    "updated": False,
-                },
+                "b": ProjectVar(
+                    value="value1",
+                    updated=False,
+                    part_name=None,
+                ).marshal(),
                 "c": {
-                    "d": {
-                        "value": "value2",
-                        "updated": True,
-                    },
+                    "d": ProjectVar(
+                        value="value2",
+                        updated=True,
+                        part_name=None,
+                    ).marshal(),
                 },
             },
-            "e": {
-                "value": "value3",
-                "updated": False,
-            },
+            "e": ProjectVar(
+                value="value3",
+                updated=False,
+                part_name="part3",
+            ).marshal(),
         }
 
     def test_unmarshal_error(self):
@@ -744,9 +949,72 @@ class TestProjectVarInfo:
         with pytest.raises(TypeError, match=expected_error):
             ProjectVarInfo.unmarshal("invalid")  # pyright: ignore[reportArgumentType]
 
+    @pytest.mark.parametrize(
+        ("attr", "expected"),
+        [
+            (
+                "value",
+                {
+                    "a": {
+                        "b": "value1",
+                        "c": {"d": "value2"},
+                    },
+                    "e": "value3",
+                },
+            ),
+            (
+                "updated",
+                {
+                    "a": {
+                        "b": False,
+                        "c": {"d": True},
+                    },
+                    "e": False,
+                },
+            ),
+            (
+                "part_name",
+                {
+                    "a": {
+                        "b": None,
+                        "c": {"d": None},
+                    },
+                    "e": "part3",
+                },
+            ),
+        ],
+    )
+    def test_marshal_one_attribute(self, attr, expected):
+        """Unmarshal one attribute of the project vars."""
+        data = {
+            "a": {
+                "b": {
+                    "value": "value1",
+                },
+                "c": {
+                    "d": {
+                        "value": "value2",
+                        "updated": True,
+                    }
+                },
+            },
+            "e": {
+                "value": "value3",
+                "updated": False,
+                "part-name": "part3",
+            },
+        }
+
+        info = ProjectVarInfo.unmarshal(data)
+        new_data = info.marshal_one_attribute(attr)
+
+        assert new_data == expected
+
     def test_has_key(self, mock_logger):
         """Check if a key exists."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
 
         assert info.has_key("a", "b")
         assert not info.has_key("a")
@@ -770,15 +1038,29 @@ class TestProjectVarInfo:
     )
     def test_no_keys_error(self, func, kwargs):
         """Error if no keys are provided."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
         expected_error = "No keys provided."
 
         with pytest.raises(KeyError, match=expected_error):
             getattr(info, func)(**kwargs)
 
+    def test_values(self):
+        """Get the values of a ProjectVarInfo."""
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
+
+        values = info.values()
+
+        assert list(values) == list(info.root.values())
+
     def test_get_and_set(self, mock_logger):
         """Test getting and setting a value from ProjectVarInfo."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
 
         info.set("a", "b", value="new-value")
         var = info.get("a", "b")
@@ -793,7 +1075,9 @@ class TestProjectVarInfo:
 
     def test_get_invalid_path_error(self):
         """Error if an item the path doesn't exist."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
         expected_error = re.escape(
             "Failed to get value for 'a.non-existent': 'non-existent' doesn't exist."
         )
@@ -803,7 +1087,9 @@ class TestProjectVarInfo:
 
     def test_get_invalid_path_top_level_error(self):
         """Error if the top level item in the path doesn't exist."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
         expected_error = re.escape(
             "Failed to get value for 'foo.bar.baz': 'foo' doesn't exist."
         )
@@ -813,7 +1099,9 @@ class TestProjectVarInfo:
 
     def test_get_into_project_var_error(self):
         """Error if traversing into a ProjectVar to get a value."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
         expected_error = re.escape(
             "Failed to get value for 'a.b.updated': can't traverse into node at 'b'."
         )
@@ -824,7 +1112,9 @@ class TestProjectVarInfo:
 
     def test_get_not_project_var_error(self):
         """Error if getting an intermediate node instead of an end node (a ProjectVar)."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
         expected_error = re.escape(
             "Failed to get value for 'a': value isn't a ProjectVar."
         )
@@ -835,7 +1125,9 @@ class TestProjectVarInfo:
 
     def test_set_into_project_var_error(self):
         """Error if traversing into a ProjectVar to set a value."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
         expected_error = re.escape(
             "Failed to set 'a.b.updated' to 'new-value': can't traverse into node at 'b'."
         )
@@ -846,7 +1138,9 @@ class TestProjectVarInfo:
 
     def test_set_not_project_var_error(self):
         """Error if setting an intermediate node instead of an end node (a ProjectVar)."""
-        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": ProjectVar(value="value").marshal()}}
+        )
         expected_error = re.escape(
             "Failed to set 'a' to 'new-value': value isn't a ProjectVar."
         )
@@ -858,7 +1152,7 @@ class TestProjectVarInfo:
     def test_set_overwrite(self, mock_logger):
         """Overwrite an item that already exists."""
         info = ProjectVarInfo.unmarshal(
-            {"a": {"b": {"value": "value", "updated": True}}}
+            {"a": {"b": ProjectVar(value="value", updated=True).marshal()}}
         )
 
         info.set("a", "b", value="new-value", overwrite=True)
@@ -879,7 +1173,7 @@ class TestProjectVarInfo:
     def test_set_overwrite_error(self, kwargs, mock_logger):
         """Error if overwrite is false."""
         info = ProjectVarInfo.unmarshal(
-            {"a": {"b": {"value": "value", "updated": True}}}
+            {"a": {"b": ProjectVar(value="value", updated=True).marshal()}}
         )
         expected_error = re.escape(
             "Failed to set 'a.b' to 'new-value': key 'b' already exists and overwrite is false."

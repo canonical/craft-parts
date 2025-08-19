@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 import platform
 import re
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -37,14 +38,13 @@ from craft_parts.filesystem_mounts import (
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION, is_default_partition
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Sequence, ValuesView
 
     from craft_parts.parts import Part
     from craft_parts.state_manager import states
     from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
-
 
 # Architecture name translation from platform to deb/snap.
 _PLATFORM_MACHINE_TO_DEB = {
@@ -84,14 +84,53 @@ _DEB_TO_TRIPLET: dict[str, str] = {
 }
 
 
-_var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_var_name_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")
 
 
 class ProjectVar(pydantic.BaseModel):
     """A project variable that can be updated using craftctl."""
 
-    value: str
+    model_config = pydantic.ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        alias_generator=lambda s: s.replace("_", "-"),
+        populate_by_name=True,
+    )
+
+    value: str | None = None
+    """The value of the project variable."""
+
     updated: bool = False
+    """Whether the variable has already been updated."""
+
+    part_name: str | None = None
+    """The name of the part that can update the project variable."""
+
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> ProjectVar:
+        """Create and populate a new ProjectVar object from a dict.
+
+        The unmarshal method validates entries in the input dict, populating
+        the corresponding fields in the data object.
+
+        :param data: The dict to unmarshal.
+
+        :return: The newly created object.
+
+        :raise TypeError: If data is not a dict.
+        :raise pydantic.ValidationError: If the data fails validation.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("Project variable must be a dictionary.")
+
+        return cls.model_validate(data)
+
+    def marshal(self) -> dict[str, Any]:
+        """Create a dictionary containing the project var data.
+
+        :return: The newly created dictionary.
+        """
+        return self.model_dump(mode="json", by_alias=True)
 
 
 class ProjectVarInfo(pydantic.RootModel):
@@ -101,14 +140,18 @@ class ProjectVarInfo(pydantic.RootModel):
     Data is accessed with structured paths.
     """
 
-    root: dict[str, ProjectVar | ProjectVarInfo]
+    root: dict[str, ProjectVar | ProjectVarInfo] = {}
     """A nested dictionary of ProjectVars."""
 
-    def __getitem__(self, item: str) -> ProjectVar | ProjectVarInfo:
-        return self.root[item]
+    def __getitem__(self, key: str) -> ProjectVar | ProjectVarInfo:
+        return self.root[key]
 
     def __setitem__(self, key: str, value: ProjectVar | ProjectVarInfo) -> None:
         self.root[key] = value
+
+    def values(self) -> ValuesView[ProjectVar | ProjectVarInfo]:
+        """Get values of the project vars."""
+        return self.root.values()
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> ProjectVarInfo:
@@ -283,6 +326,26 @@ class ProjectVarInfo(pydantic.RootModel):
 
         self._set(*remaining, data=data_at_key, value=value, overwrite=overwrite)
 
+    def marshal_one_attribute(self, attr: str) -> dict[str, Any]:
+        """Marshal the data, but only return one attribute of the ProjectVar.
+
+        This is useful for:
+          - the StateManager in craft-parts which only needs part names
+          - a PackageService in a downstream application which only needs values
+
+        :param attr: The name of the ProjectVar attribute to retain.
+
+        :returns: A nested dictionary of the attribute.
+        """
+        result: dict[str, Any] = {}
+        for key, value in self.root.items():
+            if isinstance(value, ProjectVarInfo):
+                result[key] = value.marshal_one_attribute(attr)
+            elif isinstance(value, ProjectVar):
+                dumped = value.model_dump(include={attr})
+                result[key] = dumped.get(attr)
+        return result
+
     def _validate_keys(self, *keys: str) -> None:
         """Validate the keys.
 
@@ -316,7 +379,10 @@ class ProjectInfo:
     :param project_name: The name of the project.
     :param project_vars_part_name: Project variables can be set only if
         the part name matches this name.
-    :param project_vars: A dictionary containing the project variables.
+    :param project_vars: A nested dictionary containing project variables and the the
+        part that can update each variable. Project variabless can also be defined with
+        a deprecated API where `project_vars` must be a flat (not-nested) dictionary and
+        `project_vars_part_name` defines the part that can update all project variables.
     :param custom_args: Any additional arguments defined by the application
         when creating a :class:`LifecycleManager`.
     :param partitions: A list of partitions.
@@ -335,7 +401,7 @@ class ProjectInfo:
         project_dirs: ProjectDirs | None = None,
         project_name: str | None = None,
         project_vars_part_name: str | None = None,
-        project_vars: dict[str, str] | None = None,
+        project_vars: dict[str, str] | ProjectVarInfo | None = None,
         partitions: list[str] | None = None,
         filesystem_mounts: FilesystemMounts | None = None,
         base_layer_dir: Path | None = None,
@@ -348,8 +414,6 @@ class ProjectInfo:
         if not project_dirs:
             project_dirs = ProjectDirs(partitions=partitions)
 
-        pvars = project_vars or {}
-
         self._application_name = application_name
         self._cache_dir = Path(cache_dir).expanduser().resolve()
         self._host_arch = _get_host_architecture()
@@ -360,7 +424,9 @@ class ProjectInfo:
         self._dirs = project_dirs
         self._project_name = project_name
         self._project_vars_part_name = project_vars_part_name
-        self._project_vars = {k: ProjectVar(value=v) for k, v in pvars.items()}
+        self._project_vars = self._get_project_var_info(
+            project_vars, project_vars_part_name
+        )
         self._partitions = partitions
         self._filesystem_mounts = filesystem_mounts
         self._custom_args = custom_args
@@ -369,6 +435,36 @@ class ProjectInfo:
         self.global_environment: dict[str, str] = {}
 
         self.execution_finished = False
+
+    def _get_project_var_info(
+        self,
+        project_vars: dict[str, str] | ProjectVarInfo | None,
+        part_name: str | None,
+    ) -> ProjectVarInfo:
+        """Get a ProjectVarInfo.
+
+        :param project_vars: Either a ProjectVarInfo instance or a dictionary containing
+        project variables. The latter type is deprecated.
+        :param part_name: The name of the part that can set the variables. This is a deprecated
+        parameter and is ignored when using a ProjectVarInfo is provided.
+
+        :returns: A ProjectVarInfo instance.
+        """
+        if isinstance(project_vars, ProjectVarInfo):
+            return project_vars
+
+        if project_vars:
+            warnings.warn(
+                DeprecationWarning("Using deprecated API to define project variables."),
+                stacklevel=2,
+            )
+
+        converted = {
+            key: {"value": value, "part_name": part_name}
+            for key, value in (project_vars or {}).items()
+        }
+
+        return ProjectVarInfo.unmarshal(converted)
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         if hasattr(self._dirs, name):
@@ -460,8 +556,20 @@ class ProjectInfo:
         return self._project_name
 
     @property
+    def project_vars(self) -> ProjectVarInfo:
+        """Return the project vars."""
+        return self._project_vars
+
+    @property
     def project_vars_part_name(self) -> str | None:
         """Return the name of the part that can set project vars."""
+        warnings.warn(
+            DeprecationWarning(
+                "Using deprecated property 'project_vars_part_name'. "
+                "Use 'project_options.project_vars' instead."
+            ),
+            stacklevel=2,
+        )
         return self._project_vars_part_name
 
     @property
@@ -584,27 +692,27 @@ class ProjectInfo:
             part name is specified and the variable is set from a different part.
         """
         self._ensure_valid_variable_name(name)
+        keys = name.split(".")
+        project_var = self._project_vars.get(*keys)
 
         if raw_write:
-            self._project_vars[name].value = value
-            self._project_vars[name].updated = True
+            self._project_vars.set(*keys, value=value, overwrite=raw_write)
             return
 
-        if self._project_vars[name].updated:
+        if project_var.updated:
             raise RuntimeError(f"variable {name!r} can be set only once")
 
-        if self._project_vars_part_name == part_name:
-            self._project_vars[name].value = value
-            self._project_vars[name].updated = True
-        elif not self._project_vars_part_name:
+        if project_var.part_name == part_name:
+            self._project_vars.set(*keys, value=value)
+        elif not project_var.part_name:
             raise RuntimeError(
                 f"variable {name!r} can only be set in a part that "
                 "adopts external metadata"
             )
         else:
+            part_name = self._project_vars.get(*keys).part_name
             raise RuntimeError(
-                f"variable {name!r} can only be set "
-                f"in part {self._project_vars_part_name!r}"
+                f"variable {name!r} can only be set in part {part_name!r}"
             )
 
     def get_project_var(self, name: str, *, raw_read: bool = False) -> str:
@@ -626,7 +734,7 @@ class ProjectInfo:
                 f"cannot consume variable {name!r} during lifecycle execution"
             )
 
-        return self._project_vars[name].value
+        return self._project_vars.get(*name.split(".")).value or ""
 
     def _ensure_valid_variable_name(self, name: str) -> None:
         """Raise an error if variable name is invalid.
@@ -636,7 +744,7 @@ class ProjectInfo:
         if not _var_name_pattern.match(name):
             raise ValueError(f"{name!r} is not a valid variable name")
 
-        if name not in self._project_vars:
+        if not self._project_vars.has_key(*name.split(".")):
             raise ValueError(f"{name!r} not in project variables")
 
 
@@ -655,8 +763,8 @@ class ProjectOptions(pydantic.BaseModel):
     application_name: str = ""
     arch_triplet: str = ""
     target_arch: str = ""
-    project_vars: dict[str, ProjectVar] = {}
     project_vars_part_name: str | None = None
+    project_vars: ProjectVarInfo = ProjectVarInfo()
 
     @classmethod
     def from_project_info(cls, project_info: ProjectInfo) -> Self:

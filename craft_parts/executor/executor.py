@@ -22,7 +22,13 @@ from pathlib import Path
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
-from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
+from craft_parts.infos import (
+    PartInfo,
+    ProjectInfo,
+    ProjectVar,
+    ProjectVarInfo,
+    StepInfo,
+)
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
@@ -191,6 +197,17 @@ class Executor:
             ):
                 shutil.rmtree(self._project_info.partition_dir)
 
+    def _update_project_vars(
+        self, project_vars: ProjectVarInfo, part_name: str
+    ) -> None:
+        """Recurse through the project variables and mark the variables for a particular part as updated."""
+        for item in project_vars.values():
+            if isinstance(item, ProjectVar):
+                if item.part_name == part_name:
+                    item.updated = True
+            else:
+                self._update_project_vars(item, part_name)
+
     def _run_action(
         self,
         action: Action,
@@ -210,11 +227,7 @@ class Executor:
             logger.debug("Skip execution of %s (because %s)", action, action.reason)
             # update project variables if action is skipped
             if action.project_vars:
-                for var, pvar in action.project_vars.items():
-                    if pvar.updated:
-                        self._project_info.set_project_var(
-                            var, pvar.value, raw_write=True, part_name=action.part_name
-                        )
+                self._update_project_vars(action.project_vars, action.part_name)
             return
 
         if action.step == Step.STAGE:
