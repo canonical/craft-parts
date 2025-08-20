@@ -16,8 +16,9 @@
 
 import logging
 import os
+import platform
 from pathlib import Path
-from typing import cast
+from typing import Dict, cast
 from unittest.mock import call
 
 import pytest
@@ -783,7 +784,7 @@ class TestPackages:
         assert raised.value.package_name == "pkg1"
 
     def test_pull_fetch_stage_packages_arch(self, mocker, new_dir, partitions):
-        """Verify _run_pull fetches stage packages from the host architecture."""
+        """Verify _run_pull fetches stage packages for the target architecture."""
         getpkg = mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
             return_value=["pkg1"],
@@ -792,7 +793,24 @@ class TestPackages:
         part = Part(
             "foo", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
         )
-        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+
+        _platform_machine_translations: Dict[str, str] = {
+            # Maps other possible ``platform.machine()`` values to the arch translations below.
+            "arm64": "aarch64",
+            "armv7hl": "armv7l",
+            "i386": "i686",
+            "amd64": "x86_64",
+            "x64": "x86_64",
+        }
+
+        machine = platform.machine()
+        host_arch = _platform_machine_translations.get(machine.lower(), machine)
+        target_arch = "aarch64"
+
+        if host_arch != "x86_64":
+            target_arch = "x86_64"
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir, arch=target_arch)
         part_info = PartInfo(info, part)
         ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
         handler = PartHandler(
@@ -805,7 +823,7 @@ class TestPackages:
             base=mocker.ANY,
             package_names=mocker.ANY,
             stage_packages_path=mocker.ANY,
-            arch=part_info.host_arch,
+            arch=part_info.target_arch,
         )
 
     def test_fetch_stage_snaps(self, mocker, new_dir, partitions):
