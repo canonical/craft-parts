@@ -133,6 +133,7 @@ JLinkPlugin
 JLinkPluginEnvironmentValidator
 JLinkPluginProperties
 JSON
+KeyError
 LDFLAGS
 LLVM
 LTO
@@ -246,7 +247,10 @@ Prepend
 PrimeState
 ProjectDirs
 ProjectInfo
+ProjectOptions
 ProjectVar
+ProjectVarInfo
+ProjectVars
 PullError
 PullState
 PurePath
@@ -379,6 +383,7 @@ confictling
 config
 configfile
 cp
+cpu
 craftctl
 crafter
 crafters

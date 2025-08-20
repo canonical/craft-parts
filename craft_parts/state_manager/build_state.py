@@ -21,6 +21,8 @@ from typing import Annotated, Any
 import pydantic
 from overrides import override
 
+from craft_parts.infos import ProjectOptions
+
 from .step_state import StepState, validate_hex_string
 
 
@@ -79,7 +81,7 @@ class BuildState(StepState):
 
     @override
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
+        self, project_options: ProjectOptions
     ) -> dict[str, Any]:
         """Return relevant project options concerning this step.
 
@@ -88,5 +90,5 @@ class BuildState(StepState):
         :return: A dictionary containing project options of interest.
         """
         return {
-            "project_vars_part_name": project_options.get("project_vars_part_name"),
+            "project_vars_part_name": project_options.project_vars_part_name,
         }
