@@ -564,7 +564,14 @@ class PartSpec(BaseModel):
             self.overlay_packages
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
+            or self.organizes_to_overlay
         )
+
+    @property
+    def organizes_to_overlay(self) -> bool:
+        """Return whether the part organizes file to the overlay."""
+        # TODO: verify organize_files
+        return False
 
     @property
     def has_slices(self) -> bool:
@@ -1012,6 +1019,12 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     # We want to process parts in a consistent order between runs. The
     # simplest way to do this is to sort them by name.
     all_parts = sorted(part_list, key=lambda part: part.name, reverse=True)
+
+    # Reorder so that parts organizing to the overlay come first. This
+    # allows parts to create a viable base to work on before installing
+    # overlay packages.
+
+    # TODO: reorder based on overlay first
 
     while all_parts:
         top_part = None
