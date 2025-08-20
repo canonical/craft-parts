@@ -23,8 +23,8 @@ Changelog
 
 Bug fixes:
 
-- `#1207 <https://github.com/canonical/craft-parts/issues/1207>`_ the overlay directory
-  is not removed on a clean.
+- `#1207 <https://github.com/canonical/craft-parts/issues/1207>`_ Overlay directory is
+  not removed on a clean
 
 For a complete list of commits, check out the `2.20.1`_ release on GitHub.
 
