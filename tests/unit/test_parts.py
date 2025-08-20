@@ -339,6 +339,20 @@ class TestPartData:
         assert p.has_overlay is False
 
     @pytest.mark.parametrize(
+        ("organize", "result"),
+        [
+            ({}, False),
+            ({"this": "that"}, False),
+            ({"foo": "(partition)/bar"}, False),
+            ({"foo": "(overlay)/bar"}, True),
+            ({"this": "that", "foo": "(overlay)/bar"}, False),
+        ],
+    )
+    def test_part_organizes_to_overlay(self, partitions, organize, result):
+        p = Part("foo", {"organize": organize}, partitions=partitions)
+        assert p.organizes_to_overlay == result
+
+    @pytest.mark.parametrize(
         ("tc_spec", "tc_result"),
         [
             ({}, False),

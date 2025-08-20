@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -74,10 +74,19 @@ class Executor:
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
 
+        # The cache layer level is set by the first part that doesn't organize
+        # to overlay.
+        cache_level = 0
+        for i, part in enumerate(part_list):
+            if not part.organizes_to_overlay:
+                cache_level = i
+                break
+
         self._overlay_manager = OverlayManager(
             project_info=self._project_info,
             part_list=self._part_list,
             base_layer_dir=base_layer_dir,
+            cache_level=cache_level,
         )
 
     def prologue(self) -> None:
@@ -90,9 +99,13 @@ class Executor:
 
         self._verify_plugin_environment()
 
-        # update the overlay environment package list to allow installation of
-        # overlay packages.
-        if any(p.spec.overlay_packages for p in self._part_list):
+        # Update the overlay environment package list to allow installation of
+        # overlay packages if the cache layer is the first layer after base, to keep
+        # compatibility with existing behavior.
+        if (
+            any(p.spec.overlay_packages for p in self._part_list)
+            and self._overlay_manager.cache_level == 0
+        ):
             logger.info("Updating base overlay system")
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 callbacks.run_configure_overlay(

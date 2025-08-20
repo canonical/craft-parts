@@ -40,7 +40,11 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION, get_partition_dir_map
+from craft_parts.utils.partition_utils import (
+    DEFAULT_PARTITION,
+    OVERLAY_PARTITION,
+    get_partition_dir_map,
+)
 from craft_parts.utils.path_utils import get_partition_and_path
 
 
@@ -564,7 +568,17 @@ class PartSpec(BaseModel):
             self.overlay_packages
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
+            # Don't include organize to overlay in this verification.
         )
+
+    @property
+    def organizes_to_overlay(self) -> bool:
+        """Return whether the part organizes file to the overlay."""
+        for dest in self.organize_files.values():
+            partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
+            if partition == OVERLAY_PARTITION:
+                return True
+        return False
 
     @property
     def has_slices(self) -> bool:
@@ -702,13 +716,16 @@ class Part:
 
         With partitions disabled, the only partition name is ``None``
         """
-        return MappingProxyType(
-            get_partition_dir_map(
-                base_dir=self.dirs.work_dir,
-                partitions=self._partitions,
-                suffix=f"parts/{self.name}/install",
-            )
+        dir_map = get_partition_dir_map(
+            base_dir=self.dirs.work_dir,
+            partitions=self._partitions,
+            suffix=f"parts/{self.name}/install",
         )
+
+        if self.organizes_to_overlay:
+            dir_map[OVERLAY_PARTITION] = self.dirs.overlay_mount_dir
+
+        return MappingProxyType(dir_map)
 
     @property
     def part_state_dir(self) -> Path:
@@ -815,6 +832,11 @@ class Part:
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
+
+    @property
+    def organizes_to_overlay(self) -> bool:
+        """Return whether this part organizes files to overlay."""
+        return self.spec.organizes_to_overlay
 
     @property
     def has_slices(self) -> bool:
@@ -927,7 +949,10 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) not in self._partitions:
+                if str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
+                    # If overlays are enabled we can organize to (overlay)
+                    pass
+                elif str(partition) not in self._partitions:
                     error_list.append(
                         f"    unknown partition {partition!r} in {filepath!r}"
                     )
@@ -1012,6 +1037,12 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     # We want to process parts in a consistent order between runs. The
     # simplest way to do this is to sort them by name.
     all_parts = sorted(part_list, key=lambda part: part.name, reverse=True)
+
+    # Reorder so that parts organizing to the overlay come first. This
+    # allows parts to create a viable base to work on before installing
+    # overlay packages.
+
+    # TODO: reorder placing parts that organize to the overlay first
 
     while all_parts:
         top_part = None
