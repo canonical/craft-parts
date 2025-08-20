@@ -14,12 +14,21 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+import re
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from craft_parts import errors, infos
 from craft_parts.dirs import ProjectDirs
-from craft_parts.infos import PartInfo, ProjectInfo, ProjectVar, StepInfo
+from craft_parts.infos import (
+    PartInfo,
+    ProjectInfo,
+    ProjectVar,
+    ProjectVarInfo,
+    StepInfo,
+)
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -35,6 +44,11 @@ LINUX_ARCHS = [
     ("s390x", "s390x", "s390x-linux-gnu", True),
     ("x86_64", "amd64", "x86_64-linux-gnu", True),
 ]
+
+
+@pytest.fixture
+def mock_logger(mocker):
+    return mocker.patch("craft_parts.infos.logger", spec=logging.Logger)
 
 
 @pytest.mark.parametrize(
@@ -676,3 +690,200 @@ def test_get_host_architecture_returns_valid_arch(
     result = infos._get_host_architecture()
 
     assert result == translated_machine
+
+
+class TestProjectVarInfo:
+    """Tests for the ProjectVarInfo class."""
+
+    def test_marshal_unmarshal(self):
+        """Marshal and unmarshal a ProjectVarInfo."""
+        data = {
+            "a": {
+                "b": {
+                    "value": "value1",
+                },
+                "c": {
+                    "d": {
+                        "value": "value2",
+                        "updated": True,
+                    }
+                },
+            },
+            "e": {
+                "value": "value3",
+                "updated": False,
+            },
+        }
+
+        info = ProjectVarInfo.unmarshal(data)
+        new_data = info.marshal()
+
+        assert new_data == {
+            "a": {
+                "b": {
+                    "value": "value1",
+                    "updated": False,
+                },
+                "c": {
+                    "d": {
+                        "value": "value2",
+                        "updated": True,
+                    },
+                },
+            },
+            "e": {
+                "value": "value3",
+                "updated": False,
+            },
+        }
+
+    def test_unmarshal_error(self):
+        """Error if unmarshalling invalid data."""
+        expected_error = "Project variable info must be a dictionary."
+
+        with pytest.raises(TypeError, match=expected_error):
+            ProjectVarInfo.unmarshal("invalid")  # pyright: ignore[reportArgumentType]
+
+    def test_has_key(self, mock_logger):
+        """Check if a key exists."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+
+        assert info.has_key("a", "b")
+        assert not info.has_key("a")
+        assert not info.has_key("a", "b", "c")
+        assert not info.has_key("c")
+        # assert logs only for the first `has_key()` call
+        assert mock_logger.debug.mock_calls[0:4] == [
+            call("Checking if 'a.b' exists."),
+            call("Getting value for 'a.b'."),
+            call("Got 'value' (updated=False) for 'a.b'."),
+            call("'a.b' exists."),
+        ]
+
+    @pytest.mark.parametrize(
+        ("func", "kwargs"),
+        [
+            ("has_key", {}),
+            ("get", {}),
+            ("set", {"value": "baz"}),
+        ],
+    )
+    def test_no_keys_error(self, func, kwargs):
+        """Error if no keys are provided."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        expected_error = "No keys provided."
+
+        with pytest.raises(KeyError, match=expected_error):
+            getattr(info, func)(**kwargs)
+
+    def test_get_and_set(self, mock_logger):
+        """Test getting and setting a value from ProjectVarInfo."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+
+        info.set("a", "b", value="new-value")
+        var = info.get("a", "b")
+
+        assert var == ProjectVar(value="new-value", updated=True)
+        assert mock_logger.debug.mock_calls == [
+            call("Setting 'a.b' to 'new-value'."),
+            call("Set 'a.b' to 'new-value'."),
+            call("Getting value for 'a.b'."),
+            call("Got 'new-value' (updated=True) for 'a.b'."),
+        ]
+
+    def test_get_invalid_path_error(self):
+        """Error if an item the path doesn't exist."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        expected_error = re.escape(
+            "Failed to get value for 'a.non-existent': 'non-existent' doesn't exist."
+        )
+
+        with pytest.raises(KeyError, match=expected_error):
+            info.get("a", "non-existent")
+
+    def test_get_invalid_path_top_level_error(self):
+        """Error if the top level item in the path doesn't exist."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        expected_error = re.escape(
+            "Failed to get value for 'foo.bar.baz': 'foo' doesn't exist."
+        )
+
+        with pytest.raises(KeyError, match=expected_error):
+            info.get("foo", "bar", "baz")
+
+    def test_get_into_project_var_error(self):
+        """Error if traversing into a ProjectVar to get a value."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        expected_error = re.escape(
+            "Failed to get value for 'a.b.updated': can't traverse into node at 'b'."
+        )
+
+        with pytest.raises(KeyError, match=expected_error):
+            # try traversing into a value inside a ProjectVar
+            info.get("a", "b", "updated")
+
+    def test_get_not_project_var_error(self):
+        """Error if getting an intermediate node instead of an end node (a ProjectVar)."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        expected_error = re.escape(
+            "Failed to get value for 'a': value isn't a ProjectVar."
+        )
+
+        with pytest.raises(ValueError, match=expected_error):
+            # try getting something besides an end node
+            info.get("a")
+
+    def test_set_into_project_var_error(self):
+        """Error if traversing into a ProjectVar to set a value."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        expected_error = re.escape(
+            "Failed to set 'a.b.updated' to 'new-value': can't traverse into node at 'b'."
+        )
+
+        with pytest.raises(KeyError, match=expected_error):
+            # try traversing into a value inside a ProjectVar
+            info.set("a", "b", "updated", value="new-value")
+
+    def test_set_not_project_var_error(self):
+        """Error if setting an intermediate node instead of an end node (a ProjectVar)."""
+        info = ProjectVarInfo.unmarshal({"a": {"b": {"value": "value"}}})
+        expected_error = re.escape(
+            "Failed to set 'a' to 'new-value': value isn't a ProjectVar."
+        )
+
+        with pytest.raises(ValueError, match=expected_error):
+            # try setting a value inside a ProjectVar
+            info.set("a", value="new-value")
+
+    def test_set_overwrite(self, mock_logger):
+        """Overwrite an item that already exists."""
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": {"value": "value", "updated": True}}}
+        )
+
+        info.set("a", "b", value="new-value", overwrite=True)
+
+        assert mock_logger.debug.mock_calls == [
+            call("Setting 'a.b' to 'new-value'."),
+            call("Overwriting updated value 'value'."),
+            call("Set 'a.b' to 'new-value'."),
+        ]
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            pytest.param({}, id="default"),
+            pytest.param({"overwrite": False}, id="explicit"),
+        ],
+    )
+    def test_set_overwrite_error(self, kwargs, mock_logger):
+        """Error if overwrite is false."""
+        info = ProjectVarInfo.unmarshal(
+            {"a": {"b": {"value": "value", "updated": True}}}
+        )
+        expected_error = re.escape(
+            "Failed to set 'a.b' to 'new-value': key 'b' already exists and overwrite is false."
+        )
+
+        with pytest.raises(ValueError, match=expected_error):
+            info.set("a", "b", value="new-value", **kwargs)
