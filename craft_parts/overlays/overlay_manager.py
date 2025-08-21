@@ -88,11 +88,11 @@ class OverlayManager:
         # it will be placed immediately after the base layer.
         if pkg_cache and index >= self._cache_level:
             level = self._cache_level + 1
-            lowers = (
-                lowers[0:level]
-                + self._project_info.overlay_packages_dir
-                + lowers[level:index]
-            )
+            lowers = [
+                *lowers[0:level],
+                self._project_info.overlay_packages_dir,
+                *lowers[level : index + 1],
+            ]
 
         # The top layer.
         upper = self._layer_dirs[index]
@@ -117,6 +117,9 @@ class OverlayManager:
 
         lowers = [self._base_layer_dir]
         lowers.extend(self._layer_dirs[0 : self._cache_level])
+
+        # lower dirs are stacked from right to left
+        lowers.reverse()
 
         self._overlay_fs = OverlayFS(
             lower_dirs=lowers,

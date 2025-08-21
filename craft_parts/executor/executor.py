@@ -78,7 +78,7 @@ class Executor:
         # to overlay.
         cache_level = 0
         for i, part in enumerate(part_list):
-            if not part.spec.organizes_to_overlay:
+            if not part.organizes_to_overlay:
                 cache_level = i
                 break
 
