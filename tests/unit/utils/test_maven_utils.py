@@ -531,8 +531,8 @@ def test_versions_max(versions: _Versions, expected: str) -> None:
             "2.0.0",
             "3.0.0",
             "Using latest semver version available.",
-            id="no-matching-majors"
-        )
+            id="no-matching-majors",
+        ),
     ],
 )
 def test_versions_nearest(
