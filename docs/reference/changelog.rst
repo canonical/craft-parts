@@ -31,15 +31,13 @@ New features:
 
   With Craft Parts 2.20.1, the plugin now deterministically detects and matches the
   dependency versions available on the host, aligning with how Maven normally behaves.
-  This change makes the plugin a drop-in replacement of Maven, for private networks.
+  This change makes the plugin a drop-in replacement for Maven in private networks.
 
 Bug fixes:
 
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
-- When rebuilding a part with the ``self-contained`` build attribute, the maven-use
-  plugin now guarantees to select the same dependency version.
 
 For a complete list of commits, check out the `2.20.1`_ release on GitHub.
 
