@@ -33,7 +33,7 @@ from craft_parts.utils.maven.common import (
     MavenXMLError,
     Namespaces,
     _find_element,
-    _get_available_version,
+    _get_available_versions,
     _get_element_text,
     _get_existing_artifacts,
     _get_namespaces,
@@ -42,6 +42,7 @@ from craft_parts.utils.maven.common import (
     _insert_into_existing,
     _needs_proxy_config,
     _set_version,
+    _Versions,
     create_maven_settings,
     update_pom,
 )
@@ -247,7 +248,8 @@ def test_get_element_text() -> None:
         _get_element_text(element)
 
 
-def test_set_version_upgrade() -> None:
+def test_set_version_upgrade(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.DEBUG)
     dependency = """\
         <dependency>
           <groupId>org.starcraft</groupId>
@@ -258,17 +260,32 @@ def test_set_version_upgrade() -> None:
 
     dep_element = etree.fromstring(dependency, parser=_XML_PARSER)
 
-    _set_version(dep_element, {}, "1.0.1")
+    _set_version(
+        dep_element,
+        {},
+        _Versions(
+            {
+                MavenArtifact(
+                    group_id="org.starcraft",
+                    artifact_id="test",
+                    version="1.0.1",
+                    packaging_type="jar",
+                )
+            }
+        ),
+    )
 
     version = _find_element(dep_element, "version", {})
     assert _get_element_text(version) == "1.0.1"
 
+    assert "Found a matching major version." in caplog.text
     assert b"Version updated by craft-parts from '1.0.0' to '1.0.1'" in etree.tostring(
         dep_element
     )
 
 
-def test_set_version_unpinned() -> None:
+def test_set_version_unpinned(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.DEBUG)
     dependency = """\
         <dependency>
           <groupId>org.starcraft</groupId>
@@ -278,18 +295,31 @@ def test_set_version_unpinned() -> None:
 
     dep_element = etree.fromstring(dependency, parser=_XML_PARSER)
 
-    _set_version(dep_element, {}, "1.0.1")
+    _set_version(
+        dep_element,
+        {},
+        _Versions(
+            {
+                MavenArtifact(
+                    group_id="org.starcraft",
+                    artifact_id="test",
+                    version="1.0.1",
+                    packaging_type="jar",
+                )
+            }
+        ),
+    )
 
     version = _find_element(dep_element, "version", {})
     assert _get_element_text(version) == "1.0.1"
 
     assert b"Version set by craft-parts to '1.0.1'" in etree.tostring(dep_element)
+    assert "Setting version of 'org.starcraft.test' to '1.0.1'" in caplog.text
 
 
 @pytest.mark.parametrize(
     ("package"),
     [
-        pytest.param({}, id="not-available"),
         pytest.param({"package": {"1.0.1"}}, id="upgrade"),
         pytest.param({"package": {"1.0.1", "1.0.2"}}, id="multi"),
     ],
@@ -300,18 +330,31 @@ def test_get_available_version(package: dict[str, set[str]]) -> None:
             artifact_id="package",
             group_id="org.starcraft",
             packaging_type="jar",
-            version=version,
+            version=str(version),
         )
         for version in package.get("package", set())
     }
     existing = {"org.starcraft": {"package": artifacts}}
 
-    available = _get_available_version(
-        existing,
-        MavenArtifact("org.starcraft", "package", "1.0.0", packaging_type="jar"),
+    versions = cast(
+        "_Versions",
+        _get_available_versions(
+            existing,
+            MavenArtifact("org.starcraft", "package", "1.0.0", packaging_type="jar"),
+        ),
     )
 
-    assert available is None or available in package["package"]
+    available_versions = {str(version) for version in versions.available}
+
+    assert available_versions == package["package"]
+
+
+def test_get_available_version_not_available() -> None:
+    versions = _get_available_versions(
+        {}, MavenArtifact("org.starcraft", "package", "1.0.0", packaging_type="jar")
+    )
+
+    assert versions is None
 
 
 @dataclass(frozen=True)
@@ -344,6 +387,164 @@ class FakeArtifact(MavenArtifact):
         )
 
         return pom_file
+
+
+@pytest.mark.parametrize(
+    ("versions", "expected"),
+    [
+        pytest.param(
+            _Versions({FakeArtifact("org.starcraft", "test", "1.0.0")}),
+            "1.0.0",
+            id="simple-semver",
+        ),
+        pytest.param(
+            _Versions({FakeArtifact("org.starcraft", "test", "1.0.0-snapshot")}),
+            "1.0.0-snapshot",
+            id="simple-fallback",
+        ),
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0"),
+                    FakeArtifact("org.starcraft", "test", "1.0.1-snapshot"),
+                }
+            ),
+            "1.0.0",
+            id="prefer-semver",
+        ),
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0"),
+                    FakeArtifact("org.starcraft", "test", "1.0.1"),
+                }
+            ),
+            "1.0.1",
+            id="two-semvers",
+        ),
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0-snapshot"),
+                    FakeArtifact("org.starcraft", "test", "1.0.1-snapshot"),
+                }
+            ),
+            "1.0.1-snapshot",
+            id="two-fallbacks",
+        ),
+    ],
+)
+def test_versions_max(versions: _Versions, expected: str) -> None:
+    assert versions.max() == expected
+
+
+@pytest.mark.parametrize(
+    ("versions", "target", "expected", "message"),
+    [
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0"),
+                }
+            ),
+            "1.0.0",
+            "1.0.0",
+            "Exact match was found.",
+            id="simple-exact-semver",
+        ),
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0-snapshot"),
+                }
+            ),
+            "1.0.0-snapshot",
+            "1.0.0-snapshot",
+            "Exact match was found.",
+            id="simple-exact-fallback",
+        ),
+        # In the case that the major version can be matched, pick latest patch closest to the requested
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0"),
+                    FakeArtifact("org.starcraft", "test", "1.0.2"),
+                    FakeArtifact("org.starcraft", "test", "1.0.3"),
+                }
+            ),
+            "1.0.1",
+            "1.0.2",
+            "Found a matching major version.",
+            id="major-min-candidate-semver",
+        ),
+        # In the case that the major version can be matched, but no patches >= the requested are present,
+        # pick the highest possible patch
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.1"),
+                    FakeArtifact("org.starcraft", "test", "1.0.2"),
+                }
+            ),
+            "1.0.3",
+            "1.0.2",
+            "Found a matching major version.",
+            id="major-max-patch-semver",
+        ),
+        # If no version matches, use the latest semver-compliant version available
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0"),
+                    FakeArtifact("org.starcraft", "test", "1.0.1"),
+                    FakeArtifact("org.starcraft", "test", "1.0.2-snapshot"),
+                }
+            ),
+            "X.Y.Z",
+            "1.0.1",
+            "Could not interpret target as semver, using max semver version.",
+            id="no-match-use-latest",
+        ),
+        # If no version matches and no semver available, use alphabetically highest fallback
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0-snapshot"),
+                    FakeArtifact("org.starcraft", "test", "1.0.1-snapshot"),
+                    FakeArtifact("org.starcraft", "test", "debian"),
+                }
+            ),
+            "X.Y.Z",
+            "debian",
+            "No package versions using semver were found - falling back to latest.",
+            id="no-match-use-latest-fallback",
+        ),
+        # If everything is well-formed, but a matching major version simply doesn't exist,
+        # just use the newest semver version available.
+        pytest.param(
+            _Versions(
+                {
+                    FakeArtifact("org.starcraft", "test", "1.0.0"),
+                    FakeArtifact("org.starcraft", "test", "3.0.0"),
+                }
+            ),
+            "2.0.0",
+            "3.0.0",
+            "Using latest semver version available.",
+            id="no-matching-majors"
+        )
+    ],
+)
+def test_versions_nearest(
+    versions: _Versions,
+    target: str,
+    expected: str,
+    message: str,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    assert versions.nearest(target) == expected
+    assert message in caplog.text
 
 
 @pytest.mark.parametrize(
