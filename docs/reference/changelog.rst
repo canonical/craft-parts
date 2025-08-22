@@ -24,7 +24,7 @@ Changelog
 
 New features:
 
-- The autotools plugin now supports 'disable-parallel' parameter.
+- The autotools plugin now supports the ``disable-parallel`` parameter.
 
 Bug fixes:
 
