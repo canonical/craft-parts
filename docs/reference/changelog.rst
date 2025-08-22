@@ -22,11 +22,24 @@ Changelog
 2.20.1 (2025-MM-DD)
 -------------------
 
+New features:
+
+- Previously, when the Maven Use plugin updated ``pom.xml`` for self-contained projects,
+  it wouldn't reliably find the correct dependency versions on the host. It could
+  unpredictably declare the wrong package version, or select a vastly different version
+  despite a similar one being available.
+
+  With Craft Parts 2.20.1, the plugin now deterministically detects and matches the
+  dependency versions available on the host, aligning with how Maven normally behaves.
+  This change makes the plugin a drop-in replacement of Maven, for private networks.
+
 Bug fixes:
 
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
+- When rebuilding a part with the ``self-contained`` build attribute, the maven-use
+  plugin now guarantees to select the same dependency version.
 
 For a complete list of commits, check out the `2.20.1`_ release on GitHub.
 
@@ -43,7 +56,7 @@ New features:
 Bug fixes:
 
 - Files and directories produced during the build step are now correctly checked for
-  collisions with overlay contents during the staging step. Conflicts can be resolved 
+  collisions with overlay contents during the staging step. Conflicts can be resolved
   with the :ref:`stage <reference-part-properties-stage>` and
   :ref:`overlay <reference-part-properties-overlay-files>` keys.
 - When content is staged to partitions from the overlay of the default partition,
@@ -76,7 +89,7 @@ Bug fixes:
 
 - The ``--recurse-submodules`` link in the ``source-submodules`` docstring
   no longer produces a linkcheck error.
-- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition 
+- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition
   is aliased.
 
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
