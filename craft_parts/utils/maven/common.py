@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from lxml import etree
-from packaging.version import InvalidVersion, Version
+from semver import Version
 from typing_extensions import Self, override
 
 from ._xml import (
@@ -455,7 +455,7 @@ def _get_existing_artifacts(part_info: PartInfo) -> GroupDict:
 class _Versions:
     """Convenience type for versions available on-disk."""
 
-    available: set[Version]
+    semvers: set[Version]
     fallbacks: set[str]
 
     def __init__(self, artifacts: set[MavenArtifact]) -> None:
@@ -464,90 +464,84 @@ class _Versions:
         This function maps a set of artifacts into two sets. One is a list of all valid
         versions for easy handling, and the other is a set of unparsable version numbers.
         """
+        if not artifacts:
+            raise ValueError("No versions were specified.")
+
         available: set[Version] = set()
         fallbacks: set[str] = set()
         for art in artifacts:
             if art.version is None:
                 continue
             try:
-                available.add(Version(art.version))
-            except InvalidVersion:
+                available.add(Version.parse(art.version))
+            except ValueError:
                 fallbacks.add(art.version)
 
-        self.available = available
+        self.semvers = available
         self.fallbacks = fallbacks
 
-    def nearest(self, target: str) -> str:  # noqa: PLR0911, too many return statements
+    def nearest_to(self, target: str) -> str:
         """Calculate the nearest available version to `target`.
 
-        If necessary, falls back in this order:
-            - If no semver versions are on disk, use the alphabetically highest non-semver version
-            - If `target` isn't semver, use the latest available semver version
-            - If the versions on-disk don't match `target`'s major version, an attempt is made
-              to find it in the non-semver available versions. From this, the alphabetically
-              highest version is picked
-            - If nothing else worked, just use the latest semver-conformant version available
-        """
-        # If there is an exact match in fallbacks, just use that
-        if target in self.fallbacks:
-            logger.debug("Exact match was found.")
-            return target
+        This method will make a best-effort attempt at matching the version
+        specified by `target`. It will always prefer exact version matches.
 
-        # If there weren't any successfully parsed versions on-disk, use fallback versions
-        if not self.available:
+        If the target is a semantic version, it will attempt to use the newest version
+        that is older than the target, followed by the oldest version that is newer
+        than the target.
+
+        Finally, if `target` is not a semantic version at all, it will first attempt
+        to use the newest semantic version available, then fall back to the
+        alphabetically highest non-semantic version available.
+        """
+        # If this succeeds, the target is a semantic version. If not, we can't understand the target
+        # beyond equality, so just do our best.
+        try:
+            parsed_target = Version.parse(target)
+        except ValueError:
+            logger.debug("Requested version was not a semantic version.")
+
+            # If there is an exact match in fallbacks, just use that
+            if target in self.fallbacks:
+                logger.debug("Exact match was found.")
+                return target
+
+            # The target isn't semver, just get the latest version we can
+            if self.semvers:
+                logger.debug(
+                    "Using maximum semantic version for unknown requested version."
+                )
+                return str(max(self.semvers))
+
+            # If there weren't any successfully parsed versions on-disk, use fallback versions
             logger.debug(
-                "No package versions using semver were found - falling back to latest."
+                "No package versions using semver were found - falling back to alphabetically highest."
             )
             return max(self.fallbacks)
 
-        try:
-            parsed_target = Version(target)
-        except InvalidVersion:
-            # The target isn't semver, just get the latest version we can
-            logger.debug(
-                "Could not interpret target as semver, using max semver version."
-            )
-            return str(max(self.available))
 
         # If there is an exact match available, just use that
-        if parsed_target in self.available:
+        if parsed_target in self.semvers:
             logger.debug("Exact match was found.")
             return target
 
-        # See if any of the successfully-parsed versions use the same major and return the best
-        # match if so
-        matching_majors = list(
-            filter(lambda ver: ver.major == parsed_target.major, self.available)
-        )
-        if matching_majors:
-            logger.debug("Found a matching major version.")
-            # Try to only match versions greater than what was requested
-            candidates = list(filter(lambda ver: ver > parsed_target, matching_majors))
-            if candidates:
-                return str(min(candidates))
-            # But at least match the major version if we can
-            return str(max(matching_majors))
+        # Sort the available versions into those that are newer than the target
+        semvers_newer = {ver for ver in self.semvers if ver > parsed_target}
 
-        # Attempt to find a matching major in the fallbacks, just in case
-        if self.fallbacks:
-            matching_majors = list(
-                filter(
-                    lambda ver: ver.split(".", maxsplit=1)[0] == parsed_target.major,
-                    self.fallbacks,
-                )
-            )
-            if matching_majors:
-                logger.debug("Found a matching major version.")
-                return max(matching_majors)
+        if semvers_newer:
+            logger.debug("Using the closest newer version.")
+            return str(min(semvers_newer))
 
-        # Nothing else worked, just use the latest semver-conformant version we have
-        logger.debug("Using latest semver version available.")
-        return str(max(self.available))
+        # What remains must then be older than the target
+        semvers_older = self.semvers - semvers_newer
+        logger.debug("Using the closest older version.")
+        return str(max(semvers_older))
+
 
     def max(self) -> str:
         """Get the latest version on-disk."""
-        if self.available:
-            return str(max(self.available))
+        if self.semvers:
+            return str(max(self.semvers))
         return max(self.fallbacks)
 
 
@@ -588,7 +582,7 @@ def _set_version(
 
     current_version = _get_element_text(version_element)
     logger.debug(f"Getting nearest version number for {artifact_id!r}.")
-    new_version = versions.nearest(current_version)
+    new_version = versions.nearest_to(current_version)
 
     if current_version == new_version:
         return
