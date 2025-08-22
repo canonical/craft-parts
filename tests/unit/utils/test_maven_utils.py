@@ -283,6 +283,7 @@ def test_set_version_downgrade(caplog: pytest.LogCaptureFixture) -> None:
         dep_element
     )
 
+
 def test_set_version_upgrade(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG)
     dependency = """\

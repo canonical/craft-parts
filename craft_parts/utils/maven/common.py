@@ -519,7 +519,6 @@ class _Versions:
             )
             return max(self.fallbacks)
 
-
         # If there is an exact match available, just use that
         if parsed_target in self.semvers:
             logger.debug("Exact match was found.")
@@ -536,7 +535,6 @@ class _Versions:
         semvers_older = self.semvers - semvers_newer
         logger.debug("Using the closest older version.")
         return str(max(semvers_older))
-
 
     def max(self) -> str:
         """Get the latest version on-disk."""
