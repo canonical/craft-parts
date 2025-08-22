@@ -462,7 +462,7 @@ class _Versions:
         """Parse out the versions of a set of artifacts.
 
         This function maps a set of artifacts into two sets. One is a list of all valid
-        versions for easy handling, and the other is a set of unparseable version numbers.
+        versions for easy handling, and the other is a set of unparsable version numbers.
         """
         available: set[Version] = set()
         fallbacks: set[str] = set()
