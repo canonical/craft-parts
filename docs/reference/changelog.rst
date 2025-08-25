@@ -17,9 +17,9 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
-.. _release-2.20.1:
+.. _release-2.21.0:
 
-2.20.1 (2025-MM-DD)
+2.21.0 (2025-MM-DD)
 -------------------
 
 New features:
@@ -29,7 +29,7 @@ New features:
   unpredictably declare the wrong package version, or select a vastly different version
   despite a similar one being available.
 
-  With Craft Parts 2.20.1, the plugin now deterministically detects and matches the
+  With Craft Parts 2.21.0, the plugin now deterministically detects and matches the
   dependency versions available on the host, aligning with how Maven normally behaves.
   This change makes the plugin a drop-in replacement for Maven in private networks.
 
@@ -39,7 +39,7 @@ Bug fixes:
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
 
-For a complete list of commits, check out the `2.20.1`_ release on GitHub.
+For a complete list of commits, check out the `2.21.0`_ release on GitHub.
 
 .. _release 2.20.0:
 
@@ -1363,7 +1363,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
-.. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1
+.. _2.21.0: https://github.com/canonical/craft-parts/releases/tag/2.21.0
 .. _2.20.0: https://github.com/canonical/craft-parts/releases/tag/2.20.0
 .. _2.19.0: https://github.com/canonical/craft-parts/releases/tag/2.19.0
 .. _2.18.0: https://github.com/canonical/craft-parts/releases/tag/2.18.0
