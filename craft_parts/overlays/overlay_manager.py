@@ -59,7 +59,7 @@ class OverlayManager:
         """Return the path to the base layer, if any."""
         return self._base_layer_dir
 
-    def mount_layer(self, part: Part, *, pkg_cache: bool = False) -> None:
+    def mount_layer(self, part: Part) -> None:
         """Mount the overlay step layer stack up to the given part.
 
         :param part: The part corresponding to the topmost layer to mount.
@@ -70,8 +70,8 @@ class OverlayManager:
 
         lowers = [self._base_layer_dir]
 
-        if pkg_cache:
-            lowers.append(self._project_info.overlay_packages_dir)
+        # if pkg_cache:
+        #    lowers.append(self._project_info.overlay_packages_dir)
 
         index = self._part_list.index(part)
         lowers.extend(self._layer_dirs[0:index])
@@ -170,18 +170,18 @@ class LayerMount:
         self,
         overlay_manager: OverlayManager,
         top_part: Part,
-        pkg_cache: bool = True,  # noqa: FBT001, FBT002
+        # pkg_cache: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         self._overlay_manager = overlay_manager
         self._overlay_manager.mkdirs()
         self._top_part = top_part
-        self._pkg_cache = pkg_cache
+        # self._pkg_cache = pkg_cache
         self._pid = os.getpid()
 
     def __enter__(self) -> "LayerMount":
         self._overlay_manager.mount_layer(
             self._top_part,
-            pkg_cache=self._pkg_cache,
+            # pkg_cache=self._pkg_cache,
         )
         return self
 
@@ -199,36 +199,35 @@ class LayerMount:
         """
         self._overlay_manager.install_packages(package_names)
 
-
-class PackageCacheMount:
-    """Mount and umount the overlay package cache.
-
-    :param overlay_manager: The overlay manager.
-    """
-
-    def __init__(self, overlay_manager: OverlayManager) -> None:
-        self._overlay_manager = overlay_manager
-        self._overlay_manager.mkdirs()
-        self._pid = os.getpid()
-
-    def __enter__(self) -> "PackageCacheMount":
-        self._overlay_manager.mount_pkg_cache()
-        return self
-
-    def __exit__(self, *exc: object) -> Literal[False]:
-        # prevent pychroot process leak
-        if os.getpid() != self._pid:
-            sys.exit()
-        self._overlay_manager.unmount()
-        return False
-
-    def refresh_packages_list(self) -> None:
-        """Update the list of available packages in the overlay system."""
-        self._overlay_manager.refresh_packages_list()
-
-    def download_packages(self, package_names: list[str]) -> None:
-        """Download the specified packages to the local system.
-
-        :param package_names: The list of packages to download.
-        """
-        self._overlay_manager.download_packages(package_names)
+    # class PackageCacheMount:
+    #    """Mount and umount the overlay package cache.
+    #
+    #    :param overlay_manager: The overlay manager.
+    #    """
+    #
+    #    def __init__(self, overlay_manager: OverlayManager) -> None:
+    #        self._overlay_manager = overlay_manager
+    #        self._overlay_manager.mkdirs()
+    #        self._pid = os.getpid()
+    #
+    #    def __enter__(self) -> "PackageCacheMount":
+    #        self._overlay_manager.mount_pkg_cache()
+    #        return self
+    #
+    #    def __exit__(self, *exc: object) -> Literal[False]:
+    #        # prevent pychroot process leak
+    #        if os.getpid() != self._pid:
+    #            sys.exit()
+    #        self._overlay_manager.unmount()
+    #        return False
+    #
+    #    def refresh_packages_list(self) -> None:
+    #        """Update the list of available packages in the overlay system."""
+    #        self._overlay_manager.refresh_packages_list()
+    #
+    #    def download_packages(self, package_names: list[str]) -> None:
+    #        """Download the specified packages to the local system.
+    #
+    #        :param package_names: The list of packages to download.
+    #        """
+    #        self._overlay_manager.download_packages(package_names)

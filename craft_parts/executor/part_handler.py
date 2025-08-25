@@ -234,6 +234,14 @@ class PartHandler:
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
         self._app_environment: dict[str, str] = {}
+        self._pkg_cache_part: Part | None
+
+        for p in part_list:
+            if p.name.endswith("_package_cache"):
+                self._pkg_cache_part = p
+                break
+        else:
+            self._pkg_cache_part = None
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -1239,11 +1247,14 @@ class PartHandler:
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
         overlay_packages = self._part.spec.overlay_packages
-        if not overlay_packages:
+        if not overlay_packages or not self._pkg_cache_part:
             return
 
         try:
-            with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+            # with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+            with overlays.LayerMount(
+                self._overlay_manager, top_part=self._pkg_cache_part
+            ) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:

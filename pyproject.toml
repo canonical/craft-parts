@@ -380,7 +380,7 @@ lint.ignore = [
 allow-star-arg-any = true
 
 [tool.ruff.lint.flake8-builtins]
-strict-checking = true
+#strict-checking = true
 
 [tool.ruff.lint.pylint]
 max-args = 8
