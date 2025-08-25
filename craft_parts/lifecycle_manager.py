@@ -41,7 +41,7 @@ from craft_parts.utils.partition_utils import validate_partition_names
 class LifecycleManager:
     """Coordinate the planning and execution of the parts lifecycle.
 
-    The lifecycle manager determines the list of actions that needs be executed in
+    The lifecycle manager determines the list of actions that must be executed in
     order to obtain a tree of installed files from the specification on how to
     process its parts, and provides a mechanism to execute each of these actions.
 
