@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from lxml import etree
+from semver import Version
 from typing_extensions import Self, override
 
 from ._xml import (
@@ -266,8 +267,8 @@ class MavenArtifact:
         """Update all of the versions for this project as necessary."""
         for dependency in cls._collect_elements(project, namespaces):
             dep = cls.from_element(dependency, namespaces)
-            if new_version := _get_available_version(existing, dep):
-                _set_version(dependency, namespaces, new_version)
+            if versions := _get_available_versions(existing, dep):
+                _set_version(dependency, namespaces, versions)
             else:
                 logger.debug(
                     f"{cls.field_name} {dep.artifact_id} has no available version, skipping."
@@ -367,9 +368,9 @@ class MavenPlugin(MavenArtifact):
         # Patch the declared plugins
         patched_plugins: set[MavenArtifact] = set()
         for plugin_ele in declared_plugins:
-            plugin = MavenPlugin.from_element(plugin_ele, namespaces)
-            if (version := _get_available_version(existing, plugin)) is not None:
-                _set_version(plugin_ele, namespaces, version)
+            plugin = cls.from_element(plugin_ele, namespaces)
+            if (versions := _get_available_versions(existing, plugin)) is not None:
+                _set_version(plugin_ele, namespaces, versions)
                 patched_plugins.add(plugin)
             else:
                 logger.warning(
@@ -451,18 +452,110 @@ def _get_existing_artifacts(part_info: PartInfo) -> GroupDict:
     return result
 
 
-def _get_available_version(
+class _Versions:
+    """Convenience type for versions available on-disk."""
+
+    semvers: set[Version]
+    fallbacks: set[str]
+
+    def __init__(self, artifacts: set[MavenArtifact]) -> None:
+        """Parse out the versions of a set of artifacts.
+
+        This function maps a set of artifacts into two sets. One is a list of all valid
+        versions for easy handling, and the other is a set of unparsable version numbers.
+        """
+        if not artifacts:
+            raise ValueError("No versions were specified.")
+
+        available: set[Version] = set()
+        fallbacks: set[str] = set()
+        for art in artifacts:
+            if art.version is None:
+                continue
+            try:
+                available.add(Version.parse(art.version))
+            except ValueError:
+                fallbacks.add(art.version)
+
+        self.semvers = available
+        self.fallbacks = fallbacks
+
+    def nearest_to(self, target: str) -> str:
+        """Calculate the nearest available version to `target`.
+
+        This method will make a best-effort attempt at matching the version
+        specified by `target`. It will always prefer exact version matches.
+
+        If the target is a semantic version, it will attempt to use the newest version
+        that is older than the target, followed by the oldest version that is newer
+        than the target.
+
+        Finally, if `target` is not a semantic version at all, it will first attempt
+        to use the newest semantic version available, then fall back to the
+        alphabetically highest non-semantic version available.
+        """
+        # If this succeeds, the target is a semantic version. If not, we can't understand the target
+        # beyond equality, so just do our best.
+        try:
+            parsed_target = Version.parse(target)
+        except ValueError:
+            logger.debug("Requested version was not a semantic version.")
+
+            # If there is an exact match in fallbacks, just use that
+            if target in self.fallbacks:
+                logger.debug("Exact match was found.")
+                return target
+
+            # The target isn't semver, just get the latest version we can
+            if self.semvers:
+                logger.debug(
+                    "Using maximum semantic version for unknown requested version."
+                )
+                return str(max(self.semvers))
+
+            # If there weren't any successfully parsed versions on-disk, use fallback versions
+            logger.debug(
+                "No package versions using semver were found - falling back to alphabetically highest."
+            )
+            return max(self.fallbacks)
+
+        # If there is an exact match available, just use that
+        if parsed_target in self.semvers:
+            logger.debug("Exact match was found.")
+            return target
+
+        # Sort the available versions into those that are newer than the target
+        semvers_newer = {ver for ver in self.semvers if ver > parsed_target}
+
+        if semvers_newer:
+            logger.debug("Using the closest newer version.")
+            return str(min(semvers_newer))
+
+        # What remains must then be older than the target
+        semvers_older = self.semvers - semvers_newer
+        logger.debug("Using the closest older version.")
+        return str(max(semvers_older))
+
+    def max(self) -> str:
+        """Get the latest version on-disk."""
+        if self.semvers:
+            return str(max(self.semvers))
+        return max(self.fallbacks)
+
+
+def _get_available_versions(
     existing: GroupDict, dependency: MavenArtifact
-) -> str | None:
-    if versions := existing.get(dependency.group_id, {}).get(
+) -> _Versions | None:
+    if artifacts := existing.get(dependency.group_id, {}).get(
         dependency.artifact_id, set()
     ):
-        return next(iter(versions)).version
+        # Guaranteed to be a non-empty set of versions
+        return _Versions(artifacts)
     return None
 
 
 def _set_version(
-    element: etree._Element, namespaces: Namespaces, new_version: str
+    element: etree._Element, namespaces: Namespaces, versions: _Versions
 ) -> None:
     group_id = _get_element_text(_find_element(element, "groupId", namespaces))
     artifact_id = _get_element_text(_find_element(element, "artifactId", namespaces))
@@ -471,6 +564,7 @@ def _set_version(
 
     # If no version is specified at all, always set it
     if version_element is None:
+        new_version = versions.max()
         new_version_element = etree.Element("version")
         new_version_element.text = new_version
         comment = etree.Comment(f"Version set by craft-parts to '{new_version}'")
@@ -485,6 +579,8 @@ def _set_version(
         return
 
     current_version = _get_element_text(version_element)
+    logger.debug(f"Getting nearest version number for {artifact_id!r}.")
+    new_version = versions.nearest_to(current_version)
 
     if current_version == new_version:
         return
