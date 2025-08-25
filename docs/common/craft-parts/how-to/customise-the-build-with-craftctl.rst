@@ -110,11 +110,11 @@ override:
           craftctl set version="$(craftctl get version)-$(git rev-parse --short HEAD)"
 
 
-Defining custom variables within components
--------------------------------------------
+Accessing project variables across parts and components
+-------------------------------------------------------
 
 You can further use craftctl to get and set custom variables within different
-components using a dot syntax. FOr example:
+components using a combination of the ``adopt-info`` tag and a dot syntax. For example:
 
 .. code-block:: yaml
     :caption: Project file
