@@ -144,7 +144,7 @@ components using a combination of the ``adopt-info`` tag and a dot syntax. For e
           craftctl set components.component-1.version="$(cat VERSION.txt)"
           craftctl default
 
-Note the syntax ``component:component-1.version``, which is a distinct value from
+Note the syntax ``components.component-1.version``, which is a distinct value from
 the ``version`` variable referenced in ``part-1``.
 
 Note also how we use ``adopt-info`` at both the top level, and within a component.
