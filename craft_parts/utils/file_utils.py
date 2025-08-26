@@ -131,7 +131,8 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
 
     if not os.path.exists(os.path.dirname(destination)):  # noqa: PTH110, PTH120
         create_similar_directory(
-            os.path.dirname(source_path), os.path.dirname(destination)  # noqa: PTH120
+            os.path.dirname(source_path),  # noqa: PTH120
+            os.path.dirname(destination),  # noqa: PTH120
         )
 
     # Setting follow_symlinks=False in case this bug is ever fixed

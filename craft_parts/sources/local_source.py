@@ -88,7 +88,10 @@ class LocalSource(SourceHandler):
         logger.debug("ignore patterns: %r", self._ignore_patterns)
 
         self._ignore = functools.partial(
-            _ignore, self.source_abspath, os.getcwd(), self._ignore_patterns  # noqa: PTH109
+            _ignore,
+            self.source_abspath,
+            os.getcwd(),  # noqa: PTH109
+            self._ignore_patterns,
         )
         self._updated_files: set[str] = set()
         self._updated_directories: set[str] = set()

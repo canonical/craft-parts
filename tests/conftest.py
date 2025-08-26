@@ -159,7 +159,8 @@ def temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
 
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_home", new=os.path.join(tmpdir, ".config")  # noqa: PTH118
+        "xdg.BaseDirectory.xdg_config_home",
+        new=os.path.join(tmpdir, ".config"),  # noqa: PTH118
     )
     mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))  # noqa: PTH118
     mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))  # noqa: PTH118

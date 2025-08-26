@@ -265,7 +265,9 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
             include_files |= {os.path.join(directory, include)}  # noqa: PTH118
 
     include_dirs = [
-        x for x in include_files if os.path.isdir(x) and not os.path.islink(x)  # noqa: PTH112, PTH114
+        x
+        for x in include_files
+        if os.path.isdir(x) and not os.path.islink(x)  # noqa: PTH112, PTH114
     ]
     include_files = {os.path.relpath(x, directory) for x in include_files}
 
@@ -274,10 +276,12 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
             include_files |= {
-                os.path.relpath(os.path.join(root, d), directory) for d in dirs  # noqa: PTH118
+                os.path.relpath(os.path.join(root, d), directory)  # noqa: PTH118
+                for d in dirs
             }
             include_files |= {
-                os.path.relpath(os.path.join(root, f), directory) for f in files  # noqa: PTH118
+                os.path.relpath(os.path.join(root, f), directory)  # noqa: PTH118
+                for f in files
             }
 
     return include_files
@@ -300,7 +304,9 @@ def _generate_exclude_set(
         exclude_files |= set(matches)
 
     exclude_dirs = {
-        os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)  # noqa: PTH112
+        os.path.relpath(x, directory)
+        for x in exclude_files
+        if os.path.isdir(x)  # noqa: PTH112
     }
     exclude_files = {os.path.relpath(x, directory) for x in exclude_files}
 

@@ -317,7 +317,8 @@ class TestGitConflicts(GitBaseTestCase):
         git.pull()
 
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"  # noqa: PTH118
+            os.path.join(working_tree, "subrepo", "sub-file"),  # noqa: PTH118
+            "sub-file",
         )
 
         # add a file to the repo
@@ -330,7 +331,8 @@ class TestGitConflicts(GitBaseTestCase):
 
         # this shouldn't cause any change
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"  # noqa: PTH118
+            os.path.join(working_tree, "subrepo", "sub-file"),  # noqa: PTH118
+            "sub-file",
         )
         assert os.path.exists(os.path.join(working_tree, "subrepo", "fake")) is False  # noqa: PTH110, PTH118
 
@@ -357,10 +359,12 @@ class TestGitConflicts(GitBaseTestCase):
 
         # new file should be there now
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"  # noqa: PTH118
+            os.path.join(working_tree, "subrepo", "sub-file"),  # noqa: PTH118
+            "sub-file",
         )
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "fake"), "fake 1"  # noqa: PTH118
+            os.path.join(working_tree, "subrepo", "fake"),  # noqa: PTH118
+            "fake 1",
         )
 
 
