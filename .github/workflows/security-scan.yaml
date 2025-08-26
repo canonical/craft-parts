@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - hotfix/*
-      - work/secscan  # For development
+      - work/secscan # For development
 
 jobs:
   python-scans:
