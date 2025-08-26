@@ -1233,7 +1233,7 @@ class TestDirs:
         handler._make_dirs()
 
         for i, p in enumerate(partitions or (None,)):
-            partition_dir = Path(".")
+            partition_dir = Path()
             if p and p != "default":
                 partition_dir = Path("partitions", p)
 

@@ -139,14 +139,14 @@ class _Squasher:
                     dst_partition=dst_partition,
                 )
                 # If the sub path was really a sub path, record it.
-                if sub_path != Path("."):
+                if sub_path != Path():
                     self._distributed_paths.add(sub_path)
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
                 srcdir=srcdir,
                 destdir=destdirs[self._src_partition],
-                sub_path=Path(""),
+                sub_path=Path(),
                 dst_partition=self._src_partition,
             )
 
