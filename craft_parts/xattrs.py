@@ -37,7 +37,7 @@ def read_xattr(path: str, key: str) -> str | None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):
+    if os.path.islink(path):  # noqa: PTH114
         return None
 
     key = f"user.craft_parts.{key}"
@@ -69,7 +69,7 @@ def write_xattr(path: str, key: str, value: str) -> None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):
+    if os.path.islink(path):  # noqa: PTH114
         return
 
     key = f"user.craft_parts.{key}"

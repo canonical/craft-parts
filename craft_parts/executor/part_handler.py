@@ -1023,7 +1023,7 @@ class PartHandler:
                 primed_whiteout.unlink()
                 logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
-                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?
+                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?  # noqa: FIX003
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
     def clean_step(self, step: Step) -> None:
@@ -1192,7 +1192,7 @@ class PartHandler:
             *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)
+            os.makedirs(dir_name, exist_ok=True)  # noqa: PTH103
 
         self._symlink_alias_to_default()
 
@@ -1278,7 +1278,7 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
+        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))  # noqa: PTH118, PTH207
         snap_sources = (
             sources.SnapSource(
                 source=s,

@@ -123,7 +123,7 @@ def test_poetry_plugin_override_get_system_interpreter(
 
     python_link = pathlib.Path(lf.project_info.prime_dir, "bin", "python3")
     assert python_link.is_symlink()
-    assert os.readlink(python_link) == "use-this-python"
+    assert os.readlink(python_link) == "use-this-python"  # noqa: PTH115
 
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])

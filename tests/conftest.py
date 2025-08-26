@@ -159,10 +159,10 @@ def temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
 
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_home", new=os.path.join(tmpdir, ".config")
+        "xdg.BaseDirectory.xdg_config_home", new=os.path.join(tmpdir, ".config")  # noqa: PTH118
     )
-    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))
-    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))
+    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))  # noqa: PTH118
+    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))  # noqa: PTH118
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
         new=[
@@ -175,7 +175,7 @@ def temp_xdg(tmpdir, mocker):
             xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
-    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
+    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})  # noqa: PTH118
 
 
 @pytest.fixture(scope="class")
@@ -199,7 +199,7 @@ def http_server(request):
     server_thread.join()
 
 
-# XXX: check windows compatibility, explore if fixture setup can skip itself
+# XXX: check windows compatibility, explore if fixture setup can skip itself  # noqa: FIX003
 
 
 @pytest.fixture(scope="class")
@@ -209,7 +209,7 @@ def fake_snapd():
     server = FakeSnapd()
 
     snapd_fake_socket_path = str(tempfile.mkstemp()[1])
-    os.unlink(snapd_fake_socket_path)
+    os.unlink(snapd_fake_socket_path)  # noqa: PTH108
 
     socket_path_patcher = mock.patch(
         "craft_parts.packages.snaps.get_snapd_socket_path_template"
