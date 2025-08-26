@@ -1,148 +1,64 @@
-SOURCES=$(wildcard *.py) craft_parts tests
+PROJECT=craft_parts
+# Define when more than the main package tree requires coverage
+# like is the case for snapcraft (snapcraft and snapcraft_legacy):
+# COVERAGE_SOURCE="starcraft"
+UV_TEST_GROUPS := "--group=dev"
+UV_DOCS_GROUPS := "--group=docs"
+UV_LINT_GROUPS := "--group=lint" "--group=types"
+UV_TICS_GROUPS := "--group=tics"
 
-UV_FROZEN:=true
-
-.PHONY: help
-help: ## Show this help.
-	@printf "%-30s %s\n" "Target" "Description"
-	@printf "%-30s %s\n" "------" "-----------"
-	@fgrep " ## " $(MAKEFILE_LIST) | fgrep -v grep | awk -F ': .*## ' '{$$1 = sprintf("%-30s", $$1)} 1'
-
-.PHONY: autoformat
-autoformat: ## Run automatic code formatters.
-	autoflake --remove-all-unused-imports --ignore-init-module-imports -ri $(SOURCES)
-	ruff check --fix $(SOURCES)
-	ruff format $(SOURCES)
-
-.PHONY: clean
-clean: ## Clean artifacts from building, testing, etc.
-	rm -rf build/
-	rm -rf dist/
-	rm -rf .eggs/
-	find . -name '*.egg-info' -exec rm -rf {} +
-	find . -name '*.egg' -exec rm -f {} +
-	rm -rf docs/_build/
-	rm -f docs/craft_parts.*
-	rm -f docs/modules.rst
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
-	find . -name '__pycache__' -exec rm -rf {} +
-	rm -rf .tox/
-	rm -f .coverage
-	rm -rf htmlcov/
-	rm -rf .pytest_cache
-
-.PHONY: coverage
-coverage: ## Run pytest with coverage report.
-	coverage run --source craft_parts -m pytest tests/unit
-	coverage report -m
-	coverage xml
-
-.PHONY: preparedocs
-preparedocs: ## move file from the sphinx-starter-pack to docs folder
-	cp docs/sphinx-resources/.sphinx/_static/* docs/_static
-	mkdir -p docs/_templates
-	cp -R docs/sphinx-resources/.sphinx/_templates/* docs/_templates
-	cp docs/sphinx-resources/.sphinx/spellingcheck.yaml docs/spellingcheck.yaml
-
-.PHONY: installdocs
-installdocs: preparedocs ## install documentation dependencies.
-	$(MAKE) -C docs install
-
-.PHONY: docs
-docs: ## Generate documentation.
-	rm -f docs/craft_parts.rst
-	rm -f docs/modules.rst
-	pip install -r docs/requirements.txt
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-
-.PHONY: dist
-dist: clean ## Build python package.
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
-
-.PHONY: install
-install: clean ## Install python package.
-	python setup.py install
-
-.PHONY: lint
-lint: test-codespell test-ruff test-mypy test-pydocstyle test-pyright ## Run all linting tests
-
-.PHONY: release
-release: dist ## Release with twine.
-	twine upload dist/*
-
-.PHONY: test-black
-test-black: test-ruff
-	@echo "\033[0;31mWARNING\033[0m: Switched from black to ruff"
-
-.PHONY: test-codespell
-test-codespell:
-	codespell $(SOURCES) --ignore-words-list crate
-
-.PHONY: test-flake8
-test-flake8:
-	echo "\033[0;31mWARNING\033[0m: Did you mean to run \`make ruff\`?"
-	flake8 $(SOURCES)
-
-.PHONY: test-ruff lint-ruff
-test-ruff lint-ruff:
-	ruff check $(SOURCES)
-	ruff format --diff $(SOURCES)
-
-.PHONY: test-integrations
-test-integrations: ## Run integration tests.
-	pytest tests/integration
-
-.PHONY: test-mypy
-test-mypy:
-	mypy $(SOURCES)
-
-.PHONY: test-pydocstyle
-test-pydocstyle:
-	pydocstyle craft_parts
-
-.PHONY: test-pyright
-test-pyright:
-	pyright $(SOURCES)
-
-.PHONY: test-units
-test-units: ## Run unit tests.
-	pytest tests/unit
-
-.PHONY: test-docs
-test-docs: installdocs ## Run docs tests.
-	$(MAKE) -C docs linkcheck
-	$(MAKE) -C docs woke
-	$(MAKE) -C docs spelling
-
-.PHONY: tests
-tests: lint test-units test-integrations ## Run all tests.
-
-# This target exists for compatibility with the Starflow TICS workflow.
-# https://github.com/canonical/starflow/blob/main/.github/workflows/tics.yaml
-.PHONY: setup-tics
-setup-tics:
-ifneq ($(shell which uv),)
-else ifneq ($(shell which snap),)
-	sudo snap install --classic astral-uv
-else ifneq ($(shell which brew),)
-	brew install uv
-else ifeq ($(OS),Windows_NT)
-	pwsh -c "irm https://astral.sh/uv/install.ps1 | iex"
-else
-	curl -LsSf https://astral.sh/uv/install.sh | sh
+# If you have dev dependencies that depend on your distro version, uncomment these:
+ifneq ($(wildcard /etc/os-release),)
+include /etc/os-release
+endif
+ifdef VERSION_CODENAME
+UV_TEST_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+UV_DOCS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+UV_LINT_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+UV_TICS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 endif
 
-include /etc/os-release
-.ONESHELL:
-.PHONY: test-coverage
-test-coverage:
-	uv sync --extra apt-$(VERSION_CODENAME) --extra tics --extra dev
-	uv run coverage run --source craft_parts,tests -m pytest
-	uv run coverage xml -o results/coverage.xml
-	uv run coverage report -m
-	uv run coverage html
+include common.mk
+
+.PHONY: format
+format: format-ruff format-codespell format-prettier format-pre-commit  ## Run all automatic formatters
+
+.PHONY: lint
+lint: lint-ruff lint-codespell lint-mypy lint-prettier lint-pyright lint-shellcheck lint-docs lint-twine lint-uv-lockfile  ## Run all linters
+
+.PHONY: pack
+pack: pack-pip  ## Build all packages
+
+.PHONY: pack-snap
+pack-snap: snap/snapcraft.yaml  ##- Build snap package
+ifeq ($(shell which snapcraft),)
+	sudo snap install --classic snapcraft
+endif
+	snapcraft pack
+
+# Find dependencies that need installing
+APT_PACKAGES :=
+ifeq ($(wildcard /usr/include/libxml2/libxml/xpath.h),)
+APT_PACKAGES += libxml2-dev
+endif
+ifeq ($(wildcard /usr/include/libxslt/xslt.h),)
+APT_PACKAGES += libxslt1-dev
+endif
+ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
+APT_PACKAGES += python3-venv
+endif
+
+# Used for installing build dependencies in CI.
+.PHONY: install-build-deps
+install-build-deps: install-lint-build-deps
+ifeq ($(APT_PACKAGES),)
+else ifeq ($(shell which apt-get),)
+	$(warning Cannot install build dependencies without apt.)
+	$(warning Please ensure the equivalents to these packages are installed: $(APT_PACKAGES))
+else
+	sudo $(APT) install $(APT_PACKAGES)
+endif
+
+# If additional build dependencies need installing in order to build the linting env.
+.PHONY: install-lint-build-deps
+install-lint-build-deps:
