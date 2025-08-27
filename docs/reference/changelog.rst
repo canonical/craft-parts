@@ -75,8 +75,6 @@ For a complete list of commits, check out the `2.20.0`_ release on GitHub.
 2.19.0 (2025-07-24)
 -------------------
 
-For a complete list of commits, check out the `2.19.1`_ release on GitHub.
-
 New features:
 
 - When the default partition is aliased, create symlinks in the ``partitions``
