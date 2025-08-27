@@ -438,6 +438,56 @@ class TestFileMigration:
             assert call.owner == 1111
             assert call.group == 2222
 
+    @pytest.mark.parametrize(
+        ("filters", "filemap"),
+        [
+            (
+                ["*"],
+                {
+                    ".foo": False,
+                    ".bar/foo": False,
+                    "bar/.foo": True,
+                },
+            ),
+            (
+                ["*", ".*"],
+                {
+                    ".foo": True,
+                    ".bar/foo": True,
+                    "bar/.foo": True,
+                },
+            ),
+        ],
+    )
+    def test_migrate_hidden_files(self, partitions, filters, filemap):
+        install_dir = Path("install")
+        stage_dir = Path("stage")
+
+        install_dir.mkdir()
+        stage_dir.mkdir()
+
+        for file in filemap:
+            filepath = Path(install_dir, file)
+            filepath.parent.mkdir(exist_ok=True)
+            filepath.touch()
+
+        files, dirs = filesets.migratable_filesets(
+            Fileset(filters),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+        migration.migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
+            follow_symlinks=True,
+        )
+
+        for file, exists in filemap.items():
+            assert Path(stage_dir, file).exists() == exists
+
 
 @pytest.mark.usefixtures("new_dir")
 class TestFileMigrationErrors:

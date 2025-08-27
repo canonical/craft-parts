@@ -133,6 +133,7 @@ JLinkPlugin
 JLinkPluginEnvironmentValidator
 JLinkPluginProperties
 JSON
+KeyError
 LDFLAGS
 LLVM
 LTO
@@ -202,6 +203,7 @@ OverlayMountError
 OverlayPackageNotFound
 OverlayPermissionError
 OverlayPlatformError
+OverlayStageConflict
 OverlayState
 OverlayUnmountError
 Overlayfs
@@ -245,7 +247,10 @@ Prepend
 PrimeState
 ProjectDirs
 ProjectInfo
+ProjectOptions
 ProjectVar
+ProjectVarInfo
+ProjectVars
 PullError
 PullState
 PurePath
@@ -295,6 +300,7 @@ SourceModel
 SourceNotFound
 SourceUpdateUnsupported
 SSL
+StageCandidate
 StageContents
 StageFilesConflict
 StagePackageNotFound
@@ -377,6 +383,7 @@ confictling
 config
 configfile
 cp
+cpu
 craftctl
 crafter
 crafters
@@ -398,6 +405,7 @@ distros
 dl
 dnf
 docstring
+docstrings
 dotnet
 dst
 emacs
@@ -540,6 +548,7 @@ subdirectories
 subdirectory
 subkey
 submodules
+subpath
 subprocess
 subprocesses
 subtree

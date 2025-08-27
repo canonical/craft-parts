@@ -24,6 +24,7 @@ dependencies = [
     "PyYAML",
     "requests-unixsocket2>=0.4.0",
     "requests>=2.32.4,<3.0",
+    "semver>=3.0.4",
     "tomli >= 1.1.0 ; python_version < '3.11'",
 ]
 
@@ -48,7 +49,7 @@ apt-questing = [
 ]
 docs = [
     "canonical-sphinx",
-    "pydantic-kitbash==0.0.6",
+    "pydantic-kitbash==0.0.7",
     "setuptools",  # Missing from sphinxcontrib-details-directive,
     # see https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "sphinx",
