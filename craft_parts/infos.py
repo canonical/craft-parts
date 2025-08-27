@@ -417,6 +417,8 @@ class ProjectInfo:
         when creating a :class:`LifecycleManager`.
     :param partitions: A list of partitions.
     :param filesystem_mounts: A dict of filesystem_mounts.
+    :param usrmerged_by_default: Whether the parts' install dirs should be filled with
+        usrmerge-safe directories and symlinks prior to a part's build.
     """
 
     def __init__(  # noqa: PLR0913
@@ -436,6 +438,7 @@ class ProjectInfo:
         filesystem_mounts: FilesystemMounts | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
+        usrmerged_by_default: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         if arch and arch not in _DEB_TO_TRIPLET:
@@ -463,6 +466,7 @@ class ProjectInfo:
         self._base_layer_dir = base_layer_dir
         self._base_layer_hash = base_layer_hash
         self.global_environment: dict[str, str] = {}
+        self._usrmerged_by_default = usrmerged_by_default
 
         self.execution_finished = False
 
@@ -707,6 +711,11 @@ class ProjectInfo:
     def base_layer_hash(self) -> bytes | None:
         """Return the hash of the base layer (if any)."""
         return self._base_layer_hash
+
+    @property
+    def usrmerged_by_default(self) -> bool:
+        """Return whether parts should be usrmerged by default."""
+        return self._usrmerged_by_default
 
     def set_project_var(
         self,

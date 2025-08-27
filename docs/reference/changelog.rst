@@ -31,6 +31,12 @@ New features:
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
 
+- Add a new LifecycleManager creation parameter to control whether parts should have a
+  "usrmerged" directory structure pre-created in their install directories.
+
+- Add two new build-attributes, "enable-usrmerge" and "disable-usrmerge", to control the
+  creation of the "usrmerged" directory structure in a part's install dir.
+
 Bug fixes:
 
 Documentation:

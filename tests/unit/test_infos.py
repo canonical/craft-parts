@@ -508,6 +508,7 @@ def test_project_info_set_invalid_project_vars():
 def test_project_info_default():
     info = ProjectInfo(application_name="test", cache_dir=Path())
     assert info.parallel_build_count == 1
+    assert not info.usrmerged_by_default
 
 
 def test_project_info_cache_dir_resolving():
