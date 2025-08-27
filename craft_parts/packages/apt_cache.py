@@ -247,7 +247,6 @@ class AptCache(ContextDecorator):
 
             try:
                 logger.info("Downloading package: %s", package)
-                logger.debug(f"Apt cache ownership: {download_path.owner()}:{download_path.group()}")
                 dl_path = package.candidate.fetch_binary(
                     str(download_path), progress=self.progress
                 )
