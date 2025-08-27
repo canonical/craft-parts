@@ -110,6 +110,7 @@ class LifecycleManager:
         project_vars_part_name: str | None = None,
         project_vars: dict[str, str] | None = None,
         partitions: list[str] | None = None,
+        filesystem_mounts: dict[str, Any] | None = None,
         use_host_sources: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
