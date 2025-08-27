@@ -16,7 +16,6 @@
 
 import contextlib
 import logging
-import shutil
 import subprocess
 import textwrap
 from pathlib import Path
@@ -819,18 +818,28 @@ def test_get_filtered_stage_package_core24(mocker):
     assert filtered_names == {"some-package"}
 
 
+@pytest.mark.parametrize(
+    ("side_effect", "message"),
+    [
+        pytest.param(PermissionError, "Cannot chown '{}' to '_apt'", id="PermissionError"),
+        pytest.param(LookupError, "Cannot chown '{}' to '_apt'", id="LookupError"),
+        pytest.param(None, "Set ownership of '{}' to '_apt'", id="happy-path")
+    ]
+)
 @pytest.mark.usefixtures("fake_deb_run")
 def test_chown_stage_packages(
     mocker: MockerFixture,
     tmp_path: Path,
     fake_apt_cache: Mock,
     caplog: pytest.LogCaptureFixture,
+    side_effect: Exception | None,
+    message: str
 ) -> None:
     """Ensure an attempt is made to set file ownership permissions for the stage packages cache."""
     caplog.set_level(logging.DEBUG)
     mocker.patch("os.geteuid", return_value=0)
 
-    mock_chown = mocker.patch("shutil.chown", side_effect=shutil.chown)
+    mock_chown = mocker.patch("shutil.chown", side_effect=side_effect)
 
     _, deb_cache_dir = deb.get_cache_dirs(tmp_path)
     fake_package = deb_cache_dir / "fake-package_1.0_all.deb"
@@ -849,7 +858,4 @@ def test_chown_stage_packages(
 
     # Make sure chown was called properly
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
-
-    # Even if called properly, it will always fail in unit tests, so just make sure
-    # it errors out well
-    assert f"Cannot chown '{deb_cache_dir}' to _apt:" in caplog.text
+    assert message.format(deb_cache_dir) in caplog.text
