@@ -574,6 +574,9 @@ class PartSpec(BaseModel):
     @property
     def organizes_to_overlay(self) -> bool:
         """Return whether the part organizes file to the overlay."""
+        if not Features().enable_partitions or not Features().enable_overlay:
+            return False
+
         for dest in self.organize_files.values():
             partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
             if partition == OVERLAY_PARTITION:

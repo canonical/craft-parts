@@ -169,7 +169,7 @@ class OverlayManager:
 
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
-        mount_dir, packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
+        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
 
         chroot.chroot(
             mount_dir, _defer_evaluation(packages.Repository.refresh_packages_list)

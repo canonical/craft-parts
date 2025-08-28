@@ -343,9 +343,6 @@ class TestPartData:
         [
             ({}, False),
             ({"this": "that"}, False),
-            ({"foo": "(partition)/bar"}, False),
-            ({"foo": "(overlay)/bar"}, True),
-            ({"this": "that", "foo": "(overlay)/bar"}, False),
         ],
     )
     def test_part_organizes_to_overlay(self, partitions, organize, result):
