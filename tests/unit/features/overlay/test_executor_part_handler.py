@@ -73,6 +73,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         # pylint: enable=attribute-defined-outside-init
 
     def test_run_overlay(self, mocker):
+        mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
         mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
 
@@ -85,6 +86,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
 
     def test_run_overlay_with_filter(self, mocker, new_dir, partitions):
+        mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
         mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
 
