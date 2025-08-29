@@ -833,7 +833,7 @@ def test_chown_stage_packages(
     fake_apt_cache: Mock,
     caplog: pytest.LogCaptureFixture,
     side_effect: Exception | None,
-    message: str
+    message: str,
 ) -> None:
     """Ensure an attempt is made to set file ownership permissions for the stage packages cache."""
     caplog.set_level(logging.DEBUG)
