@@ -1032,27 +1032,28 @@ class TestProjectVarInfo:
     )
     def test_marshal_one_attribute(self, attr, expected):
         """Unmarshal one attribute of the project vars."""
-        data = {
-            "a": {
-                "b": {
-                    "value": "value1",
+        info = ProjectVarInfo.unmarshal(
+            {
+                "a": {
+                    "b": ProjectVar(
+                        value="value1",
+                    ).marshal(),
+                    "c": {
+                        "d": ProjectVar(
+                            value="value2",
+                            updated=True,
+                        ).marshal(),
+                    },
                 },
-                "c": {
-                    "d": {
-                        "value": "value2",
-                        "updated": True,
-                    }
-                },
-            },
-            "e": {
-                "value": "value3",
-                "updated": False,
-                "part-name": "part3",
-            },
-        }
+                "e": ProjectVar(
+                    value="value3",
+                    updated=False,
+                    part_name="part3",
+                ).marshal(),
+            }
+        )
 
-        info = ProjectVarInfo.unmarshal(data)
-        new_data = info.marshal_one_attribute(attr)
+        new_data = info.marshal(attr)
 
         assert new_data == expected
 

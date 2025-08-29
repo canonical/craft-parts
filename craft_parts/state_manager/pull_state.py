@@ -94,8 +94,4 @@ class PullState(StepState):
 
         :return: A dictionary containing project options of interest.
         """
-        return {
-            "project_vars": project_options.project_vars.marshal_one_attribute(
-                "part-name"
-            )
-        }
+        return {"project_vars": project_options.project_vars.marshal("part_name")}

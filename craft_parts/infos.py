@@ -131,11 +131,17 @@ class ProjectVar(pydantic.BaseModel):
 
         return cls.model_validate(data)
 
-    def marshal(self) -> dict[str, Any]:
+    def marshal(self, attr: str | None = None) -> dict[str, Any] | str | bool | None:
         """Create a dictionary containing the project var data.
 
-        :return: The newly created dictionary.
+        :param attr: If provided, return the bare attribute instead of a
+        dictionary of all attributes.
+
+        :return: The newly created dictionary or a specific attribute.
         """
+        if attr:
+            return cast(str | bool | None, getattr(self, attr))
+
         return self.model_dump(mode="json", by_alias=True)
 
 
@@ -178,31 +184,22 @@ class ProjectVarInfo(pydantic.RootModel):
 
         return cls.model_validate(data)
 
-    def marshal(self) -> dict[str, Any]:
+    def marshal(self, attr: str | None = None) -> dict[str, Any]:
         """Create a dictionary containing the project var info data.
 
-        :return: The newly created dictionary.
-        """
-        return cast(dict[str, Any], self.model_dump(by_alias=True))
-
-    def marshal_one_attribute(self, attr: str) -> dict[str, Any]:
-        """Marshal the data, but only return one attribute of the ProjectVar.
-
-        This is useful for:
+        :param attr: The name of a ProjectVar attribute to return in place
+        of the ProjectVar itself. This is useful for:
           - the StateManager in craft-parts which only needs part names
           - a PackageService in a downstream application which only needs values
 
-        :param attr: The name of the ProjectVar attribute to retain.
-
-        :returns: A nested dictionary of the attribute.
+        :return: The newly created dictionary.
         """
+        if not attr:
+            return cast(dict[str, Any], self.model_dump(mode="json", by_alias=True))
+
         result: dict[str, Any] = {}
         for key, value in self.root.items():
-            if isinstance(value, ProjectVarInfo):
-                result[key] = value.marshal_one_attribute(attr)
-            elif isinstance(value, ProjectVar):
-                dumped = value.model_dump(include={attr})
-                result[key] = dumped.get(attr)
+            result[key] = value.marshal(attr)
         return result
 
     def has_key(self, *keys: str) -> bool:
