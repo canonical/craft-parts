@@ -35,8 +35,11 @@ logger = logging.getLogger(__name__)
 
 def _defer_evaluation(method: Callable) -> Callable:
     """Wrap methods to defer evaluation."""
-    method_name = method.__name__
-    instance = method.__self__  # type: ignore[attr-defined]
+    method_name = getattr(method, "__name__", None)
+    instance = getattr(method, "__self__", None)
+
+    if instance is None or method_name is None:
+        raise TypeError("Only bound methods can be deferred")
 
     def _thunk(*args: Any, **kwargs: Any) -> None:
         method = getattr(instance, method_name)
