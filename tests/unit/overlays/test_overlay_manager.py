@@ -263,6 +263,9 @@ class TestPackageManagement:
         self.mock_refresh_packages_list = mocker.patch(
             "craft_parts.packages.Repository.refresh_packages_list"
         )
+        self.mock_defer_evaluation = mocker.patch(
+            "craft_parts.overlays.overlay_manager._defer_evaluation", new=lambda x: x
+        )
         # pylint: enable=attribute-defined-outside-init
 
     def test_refresh_packages_list(self, new_dir):
