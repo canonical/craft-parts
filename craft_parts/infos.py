@@ -135,7 +135,7 @@ class ProjectVar(pydantic.BaseModel):
         """Create a dictionary containing the project var data.
 
         :param attr: If provided, return the bare attribute instead of a
-        dictionary of all attributes.
+            dictionary of all attributes.
 
         :return: The newly created dictionary or a specific attribute.
         """
@@ -188,9 +188,9 @@ class ProjectVarInfo(pydantic.RootModel):
         """Create a dictionary containing the project var info data.
 
         :param attr: The name of a ProjectVar attribute to return in place
-        of the ProjectVar itself. This is useful for:
-          - the StateManager in craft-parts which only needs part names
-          - a PackageService in a downstream application which only needs values
+            of the ProjectVar itself. This is useful for:
+            - the StateManager in craft-parts which only needs part names
+            - a PackageService in a downstream application which only needs values
 
         :return: The newly created dictionary.
         """
