@@ -32,7 +32,7 @@ New features:
   dependency versions available on the host, aligning with how Maven normally behaves.
   This change makes the plugin a drop-in replacement for Maven in private networks.
 
-- Adds support for nested project variables. Nested project variables are managed with
+- Add support for nested project variables, which can be referenced with
   craftctl using dot notation. For example, ``craftctl set var.subvar=foo`` sets the
   nested project variable ``var.subvar`` to ``foo``.
 
