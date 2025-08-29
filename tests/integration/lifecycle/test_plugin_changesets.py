@@ -20,7 +20,14 @@ from typing import Literal
 
 import craft_parts
 import yaml
-from craft_parts import Action, ActionProperties, ActionType, Step, plugins
+from craft_parts import (
+    Action,
+    ActionProperties,
+    ActionType,
+    ProjectVarInfo,
+    Step,
+    plugins,
+)
 
 
 def setup_function():
@@ -122,7 +129,7 @@ def test_changesets(new_dir, mocker, capfd):
             Step.BUILD,
             action_type=ActionType.UPDATE,
             reason="'PULL' step changed",
-            project_vars=None,
+            project_vars=ProjectVarInfo(),
             properties=ActionProperties(changed_files=["foo"], changed_dirs=[]),
         ),
     ]
@@ -203,7 +210,7 @@ def test_changesets_reload_state(new_dir, mocker, capfd):
             Step.BUILD,
             action_type=ActionType.UPDATE,
             reason="'PULL' step changed",
-            project_vars=None,
+            project_vars=ProjectVarInfo(),
             properties=ActionProperties(changed_files=["foo"], changed_dirs=[]),
         ),
     ]

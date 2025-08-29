@@ -17,7 +17,7 @@
 from typing import Any
 
 import pytest
-from craft_parts.infos import ProjectOptions
+from craft_parts.infos import ProjectOptions, ProjectVarInfo
 
 
 @pytest.fixture
@@ -56,6 +56,5 @@ def project_options() -> ProjectOptions:
         application_name="test",
         arch_triplet="",
         target_arch="amd64",
-        project_vars={},
-        project_vars_part_name=None,
+        project_vars=ProjectVarInfo(),
     )

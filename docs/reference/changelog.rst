@@ -16,7 +16,6 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-
 .. _release-2.21.0:
 
 2.21.0 (2025-MM-DD)
@@ -32,6 +31,13 @@ New features:
   With Craft Parts 2.21.0, the plugin now deterministically detects and matches the
   dependency versions available on the host, aligning with how Maven normally behaves.
   This change makes the plugin a drop-in replacement for Maven in private networks.
+
+- Add support for nested project variables, which can be referenced with
+  craftctl using dot notation. For example, ``craftctl set var.subvar=foo`` sets the
+  nested project variable ``var.subvar`` to ``foo``.
+
+- Previously, all project variables had to be set by the same part. Now, each project
+  variable can be set by a different part.
 
 Bug fixes:
 
