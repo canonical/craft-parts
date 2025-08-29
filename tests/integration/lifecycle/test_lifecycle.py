@@ -446,6 +446,45 @@ class TestCleaning:
 
         assert sorted(Path("parts").rglob("*/state/*")) == sorted(all_states)
 
+    def test_build_and_clean(self, check, new_path):
+        parts = ("foo", "bar")
+        part_dirs = (
+            "build",
+            "export",
+            "install",
+            "layer",
+            "run",
+            "src",
+            "state",
+        )
+        general_dirs = ("overlay", "backstage", "stage", "prime")
+
+        # always run all steps
+        actions = self._lifecycle.plan(Step.PRIME)
+
+        with self._lifecycle.action_executor() as ctx:
+            ctx.execute(actions)
+
+        for part in parts:
+            for part_dir in part_dirs:
+                path = new_path / "parts" / part / part_dir
+                assert path.is_dir(), f"Not created: {path}"
+        for general_dir in general_dirs:
+            path = new_path / general_dir
+            assert path.is_dir(), f"Not created: {path}"
+
+        self._lifecycle.clean()
+
+        for part in parts:
+            for part_dir in part_dirs:
+                path = new_path / "parts" / part / part_dir
+                with check:
+                    assert not path.exists(), f"Not cleaned: {path}"
+        for general_dir in general_dirs:
+            path = new_path / general_dir
+            with check:
+                assert not path.exists(), f"Not cleaned: {path}"
+
 
 class TestUpdating:
     @pytest.fixture(autouse=True)
