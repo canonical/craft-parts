@@ -83,7 +83,7 @@ dev = [  # TODO: Remove this once we've switched CI to uv
     # Testing
     "hypothesis",
     "jsonschema",
-    "pytest-check<2.5.0",
+    "pytest-check<2.5.4",
     "pytest-subprocess",
     "requests-mock",
 
