@@ -59,8 +59,15 @@ class _RepositoryProxy:
 
     def __getattr__(self, attr: str) -> "Any":  # noqa: ANN401
         repo = _get_repository_for_platform()
-        logger.debug("Repository evaluation: attr=%s, repository:%s", attr, repo)
+        logger.debug("get repository attribute: attr=%s, repository:%s", attr, repo)
         return getattr(repo, attr)
+
+    def __setattr__(self, attr: str, value: "Any") -> None:  # noqa: ANN401
+        repo = _get_repository_for_platform()
+        logger.debug(
+            "set repository attribute: attr=%s, value=%s, repo:%s", attr, value, repo
+        )
+        setattr(repo, attr, value)
 
 
 Repository = cast("BaseRepository", _RepositoryProxy())
