@@ -31,6 +31,7 @@ New features:
   With Craft Parts 2.21.0, the plugin now deterministically detects and matches the
   dependency versions available on the host, aligning with how Maven normally behaves.
   This change makes the plugin a drop-in replacement for Maven in private networks.
+- The autotools plugin now supports the ``disable-parallel`` parameter.
 
 - Add support for nested project variables, which can be referenced with
   craftctl using dot notation. For example, ``craftctl set var.subvar=foo`` sets the
