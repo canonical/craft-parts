@@ -43,7 +43,7 @@ New features:
 Bug fixes:
 
 - Files and directories produced during the build step are now correctly checked for
-  collisions with overlay contents during the staging step. Conflicts can be resolved 
+  collisions with overlay contents during the staging step. Conflicts can be resolved
   with the :ref:`stage <reference-part-properties-stage>` and
   :ref:`overlay <reference-part-properties-overlay-files>` keys.
 - When content is staged to partitions from the overlay of the default partition,
@@ -76,7 +76,7 @@ Bug fixes:
 
 - The ``--recurse-submodules`` link in the ``source-submodules`` docstring
   no longer produces a linkcheck error.
-- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition 
+- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition
   is aliased.
 
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
@@ -138,9 +138,9 @@ Bug fixes:
 
 - With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven
   plugins when the project indirectly depends on one.
-- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
-  in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
-  the import time of downstream applications.
+- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and
+  functions in the top-level module. It is unused outside of Craft Parts and adds
+  ~150-200ms to the import time of downstream applications.
 
 Documentation:
 
@@ -157,7 +157,8 @@ New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
   encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use plugin.
+- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use
+  plugin.
 
 Bug fixes:
 
