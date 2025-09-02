@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,9 @@
 import logging
 import os
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
@@ -30,6 +31,26 @@ from . import chroot
 from .overlay_fs import OverlayFS
 
 logger = logging.getLogger(__name__)
+
+
+def _defer_evaluation(method: Callable) -> Callable:
+    """Wrap methods to defer evaluation.
+
+    Defer evaluation of proxied class methods to happen at execution time.
+    Used to pass repositories to chroot environments in a way that the
+    repository type will only be evaluated inside the chroot environment.
+    """
+    method_name = getattr(method, "__name__", None)
+    instance = getattr(method, "__self__", None)
+
+    if instance is None or method_name is None:
+        raise TypeError("Only bound methods can be deferred")
+
+    def _thunk(*args: Any, **kwargs: Any) -> None:
+        method = getattr(instance, method_name)
+        method(*args, **kwargs)
+
+    return _thunk
 
 
 class OverlayManager:
@@ -128,7 +149,9 @@ class OverlayManager:
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
         packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
-        chroot.chroot(mount_dir, packages.Repository.refresh_packages_list)
+        chroot.chroot(
+            mount_dir, _defer_evaluation(packages.Repository.refresh_packages_list)
+        )
 
     def download_packages(self, package_names: list[str]) -> None:
         """Download packages and populate the overlay package cache.
@@ -139,7 +162,11 @@ class OverlayManager:
             raise RuntimeError("overlay filesystem not mounted")
 
         mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(mount_dir, packages.Repository.download_packages, package_names)
+        chroot.chroot(
+            mount_dir,
+            _defer_evaluation(packages.Repository.download_packages),
+            package_names,
+        )
 
     def install_packages(self, package_names: list[str]) -> None:
         """Install packages on the overlay area using chroot.
@@ -152,7 +179,7 @@ class OverlayManager:
         mount_dir = self._project_info.overlay_mount_dir
         chroot.chroot(
             mount_dir,
-            packages.Repository.install_packages,
+            _defer_evaluation(packages.Repository.install_packages),
             package_names,
             refresh_package_cache=False,
         )
@@ -179,6 +206,7 @@ class LayerMount:
         self._pid = os.getpid()
 
     def __enter__(self) -> "LayerMount":
+        logger.debug("---- Enter layer mount context ----")
         self._overlay_manager.mount_layer(
             self._top_part,
             pkg_cache=self._pkg_cache,
@@ -190,6 +218,7 @@ class LayerMount:
         if os.getpid() != self._pid:
             sys.exit()
         self._overlay_manager.unmount()
+        logger.debug("---- Exit layer mount context ----")
         return False
 
     def install_packages(self, package_names: list[str]) -> None:
@@ -212,6 +241,7 @@ class PackageCacheMount:
         self._pid = os.getpid()
 
     def __enter__(self) -> "PackageCacheMount":
+        logger.debug("---- Enter package cache mount context ----")
         self._overlay_manager.mount_pkg_cache()
         return self
 
@@ -220,6 +250,7 @@ class PackageCacheMount:
         if os.getpid() != self._pid:
             sys.exit()
         self._overlay_manager.unmount()
+        logger.debug("---- Exit package cache mount context ----")
         return False
 
     def refresh_packages_list(self) -> None:
