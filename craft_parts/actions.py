@@ -16,14 +16,16 @@
 
 """Definitions of lifecycle actions and action types."""
 
+from __future__ import annotations
+
 import enum
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from craft_parts.steps import Step
+from craft_parts.infos import ProjectVarInfo
 
 if TYPE_CHECKING:
-    from craft_parts.infos import ProjectVar
+    from craft_parts.steps import Step
 
 
 @enum.unique
@@ -82,5 +84,5 @@ class Action:
     step: Step
     action_type: ActionType = ActionType.RUN
     reason: str | None = None
-    project_vars: dict[str, "ProjectVar"] | None = None
+    project_vars: ProjectVarInfo = field(default_factory=ProjectVarInfo)
     properties: ActionProperties = field(default=ActionProperties())
