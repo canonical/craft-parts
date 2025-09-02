@@ -33,6 +33,13 @@ from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
 
 
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Use collection hook to mark all integration tests as slow"""
+    for item in items:
+        if "tests/integration" in str(item.path):
+            item.add_marker(pytest.mark.slow)
+
+
 def pytest_configure(config):
     config.addinivalue_line(
         "markers", "http_request_handler(handler): set a fake HTTP request handler"
