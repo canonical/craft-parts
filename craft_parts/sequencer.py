@@ -22,7 +22,7 @@ from collections.abc import Sequence
 from craft_parts import errors, parts, steps
 from craft_parts.actions import Action, ActionProperties, ActionType
 from craft_parts.features import Features
-from craft_parts.infos import ProjectInfo, ProjectOptions, ProjectVar
+from craft_parts.infos import ProjectInfo, ProjectOptions, ProjectVarInfo
 from craft_parts.overlays import LayerHash, LayerStateManager
 from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.state_manager import StateManager, states
@@ -210,10 +210,8 @@ class Sequencer:
             project_vars=self._get_project_vars(part, current_step),
         )
 
-    def _get_project_vars(self, part: Part, step: Step) -> dict[str, ProjectVar] | None:
-        if part.name == self._project_info.project_vars_part_name:
-            return self._sm.project_vars(part, step)
-        return None
+    def _get_project_vars(self, part: Part, step: Step) -> ProjectVarInfo | None:
+        return self._sm.project_vars(part, step)
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
         prerequisite_step = steps.dependency_prerequisite_step(step)
@@ -368,10 +366,14 @@ class Sequencer:
         *,
         action_type: ActionType = ActionType.RUN,
         reason: str | None = None,
-        project_vars: dict[str, ProjectVar] | None = None,
+        project_vars: ProjectVarInfo | None = None,
         properties: ActionProperties | None = None,
     ) -> None:
         logger.debug("add action %s:%s(%s)", part.name, step, action_type)
+
+        if not project_vars:
+            project_vars = ProjectVarInfo()
+
         if not properties:
             properties = ActionProperties()
 

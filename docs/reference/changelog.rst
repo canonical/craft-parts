@@ -16,17 +16,47 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.21.0:
 
-.. _release-2.20.1:
-
-2.20.1 (2025-MM-DD)
+2.21.0 (2025-08-29)
 -------------------
+
+New features:
+
+- Previously, when the Maven Use plugin updated ``pom.xml`` for self-contained projects,
+  it wouldn't reliably find the correct dependency versions on the host. It could
+  unpredictably declare the wrong package version, or select a vastly different version
+  despite a similar one being available.
+
+  With Craft Parts 2.21.0, the plugin now deterministically detects and matches the
+  dependency versions available on the host, aligning with how Maven normally behaves.
+  This change makes the plugin a drop-in replacement for Maven in private networks.
+- The autotools plugin now supports the ``disable-parallel`` parameter.
+
+- Add support for nested project variables, which can be referenced with
+  craftctl using dot notation. For example, ``craftctl set var.subvar=foo`` sets the
+  nested project variable ``var.subvar`` to ``foo``.
+
+- Previously, all project variables had to be set by the same part. Now, each project
+  variable can be set by a different part.
 
 Bug fixes:
 
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
+
+For a complete list of commits, check out the `2.21.0`_ release on GitHub.
+
+.. _release 2.20.1:
+
+2.20.1 (2025-08-20)
+-------------------
+
+Bug fixes:
+
+- `#1207 <https://github.com/canonical/craft-parts/issues/1207>`_ Overlay directory is
+  not removed on a clean
 
 For a complete list of commits, check out the `2.20.1`_ release on GitHub.
 
@@ -1353,6 +1383,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.21.0: https://github.com/canonical/craft-parts/releases/tag/2.21.0
 .. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1
 .. _2.20.0: https://github.com/canonical/craft-parts/releases/tag/2.20.0
 .. _2.19.0: https://github.com/canonical/craft-parts/releases/tag/2.19.0
