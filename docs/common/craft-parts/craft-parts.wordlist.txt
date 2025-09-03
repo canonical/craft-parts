@@ -493,6 +493,7 @@ openjdk
 organization
 organize
 organized
+organizes
 organizing
 ormal
 os
