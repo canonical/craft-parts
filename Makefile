@@ -163,6 +163,13 @@ endif
 ifeq ($(wildcard /usr/share/doc/libsurefire-java/copyright),)
 APT_PACKAGES += libsurefire-java
 endif
+# Poetry 2+ removes the export subcommand and requires you to get a plugin for it
+# However, jammy uses an older poetry version that still has that subcommand
+ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
+ifneq ($(VERSION_CODENAME),"jammy")
+APT_PACKAGES += python3-poetry-plugin-export
+endif
+endif
 
 .PHONY: install-chisel
 install-chisel:
