@@ -47,10 +47,145 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
 APT_PACKAGES += python3-venv
 endif
+ifeq ($(wildcard /usr/share/doc/intltool/copyright),)
+APT_PACKAGES += intltool
+endif
+ifeq ($(wildcard /usr/share/doc/fuse-overlayfs/copyright),)
+APT_PACKAGES += fuse-overlayfs
+endif
+ifeq ($(wildcard /usr/share/doc/ninja-build/copyright),)
+APT_PACKAGES += ninja-build
+endif
+ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
+APT_PACKAGES += cmake
+endif
+ifeq ($(wildcard /usr/share/doc/scons/copyright),)
+APT_PACKAGES += scons
+endif
+ifeq ($(wildcard /usr/share/doc/autoconf/copyright),)
+APT_PACKAGES += autoconf
+endif
+ifeq ($(wildcard /usr/share/doc/automake/copyright),)
+APT_PACKAGES += automake
+endif
+ifeq ($(wildcard /usr/share/doc/autopoint/copyright),)
+APT_PACKAGES += autopoint
+endif
+ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
+APT_PACKAGES += gcc
+endif
+ifeq ($(wildcard /usr/share/doc/git/copyright),)
+APT_PACKAGES += git
+endif
+ifeq ($(wildcard /usr/share/doc/gperf/copyright),)
+APT_PACKAGES += gperf
+endif
+ifeq ($(wildcard /usr/share/doc/help2man/copyright),)
+APT_PACKAGES += help2man
+endif
+ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
+APT_PACKAGES += libtool
+endif
+ifeq ($(wildcard /usr/share/doc/texinfo/copyright),)
+APT_PACKAGES += texinfo
+endif
+ifeq ($(wildcard /usr/share/doc/socat/copyright),)
+APT_PACKAGES += socat
+endif
+ifeq ($(wildcard /usr/share/doc/python3-poetry/copyright),)
+APT_PACKAGES += python3-poetry
+endif
+ifeq ($(wildcard /usr/share/doc/curl/copyright),)
+APT_PACKAGES += curl
+endif
+ifeq ($(wildcard /usr/share/doc/findutils/copyright),)
+APT_PACKAGES += findutils
+endif
+ifeq ($(wildcard /usr/share/doc/pkg-config/copyright),)
+APT_PACKAGES += pkg-config
+endif
+ifeq ($(wildcard /usr/share/doc/rpm/copyright),)
+APT_PACKAGES += rpm
+endif
+ifeq ($(wildcard /usr/share/doc/python3-dev/copyright),)
+APT_PACKAGES += python3-dev
+endif
+ifeq ($(wildcard /usr/share/doc/cargo/copyright),)
+APT_PACKAGES += cargo
+endif
+ifeq ($(wildcard /usr/share/doc/rustc/copyright),)
+APT_PACKAGES += rustc
+endif
+# Java
+ifeq ($(wildcard /usr/share/doc/default-jdk/copyright),)
+APT_PACKAGES += default-jdk
+endif
+ifeq ($(wildcard /usr/share/doc/openjdk-17-jdk/copyright),)
+APT_PACKAGES += openjdk-17-jdk
+endif
+ifeq ($(wildcard /usr/share/doc/openjdk-21-jdk/copyright),)
+APT_PACKAGES += openjdk-21-jdk
+endif
+ifeq ($(wildcard /usr/share/doc/openjdk-8-jdk-headless/copyright),)
+APT_PACKAGES += openjdk-8-jdk-headless
+endif
+ifeq ($(wildcard /usr/share/doc/openjdk-11-jdk/copyright),)
+APT_PACKAGES += openjdk-11-jdk
+endif
+ifeq ($(wildcard /usr/share/doc/tinyproxy/copyright),)
+APT_PACKAGES += tinyproxy
+endif
+ifeq ($(wildcard /usr/share/doc/gradle/copyright),)
+APT_PACKAGES += gradle
+endif
+# Maven
+ifeq ($(wildcard /usr/share/doc/maven/copyright),)
+APT_PACKAGES += maven
+endif
+ifeq ($(wildcard /usr/share/doc/libmaven-resources-plugin-java/copyright),)
+APT_PACKAGES += libmaven-resources-plugin-java
+endif
+ifeq ($(wildcard /usr/share/doc/libmaven-compiler-plugin-java/copyright),)
+APT_PACKAGES += libmaven-compiler-plugin-java
+endif
+ifeq ($(wildcard /usr/share/doc/libmaven-jar-plugin-java/copyright),)
+APT_PACKAGES += libmaven-jar-plugin-java
+endif
+ifeq ($(wildcard /usr/share/doc/libmaven-install-plugin-java/copyright),)
+APT_PACKAGES += libmaven-install-plugin-java
+endif
+ifeq ($(wildcard /usr/share/doc/libmaven-deploy-plugin-java/copyright),)
+APT_PACKAGES += libmaven-deploy-plugin-java
+endif
+ifeq ($(wildcard /usr/share/doc/libmaven-shade-plugin-java/copyright),)
+APT_PACKAGES += libmaven-shade-plugin-java
+endif
+ifeq ($(wildcard /usr/share/doc/libsurefire-java/copyright),)
+APT_PACKAGES += libsurefire-java
+endif
+
+.PHONY: install-chisel
+install-chisel:
+ifeq ($(shell which snap),)
+	$(warning Cannot install chisel without snap. Please install it yourself.)
+else
+	sudo snap install chisel --channel latest/candidate
+endif
+
+.PHONY: install-go
+install-go:
+ifeq ($(shell which snap),)
+	$(warning Cannot install go without snap. Please install it yourself.)
+else
+	sudo snap install go --classic
+endif
+
+.PHONY: install-build-snaps
+install-build-snaps: install-chisel install-go
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
-install-build-deps: install-lint-build-deps
+install-build-deps: install-lint-build-deps install-build-snaps
 ifeq ($(APT_PACKAGES),)
 else ifeq ($(shell which apt-get),)
 	$(warning Cannot install build dependencies without apt.)
