@@ -15,7 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Experiments with pydantic schemas."""
 
-from typing import Annotated, Any, TypeAlias
+from functools import reduce
+from typing import Annotated, Any, TypeAlias, cast
 
 import pydantic
 from overrides import override
@@ -58,14 +59,16 @@ class Part(pydantic.BaseModel):
         """Create the JSON schema for a Part."""
         registered_plugins = plugins.get_registered_plugins()
         plugin_models = [
-            plugin.properties_class for plugin in registered_plugins.values()
+            cast(TypeAlias, plugin.properties_class)
+            for plugin in registered_plugins.values()
         ]
-        PluginUnion: TypeAlias = plugin_models[0]  # type: ignore[valid-type]
-        for model in plugin_models[1:]:
-            PluginUnion |= model  # noqa: N806
+
+        # This type is not actually used outside of schema generation, so it is acceptable
+        # to be dynamically defined at runtime
+        PluginUnion: TypeAlias = reduce(lambda acc, ty: acc | ty, plugin_models)  # type: ignore[reportInvalidTypeForm, valid-type]
 
         plugin_model = Annotated[
-            PluginUnion,  # type: ignore[valid-type]
+            PluginUnion,
             pydantic.Discriminator("plugin"),
             pydantic.ConfigDict(extra="allow"),
         ]
