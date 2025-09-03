@@ -38,6 +38,7 @@ class TestLayerMounting:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=base_layer_dir,
+            cache_level=0,
         )
 
         self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
@@ -79,6 +80,7 @@ class TestLayerMounting:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=None,
+            cache_level=0,
         )
 
         with pytest.raises(RuntimeError) as raised:
@@ -101,6 +103,7 @@ class TestLayerMounting:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=None,
+            cache_level=0,
         )
 
         with pytest.raises(RuntimeError) as raised:
@@ -201,6 +204,7 @@ class TestLayerMountingCacheLevel:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=None,
+            cache_level=0,
         )
 
         with pytest.raises(RuntimeError) as raised:
@@ -224,6 +228,7 @@ class TestLayerMountingCacheLevel:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=None,
+            cache_level=0,
         )
 
         with pytest.raises(RuntimeError) as raised:
@@ -250,6 +255,7 @@ class TestPackageManagement:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=base_layer_dir,
+            cache_level=0,
         )
         self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         self.mock_mount_overlayfs = mocker.patch(

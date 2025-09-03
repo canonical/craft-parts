@@ -65,7 +65,7 @@ class OverlayManager:
         project_info: ProjectInfo,
         part_list: list[Part],
         base_layer_dir: Path | None,
-        cache_level: int = 0,
+        cache_level: int,
     ) -> None:
         self._project_info = project_info
         self._part_list = part_list

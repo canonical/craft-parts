@@ -179,7 +179,10 @@ class TestDirs(test_part_handler.TestDirs):
             )
             part_info = PartInfo(info, part)
             ovmgr = OverlayManager(
-                project_info=info, part_list=[part], base_layer_dir=None
+                project_info=info,
+                part_list=[part],
+                base_layer_dir=None,
+                cache_level=0,
             )
             return PartHandler(
                 part,
