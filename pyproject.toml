@@ -58,7 +58,11 @@ dev = [
     "pytest-subprocess",
     "requests-mock",
 ]
-lint = ["autoflake", "black", "codespell", "pydocstyle"]
+lint = [
+    "codespell",
+    # Imported in docs/conf.py, needed for pyright to validate
+    "sphinx",
+]
 types = [
     # Type checking
     "types-colorama",
