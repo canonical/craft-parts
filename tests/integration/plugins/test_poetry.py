@@ -20,6 +20,7 @@ import stat
 import subprocess
 import sys
 import textwrap
+from typing import Any
 
 import craft_parts.plugins.plugins
 import pytest
@@ -57,7 +58,10 @@ def parts_dict(poetry_part):
 
 
 def test_poetry_plugin(
-    new_dir, partitions, source_directory, parts_dict, check: CheckContextManager
+    new_dir: pathlib.Path,
+    partitions: list[str],
+    parts_dict: dict[str, Any],
+    check: CheckContextManager,
 ):
     """Prime a simple python source."""
     lf = LifecycleManager(
