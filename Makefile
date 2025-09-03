@@ -95,6 +95,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-poetry/copyright),)
 APT_PACKAGES += python3-poetry
 endif
+ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
+APT_PACKAGES += python3-poetry-plugin-export
+endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
 APT_PACKAGES += curl
 endif
