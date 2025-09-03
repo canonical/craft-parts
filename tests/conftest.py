@@ -26,6 +26,7 @@ from unittest import mock
 
 import pytest
 import xdg  # type: ignore[import]
+import craft_parts.packages
 from craft_parts.features import Features
 
 from . import fake_servers
@@ -290,3 +291,12 @@ def mock_chown(mocker) -> dict[str, ChmodCall]:
     mocker.patch.object(os, "chown", side_effect=fake_chown)
 
     return calls
+
+
+@pytest.fixture(autouse=True)
+def fake_repository(mocker) -> None:
+    mocker.patch.object(
+        craft_parts.packages,
+        "Repository",
+        craft_parts.packages._get_repository_for_platform(),
+    )

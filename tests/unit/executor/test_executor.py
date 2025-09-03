@@ -84,6 +84,33 @@ class TestExecutor:
         assert file1.exists() is False
         assert file2.exists() is False
 
+    @pytest.mark.parametrize(
+        ("parts", "level"),
+        [
+            ([], 0),
+            ([Part("p1", {"plugin": "nil"})], 0),
+            ([Part("p1", {"plugin": "nil"}), Part("p2", {"plugin": "nil"})], 0),
+            (
+                [
+                    Part("p1", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    Part("p2", {"plugin": "nil"}),
+                ],
+                0,
+            ),
+            (
+                [
+                    Part("p1", {"plugin": "nil"}),
+                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                ],
+                0,
+            ),
+        ],
+    )
+    def test_cache_level(self, new_dir, parts, level):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        e = Executor(project_info=info, part_list=parts)
+        assert e._overlay_manager.cache_level == level
+
 
 class TestPackages:
     """Verify package installation during the execution phase."""
