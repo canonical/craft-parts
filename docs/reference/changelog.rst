@@ -16,6 +16,23 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.22.0:
+
+2.22.0 (2025-MM-DD)
+-------------------
+
+New features:
+
+- Allow parts to organize content to the overlay. This is done by specifying the
+  target as the (overlay) pseudo-partition. To be able to organize to overlay
+  both overlays and partition features must be enabled.
+
+Bug fixes:
+
+Documentation:
+
+For a complete list of commits, check out the `2.22.0`_ release on GitHub.
+
 .. _release-2.21.0:
 
 2.21.0 (2025-08-29)
