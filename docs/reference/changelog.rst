@@ -23,9 +23,10 @@ Changelog
 
 New features:
 
-- Allow parts to organize content to the overlay. This is done by specifying the
-  target as the (overlay) pseudo-partition. To be able to organize to overlay
-  both overlays and partition features must be enabled.
+- Parts can now copy files to the project's overlay filesystem with the ``organize``
+  key. This is done by prefixing the file's destination path with the ``(overlay)``
+  pseudo-partition. To make use of this feature, the project must support both overlays
+  and partitions.
 
 Bug fixes:
 
