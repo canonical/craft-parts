@@ -826,7 +826,7 @@ def test_get_filtered_stage_package_core24(mocker):
         ),
         pytest.param(LookupError, "Cannot chown '{}' to '_apt'", id="LookupError"),
         pytest.param(None, "Set ownership of '{}' to '_apt'", id="happy-path"),
-    ]
+    ],
 )
 @pytest.mark.usefixtures("fake_deb_run")
 def test_chown_stage_packages(
