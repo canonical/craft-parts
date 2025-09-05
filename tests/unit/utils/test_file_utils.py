@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@ import stat
 from pathlib import Path
 
 import pytest
+
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
@@ -182,6 +183,79 @@ class TestCopy:
         with pytest.raises(errors.CopyFileNotFound) as raised:
             file_utils.copy("2", "3")
         assert raised.value.name == "2"
+
+
+class TestMove:
+    """Verify func:`move` usage scenarios."""
+
+    def test_move_simple(self):
+        Path("foo").touch()
+        foo_stat = os.stat("foo")
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")
+
+        assert Path("foo").exists() is False
+        assert Path("bar").is_file()
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    def test_move_symlink(self):
+        Path("foo").symlink_to("baz")
+        foo_stat = os.lstat("foo")
+        file_utils.move("foo", "bar")
+        bar_stat = os.lstat("bar")
+
+        assert Path("foo").exists() is False
+        assert Path("bar").is_symlink()
+        assert Path("bar").readlink() == Path("baz")
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+    def test_move_chardev(self):
+        os.mknod("foo", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
+        foo_stat = os.stat("foo")
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")
+
+        assert Path("foo").exists() is False
+        assert Path("bar").exists()
+        assert stat.S_ISCHR(bar_stat.st_mode) != 0
+        assert os.major(bar_stat.st_rdev) == 1
+        assert os.minor(bar_stat.st_rdev) == 5
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+    def test_move_blockdev(self):
+        os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(1, 5))
+        foo_stat = os.stat("foo")
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")
+
+        assert Path("foo").exists() is False
+        assert Path("bar").exists()
+        assert stat.S_ISBLK(bar_stat.st_mode) != 0
+        assert os.major(bar_stat.st_rdev) == 1
+        assert os.minor(bar_stat.st_rdev) == 5
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    def test_move_fifo(self):
+        os.mkfifo("foo")
+        foo_stat = os.stat("foo")
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")
+
+        assert Path("foo").exists() is False
+        assert Path("bar").exists()
+        assert stat.S_ISFIFO(bar_stat.st_mode) != 0
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    @staticmethod
+    def _has_same_attributes(a: os.stat_result, b: os.stat_result) -> bool:
+        return (
+            a.st_mode == b.st_mode
+            and a.st_uid == b.st_uid
+            and a.st_gid == b.st_gid
+            and a.st_mtime_ns == b.st_mtime_ns
+        )
 
 
 # TODO: test NonBlockingRWFifo

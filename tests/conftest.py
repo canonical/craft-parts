@@ -26,6 +26,7 @@ from unittest import mock
 
 import pytest
 import xdg  # type: ignore[import]
+
 import craft_parts
 import craft_parts.packages
 from craft_parts.features import Features
