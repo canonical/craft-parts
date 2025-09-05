@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.22.0:
 
-2.22.0 (YYYY-MM-DD)
+2.22.0 (2025-MM-DD)
 -------------------
 
 New features:
