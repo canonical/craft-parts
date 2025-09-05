@@ -30,7 +30,7 @@ from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.filesystem_mounts import FilesystemMounts, validate_filesystem_mounts
-from craft_parts.infos import ProjectInfo
+from craft_parts.infos import ProjectInfo, ProjectVarInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
@@ -76,7 +76,7 @@ class LifecycleManager:
         change if a different base image is used.
     :param project_vars_part_name: Project variables can only be set in the part
         matching this name.
-    :param project_vars: A dictionary containing project variables.
+    :param project_vars: A ProjectVarInfo instance or a dictionary containing project variables.
     :param partitions: A list of partitions to use when the partitions feature is
         enabled. The first partition will be considered the default. Partitions may
         have an optional namespace prefix separated by a forward slash. Partition names
@@ -108,7 +108,7 @@ class LifecycleManager:
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
         project_vars_part_name: str | None = None,
-        project_vars: dict[str, str] | None = None,
+        project_vars: dict[str, str] | ProjectVarInfo | None = None,
         partitions: list[str] | None = None,
         filesystem_mounts: dict[str, Any] | None = None,
         **custom_args: Any,  # custom passthrough args
