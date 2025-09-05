@@ -35,6 +35,7 @@ PARTITION_INVALID_MSG = (
 )
 
 DEFAULT_PARTITION = "default"
+OVERLAY_PARTITION = "overlay"  # Pseudo-partition targeting the overlay
 
 
 def validate_partition_names(partitions: Sequence[str] | None) -> None:
@@ -71,11 +72,13 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
     if len(partitions) != len(set(partitions)):
         raise errors.FeatureError("Partitions must be unique.")
 
-    for partition in partitions[1:]:
-        if partition == DEFAULT_PARTITION:
-            raise errors.FeatureError(
-                "Only the first partition can be named 'default'."
-            )
+    if DEFAULT_PARTITION in partitions[1:]:
+        raise errors.FeatureError("Only the first partition can be named 'default'.")
+
+    if OVERLAY_PARTITION in partitions:
+        raise errors.FeatureError(
+            "Reserved name 'overlay' cannot be used to name a partition."
+        )
 
     _validate_partition_naming_convention(partitions)
     _validate_partitions_conflicts(partitions)
