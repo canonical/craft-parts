@@ -821,9 +821,11 @@ def test_get_filtered_stage_package_core24(mocker):
 @pytest.mark.parametrize(
     ("side_effect", "message"),
     [
-        pytest.param(PermissionError, "Cannot chown '{}' to '_apt'", id="PermissionError"),
+        pytest.param(
+            PermissionError, "Cannot chown '{}' to '_apt'", id="PermissionError"
+        ),
         pytest.param(LookupError, "Cannot chown '{}' to '_apt'", id="LookupError"),
-        pytest.param(None, "Set ownership of '{}' to '_apt'", id="happy-path")
+        pytest.param(None, "Set ownership of '{}' to '_apt'", id="happy-path"),
     ]
 )
 @pytest.mark.usefixtures("fake_deb_run")
