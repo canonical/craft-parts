@@ -110,6 +110,7 @@ GradlePlugin
 GradlePluginEnvironmentValidator
 GradlePluginProperties
 HttpRequestError
+IncompatibleChrootError
 IncompatibleSourceOptions
 Initialization
 InvalidAction
