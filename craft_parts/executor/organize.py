@@ -126,7 +126,7 @@ def organize_files(
                             os.remove(real_dst)
 
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.move(src, dst)
+            file_utils.move(src, dst)
 
 
 def get_src_path(
