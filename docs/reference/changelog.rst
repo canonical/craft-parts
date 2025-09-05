@@ -16,6 +16,24 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.22.0:
+
+2.22.0 (2025-MM-DD)
+-------------------
+
+New features:
+
+- Parts can now copy files to the project's overlay filesystem with the ``organize``
+  key. This is done by prefixing the file's destination path with the ``(overlay)``
+  pseudo-partition. To make use of this feature, the project must support both overlays
+  and partitions.
+
+Bug fixes:
+
+Documentation:
+
+For a complete list of commits, check out the `2.22.0`_ release on GitHub.
+
 .. _release-2.21.0:
 
 2.21.0 (2025-08-29)

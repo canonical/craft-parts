@@ -16,6 +16,7 @@
 
 from copy import deepcopy
 from functools import partial
+from pathlib import Path
 
 import pydantic
 import pytest
@@ -337,6 +338,23 @@ class TestPartData:
     def test_part_has_overlay(self, partitions):
         p = Part("foo", {}, partitions=partitions)
         assert p.has_overlay is False
+
+    @pytest.mark.parametrize(
+        ("organize", "result"),
+        [
+            ({}, False),
+            ({"this": "that"}, False),
+        ],
+    )
+    def test_part_organizes_to_overlay(self, partitions, organize, result):
+        p = Part("foo", {"organize": organize}, partitions=partitions)
+        assert p.organizes_to_overlay == result
+
+    def test_part_install_dirs(self, new_dir):
+        p = Part("foo", {"organize": {"foo": "bar"}})
+        assert p.part_install_dirs == {
+            None: Path(new_dir / "parts/foo/install"),
+        }
 
     @pytest.mark.parametrize(
         ("tc_spec", "tc_result"),
