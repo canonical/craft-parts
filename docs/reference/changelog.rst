@@ -24,7 +24,7 @@ Changelog
 New features:
 
 - Dynamically detect the repository type used by the operating system. This allows
-  parts to use different package managers if the system is changed in a previous part.
+  parts to use different package managers if the system is changed by a preceding part.
 
 Bug fixes:
 
