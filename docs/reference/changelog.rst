@@ -61,6 +61,8 @@ Bug fixes:
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
+- Set the right directory permissions so that APT no longer emits a warning when 
+  downloading to the stage package cache.
 
 For a complete list of commits, check out the `2.21.0`_ release on GitHub.
 
