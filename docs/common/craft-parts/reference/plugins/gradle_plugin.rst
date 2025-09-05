@@ -12,7 +12,7 @@ After a successful build, this plugin will:
 * Create ``bin/`` and ``jar/`` directories in ``$CRAFT_PART_INSTALL``.
 * Find the ``java`` executable provided by the part and link it as
   ``$CRAFT_PART_INSTALL/bin/java``.
-* Hard link the ``.jar`` files generated in ``$CRAFT_PART_BUILD`` to 
+* Hard link the ``.jar`` files generated in ``$CRAFT_PART_BUILD`` to
   ``$CRAFT_PART_INSTALL/jar``.
 
 .. _craft_parts_gradle_plugin_post_build_end:
@@ -26,9 +26,9 @@ gradle-init-script
 ~~~~~~~~~~~~~~~~~~
 **Type:** string
 
-The path to the initialization script to run with ``gradle --init-script <gradle-init-script>``
-command. See `official gradle documentation <https://docs.gradle.org/current/userguide/init_scripts.html>`_
-on the init script.
+The path to the initialization script to run with ``gradle --init-script
+<gradle-init-script>`` command. See `official gradle documentation
+<https://docs.gradle.org/current/userguide/init_scripts.html>`_ on the init script.
 
 gradle-parameters
 ~~~~~~~~~~~~~~~~~
@@ -40,26 +40,28 @@ gradle-task
 ~~~~~~~~~~~
 **Type:** string
 
-The `Gradle task <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_ to build the
-project.
+The `Gradle task <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
+to build the project.
 
 Environment variables
 ---------------------
 
-Environment variables can be specified to modify the behavior of the build. For the Gradle plugin,
-three proxy environment variables are treated specially: ``http_proxy``, ``https_proxy`` and
-``no_proxy``. For a list of environment variables used to configure Gradle, please refer to
-`Configuring the build environment`_.
+Environment variables can be specified to modify the behavior of the build. For the
+Gradle plugin, three proxy environment variables are treated specially: ``http_proxy``,
+``https_proxy`` and ``no_proxy``. For a list of environment variables used to configure
+Gradle, please refer to `Configuring the build environment`_.
 
 http_proxy
 ~~~~~~~~~~
 
-URL to proxy HTTP requests to. The value is mapped to the settings file (.parts/.m2/settings.xml) under proxy element.
+URL to proxy HTTP requests to. The value is mapped to the settings file
+(``.parts/.m2/settings.xml``) under the proxy element.
 
 https_proxy
 ~~~~~~~~~~~
 
-URL to proxy HTTPS requests to. The value is mapped to the settings file (.parts/.m2/settings.xml) under proxy element.
+URL to proxy HTTPS requests to. The value is mapped to the settings file
+(``.parts/.m2/settings.xml``) under the proxy element.
 
 no_proxy
 ~~~~~~~~
@@ -87,8 +89,10 @@ Here is a consolidated example of how to use the Gradle plugin.
 
 For possible values of each field, refer to the Gradle documentation.
 
-* ``gradle-parameters``: `Command line interface <https://docs.gradle.org/current/userguide/command_line_interface.html>`_
-* ``gradle-task``: `Understanding tasks <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
+* ``gradle-parameters``: `Command line interface
+  <https://docs.gradle.org/current/userguide/command_line_interface.html>`_
+* ``gradle-task``: `Understanding tasks
+  <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
 * ``build-environment``: `Configuring the build environment`_
 
 .. _Configuring the build environment: https://docs.gradle.org/current/userguide/build_environment.html

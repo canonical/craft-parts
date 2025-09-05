@@ -39,7 +39,8 @@ Craftctl comes in most handy when when you need to tweak files or settings befor
 after executing a step.
 
 To specify where the regular step behavior occurs inside the scriptlet, call it with the
-special ``craftctl default`` command. Using that command as an anchor point, alter the build files or environment with other commands before or after it.
+special ``craftctl default`` command. Using that command as an anchor point, alter the
+build files or environment with other commands before or after it.
 
 .. admonition:: Don't forget to execute the step
     :class: caution
@@ -122,7 +123,7 @@ lifecycle execution is finished::
 
   import yaml
   from craft_parts import LifecycleManager, Step
-  
+
   parts_yaml = """
   parts:
     foo:
@@ -131,9 +132,9 @@ lifecycle execution is finished::
         echo "Running the pull step"
         craftctl set version="2"
   """
-  
+
   parts = yaml.safe_load(parts_yaml)
-  
+
   lcm = LifecycleManager(
     parts,
     app_name="example",

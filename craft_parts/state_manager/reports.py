@@ -109,7 +109,7 @@ class DirtyReport:
         self.changed_dependencies = changed_dependencies
 
     # pylint: disable=too-many-branches
-    def reason(self) -> str:
+    def reason(self) -> str:  # noqa: PLR0912
         """Get summarized report.
 
         :return: Short summary of why the part is dirty.

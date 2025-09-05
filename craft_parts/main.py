@@ -78,7 +78,7 @@ def main() -> None:
 
 
 def _process_inputs(options: argparse.Namespace) -> None:
-    with open(options.file) as opt_file:
+    with open(options.file) as opt_file:  # noqa: PTH123
         part_data = yaml.safe_load(opt_file)
 
     cache_dir = options.cache_dir
@@ -100,7 +100,7 @@ def _process_inputs(options: argparse.Namespace) -> None:
 
     filesystem_mounts_data = None
     if options.filesystem_mounts:
-        with open(options.filesystem_mounts) as opt_filesystem_mounts_file:
+        with open(options.filesystem_mounts) as opt_filesystem_mounts_file:  # noqa: PTH123
             filesystems_data = yaml.safe_load(opt_filesystem_mounts_file)
             if not isinstance(filesystems_data, dict):
                 raise TypeError("filesystem_mounts definition must be a dictionary")

@@ -241,7 +241,7 @@ class TestOsRelease:
 
     def _write_os_release(self, contents) -> str:
         path = "os-release"
-        with open(path, "w") as f:
+        with open(path, "w") as f:  # noqa: PTH123
             f.write(contents)
         return path
 

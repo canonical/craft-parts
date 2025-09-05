@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-  # noqa: INP001
 #
 # Copyright 2024 Canonical Ltd.
 #
@@ -19,11 +19,12 @@ import pathlib
 from collections.abc import Sequence
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 from craft_parts.packages import snaps
+from pytest_check.context_manager import CheckContextManager
 
 
-def test_get_installed_snaps_success():
+def test_get_installed_snaps_success(check: CheckContextManager):
     """Test that get_installed_snaps returns a list of snaps."""
     actual = snaps.get_installed_snaps()
 
@@ -32,11 +33,11 @@ def test_get_installed_snaps_success():
         pytest_check.is_true(len(name) >= 1)
         if revision.startswith("x"):
             # Locally installed snaps should be of the form "x<int>"
-            with pytest_check.check():
+            with check:
                 int(revision[1:])
         else:
             # Store-instaled snaps should simply have an integer revision.
-            with pytest_check.check():
+            with check:
                 int(revision)
 
 

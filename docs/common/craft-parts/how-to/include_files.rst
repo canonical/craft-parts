@@ -39,8 +39,8 @@ Given the following project structure:
       └── services
           ├── README
           └── hello.service
-    
-    
+
+
 The following dump part can be used to include the ``hello.service`` and
 ``good.otf`` files from the ``misc`` directory, then move them to the correct
 locations, keeping only ``/usr`` in the final payload:
@@ -86,7 +86,7 @@ remote URL and includes it in the final payload:
       plugin: dump
       source: http://archive.ubuntu.com/ubuntu/pool/main/b/busybox/busybox-static_1.30.1-7ubuntu3_amd64.deb
       source-type: deb
-  
+
 The resulting payload will look like this:
 
 .. code-block:: text
@@ -123,7 +123,7 @@ and ``ffprobe`` binaries in the ``/usr/bin``.
         'ffmpeg': usr/bin/
       stage:
         - usr/
-  
+
 The resulting payload will look like this:
 
 .. code-block:: text
@@ -138,7 +138,7 @@ The resulting payload will look like this:
 Example: To include a remote git repository with a specific branch
 ------------------------------------------------------------------
 
-The following dump part will clone a theme from a remote git repository and 
+The following dump part will clone a theme from a remote git repository and
 move the theme files to the correct location.
 
 .. code-block:: yaml
@@ -152,7 +152,7 @@ move the theme files to the correct location.
       source-depth: 1
       organize:
         ubuntu-core: usr/share/plymouth/themes/ubuntu-core
-  
+
 The resulting payload will look like this:
 
 .. code-block:: text

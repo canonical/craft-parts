@@ -4,11 +4,11 @@ Maven plugin
 ============
 
 
-Maven plugin is a plugin that simplifies building and packaging Jars for projects that use the
-Maven (mvn) tooling. It is equivalent to running the following command:
+Maven plugin is a plugin that simplifies building and packaging Jars for projects that
+use the Maven (mvn) tooling. It is equivalent to running the following command:
 
 .. code-block:: shell
-    
+
     mvn package
 
 
@@ -16,8 +16,8 @@ The ``maven-parameters`` key passes arguments to the ``mvn package`` command. Th
 parameter can also configure any command-line arguments. All values are passed after the
 initial package command, delimited by spaces.
 
-The ``maven-use-wrapper`` key leverages Maven wrapper files provided by the project to run
-the package command. It replaces the default Maven executable with the project's
+The ``maven-use-wrapper`` key leverages Maven wrapper files provided by the project to
+run the package command. It replaces the default Maven executable with the project's
 ``mvnw`` file, to where the package command becomes ``./mvnw package``.
 
 After a successful build, this plugin will:

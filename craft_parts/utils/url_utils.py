@@ -58,7 +58,7 @@ def download_request(
         # Content-Length in the case of resuming will be
         # Content-Length - total_read so we add back up to have the feel of
         # resuming
-        if os.path.exists(destination):
+        if os.path.exists(destination):  # noqa: PTH110
             total_length += total_read
 
     if message:
@@ -66,9 +66,9 @@ def download_request(
     else:
         logger.debug("Downloading %r", destination)
 
-    mode = "ab" if os.path.exists(destination) else "wb"
+    mode = "ab" if os.path.exists(destination) else "wb"  # noqa: PTH110
 
-    with open(destination, mode) as destination_file:
+    with open(destination, mode) as destination_file:  # noqa: PTH123
         for buf in request.iter_content(1024):
             destination_file.write(buf)
             if not os_utils.is_dumb_terminal():

@@ -301,7 +301,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
     try:
         output = (
             subprocess.check_output(
-                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],
+                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],  # noqa: PTH118
                 stderr=subprocess.STDOUT,
                 env={"LANG": "C.UTF-8"},
             )
@@ -328,7 +328,7 @@ def _run_dpkg_query_list_files(package_name: str) -> set[str]:
         .split()
     )
 
-    return {i for i in output if ("lib" in i and os.path.isfile(i))}
+    return {i for i in output if ("lib" in i and os.path.isfile(i))}  # noqa: PTH113
 
 
 def _get_dpkg_list_path(base: str) -> pathlib.Path:
@@ -633,7 +633,7 @@ class Ubuntu(BaseRepository):
             return []
 
         if _is_list_of_slices(package_names):
-            # TODO: fetching of Chisel slices is not supported yet.
+            # TODO: fetching of Chisel slices is not supported yet.  # noqa: FIX002
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)

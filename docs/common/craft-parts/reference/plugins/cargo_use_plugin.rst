@@ -4,8 +4,8 @@ Cargo Use plugin
 =====================
 
 The Cargo Use plugin sets up a local `cargo registry`_ for `Rust`_ crates. It's
-a companion plugin meant to be used with the :ref:`Rust plugin <craft_parts_rust_plugin>`.
-It affects all Rust parts in a project.
+a companion plugin meant to be used with the :ref:`Rust plugin
+<craft_parts_rust_plugin>`. It affects all Rust parts in a project.
 
 Keys
 ----

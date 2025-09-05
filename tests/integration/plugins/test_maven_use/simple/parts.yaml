@@ -1,4 +1,3 @@
-
 parts:
   java-dep-add:
     plugin: maven-use

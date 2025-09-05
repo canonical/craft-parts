@@ -45,9 +45,10 @@ During the build step the plugin performs the following actions:
 Examples
 --------
 
-The following snippet declares a parts named ``go-flags`` using the ``go-use`` plugin and
-a ``hello`` part that declares this ``go-flags``` in its ``go.mod`` using the ``go`` plugin.
-Correct ordering is achieved with the use of the ``after`` key in the ``hello`` part.
+The following snippet declares a parts named ``go-flags`` using the ``go-use`` plugin
+and a ``hello`` part that declares this ``go-flags``` in its ``go.mod`` using the
+``go`` plugin. Correct ordering is achieved with the use of the ``after`` key in the
+``hello`` part.
 
 .. code-block:: yaml
 

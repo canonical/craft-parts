@@ -208,8 +208,8 @@ def _check_for_stage_collisions_per_partition(
 
             conflict_files = []
             for item in common:
-                this = os.path.join(candidate.source_dir, item)
-                other = os.path.join(other_candidate.source_dir, item)
+                this = os.path.join(candidate.source_dir, item)  # noqa: PTH118
+                other = os.path.join(other_candidate.source_dir, item)  # noqa: PTH118
 
                 permissions_this = permissions.filter_permissions(
                     item, candidate.permissions
@@ -260,14 +260,14 @@ def paths_collide(
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
-    path1_is_dir = os.path.isdir(path1)
-    path2_is_dir = os.path.isdir(path2)
-    path1_is_link = os.path.islink(path1)
-    path2_is_link = os.path.islink(path2)
+    path1_is_dir = os.path.isdir(path1)  # noqa: PTH112
+    path2_is_dir = os.path.isdir(path2)  # noqa: PTH112
+    path1_is_link = os.path.islink(path1)  # noqa: PTH114
+    path2_is_link = os.path.islink(path2)  # noqa: PTH114
 
     # Paths collide if they're both symlinks, but pointing to different places.
     if path1_is_link and path2_is_link:
-        return os.readlink(path1) != os.readlink(path2)
+        return os.readlink(path1) != os.readlink(path2)  # noqa: PTH115
 
     # Paths collide if one is a symlink, but not the other.
     if path1_is_link or path2_is_link:
@@ -291,7 +291,7 @@ def _file_collides(file_this: str, file_other: str) -> bool:
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     # pkgconfig files need special handling, only prefix line may be different.
-    with open(file_this) as pc_file_1, open(file_other) as pc_file_2:
+    with open(file_this) as pc_file_1, open(file_other) as pc_file_2:  # noqa: PTH123
         for line_pc_1, line_pc_2 in zip(pc_file_1, pc_file_2):
             if line_pc_1.startswith("prefix=") and line_pc_2.startswith("prefix="):
                 continue

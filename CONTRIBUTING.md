@@ -92,33 +92,16 @@ git remote add upstream https://github.com/canonical/craft-parts
 git fetch upstream
 ```
 
-Inside the project directory, set up the dependencies. Ubuntu 24.04 is assumed in the
-rest of this setup:
+Inside the project directory, set up the virtual development environment and install all
+dependencies, linters, and testers:
 
 ```bash
-sudo apt install libapt-pkg-dev intltool fuse-overlayfs python3-venv python3-dev \
-            gcc g++ make ninja-build cmake scons tox qt5-qmake p7zip rpm autoconf \
-            automake autopoint git gperf help2man libtool texinfo pkg-config \
-            tinyproxy dpkg-dev socat maven python3-poetry openjdk-17-jdk \
-            openjdk-21-jdk openjdk-8-jdk-headless openjdk-11-jdk gradle
-sudo snap install chisel --candidate
-sudo snap install go astral-uv node
+make setup
+make lint
+make test
 ```
 
-Next, create the virtual environment and install the required Python packages:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .[dev,docs]
-pip install https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
-```
-
-Older versions of Python Apt are also available:
-
-- [Ubuntu 20.04 LTS](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz)
-- [Ubuntu 22.04 LTS](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz)
-- [Ubuntu 23.04](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.5.3ubuntu1/python-apt_2.5.3ubuntu1.tar.xz)
+If all linting and testing completes without errors, your local environment is ready.
 
 ## Contribute a change
 
@@ -174,7 +157,7 @@ If you're making a change to a current release, run:
 ```bash
 git fetch upstream
 git checkout -b <new-branch-name> upstream/hotfix/<current-release>
-pip install -e .[dev,docs]
+make setup
 ```
 
 If you're contributing to multiple releases or the next major release, run:
@@ -183,7 +166,7 @@ If you're contributing to multiple releases or the next major release, run:
 git checkout main
 git pull upstream main
 git checkout -b <new-branch-name>
-pip install -e .[dev,docs]
+make setup
 ```
 
 The new branch name should be brief, at no more than 80 characters. Format your branch
@@ -246,18 +229,34 @@ The Craft Parts test suite includes both unit and integration tests. If you're n
 which tests you should add, go with your best judgement – additional tests can be added
 during the review process.
 
-Once you've made your changes, run the test suite:
+For low-complexity changes that require basic testing, run the fast tests:
 
 ```bash
-make test-units && make test-integrations
+make test-fast
+```
+
+For complex work, run the full test suite:
+
+```bash
+make test
 ```
 
 Running all tests can take a very long time, in some cases an hour.
 
-You can obtain coverage information from the unit tests with:
+When iterating and testing, it's a good practice to clean the local temporary files that
+the tests generate:
 
 ```bash
-make coverage
+make clean
+```
+
+In rare instances, tests can fail in unpredictable ways, regardless of the state of your
+code. In such cases, it's best to delete your virtual environment and start over:
+
+```bash
+rm -rf .venv
+make clean
+make setup
 ```
 
 There are also special tests that are feature-specific. Run `make help` to view all of
@@ -287,13 +286,13 @@ notes](docs/reference/changelog.rst).
 Once you've updated the documentation, build the site locally with:
 
 ```bash
-tox -f build-docs
+make docs
 ```
 
 Check for problems in the documentation with:
 
 ```bash
-tox -f lint-docs
+make lint-docs
 ```
 
 ### Push the branch and open a PR

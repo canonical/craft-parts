@@ -64,9 +64,9 @@ During the build step the plugin performs the following actions:
 
 * Call ``dotnet build -c <config>`` where ``<config>`` is the value of the
   ``dotnet-build-configuration`` key.
-* Call ``dotnet publish`` to install the generated assets into ``${CRAFT_PART_INSTALL}``,
-  optionally passing the value of ``dotnet-self-contained-runtime-identifier`` if
-  set.
+* Call ``dotnet publish`` to install the generated assets into
+  ``${CRAFT_PART_INSTALL}``, optionally passing the value of
+  ``dotnet-self-contained-runtime-identifier`` if set.
 
 
 Examples
