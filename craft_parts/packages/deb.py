@@ -439,7 +439,7 @@ class Ubuntu(BaseRepository):
     ) -> None:
         """Refresh the list of packages available in the repository."""
         # Return early when testing.
-        logger.debug("refresh apt package list")
+        logger.debug("Refreshing apt package list")
         if os.geteuid() != 0:
             logger.warning("Packages list not refreshed, not running as superuser.")
             return
@@ -516,7 +516,7 @@ class Ubuntu(BaseRepository):
     @classmethod
     def download_packages(cls, package_names: list[str]) -> None:
         """Download the specified packages to the local package cache area."""
-        logger.debug("downloading packages using apt: %s", " ".join(package_names))
+        logger.debug("Downloading packages using apt: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
             {
@@ -556,7 +556,7 @@ class Ubuntu(BaseRepository):
         install_required = False
         package_names = sorted(package_names)
 
-        logger.debug("installing packages using apt: %s", package_names)
+        logger.debug("Installing packages using apt: %s", package_names)
 
         # Ensure we have an up-to-date cache first if we will have to
         # install anything.

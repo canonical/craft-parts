@@ -212,7 +212,7 @@ class DummyRepository(BaseRepository):
         refresh_package_cache: bool = True,  # noqa: ARG003
     ) -> list[str]:
         """Install packages on the host system."""
-        logger.debug("package manager not defined, don't install any packages")
+        logger.debug("Package manager not defined, not installing any packages")
         return []
 
     @classmethod
