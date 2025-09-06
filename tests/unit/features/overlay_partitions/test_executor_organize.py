@@ -15,13 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
-from craft_parts import errors
-from craft_parts.executor.organize import organize_files
+
 from tests.unit.executor.test_organize import organize_and_assert
 
 
