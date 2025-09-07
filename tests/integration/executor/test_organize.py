@@ -40,8 +40,9 @@ basic_parts_yaml = textwrap.dedent(
 def test_organize_special_files(new_dir, mocker):
     parts = yaml.safe_load(basic_parts_yaml)
 
-    source_dir = Path("source/dev")
-    source_dir.mkdir(parents=True)
+    source_dir = Path("source")
+    source_dir.mkdir()
+    (source_dir / "dev").mkdir()
 
     # File to be organized into overlay
     (source_dir / "foo.txt").touch()
