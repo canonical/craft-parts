@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,8 @@ from unittest import mock
 
 import pytest
 import xdg  # type: ignore[import]
+import craft_parts
+import craft_parts.packages
 from craft_parts.features import Features
 
 from . import fake_servers
@@ -112,6 +114,18 @@ def enable_partitions_feature():
     assert Features().enable_partitions is False
     Features.reset()
     Features(enable_partitions=True)
+
+    yield
+
+    Features.reset()
+
+
+@pytest.fixture
+def enable_overlay_and_partitions_features():
+    assert Features().enable_partitions is False
+    assert Features().enable_overlay is False
+    Features.reset()
+    Features(enable_partitions=True, enable_overlay=True)
 
     yield
 
@@ -298,3 +312,12 @@ def mock_chown(mocker) -> dict[str, ChmodCall]:
     mocker.patch.object(os, "chown", side_effect=fake_chown)
 
     return calls
+
+
+@pytest.fixture(autouse=True)
+def fake_repository(mocker) -> None:
+    mocker.patch.object(
+        craft_parts.packages,
+        "Repository",
+        craft_parts.packages._get_repository_for_platform(),
+    )

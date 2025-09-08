@@ -16,6 +16,27 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.22.0:
+
+2.22.0 (2025-MM-DD)
+-------------------
+
+New features:
+
+- Dynamically detect the repository type used by the operating system. This allows
+  parts to use different package managers if the system is changed by a preceding part.
+
+- Parts can now copy files to the project's overlay filesystem with the ``organize``
+  key. This is done by prefixing the file's destination path with the ``(overlay)``
+  pseudo-partition. To make use of this feature, the project must support both overlays
+  and partitions.
+
+Bug fixes:
+
+Documentation:
+
+For a complete list of commits, check out the `2.22.0`_ release on GitHub.
+
 .. _release-2.21.0:
 
 2.21.0 (2025-08-29)
@@ -45,6 +66,8 @@ Bug fixes:
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
+- Set the right directory permissions so that APT no longer emits a warning when 
+  downloading to the stage package cache.
 
 For a complete list of commits, check out the `2.21.0`_ release on GitHub.
 
@@ -1383,6 +1406,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
 .. _2.21.0: https://github.com/canonical/craft-parts/releases/tag/2.21.0
 .. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1
 .. _2.20.0: https://github.com/canonical/craft-parts/releases/tag/2.20.0

@@ -15,17 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
 import subprocess
 import textwrap
 from pathlib import Path
 from subprocess import CalledProcessError
 from unittest import mock
-from unittest.mock import call
+from unittest.mock import Mock, call
 
 import pytest
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
 from craft_parts.packages.deb_package import DebPackage
+from pytest_mock import MockerFixture
 
 # pylint: disable=line-too-long
 # pylint: disable=missing-class-docstring
@@ -814,3 +816,48 @@ def test_get_filtered_stage_package_core24(mocker):
     # python3-cffi-backend and python3-attr must NOT be on the list of filtered
     # names, even though they are present in the core24 base.
     assert filtered_names == {"some-package"}
+
+
+@pytest.mark.parametrize(
+    ("side_effect", "message"),
+    [
+        pytest.param(
+            PermissionError, "Cannot chown '{}' to '_apt'", id="PermissionError"
+        ),
+        pytest.param(LookupError, "Cannot chown '{}' to '_apt'", id="LookupError"),
+        pytest.param(None, "Set ownership of '{}' to '_apt'", id="happy-path"),
+    ],
+)
+@pytest.mark.usefixtures("fake_deb_run")
+def test_chown_stage_packages(
+    mocker: MockerFixture,
+    tmp_path: Path,
+    fake_apt_cache: Mock,
+    caplog: pytest.LogCaptureFixture,
+    side_effect: Exception | None,
+    message: str,
+) -> None:
+    """Ensure an attempt is made to set file ownership permissions for the stage packages cache."""
+    caplog.set_level(logging.DEBUG)
+    mocker.patch("os.geteuid", return_value=0)
+
+    mock_chown = mocker.patch("shutil.chown", side_effect=side_effect)
+
+    _, deb_cache_dir = deb.get_cache_dirs(tmp_path)
+    fake_package = deb_cache_dir / "fake-package_1.0_all.deb"
+    fake_package.touch()
+    fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
+        ("fake-package", "1.0", fake_package)
+    ]
+
+    deb.Ubuntu.fetch_stage_packages(
+        cache_dir=tmp_path,
+        package_names=["fake-package"],
+        stage_packages_path=tmp_path,
+        base="core",
+        arch="amd64",
+    )
+
+    # Make sure chown was called properly
+    mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
+    assert message.format(deb_cache_dir) in caplog.text
