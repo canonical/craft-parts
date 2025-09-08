@@ -26,14 +26,14 @@ New features:
 - Dynamically detect the repository type used by the operating system. This allows
   parts to use different package managers if the system is changed by a preceding part.
 
-- Parts can now copy files to the project's overlay filesystem with the ``organize``
+- Parts can now move files to the project's overlay filesystem with the ``organize``
   key. This is done by prefixing the file's destination path with the ``(overlay)``
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
 
 Bug fixes:
 
-- Organize now works with character and block device nodes.
+- The ``organize`` key now works with character and block device nodes.
 
 Documentation:
 
