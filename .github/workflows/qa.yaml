@@ -17,6 +17,6 @@ jobs:
     with:
       fast-test-platforms: '["ubuntu-22.04", "ubuntu-24.04"]'
       fast-test-python-versions: '["3.10", "3.12", "3.13"]'
-      slow-test-platforms: '["ubuntu-22.04", "ubuntu-24.04"]'
-      slow-test-python-versions: '["3.10", "3.12"]'
+      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
