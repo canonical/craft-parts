@@ -33,6 +33,8 @@ New features:
 
 Bug fixes:
 
+- Organize now works with character and block device nodes.
+
 Documentation:
 
 For a complete list of commits, check out the `2.22.0`_ release on GitHub.
