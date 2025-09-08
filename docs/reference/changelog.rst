@@ -31,6 +31,9 @@ New features:
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
 
+- The package cache layer can be placed higher in the overlay stack, allowing overlay
+  packages to be installed on top of a system created by another part.
+
 Bug fixes:
 
 Documentation:

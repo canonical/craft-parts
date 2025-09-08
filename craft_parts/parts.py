@@ -1038,6 +1038,12 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     # simplest way to do this is to sort them by name.
     all_parts = sorted(part_list, key=lambda part: part.name, reverse=True)
 
+    # Reorder so that parts organizing to the overlay come first. This
+    # allows parts to create a viable base to work on before installing
+    # overlay packages.
+
+    # TODO: reorder placing parts that organize to the overlay first.
+
     while all_parts:
         top_part = None
 
