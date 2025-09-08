@@ -187,8 +187,16 @@ else
 	sudo snap install go --classic
 endif
 
+.PHONY: install-core20
+install-core20:
+ifeq ($(shell which snap),)
+	$(warning Cannot install core20 without snap. Please install it yourself.)
+else
+	sudo snap install core20
+endif
+
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go
+install-build-snaps: install-chisel install-go install-core20
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
