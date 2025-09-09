@@ -196,7 +196,7 @@ else
 endif
 
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20
+install-build-snaps: install-chisel install-go install-core20 install-rustup
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
@@ -212,6 +212,15 @@ endif
 # If additional build dependencies need installing in order to build the linting env.
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
+
+.PHONY: install-rustup
+install-rustup:
+ifeq ($(shell which rustup),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install rustup without snap. Please install it yourself.)
+else
+	sudo snap install rustup --classic
+endif
 
 # A temporary override to the lint-docs directive to ignore the sphinx-resources git submodule.
 .PHONY: lint-docs
