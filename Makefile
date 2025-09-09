@@ -221,7 +221,7 @@ install-lint-build-deps:
 install-rustup:
 ifeq ($(shell which rustup),)
 else ifeq ($(shell which snap),)
-	$(warning Cannot install rustup without snap. Please install it yourself.)
+	$(warning Cannot install rustup without snap. Install it yourself.)
 else
 	sudo snap install rustup --classic
 endif
