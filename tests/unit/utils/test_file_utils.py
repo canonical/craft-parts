@@ -218,7 +218,7 @@ class TestMove:
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
-        assert stat.S_ISCHR(bar_stat.st_mode) != 0
+        assert stat.S_ISCHR(bar_stat.st_mode)
         assert os.major(bar_stat.st_rdev) == 1
         assert os.minor(bar_stat.st_rdev) == 5
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
@@ -232,7 +232,7 @@ class TestMove:
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
-        assert stat.S_ISBLK(bar_stat.st_mode) != 0
+        assert stat.S_ISBLK(bar_stat.st_mode)
         assert os.major(bar_stat.st_rdev) == 1
         assert os.minor(bar_stat.st_rdev) == 5
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
@@ -245,7 +245,7 @@ class TestMove:
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
-        assert stat.S_ISFIFO(bar_stat.st_mode) != 0
+        assert stat.S_ISFIFO(bar_stat.st_mode)
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
 
     @staticmethod

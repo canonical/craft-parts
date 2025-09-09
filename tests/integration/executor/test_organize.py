@@ -66,7 +66,7 @@ def test_organize_special_files(new_dir, mocker):
     assert Path("prime/qux").exists() is False
 
     assert Path("prime/dest/foo.txt").is_file()
-    assert stat.S_ISCHR(os.stat("prime/dest/dev/null").st_mode) != 0
-    assert stat.S_ISBLK(os.stat("prime/dest/dev/loop99").st_mode) != 0
-    assert stat.S_ISFIFO(os.stat("prime/dest/bar.fifo").st_mode) != 0
+    assert stat.S_ISCHR(os.stat("prime/dest/dev/null").st_mode)
+    assert stat.S_ISBLK(os.stat("prime/dest/dev/loop99").st_mode)
+    assert stat.S_ISFIFO(os.stat("prime/dest/bar.fifo").st_mode)
     assert Path("prime/dest/qux").readlink() == "quux"
