@@ -19,12 +19,12 @@ from functools import reduce
 from typing import Annotated, Any, TypeAlias, cast
 
 import pydantic
-from overrides import override
 from pydantic.json_schema import (
     DEFAULT_REF_TEMPLATE,
     GenerateJsonSchema,
     JsonSchemaMode,
 )
+from typing_extensions import override
 
 from craft_parts import plugins, sources
 from craft_parts.plugins.nil_plugin import NilPluginProperties
@@ -54,7 +54,7 @@ class Part(pydantic.BaseModel):
     @override
     def model_json_schema(
         cls,
-        by_alias: bool = True,  # noqa: FBT001, FBT002
+        by_alias: bool = True,
         ref_template: str = DEFAULT_REF_TEMPLATE,
         schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
         mode: JsonSchemaMode = "validation",
@@ -123,7 +123,7 @@ class PartsFile(pydantic.BaseModel):
     @override
     def model_json_schema(
         cls,
-        by_alias: bool = True,  # noqa: FBT001, FBT002
+        by_alias: bool = True,
         ref_template: str = DEFAULT_REF_TEMPLATE,
         schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
         mode: JsonSchemaMode = "validation",

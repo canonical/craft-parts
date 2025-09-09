@@ -24,9 +24,8 @@ from textwrap import dedent
 from typing import Any, Literal, cast
 
 import requests
-from overrides import override
 from pydantic import model_validator
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
 
