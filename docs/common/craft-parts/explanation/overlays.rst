@@ -1,8 +1,7 @@
 .. _overlays:
 
-************
 Overlay Step
-************
+============
 
 Some Craft applications, such as Rockcraft_, include entire base filesystems in
 addition to the usual part-generated payload. The ``OVERLAY`` step provides the
