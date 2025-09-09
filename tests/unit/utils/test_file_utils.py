@@ -19,7 +19,6 @@ import stat
 from pathlib import Path
 
 import pytest
-
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
@@ -190,9 +189,9 @@ class TestMove:
 
     def test_move_simple(self):
         Path("foo").touch()
-        foo_stat = os.stat("foo")
+        foo_stat = Path.stat("foo")
         file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")
+        bar_stat = Path.stat("bar")
 
         assert Path("foo").exists() is False
         assert Path("bar").is_file()
@@ -213,9 +212,9 @@ class TestMove:
     @pytest.mark.skipif(os.getuid() != 0, reason="requires root permissions")
     def test_move_chardev(self):
         os.mknod("foo", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
-        foo_stat = os.stat("foo")
+        foo_stat = Path.stat("foo")
         file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")
+        bar_stat = Path.stat("bar")
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
@@ -227,9 +226,9 @@ class TestMove:
     @pytest.mark.skipif(os.getuid() != 0, reason="requires root permissions")
     def test_move_blockdev(self):
         os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
-        foo_stat = os.stat("foo")
+        foo_stat = Path.stat("foo")
         file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")
+        bar_stat = Path.stat("bar")
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
@@ -240,9 +239,9 @@ class TestMove:
 
     def test_move_fifo(self):
         os.mkfifo("foo")
-        foo_stat = os.stat("foo")
+        foo_stat = Path.stat("foo")
         file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")
+        bar_stat = Path.stat("bar")
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
