@@ -26,7 +26,7 @@ import craft_parts.plugins.plugins
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
-from overrides import override
+from typing_extensions import override
 
 
 def setup_function():

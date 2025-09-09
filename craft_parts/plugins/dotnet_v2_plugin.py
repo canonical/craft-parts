@@ -22,7 +22,7 @@ from enum import Enum
 from typing import Literal, cast
 
 import pydantic
-from overrides import override
+from typing_extensions import override
 
 from craft_parts.utils.formatting_utils import humanize_list
 

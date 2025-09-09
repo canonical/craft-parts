@@ -20,6 +20,7 @@ import pathlib
 import sys
 import tempfile
 import threading
+import types
 from pathlib import Path
 from typing import Any, NamedTuple
 from unittest import mock
@@ -46,6 +47,26 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "http_request_handler(handler): set a fake HTTP request handler"
     )
+
+
+@pytest.fixture
+def project_main_module() -> types.ModuleType:
+    """Fixture that returns the project's principal package (imported).
+
+    This fixture should be rewritten by "downstream" projects to return the correct
+    module. Then, every test that uses this fixture will correctly test against the
+    downstream project.
+    """
+    try:
+        # This should be the project's main package; downstream projects must update this.
+        import craft_parts  # noqa: PLC0415
+
+        main_module = craft_parts
+    except ImportError:
+        pytest.fail(
+            "Failed to import the project's main module: check if it needs updating",
+        )
+    return main_module
 
 
 @pytest.fixture

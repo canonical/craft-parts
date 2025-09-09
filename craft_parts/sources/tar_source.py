@@ -23,7 +23,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Literal
 
-from overrides import overrides
+from typing_extensions import override
 
 from .base import (
     BaseFileSourceModel,
@@ -48,11 +48,11 @@ class TarSource(FileSourceHandler):
 
     source_model = TarSourceModel
 
-    @overrides
+    @override
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
