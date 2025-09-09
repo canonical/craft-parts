@@ -47,6 +47,10 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
 APT_PACKAGES += python3-venv
 endif
+# 7z is used for sources.
+ifeq ($(wildcard /usr/share/doc/7zip/copyright),)
+APT_PACKAGES += 7zip
+endif
 ifeq ($(wildcard /usr/share/doc/intltool/copyright),)
 APT_PACKAGES += intltool
 endif
