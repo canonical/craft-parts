@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.22.0:
 
-2.22.0 (2025-MM-DD)
+2.22.0 (2025-09-09)
 -------------------
 
 New features:
@@ -31,9 +31,7 @@ New features:
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
 
-Bug fixes:
-
-Documentation:
+- The autotools plugin now supports the ``disable-parallel`` parameter.
 
 For a complete list of commits, check out the `2.22.0`_ release on GitHub.
 
@@ -52,7 +50,6 @@ New features:
   With Craft Parts 2.21.0, the plugin now deterministically detects and matches the
   dependency versions available on the host, aligning with how Maven normally behaves.
   This change makes the plugin a drop-in replacement for Maven in private networks.
-- The autotools plugin now supports the ``disable-parallel`` parameter.
 
 - Add support for nested project variables, which can be referenced with
   craftctl using dot notation. For example, ``craftctl set var.subvar=foo`` sets the
