@@ -31,6 +31,7 @@ class CMakePluginProperties(PluginProperties, frozen=True):
 
     cmake_parameters: list[str] = []
     cmake_generator: str = "Unix Makefiles"
+    cmake_source: str = "snap"
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -65,6 +66,11 @@ class CMakePlugin(Plugin):
           (string; default: "Unix Makefiles")
           Determine what native build system is to be used.
           Can be either `Ninja` or `Unix Makefiles` (default).
+
+        - cmake-source
+          (string; default: "deb")
+          Determine the source type.
+          Can be either `deb` (default) or `snap`.
     """
 
     properties_class = CMakePluginProperties
@@ -72,14 +78,19 @@ class CMakePlugin(Plugin):
     @override
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
+        options = cast(CMakePluginProperties, self._options)
+        if options.cmake_source == "snap":
+            return {"cmake"}
         return set()
 
     @override
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
-        build_packages = {"gcc", "cmake"}
-
         options = cast(CMakePluginProperties, self._options)
+
+        if options.cmake_source == "deb":
+            build_packages = {"gcc", "cmake"}
+        build_packages = {"gcc"}
 
         if options.cmake_generator == "Ninja":
             build_packages.add("ninja-build")
