@@ -173,7 +173,8 @@ endif
 
 .PHONY: install-chisel
 install-chisel:
-ifeq ($(shell which snap),)
+ifneq ($(shell which chisel),)
+else ifeq ($(shell which snap),)
 	$(warning Cannot install chisel without snap. Please install it yourself.)
 else
 	sudo snap install chisel --channel latest/candidate
@@ -181,7 +182,8 @@ endif
 
 .PHONY: install-go
 install-go:
-ifeq ($(shell which snap),)
+ifneq ($(shell which go),)
+else ifeq ($(shell which snap),)
 	$(warning Cannot install go without snap. Please install it yourself.)
 else
 	sudo snap install go --classic
@@ -189,7 +191,8 @@ endif
 
 .PHONY: install-core20
 install-core20:
-ifeq ($(shell which snap),)
+ifneq ($(wildcard /snap/core20/),)
+else ifeq ($(shell which snap),)
 	$(warning Cannot install core20 without snap. Please install it yourself.)
 else
 	sudo snap install core20
