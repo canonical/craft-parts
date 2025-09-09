@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Literal, cast
 
 import yaml
-from overrides import overrides
+from typing_extensions import override
 
 from craft_parts.utils import file_utils
 
@@ -54,11 +54,11 @@ class SnapSource(FileSourceHandler):
 
     source_model = SnapSourceModel
 
-    @overrides
+    @override
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Provision the snap source.

@@ -24,7 +24,7 @@ from textwrap import dedent
 from typing import Literal, cast
 
 import pydantic
-from overrides import override
+from typing_extensions import override
 
 from craft_parts.constraints import UniqueList
 

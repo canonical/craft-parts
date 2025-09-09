@@ -23,7 +23,7 @@ import os
 import subprocess
 import tempfile
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 
