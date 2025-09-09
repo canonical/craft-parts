@@ -27,7 +27,7 @@ from typing import Any, ClassVar
 
 import pydantic
 import requests
-from overrides import overrides
+from typing_extensions import override
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import os_utils, url_utils
@@ -250,7 +250,7 @@ class FileSourceHandler(SourceHandler):
     ) -> None:
         """Process the source file to extract its payload."""
 
-    @overrides
+    @override
     def pull(self) -> None:
         """Retrieve this source from its origin."""
         source_file = None

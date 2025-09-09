@@ -20,7 +20,7 @@ import pathlib
 import re
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts import errors
 from craft_parts.utils.maven import create_maven_settings, update_pom

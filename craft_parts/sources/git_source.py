@@ -24,8 +24,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import pydantic
-from overrides import overrides
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from craft_parts.utils.git import get_git_command
 
@@ -322,7 +321,7 @@ class GitSource(SourceHandler):
 
         return f"file://{Path(self.source).resolve()}"
 
-    @overrides
+    @override
     def pull(self) -> None:
         """Retrieve the local or remote source files."""
         if self.is_local():
