@@ -225,7 +225,7 @@ class TestMove:
 
     @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
     def test_move_blockdev(self):
-        os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(1, 5))
+        os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
         foo_stat = os.stat("foo")
         file_utils.move("foo", "bar")
         bar_stat = os.stat("bar")
@@ -233,8 +233,8 @@ class TestMove:
         assert Path("foo").exists() is False
         assert Path("bar").exists()
         assert stat.S_ISBLK(bar_stat.st_mode)
-        assert os.major(bar_stat.st_rdev) == 1
-        assert os.minor(bar_stat.st_rdev) == 5
+        assert os.major(bar_stat.st_rdev) == 7
+        assert os.minor(bar_stat.st_rdev) == 99
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
 
     def test_move_fifo(self):
