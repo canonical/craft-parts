@@ -135,7 +135,7 @@ class Executor:
         for act in actions:
             self._run_action(act, stdout=stdout, stderr=stderr)
 
-    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:
+    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:  # noqa: PLR0912
         """Clean the given parts, or all parts if none is specified.
 
         :param initial_step: The step to clean. More steps may be cleaned

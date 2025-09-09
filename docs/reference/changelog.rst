@@ -68,7 +68,7 @@ Bug fixes:
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
-- Set the right directory permissions so that APT no longer emits a warning when 
+- Set the right directory permissions so that APT no longer emits a warning when
   downloading to the stage package cache.
 
 For a complete list of commits, check out the `2.21.0`_ release on GitHub.
@@ -193,9 +193,9 @@ Bug fixes:
 
 - With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven
   plugins when the project indirectly depends on one.
-- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
-  in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
-  the import time of downstream applications.
+- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and
+  functions in the top-level module. It is unused outside of Craft Parts and adds
+  ~150-200ms to the import time of downstream applications.
 
 Documentation:
 
@@ -212,7 +212,8 @@ New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
   encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use plugin.
+- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use
+  plugin.
 
 Bug fixes:
 
