@@ -19,11 +19,10 @@ import stat
 import textwrap
 from pathlib import Path
 
+import craft_parts
 import pytest
 import yaml
-
-import craft_parts
-from craft_parts import Action, Step
+from craft_parts import Step
 
 basic_parts_yaml = textwrap.dedent(
     """\
