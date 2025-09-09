@@ -197,6 +197,7 @@ class TestMove:
         assert Path("foo").exists() is False
         assert Path("bar").is_file()
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
+        assert foo_stat.st_ino == bar_stat.st_ino
 
     def test_move_symlink(self):
         Path("foo").symlink_to("baz")
