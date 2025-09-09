@@ -36,10 +36,17 @@ from .fake_snapd import FakeSnapd
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Use collection hook to mark all integration tests as slow"""
+    """Use collection hook do automatic marks for tests.
+
+    This adds the following marks to tests:
+      - ``slow`` for integration tests
+      - ``plugin`` for tests in a ``plugins`` directory.
+    """
     for item in items:
         if "tests/integration" in str(item.path):
             item.add_marker(pytest.mark.slow)
+        if "/plugins/" in str(item.path):
+            item.add_marker(pytest.mark.plugin)
 
 
 def pytest_configure(config):
