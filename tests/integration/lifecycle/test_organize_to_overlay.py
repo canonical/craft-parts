@@ -20,7 +20,7 @@ from pathlib import Path
 import craft_parts
 import pytest
 import yaml
-from craft_parts import Action, ActionProperties, ActionType, Step
+from craft_parts import Action, Step
 
 basic_parts_yaml = textwrap.dedent(
     """\
