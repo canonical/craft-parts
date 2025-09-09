@@ -39,6 +39,7 @@ docs = [
     "sphinx-pydantic",
     "sphinx-rtd-theme",
     "sphinxcontrib-details-directive",
+    "sphinxext-rediraffe",
 ]
 dev = [
     "build",

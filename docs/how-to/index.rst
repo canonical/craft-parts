@@ -1,4 +1,4 @@
-.. _howto:
+.. _how-to-guides:
 
 How-to guides
 *************
