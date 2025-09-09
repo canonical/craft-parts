@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 import shutil
 import subprocess
 import textwrap
@@ -53,15 +54,16 @@ ViaProxyName "tinyproxy"
 def testing_source_dir(new_dir):
     source_location = Path(__file__).parent / "test_gradle"
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
-    return new_dir
+    return pathlib.Path(new_dir)
 
 
 @pytest.fixture
 def use_gradlew(request, testing_source_dir):
     if request.param:
         yield request.param
-        return
-    (testing_source_dir / "gradlew").unlink(missing_ok=True)
+    else:
+        (testing_source_dir / "gradlew").unlink(missing_ok=True)
+        yield
 
 
 # Parametrization of using gradle vs gradlew is not applied since gradle cannot
@@ -110,7 +112,7 @@ def test_gradle_plugin_gradlew(
     assert (lf.project_info.dirs.parts_dir / f"{part_name}/build" / "test.txt").exists()
 
 
-@pytest.mark.skip(reason="Current apt provided Gradle (4.4.1) cannot build even with ")
+# @pytest.mark.skip(reason="Current apt provided Gradle (4.4.1) cannot build even with ")
 @pytest.mark.parametrize("use_gradlew", [False], indirect=True)
 def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradlew):
     part_name = "foo"
