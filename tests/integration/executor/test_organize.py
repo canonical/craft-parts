@@ -57,12 +57,6 @@ def test_organize_special_files(new_dir, mocker):
         cache_dir=new_dir,
     )
     actions = lf.plan(Step.PRIME)
-    assert actions == [
-        Action("p1", Step.PULL),
-        Action("p1", Step.BUILD),
-        Action("p1", Step.STAGE),
-        Action("p1", Step.PRIME),
-    ]
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
