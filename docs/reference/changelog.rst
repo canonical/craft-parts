@@ -31,7 +31,7 @@ New features:
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
 
-- The autotools plugin now supports the ``disable-parallel`` parameter.
+- The Autotools plugin now supports the ``disable-parallel`` key.
 
 For a complete list of commits, check out the `2.22.0`_ release on GitHub.
 
