@@ -577,6 +577,7 @@ class TestPartUpdateHandler:
 
     _update_build_path = Path("parts/foo/install/foo.txt")
 
+    @pytest.mark.slow
     def test_update_build(self):
         self._handler._make_dirs()
         self._handler.run_action(Action("foo", Step.PULL))
@@ -590,6 +591,7 @@ class TestPartUpdateHandler:
 
         assert self._update_build_path.read_text() == "change"
 
+    @pytest.mark.slow
     def test_update_build_stage_packages(self, new_dir, partitions, mocker):
         def fake_unpack(**_):
             Path("parts/foo/install/hello").touch()

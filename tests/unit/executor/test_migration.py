@@ -511,6 +511,7 @@ class TestFileMigrationErrors:
 class TestHelpers:
     """Verify helper functions."""
 
+    @pytest.mark.slow
     def test_clean_shared_area(self, new_dir, partitions):
         p1 = Part("p1", {"plugin": "dump", "source": "subdir1"}, partitions=partitions)
         Path("subdir1").mkdir()
