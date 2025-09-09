@@ -37,8 +37,6 @@ def setup_module_fixture(new_dir):  # pylint: disable=unused-argument
     ],
 )
 def test_calculate_hash(algo, digest):
-    print("====", os.getuid(), os.geteuid)
-    assert False
     test_file = Path("test_file")
     test_file.write_text("content")
     assert file_utils.calculate_hash(test_file, algorithm=algo) == digest
