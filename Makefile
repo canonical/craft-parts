@@ -173,6 +173,10 @@ ifneq ($(VERSION_CODENAME),jammy)
 ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
 APT_PACKAGES += python3-poetry-plugin-export
 endif
+# On Jammy, we can use pip to install meson. Everywhere else we install it through apt.
+ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
+APT_PACKAGES += meson
+endif
 endif
 
 .PHONY: install-chisel
