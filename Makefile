@@ -209,6 +209,12 @@ endif
 
 .PHONY: install-build-snaps
 install-build-snaps: install-chisel install-go install-core20
+ifneq ($(shell which rustup),)
+else ifeq ($(shell which snap),)
+	$(warning Rustup is needed but cannot be installed.)
+else
+	sudo snap install rustup --classic
+endif
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
