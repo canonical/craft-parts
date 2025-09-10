@@ -30,6 +30,7 @@ def meson():
     subprocess.run(["pip", "uninstall", "meson", "--yes"], check=True)
 
 
+@pytest.mark.plugin
 @pytest.mark.usefixtures("mocker")
 @pytest.mark.usefixtures("meson")
 def test_meson_plugin(new_dir, partitions):
@@ -83,6 +84,7 @@ def test_meson_plugin(new_dir, partitions):
     assert output == "hello world\n"
 
 
+@pytest.mark.plugin
 @pytest.mark.usefixtures("mocker")
 @pytest.mark.usefixtures("meson")
 def test_meson_plugin_with_subdir(new_dir, partitions):

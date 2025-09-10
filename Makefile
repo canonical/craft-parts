@@ -50,62 +50,22 @@ endif
 ifeq ($(wildcard /usr/share/doc/fuse-overlayfs/copyright),)
 APT_PACKAGES += fuse-overlayfs
 endif
-ifeq ($(wildcard /usr/share/doc/ninja-build/copyright),)
-APT_PACKAGES += ninja-build
-endif
-ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
-APT_PACKAGES += cmake
-endif
-ifeq ($(wildcard /usr/share/doc/scons/copyright),)
-APT_PACKAGES += scons
-endif
-ifeq ($(wildcard /usr/share/doc/autoconf/copyright),)
-APT_PACKAGES += autoconf
-endif
-ifeq ($(wildcard /usr/share/doc/automake/copyright),)
-APT_PACKAGES += automake
-endif
-ifeq ($(wildcard /usr/share/doc/autopoint/copyright),)
-APT_PACKAGES += autopoint
-endif
-ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
-APT_PACKAGES += gcc
-endif
-ifeq ($(wildcard /usr/share/doc/git/copyright),)
-APT_PACKAGES += git
-endif
-ifeq ($(wildcard /usr/share/doc/gperf/copyright),)
-APT_PACKAGES += gperf
-endif
-ifeq ($(wildcard /usr/share/doc/help2man/copyright),)
-APT_PACKAGES += help2man
-endif
-ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
-APT_PACKAGES += libtool
-endif
-ifeq ($(wildcard /usr/share/doc/texinfo/copyright),)
-APT_PACKAGES += texinfo
-endif
 ifeq ($(wildcard /usr/share/doc/socat/copyright),)
 APT_PACKAGES += socat
-endif
-ifeq ($(wildcard /usr/share/doc/curl/copyright),)
-APT_PACKAGES += curl
 endif
 ifeq ($(wildcard /usr/share/doc/findutils/copyright),)
 APT_PACKAGES += findutils
 endif
-ifeq ($(wildcard /usr/share/doc/pkg-config/copyright),)
-APT_PACKAGES += pkg-config
+
+# Dependencies for sources
+ifeq ($(wildcard /usr/share/doc/curl/copyright),)
+APT_PACKAGES += curl
+endif
+ifeq ($(wildcard /usr/share/doc/git/copyright),)
+APT_PACKAGES += git
 endif
 ifeq ($(wildcard /usr/share/doc/rpm/copyright),)
 APT_PACKAGES += rpm
-endif
-ifeq ($(wildcard /usr/share/doc/cargo/copyright),)
-APT_PACKAGES += cargo
-endif
-ifeq ($(wildcard /usr/share/doc/rustc/copyright),)
-APT_PACKAGES += rustc
 endif
 
 # Java tools - Used for Java plugin integration tests.
@@ -175,6 +135,48 @@ ifneq ($(VERSION_CODENAME),jammy)
 ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
 APT_PACKAGES += python3-poetry-plugin-export
 endif
+endif
+endif
+
+# Tools needed for plugin integration tests that aren't java or python
+ifneq ($(NO_PLUGIN),1)
+ifeq ($(wildcard /usr/share/doc/automake/copyright),)
+APT_PACKAGES += automake
+endif
+ifeq ($(wildcard /usr/share/doc/autopoint/copyright),)
+APT_PACKAGES += autopoint
+endif
+ifeq ($(wildcard /usr/share/doc/cargo/copyright),)
+APT_PACKAGES += cargo
+endif
+ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
+APT_PACKAGES += cmake
+endif
+ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
+APT_PACKAGES += gcc
+endif
+ifeq ($(wildcard /usr/share/doc/pkg-config/copyright),)
+APT_PACKAGES += pkg-config
+endif
+ifeq ($(wildcard /usr/share/doc/ninja-build/copyright),)
+APT_PACKAGES += ninja-build
+endif
+ifeq ($(wildcard /usr/share/doc/scons/copyright),)
+APT_PACKAGES += scons
+endif
+# Specifically used by the autotools plugin tests.
+ifeq ($(wildcard /usr/share/doc/gperf/copyright),)
+APT_PACKAGES += gperf
+endif
+ifeq ($(wildcard /usr/share/doc/help2man/copyright),)
+APT_PACKAGES += help2man
+endif
+ifeq ($(wildcard /usr/share/doc/texinfo/copyright),)
+APT_PACKAGES += texinfo
+endif
+# Used by the autotools plugin itself.
+ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
+APT_PACKAGES += libtool
 endif
 endif
 
