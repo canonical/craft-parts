@@ -18,6 +18,7 @@ import textwrap
 from pathlib import Path
 
 import craft_parts
+import pytest
 import yaml
 from craft_parts import Step
 from craft_parts.packages import deb
@@ -82,6 +83,7 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run, mocker):
     spied_normalize.assert_called_once_with(install_dir, repository=deb.Ubuntu)
 
 
+@pytest.mark.slow
 def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):
     """Test the combination of 'pulling' and 'building' chisel slices."""
     _parts_yaml = textwrap.dedent(
