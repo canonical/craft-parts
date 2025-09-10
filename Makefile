@@ -44,9 +44,6 @@ endif
 ifeq ($(wildcard /usr/include/libxslt/xslt.h),)
 APT_PACKAGES += libxslt1-dev
 endif
-ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
-APT_PACKAGES += python3-venv
-endif
 ifeq ($(wildcard /usr/share/doc/intltool/copyright),)
 APT_PACKAGES += intltool
 endif
@@ -92,9 +89,6 @@ endif
 ifeq ($(wildcard /usr/share/doc/socat/copyright),)
 APT_PACKAGES += socat
 endif
-ifeq ($(wildcard /usr/share/doc/python3-poetry/copyright),)
-APT_PACKAGES += python3-poetry
-endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
 APT_PACKAGES += curl
 endif
@@ -106,9 +100,6 @@ APT_PACKAGES += pkg-config
 endif
 ifeq ($(wildcard /usr/share/doc/rpm/copyright),)
 APT_PACKAGES += rpm
-endif
-ifeq ($(wildcard /usr/share/doc/python3-dev/copyright),)
-APT_PACKAGES += python3-dev
 endif
 ifeq ($(wildcard /usr/share/doc/cargo/copyright),)
 APT_PACKAGES += cargo
@@ -166,11 +157,24 @@ ifeq ($(wildcard /usr/share/doc/libsurefire-java/copyright),)
 APT_PACKAGES += libsurefire-java
 endif
 endif
+
+# Python tools - used for python plugin integration tests.
+ifneq ($(NO_PYTHON),1)
+ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
+APT_PACKAGES += python3-venv
+endif
+ifeq ($(wildcard /usr/share/doc/python3-poetry/copyright),)
+APT_PACKAGES += python3-poetry
+endif
+ifeq ($(wildcard /usr/share/doc/python3-dev/copyright),)
+APT_PACKAGES += python3-dev
+endif
 # Poetry 2+ removes the export subcommand and requires you to get a plugin for it
 # However, jammy uses an older poetry version that still has that subcommand
 ifneq ($(VERSION_CODENAME),jammy)
 ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
 APT_PACKAGES += python3-poetry-plugin-export
+endif
 endif
 endif
 
