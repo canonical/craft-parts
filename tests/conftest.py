@@ -69,6 +69,13 @@ def project_main_module() -> types.ModuleType:
     return main_module
 
 
+@pytest.fixture(scope="session")
+def host_arch() -> str:
+    from craft_parts.infos import _get_host_architecture  # noqa: PLC0415
+
+    return _get_host_architecture()
+
+
 @pytest.fixture
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
@@ -80,13 +87,6 @@ def new_dir(monkeypatch, tmpdir):
 def new_path(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     return tmp_path
-
-
-@pytest.fixture(scope="session")
-def host_arch() -> str:
-    from craft_parts.infos import _get_host_architecture  # noqa: PLC0415
-
-    return _get_host_architecture()
 
 
 @pytest.fixture(scope="session")
