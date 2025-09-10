@@ -56,8 +56,15 @@ endif
 ifeq ($(wildcard /usr/share/doc/findutils/copyright),)
 APT_PACKAGES += findutils
 endif
+ifneq ($(NO_PYTHON),1)
+ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
+APT_PACKAGES += python3-venv
+endif
 
 # Dependencies for sources
+ifeq ($(wildcard /usr/share/doc/7zip/copyright),)
+APT_PACKAGES += 7zip
+endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
 APT_PACKAGES += curl
 endif
@@ -119,10 +126,6 @@ endif
 endif
 
 # Python tools - used for python plugin integration tests.
-ifneq ($(NO_PYTHON),1)
-ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
-APT_PACKAGES += python3-venv
-endif
 ifeq ($(wildcard /usr/share/doc/python3-poetry/copyright),)
 APT_PACKAGES += python3-poetry
 endif
