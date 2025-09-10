@@ -1195,7 +1195,7 @@ class PartHandler:
             # usrmerged not enabled by default, nor for the individual
             return
 
-        root_dir = self._part.part_install_dirs[self._part_info.default_partition]
+        root_dir = self._part.part_install_dir
         merge_to_usr = ("bin", "lib", "lib64", "sbin")
 
         for dir_name in merge_to_usr:
