@@ -9,6 +9,11 @@ on:
       - "renovate/*"
   pull_request:
 
+# Cancel existing jobs for this branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
