@@ -15,7 +15,6 @@ classifiers = [
 ]
 dependencies = [
     "lxml>=5.3.0",
-    "overrides!=7.6.0",
     "pydantic>=2.0.0",
     "pyxdg",
     "PyYAML",
@@ -39,6 +38,7 @@ docs = [
     "sphinx-pydantic",
     "sphinx-rtd-theme",
     "sphinxcontrib-details-directive",
+    "sphinxext-rediraffe",
 ]
 dev = [
     "build",

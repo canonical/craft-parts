@@ -1,8 +1,7 @@
 .. _plugins:
 
-*******
 Plugins
-*******
+=======
 
 Plugins are used to provide support for specific technologies during the parts
 lifecycle.

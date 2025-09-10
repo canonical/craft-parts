@@ -19,7 +19,12 @@ from functools import reduce
 from typing import Annotated, Any, TypeAlias, cast
 
 import pydantic
-from overrides import override
+from pydantic.json_schema import (
+    DEFAULT_REF_TEMPLATE,
+    GenerateJsonSchema,
+    JsonSchemaMode,
+)
+from typing_extensions import override
 
 from craft_parts import plugins, sources
 from craft_parts.plugins.nil_plugin import NilPluginProperties
@@ -49,12 +54,10 @@ class Part(pydantic.BaseModel):
     @override
     def model_json_schema(
         cls,
-        by_alias: bool = True,  # noqa: FBT001, FBT002
-        ref_template: str = pydantic.json_schema.DEFAULT_REF_TEMPLATE,
-        schema_generator: type[
-            pydantic.json_schema.GenerateJsonSchema
-        ] = pydantic.json_schema.GenerateJsonSchema,
-        mode: pydantic.json_schema.JsonSchemaMode = "validation",
+        by_alias: bool = True,
+        ref_template: str = DEFAULT_REF_TEMPLATE,
+        schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
+        mode: JsonSchemaMode = "validation",
     ) -> dict[str, Any]:
         """Create the JSON schema for a Part."""
         registered_plugins = plugins.get_registered_plugins()
@@ -120,12 +123,10 @@ class PartsFile(pydantic.BaseModel):
     @override
     def model_json_schema(
         cls,
-        by_alias: bool = True,  # noqa: FBT001, FBT002
-        ref_template: str = pydantic.json_schema.DEFAULT_REF_TEMPLATE,
-        schema_generator: type[
-            pydantic.json_schema.GenerateJsonSchema
-        ] = pydantic.json_schema.GenerateJsonSchema,
-        mode: pydantic.json_schema.JsonSchemaMode = "validation",
+        by_alias: bool = True,
+        ref_template: str = DEFAULT_REF_TEMPLATE,
+        schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
+        mode: JsonSchemaMode = "validation",
     ) -> dict[str, Any]:
         """Create the JSON schema for a file with Parts."""
         schema = super().model_json_schema(

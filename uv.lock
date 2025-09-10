@@ -388,7 +388,6 @@ name = "craft-parts"
 source = { editable = "." }
 dependencies = [
     { name = "lxml" },
-    { name = "overrides" },
     { name = "pydantic" },
     { name = "pyxdg" },
     { name = "pyyaml" },
@@ -439,6 +438,7 @@ docs = [
     { name = "sphinx-pydantic" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-details-directive" },
+    { name = "sphinxext-rediraffe" },
 ]
 lint = [
     { name = "codespell" },
@@ -464,7 +464,6 @@ types = [
 [package.metadata]
 requires-dist = [
     { name = "lxml", specifier = ">=5.3.0" },
-    { name = "overrides", specifier = "!=7.6.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pyxdg" },
     { name = "pyyaml" },
@@ -507,6 +506,7 @@ docs = [
     { name = "sphinx-pydantic" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-details-directive" },
+    { name = "sphinxext-rediraffe" },
 ]
 lint = [
     { name = "codespell" },
@@ -1053,15 +1053,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/43/16/fc88b08840de0e0a72a2f9d8c6bae36be573e475a6326ae854bcc549fc45/nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f", size = 47437, upload-time = "2024-06-04T18:44:11.171Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d2/1d/1b658dbd2b9fa9c4c9f32accbfc0205d532c8c6194dc0f2a4c0428e7128a/nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9", size = 22314, upload-time = "2024-06-04T18:44:08.352Z" },
-]
-
-[[package]]
-name = "overrides"
-version = "7.7.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/36/86/b585f53236dec60aba864e050778b25045f857e17f6e5ea0ae95fe80edd2/overrides-7.7.0.tar.gz", hash = "sha256:55158fa3d93b98cc75299b1e67078ad9003ca27945c76162c1c0766d6f91820a", size = 22812, upload-time = "2024-01-27T21:01:33.423Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/ab/fc8290c6a4c722e5514d80f62b2dc4c4df1a68a41d1364e625c35990fcf3/overrides-7.7.0-py3-none-any.whl", hash = "sha256:c7ed9d062f78b8e4c1a7b70bd8796b35ead4d9f510227ef9c5dc7626c60d7e49", size = 17832, upload-time = "2024-01-27T21:01:31.393Z" },
 ]
 
 [[package]]
@@ -2178,6 +2169,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f6/c0/eb6838e3bae624ce6c8b90b245d17e84252863150e95efdb88f92c8aa3fb/sphinxext_opengraph-0.13.0.tar.gz", hash = "sha256:103335d08567ad8468faf1425f575e3b698e9621f9323949a6c8b96d9793e80b", size = 1026875, upload-time = "2025-08-29T12:20:31.066Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bf/a4/66c1fd4f8fab88faf71cee04a945f9806ba0fef753f2cfc8be6353f64508/sphinxext_opengraph-0.13.0-py3-none-any.whl", hash = "sha256:936c07828edc9ad9a7b07908b29596dc84ed0b3ceaa77acdf51282d232d4d80e", size = 1004152, upload-time = "2025-08-29T12:20:29.072Z" },
+]
+
+[[package]]
+name = "sphinxext-rediraffe"
+version = "0.2.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1f/b4/e5fbb493f796430230189a1ce5f9beff1ac1b98619fc71ed35deca6059a5/sphinxext-rediraffe-0.2.7.tar.gz", hash = "sha256:651dcbfae5ffda9ffd534dfb8025f36120e5efb6ea1a33f5420023862b9f725d", size = 8735, upload-time = "2021-04-16T11:42:28.206Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/4f/c8797e796199e55cf6c8979ecdf5f4b09b81e93f87b3193c759faea63263/sphinxext_rediraffe-0.2.7-py3-none-any.whl", hash = "sha256:9e430a52d4403847f4ffb3a8dd6dfc34a9fe43525305131f52ed899743a5fd8c", size = 8267, upload-time = "2021-04-16T11:42:26.95Z" },
 ]
 
 [[package]]

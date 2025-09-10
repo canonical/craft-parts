@@ -19,7 +19,7 @@
 import logging
 from typing import Literal
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 from .go_plugin import GoPluginEnvironmentValidator

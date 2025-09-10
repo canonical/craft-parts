@@ -23,7 +23,7 @@ from collections.abc import Iterator
 from typing import Literal, cast
 from urllib.parse import urlsplit
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts import errors
 

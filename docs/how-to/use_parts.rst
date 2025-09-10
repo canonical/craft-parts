@@ -58,4 +58,3 @@ Next, give the plugin a source to copy:
 With this, you have a complete part that packs the :file:`hello.sh` file into your
 project's final artifact. For more information on keys available to use within a part,
 see the :ref:`parts reference <reference-part-properties>`.
-

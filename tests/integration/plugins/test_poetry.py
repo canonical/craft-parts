@@ -25,8 +25,8 @@ from typing import Any
 import craft_parts.plugins.plugins
 import pytest
 from craft_parts import LifecycleManager, Step, errors, plugins
-from overrides import override
 from pytest_check.context_manager import CheckContextManager
+from typing_extensions import override
 
 
 def setup_function():

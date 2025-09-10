@@ -23,7 +23,7 @@ import tarfile
 from pathlib import Path
 from typing import Literal
 
-from overrides import override
+from typing_extensions import override
 
 from . import errors
 from .base import (
@@ -53,7 +53,7 @@ class RpmSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Extract rpm file contents to the part source dir."""
