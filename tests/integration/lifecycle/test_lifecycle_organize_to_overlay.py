@@ -277,3 +277,183 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     ]
     with lf.action_executor() as ctx:
         ctx.execute(actions)
+
+
+unsorted_parts_yaml = textwrap.dedent(
+    """\
+    parts:
+      p1:
+        plugin: nil
+
+      p2:
+        plugin: nil
+        organize:
+          '*': (overlay)/
+
+      p3:
+        plugin: nil"""
+)
+
+
+def test_unsorted_lifecycle_actions(new_dir, mocker):
+    mocker.patch("os.geteuid", return_value=0)
+
+    parts = yaml.safe_load(unsorted_parts_yaml)
+    Path("base").mkdir()
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=["default"],
+        base_layer_dir="base",
+        base_layer_hash=b"hash",
+    )
+
+    # first run
+    # command pull
+    actions = lf.plan(Step.PRIME)
+    assert actions == [
+        Action("p2", Step.PULL),
+        Action("p1", Step.PULL),
+        Action("p3", Step.PULL),
+        Action("p2", Step.OVERLAY),
+        Action("p2", Step.BUILD, reason="organize contents to overlay"),
+        Action("p1", Step.OVERLAY),
+        Action("p3", Step.OVERLAY),
+        Action("p2", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p1", Step.BUILD),
+        Action("p3", Step.BUILD),
+        Action("p2", Step.STAGE),
+        Action("p1", Step.STAGE),
+        Action("p3", Step.STAGE),
+        Action("p2", Step.PRIME),
+        Action("p1", Step.PRIME),
+        Action("p3", Step.PRIME),
+    ]
+
+
+organize_twice_parts_yaml = textwrap.dedent(
+    """\
+    parts:
+      p1:
+        plugin: nil
+
+      p2:
+        plugin: nil
+        organize:
+          '*': (overlay)/
+
+      p3:
+        plugin: nil
+
+      p4:
+        plugin: nil
+        organize:
+          '*': (overlay)/"""
+)
+
+
+def test_organize_twice_lifecycle_actions(new_dir, mocker):
+    mocker.patch("os.geteuid", return_value=0)
+
+    parts = yaml.safe_load(organize_twice_parts_yaml)
+    Path("base").mkdir()
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=["default"],
+        base_layer_dir="base",
+        base_layer_hash=b"hash",
+    )
+
+    # first run
+    # command pull
+    actions = lf.plan(Step.PRIME)
+    assert actions == [
+        Action("p2", Step.PULL),
+        Action("p4", Step.PULL),
+        Action("p1", Step.PULL),
+        Action("p3", Step.PULL),
+        Action("p2", Step.OVERLAY),
+        Action("p2", Step.BUILD, reason="organize contents to overlay"),
+        Action("p4", Step.OVERLAY),
+        Action("p4", Step.BUILD, reason="organize contents to overlay"),
+        Action("p1", Step.OVERLAY),
+        Action("p3", Step.OVERLAY),
+        Action("p2", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p4", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p1", Step.BUILD),
+        Action("p3", Step.BUILD),
+        Action("p2", Step.STAGE),
+        Action("p4", Step.STAGE),
+        Action("p1", Step.STAGE),
+        Action("p3", Step.STAGE),
+        Action("p2", Step.PRIME),
+        Action("p4", Step.PRIME),
+        Action("p1", Step.PRIME),
+        Action("p3", Step.PRIME),
+    ]
+
+
+organize_after_parts_yaml = textwrap.dedent(
+    """\
+    parts:
+      p1:
+        plugin: nil
+
+      p2:
+        plugin: nil
+        after: [p3]
+        organize:
+          '*': (overlay)/
+
+      p3:
+        plugin: nil"""
+)
+
+
+def test_organize_after_lifecycle_actions(new_dir, mocker):
+    mocker.patch("os.geteuid", return_value=0)
+
+    parts = yaml.safe_load(organize_after_parts_yaml)
+    Path("base").mkdir()
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=["default"],
+        base_layer_dir="base",
+        base_layer_hash=b"hash",
+    )
+
+    # first run
+    # command pull
+    actions = lf.plan(Step.PRIME)
+    assert actions == [
+        Action("p3", Step.PULL),
+        Action("p2", Step.PULL),
+        Action("p1", Step.PULL),
+        Action("p3", Step.OVERLAY),
+        Action("p2", Step.OVERLAY),
+        # p2 BUILD must come after p3 STAGE
+        Action("p3", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p3", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p3", Step.BUILD, reason="required to build 'p2'"),
+        Action("p3", Step.STAGE, reason="required to build 'p2'"),
+        # end of p2 after dependency
+        Action("p2", Step.BUILD, reason="organize contents to overlay"),
+        Action("p1", Step.OVERLAY),
+        Action("p3", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p2", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p1", Step.BUILD),
+        Action("p3", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
+        Action("p2", Step.STAGE),
+        Action("p1", Step.STAGE),
+        Action("p3", Step.PRIME),
+        Action("p2", Step.PRIME),
+        Action("p1", Step.PRIME),
+    ]
