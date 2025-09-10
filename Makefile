@@ -116,7 +116,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/rustc/copyright),)
 APT_PACKAGES += rustc
 endif
-# Java
+
+# Java tools - Used for Java plugin integration tests.
+ifneq ($(NO_JAVA),1)  # Allow setting NO_JAVA=1 to avoid installing java deps
 ifeq ($(wildcard /usr/share/doc/default-jdk/copyright),)
 APT_PACKAGES += default-jdk
 endif
@@ -162,6 +164,7 @@ APT_PACKAGES += libmaven-shade-plugin-java
 endif
 ifeq ($(wildcard /usr/share/doc/libsurefire-java/copyright),)
 APT_PACKAGES += libsurefire-java
+endif
 endif
 # Poetry 2+ removes the export subcommand and requires you to get a plugin for it
 # However, jammy uses an older poetry version that still has that subcommand

@@ -182,7 +182,10 @@ minversion = "7.0"
 testpaths = "tests"
 xfail_strict = true
 addopts = "--ignore=tests/spread"
-markers = ["slow: slow tests"]
+markers = [
+    "slow: slow tests",
+    "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)"
+]
 
 [tool.coverage.run]
 branch = true
