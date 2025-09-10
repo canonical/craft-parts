@@ -19,6 +19,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+import semver
 import yaml
 from craft_parts import LifecycleManager, Step
 
@@ -229,6 +230,16 @@ def test_rust_plugin_workspace(new_dir, partitions):
 
 @pytest.mark.plugin
 def test_rust_plugin_with_cargo_use(new_dir, partitions):
+    cargo_version = semver.Version.parse(
+        subprocess.run(
+            ["cargo", "--version"], check=False, capture_output=True, text=True
+        ).stdout.split()[1]
+    )
+    if cargo_version < semver.Version(1, 85):
+        pytest.xfail(
+            reason=f"Need edition2024 in rust 1.85, but only have {cargo_version}"
+        )
+
     source_location = Path(__file__).parent / "test_cargo_use"
     parts_yaml = textwrap.dedent(
         f"""\
