@@ -19,8 +19,19 @@ import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
+from craft_parts.plugins.dotnet_v2_plugin import (
+    _DEBIAN_ARCH_TO_DOTNET_RID,
+    DotnetV2Plugin,
+)
 from pydantic import ValidationError
+
+
+@pytest.fixture(scope="session")
+def host_dotnet_rid(host_arch: str) -> str:
+    try:
+        return _DEBIAN_ARCH_TO_DOTNET_RID[host_arch]
+    except KeyError:
+        pytest.skip(reason=f"Dotnet plugin does not support host arch {host_arch!r}")
 
 
 @pytest.fixture
@@ -197,7 +208,7 @@ def test_get_build_packages(part_info):
 
 @pytest.mark.parametrize("part_version", ["8", "8.0", "9", "9.1", "10"])
 def test_get_build_environment_without_dotnet_deps_and_valid_versions(
-    part_info, part_version
+    host_dotnet_rid: str, part_info, part_version
 ):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-version": part_version}
@@ -211,7 +222,7 @@ def test_get_build_environment_without_dotnet_deps_and_valid_versions(
     assert "PATH" in environment
 
 
-def test_get_build_commands_default_values(part_info):
+def test_get_build_commands_default_values(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal({"source": "."})
     plugin = DotnetV2Plugin(properties=properties, part_info=part_info)
 
@@ -220,7 +231,7 @@ def test_get_build_commands_default_values(part_info):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
+        ["dotnet", "restore", "--verbosity normal", f"--runtime {host_dotnet_rid}"],
     )
     assert build_commands[0] == ""
 
@@ -232,7 +243,7 @@ def test_get_build_commands_default_values(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -248,7 +259,7 @@ def test_get_build_commands_default_values(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -256,7 +267,9 @@ def test_get_build_commands_default_values(part_info):
 
 
 @pytest.mark.parametrize("configuration", ["Debug", "Release"])
-def test_get_build_commands_configuration(part_info, configuration):
+def test_get_build_commands_configuration(
+    host_dotnet_rid: str, part_info, configuration
+):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-configuration": configuration}
     )
@@ -267,7 +280,7 @@ def test_get_build_commands_configuration(part_info, configuration):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
+        ["dotnet", "restore", "--verbosity normal", f"--runtime {host_dotnet_rid}"],
     )
     assert build_commands[0] == ""
 
@@ -279,7 +292,7 @@ def test_get_build_commands_configuration(part_info, configuration):
             f"--configuration {configuration}",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -295,14 +308,14 @@ def test_get_build_commands_configuration(part_info, configuration):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
     assert build_commands[2] == ""
 
 
-def test_get_build_commands_project(part_info):
+def test_get_build_commands_project(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-project": "myproject.csproj"}
     )
@@ -317,7 +330,7 @@ def test_get_build_commands_project(part_info):
             "dotnet",
             "restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "myproject.csproj",
         ],
     )
@@ -331,7 +344,7 @@ def test_get_build_commands_project(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
             "myproject.csproj",
         ],
@@ -348,7 +361,7 @@ def test_get_build_commands_project(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
             "myproject.csproj",
         ],
@@ -356,7 +369,7 @@ def test_get_build_commands_project(part_info):
     assert build_commands[2].strip() == ""
 
 
-def test_get_build_commands_properties(part_info):
+def test_get_build_commands_properties(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-properties": {"foo": "bar"}}
     )
@@ -371,7 +384,7 @@ def test_get_build_commands_properties(part_info):
             "dotnet",
             "restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "-p:foo=bar",
         ],
     )
@@ -385,7 +398,7 @@ def test_get_build_commands_properties(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
             "-p:foo=bar",
         ],
@@ -402,7 +415,7 @@ def test_get_build_commands_properties(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
             "-p:foo=bar",
         ],
@@ -411,7 +424,9 @@ def test_get_build_commands_properties(part_info):
 
 
 @pytest.mark.parametrize("self_contained", [True, False])
-def test_get_build_commands_self_contained(part_info, self_contained):
+def test_get_build_commands_self_contained(
+    host_dotnet_rid: str, part_info, self_contained
+):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-self-contained": self_contained}
     )
@@ -422,7 +437,7 @@ def test_get_build_commands_self_contained(part_info, self_contained):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
+        ["dotnet", "restore", "--verbosity normal", f"--runtime {host_dotnet_rid}"],
     )
     assert build_commands[0] == ""
 
@@ -434,7 +449,7 @@ def test_get_build_commands_self_contained(part_info, self_contained):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             f"--self-contained {self_contained}",
         ],
     )
@@ -450,7 +465,7 @@ def test_get_build_commands_self_contained(part_info, self_contained):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             f"--self-contained {self_contained}",
         ],
     )
@@ -472,7 +487,7 @@ def test_get_build_commands_self_contained(part_info, self_contained):
         "diag",
     ],
 )
-def test_get_build_commands_valid_verbosity(part_info, verbosity):
+def test_get_build_commands_valid_verbosity(host_dotnet_rid: str, part_info, verbosity):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-verbosity": verbosity}
     )
@@ -483,7 +498,12 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", f"--verbosity {verbosity}", "--runtime linux-x64"],
+        [
+            "dotnet",
+            "restore",
+            f"--verbosity {verbosity}",
+            f"--runtime {host_dotnet_rid}",
+        ],
     )
     assert build_commands[0] == ""
 
@@ -495,7 +515,7 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
             "--configuration Release",
             "--no-restore",
             f"--verbosity {verbosity}",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -511,7 +531,7 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
             f"--verbosity {verbosity}",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -526,7 +546,9 @@ def test_get_build_commands_valid_verbosity(part_info, verbosity):
         "9.1",
     ],
 )
-def test_get_build_commands_valid_version(part_info, part_version):
+def test_get_build_commands_valid_version(
+    host_dotnet_rid: str, part_info, part_version
+):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-version": part_version}
     )
@@ -537,7 +559,7 @@ def test_get_build_commands_valid_version(part_info, part_version):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
+        ["dotnet", "restore", "--verbosity normal", f"--runtime {host_dotnet_rid}"],
     )
     assert build_commands[0] == ""
 
@@ -549,7 +571,7 @@ def test_get_build_commands_valid_version(part_info, part_version):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -565,14 +587,14 @@ def test_get_build_commands_valid_version(part_info, part_version):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
     assert build_commands[2] == ""
 
 
-def test_get_build_commands_restore_properties(part_info):
+def test_get_build_commands_restore_properties(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-restore-properties": {"foo": "bar"}}
     )
@@ -587,7 +609,7 @@ def test_get_build_commands_restore_properties(part_info):
             "dotnet",
             "restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "-p:foo=bar",
         ],
     )
@@ -601,7 +623,7 @@ def test_get_build_commands_restore_properties(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -617,14 +639,14 @@ def test_get_build_commands_restore_properties(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
     assert build_commands[2].strip() == ""
 
 
-def test_get_build_commands_restore_sources(part_info):
+def test_get_build_commands_restore_sources(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-restore-sources": ["source1", "source2"]}
     )
@@ -639,7 +661,7 @@ def test_get_build_commands_restore_sources(part_info):
             "dotnet",
             "restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--source source1",
             "--source source2",
         ],
@@ -654,7 +676,7 @@ def test_get_build_commands_restore_sources(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -670,14 +692,14 @@ def test_get_build_commands_restore_sources(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
     assert build_commands[2] == ""
 
 
-def test_get_build_commands_build_framework(part_info):
+def test_get_build_commands_build_framework(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-build-framework": "net8.0"}
     )
@@ -688,7 +710,7 @@ def test_get_build_commands_build_framework(part_info):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
+        ["dotnet", "restore", "--verbosity normal", f"--runtime {host_dotnet_rid}"],
     )
     assert build_commands[0] == ""
 
@@ -701,7 +723,7 @@ def test_get_build_commands_build_framework(part_info):
             "--no-restore",
             "--framework net8.0",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -717,14 +739,14 @@ def test_get_build_commands_build_framework(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
     assert build_commands[2] == ""
 
 
-def test_get_build_commands_restore_configfile(part_info):
+def test_get_build_commands_restore_configfile(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-restore-configfile": "configfile"}
     )
@@ -740,7 +762,7 @@ def test_get_build_commands_restore_configfile(part_info):
             "restore",
             "--configfile configfile",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
         ],
     )
     assert build_commands[0] == ""
@@ -753,7 +775,7 @@ def test_get_build_commands_restore_configfile(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -769,14 +791,14 @@ def test_get_build_commands_restore_configfile(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
     assert build_commands[2] == ""
 
 
-def test_get_build_commands_build_properties(part_info):
+def test_get_build_commands_build_properties(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-build-properties": {"foo": "bar"}}
     )
@@ -787,7 +809,7 @@ def test_get_build_commands_build_properties(part_info):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
+        ["dotnet", "restore", "--verbosity normal", f"--runtime {host_dotnet_rid}"],
     )
     assert build_commands[0].strip() == ""
 
@@ -799,7 +821,7 @@ def test_get_build_commands_build_properties(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
             "-p:foo=bar",
         ],
@@ -816,14 +838,14 @@ def test_get_build_commands_build_properties(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
     assert build_commands[2].strip() == ""
 
 
-def test_get_build_commands_publish_properties(part_info):
+def test_get_build_commands_publish_properties(host_dotnet_rid: str, part_info):
     properties = DotnetV2Plugin.properties_class.unmarshal(
         {"source": ".", "dotnet-publish-properties": {"foo": "bar"}}
     )
@@ -834,7 +856,7 @@ def test_get_build_commands_publish_properties(part_info):
 
     build_commands[0] = _remove_parameter_from_command(
         build_commands[0],
-        ["dotnet", "restore", "--verbosity normal", "--runtime linux-x64"],
+        ["dotnet", "restore", "--verbosity normal", f"--runtime {host_dotnet_rid}"],
     )
     assert build_commands[0].strip() == ""
 
@@ -846,7 +868,7 @@ def test_get_build_commands_publish_properties(part_info):
             "--configuration Release",
             "--no-restore",
             "--verbosity normal",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
         ],
     )
@@ -862,7 +884,7 @@ def test_get_build_commands_publish_properties(part_info):
             "--verbosity normal",
             "--no-restore",
             "--no-build",
-            "--runtime linux-x64",
+            f"--runtime {host_dotnet_rid}",
             "--self-contained False",
             "-p:foo=bar",
         ],
