@@ -25,7 +25,8 @@ plugins, must then be provided as build packages or in an earlier part.
 When this attribute is declared, Maven Use may rewrite the version specification of
 project dependencies based on what is locally available. This can be avoided by
 provisioning the specified version prior to build time — for example, by building it
-with the Maven Use plugin in an earlier part.
+with the Maven Use plugin in an earlier part. For more information on this behavior,
+see :ref:`maven_use_version_rewriting`.
 
 .. _maven_use_self-contained_end:
 
@@ -45,6 +46,30 @@ be used in the build step. This can be useful, for example, in cases where a spe
 unreleased version of Maven is desired but unavailable as a snap or Ubuntu package.
 
 .. _maven_use_details_end:
+
+.. _maven_use_version_rewriting:
+
+Version rewriting
+-----------------
+
+When building a :ref:`self-contained <maven_use_self-contained_start>` part, the
+following algorithm is used to decide which version to use:
+
+First, it will check for an exact version match. That is, if a dependency on-disk has
+the exact same version string as what was requested in ``pom.xml``, no change will be
+done.
+
+If not, it will compare all of the available versions on-disk using `semantic
+versioning`_ and select the oldest release that is still newer than what was requested.
+If no such release exists, it will instead select the newest release that is still
+older than what was requested.
+
+Next, if all previous scenarios fail, no version was requested at all, or if the
+requested version could not be interpreted as a semantic version, the latest release
+will be selected.
+
+Finally, if no releases with semantic versions were available, the alphabetically
+highest release will be used.
 
 How it works
 ------------
@@ -111,3 +136,4 @@ that ``java-main`` must build ``after`` the ``java-jacoco`` part.
 .. _Maven repository: https://maven.apache.org/guides/introduction/introduction-to-repositories.html
 .. _Maven: https://maven.apache.org/index.html
 .. _Maven Central repository: https://central.sonatype.com/
+.. _semantic versioning: https://semver.org/
