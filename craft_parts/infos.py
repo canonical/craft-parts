@@ -847,6 +847,7 @@ class PartInfo:
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
         self._part_dependencies = part.dependencies
+        self._plugin_name = part.plugin_name
         self.build_attributes = part.spec.build_attributes.copy()
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
@@ -911,6 +912,11 @@ class PartInfo:
     def part_dependencies(self) -> Sequence[str]:
         """Return the names of the parts that this part depends on."""
         return self._part_dependencies
+
+    @property
+    def plugin_name(self) -> str:
+        """Return the name of the part's plugin."""
+        return self._plugin_name
 
     def set_project_var(
         self, name: str, value: str, *, raw_write: bool = False

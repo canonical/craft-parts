@@ -1182,7 +1182,12 @@ class PartHandler:
             # Explicitly disabled
             return
 
+        plugin = self._part_info.plugin_name
         usrmerged_by_default = self._part_info.usrmerged_by_default
+        # Currently parts using the 'dump' or 'nil' plugin are special cases that do
+        # *not* get usrmerged by default.
+        usrmerged_by_default = usrmerged_by_default and plugin not in ("dump", "nil")
+
         enabled_attr = "enable-usrmerge" in self._part_info.build_attributes
 
         usrmerged = usrmerged_by_default or enabled_attr

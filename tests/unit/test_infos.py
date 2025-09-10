@@ -740,6 +740,14 @@ def test_part_info_part_dependencies():
     assert x.part_dependencies == ["part1", "part2"]
 
 
+@pytest.mark.parametrize("plugin", ["nil", "dump", "make"])
+def test_part_info_plugin_name(plugin):
+    info = ProjectInfo(application_name="test", cache_dir=Path())
+    part = Part("foo", {"plugin": plugin})
+    x = PartInfo(project_info=info, part=part)
+    assert x.plugin_name == plugin
+
+
 def test_step_info(new_dir):
     info = ProjectInfo(
         application_name="test",
