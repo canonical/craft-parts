@@ -70,7 +70,7 @@ class _RepositoryProxy:
     def __delattr__(self, attr: str) -> None:
         repo = _get_repository_for_platform()
         logger.debug(
-            "delete repository attribute: attr=%s, value=%s, repo:%s", attr, value, repo
+            "delete repository attribute: attr=%s, repo:%s", attr, repo
         )
         delattr(repo, attr)
 
