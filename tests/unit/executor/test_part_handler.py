@@ -17,7 +17,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import cast, Any
+from typing import Any, cast
 from unittest.mock import call
 
 import pytest
