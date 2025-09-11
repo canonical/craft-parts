@@ -22,6 +22,7 @@ import hashlib
 import logging
 import os
 import shutil
+import stat
 import sys
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -92,15 +93,15 @@ def link_or_copy(
         new file.
     """
     try:
-        if permissions or (not follow_symlinks and os.path.islink(source)):
+        if permissions or (not follow_symlinks and os.path.islink(source)):  # noqa: PTH114
             copy(source, destination)
         else:
             link(source, destination, follow_symlinks=follow_symlinks)
     except OSError as err:
-        if err.errno == errno.EEXIST and not os.path.isdir(destination):
+        if err.errno == errno.EEXIST and not os.path.isdir(destination):  # noqa: PTH112
             # os.link will fail if the destination already exists, so let's
             # remove it and try again.
-            os.remove(destination)
+            os.remove(destination)  # noqa: PTH107
             link_or_copy(
                 source,
                 destination,
@@ -129,9 +130,10 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     if follow_symlinks:
         source_path = os.path.realpath(source)
 
-    if not os.path.exists(os.path.dirname(destination)):
+    if not os.path.exists(os.path.dirname(destination)):  # noqa: PTH110, PTH120
         create_similar_directory(
-            os.path.dirname(source_path), os.path.dirname(destination)
+            os.path.dirname(source_path),  # noqa: PTH120
+            os.path.dirname(destination),  # noqa: PTH120
         )
 
     # Setting follow_symlinks=False in case this bug is ever fixed
@@ -166,15 +168,15 @@ def copy(
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with contextlib.suppress(OSError):
-        os.unlink(destination)
+        os.unlink(destination)  # noqa: PTH108
 
     try:
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
     except FileNotFoundError as err:
         raise errors.CopyFileNotFound(source) from err
 
-    uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
-    gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
+    uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid  # noqa: PTH116
+    gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid  # noqa: PTH116
 
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
@@ -200,11 +202,11 @@ def link_or_copy_tree(
         for every dir copied. Should return list of contents to NOT copy.
     :param copy_function: Callable that actually copies.
     """
-    if not os.path.isdir(source_tree):
+    if not os.path.isdir(source_tree):  # noqa: PTH112
         raise errors.CopyTreeError(f"{source_tree!r} is not a directory")
 
-    if not os.path.isdir(destination_tree) and (
-        os.path.exists(destination_tree) or os.path.islink(destination_tree)
+    if not os.path.isdir(destination_tree) and (  # noqa: PTH112
+        os.path.exists(destination_tree) or os.path.islink(destination_tree)  # noqa: PTH110, PTH114
     ):
         raise errors.CopyTreeError(
             f"cannot overwrite non-directory {destination_tree!r} with "
@@ -213,7 +215,7 @@ def link_or_copy_tree(
 
     create_similar_directory(source_tree, destination_tree)
 
-    destination_basename = os.path.basename(destination_tree)
+    destination_basename = os.path.basename(destination_tree)  # noqa: PTH119
 
     for root, directories, files in os.walk(source_tree, topdown=True):
         ignored: set[str] = set()
@@ -231,27 +233,49 @@ def link_or_copy_tree(
             directories[:] = [d for d in directories if d not in ignored]
 
         for directory in directories:
-            source = os.path.join(root, directory)
+            source = os.path.join(root, directory)  # noqa: PTH118
             # os.walk doesn't by default follow symlinks (which is good), but
             # it includes symlinks that are pointing to directories in the
             # directories list. We want to treat it as a file, here.
-            if os.path.islink(source):
+            if os.path.islink(source):  # noqa: PTH114
                 files.append(directory)
                 continue
 
-            destination = os.path.join(
+            destination = os.path.join(  # noqa: PTH118
                 destination_tree, os.path.relpath(source, source_tree)
             )
 
             create_similar_directory(source, destination)
 
         for file_name in set(files) - ignored:
-            source = os.path.join(root, file_name)
-            destination = os.path.join(
+            source = os.path.join(root, file_name)  # noqa: PTH118
+            destination = os.path.join(  # noqa: PTH118
                 destination_tree, os.path.relpath(source, source_tree)
             )
 
             copy_function(source, destination)
+
+
+def move(source: str, destination: str) -> None:
+    """Move regular files, directories, or special files from source to destination.
+
+    :param source: Directory from which to move the file or directory.
+    :param destination: Directory where the file or directory will be moved to.
+    """
+    src_path = Path(source)
+    dest_path = Path(destination)
+
+    src_stat = src_path.stat(follow_symlinks=False)
+    src_mode = src_stat.st_mode
+
+    if stat.S_ISCHR(src_mode) or stat.S_ISBLK(src_mode):
+        os.mknod(dest_path, src_mode, src_stat.st_rdev)
+        shutil.copystat(src_path, dest_path)
+        os.chown(dest_path, src_stat.st_uid, src_stat.st_gid)
+        src_path.unlink()
+        return
+
+    shutil.move(src_path, dest_path)
 
 
 def create_similar_directory(
@@ -267,10 +291,10 @@ def create_similar_directory(
         If omitted, the new directory will have the same permissions and ownership
         of ``source``.
     """
-    stat = os.stat(source, follow_symlinks=False)
+    stat = os.stat(source, follow_symlinks=False)  # noqa: PTH116
     uid = stat.st_uid
     gid = stat.st_gid
-    os.makedirs(destination, exist_ok=True)
+    os.makedirs(destination, exist_ok=True)  # noqa: PTH103
 
     # Windows does not have "os.chown" implementation and copystat
     # is unlikely to be useful, so just bail after creating directory.

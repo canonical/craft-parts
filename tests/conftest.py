@@ -20,14 +20,15 @@ import pathlib
 import sys
 import tempfile
 import threading
+import types
 from pathlib import Path
 from typing import Any, NamedTuple
 from unittest import mock
 
-import pytest
-import xdg  # type: ignore[import]
 import craft_parts
 import craft_parts.packages
+import pytest
+import xdg  # type: ignore[import]
 from craft_parts.features import Features
 
 from . import fake_servers
@@ -35,10 +36,37 @@ from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
 
 
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Use collection hook to mark all integration tests as slow"""
+    for item in items:
+        if "tests/integration" in str(item.path):
+            item.add_marker(pytest.mark.slow)
+
+
 def pytest_configure(config):
     config.addinivalue_line(
         "markers", "http_request_handler(handler): set a fake HTTP request handler"
     )
+
+
+@pytest.fixture
+def project_main_module() -> types.ModuleType:
+    """Fixture that returns the project's principal package (imported).
+
+    This fixture should be rewritten by "downstream" projects to return the correct
+    module. Then, every test that uses this fixture will correctly test against the
+    downstream project.
+    """
+    try:
+        # This should be the project's main package; downstream projects must update this.
+        import craft_parts  # noqa: PLC0415
+
+        main_module = craft_parts
+    except ImportError:
+        pytest.fail(
+            "Failed to import the project's main module: check if it needs updating",
+        )
+    return main_module
 
 
 @pytest.fixture
@@ -173,10 +201,11 @@ def temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
 
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_home", new=os.path.join(tmpdir, ".config")
+        "xdg.BaseDirectory.xdg_config_home",
+        new=os.path.join(tmpdir, ".config"),  # noqa: PTH118
     )
-    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))
-    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))
+    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))  # noqa: PTH118
+    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))  # noqa: PTH118
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
         new=[
@@ -189,7 +218,7 @@ def temp_xdg(tmpdir, mocker):
             xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
-    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})
+    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})  # noqa: PTH118
 
 
 @pytest.fixture(scope="class")
@@ -213,7 +242,7 @@ def http_server(request):
     server_thread.join()
 
 
-# XXX: check windows compatibility, explore if fixture setup can skip itself
+# XXX: check windows compatibility, explore if fixture setup can skip itself  # noqa: FIX003
 
 
 @pytest.fixture(scope="class")
@@ -223,7 +252,7 @@ def fake_snapd():
     server = FakeSnapd()
 
     snapd_fake_socket_path = str(tempfile.mkstemp()[1])
-    os.unlink(snapd_fake_socket_path)
+    os.unlink(snapd_fake_socket_path)  # noqa: PTH108
 
     socket_path_patcher = mock.patch(
         "craft_parts.packages.snaps.get_snapd_socket_path_template"

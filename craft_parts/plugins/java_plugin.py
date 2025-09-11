@@ -23,7 +23,7 @@ import os
 import subprocess
 import tempfile
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 
@@ -45,12 +45,12 @@ class JavaPlugin(Plugin):
                         System.out.println(System.getProperty("java.specification.version"));
                     }
                 }"""
-            with open(f"{tempdir}/Test.java", "w") as file:
+            with open(f"{tempdir}/Test.java", "w") as file:  # noqa: PTH123
                 file.write(test_class)
 
             try:
                 subprocess.call([javac, "-d", tempdir, f"{tempdir}/Test.java"])
-                java_home = os.path.dirname(os.path.dirname(javac))
+                java_home = os.path.dirname(os.path.dirname(javac))  # noqa: PTH120
                 spec_version = subprocess.check_output(
                     [java_home + "/bin/java", "-cp", tempdir, "Test"], text=True
                 )

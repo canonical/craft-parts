@@ -150,7 +150,7 @@ to be deployed with the part are specified using the ``stage-snaps`` and
 .. ifconfig:: project in ("Rockcraft", "Snapcraft")
 
    Chisel slices can be specified in ``stage-packages`` as well, but they can't be mixed
-   with deb packages. 
+   with deb packages.
 
 In the final *prime* step, the files needed for deployment are copied from the staging
 area to the priming area. During this step the ``prime`` key is typically used to

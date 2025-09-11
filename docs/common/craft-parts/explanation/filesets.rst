@@ -80,7 +80,8 @@ To stage all paths, both visible and hidden, use these glob patterns:
 Partitions
 ^^^^^^^^^^
 
-If partitions are in use, bare path specifications (as demonstrated above) will refer to the default partition.  The following two lines are equivalent:
+If partitions are in use, bare path specifications (as demonstrated above) will refer
+to the default partition.  The following two lines are equivalent:
 
 * :file:`usr/bin/hello`
 * :file:`(default)/usr/bin/hello`

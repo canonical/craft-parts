@@ -1,8 +1,7 @@
 .. _lifecycle:
 
-*****************
 Lifecycle details
-*****************
+=================
 
 Each part is built in five separate steps, each with its own input and output locations:
 
@@ -41,7 +40,7 @@ the general rules for combining parts are:
 .. _part_processing_order:
 
 Part processing order
-=====================
+~~~~~~~~~~~~~~~~~~~~~
 
 The processing of various parts is ordered based on dependencies. Circular
 dependencies are not permitted between parts. The ordering rules are as follows:

@@ -90,7 +90,7 @@ class LifecycleManager:
         to callbacks.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0912, PLR0913
         self,
         all_parts: dict[str, Any],
         *,

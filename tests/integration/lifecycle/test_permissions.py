@@ -56,7 +56,7 @@ def test_part_permissions(new_dir, mock_chown):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    assert stat.S_IMODE(os.stat(Path("prime/1.txt")).st_mode) == 0o222
+    assert stat.S_IMODE(os.stat(Path("prime/1.txt")).st_mode) == 0o222  # noqa: PTH116
     chown_call = mock_chown[str(Path("prime/bar/2.txt").resolve())]
     assert chown_call.owner == 1111
     assert chown_call.group == 2222
