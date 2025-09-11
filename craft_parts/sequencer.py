@@ -121,7 +121,7 @@ class Sequencer:
                     rerun_target_step=rerun_target_step,
                 )
 
-    def _add_step_actions(
+    def _add_step_actions(  # noqa: PLR0912
         self,
         *,
         current_step: Step,

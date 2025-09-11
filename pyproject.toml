@@ -359,7 +359,6 @@ ignore-decorators = [ # Functions with these decorators don't have to have docst
 ]
 
 [tool.ruff.lint.pylint]
-max-branches = 16
 max-args = 8
 
 [tool.ruff.lint.pep8-naming]
