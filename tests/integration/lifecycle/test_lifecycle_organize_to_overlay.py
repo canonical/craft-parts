@@ -290,7 +290,7 @@ def test_basic_lifecycle_overlay_only(new_dir, mocker):
         application_name="test_demo",
         cache_dir=new_dir,
         partitions=["default"],
-        base_layer_dir="base",
+        base_layer_dir=Path("base"),
         base_layer_hash=b"hash",
     )
 
@@ -348,7 +348,7 @@ def test_unsorted_lifecycle_actions(new_dir, mocker):
         application_name="test_demo",
         cache_dir=new_dir,
         partitions=["default"],
-        base_layer_dir="base",
+        base_layer_dir=Path("base"),
         base_layer_hash=b"hash",
     )
 
@@ -407,7 +407,7 @@ def test_organize_twice_lifecycle_actions(new_dir, mocker):
         application_name="test_demo",
         cache_dir=new_dir,
         partitions=["default"],
-        base_layer_dir="base",
+        base_layer_dir=Path("base"),
         base_layer_hash=b"hash",
     )
 
@@ -468,7 +468,7 @@ def test_organize_after_lifecycle_actions(new_dir, mocker):
         application_name="test_demo",
         cache_dir=new_dir,
         partitions=["default"],
-        base_layer_dir="base",
+        base_layer_dir=Path("base"),
         base_layer_hash=b"hash",
     )
 
