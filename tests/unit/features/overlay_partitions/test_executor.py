@@ -42,7 +42,7 @@ class TestExecutor:
                     Part("p1", {"plugin": "nil"}),
                     Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
                 ],
-                0,
+                1,
             ),
             (
                 [
@@ -71,7 +71,7 @@ class TestExecutor:
                     Part("p3", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
                     Part("p4", {"plugin": "nil"}),
                 ],
-                3,
+                2,
             ),
         ],
     )
