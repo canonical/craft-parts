@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from pathlib import Path
 
 import pytest
@@ -34,7 +33,7 @@ from tests.unit.executor.test_organize import organize_and_assert
         # simple_dir_with_file
         {
             "setup_dirs": ["foodir"],
-            "setup_files": [os.path.join("foodir", "foo")],
+            "setup_files": [Path("foodir", "foo")],
             "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },

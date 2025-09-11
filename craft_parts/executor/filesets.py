@@ -120,7 +120,7 @@ class Fileset:
         """
         for entry in entries:
             filepath = entry[1:] if entry[0] == "-" else entry
-            if os.path.isabs(filepath):
+            if os.path.isabs(filepath):  # noqa: PTH117
                 raise errors.FilesetError(
                     name=self.name, message=f"path {filepath!r} must be relative."
                 )
@@ -153,8 +153,8 @@ def migratable_filesets(
     dirs = {
         x
         for x in files
-        if os.path.isdir(os.path.join(srcdir, x))
-        and not os.path.islink(os.path.join(srcdir, x))
+        if os.path.isdir(os.path.join(srcdir, x))  # noqa: PTH112, PTH118
+        and not os.path.islink(os.path.join(srcdir, x))  # noqa: PTH114, PTH118
     }
 
     # Remove dirs from files.
@@ -163,10 +163,10 @@ def migratable_filesets(
     # Include (resolved) parent directories for each selected file.
     for _filename in files:
         filename = _get_resolved_relative_path(_filename, srcdir)
-        dirname = os.path.dirname(filename)
+        dirname = os.path.dirname(filename)  # noqa: PTH120
         while dirname:
             dirs.add(dirname)
-            dirname = os.path.dirname(dirname)
+            dirname = os.path.dirname(dirname)  # noqa: PTH120
 
     # Resolve parent paths for dirs and files.
     resolved_dirs = set()
@@ -258,14 +258,16 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
 
     for include in includes:
         if "*" in include:
-            pattern = os.path.join(directory, include)
-            matches = iglob(pattern, recursive=True)
+            pattern = os.path.join(directory, include)  # noqa: PTH118
+            matches = iglob(pattern, recursive=True)  # noqa: PTH207
             include_files |= set(matches)
         else:
-            include_files |= {os.path.join(directory, include)}
+            include_files |= {os.path.join(directory, include)}  # noqa: PTH118
 
     include_dirs = [
-        x for x in include_files if os.path.isdir(x) and not os.path.islink(x)
+        x
+        for x in include_files
+        if os.path.isdir(x) and not os.path.islink(x)  # noqa: PTH112, PTH114
     ]
     include_files = {os.path.relpath(x, directory) for x in include_files}
 
@@ -274,10 +276,12 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
             include_files |= {
-                os.path.relpath(os.path.join(root, d), directory) for d in dirs
+                os.path.relpath(os.path.join(root, d), directory)  # noqa: PTH118
+                for d in dirs
             }
             include_files |= {
-                os.path.relpath(os.path.join(root, f), directory) for f in files
+                os.path.relpath(os.path.join(root, f), directory)  # noqa: PTH118
+                for f in files
             }
 
     return include_files
@@ -295,12 +299,14 @@ def _generate_exclude_set(
     exclude_files = set()
 
     for exclude in excludes:
-        pattern = os.path.join(directory, exclude)
-        matches = iglob(pattern, recursive=True)
+        pattern = os.path.join(directory, exclude)  # noqa: PTH118
+        matches = iglob(pattern, recursive=True)  # noqa: PTH207
         exclude_files |= set(matches)
 
     exclude_dirs = {
-        os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)
+        os.path.relpath(x, directory)
+        for x in exclude_files
+        if os.path.isdir(x)  # noqa: PTH112
     }
     exclude_files = {os.path.relpath(x, directory) for x in exclude_files}
 
@@ -320,10 +326,11 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     :return: Resolved path, relative to base_directory.
     """
     parent_relpath, filename = os.path.split(relative_path)
-    parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))
+    parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))  # noqa: PTH118
 
-    filename_abspath = os.path.join(parent_abspath, filename)
-    return os.path.relpath(filename_abspath, base_directory)
+    filename_abspath = os.path.join(parent_abspath, filename)  # noqa: PTH118
+    #  https://github.com/astral-sh/ty/issues/405
+    return os.path.relpath(filename_abspath, base_directory)  # ty: ignore[invalid-return-type]
 
 
 def _normalize_entry(entry: str, default_partition: str) -> str:

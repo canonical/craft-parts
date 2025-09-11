@@ -17,7 +17,6 @@
 from pathlib import Path
 
 import pytest
-
 from craft_parts import parts
 from craft_parts.parts import Part
 

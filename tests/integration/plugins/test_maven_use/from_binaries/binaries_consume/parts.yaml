@@ -1,4 +1,3 @@
-
 # This project needs binaries built by the "binaries_source" project
 parts:
   java-dep-add:

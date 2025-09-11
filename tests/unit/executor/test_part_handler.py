@@ -577,6 +577,7 @@ class TestPartUpdateHandler:
 
     _update_build_path = Path("parts/foo/install/foo.txt")
 
+    @pytest.mark.slow
     def test_update_build(self):
         self._handler._make_dirs()
         self._handler.run_action(Action("foo", Step.PULL))
@@ -590,6 +591,7 @@ class TestPartUpdateHandler:
 
         assert self._update_build_path.read_text() == "change"
 
+    @pytest.mark.slow
     def test_update_build_stage_packages(self, new_dir, partitions, mocker):
         def fake_unpack(**_):
             Path("parts/foo/install/hello").touch()
@@ -829,7 +831,7 @@ class TestPackages:
         assert result == ["word-salad"]
         mock_download_snaps.assert_called_once_with(
             snaps_list=["word-salad"],
-            directory=os.path.join(new_dir, "parts/p1/stage_snaps"),
+            directory=os.path.join(new_dir, "parts/p1/stage_snaps"),  # noqa: PTH118
         )
 
     def test_fetch_stage_snaps_none(self, mocker, new_dir, partitions):
@@ -1233,7 +1235,7 @@ class TestDirs:
         handler._make_dirs()
 
         for i, p in enumerate(partitions or (None,)):
-            partition_dir = Path(".")
+            partition_dir = Path()
             if p and p != "default":
                 partition_dir = Path("partitions", p)
 

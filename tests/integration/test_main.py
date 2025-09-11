@@ -214,7 +214,7 @@ def test_main_alternative_work_dir(mocker, capfd):
     assert Path("work_dir/prime").is_dir()
 
     # no new entries in the current dir
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
+    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
 
 
 @pytest.mark.parametrize("opt", ["-f", "--file"])
@@ -517,7 +517,7 @@ def test_main_clean_workdir(mocker, capfd):
     assert Path("work_dir/stage").is_dir()
     assert Path("work_dir/prime").is_dir()
 
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
+    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir", "clean"])
@@ -533,7 +533,7 @@ def test_main_clean_workdir(mocker, capfd):
     assert Path("work_dir/stage").is_dir() is False
     assert Path("work_dir/prime").is_dir() is False
 
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
+    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
 
 
 def test_main_clean_dry_run(mocker, capfd):
@@ -549,7 +549,7 @@ def test_main_clean_dry_run(mocker, capfd):
     assert raised.value.code is None
 
     # work dirs are not removed
-    assert set(os.listdir(".")).issuperset({"parts", "prime", "stage"})
+    assert set(os.listdir(".")).issuperset({"parts", "prime", "stage"})  # noqa: PTH208
 
 
 def test_main_clean_part(mocker, capfd):

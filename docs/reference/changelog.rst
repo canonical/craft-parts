@@ -16,9 +16,18 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.22.1:
+
+2.22.1 (2025-09-10)
+-------------------
+
+Bug fixes:
+
+- The wheel once again includes ``craft_parts_docs``.
+
 .. _release-2.22.0:
 
-2.22.0 (2025-MM-DD)
+2.22.0 (2025-09-09)
 -------------------
 
 New features:
@@ -26,14 +35,17 @@ New features:
 - Dynamically detect the repository type used by the operating system. This allows
   parts to use different package managers if the system is changed by a preceding part.
 
-- Parts can now copy files to the project's overlay filesystem with the ``organize``
+- Parts can now move files to the project's overlay filesystem with the ``organize``
   key. This is done by prefixing the file's destination path with the ``(overlay)``
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
 
 Bug fixes:
 
+- The ``organize`` key now works with character and block device nodes.
+
 Documentation:
+- The Autotools plugin now supports the ``disable-parallel`` key.
 
 For a complete list of commits, check out the `2.22.0`_ release on GitHub.
 
@@ -52,7 +64,6 @@ New features:
   With Craft Parts 2.21.0, the plugin now deterministically detects and matches the
   dependency versions available on the host, aligning with how Maven normally behaves.
   This change makes the plugin a drop-in replacement for Maven in private networks.
-- The autotools plugin now supports the ``disable-parallel`` parameter.
 
 - Add support for nested project variables, which can be referenced with
   craftctl using dot notation. For example, ``craftctl set var.subvar=foo`` sets the
@@ -66,7 +77,7 @@ Bug fixes:
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
-- Set the right directory permissions so that APT no longer emits a warning when 
+- Set the right directory permissions so that APT no longer emits a warning when
   downloading to the stage package cache.
 
 For a complete list of commits, check out the `2.21.0`_ release on GitHub.
@@ -191,9 +202,9 @@ Bug fixes:
 
 - With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven
   plugins when the project indirectly depends on one.
-- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
-  in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
-  the import time of downstream applications.
+- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and
+  functions in the top-level module. It is unused outside of Craft Parts and adds
+  ~150-200ms to the import time of downstream applications.
 
 Documentation:
 
@@ -210,7 +221,8 @@ New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
   encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use plugin.
+- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use
+  plugin.
 
 Bug fixes:
 
@@ -1405,6 +1417,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
 .. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
 .. _2.21.0: https://github.com/canonical/craft-parts/releases/tag/2.21.0
 .. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1

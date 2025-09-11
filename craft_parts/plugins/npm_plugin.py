@@ -24,9 +24,8 @@ from textwrap import dedent
 from typing import Any, Literal, cast
 
 import requests
-from overrides import override
 from pydantic import model_validator
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
 
@@ -169,7 +168,7 @@ class NpmPlugin(Plugin):
         return versions
 
     @staticmethod
-    def _get_best_node_version(
+    def _get_best_node_version(  # noqa: PLR0912
         node_version: str | None, target_arch: str
     ) -> tuple[str, str]:
         """Get the best matching Node.js version using NVM-style version tags.
@@ -280,7 +279,7 @@ class NpmPlugin(Plugin):
 
             node_uri = f"https://nodejs.org/dist/{resolved_version}/{file_name}"
             checksum_uri = f"https://nodejs.org/dist/{resolved_version}/SHASUMS256.txt"
-            self._node_binary_path = os.path.join(
+            self._node_binary_path = os.path.join(  # noqa: PTH118
                 self._part_info.part_cache_dir, file_name
             )
             cmd += [

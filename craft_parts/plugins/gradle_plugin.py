@@ -21,9 +21,8 @@ from textwrap import dedent
 from typing import Literal, cast
 from urllib.parse import urlparse
 
-from overrides import override
 from pydantic import model_validator
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -153,7 +152,7 @@ class GradlePlugin(JavaPlugin):
                 continue
             proxy_url = urlparse(case_insensitive_env[env_name])
 
-            with open(
+            with open(  # noqa: PTH123
                 gradle_properties, "a+", encoding="utf-8"
             ) as gradle_properties_file:
                 gradle_properties_file.write(

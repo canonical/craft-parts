@@ -23,7 +23,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Literal
 
-from overrides import overrides
+from typing_extensions import override
 
 from .base import (
     BaseFileSourceModel,
@@ -48,20 +48,20 @@ class TarSource(FileSourceHandler):
 
     source_model = TarSourceModel
 
-    @overrides
+    @override
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
-        tarball = src if src else self.part_src_dir / os.path.basename(self.source)
+        tarball = src if src else self.part_src_dir / os.path.basename(self.source)  # noqa: PTH119
 
         _extract(tarball, dst)
 
         if not keep:
-            os.remove(tarball)
+            os.remove(tarball)  # noqa: PTH107
 
 
 def _extract(tarball: Path, dst: Path) -> None:
@@ -83,7 +83,7 @@ def _extract(tarball: Path, dst: Path) -> None:
                 ):
                     # commonprefix() didn't return a dir name; go up one
                     # level
-                    common = os.path.dirname(common)
+                    common = os.path.dirname(common)  # noqa: PTH120
                     break
 
             for member in members:
