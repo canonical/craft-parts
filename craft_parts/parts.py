@@ -343,12 +343,21 @@ class PartSpec(BaseModel):
         examples=["[enable-usrmerge]", "[disable-usrmerge]"],
     )
     """Special identifiers that change some features and behaviors during the build.
-    Possible values are:
 
-    * ``enable-usrmerge``: Pre-fill the ``${CRAFT_PART_INSTALL}`` directory with a basic
-      usrmerged directory structure before running the part's build step.
-    * ``disable-usrmerge``: Do *not* pre-fill ``${CRAFT_PART_INSTALL}`` wih the usrmerged
-      directory structure.
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable-usrmerge``
+          - Fills the ``${CRAFT_PART_INSTALL}`` directory with a merged ``/usr``
+            directory before running the part's build step.
+        * - ``disable-usrmerge``
+          - Prevents a merged ``/usr`` directory from being assembled for the build
+            step. Available in lifecycles in which the directory would be merged by
+            default.
     """
 
     organize_files: dict[str, str] = Field(
