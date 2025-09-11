@@ -1338,7 +1338,9 @@ class TestDirs:
             usrmerged_by_default=usrmerged_by_default,
         )
         part_info = PartInfo(info, part)
-        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[part], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             part,
             part_info=part_info,
