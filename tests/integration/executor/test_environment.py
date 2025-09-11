@@ -102,7 +102,7 @@ def test_step_callback(new_dir, mocker, capfd, step):
             CRAFT_TARGET_ARCH=arm64
             TEST_OVERRIDE=bar
             TEST_STEP={step!s}
-            """
+            """  # noqa: PTH109
         )
     )
 
@@ -148,7 +148,7 @@ def test_prologue_callback(new_dir, capfd, mocker):
             CRAFT_TARGET_ARCH=arm64
             TEST_GLOBAL=prologue
             TEST_OVERRIDE=bar
-            """
+            """  # noqa: PTH109
         )
     )
 
@@ -214,7 +214,7 @@ def test_expand_environment_order(new_dir, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    with open(lf.project_info.prime_dir / "part-variables.txt") as file:
+    with open(lf.project_info.prime_dir / "part-variables.txt") as file:  # noqa: PTH123
         data = file.read()
 
     assert data == textwrap.dedent(

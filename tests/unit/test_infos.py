@@ -508,6 +508,7 @@ def test_project_info_set_invalid_project_vars():
 def test_project_info_default():
     info = ProjectInfo(application_name="test", cache_dir=Path())
     assert info.parallel_build_count == 1
+    assert not info.usrmerged_by_default
 
 
 def test_project_info_cache_dir_resolving():
@@ -737,6 +738,14 @@ def test_part_info_part_dependencies():
     part = Part("foo", {"after": ["part1", "part2"]})
     x = PartInfo(project_info=info, part=part)
     assert x.part_dependencies == ["part1", "part2"]
+
+
+@pytest.mark.parametrize("plugin", ["nil", "dump", "make"])
+def test_part_info_plugin_name(plugin):
+    info = ProjectInfo(application_name="test", cache_dir=Path())
+    part = Part("foo", {"plugin": plugin})
+    x = PartInfo(project_info=info, part=part)
+    assert x.plugin_name == plugin
 
 
 def test_step_info(new_dir):

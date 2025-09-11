@@ -105,16 +105,16 @@ class TestGetName:
     """Checks for snap name retrieval from snap.yaml."""
 
     def test_get_name(self):
-        os.mkdir("meta")
+        os.mkdir("meta")  # noqa: PTH102
 
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
+        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:  # noqa: PTH118, PTH123
             print("name: my-snap", file=snap_yaml_file)
         assert snap_source._get_snap_name("snap", ".") == "my-snap"
 
     def test_no_name_yaml(self):
-        os.mkdir("meta")
+        os.mkdir("meta")  # noqa: PTH102
 
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
+        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:  # noqa: PTH118, PTH123
             print("summary: no name", file=snap_yaml_file)
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
@@ -122,7 +122,7 @@ class TestGetName:
         assert raised.value.snap_file == "snap"
 
     def test_no_snap_yaml(self):
-        os.mkdir("meta")
+        os.mkdir("meta")  # noqa: PTH102
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
             snap_source._get_snap_name("snap", ".")

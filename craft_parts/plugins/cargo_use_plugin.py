@@ -23,7 +23,7 @@ import shutil
 import sys
 from typing import Literal
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts import errors
 

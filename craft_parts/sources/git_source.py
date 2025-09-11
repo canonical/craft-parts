@@ -24,8 +24,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import pydantic
-from overrides import overrides
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from craft_parts.utils.git import get_git_command
 
@@ -53,7 +52,7 @@ class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     source_depth: int = 0
     source_submodules: list[str] | None = None
 
-    # TODO: make these mutually exclusive fields declarative with a jsonschema too.
+    # TODO: make these mutually exclusive fields declarative with a jsonschema too.  # noqa: FIX002
     @pydantic.model_validator(mode="after")
     def _validate_mutually_exclusive_fields(self) -> Self:
         if self.source_tag and self.source_branch:
@@ -322,7 +321,7 @@ class GitSource(SourceHandler):
 
         return f"file://{Path(self.source).resolve()}"
 
-    @overrides
+    @override
     def pull(self) -> None:
         """Retrieve the local or remote source files."""
         if self.is_local():

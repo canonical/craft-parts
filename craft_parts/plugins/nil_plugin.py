@@ -22,7 +22,7 @@ automatically included, e.g. stage-packages.
 
 from typing import Literal
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 from .properties import PluginProperties

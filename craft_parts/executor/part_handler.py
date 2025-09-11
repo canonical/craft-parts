@@ -140,14 +140,14 @@ class _Squasher:
                     dst_partition=dst_partition,
                 )
                 # If the sub path was really a sub path, record it.
-                if sub_path != Path("."):
+                if sub_path != Path():
                     self._distributed_paths.add(sub_path)
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
                 srcdir=srcdir,
                 destdir=destdirs[self._src_partition],
-                sub_path=Path(""),
+                sub_path=Path(),
                 dst_partition=self._src_partition,
             )
 
@@ -1021,7 +1021,7 @@ class PartHandler:
                 primed_whiteout.unlink()
                 logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
-                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?
+                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?  # noqa: FIX003
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
     def clean_step(self, step: Step) -> None:
@@ -1169,11 +1169,49 @@ class PartHandler:
                     )
                 # The symlink already exists
                 continue
-            os.symlink(
-                src,
-                dst,
-                target_is_directory=True,
+            dst.symlink_to(src, target_is_directory=True)
+
+    def _create_usrmerge_scaffolding(self) -> None:
+        disabled_attr = "disable-usrmerge" in self._part_info.build_attributes
+
+        if disabled_attr:
+            # Explicitly disabled
+            return
+
+        plugin = self._part_info.plugin_name
+        usrmerged_by_default = self._part_info.usrmerged_by_default
+        # Currently parts using the 'dump' or 'nil' plugin are special cases that do
+        # *not* get usrmerged by default.
+        usrmerged_by_default = usrmerged_by_default and plugin not in ("dump", "nil")
+
+        enabled_attr = "enable-usrmerge" in self._part_info.build_attributes
+
+        usrmerged = usrmerged_by_default or enabled_attr
+        if not usrmerged:
+            # usrmerged not enabled by default, nor for the individual
+            return
+
+        root_dir = self._part.part_install_dir
+        merge_to_usr = ("bin", "lib", "lib64", "sbin")
+
+        for dir_name in merge_to_usr:
+            usr_dir = Path("usr") / dir_name
+            (root_dir / usr_dir).mkdir(exist_ok=True, parents=True)
+
+            symlink_path = root_dir / dir_name
+
+            if (
+                symlink_path.exists()
+                and symlink_path.is_symlink()
+                and symlink_path.readlink() == usr_dir
+            ):
+                # Link already exists
+                continue
+
+            logger.debug(
+                f"creating symlink for usrmerge fix: {symlink_path} -> {usr_dir}"
             )
+            symlink_path.symlink_to(usr_dir, target_is_directory=True)
 
     def _make_dirs(self) -> None:
         dirs = [
@@ -1190,9 +1228,10 @@ class PartHandler:
             *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)
+            os.makedirs(dir_name, exist_ok=True)  # noqa: PTH103
 
         self._symlink_alias_to_default()
+        self._create_usrmerge_scaffolding()
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.
@@ -1280,7 +1319,7 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
+        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))  # noqa: PTH118, PTH207
         snap_sources = (
             sources.SnapSource(
                 source=s,

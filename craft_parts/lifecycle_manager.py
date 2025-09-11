@@ -84,11 +84,13 @@ class LifecycleManager:
         ("-"), and may not begin or end with a hyphen. Namespace names must
         consist of only lowercase alphanumeric characters.
     :param filesystem_mounts: A dict of filesystem_mounts to apply when migrating files.
+    :param usrmerged_by_default: Whether the parts' install dirs should be filled with
+        usrmerge-safe directories and symlinks prior to a part's build.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0912, PLR0913
         self,
         all_parts: dict[str, Any],
         *,
@@ -111,6 +113,7 @@ class LifecycleManager:
         project_vars: dict[str, str] | ProjectVarInfo | None = None,
         partitions: list[str] | None = None,
         filesystem_mounts: dict[str, Any] | None = None,
+        usrmerged_by_default: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -152,6 +155,7 @@ class LifecycleManager:
             filesystem_mounts=filesystem_mounts_obj,
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,
+            usrmerged_by_default=usrmerged_by_default,
             **custom_args,
         )
 

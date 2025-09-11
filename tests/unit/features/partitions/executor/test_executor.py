@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import pathlib
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -71,21 +71,19 @@ class TestExecutor:
 
         # Create symlinks if default partition aliased
         if info.is_default_partition_aliased:
-            info.alias_partition_dir.mkdir(parents=True, exist_ok=True)  # pyright: ignore[reportOptionalMemberAccess]
-            os.symlink(
-                new_path / "stage",
-                info.stage_alias_symlink,  # type: ignore[reportArgumentType]
-                target_is_directory=True,
+            assert isinstance(info.alias_partition_dir, pathlib.Path)
+            assert isinstance(info.stage_alias_symlink, pathlib.Path)
+            assert isinstance(info.prime_alias_symlink, pathlib.Path)
+            assert isinstance(info.parts_alias_symlink, pathlib.Path)
+            info.alias_partition_dir.mkdir(parents=True, exist_ok=True)
+            info.stage_alias_symlink.symlink_to(
+                new_path / "stage", target_is_directory=True
             )
-            os.symlink(
-                new_path / "prime",
-                info.prime_alias_symlink,  # type: ignore[reportArgumentType]
-                target_is_directory=True,
+            info.prime_alias_symlink.symlink_to(
+                new_path / "prime", target_is_directory=True
             )
-            os.symlink(
-                new_path / "parts",
-                info.parts_alias_symlink,  # type: ignore[reportArgumentType]
-                target_is_directory=True,
+            info.parts_alias_symlink.symlink_to(
+                new_path / "parts", target_is_directory=True
             )
 
         e = Executor(project_info=info, part_list=[p1, p2])

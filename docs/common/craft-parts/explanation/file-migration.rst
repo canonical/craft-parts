@@ -1,8 +1,7 @@
 .. _explanation-file-migration:
 
-**************
 File migration
-**************
+==============
 
 During the part lifecycle, files resulting from building a part
 are transferred from that part's install directory to a shared stage
