@@ -16,6 +16,19 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.23.0:
+
+2.23.0 (unreleased)
+-------------------
+
+New features:
+
+- Add a new ``LifecycleManager`` creation parameter to control whether parts should have
+  a merged ``/usr`` directory scheme in their install directories.
+
+- Add two new build attributes, ``enable-usrmerge`` and ``disable-usrmerge``, to control
+  the creation of a merged ``/usr`` directory scheme in a part's install directory.
+
 .. _release-2.22.1:
 
 2.22.1 (2025-09-10)
@@ -39,12 +52,6 @@ New features:
   key. This is done by prefixing the file's destination path with the ``(overlay)``
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
-
-- Add a new ``LifecycleManager`` creation parameter to control whether parts should have
-  a merged ``/usr`` directory scheme in their install directories.
-
-- Add two new build attributes, ``enable-usrmerge`` and ``disable-usrmerge``, to control
-  the creation of a merged ``/usr`` directory scheme in a part's install directory.
 
 Bug fixes:
 
