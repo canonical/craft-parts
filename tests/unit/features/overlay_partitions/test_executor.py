@@ -44,6 +44,35 @@ class TestExecutor:
                 ],
                 0,
             ),
+            (
+                [
+                    Part("p1", {"plugin": "nil"}),
+                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    Part("p3", {"plugin": "nil"}),
+                    Part("p4", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                ],
+                2,
+            ),
+            (
+                [
+                    Part("p1", {"plugin": "nil"}),
+                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    Part("p3", {"plugin": "nil"}),
+                    Part("p4", {"plugin": "nil"}),
+                    Part("p5", {"plugin": "nil"}),
+                    Part("p6", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                ],
+                2,
+            ),
+            (
+                [
+                    Part("p1", {"plugin": "nil"}),
+                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    Part("p3", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    Part("p4", {"plugin": "nil"}),
+                ],
+                3,
+            ),
         ],
     )
     def test_cache_level(self, new_dir, partitions, parts, level):
