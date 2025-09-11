@@ -17,7 +17,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from unittest.mock import call
 
 import pytest
@@ -1248,3 +1248,103 @@ class TestDirs:
                 if i == 0 and p is not None and p != "default":
                     assert sub_dir.is_symlink()
                     assert sub_dir.readlink() == Path(d).resolve()
+
+    @staticmethod
+    def _part_and_handler(
+        *,
+        usrmerged_by_default,
+        partitions,
+        new_dir,
+        plugin: str = "make",
+        part_spec: dict[str, Any] | None = None,
+    ) -> tuple[Part, PartHandler]:
+        spec = part_spec or {}
+        part = Part(
+            "foo",
+            {"plugin": plugin, "source": ".", **spec},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+            usrmerged_by_default=usrmerged_by_default,
+        )
+        part_info = PartInfo(info, part)
+        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        return part, handler
+
+    @staticmethod
+    def _assert_usrmerged(path: Path) -> None:
+        for name in ("bin", "lib", "lib64", "sbin"):
+            actual = path / f"usr/{name}"
+            assert actual.is_dir()
+
+            symlink = path / name
+            assert symlink.is_symlink()
+            assert symlink.readlink() == Path(f"usr/{name}")
+
+    def test_makedirs_usrmerged_default(self, new_dir, partitions):
+        """Test the behavior when 'usrmerged_by_default' is True."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+        )
+
+        handler._make_dirs()
+
+        # Check usrmerged structure in the install dir
+        self._assert_usrmerged(part.part_install_dir)
+
+    @pytest.mark.parametrize("plugin", ["nil", "dump"])
+    def test_makedirs_usrmerged_dump_nil(self, new_dir, partitions, plugin):
+        """Test the behavior when 'usrmerged_by_default' is True but the plugin is 'nil' or 'dump."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin=plugin,
+        )
+
+        handler._make_dirs()
+
+        assert list(part.part_install_dir.iterdir()) == []
+
+    @pytest.mark.parametrize("plugin", ["nil", "dump", "make"])
+    def test_makedirs_enable_usrmerge(self, new_dir, partitions, plugin):
+        """Test the behavior when 'usrmerged_by_default' is False but a part opts-in."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=False,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin=plugin,
+            part_spec={"build-attributes": ["enable-usrmerge"]},
+        )
+
+        handler._make_dirs()
+
+        # Check usrmerged structure in the install dir
+        self._assert_usrmerged(part.part_install_dir)
+
+    @pytest.mark.parametrize("plugin", ["nil", "dump", "make"])
+    def test_makedirs_disable_usrmerge(self, new_dir, partitions, plugin):
+        """Test the behavior when 'usrmerged_by_default' is True but a part opts-out."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin=plugin,
+            part_spec={"build-attributes": ["disable-usrmerge"]},
+        )
+
+        handler._make_dirs()
+
+        assert list(part.part_install_dir.iterdir()) == []

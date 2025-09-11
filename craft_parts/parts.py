@@ -337,7 +337,28 @@ class PartSpec(BaseModel):
         examples=['[{MESSAGE: "Hello world!"}, {NAME: "Craft Parts"}]'],
     )
 
-    build_attributes: list[str] = []
+    build_attributes: list[str] = Field(
+        default=[],
+        description="Identifiers that control specific behaviors during the build.",
+        examples=["[enable-usrmerge]", "[disable-usrmerge]"],
+    )
+    """Special identifiers that change some features and behaviors during the build.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable-usrmerge``
+          - Fills the ``${CRAFT_PART_INSTALL}`` directory with a merged ``/usr``
+            directory before running the part's build step.
+        * - ``disable-usrmerge``
+          - Prevents a merged ``/usr`` directory from being assembled for the build
+            step. Available in lifecycles in which the directory would be merged by
+            default.
+    """
 
     organize_files: dict[str, str] = Field(
         default_factory=dict,
