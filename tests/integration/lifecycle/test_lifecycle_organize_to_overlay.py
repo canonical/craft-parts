@@ -279,6 +279,48 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         ctx.execute(actions)
 
 
+def test_basic_lifecycle_overlay_only(new_dir, mocker):
+    mocker.patch("os.geteuid", return_value=0)
+
+    parts = yaml.safe_load(basic_parts_yaml)
+    Path("base").mkdir()
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=["default"],
+        base_layer_dir="base",
+        base_layer_hash=b"hash",
+    )
+
+    actions = lf.plan(Step.PRIME, part_names=["bar"])
+    assert actions == [
+        Action("bar", Step.PULL),
+        # dependencies to overlay bar
+        Action("foo", Step.PULL, reason="required to overlay 'bar'"),
+        Action("foo", Step.OVERLAY, reason="required to overlay 'bar'"),
+        Action("foo", Step.BUILD, reason="organize contents to overlay"),
+        Action("bar", Step.OVERLAY),
+        # dependencies for "after"
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.STAGE, reason="required to build 'bar'"),
+        # now we can build bar
+        Action("bar", Step.BUILD),
+        Action("bar", Step.STAGE),
+        # these steps shouldn't be here (to be fixed)
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.PRIME, reason="required to prime 'bar'"),  # wrong
+        # the final requested action
+        Action("bar", Step.PRIME),
+    ]
+
+
 unsorted_parts_yaml = textwrap.dedent(
     """\
     parts:
