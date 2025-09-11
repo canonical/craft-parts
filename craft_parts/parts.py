@@ -1038,6 +1038,19 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     # simplest way to do this is to sort them by name.
     all_parts = sorted(part_list, key=lambda part: part.name, reverse=True)
 
+    # Change the implicit order so that parts that organize to them
+    # are at the end of the list (because the order is reversed).
+    organize_to_overlay_parts: list[Part] = []
+    other_parts: list[Part] = []
+    for part in all_parts:
+        if part.organizes_to_overlay:
+            organize_to_overlay_parts.append(part)
+        else:
+            other_parts.append(part)
+
+    all_parts = [*other_parts, *organize_to_overlay_parts]
+
+    # Process explicit ordering set using the "after" key.
     while all_parts:
         top_part = None
 
