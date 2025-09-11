@@ -79,7 +79,7 @@ class Executor:
         cache_level = 0
         organized_to_overlay = False
 
-        for level, part in enumerate(part_list):
+        for level, part in enumerate(self._part_list):
             if part.organizes_to_overlay:
                 organized_to_overlay = True
             elif organized_to_overlay:
