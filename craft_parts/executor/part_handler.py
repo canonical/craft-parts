@@ -1169,11 +1169,7 @@ class PartHandler:
                     )
                 # The symlink already exists
                 continue
-            os.symlink(
-                src,
-                dst,
-                target_is_directory=True,
-            )
+            dst.symlink_to(src, target_is_directory=True)
 
     def _make_dirs(self) -> None:
         dirs = [

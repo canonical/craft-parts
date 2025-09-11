@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import stat
 from pathlib import Path
 
@@ -96,7 +97,7 @@ class TestLinkOrCopyTree:
 
     def test_link_symlink_to_file(self):
         # Create a symlink to a file
-        os.symlink("2", os.path.join("foo", "2-link"))  # noqa: PTH118
+        pathlib.Path("foo", "2-link").symlink_to("2")
         file_utils.link_or_copy_tree("foo", "qux")
         # Verify that the symlink remains a symlink
         link = os.path.join("qux", "2-link")  # noqa: PTH118
@@ -104,7 +105,7 @@ class TestLinkOrCopyTree:
         assert os.readlink(link) == "2"  # noqa: PTH115
 
     def test_link_symlink_to_dir(self):
-        os.symlink("bar", os.path.join("foo", "bar-link"))  # noqa: PTH118
+        pathlib.Path("foo", "bar-link").symlink_to("bar")
         file_utils.link_or_copy_tree("foo", "qux")
 
         # Verify that the symlink remains a symlink
