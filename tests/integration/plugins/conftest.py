@@ -17,11 +17,7 @@ import pytest
 from craft_parts.features import Features
 
 
-@pytest.fixture(
-    scope="module",
-    params=["none", "partitions"],
-    autouse=True,
-)
+@pytest.fixture(params=["none", "partitions"], autouse=True)
 def enabled_features(request: pytest.FixtureRequest):
     Features.reset()
     enable_overlay = "overlay" in request.param
