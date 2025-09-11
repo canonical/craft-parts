@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import shutil
 from pathlib import Path
 
@@ -72,7 +73,7 @@ class TestLocal:
         open(os.path.join("src", "dir", "file"), "w").close()  # noqa: PTH118, PTH123
 
         # Note that this is a symlink now instead of a directory
-        os.symlink("dummy", "destination")
+        pathlib.Path("destination").symlink_to("dummy")
 
         dirs = ProjectDirs(partitions=partitions)
         local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
@@ -261,8 +262,8 @@ class TestLocal:
         # Create a source containing a directory, a file and symlinks to both.
         os.makedirs(os.path.join("src", "dir"))  # noqa: PTH103, PTH118
         open(os.path.join("src", "dir", "file"), "w").close()  # noqa: PTH118, PTH123
-        os.symlink("dir", os.path.join("src", "dir_symlink"))  # noqa: PTH118
-        os.symlink("file", os.path.join("src", "dir", "file_symlink"))  # noqa: PTH118
+        pathlib.Path("src", "dir_symlink").symlink_to("dir")
+        pathlib.Path("src", "dir", "file_symlink").symlink_to("file")
 
         dirs = ProjectDirs(partitions=partitions)
 

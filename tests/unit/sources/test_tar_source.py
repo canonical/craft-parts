@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import tarfile
 from pathlib import Path
 from unittest.mock import call
@@ -111,13 +112,13 @@ class TestTarSource:
         file_to_tar = os.path.join("src", "test_prefix", "test.txt")  # noqa: PTH118
         open(file_to_tar, "w").close()  # noqa: PTH123
 
-        file_to_link = os.path.join("src", "test_prefix", "link.txt")  # noqa: PTH118
-        os.symlink("./test.txt", file_to_link)
+        file_to_link = pathlib.Path("src", "test_prefix", "link.txt")
+        file_to_link.symlink_to("./test.txt")
         assert os.path.islink(file_to_link)  # noqa: PTH114
 
         def check_for_symlink(tarinfo):
             assert tarinfo.issym()
-            assert file_to_link == tarinfo.name
+            assert file_to_link.as_posix() == tarinfo.name
             assert file_to_tar == os.path.normpath(
                 os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname)  # noqa: PTH118, PTH120
             )
