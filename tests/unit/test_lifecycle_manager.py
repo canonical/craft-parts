@@ -37,7 +37,7 @@ from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 @pytest.fixture
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
-    monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
+    monkeypatch.setattr(craft_parts.plugins.plugins, "_Plugins", available)
 
 
 def create_data(part_name: str, plugin_name: str) -> dict[str, Any]:
@@ -407,7 +407,7 @@ class TestPluginProperties:
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
-        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_fallback_plugin_name(self, new_dir, mocker):
         mocker.patch("craft_parts.sequencer.Sequencer")
@@ -426,7 +426,7 @@ class TestPluginProperties:
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
-        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_invalid_plugin_name(self, new_dir):
         with pytest.raises(errors.InvalidPlugin) as raised:

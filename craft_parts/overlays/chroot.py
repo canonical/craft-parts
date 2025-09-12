@@ -32,7 +32,7 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 
-def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+def chroot(path: Path, target: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.
@@ -66,9 +66,9 @@ def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:  # n
 def _runner(
     path: Path,
     conn: Connection,
-    target: Callable,
-    args: tuple,
-    kwargs: dict,
+    target: Callable[..., Any],
+    args: tuple[Any],
+    kwargs: dict[str, Any],
 ) -> None:
     """Chroot to the execution directory and call the target function."""
     logger.debug("[pid=%d] child process: target=%r", os.getpid(), target)
@@ -135,7 +135,7 @@ def _setup_chroot_linux(path: Path) -> None:
 
     pid = os.getpid()
     for entry in _linux_mounts:
-        args = []
+        args: list[str] = []
         if entry.options:
             args.extend(entry.options)
         if entry.fstype:

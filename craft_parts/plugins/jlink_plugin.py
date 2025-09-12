@@ -94,7 +94,7 @@ class JLinkPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        commands = []
+        commands: list[str] = []
 
         # Set JAVA_HOME to be used in jlink commands
         commands.append(

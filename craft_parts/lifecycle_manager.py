@@ -121,7 +121,7 @@ class LifecycleManager:
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):
             raise errors.InvalidApplicationName(application_name)
 
-        if not isinstance(all_parts, dict):
+        if not isinstance(all_parts, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("parts definition must be a dictionary")
 
         if not application_package_name:
@@ -163,7 +163,7 @@ class LifecycleManager:
 
         executor.expand_environment(parts_data, info=project_info)
 
-        part_list = []
+        part_list: list[Part] = []
         for name, spec in parts_data.items():
             part = _build_part(name, spec, project_dirs, strict_mode, partitions)
             _validate_part_dependencies(part, parts_data)
@@ -334,7 +334,7 @@ def _build_part(
 
     :return: A :class:`Part` object corresponding to the given part specification.
     """
-    if not isinstance(spec, dict):
+    if not isinstance(spec, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise errors.PartSpecificationError(
             part_name=name, message="part definition is malformed"
         )

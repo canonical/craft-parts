@@ -105,7 +105,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             _get_step_overlay_environment_for_partitions(part, step_info.partitions)
         )
 
-    bin_paths = []
+    bin_paths: list[str] = []
     for path in paths:
         bin_paths.extend(os_utils.get_bin_paths(root=path, existing_only=True))
 
@@ -115,7 +115,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             paths=bin_paths, prepend="", separator=":"
         )
 
-    include_paths = []
+    include_paths: list[str] = []
     for path in paths:
         include_paths.extend(
             os_utils.get_include_paths(root=path, arch_triplet=step_info.arch_triplet)
@@ -127,7 +127,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
                 paths=include_paths, prepend="-isystem ", separator=" "
             )
 
-    library_paths = []
+    library_paths: list[str] = []
     for path in paths:
         library_paths.extend(
             os_utils.get_library_paths(root=path, arch_triplet=step_info.arch_triplet)
@@ -138,7 +138,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             paths=library_paths, prepend="-L", separator=" "
         )
 
-    pkg_config_paths = []
+    pkg_config_paths: list[str] = []
     for path in paths:
         pkg_config_paths.extend(
             os_utils.get_pkg_config_paths(
@@ -365,16 +365,13 @@ def _replace_attr(
     if isinstance(attr, list | tuple):
         return [cast(str, _replace_attr(i, replacements)) for i in attr]
 
-    if isinstance(attr, dict):
-        result: dict[str, str] = {}
-        for _key, _value in attr.items():
-            # Run replacements on both the key and value
-            key = cast(str, _replace_attr(_key, replacements))
-            value = cast(str, _replace_attr(_value, replacements))
-            result[key] = value
-        return result
-
-    return attr
+    result: dict[str, str] = {}
+    for _key, _value in attr.items():
+        # Run replacements on both the key and value
+        key = cast(str, _replace_attr(_key, replacements))
+        value = cast(str, _replace_attr(_value, replacements))
+        result[key] = value
+    return result
 
 
 def _warn_if_deprecated_key(key: str) -> None:

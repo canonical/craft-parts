@@ -66,7 +66,7 @@ class OutdatedReport:
 
         :return: Short summary of why the step is outdated.
         """
-        reasons = []
+        reasons: list[str] = []
 
         if self.previous_step_modified:
             reasons.append(f"{self.previous_step_modified.name!r} step")
@@ -114,7 +114,7 @@ class DirtyReport:
 
         :return: Short summary of why the part is dirty.
         """
-        reasons = []
+        reasons: list[str] = []
 
         reasons_count = 0
         if self.dirty_properties:

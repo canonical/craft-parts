@@ -21,14 +21,11 @@ import contextlib
 import pathlib
 from collections.abc import Iterable
 from io import StringIO
-from typing import TYPE_CHECKING
 
+from pydantic_core import ErrorDetails
 from typing_extensions import override
 
 from craft_parts.utils.formatting_utils import humanize_list
-
-if TYPE_CHECKING:
-    from pydantic.error_wrappers import ErrorDict, Loc
 
 
 class PartsError(Exception):
@@ -158,7 +155,7 @@ class PartSpecificationError(PartsError):
 
     @classmethod
     def from_validation_error(
-        cls, *, part_name: str, error_list: list["ErrorDict"]
+        cls, *, part_name: str, error_list: list[ErrorDetails]
     ) -> "PartSpecificationError":
         """Create a PartSpecificationError from a pydantic error list.
 
@@ -168,10 +165,13 @@ class PartSpecificationError(PartsError):
         formatted_errors: list[str] = []
 
         for error in error_list:
-            loc = error.get("loc")
-            msg = error.get("msg")
+            try:
+                loc = error["loc"]
+                msg = error["msg"]
+            except KeyError:
+                continue
 
-            if not (loc and msg) or not isinstance(loc, tuple):
+            if not loc or not msg:
                 continue
 
             field = cls._format_loc(loc)
@@ -185,19 +185,17 @@ class PartSpecificationError(PartsError):
         return cls(part_name=part_name, message="\n".join(formatted_errors))
 
     @classmethod
-    def _format_loc(cls, loc: "Loc") -> str:
+    def _format_loc(cls, loc: tuple[int | str, ...]) -> str:
         """Format location."""
-        loc_parts = []
+        loc_parts: list[str] = []
         for loc_part in loc:
             if isinstance(loc_part, str):
                 loc_parts.append(loc_part)
-            elif isinstance(loc_part, int):
+            else:
                 # Integer indicates an index. Go back and fix up previous part.
                 previous_part = loc_parts.pop()
                 previous_part += f"[{loc_part}]"
                 loc_parts.append(previous_part)
-            else:
-                raise TypeError(f"unhandled loc: {loc_part}")
 
         loc_str = ".".join(loc_parts)
 
@@ -837,7 +835,7 @@ class FilesystemMountError(PartsError):
 
     @classmethod
     def from_validation_error(
-        cls, *, error_list: list["ErrorDict"]
+        cls, *, error_list: list[ErrorDetails]
     ) -> "FilesystemMountError":
         """Create a FilesystemMountError from a pydantic error list.
 
@@ -846,10 +844,13 @@ class FilesystemMountError(PartsError):
         formatted_errors: list[str] = []
 
         for error in error_list:
-            loc = error.get("loc")
-            msg = error.get("msg")
+            try:
+                loc = error["loc"]
+                msg = error["msg"]
+            except KeyError:
+                continue
 
-            if not msg or not isinstance(loc, tuple):
+            if not msg:
                 continue
 
             field = cls._format_loc(loc)
@@ -865,19 +866,17 @@ class FilesystemMountError(PartsError):
         )
 
     @classmethod
-    def _format_loc(cls, loc: "Loc") -> str:
+    def _format_loc(cls, loc: tuple[int | str, ...]) -> str:
         """Format location."""
-        loc_parts = []
+        loc_parts: list[str] = []
         for loc_part in loc:
             if isinstance(loc_part, str):
                 loc_parts.append(loc_part)
-            elif isinstance(loc_part, int):
+            else:
                 # Integer indicates an index. Go back and fix up previous part.
                 previous_part = loc_parts.pop()
                 previous_part += f"[{loc_part}]"
                 loc_parts.append(previous_part)
-            else:
-                raise TypeError(f"unhandled loc: {loc_part}")
 
         loc_str = ".".join(loc_parts)
 

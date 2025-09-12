@@ -17,6 +17,9 @@
 """Utilities and helpers."""
 
 from typing import Any
+import logging
+
+logger = logging.getLogger()
 
 
 def package_name() -> str:
@@ -27,7 +30,7 @@ def package_name() -> str:
 class Singleton(type):
     """Singleton metaclass."""
 
-    _instances: dict = {}
+    _instances: dict["Singleton", Any] = {}
 
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
         """Return an existing instance, or create a new instance."""

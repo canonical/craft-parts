@@ -146,7 +146,7 @@ class LocalSource(SourceHandler):
                 if os.lstat(path).st_mtime >= target_mtime:
                     self._updated_files.add(os.path.relpath(path, self.source))
 
-            directories_to_remove = []
+            directories_to_remove: list[str] = []
             for directory in directories:
                 path = os.path.join(root, directory)  # noqa: PTH118
                 if os.lstat(path).st_mtime >= target_mtime:
@@ -213,7 +213,7 @@ def _ignore(
     also_ignore: list[str] | None = None,
 ) -> list[str]:
     """Build a list of files to ignore based on the given patterns."""
-    ignored = []
+    ignored: list[str] = []
     if directory in (source, current_directory):
         for pattern in patterns + (also_ignore or []):
             files = glob.glob(os.path.join(directory, pattern))  # noqa: PTH118, PTH207
