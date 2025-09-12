@@ -310,7 +310,7 @@ def test_basic_lifecycle_overlay_only(new_dir, mocker):
         # now we can build bar
         Action("bar", Step.BUILD),
         Action("bar", Step.STAGE),
-        # these steps shouldn't be here (to be fixed)
+        # "after" causes the dependency to be primed too
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
