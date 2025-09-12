@@ -38,6 +38,7 @@ class TestLayerMounting:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=base_layer_dir,
+            cache_level=0,
         )
 
         self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
@@ -79,6 +80,7 @@ class TestLayerMounting:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=None,
+            cache_level=0,
         )
 
         with pytest.raises(RuntimeError) as raised:
@@ -101,6 +103,7 @@ class TestLayerMounting:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=None,
+            cache_level=0,
         )
 
         with pytest.raises(RuntimeError) as raised:
@@ -136,6 +139,107 @@ class TestLayerMounting:
         Path("overlay/work").is_dir()
 
 
+class TestLayerMountingCacheLevel:
+    """Verify overlayfs mounting and unmounting with cache layer level."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, mocker, new_dir):
+        # pylint: disable=attribute-defined-outside-init
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        self.p1 = Part("p1", {"plugin": "nil"})
+        self.p2 = Part("p2", {"plugin": "nil"})
+        base_layer_dir = Path("base_dir")
+        base_layer_dir.mkdir()
+        self.om = OverlayManager(
+            project_info=info,
+            part_list=[self.p1, self.p2],
+            base_layer_dir=base_layer_dir,
+            cache_level=1,  # Order is base, p1, cache, p2
+        )
+
+        self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        self.mock_mount_overlayfs = mocker.patch(
+            "craft_parts.utils.os_utils.mount_overlayfs"
+        )
+        self.mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
+        # pylint: enable=attribute-defined-outside-init
+
+    def test_mount_layer(self, new_dir):
+        self.om.mount_layer(self.p2)
+        self.mock_mount_overlayfs.assert_called_with(
+            str(new_dir / "overlay/overlay"),
+            f"-olowerdir={new_dir}/parts/p1/layer:base_dir,"
+            f"upperdir={new_dir}/parts/p2/layer,"
+            f"workdir={new_dir}/overlay/work",
+        )
+
+    def test_mount_layer_single_part(self, new_dir):
+        self.om.mount_layer(self.p1)
+        self.mock_mount_overlayfs.assert_called_with(
+            str(new_dir / "overlay/overlay"),
+            f"-olowerdir=base_dir,upperdir={new_dir}/parts/p1/layer,"
+            f"workdir={new_dir}/overlay/work",
+        )
+
+    def test_mount_1st_layer_pkg_cache(self, new_dir):
+        self.om.mount_layer(self.p1, pkg_cache=True)
+        self.mock_mount_overlayfs.assert_called_with(
+            str(new_dir / "overlay/overlay"),
+            f"-olowerdir=base_dir,upperdir={new_dir}/parts/p1/layer,"
+            f"workdir={new_dir}/overlay/work",
+        )
+
+    def test_mount_2nd_layer_pkg_cache(self, new_dir):
+        self.om.mount_layer(self.p2, pkg_cache=True)
+        self.mock_mount_overlayfs.assert_called_with(
+            str(new_dir / "overlay/overlay"),
+            f"-olowerdir={new_dir}/overlay/packages:{new_dir}/parts/p1/layer:base_dir,"
+            f"upperdir={new_dir}/parts/p2/layer,"
+            f"workdir={new_dir}/overlay/work",
+        )
+
+    def test_mount_layer_no_base(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        overlay_manager = OverlayManager(
+            project_info=info,
+            part_list=[self.p1, self.p2],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+
+        with pytest.raises(RuntimeError) as raised:
+            overlay_manager.mount_layer(self.p1)
+
+        assert str(raised.value) == "request to mount overlay without a base layer"
+        self.mock_mount_overlayfs.assert_not_called()
+
+    def test_mount_pkg_cache(self, new_dir):
+        self.om.mount_pkg_cache()
+        self.mock_mount_overlayfs.assert_called_with(
+            str(new_dir / "overlay/overlay"),
+            f"-olowerdir={new_dir}/parts/p1/layer:base_dir,"
+            f"upperdir={new_dir}/overlay/packages,"
+            f"workdir={new_dir}/overlay/work",
+        )
+
+    def test_mount_pkg_cache_no_base(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        overlay_manager = OverlayManager(
+            project_info=info,
+            part_list=[self.p1, self.p2],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+
+        with pytest.raises(RuntimeError) as raised:
+            overlay_manager.mount_pkg_cache()
+
+        assert str(raised.value) == (
+            "request to mount the overlay package cache without a base layer"
+        )
+        self.mock_mount_overlayfs.assert_not_called()
+
+
 class TestPackageManagement:
     """Verify package installation on mounted overlayfs."""
 
@@ -151,6 +255,7 @@ class TestPackageManagement:
             project_info=info,
             part_list=[self.p1, self.p2],
             base_layer_dir=base_layer_dir,
+            cache_level=0,
         )
         self.mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         self.mock_mount_overlayfs = mocker.patch(
