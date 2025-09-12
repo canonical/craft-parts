@@ -183,7 +183,7 @@ class AptCache(ContextDecorator):
             destination = Path(self.stage_cache, dpkg_path[1:])
             if not destination.exists():
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                os.symlink(dpkg_path, destination)
+                destination.symlink_to(dpkg_path)
         else:
             logger.warning("Cannot find 'dpkg' command needed to support multiarch")
 

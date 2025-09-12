@@ -14,13 +14,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import stat
 import textwrap
 from pathlib import Path
 
 import craft_parts
 import pytest
 import yaml
-from craft_parts import Action, ActionType, Step
+from craft_parts import Step
 
 basic_parts_yaml = textwrap.dedent(
     """\
@@ -29,49 +31,41 @@ basic_parts_yaml = textwrap.dedent(
         plugin: dump
         source: source
         organize:
-          '*': (overlay)/"""
+          '*': dest/"""
 )
 
 
-@pytest.fixture(autouse=True)
-def setup_feature(enable_overlay_and_partitions_features):
-    return
-
-
-def test_organize_to_overlay(new_dir, mocker):
-    mocker.patch("os.geteuid", return_value=0)
-
+@pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+def test_organize_special_files(new_dir, mocker):
     parts = yaml.safe_load(basic_parts_yaml)
-
-    base_layer_dir = Path("base")
-    base_layer_dir.mkdir()
 
     source_dir = Path("source")
     source_dir.mkdir()
+    (source_dir / "dev").mkdir()
 
     # File to be organized into overlay
     (source_dir / "foo.txt").touch()
+    os.mknod(source_dir / "dev/null", 0o777 | stat.S_IFCHR, os.makedev(1, 3))
+    os.mknod(source_dir / "dev/loop99", 0o777 | stat.S_IFBLK, os.makedev(7, 99))
+    os.mkfifo(source_dir / "bar.fifo")
+    (source_dir / "qux").symlink_to("quux")
 
     lf = craft_parts.LifecycleManager(
         parts,
-        application_name="test_demo",
+        application_name="test",
         cache_dir=new_dir,
-        partitions=["default"],
-        base_layer_dir=base_layer_dir,
-        base_layer_hash=b"hash",
     )
     actions = lf.plan(Step.PRIME)
-    assert actions == [
-        Action("p1", Step.PULL),
-        Action("p1", Step.OVERLAY),
-        Action("p1", Step.BUILD, reason="organize contents to overlay"),
-        Action("p1", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
-        Action("p1", Step.STAGE),
-        Action("p1", Step.PRIME),
-    ]
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    assert Path("parts/p1/install/foo.txt").exists() is False
-    assert Path("parts/p1/layer/foo.txt").exists()
-    assert Path("prime/foo.txt").exists()
+    assert Path("prime/foo.txt").exists() is False
+    assert Path("prime/dev").exists() is False
+    assert Path("prime/bar.fifo").exists() is False
+    assert Path("prime/qux").exists() is False
+
+    assert Path("prime/dest/foo.txt").is_file()
+    assert stat.S_ISCHR(os.stat("prime/dest/dev/null").st_mode)  # noqa: PTH116
+    assert stat.S_ISBLK(os.stat("prime/dest/dev/loop99").st_mode)  # noqa: PTH116
+    assert stat.S_ISFIFO(os.stat("prime/dest/bar.fifo").st_mode)  # noqa: PTH116
+    assert Path("prime/dest/qux").readlink() == "quux"

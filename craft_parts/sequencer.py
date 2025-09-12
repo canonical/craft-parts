@@ -121,7 +121,7 @@ class Sequencer:
                     rerun_target_step=rerun_target_step,
                 )
 
-    def _add_step_actions(
+    def _add_step_actions(  # noqa: PLR0912
         self,
         *,
         current_step: Step,
@@ -141,6 +141,14 @@ class Sequencer:
         # check if step already ran, if not then run it
         if not self._sm.has_step_run(part, current_step):
             self._run_step(part, current_step, reason=reason)
+
+            # Parts that organize to the overlay run the BUILD step immediately
+            # after the OVERLAY step. Organization happens at the end of the
+            # BUILD step, and organized files may be needed by another part that
+            # installs overlay packages. See ST-158.
+            if part.organizes_to_overlay and current_step == Step.OVERLAY:
+                self._run_step(part, Step.BUILD, reason="organize contents to overlay")
+
             return
 
         # If the step has already run:
@@ -194,6 +202,15 @@ class Sequencer:
                     outdated_files=outdated_files,
                     outdated_dirs=outdated_dirs,
                 )
+
+                if part.organizes_to_overlay and current_step == Step.OVERLAY:
+                    self._update_step(
+                        part,
+                        Step.BUILD,
+                        reason="organize contents to overlay",
+                        outdated_files=outdated_files,
+                        outdated_dirs=outdated_dirs,
+                    )
             else:
                 self._rerun_step(part, current_step, reason=outdated_report.reason())
 

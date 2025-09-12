@@ -17,7 +17,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from unittest.mock import call
 
 import pytest
@@ -65,7 +65,10 @@ class TestPartHandling:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         self._part_info = PartInfo(info, self._part)
         self._handler = PartHandler(
@@ -173,7 +176,10 @@ class TestPartHandling:
 
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[p1], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[p1],
+            base_layer_dir=None,
+            cache_level=0,
         )
         part_info = PartInfo(self._project_info, p1)
         handler = PartHandler(
@@ -265,7 +271,10 @@ class TestPartHandling:
         )
 
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         handler = PartHandler(
             self._part,
@@ -350,7 +359,10 @@ class TestPartHandling:
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -390,7 +402,10 @@ class TestPartHandling:
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -425,7 +440,10 @@ class TestPartHandling:
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -460,7 +478,10 @@ class TestPartHandling:
         part_info = PartInfo(self._project_info, p1)
         step_info = StepInfo(part_info, step=step)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -512,7 +533,10 @@ class TestPartUpdateHandler:
             project_dirs=self._dirs,
         )
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         self._part_info = PartInfo(self._project_info, self._part)
         self._handler = PartHandler(
@@ -540,7 +564,10 @@ class TestPartUpdateHandler:
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         part_info = PartInfo(self._project_info, part=p1)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -563,7 +590,10 @@ class TestPartUpdateHandler:
         )
         part_info = PartInfo(self._project_info, p1)
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[self._part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
@@ -610,7 +640,10 @@ class TestPartUpdateHandler:
             partitions=partitions,
         )
         ovmgr = OverlayManager(
-            project_info=self._project_info, part_list=[part], base_layer_dir=None
+            project_info=self._project_info,
+            part_list=[part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         part_info = PartInfo(self._project_info, part)
         handler = PartHandler(
@@ -659,7 +692,10 @@ class TestPartCleanHandler:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[self._part], base_layer_dir=None
+            project_info=info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
         )
         self._part_info = PartInfo(info, self._part)
         self._handler = PartHandler(
@@ -706,7 +742,12 @@ class TestRerunStep:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[p1],
+            base_layer_dir=None,
+            cache_level=0,
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -741,7 +782,9 @@ class TestPackages:
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -754,7 +797,9 @@ class TestPackages:
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -774,7 +819,9 @@ class TestPackages:
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
         step_info = StepInfo(part_info, step=Step.PULL)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -796,7 +843,9 @@ class TestPackages:
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, part)
-        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[part], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             part, part_info=part_info, part_list=[part], overlay_manager=ovmgr
         )
@@ -822,7 +871,9 @@ class TestPackages:
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -838,7 +889,9 @@ class TestPackages:
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -859,7 +912,9 @@ class TestPackages:
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -893,7 +948,9 @@ class TestPackages:
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -916,7 +973,9 @@ class TestPackages:
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -935,7 +994,9 @@ class TestPackages:
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -949,7 +1010,9 @@ class TestPackages:
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -977,7 +1040,9 @@ class TestPackages:
 
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -1224,7 +1289,9 @@ class TestDirs:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, part)
-        ovmgr = OverlayManager(project_info=info, part_list=[part], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[part], base_layer_dir=None, cache_level=0
+        )
         handler = PartHandler(
             part,
             part_info=part_info,
@@ -1248,3 +1315,105 @@ class TestDirs:
                 if i == 0 and p is not None and p != "default":
                     assert sub_dir.is_symlink()
                     assert sub_dir.readlink() == Path(d).resolve()
+
+    @staticmethod
+    def _part_and_handler(
+        *,
+        usrmerged_by_default,
+        partitions,
+        new_dir,
+        plugin: str = "make",
+        part_spec: dict[str, Any] | None = None,
+    ) -> tuple[Part, PartHandler]:
+        spec = part_spec or {}
+        part = Part(
+            "foo",
+            {"plugin": plugin, "source": ".", **spec},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+            usrmerged_by_default=usrmerged_by_default,
+        )
+        part_info = PartInfo(info, part)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[part], base_layer_dir=None, cache_level=0
+        )
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        return part, handler
+
+    @staticmethod
+    def _assert_usrmerged(path: Path) -> None:
+        for name in ("bin", "lib", "lib64", "sbin"):
+            actual = path / f"usr/{name}"
+            assert actual.is_dir()
+
+            symlink = path / name
+            assert symlink.is_symlink()
+            assert symlink.readlink() == Path(f"usr/{name}")
+
+    def test_makedirs_usrmerged_default(self, new_dir, partitions):
+        """Test the behavior when 'usrmerged_by_default' is True."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+        )
+
+        handler._make_dirs()
+
+        # Check usrmerged structure in the install dir
+        self._assert_usrmerged(part.part_install_dir)
+
+    @pytest.mark.parametrize("plugin", ["nil", "dump"])
+    def test_makedirs_usrmerged_dump_nil(self, new_dir, partitions, plugin):
+        """Test the behavior when 'usrmerged_by_default' is True but the plugin is 'nil' or 'dump."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin=plugin,
+        )
+
+        handler._make_dirs()
+
+        assert list(part.part_install_dir.iterdir()) == []
+
+    @pytest.mark.parametrize("plugin", ["nil", "dump", "make"])
+    def test_makedirs_enable_usrmerge(self, new_dir, partitions, plugin):
+        """Test the behavior when 'usrmerged_by_default' is False but a part opts-in."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=False,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin=plugin,
+            part_spec={"build-attributes": ["enable-usrmerge"]},
+        )
+
+        handler._make_dirs()
+
+        # Check usrmerged structure in the install dir
+        self._assert_usrmerged(part.part_install_dir)
+
+    @pytest.mark.parametrize("plugin", ["nil", "dump", "make"])
+    def test_makedirs_disable_usrmerge(self, new_dir, partitions, plugin):
+        """Test the behavior when 'usrmerged_by_default' is True but a part opts-out."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin=plugin,
+            part_spec={"build-attributes": ["disable-usrmerge"]},
+        )
+
+        handler._make_dirs()
+
+        assert list(part.part_install_dir.iterdir()) == []
