@@ -36,7 +36,12 @@ from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
-from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
+from craft_parts.parts import (
+    Part,
+    get_parts_with_overlay,
+    has_overlay_visibility,
+    part_position,
+)
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import (
     MigrationContents,
@@ -1065,6 +1070,11 @@ class PartHandler:
         for partition in self._part_info.partitions or (None,):
             _remove(self._part.part_layer_dirs[partition])
         _remove(self._part.part_state_dir / "layer_hash")
+        # Clean the package cache if the part was below it and if the
+        # cache was not directly on top of the base layer.
+        part_level = part_position(self._part, part_list=self._part_list)
+        if part_level < self._overlay_manager.cache_level:
+            _remove(self._part.dirs.overlay_packages_dir)
 
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
