@@ -7,7 +7,7 @@
 [![Code Style][ruff-badge]][ruff-site]
 [![TICS][tics-badge]][tics-link]
 [![GitHub commits since latest release][commits-badge]][releases-link]
-[![GitHub Release Date][release-date-badge][releases-link]
+[![GitHub Release Date][release-date-badge]][releases-link]
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/craft-parts)
 [![GitHub License][license-badge][license-link]
 
