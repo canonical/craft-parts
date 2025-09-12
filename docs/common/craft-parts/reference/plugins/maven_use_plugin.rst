@@ -53,23 +53,22 @@ Version rewriting
 -----------------
 
 When building a :ref:`self-contained <maven_use_self-contained_start>` part, the
-following algorithm is used to decide which version to use:
+Maven Use plugin selects dependency versions as follows:
 
-First, it will check for an exact version match. That is, if a dependency on-disk has
-the exact same version string as what was requested in ``pom.xml``, no change will be
-done.
+If the version of the dependency specified in the project's ``pom.xml`` file exists
+locally, that version is selected.
 
-If not, it will compare all of the available versions on-disk using `semantic
-versioning`_ and select the oldest release that is still newer than what was requested.
-If no such release exists, it will instead select the newest release that is still
-older than what was requested.
+If the requested version doesn't exist locally, Maven Use compares the locally
+available versions that follow `semantic versioning`_ and selects the earliest
+subsequent release. If no such version is found, Maven Use selects the latest release
+that precedes the requested version.
 
-Next, if all previous scenarios fail, no version was requested at all, or if the
-requested version could not be interpreted as a semantic version, the latest release
-will be selected.
+If no prior conditions were satisfied, no version was requested, or the requested
+version couldn't be interpreted as a semantic version, the latest locally-available
+release following semantic versioning is selected.
 
-Finally, if no releases with semantic versions were available, the alphabetically
-highest release will be used.
+Finally, if no releases with semantic versions exist locally, the release that comes
+last alphabetically is used.
 
 How it works
 ------------
