@@ -57,6 +57,7 @@ def parts_dict(poetry_part):
     return {"parts": {"foo": poetry_part}}
 
 
+@pytest.mark.python
 def test_poetry_plugin(
     new_dir: pathlib.Path,
     partitions: list[str],
@@ -104,6 +105,7 @@ def test_poetry_plugin(
         assert result.stdout == "Test succeeded!\n"
 
 
+@pytest.mark.python
 def test_poetry_plugin_override_get_system_interpreter(
     new_dir, partitions, source_directory, parts_dict
 ):
@@ -132,6 +134,7 @@ def test_poetry_plugin_override_get_system_interpreter(
     assert os.readlink(python_link) == "use-this-python"  # noqa: PTH115
 
 
+@pytest.mark.python
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
 def test_poetry_plugin_no_system_interpreter(
     new_dir,
@@ -166,6 +169,7 @@ def test_poetry_plugin_no_system_interpreter(
         ctx.execute(actions)
 
 
+@pytest.mark.python
 def test_poetry_plugin_remove_symlinks(new_dir, partitions, parts_dict):
     """Override symlink removal."""
 
@@ -191,6 +195,7 @@ def test_poetry_plugin_remove_symlinks(new_dir, partitions, parts_dict):
     assert python_link.exists() is False
 
 
+@pytest.mark.python
 def test_poetry_plugin_override_shebangs(new_dir, partitions, parts_dict):
     """Override what we want in script shebang lines."""
 
@@ -216,6 +221,7 @@ def test_poetry_plugin_override_shebangs(new_dir, partitions, parts_dict):
     assert primed_script.open().readline().rstrip() == "#!/my/script/interpreter"
 
 
+@pytest.mark.python
 def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry_part):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
@@ -281,6 +287,7 @@ def test_find_payload_python_bad_version(new_dir, partitions, parts_dict, poetry
     assert expected_error_text in output
 
 
+@pytest.mark.python
 def test_find_payload_python_good_version(new_dir, partitions, parts_dict, poetry_part):
     """Test that the build succeeds if a payload interpreter is needed, and it's
     the right Python version."""

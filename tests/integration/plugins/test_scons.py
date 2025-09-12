@@ -2,10 +2,12 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
 
+@pytest.mark.plugin
 def test_scons_plugin(new_dir, partitions):
     """Test builds with the scons plugin"""
     source_location = Path(__file__).parent / "test_scons"
