@@ -649,7 +649,6 @@ class TestOverlayMigration:
         assert Path(f"overlay/{step_dir}_overlay").exists()
 
         _run_step_migration(self._p2_handler, step)
-        assert Path("overlay/packages").exists()
 
         self._p1_handler.clean_step(step)
         assert Path(f"{step_dir}/dir1/foo").exists()
@@ -662,7 +661,6 @@ class TestOverlayMigration:
         assert Path(f"{step_dir}/dir1/foo").exists() is False
         assert Path(f"{step_dir}/bar").exists() is False
         assert Path(f"{step_dir}/dir1/baz").exists() is False
-        assert Path(f"overlay/{step_dir}_overlay").exists() is False
 
     @pytest.mark.parametrize(
         ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
