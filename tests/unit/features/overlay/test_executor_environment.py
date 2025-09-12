@@ -74,7 +74,9 @@ def directories(new_dir, partitions):
 # pylint: disable=line-too-long
 
 
-def test_generate_step_environment_build(new_dir, partitions):
+def test_generate_step_environment_build(
+    host_arch: str, host_triplet: str, new_dir, partitions
+):
     p1 = Part(
         "p1",
         {"build-environment": [{"PART_ENVVAR": "from_part"}]},
@@ -106,9 +108,9 @@ def test_generate_step_environment_build(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -136,7 +138,9 @@ def test_generate_step_environment_build(new_dir, partitions):
     )
 
 
-def test_generate_step_environment_no_project_name(new_dir, partitions):
+def test_generate_step_environment_no_project_name(
+    host_arch: str, host_triplet: str, new_dir, partitions
+):
     p1 = Part(
         "p1",
         {"build-environment": [{"PART_ENVVAR": "from_part"}]},
@@ -163,9 +167,9 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -194,7 +198,9 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
 
 
 @pytest.mark.parametrize("step", set(Step) - {Step.BUILD})
-def test_generate_step_environment_no_build(new_dir, partitions, step):
+def test_generate_step_environment_no_build(
+    host_arch: str, host_triplet: str, new_dir, partitions, step
+):
     p1 = Part(
         "p1",
         {"build-environment": [{"PART_ENVVAR": "from_part"}]},
@@ -222,9 +228,9 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -252,7 +258,9 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
     )
 
 
-def test_generate_step_environment_no_user_env(new_dir, partitions):
+def test_generate_step_environment_no_user_env(
+    host_arch: str, host_triplet: str, new_dir, partitions
+):
     p1 = Part("p1", {})
     info = ProjectInfo(
         arch="arm64",
@@ -277,9 +285,9 @@ def test_generate_step_environment_no_user_env(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"

@@ -73,7 +73,7 @@ def directories(new_dir):  # pylint: disable=unused-argument
 # pylint: disable=line-too-long
 
 
-def test_generate_step_environment_build(new_dir):
+def test_generate_step_environment_build(host_arch: str, host_triplet: str, new_dir):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
         arch="arm64",
@@ -101,9 +101,9 @@ def test_generate_step_environment_build(new_dir):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -131,7 +131,7 @@ def test_generate_step_environment_build(new_dir):
 
 
 def test_generate_step_environment_build_features(
-    new_dir, enable_all_features, partitions
+    host_arch: str, host_triplet: str, new_dir, enable_all_features, partitions
 ):
     p1 = Part(
         "p1",
@@ -165,9 +165,9 @@ def test_generate_step_environment_build_features(
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -204,7 +204,9 @@ def test_generate_step_environment_build_features(
     )
 
 
-def test_generate_step_environment_no_project_name(new_dir):
+def test_generate_step_environment_no_project_name(
+    host_arch: str, host_triplet: str, new_dir
+):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
         arch="arm64",
@@ -227,9 +229,9 @@ def test_generate_step_environment_no_project_name(new_dir):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -257,7 +259,9 @@ def test_generate_step_environment_no_project_name(new_dir):
 
 
 @pytest.mark.parametrize("step", set(Step) - {Step.BUILD})
-def test_generate_step_environment_no_build(new_dir, step):
+def test_generate_step_environment_no_build(
+    host_arch: str, host_triplet: str, new_dir, step
+):
     p1 = Part("p1", {"build-environment": [{"PART_ENVVAR": "from_part"}]})
     info = ProjectInfo(
         arch="arm64",
@@ -281,9 +285,9 @@ def test_generate_step_environment_no_build(new_dir, step):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -310,7 +314,9 @@ def test_generate_step_environment_no_build(new_dir, step):
     )
 
 
-def test_generate_step_environment_no_user_env(new_dir):
+def test_generate_step_environment_no_user_env(
+    host_arch: str, host_triplet: str, new_dir
+):
     p1 = Part("p1", {})
     info = ProjectInfo(
         arch="arm64",
@@ -334,9 +340,9 @@ def test_generate_step_environment_no_user_env(new_dir):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
@@ -500,7 +506,7 @@ def test_get_global_environment(new_dir, partitions, invalid_vars):
 
 
 def test_get_global_environment_partitions(
-    new_dir, enable_partitions_feature, partitions
+    host_arch: str, host_triplet: str, new_dir, enable_partitions_feature, partitions
 ):
     """Test that get_global_environment doesn't include partitions when disabled."""
     work_dir = "/work"
@@ -516,10 +522,10 @@ def test_get_global_environment_partitions(
 
     assert environment._get_global_environment(info) == {
         "CRAFT_ARCH_BUILD_FOR": "arm64",
-        "CRAFT_ARCH_BUILD_ON": "amd64",
+        "CRAFT_ARCH_BUILD_ON": host_arch,
         "CRAFT_ARCH_TRIPLET": "aarch64-linux-gnu",
         "CRAFT_ARCH_TRIPLET_BUILD_FOR": "aarch64-linux-gnu",
-        "CRAFT_ARCH_TRIPLET_BUILD_ON": "x86_64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON": host_triplet,
         "CRAFT_DEFAULT_PRIME": f"{work_dir}/prime",
         "CRAFT_DEFAULT_STAGE": f"{work_dir}/stage",
         "CRAFT_MYPART_PRIME": f"{work_dir}/partitions/mypart/prime",
@@ -536,7 +542,7 @@ def test_get_global_environment_partitions(
 
 
 def test_get_global_environment_partitions_overlay(
-    new_dir, enable_all_features, partitions
+    host_arch: str, host_triplet: str, new_dir, enable_all_features, partitions
 ):
     """Test that get_global_environment doesn't include partitions when disabled."""
     work_dir = "/work"
@@ -552,10 +558,10 @@ def test_get_global_environment_partitions_overlay(
 
     assert environment._get_global_environment(info) == {
         "CRAFT_ARCH_BUILD_FOR": "arm64",
-        "CRAFT_ARCH_BUILD_ON": "amd64",
+        "CRAFT_ARCH_BUILD_ON": host_arch,
         "CRAFT_ARCH_TRIPLET": "aarch64-linux-gnu",
         "CRAFT_ARCH_TRIPLET_BUILD_FOR": "aarch64-linux-gnu",
-        "CRAFT_ARCH_TRIPLET_BUILD_ON": "x86_64-linux-gnu",
+        "CRAFT_ARCH_TRIPLET_BUILD_ON": host_triplet,
         "CRAFT_DEFAULT_PRIME": f"{work_dir}/prime",
         "CRAFT_DEFAULT_STAGE": f"{work_dir}/stage",
         "CRAFT_MYPART_PRIME": f"{work_dir}/partitions/mypart/prime",
