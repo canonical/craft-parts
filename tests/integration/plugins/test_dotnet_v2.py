@@ -14,14 +14,21 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import platform
 import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, plugins
 from craft_parts.plugins import dotnet_v2_plugin
 
 
+@pytest.mark.plugin
+@pytest.mark.skipif(
+    platform.machine() != "x86_64",
+    reason="https://github.com/canonical/craft-parts/issues/1282",
+)
 def test_dotnet_plugin(new_dir, partitions):
     project_path = Path(__file__).parent / "test_dotnet_v2"
     with open(project_path / "parts.yaml") as file:  # noqa: PTH123
@@ -49,6 +56,11 @@ def test_dotnet_plugin(new_dir, partitions):
     assert output == "Hello, World!\n"
 
 
+@pytest.mark.plugin
+@pytest.mark.skipif(
+    platform.machine() != "x86_64",
+    reason="https://github.com/canonical/craft-parts/issues/1282",
+)
 def test_dotnet_plugin_no_dotnet(new_dir, partitions, fp):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
     fp.allow_unregistered(allow=True)
@@ -56,6 +68,11 @@ def test_dotnet_plugin_no_dotnet(new_dir, partitions, fp):
     test_dotnet_plugin(new_dir, partitions)
 
 
+@pytest.mark.plugin
+@pytest.mark.skipif(
+    platform.machine() != "x86_64",
+    reason="https://github.com/canonical/craft-parts/issues/1282",
+)
 def test_dotnet_plugin_fake_dotnet(new_dir, partitions, fp):
     """Test the dotnet plugin while pretending dotnet is installed."""
     fp.allow_unregistered(allow=True)

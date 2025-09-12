@@ -14,16 +14,22 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import platform
 import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
 from typing_extensions import override
 
 
+@pytest.mark.plugin
+@pytest.mark.skipif(
+    platform.machine() != "x86_64", reason="dotnet v1 plugin is only designed for amd64"
+)
 def test_dotnet_plugin(new_dir, partitions):
     # pylint: disable=line-too-long
     parts_yaml = textwrap.dedent(
@@ -84,6 +90,10 @@ def test_dotnet_plugin(new_dir, partitions):
     assert output == "Hello, World!\n"
 
 
+@pytest.mark.plugin
+@pytest.mark.skipif(
+    platform.machine() != "x86_64", reason="dotnet v1 plugin is only designed for amd64"
+)
 def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
 
@@ -106,6 +116,10 @@ def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
     test_dotnet_plugin(new_dir, partitions)
 
 
+@pytest.mark.plugin
+@pytest.mark.skipif(
+    platform.machine() != "x86_64", reason="dotnet v1 plugin is only designed for amd64"
+)
 def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet is installed."""
 
