@@ -68,7 +68,7 @@ version couldn't be interpreted as a semantic version, the latest locally-availa
 release following semantic versioning is selected.
 
 Finally, if no releases with semantic versions exist locally, the release that comes
-last alphabetically is used.
+last alphabetically is selected.
 
 How it works
 ------------
