@@ -435,6 +435,79 @@ class TestPartReapplyHandler:
 
 
 @pytest.mark.usefixtures("new_dir")
+class TestPartOverlayCleaning:
+    """Verify the part handler step cleaning the overlay."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, mocker, new_dir, partitions):
+        # pylint: disable=attribute-defined-outside-init
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+        )
+        p2 = Part(
+            "p2", {"plugin": "nil", "overlay-packages": ["pkg1"]}, partitions=partitions
+        )
+        p3 = Part("p3", {"plugin": "nil"}, partitions=partitions)
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        base_dir = new_dir / "base"
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[p1, p2, p3],
+            base_layer_dir=base_dir,
+            cache_level=1,
+        )
+
+        self._p1_handler = PartHandler(
+            p1,
+            part_info=PartInfo(info, p1),
+            part_list=[p1, p2, p3],
+            overlay_manager=ovmgr,
+        )
+        self._p2_handler = PartHandler(
+            p2,
+            part_info=PartInfo(info, p2),
+            part_list=[p1, p2, p3],
+            overlay_manager=ovmgr,
+        )
+        self._p3_handler = PartHandler(
+            p3,
+            part_info=PartInfo(info, p3),
+            part_list=[p1, p2, p3],
+            overlay_manager=ovmgr,
+        )
+
+        self._p1_handler._make_dirs()
+        self._p2_handler._make_dirs()
+        self._p3_handler._make_dirs()
+
+        mocker.patch("craft_parts.utils.os_utils.mount")
+        mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
+        mocker.patch.object(OverlayManager, "mount_pkg_cache")
+        mocker.patch.object(OverlayManager, "unmount")
+        mocker.patch.object(OverlayManager, "install_packages")
+        mocker.patch.object(OverlayManager, "download_packages")
+        mocker.patch.object(OverlayManager, "refresh_packages_list")
+
+    def test_clean_overlay(self):
+        step = Step.OVERLAY
+        _run_step_migration(self._p1_handler, step)
+        _run_step_migration(self._p2_handler, step)
+        _run_step_migration(self._p3_handler, step)
+        assert Path("overlay/packages").exists()
+
+        # Cleaning part3 does not invalidate the cache layer
+        self._p3_handler.clean_step(step)
+        assert Path("overlay/packages").exists()
+        # Cleaning part2 does not invalidate the cache layer either (still above)
+        self._p2_handler.clean_step(step)
+        assert Path("overlay/packages").exists()
+        # Cleaning part1 does invalidate the cache layer
+        self._p1_handler.clean_step(step)
+        assert Path("overlay/packages").exists() is False
+
+
+@pytest.mark.usefixtures("new_dir")
 class TestOverlayMigration:
     """Overlay migration to stage and prime test cases"""
 
@@ -445,7 +518,7 @@ class TestOverlayMigration:
             "p1", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
         )
         p2 = Part(
-            "p2", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+            "p2", {"plugin": "nil", "overlay-packages": ["pkg1"]}, partitions=partitions
         )
         p3 = Part("p3", {"plugin": "nil"}, partitions=partitions)
 
@@ -454,7 +527,7 @@ class TestOverlayMigration:
             project_info=info,
             part_list=[p1, p2, p3],
             base_layer_dir=None,
-            cache_level=0,
+            cache_level=1,
         )
 
         self._p1_handler = PartHandler(
@@ -576,12 +649,14 @@ class TestOverlayMigration:
         assert Path(f"overlay/{step_dir}_overlay").exists()
 
         _run_step_migration(self._p2_handler, step)
+        assert Path("overlay/packages").exists()
 
         self._p1_handler.clean_step(step)
         assert Path(f"{step_dir}/dir1/foo").exists()
         assert Path(f"{step_dir}/bar").exists()
         assert Path(f"{step_dir}/dir1/baz").exists()
         assert Path(f"overlay/{step_dir}_overlay").exists()
+        assert Path("overlay/packages").exists() is False
 
         self._p2_handler.clean_step(step)
         assert Path(f"{step_dir}/dir1/foo").exists() is False

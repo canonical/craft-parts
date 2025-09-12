@@ -504,6 +504,20 @@ class TestPartHelpers:
             parts.part_list_by_name(["bar", "invalid"], [p1, p2, p3])
         assert raised.value.part_name == "invalid"
 
+    def test_part_position(self, partitions):
+        p1 = Part("foo", {}, partitions=partitions)
+        p2 = Part("bar", {}, partitions=partitions)
+        p3 = Part("baz", {}, partitions=partitions)
+
+        x = parts.part_position(p2, part_list=[p1, p2, p3])
+        assert x == 1
+
+        with pytest.raises(errors.InvalidPartName) as raised:
+            parts.part_position(
+                Part("invalid", {}, partitions=partitions), part_list=[p1, p2, p3]
+            )
+        assert raised.value.part_name == "invalid"
+
     def test_part_dependencies(self, partitions):
         p1 = Part("foo", {"after": ["bar", "baz"]}, partitions=partitions)
         p2 = Part("bar", {"after": ["qux"]}, partitions=partitions)
