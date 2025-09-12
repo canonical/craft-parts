@@ -1093,6 +1093,20 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     return sorted_parts
 
 
+def part_position(part: Part, *, part_list: list[Part]) -> int:
+    """Return the position of a part in the part list.
+
+    :param part: The part to get the position of.
+    :param part_list: The list of parts to look into.
+
+    :returns: The part position
+    """
+    for i, p in enumerate(part_list):
+        if p.name == part.name:
+            return i
+    raise errors.InvalidPartName(part.name)
+
+
 def part_dependencies(
     part: Part, *, part_list: list[Part], recursive: bool = False
 ) -> set[Part]:
