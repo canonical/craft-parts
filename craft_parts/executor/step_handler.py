@@ -409,7 +409,7 @@ class StepHandler:
         selector = selectors.SelectSelector()
 
         def accept(sock: socket.socket, _mask: int) -> None:
-            conn, addr = sock.accept()
+            conn, _ = sock.accept()
             selector.register(conn, selectors.EVENT_READ, read)
 
         def read(conn: socket.socket, _mask: int) -> None:

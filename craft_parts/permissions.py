@@ -204,18 +204,12 @@ def _squash_permissions(permissions: list[Permissions]) -> Permissions:
     :param permissions: A series of Permissions objects to be "squashed" into a single
         one.
     """
-    attributes = {
-        "path": "*",
-        "owner": None,
-        "group": None,
-        "mode": None,
-    }
+    squashed_permissions = Permissions(path="*", owner=None, group=None, mode=None)
 
-    keys = tuple(attributes.keys())
     for permission in permissions:
-        for key in keys:
+        for key in ["path", "owner", "group", "mode"]:
             permission_value = getattr(permission, key)
             if permission_value is not None:
-                attributes[key] = permission_value
+                setattr(squashed_permissions, key, permission_value)
 
-    return Permissions(**attributes)
+    return squashed_permissions

@@ -19,3 +19,10 @@
 from .environment import expand_environment
 from .executor import ExecutionContext, Executor
 from .filesets import Fileset
+
+__all__ = [
+    "ExecutionContext",
+    "Executor",
+    "expand_environment",
+    "Fileset",
+]

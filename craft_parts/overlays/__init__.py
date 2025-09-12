@@ -28,3 +28,20 @@ from .overlays import (
     oci_whiteout,
     visible_in_layer,
 )
+
+__all__ = [
+    "is_oci_opaque_dir",
+    "is_oci_whiteout",
+    "is_oci_whiteout_file",
+    "is_opaque_dir",
+    "is_whiteout_file",
+    "LayerHash",
+    "LayerMount",
+    "LayerStateManager",
+    "oci_opaque_dir",
+    "oci_whiteout",
+    "oci_whited_out_file",
+    "OverlayManager",
+    "PackageCacheMount",
+    "visible_in_layer",
+]

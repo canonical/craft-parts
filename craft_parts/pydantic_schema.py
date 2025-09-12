@@ -44,7 +44,7 @@ class Part(pydantic.BaseModel):
         source_raw_data = {
             key: val for key, val in data.items() if key.startswith("source")
         }
-        source_data: sources.SourceModel = pydantic.TypeAdapter(
+        source_data: sources.SourceModel = pydantic.TypeAdapter(  # type: ignore[reportUnknownVariableType]
             sources.SourceModel
         ).validate_python(source_raw_data)
 
@@ -76,8 +76,8 @@ class Part(pydantic.BaseModel):
             pydantic.ConfigDict(extra="allow"),
         ]
 
-        source_adapter: pydantic.TypeAdapter = pydantic.TypeAdapter(sources.SourceModel)
-        plugin_adapter: pydantic.TypeAdapter = pydantic.TypeAdapter(plugin_model)
+        source_adapter = pydantic.TypeAdapter(sources.SourceModel)  # type: ignore[reportUnknownVariableType, var-annotated]
+        plugin_adapter = pydantic.TypeAdapter(plugin_model)  # type: ignore[reportUnknownVariableType]
         source_json_schema = source_adapter.json_schema(
             by_alias=by_alias,
             ref_template=ref_template,

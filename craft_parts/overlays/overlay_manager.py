@@ -33,7 +33,7 @@ from .overlay_fs import OverlayFS
 logger = logging.getLogger(__name__)
 
 
-def _defer_evaluation(method: Callable) -> Callable:
+def _defer_evaluation(method: Callable[..., Any]) -> Callable[..., Any]:
     """Wrap methods to defer evaluation.
 
     Defer evaluation of proxied class methods to happen at execution time.

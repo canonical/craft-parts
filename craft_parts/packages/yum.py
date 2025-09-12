@@ -52,6 +52,7 @@ class YUMRepository(BaseRepository):
     @classmethod
     def get_packages_for_source_type(cls, source_type: str) -> set[str]:
         """Return a list of packages required to work with source_type."""
+        packages: set[str]
         if source_type == "bzr":
             packages = {"bzr"}
         elif source_type == "git":

@@ -43,7 +43,7 @@ class PythonPlugin(BasePythonPlugin):
     _options: PythonPluginProperties
 
     def _get_package_install_commands(self) -> list[str]:
-        commands = []
+        commands: list[str] = []
 
         pip = self._get_pip()
 

@@ -78,8 +78,8 @@ class JavaPlugin(Plugin):
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Override JAVA_HOME in the build environment."""
-        env = {}
-        candidate_java = {}
+        env: dict[str, str] = {}
+        candidate_java: dict[int, str] = {}
         for javac in self._find_javac():
             spec, home = self._check_java(javac)
             if spec is not None:

@@ -253,7 +253,7 @@ class Executor:
         for part in self._part_list:
             self._create_part_handler(part)
 
-        build_packages = set()
+        build_packages: set[str] = set()
         for handler in self._handler.values():
             build_packages.update(handler.build_packages)
 
@@ -264,7 +264,7 @@ class Executor:
         packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
-        build_snaps = set()
+        build_snaps: set[str] = set()
         for handler in self._handler.values():
             build_snaps.update(handler.build_snaps)
 

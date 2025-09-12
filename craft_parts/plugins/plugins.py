@@ -82,7 +82,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "uv": UvPlugin,
 }
 
-_PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
+_Plugins = copy.deepcopy(_BUILTIN_PLUGINS)
 
 
 def get_plugin(
@@ -114,15 +114,15 @@ def get_plugin_class(name: str) -> PluginType:
 
     :raise ValueError: If the plugin name is invalid.
     """
-    if name not in _PLUGINS:
+    if name not in _Plugins:
         raise ValueError(f"plugin not registered: {name!r}")
 
-    return _PLUGINS[name]
+    return _Plugins[name]
 
 
 def get_registered_plugins() -> dict[str, PluginType]:
     """Return the list of currently registered plugins."""
-    return copy.deepcopy(_PLUGINS)
+    return copy.deepcopy(_Plugins)
 
 
 def register(plugins: dict[str, PluginType]) -> None:
@@ -131,19 +131,19 @@ def register(plugins: dict[str, PluginType]) -> None:
     :param plugins: a dictionary where the keys are plugin names and values
         are plugin classes. Valid plugins must subclass class:`Plugin`.
     """
-    _PLUGINS.update(plugins)
+    _Plugins.update(plugins)
 
 
 def unregister(*plugins: str) -> None:
     """Unregister plugins by name."""
     for plugin in plugins:
-        _PLUGINS.pop(plugin, None)
+        _Plugins.pop(plugin, None)
 
 
 def unregister_all() -> None:
     """Unregister all user-registered plugins."""
-    global _PLUGINS  # noqa: PLW0603
-    _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
+    global _Plugins  # noqa: PLW0603
+    _Plugins = copy.deepcopy(_BUILTIN_PLUGINS)
 
 
 def extract_part_properties(
