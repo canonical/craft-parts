@@ -47,6 +47,10 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
 APT_PACKAGES += python3-venv
 endif
+# 7z is used for sources.
+ifeq ($(wildcard /usr/share/doc/7zip/copyright),)
+APT_PACKAGES += 7zip
+endif
 ifeq ($(wildcard /usr/share/doc/intltool/copyright),)
 APT_PACKAGES += intltool
 endif
@@ -169,6 +173,10 @@ ifneq ($(VERSION_CODENAME),jammy)
 ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
 APT_PACKAGES += python3-poetry-plugin-export
 endif
+# On Jammy, we can use pip to install meson. Everywhere else we install it through apt.
+ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
+APT_PACKAGES += meson
+endif
 endif
 
 .PHONY: install-chisel
@@ -199,7 +207,7 @@ else
 endif
 
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20
+install-build-snaps: install-chisel install-go install-core20 install-rustup
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
@@ -215,6 +223,15 @@ endif
 # If additional build dependencies need installing in order to build the linting env.
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
+
+.PHONY: install-rustup
+install-rustup:
+ifeq ($(shell which rustup),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install rustup without snap. Install it yourself.)
+else
+	sudo snap install rustup --classic
+endif
 
 # A temporary override to the lint-docs directive to ignore the sphinx-resources git submodule.
 .PHONY: lint-docs
