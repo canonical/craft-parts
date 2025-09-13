@@ -47,7 +47,7 @@ dev = [
     "pytest-cov~=5.0",
     "pytest-mock~=3.12",
     "pyfakefs~=5.3",
-    "mypy[reports]~=1.14.1",
+    "mypy[reports]~=1.17.1",
     "pyright==1.1.391",
     "types-Pygments",
     "types-colorama",
