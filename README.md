@@ -1,20 +1,14 @@
 # Craft Parts
 
 [![Canonical Starcraft][starcraft-badge]][canonical-link]
-[![Documentation Status][rtd-badge]][rtd-latest]
-[![QA][qa-badge]][qa-link]
+[![GitHub License][license-badge]][license-link]
 [![PyPI - Version](https://img.shields.io/pypi/v/craft-parts)][pypi]
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/craft-parts)][pypi]
-[![GitHub License][license-badge]][license-link]
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/craft-parts)
+[![QA][qa-badge]][qa-link]
 [![TICS][tics-badge]][tics-link]
 [![GitHub commits since latest release][commits-badge]][releases-link]
 [![GitHub Release Date][release-date-badge]][releases-link]
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/craft-parts)
-[![Python code style: ruff][ruff-badge]][ruff-link]
-[![Bash code style: shellcheck][shellcheck-badge]][shellcheck-link]
-[![Checked with mypy][mypy-badge]][mypy-link]
-[![Checked with pyright][pyright-badge]][pyright-link]
-[![Managed with uv][uv-badge]][uv-link]
 
 [//]: # "Once the Starcraft matrix channel gets a canonical URL we should add it."
 [//]: # "What's the correct discussion forum for our libraries?"
@@ -26,6 +20,8 @@ before it is packaged into the final artifact.
 This library is most useful for app developers in the Starcraft family.
 
 ## Documentation
+
+[![Documentation Status][rtd-badge]][rtd-latest]
 
 The [Craft Parts documentation][rtd-latest] describes the library's key components and
 provides guidance on its usage.
@@ -39,6 +35,12 @@ Craft Parts is covered by the [Ubuntu Code of
 Conduct](https://ubuntu.com/community/ethos/code-of-conduct).
 
 ## Contribute to Craft Parts
+
+[![Managed with uv][uv-badge]][uv-link]
+[![Python code style: ruff][ruff-badge]][ruff-link]
+[![Checked with mypy][mypy-badge]][mypy-link]
+[![Checked with pyright][pyright-badge]][pyright-link]
+[![Bash code style: shellcheck][shellcheck-badge]][shellcheck-link]
 
 Craft Parts is open source and part of the Canonical family. We would love
 your help.
