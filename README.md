@@ -2,7 +2,7 @@
 
 [![Canonical Starcraft][starcraft-badge]][canonical-link]
 [![Documentation Status][rtd-badge]][rtd-latest]
-[![.github/workflows/qa.yaml][qa-badge]][qa-link]
+[![QA][qa-badge]][qa-link]
 [![PyPI - Version](https://img.shields.io/pypi/v/craft-parts)][pypi]
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/craft-parts)][pypi]
 [![GitHub License][license-badge]][license-link]
