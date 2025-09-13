@@ -1,6 +1,6 @@
 # Craft Parts
 
-[![Canonical Starcraft][starcraft-badge]]
+[![Canonical Starcraft][starcraft-badge]][canonical-link]
 [![Documentation Status][rtd-badge]][rtd-latest]
 [![.github/workflows/qa.yaml][qa-badge]][qa-link]
 [![PyPI - Version](https://img.shields.io/pypi/v/craft-parts)][pypi]
@@ -56,6 +56,7 @@ Craft Parts is released under the [LGPL-3.0 license](LICENSE).
 
 © 2021-2025 Canonical Ltd.
 
+[canonical-link]: https://canonical.com
 [commits-badge]: https://img.shields.io/github/commits-since/canonical/craft-parts/latest?logo=pypi&link=https%3A%2F%2Fgithub.com%2Fcanonical%2Fcraft-parts%2Freleases
 [license-badge]: https://img.shields.io/github/license/canonical/craft-parts?color=green
 [license-link]: https://github.com/canonical/craft-parts/blob/main/LICENSE
