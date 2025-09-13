@@ -1,4 +1,4 @@
-# Craft Parts
+# ![Canonical][canonical-logo] Craft Parts
 
 [![Documentation Status][rtd-badge]][rtd-latest]
 [![.github/workflows/qa.yaml][qa-badge]][qa-link]
@@ -9,7 +9,7 @@
 [![GitHub commits since latest release][commits-badge]][releases-link]
 [![GitHub Release Date][release-date-badge]][releases-link]
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/craft-parts)
-[![Python code style: ruff][ruff-badge]][ruff-site]
+[![Python code style: ruff][ruff-badge]][ruff-link]
 [![Bash code style: shellcheck][shellcheck-badge]][shellcheck-link]
 [![Checked with mypy][mypy-badge]][mypy-link]
 [![Checked with pyright][pyright-badge]][pyright-link]
@@ -51,23 +51,24 @@ Craft Parts is released under the [LGPL-3.0 license](LICENSE).
 
 © 2021-2025 Canonical Ltd.
 
+[canonical-logo]: https://canonical-craft-parts.readthedocs-hosted.com/latest/_static/tag.png
 [commits-badge]: https://img.shields.io/github/commits-since/canonical/craft-parts/latest?logo=pypi&link=https%3A%2F%2Fgithub.com%2Fcanonical%2Fcraft-parts%2Freleases
-[mypy-badge]: https://img.shields.io/badge/python-mypy-blue?logo=python
-[pyright-badge]: https://microsoft.github.io/pyright/img/pyright_badge.svg
-[qa-badge]: https://github.com/canonical/craft-parts/actions/workflows/qa.yaml/badge.svg?branch=main
-[release-date-badge]: https://img.shields.io/github/release-date/canonical/craft-parts?display_date=published_at&logo=pypi
-[rtd-badge]: https://readthedocs.com/projects/canonical-craft-parts/badge/?version=latest
-[ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
-[shellcheck-badge]: https://img.shields.io/badge/bash-shellcheck-blue?logo=gnubash
-[tics-badge]: https://github.com/canonical/craft-parts/actions/workflows/tics.yaml/badge.svg
 [license-badge]: https://img.shields.io/github/license/canonical/craft-parts?color=green
 [license-link]: https://github.com/canonical/craft-parts/blob/main/LICENSE
+[mypy-badge]: https://img.shields.io/badge/python-mypy-blue?logo=python
 [mypy-link]: https://www.mypy-lang.org/
 [pypi]: https://pypi.org/project/craft-parts
+[pyright-badge]: https://microsoft.github.io/pyright/img/pyright_badge.svg
 [pyright-link]: https://microsoft.github.io/pyright/
+[qa-badge]: https://github.com/canonical/craft-parts/actions/workflows/qa.yaml/badge.svg?branch=main
 [qa-link]: https://github.com/canonical/craft-parts/actions/workflows/qa.yaml
+[release-date-badge]: https://img.shields.io/github/release-date/canonical/craft-parts?display_date=published_at&logo=pypi
 [releases-link]: https://github.com/canonical/craft-parts/releases
+[rtd-badge]: https://readthedocs.com/projects/canonical-craft-parts/badge/?version=latest
 [rtd-latest]: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
-[ruff-site]: https://github.com/astral-sh/ruff
+[ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+[ruff-link]: https://astral.sh/ruff
+[shellcheck-badge]: https://img.shields.io/badge/bash-shellcheck-blue?logo=gnubash
 [shellcheck-link]: https://github.com/koalaman/shellcheck
+[tics-badge]: https://github.com/canonical/craft-parts/actions/workflows/tics.yaml/badge.svg
 [tics-link]: https://github.com/canonical/craft-parts/actions/workflows/tics.yaml
