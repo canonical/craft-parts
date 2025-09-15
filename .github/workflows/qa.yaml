@@ -28,7 +28,7 @@ jobs:
       pytest-markers: not java and not python and not plugin
       setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
   test-java-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@work/setup-vars
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: '["ubuntu-24.04"]'
@@ -37,7 +37,7 @@ jobs:
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
   test-python-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@work/setup-vars
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: '["ubuntu-24.04"]'
@@ -46,7 +46,7 @@ jobs:
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
   test-other-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@work/setup-vars
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: '["ubuntu-24.04"]'
