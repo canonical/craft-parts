@@ -36,11 +36,32 @@ jobs:
       lowest-python-version: ""
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
-  test-python-plugins:
+  test-python-plugins-jammy:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
-      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+        ]
+      slow-test-python-versions: '["3.10"]'
+      lowest-python-platform: ""
+      pytest-markers: python
+      setup-vars: NO_JAVA=1 NO_PLUGIN=1
+  test-python-plugins-noble:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      # Note: s390x and ppc64el cannot be made required until the runners are no longer
+      # marked as experimental.
+      slow-test-platforms: >
+        [
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x"],
+          ["noble", "ppc64el"],
+        ]
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: python
