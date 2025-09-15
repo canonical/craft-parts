@@ -41,6 +41,7 @@ def use_maven_wrapper(request, testing_source_dir):
     return
 
 
+@pytest.mark.java
 @pytest.mark.parametrize(
     ("use_maven_wrapper", "stage_packages"),
     [(True, "[default-jre-headless]"), (False, "[default-jre-headless, maven]")],
@@ -63,6 +64,7 @@ def test_maven_plugin(
     _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
 
 
+@pytest.mark.java
 @pytest.mark.parametrize("use_maven_wrapper", [False], indirect=True)
 def test_maven_plugin_use_maven_wrapper_wrapper_missing(
     new_dir, partitions, testing_source_dir, use_maven_wrapper

@@ -67,6 +67,7 @@ def use_gradlew(request, testing_source_dir):
 # Parametrization of using gradle vs gradlew is not applied since gradle cannot
 # run init scripts at the time of writing (2025-04-2) due to the version provided
 # by Ubuntu packages archive being too low (4.4.1).
+@pytest.mark.java
 def test_gradle_plugin_gradlew(
     new_dir, testing_source_dir, partitions, local_proxy_url
 ):
@@ -111,6 +112,7 @@ def test_gradle_plugin_gradlew(
 
 
 @pytest.mark.skip(reason="Current apt provided Gradle (4.4.1) cannot build even with ")
+@pytest.mark.java
 @pytest.mark.parametrize("use_gradlew", [False], indirect=True)
 def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradlew):
     part_name = "foo"

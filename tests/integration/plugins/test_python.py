@@ -34,6 +34,7 @@ def teardown_module():
     plugins.unregister_all()
 
 
+@pytest.mark.python
 def test_python_plugin(new_dir, partitions):
     """Prime a simple python source."""
     source_location = Path(__file__).parent / "test_python"
@@ -61,6 +62,7 @@ def test_python_plugin(new_dir, partitions):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
+@pytest.mark.python
 def test_python_plugin_with_pyproject_toml(new_dir, partitions):
     """Prime a simple python source."""
     source_location = Path(__file__).parent / "test_python_pyproject_toml"
@@ -91,6 +93,7 @@ def test_python_plugin_with_pyproject_toml(new_dir, partitions):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
+@pytest.mark.python
 def test_python_plugin_symlink(new_dir, partitions):
     """Run in the standard scenario with no overrides."""
     parts_yaml = textwrap.dedent(
@@ -120,6 +123,7 @@ def test_python_plugin_symlink(new_dir, partitions):
     assert os.path.basename(python_link).startswith("python3")  # noqa: PTH119
 
 
+@pytest.mark.python
 def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     """Override the system interpreter, link should use it."""
 
@@ -153,6 +157,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
     assert os.readlink(python_link) == "use-this-python"  # noqa: PTH115
 
 
+@pytest.mark.python
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
 def test_python_plugin_no_system_interpreter(
     new_dir,
@@ -193,6 +198,7 @@ def test_python_plugin_no_system_interpreter(
         ctx.execute(actions)
 
 
+@pytest.mark.python
 def test_python_plugin_remove_symlinks(new_dir, partitions):
     """Override symlink removal."""
 
@@ -225,6 +231,7 @@ def test_python_plugin_remove_symlinks(new_dir, partitions):
     assert python_link.exists() is False
 
 
+@pytest.mark.python
 def test_python_plugin_fix_shebangs(new_dir, partitions):
     """Check if shebangs are properly fixed in scripts."""
     parts_yaml = textwrap.dedent(
@@ -249,6 +256,7 @@ def test_python_plugin_fix_shebangs(new_dir, partitions):
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
 
 
+@pytest.mark.python
 def test_python_plugin_override_shebangs(new_dir, partitions):
     """Override what we want in script shebang lines."""
 
@@ -296,6 +304,7 @@ parts:
 """
 
 
+@pytest.mark.python
 def test_find_payload_python_bad_version(new_dir, partitions):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
@@ -357,6 +366,7 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     assert expected_error_text in output
 
 
+@pytest.mark.python
 def test_find_payload_python_good_version(new_dir, partitions):
     """Test that the build succeeds if a payload interpreter is needed, and it's
     the right Python version."""
@@ -391,6 +401,7 @@ def test_find_payload_python_good_version(new_dir, partitions):
     assert expected_text in output
 
 
+@pytest.mark.python
 def test_no_shebangs(new_dir, partitions):
     """Test that building a Python part with no scripts works."""
 

@@ -25,6 +25,7 @@ from craft_parts import LifecycleManager, Step
 SOURCE_DIR = Path(__file__).parent / "test_maven_use"
 
 
+@pytest.mark.java
 def test_maven_use_plugin(new_dir, partitions, monkeypatch):
     project_dir = Path(new_dir) / "project"
     shutil.copytree(SOURCE_DIR / "simple", project_dir)
@@ -55,6 +56,7 @@ def test_maven_use_plugin(new_dir, partitions, monkeypatch):
     assert expected_pom.is_file()
 
 
+@pytest.mark.java
 def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplog):
     caplog.set_level(logging.DEBUG)
     project_dir = Path(new_dir) / "project"
@@ -115,6 +117,7 @@ def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplo
     )
 
 
+@pytest.mark.java
 def test_maven_use_with_modules(
     new_dir: Path,
     partitions: list[str],
@@ -225,6 +228,7 @@ def prepare_binaries(new_dir, partitions, monkeypatch):
     return run
 
 
+@pytest.mark.java
 def test_maven_use_from_binaries(new_dir, partitions, monkeypatch, prepare_binaries):
     """Test the maven-use plugin when consuming directly from binaries.
 
