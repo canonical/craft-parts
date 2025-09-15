@@ -22,6 +22,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
 
+pytestmark = [pytest.mark.java]
+
 
 @pytest.fixture
 def build_test_jar(new_dir):
@@ -60,7 +62,6 @@ def build_test_jar(new_dir):
     )
 
 
-@pytest.mark.java
 @pytest.mark.usefixtures("build_test_jar")
 def test_jlink_plugin_embedded_jar(new_dir, partitions):
     parts_yaml = textwrap.dedent(
@@ -90,7 +91,6 @@ def test_jlink_plugin_embedded_jar(new_dir, partitions):
     assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) > 0
 
 
-@pytest.mark.java
 @pytest.mark.usefixtures("build_test_jar")
 def test_jlink_plugin_add_modules(new_dir, partitions):
     parts_yaml = textwrap.dedent(
@@ -125,7 +125,6 @@ def test_jlink_plugin_add_modules(new_dir, partitions):
     assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("java.sql"))) > 0
 
 
-@pytest.mark.java
 def test_jlink_plugin_with_jar(new_dir, partitions):
     """Test that jlink produces tailored modules"""
 
@@ -174,7 +173,6 @@ def test_jlink_plugin_with_jar(new_dir, partitions):
     assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) > 0
 
 
-@pytest.mark.java
 def test_jlink_plugin_bad_java_home(new_dir, partitions):
     """Test that jlink fails when JAVA_HOME is
     set incorrectly."""
@@ -209,7 +207,6 @@ def test_jlink_plugin_bad_java_home(new_dir, partitions):
     )
 
 
-@pytest.mark.java
 def test_jlink_plugin_java_home(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """
@@ -240,7 +237,6 @@ def test_jlink_plugin_java_home(new_dir, partitions):
     assert 'JAVA_VERSION="17.' in java_release.read_text()
 
 
-@pytest.mark.java
 def test_jlink_plugin_base(new_dir, partitions):
     """Test that jlink produces base image"""
 

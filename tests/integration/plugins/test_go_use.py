@@ -22,6 +22,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.plugin]
+
 
 @pytest.fixture(scope="module")
 def go_version():
@@ -34,7 +36,6 @@ def go_version():
     return match.group(1)
 
 
-@pytest.mark.plugin
 def test_go_workspace_use(new_dir, partitions, go_version):
     parts_yaml = textwrap.dedent(
         """
@@ -60,7 +61,6 @@ def test_go_workspace_use(new_dir, partitions, go_version):
     assert (new_dir / "backstage" / "go-use" / "go-flags").exists()
 
 
-@pytest.mark.plugin
 def test_go_workspace_use_multiple(new_dir, partitions, go_version):
     parts_yaml = textwrap.dedent(
         """

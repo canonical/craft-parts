@@ -22,6 +22,8 @@ import yaml
 from craft_parts import LifecycleManager, Step, errors
 from py import path  # type: ignore[import-untyped]
 
+pytestmark = [pytest.mark.plugin]
+
 
 @pytest.fixture
 def cargo_project(new_dir: path.LocalPath) -> pathlib.Path:
@@ -38,7 +40,6 @@ def cargo_project(new_dir: path.LocalPath) -> pathlib.Path:
     return pathlib.Path(new_dir)
 
 
-@pytest.mark.plugin
 def test_cargo_use(
     new_dir: path.LocalPath, cargo_project: pathlib.Path, partitions
 ) -> None:
@@ -88,7 +89,6 @@ def test_cargo_use(
     )
 
 
-@pytest.mark.plugin
 def test_cargo_use_on_non_rust_sources(new_dir: path.LocalPath, partitions) -> None:
     """Test cargo registry plugin"""
     parts_yaml = textwrap.dedent(
@@ -118,7 +118,6 @@ def test_cargo_use_on_non_rust_sources(new_dir: path.LocalPath, partitions) -> N
             ctx.execute(actions)
 
 
-@pytest.mark.plugin
 def test_cargo_use_multiple(new_dir: path.LocalPath, partitions):
     parts_yaml = textwrap.dedent(
         """\
