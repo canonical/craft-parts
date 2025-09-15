@@ -28,7 +28,7 @@ license-files = ["LICENSE"]
 [dependency-groups]
 docs = [
     "canonical-sphinx[full]",
-    "pydantic-kitbash==0.0.7",
+    "pydantic-kitbash==0.0.8",
     # Missing from sphinxcontrib-details-directive, see
     # https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "setuptools",
@@ -125,10 +125,6 @@ Homepage = "https://github.com/canonical/craft-parts"
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.package-dir]
-"craft_parts" = "craft_parts"
-"craft_parts_docs" = "docs/common"
-
 [tool.setuptools_scm]
 write_to = "craft_parts/_version.py"
 # the version comes from the latest annotated git tag formatted as 'X.Y.Z'
@@ -155,9 +151,11 @@ git_describe_command = [
     "*[^0-9.]*",
 ]
 
-[tool.setuptools.packages.find]
-include = ["*craft*"]
-namespaces = false
+# NOTE: Do not merge starbase's auto-find here, as we are intentionally adding two
+# packages using this manual description.
+[tool.setuptools.package-dir]
+"craft_parts" = "craft_parts"
+"craft_parts_docs" = "docs/common"
 
 [tool.black]
 target-version = ["py310"]

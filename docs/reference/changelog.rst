@@ -16,6 +16,32 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.23.0:
+
+2.23.0 (unreleased)
+-------------------
+
+New features:
+
+- Add a new ``LifecycleManager`` creation parameter to control whether parts should have
+  a merged ``/usr`` directory scheme in their install directories.
+
+- Add two new build attributes, ``enable-usrmerge`` and ``disable-usrmerge``, to control
+  the creation of a merged ``/usr`` directory scheme in a part's install directory.
+
+Bug fixes:
+
+- The package cache layer is cleaned when an underlying layer is cleaned.
+
+.. _release-2.22.1:
+
+2.22.1 (2025-09-10)
+-------------------
+
+Bug fixes:
+
+- The wheel once again includes ``craft_parts_docs``.
+
 .. _release-2.22.0:
 
 2.22.0 (2025-09-09)
@@ -26,11 +52,19 @@ New features:
 - Dynamically detect the repository type used by the operating system. This allows
   parts to use different package managers if the system is changed by a preceding part.
 
-- Parts can now copy files to the project's overlay filesystem with the ``organize``
+- Parts can now move files to the project's overlay filesystem with the ``organize``
   key. This is done by prefixing the file's destination path with the ``(overlay)``
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
 
+- The package cache layer can be placed higher in the overlay stack, allowing overlay
+  packages to be installed on top of a system created by another part.
+
+Bug fixes:
+
+- The ``organize`` key now works with character and block device nodes.
+
+Documentation:
 - The Autotools plugin now supports the ``disable-parallel`` key.
 
 For a complete list of commits, check out the `2.22.0`_ release on GitHub.
@@ -1403,6 +1437,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
 .. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
 .. _2.21.0: https://github.com/canonical/craft-parts/releases/tag/2.21.0
 .. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1

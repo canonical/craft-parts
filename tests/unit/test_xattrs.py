@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import sys
 from pathlib import Path
 
@@ -86,7 +87,7 @@ class TestXattrs:
     def test_symlink(self, test_file):
         test_symlink = test_file + "-symlink"
         try:
-            os.symlink(test_file, test_symlink)
+            pathlib.Path(test_symlink).symlink_to(test_file)
 
             result = xattrs.read_xattr(test_symlink, "attr")
             assert result is None
