@@ -29,6 +29,10 @@ New features:
 - Add two new build attributes, ``enable-usrmerge`` and ``disable-usrmerge``, to control
   the creation of a merged ``/usr`` directory scheme in a part's install directory.
 
+Bug fixes:
+
+- The package cache layer is cleaned when an underlying layer is cleaned.
+
 .. _release-2.22.1:
 
 2.22.1 (2025-09-10)
