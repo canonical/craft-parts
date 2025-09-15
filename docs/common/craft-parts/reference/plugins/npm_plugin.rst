@@ -3,7 +3,8 @@
 NPM Plugin
 =============
 
-The NPM plugin can be used for Node.js projects that use NPM (or Yarn) as the package manager.
+The NPM plugin can be used for Node.js projects that use NPM (or Yarn) as the package
+manager.
 
 Keys
 ----
@@ -40,7 +41,7 @@ The option accepts an NVM-style version string; you can specify one of:
 When specifying a non-exact version identifier, the plugin selects
 the latest version that satisfies the specified version range. If
 the version picked by the plugin does not publish binaries for the
-target architecture, the plugin picks the nearest version that 
+target architecture, the plugin picks the nearest version that
 both satisfies the version range and also publishes binaries
 for the target architecture.
 

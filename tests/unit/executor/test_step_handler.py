@@ -91,7 +91,7 @@ def _step_handler_for_step(
 
 def get_mode(path) -> int:
     """Shortcut the retrieve the read/write/execute mode for a given path."""
-    return os.stat(path).st_mode & 0o777
+    return os.stat(path).st_mode & 0o777  # noqa: PTH116
 
 
 class TestStepHandlerBuiltins:
@@ -216,11 +216,11 @@ class TestStepHandlerBuiltins:
         )
 
         assert get_mode(environment_script_path) == 0o644
-        with open(environment_script_path) as file:
+        with open(environment_script_path) as file:  # noqa: PTH123
             assert file.read() == expected_script
 
         assert get_mode(build_script_path) == 0o755
-        with open(build_script_path) as file:
+        with open(build_script_path) as file:  # noqa: PTH123
             assert file.read() == dedent(
                 f"""\
                 #!/bin/bash

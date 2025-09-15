@@ -49,10 +49,10 @@ class SevenzipSource(FileSourceHandler):
         src: Path | None = None,
     ) -> None:
         """Extract 7z file contents to the part source dir."""
-        sevenzip_file = src or Path(self.part_src_dir, os.path.basename(self.source))
+        sevenzip_file = src or Path(self.part_src_dir, os.path.basename(self.source))  # noqa: PTH119
 
         sevenzip_file = sevenzip_file.expanduser().resolve()
         self._run_output(["7z", "x", f"-o{dst}", str(sevenzip_file)])
 
         if not keep:
-            os.remove(sevenzip_file)
+            os.remove(sevenzip_file)  # noqa: PTH107

@@ -23,7 +23,7 @@ import textwrap
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from overrides import override
+from typing_extensions import override
 
 from .validator import PluginEnvironmentValidator
 

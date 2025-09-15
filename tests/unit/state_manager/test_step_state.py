@@ -19,6 +19,7 @@ from typing import Any
 
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager import step_state
 
 
@@ -174,9 +175,9 @@ class SomeStepState(step_state.StepState):
         return {"name": part_properties.get("name")}
 
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
+        self, project_options: ProjectOptions
     ) -> dict[str, Any]:
-        return {"number": project_options.get("number")}
+        return {"target_arch": project_options.target_arch}
 
 
 class TestStepState:
@@ -187,7 +188,13 @@ class TestStepState:
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": set(),
             "directories": set(),
             "partitions-contents": {},
@@ -198,16 +205,14 @@ class TestStepState:
             part_properties={
                 "name": "foo",
             },
-            project_options={
-                "number": 42,
-            },
+            project_options=ProjectOptions(),
             files={"a"},
             directories={"b"},
         )
         assert state.marshal() == {
             "partition": None,
             "part-properties": {"name": "foo"},
-            "project-options": {"number": 42},
+            "project-options": ProjectOptions().model_dump(),
             "files": {"a"},
             "directories": {"b"},
             "partitions-contents": {},
@@ -218,7 +223,13 @@ class TestStepState:
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": set(),
             "directories": set(),
             "partitions-contents": {},
@@ -234,15 +245,13 @@ class TestStepStatePersist:
             part_properties={
                 "name": "foo",
             },
-            project_options={
-                "number": 42,
-            },
+            project_options=ProjectOptions(),
             files={"a"},
             directories={"b"},
         )
 
         state.write(Path("state"))
-        with open("state") as f:
+        with open("state") as f:  # noqa: PTH123
             content = f.read()
 
         new_state = yaml.safe_load(content)
@@ -269,21 +278,15 @@ class TestStateChanges:
         assert state.diff_properties_of_interest({"name": "bob"}) == {"name"}
 
     def test_project_options_changes(self):
-        state = SomeStepState(
-            project_options={
-                "number": 42,
-                "useful": False,
-            },
-        )
+        state = SomeStepState(project_options=ProjectOptions())
 
         # relevant project options didn't change
-        assert (
-            state.diff_project_options_of_interest({"number": 42, "useful": True})
-            == set()
-        )
+        assert state.diff_project_options_of_interest(ProjectOptions()) == set()
 
         # relevant project options changed
-        assert state.diff_project_options_of_interest({"number": 50}) == {"number"}
+        assert state.diff_project_options_of_interest(
+            ProjectOptions(target_arch="different")
+        ) == {"target_arch"}
 
 
 class TestHelpers:

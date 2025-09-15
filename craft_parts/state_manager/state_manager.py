@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, cast
 
 from craft_parts import parts, sources, steps
 from craft_parts.features import Features
-from craft_parts.infos import ProjectInfo, ProjectVar
+from craft_parts.infos import ProjectInfo, ProjectOptions, ProjectVarInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -264,7 +264,7 @@ class StateManager:
 
         return False
 
-    def project_vars(self, part: Part, step: Step) -> dict[str, ProjectVar] | None:
+    def project_vars(self, part: Part, step: Step) -> ProjectVarInfo | None:
         """Obtain the project variables for a given part and step.
 
         :param part: The part corresponding to the state to retrieve.
@@ -274,9 +274,9 @@ class StateManager:
         """
         stw = self._state_db.get(part_name=part.name, step=step)
         if not stw:
-            return {}
+            return ProjectVarInfo()
 
-        return stw.state.project_options.get("project_vars") or None
+        return stw.state.project_options.project_vars or None
 
     def check_if_outdated(self, part: Part, step: Step) -> OutdatedReport | None:
         """Verify whether a step is outdated.
@@ -383,7 +383,7 @@ class StateManager:
             part_properties, also_compare=plugin_properties_to_check
         )
         options = state.diff_project_options_of_interest(
-            self._project_info.project_options
+            ProjectOptions.from_project_info(self._project_info)
         )
 
         if properties or options:

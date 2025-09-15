@@ -22,7 +22,6 @@ from pathlib import Path
 
 import yaml
 
-from craft_parts.infos import ProjectVar
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -51,19 +50,8 @@ def load_step_state(part: Part, step: Step) -> StepState | None:
         return None
 
     logger.debug("load state file: %s", filename)
-    with open(filename) as yaml_file:
+    with open(filename) as yaml_file:  # noqa: PTH123
         state_data = yaml.safe_load(yaml_file)
-
-    # Fix project variables in loaded state data.
-    #
-    # FIXME: add proper type definition for project_options so that
-    # ProjectVar can be created by pydantic during model unmarshaling.
-    options = state_data.get("project-options")
-    if options:
-        pvars = options.get("project_vars")
-        if pvars:
-            for key, val in pvars.items():
-                state_data["project-options"]["project_vars"][key] = ProjectVar(**val)
 
     state_class: type[StepState]
 
@@ -94,7 +82,7 @@ def load_overlay_migration_state(state_dir: Path, step: Step) -> MigrationState 
         return None
 
     logger.debug("load overlay migration state file: %s", filename)
-    with open(filename) as yaml_file:
+    with open(filename) as yaml_file:  # noqa: PTH123
         state_data = yaml.safe_load(yaml_file)
 
     return MigrationState.unmarshal(state_data)

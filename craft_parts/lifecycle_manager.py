@@ -30,7 +30,7 @@ from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.filesystem_mounts import FilesystemMounts, validate_filesystem_mounts
-from craft_parts.infos import ProjectInfo
+from craft_parts.infos import ProjectInfo, ProjectVarInfo
 from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
@@ -76,7 +76,7 @@ class LifecycleManager:
         change if a different base image is used.
     :param project_vars_part_name: Project variables can only be set in the part
         matching this name.
-    :param project_vars: A dictionary containing project variables.
+    :param project_vars: A ProjectVarInfo instance or a dictionary containing project variables.
     :param partitions: A list of partitions to use when the partitions feature is
         enabled. The first partition will be considered the default. Partitions may
         have an optional namespace prefix separated by a forward slash. Partition names
@@ -84,11 +84,13 @@ class LifecycleManager:
         ("-"), and may not begin or end with a hyphen. Namespace names must
         consist of only lowercase alphanumeric characters.
     :param filesystem_mounts: A dict of filesystem_mounts to apply when migrating files.
+    :param usrmerged_by_default: Whether the parts' install dirs should be filled with
+        usrmerge-safe directories and symlinks prior to a part's build.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0912, PLR0913
         self,
         all_parts: dict[str, Any],
         *,
@@ -108,9 +110,10 @@ class LifecycleManager:
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
         project_vars_part_name: str | None = None,
-        project_vars: dict[str, str] | None = None,
+        project_vars: dict[str, str] | ProjectVarInfo | None = None,
         partitions: list[str] | None = None,
         filesystem_mounts: dict[str, Any] | None = None,
+        usrmerged_by_default: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -152,6 +155,7 @@ class LifecycleManager:
             filesystem_mounts=filesystem_mounts_obj,
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,
+            usrmerged_by_default=usrmerged_by_default,
             **custom_args,
         )
 
@@ -166,6 +170,7 @@ class LifecycleManager:
             part_list.append(part)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
+        self._organizes_to_overlay = any(p.organizes_to_overlay for p in part_list)
         self._needs_chisel = any(p.has_slices for p in part_list)
         self._has_chisel = any(p.has_chisel_as_build_snap for p in part_list)
 
@@ -176,7 +181,7 @@ class LifecycleManager:
             extra_build_snaps.append("chisel/latest/stable")
 
         # a base layer is mandatory if overlays are in use
-        if self._has_overlay:
+        if self._has_overlay or self._organizes_to_overlay:
             _ensure_overlay_supported()
 
             if not base_layer_dir:

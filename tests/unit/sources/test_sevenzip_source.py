@@ -79,7 +79,7 @@ class TestZipSource:
                     "7z",
                     "x",
                     f"-o{dest_dir}",
-                    os.path.join(new_dir, dest_dir, source_file),
+                    os.path.join(new_dir, dest_dir, source_file),  # noqa: PTH118
                 ],
                 text=True,
             ),
@@ -112,7 +112,7 @@ class TestZipSource:
                     "7z",
                     "x",
                     f"-o{dest_dir}",
-                    os.path.join(new_dir, dest_dir, source_file),
+                    os.path.join(new_dir, dest_dir, source_file),  # noqa: PTH118
                 ],
                 text=True,
             )

@@ -28,7 +28,7 @@ from craft_parts.permissions import (
 
 def get_mode(path) -> int:
     """Shortcut the retrieve the read/write/execute mode for a given path."""
-    return os.stat(path).st_mode & 0o777
+    return os.stat(path).st_mode & 0o777  # noqa: PTH116
 
 
 def test_owner_group_error():
@@ -43,7 +43,7 @@ def test_owner_group_error():
 def test_apply_permissions_mode(tmp_path):
     target = tmp_path / "a.txt"
     target.touch()
-    os.chmod(target, 0)
+    os.chmod(target, 0)  # noqa: PTH101
 
     perm = Permissions()
     perm.apply_permissions(target)
@@ -98,7 +98,7 @@ def test_filter_permissions():
 def test_apply_permissions(tmp_path, mock_chown):
     target = tmp_path / "a.txt"
     target.touch()
-    os.chmod(target, 0)
+    os.chmod(target, 0)  # noqa: PTH101
 
     p1 = Permissions(mode="755")
     p2 = Permissions(owner=1111, group=2222)

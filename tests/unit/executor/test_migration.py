@@ -99,7 +99,7 @@ class TestFileMigration:
             "Expected migrated 'bar' to still be a symlink."
         )
 
-        assert os.readlink(os.path.join(stage_dir, "bar")) == "foo", (
+        assert os.readlink(os.path.join(stage_dir, "bar")) == "foo", (  # noqa: PTH115, PTH118
             "Expected migrated 'bar' to point to 'foo'"
         )
 
@@ -285,7 +285,7 @@ class TestFileMigration:
             "Expected migrated 'bar' to be a symlink."
         )
 
-        assert os.path.islink(os.path.join("stage", "a", "bar")), (
+        assert os.path.islink(os.path.join("stage", "a", "bar")), (  # noqa: PTH114, PTH118
             "Expected migrated 'a/bar' to be a symlink."
         )
 
@@ -357,7 +357,7 @@ class TestFileMigration:
 
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
 
-    # TODO: add test_migrate_files_preserves_file_mode_chown_permissions
+    # TODO: add test_migrate_files_preserves_file_mode_chown_permissions  # noqa: FIX002
 
     def test_migrate_files_preserves_directory_mode(self, partitions):
         install_dir = Path("install")
@@ -405,8 +405,8 @@ class TestFileMigration:
         (source / "baz/qux").mkdir()
         (source / "baz/qux/4.txt").touch()
 
-        os.chmod(source / "1.txt", 0o644)
-        os.chmod(source / "bar/2.txt", 0o555)
+        os.chmod(source / "1.txt", 0o644)  # noqa: PTH101
+        os.chmod(source / "bar/2.txt", 0o555)  # noqa: PTH101
 
         target = Path("target")
         target.mkdir()
@@ -425,8 +425,8 @@ class TestFileMigration:
             permissions=permissions,
         )
 
-        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755
-        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444
+        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755  # noqa: PTH116
+        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444  # noqa: PTH116
 
         paths_with_chown = [
             "target/baz/3.txt",
@@ -439,7 +439,7 @@ class TestFileMigration:
             assert call.group == 2222
 
     @pytest.mark.parametrize(
-        ["filters", "filemap"],
+        ("filters", "filemap"),
         [
             (
                 ["*"],
@@ -466,7 +466,7 @@ class TestFileMigration:
         install_dir.mkdir()
         stage_dir.mkdir()
 
-        for file in filemap.keys():
+        for file in filemap:
             filepath = Path(install_dir, file)
             filepath.parent.mkdir(exist_ok=True)
             filepath.touch()
@@ -511,6 +511,7 @@ class TestFileMigrationErrors:
 class TestHelpers:
     """Verify helper functions."""
 
+    @pytest.mark.slow
     def test_clean_shared_area(self, new_dir, partitions):
         p1 = Part("p1", {"plugin": "dump", "source": "subdir1"}, partitions=partitions)
         Path("subdir1").mkdir()
@@ -529,7 +530,7 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[p1, p2], base_layer_dir=None
+            project_info=info, part_list=[p1, p2], base_layer_dir=None, cache_level=0
         )
 
         handler1 = part_handler.PartHandler(
@@ -556,7 +557,7 @@ class TestHelpers:
         assert foo_path.is_file()
         assert bar_path.is_file()
 
-        # TODO: also test files shared with overlay
+        # TODO: also test files shared with overlay  # noqa: FIX002
         for partition in partitions or (None,):
             migration.clean_shared_area(
                 part_name="p1",
@@ -595,7 +596,9 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, part=p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = part_handler.PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -620,7 +623,9 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, part=p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = part_handler.PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )

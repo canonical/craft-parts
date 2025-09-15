@@ -20,7 +20,8 @@ import logging
 import os
 import os.path
 import shutil
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from glob import iglob
 from pathlib import Path
 from typing import Any, cast
@@ -35,7 +36,11 @@ from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
-from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
+from craft_parts.parts import (
+    Part,
+    get_parts_with_overlay,
+    has_overlay_visibility,
+)
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import (
     MigrationContents,
@@ -139,14 +144,14 @@ class _Squasher:
                     dst_partition=dst_partition,
                 )
                 # If the sub path was really a sub path, record it.
-                if sub_path != Path("."):
+                if sub_path != Path():
                     self._distributed_paths.add(sub_path)
         else:
             # Ignore the filesystem mounts and migrate from/to the same partition
             self._migrate(
                 srcdir=srcdir,
                 destdir=destdirs[self._src_partition],
-                sub_path=Path(""),
+                sub_path=Path(),
                 dst_partition=self._src_partition,
             )
 
@@ -329,7 +334,6 @@ class PartHandler:
 
         fetched_packages = self._fetch_stage_packages(step_info=step_info)
         fetched_snaps = self._fetch_stage_snaps()
-        self._fetch_overlay_packages()
 
         self._run_step(
             step_info=step_info,
@@ -363,6 +367,7 @@ class PartHandler:
         :return: The overlay step state.
         """
         self._make_dirs()
+        self._fetch_overlay_packages()
 
         if self._part.has_overlay:
             # install overlay packages
@@ -446,16 +451,13 @@ class PartHandler:
             )
 
         # Perform the build step
-        if has_overlay_visibility(self._part, part_list=self._part_list):
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                self._run_step(
-                    step_info=step_info,
-                    scriptlet_name="override-build",
-                    work_dir=self._part.part_build_dir,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
-        else:
+        needs_overlay = (
+            has_overlay_visibility(self._part, part_list=self._part_list)
+            or self._part.organizes_to_overlay
+        )
+        with _conditional_layer_mount(
+            self._overlay_manager, top_part=self._part, condition=needs_overlay
+        ):
             self._run_step(
                 step_info=step_info,
                 scriptlet_name="override-build",
@@ -464,28 +466,28 @@ class PartHandler:
                 stderr=stderr,
             )
 
-        # Organize the installed files as requested. We do this in the build step for
-        # two reasons:
-        #
-        #   1. So cleaning and re-running the stage step works even if `organize` is
-        #      used
-        #   2. So collision detection takes organization into account, i.e. we can use
-        #      organization to get around file collisions between parts when staging.
-        #
-        # If `update` is true, we give permission to overwrite files that already exist.
-        # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
-        # files brought in from stage-packages, but in the case of updating build, we
-        # want the part to have the ability to organize over the files it organized last
-        # time around. We can be confident that this won't overwrite anything else,
-        # because to do so would require changing the `organize` keyword, which will
-        # make the build step dirty and require a clean instead of an update.
-        organize_files(
-            part_name=self._part.name,
-            file_map=self._part.spec.organize_files,
-            install_dir_map=self._part.part_install_dirs,
-            overwrite=update,
-            default_partition=step_info.default_partition,
-        )
+            # Organize the installed files as requested. We do this in the build step for
+            # two reasons:
+            #
+            #   1. So cleaning and re-running the stage step works even if `organize` is
+            #      used
+            #   2. So collision detection takes organization into account, i.e. we can use
+            #      organization to get around file collisions between parts when staging.
+            #
+            # If `update` is true, we give permission to overwrite files that already exist.
+            # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
+            # files brought in from stage-packages, but in the case of updating build, we
+            # want the part to have the ability to organize over the files it organized last
+            # time around. We can be confident that this won't overwrite anything else,
+            # because to do so would require changing the `organize` keyword, which will
+            # make the build step dirty and require a clean instead of an update.
+            organize_files(
+                part_name=self._part.name,
+                file_map=self._part.spec.organize_files,
+                install_dir_map=self._part.part_install_dirs,
+                overwrite=update,
+                default_partition=step_info.default_partition,
+            )
 
         assets = {
             "build-packages": self.build_packages,
@@ -1023,7 +1025,7 @@ class PartHandler:
                 primed_whiteout.unlink()
                 logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
-                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?
+                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?  # noqa: FIX003
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
     def clean_step(self, step: Step) -> None:
@@ -1067,6 +1069,11 @@ class PartHandler:
         for partition in self._part_info.partitions or (None,):
             _remove(self._part.part_layer_dirs[partition])
         _remove(self._part.part_state_dir / "layer_hash")
+        # Clean the package cache if the part was below it and if the
+        # cache was not directly on top of the base layer.
+        part_level = self._part_list.index(self._part)
+        if part_level < self._overlay_manager.cache_level:
+            _remove(self._part.dirs.overlay_packages_dir)
 
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
@@ -1171,11 +1178,49 @@ class PartHandler:
                     )
                 # The symlink already exists
                 continue
-            os.symlink(
-                src,
-                dst,
-                target_is_directory=True,
+            dst.symlink_to(src, target_is_directory=True)
+
+    def _create_usrmerge_scaffolding(self) -> None:
+        disabled_attr = "disable-usrmerge" in self._part_info.build_attributes
+
+        if disabled_attr:
+            # Explicitly disabled
+            return
+
+        plugin = self._part_info.plugin_name
+        usrmerged_by_default = self._part_info.usrmerged_by_default
+        # Currently parts using the 'dump' or 'nil' plugin are special cases that do
+        # *not* get usrmerged by default.
+        usrmerged_by_default = usrmerged_by_default and plugin not in ("dump", "nil")
+
+        enabled_attr = "enable-usrmerge" in self._part_info.build_attributes
+
+        usrmerged = usrmerged_by_default or enabled_attr
+        if not usrmerged:
+            # usrmerged not enabled by default, nor for the individual
+            return
+
+        root_dir = self._part.part_install_dir
+        merge_to_usr = ("bin", "lib", "lib64", "sbin")
+
+        for dir_name in merge_to_usr:
+            usr_dir = Path("usr") / dir_name
+            (root_dir / usr_dir).mkdir(exist_ok=True, parents=True)
+
+            symlink_path = root_dir / dir_name
+
+            if (
+                symlink_path.exists()
+                and symlink_path.is_symlink()
+                and symlink_path.readlink() == usr_dir
+            ):
+                # Link already exists
+                continue
+
+            logger.debug(
+                f"creating symlink for usrmerge fix: {symlink_path} -> {usr_dir}"
             )
+            symlink_path.symlink_to(usr_dir, target_is_directory=True)
 
     def _make_dirs(self) -> None:
         dirs = [
@@ -1192,9 +1237,10 @@ class PartHandler:
             *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)
+            os.makedirs(dir_name, exist_ok=True)  # noqa: PTH103
 
         self._symlink_alias_to_default()
+        self._create_usrmerge_scaffolding()
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.
@@ -1243,8 +1289,12 @@ class PartHandler:
             return
 
         try:
+            # Parts declaring overlay packages are ordered to be processed after
+            # parts organizing to the overlay. The latter should prepare the
+            # environment for the package manager.
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
+                ctx.refresh_packages_list()
                 ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
@@ -1278,7 +1328,7 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
+        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))  # noqa: PTH118, PTH207
         snap_sources = (
             sources.SnapSource(
                 source=s,
@@ -1486,3 +1536,15 @@ def _consolidate_states(
         if not consolidated_states.get(partition):
             consolidated_states[partition] = MigrationState(partition=partition)
         consolidated_states[partition].add(directories=dst_dirs)
+
+
+@contextmanager
+def _conditional_layer_mount(
+    overlay_manager: OverlayManager, *, top_part: Part, condition: bool
+) -> Iterator:
+    """Conditionally execute the enclosed code block with the overlay mounted."""
+    if condition:
+        with overlays.LayerMount(overlay_manager, top_part=top_part):
+            yield
+    else:
+        yield

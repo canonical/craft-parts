@@ -22,7 +22,7 @@ from collections.abc import Sequence
 from craft_parts import errors, parts, steps
 from craft_parts.actions import Action, ActionProperties, ActionType
 from craft_parts.features import Features
-from craft_parts.infos import ProjectInfo, ProjectVar
+from craft_parts.infos import ProjectInfo, ProjectOptions, ProjectVarInfo
 from craft_parts.overlays import LayerHash, LayerStateManager
 from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.state_manager import StateManager, states
@@ -121,7 +121,7 @@ class Sequencer:
                     rerun_target_step=rerun_target_step,
                 )
 
-    def _add_step_actions(
+    def _add_step_actions(  # noqa: PLR0912
         self,
         *,
         current_step: Step,
@@ -141,6 +141,14 @@ class Sequencer:
         # check if step already ran, if not then run it
         if not self._sm.has_step_run(part, current_step):
             self._run_step(part, current_step, reason=reason)
+
+            # Parts that organize to the overlay run the BUILD step immediately
+            # after the OVERLAY step. Organization happens at the end of the
+            # BUILD step, and organized files may be needed by another part that
+            # installs overlay packages. See ST-158.
+            if part.organizes_to_overlay and current_step == Step.OVERLAY:
+                self._run_step(part, Step.BUILD, reason="organize contents to overlay")
+
             return
 
         # If the step has already run:
@@ -194,6 +202,15 @@ class Sequencer:
                     outdated_files=outdated_files,
                     outdated_dirs=outdated_dirs,
                 )
+
+                if part.organizes_to_overlay and current_step == Step.OVERLAY:
+                    self._update_step(
+                        part,
+                        Step.BUILD,
+                        reason="organize contents to overlay",
+                        outdated_files=outdated_files,
+                        outdated_dirs=outdated_dirs,
+                    )
             else:
                 self._rerun_step(part, current_step, reason=outdated_report.reason())
 
@@ -210,10 +227,8 @@ class Sequencer:
             project_vars=self._get_project_vars(part, current_step),
         )
 
-    def _get_project_vars(self, part: Part, step: Step) -> dict[str, ProjectVar] | None:
-        if part.name == self._project_info.project_vars_part_name:
-            return self._sm.project_vars(part, step)
-        return None
+    def _get_project_vars(self, part: Part, step: Step) -> ProjectVarInfo | None:
+        return self._sm.project_vars(part, step)
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
         prerequisite_step = steps.dependency_prerequisite_step(step)
@@ -275,33 +290,33 @@ class Sequencer:
         if step == Step.PULL:
             state = states.PullState(
                 part_properties=part_properties,
-                project_options=self._project_info.project_options,
+                project_options=ProjectOptions.from_project_info(self._project_info),
             )
 
         elif step == Step.OVERLAY:
             state = states.OverlayState(
                 part_properties=part_properties,
-                project_options=self._project_info.project_options,
+                project_options=ProjectOptions.from_project_info(self._project_info),
             )
 
         elif step == Step.BUILD:
             state = states.BuildState(
                 part_properties=part_properties,
-                project_options=self._project_info.project_options,
+                project_options=ProjectOptions.from_project_info(self._project_info),
                 overlay_hash=self._layer_state.get_overlay_hash().hex(),
             )
 
         elif step == Step.STAGE:
             state = states.StageState(
                 part_properties=part_properties,
-                project_options=self._project_info.project_options,
+                project_options=ProjectOptions.from_project_info(self._project_info),
                 overlay_hash=self._layer_state.get_overlay_hash().hex(),
             )
 
         elif step == Step.PRIME:
             state = states.PrimeState(
                 part_properties=part_properties,
-                project_options=self._project_info.project_options,
+                project_options=ProjectOptions.from_project_info(self._project_info),
             )
 
         else:
@@ -345,7 +360,7 @@ class Sequencer:
         if step == Step.PULL:
             state = states.PullState(
                 part_properties=part.spec.marshal(),
-                project_options=self._project_info.project_options,
+                project_options=ProjectOptions.from_project_info(self._project_info),
                 outdated_files=outdated_files,
                 outdated_dirs=outdated_dirs,
             )
@@ -368,10 +383,14 @@ class Sequencer:
         *,
         action_type: ActionType = ActionType.RUN,
         reason: str | None = None,
-        project_vars: dict[str, ProjectVar] | None = None,
+        project_vars: ProjectVarInfo | None = None,
         properties: ActionProperties | None = None,
     ) -> None:
         logger.debug("add action %s:%s(%s)", part.name, step, action_type)
+
+        if not project_vars:
+            project_vars = ProjectVarInfo()
+
         if not properties:
             properties = ActionProperties()
 

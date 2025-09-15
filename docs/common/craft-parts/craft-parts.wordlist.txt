@@ -133,6 +133,7 @@ JLinkPlugin
 JLinkPluginEnvironmentValidator
 JLinkPluginProperties
 JSON
+KeyError
 LDFLAGS
 LLVM
 LTO
@@ -142,6 +143,7 @@ LayerHash
 LayerMount
 LayerStateManager
 Lifecycle
+Lifecycle's
 LifecycleManager
 LocalSource
 LocalSourceModel
@@ -213,6 +215,7 @@ PackageCacheMount
 PackageFetchError
 PackageListRefreshError
 PackageNotFound
+PackageService
 PackagesDownloadError
 PackagesError
 PackagesNotFound
@@ -246,7 +249,10 @@ Prepend
 PrimeState
 ProjectDirs
 ProjectInfo
+ProjectOptions
 ProjectVar
+ProjectVarInfo
+ProjectVars
 PullError
 PullState
 PurePath
@@ -349,6 +355,7 @@ armv
 artifact
 artifactId
 artifacts
+attr
 apache
 autogen
 autotools
@@ -379,6 +386,7 @@ confictling
 config
 configfile
 cp
+cpu
 craftctl
 crafter
 crafters
@@ -485,6 +493,7 @@ openjdk
 organization
 organize
 organized
+organizes
 organizing
 ormal
 os
@@ -576,6 +585,8 @@ unregistering
 uri
 url
 urllib
+usrmerge
+usrmerged
 utilizing
 utils
 uv

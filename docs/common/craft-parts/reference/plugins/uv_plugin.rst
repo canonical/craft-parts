@@ -38,7 +38,7 @@ own special variables.
 
   This section describes how this plugin uses uv-specific environment
   variables. For more information, as well as a complete list of environment
-  variables for uv, see the `uv environment documentation 
+  variables for uv, see the `uv environment documentation
   <https://docs.astral.sh/uv/configuration/environment/>`_.
 
 UV_FROZEN

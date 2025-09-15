@@ -19,7 +19,7 @@
 from pathlib import Path
 from typing import Any, Literal
 
-from overrides import overrides
+from typing_extensions import override
 
 from craft_parts.dirs import ProjectDirs
 
@@ -58,11 +58,11 @@ class FileSource(FileSourceHandler):
             **kwargs,
         )
 
-    @overrides
+    @override
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Process the source file to extract its payload."""

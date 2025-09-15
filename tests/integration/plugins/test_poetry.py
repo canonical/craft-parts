@@ -20,12 +20,13 @@ import stat
 import subprocess
 import sys
 import textwrap
+from typing import Any
 
 import craft_parts.plugins.plugins
 import pytest
-import pytest_check  # type: ignore[import-untyped]
 from craft_parts import LifecycleManager, Step, errors, plugins
-from overrides import override
+from pytest_check.context_manager import CheckContextManager
+from typing_extensions import override
 
 
 def setup_function():
@@ -56,7 +57,12 @@ def parts_dict(poetry_part):
     return {"parts": {"foo": poetry_part}}
 
 
-def test_poetry_plugin(new_dir, partitions, source_directory, parts_dict):
+def test_poetry_plugin(
+    new_dir: pathlib.Path,
+    partitions: list[str],
+    parts_dict: dict[str, Any],
+    check: CheckContextManager,
+):
     """Prime a simple python source."""
     lf = LifecycleManager(
         parts_dict,
@@ -71,24 +77,24 @@ def test_poetry_plugin(new_dir, partitions, source_directory, parts_dict):
 
     primed_script = pathlib.Path(lf.project_info.prime_dir, "bin", "mytest")
     python_link = pathlib.Path(lf.project_info.prime_dir, "bin", "python3")
-    with pytest_check.check():
+    with check:
         assert primed_script.exists()
         assert primed_script.open().readline().rstrip() == "#!/usr/bin/env python3"
         assert python_link.is_symlink()
-    with pytest_check.check():
+    with check:
         assert python_link.readlink().is_absolute()
         # This is normally /usr/bin/python3.*, but if running in a venv
         # it could be elsewhere.
         assert python_link.name.startswith("python3")
         assert python_link.stat().st_mode & stat.S_IXOTH
 
-    with pytest_check.check():
+    with check:
         result = subprocess.run(
             [python_link, primed_script], text=True, capture_output=True, check=False
         )
         assert result.stdout == "Test succeeded!\n"
 
-    with pytest_check.check():
+    with check:
         result = subprocess.run(
             [python_link, "-m", "test_poetry"],
             text=True,
@@ -123,7 +129,7 @@ def test_poetry_plugin_override_get_system_interpreter(
 
     python_link = pathlib.Path(lf.project_info.prime_dir, "bin", "python3")
     assert python_link.is_symlink()
-    assert os.readlink(python_link) == "use-this-python"
+    assert os.readlink(python_link) == "use-this-python"  # noqa: PTH115
 
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])

@@ -15,12 +15,11 @@ rust-channel
 **Type:** string
 **Default:** stable
 
-Used to select which `Rust channel or version <https://rust-lang.github.io/rustup/concepts/channels.html#channels>`_ to use.
-It can be one of "stable", "beta", "nightly" or a version number.
-If you want to use a specific nightly version, use this format:
-``"nightly-YYYY-MM-DD"``.
-If you don't want this plugin to install Rust toolchain for you,
-you can put ``"none"`` for this option.
+Used to select which `Rust channel or
+version <https://rust-lang.github.io/rustup/concepts/channels.html#channels>`_ to use.
+It can be one of "stable", "beta", "nightly" or a version number. If you want to use a
+specific nightly version, use this format: ``"nightly-YYYY-MM-DD"``. If you don't want
+this plugin to install Rust toolchain for you, you can put ``"none"`` for this option.
 
 .. _rust-features:
 
@@ -37,8 +36,8 @@ You can also use ``["*"]`` to select all the features available in the project.
   This option does not override any default features
   specified by the project itself.
 
-  If you want to override the default features, please see the :ref:`rust-no-default-features`
-  option below.
+  If you want to override the default features, please see the
+  :ref:`rust-no-default-features` option below.
 
 .. _rust-no-default-features:
 
@@ -50,7 +49,8 @@ rust-no-default-features
 If this option is set to ``true``, the default features specified by the project
 will be ignored.
 
-You can then use the :ref:`rust-features` key to specify any features you wish to override.
+You can then use the :ref:`rust-features` key to specify any features you wish to
+override.
 
 rust-path
 ~~~~~~~~~
@@ -76,7 +76,8 @@ in the Cargo.toml file.
 
 This is equivalent to the ``lto = "fat"`` option in the Cargo.toml file.
 
-If you want better runtime performance, see the :ref:`Performance tuning<perf-tuning>` section below.
+If you want better runtime performance, see the :ref:`Performance tuning <perf-tuning>`
+section below.
 
 rust-ignore-toolchain-file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,17 +134,20 @@ by wrapping and appending the ``LDFLAGS`` value to ``RUSTFLAGS``.
 Environment variables
 ---------------------
 
-This plugin sets the PATH environment variable so the Rust compiler is accessible in the build environment.
+This plugin sets the PATH environment variable so the Rust compiler is accessible in
+the build environment.
 
 Some environment variables may also influence the Rust compiler or Cargo build tool.
-For more information, see `Cargo documentation <https://doc.rust-lang.org/cargo/reference/environment-variables.html>`_ for the details.
+For more information, see `Cargo documentation
+<https://doc.rust-lang.org/cargo/reference/environment-variables.html>`_ for the
+details.
 
 Dependencies
 ------------
 
-By default this plugin uses Rust toolchain binaries from the Rust upstream.
-If this is not desired, you can set ``rust-deps: ["rustc", "cargo"]`` and
-``rust-channel: "none"`` in the part definition to override the default behaviour.
+By default this plugin uses Rust toolchain binaries from the Rust upstream. If this is
+not desired, you can set ``rust-deps: ["rustc", "cargo"]`` and ``rust-channel: "none"``
+in the part definition to override the default behaviour.
 
 .. _perf-tuning:
 
@@ -151,29 +155,34 @@ Performance tuning
 -------------------
 
 .. warning::
-  Keep in mind that due to individual differences between different projects, some of the
-  optimisations may not work as expected or even incur performance penalties. YMMV.
+  Keep in mind that due to individual differences between different projects, some of
+  the optimisations may not work as expected or even incur performance penalties.
 
-  Some programs may even behave differently or crash if aggressive optimisations are used.
+  Some programs may even behave differently or crash if aggressive optimisations are
+  used.
 
 Many Rust programs boast their performance over similar programs implemented in other
 programming languages.
 To get even better performance, you might want to follow the tips below.
 
-* Use the :ref:`rust-use-global-lto` option to enable LTO support. This is suitable for most
-  projects. However, analysing the whole program during the build time requires more memory and CPU time.
+* Use the :ref:`rust-use-global-lto` option to enable LTO support. This is suitable
+  for most projects. However, analysing the whole program during the build time
+  requires more memory and CPU time.
 
-* Specify ``codegen-units=1`` in ``Cargo.toml`` to reduce LLVM parallelism. This may sound counter-intuitive,
-  but reducing code generator threads could improve the quality of generated machine code.
-  This option will also reduce the build time performance since the code generator uses only one thread per translation unit.
+* Specify ``codegen-units=1`` in ``Cargo.toml`` to reduce LLVM parallelism. This may
+  sound counter-intuitive, but reducing code generator threads could improve the
+  quality of generated machine code. This option will also reduce the build time
+  performance since the code generator uses only one thread per translation unit.
 
-* Disable ``incremental=true`` in ``Cargo.toml`` to improve inter-procedural optimisations. Many projects may have
-  already done this for the release profile. You should check if that is the case for your project.
+* Disable ``incremental=true`` in ``Cargo.toml`` to improve inter-procedural
+  optimisations. Many projects may have already done this for the release profile.
+  You should check if that is the case for your project.
 
-* (Advanced) Perform cross-language LTO. This requires installing the correct version of LLVM/Clang and setting the right environment variables.
-  You must know which LLVM version of your selected Rust toolchain is using.
-  You can use ``rustc -vV`` to check the LLVM version used by the compiler. For example, you can see Rust 1.81 uses LLVM 18.1 because
-  it prints an output like this:
+* (Advanced) Perform cross-language LTO. This requires installing the correct version
+  of LLVM/Clang and setting the right environment variables. You must know which LLVM
+  version of your selected Rust toolchain is using. You can use ``rustc -vV`` to check
+  the LLVM version used by the compiler. For example, you can see Rust 1.81 uses LLVM
+  18.1 because it prints an output like this:
 
   .. terminal::
     :input: rustc -vV
@@ -188,9 +197,11 @@ To get even better performance, you might want to follow the tips below.
     release: 1.81.0
     LLVM version: 18.1.7
 
-  On Rust toolchains that don't include the LLVM version, you can check the LLVM version number by examining the ``lib`` directory.
-  For example, Rust 1.81 uses LLVM 18.1 because it bundles a ``libLLVM.so.18.1-rust-1.81.0-stable`` file under the ``lib`` directory.
-  In this case, you would install ``clang-18`` and ``lld-18`` from the Ubuntu archive.
+  On Rust toolchains that don't include the LLVM version, you can check the LLVM
+  version number by examining the ``lib`` directory. For example, Rust 1.81 uses
+  LLVM 18.1 because it bundles a ``libLLVM.so.18.1-rust-1.81.0-stable`` file
+  under the ``lib`` directory. In this case, you would install ``clang-18`` and
+  ``lld-18`` from the Ubuntu archive.
 
   * You will need to set these environment variables for Clang:
       .. code-block:: yaml
@@ -209,13 +220,19 @@ To get even better performance, you might want to follow the tips below.
               - CXXFLAGS: -flto=full -O3
               - RUSTFLAGS: "-Cembed-bitcode=yes -Clinker-plugin-lto -Clinker=clang-18 -Clink-arg=-flto=full -Clink-arg=-fuse-ld=lld -Clink-arg=-Wl,--lto-O3"
 
-    For some projects that manipulate the object files during the build, you may also need:
+    For some projects that manipulate the object files during the build, you may also
+    need:
+
       .. code-block:: bash
 
         export NM=llvm-nm-18
         export AR=llvm-ar-18
         export RANLIB=llvm-ranlib-18
 
-    You can refer to the `rustc documentation <https://doc.rust-lang.org/rustc/codegen-options/index.html>`_ for more information on the meaning of those options.
-  * You will need significantly more memory and CPU time for large projects to build and link.
-    For instance, Firefox under full LTO requires about 80 GiB of memory to pass the linking phase.
+    You can refer to the `rustc documentation
+    <https://doc.rust-lang.org/rustc/codegen-options/index.html>`_ for more information
+    on the meaning of those options.
+
+  * You will need significantly more memory and CPU time for large projects to build
+    and link. For instance, Firefox under full LTO requires about 80 GiB of memory to
+    pass the linking phase.

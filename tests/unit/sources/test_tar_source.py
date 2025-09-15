@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import tarfile
 from pathlib import Path
 from unittest.mock import call
@@ -86,70 +87,70 @@ class TestTarSource:
 
     def test_strip_common_prefix(self, new_dir, partitions):
         # Create tar file for testing
-        os.makedirs(os.path.join("src", "test_prefix"))
-        file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
-        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+        os.makedirs(os.path.join("src", "test_prefix"))  # noqa: PTH103, PTH118
+        file_to_tar = os.path.join("src", "test_prefix", "test.txt")  # noqa: PTH118
+        open(file_to_tar, "w").close()  # noqa: PTH123
+        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:  # noqa: PTH118
             tar.add(file_to_tar)
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"),
+            os.path.join("src", "test.tar"),  # noqa: PTH118
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,
         )
-        os.mkdir("dst")
+        os.mkdir("dst")  # noqa: PTH102
         tar_source.pull()
 
         # The 'test_prefix' part of the path should have been removed
-        assert os.path.exists(os.path.join("dst", "test.txt"))
+        assert os.path.exists(os.path.join("dst", "test.txt"))  # noqa: PTH110, PTH118
 
     def test_strip_common_prefix_symlink(self, new_dir, partitions):
         # Create tar file for testing
-        os.makedirs(os.path.join("src", "test_prefix"))
-        file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
+        os.makedirs(os.path.join("src", "test_prefix"))  # noqa: PTH103, PTH118
+        file_to_tar = os.path.join("src", "test_prefix", "test.txt")  # noqa: PTH118
+        open(file_to_tar, "w").close()  # noqa: PTH123
 
-        file_to_link = os.path.join("src", "test_prefix", "link.txt")
-        os.symlink("./test.txt", file_to_link)
-        assert os.path.islink(file_to_link)
+        file_to_link = pathlib.Path("src", "test_prefix", "link.txt")
+        file_to_link.symlink_to("./test.txt")
+        assert os.path.islink(file_to_link)  # noqa: PTH114
 
         def check_for_symlink(tarinfo):
             assert tarinfo.issym()
-            assert file_to_link == tarinfo.name
+            assert file_to_link.as_posix() == tarinfo.name
             assert file_to_tar == os.path.normpath(
-                os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname)
+                os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname)  # noqa: PTH118, PTH120
             )
             return tarinfo
 
-        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:  # noqa: PTH118
             tar.add(file_to_tar)
             tar.add(file_to_link, filter=check_for_symlink)
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"),
+            os.path.join("src", "test.tar"),  # noqa: PTH118
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,
         )
-        os.mkdir("dst")
+        os.mkdir("dst")  # noqa: PTH102
         tar_source.pull()
 
         # The 'test_prefix' part of the path should have been removed
-        assert os.path.exists(os.path.join("dst", "test.txt"))
-        assert os.path.exists(os.path.join("dst", "link.txt"))
+        assert os.path.exists(os.path.join("dst", "test.txt"))  # noqa: PTH110, PTH118
+        assert os.path.exists(os.path.join("dst", "link.txt"))  # noqa: PTH110, PTH118
 
     def test_strip_common_prefix_hardlink(self, new_dir, partitions):
         # Create tar file for testing
-        os.makedirs(os.path.join("src", "test_prefix"))
-        file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
+        os.makedirs(os.path.join("src", "test_prefix"))  # noqa: PTH103, PTH118
+        file_to_tar = os.path.join("src", "test_prefix", "test.txt")  # noqa: PTH118
+        open(file_to_tar, "w").close()  # noqa: PTH123
 
-        file_to_link = os.path.join("src", "test_prefix", "link.txt")
+        file_to_link = os.path.join("src", "test_prefix", "link.txt")  # noqa: PTH118
         os.link(file_to_tar, file_to_link)
-        assert os.path.exists(file_to_link)
+        assert os.path.exists(file_to_link)  # noqa: PTH110
 
         def check_for_hardlink(tarinfo):
             assert tarinfo.islnk()
@@ -158,20 +159,20 @@ class TestTarSource:
             assert file_to_tar == tarinfo.linkname
             return tarinfo
 
-        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:  # noqa: PTH118
             tar.add(file_to_tar)
             tar.add(file_to_link, filter=check_for_hardlink)
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"),
+            os.path.join("src", "test.tar"),  # noqa: PTH118
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,
         )
-        os.mkdir("dst")
+        os.mkdir("dst")  # noqa: PTH102
         tar_source.pull()
 
         # The 'test_prefix' part of the path should have been removed
-        assert os.path.exists(os.path.join("dst", "test.txt"))
-        assert os.path.exists(os.path.join("dst", "link.txt"))
+        assert os.path.exists(os.path.join("dst", "test.txt"))  # noqa: PTH110, PTH118
+        assert os.path.exists(os.path.join("dst", "link.txt"))  # noqa: PTH110, PTH118

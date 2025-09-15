@@ -23,7 +23,7 @@ import pytest
 import yaml
 from craft_parts import Action, ActionType, Part, Step, plugins
 from craft_parts.state_manager import states
-from overrides import override
+from typing_extensions import override
 
 
 def setup_function():

@@ -49,6 +49,7 @@ extensions.extend(
         "sphinx_autodoc_typehints",  # must be loaded after napoleon
         "sphinx-pydantic",
         "sphinxcontrib.details.directive",
+        "sphinxext.rediraffe",
     ]
 )
 
@@ -106,6 +107,8 @@ napoleon_use_ivar = True
 # Github config
 github_username = "canonical"
 github_repository = "craft-parts"
+
+rediraffe_redirects = "redirects.txt"
 
 # endregion
 

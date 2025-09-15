@@ -61,7 +61,7 @@ def test_dirs_work_dir_resolving(partitions):
     partitions=strategies.lists(
         strategies.text(
             strategies.sampled_from(string.ascii_lowercase), min_size=1
-        ).filter(lambda x: x != "default"),
+        ).filter(lambda x: x not in ("default", "overlay")),
         min_size=1,
         unique=True,
     )
@@ -80,7 +80,7 @@ def test_get_stage_dir_with_partitions(partitions):
     partitions=strategies.lists(
         strategies.text(
             strategies.sampled_from(string.ascii_lowercase), min_size=1
-        ).filter(lambda x: x != "default"),
+        ).filter(lambda x: x not in ("default", "overlay")),
         min_size=1,
         unique=True,
     )

@@ -24,7 +24,7 @@ from craft_parts.plugins.gradle_plugin import (
     GradlePlugin,
     GradlePluginEnvironmentValidator,
 )
-from overrides import override
+from typing_extensions import override
 
 
 @pytest.fixture

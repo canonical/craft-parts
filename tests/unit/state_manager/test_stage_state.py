@@ -19,6 +19,7 @@ from pathlib import Path
 import pydantic
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager.stage_state import StageState
 
 
@@ -30,7 +31,7 @@ class TestStageState:
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": ProjectOptions().model_dump(),
             "files": set(),
             "directories": set(),
             "overlay-hash": None,
@@ -43,7 +44,9 @@ class TestStageState:
         state_data = {
             "partition": "default",
             "part-properties": {"plugin": "nil"},
-            "project-options": {"target_arch": "amd64"},
+            "project-options": ProjectOptions(
+                target_arch="amd64",
+            ).model_dump(),
             "files": {"a"},
             "directories": {"b"},
             "overlay-hash": "6f7665726c61792d68617368",
@@ -77,15 +80,13 @@ class TestStageStatePersist:
     def test_write(self, properties):
         state = StageState(
             part_properties=properties,
-            project_options={
-                "target_arch": "amd64",
-            },
+            project_options=ProjectOptions(target_arch="amd64"),
             files={"a"},
             directories={"b"},
         )
 
         state.write(Path("state"))
-        with open("state") as f:
+        with open("state") as f:  # noqa: PTH123
             content = f.read()
 
         new_state = yaml.safe_load(content)
@@ -117,7 +118,7 @@ class TestStageStateChanges:
 
     def test_project_option_changes(self, project_options):
         state = StageState(project_options=project_options)
-        assert state.diff_project_options_of_interest({}) == set()
+        assert state.diff_project_options_of_interest(ProjectOptions()) == set()
 
     def test_extra_property_changes(self, properties):
         augmented_properties = {**properties, "extra-property": "foo"}
