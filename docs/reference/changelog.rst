@@ -28,7 +28,6 @@ New features:
 
 - Add two new build attributes, ``enable-usrmerge`` and ``disable-usrmerge``, to control
   the creation of a merged ``/usr`` directory scheme in a part's install directory.
-  
 - The package cache layer can be placed higher in the overlay stack, allowing overlay
   packages to be installed on top of a system created by another part.
 
