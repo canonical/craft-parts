@@ -24,6 +24,8 @@ import yaml
 from craft_parts import LifecycleManager, Step
 from craft_parts.infos import ProjectInfo
 
+pytestmark = [pytest.mark.java]
+
 
 @pytest.fixture
 def local_proxy_url():

@@ -2,8 +2,11 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
+
+pytestmark = [pytest.mark.plugin]
 
 
 def test_scons_plugin(new_dir, partitions):
