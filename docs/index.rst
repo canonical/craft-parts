@@ -50,4 +50,4 @@ and constructive feedback.
 
 * `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`_
 * `Canonical Contributor License Agreement
-  <https://ubuntu.com/legal/contributors>`_
+  <https://canonical.com/legal/contributors>`_

@@ -133,4 +133,4 @@ Further Information
 Further information can be found in the `Snapcraft parts lifecycle documentation
 <snapcraft-parts-lifecycle_>`_.
 
-.. _snapcraft-parts-lifecycle: https://snapcraft.io/docs/parts-lifecycle
+.. _snapcraft-parts-lifecycle: https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/
