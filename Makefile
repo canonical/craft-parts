@@ -83,7 +83,13 @@ endif
 ifeq ($(wildcard /usr/share/doc/openjdk-17-jdk/copyright),)
 APT_PACKAGES += openjdk-17-jdk
 endif
+ifeq ($(wildcard /usr/share/doc/openjdk-17-jdk-headless/copyright),)
+APT_PACKAGES += openjdk-17-jdk-headless
+endif
 ifeq ($(wildcard /usr/share/doc/openjdk-21-jdk/copyright),)
+APT_PACKAGES += openjdk-21-jdk
+endif
+ifeq ($(wildcard /usr/share/doc/openjdk-21-jdk-headless/copyright),)
 APT_PACKAGES += openjdk-21-jdk
 endif
 ifeq ($(wildcard /usr/share/doc/openjdk-8-jdk-headless/copyright),)
