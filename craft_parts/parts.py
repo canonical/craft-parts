@@ -434,9 +434,9 @@ class PartSpec(BaseModel):
             textwrap.dedent(
                 """\
                 |
-                rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
-                rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
-                rm -f ${CRAFT_OVERLAY}/bin/nano"""
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+                  rm -f ${CRAFT_OVERLAY}/bin/nano"""
             )
         ],
     )
@@ -453,9 +453,9 @@ class PartSpec(BaseModel):
             textwrap.dedent(
                 """\
                 |
-                cd cmd/webhook
-                mkdir $CRAFT_PART_INSTALL/ko-app
-                go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+                  cd cmd/webhook
+                  mkdir $CRAFT_PART_INSTALL/ko-app
+                  go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
             ),
         ],
     )
@@ -471,8 +471,8 @@ class PartSpec(BaseModel):
             textwrap.dedent(
                 '''\
                 |
-                craftctl default
-                chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+                  craftctl default
+                  chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
             )
         ],
     )
@@ -488,9 +488,9 @@ class PartSpec(BaseModel):
             textwrap.dedent(
                 """\
                 |
-                craftctl default
-                mkdir -p $CRAFT_PRIME/var/lib/mysql
-                mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+                  craftctl default
+                  mkdir -p $CRAFT_PRIME/var/lib/mysql
+                  mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
             )
         ],
     )
