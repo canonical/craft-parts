@@ -39,7 +39,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.10", "3.12"]'
+      slow-test-python-versions: '["3.12"]'
       lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
       pytest-markers: not java and not python and not plugin
