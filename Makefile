@@ -61,8 +61,8 @@ APT_PACKAGES += python3-venv
 endif
 
 # Dependencies for sources
-ifeq ($(wildcard /usr/share/doc/7zip/copyright),)
-APT_PACKAGES += 7zip
+ifneq ($(shell which 7z),)
+APT_PACKAGES += p7zip-full
 endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
 APT_PACKAGES += curl
