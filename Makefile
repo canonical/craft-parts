@@ -75,22 +75,23 @@ APT_PACKAGES += rpm
 endif
 
 # Java tools - Used for Java plugin integration tests.
-# We need *a* jdk for our unit tests to succeed.
-ifeq ($(wildcard /usr/share/doc/openjdk-8-jdk-headless/copyright),)
-APT_PACKAGES += openjdk-8-jdk-headless
+# We need *a* jdk for our unit tests to succeed. Use 17 because a unit test looks for
+# it specifically.
+ifeq ($(wildcard /usr/share/doc/openjdk-17-jdk/copyright),)
+APT_PACKAGES += openjdk-17-jdk
 endif
 ifneq ($(NO_JAVA),1)  # Allow setting NO_JAVA=1 to avoid installing java deps
 ifeq ($(wildcard /usr/share/doc/default-jdk/copyright),)
 APT_PACKAGES += default-jdk
 endif
-ifeq ($(wildcard /usr/share/doc/openjdk-17-jdk/copyright),)
-APT_PACKAGES += openjdk-17-jdk
-endif
-ifeq ($(wildcard /usr/share/doc/openjdk-21-jdk/copyright),)
-APT_PACKAGES += openjdk-21-jdk
+ifeq ($(wildcard /usr/share/doc/openjdk-8-jdk-headless/copyright),)
+APT_PACKAGES += openjdk-8-jdk-headless
 endif
 ifeq ($(wildcard /usr/share/doc/openjdk-11-jdk/copyright),)
 APT_PACKAGES += openjdk-11-jdk
+endif
+ifeq ($(wildcard /usr/share/doc/openjdk-21-jdk/copyright),)
+APT_PACKAGES += openjdk-21-jdk
 endif
 ifeq ($(wildcard /usr/share/doc/tinyproxy/copyright),)
 APT_PACKAGES += tinyproxy
