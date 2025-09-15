@@ -18,10 +18,12 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
 
+@pytest.mark.plugin
 def test_rust_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
@@ -72,6 +74,7 @@ def test_rust_plugin(new_dir, partitions):
     assert output == "hello world\n"
 
 
+@pytest.mark.plugin
 def test_rust_plugin_features(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
@@ -132,6 +135,7 @@ def test_rust_plugin_features(new_dir, partitions):
     assert output == "hello world\n"
 
 
+@pytest.mark.plugin
 def test_rust_plugin_workspace(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
@@ -223,6 +227,7 @@ def test_rust_plugin_workspace(new_dir, partitions):
     assert output == "hello world\n"
 
 
+@pytest.mark.plugin
 def test_rust_plugin_with_cargo_use(new_dir, partitions):
     source_location = Path(__file__).parent / "test_cargo_use"
     parts_yaml = textwrap.dedent(

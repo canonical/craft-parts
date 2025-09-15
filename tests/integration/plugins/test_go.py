@@ -24,6 +24,7 @@ from craft_parts import LifecycleManager, Step
 from craft_parts.errors import PluginBuildError
 
 
+@pytest.mark.plugin
 def test_go_plugin(new_dir, partitions, mocker):
     parts_yaml = textwrap.dedent(
         """
@@ -64,19 +65,24 @@ def test_go_plugin(new_dir, partitions, mocker):
 
     # the go compiler is installed in the ci test setup
     lf = LifecycleManager(
-        parts, application_name="test_go", cache_dir=new_dir, partitions=partitions
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        partitions=partitions,
+        usrmerged_by_default=True,
     )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    binary = Path(lf.project_info.prime_dir, "bin", "hello")
+    binary = lf.project_info.prime_dir / "usr/bin/hello"
 
     output = subprocess.check_output([str(binary)], text=True)
     assert output == "I can eat glass and it doesn't hurt me."
 
 
+@pytest.mark.plugin
 def test_go_generate(new_dir, partitions):
     """Test code generation via "go generate" in parts using the go plugin
 
@@ -118,6 +124,7 @@ def test_go_generate(new_dir, partitions):
     assert output == "This is a generated line\n"
 
 
+@pytest.mark.plugin
 def test_go_use(new_dir, partitions):
     # Ensure we're not using cached sources
     source_location = Path(__file__).parent / "test_go_workspace"
@@ -170,6 +177,7 @@ def test_go_use(new_dir, partitions):
     assert output == "hello\n"
 
 
+@pytest.mark.plugin
 @pytest.mark.parametrize(
     "parts_yaml_template",
     [

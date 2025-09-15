@@ -19,10 +19,12 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
 
+@pytest.mark.java
 def test_ant_plugin(new_dir, partitions):
     source_location = Path(__file__).parent / "test_ant"
 

@@ -19,10 +19,12 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
 
+@pytest.mark.plugin
 def test_autotools_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """
