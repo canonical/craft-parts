@@ -29,6 +29,7 @@ def install_dir():
     return Path("parts", "foo", "install")
 
 
+@pytest.mark.plugin
 def test_dump_source(new_dir, partitions, install_dir):
     _parts_yaml = textwrap.dedent(
         """\
@@ -55,6 +56,7 @@ def test_dump_source(new_dir, partitions, install_dir):
     assert list(install_dir.rglob("*")) == [install_dir / "foobar.txt"]
 
 
+@pytest.mark.plugin
 def test_dump_ignore_dirs(new_dir, partitions, install_dir):
     _parts_yaml = textwrap.dedent(
         """\
