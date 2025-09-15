@@ -76,6 +76,10 @@ APT_PACKAGES += rpm
 endif
 
 # Java tools - Used for Java plugin integration tests.
+# We need *a* jdk for our unit tests to succeed.
+ifeq ($(wildcard /usr/share/doc/openjdk-8-jdk-headless/copyright),)
+APT_PACKAGES += openjdk-8-jdk-headless
+endif
 ifneq ($(NO_JAVA),1)  # Allow setting NO_JAVA=1 to avoid installing java deps
 ifeq ($(wildcard /usr/share/doc/default-jdk/copyright),)
 APT_PACKAGES += default-jdk
@@ -91,9 +95,6 @@ APT_PACKAGES += openjdk-21-jdk
 endif
 ifeq ($(wildcard /usr/share/doc/openjdk-21-jdk-headless/copyright),)
 APT_PACKAGES += openjdk-21-jdk
-endif
-ifeq ($(wildcard /usr/share/doc/openjdk-8-jdk-headless/copyright),)
-APT_PACKAGES += openjdk-8-jdk-headless
 endif
 ifeq ($(wildcard /usr/share/doc/openjdk-11-jdk/copyright),)
 APT_PACKAGES += openjdk-11-jdk
