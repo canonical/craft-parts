@@ -24,6 +24,7 @@ from craft_parts import LifecycleManager, Step
 from craft_parts.errors import PluginBuildError
 
 
+@pytest.mark.plugin
 def test_go_plugin(new_dir, partitions, mocker):
     parts_yaml = textwrap.dedent(
         """
@@ -81,6 +82,7 @@ def test_go_plugin(new_dir, partitions, mocker):
     assert output == "I can eat glass and it doesn't hurt me."
 
 
+@pytest.mark.plugin
 def test_go_generate(new_dir, partitions):
     """Test code generation via "go generate" in parts using the go plugin
 
@@ -122,6 +124,7 @@ def test_go_generate(new_dir, partitions):
     assert output == "This is a generated line\n"
 
 
+@pytest.mark.plugin
 def test_go_use(new_dir, partitions):
     # Ensure we're not using cached sources
     source_location = Path(__file__).parent / "test_go_workspace"
@@ -174,6 +177,7 @@ def test_go_use(new_dir, partitions):
     assert output == "hello\n"
 
 
+@pytest.mark.plugin
 @pytest.mark.parametrize(
     "parts_yaml_template",
     [
