@@ -212,7 +212,7 @@ install-build-snaps: install-chisel install-go install-core20
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
-install-build-deps: install-lint-build-deps install-build-snaps
+install-build-deps: _gh-runner-clear-space install-lint-build-deps install-build-snaps
 ifeq ($(APT_PACKAGES),)
 else ifeq ($(shell which apt-get),)
 	$(warning Cannot install build dependencies without apt.)
@@ -235,4 +235,12 @@ endif
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
+endif
+
+.PHONY: _gh-runner-clear-space
+_gh-runner-clear-space:
+# Only on Github-hosted runners, to free up space.
+ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
+	# Delete the (huge) Android SDK in the background.
+	nohup sudo rm -rf /usr/local/lib/android/ &
 endif

@@ -28,6 +28,8 @@ import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
 from typing_extensions import override
 
+pytestmark = [pytest.mark.python]
+
 
 def setup_function():
     plugins.unregister_all()
@@ -51,7 +53,6 @@ def uv_parts_simple() -> dict[str, Any]:
     return cast(dict[str, Any], yaml.safe_load(parts_yaml))
 
 
-@pytest.mark.python
 def test_uv_plugin(new_dir, partitions, uv_parts_simple):
     """Prime a simple python source."""
     lf = LifecycleManager(
@@ -72,7 +73,6 @@ def test_uv_plugin(new_dir, partitions, uv_parts_simple):
     assert output == "it works with uv too!"
 
 
-@pytest.mark.python
 def test_uv_plugin_symlink(new_dir, partitions, uv_parts_simple):
     """Run in the standard scenario with no overrides."""
     lf = LifecycleManager(
@@ -95,7 +95,6 @@ def test_uv_plugin_symlink(new_dir, partitions, uv_parts_simple):
     assert os.path.basename(python_link).startswith("python3")  # noqa: PTH119
 
 
-@pytest.mark.python
 def test_uv_plugin_override_get_system_interpreter(
     new_dir, partitions, uv_parts_simple
 ):
@@ -124,7 +123,6 @@ def test_uv_plugin_override_get_system_interpreter(
     assert python_link.resolve() == Path(sys.executable).resolve()
 
 
-@pytest.mark.python
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
 def test_uv_plugin_no_system_interpreter(
     new_dir,
@@ -161,7 +159,6 @@ def test_uv_plugin_no_system_interpreter(
     assert b"No suitable Python interpreter found" in cast(bytes, exc.value.stderr)
 
 
-@pytest.mark.python
 def test_uv_plugin_remove_symlinks(new_dir, partitions, uv_parts_simple):
     """Override symlink removal."""
 
@@ -217,7 +214,6 @@ def uv_parts_complex() -> Callable[[str, str], dict[str, Any]]:
     return _inner
 
 
-@pytest.mark.python
 def test_find_payload_python_bad_version(new_dir, partitions, uv_parts_complex):
     """Test that the build fails if a payload interpreter is needed but it's the
     wrong Python version."""
@@ -251,7 +247,6 @@ def test_find_payload_python_bad_version(new_dir, partitions, uv_parts_complex):
     assert "Invalid version request:" in output
 
 
-@pytest.mark.python
 def test_find_payload_python_good_version(new_dir, partitions, uv_parts_complex):
     """Test that the build succeeds if a payload interpreter is needed, and it's
     the right Python version."""

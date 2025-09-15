@@ -22,6 +22,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.java]
+
 
 def run_build(new_dir, partitions, application):
     source_location = Path(__file__).parent / "test_maven"
@@ -58,7 +60,6 @@ def run_build(new_dir, partitions, application):
     return lf.project_info.prime_dir
 
 
-@pytest.mark.java
 def test_java_plugin(new_dir, partitions):
     """This test validates that java plugin sets JAVA_HOME.
     The JAVA_HOME should be set according to the following rules:

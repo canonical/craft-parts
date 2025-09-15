@@ -22,8 +22,9 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.plugin]
 
-@pytest.mark.plugin
+
 @pytest.mark.parametrize(
     ("prefix", "install_path"),
     [
@@ -95,7 +96,6 @@ def test_cmake_plugin(new_dir, partitions, prefix, install_path):
     assert output == "hello world\n"
 
 
-@pytest.mark.plugin
 @pytest.mark.parametrize(
     ("prefix", "install_path"),
     [
