@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import platform
 import textwrap
 from pathlib import Path
 
@@ -43,6 +44,10 @@ def _current_release_supported() -> bool:
 
 @pytest.mark.skipif(
     not _current_release_supported(), reason="Test needs Chisel support"
+)
+@pytest.mark.skipif(
+    platform.machine() == "ppc64el",
+    reason="https://github.com/canonical/craft-parts/issues/1301",
 )
 def test_chisel_lifecycle(new_homedir_path, partitions):
     """Integrated test for Chisel support.
