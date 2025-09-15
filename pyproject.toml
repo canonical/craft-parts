@@ -28,7 +28,7 @@ license-files = ["LICENSE"]
 [dependency-groups]
 docs = [
     "canonical-sphinx[full]",
-    "pydantic-kitbash==0.0.7",
+    "pydantic-kitbash==0.0.8",
     # Missing from sphinxcontrib-details-directive, see
     # https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "setuptools",
@@ -48,7 +48,7 @@ dev = [
     "pytest-mock~=3.12",
     "pyfakefs~=5.3",
     "mypy[reports]~=1.14.1",
-    "pyright==1.1.391",
+    "pyright==1.1.405",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",

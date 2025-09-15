@@ -481,7 +481,7 @@ dev = [
     { name = "jsonschema" },
     { name = "mypy", extras = ["reports"], specifier = "~=1.14.1" },
     { name = "pyfakefs", specifier = "~=5.3" },
-    { name = "pyright", specifier = "==1.1.391" },
+    { name = "pyright", specifier = "==1.1.405" },
     { name = "pytest", specifier = "~=8.0" },
     { name = "pytest-check" },
     { name = "pytest-cov", specifier = "~=5.0" },
@@ -498,7 +498,7 @@ dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifi
 dev-questing = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=3.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 docs = [
     { name = "canonical-sphinx", extras = ["full"] },
-    { name = "pydantic-kitbash", specifier = "==0.0.7" },
+    { name = "pydantic-kitbash", specifier = "==0.0.8" },
     { name = "setuptools" },
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
@@ -1204,7 +1204,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-kitbash"
-version = "0.0.7"
+version = "0.0.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -1212,9 +1212,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c6/b9/630281fa690b2449e70d59ce221c91d9633571c4a7c2dcd8469a59a8c7cc/pydantic_kitbash-0.0.7.tar.gz", hash = "sha256:14eda8a87401b09d746e1ad4157248d8c0d1841803bf609600143e567a687551", size = 131893, upload-time = "2025-08-01T16:26:32.107Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/89/cf/ba829d9cb8dea479f3b495ad3ebae15136f036f193da5e1b2b684361d477/pydantic_kitbash-0.0.8.tar.gz", hash = "sha256:d7ca7206dadb40962f969613c9e3cbe5d411208bda24ab745270101c21955e36", size = 133038, upload-time = "2025-09-03T17:45:50.152Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/05/4a05fbb8f72ae86060430e55349e1d504ee73973e9a767aeb9ecaf85a447/pydantic_kitbash-0.0.7-py3-none-any.whl", hash = "sha256:4ab60369cb8b3cbf289724df295a514bb309d2cb669d1d0c6d1eafaacf530ec5", size = 13645, upload-time = "2025-08-01T16:26:29.879Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/c4/104ef0c4e212ed915e61d43aaf9dd27224aae9029a31db0986aebdb3859e/pydantic_kitbash-0.0.8-py3-none-any.whl", hash = "sha256:63e793bac0b570c34d0bb6de3e96cb8ff1f0a8a83636b53f6da8530fa8f9c7f6", size = 13721, upload-time = "2025-09-03T17:45:48.656Z" },
 ]
 
 [[package]]
@@ -1274,15 +1274,15 @@ wheels = [
 
 [[package]]
 name = "pyright"
-version = "1.1.391"
+version = "1.1.405"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nodeenv" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/05/4ea52a8a45cc28897edb485b4102d37cbfd5fce8445d679cdeb62bfad221/pyright-1.1.391.tar.gz", hash = "sha256:66b2d42cdf5c3cbab05f2f4b76e8bec8aa78e679bfa0b6ad7b923d9e027cadb2", size = 21965, upload-time = "2024-12-18T10:33:09.13Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/6c/ba4bbee22e76af700ea593a1d8701e3225080956753bee9750dcc25e2649/pyright-1.1.405.tar.gz", hash = "sha256:5c2a30e1037af27eb463a1cc0b9f6d65fec48478ccf092c1ac28385a15c55763", size = 4068319, upload-time = "2025-09-04T03:37:06.776Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/89/66f49552fbeb21944c8077d11834b2201514a56fd1b7747ffff9630f1bd9/pyright-1.1.391-py3-none-any.whl", hash = "sha256:54fa186f8b3e8a55a44ebfa842636635688670c6896dcf6cf4a7fc75062f4d15", size = 18579, upload-time = "2024-12-18T10:33:06.634Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/1a/524f832e1ff1962a22a1accc775ca7b143ba2e9f5924bb6749dce566784a/pyright-1.1.405-py3-none-any.whl", hash = "sha256:a2cb13700b5508ce8e5d4546034cb7ea4aedb60215c6c33f56cec7f53996035a", size = 5905038, upload-time = "2025-09-04T03:37:04.913Z" },
 ]
 
 [[package]]
