@@ -23,8 +23,9 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.java]
 
-@pytest.mark.java
+
 def test_ant_plugin(new_dir, partitions):
     source_location = Path(__file__).parent / "test_ant"
 

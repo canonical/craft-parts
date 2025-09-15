@@ -24,8 +24,9 @@ from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
 from typing_extensions import override
 
+pytestmark = [pytest.mark.plugin]
 
-@pytest.mark.plugin
+
 def test_dotnet_plugin(new_dir, partitions):
     # pylint: disable=line-too-long
     parts_yaml = textwrap.dedent(
@@ -86,7 +87,6 @@ def test_dotnet_plugin(new_dir, partitions):
     assert output == "Hello, World!\n"
 
 
-@pytest.mark.plugin
 def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet isn't installed."""
 
@@ -109,7 +109,6 @@ def test_dotnet_plugin_no_dotnet(new_dir, partitions, mocker):
     test_dotnet_plugin(new_dir, partitions)
 
 
-@pytest.mark.plugin
 def test_dotnet_plugin_fake_dotnet(new_dir, partitions, mocker):
     """Test the dotnet plugin while pretending dotnet is installed."""
 

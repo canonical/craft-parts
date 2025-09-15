@@ -22,8 +22,9 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.plugin]
 
-@pytest.mark.plugin
+
 def test_npm_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
@@ -96,7 +97,6 @@ def test_npm_plugin(new_dir, partitions):
     assert Path(lifecycle.project_info.prime_dir, "bin", "node").exists() is False
 
 
-@pytest.mark.plugin
 def test_npm_plugin_include_node(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """\
