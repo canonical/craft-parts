@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.23.0:
 
-2.23.0 (unreleased)
+2.23.0 (2025-09-15)
 -------------------
 
 New features:
@@ -28,6 +28,8 @@ New features:
 
 - Add two new build attributes, ``enable-usrmerge`` and ``disable-usrmerge``, to control
   the creation of a merged ``/usr`` directory scheme in a part's install directory.
+- The package cache layer can be placed higher in the overlay stack, allowing overlay
+  packages to be installed on top of a system created by another part.
 
 Bug fixes:
 
@@ -56,9 +58,6 @@ New features:
   key. This is done by prefixing the file's destination path with the ``(overlay)``
   pseudo-partition. To make use of this feature, the project must support both overlays
   and partitions.
-
-- The package cache layer can be placed higher in the overlay stack, allowing overlay
-  packages to be installed on top of a system created by another part.
 
 Bug fixes:
 
@@ -1437,6 +1436,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0
 .. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
 .. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
 .. _2.21.0: https://github.com/canonical/craft-parts/releases/tag/2.21.0
