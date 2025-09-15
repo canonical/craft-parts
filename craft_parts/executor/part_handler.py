@@ -40,7 +40,6 @@ from craft_parts.parts import (
     Part,
     get_parts_with_overlay,
     has_overlay_visibility,
-    part_position,
 )
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import (
@@ -1072,7 +1071,7 @@ class PartHandler:
         _remove(self._part.part_state_dir / "layer_hash")
         # Clean the package cache if the part was below it and if the
         # cache was not directly on top of the base layer.
-        part_level = part_position(self._part, part_list=self._part_list)
+        part_level = self._part_list.index(self._part)
         if part_level < self._overlay_manager.cache_level:
             _remove(self._part.dirs.overlay_packages_dir)
 
