@@ -157,6 +157,12 @@ endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
 endif
+# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
+# 22.04 -> 25.10 (and possibly 26.04).
+# On focal, we'll get the snap instead.
+ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
+APT_PACKAGES += dotnet-sdk-8.0
+endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
 APT_PACKAGES += gcc
 endif
@@ -224,6 +230,15 @@ else ifeq ($(shell which apt-get),)
 	$(warning Please ensure the equivalents to these packages are installed: $(APT_PACKAGES))
 else
 	sudo $(APT) install $(APT_PACKAGES)
+endif
+ifeq ($(ID)_$(VERSION_ID),ubuntu_20.04)
+ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
+ifeq ($(shell which snap),)
+	$(warning Cannot install dotnet without snap.)
+else
+	sudo snap install dotnet --classic
+endif
+endif
 endif
 
 # If additional build dependencies need installing in order to build the linting env.
