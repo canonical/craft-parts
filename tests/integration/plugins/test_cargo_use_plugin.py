@@ -22,6 +22,8 @@ import yaml
 from craft_parts import LifecycleManager, Step, errors
 from py import path  # type: ignore[import-untyped]
 
+pytestmark = [pytest.mark.plugin]
+
 
 @pytest.fixture
 def cargo_project(new_dir: path.LocalPath) -> pathlib.Path:

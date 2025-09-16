@@ -22,6 +22,7 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.java]
 SOURCE_DIR = Path(__file__).parent / "test_maven_use"
 
 

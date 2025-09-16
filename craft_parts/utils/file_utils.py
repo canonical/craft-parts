@@ -22,6 +22,7 @@ import hashlib
 import logging
 import os
 import shutil
+import stat
 import sys
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -252,6 +253,28 @@ def link_or_copy_tree(
             )
 
             copy_function(source, destination)
+
+
+def move(source: str, destination: str) -> None:
+    """Move regular files, directories, or special files from source to destination.
+
+    :param source: Directory from which to move the file or directory.
+    :param destination: Directory where the file or directory will be moved to.
+    """
+    src_path = Path(source)
+    dest_path = Path(destination)
+
+    src_stat = src_path.stat(follow_symlinks=False)
+    src_mode = src_stat.st_mode
+
+    if stat.S_ISCHR(src_mode) or stat.S_ISBLK(src_mode):
+        os.mknod(dest_path, src_mode, src_stat.st_rdev)
+        shutil.copystat(src_path, dest_path)
+        os.chown(dest_path, src_stat.st_uid, src_stat.st_gid)
+        src_path.unlink()
+        return
+
+    shutil.move(src_path, dest_path)
 
 
 def create_similar_directory(

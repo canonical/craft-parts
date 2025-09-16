@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import platform
 import textwrap
 from pathlib import Path
 
@@ -28,7 +29,9 @@ from craft_parts.utils import os_utils
 IS_CI: bool = os.getenv("CI") == "true"
 
 # These are the Ubuntu versions that Chisel currently supports.
-SUPPORTED_UBUNTU_VERSIONS = {"20.04", "22.04", "22.10", "24.04"}
+SUPPORTED_UBUNTU_VERSIONS = frozenset(
+    {"20.04", "22.04", "22.10", "24.04", "24.10", "25.04", "25.10"}
+)
 
 
 def _current_release_supported() -> bool:
@@ -41,6 +44,10 @@ def _current_release_supported() -> bool:
 
 @pytest.mark.skipif(
     not _current_release_supported(), reason="Test needs Chisel support"
+)
+@pytest.mark.skipif(
+    platform.machine() == "ppc64el",
+    reason="https://github.com/canonical/craft-parts/issues/1301",
 )
 def test_chisel_lifecycle(new_homedir_path, partitions):
     """Integrated test for Chisel support.
@@ -105,7 +112,7 @@ def test_chisel_error(new_homedir_path, caplog):
 @pytest.mark.skipif(
     not _current_release_supported(), reason="Test needs Chisel support"
 )
-def test_chisel_normalize_paths(new_homedir_path, partitions):
+def test_chisel_normalize_paths(host_arch: str, new_homedir_path, partitions):
     """Check that the contents of cut chisel slices are "normalized" just like
     staged debs.
     """
@@ -137,7 +144,7 @@ def test_chisel_normalize_paths(new_homedir_path, partitions):
         ctx.execute(actions)
 
     root = Path(new_homedir_path) / "prime"
-    link = root / "usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security/java.policy"
+    link = root / f"usr/lib/jvm/java-8-openjdk-{host_arch}/jre/lib/security/java.policy"
     assert link.is_symlink()
     # Symlink must point to the file in the prime dir
     assert link.resolve(strict=True) == root / "etc/java-8-openjdk/security/java.policy"

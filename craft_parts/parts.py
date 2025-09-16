@@ -17,6 +17,7 @@
 """Definitions and helpers to handle parts."""
 
 import re
+import textwrap
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -337,7 +338,28 @@ class PartSpec(BaseModel):
         examples=['[{MESSAGE: "Hello world!"}, {NAME: "Craft Parts"}]'],
     )
 
-    build_attributes: list[str] = []
+    build_attributes: list[str] = Field(
+        default=[],
+        description="Identifiers that control specific behaviors during the build.",
+        examples=["[enable-usrmerge]", "[disable-usrmerge]"],
+    )
+    """Special identifiers that change some features and behaviors during the build.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable-usrmerge``
+          - Fills the ``${CRAFT_PART_INSTALL}`` directory with a merged ``/usr``
+            directory before running the part's build step.
+        * - ``disable-usrmerge``
+          - Prevents a merged ``/usr`` directory from being assembled for the build
+            step. Available in lifecycles in which the directory would be merged by
+            default.
+    """
 
     organize_files: dict[str, str] = Field(
         default_factory=dict,
@@ -392,9 +414,12 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the pull step.",
         examples=[
-            """|
-              craftctl default
-              rm $CRAFT_PART_SRC/pyproject.toml"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  rm $CRAFT_PART_SRC/pyproject.toml"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the pull step.
@@ -406,10 +431,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run after the part's overlay packages are installed.",
         examples=[
-            """|
-              rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
-              rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
-              rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            textwrap.dedent(
+                """\
+                |
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+                  rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            )
         ],
     )
     """The commands to run after the part's overlay packages are installed.
@@ -422,10 +450,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
         examples=[
-            """|
-              cd cmd/webhook
-              mkdir $CRAFT_PART_INSTALL/ko-app
-              go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            textwrap.dedent(
+                """\
+                |
+                  cd cmd/webhook
+                  mkdir $CRAFT_PART_INSTALL/ko-app
+                  go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            ),
         ],
     )
     """The commands to run instead of the default behavior of the build step.
@@ -437,9 +468,12 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the stage step.",
         examples=[
-            '''|
-              craftctl default
-              chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            textwrap.dedent(
+                '''\
+                |
+                  craftctl default
+                  chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            )
         ],
     )
     """The commands to run instead of the default behavior of the stage step.
@@ -451,10 +485,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the prime step.",
         examples=[
-            """|
-              craftctl default
-              mkdir -p $CRAFT_PRIME/var/lib/mysql
-              mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  mkdir -p $CRAFT_PRIME/var/lib/mysql
+                  mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the prime step.
@@ -1038,6 +1075,19 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     # simplest way to do this is to sort them by name.
     all_parts = sorted(part_list, key=lambda part: part.name, reverse=True)
 
+    # Change the implicit order so that parts that organize to them
+    # are at the end of the list (because the order is reversed).
+    organize_to_overlay_parts: list[Part] = []
+    other_parts: list[Part] = []
+    for part in all_parts:
+        if part.organizes_to_overlay:
+            organize_to_overlay_parts.append(part)
+        else:
+            other_parts.append(part)
+
+    all_parts = [*other_parts, *organize_to_overlay_parts]
+
+    # Process explicit ordering set using the "after" key.
     while all_parts:
         top_part = None
 

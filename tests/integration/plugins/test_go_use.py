@@ -22,6 +22,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.plugin]
+
 
 @pytest.fixture(scope="module")
 def go_version():

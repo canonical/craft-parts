@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -401,7 +402,7 @@ class TestFixSymlinks:
         os.makedirs("a")  # noqa: PTH103
         open("1", mode="w").close()  # noqa: PTH123
 
-        os.symlink(src, dst)
+        pathlib.Path(dst).symlink_to(src)
         normalize(new_dir, repository=DummyRepository)
 
         assert os.readlink(dst) == result  # noqa: PTH115

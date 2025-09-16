@@ -28,6 +28,8 @@ from craft_parts import LifecycleManager, Step, errors, plugins
 from pytest_check.context_manager import CheckContextManager
 from typing_extensions import override
 
+pytestmark = [pytest.mark.python]
+
 
 def setup_function():
     plugins.unregister_all()

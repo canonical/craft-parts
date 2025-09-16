@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import stat
 from pathlib import Path
 
@@ -96,7 +97,7 @@ class TestLinkOrCopyTree:
 
     def test_link_symlink_to_file(self):
         # Create a symlink to a file
-        os.symlink("2", os.path.join("foo", "2-link"))  # noqa: PTH118
+        pathlib.Path("foo", "2-link").symlink_to("2")
         file_utils.link_or_copy_tree("foo", "qux")
         # Verify that the symlink remains a symlink
         link = os.path.join("qux", "2-link")  # noqa: PTH118
@@ -104,7 +105,7 @@ class TestLinkOrCopyTree:
         assert os.readlink(link) == "2"  # noqa: PTH115
 
     def test_link_symlink_to_dir(self):
-        os.symlink("bar", os.path.join("foo", "bar-link"))  # noqa: PTH118
+        pathlib.Path("foo", "bar-link").symlink_to("bar")
         file_utils.link_or_copy_tree("foo", "qux")
 
         # Verify that the symlink remains a symlink
@@ -182,6 +183,80 @@ class TestCopy:
         with pytest.raises(errors.CopyFileNotFound) as raised:
             file_utils.copy("2", "3")
         assert raised.value.name == "2"
+
+
+class TestMove:
+    """Verify func:`move` usage scenarios."""
+
+    def test_move_simple(self):
+        Path("foo").touch()
+        foo_stat = os.stat("foo")  # noqa: PTH116
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")  # noqa: PTH116
+
+        assert Path("foo").exists() is False
+        assert Path("bar").is_file()
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+        assert foo_stat.st_ino == bar_stat.st_ino
+
+    def test_move_symlink(self):
+        Path("foo").symlink_to("baz")
+        foo_stat = os.lstat("foo")
+        file_utils.move("foo", "bar")
+        bar_stat = os.lstat("bar")
+
+        assert Path("foo").exists() is False
+        assert Path("bar").is_symlink()
+        assert Path("bar").readlink() == Path("baz")
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+    def test_move_chardev(self):
+        os.mknod("foo", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
+        foo_stat = os.stat("foo")  # noqa: PTH116
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")  # noqa: PTH116
+
+        assert Path("foo").exists() is False
+        assert Path("bar").exists()
+        assert stat.S_ISCHR(bar_stat.st_mode)
+        assert os.major(bar_stat.st_rdev) == 1
+        assert os.minor(bar_stat.st_rdev) == 5
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+    def test_move_blockdev(self):
+        os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
+        foo_stat = os.stat("foo")  # noqa: PTH116
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")  # noqa: PTH116
+
+        assert Path("foo").exists() is False
+        assert Path("bar").exists()
+        assert stat.S_ISBLK(bar_stat.st_mode)
+        assert os.major(bar_stat.st_rdev) == 7
+        assert os.minor(bar_stat.st_rdev) == 99
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    def test_move_fifo(self):
+        os.mkfifo("foo")
+        foo_stat = os.stat("foo")  # noqa: PTH116
+        file_utils.move("foo", "bar")
+        bar_stat = os.stat("bar")  # noqa: PTH116
+
+        assert Path("foo").exists() is False
+        assert Path("bar").exists()
+        assert stat.S_ISFIFO(bar_stat.st_mode)
+        assert TestMove._has_same_attributes(foo_stat, bar_stat)
+
+    @staticmethod
+    def _has_same_attributes(a: os.stat_result, b: os.stat_result) -> bool:
+        return (
+            a.st_mode == b.st_mode
+            and a.st_uid == b.st_uid
+            and a.st_gid == b.st_gid
+            and a.st_mtime_ns == b.st_mtime_ns
+        )
 
 
 # TODO: test NonBlockingRWFifo  # noqa: FIX002

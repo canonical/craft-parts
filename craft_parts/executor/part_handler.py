@@ -36,7 +36,11 @@ from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
-from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
+from craft_parts.parts import (
+    Part,
+    get_parts_with_overlay,
+    has_overlay_visibility,
+)
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import (
     MigrationContents,
@@ -330,7 +334,6 @@ class PartHandler:
 
         fetched_packages = self._fetch_stage_packages(step_info=step_info)
         fetched_snaps = self._fetch_stage_snaps()
-        self._fetch_overlay_packages()
 
         self._run_step(
             step_info=step_info,
@@ -364,6 +367,7 @@ class PartHandler:
         :return: The overlay step state.
         """
         self._make_dirs()
+        self._fetch_overlay_packages()
 
         if self._part.has_overlay:
             # install overlay packages
@@ -1066,6 +1070,11 @@ class PartHandler:
         for partition in self._part_info.partitions or (None,):
             _remove(self._part.part_layer_dirs[partition])
         _remove(self._part.part_state_dir / "layer_hash")
+        # Clean the package cache if the part was below it and if the
+        # cache was not directly on top of the base layer.
+        part_level = self._part_list.index(self._part)
+        if part_level < self._overlay_manager.cache_level:
+            _remove(self._part.dirs.overlay_packages_dir)
 
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
@@ -1170,11 +1179,49 @@ class PartHandler:
                     )
                 # The symlink already exists
                 continue
-            os.symlink(
-                src,
-                dst,
-                target_is_directory=True,
+            dst.symlink_to(src, target_is_directory=True)
+
+    def _create_usrmerge_scaffolding(self) -> None:
+        disabled_attr = "disable-usrmerge" in self._part_info.build_attributes
+
+        if disabled_attr:
+            # Explicitly disabled
+            return
+
+        plugin = self._part_info.plugin_name
+        usrmerged_by_default = self._part_info.usrmerged_by_default
+        # Currently parts using the 'dump' or 'nil' plugin are special cases that do
+        # *not* get usrmerged by default.
+        usrmerged_by_default = usrmerged_by_default and plugin not in ("dump", "nil")
+
+        enabled_attr = "enable-usrmerge" in self._part_info.build_attributes
+
+        usrmerged = usrmerged_by_default or enabled_attr
+        if not usrmerged:
+            # usrmerged not enabled by default, nor for the individual
+            return
+
+        root_dir = self._part.part_install_dir
+        merge_to_usr = ("bin", "lib", "lib64", "sbin")
+
+        for dir_name in merge_to_usr:
+            usr_dir = Path("usr") / dir_name
+            (root_dir / usr_dir).mkdir(exist_ok=True, parents=True)
+
+            symlink_path = root_dir / dir_name
+
+            if (
+                symlink_path.exists()
+                and symlink_path.is_symlink()
+                and symlink_path.readlink() == usr_dir
+            ):
+                # Link already exists
+                continue
+
+            logger.debug(
+                f"creating symlink for usrmerge fix: {symlink_path} -> {usr_dir}"
             )
+            symlink_path.symlink_to(usr_dir, target_is_directory=True)
 
     def _make_dirs(self) -> None:
         dirs = [
@@ -1194,6 +1241,7 @@ class PartHandler:
             os.makedirs(dir_name, exist_ok=True)  # noqa: PTH103
 
         self._symlink_alias_to_default()
+        self._create_usrmerge_scaffolding()
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.
@@ -1242,8 +1290,12 @@ class PartHandler:
             return
 
         try:
+            # Parts declaring overlay packages are ordered to be processed after
+            # parts organizing to the overlay. The latter should prepare the
+            # environment for the package manager.
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
+                ctx.refresh_packages_list()
                 ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(

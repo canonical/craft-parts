@@ -9,14 +9,65 @@ on:
       - "renovate/*"
   pull_request:
 
+# Cancel existing jobs for this branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
-  test:
+  test-common:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: '["ubuntu-22.04", "ubuntu-24.04"]'
+      fast-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+        ]
       fast-test-python-versions: '["3.10", "3.12", "3.13"]'
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+        ]
+      slow-test-python-versions: '["3.12"]'
+      lowest-python-platform: '["amd64", "focal"]'
+      lowest-python-version: "3.10"
+      pytest-markers: not java and not python and not plugin
+      setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
+  test-java-plugins:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
       slow-test-platforms: '["ubuntu-24.04"]'
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
+      pytest-markers: java
+      setup-vars: NO_PYTHON=1 NO_PLUGIN=1
+  test-python-plugins:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-python-versions: '["3.12"]'
+      lowest-python-version: ""
+      pytest-markers: python
+      setup-vars: NO_JAVA=1 NO_PLUGIN=1
+  test-other-plugins:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-python-versions: '["3.12"]'
+      lowest-python-version: ""
+      pytest-markers: plugin
+      setup-vars: NO_JAVA=1 NO_PYTHON=1

@@ -418,6 +418,8 @@ class ProjectInfo:
         when creating a :class:`LifecycleManager`.
     :param partitions: A list of partitions.
     :param filesystem_mounts: A dict of filesystem_mounts.
+    :param usrmerged_by_default: Whether the parts' install dirs should be filled with
+        usrmerge-safe directories and symlinks prior to a part's build.
     """
 
     def __init__(  # noqa: PLR0913
@@ -437,6 +439,7 @@ class ProjectInfo:
         filesystem_mounts: FilesystemMounts | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
+        usrmerged_by_default: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         if arch and arch not in _DEB_TO_TRIPLET:
@@ -464,6 +467,7 @@ class ProjectInfo:
         self._base_layer_dir = base_layer_dir
         self._base_layer_hash = base_layer_hash
         self.global_environment: dict[str, str] = {}
+        self._usrmerged_by_default = usrmerged_by_default
 
         self.execution_finished = False
 
@@ -709,6 +713,11 @@ class ProjectInfo:
         """Return the hash of the base layer (if any)."""
         return self._base_layer_hash
 
+    @property
+    def usrmerged_by_default(self) -> bool:
+        """Return whether parts should be usrmerged by default."""
+        return self._usrmerged_by_default
+
     def set_project_var(
         self,
         name: str,
@@ -839,6 +848,7 @@ class PartInfo:
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
         self._part_dependencies = part.dependencies
+        self._plugin_name = part.plugin_name
         self.build_attributes = part.spec.build_attributes.copy()
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
@@ -903,6 +913,11 @@ class PartInfo:
     def part_dependencies(self) -> Sequence[str]:
         """Return the names of the parts that this part depends on."""
         return self._part_dependencies
+
+    @property
+    def plugin_name(self) -> str:
+        """Return the name of the part's plugin."""
+        return self._plugin_name
 
     def set_project_var(
         self, name: str, value: str, *, raw_write: bool = False

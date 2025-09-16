@@ -126,7 +126,7 @@ def organize_files(  # noqa: PLR0912
                             os.remove(real_dst)  # noqa: PTH107
 
             os.makedirs(os.path.dirname(dst), exist_ok=True)  # noqa: PTH103, PTH120
-            shutil.move(src, dst)
+            file_utils.move(src, dst)
 
 
 def get_src_path(
