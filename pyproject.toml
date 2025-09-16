@@ -206,6 +206,8 @@ exclude = [
     "**/_version.py",
     # Ignore the starter pack submodule
     "docs/sphinx-resources",
+    # No need to lint test inputs
+    "tests/integration/plugins/test_python"
 ]
 
 [tool.mypy]
