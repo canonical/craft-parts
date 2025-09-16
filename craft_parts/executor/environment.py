@@ -20,7 +20,8 @@ from __future__ import annotations
 
 import io
 import logging
-from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING, Any, overload
 
 from craft_parts import errors
 from craft_parts.features import Features
@@ -341,6 +342,14 @@ def expand_environment(
             data[key] = _replace_attr(value, replacements)
 
 
+@overload
+def _replace_attr(
+    attr: dict[str, str], replacements: dict[str, str]
+) -> dict[str, str]: ...
+@overload
+def _replace_attr(attr: list[str], replacements: dict[str, str]) -> list[str]: ...
+@overload
+def _replace_attr(attr: str, replacements: dict[str, str]) -> str: ...
 def _replace_attr(
     attr: list[str] | dict[str, str] | str, replacements: dict[str, str]
 ) -> list[str] | dict[str, str] | str:
@@ -355,23 +364,20 @@ def _replace_attr(
 
     :returns: The data structure with replaced values.
     """
-    if isinstance(attr, str):
-        for key, value in replacements.items():
-            if key in attr:
-                _warn_if_deprecated_key(key)
-                attr = attr.replace(key, str(value))
-        return attr
-
-    if isinstance(attr, list | tuple):
-        return [cast(str, _replace_attr(i, replacements)) for i in attr]
-
-    result: dict[str, str] = {}
-    for _key, _value in attr.items():
-        # Run replacements on both the key and value
-        key = cast(str, _replace_attr(_key, replacements))
-        value = cast(str, _replace_attr(_value, replacements))
-        result[key] = value
-    return result
+    match attr:
+        case Mapping():
+            return {
+                _replace_attr(key, replacements): _replace_attr(value, replacements)
+                for key, value in attr.items()
+            }
+        case str():
+            for key, value in replacements.items():
+                if key in attr:
+                    _warn_if_deprecated_key(key)
+                    attr = attr.replace(key, str(value))
+            return attr
+        case Sequence():
+            return [_replace_attr(i, replacements) for i in attr]
 
 
 def _warn_if_deprecated_key(key: str) -> None:
