@@ -221,7 +221,7 @@ else
 endif
 
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
@@ -232,15 +232,6 @@ else ifeq ($(shell which apt-get),)
 	$(warning Please ensure the equivalents to these packages are installed: $(APT_PACKAGES))
 else
 	sudo $(APT) install $(APT_PACKAGES)
-endif
-ifeq ($(UBUNTU_CODENAME),focal)
-ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
-ifeq ($(shell which snap),)
-	$(warning Cannot install dotnet without snap.)
-else
-	sudo snap install dotnet --classic
-endif
-endif
 endif
 
 # If additional build dependencies need installing in order to build the linting env.
@@ -257,6 +248,26 @@ endif
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
+endif
+
+.PHONY: install-dotnet
+install-dotnet:
+ifeq ($(UBUNTU_CODENAME),focal)
+ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
+ifeq ($(shell which snap),)
+	$(warning Cannot install dotnet without snap.)
+else
+	sudo snap install dotnet --classic
+endif
+endif
+endif
+
+.PHONY: install-rustup
+install-rustup:
+ifeq ($(shell which snap),)
+	$(warning Cannot install rustup without snap.)
+else
+	sudo snap install rustup --classic
 endif
 
 .PHONY: _gh-runner-clear-space
