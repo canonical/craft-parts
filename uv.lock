@@ -410,6 +410,7 @@ dev = [
     { name = "pytest-check" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
+    { name = "pytest-randomly" },
     { name = "pytest-subprocess" },
     { name = "requests-mock" },
     { name = "types-colorama" },
@@ -488,6 +489,7 @@ dev = [
     { name = "pytest-check" },
     { name = "pytest-cov", specifier = "~=5.0" },
     { name = "pytest-mock", specifier = "~=3.12" },
+    { name = "pytest-randomly", specifier = ">=4.0.1" },
     { name = "pytest-subprocess" },
     { name = "requests-mock" },
     { name = "types-colorama" },
@@ -564,7 +566,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-jammy') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-plucky' and extra == 'group-11-craft-parts-dev-questing')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-jammy') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-plucky' and extra == 'group-11-craft-parts-dev-questing')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -684,7 +686,7 @@ name = "importlib-metadata"
 version = "8.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.11' or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-jammy') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-plucky' and extra == 'group-11-craft-parts-dev-questing')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", hash = "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000", size = 56641, upload-time = "2025-04-27T15:29:01.736Z" }
 wheels = [
@@ -1338,6 +1340,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/71/28/67172c96ba684058a4d24ffe144d64783d2a270d0af0d9e792737bddc75c/pytest_mock-3.14.1.tar.gz", hash = "sha256:159e9edac4c451ce77a5cdb9fc5d1100708d2dd4ba3c3df572f14097351af80e", size = 33241, upload-time = "2025-05-26T13:58:45.167Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/05/77b60e520511c53d1c1ca75f1930c7dd8e971d0c4379b7f4b3f9644685ba/pytest_mock-3.14.1-py3-none-any.whl", hash = "sha256:178aefcd11307d874b4cd3100344e7e2d888d9791a6a1d9bfe90fbc1b74fd1d0", size = 9923, upload-time = "2025-05-26T13:58:43.487Z" },
+]
+
+[[package]]
+name = "pytest-randomly"
+version = "4.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/1d/258a4bf1109258c00c35043f40433be5c16647387b6e7cd5582d638c116b/pytest_randomly-4.0.1.tar.gz", hash = "sha256:174e57bb12ac2c26f3578188490bd333f0e80620c3f47340158a86eca0593cd8", size = 14130, upload-time = "2025-09-12T15:23:00.085Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/33/3e/a4a9227807b56869790aad3e24472a554b585974fe7e551ea350f50897ae/pytest_randomly-4.0.1-py3-none-any.whl", hash = "sha256:e0dfad2fd4f35e07beff1e47c17fbafcf98f9bf4531fd369d9260e2f858bfcb7", size = 8304, upload-time = "2025-09-12T15:22:58.946Z" },
 ]
 
 [[package]]
