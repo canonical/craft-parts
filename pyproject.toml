@@ -75,6 +75,7 @@ types = [
     "types-setuptools",
     "types-lxml>=2025.3.30",
 ]
+dev-focal = ["python-apt~=2.0.0;sys_platform=='linux'"]
 dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
 dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
 dev-plucky = ["python-apt~=2.9.9;sys_platform=='linux'"]
@@ -100,6 +101,7 @@ constraint-dependencies = [
 ]
 conflicts = [
     [
+        { group = "dev-focal" },
         { group = "dev-jammy" },
         { group = "dev-noble" },
         { group = "dev-plucky" },

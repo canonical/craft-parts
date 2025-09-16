@@ -22,6 +22,7 @@ from pathlib import Path
 import pytest
 from craft_parts import ProjectDirs
 from craft_parts.sources.git_source import GitSource
+from craft_parts.utils.os_utils import OsRelease
 
 
 def _call(cmd: list[str]) -> None:
@@ -114,6 +115,10 @@ class TestGitSource(GitBaseTestCase):
         # assert we actually pulled the commit
         assert Path(working_tree / "test.txt").read_text() == "Howdy, Partner!"
 
+    @pytest.mark.skipif(
+        OsRelease().id() == "ubuntu" and OsRelease().version_id() <= "20.04",
+        reason="Need git >= 2.28.0",
+    )
     def test_pull_existing_with_branch_after_update(self, new_dir, monkeypatch):
         """Test that `pull_existing` with a branch works after the remote is updated."""
         # set up repositories
