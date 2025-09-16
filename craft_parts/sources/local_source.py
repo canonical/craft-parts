@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import pydantic
-from overrides import overrides
+from typing_extensions import override
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils
@@ -76,6 +76,7 @@ class LocalSource(SourceHandler):
             self._ignore_patterns.append(self._dirs.parts_dir.name)
             self._ignore_patterns.append(self._dirs.stage_dir.name)
             self._ignore_patterns.append(self._dirs.prime_dir.name)
+            self._ignore_patterns.append(self._dirs.overlay_dir.name)
             if self._dirs.partition_dir:
                 self._ignore_patterns.append(self._dirs.partition_dir.name)
         else:
@@ -96,7 +97,7 @@ class LocalSource(SourceHandler):
         self._updated_files: set[str] = set()
         self._updated_directories: set[str] = set()
 
-    @overrides
+    @override
     def pull(self) -> None:
         """Retrieve the local source files."""
         if not Path(self.source_abspath).exists():
@@ -109,7 +110,7 @@ class LocalSource(SourceHandler):
             copy_function=self.copy_function,
         )
 
-    @overrides
+    @override
     def check_if_outdated(
         self, target: str, *, ignore_files: list[str] | None = None
     ) -> bool:
@@ -168,7 +169,7 @@ class LocalSource(SourceHandler):
 
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
-    @overrides
+    @override
     def get_outdated_files(self) -> tuple[list[str], list[str]]:
         """Obtain lists of outdated files and directories.
 
@@ -179,7 +180,7 @@ class LocalSource(SourceHandler):
         """
         return (sorted(self._updated_files), sorted(self._updated_directories))
 
-    @overrides
+    @override
     def update(self) -> None:
         """Update pulled source.
 

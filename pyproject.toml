@@ -15,7 +15,6 @@ classifiers = [
 ]
 dependencies = [
     "lxml>=5.3.0",
-    "overrides!=7.6.0",
     "pydantic>=2.0.0",
     "pyxdg",
     "PyYAML",
@@ -29,7 +28,7 @@ license-files = ["LICENSE"]
 [dependency-groups]
 docs = [
     "canonical-sphinx[full]",
-    "pydantic-kitbash==0.0.7",
+    "pydantic-kitbash==0.0.8",
     # Missing from sphinxcontrib-details-directive, see
     # https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
     "setuptools",
@@ -39,6 +38,7 @@ docs = [
     "sphinx-pydantic",
     "sphinx-rtd-theme",
     "sphinxcontrib-details-directive",
+    "sphinxext-rediraffe",
 ]
 dev = [
     "build",
@@ -48,7 +48,6 @@ dev = [
     "pytest-mock~=3.12",
     "pyfakefs~=5.3",
     "mypy[reports]~=1.14.1",
-    "pyright==1.1.391",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
@@ -76,6 +75,7 @@ types = [
     "types-setuptools",
     "types-lxml>=2025.3.30",
 ]
+dev-focal = ["python-apt~=2.0.0;sys_platform=='linux'"]
 dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
 dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
 dev-plucky = ["python-apt~=2.9.9;sys_platform=='linux'"]
@@ -101,6 +101,7 @@ constraint-dependencies = [
 ]
 conflicts = [
     [
+        { group = "dev-focal" },
         { group = "dev-jammy" },
         { group = "dev-noble" },
         { group = "dev-plucky" },
@@ -125,10 +126,6 @@ Homepage = "https://github.com/canonical/craft-parts"
 [build-system]
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.package-dir]
-"craft_parts" = "craft_parts"
-"craft_parts_docs" = "docs/common"
 
 [tool.setuptools_scm]
 write_to = "craft_parts/_version.py"
@@ -156,9 +153,11 @@ git_describe_command = [
     "*[^0-9.]*",
 ]
 
-[tool.setuptools.packages.find]
-include = ["*craft*"]
-namespaces = false
+# NOTE: Do not merge starbase's auto-find here, as we are intentionally adding two
+# packages using this manual description.
+[tool.setuptools.package-dir]
+"craft_parts" = "craft_parts"
+"craft_parts_docs" = "docs/common"
 
 [tool.black]
 target-version = ["py310"]
@@ -182,7 +181,12 @@ minversion = "7.0"
 testpaths = "tests"
 xfail_strict = true
 addopts = "--ignore=tests/spread"
-markers = ["slow: slow tests"]
+markers = [
+    "slow: slow tests",
+    "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
+    "python: tests that require the Python build tools (poetry, uv, pip)",
+    "plugin: tests that require plugin dependencies other than java or python",
+]
 
 [tool.coverage.run]
 branch = true

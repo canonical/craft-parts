@@ -23,7 +23,7 @@ from collections.abc import Iterable
 from io import StringIO
 from typing import TYPE_CHECKING
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts.utils.formatting_utils import humanize_list
 

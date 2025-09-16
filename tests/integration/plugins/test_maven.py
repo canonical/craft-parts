@@ -23,6 +23,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
 
+pytestmark = [pytest.mark.java]
+
 
 @pytest.fixture
 def testing_source_dir(new_dir):

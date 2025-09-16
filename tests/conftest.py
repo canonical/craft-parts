@@ -20,6 +20,7 @@ import pathlib
 import sys
 import tempfile
 import threading
+import types
 from pathlib import Path
 from typing import Any, NamedTuple
 from unittest import mock
@@ -49,6 +50,33 @@ def pytest_configure(config):
 
 
 @pytest.fixture
+def project_main_module() -> types.ModuleType:
+    """Fixture that returns the project's principal package (imported).
+
+    This fixture should be rewritten by "downstream" projects to return the correct
+    module. Then, every test that uses this fixture will correctly test against the
+    downstream project.
+    """
+    try:
+        # This should be the project's main package; downstream projects must update this.
+        import craft_parts  # noqa: PLC0415
+
+        main_module = craft_parts
+    except ImportError:
+        pytest.fail(
+            "Failed to import the project's main module: check if it needs updating",
+        )
+    return main_module
+
+
+@pytest.fixture(scope="session")
+def host_arch() -> str:
+    from craft_parts.infos import _get_host_architecture  # noqa: PLC0415
+
+    return _get_host_architecture()
+
+
+@pytest.fixture
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
     monkeypatch.chdir(tmpdir)
@@ -59,6 +87,13 @@ def new_dir(monkeypatch, tmpdir):
 def new_path(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     return tmp_path
+
+
+@pytest.fixture(scope="session")
+def host_triplet(host_arch: str) -> str:
+    from craft_parts.infos import _DEB_TO_TRIPLET  # noqa: PLC0415
+
+    return _DEB_TO_TRIPLET[host_arch]
 
 
 @pytest.fixture

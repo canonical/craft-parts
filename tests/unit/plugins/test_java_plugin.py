@@ -17,7 +17,7 @@ import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins import PluginProperties
 from craft_parts.plugins.java_plugin import JavaPlugin
-from overrides import override
+from typing_extensions import override
 
 
 class DummyJavaPlugin(JavaPlugin):

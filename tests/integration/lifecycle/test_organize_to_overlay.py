@@ -20,7 +20,7 @@ from pathlib import Path
 import craft_parts
 import pytest
 import yaml
-from craft_parts import Action, Step
+from craft_parts import Action, ActionType, Step
 
 basic_parts_yaml = textwrap.dedent(
     """\
@@ -64,7 +64,8 @@ def test_organize_to_overlay(new_dir, mocker):
     assert actions == [
         Action("p1", Step.PULL),
         Action("p1", Step.OVERLAY),
-        Action("p1", Step.BUILD),
+        Action("p1", Step.BUILD, reason="organize contents to overlay"),
+        Action("p1", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         Action("p1", Step.STAGE),
         Action("p1", Step.PRIME),
     ]

@@ -18,10 +18,13 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 from craft_parts.plugins import dotnet_plugin
-from overrides import override
+from typing_extensions import override
+
+pytestmark = [pytest.mark.plugin]
 
 
 def test_dotnet_plugin(new_dir, partitions):

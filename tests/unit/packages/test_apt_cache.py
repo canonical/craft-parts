@@ -33,6 +33,7 @@ class TestAptStageCache:
     create mocks.
     """
 
+    @pytest.mark.slow
     def test_stage_packages(self, tmpdir):
         fetch_dir_path = Path(tmpdir, "debs")
         fetch_dir_path.mkdir(exist_ok=True, parents=True)

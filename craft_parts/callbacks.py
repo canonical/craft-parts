@@ -202,5 +202,5 @@ def _ensure_not_defined(func: Callback, hook_list: list[CallbackHook]) -> None:
     for hook in hook_list:
         if func == hook.function:
             raise errors.CallbackRegistrationError(
-                f"callback function {hook.function.__name__!r} is already registered."
+                f"callback function {func.__name__!r} is already registered."
             )

@@ -441,7 +441,7 @@ class StepHandler:
         """Parse the command message received from the client."""
         try:
             function_json = json.loads(function_call)
-        except json.decoder.JSONDecodeError as err:
+        except json.JSONDecodeError as err:
             raise RuntimeError(
                 f"{scriptlet_name!r} scriptlet called a function with invalid json: "
                 f"{function_call}"

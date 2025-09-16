@@ -179,7 +179,10 @@ class TestDirs(test_part_handler.TestDirs):
             )
             part_info = PartInfo(info, part)
             ovmgr = OverlayManager(
-                project_info=info, part_list=[part], base_layer_dir=None
+                project_info=info,
+                part_list=[part],
+                base_layer_dir=None,
+                cache_level=0,
             )
             return PartHandler(
                 part,
@@ -197,3 +200,16 @@ class TestDirs(test_part_handler.TestDirs):
 
         with pytest.raises(EnvironmentChangedError):
             handler._make_dirs()
+
+    def test_makedirs_usrmerged_partitions(self, new_dir):
+        """Test the behavior when 'usrmerged_by_default' is True and we have partitions."""
+        partitions = ["one", "two", "three"]
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True, new_dir=new_dir, partitions=partitions
+        )
+        handler._make_dirs()
+
+        # The default partition gets usrmerged; the others don't.
+        self._assert_usrmerged(part.part_install_dirs["one"])
+        assert list(part.part_install_dirs["two"].iterdir()) == []
+        assert list(part.part_install_dirs["three"].iterdir()) == []

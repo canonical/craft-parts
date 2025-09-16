@@ -329,7 +329,8 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))  # noqa: PTH118
 
     filename_abspath = os.path.join(parent_abspath, filename)  # noqa: PTH118
-    return os.path.relpath(filename_abspath, base_directory)
+    #  https://github.com/astral-sh/ty/issues/405
+    return os.path.relpath(filename_abspath, base_directory)  # ty: ignore[invalid-return-type]
 
 
 def _normalize_entry(entry: str, default_partition: str) -> str:

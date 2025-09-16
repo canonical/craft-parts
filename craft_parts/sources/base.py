@@ -27,7 +27,7 @@ from typing import Any, ClassVar
 
 import pydantic
 import requests
-from overrides import overrides
+from typing_extensions import override
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import os_utils, url_utils
@@ -250,7 +250,7 @@ class FileSourceHandler(SourceHandler):
     ) -> None:
         """Process the source file to extract its payload."""
 
-    @overrides
+    @override
     def pull(self) -> None:
         """Retrieve this source from its origin."""
         source_file = None
@@ -305,7 +305,7 @@ class FileSourceHandler(SourceHandler):
                 self.source, stream=True, allow_redirects=True, timeout=3600
             )
             request.raise_for_status()
-        except requests.exceptions.HTTPError as err:
+        except requests.HTTPError as err:
             if err.response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err
 
@@ -314,7 +314,7 @@ class FileSourceHandler(SourceHandler):
                 reason=err.response.reason,
                 source=self.source,
             ) from err
-        except requests.exceptions.RequestException as err:
+        except requests.RequestException as err:
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
                 f"response={err.response!r})",

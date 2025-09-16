@@ -1,8 +1,7 @@
 .. _overlays:
 
-************
 Overlay Step
-************
+============
 
 Some Craft applications, such as Rockcraft_, include entire base filesystems in
 addition to the usual part-generated payload. The ``OVERLAY`` step provides the
@@ -150,4 +149,4 @@ ensuring proper invalidation of those steps if overlay data changes.
 
 
 .. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/main/layer.md
-.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/en/stable/
+.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/stable/

@@ -18,8 +18,11 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
+
+pytestmark = [pytest.mark.plugin]
 
 
 def test_npm_plugin(new_dir, partitions):

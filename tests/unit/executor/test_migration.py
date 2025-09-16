@@ -511,6 +511,7 @@ class TestFileMigrationErrors:
 class TestHelpers:
     """Verify helper functions."""
 
+    @pytest.mark.slow
     def test_clean_shared_area(self, new_dir, partitions):
         p1 = Part("p1", {"plugin": "dump", "source": "subdir1"}, partitions=partitions)
         Path("subdir1").mkdir()
@@ -529,7 +530,7 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[p1, p2], base_layer_dir=None
+            project_info=info, part_list=[p1, p2], base_layer_dir=None, cache_level=0
         )
 
         handler1 = part_handler.PartHandler(
@@ -595,7 +596,9 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, part=p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = part_handler.PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -620,7 +623,9 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, part=p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = part_handler.PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
