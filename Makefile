@@ -161,7 +161,7 @@ endif
 # 22.04 -> 25.10 (and possibly 26.04).
 # On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifneq ($(ID)_$(VERSION_ID),ubuntu_20.04)
+ifneq ($(UBUNTU_CODENAME),focal)
 APT_PACKAGES += dotnet-sdk-8.0
 endif
 endif
@@ -233,7 +233,7 @@ else ifeq ($(shell which apt-get),)
 else
 	sudo $(APT) install $(APT_PACKAGES)
 endif
-ifeq ($(ID)_$(VERSION_ID),ubuntu_20.04)
+ifeq ($(UBUNTU_CODENAME),focal)
 ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
 ifeq ($(shell which snap),)
 	$(warning Cannot install dotnet without snap.)
