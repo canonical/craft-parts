@@ -20,9 +20,16 @@ from pathlib import Path
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, plugins
+from craft_parts.infos import _get_host_architecture
 from craft_parts.plugins import dotnet_v2_plugin
 
-pytestmark = [pytest.mark.plugin]
+pytestmark = [
+    pytest.mark.plugin,
+    pytest.mark.skipif(
+        _get_host_architecture() not in dotnet_v2_plugin._DEBIAN_ARCH_TO_DOTNET_RID,
+        reason="No dotnet runtime for this architecture.",
+    ),
+]
 
 
 def test_dotnet_plugin(new_dir, partitions):
