@@ -16,16 +16,22 @@
 
 """Craft parts errors."""
 
+from __future__ import annotations
+
 import abc
 import contextlib
-import pathlib
-from collections.abc import Iterable
 from io import StringIO
+from typing import TYPE_CHECKING
 
-from pydantic_core import ErrorDetails
 from typing_extensions import override
 
 from craft_parts.utils.formatting_utils import humanize_list
+
+if TYPE_CHECKING:
+    import pathlib
+    from collections.abc import Iterable
+
+    from pydantic_core import ErrorDetails
 
 
 class PartsError(Exception):
@@ -156,7 +162,7 @@ class PartSpecificationError(PartsError):
     @classmethod
     def from_validation_error(
         cls, *, part_name: str, error_list: list[ErrorDetails]
-    ) -> "PartSpecificationError":
+    ) -> PartSpecificationError:
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
@@ -836,7 +842,7 @@ class FilesystemMountError(PartsError):
     @classmethod
     def from_validation_error(
         cls, *, error_list: list[ErrorDetails]
-    ) -> "FilesystemMountError":
+    ) -> FilesystemMountError:
         """Create a FilesystemMountError from a pydantic error list.
 
         :param error_list: A list of dictionaries containing pydantic error definitions.
