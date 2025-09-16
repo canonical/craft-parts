@@ -23,7 +23,7 @@ import sys
 from collections.abc import Callable
 from multiprocessing.connection import Connection
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TypeVar
 
 from craft_parts.utils import os_utils
 
@@ -31,8 +31,10 @@ from . import errors
 
 logger = logging.getLogger(__name__)
 
+_T = TypeVar("_T")
 
-def chroot(path: Path, target: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+
+def chroot(path: Path, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.
@@ -67,7 +69,7 @@ def _runner(
     path: Path,
     conn: Connection,
     target: Callable[..., Any],
-    args: tuple[Any],
+    args: tuple[Any, ...],
     kwargs: dict[str, Any],
 ) -> None:
     """Chroot to the execution directory and call the target function."""
@@ -135,9 +137,7 @@ def _setup_chroot_linux(path: Path) -> None:
 
     pid = os.getpid()
     for entry in _linux_mounts:
-        args: list[str] = []
-        if entry.options:
-            args.extend(entry.options)
+        args = entry.options or []
         if entry.fstype:
             args.append(f"-t{entry.fstype}")
 
