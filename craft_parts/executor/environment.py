@@ -350,9 +350,11 @@ def _replace_attr(
 def _replace_attr(attr: list[str], replacements: dict[str, str]) -> list[str]: ...
 @overload
 def _replace_attr(attr: str, replacements: dict[str, str]) -> str: ...
+@overload
+def _replace_attr(attr: int, replacements: dict[str, str]) -> int: ...
 def _replace_attr(
-    attr: list[str] | dict[str, str] | str, replacements: dict[str, str]
-) -> list[str] | dict[str, str] | str:
+    attr: list[str] | dict[str, str] | str | int, replacements: dict[str, str]
+) -> list[str] | dict[str, str] | str | int:
     """Recurse through a complex data structure and replace values.
 
     The first matching replacement in the replacement map is used. For example,
@@ -378,6 +380,8 @@ def _replace_attr(
             return attr
         case Sequence():
             return [_replace_attr(i, replacements) for i in attr]
+        case _:
+            return attr
 
 
 def _warn_if_deprecated_key(key: str) -> None:
