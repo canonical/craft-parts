@@ -28,7 +28,7 @@ from typing_extensions import override
 pytestmark = [
     pytest.mark.plugin,
     pytest.mark.skipif(
-        platform.machine() != "amd64", reason="Dotnet v1 plugin is amd64-only."
+        platform.machine() != "x86_64", reason="Dotnet v1 plugin is amd64-only."
     ),
 ]
 
