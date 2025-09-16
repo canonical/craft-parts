@@ -17,6 +17,7 @@
 """Definitions and helpers to handle parts."""
 
 import re
+import textwrap
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -413,9 +414,12 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the pull step.",
         examples=[
-            """|
-              craftctl default
-              rm $CRAFT_PART_SRC/pyproject.toml"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  rm $CRAFT_PART_SRC/pyproject.toml"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the pull step.
@@ -427,10 +431,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run after the part's overlay packages are installed.",
         examples=[
-            """|
-              rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
-              rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
-              rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            textwrap.dedent(
+                """\
+                |
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+                  rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            )
         ],
     )
     """The commands to run after the part's overlay packages are installed.
@@ -443,10 +450,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
         examples=[
-            """|
-              cd cmd/webhook
-              mkdir $CRAFT_PART_INSTALL/ko-app
-              go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            textwrap.dedent(
+                """\
+                |
+                  cd cmd/webhook
+                  mkdir $CRAFT_PART_INSTALL/ko-app
+                  go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            ),
         ],
     )
     """The commands to run instead of the default behavior of the build step.
@@ -458,9 +468,12 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the stage step.",
         examples=[
-            '''|
-              craftctl default
-              chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            textwrap.dedent(
+                '''\
+                |
+                  craftctl default
+                  chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            )
         ],
     )
     """The commands to run instead of the default behavior of the stage step.
@@ -472,10 +485,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the prime step.",
         examples=[
-            """|
-              craftctl default
-              mkdir -p $CRAFT_PRIME/var/lib/mysql
-              mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  mkdir -p $CRAFT_PRIME/var/lib/mysql
+                  mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the prime step.
