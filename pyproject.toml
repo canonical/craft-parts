@@ -198,7 +198,6 @@ exclude_also = ["if (typing\\.)?TYPE_CHECKING:"]
 
 [tool.pyright]
 strict = ["craft_parts"]
-pythonVersion = "3.10"
 pythonPlatform = "Linux"
 exclude = [
     "**/.*",
