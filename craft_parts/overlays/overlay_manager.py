@@ -21,7 +21,7 @@ import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
@@ -32,8 +32,10 @@ from .overlay_fs import OverlayFS
 
 logger = logging.getLogger(__name__)
 
+_T = TypeVar("_T")
 
-def _defer_evaluation(method: Callable[..., Any]) -> Callable[..., Any]:
+
+def _defer_evaluation(method: Callable[..., _T]) -> Callable[..., _T]:
     """Wrap methods to defer evaluation.
 
     Defer evaluation of proxied class methods to happen at execution time.
@@ -46,9 +48,9 @@ def _defer_evaluation(method: Callable[..., Any]) -> Callable[..., Any]:
     if instance is None or method_name is None:
         raise TypeError("Only bound methods can be deferred")
 
-    def _thunk(*args: Any, **kwargs: Any) -> None:
+    def _thunk(*args: Any, **kwargs: Any) -> _T:
         method = getattr(instance, method_name)
-        method(*args, **kwargs)
+        return method(*args, **kwargs)
 
     return _thunk
 
