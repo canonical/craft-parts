@@ -388,24 +388,25 @@ class Ubuntu(BaseRepository):
     def get_packages_for_source_type(cls, source_type: str) -> set[str]:
         """Return the packages required to work with source_type."""
         packages: set[str]
-        if source_type == "bzr":
-            packages = {"bzr"}
-        elif source_type == "git":
-            packages = {"git"}
-        elif source_type == "tar":
-            packages = {"tar"}
-        elif source_type in ["hg", "mercurial"]:
-            packages = {"mercurial"}
-        elif source_type in ["svn", "subversion"]:
-            packages = {"subversion"}
-        elif source_type == "rpm2cpio":
-            packages = {"rpm2cpio"}
-        elif source_type == "rpm":
-            packages = {"rpm"}
-        elif source_type == "7zip":
-            packages = {"p7zip-full"}
-        else:
-            packages = set()
+        match source_type:
+            case "bzr":
+                packages = {"bzr"}
+            case "git":
+                packages = {"git"}
+            case "tar":
+                packages = {"tar"}
+            case "hg" | "mercurial":
+                packages = {"mercurial"}
+            case "svn" | "subversion":
+                packages = {"subversion"}
+            case "rpm2cpio":
+                packages = {"rpm2cpio"}
+            case "rpm":
+                packages = {"rpm"}
+            case "7zip":
+                packages = {"p7zip-full"}
+            case _:
+                packages = set()
 
         return packages
 
