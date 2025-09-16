@@ -149,4 +149,4 @@ ensuring proper invalidation of those steps if overlay data changes.
 
 
 .. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/main/layer.md
-.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/en/stable/
+.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/stable/
