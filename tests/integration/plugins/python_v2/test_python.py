@@ -23,7 +23,7 @@ from craft_parts import LifecycleManager, Step, plugins
 from craft_parts.errors import PluginBuildError
 from craft_parts.plugins.python_v2.python_plugin import PythonPlugin
 
-pytestmark = pytest.mark.slow
+pytestmark = [pytest.mark.slow, pytest.mark.python]
 
 
 @pytest.fixture(autouse=True)
