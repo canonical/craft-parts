@@ -92,7 +92,7 @@ class PythonPlugin(Plugin):
             pip_calls.append(f"pip install {python_packages}")
 
         # Then finally the project in the source itself, if it exists
-        pip_calls.append("[ -f setup.py ] || [ -f pyproject.toml ] && pip install .")
+        pip_calls.append("[ -f setup.py -o -f pyproject.toml ] && pip install .")
 
         # Add a sitecustomize so that the bundled Python interpreter (if any) will
         # pick up the packages installed by pip here
