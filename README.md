@@ -19,7 +19,7 @@ before it is packaged into the final artifact.
 
 This library is most useful for app developers in the Starcraft family.
 
-## [![Documentation Status][rtd-badge]][rtd-latest]
+## Documentation
 
 The [Craft Parts documentation][rtd-latest] describes the library's key components and
 provides guidance on its usage.
