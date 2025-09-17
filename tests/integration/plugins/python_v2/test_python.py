@@ -19,11 +19,27 @@ from pathlib import Path
 
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step, plugins
+from craft_parts import LifecycleManager, Step, errors, plugins
 from craft_parts.errors import PluginBuildError
 from craft_parts.plugins.python_v2.python_plugin import PythonPlugin
+from craft_parts.utils import os_utils
 
-pytestmark = [pytest.mark.slow, pytest.mark.python]
+
+def is_ubuntu_jammy() -> bool:
+    release = os_utils.OsRelease()
+    try:
+        return release.id() == "ubuntu" and release.version_id() == "22.04"
+    except errors.OsReleaseIdError:
+        return False
+
+
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.python,
+    pytest.mark.skipif(
+        is_ubuntu_jammy(), reason="Needs new enough pip provided by the system."
+    ),
+]
 
 
 @pytest.fixture(autouse=True)
@@ -154,8 +170,6 @@ def test_python_plugin_staged(new_dir, partitions):
           interpreter:
             plugin: nil
             stage-packages: [python3]
-            build-attributes:
-              - enable-usrmerge
 
           foo:
             after: [interpreter]
