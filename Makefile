@@ -168,6 +168,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
 APT_PACKAGES += gcc
 endif
+ifeq ($(wildcard /usr/share/doc/meson/copyright),)
+APT_PACKAGES += meson
+endif
 ifeq ($(wildcard /usr/share/doc/pkg-config/copyright),)
 APT_PACKAGES += pkg-config
 endif
