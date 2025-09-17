@@ -114,7 +114,7 @@ class JLinkPlugin(Plugin):
             "MULTI_RELEASE=${JLINK_VERSION%%.*}",
             self._get_find_jars_commands(),
             # Tell Jlink where to install.
-            "INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}"
+            "INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}",
             # create temp folder
             "mkdir -p ${CRAFT_PART_BUILD}/tmp",
             # extract jar files into temp folder - spring boot fat jar
