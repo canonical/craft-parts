@@ -211,6 +211,8 @@ def _check_for_stage_collisions_per_partition(
                 this = os.path.join(candidate.source_dir, item)  # noqa: PTH118
                 other = os.path.join(other_candidate.source_dir, item)  # noqa: PTH118
 
+                rel_dirname = os.path.dirname(item)  # noqa: PTH120
+
                 permissions_this = permissions.filter_permissions(
                     item, candidate.permissions
                 )
@@ -219,7 +221,15 @@ def _check_for_stage_collisions_per_partition(
                     item, other_candidate.permissions
                 )
 
-                if paths_collide(this, other, permissions_this, permissions_other):
+                if paths_collide(
+                    this,
+                    other,
+                    rel_dirname,
+                    candidate.is_overlay,
+                    other_candidate.is_overlay,
+                    permissions_this,
+                    permissions_other,
+                ):
                     conflict_files.append(item)
 
             if conflict_files:
@@ -244,6 +254,9 @@ def _check_for_stage_collisions_per_partition(
 def paths_collide(
     path1: str,
     path2: str,
+    rel_dirname: str,
+    is_overlay_1: bool,  # noqa: FBT001
+    is_overlay_2: bool,  # noqa: FBT001
     permissions_path1: list[Permissions] | None = None,
     permissions_path2: list[Permissions] | None = None,
 ) -> bool:
@@ -267,7 +280,10 @@ def paths_collide(
 
     # Paths collide if they're both symlinks, but pointing to different places.
     if path1_is_link and path2_is_link:
-        return os.readlink(path1) != os.readlink(path2)  # noqa: PTH115
+        path1_target = normalize_symlink(path1, is_overlay_2, rel_dirname)
+        path2_target = normalize_symlink(path2, is_overlay_1, rel_dirname)
+
+        return path1_target != path2_target
 
     # Paths collide if one is a symlink, but not the other.
     if path1_is_link or path2_is_link:
@@ -299,3 +315,20 @@ def _file_collides(file_this: str, file_other: str) -> bool:
                 return True
 
     return False
+
+
+def normalize_symlink(path: str, is_other_overlay: bool, rel_dirname: str) -> str:  # noqa: FBT001
+    """Simulate a symlink resolution (only one level) if needed.
+
+    We do not want to really resolve the symlink with os.path.realpath() since it
+    might point to another symlink (and so on).
+
+    """
+    path_target = os.readlink(path)  # noqa: PTH115
+    if not is_other_overlay:
+        # We will compare two symlinks coming from install dirs.
+        return path_target
+
+    # Convert the target path as if it were living in a path where relative path
+    # of the parent directory were at the root.
+    return os.path.normpath(os.path.join("/", rel_dirname, path_target))  # noqa: PTH118
