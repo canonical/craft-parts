@@ -34,7 +34,7 @@ def test_get_build_commands(new_dir):
     assert commands[0:3] == [
         "pip install -r requirements.txt",
         "pip install black",
-        "[ -f setup.py ] || [ -f pyproject.toml ] && pip install .",
+        "[ -f setup.py -o -f pyproject.toml ] && pip install .",
     ]
 
     assert commands[3].startswith("# Add a sitecustomize")
