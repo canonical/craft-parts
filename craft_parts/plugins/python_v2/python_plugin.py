@@ -79,6 +79,16 @@ class PythonPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         pip_calls: list[str] = []
 
+        # Disallow using the system's Python interpreter for now. The issue is that
+        # using the system interpreter will make pip skip dependencies that are already
+        # installed in the system, even though they won't be part of the part's files.
+        python_check = dedent("""\
+          if [[ ${PIP_PYTHON} == /usr/bin/* ]]; then
+            echo "Using the system Python interpreter is not supported." 1>&2
+            exit 1
+          fi
+        """)
+
         # First the requirements
         pip_calls.extend(
             f"pip install -r {req}" for req in self._options.python_requirements
@@ -112,4 +122,4 @@ class PythonPlugin(Plugin):
           EOF
         """)
 
-        return [*pip_calls, sitecustomize]
+        return [python_check, *pip_calls, sitecustomize]

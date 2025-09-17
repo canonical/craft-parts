@@ -29,15 +29,15 @@ def test_get_build_commands(new_dir):
     python_plugin = PythonPlugin(part_info=part_info, properties=properties)
 
     commands = python_plugin.get_build_commands()
-    assert len(commands) == 4
+    assert len(commands) == 5
 
-    assert commands[0:3] == [
+    assert commands[1:4] == [
         "pip install -r requirements.txt",
         "pip install black",
         "[ -f setup.py -o -f pyproject.toml ] && pip install .",
     ]
 
-    assert commands[3].startswith("# Add a sitecustomize")
+    assert commands[-1].startswith("# Add a sitecustomize")
 
 
 def test_get_build_environment(new_dir):

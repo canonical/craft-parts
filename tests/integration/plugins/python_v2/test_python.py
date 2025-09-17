@@ -12,14 +12,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import re
 import subprocess
-import sys
 import textwrap
 from pathlib import Path
 
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, plugins
+from craft_parts.errors import PluginBuildError
 from craft_parts.plugins.python_v2.python_plugin import PythonPlugin
 
 pytestmark = pytest.mark.slow
@@ -95,7 +96,7 @@ def _check_binaries(prime_dir, expected_prefix):
         assert b"A general utility script for Flask applications." in output
 
 
-def test_python_plugin(new_dir, partitions):
+def test_python_plugin_no_bundled_python(new_dir, partitions):
     """Prime a simple python source."""
     source_location = Path(__file__).parent / "test_python"
 
@@ -110,24 +111,9 @@ def test_python_plugin(new_dir, partitions):
         """
     )
 
-    lifecycle = _run_lifecycle(parts_yaml, new_dir, partitions)
-    prime_dir = lifecycle.project_info.prime_dir
-
-    primed_script = prime_dir / "bin/mytest"
-    assert primed_script.exists()
-    assert primed_script.open().readline().rstrip() == "#!/usr/bin/python3"
-
-    major, minor = sys.version_info.major, sys.version_info.minor
-    python_dir = f"python{major}.{minor}"
-
-    customize = prime_dir / f"lib/{python_dir}/sitecustomize.py"
-    assert customize.is_file()
-
-    site_packages = prime_dir / f"lib/{python_dir}/site-packages"
-    mytest = site_packages / "mytest/__init__.py"
-    assert mytest.is_file()
-
-    return prime_dir
+    expected = re.escape("Using the system Python interpreter is not supported.")
+    with pytest.raises(PluginBuildError, match=expected):
+        _run_lifecycle(parts_yaml, new_dir, partitions)
 
 
 def test_python_plugin_bundled_in_part(new_dir, partitions):
