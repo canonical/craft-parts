@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import shutil
 import subprocess
 import textwrap
 from pathlib import Path
@@ -27,9 +28,12 @@ pytestmark = [pytest.mark.plugin]
 
 @pytest.fixture
 def meson():
-    subprocess.run(["pip", "install", "meson"], check=True)
+    has_meson = shutil.which("meson")
+    if not has_meson:
+        subprocess.run(["pip", "install", "meson"], check=True)
     yield
-    subprocess.run(["pip", "uninstall", "meson", "--yes"], check=True)
+    if not has_meson:
+        subprocess.run(["pip", "uninstall", "meson", "--yes"], check=True)
 
 
 @pytest.mark.usefixtures("mocker")
