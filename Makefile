@@ -244,7 +244,7 @@ endif
 
 .PHONY: _gh-runner-clear-space
 _gh-runner-clear-space:
-# Only on Github-hosted runners, to free up space.
+# Prepare and fix issues on Github-hosted runners.
 ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Delete the (huge) Android SDK in the background.
 	nohup sudo rm -rf /usr/local/lib/android/ > /dev/null &
