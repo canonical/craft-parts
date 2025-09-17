@@ -19,7 +19,7 @@ before it is packaged into the final artifact.
 
 This library is most useful for app developers in the Starcraft family.
 
-## Documentation
+## [![Documentation Status][rtd-badge]][rtd-latest]
 
 The [Craft Parts documentation][rtd-latest] describes the library's key components and
 provides guidance on its usage.
@@ -59,6 +59,8 @@ Craft Parts is released under the [LGPL-3.0 license](LICENSE).
 [qa-link]: https://github.com/canonical/craft-parts/actions/workflows/qa.yaml
 [release-date-badge]: https://img.shields.io/github/release-date/canonical/craft-parts?display_date=published_at&logo=pypi
 [releases-link]: https://github.com/canonical/craft-parts/releases
+[rtd-badge]: https://readthedocs.com/projects/canonical-craft-parts/badge/?version=latest
+[rtd-latest]: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
 [starcraft-badge]: https://img.shields.io/badge/Canonical-%E2%AD%90craft-772953?logo=canonical&labelColor=333333
 [tics-badge]: https://github.com/canonical/craft-parts/actions/workflows/tics.yaml/badge.svg
 [tics-link]: https://github.com/canonical/craft-parts/actions/workflows/tics.yaml
