@@ -21,7 +21,7 @@ import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
@@ -49,7 +49,7 @@ def _defer_evaluation(method: Callable[..., _T]) -> Callable[..., _T]:
         raise TypeError("Only bound methods can be deferred")
 
     def _thunk(*args: Any, **kwargs: Any) -> _T:
-        method = getattr(instance, method_name)
+        method = cast(Callable[..., _T], getattr(instance, method_name))
         return method(*args, **kwargs)
 
     return _thunk
