@@ -96,7 +96,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          "ubuntu-22.04-arm",
+          ["jammy", "arm64"],
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
