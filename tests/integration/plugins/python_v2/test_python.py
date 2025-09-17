@@ -145,12 +145,17 @@ def test_python_plugin_staged(new_dir, partitions):
 
     plugins.register({"python": PythonPlugin})
 
+    # Note: the 'enable-usrmerge' build attribute is needed because when running this
+    # test on Jammy the 'python3' stage-package has bin/python3 (usr/bin/python3 started
+    # with Noble).
     parts_yaml = textwrap.dedent(
         f"""\
         parts:
           interpreter:
             plugin: nil
             stage-packages: [python3]
+            build-attributes:
+              - enable-usrmerge
 
           foo:
             after: [interpreter]
