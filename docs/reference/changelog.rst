@@ -16,6 +16,17 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.24.0:
+
+2.24.0 (unreleased)
+-------------------
+
+New features:
+
+- Add a new version of the ``PythonPlugin``. This new version is not registered by
+  default as it is still experimental and has a different set of requirements and
+  behaviors when compared to the default plugin for Python projects.
+
 .. _release-2.23.0:
 
 2.23.0 (2025-09-15)
