@@ -119,7 +119,17 @@ def test_get_build_snaps_and_packages(part_info):
     assert plugin.get_build_packages() == set()
 
 
-def test_get_build_environment(part_info):
+def test_get_build_environment(part_info, mocker):
+    mocker.patch(
+        "craft_parts.plugins.java_plugin.JavaPlugin._find_javac",
+        return_value=["mock_javac"],
+    )
+
+    mocker.patch(
+        "craft_parts.plugins.java_plugin.JavaPlugin._check_java",
+        return_value=(True, None),
+    )
+
     properties = AntPlugin.properties_class.unmarshal({"source": "."})
     plugin = AntPlugin(properties=properties, part_info=part_info)
     env = plugin.get_build_environment()
