@@ -23,9 +23,14 @@ Changelog
 
 New features:
 
-- Add a new version of the ``PythonPlugin``. This new version is not registered by
-  default as it is still experimental and has a different set of requirements and
-  behaviors when compared to the default plugin for Python projects.
+- Add a new ``PythonPlugin``. This new version is not registered by default and has
+  a different set of requirements and behaviors than the default plugin for Python
+  projects.
+
+  .. caution::
+
+     This new plugin is experimental and does not currently come with any stability or
+     backwards compatibility guarantees.
 
 .. _release-2.23.0:
 
