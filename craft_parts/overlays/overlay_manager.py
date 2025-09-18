@@ -206,7 +206,7 @@ class OverlayManager:
             mount_dir,
             _defer_evaluation(packages.Repository.download_packages),
             use_host_sources=self._use_host_sources,
-            args=(package_names,),  # type: ignore
+            args=(package_names,),
         )
 
     def install_packages(self, package_names: list[str]) -> None:
@@ -222,7 +222,7 @@ class OverlayManager:
             mount_dir,
             packages.Repository.install_packages,
             use_host_sources=self._use_host_sources,
-            args=(package_names,),  # type: ignore
+            args=(package_names,),
             kwargs={"refresh_package_cache": False},
         )
 

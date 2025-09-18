@@ -461,7 +461,7 @@ class StepHandler:
             cmd_name, cmd_args, step=step, scriptlet_name=scriptlet_name
         )
 
-    def _process_api_commands(
+    def _process_api_commands(  # noqa: PLR0912
         self, cmd_name: str, cmd_args: list[str], *, step: Step, scriptlet_name: str
     ) -> str:
         """Invoke API command actions."""
@@ -480,7 +480,6 @@ class StepHandler:
                 )
             self._execute_builtin_handler(step)
         elif cmd_name == "chroot":
-            # TODO: why can we only execute this in the overlay step?
             if self._step_info.step != step.OVERLAY:
                 raise invalid_control_api_call(
                     message=f"{cmd_name!r} can only run in overlay step",

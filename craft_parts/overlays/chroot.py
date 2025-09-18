@@ -140,7 +140,6 @@ def _cleanup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
     logger.debug("chroot cleanup complete")
 
 
-# TODO: refactor as to not call _Mount.get_abs_path repeatedly
 class _Mount:
     def __init__(
         self,
@@ -187,8 +186,7 @@ class _Mount:
 
     def remove_dst(self, chroot: Path) -> None:
         """Remove `self.dst` if present to prepare mountpoint `self.dst`."""
-        # This is not required for the base class
-        # TODO: consider using abc
+        # Overriding this method is not required.
 
     def create_dst(self, chroot: Path) -> None:
         """Create mountpoint `self.dst` later used in mount call."""
@@ -324,7 +322,7 @@ _linux_mounts: list[_Mount] = [
 ]
 
 # Mounts required to import host's Ubuntu Pro apt configuration to chroot
-# TODO: parameterize this per linux distribution / package manager
+# Improvement: parameterize this per linux distribution / package manager
 _ubuntu_apt_mounts = [
     _TempFSClone("/etc/apt", "/etc/apt", skip_missing=False),
     _BindMount(
