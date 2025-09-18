@@ -304,7 +304,11 @@ class StepHandler:
 
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
-        if prime_fileset.entries == ["*"] or len(prime_fileset.includes) == 0:
+        if (
+            prime_fileset.entries
+            == [filesets.normalize_entry("*", self._step_info.default_partition)]
+            or len(prime_fileset.includes) == 0
+        ):
             stage_fileset = Fileset(
                 self._part.spec.stage_files,
                 name="stage",
