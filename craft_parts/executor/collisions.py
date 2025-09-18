@@ -206,31 +206,15 @@ def _check_for_stage_collisions_per_partition(
             # Our files that are also in a different part.
             common = candidate.contents & other_candidate.contents
 
-            conflict_files = []
-            for item in common:
-                this = os.path.join(candidate.source_dir, item)  # noqa: PTH118
-                other = os.path.join(other_candidate.source_dir, item)  # noqa: PTH118
-
-                rel_dirname = os.path.dirname(item)  # noqa: PTH120
-
-                permissions_this = permissions.filter_permissions(
-                    item, candidate.permissions
-                )
-
-                permissions_other = permissions.filter_permissions(
-                    item, other_candidate.permissions
-                )
-
+            conflict_files = [
+                item
+                for item in common
                 if paths_collide(
-                    this,
-                    other,
-                    rel_dirname,
-                    candidate.is_overlay,
-                    other_candidate.is_overlay,
-                    permissions_this,
-                    permissions_other,
-                ):
-                    conflict_files.append(item)
+                    item,
+                    candidate,
+                    other_candidate,
+                )
+            ]
 
             if conflict_files:
                 if other_candidate.is_overlay:
@@ -252,36 +236,38 @@ def _check_for_stage_collisions_per_partition(
 
 
 def paths_collide(
-    path1: str,
-    path2: str,
-    rel_dirname: str,
-    is_overlay_1: bool,  # noqa: FBT001
-    is_overlay_2: bool,  # noqa: FBT001
-    permissions_path1: list[Permissions] | None = None,
-    permissions_path2: list[Permissions] | None = None,
+    item: str,
+    stage_candidate_1: StageCandidate,
+    stage_candidate_2: StageCandidate,
 ) -> bool:
-    """Check whether the provided paths conflict to each other.
+    """Check whether the provided item conflicts in the given candidates.
 
     If both paths have Permissions definitions, they are considered to be conflicting
     if the permissions are incompatible (as defined by
     ``permissions.permissions_are_compatible()``).
-
-    :param permissions_path1: The list of ``Permissions`` that affect ``path1``.
-    :param permissions_path2: The list of ``Permissions`` that affect ``path2``.
-
     """
+    path1 = os.path.join(stage_candidate_1.source_dir, item)  # noqa: PTH118
+    path2 = os.path.join(stage_candidate_2.source_dir, item)  # noqa: PTH118
+
+    rel_dirname = os.path.dirname(item)  # noqa: PTH120
+
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
-    path1_is_dir = os.path.isdir(path1)  # noqa: PTH112
-    path2_is_dir = os.path.isdir(path2)  # noqa: PTH112
+    # Paths collide if they're both symlinks, but pointing to different places.
     path1_is_link = os.path.islink(path1)  # noqa: PTH114
     path2_is_link = os.path.islink(path2)  # noqa: PTH114
-
-    # Paths collide if they're both symlinks, but pointing to different places.
     if path1_is_link and path2_is_link:
-        path1_target = normalize_symlink(path1, is_overlay_2, rel_dirname)
-        path2_target = normalize_symlink(path2, is_overlay_1, rel_dirname)
+        path1_target = os.readlink(path1)  # noqa: PTH115
+        path2_target = os.readlink(path2)  # noqa: PTH115
+
+        # Symlinks targeting relative path must be normalized if they
+        # are compared with symlinks from the overlay.
+        if not os.path.isabs(path1_target) and stage_candidate_2.is_overlay:  # noqa: PTH117
+            path1_target = normalize_symlink(path1, rel_dirname)
+
+        if not os.path.isabs(path2_target) and stage_candidate_1.is_overlay:  # noqa: PTH117
+            path2_target = normalize_symlink(path2, rel_dirname)
 
         return path1_target != path2_target
 
@@ -290,6 +276,8 @@ def paths_collide(
         return True
 
     # Paths collide if one is a directory, but not the other.
+    path1_is_dir = os.path.isdir(path1)  # noqa: PTH112
+    path2_is_dir = os.path.isdir(path2)  # noqa: PTH112
     if path1_is_dir != path2_is_dir:
         return True
 
@@ -299,6 +287,13 @@ def paths_collide(
         return True
 
     # Otherwise, paths conflict if they have incompatible permissions.
+    permissions_path1 = permissions.filter_permissions(
+        item, stage_candidate_1.permissions
+    )
+
+    permissions_path2 = permissions.filter_permissions(
+        item, stage_candidate_2.permissions
+    )
     return not permissions_are_compatible(permissions_path1, permissions_path2)
 
 
@@ -317,18 +312,14 @@ def _file_collides(file_this: str, file_other: str) -> bool:
     return False
 
 
-def normalize_symlink(path: str, is_other_overlay: bool, rel_dirname: str) -> str:  # noqa: FBT001
-    """Simulate a symlink resolution (only one level) if needed.
+def normalize_symlink(path: str, rel_dirname: str) -> str:
+    """Simulate a symlink resolution (only one level).
 
     We do not want to really resolve the symlink with os.path.realpath() since it
     might point to another symlink (and so on).
 
-    """
-    path_target = os.readlink(path)  # noqa: PTH115
-    if not is_other_overlay:
-        # We will compare two symlinks coming from install dirs.
-        return path_target
+    Convert the path as if were under rel_dirname and rel_dirname were at the
+    root.
 
-    # Convert the target path as if it were living in a path where relative path
-    # of the parent directory were at the root.
-    return os.path.normpath(os.path.join("/", rel_dirname, path_target))  # noqa: PTH118
+    """
+    return os.path.normpath(os.path.join("/", rel_dirname, path))  # noqa: PTH118
