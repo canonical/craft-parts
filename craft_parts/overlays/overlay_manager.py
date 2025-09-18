@@ -189,13 +189,8 @@ class OverlayManager:
 
         chroot.chroot(
             mount_dir,
-            packages.Repository.refresh_packages_list,
+            _defer_evaluation(packages.Repository.refresh_packages_list),
             use_host_sources=self._use_host_sources,
-            args=(
-                _defer_evaluation(packages.Repository.refresh_packages_list),
-                package_names,
-            ),  # type: ignore
-            kwargs={"refresh_package_cache": False},
         )
 
     def download_packages(self, package_names: list[str]) -> None:
@@ -209,13 +204,9 @@ class OverlayManager:
         mount_dir = self._project_info.overlay_mount_dir
         chroot.chroot(
             mount_dir,
-            packages.Repository.download_packages,
+            _defer_evaluation(packages.Repository.download_packages),
             use_host_sources=self._use_host_sources,
-            args=(
-                _defer_evaluation(packages.Repository.download_packages),
-                package_names,
-            ),  # type: ignore
-            kwargs={"refresh_package_cache": False},
+            args=(package_names,),  # type: ignore
         )
 
     def install_packages(self, package_names: list[str]) -> None:
@@ -231,10 +222,7 @@ class OverlayManager:
             mount_dir,
             packages.Repository.install_packages,
             use_host_sources=self._use_host_sources,
-            args=(
-                _defer_evaluation(packages.Repository.install_packages),
-                package_names,
-            ),  # type: ignore
+            args=(package_names,),  # type: ignore
             kwargs={"refresh_package_cache": False},
         )
 
