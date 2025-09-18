@@ -22,6 +22,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
 
+pytestmark = [pytest.mark.java]
+
 
 @pytest.fixture
 def build_test_jar(new_dir):

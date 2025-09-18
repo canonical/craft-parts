@@ -23,6 +23,8 @@ import yaml
 from craft_parts import LifecycleManager, Step
 from craft_parts.errors import PluginBuildError
 
+pytestmark = [pytest.mark.plugin]
+
 
 def test_go_plugin(new_dir, partitions, mocker):
     parts_yaml = textwrap.dedent(

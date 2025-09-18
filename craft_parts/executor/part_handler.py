@@ -36,7 +36,11 @@ from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
-from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
+from craft_parts.parts import (
+    Part,
+    get_parts_with_overlay,
+    has_overlay_visibility,
+)
 from craft_parts.plugins import Plugin
 from craft_parts.state_manager import (
     MigrationContents,
@@ -330,7 +334,6 @@ class PartHandler:
 
         fetched_packages = self._fetch_stage_packages(step_info=step_info)
         fetched_snaps = self._fetch_stage_snaps()
-        self._fetch_overlay_packages()
 
         self._run_step(
             step_info=step_info,
@@ -364,6 +367,7 @@ class PartHandler:
         :return: The overlay step state.
         """
         self._make_dirs()
+        self._fetch_overlay_packages()
 
         if self._part.has_overlay:
             # install overlay packages
@@ -1065,6 +1069,11 @@ class PartHandler:
         for partition in self._part_info.partitions or (None,):
             _remove(self._part.part_layer_dirs[partition])
         _remove(self._part.part_state_dir / "layer_hash")
+        # Clean the package cache if the part was below it and if the
+        # cache was not directly on top of the base layer.
+        part_level = self._part_list.index(self._part)
+        if part_level < self._overlay_manager.cache_level:
+            _remove(self._part.dirs.overlay_packages_dir)
 
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
@@ -1280,8 +1289,12 @@ class PartHandler:
             return
 
         try:
+            # Parts declaring overlay packages are ordered to be processed after
+            # parts organizing to the overlay. The latter should prepare the
+            # environment for the package manager.
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
+                ctx.refresh_packages_list()
                 ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
