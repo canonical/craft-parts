@@ -185,3 +185,30 @@ def test_python_plugin_staged(new_dir, partitions):
     stage_dir = new_dir / "stage"
 
     _check_binaries(prime_dir, stage_dir)
+
+
+def test_python_plugin_package_conflicts(new_dir, partitions):
+    """Specified packages and requirements have a conflict."""
+    source_location = Path(__file__).parent / "test_python"
+
+    plugins.register({"python": PythonPlugin})
+
+    # requirements-black.txt declares black==24.10.0, but python-packages declares
+    # black==25.1.0
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          foo:
+            plugin: python
+            source: {source_location}
+            stage-packages: [python3]
+            python-packages: [black==25.1.0]
+            python-requirements: [requirements-black.txt]
+        """
+    )
+
+    expected = re.escape(
+        "Cannot install black==24.10.0 and black==25.1.0 because these package versions have conflicting dependencies."
+    )
+    with pytest.raises(PluginBuildError, match=expected):
+        _run_lifecycle(parts_yaml, new_dir, partitions)

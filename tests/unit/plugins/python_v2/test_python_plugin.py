@@ -11,6 +11,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from textwrap import dedent
+
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.python_v2.python_plugin import PythonPlugin
 
@@ -29,12 +31,18 @@ def test_get_build_commands(new_dir):
     python_plugin = PythonPlugin(part_info=part_info, properties=properties)
 
     commands = python_plugin.get_build_commands()
-    assert len(commands) == 5
+    assert len(commands) == 6
+
+    project_line = dedent("""\
+      if [ -f setup.py -o -f pyproject.toml ]; then
+        PACKAGES="${PACKAGES} ."
+      fi
+    """)
 
     assert commands[1:4] == [
-        "pip install -r requirements.txt",
-        "pip install black",
-        "[ -f setup.py -o -f pyproject.toml ] && pip install .",
+        'REQUIREMENTS="-r requirements.txt"',
+        'PACKAGES="black"',
+        project_line,
     ]
 
     assert commands[-1].startswith("# Add a sitecustomize")

@@ -77,7 +77,6 @@ class PythonPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        pip_calls: list[str] = []
 
         # Disallow using the system's Python interpreter for now. The issue is that
         # using the system interpreter will make pip skip dependencies that are already
@@ -89,20 +88,27 @@ class PythonPlugin(Plugin):
           fi
         """)
 
+        pip_lines: list[str] = []
+
         # First the requirements
-        pip_calls.extend(
-            f"pip install -r {req}" for req in self._options.python_requirements
+        requirements = " ".join(
+            f"-r {req}" for req in self._options.python_requirements
         )
+        pip_lines.append(f'REQUIREMENTS="{requirements}"')
 
         # Then any extra packages
-        if self._options.python_packages:
-            python_packages = " ".join(
-                [shlex.quote(pkg) for pkg in self._options.python_packages]
-            )
-            pip_calls.append(f"pip install {python_packages}")
+        packages = " ".join(shlex.quote(pkg) for pkg in self._options.python_packages)
+        pip_lines.append(f'PACKAGES="{packages}"')
 
         # Then finally the project in the source itself, if it exists
-        pip_calls.append("[ -f setup.py -o -f pyproject.toml ] && pip install .")
+        project = dedent("""\
+          if [ -f setup.py -o -f pyproject.toml ]; then
+            PACKAGES="${PACKAGES} ."
+          fi
+        """)
+        pip_lines.append(project)
+
+        pip_lines.append("pip install ${REQUIREMENTS} ${PACKAGES}")
 
         # Add a sitecustomize so that the bundled Python interpreter (if any) will
         # pick up the packages installed by pip here
@@ -122,4 +128,4 @@ class PythonPlugin(Plugin):
           EOF
         """)
 
-        return [python_check, *pip_calls, sitecustomize]
+        return [python_check, *pip_lines, sitecustomize]
