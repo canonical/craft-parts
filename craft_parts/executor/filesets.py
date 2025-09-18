@@ -222,11 +222,9 @@ def _get_file_list(
         else:
             includes.append(item)
 
-    normalized_wildcard = normalize_entry("*", default_partition)
-
     # short circuit if no partition was provided
     if not partition:
-        return includes or [normalized_wildcard], excludes
+        return includes or ["*"], excludes
 
     # only include files for the partition
     processed_includes: list[str] = []
@@ -247,7 +245,7 @@ def _get_file_list(
             processed_excludes.append(str(file_inner_path))
 
     # the default behavior is to include everything
-    return processed_includes or [normalized_wildcard], processed_excludes
+    return processed_includes or ["*"], processed_excludes
 
 
 def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
