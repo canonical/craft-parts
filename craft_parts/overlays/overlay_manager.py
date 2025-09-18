@@ -56,17 +56,14 @@ def _defer_evaluation(method: Callable) -> Callable:
 class OverlayManager:
     """Execution time overlay mounting and package installation.
 
-        :param project_info: The project information.
-        :param part_list: A list of all parts in the project.
-        :param base_layer_dir: The directory containing the overlay base, or None
-            if the project doesn't use overlay parameters.
-    <<<<<<< HEAD
-        :param use_host_sources: Configure chroot to use package sources from
-            the the host environment.
-    =======
-        :param cache_level: The number of part layers to be mounted before the
-            package cache.
-    >>>>>>> 390f111d1fa3b45466a07a67b07fe71ac7ef364d
+    :param project_info: The project information.
+    :param part_list: A list of all parts in the project.
+    :param base_layer_dir: The directory containing the overlay base, or None
+        if the project doesn't use overlay parameters.
+    :param use_host_sources: Configure chroot to use package sources from
+        the the host environment.
+    :param cache_level: The number of part layers to be mounted before the
+        package cache.
     """
 
     def __init__(
