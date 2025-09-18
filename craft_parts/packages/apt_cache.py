@@ -122,18 +122,18 @@ class AptCache(ContextDecorator):
         if (
             os_utils.is_snap(application_package_name)
             and snap_dir
-            and os.path.exists(snap_dir)
+            and os.path.exists(snap_dir)  # noqa: PTH110
         ):
-            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
+            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")  # noqa: PTH118
             apt_pkg.config.set("Dir", apt_dir)
             # yes apt is broken like that we need to append os.path.sep
-            methods_dir = os.path.join(apt_dir, "methods")
+            methods_dir = os.path.join(apt_dir, "methods")  # noqa: PTH118
             apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
-            solvers_dir = os.path.join(apt_dir, "solvers")
+            solvers_dir = os.path.join(apt_dir, "solvers")  # noqa: PTH118
             apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
-            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
+            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")  # noqa: PTH118
             apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
-            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
+            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")  # noqa: PTH118
             apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
 
         apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
@@ -183,7 +183,7 @@ class AptCache(ContextDecorator):
             destination = Path(self.stage_cache, dpkg_path[1:])
             if not destination.exists():
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                os.symlink(dpkg_path, destination)
+                destination.symlink_to(dpkg_path)
         else:
             logger.warning("Cannot find 'dpkg' command needed to support multiarch")
 

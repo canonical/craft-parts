@@ -19,7 +19,7 @@
 import logging
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from . import validator
 from .base import Plugin

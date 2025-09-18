@@ -24,7 +24,7 @@ from textwrap import dedent
 from typing import Literal, cast
 
 import pydantic
-from overrides import override
+from typing_extensions import override
 
 from craft_parts.constraints import UniqueList
 
@@ -209,7 +209,7 @@ class RustPlugin(Plugin):
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
             return False
-        return os.path.exists("rust-toolchain.toml") or os.path.exists("rust-toolchain")
+        return os.path.exists("rust-toolchain.toml") or os.path.exists("rust-toolchain")  # noqa: PTH110
 
     @override
     def get_build_environment(self) -> dict[str, str]:

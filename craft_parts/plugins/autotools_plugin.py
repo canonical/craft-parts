@@ -18,7 +18,7 @@
 
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 from .properties import PluginProperties
@@ -31,6 +31,7 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
 
     autotools_configure_parameters: list[str] = []
     autotools_bootstrap_parameters: list[str] = []
+    disable_parallel: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -101,11 +102,16 @@ class AutotoolsPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        options = cast(AutotoolsPluginProperties, self._options)
         return [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
             f"[ ! -f ./configure ] && [ -f ./bootstrap ] && {self._get_bootstrap_command()}",
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
-            f"make -j{self._part_info.parallel_build_count}",
+            (
+                "make"
+                if options.disable_parallel
+                else f"make -j{self._part_info.parallel_build_count}"
+            ),
             f'make install DESTDIR="{self._part_info.part_install_dir}"',
         ]

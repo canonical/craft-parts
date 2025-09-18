@@ -22,7 +22,7 @@ from .dirs import ProjectDirs
 from .errors import PartsError
 from .executor import expand_environment
 from .features import Features
-from .infos import PartInfo, ProjectInfo, StepInfo
+from .infos import PartInfo, ProjectInfo, ProjectVar, ProjectVarInfo, StepInfo
 from .lifecycle_manager import LifecycleManager
 from .parts import (
     Part,
@@ -51,10 +51,12 @@ __all__ = [
     "Action",
     "ActionProperties",
     "ActionType",
-    "ProjectDirs",
-    "PartsError",
-    "ProjectInfo",
     "PartInfo",
+    "PartsError",
+    "ProjectDirs",
+    "ProjectInfo",
+    "ProjectVar",
+    "ProjectVarInfo",
     "StepInfo",
     "LifecycleManager",
     "Part",

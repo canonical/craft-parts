@@ -59,7 +59,7 @@ def test_run_selector(out, err, new_dir):
     selector = selectors.SelectSelector()
 
     # set up unix socket
-    sock_path = os.path.join(new_dir, "test.socket")
+    sock_path = os.path.join(new_dir, "test.socket")  # noqa: PTH118
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.bind(sock_path)
     sock.listen(1)

@@ -17,6 +17,7 @@
 """Definitions and helpers to handle parts."""
 
 import re
+import textwrap
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -40,7 +41,11 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION, get_partition_dir_map
+from craft_parts.utils.partition_utils import (
+    DEFAULT_PARTITION,
+    OVERLAY_PARTITION,
+    get_partition_dir_map,
+)
 from craft_parts.utils.path_utils import get_partition_and_path
 
 
@@ -333,7 +338,28 @@ class PartSpec(BaseModel):
         examples=['[{MESSAGE: "Hello world!"}, {NAME: "Craft Parts"}]'],
     )
 
-    build_attributes: list[str] = []
+    build_attributes: list[str] = Field(
+        default=[],
+        description="Identifiers that control specific behaviors during the build.",
+        examples=["[enable-usrmerge]", "[disable-usrmerge]"],
+    )
+    """Special identifiers that change some features and behaviors during the build.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable-usrmerge``
+          - Fills the ``${CRAFT_PART_INSTALL}`` directory with a merged ``/usr``
+            directory before running the part's build step.
+        * - ``disable-usrmerge``
+          - Prevents a merged ``/usr`` directory from being assembled for the build
+            step. Available in lifecycles in which the directory would be merged by
+            default.
+    """
 
     organize_files: dict[str, str] = Field(
         default_factory=dict,
@@ -388,9 +414,12 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the pull step.",
         examples=[
-            """|
-              craftctl default
-              rm $CRAFT_PART_SRC/pyproject.toml"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  rm $CRAFT_PART_SRC/pyproject.toml"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the pull step.
@@ -402,10 +431,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run after the part's overlay packages are installed.",
         examples=[
-            """|
-              rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
-              rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
-              rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            textwrap.dedent(
+                """\
+                |
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+                  rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            )
         ],
     )
     """The commands to run after the part's overlay packages are installed.
@@ -418,10 +450,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
         examples=[
-            """|
-              cd cmd/webhook
-              mkdir $CRAFT_PART_INSTALL/ko-app
-              go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            textwrap.dedent(
+                """\
+                |
+                  cd cmd/webhook
+                  mkdir $CRAFT_PART_INSTALL/ko-app
+                  go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            ),
         ],
     )
     """The commands to run instead of the default behavior of the build step.
@@ -433,9 +468,12 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the stage step.",
         examples=[
-            '''|
-              craftctl default
-              chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            textwrap.dedent(
+                '''\
+                |
+                  craftctl default
+                  chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            )
         ],
     )
     """The commands to run instead of the default behavior of the stage step.
@@ -447,10 +485,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the prime step.",
         examples=[
-            """|
-              craftctl default
-              mkdir -p $CRAFT_PRIME/var/lib/mysql
-              mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  mkdir -p $CRAFT_PRIME/var/lib/mysql
+                  mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the prime step.
@@ -564,7 +605,19 @@ class PartSpec(BaseModel):
             self.overlay_packages
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
+            # Don't include organize to overlay in this verification.
         )
+
+    @property
+    def organizes_to_overlay(self) -> bool:
+        """Return whether the part organizes file to the overlay."""
+        if not Features().enable_partitions or not Features().enable_overlay:
+            return False
+        for dest in self.organize_files.values():
+            partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
+            if partition == OVERLAY_PARTITION:
+                return True
+        return False
 
     @property
     def has_slices(self) -> bool:
@@ -702,13 +755,14 @@ class Part:
 
         With partitions disabled, the only partition name is ``None``
         """
-        return MappingProxyType(
-            get_partition_dir_map(
-                base_dir=self.dirs.work_dir,
-                partitions=self._partitions,
-                suffix=f"parts/{self.name}/install",
-            )
+        dir_map = get_partition_dir_map(
+            base_dir=self.dirs.work_dir,
+            partitions=self._partitions,
+            suffix=f"parts/{self.name}/install",
         )
+        if self.organizes_to_overlay:
+            dir_map[OVERLAY_PARTITION] = self.dirs.overlay_mount_dir
+        return MappingProxyType(dir_map)
 
     @property
     def part_state_dir(self) -> Path:
@@ -815,6 +869,11 @@ class Part:
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
         return self.spec.has_overlay
+
+    @property
+    def organizes_to_overlay(self) -> bool:
+        """Return whether this part organizes files to overlay."""
+        return self.spec.organizes_to_overlay
 
     @property
     def has_slices(self) -> bool:
@@ -927,7 +986,10 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) not in self._partitions:
+                if str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
+                    # If overlays are enabled we can organize to (overlay)
+                    pass
+                elif str(partition) not in self._partitions:
                     error_list.append(
                         f"    unknown partition {partition!r} in {filepath!r}"
                     )
@@ -1013,6 +1075,19 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     # simplest way to do this is to sort them by name.
     all_parts = sorted(part_list, key=lambda part: part.name, reverse=True)
 
+    # Change the implicit order so that parts that organize to them
+    # are at the end of the list (because the order is reversed).
+    organize_to_overlay_parts: list[Part] = []
+    other_parts: list[Part] = []
+    for part in all_parts:
+        if part.organizes_to_overlay:
+            organize_to_overlay_parts.append(part)
+        else:
+            other_parts.append(part)
+
+    all_parts = [*other_parts, *organize_to_overlay_parts]
+
+    # Process explicit ordering set using the "after" key.
     while all_parts:
         top_part = None
 
@@ -1093,7 +1168,7 @@ def get_parts_with_overlay(*, part_list: list[Part]) -> list[Part]:
 
     :return: A list of parts with overlay parameters.
     """
-    return [p for p in part_list if p.has_overlay]
+    return [p for p in part_list if p.has_overlay or p.organizes_to_overlay]
 
 
 def validate_part(data: dict[str, Any]) -> None:

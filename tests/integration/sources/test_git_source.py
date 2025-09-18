@@ -22,6 +22,7 @@ from pathlib import Path
 import pytest
 from craft_parts import ProjectDirs
 from craft_parts.sources.git_source import GitSource
+from craft_parts.utils.os_utils import OsRelease
 
 
 def _call(cmd: list[str]) -> None:
@@ -44,12 +45,12 @@ class GitBaseTestCase:
     # pylint: enable=attribute-defined-outside-init
 
     def rm_dir(self, dir_name):
-        if os.path.exists(dir_name):
+        if os.path.exists(dir_name):  # noqa: PTH110
             shutil.rmtree(dir_name)
 
     def clean_dir(self, dir_name):
         self.rm_dir(dir_name)
-        os.mkdir(dir_name)
+        os.mkdir(dir_name)  # noqa: PTH102
 
     def clone_repo(self, repo, tree):
         self.clean_dir(tree)
@@ -59,7 +60,7 @@ class GitBaseTestCase:
         _call(["git", "config", "--local", "user.email", "dev@example.com"])
 
     def add_file(self, filename, body, message):
-        with open(filename, "w") as fp:
+        with open(filename, "w") as fp:  # noqa: PTH123
             fp.write(body)
 
         _call(["git", "add", filename])
@@ -67,7 +68,7 @@ class GitBaseTestCase:
 
     def check_file_contents(self, path, expected):
         body = None
-        with open(path) as fp:
+        with open(path) as fp:  # noqa: PTH123
             body = fp.read()
         assert body == expected
 
@@ -114,6 +115,10 @@ class TestGitSource(GitBaseTestCase):
         # assert we actually pulled the commit
         assert Path(working_tree / "test.txt").read_text() == "Howdy, Partner!"
 
+    @pytest.mark.skipif(
+        OsRelease().id() == "ubuntu" and OsRelease().version_id() <= "20.04",
+        reason="Need git >= 2.28.0",
+    )
     def test_pull_existing_with_branch_after_update(self, new_dir, monkeypatch):
         """Test that `pull_existing` with a branch works after the remote is updated."""
         # set up repositories
@@ -247,7 +252,7 @@ class TestGitConflicts(GitBaseTestCase):
     """Test that git pull errors don't kill the parser"""
 
     def test_git_conflicts(self, new_dir, monkeypatch):
-        repo = os.path.abspath("conflict-test.git")
+        repo = os.path.abspath("conflict-test.git")  # noqa: PTH100
         working_tree = Path("git-conflict-test").absolute()
         conflicting_tree = f"{working_tree}-conflict"
         git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
@@ -279,18 +284,18 @@ class TestGitConflicts(GitBaseTestCase):
         git.pull()
 
         body = None
-        with open(os.path.join(working_tree, "fake")) as fp:
+        with open(os.path.join(working_tree, "fake")) as fp:  # noqa: PTH118, PTH123
             body = fp.read()
 
         assert body == "fake 2"
 
     def test_git_submodules(self, new_dir, monkeypatch):
         """Test that updates to submodules are pulled"""
-        repo = os.path.abspath("submodules.git")
-        sub_repo = os.path.abspath("subrepo")
+        repo = os.path.abspath("submodules.git")  # noqa: PTH100
+        sub_repo = os.path.abspath("subrepo")  # noqa: PTH100
         working_tree = Path("git-submodules").absolute()
         working_tree_two = f"{working_tree}-two"
-        sub_working_tree = os.path.abspath("git-submodules-sub")
+        sub_working_tree = os.path.abspath("git-submodules-sub")  # noqa: PTH100
         git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
 
         self.clean_dir(repo)
@@ -317,7 +322,8 @@ class TestGitConflicts(GitBaseTestCase):
         git.pull()
 
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"
+            os.path.join(working_tree, "subrepo", "sub-file"),  # noqa: PTH118
+            "sub-file",
         )
 
         # add a file to the repo
@@ -330,9 +336,10 @@ class TestGitConflicts(GitBaseTestCase):
 
         # this shouldn't cause any change
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"
+            os.path.join(working_tree, "subrepo", "sub-file"),  # noqa: PTH118
+            "sub-file",
         )
-        assert os.path.exists(os.path.join(working_tree, "subrepo", "fake")) is False
+        assert os.path.exists(os.path.join(working_tree, "subrepo", "fake")) is False  # noqa: PTH110, PTH118
 
         # update the submodule
         self.clone_repo(repo, working_tree_two)
@@ -357,10 +364,12 @@ class TestGitConflicts(GitBaseTestCase):
 
         # new file should be there now
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "sub-file"), "sub-file"
+            os.path.join(working_tree, "subrepo", "sub-file"),  # noqa: PTH118
+            "sub-file",
         )
         self.check_file_contents(
-            os.path.join(working_tree, "subrepo", "fake"), "fake 1"
+            os.path.join(working_tree, "subrepo", "fake"),  # noqa: PTH118
+            "fake 1",
         )
 
 
@@ -374,7 +383,7 @@ class TestGitDetails(GitBaseTestCase):
             if not message:
                 message = filename
 
-            with open(filename, "w") as fp:
+            with open(filename, "w") as fp:  # noqa: PTH123
                 fp.write(content)
 
             _call(["git", "add", filename])

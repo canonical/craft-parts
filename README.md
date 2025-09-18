@@ -4,7 +4,7 @@
 [![Codecov Status][codecov-badge]][codecov-status]
 [![Code Style][ruff-badge]][ruff-site]
 
-Craft Parts supports the *parts* mechanism common to all craft applications. It
+Craft Parts supports the _parts_ mechanism common to all craft applications. It
 provides a declarative way to obtain, process, and organize data from different sources
 before it is packaged into the final artifact.
 

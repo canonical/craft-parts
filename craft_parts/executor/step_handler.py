@@ -202,7 +202,7 @@ class StepHandler:
         )
 
         def pkgconfig_fixup(file_path: str) -> None:
-            if os.path.islink(file_path):
+            if os.path.islink(file_path):  # noqa: PTH114
                 return
             if not file_path.endswith(".pc"):
                 return
@@ -372,7 +372,7 @@ class StepHandler:
         :param work_dir: the directory where the script will be executed.
         """
         with tempfile.TemporaryDirectory() as tempdir:
-            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")
+            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")  # noqa: PTH118
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             ctl_socket.bind(ctl_socket_path)
             ctl_socket.listen(1)
@@ -442,7 +442,7 @@ class StepHandler:
         """Parse the command message received from the client."""
         try:
             function_json = json.loads(function_call)
-        except json.decoder.JSONDecodeError as err:
+        except json.JSONDecodeError as err:
             raise RuntimeError(
                 f"{scriptlet_name!r} scriptlet called a function with invalid json: "
                 f"{function_call}"

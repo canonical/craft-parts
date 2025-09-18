@@ -16,17 +16,100 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.23.0:
 
-.. _release-2.20.1:
-
-2.20.1 (2025-MM-DD)
+2.23.0 (2025-09-15)
 -------------------
+
+New features:
+
+- Add a new ``LifecycleManager`` creation parameter to control whether parts should have
+  a merged ``/usr`` directory scheme in their install directories.
+
+- Add two new build attributes, ``enable-usrmerge`` and ``disable-usrmerge``, to control
+  the creation of a merged ``/usr`` directory scheme in a part's install directory.
+- The package cache layer can be placed higher in the overlay stack, allowing overlay
+  packages to be installed on top of a system created by another part.
+
+Bug fixes:
+
+- The package cache layer is cleaned when an underlying layer is cleaned.
+
+.. _release-2.22.1:
+
+2.22.1 (2025-09-10)
+-------------------
+
+Bug fixes:
+
+- The wheel once again includes ``craft_parts_docs``.
+
+.. _release-2.22.0:
+
+2.22.0 (2025-09-09)
+-------------------
+
+New features:
+
+- Dynamically detect the repository type used by the operating system. This allows
+  parts to use different package managers if the system is changed by a preceding part.
+
+- Parts can now move files to the project's overlay filesystem with the ``organize``
+  key. This is done by prefixing the file's destination path with the ``(overlay)``
+  pseudo-partition. To make use of this feature, the project must support both overlays
+  and partitions.
+
+Bug fixes:
+
+- The ``organize`` key now works with character and block device nodes.
+
+Documentation:
+- The Autotools plugin now supports the ``disable-parallel`` key.
+
+For a complete list of commits, check out the `2.22.0`_ release on GitHub.
+
+.. _release-2.21.0:
+
+2.21.0 (2025-08-29)
+-------------------
+
+New features:
+
+- Previously, when the Maven Use plugin updated ``pom.xml`` for self-contained projects,
+  it wouldn't reliably find the correct dependency versions on the host. It could
+  unpredictably declare the wrong package version, or select a vastly different version
+  despite a similar one being available.
+
+  With Craft Parts 2.21.0, the plugin now deterministically detects and matches the
+  dependency versions available on the host, aligning with how Maven normally behaves.
+  This change makes the plugin a drop-in replacement for Maven in private networks.
+
+- Add support for nested project variables, which can be referenced with
+  craftctl using dot notation. For example, ``craftctl set var.subvar=foo`` sets the
+  nested project variable ``var.subvar`` to ``foo``.
+
+- Previously, all project variables had to be set by the same part. Now, each project
+  variable can be set by a different part.
 
 Bug fixes:
 
 - `#1007 <https://github.com/canonical/craft-parts/issues/1007>`_ When wild cards
   were used in an ``organize`` source path, an error would occur if files mapped to
   themselves. These cases are now ignored.
+- Set the right directory permissions so that APT no longer emits a warning when
+  downloading to the stage package cache.
+
+For a complete list of commits, check out the `2.21.0`_ release on GitHub.
+
+.. _release 2.20.1:
+
+2.20.1 (2025-08-20)
+-------------------
+
+Bug fixes:
+
+- `#1207 <https://github.com/canonical/craft-parts/issues/1207>`_ Overlay directory is
+  not removed on a clean
 
 For a complete list of commits, check out the `2.20.1`_ release on GitHub.
 
@@ -43,7 +126,7 @@ New features:
 Bug fixes:
 
 - Files and directories produced during the build step are now correctly checked for
-  collisions with overlay contents during the staging step. Conflicts can be resolved 
+  collisions with overlay contents during the staging step. Conflicts can be resolved
   with the :ref:`stage <reference-part-properties-stage>` and
   :ref:`overlay <reference-part-properties-overlay-files>` keys.
 - When content is staged to partitions from the overlay of the default partition,
@@ -76,7 +159,7 @@ Bug fixes:
 
 - The ``--recurse-submodules`` link in the ``source-submodules`` docstring
   no longer produces a linkcheck error.
-- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition 
+- ``CRAFT_DEFAULT_*`` environment variables are set when the default partition
   is aliased.
 
 For a complete list of commits, check out the `2.19.0`_ release on GitHub.
@@ -138,9 +221,9 @@ Bug fixes:
 
 - With the maven-use plugin in Craft Parts, fix versioning errors caused by native Maven
   plugins when the project indirectly depends on one.
-- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and functions
-  in the top-level module. It is unused outside of Craft Parts and adds ~150-200ms to
-  the import time of downstream applications.
+- Don't expose :class:`~craft_parts.FilesystemMount` or its related classes and
+  functions in the top-level module. It is unused outside of Craft Parts and adds
+  ~150-200ms to the import time of downstream applications.
 
 Documentation:
 
@@ -157,7 +240,8 @@ New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
   encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use plugin.
+- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use
+  plugin.
 
 Bug fixes:
 
@@ -1352,6 +1436,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0
+.. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
+.. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
+.. _2.21.0: https://github.com/canonical/craft-parts/releases/tag/2.21.0
 .. _2.20.1: https://github.com/canonical/craft-parts/releases/tag/2.20.1
 .. _2.20.0: https://github.com/canonical/craft-parts/releases/tag/2.20.0
 .. _2.19.0: https://github.com/canonical/craft-parts/releases/tag/2.19.0

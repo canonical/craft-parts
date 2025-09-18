@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2023 Canonical Ltd.
+# Copyright 2017-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,7 @@ class BaseRepository(abc.ABC):
         :param package_names: A list with the names of the packages to download.
         """
 
-    # XXX: list-only functionality can be a method called by install_build_packages
+    # XXX: list-only functionality can be a method called by install_build_packages  # noqa: FIX003
 
     @classmethod
     @abc.abstractmethod
@@ -212,6 +212,7 @@ class DummyRepository(BaseRepository):
         refresh_package_cache: bool = True,  # noqa: ARG003
     ) -> list[str]:
         """Install packages on the host system."""
+        logger.debug("Package manager not defined, not installing any packages")
         return []
 
     @classmethod
@@ -268,7 +269,7 @@ def mark_origin_stage_package(sources_dir: str, stage_package: str) -> None:
     """Mark all files in sources_dir as coming from stage_package."""
     for root, _, files in os.walk(sources_dir):
         for file_name in files:
-            file_path = os.path.join(root, file_name)
+            file_path = os.path.join(root, file_name)  # noqa: PTH118
 
             # Mark source.
             write_origin_stage_package(file_path, stage_package)

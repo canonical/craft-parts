@@ -279,10 +279,10 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
     # we'll sort them in reverse here to get subdirectories before parents.
 
     for each_dir in sorted(dirs, reverse=True):
-        migrated_directory = os.path.join(directory, each_dir)
+        migrated_directory = os.path.join(directory, each_dir)  # noqa: PTH118
         try:
-            if not os.listdir(migrated_directory):
-                os.rmdir(migrated_directory)
+            if not os.listdir(migrated_directory):  # noqa: PTH208
+                os.rmdir(migrated_directory)  # noqa: PTH106
         except FileNotFoundError:
             logger.warning(
                 "Attempted to remove directory '%s', but it didn't exist. Skipping...",

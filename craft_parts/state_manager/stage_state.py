@@ -19,7 +19,7 @@
 from typing import Annotated, Any
 
 import pydantic
-from overrides import override
+from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
 
@@ -86,6 +86,4 @@ class StageState(StepState):
 
         :return: A dictionary containing project options of interest.
         """
-        return {
-            "project_vars_part_name": project_options.project_vars_part_name,
-        }
+        return {"project_vars": project_options.project_vars.marshal(attr="part_name")}

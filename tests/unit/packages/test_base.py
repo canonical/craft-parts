@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
-from craft_parts.packages import base
+from craft_parts.packages import Repository, base
 from craft_parts.packages.base import BaseRepository, DummyRepository
 
 
@@ -118,3 +119,22 @@ class TestOriginStagePackage:
         base.mark_origin_stage_package(str(test_dir), "package")
         assert base.read_origin_stage_package(str(test_dir / "foo")) == "package"
         assert base.read_origin_stage_package(str(test_dir / "bar")) == "package"
+
+
+class TestRepositoryEvaluation:
+    def test_dynamic_repository(self, mocker):
+        mocker.patch("craft_parts.packages.is_deb_based", return_value=False)
+        mocker.patch("craft_parts.packages.is_yum_based", return_value=False)
+        mocker.patch("craft_parts.packages.is_dnf_based", return_value=False)
+        fake_configure = mocker.patch(
+            "craft_parts.packages.base.DummyRepository.configure"
+        )
+
+        Repository.configure("this-test")
+        assert fake_configure.mock_calls == [call("this-test")]
+
+        mocker.patch("craft_parts.packages.is_deb_based", return_value=True)
+        fake_configure = mocker.patch("craft_parts.packages.deb.Ubuntu.configure")
+
+        Repository.configure("that-test")
+        assert fake_configure.mock_calls == [call("that-test")]

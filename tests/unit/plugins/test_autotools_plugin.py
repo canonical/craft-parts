@@ -117,6 +117,32 @@ class TestPluginAutotools:
             'make install DESTDIR="/tmp"',
         ]
 
+    def test_get_build_commands_disable_parallel(self, new_dir):
+        properties = AutotoolsPlugin.properties_class.unmarshal(
+            {
+                "source": ".",
+                "disable-parallel": "true",
+            },
+        )
+
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        project_info._parallel_build_count = 8
+
+        part = Part("bar", {})
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info._part_install_dir = Path("/tmp")
+
+        plugin = AutotoolsPlugin(properties=properties, part_info=part_info)
+
+        assert plugin.get_build_commands() == [
+            "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
+            "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
+            "[ ! -f ./configure ] && autoreconf --install",
+            "./configure",
+            "make",
+            'make install DESTDIR="/tmp"',
+        ]
+
     def test_invalid_properties(self):
         with pytest.raises(ValidationError) as raised:
             AutotoolsPlugin.properties_class.unmarshal(

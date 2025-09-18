@@ -1,6 +1,5 @@
-*******************
 Project information
-*******************
+===================
 
 Project parameters are provided to callback functions by passing an
 instance of the :class:`StepInfo <craft_parts.infos.StepInfo>` class.

@@ -4,13 +4,10 @@ dynamic = ["version"]
 description = "Craft parts tooling"
 readme = "README.md"
 requires-python = ">=3.10"
-authors = [
-    { name = "Canonical Ltd.", email = "snapcraft@lists.snapcraft.io" },
-]
+authors = [{ name = "Canonical Ltd.", email = "snapcraft@lists.snapcraft.io" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Natural Language :: English",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -18,74 +15,54 @@ classifiers = [
 ]
 dependencies = [
     "lxml>=5.3.0",
-    "overrides!=7.6.0",
     "pydantic>=2.0.0",
     "pyxdg",
     "PyYAML",
     "requests-unixsocket2>=0.4.0",
     "requests>=2.32.4,<3.0",
+    "semver>=3.0.4",
     "tomli >= 1.1.0 ; python_version < '3.11'",
 ]
+license-files = ["LICENSE"]
 
-[project.optional-dependencies]
-apt-jammy = [
-    # Stay on 2.4 for Jammy
-    "python-apt~=2.4.0;sys_platform=='linux'",
-]
-apt-noble = [
-    # 2.7 for Noble
-    "python-apt~=2.7.0;sys_platform=='linux'",
-]
-apt-oracular = [
-    # 2.9 for Oracular
-    "python-apt~=2.9.0,<2.9.9;sys_platform=='linux'",
-]
-apt-plucky = [
-    "python-apt~=2.9.9;sys_platform=='linux'",
-]
-apt-questing = [
-    "python-apt~=3.0.0;sys_platform=='linux'",
-]
+[dependency-groups]
 docs = [
-    "canonical-sphinx",
-    "pydantic-kitbash==0.0.7",
-    "setuptools",  # Missing from sphinxcontrib-details-directive,
-    # see https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
+    "canonical-sphinx[full]",
+    "pydantic-kitbash==0.0.8",
+    # Missing from sphinxcontrib-details-directive, see
+    # https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
+    "setuptools",
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
     "sphinx-pydantic",
     "sphinx-rtd-theme",
     "sphinxcontrib-details-directive",
+    "sphinxext-rediraffe",
 ]
-dev = [  # TODO: Remove this once we've switched CI to uv
-    # Inherited from starbase
+dev = [
     "build",
     "coverage[toml]~=7.4",
-    "pyfakefs~=5.3",
     "pytest~=8.0",
     "pytest-cov~=5.0",
     "pytest-mock~=3.12",
-    "yamllint~=1.34",
+    "pyfakefs~=5.3",
     "mypy[reports]~=1.14.1",
-    "pyright==1.1.391",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
-
-    # Project-specific linting
-    "autoflake",
-    "codespell",
-    "pydocstyle",
-    "tox",
-
-    # Testing
     "hypothesis",
     "jsonschema",
-    "pytest-check<2.5.0",
+    "pytest-check",
     "pytest-subprocess",
     "requests-mock",
-
+]
+lint = [
+    "codespell",
+    # Imported in docs/conf.py, needed for pyright to validate
+    "sphinx",
+]
+types = [
     # Type checking
     "types-colorama",
     "types-docutils",
@@ -98,6 +75,11 @@ dev = [  # TODO: Remove this once we've switched CI to uv
     "types-setuptools",
     "types-lxml>=2025.3.30",
 ]
+dev-focal = ["python-apt~=2.0.0;sys_platform=='linux'"]
+dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
+dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
+dev-plucky = ["python-apt~=2.9.9;sys_platform=='linux'"]
+dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
 tics = ["flake8", "pylint"]
 
 [tool.uv]
@@ -117,52 +99,15 @@ constraint-dependencies = [
     "tornado>=4.0",
     "webencodings>=0.4.0",
 ]
-dev-dependencies = [
-    # Inherited from starbase
-    "build",
-    "coverage[toml]~=7.4",
-    "pytest~=8.0",
-    "pytest-cov~=5.0",
-    "pytest-mock~=3.12",
-    "yamllint~=1.35",
-    "mypy[reports]~=1.14.1",
-    "pyright==1.1.391",
-    "types-Pygments",
-    "types-colorama",
-    "types-setuptools",
-    # Project-specific linting
-    "autoflake",
-    "black",
-    "codespell",
-    "pydocstyle",
-    # Testing
-    "hypothesis",
-    "jsonschema",
-    "pytest-check",
-    "pytest-subprocess",
-    "requests-mock",
-    # Type checking
-    "types-colorama",
-    "types-docutils",
-    "types-jsonschema",
-    "types-Pillow",
-    "types-Pygments",
-    "types-pytz",
-    "types-PyYAML",
-    "types-requests",
-    "types-setuptools",
-    "types-lxml>=2025.3.30",
-]
 conflicts = [
     [
-        { extra = "apt-jammy" },
-        { extra = "apt-noble" },
-        { extra = "apt-oracular" },
-        { extra = "apt-plucky" },
-        { extra = "apt-questing" },
-    ]
+        { group = "dev-focal" },
+        { group = "dev-jammy" },
+        { group = "dev-noble" },
+        { group = "dev-plucky" },
+        { group = "dev-questing" },
+    ],
 ]
-
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
@@ -179,19 +124,8 @@ craftctl = "craft_parts.ctl:main"
 Homepage = "https://github.com/canonical/craft-parts"
 
 [build-system]
-requires = [
-    "setuptools>=69.0",
-    "setuptools_scm[toml]>=7.1"
-]
+requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.package-dir]
-"craft_parts" = "craft_parts"
-"craft_parts_docs" = "docs/common"
-
-
-[tool.setuptools.dynamic]
-readme = {file = "README.rst"}
 
 [tool.setuptools_scm]
 write_to = "craft_parts/_version.py"
@@ -219,6 +153,12 @@ git_describe_command = [
     "*[^0-9.]*",
 ]
 
+# NOTE: Do not merge starbase's auto-find here, as we are intentionally adding two
+# packages using this manual description.
+[tool.setuptools.package-dir]
+"craft_parts" = "craft_parts"
+"craft_parts_docs" = "docs/common"
+
 [tool.black]
 target-version = ["py310"]
 
@@ -228,17 +168,52 @@ skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,.
 quiet-level = 3
 check-filenames = true
 
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+addopts = "--ignore=tests/spread"
+markers = [
+    "slow: slow tests",
+    "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
+    "python: tests that require the Python build tools (poetry, uv, pip)",
+    "plugin: tests that require plugin dependencies other than java or python",
+]
+
+[tool.coverage.run]
+branch = true
+omit = ["tests/**"]
+
+[tool.coverage.report]
+skip_empty = true
+exclude_also = ["if (typing\\.)?TYPE_CHECKING:"]
+
+[tool.pyright]
+# Should be uncommented once https://github.com/canonical/craft-parts/issues/1258 is closed
+# strict = ["craft_parts"]
+pythonVersion = "3.10"
+pythonPlatform = "Linux"
+exclude = [
+    "**/.*",
+    "**/__pycache__",
+    # pyright might not like the annotations generated by setuptools_scm
+    "**/_version.py",
+    # Ignore the starter pack submodule
+    "docs/sphinx-resources",
+]
+
 [tool.mypy]
 python_version = "3.10"
-exclude = [
-    "build",
-    "results",
-    "venv",
-    ".venv"
-]
-plugins = [
-    "pydantic.mypy"
-]
+exclude = ["build", "results", "venv", ".venv"]
+plugins = ["pydantic.mypy"]
 warn_unused_configs = true
 warn_redundant_casts = true
 strict_equality = true
@@ -249,7 +224,7 @@ disallow_subclassing_any = true
 #disallow_any_generics = true
 
 [[tool.mypy.overrides]]
-module = ["craft-parts"]
+module = ["craft_parts.*"]
 #disallow_untyped_defs = true
 no_implicit_optional = true
 
@@ -257,123 +232,120 @@ no_implicit_optional = true
 module = ["tests.*"]
 strict = false
 
-[tool.pydocstyle]
-ignore = [
-    "D105", # Missing docstring in magic method (reason: magic methods already have definitions)
-    "D107", # Missing docstring in __init__ (reason: documented in class docstring)
-    "D203", # 1 blank line required before class docstring (reason: pep257 default)
-    "D204",
-    "D213", # Multi-line docstring summary should start at the second line (reason: pep257 default)
-    "D215", # Section underline is over-indented (reason: pep257 default)
-]
-
-
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-src = ["craft-parts"]
-extend-exclude = [
-    "docs",
-    "__pycache__",
-]
+src = ["craft_parts", "tests"]
+extend-exclude = ["docs"]
+
+[tool.ruff.format]
+docstring-code-format = true
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
 # Follow ST063 - Maintaining and updating linting specifications for updating these.
-lint.select = [  # Base linting rule selections.
+# Handy link: https://docs.astral.sh/ruff/rules/
+select = [ # Base linting rule selections.
     # See the internal document for discussion:
     # https://docs.google.com/document/d/1i1n8pDmFmWi4wTDpk-JfnWCVUThPJiggyPi2DYwBBu4/edit
     # All sections here are stable in ruff and shouldn't randomly introduce
     # failures with ruff updates.
-    "F",  # The rules built into Flake8
-    "E", "W",  # pycodestyle errors and warnings
-    "I",  # isort checking
-    "N",  # PEP8 naming
-    "D",  # Implement pydocstyle checking as well.
-    "UP",  # Pyupgrade - note that some of are excluded below due to Python versions
-    "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
-    "ANN",  # Type annotations.
-    "ASYNC",  # Catching blocking calls in async functions
+    "F",     # The rules built into Flake8
+    "E",
+    "W",     # pycodestyle errors and warnings
+    "I",     # isort checking
+    "N",     # PEP8 naming
+    "D",     # Implement pydocstyle checking as well.
+    "UP",    # Pyupgrade - note that some of are excluded below due to Python versions
+    "YTT",   # flake8-2020: Misuse of `sys.version` and `sys.version_info`
+    "ANN",   # Type annotations.
+    "ASYNC", # Catching blocking calls in async functions
     # flake8-bandit: security testing. https://docs.astral.sh/ruff/rules/#flake8-bandit-s
     # https://bandit.readthedocs.io/en/latest/plugins/index.html#complete-test-plugin-listing
-    "S101", "S102",  # assert or exec
-    "S103", "S108",  # File permissions and tempfiles - use #noqa to silence when appropriate.
-    "S104",  # Network binds
-    "S105", "S106", "S107",  # Hardcoded passwords
-    "S110",  # try-except-pass (use contextlib.suppress instead)
-    "S113",  # Requests calls without timeouts
-    "S3",  # Serialising, deserialising, hashing, crypto, etc.
-    "S5",  # Unsafe cryptography or YAML loading.
-    "S602",  # Subprocess call with shell=true
-    "S701",  # jinja2 templates without autoescape
+    "S101",
+    "S102", # assert or exec
+    "S103",
+    "S108", # File permissions and tempfiles - use #noqa to silence when appropriate.
+    "S104", # Network binds
+    "S105",
+    "S106",
+    "S107", # Hardcoded passwords
+    "S110", # try-except-pass (use contextlib.suppress instead)
+    "S113", # Requests calls without timeouts
+    "S3",   # Serialising, deserialising, hashing, crypto, etc.
+    "S5",   # Unsafe cryptography or YAML loading.
+    "S602", # Subprocess call with shell=true
+    "S701", # jinja2 templates without autoescape
     "BLE",  # Do not catch blind exceptions
     "FBT",  # Disallow boolean positional arguments (make them keyword-only)
-    "B0",  # Common mistakes and typos.
-    "A",  # Shadowing built-ins.
+    "B0",   # Common mistakes and typos.
+    "A",    # Shadowing built-ins.
     "COM",  # Trailing commas
-    "C4", # Encourage comprehensions, which tend to be faster than alternatives.
+    "C4",   # Encourage comprehensions, which tend to be faster than alternatives.
     "T10",  # Don't call the debugger in production code
     "ISC",  # Implicit string concatenation that can cause subtle issues
     "ICN",  # Only use common conventions for import aliases.
     "INP",  # Implicit namespace packages
     # flake8-pie: miscellaneous linters (enabled individually because they're not really related)
-    "PIE790",  # Unnecessary pass statement
-    "PIE794",  # Multiple definitions of class field
-    "PIE796",  # Duplicate value in an enum (reasonable to noqa for backwards compatibility)
-    "PIE804",  # Don't use a dict with unnecessary kwargs
-    "PIE807",  # prefer `list` over `lambda: []`
-    "PIE810",  # Use a tuple rather than multiple calls. E.g. `mystr.startswith(("Hi", "Hello"))`
-    "PYI",  # Linting for type stubs.
-    "PT",  # Pytest
-    "Q",  # Consistent quotations
-    "RSE",  # Errors on pytest raises.
-    "RET",  # Simpler logic after return, raise, continue or break
-    "SLF",  # Error when accessing private members
-    "SIM",  # Code simplification
-    "TID",  # Tidy imports
-    # The team have chosen to only use type-checking blocks when necessary to prevent circular imports.
-    # As such, the only enabled type-checking checks are those that warn of an import that needs to be
-    # removed from a type-checking block.
+    "PIE790", # Unnecessary pass statement
+    "PIE794", # Multiple definitions of class field
+    "PIE796", # Duplicate value in an enum (reasonable to noqa for backwards compatibility)
+    "PIE804", # Don't use a dict with unnecessary kwargs
+    "PIE807", # prefer `list` over `lambda: []`
+    "PIE810", # Use a tuple rather than multiple calls. E.g. `mystr.startswith(("Hi", "Hello"))`
+    "PYI",    # Linting for type stubs.
+    "PT",     # Pytest
+    "Q",      # Consistent quotations
+    "RSE",    # Errors on pytest raises.
+    "RET",    # Simpler logic after return, raise, continue or break
+    "SLF",    # Prevent accessing private class members.
+    "SIM",    # Code simplification
+    "TID",    # Tidy imports
     "TC001",  # Checks for first-party imports that are only used for type annotations
     "TC002",  # Checks for third-party imports that are only used for type annotations
     "TC003",  # Checks for standard library imports that are only used for type annotations
     "TC004",  # Remove imports from type-checking guard blocks if used at runtime
     "TC005",  # Delete empty type-checking blocks
-    "ARG",  # Unused arguments
-    "PTH",  # Migrate to pathlib
-    #"FIX",  # All TODOs, FIXMEs, etc. should be turned into issues instead.
-    "ERA",  # Don't check in commented out code
-    "PGH",  # Pygrep hooks
-    "PL",  # Pylint
-    "TRY",  # Cleaner try/except,
-    "FLY",  # Detect things that would be better as f-strings.
-    "PERF",  # Catch things that can slow down the application like unnecessary casts to list.
-    "RUF001", "RUF002", "RUF003",  # Ambiguous unicode characters
-    "RUF005",  # Encourages unpacking rather than concatenation
-    "RUF008",  # Do not use mutable default values for dataclass attributes
-    #"RUF012",  # Mutable class attributes should be annotated with typing.ClassVar
-    "RUF013",  # Prohibit implicit Optionals (PEP 484)
-    "RUF100",  # #noqa directive that doesn't flag anything
-    "RUF200",  # If ruff fails to parse pyproject.toml...
+    "ARG",    # Unused arguments
+    "PTH",    # Migrate to pathlib
+    "FIX",    # All TODOs, FIXMEs, etc. should be turned into issues instead.
+    "ERA",    # Don't check in commented out code
+    "PGH",    # Pygrep hooks
+    "PL",     # Pylint
+    "TRY",    # Cleaner try/except,
+    "FLY",    # Detect things that would be better as f-strings.
+    "PERF",   # Catch things that can slow down the application like unnecessary casts to list.
+    "RUF001",
+    "RUF002",
+    "RUF003", # Ambiguous unicode characters
+    "RUF005", # Encourages unpacking rather than concatenation
+    "RUF008", # Do not use mutable default values for dataclass attributes
+    "B035",   # Don't use static keys in dict comprehensions.
+    "RUF013", # Prohibit implicit Optionals (PEP 484)
+    "RUF100", # #noqa directive that doesn't flag anything
+    "RUF200", # If ruff fails to parse pyproject.toml...
 ]
-lint.ignore = [
+ignore = [
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long (reason: black will automatically fix this for us)
-    "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
-    "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
-    "D203",  # 1 blank line required before class docstring (reason: pep257 default)
-    "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
-    "D215",  # Section underline is over-indented (reason: pep257 default)
-    "A003",  # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
+    "E501",   # Line too long (reason: ruff will automatically fix this for us)
+    "D105",   # Missing docstring in magic method (reason: magic methods already have definitions)
+    "D107",   # Missing docstring in __init__ (reason: documented in class docstring)
+    "D203",   # 1 blank line required before class docstring (reason: pep257 default)
+    "D213",   # Multi-line docstring summary should start at the second line (reason: pep257 default)
+    "D215",   # Section underline is over-indented (reason: pep257 default)
+    "A003",   # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
     "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
-              # (reason: this creates long lines that get wrapped and reduces readability)
+    # (reason: this creates long lines that get wrapped and reduces readability)
     "PLW1641", # eq-without-hash (most of our classes should be unhashable)
 
+    # Ignored due to conflicts with ruff's formatter:
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812", # Missing trailing comma - mostly the same, but marginal differences.
+    "ISC001", # Single-line implicit string concatenation.
+
     # Ignored due to common usage in current code
-    "TRY003",  # Avoid specifying long messages outside the exception class
-    # Temporary ignored due to API change
-    "PTH", # Use pathlib.Path
-
-    "N818", # Allow Exception name without an Error suffix
-
-    "COM812", # Trailing comma missing
+    "TRY003", # Avoid specifying long messages outside the exception class
 ]
 
 [tool.ruff.lint.flake8-annotations]
@@ -382,36 +354,36 @@ allow-star-arg-any = true
 [tool.ruff.lint.flake8-builtins]
 strict-checking = true
 
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
+    "typing.overload", # Default configuration
+    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
+    "overrides.override",
+    "overrides.overrides",
+    "typing.override",
+    "typing_extensions.override",
+]
+
 [tool.ruff.lint.pylint]
 max-args = 8
-max-branches = 16
-max-locals = 18
-# max-attributes = 16
 
 [tool.ruff.lint.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**.py" = [  # Some things we want for the moin project are unnecessary in tests.
-    "D",  # Ignore docstring rules in tests
-    "ANN",  # Ignore type annotations in tests
-    "ARG",  # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
-    "S101",  # Allow assertions in tests
-    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-    "S108", # Allow Probable insecure usage of temporary file or directory
-    "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
+"tests/**.py" = [ # Some things we want for the main project are unnecessary in tests.
+    "D",       # Ignore docstring rules in tests
+    "ANN",     # Ignore type annotations in tests
+    "ARG",     # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
+    "S101",    # Allow assertions in tests
+    "S103",    # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S108",    # Allow Probable insecure usage of temporary file or directory
+    "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
     "PLR2004", # Allow magic values in tests
-    "SLF",  # Allow accessing private members from tests.
-    "INP001", # Allow implicit namespace package
-    "RUF012", # Allow mutable class attributes without `typing.ClassVar`
+    "SLF",     # Allow accessing private members from tests.
 ]
 "__init__.py" = [
-    "I001",  # isort leaves init files alone by default, this makes ruff ignore them too.
-    "F401",  # Allows unused imports in __init__ files.
+    "I001", # isort leaves init files alone by default, this makes ruff ignore them too.
+    "F401", # Allows unused imports in __init__ files.
 ]
-
-[tool.ruff.format]
-quote-style = "double"
-docstring-code-format = true
-skip-magic-trailing-comma = false

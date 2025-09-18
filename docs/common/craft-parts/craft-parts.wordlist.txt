@@ -144,6 +144,7 @@ LayerHash
 LayerMount
 LayerStateManager
 Lifecycle
+Lifecycle's
 LifecycleManager
 LocalSource
 LocalSourceModel
@@ -215,6 +216,7 @@ PackageCacheMount
 PackageFetchError
 PackageListRefreshError
 PackageNotFound
+PackageService
 PackagesDownloadError
 PackagesError
 PackagesNotFound
@@ -354,6 +356,7 @@ armv
 artifact
 artifactId
 artifacts
+attr
 apache
 autogen
 autotools
@@ -491,6 +494,7 @@ openjdk
 organization
 organize
 organized
+organizes
 organizing
 ormal
 os
@@ -582,6 +586,8 @@ unregistering
 uri
 url
 urllib
+usrmerge
+usrmerged
 utilizing
 utils
 uv

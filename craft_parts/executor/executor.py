@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -76,11 +76,24 @@ class Executor:
         self._ignore_patterns = ignore_patterns
         self._use_host_sources = use_host_sources
 
+        # The cache layer level is set to the first part that doesn't organize
+        # to the overlay coming after a part that organizes to the overlay.
+        cache_level = 0
+        organized_to_overlay = False
+
+        for level, part in enumerate(self._part_list):
+            if part.organizes_to_overlay:
+                organized_to_overlay = True
+            elif organized_to_overlay:
+                cache_level = level
+                break
+
         self._overlay_manager = OverlayManager(
             project_info=self._project_info,
             part_list=self._part_list,
             base_layer_dir=base_layer_dir,
             use_host_sources=use_host_sources,
+            cache_level=cache_level,
         )
 
     def prologue(self) -> None:
@@ -93,9 +106,13 @@ class Executor:
 
         self._verify_plugin_environment()
 
-        # update the overlay environment package list to allow installation of
-        # overlay packages.
-        if any(p.spec.overlay_packages for p in self._part_list):
+        # Update the overlay environment package list to allow installation of
+        # overlay packages if the cache level is the first layer after the base,
+        # to keep compatibility with existing behavior.
+        if (
+            any(p.spec.overlay_packages for p in self._part_list)
+            and self._overlay_manager.cache_level == 0
+        ):
             logger.info("Updating base overlay system")
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 callbacks.run_configure_overlay(
@@ -138,7 +155,7 @@ class Executor:
         for act in actions:
             self._run_action(act, stdout=stdout, stderr=stderr)
 
-    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:
+    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:  # noqa: PLR0912
         """Clean the given parts, or all parts if none is specified.
 
         :param initial_step: The step to clean. More steps may be cleaned
@@ -194,6 +211,11 @@ class Executor:
             ):
                 shutil.rmtree(self._project_info.partition_dir)
 
+            if initial_step <= Step.OVERLAY:
+                for overlay in self._project_info.dirs.overlay_dirs.values():
+                    if overlay.exists():
+                        shutil.rmtree(overlay)
+
     def _run_action(
         self,
         action: Action,
@@ -213,11 +235,9 @@ class Executor:
             logger.debug("Skip execution of %s (because %s)", action, action.reason)
             # update project variables if action is skipped
             if action.project_vars:
-                for var, pvar in action.project_vars.items():
-                    if pvar.updated:
-                        self._project_info.set_project_var(
-                            var, pvar.value, raw_write=True, part_name=action.part_name
-                        )
+                self._project_info.project_vars.update_from(
+                    action.project_vars, action.part_name
+                )
             return
 
         if action.step == Step.STAGE:

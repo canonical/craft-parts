@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2023 Canonical Ltd.
+# Copyright 2017-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,8 @@
 
 """Operations with platform-specific package repositories."""
 
-from typing import TYPE_CHECKING
+import logging
+from typing import Any, TYPE_CHECKING, cast
 
 from . import errors, snaps
 from .normalize import fix_pkg_config
@@ -24,6 +25,8 @@ from .platform import is_deb_based, is_dnf_based, is_yum_based
 
 if TYPE_CHECKING:
     from .base import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 # pylint: disable=import-outside-toplevel
 
@@ -49,4 +52,20 @@ def _get_repository_for_platform() -> type["BaseRepository"]:
     return DummyRepository
 
 
-Repository = _get_repository_for_platform()
+class _RepositoryProxy:
+    """Dynamic dispatcher for repository instances."""
+
+    def __getattr__(self, attr: str) -> Any:  # noqa: ANN401
+        repo = _get_repository_for_platform()
+        logger.debug("get repository attribute: attr=%s, repository:%s", attr, repo)
+        return getattr(repo, attr)
+
+    def __setattr__(self, attr: str, value: Any) -> None:  # noqa: ANN401
+        repo = _get_repository_for_platform()
+        logger.debug(
+            "set repository attribute: attr=%s, value=%s, repo:%s", attr, value, repo
+        )
+        setattr(repo, attr, value)
+
+
+Repository = cast("BaseRepository", _RepositoryProxy())

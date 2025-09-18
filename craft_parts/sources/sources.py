@@ -224,7 +224,7 @@ def get_source_type_from_uri(
         if source_model.pattern and re.search(source_model.pattern, source):
             return _get_type_name_from_model(source_model)
     # Special case for the "local" source for backwards compatibility.
-    if os.path.isdir(source):
+    if os.path.isdir(source):  # noqa: PTH112
         return "local"
     if ignore_errors:
         return ""

@@ -22,6 +22,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo
 from craft_parts.plugins.maven_use_plugin import MavenUsePlugin
+from craft_parts.utils.os_utils import OsRelease
 
 
 @pytest.fixture
@@ -106,6 +107,10 @@ def test_get_build_commands(
     ]
 
 
+@pytest.mark.skipif(
+    OsRelease().id() == "ubuntu" and OsRelease().version_id() <= "20.04",
+    reason="Maven on 20.04 and below does not rewrite the project file.",
+)
 def test_get_build_commands_is_reentrant(
     plugin: MavenUsePlugin, fake_maven_project: Path
 ) -> None:

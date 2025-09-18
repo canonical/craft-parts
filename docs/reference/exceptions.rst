@@ -1,6 +1,5 @@
-**********
 Exceptions
-**********
+==========
 
 Exceptions are defined in three different modules in the :py:mod:`craft_parts`
 package.

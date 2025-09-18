@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ import logging
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -300,7 +301,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
     try:
         output = (
             subprocess.check_output(
-                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],
+                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],  # noqa: PTH118
                 stderr=subprocess.STDOUT,
                 env={"LANG": "C.UTF-8"},
             )
@@ -327,7 +328,7 @@ def _run_dpkg_query_list_files(package_name: str) -> set[str]:
         .split()
     )
 
-    return {i for i in output if ("lib" in i and os.path.isfile(i))}
+    return {i for i in output if ("lib" in i and os.path.isfile(i))}  # noqa: PTH113
 
 
 def _get_dpkg_list_path(base: str) -> pathlib.Path:
@@ -439,6 +440,7 @@ class Ubuntu(BaseRepository):
     ) -> None:
         """Refresh the list of packages available in the repository."""
         # Return early when testing.
+        logger.debug("Refreshing apt package list")
         if os.geteuid() != 0:
             logger.warning("Packages list not refreshed, not running as superuser.")
             return
@@ -515,7 +517,7 @@ class Ubuntu(BaseRepository):
     @classmethod
     def download_packages(cls, package_names: list[str]) -> None:
         """Download the specified packages to the local package cache area."""
-        logger.debug("Downloading packages: %s", " ".join(package_names))
+        logger.debug("Downloading packages using apt: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
             {
@@ -555,7 +557,7 @@ class Ubuntu(BaseRepository):
         install_required = False
         package_names = sorted(package_names)
 
-        logger.debug("Requested build-packages: %s", package_names)
+        logger.debug("Installing packages using apt: %s", package_names)
 
         # Ensure we have an up-to-date cache first if we will have to
         # install anything.
@@ -631,7 +633,7 @@ class Ubuntu(BaseRepository):
             return []
 
         if _is_list_of_slices(package_names):
-            # TODO: fetching of Chisel slices is not supported yet.
+            # TODO: fetching of Chisel slices is not supported yet.  # noqa: FIX002
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
@@ -673,6 +675,16 @@ class Ubuntu(BaseRepository):
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
+        # Fix a runtime warning from apt not liking to write to directories it
+        # doesn't own
+        try:
+            shutil.chown(deb_cache_dir, user="_apt")
+        except (LookupError, PermissionError) as err:
+            # LookupError: user `_apt` not found
+            # PermissionError: non root run, such as unit tests
+            logger.debug(f"Cannot chown '{deb_cache_dir}' to '_apt': {err!s}")
+        else:
+            logger.debug(f"Set ownership of '{deb_cache_dir}' to '_apt'")
 
         installed: set[str] = set()
 

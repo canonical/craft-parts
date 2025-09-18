@@ -88,6 +88,9 @@ build environment.
 .. kitbash-field:: PartSpec disable_parallel
     :label: reference-part-properties-disable-parallel
 
+.. kitbash-field:: PartSpec build_attributes
+    :label: reference-part-properties-build-attributes
+
 .. kitbash-field:: PartSpec build_environment
     :label: reference-part-properties-build-environment
 
