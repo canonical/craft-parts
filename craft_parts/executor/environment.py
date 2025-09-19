@@ -20,7 +20,8 @@ from __future__ import annotations
 
 import io
 import logging
-from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING, Any, overload
 
 from craft_parts import errors
 from craft_parts.features import Features
@@ -105,7 +106,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             _get_step_overlay_environment_for_partitions(part, step_info.partitions)
         )
 
-    bin_paths = []
+    bin_paths: list[str] = []
     for path in paths:
         bin_paths.extend(os_utils.get_bin_paths(root=path, existing_only=True))
 
@@ -115,7 +116,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             paths=bin_paths, prepend="", separator=":"
         )
 
-    include_paths = []
+    include_paths: list[str] = []
     for path in paths:
         include_paths.extend(
             os_utils.get_include_paths(root=path, arch_triplet=step_info.arch_triplet)
@@ -127,7 +128,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
                 paths=include_paths, prepend="-isystem ", separator=" "
             )
 
-    library_paths = []
+    library_paths: list[str] = []
     for path in paths:
         library_paths.extend(
             os_utils.get_library_paths(root=path, arch_triplet=step_info.arch_triplet)
@@ -138,7 +139,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             paths=library_paths, prepend="-L", separator=" "
         )
 
-    pkg_config_paths = []
+    pkg_config_paths: list[str] = []
     for path in paths:
         pkg_config_paths.extend(
             os_utils.get_pkg_config_paths(
@@ -341,9 +342,19 @@ def expand_environment(
             data[key] = _replace_attr(value, replacements)
 
 
+@overload
 def _replace_attr(
-    attr: list[str] | dict[str, str] | str, replacements: dict[str, str]
-) -> list[str] | dict[str, str] | str:
+    attr: dict[str, str], replacements: dict[str, str]
+) -> dict[str, str]: ...
+@overload
+def _replace_attr(attr: list[str], replacements: dict[str, str]) -> list[str]: ...
+@overload
+def _replace_attr(attr: str, replacements: dict[str, str]) -> str: ...
+@overload
+def _replace_attr(attr: int, replacements: dict[str, str]) -> int: ...
+def _replace_attr(
+    attr: list[str] | dict[str, str] | str | int, replacements: dict[str, str]
+) -> list[str] | dict[str, str] | str | int:
     """Recurse through a complex data structure and replace values.
 
     The first matching replacement in the replacement map is used. For example,
@@ -355,26 +366,22 @@ def _replace_attr(
 
     :returns: The data structure with replaced values.
     """
-    if isinstance(attr, str):
-        for key, value in replacements.items():
-            if key in attr:
-                _warn_if_deprecated_key(key)
-                attr = attr.replace(key, str(value))
-        return attr
-
-    if isinstance(attr, list | tuple):
-        return [cast(str, _replace_attr(i, replacements)) for i in attr]
-
-    if isinstance(attr, dict):
-        result: dict[str, str] = {}
-        for _key, _value in attr.items():
-            # Run replacements on both the key and value
-            key = cast(str, _replace_attr(_key, replacements))
-            value = cast(str, _replace_attr(_value, replacements))
-            result[key] = value
-        return result
-
-    return attr
+    match attr:
+        case Mapping():
+            return {
+                _replace_attr(key, replacements): _replace_attr(value, replacements)
+                for key, value in attr.items()
+            }
+        case str():
+            for key, value in replacements.items():
+                if key in attr:
+                    _warn_if_deprecated_key(key)
+                    attr = attr.replace(key, str(value))
+            return attr
+        case Sequence():
+            return [_replace_attr(i, replacements) for i in attr]
+        case _:
+            return attr
 
 
 def _warn_if_deprecated_key(key: str) -> None:

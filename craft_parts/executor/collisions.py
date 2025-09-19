@@ -141,7 +141,7 @@ def _get_candidates_from_overlay(
     if not Features().enable_overlay:
         return []
 
-    candidates = []
+    candidates: list[StageCandidate] = []
     parts_with_overlay = [p for p in part_list if p.has_overlay]
     for i, part in enumerate(parts_with_overlay):
         part_layer_dir = part.part_layer_dirs[partition]
@@ -206,7 +206,7 @@ def _check_for_stage_collisions_per_partition(
             # Our files that are also in a different part.
             common = candidate.contents & other_candidate.contents
 
-            conflict_files = []
+            conflict_files: list[str] = []
             for item in common:
                 this = os.path.join(candidate.source_dir, item)  # noqa: PTH118
                 other = os.path.join(other_candidate.source_dir, item)  # noqa: PTH118

@@ -72,7 +72,7 @@ class FilesystemMountItem(BaseModel):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("Filesystem input data must be a dictionary.")
 
         return cls.model_validate(data)
@@ -86,10 +86,10 @@ class FilesystemMountItem(BaseModel):
         return self.model_dump(by_alias=True)
 
 
-class FilesystemMount(RootModel):
+class FilesystemMount(
+    RootModel[Annotated[UniqueList[FilesystemMountItem], Field(min_length=1)]]
+):
     """FilesystemMount defines the order in which devices should be mounted."""
-
-    root: Annotated[UniqueList[FilesystemMountItem], Field(min_length=1)]
 
     def __iter__(self) -> Iterator[FilesystemMountItem]:  # type: ignore[override]
         return iter(self.root)
@@ -121,7 +121,7 @@ class FilesystemMount(RootModel):
         :raise TypeError: If data is not a list.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, list):
+        if not isinstance(data, list):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("Filesystem entry must be a list.")
 
         return cls.model_validate(
@@ -137,10 +137,8 @@ class FilesystemMount(RootModel):
         return cast(list[dict[str, Any]], self.model_dump(by_alias=True))
 
 
-class FilesystemMounts(RootModel):
+class FilesystemMounts(RootModel[SingleEntryDict[Literal["default"], FilesystemMount]]):
     """FilesystemMounts defines list of FilesystemMount."""
-
-    root: SingleEntryDict[Literal["default"], FilesystemMount]
 
     def __iter__(self) -> Iterator[Literal["default"]]:  # type: ignore[override]
         return iter(self.root)
@@ -171,7 +169,7 @@ class FilesystemMounts(RootModel):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("filesystems is not a dictionary")
 
         return cls.model_validate(data)

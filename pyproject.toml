@@ -198,9 +198,7 @@ skip_empty = true
 exclude_also = ["if (typing\\.)?TYPE_CHECKING:"]
 
 [tool.pyright]
-# Should be uncommented once https://github.com/canonical/craft-parts/issues/1258 is closed
-# strict = ["craft_parts"]
-pythonVersion = "3.10"
+strict = ["craft_parts"]
 pythonPlatform = "Linux"
 exclude = [
     "**/.*",
@@ -209,6 +207,8 @@ exclude = [
     "**/_version.py",
     # Ignore the starter pack submodule
     "docs/sphinx-resources",
+    # No need to lint test inputs
+    "tests/integration/plugins/test_python"
 ]
 
 [tool.mypy]

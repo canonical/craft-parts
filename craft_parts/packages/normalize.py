@@ -263,7 +263,10 @@ def _rewrite_python_shebangs(root_dir: Path) -> None:
 
 
 def _replace_in_file(
-    directory: Path, file_pattern: Pattern, search_pattern: Pattern, replacement: str
+    directory: Path,
+    file_pattern: Pattern[str],
+    search_pattern: Pattern[str],
+    replacement: str,
 ) -> None:
     """Search and replaces patterns that match a file pattern.
 
@@ -283,7 +286,7 @@ def _replace_in_file(
 
 
 def _search_and_replace_contents(
-    file_path: Path, search_pattern: Pattern, replacement: str
+    file_path: Path, search_pattern: Pattern[str], replacement: str
 ) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 

@@ -77,7 +77,7 @@ class SnapSource(FileSourceHandler):
         # -force: if file already exists then overwrite
         # -dest <pathname>: unsquash to <pathname>
         with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
-            extract_command = [
+            extract_command: list[str | Path] = [
                 "unsquashfs",
                 "-force",
                 "-dest",
