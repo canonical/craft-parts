@@ -17,6 +17,7 @@
 import datetime
 import logging
 import pathlib
+import re
 import sys
 
 project = "Craft Parts"
@@ -73,17 +74,45 @@ exclude_patterns = [
     "common/craft-parts/reference/step_output_directories.rst",
 ]
 
-# Links to ignore when checking links
+# We have many links on sites that frequently respond with 503s to GitHub runners.
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_retries
+linkcheck_retries = 20
+linkcheck_anchors_ignore = ["#", ":"]
 linkcheck_ignore = [
-    "https://foo.org/",
-    # GNU's site is a bit unreliable
-    "https://www.gnu.org/.*",
-    # https://github.com/rust-lang/crates.io/issues/788
-    "https://crates.io/",
     # Ignore releases, since we'll include the next release before it exists.
-    "https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
-    # returns a 403 from GitHub CI
-    "https://rsync.samba.org",
+    r"^https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
+    # Entire domains to ignore due to flakiness or issues
+    r"^https://www.gnu.org/",
+    r"^https://crates.io/",
+    r"^https://([\w-]*\.)?npmjs.(org|com)",
+    r"^https://rsync.samba.org",
+    r"^https://ubuntu.com",
+    # Known good links that if they break we'll hear it in the news.
+    r"^https://([\w-]*\.)?apache.org\/?$",
+    r"^https://canonical.com/legal/contributors$",
+    r"^https://([\w-]*\.)?cmake.org/?$",
+    r"^https://([\w-]*\.)?curl.se/?$",
+    r"^https://dnf.readthedocs.io/?$",
+    r"^https://dotnet.microsoft.com/?$",
+    r"^https://([\w-]*\.)?git-scm.com/?$",
+    r"^https://go.dev/?$",
+    r"^https://([\w-]*\.)?mesonbuild.com/?$",
+    r"^https://([\w-]*\.)?ninja-build.org/?$",
+    r"^https://pip.pypa.(com|io)/?$",
+    r"^https://([\w-]*\.)?pydantic.dev/?$",
+    r"^https://([\w-]*\.)?python-poetry.org/?$",
+    r"^https://([\w-]*\.)?rust-lang.org(/(stable/?)?)?$",
+    r"^https://([\w-]*\.)?rustup.rs/?$",
+    r"^https://([\w-]*\.)?scons.org/?$",
+    r"^https://([\w-]*\.)?semver.org/?$",
+    r"^https://([\w-]*\.)?yum.baseurl.org/?$",
+    # Fake link
+    r"^https://foo.org/?$",
+    # Add project-specific ignores below
+    re.escape(
+        r"^https://github.com/canonical/craft-parts/blob/main/craft_parts/main.py$"
+    ),
+    re.escape(r"^https://github.com/opencontainers/image-spec/blob/main/layer.md$"),
 ]
 
 rst_epilog = """
@@ -117,6 +146,7 @@ rediraffe_redirects = "redirects.txt"
 project_dir = pathlib.Path(__file__).parents[1].resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
+
 def run_apidoc(_):
     import os
     import sys
@@ -142,5 +172,6 @@ def setup(app):
 
     logger = logging.getLogger("sphinx.sphinx_autodoc_typehints")
     logger.addFilter(filter_errordict_warnings)
+
 
 # endregion
