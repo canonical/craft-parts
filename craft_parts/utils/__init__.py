@@ -17,9 +17,6 @@
 """Utilities and helpers."""
 
 from typing import Any
-import logging
-
-logger = logging.getLogger()
 
 
 def package_name() -> str:
