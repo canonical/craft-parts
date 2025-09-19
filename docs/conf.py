@@ -17,6 +17,7 @@
 import datetime
 import logging
 import pathlib
+import re
 import sys
 
 project = "Craft Parts"
@@ -83,9 +84,35 @@ linkcheck_ignore = [
     # Entire domains to ignore due to flakiness or issues
     r"^https://www.gnu.org/",
     r"^https://crates.io/",
-    r"^https://([\w-]*\.)?npmjs.org",
+    r"^https://([\w-]*\.)?npmjs.(org|com)",
     r"^https://rsync.samba.org",
     r"^https://ubuntu.com",
+    # Known good links that if they break we'll hear it in the news.
+    r"^https://([\w-]*\.)?apache.org\/?$",
+    r"^https://canonical.com/legal/contributors$",
+    r"^https://([\w-]*\.)?cmake.org/?$",
+    r"^https://([\w-]*\.)?curl.se/?$",
+    r"^https://dnf.readthedocs.io/?$",
+    r"^https://dotnet.microsoft.com/?$",
+    r"^https://([\w-]*\.)?git-scm.com/?$",
+    r"^https://go.dev/?$",
+    r"^https://([\w-]*\.)?mesonbuild.com/?$",
+    r"^https://([\w-]*\.)?ninja-build.org/?$",
+    r"^https://pip.pypa.(com|io)/?$",
+    r"^https://([\w-]*\.)?pydantic.dev/?$",
+    r"^https://([\w-]*\.)?python-poetry.org/?$",
+    r"^https://([\w-]*\.)?rust-lang.org(/(stable/?)?)?$",
+    r"^https://([\w-]*\.)?rustup.rs/?$",
+    r"^https://([\w-]*\.)?scons.org/?$",
+    r"^https://([\w-]*\.)?semver.org/?$",
+    r"^https://([\w-]*\.)?yum.baseurl.org/?$",
+    # Fake link
+    r"^https://foo.org/?$",
+    # Add project-specific ignores below
+    re.escape(
+        r"^https://github.com/canonical/craft-parts/blob/main/craft_parts/main.py$"
+    ),
+    re.escape(r"^https://github.com/opencontainers/image-spec/blob/main/layer.md$"),
 ]
 
 rst_epilog = """
