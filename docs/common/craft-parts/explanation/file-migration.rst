@@ -43,7 +43,7 @@ remove.
 .. figure:: /common/craft-parts/images/simple_migration.svg
     :align: left
     :alt: A diagram showing the migration tracking state of files from two parts,
-        described in more detail below.
+          described in more detail in the figure caption.
 
     The migration of files between lifecycle steps. Each labelled circle is a file.
     Each black rectangle is a directory.
@@ -68,7 +68,7 @@ to the partition's own stage and prime directories.
 
 .. image:: /common/craft-parts/images/partition_migration.svg
     :alt: A diagram showing the migration tracking state of files when partitions are
-        in use, described in more detail below.
+          in use, described in more detail next.
 
 When partitions are used, an operation to remove or migrate files from a
 specific part happens across all partitions. In this example, if files from
@@ -91,7 +91,7 @@ directory and the overlay area.
 .. figure:: /common/craft-parts/images/overlay_migration.svg
     :align: left
     :alt: A diagram showing the migration tracking state of files when overlays
-        are in use, described in more detail below.
+          are in use, described in more detail next.
 
     File migration involving overlays. Files from the overlay are represented as
     squares, and files from the build install are represented as circles.
