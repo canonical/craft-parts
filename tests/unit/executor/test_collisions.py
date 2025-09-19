@@ -165,6 +165,21 @@ class TestCollisions:
             )
         return part
 
+    @pytest.fixture
+    def part9(self, tmpdir, partitions) -> Part:
+        # Create a new part with a symlink that points to an absolute place
+        part = Part(
+            name="part9",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "a/b/c").mkdir(parents=True)
+            (install_dir / "a/b/c" / "d.txt").symlink_to("bar.txt")
+        return part
+
     def test_no_collisions(self, part1, part2, partitions):
         """No exception is expected as there are no collisions."""
         check_for_stage_collisions([part1, part2], partitions)
@@ -335,6 +350,34 @@ class TestCollisions:
             (layer_dir / "a/b/c" / "d.txt").symlink_to("/foo/bar.txt")
         return part
 
+    @pytest.fixture
+    def overlay_part4(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part4",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "a/b/c/").mkdir(parents=True)
+            (layer_dir / "a/b/c" / "d.txt").symlink_to("/a/b/foo/bar.txt")
+        return part
+
+    @pytest.fixture
+    def overlay_part5(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part5",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "a/b/c/").mkdir(parents=True)
+            (layer_dir / "a/b/c" / "d.txt").symlink_to("bar.txt")
+        return part
+
     @pytest.mark.usefixtures("add_overlay_feature")
     def test_collisions_between_install_and_overlay(
         self, overlay_part0, overlay_part1, partitions
@@ -366,6 +409,22 @@ class TestCollisions:
         They are targeting the same file in the final artifact and should not collide.
         """
         check_for_stage_collisions([part7, overlay_part3], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_no_collisions_burried_symlinks(self, part8, overlay_part4, partitions):
+        """Overlay and the part staging 2 different symlinks.
+
+        They are targeting the same file in the final artifact and should not collide.
+        """
+        check_for_stage_collisions([part8, overlay_part4], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_no_collisions_relative_symlinks(self, part9, overlay_part5, partitions):
+        """Overlay and the part staging 2 different symlinks.
+
+        They are targeting the same file in the final artifact and should not collide.
+        """
+        check_for_stage_collisions([part9, overlay_part5], partitions)
 
 
 class TestCollisionsPartitionError:
