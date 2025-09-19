@@ -1,7 +1,8 @@
 allprojects {
     tasks.register('testWrite') {
         doLast {
-            def outputFile = new File("${System.getProperty('user.dir')}/test.txt")
+            def outputFile = layout.buildDirectory.file("test.txt").get().asFile
+            outputFile.parentFile.mkdirs()
             outputFile.text = "hello world"
         }
     }
