@@ -75,16 +75,18 @@ exclude_patterns = [
 
 # Links to ignore when checking links
 linkcheck_ignore = [
-    "https://foo.org/",
-    # GNU's site is a bit unreliable
-    "https://www.gnu.org/.*",
     # https://github.com/rust-lang/crates.io/issues/788
     "https://crates.io/",
-    # Ignore releases, since we'll include the next release before it exists.
-    "https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
-    # returns a 403 from GitHub CI
-    "https://rsync.samba.org",
+    # Standard github URLs don't need checking, and we often get rate-limited on these.
+    r"^https://github.com/[\w-]+/[\w-]+/(issues|pulls|releases)/[\d.]*",
+    # Ignore any link to the root of a domain.
+    r"^https?:\/\/((?!\/).)+\/?$",
+    # GNU's site is a bit unreliable
+    "^https://www.gnu.org/.*",
 ]
+# We have many links on sites that frequently respond with 503s to GitHub runners.
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_retries
+linkcheck_retries = 20
 
 rst_epilog = """
 .. include:: /common/craft-parts/reuse/links.txt
@@ -117,6 +119,7 @@ rediraffe_redirects = "redirects.txt"
 project_dir = pathlib.Path(__file__).parents[1].resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
+
 def run_apidoc(_):
     import os
     import sys
@@ -142,5 +145,6 @@ def setup(app):
 
     logger = logging.getLogger("sphinx.sphinx_autodoc_typehints")
     logger.addFilter(filter_errordict_warnings)
+
 
 # endregion
