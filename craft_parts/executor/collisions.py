@@ -264,10 +264,10 @@ def paths_collide(
         # Symlinks targeting relative path must be normalized if they
         # are compared with symlinks from the overlay.
         if not os.path.isabs(path1_target) and stage_candidate_2.is_overlay:  # noqa: PTH117
-            path1_target = normalize_symlink(path1, rel_dirname)
+            path1_target = normalize_symlink(path1_target, rel_dirname)
 
         if not os.path.isabs(path2_target) and stage_candidate_1.is_overlay:  # noqa: PTH117
-            path2_target = normalize_symlink(path2, rel_dirname)
+            path2_target = normalize_symlink(path2_target, rel_dirname)
 
         return path1_target != path2_target
 
