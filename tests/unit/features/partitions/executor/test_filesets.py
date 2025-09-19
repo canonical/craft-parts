@@ -71,11 +71,11 @@ def test_remove(entries, remove, expected):
     assert fs.entries == expected
 
 
-@pytest.mark.xfail(strict=True, reason="combine function is not partition-aware")
 @pytest.mark.parametrize(
     ("fs1", "fs2", "result"),
     [
-        (["foo"], ["bar", "*"], ["foo", "bar"]),
+        (["foo"], ["bar", "*"], ["(default)/foo", "(default)/bar"]),
+        (["*"], ["-(default)/foo"], ["(default)/*", "-(default)/foo"]),
     ],
 )
 def test_combine(fs1, fs2, result):
@@ -144,6 +144,7 @@ def test_filesets_excludes_without_relative_paths(abs_entry, abs_filepath):
     [
         ([], [], []),
         (["*"], ["(default)/*"], []),
+        (["(default)/*"], ["(default)/*"], []),
         (["foo", "-bar"], ["(default)/foo"], ["(default)/bar"]),
         (["(foo)/bar", "-baz"], ["(foo)/bar"], ["(default)/baz"]),
         (["(foo)/file1", "-file1"], ["(foo)/file1"], ["(default)/file1"]),
