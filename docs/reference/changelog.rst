@@ -34,8 +34,8 @@ New features:
 
 Bug fixes:
 
-- When the partition feature is used, add the default partition name to the default
-  prime fileset entry.
+- When partitions are enabled, the default partition name is now added to the
+  default prime fileset entry.
 
 
 .. _release-2.23.0:
