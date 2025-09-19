@@ -32,6 +32,12 @@ New features:
      This new plugin is experimental and does not currently come with any stability or
      backwards compatibility guarantees.
 
+Bug fixes:
+
+- When the partition feature is used, add the default partition name to the default
+  prime fileset entry.
+
+
 .. _release-2.23.0:
 
 2.23.0 (2025-09-15)
