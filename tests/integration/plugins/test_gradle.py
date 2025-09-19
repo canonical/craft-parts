@@ -70,10 +70,6 @@ def use_gradlew(request, testing_source_dir):
 # Parametrization of using gradle vs gradlew is not applied since gradle cannot
 # run init scripts at the time of writing (2025-04-2) due to the version provided
 # by Ubuntu packages archive being too low (4.4.1).
-#@pytest.mark.skipif(
-#    platform.machine() in ("ppc64le", "riscv64", "s390x"),
-#    reason="https://github.com/canonical/craft-parts/issues/1304",
-#)
 def test_gradle_plugin_gradlew(
     new_dir, testing_source_dir, partitions, local_proxy_url
 ):
