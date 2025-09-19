@@ -430,7 +430,9 @@ class TestPluginProperties:
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
-        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]  # pyright: ignore[reportAttributeAccessIssue]
+        assert cast(MakePluginProperties, part.plugin_properties).make_parameters == [
+            "-DTEST_PARAMETER"
+        ]
 
     def test_invalid_plugin_name(self, new_dir):
         with pytest.raises(errors.InvalidPlugin) as raised:
