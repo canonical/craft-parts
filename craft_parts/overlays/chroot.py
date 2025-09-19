@@ -49,6 +49,11 @@ def chroot(path: Path, target: Callable[..., _T], *args: Any, **kwargs: Any) -> 
     :returns: The target function return value.
     """
     logger.debug("[pid=%d] parent process", os.getpid())
+
+    # This typehint technically should be "Connection[Any, tuple[_T, None] | tuple[None, str]]"
+    # However, types surrounding multiprocessing are finnicky at best and the way we handle the
+    # result here makes the typehint effectively true, since we don't attempt to access the first
+    # field of the tuple unless the second field is None.
     parent_conn: Connection[Any, tuple[_T, str | None]]
     parent_conn, child_conn = multiprocessing.Pipe()
     child = multiprocessing.Process(

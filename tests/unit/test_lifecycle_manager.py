@@ -39,7 +39,7 @@ from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 @pytest.fixture
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
-    monkeypatch.setattr(craft_parts.plugins.plugins, "_Plugins", available)
+    monkeypatch.setattr(craft_parts.plugins.plugins, "_plugins", available)
 
 
 def create_data(part_name: str, plugin_name: str) -> dict[str, Any]:

@@ -450,7 +450,7 @@ class StateManager:
         :returns: The hash value for the layer corresponding to the part
             being processed.
         """
-        if step not in [Step.BUILD, Step.STAGE]:
+        if step not in (Step.BUILD, Step.STAGE):
             raise ValueError("only BUILD and STAGE states have overlay hash")
 
         stw = self._state_db.get(part_name=part.name, step=step)

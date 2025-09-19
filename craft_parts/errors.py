@@ -171,11 +171,8 @@ class PartSpecificationError(PartsError):
         formatted_errors: list[str] = []
 
         for error in error_list:
-            try:
-                loc = error["loc"]
-                msg = error["msg"]
-            except KeyError:
-                continue
+            loc = error["loc"]
+            msg = error["msg"]
 
             if not loc or not msg:
                 continue
@@ -850,11 +847,8 @@ class FilesystemMountError(PartsError):
         formatted_errors: list[str] = []
 
         for error in error_list:
-            try:
-                loc = error["loc"]
-                msg = error["msg"]
-            except KeyError:
-                continue
+            loc = error["loc"]
+            msg = error["msg"]
 
             if not msg:
                 continue
