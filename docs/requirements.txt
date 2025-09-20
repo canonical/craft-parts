@@ -260,7 +260,7 @@ sphinx-notfound-page==1.0.4
     #   canonical-sphinx
 sphinx-pydantic==0.1.1
     # via -r requirements.txt
-sphinx-reredirects==0.1.6
+sphinx-reredirects==1.0.0
     # via
     #   -r requirements.txt
     #   canonical-sphinx
