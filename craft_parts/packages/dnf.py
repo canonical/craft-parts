@@ -40,20 +40,22 @@ class DNFRepository(YUMRepository):
         if source_type == "deb":
             raise NotImplementedError("Deb files not yet supported on this base.")
 
-        if source_type == "git":
-            packages = {"git"}
-        elif source_type == "tar":
-            packages = {"tar"}
-        elif source_type in ["hg", "mercurial"]:
-            packages = {"mercurial"}
-        elif source_type in ["svn", "subversion"]:
-            packages = {"subversion"}
-        elif source_type in ["rpm2cpio", "rpm"]:
-            packages = set()
-        elif source_type == "7zip":
-            packages = {"p7zip"}
-        else:
-            packages = set()
+        packages: set[str]
+        match source_type:
+            case "git":
+                packages = {"git"}
+            case "tar":
+                packages = {"tar"}
+            case "hg" | "mercurial":
+                packages = {"mercurial"}
+            case "svn" | "subversion":
+                packages = {"subversion"}
+            case "rpm2cpio" | "rpm":
+                packages = set()
+            case "7zip":
+                packages = {"p7zip"}
+            case _:
+                packages = set()
 
         return packages
 

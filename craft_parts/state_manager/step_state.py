@@ -182,7 +182,7 @@ def _get_differing_keys(dict1: dict[str, Any], dict2: dict[str, Any]) -> set[str
     that don't have the same value in both dictionaries. Entries with value
     of None are equivalent to a non-existing entry.
     """
-    differing_keys = set()
+    differing_keys: set[str] = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
         if dict1_value != dict2_value:

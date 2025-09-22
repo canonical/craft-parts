@@ -231,10 +231,7 @@ class DotnetV2Plugin(Plugin):
 
         logger.info(f"Using .NET SDK content snap: {snap_name}")
 
-        build_snaps = set()
-        build_snaps.add(snap_name)
-
-        return build_snaps
+        return {snap_name}
 
     @override
     def get_build_packages(self) -> set[str]:
