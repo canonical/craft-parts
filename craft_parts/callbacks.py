@@ -19,20 +19,15 @@
 import itertools
 import logging
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, Generic
+
+from typing_extensions import TypeVar
 
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.steps import Step
-
-
-class CallbackHook(NamedTuple):
-    """A callback hook."""
-
-    function: Callable
-    step_list: list[Step] | None
-
 
 FilterCallback = Callable[[ProjectInfo], Iterable[str]]
 ExecutionCallback = Callable[[ProjectInfo], None]
@@ -40,12 +35,23 @@ StepCallback = Callable[[StepInfo], bool]
 ConfigureOverlayCallback = Callable[[Path, ProjectInfo], None]
 Callback = FilterCallback | ExecutionCallback | StepCallback | ConfigureOverlayCallback
 
-_STAGE_PACKAGE_FILTERS: list[CallbackHook] = []
-_OVERLAY_HOOKS: list[CallbackHook] = []
-_PROLOGUE_HOOKS: list[CallbackHook] = []
-_EPILOGUE_HOOKS: list[CallbackHook] = []
-_PRE_STEP_HOOKS: list[CallbackHook] = []
-_POST_STEP_HOOKS: list[CallbackHook] = []
+_T_cb_co = TypeVar("_T_cb_co", covariant=True, bound=Callable[..., Any])
+
+
+@dataclass(frozen=True)
+class CallbackHook(Generic[_T_cb_co]):
+    """A callback hook."""
+
+    function: _T_cb_co
+    step_list: list[Step] | None
+
+
+_STAGE_PACKAGE_FILTERS: list[CallbackHook[FilterCallback]] = []
+_OVERLAY_HOOKS: list[CallbackHook[ConfigureOverlayCallback]] = []
+_PROLOGUE_HOOKS: list[CallbackHook[ExecutionCallback]] = []
+_EPILOGUE_HOOKS: list[CallbackHook[ExecutionCallback]] = []
+_PRE_STEP_HOOKS: list[CallbackHook[StepCallback]] = []
+_POST_STEP_HOOKS: list[CallbackHook[StepCallback]] = []
 
 logger = logging.getLogger(__name__)
 
@@ -192,13 +198,17 @@ def run_post_step(step_info: StepInfo) -> None:
     return _run_step(hook_list=_POST_STEP_HOOKS, step_info=step_info)
 
 
-def _run_step(*, hook_list: list[CallbackHook], step_info: StepInfo) -> None:
+def _run_step(
+    *, hook_list: list[CallbackHook[StepCallback]], step_info: StepInfo
+) -> None:
     for hook in hook_list:
         if not hook.step_list or step_info.step in hook.step_list:
             hook.function(step_info)
 
 
-def _ensure_not_defined(func: Callback, hook_list: list[CallbackHook]) -> None:
+def _ensure_not_defined(
+    func: Callback, hook_list: list[CallbackHook[Callable[..., Any]]]
+) -> None:
     for hook in hook_list:
         if func == hook.function:
             raise errors.CallbackRegistrationError(

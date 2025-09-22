@@ -48,7 +48,15 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
-      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+        ]
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: java
@@ -57,8 +65,27 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
-      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-platforms: >
+        [
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+        ]
       slow-test-python-versions: '["3.12"]'
+      lowest-python-version: ""
+      pytest-markers: python
+      setup-vars: NO_JAVA=1 NO_PLUGIN=1
+  test-python-plugins-jammy:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+        ]
+      slow-test-python-versions: '["3.10"]'
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1

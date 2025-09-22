@@ -50,7 +50,7 @@ class Step(enum.IntEnum):
 
         :returns: The list of previous steps.
         """
-        steps = []
+        steps: list[Step] = []
 
         if self >= Step.OVERLAY:
             steps.append(Step.PULL)
@@ -68,7 +68,7 @@ class Step(enum.IntEnum):
 
         :returns: The list of next steps.
         """
-        steps = []
+        steps: list[Step] = []
 
         if self == Step.PULL and Features().enable_overlay:
             steps.append(Step.OVERLAY)

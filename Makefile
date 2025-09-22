@@ -244,8 +244,12 @@ endif
 
 .PHONY: _gh-runner-clear-space
 _gh-runner-clear-space:
-# Only on Github-hosted runners, to free up space.
+# Prepare and fix issues on Github-hosted runners.
 ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Delete the (huge) Android SDK in the background.
-	nohup sudo rm -rf /usr/local/lib/android/ &
+	nohup sudo rm -rf /usr/local/lib/android/ > /dev/null &
+	# Remove the github-installed cmake 4 because it breaks the cmake tests.
+	# See: https://github.com/actions/runner-images/issues/13023
+	nohup sudo rm -rf /usr/local/bin/cmake /usr/local/bin/cmake-gui /usr/local/bin/ccmake /usr/local/bin/ctest /usr/local/bin/cpack > /dev/null &
+	nohup sudo rm -rf /usr/local/share/cmake-4* > /dev/null &
 endif

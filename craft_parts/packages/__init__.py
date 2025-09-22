@@ -69,3 +69,10 @@ class _RepositoryProxy:
 
 
 Repository = cast("BaseRepository", _RepositoryProxy())
+
+__all__ = [
+    "errors",
+    "fix_pkg_config",
+    "Repository",
+    "snaps",
+]

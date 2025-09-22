@@ -115,7 +115,7 @@ class SourceHandler(abc.ABC):
         if not ignore_patterns:
             ignore_patterns = []
 
-        invalid_options = []
+        invalid_options: list[str] = []
         model_params = {key.replace("_", "-"): value for key, value in kwargs.items()}
         model_params["source"] = source
         properties = self.source_model.model_json_schema()["properties"]
@@ -204,7 +204,7 @@ class SourceHandler(abc.ABC):
             raise errors.PullError(command=command, exit_code=err.returncode) from err
 
     @classmethod
-    def _run_output(cls, command: Sequence) -> str:
+    def _run_output(cls, command: Sequence[str | Path]) -> str:
         try:
             return subprocess.check_output(command, text=True).strip()
         except subprocess.CalledProcessError as err:
