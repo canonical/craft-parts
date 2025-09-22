@@ -16,6 +16,8 @@
 
 """Part crafter step state management."""
 
+from __future__ import annotations
+
 import contextlib
 import itertools
 import logging
@@ -25,14 +27,15 @@ from typing import TYPE_CHECKING, cast
 from craft_parts import parts, sources, steps
 from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo, ProjectOptions, ProjectVarInfo
-from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 from .reports import Dependency, DirtyReport, OutdatedReport
 from .states import PullState, StepState, get_step_state_path, load_step_state
 
 if TYPE_CHECKING:
+    from craft_parts.parts import Part
     from craft_parts.sources import SourceHandler
+    from craft_parts.state_manager import build_state, stage_state
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +53,7 @@ class _StateWrapper:
     serial: int
     step_updated: bool = False
 
-    def is_newer_than(self, other: "_StateWrapper") -> bool:
+    def is_newer_than(self, other: _StateWrapper) -> bool:
         """Verify if this state is newer than the specified state.
 
         :param other: The wrapped state to compare this state to.
@@ -447,7 +450,7 @@ class StateManager:
         :returns: The hash value for the layer corresponding to the part
             being processed.
         """
-        if step not in [Step.BUILD, Step.STAGE]:
+        if step not in (Step.BUILD, Step.STAGE):
             raise ValueError("only BUILD and STAGE states have overlay hash")
 
         stw = self._state_db.get(part_name=part.name, step=step)
@@ -455,7 +458,8 @@ class StateManager:
             # step didn't run yet
             return b""
 
-        overlay_hash = stw.state.overlay_hash  # type: ignore[reportGeneralTypeIssues, attr-defined]
+        state = cast("stage_state.StageState | build_state.BuildState", stw.state)
+        overlay_hash = state.overlay_hash
         if not overlay_hash:
             return b""
 
