@@ -134,7 +134,8 @@ class TestCollisions:
 
     @pytest.fixture
     def part7(self, tmpdir, partitions) -> Part:
-        # Create a new part with a symlink that points to an absolute place
+        # Create a new part with a symlink that points to a relative place
+        # outside of the install dir.
         part = Part(
             name="part7",
             data={},
@@ -149,7 +150,8 @@ class TestCollisions:
 
     @pytest.fixture
     def part8(self, tmpdir, partitions) -> Part:
-        # Create a new part with a symlink that points to an absolute place
+        # Create a new part with a symlink that points to a relative place
+        # up in the directory tree.
         part = Part(
             name="part8",
             data={},
@@ -167,7 +169,7 @@ class TestCollisions:
 
     @pytest.fixture
     def part9(self, tmpdir, partitions) -> Part:
-        # Create a new part with a symlink that points to an absolute place
+        # Create a new part with a symlink that points to a relative place
         part = Part(
             name="part9",
             data={},
@@ -411,8 +413,8 @@ class TestCollisions:
         check_for_stage_collisions([part7, overlay_part3], partitions)
 
     @pytest.mark.usefixtures("add_overlay_feature")
-    def test_no_collisions_burried_symlinks(self, part8, overlay_part4, partitions):
-        """Overlay and the part staging 2 different symlinks.
+    def test_no_collisions_buried_symlinks(self, part8, overlay_part4, partitions):
+        """Layer of a part and another part staging a symlink.
 
         They are targeting the same file in the final artifact and should not collide.
         """
@@ -420,7 +422,7 @@ class TestCollisions:
 
     @pytest.mark.usefixtures("add_overlay_feature")
     def test_no_collisions_relative_symlinks(self, part9, overlay_part5, partitions):
-        """Overlay and the part staging 2 different symlinks.
+        """Layer of a part and another part staging a relative symlink.
 
         They are targeting the same file in the final artifact and should not collide.
         """

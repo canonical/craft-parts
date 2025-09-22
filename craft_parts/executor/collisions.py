@@ -265,17 +265,14 @@ def paths_collide(
     if the permissions are incompatible (as defined by
     ``permissions.permissions_are_compatible()``).
 
+    :parm path1: Path of the first element to compare.
+    :parm path2: Path of the second element to compare.
     :param permissions_path1: The list of ``Permissions`` that affect ``path1``.
     :param permissions_path2: The list of ``Permissions`` that affect ``path2``.
-
+    :param rel_dirname: relative path of the directory the item is.
+    :param path1_is_overlay: Indicates if path1 comes from the overlay.
+    :param path2_is_overlay: Indicates if path2 comes from the overlay.
     """
-    """Check whether the provided item conflicts in the given candidates.
-
-    If both paths have Permissions definitions, they are considered to be conflicting
-    if the permissions are incompatible (as defined by
-    ``permissions.permissions_are_compatible()``).
-    """
-
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
