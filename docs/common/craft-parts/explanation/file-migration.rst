@@ -116,7 +116,7 @@ migration state to keep track of the files originating part.
 
 .. image:: /common/craft-parts/images/partition_overlay_migration.svg
     :alt: A diagram showing the migration tracking state of files when both overlays
-        and partitions are in use, described in more detail below.
+          and partitions are in use, described in more detail next.
 
 The same constraints for overlay file removal and migration apply, extended to
 all partitions. In the example above, if files from part 1 are to be removed
