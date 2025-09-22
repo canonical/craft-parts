@@ -591,6 +591,7 @@ class PartHandler:
         self._migrate_overlay_files_to_prime()
         default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
+        primed_stage_packages: set[str]
         if (
             self._part.spec.stage_packages
             and self._track_stage_packages
@@ -1541,7 +1542,7 @@ def _consolidate_states(
 @contextmanager
 def _conditional_layer_mount(
     overlay_manager: OverlayManager, *, top_part: Part, condition: bool
-) -> Iterator:
+) -> Iterator[None]:
     """Conditionally execute the enclosed code block with the overlay mounted."""
     if condition:
         with overlays.LayerMount(overlay_manager, top_part=top_part):

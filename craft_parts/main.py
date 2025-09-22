@@ -30,6 +30,7 @@ from functools import partial
 from pathlib import Path
 
 import yaml
+from typing_extensions import Any
 from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
@@ -101,7 +102,9 @@ def _process_inputs(options: argparse.Namespace) -> None:
     filesystem_mounts_data = None
     if options.filesystem_mounts:
         with open(options.filesystem_mounts) as opt_filesystem_mounts_file:  # noqa: PTH123
-            filesystems_data = yaml.safe_load(opt_filesystem_mounts_file)
+            filesystems_data: dict[str, Any] | list[dict[str, Any]] = yaml.safe_load(
+                opt_filesystem_mounts_file
+            )
             if not isinstance(filesystems_data, dict):
                 raise TypeError("filesystem_mounts definition must be a dictionary")
             filesystem_mounts_data = filesystems_data.get("filesystems")

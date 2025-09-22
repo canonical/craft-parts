@@ -17,6 +17,7 @@
 """Source handler error definitions."""
 
 from collections.abc import Sequence
+from pathlib import Path
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -217,7 +218,11 @@ class PullError(SourceError):
     """
 
     def __init__(
-        self, *, command: Sequence, exit_code: int, resolution: str | None = None
+        self,
+        *,
+        command: Sequence[str | Path],
+        exit_code: int,
+        resolution: str | None = None,
     ) -> None:
         self.command = command
         self.exit_code = exit_code
