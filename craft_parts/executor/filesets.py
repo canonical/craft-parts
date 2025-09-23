@@ -53,7 +53,7 @@ class Fileset:
         self._validate_entries(entries)
         self._default_partition = default_partition
         self._list: list[str] = [
-            _normalize_entry(entry, self._default_partition) for entry in entries
+            normalize_entry(entry, self._default_partition) for entry in entries
         ]
 
     def __repr__(self) -> str:
@@ -84,7 +84,7 @@ class Fileset:
 
         :param item: The item to remove.
         """
-        self._list.remove(_normalize_entry(item, self._default_partition))
+        self._list.remove(normalize_entry(item, self._default_partition))
 
     def combine(self, other: "Fileset") -> None:
         """Combine the entries in this fileset with entries from another fileset.
@@ -93,9 +93,10 @@ class Fileset:
         """
         to_combine = False
         # combine if the fileset has a wildcard
-        if "*" in self.entries:
+        wildcard = normalize_entry("*", self._default_partition)
+        if wildcard in self.entries:
             to_combine = True
-            self.remove("*")
+            self.remove(wildcard)
 
         other_excludes = set(other.excludes)
         my_includes = set(self.includes)
@@ -328,7 +329,7 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     return os.path.relpath(filename_abspath, base_directory)  # ty: ignore[invalid-return-type]
 
 
-def _normalize_entry(entry: str, default_partition: str) -> str:
+def normalize_entry(entry: str, default_partition: str) -> str:
     """Normalize an entry to begin with a partition, if partitions are enabled.
 
     If partitions are enabled, `foo` will be normalized to `(default)/foo`.
