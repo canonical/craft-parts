@@ -270,7 +270,7 @@ class NpmPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        cmd = []
+        cmd: list[str] = []
         options = cast(NpmPluginProperties, self._options)
         if options.npm_include_node:
             arch = self._get_architecture()

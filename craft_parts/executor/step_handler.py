@@ -49,16 +49,16 @@ Stream = TextIO | int | None
 class StepPartitionContents:
     """Files and directories to be added to the step's state."""
 
-    files: set[str] = dataclasses.field(default_factory=set)
-    dirs: set[str] = dataclasses.field(default_factory=set)
+    files: set[str] = dataclasses.field(default_factory=set[str])
+    dirs: set[str] = dataclasses.field(default_factory=set[str])
 
 
 @dataclasses.dataclass(frozen=True)
 class StagePartitionContents(StepPartitionContents):
     """Files and directories for both stage and backstage in the step's state."""
 
-    backstage_files: set[str] = dataclasses.field(default_factory=set)
-    backstage_dirs: set[str] = dataclasses.field(default_factory=set)
+    backstage_files: set[str] = dataclasses.field(default_factory=set[str])
+    backstage_dirs: set[str] = dataclasses.field(default_factory=set[str])
 
 
 @dataclasses.dataclass(init=False)
@@ -66,7 +66,9 @@ class StepContents:
     """Contents mapped to partitions."""
 
     partitions_contents: dict[str, StepPartitionContents | StagePartitionContents] = (
-        dataclasses.field(default_factory=dict)
+        dataclasses.field(
+            default_factory=dict[str, StepPartitionContents | StagePartitionContents]
+        )
     )
 
     def __init__(
@@ -415,7 +417,7 @@ class StepHandler:
         selector = selectors.SelectSelector()
 
         def accept(sock: socket.socket, _mask: int) -> None:
-            conn, addr = sock.accept()
+            conn, _ = sock.accept()
             selector.register(conn, selectors.EVENT_READ, read)
 
         def read(conn: socket.socket, _mask: int) -> None:

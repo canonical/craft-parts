@@ -126,7 +126,7 @@ class ProjectVar(pydantic.BaseModel):
         :raise TypeError: If data is not a dict.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("Project variable must be a dictionary.")
 
         return cls.model_validate(data)
@@ -145,13 +145,14 @@ class ProjectVar(pydantic.BaseModel):
         return self.model_dump(mode="json", by_alias=True)
 
 
-class ProjectVarInfo(pydantic.RootModel):
+class ProjectVarInfo(pydantic.RootModel[dict[str, "ProjectVar | ProjectVarInfo"]]):
     """Project variables that can be updated using craftctl.
 
     This class wraps a nested dictionary of project variables.
     Data is accessed with structured paths.
     """
 
+    # Duplicate the type from the parameter above so Sphinx can pick up the docstring
     root: dict[str, ProjectVar | ProjectVarInfo] = {}
     """A nested dictionary of ProjectVars."""
 
@@ -179,7 +180,7 @@ class ProjectVarInfo(pydantic.RootModel):
         :raise TypeError: If data is not a dict.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("Project variable info must be a dictionary.")
 
         return cls.model_validate(data)

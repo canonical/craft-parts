@@ -101,7 +101,7 @@ class Fileset:
         other_excludes = set(other.excludes)
         my_includes = set(self.includes)
 
-        contradicting_set = set.intersection(other_excludes, my_includes)
+        contradicting_set = other_excludes & my_includes
         if contradicting_set:
             raise errors.FilesetConflict(contradicting_set)
 
@@ -170,13 +170,8 @@ def migratable_filesets(
             dirname = os.path.dirname(dirname)  # noqa: PTH120
 
     # Resolve parent paths for dirs and files.
-    resolved_dirs = set()
-    for dirname in dirs:
-        resolved_dirs.add(_get_resolved_relative_path(dirname, srcdir))
-
-    resolved_files = set()
-    for filename in files:
-        resolved_files.add(_get_resolved_relative_path(filename, srcdir))
+    resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
+    resolved_files = {_get_resolved_relative_path(name, srcdir) for name in files}
 
     return resolved_files, resolved_dirs
 
@@ -255,7 +250,7 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
 
     :return: The set of files to include.
     """
-    include_files = set()
+    include_files: set[str] = set()
 
     for include in includes:
         if "*" in include:
@@ -297,7 +292,7 @@ def _generate_exclude_set(
 
     :return: The set of files to exclude.
     """
-    exclude_files = set()
+    exclude_files: set[str] = set()
 
     for exclude in excludes:
         pattern = os.path.join(directory, exclude)  # noqa: PTH118
