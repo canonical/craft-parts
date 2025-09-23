@@ -43,7 +43,12 @@ _NODE_ARCH_FROM_SNAP_ARCH = {
     "ppc64el": "ppc64le",
     "s390x": "s390x",
 }
-_NODE_ARCH_FROM_PLATFORM = {"x86_64": {"32bit": "x86", "64bit": "x64"}}
+_NODE_ARCH_FROM_PLATFORM = {
+    "x86_64": {"32bit": "x86", "64bit": "x64"},
+    "aarch64": {"32bit": "armv7l", "64bit": "arm64"},
+    "ppc64le": {"64bit": "ppc64le"},
+    "s390x": {"64bit": "s390x"},
+}
 
 
 class NpmPluginProperties(PluginProperties, frozen=True):
