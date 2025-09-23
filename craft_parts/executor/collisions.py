@@ -265,8 +265,8 @@ def paths_collide(
     if the permissions are incompatible (as defined by
     ``permissions.permissions_are_compatible()``).
 
-    :parm path1: Path of the first element to compare.
-    :parm path2: Path of the second element to compare.
+    :param path1: Path of the first element to compare.
+    :param path2: Path of the second element to compare.
     :param permissions_path1: The list of ``Permissions`` that affect ``path1``.
     :param permissions_path2: The list of ``Permissions`` that affect ``path2``.
     :param rel_dirname: relative path of the directory the item is.
