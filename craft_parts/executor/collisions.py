@@ -206,7 +206,7 @@ def _check_for_stage_collisions_per_partition(
             # Our files that are also in a different part.
             common = candidate.contents & other_candidate.contents
 
-            conflict_files = []
+            conflict_files: list[str] = []
             for item in common:
                 this = os.path.join(candidate.source_dir, item)  # noqa: PTH118
                 other = os.path.join(other_candidate.source_dir, item)  # noqa: PTH118
