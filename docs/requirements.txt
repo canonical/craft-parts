@@ -138,7 +138,7 @@ packaging==24.2
     # via
     #   -r requirements.txt
     #   sphinx
-pip==24.0
+pip==25.2
     # via -r requirements.txt
 polib==1.2.0
     # via
