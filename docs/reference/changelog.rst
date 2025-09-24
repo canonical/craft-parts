@@ -32,6 +32,13 @@ New features:
      This new plugin is experimental and does not currently come with any stability or
      backwards compatibility guarantees.
 
+Bug fixes:
+
+- When partitions are enabled, the default partition name is now added to the
+  default prime fileset entry.
+- Relative symbolic links produced during the build step are now correctly checked for
+  collisions with absolute symbolic links from the overlay during the stage step.
+
 .. _release-2.23.0:
 
 2.23.0 (2025-09-15)

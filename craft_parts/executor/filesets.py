@@ -53,7 +53,7 @@ class Fileset:
         self._validate_entries(entries)
         self._default_partition = default_partition
         self._list: list[str] = [
-            _normalize_entry(entry, self._default_partition) for entry in entries
+            normalize_entry(entry, self._default_partition) for entry in entries
         ]
 
     def __repr__(self) -> str:
@@ -84,7 +84,7 @@ class Fileset:
 
         :param item: The item to remove.
         """
-        self._list.remove(_normalize_entry(item, self._default_partition))
+        self._list.remove(normalize_entry(item, self._default_partition))
 
     def combine(self, other: "Fileset") -> None:
         """Combine the entries in this fileset with entries from another fileset.
@@ -93,14 +93,15 @@ class Fileset:
         """
         to_combine = False
         # combine if the fileset has a wildcard
-        if "*" in self.entries:
+        wildcard = normalize_entry("*", self._default_partition)
+        if wildcard in self.entries:
             to_combine = True
-            self.remove("*")
+            self.remove(wildcard)
 
         other_excludes = set(other.excludes)
         my_includes = set(self.includes)
 
-        contradicting_set = set.intersection(other_excludes, my_includes)
+        contradicting_set = other_excludes & my_includes
         if contradicting_set:
             raise errors.FilesetConflict(contradicting_set)
 
@@ -169,13 +170,8 @@ def migratable_filesets(
             dirname = os.path.dirname(dirname)  # noqa: PTH120
 
     # Resolve parent paths for dirs and files.
-    resolved_dirs = set()
-    for dirname in dirs:
-        resolved_dirs.add(_get_resolved_relative_path(dirname, srcdir))
-
-    resolved_files = set()
-    for filename in files:
-        resolved_files.add(_get_resolved_relative_path(filename, srcdir))
+    resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
+    resolved_files = {_get_resolved_relative_path(name, srcdir) for name in files}
 
     return resolved_files, resolved_dirs
 
@@ -254,7 +250,7 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
 
     :return: The set of files to include.
     """
-    include_files = set()
+    include_files: set[str] = set()
 
     for include in includes:
         if "*" in include:
@@ -296,7 +292,7 @@ def _generate_exclude_set(
 
     :return: The set of files to exclude.
     """
-    exclude_files = set()
+    exclude_files: set[str] = set()
 
     for exclude in excludes:
         pattern = os.path.join(directory, exclude)  # noqa: PTH118
@@ -333,7 +329,7 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     return os.path.relpath(filename_abspath, base_directory)  # ty: ignore[invalid-return-type]
 
 
-def _normalize_entry(entry: str, default_partition: str) -> str:
+def normalize_entry(entry: str, default_partition: str) -> str:
     """Normalize an entry to begin with a partition, if partitions are enabled.
 
     If partitions are enabled, `foo` will be normalized to `(default)/foo`.

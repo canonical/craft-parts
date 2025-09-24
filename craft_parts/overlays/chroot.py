@@ -16,23 +16,29 @@
 
 """Execute a callable in a chroot environment."""
 
+from __future__ import annotations
+
 import logging
 import multiprocessing
 import os
 import sys
-from collections.abc import Callable
-from multiprocessing.connection import Connection
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from craft_parts.utils import os_utils
 
 from . import errors
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from multiprocessing.connection import Connection
+
 logger = logging.getLogger(__name__)
 
+_T = TypeVar("_T")
 
-def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+
+def chroot(path: Path, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.
@@ -43,6 +49,12 @@ def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:  # n
     :returns: The target function return value.
     """
     logger.debug("[pid=%d] parent process", os.getpid())
+
+    # This typehint technically should be "Connection[Any, tuple[_T, None] | tuple[None, str]]"
+    # However, types surrounding multiprocessing are finnicky at best and the way we handle the
+    # result here makes the typehint effectively true, since we don't attempt to access the first
+    # field of the tuple unless the second field is None.
+    parent_conn: Connection[Any, tuple[_T, str | None]]
     parent_conn, child_conn = multiprocessing.Pipe()
     child = multiprocessing.Process(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
@@ -65,10 +77,10 @@ def chroot(path: Path, target: Callable, *args: Any, **kwargs: Any) -> Any:  # n
 
 def _runner(
     path: Path,
-    conn: Connection,
-    target: Callable,
-    args: tuple,
-    kwargs: dict,
+    conn: Connection[tuple[_T, str | None], Any],
+    target: Callable[..., _T],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
 ) -> None:
     """Chroot to the execution directory and call the target function."""
     logger.debug("[pid=%d] child process: target=%r", os.getpid(), target)
@@ -78,7 +90,8 @@ def _runner(
         os.chroot(path)
         res = target(*args, **kwargs)
     except Exception as exc:  # noqa: BLE001
-        conn.send((None, str(exc)))
+        # Just send None for data since it won't be accessed anyways
+        conn.send((None, str(exc)))  # type: ignore[arg-type]
         return
 
     conn.send((res, None))
@@ -135,9 +148,7 @@ def _setup_chroot_linux(path: Path) -> None:
 
     pid = os.getpid()
     for entry in _linux_mounts:
-        args = []
-        if entry.options:
-            args.extend(entry.options)
+        args = entry.options or []
         if entry.fstype:
             args.append(f"-t{entry.fstype}")
 

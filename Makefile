@@ -157,8 +157,19 @@ endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
 endif
+# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
+# 22.04 -> 25.10 (and possibly 26.04).
+# On focal, we'll get the snap instead.
+ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
+ifneq ($(UBUNTU_CODENAME),focal)
+APT_PACKAGES += dotnet-sdk-8.0
+endif
+endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
 APT_PACKAGES += gcc
+endif
+ifeq ($(wildcard /usr/share/doc/meson/copyright),)
+APT_PACKAGES += meson
 endif
 ifeq ($(wildcard /usr/share/doc/pkg-config/copyright),)
 APT_PACKAGES += pkg-config
@@ -213,7 +224,7 @@ else
 endif
 
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
@@ -240,6 +251,26 @@ endif
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
+endif
+
+.PHONY: install-dotnet
+install-dotnet:
+ifeq ($(UBUNTU_CODENAME),focal)
+ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
+ifeq ($(shell which snap),)
+	$(warning Cannot install dotnet without snap.)
+else
+	sudo snap install dotnet --classic
+endif
+endif
+endif
+
+.PHONY: install-rustup
+install-rustup:
+ifeq ($(shell which snap),)
+	$(warning Cannot install rustup without snap.)
+else
+	sudo snap install rustup --classic
 endif
 
 .PHONY: _gh-runner-clear-space
