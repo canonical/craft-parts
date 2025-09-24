@@ -27,7 +27,7 @@ python-packages
 ~~~~~~~~~~~~~~~
 **Type:**
 
-A list of dependencies to install with ``pip``.
+A list of additional Python packages to install with ``pip``.
 
 .. _python_plugin_v2-environment_variables:
 
