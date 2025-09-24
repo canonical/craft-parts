@@ -36,7 +36,8 @@ Bug fixes:
 
 - When partitions are enabled, the default partition name is now added to the
   default prime fileset entry.
-
+- Relative symbolic links produced during the build step are now correctly checked for
+  collisions with absolute symbolic links from the overlay during the stage step.
 
 .. _release-2.23.0:
 
