@@ -27,8 +27,7 @@ python-packages
 ~~~~~~~~~~~~~~~
 **Type:**
 
-A list of dependencies to install from PyPI. If needed, ``pip``, ``setuptools``, and
-``wheel`` can be upgraded here.
+A list of dependencies to install with ``pip``.
 
 .. _python_plugin_v2-environment_variables:
 
@@ -69,9 +68,9 @@ During the build step, the plugin performs the following actions:
   <https://pip.pypa.io/en/stable/cli/pip_install/#install-user>`_. Then,
   ``PYTHONUSERBASE`` is set to the part's install directory, causing pip to install all
   packages to that location.
-* Pip is used to install all of the requirements from the ``PIP_PYTHON`` environment
-  variable, as well as any dependencies in a ``setup.py`` or ``pyproject.toml`` file,
-  if present.
+* Pip is used to install all of the requirements from ``python-requirements`` and
+  packages from ``python-packages``. This step will also install the project described
+  in the ``setup.py`` or ``pyproject.toml`` file, if present.
 * A `sitecustomize <https://docs.python.org/3/library/site.html>`_ file is created,
   which adds the files from the part's install directory to Python's runtime import
   path.
