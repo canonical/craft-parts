@@ -19,7 +19,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -169,8 +169,9 @@ class StepState(MigrationState, ABC):
             self.project_options_of_interest(other_project_options),
         )
 
+    @override
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
+    def unmarshal(cls, data: dict[str, Any]) -> "StepState":
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
 

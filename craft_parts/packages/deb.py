@@ -610,7 +610,6 @@ class Ubuntu(BaseRepository):
             return []
 
         if _is_list_of_slices(package_names):
-            # TODO: fetching of Chisel slices is not supported yet.  # noqa: FIX002
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)

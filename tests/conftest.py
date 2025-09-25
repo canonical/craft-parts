@@ -256,9 +256,6 @@ def http_server(request):
     server_thread.join()
 
 
-# XXX: check windows compatibility, explore if fixture setup can skip itself  # noqa: FIX003
-
-
 @pytest.fixture(scope="class")
 def fake_snapd():
     """Provide a fake snapd server."""

@@ -1026,7 +1026,6 @@ class PartHandler:
                 primed_whiteout.unlink()
                 logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
-                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?  # noqa: FIX003
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
     def clean_step(self, step: Step) -> None:

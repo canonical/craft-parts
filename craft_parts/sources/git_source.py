@@ -52,7 +52,6 @@ class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     source_depth: int = 0
     source_submodules: list[str] | None = None
 
-    # TODO: make these mutually exclusive fields declarative with a jsonschema too.  # noqa: FIX002
     @pydantic.model_validator(mode="after")
     def _validate_mutually_exclusive_fields(self) -> Self:
         if self.source_tag and self.source_branch:

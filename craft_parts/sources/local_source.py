@@ -42,8 +42,6 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
-# TODO: change file operations to use pathlib  # noqa: FIX002
-
 
 class LocalSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a generic local source."""
