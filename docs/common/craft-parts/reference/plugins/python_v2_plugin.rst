@@ -79,7 +79,7 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-* It sets ``PIP_USER`` to ``1``, equivalent to the ``--user`` argument. For more
+* It sets ``PIP_USER`` to ``1``, equivalent to the ``--user`` argument.
   The `the pip documentation
   <https://pip.pypa.io/en/stable/cli/pip_install/#install-user>`_ describes this
   argument in detail.
