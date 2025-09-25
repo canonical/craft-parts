@@ -19,10 +19,11 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, override
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
 from craft_parts.utils import os_utils

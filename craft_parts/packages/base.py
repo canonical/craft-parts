@@ -21,7 +21,9 @@ import contextlib
 import logging
 import os
 from pathlib import Path
-from typing import Any, override
+from typing import Any
+
+from typing_extensions import override
 
 from craft_parts import xattrs
 
