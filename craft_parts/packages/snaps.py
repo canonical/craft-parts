@@ -23,6 +23,7 @@ import pathlib
 import subprocess
 import sys
 from collections.abc import Sequence
+from http import HTTPStatus
 from typing import (
     Any,
     cast,
@@ -135,7 +136,7 @@ class SnapPackage:
                         http_error.response.status_code,
                         retry_count,
                     )
-                    if http_error.response.status_code == 404:  # noqa: PLR2004
+                    if http_error.response.status_code == HTTPStatus.NOT_FOUND:
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error

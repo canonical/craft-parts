@@ -376,9 +376,9 @@ def _verify_marked_install(package: apt.package.Package) -> None:
 
     broken_deps: list[str] = []
     for package_dependencies in package.candidate.dependencies:
-        for dep in package_dependencies:
-            if not dep.target_versions:
-                broken_deps.append(dep.name)  # noqa: PERF401
+        broken_deps.extend(
+            [dep.name for dep in package_dependencies if not dep.target_versions]
+        )
     raise errors.PackageBroken(package.name, deps=broken_deps)
 
 
