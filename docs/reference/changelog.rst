@@ -41,7 +41,7 @@ Bug fixes:
 
 Documentation:
 
-- Adds a reference page for the new experimental ``PythonPlugin``.
+- Add a :ref:`python_v2_plugin` reference.
 
 .. _release-2.23.0:
 
