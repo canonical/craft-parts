@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.24.0:
 
-2.24.0 (unreleased)
+2.24.0 (2025-09-26)
 -------------------
 
 New features:
@@ -38,6 +38,10 @@ Bug fixes:
   default prime fileset entry.
 - Relative symbolic links produced during the build step are now correctly checked for
   collisions with absolute symbolic links from the overlay during the stage step.
+
+Documentation:
+
+- Add a :ref:`python_v2_plugin` reference.
 
 .. _release-2.23.0:
 
