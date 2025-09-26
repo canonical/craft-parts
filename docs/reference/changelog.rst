@@ -39,6 +39,10 @@ Bug fixes:
 - Relative symbolic links produced during the build step are now correctly checked for
   collisions with absolute symbolic links from the overlay during the stage step.
 
+Documentation:
+
+- Adds a reference page for the new experimental ``PythonPlugin``.
+
 .. _release-2.23.0:
 
 2.23.0 (2025-09-15)
