@@ -18,7 +18,7 @@ Changelog
 
 .. _release-2.24.0:
 
-2.24.0 (unreleased)
+2.24.0 (2025-09-26)
 -------------------
 
 New features:
