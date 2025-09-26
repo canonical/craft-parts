@@ -21,10 +21,6 @@ Changelog
 2.25.0 (unreleased)
 -------------------
 
-New features:
-
-Bug fixes:
-
 Documentation:
 
 - The submodule containing our documentation resources has been renamed to
