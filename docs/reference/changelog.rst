@@ -32,10 +32,11 @@ Documentation:
   change into existing clones of the repository, run the following the commands to
   ensure that the submodules are in sync:
 
-  .. code-block:: pydantic-yaml
-    git submodule sync
-    git submodule update --init --recursive
-    git clean -ffd
+  .. code-block::
+
+      git submodule sync
+      git submodule update --init --recursive
+      git clean -ffd
 
 For a complete list of commits, check out the `2.25.0`_ release on GitHub.
 
