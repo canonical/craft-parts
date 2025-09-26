@@ -23,10 +23,11 @@ Changelog
 
 Documentation:
 
-- The submodule containing our documentation resources has been renamed to
-  ``sphinx-docs-starter-pack`` to match its parent repository. After pulling this
-  change into existing clones of the repository, run the following the commands to
-  ensure that the submodules are in sync:
+- The Git submodule containing documentation components has been renamed to
+  ``sphinx-docs-starter-pack`` to match its parent repository.
+
+  If you're a returning contributor to the project, after you pull the latest commits,
+  run the following commands in your local repository to sync the submodule change:
 
   .. code-block::
 
