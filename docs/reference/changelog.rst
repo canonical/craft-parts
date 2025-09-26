@@ -39,6 +39,19 @@ Bug fixes:
 - Relative symbolic links produced during the build step are now correctly checked for
   collisions with absolute symbolic links from the overlay during the stage step.
 
+Documentation:
+
+- The submodule containing our documentation resources has been renamed to
+  ``sphinx-docs-starter-pack`` to match its parent repository. After pulling this
+  change into existing clones of the repository, run the following the commands to
+  ensure that the submodules are in sync:
+
+  .. code-block:: pydantic-yaml
+
+    git submodule sync
+    git submodule update --init --recursive
+    git clean -ffd
+
 .. _release-2.23.0:
 
 2.23.0 (2025-09-15)
