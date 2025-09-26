@@ -62,7 +62,7 @@ exclude_patterns = [
     ".DS_Store",
     "**venv",
     "base",
-    "sphinx-resources",
+    "sphinx-docs-starter-pack",
     "common/README.md",
     # These RST files are explicitly excluded here because they are included by
     # other files - without this exclusion, Sphinx will complain about duplicate
