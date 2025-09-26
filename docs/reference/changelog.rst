@@ -16,6 +16,30 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.25.0:
+
+2.25.0 (unreleased)
+-------------------
+
+New features:
+
+Bug fixes:
+
+Documentation:
+
+- The submodule containing our documentation resources has been renamed to
+  ``sphinx-docs-starter-pack`` to match its parent repository. After pulling this
+  change into existing clones of the repository, run the following the commands to
+  ensure that the submodules are in sync:
+
+  .. code-block:: pydantic-yaml
+    git submodule sync
+    git submodule update --init --recursive
+    git clean -ffd
+
+For a complete list of commits, check out the `2.25.0`_ release on GitHub.
+
+
 .. _release-2.24.0:
 
 2.24.0 (unreleased)
@@ -39,18 +63,6 @@ Bug fixes:
 - Relative symbolic links produced during the build step are now correctly checked for
   collisions with absolute symbolic links from the overlay during the stage step.
 
-Documentation:
-
-- The submodule containing our documentation resources has been renamed to
-  ``sphinx-docs-starter-pack`` to match its parent repository. After pulling this
-  change into existing clones of the repository, run the following the commands to
-  ensure that the submodules are in sync:
-
-  .. code-block:: pydantic-yaml
-
-    git submodule sync
-    git submodule update --init --recursive
-    git clean -ffd
 
 .. _release-2.23.0:
 
