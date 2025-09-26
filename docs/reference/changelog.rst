@@ -1485,6 +1485,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
 .. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0
 .. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
 .. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
