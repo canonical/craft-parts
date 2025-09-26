@@ -27,7 +27,7 @@ processing and execution of user-defined scriptlets:
       - ``amd64``
       - ``riscv64``
   * - ``CRAFT_ARCH_BUILD_ON``
-    - The architecture of the build target. For example:
+    - The architecture of the machine running the build. For example:
 
       - ``amd64``
       - ``riscv64``
