@@ -241,13 +241,13 @@ endif
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
 
-# A temporary override to the lint-docs directive to ignore the sphinx-resources git submodule.
+# A temporary override to the lint-docs directive to ignore the sphinx-docs-starter-pack git submodule.
 .PHONY: lint-docs
 lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-resources --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-docs-starter-pack --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::

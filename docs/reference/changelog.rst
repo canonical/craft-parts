@@ -16,6 +16,28 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.25.0:
+
+2.25.0 (unreleased)
+-------------------
+
+Documentation:
+
+- The Git submodule containing documentation components has been renamed to
+  ``sphinx-docs-starter-pack`` to match its parent repository.
+
+  If you're a returning contributor to the project, after you pull the latest commits,
+  run the following commands in your local repository to sync the submodule change:
+
+  .. code-block::
+
+      git submodule sync
+      git submodule update --init --recursive
+      git clean -ffd
+
+For a complete list of commits, check out the `2.25.0`_ release on GitHub.
+
+
 .. _release-2.24.0:
 
 2.24.0 (2025-09-26)
@@ -42,6 +64,7 @@ Bug fixes:
 Documentation:
 
 - Add a :ref:`python_v2_plugin` reference.
+
 
 .. _release-2.23.0:
 
@@ -1463,6 +1486,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
 .. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0
 .. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
 .. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
