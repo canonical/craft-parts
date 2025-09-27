@@ -49,7 +49,7 @@ colorama==0.4.6
     # via
     #   -r requirements.txt
     #   sphinx-autobuild
-docutils==0.21.2
+docutils==0.22.2
     # via
     #   -r requirements.txt
     #   canonical-sphinx-extensions
