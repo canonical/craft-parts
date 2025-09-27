@@ -22,7 +22,7 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import (
     BaseModel,
@@ -47,6 +47,8 @@ from craft_parts.utils.partition_utils import (
     get_partition_dir_map,
 )
 from craft_parts.utils.path_utils import get_partition_and_path
+
+_T_validate = TypeVar("_T_validate")
 
 
 class PartSpec(BaseModel):
@@ -523,7 +525,7 @@ class PartSpec(BaseModel):
 
     @field_validator("overlay_packages", "overlay_files", "overlay_script")
     @classmethod
-    def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
+    def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")

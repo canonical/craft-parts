@@ -28,7 +28,7 @@ import tempfile
 from collections.abc import Callable, Sequence
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -282,11 +282,14 @@ _IGNORE_FILTERS: dict[str, set[str]] = {
 }
 
 
-def _apt_cache_wrapper(method: Any) -> Callable[..., Any]:  # noqa: ANN401
+_T_wrapper = TypeVar("_T_wrapper")
+
+
+def _apt_cache_wrapper(method: Callable[..., _T_wrapper]) -> Callable[..., _T_wrapper]:
     """Decorate a method to handle apt availability."""
 
     @functools.wraps(method)
-    def wrapped(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+    def wrapped(*args: Any, **kwargs: Any) -> _T_wrapper:
         if not _APT_CACHE_AVAILABLE:
             raise errors.PackageBackendNotSupported("apt")
         return method(*args, **kwargs)
@@ -610,7 +613,6 @@ class Ubuntu(BaseRepository):
             return []
 
         if _is_list_of_slices(package_names):
-            # TODO: fetching of Chisel slices is not supported yet.  # noqa: FIX002
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)

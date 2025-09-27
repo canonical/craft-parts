@@ -246,7 +246,8 @@ class XAttributeError(PartsError):
         self,
         key: str,
         path: str,
-        is_write: bool = False,  # noqa: FBT001, FBT002
+        *,
+        is_write: bool = False,
     ) -> None:
         self.key = key
         self.path = path

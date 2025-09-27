@@ -159,7 +159,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 def test_python_plugin_no_system_interpreter(
     new_dir,
     partitions,
-    remove_symlinks: bool,  # noqa: FBT001
+    remove_symlinks: bool,
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 

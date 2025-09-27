@@ -357,8 +357,6 @@ class TestFileMigration:
 
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
 
-    # TODO: add test_migrate_files_preserves_file_mode_chown_permissions  # noqa: FIX002
-
     def test_migrate_files_preserves_directory_mode(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")
@@ -557,7 +555,6 @@ class TestHelpers:
         assert foo_path.is_file()
         assert bar_path.is_file()
 
-        # TODO: also test files shared with overlay  # noqa: FIX002
         for partition in partitions or (None,):
             migration.clean_shared_area(
                 part_name="p1",

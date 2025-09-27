@@ -141,10 +141,6 @@ class YUMRepository(BaseRepository):
             else:
                 logger.debug("Requested packages already installed: %s", package_names)
 
-        # XXX Facundo 2023-02-07: the information returned by this method is not used  # noqa: FIX003
-        # anywhere, so we should clean it up and just return None (here, and in the
-        # Ubuntu repository too, where a further cleaning should be done) -- related
-        # to this, `list_only` should go away.
         return []
 
     @classmethod

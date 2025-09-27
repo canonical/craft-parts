@@ -98,26 +98,24 @@ class TestGetPlugin:
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
-        with pytest.raises(ValueError) as raised:  # noqa: PT011
+        with pytest.raises(ValueError, match="plugin not registered: 'invalid'"):
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
                 properties=None,  # type: ignore[reportGeneralTypeIssues]
             )
-        assert str(raised.value) == "plugin not registered: 'invalid'"
 
     def test_get_plugin_unspecified(self, new_dir):
         part = Part("foo", {})
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
-        with pytest.raises(ValueError) as raised:  # noqa: PT011
+        with pytest.raises(ValueError, match="plugin not registered: 'foo'"):
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
                 properties=None,  # type: ignore[reportGeneralTypeIssues]
             )
-        assert str(raised.value) == "plugin not registered: 'foo'"
 
 
 class FooPlugin(plugins.Plugin):
@@ -142,7 +140,7 @@ class TestPluginRegistry:
     """Verify plugin register/unregister functions."""
 
     def test_register_unregister(self):
-        with pytest.raises(ValueError):  # noqa: PT011
+        with pytest.raises(ValueError, match="plugin not registered: 'plugin1'"):
             plugins.get_plugin_class("plugin1")
 
         plugins.register(
@@ -168,12 +166,12 @@ class TestPluginRegistry:
 
         # assert plugins are unregistered
         for plugin in ["plugin1", "plugin2", "plugin3"]:
-            with pytest.raises(ValueError):  # noqa: PT011
+            with pytest.raises(ValueError, match=f"plugin not registered: {plugin!r}"):
                 plugins.get_plugin_class(plugin)
 
         # unregister all plugins
         plugins.unregister_all()
-        with pytest.raises(ValueError):  # noqa: PT011
+        with pytest.raises(ValueError, match="plugin not registered: 'plugin4'"):
             plugins.get_plugin_class("plugin4")
 
 

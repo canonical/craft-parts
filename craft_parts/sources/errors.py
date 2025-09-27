@@ -64,7 +64,6 @@ class InvalidSourceOption(SourceError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
-# TODO: Merge this with InvalidSourceOption above  # noqa: FIX002
 class InvalidSourceOptions(SourceError):  # noqa: N818
     """A source option is not allowed for the given source type.
 

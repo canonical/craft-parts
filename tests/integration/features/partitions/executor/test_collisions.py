@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-  # noqa: INP001
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright 2024 Canonical Ltd.
 #
@@ -20,6 +20,7 @@ from typing import Any
 import pytest
 from craft_parts import LifecycleManager, Step
 from craft_parts.errors import PartFilesConflict
+
 from tests.integration.executor import test_collisions
 
 

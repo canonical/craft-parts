@@ -274,9 +274,6 @@ def umount(mountpoint: str, *args: str) -> None:
             )
 
 
-# TODO: consolidate os-release strategy with craft-providers/charmcraft  # noqa: FIX002
-
-
 class OsRelease:
     """A class to intelligently determine the OS on which we're running."""
 

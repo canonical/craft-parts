@@ -21,7 +21,7 @@ import pytest
 def fake_apt_cache(mocker):
     def get_installed_version(
         package_name,
-        resolve_virtual_packages=False,  # noqa: FBT002
+        resolve_virtual_packages=False,
     ):  # pylint: disable=unused-argument
         if "installed" in package_name:
             return "1.0"
