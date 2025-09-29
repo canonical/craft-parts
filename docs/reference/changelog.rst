@@ -21,6 +21,10 @@ Changelog
 2.25.0 (unreleased)
 -------------------
 
+New features:
+
+- The Meson plugin now calls ``meson setup`` during build.
+
 Documentation:
 
 - The Git submodule containing documentation components has been renamed to
@@ -36,7 +40,6 @@ Documentation:
       git clean -ffd
 
 For a complete list of commits, check out the `2.25.0`_ release on GitHub.
-
 
 .. _release-2.24.0:
 
