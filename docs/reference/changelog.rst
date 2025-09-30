@@ -21,6 +21,10 @@ Changelog
 2.25.0 (unreleased)
 -------------------
 
+New features:
+
+- Enforce filesystem mounts to be ordered in increasing ``mount`` depth.
+
 Documentation:
 
 - The Git submodule containing documentation components has been renamed to
