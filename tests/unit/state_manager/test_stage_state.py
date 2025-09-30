@@ -68,7 +68,7 @@ class TestStageState:
         assert err[0]["type"] == "value_error"
 
     def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError, match="state data is not a dictionary"):
+        with pytest.raises(TypeError, match="^state data is not a dictionary$"):
             StageState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 

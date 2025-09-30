@@ -76,7 +76,7 @@ class TestPartSpecs:
         assert spec.marshal() == data_copy
 
     def test_unmarshal_not_dict(self, partitions):
-        with pytest.raises(TypeError, match="part data is not a dictionary"):
+        with pytest.raises(TypeError, match="^part data is not a dictionary$"):
             PartSpec.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
     def test_unmarshal_mix_packages_slices(self, mocker):

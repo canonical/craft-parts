@@ -499,7 +499,7 @@ def test_project_info_set_project_var_other_part_name_raw(path):
 def test_project_info_set_invalid_project_vars():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError, match="'var' not in project variables"):
+    with pytest.raises(ValueError, match="^'var' not in project variables$"):
         info.set_project_var("var", "bar")
 
 
@@ -706,7 +706,7 @@ def test_part_info_set_invalid_project_vars():
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
-    with pytest.raises(ValueError, match="'var' not in project variables"):
+    with pytest.raises(ValueError, match="^'var' not in project variables$"):
         x.set_project_var("var", "bar")
 
 
@@ -882,7 +882,7 @@ def test_step_info_set_invalid_project_vars():
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
 
-    with pytest.raises(ValueError, match="'var' not in project variables"):
+    with pytest.raises(ValueError, match="^'var' not in project variables$"):
         x.set_project_var("var", "bar")
 
 

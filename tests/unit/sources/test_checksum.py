@@ -59,14 +59,14 @@ def test_verify_checksum_happy(tc_checksum, tc_checkfile):
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_invalid_algorithm():
     Path("checkfile").write_text("content")
-    with pytest.raises(ValueError, match="unsupported algorithm 'invalid'"):
+    with pytest.raises(ValueError, match="^unsupported algorithm 'invalid'$"):
         checksum.verify_checksum("invalid/digest", Path("checkfile"))
 
 
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_value_error():
     Path("checkfile").write_text("content")
-    with pytest.raises(ValueError, match="invalid checksum format: 'invalid'"):
+    with pytest.raises(ValueError, match="^invalid checksum format: 'invalid'$"):
         checksum.verify_checksum("invalid", Path("checkfile"))
 
 
@@ -77,6 +77,6 @@ def test_verify_checksum_digest_error():
     actual_digest = "9a0364b9e99bb480dd25e1f0284c8555"
     with pytest.raises(
         errors.ChecksumMismatch,
-        match=f"Expected digest {expected_digest}, obtained {actual_digest}",
+        match=rf"^Expected digest {expected_digest}, obtained {actual_digest}\.$",
     ):
         checksum.verify_checksum("md5/digest", Path("checkfile"))

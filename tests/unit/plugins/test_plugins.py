@@ -98,7 +98,7 @@ class TestGetPlugin:
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
-        with pytest.raises(ValueError, match="plugin not registered: 'invalid'"):
+        with pytest.raises(ValueError, match="^plugin not registered: 'invalid'$"):
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
@@ -110,7 +110,7 @@ class TestGetPlugin:
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
 
-        with pytest.raises(ValueError, match="plugin not registered: 'foo'"):
+        with pytest.raises(ValueError, match="^plugin not registered: 'foo'$"):
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
@@ -140,7 +140,7 @@ class TestPluginRegistry:
     """Verify plugin register/unregister functions."""
 
     def test_register_unregister(self):
-        with pytest.raises(ValueError, match="plugin not registered: 'plugin1'"):
+        with pytest.raises(ValueError, match="^plugin not registered: 'plugin1'$"):
             plugins.get_plugin_class("plugin1")
 
         plugins.register(
@@ -171,7 +171,7 @@ class TestPluginRegistry:
 
         # unregister all plugins
         plugins.unregister_all()
-        with pytest.raises(ValueError, match="plugin not registered: 'plugin4'"):
+        with pytest.raises(ValueError, match="^plugin not registered: 'plugin4'$"):
             plugins.get_plugin_class("plugin4")
 
 

@@ -40,7 +40,9 @@ def test_filesystem_mount_item_marshal_unmarshal():
 
 
 def test_filesystem_mount_item_unmarshal_not_dict():
-    with pytest.raises(TypeError, match="Filesystem input data must be a dictionary."):
+    with pytest.raises(
+        TypeError, match=r"^Filesystem input data must be a dictionary\.$"
+    ):
         FilesystemMountItem.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 
@@ -90,7 +92,7 @@ def test_filesystem_mount_marshal_unmarshal():
 
 
 def test_filesystem_mount_unmarshal_not_list():
-    with pytest.raises(TypeError, match="Filesystem entry must be a list."):
+    with pytest.raises(TypeError, match=r"^Filesystem entry must be a list\.$"):
         FilesystemMount.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 
@@ -223,7 +225,7 @@ def test_filesystem_mounts_marshal_unmarshal():
 
 
 def test_filesystem_mounts_unmarshal_not_dict():
-    with pytest.raises(TypeError, match="filesystems is not a dictionary"):
+    with pytest.raises(TypeError, match="^filesystems is not a dictionary$"):
         FilesystemMounts.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 
