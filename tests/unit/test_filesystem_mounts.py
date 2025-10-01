@@ -40,9 +40,10 @@ def test_filesystem_mount_item_marshal_unmarshal():
 
 
 def test_filesystem_mount_item_unmarshal_not_dict():
-    with pytest.raises(TypeError) as raised:
-        FilesystemMountItem.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "Filesystem input data must be a dictionary."
+    with pytest.raises(
+        TypeError, match=r"^Filesystem input data must be a dictionary\.$"
+    ):
+        FilesystemMountItem.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 
 @pytest.mark.parametrize(
@@ -91,9 +92,8 @@ def test_filesystem_mount_marshal_unmarshal():
 
 
 def test_filesystem_mount_unmarshal_not_list():
-    with pytest.raises(TypeError) as raised:
-        FilesystemMount.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "Filesystem entry must be a list."
+    with pytest.raises(TypeError, match=r"^Filesystem entry must be a list\.$"):
+        FilesystemMount.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 
 @pytest.mark.parametrize(
@@ -225,9 +225,8 @@ def test_filesystem_mounts_marshal_unmarshal():
 
 
 def test_filesystem_mounts_unmarshal_not_dict():
-    with pytest.raises(TypeError) as raised:
-        FilesystemMounts.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-    assert str(raised.value) == "filesystems is not a dictionary"
+    with pytest.raises(TypeError, match="^filesystems is not a dictionary$"):
+        FilesystemMounts.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 
 def test_filesystem_mounts_iterable():

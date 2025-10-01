@@ -138,7 +138,7 @@ def test_poetry_plugin_override_get_system_interpreter(
 def test_poetry_plugin_no_system_interpreter(
     new_dir,
     partitions,
-    remove_symlinks: bool,  # noqa: FBT001
+    remove_symlinks: bool,
     parts_dict,
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""

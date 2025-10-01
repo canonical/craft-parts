@@ -98,7 +98,6 @@ class Part(pydantic.BaseModel):
         plugin_defs = plugin_json_schema.pop("$defs")
         for model in plugin_defs.values():
             # Allow extra parts properties for the plugin.
-            # TODO: These should get their own models.  # noqa: FIX002
             model["patternProperties"] = {  # type:ignore[index]
                 r"^source\-": {},
                 r"^override\-": {"type": "string"},

@@ -259,9 +259,6 @@ class TestMove:
         )
 
 
-# TODO: test NonBlockingRWFifo  # noqa: FIX002
-
-
 def test_create_similar_directory_permissions(tmp_path, mock_chown):
     source = tmp_path / "source"
     source.mkdir()

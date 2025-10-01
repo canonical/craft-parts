@@ -23,6 +23,7 @@ from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
 from craft_parts.utils import os_utils
@@ -169,8 +170,9 @@ class StepState(MigrationState, ABC):
             self.project_options_of_interest(other_project_options),
         )
 
+    @override
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
+    def unmarshal(cls, data: dict[str, Any]) -> "StepState":
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
 

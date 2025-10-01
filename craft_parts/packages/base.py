@@ -23,6 +23,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from typing_extensions import override
+
 from craft_parts import xattrs
 
 logger = logging.getLogger(__name__)
@@ -79,8 +81,6 @@ class BaseRepository(abc.ABC):
 
         :param package_names: A list with the names of the packages to download.
         """
-
-    # XXX: list-only functionality can be a method called by install_build_packages  # noqa: FIX003
 
     @classmethod
     @abc.abstractmethod
@@ -181,58 +181,68 @@ RepositoryType = type[BaseRepository]
 class DummyRepository(BaseRepository):
     """A dummy repository."""
 
+    @override
     @classmethod
     def configure(cls, application_package_name: str) -> None:
         """Set up the repository."""
 
+    @override
     @classmethod
-    def get_package_libraries(cls, package_name: str) -> set[str]:  # noqa: ARG003
+    def get_package_libraries(cls, package_name: str) -> set[str]:
         """Return a list of libraries in package_name."""
         return set()
 
+    @override
     @classmethod
-    def get_packages_for_source_type(cls, source_type: str) -> set[str]:  # noqa: ARG003
+    def get_packages_for_source_type(cls, source_type: str) -> set[str]:
         """Return a list of packages required to to work with source_type."""
         return set()
 
+    @override
     @classmethod
     def refresh_packages_list(cls) -> None:
         """Refresh the build packages cache."""
 
+    @override
     @classmethod
     def download_packages(cls, package_names: list[str]) -> None:
         """Download the specified packages to the local package cache."""
 
+    @override
     @classmethod
     def install_packages(
         cls,
-        package_names: list[str],  # noqa: ARG003
+        package_names: list[str],
         *,
-        list_only: bool = False,  # noqa: ARG003
-        refresh_package_cache: bool = True,  # noqa: ARG003
+        list_only: bool = False,
+        refresh_package_cache: bool = True,
     ) -> list[str]:
         """Install packages on the host system."""
         logger.debug("Package manager not defined, not installing any packages")
         return []
 
+    @override
     @classmethod
-    def is_package_installed(cls, package_name: str) -> bool:  # noqa: ARG003
+    def is_package_installed(cls, package_name: str) -> bool:
         """Inform if a packahe is installed on the host system."""
         return False
 
+    @override
     @classmethod
     def get_installed_packages(cls) -> list[str]:
         """Obtain a list of the installed packages and their versions."""
         return []
 
+    @override
     @classmethod
     def fetch_stage_packages(
         cls,
-        **kwargs: Any,  # noqa: ARG003
+        **kwargs: Any,
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path."""
         return []
 
+    @override
     @classmethod
     def unpack_stage_packages(
         cls,

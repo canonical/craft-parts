@@ -39,6 +39,9 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
+MAX_COMMIT_LENGTH = 40
+
+
 class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a git-based source."""
 
@@ -52,7 +55,6 @@ class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     source_depth: int = 0
     source_submodules: list[str] | None = None
 
-    # TODO: make these mutually exclusive fields declarative with a jsonschema too.  # noqa: FIX002
     @pydantic.model_validator(mode="after")
     def _validate_mutually_exclusive_fields(self) -> Self:
         if self.source_tag and self.source_branch:
@@ -176,7 +178,7 @@ class GitSource(SourceHandler):
     def _expand_commit(self, commit: str) -> str:
         """Expand a commit hash to full length."""
         # short-circuit if the commit is already full length
-        if len(commit) == 40:  # noqa: PLR2004 (magic-value)
+        if len(commit) == MAX_COMMIT_LENGTH:
             return commit
 
         try:
@@ -197,7 +199,7 @@ class GitSource(SourceHandler):
                 raise errors.VCSError(
                     message=f"Failed to parse commit {commit!r}.",
                     resolution=(
-                        "Ensure 'source-commit' is correct, provide a full-length (40 character) commit, "
+                        f"Ensure 'source-commit' is correct, provide a full-length ({MAX_COMMIT_LENGTH} character) commit, "
                         "or remove the 'source-depth' key from the part."
                     ),
                 ) from err
