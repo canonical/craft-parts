@@ -23,7 +23,8 @@ Changelog
 
 New features:
 
-- Enforce filesystem mounts to be ordered in increasing ``mount`` depth.
+- Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
+  A ``mount`` value cannot be a parent of any preceding ``mount`` values.
 
 Documentation:
 
