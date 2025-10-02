@@ -6,10 +6,9 @@ Python plugin
 The Python plugin can be used for Python projects where you would want to do
 any of the following things:
 
-- Import Python modules with a :file:`requirements.txt` file.
-- Build a Python project that has a :file:`setup.py` or
-  :file:`pyproject.toml` file.
-- Install packages using :command:`pip`.
+* Import Python modules with a ``requirements.txt`` file.
+* Build a Python project that has a ``setup.py`` or ``pyproject.toml`` file.
+* Install packages using ``pip``.
 
 
 .. _craft_parts_python_plugin-keywords:
@@ -41,8 +40,8 @@ python-packages
 
 **Type:** list
 
-A list of dependencies to install from PyPI. If needed, :command:`pip`,
-:command:`setuptools` and :command:`wheel` can be upgraded here.
+A list of dependencies to install from PyPI. If needed, ``pip``,
+``setuptools`` and ``wheel`` can be upgraded here.
 
 
 .. _craft_parts_python_plugin-environment_variables:
@@ -100,7 +99,7 @@ During the build step, the plugin performs the following actions:
 
 * Create a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
   directory.
-* Use :command:`pip` to install the required Python packages as configured
+* Use ``pip`` to install the required Python packages as configured
   in the ``python-requirements``, ``python-constraints`` and
   ``python-packages`` keys.
 * If the source contains a ``setup.py`` or ``pyproject.toml`` file, those

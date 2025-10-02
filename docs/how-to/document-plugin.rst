@@ -41,7 +41,7 @@ For example:
 
     **Type**: list of strings
 
-    A list of paths to requirements files needed to run :command:`pip`.
+    A list of paths to requirements files needed to run ``pip``.
 
 
 Environment variables

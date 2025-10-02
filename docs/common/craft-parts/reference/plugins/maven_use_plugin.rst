@@ -83,7 +83,7 @@ During the build step the plugin performs the following actions:
 * Creates a Maven settings file that configures proxy settings, points to the local
   Maven repository created by Craft Parts, and, if the ``self-contained`` build
   attribute is declared, disables network connections.
-* Updates any of the project's :file:`pom.xml` files to deploy the final artifacts to
+* Updates any of the project's ``pom.xml`` files to deploy the final artifacts to
   the local repository.
 * Calls ``maven deploy`` to build and deploy the project to the local repository.
 
@@ -114,7 +114,7 @@ must be staged. This dependency is handled by declaring that ``java-main`` must 
 
 The following snippet declares two parts: ``java-jacoco``, which uses the ``maven-use``
 plugin, and ``java-main``. To restrict access to the Maven Central repository, both
-parts declare the ``self-contained`` build attribute. The :file:`pom.xml` file of
+parts declare the ``self-contained`` build attribute. The ``pom.xml`` file of
 ``java-main`` declares ``java-jacoco`` as a dependency, which is handled by declaring
 that ``java-main`` must build ``after`` the ``java-jacoco`` part.
 

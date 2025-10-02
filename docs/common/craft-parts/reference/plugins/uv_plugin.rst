@@ -52,7 +52,7 @@ UV_FROZEN
 
 **Default value:** true
 
-Whether or not to update the :file:`uv.lock` file. If true, :file:`uv.lock`
+Whether or not to update the ``uv.lock`` file. If true, ``uv.lock``
 must exist and will be used as the single source of truth for dependency
 versions, with no attempt made to update them before installation.
 
@@ -121,5 +121,5 @@ How it works
 During the build step, the plugin performs the following actions:
 
 * Create a virtual environment in the ``${CRAFT_PART_INSTALL}`` directory.
-* Use :command:`uv sync` to install the required Python packages from
-  the provided :file:`uv.lock` file.
+* Use ``uv sync`` to install the required Python packages from
+  the provided ``uv.lock`` file.
