@@ -23,6 +23,9 @@ Changelog
 
 New features:
 
+- Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
+  A ``mount`` value cannot be a parent of any preceding ``mount`` values.
+
 - The Meson plugin now calls ``meson setup`` during build.
 
 Documentation:

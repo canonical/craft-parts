@@ -73,18 +73,54 @@ def test_filesystem_mount_item_unmarshal_empty_entries(data, error_regex):
         FilesystemMountItem.unmarshal(data)
 
 
-def test_filesystem_mount_marshal_unmarshal():
-    data = [
-        {
-            "mount": "/",
-            "device": "foo",
-        },
-        {
-            "mount": "/bar",
-            "device": "baz",
-        },
-    ]
-
+@pytest.mark.parametrize(
+    "data",
+    [
+        [
+            {
+                "mount": "/",
+                "device": "foo",
+            },
+            {
+                "mount": "/bar",
+                "device": "baz",
+            },
+        ],
+        [
+            {
+                "mount": "/",
+                "device": "foo",
+            },
+            {
+                "mount": "/bar/a/b",
+                "device": "baz",
+            },
+            {
+                "mount": "/bar/a/c",
+                "device": "bla",
+            },
+        ],
+        [
+            {
+                "mount": "/",
+                "device": "foo",
+            },
+            {
+                "mount": "/a",
+                "device": "bar",
+            },
+            {
+                "mount": "/a/c",
+                "device": "baz",
+            },
+            {
+                "mount": "/b",
+                "device": "qux",
+            },
+        ],
+    ],
+)
+def test_filesystem_mount_marshal_unmarshal(data):
     data_copy = deepcopy(data)
     spec = FilesystemMount.unmarshal(data)
 
@@ -115,7 +151,7 @@ def test_filesystem_mount_unmarshal_not_list():
                 },
                 {
                     "mount": "/",
-                    "device": "foo",
+                    "device": "bar",
                 },
             ],
             r"1 validation error for FilesystemMount\n\s+Value error, Duplicate values in list",
@@ -128,6 +164,56 @@ def test_filesystem_mount_unmarshal_not_list():
                 },
             ],
             r"1 validation error for FilesystemMount\n\s+Value error, The first entry in a filesystem must map the '/' mount.",
+        ),
+        (
+            [
+                {
+                    "mount": "/",
+                    "device": "foo",
+                },
+                {
+                    "mount": "/a/c",
+                    "device": "baz",
+                },
+                {
+                    "mount": "/foo",
+                    "device": "bla",
+                },
+                {
+                    "mount": "/b/c",
+                    "device": "bla",
+                },
+                {
+                    "mount": "/b",
+                    "device": "baz",
+                },
+                {
+                    "mount": "/a",
+                    "device": "bar",
+                },
+            ],
+            r"1 validation error for FilesystemMount\n\s+Value error, Entries in a filesystem must be ordered in increasing depth.\n- /a/c must be listed before /a\n- /b/c must be listed before /b",
+        ),
+        (
+            [
+                {
+                    "mount": "/",
+                    "device": "foo",
+                },
+                {
+                    "mount": "/a/c",
+                    "device": "baz",
+                },
+                {
+                    "mount": "/a/b",
+                    "device": "bla",
+                },
+                {
+                    "mount": "/a",
+                    "device": "bla",
+                },
+            ],
+            r"1 validation error for FilesystemMount\n\s+Value error, Entries in a filesystem must be ordered in increasing depth.\n- /a/c must be listed before /a\n- /a/b must be listed before /a",
         ),
     ],
 )
@@ -195,6 +281,26 @@ def test_validate_filesystem_mounts_success_feature_disabled(filesystem_mounts):
             },
             "Filesystem validation failed.",
             "- Value error, The first entry in a filesystem must map the '/' mount. in field ''",
+        ),
+        (
+            {
+                "default": [
+                    {
+                        "mount": "/",
+                        "device": "foo",
+                    },
+                    {
+                        "mount": "/a/b",
+                        "device": "bar",
+                    },
+                    {
+                        "mount": "/a",
+                        "device": "baz",
+                    },
+                ]
+            },
+            "Filesystem validation failed.",
+            "- Value error, Entries in a filesystem must be ordered in increasing depth.\n- /a/b must be listed before /a in field ''",
         ),
     ],
 )
