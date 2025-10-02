@@ -5,10 +5,10 @@ Python plugin (v2)
 
 The Python plugin (v2) is the successor to the :ref:`craft_parts_python_plugin`. It can
 be used for Python projects where you would want to do any of the following things:
+* Import Python modules with a ``requirements.txt`` file.
+* Build a Python project that has a ``setup.py`` or ``pyproject.toml`` file.
+* Install packages with pip.
 
-- Import Python modules with a ``requirements.txt`` file.
-- Build a Python project that has a ``setup.py`` or ``pyproject.toml`` file.
-- Install packages with pip.
 
 .. _python_v2_plugin-keywords:
 
@@ -17,17 +17,22 @@ Keys
 
 This plugin provides the following unique keys.
 
+
 python-requirements
 ~~~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 List of paths to requirements files.
 
+
 python-packages
 ~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 Additional Python packages to install with pip.
+
 
 .. _python_plugin_v2-environment_variables:
 
@@ -44,6 +49,7 @@ PIP_PYTHON
 **Default:** The first instance of ``python3`` in the ``PATH``.
 
 The Python interpreter for pip to use.
+
 
 .. _python_plugin_v2-details-begin:
 
@@ -76,18 +82,19 @@ binary by using the ``after`` key, like so:
 
 .. _python_plugin_v2-details-end:
 
+
 How it works
 ------------
 
 During the build step, the plugin performs the following actions:
 
-* It sets ``PIP_USER`` to ``1``, equivalent to the ``--user`` argument.
+* Set ``PIP_USER`` to ``1``, equivalent to the ``--user`` argument.
   The `the pip documentation
   <https://pip.pypa.io/en/stable/cli/pip_install/#install-user>`_ describes this
   argument in detail.
 * The ``PYTHONUSERBASE`` is set to the part's install directory, which pip uses as a
   destination.
-* Pip is used to install all of the requirements from ``python-requirements`` and
+* Use pip to install all of the requirements from ``python-requirements`` and
   packages from ``python-packages``. This step will also install the project described
   in the ``setup.py`` or ``pyproject.toml`` file, if present.
 * A `sitecustomize <https://docs.python.org/3/library/site.html>`_ file is created,
