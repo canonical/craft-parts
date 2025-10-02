@@ -50,7 +50,7 @@ own special variables.
 UV_FROZEN
 ~~~~~~~~~
 
-**Default value:** true
+**Default:** true
 
 Whether or not to update the ``uv.lock`` file. If true, ``uv.lock``
 must exist and will be used as the single source of truth for dependency
@@ -60,7 +60,7 @@ versions, with no attempt made to update them before installation.
 UV_PROJECT_ENVIRONMENT
 ~~~~~~~~~~~~~~~~~~~~~~
 
-**Default value:** ``${CRAFT_PART_INSTALL}``
+**Default:** ``${CRAFT_PART_INSTALL}``
 
 A path to the Python virtual environment to build with. By default, this
 variable populates itself with the directory in which this plugin will create
@@ -70,7 +70,7 @@ the virtual environment.
 UV_PYTHON_DOWNLOADS
 ~~~~~~~~~~~~~~~~~~~
 
-**Default value:** "never"
+**Default:** "never"
 
 Whether or not to automatically download Python if the requested version is
 missing.
@@ -79,7 +79,7 @@ missing.
 UV_PYTHON
 ~~~~~~~~~
 
-**Default value:** ``${PARTS_PYTHON_INTERPRETER}``
+**Default:** ``${PARTS_PYTHON_INTERPRETER}``
 
 The version of Python that uv should use.
 
@@ -87,9 +87,9 @@ The version of Python that uv should use.
 UV_PYTHON_PREFERENCE
 ~~~~~~~~~~~~~~~~~~~~
 
-**Default value:** "only-system"
+**Type:** ``only-system``, ``only-managed``, ``system``, or ``managed``
 
-**Possible values:** only-system, only-managed, system, managed
+**Default:** "only-system"
 
 Whether uv should prefer (or exclusively use) system or uv-managed Python
 versions.

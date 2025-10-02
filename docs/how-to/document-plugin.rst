@@ -55,7 +55,7 @@ For example:
 
     **PARTS_PYTHON_INTERPRETER**
 
-    **Default value:** python3
+    **Default:** python3
 
     The interpreter binary to search for in ``PATH``.
 

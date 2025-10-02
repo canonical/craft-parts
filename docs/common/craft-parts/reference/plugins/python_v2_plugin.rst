@@ -37,9 +37,11 @@ Environment variables
 This plugin also sets environment variables in the build environment. These are defined
 in the following sections.
 
+
 PIP_PYTHON
 ~~~~~~~~~~
-**Default value:** The first instance of ``python3`` in the ``PATH``.
+
+**Default:** The first instance of ``python3`` in the ``PATH``.
 
 The Python interpreter for pip to use.
 

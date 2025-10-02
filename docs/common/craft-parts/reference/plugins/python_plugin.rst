@@ -56,7 +56,7 @@ defined in the following sections.
 PARTS_PYTHON_INTERPRETER
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Default value:** python3
+**Default:** python3
 
 The interpreter binary to search for in ``PATH``.
 
@@ -64,7 +64,7 @@ The interpreter binary to search for in ``PATH``.
 PARTS_PYTHON_VENV_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~
 
-**Default value:** Unset
+**Default:** Unset
 
 Additional arguments for venv.
 

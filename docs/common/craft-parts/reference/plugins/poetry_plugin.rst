@@ -57,7 +57,7 @@ variables to configure Poetry
 PARTS_PYTHON_INTERPRETER
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Default value:** python3
+**Default:** python3
 
 Either the interpreter binary to search for in ``PATH`` or an absolute path to
 the interpreter (e.g. ``${CRAFT_STAGE}/bin/python``).
@@ -66,7 +66,7 @@ the interpreter (e.g. ``${CRAFT_STAGE}/bin/python``).
 PARTS_PYTHON_VENV_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~
 
-**Default value:** Unset
+**Default:** Unset
 
 Additional arguments passed to ``python -m venv``.
 
