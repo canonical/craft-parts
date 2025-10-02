@@ -19,7 +19,6 @@ This plugin provides the following unique keys.
 Global flags
 ~~~~~~~~~~~~
 
-
 dotnet-configuration
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -106,7 +105,7 @@ detailed explanation of this key.
 
 .. _craft_parts_dotnet_v2_plugin-restore_flags:
 
-Restore Flags
+Restore flags
 ~~~~~~~~~~~~~
 
 dotnet-restore-configfile
@@ -147,7 +146,7 @@ operation. This setting overrides all of the sources specified in the
 
 .. _craft_parts_dotnet_v2_plugin-build_flags:
 
-Build Flags
+Build flags
 ~~~~~~~~~~~
 
 dotnet-build-framework
@@ -174,7 +173,7 @@ of ``-p:<Key>=<Value>``.
 
 .. _craft_parts_dotnet_v2_plugin-publish_flags:
 
-Publish Flags
+Publish flags
 ~~~~~~~~~~~~~
 
 dotnet-publish-properties
