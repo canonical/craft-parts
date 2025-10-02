@@ -5,6 +5,7 @@ Python plugin (v2)
 
 The Python plugin (v2) is the successor to the :ref:`craft_parts_python_plugin`. It can
 be used for Python projects where you would want to do any of the following things:
+
 * Import Python modules with a ``requirements.txt`` file.
 * Build a Python project that has a ``setup.py`` or ``pyproject.toml`` file.
 * Install packages with pip.
