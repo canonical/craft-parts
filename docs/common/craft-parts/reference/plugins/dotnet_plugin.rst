@@ -19,6 +19,8 @@ This plugin provides the following unique keys.
 dotnet-build-configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+**Type**: string
+
 **Default:** ``"Release"``
 
 The dotnet build configuration to use.
