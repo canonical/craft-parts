@@ -21,7 +21,9 @@ dotnet-build-configuration
 
 **Type:** string
 
-The dotnet build configuration to use. Defaults to ``"Release"``.
+**Default:** ``"Release"``
+
+The dotnet build configuration to use.
 
 
 dotnet-self-contained-runtime-identifier
