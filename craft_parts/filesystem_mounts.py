@@ -17,6 +17,7 @@
 """FilesystemMounts models."""
 
 from collections.abc import Iterable, Iterator
+from pathlib import Path
 from typing import Annotated, Any, Literal, cast
 
 from pydantic import (
@@ -86,6 +87,16 @@ class FilesystemMountItem(BaseModel):
         return self.model_dump(by_alias=True)
 
 
+def _format_conflicts(conflicts: list[tuple[str, str]]) -> str:
+    """Format conflicts between FilesystemMountItems."""
+    formatted: list[str] = [
+        f"- {misplaced} must be listed before {parent}"
+        for misplaced, parent in conflicts
+    ]
+
+    return "\n".join(formatted)
+
+
 class FilesystemMount(
     RootModel[Annotated[UniqueList[FilesystemMountItem], Field(min_length=1)]]
 ):
@@ -105,6 +116,36 @@ class FilesystemMount(
         """Make sure the first item in the list maps the '/' mount."""
         if value[0].mount != "/":
             raise ValueError("The first entry in a filesystem must map the '/' mount.")
+        return value
+
+    @field_validator("root", mode="after")
+    @classmethod
+    def validate_entries_order(
+        cls, value: list[FilesystemMountItem]
+    ) -> list[FilesystemMountItem]:
+        """Check entries are ordered in increasing depth."""
+        conflicts: list[tuple[str, str]] = []
+
+        mounts = [Path(e.mount) for e in value]
+        mounts_set = set(mounts)
+
+        seen_mounts: set[Path] = set()
+
+        for m in mounts:
+            conflicts.extend(
+                (str(m), str(parent))
+                for parent in m.parents
+                if parent in mounts_set and parent not in seen_mounts
+            )
+
+            seen_mounts.add(m)
+
+        if conflicts:
+            raise ValueError(
+                "Entries in a filesystem must be ordered in increasing depth.\n"
+                f"{_format_conflicts(conflicts)}"
+            )
+
         return value
 
     @classmethod

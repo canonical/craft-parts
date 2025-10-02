@@ -21,6 +21,11 @@ Changelog
 2.25.0 (unreleased)
 -------------------
 
+New features:
+
+- Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
+  A ``mount`` value cannot be a parent of any preceding ``mount`` values.
+
 Documentation:
 
 - The Git submodule containing documentation components has been renamed to
