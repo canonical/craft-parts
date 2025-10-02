@@ -3,14 +3,12 @@
 Maven plugin
 ============
 
-
 Maven plugin is a plugin that simplifies building and packaging Jars for projects that
 use the Maven (mvn) tooling. It is equivalent to running the following command:
 
 .. code-block:: shell
 
     mvn package
-
 
 The ``maven-parameters`` key passes arguments to the ``mvn package`` command. The
 parameter can also configure any command-line arguments. All values are passed after the
@@ -32,19 +30,24 @@ After a successful build, this plugin will:
 
 .. _craft_parts_maven_plugin_post_build_end:
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 maven-parameters
 ~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 Used to add additional parameters to the ``mvn package`` command line.
 
+
 maven-use-wrapper
 ~~~~~~~~~~~~~~~~~
+
 **Type:** boolean
 
 Used to determine whether the build should use the Maven wrapper provided by the project
@@ -58,12 +61,13 @@ Environment variables
 Environment variables can be specified to modify the behavior of the build. Three
 proxy-related, case-insensitive environment variables are treated specially:
 
-- ``http_proxy``
-- ``https_proxy``
-- ``no_proxy``
+* ``http_proxy``
+* ``https_proxy``
+* ``no_proxy``
 
 For a list of environment variables used to configure Maven, please refer to
 `Configuring Apache Maven <https://maven.apache.org/configure.html>`_.
+
 
 http_proxy
 ~~~~~~~~~~
@@ -71,11 +75,13 @@ http_proxy
 URL to proxy HTTP request to. The value is mapped to the settings file
 (``.parts/.m2/settings.xml``) under the proxy element.
 
+
 https_proxy
 ~~~~~~~~~~~
 
 URL to proxy HTTPS request to. The value is mapped to the settings file
 (``.parts/.m2/settings.xml``) under the proxy element.
+
 
 no_proxy
 ~~~~~~~~

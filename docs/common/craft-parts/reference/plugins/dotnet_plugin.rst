@@ -9,19 +9,24 @@ The ``dotnet`` plugin builds .NET projects using the ``dotnet`` tool.
 
     This plugin is superseded by the .NET plugin (v2).
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 dotnet-build-configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Type:** string
 
 The dotnet build configuration to use. The default value is ``"Release"``.
 
+
 dotnet-self-contained-runtime-identifier
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Type:** string
 
 Create a self contained .NET application using the specified Runtime Identifier.
@@ -57,6 +62,7 @@ generated executable.
 
 .. _dotnet-details-end:
 
+
 How it works
 ------------
 
@@ -69,8 +75,8 @@ During the build step the plugin performs the following actions:
   ``dotnet-self-contained-runtime-identifier`` if set.
 
 
-Examples
---------
+Example
+-------
 
 The following example uses the ``dotnet-sdk`` snap to build an application in
 ``Debug`` configuration, generating assets that are self-contained to execute on

@@ -8,22 +8,28 @@ The SCons plugin builds projects using SCons_.
 After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 scons-parameters
 ~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 Parameters to pass to SCons for building and installation.
+
 
 Environment variables
 ---------------------
 
 This plugin sets ``DESTDIR`` to ``$CRAFT_PART_INSTALL``.
+
 
 Dependencies
 ------------
@@ -50,6 +56,7 @@ During the build step the plugin performs the following actions:
 * Run ``scons`` with any ``scons-parameters`` that might have been set;
 * Run ``scons install`` with any ``scons-parameters`` that might have been set,
   the ``DESTDIR`` environment variable would affect the final installation path.
+
 
 Example
 -------

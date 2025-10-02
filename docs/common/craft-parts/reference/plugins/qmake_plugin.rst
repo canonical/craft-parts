@@ -9,33 +9,41 @@ by processing the `project files`_ files to be run with using `GNU Make`_.
 After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 qmake-parameters
 ~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 Parameters to configure the project using common qmake semantics.
 
 
-
 qmake-project-file
 ~~~~~~~~~~~~~~~~~~
+
 **Type:** string
-**Default:** ""
+
+**Default:** Unset
 
 The qmake project file to use. This is usually only needed if
 qmake can not determine what project file to use on its own.
+
 
 .. _qmake-major-version:
 
 qmake-major-version
 ~~~~~~~~~~~~~~~~~~~
+
 **Type:** int
+
 **Default:** 5
 
 Sets the Qt major version. The default is Qt 5, set to 6 for Qt 6 projects.
@@ -57,6 +65,7 @@ plugin as a ``build-packages`` entry.
 The plugin also sets up ``g++``.  Other compiler or library
 dependencies the source requires to build are to be provided.
 
+
 How it works
 ------------
 
@@ -70,8 +79,9 @@ During the build step the plugin performs the following actions:
 * ``make`` calls the ``install`` target with ``DESTDIR`` set to
   ``$CRAFT_PART_INSTALL``.
 
-Examples
---------
+
+Example
+-------
 
 The following snippet declares a part using the ``qmake`` plugin for a
 local source that contains a ``.pro`` project file. It specifies that the

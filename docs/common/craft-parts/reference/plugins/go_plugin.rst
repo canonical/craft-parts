@@ -14,27 +14,35 @@ Keys
 
 This plugin provides the following unique keys.
 
+
 go-buildtags
 ~~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 `Build tags`_ to use during the build. The default behavior is not to use any
 build tags.
 
+
 go-generate
 ~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 Parameters to pass to `go generate`_ before building. Each item on the list
 will be a separate ``go generate`` call. The default behavior is not to call
 ``go generate``.
 
+
 Environment variables
 ---------------------
 
 During build, this plugin sets ``GOBIN`` to ``${CRAFT_PART_INSTALL}/bin``.
+
 
 .. _go-details-begin:
 
@@ -58,6 +66,7 @@ snap or an Ubuntu package.
 
 .. _go-details-end:
 
+
 How it works
 ------------
 
@@ -72,8 +81,9 @@ During the build step the plugin performs the following actions:
 * Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
   ``--tags`` parameter.
 
-Examples
---------
+
+Example
+-------
 
 The following snippet declares a part using the ``go`` plugin. It uses the stable
 1.22 version of the ``go`` snap, enables the build tag ``experimental`` and calls

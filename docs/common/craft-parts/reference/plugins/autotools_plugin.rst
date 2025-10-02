@@ -16,15 +16,19 @@ sequence seen in most GNU projects.
 After a successful build, this plugin will install the generated binaries in
 ``$CRAFT_PART_INSTALL``.
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 autotools-bootstrap-parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 Bootstrap flags to pass to the build if a bootstrap file is found in
 the project. These can in some cases be seen by running ``./bootstrap
@@ -32,16 +36,20 @@ the project. These can in some cases be seen by running ``./bootstrap
 
 autotools-configure-parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 configure flags to pass to the build such as those shown by running
 ``./configure --help``.
+
 
 Environment variables
 ---------------------
 
 The plugin does not set any environment variables.
+
 
 Dependencies
 ------------
@@ -54,6 +62,7 @@ The plugin also sets up ``gcc`` as it is the most commonly used
 compiler for an Autotools based project.  Other compiler or library
 dependencies the source requires to build are to be provided.
 
+
 How it works
 ------------
 
@@ -62,19 +71,19 @@ During the build step the plugin performs the following actions:
 * If the source does not provide a ``configure`` file, one will be
   generated through the following options:
 
-  1. If an ``autogen.sh`` file is found in the sources it will be run
-     with ``NOCONFIGURE`` set to generate a ``configure`` file;
-  2. Alternatively, if a ``bootstrap`` file is found in the sources,
-     it will run the ``bootstrap`` with any set
-     ``autotools-bootstrap-parameters`` without *configuring* the
-     project;
-
+  - If an ``autogen.sh`` file is found in the sources it will be run
+    with ``NOCONFIGURE`` set to generate a ``configure`` file;
+  - Alternatively, if a ``bootstrap`` file is found in the sources,
+    it will run the ``bootstrap`` with any set
+    ``autotools-bootstrap-parameters`` without *configuring* the
+    project;
 * Call ``configure`` with any set ``autotools-configure-parameters``;
 * Call ``make`` to build;
 * Call ``make install`` with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
 
-Examples
---------
+
+Example
+-------
 
 The following snippet declares a part using the ``autotools``
 plugin. It sets GNU Hello as a source, which has a ``bootstrap``

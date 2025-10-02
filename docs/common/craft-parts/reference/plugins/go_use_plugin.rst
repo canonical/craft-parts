@@ -7,10 +7,12 @@ The Go Use plugin allows for setting up a `go workspace`_ for `Go`_ modules. It 
 a companion plugin meant to be used with the :ref:`Go plugin <craft_parts_go_plugin>`.
 Use of this plugin sets up ``go.work`` and affects all parts.
 
+
 Keys
 ----
 
 This plugin has no unique keys.
+
 
 .. _go-use-details-begin:
 
@@ -34,6 +36,7 @@ snap or an Ubuntu package.
 
 .. _go-use-details-end:
 
+
 How it works
 ------------
 
@@ -42,8 +45,9 @@ During the build step the plugin performs the following actions:
 * Setup a `go workspace`_ if ``go.work`` has not been setup;
 * Call ``go work use <source-dir>`` to add the source for the part to the workspace;
 
-Examples
---------
+
+Example
+-------
 
 The following snippet declares a parts named ``go-flags`` using the ``go-use`` plugin
 and a ``hello`` part that declares this ``go-flags``` in its ``go.mod`` using the
@@ -62,7 +66,7 @@ and a ``hello`` part that declares this ``go-flags``` in its ``go.mod`` using th
         plugin: go
         source: .
         after:
-        - go-flags
+          - go-flags
 
 
 .. _Build tags: https://pkg.go.dev/cmd/go#hdr-Build_constraints

@@ -1,31 +1,38 @@
 .. _craft_parts_npm_plugin:
 
 NPM Plugin
-=============
+===========
 
 The NPM plugin can be used for Node.js projects that use NPM (or Yarn) as the package
 manager.
+
 
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 npm-include-node
 ~~~~~~~~~~~~~~~~
+
 **Type:** boolean
+
 **Default:** False
 
 When set to ``true``, the plugin downloads and includes the Node.js binaries and its
 dependencies in the resulting package. If ``npm-include-node`` is ``true``, then
 ``npm-node-version`` must also be defined.
 
+
 .. _npm-node-version:
 
 npm-node-version
 ~~~~~~~~~~~~~~~~
+
 **Type:** string
-**Default:** ``null``
+
+**Default:** Unset
 
 Which version of Node.js to download and include in the final package.
 Required if ``npm-include-node`` is set to ``true``.
@@ -46,6 +53,7 @@ both satisfies the version range and also publishes binaries
 for the target architecture.
 
 .. warning::
+
     In the ``nvm`` utility, you can specify ``system`` to use the system
     Node.js package, but this is unsupported in this plugin, as we
     are using upstream Node.js binaries.
@@ -56,6 +64,7 @@ for the target architecture.
     hazard. If your project still requires a JavaScript runtime
     from nearly a decade ago, consider
     migrating to the modern Node.js runtime.
+
 
 Examples
 --------

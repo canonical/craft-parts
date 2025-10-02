@@ -11,6 +11,7 @@ any of the following things:
   :file:`pyproject.toml` file.
 - Install packages using :command:`pip`.
 
+
 .. _craft_parts_python_plugin-keywords:
 
 Keys
@@ -18,24 +19,31 @@ Keys
 
 This plugin provides the following unique keys.
 
+
 python-requirements
 ~~~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 List of paths to requirements files.
 
+
 python-constraints
 ~~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 List of paths to constraint files.
 
+
 python-packages
 ~~~~~~~~~~~~~~~
+
 **Type:** list
 
 A list of dependencies to install from PyPI. If needed, :command:`pip`,
 :command:`setuptools` and :command:`wheel` can be upgraded here.
+
 
 .. _craft_parts_python_plugin-environment_variables:
 
@@ -45,17 +53,22 @@ Environment variables
 This plugin also sets environment variables in the build environment. These are
 defined in the following sections.
 
+
 PARTS_PYTHON_INTERPRETER
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Default value:** python3
 
 The interpreter binary to search for in ``PATH``.
 
+
 PARTS_PYTHON_VENV_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~
-**Default value:** (empty string)
+
+**Default value:** Unset
 
 Additional arguments for venv.
+
 
 .. _python-details-begin:
 
@@ -77,6 +90,7 @@ variable.
 Use of ``python3-<python-package>`` in stage-packages will force the
 inclusion of the Python interpreter.
 
+
 .. _python-details-end:
 
 How it works
@@ -84,9 +98,9 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-* It creates a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
+* Create a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
   directory.
-* It uses :command:`pip` to install the required Python packages as configured
+* Use :command:`pip` to install the required Python packages as configured
   in the ``python-requirements``, ``python-constraints`` and
   ``python-packages`` keys.
 * If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
