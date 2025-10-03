@@ -556,7 +556,7 @@ def test_craftctl_set_argument_error(new_dir, partitions, capfd, mocker):
             ctx.execute(Action("foo", Step.PULL))
 
     captured = capfd.readouterr()
-    assert "invalid arguments to command 'set' (want key=value)" in captured.err
+    assert "invalid arguments. 'set' expected format <key>=<value>." in captured.err
 
 
 def test_craftctl_set_consume(new_dir, partitions, capfd):

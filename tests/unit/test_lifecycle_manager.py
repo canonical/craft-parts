@@ -216,6 +216,7 @@ class TestLifecycleManager:
                 track_stage_packages=False,
                 base_layer_dir=None,
                 base_layer_hash=None,
+                use_host_sources=False,
             )
         ]
 

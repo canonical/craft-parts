@@ -62,7 +62,7 @@ class TestChroot:
         for subdir in ["etc", "proc", "sys", "dev", "dev/shm"]:
             Path(new_root, subdir).mkdir()
 
-        chroot.chroot(new_root, target_func, "content")
+        chroot.chroot(new_root, target_func, args=("content",))
 
         assert Path("dir1/foo.txt").read_text() == "content"
         assert spy_process.mock_calls == [
@@ -95,7 +95,7 @@ class TestChroot:
         mocker.patch("os.chroot")
 
         Path("dir1").mkdir()
-        chroot.chroot(new_root, target_func, "content")
+        chroot.chroot(new_root, target_func, args=("content",))
 
         assert Path("dir1/foo.txt").read_text() == "content"
         assert spy_process.mock_calls == [
@@ -119,8 +119,8 @@ class TestChroot:
 
         Path("dir1").mkdir()
         Path("dir1/etc").mkdir()
-        Path("dir1/etc/resolv.con").symlink_to("whatever")
-        chroot.chroot(new_root, target_func, "content")
+        Path("dir1/etc/resolv.conf").symlink_to("whatever")
+        chroot.chroot(new_root, target_func, args=("content",))
 
         assert Path("dir1/foo.txt").read_text() == "content"
         assert spy_process.mock_calls == [
@@ -148,7 +148,7 @@ class TestChroot:
 
         Path("dir1").mkdir()
         Path("dir1/etc").mkdir()
-        chroot.chroot(new_root, target_func, "content")
+        chroot.chroot(new_root, target_func, args=("content",))
 
         assert Path("dir1/foo.txt").read_text() == "content"
         assert spy_process.mock_calls == [
