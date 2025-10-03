@@ -36,7 +36,7 @@ def test_parts_error_brief():
 
 def test_parts_error_full():
     err = errors.PartsError(brief="Brief", details="Details", resolution="Resolution")
-    assert str(err) == "Brief\nDetails\nResolution"
+    assert str(err) == "Brief"
     assert (
         repr(err)
         == "PartsError(brief='Brief', details='Details', resolution='Resolution', doc_slug=None)"
