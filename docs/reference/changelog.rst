@@ -28,8 +28,8 @@ New features:
 
 Bug fixes:
 
-- When installing packages in the overlay using ``overlay-packages``, the prepared
-  chroot is now properly dealing with mounts added by the packages installation.
+- When installing packages with ``overlay-packages``, the prepared
+  chroot now correctly handles mounts added during installation.
 
 Documentation:
 
