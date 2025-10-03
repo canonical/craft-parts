@@ -9,21 +9,28 @@ either using `GNU Make`_ or Ninja_.
 After a successful build, this plugin will install the generated
 binaries in ``$CRAFT_PART_INSTALL``.
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 cmake-parameters
 ~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 Parameters to configure the project using common CMake semantics.
 
+
 cmake-generator
 ~~~~~~~~~~~~~~~
+
 **Type:** string
+
 **Default:** "Unix Makefiles"
 
 Determine the tool to use to build.  Can be either set to ``Ninja`` or ``Unix
@@ -35,6 +42,7 @@ Environment variables
 
 The plugin sets the CMAKE_PREFIX_PATH_ to the stage directory.
 
+
 Dependencies
 ------------
 
@@ -45,6 +53,7 @@ provided by the plugin as a ``build-packages`` entry.
 
 The plugin also sets up ``gcc``.  Other compiler or library
 dependencies the source requires to build are to be provided.
+
 
 How it works
 ------------
@@ -60,8 +69,9 @@ During the build step the plugin performs the following actions:
 * ``cmake`` calls the ``install`` target with ``DESTDIR`` set to
   ``$CRAFT_PART_INSTALL``.
 
-Examples
---------
+
+Example
+-------
 
 The following snippet declares a part using the ``cmake`` plugin. It
 sets the CMAKE_BUILD_TYPE_ to ``RelWithDebInfo`` to generate debug
@@ -75,6 +85,7 @@ symbols from the build:
         plugin: cmake
         cmake-parameters:
           - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
 
 .. _GNU Make: https://www.gnu.org/software/make/
 .. _Ninja: https://ninja-build.org/

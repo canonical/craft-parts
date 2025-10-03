@@ -7,18 +7,21 @@ The .NET plugin (v2) builds .NET projects using the `dotnet
 <https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet>`_ tool. It's the successor
 to the .NET plugin.
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 .. _craft_parts_dotnet_v2_plugin-global_flags:
 
-Global Flags
+Global flags
 ~~~~~~~~~~~~
 
 dotnet-configuration
 ^^^^^^^^^^^^^^^^^^^^
+
 **Type:** string
 
 **Default:** ``"Release"``
@@ -26,8 +29,10 @@ dotnet-configuration
 The .NET build configuration to use. Possible values are ``"Debug"`` and
 ``"Release"``.
 
+
 dotnet-project
 ^^^^^^^^^^^^^^
+
 **Type:** string
 
 **Default:** Unset
@@ -36,8 +41,10 @@ The path to the solution or project file to build, relative to the root of the
 snap source. If a path isn't specified, MSBuild will search the root of the
 source for a file with the ``.*proj`` or ``.sln`` extension.
 
+
 dotnet-properties
 ^^^^^^^^^^^^^^^^^
+
 **Type:** dict of strings to strings
 
 **Default:** Unset
@@ -45,10 +52,12 @@ dotnet-properties
 A list of MSBuild properties to be appended to the restore, build, and publish
 commands in the format of ``-p:<Key>=<Value>``.
 
+
 .. _craft_parts_dotnet_v2_plugin-dotnet_self_contained:
 
 dotnet-self-contained
 ^^^^^^^^^^^^^^^^^^^^^
+
 **Type:** boolean
 
 **Default:** ``False``
@@ -65,8 +74,10 @@ build, such that:
 | ``arm64``                    | ``linux-arm64``        |
 +------------------------------+------------------------+
 
+
 dotnet-verbosity
 ^^^^^^^^^^^^^^^^
+
 **Type:** string
 
 **Default:** ``"normal"``
@@ -74,10 +85,12 @@ dotnet-verbosity
 Sets the MSBuild log output verbosity for the build. Possible values are:
 ``q[uiet]``, ``m[inimal]``, ``n[ormal]``, ``d[etailed]``, and ``diag[nostic]``.
 
+
 .. _craft_parts_dotnet_v2_plugin-dotnet_version:
 
 dotnet-version
 ^^^^^^^^^^^^^^
+
 **Type:** string
 
 **Default:** Unset
@@ -89,13 +102,15 @@ the application.
 See the :ref:`craft_parts_dotnet_v2_plugin-details-begin` section for a more
 detailed explanation of this key.
 
+
 .. _craft_parts_dotnet_v2_plugin-restore_flags:
 
-Restore Flags
+Restore flags
 ~~~~~~~~~~~~~
 
 dotnet-restore-configfile
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 **Type:** string
 
 **Default:** Unset
@@ -105,8 +120,10 @@ only the settings from this file will be used. If not specified, the hierarchy
 of configuration files from the current directory will be used. For more
 information, see `Common NuGet Configurations`_.
 
+
 dotnet-restore-properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 **Type:** dict of strings to strings
 
 **Default:** Unset
@@ -114,8 +131,10 @@ dotnet-restore-properties
 A list of MSBuild properties to be appended to the restore command in the
 format of ``-p:<Key>=<Value>``.
 
+
 dotnet-restore-sources
 ^^^^^^^^^^^^^^^^^^^^^^
+
 **Type:** list of strings
 
 **Default:** Unset
@@ -124,9 +143,10 @@ Specifies the URIs of the NuGet package sources to use during the restore
 operation. This setting overrides all of the sources specified in the
 *nuget.config* files.
 
+
 .. _craft_parts_dotnet_v2_plugin-build_flags:
 
-Build Flags
+Build flags
 ~~~~~~~~~~~
 
 dotnet-build-framework
@@ -139,8 +159,10 @@ dotnet-build-framework
 Compiles for a specific `framework`_. The framework must be defined in the
 `project file`_. Examples: ``net7.0``, ``net462``.
 
+
 dotnet-build-properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 **Type:** dict of strings to strings
 
 **Default:** Unset
@@ -148,19 +170,22 @@ dotnet-build-properties
 A list of MSBuild properties to be appended to the build command in the format
 of ``-p:<Key>=<Value>``.
 
+
 .. _craft_parts_dotnet_v2_plugin-publish_flags:
 
-Publish Flags
+Publish flags
 ~~~~~~~~~~~~~
 
 dotnet-publish-properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 **Type:** dict of strings to strings
 
 **Default:** Unset
 
 A list of MSBuild properties to be appended to the publish command in the
 format of ``-p:<Key>=<Value>``.
+
 
 .. _craft_parts_dotnet_v2_plugin-details-begin:
 
@@ -196,6 +221,7 @@ Runtime installed in the system.
 
 .. _craft_parts_dotnet_v2_plugin-details-end:
 
+
 How it works
 ------------
 
@@ -213,8 +239,8 @@ During the build step the plugin performs the following actions:
   The generated assets are placed by default into ``${CRAFT_PART_INSTALL}``.
 
 
-Examples
---------
+Example
+-------
 
 The following example uses the .NET (v2) plugin to build an application with
 .NET 8 using the debug configuration, generating assets that are

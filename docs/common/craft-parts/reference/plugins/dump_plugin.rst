@@ -7,9 +7,9 @@ The Dump plugin can be used for any project where you want to include existing
 files from somewhere and keep the content as is. Its source can be a local
 directory, a remote repository, or a URL. Common use cases include:
 
-- Include static files like scripts or media from a local directory.
-- Download and unpack pre-compiled proprietary software from a remote URL.
-- Use git to clone a remote SDK, dataset, or model.
+* Include static files like scripts or media from a local directory.
+* Download and unpack pre-compiled proprietary software from a remote URL.
+* Use git to clone a remote SDK, dataset, or model.
 
 
 Keys

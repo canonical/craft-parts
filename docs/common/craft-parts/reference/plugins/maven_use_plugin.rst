@@ -8,10 +8,12 @@ The Maven Use plugin packages `Maven`_-based projects and, unlike the
 repository`_. From this repository, the artifacts can be accessed by any other parts
 using the Maven or Maven Use plugins.
 
+
 Keys
 ----
 
 This plugin has no unique keys.
+
 
 .. _maven_use_self-contained_start:
 
@@ -32,6 +34,7 @@ see :ref:`maven_use_version_rewriting`.
 
 .. _maven_use_details_begin:
 
+
 Dependencies
 ------------
 
@@ -46,6 +49,7 @@ be used in the build step. This can be useful, for example, in cases where a spe
 unreleased version of Maven is desired but unavailable as a snap or Ubuntu package.
 
 .. _maven_use_details_end:
+
 
 .. _maven_use_version_rewriting:
 
@@ -70,6 +74,7 @@ release following semantic versioning is selected.
 Finally, if no releases with semantic versions exist locally, the release that comes
 last alphabetically is selected.
 
+
 How it works
 ------------
 
@@ -78,9 +83,10 @@ During the build step the plugin performs the following actions:
 * Creates a Maven settings file that configures proxy settings, points to the local
   Maven repository created by Craft Parts, and, if the ``self-contained`` build
   attribute is declared, disables network connections.
-* Updates any of the project's :file:`pom.xml` files to deploy the final artifacts to
+* Updates any of the project's ``pom.xml`` files to deploy the final artifacts to
   the local repository.
 * Calls ``maven deploy`` to build and deploy the project to the local repository.
+
 
 Examples
 --------
@@ -108,7 +114,7 @@ must be staged. This dependency is handled by declaring that ``java-main`` must 
 
 The following snippet declares two parts: ``java-jacoco``, which uses the ``maven-use``
 plugin, and ``java-main``. To restrict access to the Maven Central repository, both
-parts declare the ``self-contained`` build attribute. The :file:`pom.xml` file of
+parts declare the ``self-contained`` build attribute. The ``pom.xml`` file of
 ``java-main`` declares ``java-jacoco`` as a dependency, which is handled by declaring
 that ``java-main`` must build ``after`` the ``java-jacoco`` part.
 
@@ -131,6 +137,7 @@ that ``java-main`` must build ``after`` the ``java-jacoco`` part.
           - self-contained
         after:
           - java-jacoco
+
 
 .. _Maven repository: https://maven.apache.org/guides/introduction/introduction-to-repositories.html
 .. _Maven: https://maven.apache.org/index.html

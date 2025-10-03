@@ -7,10 +7,12 @@ The Cargo Use plugin sets up a local `cargo registry`_ for `Rust`_ crates. It's
 a companion plugin meant to be used with the :ref:`Rust plugin
 <craft_parts_rust_plugin>`. It affects all Rust parts in a project.
 
+
 Keys
 ----
 
-This plugin provides the following unique keys.
+This plugin has no unique keys.
+
 
 .. _cargo-use-details-begin:
 
@@ -21,17 +23,19 @@ The ``cargo-use`` plugin has no dependencies.
 
 .. _cargo-use-details-end:
 
+
 How it works
 ------------
 
 During the build step the plugin performs the following actions:
 
-* Setup a local `cargo registry`_ if it has not been setup;
+* Set up a local `cargo registry`_ if it has not been setup;
 * Copy sources from ``<source-dir>`` to the local cargo registry dir;
 * Add an empty ``.cargo-checksum.json`` file to satisfy registry requirements;
 
-Examples
---------
+
+Example
+-------
 
 The following snippet declares a pair of parts.
 

@@ -19,25 +19,32 @@ After a successful build, this plugin will:
 
 .. _craft_parts_ant_plugin_post_build_end:
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 ant-build-targets
 ~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 The ant targets to build. These are directly passed to the ``ant`` command line.
 
+
 ant-build-file
 ~~~~~~~~~~~~~~
+
 **Type:** str
 
 The name of the main XML build file. Defaults to ``build.xml``.
 
+
 ant-properties
 ~~~~~~~~~~~~~~
+
 **Type:** dict of strings to strings
 
 A series of key: value pairs that are passed to ``ant`` as properties using the
@@ -52,6 +59,7 @@ to configure proxy access.
 
 Please refer to `Running Apache Ant <https://ant.apache.org/manual/running.html>`_ for
 a list of environment variables used by Ant.
+
 
 .. _ant-details-begin:
 
@@ -89,5 +97,6 @@ build, respectively.
         stage-packages: [default-jre-headless]
         ant-build-file: "project-build.xml"
         ant-build-targets: [compile, jar]
+
 
 .. _Apache Ant: https://ant.apache.org/

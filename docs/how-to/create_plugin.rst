@@ -13,8 +13,8 @@ Create your plugin file
 
 The first step in creating a plugin is deciding where it will live. If you're
 adding a plugin directly to Craft Parts, then it should go in
-:file:`craft_parts/plugins`. For re-creating the ``dump`` plugin, you can put
-it in :file:`craft_parts/plugins/new_dump_plugin.py`.
+``craft_parts/plugins``. For re-creating the ``dump`` plugin, you can put
+it in ``craft_parts/plugins/new_dump_plugin.py``.
 
 
 Imports
@@ -142,7 +142,7 @@ Add it to the lifecycle manager
 Now that you have your very own plugin, the last step is to make the lifecycle
 manager aware of this plugin. Since you created your plugin directly in Craft
 Parts, all that's needed is to add it to a dictionary in
-:file:`craft_parts/plugins/plugins.py`:
+``craft_parts/plugins/plugins.py``:
 
 .. code:: python
 

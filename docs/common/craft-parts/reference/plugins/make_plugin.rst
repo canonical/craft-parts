@@ -8,15 +8,19 @@ build with `GNU Make`_. After a successful build, this plugin will run
 the ``install`` ``Makefile`` target with ``DESTDIR`` set to
 ``$CRAFT_PART_INSTALL``.
 
+
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 make-parameters
 ~~~~~~~~~~~~~~~
+
 **Type:** list of strings
-**Default:** []
+
+**Default:** Unset
 
 Options to pass to make.
 
@@ -40,6 +44,7 @@ During the build step, the plugin performs the following actions:
 * Call ``make install`` with the ``DESTDIR`` set to the installation
   directory defined for the part.
 
+
 Example
 -------
 
@@ -58,5 +63,6 @@ is set using ``make-parameters``:
           - CC=clang
         build-packages:
           - clang
+
 
 .. _GNU Make: https://www.gnu.org/software/make/
