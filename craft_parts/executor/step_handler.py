@@ -29,6 +29,7 @@ from typing import TextIO
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
+from craft_parts.overlays import chroot
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
@@ -486,6 +487,35 @@ class StepHandler:
                     message=f"invalid arguments to command {cmd_name!r}",
                 )
             self._execute_builtin_handler(step)
+
+        elif cmd_name == "chroot":
+            if self._step_info.step != step.OVERLAY:
+                raise invalid_control_api_call(
+                    message=f"{cmd_name!r} can only run in overlay step",
+                )
+
+            if len(cmd_args) < 1:
+                raise invalid_control_api_call(
+                    message=(
+                        f"invalid arguments. {cmd_name!r} requires at least one command."
+                    ),
+                )
+
+            target_dir = self._part.dirs.overlay_mount_dir
+
+            def execute_cmd(cmd_args: list[str]) -> None:
+                logger.debug(f"Executing {cmd_args} in root {target_dir}")
+                process.run(
+                    cmd_args,
+                    check=True,
+                    stdout=self._stdout,
+                    stderr=self._stderr,
+                )
+
+            chroot.chroot(
+                target_dir, execute_cmd, args=(cmd_args,), use_host_sources=True
+            )
+
         elif cmd_name == "set":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(
@@ -495,7 +525,7 @@ class StepHandler:
             if "=" not in cmd_args[0]:
                 raise invalid_control_api_call(
                     message=(
-                        f"invalid arguments to command {cmd_name!r} (want key=value)"
+                        f"invalid arguments. {cmd_name!r} expected format <key>=<value>"
                     ),
                 )
 
