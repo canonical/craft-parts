@@ -713,7 +713,6 @@ def test_craftctl_chroot(new_dir, partitions, mocker):
           foo:
             plugin: nil
             overlay-script: |
-              
               craftctl chroot foo bar
         """
     )

@@ -25,6 +25,8 @@ New features:
 
 - Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
   A ``mount`` value cannot be a parent of any preceding ``mount`` values.
+- Introduced a new sub command called ``chroot`` to ``craftctl`` which allows users to
+  run a command inside the overlay of a part.
 
 Documentation:
 

@@ -469,7 +469,7 @@ class StepHandler:
             cmd_name, cmd_args, step=step, scriptlet_name=scriptlet_name
         )
 
-    def _process_api_commands(
+    def _process_api_commands(  # noqa: PLR0912
         self, cmd_name: str, cmd_args: list[str], *, step: Step, scriptlet_name: str
     ) -> str:
         """Invoke API command actions."""
