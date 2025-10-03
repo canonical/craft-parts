@@ -21,7 +21,7 @@ import multiprocessing
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from craft_parts.utils import os_utils
 
@@ -41,7 +41,7 @@ def chroot(
     target: Callable[..., _T],
     mount_package_sources: bool = False,  # noqa: FBT001, FBT002
     args: tuple[Any] = (),  # type: ignore  # noqa: PGH003
-    kwargs: Mapping[str, Any] = {},
+    kwargs: Any = {},
 ) -> Any:  # noqa: ANN401
     """Execute a callable in a chroot environment.
 
