@@ -64,7 +64,7 @@ class Executor:
         ignore_patterns: list[str] | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: LayerHash | None = None,
-        use_host_sources: bool = False,
+        mount_package_sources: bool = False,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -74,7 +74,7 @@ class Executor:
         self._base_layer_hash = base_layer_hash
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
-        self._use_host_sources = use_host_sources
+        self._mount_package_sources = mount_package_sources
 
         # The cache layer level is set to the first part that doesn't organize
         # to the overlay coming after a part that organizes to the overlay.
@@ -92,7 +92,7 @@ class Executor:
             project_info=self._project_info,
             part_list=self._part_list,
             base_layer_dir=base_layer_dir,
-            use_host_sources=use_host_sources,
+            mount_package_sources=mount_package_sources,
             cache_level=cache_level,
         )
 

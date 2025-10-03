@@ -39,7 +39,7 @@ _T = TypeVar("_T")
 def chroot(
     path: Path,
     target: Callable[..., _T],
-    use_host_sources: bool = False,  # noqa: FBT001, FBT002
+    mount_package_sources: bool = False,  # noqa: FBT001, FBT002
     args: tuple[Any] = (),  # type: ignore  # noqa: PGH003
     kwargs: Mapping[str, Any] = {},
 ) -> Any:  # noqa: ANN401
@@ -64,14 +64,14 @@ def chroot(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
-    _setup_chroot(path, use_host_sources)
+    _setup_chroot(path, mount_package_sources)
     try:
         child.start()
         res, err = parent_conn.recv()
         child.join()
     finally:
         logger.debug("[pid=%d] clean up chroot", os.getpid())
-        _cleanup_chroot(path, use_host_sources)
+        _cleanup_chroot(path, mount_package_sources)
 
     if isinstance(err, str):
         raise errors.OverlayChrootExecutionError(err)
@@ -121,14 +121,14 @@ def _host_compatible_chroot(path: Path) -> None:
     _compare_os_release(host_os_release, chroot_os_release)
 
 
-def _setup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
+def _setup_chroot(path: Path, mount_package_sources: bool) -> None:  # noqa: FBT001
     """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
         # base configuration
         _setup_chroot_mounts(path, _linux_mounts)
 
-        if use_host_sources:
+        if mount_package_sources:
             _host_compatible_chroot(path)
 
             _setup_chroot_mounts(path, _ubuntu_apt_mounts)
@@ -136,13 +136,13 @@ def _setup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
     logger.debug("chroot setup complete")
 
 
-def _cleanup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
+def _cleanup_chroot(path: Path, mount_package_sources: bool) -> None:  # noqa: FBT001
     """Clean the chroot environment after executing the target function."""
     logger.debug("cleanup chroot: %r", path)
     if sys.platform == "linux":
         _cleanup_chroot_mounts(path, _linux_mounts)
 
-        if use_host_sources:
+        if mount_package_sources:
             # Note: no need to check if host is compatible since
             # we already called _host_compatible_chroot in _setup_chroot
             _cleanup_chroot_mounts(path, _ubuntu_apt_mounts)

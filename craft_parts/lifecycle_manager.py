@@ -113,7 +113,7 @@ class LifecycleManager:
         project_vars: dict[str, str] | ProjectVarInfo | None = None,
         partitions: list[str] | None = None,
         filesystem_mounts: dict[str, Any] | None = None,
-        use_host_sources: bool = False,
+        mount_package_sources: bool = False,
         usrmerged_by_default: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
@@ -215,7 +215,7 @@ class LifecycleManager:
             track_stage_packages=track_stage_packages,
             base_layer_dir=base_layer_dir,
             base_layer_hash=layer_hash,
-            use_host_sources=use_host_sources,
+            mount_package_sources=mount_package_sources,
         )
         self._project_info = project_info
         # pylint: enable=too-many-locals
