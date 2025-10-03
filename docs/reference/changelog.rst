@@ -26,6 +26,11 @@ New features:
 - Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
   A ``mount`` value cannot be a parent of any preceding ``mount`` values.
 
+Bug fixes:
+
+- When installing packages with ``overlay-packages``, the prepared
+  chroot now correctly handles mounts added during installation.
+
 Documentation:
 
 - The Git submodule containing documentation components has been renamed to

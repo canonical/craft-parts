@@ -76,12 +76,16 @@ class TestChroot:
             call("proc", f"{new_root}/proc", "-tproc"),
             call("sysfs", f"{new_root}/sys", "-tsysfs"),
             call("/dev", f"{new_root}/dev", "--rbind", "--make-rprivate"),
+            call(f"{new_root}/dev", "--make-rprivate"),
+            call(f"{new_root}/sys", "--make-rprivate"),
+            call(f"{new_root}/proc", "--make-rprivate"),
+            call(f"{new_root}/etc/resolv.conf", "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
             call(f"{new_root}/dev", "--recursive", "--lazy"),
-            call(f"{new_root}/sys"),
-            call(f"{new_root}/proc"),
-            call(f"{new_root}/etc/resolv.conf"),
+            call(f"{new_root}/sys", "--recursive"),
+            call(f"{new_root}/proc", "--recursive"),
+            call(f"{new_root}/etc/resolv.conf", "--recursive"),
         ]
 
     def test_chroot_no_mountpoints(self, mocker, new_dir):
@@ -131,9 +135,10 @@ class TestChroot:
         ]
         assert mock_mount.mock_calls == [
             call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
+            call(f"{new_root}/etc/resolv.conf", "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
-            call(f"{new_root}/etc/resolv.conf"),
+            call(f"{new_root}/etc/resolv.conf", "--recursive"),
         ]
 
     def test_chroot_no_resolv_conf(self, mocker, new_dir):
@@ -159,9 +164,10 @@ class TestChroot:
         ]
         assert mock_mount.mock_calls == [
             call("/etc/resolv.conf", f"{new_root}/etc/resolv.conf", "--bind"),
+            call(f"{new_root}/etc/resolv.conf", "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
-            call(f"{new_root}/etc/resolv.conf"),
+            call(f"{new_root}/etc/resolv.conf", "--recursive"),
         ]
 
     def test_runner(self, fake_conn, mock_chdir, mock_chroot):
