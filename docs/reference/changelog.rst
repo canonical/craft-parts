@@ -25,6 +25,7 @@ New features:
 
 - Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
   A ``mount`` value cannot be a parent of any preceding ``mount`` values.
+- The Meson plugin now calls ``meson setup`` during build.
 
 Bug fixes:
 
@@ -46,7 +47,6 @@ Documentation:
       git clean -ffd
 
 For a complete list of commits, check out the `2.25.0`_ release on GitHub.
-
 
 .. _release-2.24.0:
 
