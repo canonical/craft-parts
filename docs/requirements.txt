@@ -148,7 +148,7 @@ pydantic==2.10.6
     # via
     #   -r requirements.txt
     #   sphinx-pydantic
-pydantic-core==2.27.2
+pydantic-core==2.40.0
     # via
     #   -r requirements.txt
     #   pydantic
