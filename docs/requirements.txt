@@ -115,7 +115,7 @@ markdown-it-py==3.0.0
     #   -r requirements.txt
     #   mdit-py-plugins
     #   myst-parser
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   -c (workspace)
     #   -r requirements.txt
@@ -168,7 +168,7 @@ python-distutils-extra @ https://launchpad.net/ubuntu/+archive/primary/+sourcefi
     # via -r requirements.txt
 pyxdg==0.28
     # via -r requirements.txt
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -c (workspace)
     #   -r requirements.txt
