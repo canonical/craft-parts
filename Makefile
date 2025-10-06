@@ -228,7 +228,7 @@ install-build-snaps: install-chisel install-go install-core20 install-dotnet ins
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
-install-build-deps: _gh-runner-clear-space install-lint-build-deps install-build-snaps
+install-build-deps: _gh-runner-clean install-lint-build-deps install-build-snaps
 ifeq ($(APT_PACKAGES),)
 else ifeq ($(shell which apt-get),)
 	$(warning Cannot install build dependencies without apt.)
@@ -273,8 +273,8 @@ else
 	sudo snap install rustup --classic
 endif
 
-.PHONY: _gh-runner-clear-space
-_gh-runner-clear-space:
+.PHONY: _gh-runner-clean
+_gh-runner-clean:
 # Prepare and fix issues on Github-hosted runners.
 ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Delete the (huge) Android SDK in the background.
@@ -283,4 +283,11 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# See: https://github.com/actions/runner-images/issues/13023
 	nohup sudo rm -rf /usr/local/bin/cmake /usr/local/bin/cmake-gui /usr/local/bin/ccmake /usr/local/bin/ctest /usr/local/bin/cpack > /dev/null &
 	nohup sudo rm -rf /usr/local/share/cmake-4* > /dev/null &
+	# Remove Github-installed JDK 25 that's not in the repos.
+	# https://github.com/actions/runner-images/issues/13138
+	sudo $(APT) purge temurin-*-jdk || true
+	echo "JAVA_HOME=" >> "${GITHUB_ENV}"
+	# Delete the adoptium repository:
+	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
+	sudo rm -f /etc/apt/sources.list.d/adoptium.list
 endif
