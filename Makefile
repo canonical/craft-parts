@@ -286,6 +286,7 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Remove Github-installed JDK 25 that's not in the repos.
 	# https://github.com/actions/runner-images/issues/13138
 	sudo $(APT) purge temurin-*-jdk || true
+	echo "JAVA_HOME=" >> "${GITHUB_ENV}"
 	# Delete the adoptium repository:
 	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
 	sudo rm -f /etc/apt/sources.list.d/adoptium.list
