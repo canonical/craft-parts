@@ -51,7 +51,6 @@ Dependencies
 The Python plugin (v2) needs the ``python3`` executable, but it does not provision it
 itself and won't use a system-wide executable.
 
-The recommended way of providing ``python3`` is to install it as a ``stage-package``.
 The recommended way of providing a Python executable to the plugin is to install it as
 a ``stage-package``. Alternatively, a part can be added to build ``python3`` from
 source and stage the binary. Then, the consuming part can declare its dependence on the
