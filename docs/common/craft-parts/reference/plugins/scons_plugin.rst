@@ -51,7 +51,7 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-#. Run ``scons`` with any ``scons-parameters`` that might have been set;
+#. Run ``scons`` with any ``scons-parameters`` that might have been set.
 #. Run ``scons install`` with any ``scons-parameters`` that might have been set, the
    ``DESTDIR`` environment variable would affect the final installation path.
 

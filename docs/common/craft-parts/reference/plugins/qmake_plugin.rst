@@ -70,8 +70,8 @@ During the build step the plugin performs the following actions:
 #. Run ``qmake`` in the build directory to setup the ``Makefiles``, the project is
    configured with any ``qmake-parameters`` that might have been set. If
    ``qmake-project-file`` has been set, ``qmake`` refers to the defined file to
-   configure the project;
-#. ``make`` is run to build the source;
+   configure the project.
+#. ``make`` is run to build the source.
 #. ``make`` calls the ``install`` target with ``DESTDIR`` set to
    ``$CRAFT_PART_INSTALL``.
 
