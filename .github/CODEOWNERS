@@ -6,7 +6,7 @@
 *       @cmatsuoka
 
 # Documentation owners
-/docs/  @medubelko @jahn-junior @cmatsuoka
+/docs/  @canonical/starcraft-authors @cmatsuoka
 
 # Finally, all CODEOWNERS changes need to be approved by The Man, Himself.
-/.github/CODEOWNERS     @sergiusens
+/.github/CODEOWNERS     @steinbro
