@@ -211,7 +211,7 @@ During the build step the plugin performs the following actions:
 
 #. Call ``dotnet restore`` with the relevant
    :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
- v :ref:`restore-specific flags <craft_parts_dotnet_v2_plugin-restore_flags>`.
+   :ref:`restore-specific flags <craft_parts_dotnet_v2_plugin-restore_flags>`.
 #. Call ``dotnet build --no-restore`` with the relevant
    :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
    :ref:`build-specific flags <craft_parts_dotnet_v2_plugin-build_flags>`.
