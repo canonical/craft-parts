@@ -3,10 +3,9 @@
 Go plugin
 =========
 
-The Go plugin builds `Go`_ modules, which are collections of packages stored
-in a file tree containing a ``go.mod`` file at the root. After a successful
-build, this plugin will install the generated binaries in
-``$CRAFT_PART_INSTALL/bin``.
+The Go plugin builds `Go`_ modules, which are collections of packages stored in a file
+tree containing a ``go.mod`` file at the root. After a successful build, this plugin
+will install the generated binaries in ``$CRAFT_PART_INSTALL/bin``.
 
 
 Keys
@@ -20,8 +19,8 @@ go-buildtags
 
 **Type:** list of strings
 
-`Build tags`_ to use during the build. The default behavior is not to use any
-build tags.
+`Build tags`_ to use during the build. The default behavior is not to use any build
+tags.
 
 
 go-generate
@@ -29,9 +28,8 @@ go-generate
 
 **Type:** list of strings
 
-Parameters to pass to `go generate`_ before building. Each item on the list
-will be a separate ``go generate`` call. The default behavior is not to call
-``go generate``.
+Parameters to pass to `go generate`_ before building. Each item on the list will be a
+separate ``go generate`` call. The default behavior is not to call ``go generate``.
 
 
 Environment variables
@@ -81,9 +79,9 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
-The following snippet declares a part using the ``go`` plugin. It uses the stable
-1.22 version of the ``go`` snap, enables the build tag ``experimental`` and calls
-``go generate ./cmd`` before building:
+The following snippet declares a part using the ``go`` plugin. It uses the stable 1.22
+version of the ``go`` snap, enables the build tag ``experimental`` and calls ``go
+generate ./cmd`` before building:
 
 .. code-block:: yaml
 

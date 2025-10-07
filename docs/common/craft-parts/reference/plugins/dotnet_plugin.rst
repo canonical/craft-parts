@@ -31,10 +31,9 @@ dotnet-self-contained-runtime-identifier
 
 **Type:** string
 
-Create a self contained .NET application using the specified Runtime Identifier.
-See the `Runtime Identifier catalogue`_ for a list of possible values. This
-key has no default value, meaning that it won't create self-contained
-executables unless set.
+Create a self contained .NET application using the specified Runtime Identifier. See the
+`Runtime Identifier catalogue`_ for a list of possible values. This key has no default
+value, meaning that it won't create self-contained executables unless set.
 
 
 .. _dotnet-details-begin:
@@ -58,9 +57,9 @@ in cases where a specific, unreleased version of ``dotnet`` is desired but unava
 as a snap or an Ubuntu package.
 
 Finally, whether the resulting built artefact will need the presence of the .NET runtime
-to execute depends on the value of the ``dotnet-self-contained-runtime-identifier``
-key. Self-contained builds bundle the necessary portions of the runtime in the
-generated executable.
+to execute depends on the value of the ``dotnet-self-contained-runtime-identifier`` key.
+Self-contained builds bundle the necessary portions of the runtime in the generated
+executable.
 
 .. _dotnet-details-end:
 
@@ -80,9 +79,9 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
-The following example uses the ``dotnet-sdk`` snap to build an application in
-``Debug`` configuration, generating assets that are self-contained to execute on
-``linux-x64`` environments.
+The following example uses the ``dotnet-sdk`` snap to build an application in ``Debug``
+configuration, generating assets that are self-contained to execute on ``linux-x64``
+environments.
 
 
 .. code-block:: yaml

@@ -3,11 +3,11 @@
 CMake plugin
 ============
 
-The CMake plugin configures projects using CMake_ and builds them
-either using `GNU Make`_ or Ninja_.
+The CMake plugin configures projects using CMake_ and builds them either using `GNU
+Make`_ or Ninja_.
 
-After a successful build, this plugin will install the generated
-binaries in ``$CRAFT_PART_INSTALL``.
+After a successful build, this plugin will install the generated binaries in
+``$CRAFT_PART_INSTALL``.
 
 
 Keys
@@ -44,13 +44,13 @@ The plugin sets the CMAKE_PREFIX_PATH_ to the stage directory.
 Dependencies
 ------------
 
-The CMake plugin needs the ``cmake`` executable to configure, and
-``make`` or ``ninja`` executable to build. ``make`` and ``ninja`` are
-dependent on the selected ``cmake-generator``. These dependencies are
-provided by the plugin as a ``build-packages`` entry.
+The CMake plugin needs the ``cmake`` executable to configure, and ``make`` or ``ninja``
+executable to build. ``make`` and ``ninja`` are dependent on the selected
+``cmake-generator``. These dependencies are provided by the plugin as a
+``build-packages`` entry.
 
-The plugin also sets up ``gcc``.  Other compiler or library
-dependencies the source requires to build are to be provided.
+The plugin also sets up ``gcc``.  Other compiler or library dependencies the source
+requires to build are to be provided.
 
 
 How it works
@@ -58,12 +58,11 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-#. Run ``cmake`` in the build directory referring to the pulled source
-   directory (this plugin runs an out of tree build). The preferred
-   generator is set at this stage, and the project is configured with
-   any ``cmake-parameters`` that might have been set.
-#. ``cmake --build`` is run to build the source, ``cmake`` itself takes
-   care of calling ``make`` or ``ninja``;
+#. Run ``cmake`` in the build directory referring to the pulled source directory (this
+   plugin runs an out of tree build). The preferred generator is set at this stage, and
+   the project is configured with any ``cmake-parameters`` that might have been set.
+#. ``cmake --build`` is run to build the source, ``cmake`` itself takes care of calling
+   ``make`` or ``ninja``.
 #. ``cmake`` calls the ``install`` target with ``DESTDIR`` set to
    ``$CRAFT_PART_INSTALL``.
 
@@ -71,9 +70,8 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
-The following snippet declares a part using the ``cmake`` plugin. It
-sets the CMAKE_BUILD_TYPE_ to ``RelWithDebInfo`` to generate debug
-symbols from the build:
+The following snippet declares a part using the ``cmake`` plugin. It sets the
+CMAKE_BUILD_TYPE_ to ``RelWithDebInfo`` to generate debug symbols from the build:
 
 .. code-block:: yaml
 

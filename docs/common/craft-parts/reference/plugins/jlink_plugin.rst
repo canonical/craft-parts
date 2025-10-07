@@ -53,8 +53,8 @@ setting the ``JAVA_HOME`` environment variable.
           - JAVA_HOME: /usr/jvm/java-21-openjdk-${CRAFT_ARCH_BUILD_FOR}
 
 
-The user is expected to stage OpenJDK dependencies either by installing
-an appropriate OpenJDK slice:
+The user is expected to stage OpenJDK dependencies either by installing an appropriate
+OpenJDK slice:
 
 .. code-block:: yaml
 
@@ -100,12 +100,11 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-#. Finds all JAR files in the staging area or selects jars specified in
-   ``jlink-jars``.
-#. Unpacks JAR files to the temporary location and concatenates all embedded jars
-   into `jdeps <jdeps_>`_ classpath.
-#. Runs `jdeps <jdeps_>`_ to discover Java modules required for the staged jars.
-#. Runs `jlink <jlink_>`_ to create a runtime image from the build JDK.
+#. Finds all JAR files in the staging area or selects jars specified in ``jlink-jars``.
+#. Unpacks JAR files to the temporary location and concatenates all embedded jars into
+   `jdeps`_ classpath.
+#. Runs `jdeps`_ to discover Java modules required for the staged jars.
+#. Runs `jlink`_ to create a runtime image from the build JDK.
 
 
 .. _`jdeps`: https://docs.oracle.com/en/java/javase/21/docs/specs/man/jdeps.html

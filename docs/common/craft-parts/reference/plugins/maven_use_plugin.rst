@@ -27,8 +27,8 @@ plugins, must then be provided as build packages or in an earlier part.
 When this attribute is declared, Maven Use may rewrite the version specification of
 project dependencies based on what is locally available. This can be avoided by
 provisioning the specified version prior to build time — for example, by building it
-with the Maven Use plugin in an earlier part. For more information on this behavior,
-see :ref:`maven_use_version_rewriting`.
+with the Maven Use plugin in an earlier part. For more information on this behavior, see
+:ref:`maven_use_version_rewriting`.
 
 .. _maven_use_self-contained_end:
 
@@ -42,11 +42,11 @@ The Maven plugin needs the ``mvn`` executable to build Maven projects but does n
 provision it to allow flexibility in the choice of version.
 
 To provide ``mvn``, one can either specify the ``maven`` Ubuntu package as a
-``build-package`` or define a ``maven-deps`` part. In the latter case, all
-parts using Maven should declare that they come after the ``maven-deps`` part. The
-plugin will then assume that the ``maven-deps`` part staged the ``mvn`` executable to
-be used in the build step. This can be useful, for example, in cases where a specific,
-unreleased version of Maven is desired but unavailable as a snap or Ubuntu package.
+``build-package`` or define a ``maven-deps`` part. In the latter case, all parts using
+Maven should declare that they come after the ``maven-deps`` part. The plugin will then
+assume that the ``maven-deps`` part staged the ``mvn`` executable to be used in the
+build step. This can be useful, for example, in cases where a specific, unreleased
+version of Maven is desired but unavailable as a snap or Ubuntu package.
 
 .. _maven_use_details_end:
 
@@ -56,16 +56,16 @@ unreleased version of Maven is desired but unavailable as a snap or Ubuntu packa
 Version rewriting
 -----------------
 
-When building a :ref:`self-contained <maven_use_self-contained_start>` part, the
-Maven Use plugin selects dependency versions as follows:
+When building a :ref:`self-contained <maven_use_self-contained_start>` part, the Maven
+Use plugin selects dependency versions as follows:
 
 If the version of the dependency specified in the project's ``pom.xml`` file exists
 locally, that version is selected.
 
-If the requested version doesn't exist locally, Maven Use compares the locally
-available versions that follow `semantic versioning`_ and selects the earliest
-subsequent release. If no such version is found, Maven Use selects the latest release
-that precedes the requested version.
+If the requested version doesn't exist locally, Maven Use compares the locally available
+versions that follow `semantic versioning`_ and selects the earliest subsequent release.
+If no such version is found, Maven Use selects the latest release that precedes the
+requested version.
 
 If no prior conditions were satisfied, no version was requested, or the requested
 version couldn't be interpreted as a semantic version, the latest locally-available
@@ -83,8 +83,8 @@ During the build step the plugin performs the following actions:
 #. Create a Maven settings file that configures proxy settings, points to the local
    Maven repository created by Craft Parts, and, if the ``self-contained`` build
    attribute is declared, disables network connections.
-#. Update any of the project's ``pom.xml`` files to deploy the final artifacts to
-   the local repository.
+#. Update any of the project's ``pom.xml`` files to deploy the final artifacts to the
+   local repository.
 #. Call ``maven deploy`` to build and deploy the project to the local repository.
 
 

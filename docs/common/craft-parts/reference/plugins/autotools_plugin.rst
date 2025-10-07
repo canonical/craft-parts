@@ -50,13 +50,13 @@ The plugin does not set any environment variables.
 Dependencies
 ------------
 
-The Autotools plugin needs the ``autoconf``, ``automake``, ``make``,
-``autopoint`` and ``libtool`` executables to work.  These are provided
-by the plugin as a ``build-packages`` entry.
+The Autotools plugin needs the ``autoconf``, ``automake``, ``make``, ``autopoint`` and
+``libtool`` executables to work.  These are provided by the plugin as a
+``build-packages`` entry.
 
-The plugin also sets up ``gcc`` as it is the most commonly used
-compiler for an Autotools based project.  Other compiler or library
-dependencies the source requires to build are to be provided.
+The plugin also sets up ``gcc`` as it is the most commonly used compiler for an
+Autotools based project.  Other compiler or library dependencies the source requires to
+build are to be provided.
 
 
 How it works
@@ -64,15 +64,14 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-#. If the source does not provide a ``configure`` file, one will be
-   generated through the following options:
+#. If the source does not provide a ``configure`` file, one will be generated through
+   the following options:
 
-   - If an ``autogen.sh`` file is found in the sources it will be run
-     with ``NOCONFIGURE`` set to generate a ``configure`` file.
-   - Alternatively, if a ``bootstrap`` file is found in the sources,
-     it will run the ``bootstrap`` with any set
-     ``autotools-bootstrap-parameters`` without *configuring* the
-     project.
+   - If an ``autogen.sh`` file is found in the sources it will be run with
+     ``NOCONFIGURE`` set to generate a ``configure`` file.
+   - Alternatively, if a ``bootstrap`` file is found in the sources, it will run the
+     ``bootstrap`` with any set ``autotools-bootstrap-parameters`` without *configuring*
+     the project.
 #. Call ``configure`` with any set ``autotools-configure-parameters``.
 #. Call ``make`` to build.
 #. Call ``make install`` with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
@@ -81,15 +80,14 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
-The following snippet declares a part using the ``autotools``
-plugin. It sets GNU Hello as a source, which has a ``bootstrap``
-file. To setup the ``configure`` file to not care for translations
-``autotools-bootstrap-parameters`` is using the project's option
-``--skip-po``. During ``configure`` the installation ``--prefix`` is
-set to ``/usr`` with ``autotools-configure-parameters``.
+The following snippet declares a part using the ``autotools`` plugin. It sets GNU Hello
+as a source, which has a ``bootstrap`` file. To setup the ``configure`` file to not care
+for translations ``autotools-bootstrap-parameters`` is using the project's option
+``--skip-po``. During ``configure`` the installation ``--prefix`` is set to ``/usr``
+with ``autotools-configure-parameters``.
 
-The source also requires the following packages to correctly build:
-``git``, ``gperf``, ``help2man`` and texinfo.
+The source also requires the following packages to correctly build: ``git``, ``gperf``,
+``help2man`` and texinfo.
 
 .. code-block:: yaml
 

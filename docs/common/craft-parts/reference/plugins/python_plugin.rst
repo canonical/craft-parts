@@ -3,8 +3,8 @@
 Python plugin
 =============
 
-The Python plugin can be used for Python projects where you would want to do
-any of the following things:
+The Python plugin can be used for Python projects where you would want to do any of the
+following things:
 
 * Import Python modules with a ``requirements.txt`` file.
 * Build a Python project that has a ``setup.py`` or ``pyproject.toml`` file.
@@ -40,8 +40,8 @@ python-packages
 
 **Type:** list
 
-A list of dependencies to install from PyPI. If needed, ``pip``,
-``setuptools`` and ``wheel`` can be upgraded here.
+A list of dependencies to install from PyPI. If needed, ``pip``, ``setuptools`` and
+``wheel`` can be upgraded here.
 
 
 .. _craft_parts_python_plugin-environment_variables:
@@ -49,8 +49,8 @@ A list of dependencies to install from PyPI. If needed, ``pip``,
 Environment variables
 ---------------------
 
-This plugin also sets environment variables in the build environment. These are
-defined in the following sections.
+This plugin also sets environment variables in the build environment. These are defined
+in the following sections.
 
 
 PARTS_PYTHON_INTERPRETER
@@ -72,20 +72,19 @@ Additional arguments for venv.
 Dependencies
 ------------
 
-By default this plugin uses Python from the base when it is available and
-appropriate to use. This depends on the tool and format in use.
+By default this plugin uses Python from the base when it is available and appropriate to
+use. This depends on the tool and format in use.
 
-* The bases used by Rockcraft do not contain Python, so it will need to be
-  supplied in rocks that use it.
-* Snaps that use strict confinement will use the version of Python in the
-  base. Snaps that use classic confinement will use the host system's Python.
+* The bases used by Rockcraft do not contain Python, so it will need to be supplied in
+  rocks that use it.
+* Snaps that use strict confinement will use the version of Python in the base. Snaps
+  that use classic confinement will use the host system's Python.
 
-If a different interpreter is desired, it must be bundled (including the
-``venv`` module) and its path must be included in the ``PATH`` environment
-variable.
+If a different interpreter is desired, it must be bundled (including the ``venv``
+module) and its path must be included in the ``PATH`` environment variable.
 
-Use of ``python3-<python-package>`` in stage-packages will force the
-inclusion of the Python interpreter.
+Use of ``python3-<python-package>`` in stage-packages will force the inclusion of the
+Python interpreter.
 
 
 .. _python-details-end:

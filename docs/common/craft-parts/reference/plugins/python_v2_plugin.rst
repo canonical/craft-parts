@@ -60,10 +60,10 @@ Dependencies
 The Python plugin (v2) needs the ``python3`` executable, but it does not provision it
 itself and won't use a system-wide executable.
 
-The recommended way of providing a Python executable to the plugin is to install it as
-a ``stage-package``. Alternatively, a part can be added to build ``python3`` from
-source and stage the binary. Then, the consuming part can declare its dependence on the
-binary by using the ``after`` key, like so:
+The recommended way of providing a Python executable to the plugin is to install it as a
+``stage-package``. Alternatively, a part can be added to build ``python3`` from source
+and stage the binary. Then, the consuming part can declare its dependence on the binary
+by using the ``after`` key, like so:
 
 .. code-block:: yaml
 
@@ -88,15 +88,14 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-#. Set ``PIP_USER`` to ``1``, equivalent to the ``--user`` argument.
-   The `the pip documentation
-   <https://pip.pypa.io/en/stable/cli/pip_install/#install-user>`_ describes this
-   argument in detail.
+#. Set ``PIP_USER`` to ``1``, equivalent to the ``--user`` argument. The `the pip
+   documentation <https://pip.pypa.io/en/stable/cli/pip_install/#install-user>`_
+   describes this argument in detail.
 #. The ``PYTHONUSERBASE`` is set to the part's install directory, which pip uses as a
    destination.
-#. Use pip to install all of the requirements from ``python-requirements`` and
-   packages from ``python-packages``. This step will also install the project described
-   in the ``setup.py`` or ``pyproject.toml`` file, if present.
+#. Use pip to install all of the requirements from ``python-requirements`` and packages
+   from ``python-packages``. This step will also install the project described in the
+   ``setup.py`` or ``pyproject.toml`` file, if present.
 #. A `sitecustomize <https://docs.python.org/3/library/site.html>`_ file is created,
    which adds the files from the part's install directory to Python's runtime import
    path.

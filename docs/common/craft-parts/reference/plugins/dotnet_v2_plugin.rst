@@ -3,8 +3,7 @@
 .NET plugin (v2)
 ================
 
-The .NET plugin (v2) builds .NET projects using the `dotnet
-<https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet>`_ tool. It's the successor
+The .NET plugin (v2) builds .NET projects using the `dotnet`_ tool. It's the successor
 to the .NET plugin.
 
 
@@ -26,8 +25,7 @@ dotnet-configuration
 
 **Default:** ``"Release"``
 
-The .NET build configuration to use. Possible values are ``"Debug"`` and
-``"Release"``.
+The .NET build configuration to use. Possible values are ``"Debug"`` and ``"Release"``.
 
 
 dotnet-project
@@ -35,9 +33,9 @@ dotnet-project
 
 **Type:** string
 
-The path to the solution or project file to build, relative to the root of the
-snap source. If a path isn't specified, MSBuild will search the root of the
-source for a file with the ``.*proj`` or ``.sln`` extension.
+The path to the solution or project file to build, relative to the root of the snap
+source. If a path isn't specified, MSBuild will search the root of the source for a file
+with the ``.*proj`` or ``.sln`` extension.
 
 
 dotnet-properties
@@ -45,8 +43,8 @@ dotnet-properties
 
 **Type:** dict of strings to strings
 
-A list of MSBuild properties to be appended to the restore, build, and publish
-commands in the format of ``-p:<Key>=<Value>``.
+A list of MSBuild properties to be appended to the restore, build, and publish commands
+in the format of ``-p:<Key>=<Value>``.
 
 
 .. _craft_parts_dotnet_v2_plugin-dotnet_self_contained:
@@ -59,8 +57,8 @@ dotnet-self-contained
 **Default:** ``False``
 
 Create a self-contained .NET application. The Runtime Identifier (RID) will be
-automatically set based on the ``$CRAFT_BUILD_FOR`` variable for a given
-build, such that:
+automatically set based on the ``$CRAFT_BUILD_FOR`` variable for a given build, such
+that:
 
 +------------------------------+------------------------+
 | ``$CRAFT_BUILD_FOR`` value   | .NET RID               |
@@ -78,8 +76,8 @@ dotnet-verbosity
 
 **Default:** ``"normal"``
 
-Sets the MSBuild log output verbosity for the build. Possible values are:
-``q[uiet]``, ``m[inimal]``, ``n[ormal]``, ``d[etailed]``, and ``diag[nostic]``.
+Sets the MSBuild log output verbosity for the build. Possible values are: ``q[uiet]``,
+``m[inimal]``, ``n[ormal]``, ``d[etailed]``, and ``diag[nostic]``.
 
 
 .. _craft_parts_dotnet_v2_plugin-dotnet_version:
@@ -89,12 +87,11 @@ dotnet-version
 
 **Type:** string
 
-Sets the .NET version to build the project with. By setting this key, the
-plugin will download the necessary .NET SDK content snap and use it to build
-the application.
+Sets the .NET version to build the project with. By setting this key, the plugin will
+download the necessary .NET SDK content snap and use it to build the application.
 
-See the :ref:`craft_parts_dotnet_v2_plugin-details-begin` section for a more
-detailed explanation of this key.
+See the :ref:`craft_parts_dotnet_v2_plugin-details-begin` section for a more detailed
+explanation of this key.
 
 
 .. _craft_parts_dotnet_v2_plugin-restore_flags:
@@ -107,10 +104,10 @@ dotnet-restore-configfile
 
 **Type:** string
 
-A path to the NuGet configuration file (nuget.config) to use. If specified,
-only the settings from this file will be used. If not specified, the hierarchy
-of configuration files from the current directory will be used. For more
-information, see `Common NuGet Configurations`_.
+A path to the NuGet configuration file (nuget.config) to use. If specified, only the
+settings from this file will be used. If not specified, the hierarchy of configuration
+files from the current directory will be used. For more information, see `Common NuGet
+Configurations`_.
 
 
 dotnet-restore-properties
@@ -118,8 +115,8 @@ dotnet-restore-properties
 
 **Type:** dict of strings to strings
 
-A list of MSBuild properties to be appended to the restore command in the
-format of ``-p:<Key>=<Value>``.
+A list of MSBuild properties to be appended to the restore command in the format of
+``-p:<Key>=<Value>``.
 
 
 dotnet-restore-sources
@@ -127,9 +124,8 @@ dotnet-restore-sources
 
 **Type:** list of strings
 
-Specifies the URIs of the NuGet package sources to use during the restore
-operation. This setting overrides all of the sources specified in the
-*nuget.config* files.
+Specifies the URIs of the NuGet package sources to use during the restore operation.
+This setting overrides all of the sources specified in the *nuget.config* files.
 
 
 .. _craft_parts_dotnet_v2_plugin-build_flags:
@@ -142,8 +138,8 @@ dotnet-build-framework
 
 **Type:** string
 
-Compiles for a specific `framework`_. The framework must be defined in the
-`project file`_. Examples: ``net7.0``, ``net462``.
+Compiles for a specific `framework`_. The framework must be defined in the `project
+file`_. Examples: ``net7.0``, ``net462``.
 
 
 dotnet-build-properties
@@ -151,8 +147,8 @@ dotnet-build-properties
 
 **Type:** dict of strings to strings
 
-A list of MSBuild properties to be appended to the build command in the format
-of ``-p:<Key>=<Value>``.
+A list of MSBuild properties to be appended to the build command in the format of
+``-p:<Key>=<Value>``.
 
 
 .. _craft_parts_dotnet_v2_plugin-publish_flags:
@@ -165,8 +161,8 @@ dotnet-publish-properties
 
 **Type:** dict of strings to strings
 
-A list of MSBuild properties to be appended to the publish command in the
-format of ``-p:<Key>=<Value>``.
+A list of MSBuild properties to be appended to the publish command in the format of
+``-p:<Key>=<Value>``.
 
 
 .. _craft_parts_dotnet_v2_plugin-details-begin:
@@ -224,9 +220,8 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
-The following example uses the .NET (v2) plugin to build an application with
-.NET 8 using the debug configuration, generating assets that are
-self-contained.
+The following example uses the .NET (v2) plugin to build an application with .NET 8
+using the debug configuration, generating assets that are self-contained.
 
 
 .. code-block:: yaml
@@ -246,3 +241,4 @@ self-contained.
 .. _project file: https://learn.microsoft.com/en-us/dotnet/core/project-sdk/overview
 .. _dotnet-sdk-8.0: https://packages.ubuntu.com/noble/dotnet-sdk-8.0
 .. _dotnet-sdk-80: https://snapcraft.io/dotnet-sdk-80
+.. _dotnet: https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet

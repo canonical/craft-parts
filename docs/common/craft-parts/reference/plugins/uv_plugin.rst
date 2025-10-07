@@ -62,9 +62,9 @@ UV_PROJECT_ENVIRONMENT
 
 **Default:** ``${CRAFT_PART_INSTALL}``
 
-A path to the Python virtual environment to build with. By default, this
-variable populates itself with the directory in which this plugin will create
-the virtual environment.
+A path to the Python virtual environment to build with. By default, this variable
+populates itself with the directory in which this plugin will create the virtual
+environment.
 
 
 UV_PYTHON_DOWNLOADS
@@ -72,8 +72,7 @@ UV_PYTHON_DOWNLOADS
 
 **Default:** "never"
 
-Whether or not to automatically download Python if the requested version is
-missing.
+Whether or not to automatically download Python if the requested version is missing.
 
 
 UV_PYTHON
@@ -91,8 +90,7 @@ UV_PYTHON_PREFERENCE
 
 **Default:** "only-system"
 
-Whether uv should prefer (or exclusively use) system or uv-managed Python
-versions.
+Whether uv should prefer (or exclusively use) system or uv-managed Python versions.
 
 
 .. _uv-details-begin:
@@ -121,5 +119,5 @@ How it works
 During the build step, the plugin performs the following actions:
 
 #. Create a virtual environment in the ``${CRAFT_PART_INSTALL}`` directory.
-#. Use ``uv sync`` to install the required Python packages from
-   the provided ``uv.lock`` file.
+#. Use ``uv sync`` to install the required Python packages from the provided ``uv.lock``
+   file.
