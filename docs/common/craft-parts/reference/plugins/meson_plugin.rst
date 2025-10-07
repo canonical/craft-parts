@@ -44,11 +44,11 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Run ``meson`` in the build directory referring to the pulled source
-  directory (this plugin runs an out of tree build). The project is configured
-  with any ``meson-parameters`` that might have been set;
-* ``ninja`` is run to build the source;
-* ``ninja install`` is called with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
+#. Run ``meson`` in the build directory referring to the pulled source
+   directory (this plugin runs an out of tree build). The project is configured
+   with any ``meson-parameters`` that might have been set;
+#. ``ninja`` is run to build the source;
+#. ``ninja install`` is called with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
 
 
 Example

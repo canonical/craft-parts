@@ -119,15 +119,15 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-* Create a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
-  directory.
-* Use ``poetry export`` to create a ``requirements.txt`` file in the
-  project's build directory.
-* Use ``pip`` to install the packages referenced in ``requirements.txt``
-  into the virtual environment, without any additional dependencies.
-* Use ``pip`` to install the source package without any additional
-  dependencies.
-* Run ``pip check`` to ensure the virtual environment is consistent.
+#. Create a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
+   directory.
+#. Use ``poetry export`` to create a ``requirements.txt`` file in the
+   project's build directory.
+#. Use ``pip`` to install the packages referenced in ``requirements.txt``
+   into the virtual environment, without any additional dependencies.
+#. Use ``pip`` to install the source package without any additional
+   dependencies.
+#. Run ``pip check`` to ensure the virtual environment is consistent.
 
 
 .. _craft_parts_poetry_links:

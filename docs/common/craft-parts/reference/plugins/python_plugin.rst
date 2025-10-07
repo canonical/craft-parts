@@ -95,10 +95,10 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-* Create a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
-  directory.
-* Use ``pip`` to install the required Python packages as configured
-  in the ``python-requirements``, ``python-constraints`` and
-  ``python-packages`` keys.
-* If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
-  files are used to install the dependencies specified by the package itself.
+#. Create a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
+   directory.
+#. Use ``pip`` to install the required Python packages as configured
+   in the ``python-requirements``, ``python-constraints`` and
+   ``python-packages`` keys.
+#. If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
+   files are used to install the dependencies specified by the package itself.

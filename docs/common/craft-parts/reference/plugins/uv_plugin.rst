@@ -120,6 +120,6 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-* Create a virtual environment in the ``${CRAFT_PART_INSTALL}`` directory.
-* Use ``uv sync`` to install the required Python packages from
-  the provided ``uv.lock`` file.
+#. Create a virtual environment in the ``${CRAFT_PART_INSTALL}`` directory.
+#. Use ``uv sync`` to install the required Python packages from
+   the provided ``uv.lock`` file.

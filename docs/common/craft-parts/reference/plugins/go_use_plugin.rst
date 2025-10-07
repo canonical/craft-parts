@@ -42,8 +42,8 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Setup a `go workspace`_ if ``go.work`` has not been setup;
-* Call ``go work use <source-dir>`` to add the source for the part to the workspace;
+#. Setup a `go workspace`_ if ``go.work`` has not been setup;
+#. Call ``go work use <source-dir>`` to add the source for the part to the workspace;
 
 
 Example

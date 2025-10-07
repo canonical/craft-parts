@@ -7,6 +7,7 @@ The Nil plugin can be used to by-pass the need for a plugin when only parts prim
 are required.
 
 Common cases include:
+
 * Adding only stage packages in a discrete part
 * Building source for when there is no suitable plugin with the ``override-build`` key.
 

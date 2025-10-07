@@ -11,11 +11,11 @@ After a successful build, this plugin will:
 
 .. _craft_parts_ant_plugin_post_build_begin:
 
-* Create ``bin/`` and ``jar/`` directories in ``$CRAFT_PART_INSTALL``.
-* Find the ``java`` executable provided by the part and link it as
-  ``$CRAFT_PART_INSTALL/bin/java``.
-* Hard link the ``.jar`` files generated in ``$CRAFT_PART_BUILD`` to
-  ``$CRAFT_PART_INSTALL/jar``.
+#. Create ``bin/`` and ``jar/`` directories in ``$CRAFT_PART_INSTALL``.
+#. Find the ``java`` executable provided by the part and link it as
+   ``$CRAFT_PART_INSTALL/bin/java``.
+#. Hard link the ``.jar`` files generated in ``$CRAFT_PART_BUILD`` to
+   ``$CRAFT_PART_INSTALL/jar``.
 
 .. _craft_parts_ant_plugin_post_build_end:
 

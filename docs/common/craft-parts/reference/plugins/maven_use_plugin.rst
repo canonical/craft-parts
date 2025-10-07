@@ -80,12 +80,12 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Creates a Maven settings file that configures proxy settings, points to the local
-  Maven repository created by Craft Parts, and, if the ``self-contained`` build
-  attribute is declared, disables network connections.
-* Updates any of the project's ``pom.xml`` files to deploy the final artifacts to
-  the local repository.
-* Calls ``maven deploy`` to build and deploy the project to the local repository.
+#. Create a Maven settings file that configures proxy settings, points to the local
+   Maven repository created by Craft Parts, and, if the ``self-contained`` build
+   attribute is declared, disables network connections.
+#. Update any of the project's ``pom.xml`` files to deploy the final artifacts to
+   the local repository.
+#. Call ``maven deploy`` to build and deploy the project to the local repository.
 
 
 Examples

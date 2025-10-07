@@ -29,9 +29,9 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Set up a local `cargo registry`_ if it has not been setup;
-* Copy sources from ``<source-dir>`` to the local cargo registry dir;
-* Add an empty ``.cargo-checksum.json`` file to satisfy registry requirements;
+#. Set up a local `cargo registry`_ if it has not been setup;
+#. Copy sources from ``<source-dir>`` to the local cargo registry dir;
+#. Add an empty ``.cargo-checksum.json`` file to satisfy registry requirements;
 
 
 Example

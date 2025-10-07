@@ -58,14 +58,14 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Run ``cmake`` in the build directory referring to the pulled source
-  directory (this plugin runs an out of tree build). The preferred
-  generator is set at this stage, and the project is configured with
-  any ``cmake-parameters`` that might have been set.
-* ``cmake --build`` is run to build the source, ``cmake`` itself takes
-  care of calling ``make`` or ``ninja``;
-* ``cmake`` calls the ``install`` target with ``DESTDIR`` set to
-  ``$CRAFT_PART_INSTALL``.
+#. Run ``cmake`` in the build directory referring to the pulled source
+   directory (this plugin runs an out of tree build). The preferred
+   generator is set at this stage, and the project is configured with
+   any ``cmake-parameters`` that might have been set.
+#. ``cmake --build`` is run to build the source, ``cmake`` itself takes
+   care of calling ``make`` or ``ninja``;
+#. ``cmake`` calls the ``install`` target with ``DESTDIR`` set to
+   ``$CRAFT_PART_INSTALL``.
 
 
 Example

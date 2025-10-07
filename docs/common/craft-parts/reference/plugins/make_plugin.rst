@@ -38,9 +38,9 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-* Call ``make`` with any parameters defined in ``make-parameters``
-* Call ``make install`` with the ``DESTDIR`` set to the installation
-  directory defined for the part.
+#. Call ``make`` with any parameters defined in ``make-parameters``
+#. Call ``make install`` with the ``DESTDIR`` set to the installation
+   directory defined for the part.
 
 
 Example

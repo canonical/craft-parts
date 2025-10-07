@@ -209,16 +209,16 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-* Call ``dotnet restore`` with the relevant
-  :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
-  :ref:`restore-specific flags <craft_parts_dotnet_v2_plugin-restore_flags>`.
-* Call ``dotnet build --no-restore`` with the relevant
-  :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
-  :ref:`build-specific flags <craft_parts_dotnet_v2_plugin-build_flags>`.
-* Call ``dotnet publish --no-restore --no-build`` with the relevant
-  :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
-  :ref:`publish-specific flags <craft_parts_dotnet_v2_plugin-publish_flags>`.
-  The generated assets are placed by default into ``${CRAFT_PART_INSTALL}``.
+#. Call ``dotnet restore`` with the relevant
+   :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
+ v :ref:`restore-specific flags <craft_parts_dotnet_v2_plugin-restore_flags>`.
+#. Call ``dotnet build --no-restore`` with the relevant
+   :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
+   :ref:`build-specific flags <craft_parts_dotnet_v2_plugin-build_flags>`.
+#. Call ``dotnet publish --no-restore --no-build`` with the relevant
+   :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
+   :ref:`publish-specific flags <craft_parts_dotnet_v2_plugin-publish_flags>`.
+   The generated assets are placed by default into ``${CRAFT_PART_INSTALL}``.
 
 
 Example

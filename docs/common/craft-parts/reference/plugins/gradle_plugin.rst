@@ -101,11 +101,11 @@ Here is a consolidated example of how to use the Gradle plugin.
 
 For possible values of each field, refer to the Gradle documentation.
 
-* ``gradle-parameters``: `Command line interface
-  <https://docs.gradle.org/current/userguide/command_line_interface.html>`_
-* ``gradle-task``: `Understanding tasks
-  <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
-* ``build-environment``: `Configuring the build environment`_
+#. ``gradle-parameters``: `Command line interface
+   <https://docs.gradle.org/current/userguide/command_line_interface.html>`_
+#. ``gradle-task``: `Understanding tasks
+   <https://docs.gradle.org/current/userguide/more_about_tasks.html>`_
+#. ``build-environment``: `Configuring the build environment`_
 
 
 .. _Configuring the build environment: https://docs.gradle.org/current/userguide/build_environment.html
