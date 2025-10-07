@@ -18,13 +18,18 @@ Changelog
 
 .. _release-2.25.0:
 
-2.25.0 (unreleased)
+2.25.0 (2025-10-06)
 -------------------
 
 New features:
 
 - Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
   A ``mount`` value cannot be a parent of any preceding ``mount`` values.
+
+Bug fixes:
+
+- When installing packages with ``overlay-packages``, the prepared
+  chroot now correctly handles mounts added during installation.
 
 Documentation:
 
@@ -1492,6 +1497,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _Poetry: https://python-poetry.org
 
 .. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
+.. _2.24.0: https://github.com/canonical/craft-parts/releases/tag/2.24.0
 .. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0
 .. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
 .. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0
