@@ -21,8 +21,6 @@ cmake-parameters
 
 **Type:** list of strings
 
-**Default:** Unset
-
 Parameters to configure the project using common CMake semantics.
 
 

@@ -20,8 +20,6 @@ scons-parameters
 
 **Type:** list of strings
 
-**Default:** Unset
-
 Parameters to pass to SCons for building and installation.
 
 

@@ -114,8 +114,6 @@ rust-cargo-parameters
 
 **Type:** list of strings
 
-**Default:** Unset
-
 Append additional parameters to the Cargo command line.
 
 

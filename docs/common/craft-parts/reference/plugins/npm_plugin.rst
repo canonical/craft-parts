@@ -32,8 +32,6 @@ npm-node-version
 
 **Type:** string
 
-**Default:** Unset
-
 Which version of Node.js to download and include in the final package.
 Required if ``npm-include-node`` is set to ``true``.
 

@@ -21,8 +21,6 @@ qmake-parameters
 
 **Type:** list of strings
 
-**Default:** Unset
-
 Parameters to configure the project using common qmake semantics.
 
 
@@ -30,8 +28,6 @@ qmake-project-file
 ~~~~~~~~~~~~~~~~~~
 
 **Type:** string
-
-**Default:** Unset
 
 The qmake project file to use. This is usually only needed if
 qmake can not determine what project file to use on its own.

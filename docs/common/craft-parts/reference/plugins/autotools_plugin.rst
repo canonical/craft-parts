@@ -28,8 +28,6 @@ autotools-bootstrap-parameters
 
 **Type:** list of strings
 
-**Default:** Unset
-
 Bootstrap flags to pass to the build if a bootstrap file is found in
 the project. These can in some cases be seen by running ``./bootstrap
 --help``.
@@ -38,8 +36,6 @@ autotools-configure-parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Type:** list of strings
-
-**Default:** Unset
 
 configure flags to pass to the build such as those shown by running
 ``./configure --help``.

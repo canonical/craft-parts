@@ -66,8 +66,6 @@ the interpreter (e.g. ``${CRAFT_STAGE}/bin/python``).
 PARTS_PYTHON_VENV_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~
 
-**Default:** Unset
-
 Additional arguments passed to ``python -m venv``.
 
 

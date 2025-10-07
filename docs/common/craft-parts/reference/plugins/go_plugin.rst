@@ -20,8 +20,6 @@ go-buildtags
 
 **Type:** list of strings
 
-**Default:** Unset
-
 `Build tags`_ to use during the build. The default behavior is not to use any
 build tags.
 
@@ -30,8 +28,6 @@ go-generate
 ~~~~~~~~~~~
 
 **Type:** list of strings
-
-**Default:** Unset
 
 Parameters to pass to `go generate`_ before building. Each item on the list
 will be a separate ``go generate`` call. The default behavior is not to call

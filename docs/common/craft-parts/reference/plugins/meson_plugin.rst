@@ -20,8 +20,6 @@ meson_parameters
 
 **Type:** list of strings
 
-**Default:** Unset
-
 Parameters to configure the project. See the reference to the `setup command`_
 for a list of valid options.
 

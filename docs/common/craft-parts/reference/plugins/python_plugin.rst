@@ -64,8 +64,6 @@ The interpreter binary to search for in ``PATH``.
 PARTS_PYTHON_VENV_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~
 
-**Default:** Unset
-
 Additional arguments for venv.
 
 

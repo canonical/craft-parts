@@ -20,8 +20,6 @@ make-parameters
 
 **Type:** list of strings
 
-**Default:** Unset
-
 Options to pass to make.
 
 

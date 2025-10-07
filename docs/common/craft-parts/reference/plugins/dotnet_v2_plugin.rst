@@ -35,8 +35,6 @@ dotnet-project
 
 **Type:** string
 
-**Default:** Unset
-
 The path to the solution or project file to build, relative to the root of the
 snap source. If a path isn't specified, MSBuild will search the root of the
 source for a file with the ``.*proj`` or ``.sln`` extension.
@@ -46,8 +44,6 @@ dotnet-properties
 ^^^^^^^^^^^^^^^^^
 
 **Type:** dict of strings to strings
-
-**Default:** Unset
 
 A list of MSBuild properties to be appended to the restore, build, and publish
 commands in the format of ``-p:<Key>=<Value>``.
@@ -93,8 +89,6 @@ dotnet-version
 
 **Type:** string
 
-**Default:** Unset
-
 Sets the .NET version to build the project with. By setting this key, the
 plugin will download the necessary .NET SDK content snap and use it to build
 the application.
@@ -113,8 +107,6 @@ dotnet-restore-configfile
 
 **Type:** string
 
-**Default:** Unset
-
 A path to the NuGet configuration file (nuget.config) to use. If specified,
 only the settings from this file will be used. If not specified, the hierarchy
 of configuration files from the current directory will be used. For more
@@ -126,8 +118,6 @@ dotnet-restore-properties
 
 **Type:** dict of strings to strings
 
-**Default:** Unset
-
 A list of MSBuild properties to be appended to the restore command in the
 format of ``-p:<Key>=<Value>``.
 
@@ -136,8 +126,6 @@ dotnet-restore-sources
 ^^^^^^^^^^^^^^^^^^^^^^
 
 **Type:** list of strings
-
-**Default:** Unset
 
 Specifies the URIs of the NuGet package sources to use during the restore
 operation. This setting overrides all of the sources specified in the
@@ -154,8 +142,6 @@ dotnet-build-framework
 
 **Type:** string
 
-**Default:** Unset
-
 Compiles for a specific `framework`_. The framework must be defined in the
 `project file`_. Examples: ``net7.0``, ``net462``.
 
@@ -164,8 +150,6 @@ dotnet-build-properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Type:** dict of strings to strings
-
-**Default:** Unset
 
 A list of MSBuild properties to be appended to the build command in the format
 of ``-p:<Key>=<Value>``.
@@ -180,8 +164,6 @@ dotnet-publish-properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Type:** dict of strings to strings
-
-**Default:** Unset
 
 A list of MSBuild properties to be appended to the publish command in the
 format of ``-p:<Key>=<Value>``.
