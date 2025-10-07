@@ -38,8 +38,8 @@ Which version of Node.js to download and include in the final package. Required 
 The option accepts an NVM-style version string; you can specify one of:
 
 * exact version (e.g. ``"20.12.2"``)
-* major+minor version (e.g. ``"20.12"``)
 * major version (e.g. ``"20"``)
+* minor version (e.g. ``"20.12"``)
 * LTS code name (e.g. ``"lts/iron"``)
 * latest mainline version (``"node"``)
 
