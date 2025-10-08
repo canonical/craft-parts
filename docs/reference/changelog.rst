@@ -27,11 +27,11 @@ New features:
 
 Bug fixes:
 
-- 
+- ...
 
 Documentation:
 
-- 
+- ...
 
 For a complete list of commits, check out the `2.26.0`_ release on GitHub.
 
