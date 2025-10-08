@@ -16,6 +16,26 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+2.26.0 (YYYY-MM-DD)
+-------------------
+
+This is a placeholder for the next release.
+
+New features:
+
+- Suppress detached HEAD warnings when cloning git remotes.
+
+Bug fixes:
+
+- 
+
+Documentation:
+
+- 
+
+For a complete list of commits, check out the `2.26.0`_ release on GitHub.
+
+
 .. _release-2.25.0:
 
 2.25.0 (2025-10-06)
