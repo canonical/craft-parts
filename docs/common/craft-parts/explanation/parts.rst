@@ -89,8 +89,7 @@ example, the ``juju`` snap could be specified as ``juju/stable``, ``juju/2.9/sta
 ``juju/latest/stable`` to select different versions.
 
 System packages are referred to by the names that identify them on the host system, and
-they are installed using the host's native package manager, such as :command:`apt` or
-:command:`dnf`.
+they are installed using the host's native package manager, such as APT or DNF.
 
 For example, a part that is built against the SDL 2 libraries could include the
 ``libsdl2-dev`` package in the ``build-packages`` key.
@@ -112,9 +111,9 @@ This key can also be used to replace or extend the build process provided by a p
 
 When a plugin is used, it exposes additional properties that can be used to define
 behaviour that is specific to the type of project that the plugin supports. For example,
-the :py:mod:`cmake plugin <craft_parts.plugins.cmake_plugin>` provides the
+the :py:mod:`CMake plugin <craft_parts.plugins.cmake_plugin>` provides the
 ``cmake-parameters`` and ``cmake-generator`` properties that can be used to configure
-how :command:`cmake` is used in the build process.
+how CMake is used in the build process.
 
 .. ifconfig:: project in ("Snapcraft",)
 
