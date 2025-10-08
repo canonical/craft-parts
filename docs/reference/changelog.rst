@@ -299,15 +299,15 @@ For a complete list of commits, check out the `2.16.0`_ release on GitHub.
 New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
-  encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use
+  encounters invalid XML in the software's ``pom.xml`` file.
+- Add support for the ``parent`` tag on a ``pom.xml`` file with the maven-use
   plugin.
 
 Bug fixes:
 
 - With the maven-use plugin, don't raise errors if dependency versions aren't specified
-  in the software's :file:`pom.xml` file.
-- With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
+  in the software's ``pom.xml`` file.
+- With the maven-use plugin, don't create ``pom.xml`` files with duplicate
   ``<distributionManagement>`` tags.
 - Fix content migration when using :class:`~craft_parts.FilesystemMount` during the
   prime step. Instead of relying on the content of the overlay, gather the list of
