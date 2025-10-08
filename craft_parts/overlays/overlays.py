@@ -78,7 +78,6 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[st
                 # Don't descend into this directory, overridden by opaque
                 directories.remove(directory)
 
-    logger.debug("layer visibility files=%r, dirs=%r", visible_files, visible_dirs)
     return visible_files, visible_dirs
 
 
@@ -90,7 +89,6 @@ def _is_path_visible(root: Path, relpath: Path) -> bool:
 
     :returns: Whether the final element of the path is visible.
     """
-    logger.debug("check if path is visible: root=%s, relpath=%s", root, relpath)
     levels = len(relpath.parts)
 
     for level in range(levels):
