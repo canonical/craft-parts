@@ -16,6 +16,20 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.26.0:
+
+2.26.0 (2025-MM-DD)
+-------------------
+
+Bug fixes:
+
+- When handling many files in the overlay, which is common in Imagecraft, some
+  debug messages became very noisy. Reduce debug logging to make sure the debug
+  output is still usable.
+
+For a complete list of commits, check out the `2.26.0`_ release on GitHub.
+
 .. _release-2.25.0:
 
 2.25.0 (2025-10-06)
