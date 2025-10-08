@@ -86,7 +86,15 @@ class TestGitSource:
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+            [
+                "git",
+                "-c",
+                "advice.detachedHead=false",
+                "clone",
+                "--recursive",
+                "git://my-source",
+                "source_dir",
+            ]
         )
 
     def test_pull_with_depth(self, fake_run, new_dir):
@@ -103,6 +111,8 @@ class TestGitSource:
         fake_run.assert_called_once_with(
             [
                 "git",
+                "-c",
+                "advice.detachedHead=false",
                 "clone",
                 "--recursive",
                 "--depth",
@@ -125,6 +135,8 @@ class TestGitSource:
         fake_run.assert_called_once_with(
             [
                 "git",
+                "-c",
+                "advice.detachedHead=false",
                 "clone",
                 "--recursive",
                 "--branch",
@@ -147,6 +159,8 @@ class TestGitSource:
         fake_run.assert_called_once_with(
             [
                 "git",
+                "-c",
+                "advice.detachedHead=false",
                 "clone",
                 "--recursive",
                 "--branch",
@@ -171,7 +185,15 @@ class TestGitSource:
         fake_run.assert_has_calls(
             [
                 mock.call(
-                    ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+                    [
+                        "git",
+                        "-c",
+                        "advice.detachedHead=false",
+                        "clone",
+                        "--recursive",
+                        "git://my-source",
+                        "source_dir",
+                    ]
                 ),
                 mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
                 mock.call(["git", "-C", "source_dir", "checkout", commit]),
@@ -203,7 +225,15 @@ class TestGitSource:
         fake_run.assert_has_calls(
             [
                 mock.call(
-                    ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+                    [
+                        "git",
+                        "-c",
+                        "advice.detachedHead=false",
+                        "clone",
+                        "--recursive",
+                        "git://my-source",
+                        "source_dir",
+                    ]
                 ),
                 mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
                 mock.call(["git", "-C", "source_dir", "checkout", commit]),
@@ -258,7 +288,15 @@ class TestGitSource:
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "--recursive", "git://my-source", "source_dir"]
+            [
+                "git",
+                "-c",
+                "advice.detachedHead=false",
+                "clone",
+                "--recursive",
+                "git://my-source",
+                "source_dir",
+            ]
         )
 
     def test_pull_with_submodules_empty(self, fake_run, new_dir):
@@ -272,7 +310,14 @@ class TestGitSource:
         git.pull()
 
         fake_run.assert_called_once_with(
-            ["git", "clone", "git://my-source", "source_dir"]
+            [
+                "git",
+                "-c",
+                "advice.detachedHead=false",
+                "clone",
+                "git://my-source",
+                "source_dir",
+            ]
         )
 
     def test_pull_with_submodules(self, fake_run, new_dir):
@@ -288,6 +333,8 @@ class TestGitSource:
         fake_run.assert_called_once_with(
             [
                 "git",
+                "-c",
+                "advice.detachedHead=false",
                 "clone",
                 "--recursive=submodule_1",
                 "--recursive=dir/submodule_2",
@@ -310,6 +357,8 @@ class TestGitSource:
         fake_run.assert_called_once_with(
             [
                 "git",
+                "-c",
+                "advice.detachedHead=false",
                 "clone",
                 "--recursive",
                 f"file://{new_dir}/path/to/repo.git",
@@ -342,6 +391,8 @@ class TestGitSource:
         fake_run.assert_called_once_with(
             [
                 "git",
+                "-c",
+                "advice.detachedHead=false",
                 "clone",
                 "--recursive",
                 repository,
@@ -794,6 +845,8 @@ class TestGitSource:
             git.pull()
         assert raised.value.command == [
             "git",
+            "-c",
+            "advice.detachedHead=false",
             "clone",
             "--recursive",
             "git://my-source",
