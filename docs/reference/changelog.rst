@@ -23,7 +23,7 @@ This is a placeholder for the next release.
 
 New features:
 
-- Suppress detached HEAD warnings when cloning git remotes.
+- Suppress detached HEAD warnings when cloning Git remotes.
 
 Bug fixes:
 
