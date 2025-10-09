@@ -7,6 +7,7 @@
 
 # Documentation owners
 /docs/  @canonical/starcraft-authors @cmatsuoka
+/docs/reference/changelog.rst @canonical/starcraft-reviewers
 
 # Finally, all CODEOWNERS changes need to be approved by The Man, Himself.
 /.github/CODEOWNERS     @steinbro
