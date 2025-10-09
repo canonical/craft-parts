@@ -24,9 +24,8 @@ Changelog
 
 Bug fixes:
 
-- When handling many files in the overlay, which is common in Imagecraft, some
-  debug messages became very noisy. Reduce debug logging to make sure the debug
-  output is still usable.
+- Trim down debug logs to make the output more useful when handling numerous
+  overlay files.
 
 For a complete list of commits, check out the `2.26.0`_ release on GitHub.
 
