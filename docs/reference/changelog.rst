@@ -16,6 +16,19 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.26.0:
+
+2.26.0 (2025-MM-DD)
+-------------------
+
+Bug fixes:
+
+- Trim down debug logs to make the output more useful when handling numerous
+  overlay files.
+
+For a complete list of commits, check out the `2.26.0`_ release on GitHub.
+
 .. _release-2.25.0:
 
 2.25.0 (2025-10-06)
@@ -1496,6 +1509,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.26.0: https://github.com/canonical/craft-parts/releases/tag/2.26.0
 .. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
 .. _2.24.0: https://github.com/canonical/craft-parts/releases/tag/2.24.0
 .. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0

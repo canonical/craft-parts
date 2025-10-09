@@ -1024,7 +1024,6 @@ class PartHandler:
             primed_whiteout = prime_dir / whiteout
             try:
                 primed_whiteout.unlink()
-                logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
