@@ -26,6 +26,7 @@ Bug fixes:
 
 - Trim down debug logs to make the output more useful when handling numerous
   overlay files.
+- Suppress detached HEAD warnings when cloning Git remotes.
 
 For a complete list of commits, check out the `2.26.0`_ release on GitHub.
 

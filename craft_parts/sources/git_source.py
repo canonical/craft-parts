@@ -270,7 +270,12 @@ class GitSource(SourceHandler):
 
     def _clone_new(self) -> None:
         """Clone a git repository, using submodules, branch, and depth if defined."""
-        command = [get_git_command(), "clone"]
+        command = [
+            get_git_command(),
+            "-c",
+            "advice.detachedHead=false",
+            "clone",
+        ]
         if self.source_submodules is None:
             command.append("--recursive")
         else:
