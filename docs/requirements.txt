@@ -17,7 +17,7 @@ babel==2.16.0
     # via
     #   -r requirements.txt
     #   sphinx
-beautifulsoup4==4.12.3
+beautifulsoup4==4.14.2
     # via
     #   -r requirements.txt
     #   canonical-sphinx-extensions
