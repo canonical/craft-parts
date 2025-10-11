@@ -186,7 +186,7 @@ def test_get_build_commands(part_info):
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == [
-        f"meson {plugin._part_info.part_src_dir}",
+        f"meson setup {plugin._part_info.part_src_dir}",
         "ninja",
         f"DESTDIR={plugin._part_info.part_install_dir} ninja install",
     ]
@@ -199,7 +199,7 @@ def test_get_build_commands_with_parameters(part_info):
     plugin = MesonPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == [
-        f"meson {plugin._part_info.part_src_dir} --debug '--prefix=foo bar'",
+        f"meson setup {plugin._part_info.part_src_dir} --debug '--prefix=foo bar'",
         "ninja",
         f"DESTDIR={plugin._part_info.part_install_dir} ninja install",
     ]
