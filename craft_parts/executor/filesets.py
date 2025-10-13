@@ -137,6 +137,7 @@ def migratable_filesets(
 
     :param fileset: The fileset used to filter files in the srcdir.
     :param srcdir: Directory containing files to migrate.
+    :param default_partition: Name of the default partition.
     :param partition: If provided, only get files to migrate to the partition.
 
     :return: A tuple containing the set of files and the set of directories to migrate.
@@ -196,13 +197,6 @@ def _get_file_list(
         raise errors.FeatureError(
             message=(
                 "A partition must be provided if the partition feature is enabled."
-            )
-        )
-
-    if not features.Features().enable_partitions and partition:
-        raise errors.FeatureError(
-            message=(
-                "The partition feature must be enabled if a partition is provided."
             )
         )
 

@@ -23,6 +23,7 @@ from typing import NamedTuple, TypeVar
 from craft_parts.errors import FeatureError
 from craft_parts.features import Features
 from craft_parts.utils import partition_utils
+from craft_parts.utils.partition_utils import OVERLAY_PARTITION
 
 FlexiblePath = TypeVar("FlexiblePath", PurePath, str)
 
@@ -51,20 +52,27 @@ def get_partition_and_path(
 
     If the path begins with a partition, that is used. Otherwise, the default
     partition is used.
-    If partitions are not enabled, the partition will be None.
+    If partitions are not enabled, the partition will be None unless the extracted
+    partition is the overlay pseudo-partition.
 
     :param path: The filepath to parse.
 
     :returns: A tuple of (partition, filepath)
     """
-    if not Features().enable_partitions:
-        return PartitionPathPair(None, path)
-
     str_path = str(path)
 
     if _has_partition(str_path):
         partition, inner_path = _split_partition_and_inner_path(str_path)
-        return PartitionPathPair(partition.strip("()"), path.__class__(inner_path))
+        partition = partition.strip("()")
+
+        if not Features().enable_partitions and partition != OVERLAY_PARTITION:
+            return PartitionPathPair(None, path)
+
+        # Handle the overlay pseudo-partition case
+        return PartitionPathPair(partition, path.__class__(inner_path))
+
+    if not Features().enable_partitions:
+        return PartitionPathPair(None, path)
 
     return PartitionPathPair(default_partition, path)
 

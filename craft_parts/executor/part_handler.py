@@ -51,11 +51,12 @@ from craft_parts.state_manager import (
 from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION, OVERLAY_PARTITION
 
 from . import filesets, migration
 from .environment import generate_step_environment
 from .errors import EnvironmentChangedError
+from .filesets import Fileset
 from .organize import organize_files
 from .step_handler import (
     StagePartitionContents,
@@ -102,6 +103,7 @@ class _Squasher:
         self,
         partition: str | None,
         default_partition: str | None,
+        fileset: Fileset,
         filesystem_mount: FilesystemMount | None = None,
     ) -> None:
         self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
@@ -111,6 +113,7 @@ class _Squasher:
         self._distributed_paths: set[Path] = set()
         if filesystem_mount:
             self._filesystem_mount = filesystem_mount
+        self._fileset = fileset
 
     def migrate(
         self,
@@ -121,7 +124,28 @@ class _Squasher:
 
         If the source partition is the default one, content can be distributed to other
         partitions using the provided filesystem mounts.
+        If the source partition is the default one, the fileset can be applied.
         """
+        migratable_files: set[str] | None = None
+        migratable_dirs: set[str] | None = None
+
+        if (
+            self._src_partition is not None
+            or self._src_partition == self._default_partition
+        ):
+            logger.debug("get candidates from srcdir with fileset")
+            default_partition = (
+                self._default_partition
+                if self._default_partition
+                else DEFAULT_PARTITION
+            )
+            migratable_files, migratable_dirs = filesets.migratable_filesets(
+                self._fileset,
+                str(srcdir),
+                default_partition,
+                OVERLAY_PARTITION,
+            )
+
         if (
             self._src_partition is not None
             and self._src_partition == self._default_partition
@@ -142,6 +166,8 @@ class _Squasher:
                     destdir=destdirs[dst_partition],
                     sub_path=sub_path,
                     dst_partition=dst_partition,
+                    migratable_files=migratable_files,
+                    migratable_dirs=migratable_dirs,
                 )
                 # If the sub path was really a sub path, record it.
                 if sub_path != Path():
@@ -153,6 +179,8 @@ class _Squasher:
                 destdir=destdirs[self._src_partition],
                 sub_path=Path(),
                 dst_partition=self._src_partition,
+                migratable_files=migratable_files,
+                migratable_dirs=migratable_dirs,
             )
 
     def _migrate(
@@ -161,6 +189,8 @@ class _Squasher:
         destdir: Path,
         sub_path: Path,
         dst_partition: str | None,
+        migratable_files: set[str] | None = None,
+        migratable_dirs: set[str] | None = None,
     ) -> None:
         """Actually migrate content from a source to a destination.
 
@@ -171,6 +201,14 @@ class _Squasher:
             srcdir / sub_path,
             destdir,
         )
+
+        # Apply fileset
+        if migratable_files:
+            logger.debug("excluding files with fileset")
+            visible_files = visible_files & migratable_files
+        if migratable_dirs:
+            logger.debug("excluding dirs with fileset")
+            visible_dirs = visible_dirs & migratable_dirs
 
         logger.debug("excluding content distributed to other partitions")
         files = self._filter_already_distributed(visible_files)
@@ -531,7 +569,13 @@ class PartHandler:
             stderr=stderr,
         )
 
-        self._migrate_overlay_files_to_stage()
+        stage_fileset = Fileset(
+            self._part.spec.stage_files,
+            name="stage",
+            default_partition=self._part_info.default_partition,
+        )
+
+        self._migrate_overlay_files_to_stage(stage_fileset)
 
         # Overlay integrity is checked based by the hash of its last (topmost) layer,
         # so we compute it for all parts. The overlay hash is added to the stage state
@@ -855,8 +899,8 @@ class PartHandler:
 
         self._run_overlay(step_info, stdout=stdout, stderr=stderr)
 
-    def _migrate_overlay_files_to_stage(self) -> None:
-        """Stage overlay files create state.
+    def _migrate_overlay_files_to_stage(self, fileset: Fileset) -> None:
+        """Stage overlay files and create state.
 
         Files and directories are migrated from overlay to stage based on a
         list of visible overlay entries, converting overlayfs whiteout files
@@ -893,6 +937,7 @@ class PartHandler:
                 partition=src_partition,
                 default_partition=self._part_info.default_partition,
                 filesystem_mount=self._part_info.default_filesystem_mount,
+                fileset=fileset,
             )
             # Process layers from top to bottom (reversed)
             for part in reversed(parts_with_overlay):
