@@ -30,25 +30,6 @@ pytestmark = [
     pytest.mark.slow,
 ]
 
-CHISEL_PART_YAML = """
-parts:
-  chiselled-part:
-    plugin: nil
-    stage-packages:
-      - hello_bins
-"""
-
-
-@pytest.fixture(scope="module", autouse=True)
-def _edge_chisel():
-    # This fixture no longer needs to exist once chisel 1.3 or later is stable.
-    subprocess.run(
-        ["sudo", "snap", "refresh", "--edge", "chisel"],
-        check=True,
-    )
-    yield
-    subprocess.run(["sudo", "snap", "revert", "chisel"], check=True)
-
 
 def test_slice_error_has_details(new_dir: pathlib.Path, partitions, caplog):
     caplog.set_level(logging.DEBUG)
