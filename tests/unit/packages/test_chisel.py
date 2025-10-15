@@ -72,8 +72,9 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run, mocker):
         [
             "chisel",
             "cut",
-            "--root",
-            str(install_dir),
+            "--ignore=unmaintained",
+            "--ignore=unstable",
+            f"--root={install_dir}",
             "package1_slice1",
             "package2_slice2",
         ]
@@ -112,8 +113,9 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):
         [
             "chisel",
             "cut",
-            "--root",
-            str(install_dir),
+            "--ignore=unmaintained",
+            "--ignore=unstable",
+            f"--root={install_dir}",
             "package1_slice1",
             "package2_slice2",
         ]

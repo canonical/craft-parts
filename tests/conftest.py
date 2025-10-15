@@ -17,6 +17,7 @@
 import http.server
 import os
 import pathlib
+import subprocess
 import sys
 import tempfile
 import threading
@@ -34,6 +35,17 @@ from craft_parts.features import Features
 from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _edge_chisel():
+    # This fixture no longer needs to exist once chisel 1.3 or later is stable.
+    subprocess.run(
+        ["sudo", "snap", "refresh", "--edge", "chisel"],
+        check=True,
+    )
+    yield
+    subprocess.run(["sudo", "snap", "revert", "chisel"], check=False)
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
