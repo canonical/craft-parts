@@ -234,7 +234,20 @@ def test_organize(new_dir, data):
             "organize_map": {"dir1/foo": "dir/foo", "dir2/foo": "dir/"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
-                r".*trying to organize file 'foo' to 'dir/foo', but 'dir/foo' already exists.*"
+                r".*trying to organize 'dir2/foo' to 'dir/', but 'dir/foo' already exists.*"
+            ),
+        },
+        # Organize 2 files to the same destination, one referenced with a wildcard
+        {
+            "setup_dirs": ["dir1", "dir2"],
+            "setup_files": [
+                os.path.join("dir1", "foo"),  # noqa: PTH118
+                os.path.join("dir2", "foo"),  # noqa: PTH118
+            ],
+            "organize_map": {"dir1/foo": "dir/foo", "dir2/*": "dir/"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize 'dir2/\*' to 'dir/', but 'dir/foo' already exists.*"
             ),
         },
     ],

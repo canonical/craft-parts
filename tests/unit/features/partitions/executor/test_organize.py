@@ -198,6 +198,22 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
             ],
         },
+        # Organize 2 files to the same destination, one with a dir as a destination
+        {
+            "setup_dirs": ["dir1", "dir2"],
+            "setup_files": [
+                os.path.join("dir1", "foo"),  # noqa: PTH118
+                os.path.join("dir2", "foo"),  # noqa: PTH118
+            ],
+            "organize_map": {
+                "dir1/foo": "(our/special-part)/dir/foo",
+                "dir2/foo": "(our/special-part)/dir/",
+            },
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize 'dir2/foo' to '(our/special-part)/dir/', but '(our/special-part)/dir/foo' already exists.*"
+            ),
+        },
     ],
 )
 def test_organize(new_dir, data):
