@@ -27,6 +27,10 @@ Bug fixes:
 - Trim down debug logs to make the output more useful when handling numerous
   overlay files.
 - Suppress detached HEAD warnings when cloning Git remotes.
+- `#1366 <https://github.com/canonical/craft-parts/issues/1366>`_ When the destination
+  of an ``organize`` entry is a directory, properly detect collisions with existing files
+  in this directory. A proper error is now returned, giving necessary information to
+  the user to resolve the conflict.
 
 For a complete list of commits, check out the `2.26.0`_ release on GitHub.
 
