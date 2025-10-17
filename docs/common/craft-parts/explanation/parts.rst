@@ -71,7 +71,8 @@ fetched instead of the complete history. For repositories that use submodules, t
 The ``source-subdir`` key specifies the subdirectory in the unpacked sources where
 builds will occur. It also restricts the build to the subdirectory specified, preventing
 access to files in the parent directory and elsewhere in the file system directory
-structure.
+structure. This restriction does not apply to actions defined using the
+``override-build`` key.
 
 .. _build_dependencies:
 
