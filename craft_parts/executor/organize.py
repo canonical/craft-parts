@@ -124,6 +124,16 @@ def organize_files(  # noqa: PLR0912
                     else:
                         with contextlib.suppress(FileNotFoundError):
                             os.remove(real_dst)  # noqa: PTH107
+                elif os.path.exists(real_dst):  # noqa: PTH110
+                    rel_dst_string = os.path.join(dst_string, os.path.basename(src))  # noqa: PTH118, PTH119
+                    raise errors.FileOrganizeError(
+                        part_name=part_name,
+                        message=(
+                            f"trying to organize {key!r} to "
+                            f"{file_map[key]!r}, but "
+                            f"{rel_dst_string!r} already exists"
+                        ),
+                    )
 
             os.makedirs(os.path.dirname(dst), exist_ok=True)  # noqa: PTH103, PTH120
             file_utils.move(src, dst)
