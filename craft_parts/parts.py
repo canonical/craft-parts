@@ -153,7 +153,7 @@ class PartSpec(BaseModel):
     )
     """The subdirectory of the unpacked source where the build will occur.
 
-    During the build step, build commands will be restricted to the specified path.
+    During the build step, build commands are restricted to the specified path.
 
     If unset, the build can access the entire file tree of the source.
     """
@@ -465,7 +465,7 @@ class PartSpec(BaseModel):
 
     The standard build step actions can be performed by calling ``craftctl default``.
 
-    Except ``craftctl default``, these commands are not restricted by the
+    Except ``craftctl default``, these commands are not restricted to the path set by
     ``source-subdir`` value.
     """
 
