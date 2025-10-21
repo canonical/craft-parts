@@ -24,7 +24,8 @@ Changelog
 
 New features:
 
-- Chisel slices can be staged to unmaintained or unstable releases.
+- Chisel slices can be staged on unmaintained or unstable releases. (Requires
+  chisel 1.3.0 or higher.)
 
 Bug fixes:
 
