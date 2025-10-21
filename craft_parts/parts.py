@@ -156,6 +156,8 @@ class PartSpec(BaseModel):
     During the build step, build commands are restricted to the specified path.
 
     If unset, the build can access the entire file tree of the source.
+
+    This key does not affect the commands listed on ``override-build``.
     """
 
     source_submodules: list[str] | None = Field(
@@ -465,8 +467,8 @@ class PartSpec(BaseModel):
 
     The standard build step actions can be performed by calling ``craftctl default``.
 
-    Except ``craftctl default``, these commands are not restricted to the path set by
-    ``source-subdir`` value.
+    Note: These commands, except ``craftctl default``, do not respect the ``source-subdir``
+    value and so are executed on the source's root directory.
     """
 
     override_stage: str | None = Field(
