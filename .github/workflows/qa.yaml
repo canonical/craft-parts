@@ -29,7 +29,8 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      fast-test-python-versions: '["3.10", "3.12", "3.13"]'
+      # 3.14t here is the free-threaded version of Python 3.14.
+      fast-test-python-versions: '["3.10", "3.12", "3.14", "3.14t"]'
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -39,7 +40,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
       pytest-markers: not java and not python and not plugin
@@ -57,7 +58,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
@@ -72,7 +73,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
@@ -102,7 +103,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-platform: '["focal"]'
       lowest-python-version: "3.10"
       pytest-markers: plugin
