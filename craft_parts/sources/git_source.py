@@ -270,6 +270,15 @@ class GitSource(SourceHandler):
 
     def _clone_new(self) -> None:
         """Clone a git repository, using submodules, branch, and depth if defined."""
+        # Attempt a shallow fetch for source_commits
+        if self.source_commit:
+            try:
+                self._shallow_fetch()
+            except ShallowFetchError:
+                pass
+            else:
+                return
+
         command = [
             get_git_command(),
             "-c",
@@ -295,6 +304,7 @@ class GitSource(SourceHandler):
         logger.debug("Executing: %s", " ".join([str(i) for i in command]))
         self._run([*command, str(self.part_src_dir)])
 
+        # Checkout to a specific commit when shallow cloning wasn't possible
         if self.source_commit:
             self._fetch_origin_commit()
             full_commit = self._expand_commit(self.source_commit)
@@ -305,6 +315,68 @@ class GitSource(SourceHandler):
                 "checkout",
                 full_commit,
             ]
+            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+            self._run(command)
+
+    def _shallow_fetch(self) -> None:
+        """Load a repository at a specific commit.
+
+        :raises ShallowFetchError: When a short commit is given, as it is not possible
+            for git to parse it to a full commit hash without cloning the full repository
+            anyways.
+        """
+        try:
+            full_commit = self._expand_commit(self.source_commit)
+        except errors.VCSError:
+            if self.source_depth:
+                logger.warning(
+                    "A shallow clone is not possible with a short hash. "
+                    "To get a shallow clone, provide a full-length "
+                    f"({MAX_COMMIT_LENGTH}-character) hash instead."
+                )
+            raise ShallowFetchError
+
+        command_prefix = [get_git_command(), "-C", str(self.part_src_dir)]
+
+        if not self.part_src_dir.exists():
+            self.part_src_dir.mkdir()
+        if not (self.part_src_dir / ".git").exists():
+            self._run([*command_prefix, "init"])
+            self._run(
+                [
+                    *command_prefix,
+                    "remote",
+                    "add",
+                    "origin",
+                    self._format_source(),
+                ]
+            )
+
+        # Fetch the specific commit
+        command = [*command_prefix, "fetch", "origin", full_commit]
+        if self.source_depth:
+            command.extend(["--depth", str(self.source_depth)])
+        logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+        self._run(command)
+
+        # Checkout to that commit
+        command = [*command_prefix, "checkout", full_commit]
+        self._run(command)
+
+        # source_submodules can either be None or [], which behave differently.
+        # submodule update doesn't have the `--recursive=` syntax that clone does,
+        # so instead we just only run this command for the default behavior
+        # (None = all modules) or for explicitly requested modules.
+        if self.source_submodules is None or self.source_submodules:
+            command = [
+                *command_prefix,
+                "submodule",
+                "update",
+                "--init",
+                "--recursive",
+            ]
+            if self.source_submodules:
+                command.append(self.source_submodules)
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 
@@ -355,3 +427,7 @@ class GitSource(SourceHandler):
             "source": source,
             "source-tag": tag,
         }
+
+
+class ShallowFetchError(Exception):
+    """A shallow fetch was not possible."""
