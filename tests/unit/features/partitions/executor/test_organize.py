@@ -235,3 +235,47 @@ def test_organize(new_dir, data):
         overwrite=True,
         install_dirs=install_dirs,
     )
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        # Organize 2 files to the same destination, one with a dir as a destination
+        {
+            "setup_dirs": ["dir1", "dir2"],
+            "setup_files": [
+                os.path.join("dir1", "foo"),  # noqa: PTH118
+                os.path.join("dir2", "foo"),  # noqa: PTH118
+            ],
+            "organize_map": {
+                "dir1/foo": "(our/special-part)/dir/foo",
+                "dir2/foo": "(our/special-part)/dir/",
+            },
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize 'dir2/foo' to '\(our/special-part\)/dir/', but '\(our/special-part\)/dir/foo' already exists.*"
+            ),
+        },
+    ],
+)
+def test_organize_no_overwrite(new_dir, data):
+    install_dirs = {
+        "default": new_dir / "install",
+        "mypart": new_dir / "partitions/mypart/parts/part-name/install",
+        "yourpart": new_dir / "partitions/yourpart/parts/part-name/install",
+        "our/special-part": new_dir
+        / "partitions/our/special-part/parts/part-name/install",
+    }
+
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
+        organize_map=data["organize_map"],
+        expected=data["expected"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
+        overwrite=False,
+        install_dirs=install_dirs,
+    )
