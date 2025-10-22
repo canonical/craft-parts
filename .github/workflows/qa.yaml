@@ -40,6 +40,8 @@ jobs:
           ["noble", "ppc64el", "edge"],
         ]
       slow-test-python-versions: '["3.12"]'
+      # We must always test on at least one EOL base to ensure that chisel behaves
+      # correctly on said EOL base.
       lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
       pytest-markers: not java and not python and not plugin
