@@ -285,9 +285,13 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", self.mock_refresh_packages_list
+            new_dir / "overlay/overlay",
+            self.mock_refresh_packages_list,
+            mount_package_sources=False,
         )
-        self.mock_refresh_packages_list.assert_called_once_with()
+        self.mock_refresh_packages_list.assert_called_once_with(
+            mount_package_sources=False,
+        )
 
     def test_download_packages(self, mocker, new_dir):
         mock_download_packages = mocker.patch(
@@ -304,9 +308,15 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
+            new_dir / "overlay/overlay",
+            mock_download_packages,
+            args=(["pkg1", "pkg2"],),
+            mount_package_sources=False,
         )
-        mock_download_packages.assert_called_once_with(["pkg1", "pkg2"])
+        mock_download_packages.assert_called_once_with(
+            args=(["pkg1", "pkg2"],),
+            mount_package_sources=False,
+        )
 
     def test_install_packages(self, mocker, new_dir):
         mock_install_packages = mocker.patch(
@@ -326,11 +336,14 @@ class TestPackageManagement:
         self.mock_chroot.assert_called_once_with(
             new_dir / "overlay/overlay",
             mock_install_packages,
-            ["pkg1", "pkg2"],
-            refresh_package_cache=False,
+            args=(["pkg1", "pkg2"],),
+            kwargs={"refresh_package_cache": False},
+            mount_package_sources=False,
         )
         mock_install_packages.assert_called_once_with(
-            ["pkg1", "pkg2"], refresh_package_cache=False
+            args=(["pkg1", "pkg2"],),
+            kwargs={"refresh_package_cache": False},
+            mount_package_sources=False,
         )
 
     def test_package_cache_mount_refresh(self, new_dir):
@@ -350,9 +363,13 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", self.mock_refresh_packages_list
+            new_dir / "overlay/overlay",
+            self.mock_refresh_packages_list,
+            mount_package_sources=False,
         )
-        self.mock_refresh_packages_list.assert_called_once_with()
+        self.mock_refresh_packages_list.assert_called_once_with(
+            mount_package_sources=False,
+        )
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
 
     def test_package_cache_mount_download(self, mocker, new_dir):
@@ -375,10 +392,18 @@ class TestPackageManagement:
             f"workdir={new_dir}/overlay/work",
         )
         self.mock_chroot.assert_called_once_with(
-            new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
+            new_dir / "overlay/overlay",
+            mock_download_packages,
+            args=(["pkg1", "pkg2"],),
+            mount_package_sources=False,
         )
-        mock_download_packages.assert_called_once_with(["pkg1", "pkg2"])
-        self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
+        mock_download_packages.assert_called_once_with(
+            args=(["pkg1", "pkg2"],),
+            mount_package_sources=False,
+        )
+        self.mock_umount.assert_called_once_with(
+            new_dir / "overlay/overlay",
+        )
 
     def test_layer_mount_install(self, mocker, new_dir):
         mocker.patch("craft_parts.packages.Repository.download_packages")
@@ -404,10 +429,13 @@ class TestPackageManagement:
         self.mock_chroot.assert_called_once_with(
             new_dir / "overlay/overlay",
             mock_install_packages,
-            ["pkg1", "pkg2"],
-            refresh_package_cache=False,
+            args=(["pkg1", "pkg2"],),
+            kwargs={"refresh_package_cache": False},
+            mount_package_sources=False,
         )
         mock_install_packages.assert_called_once_with(
-            ["pkg1", "pkg2"], refresh_package_cache=False
+            args=(["pkg1", "pkg2"],),
+            kwargs={"refresh_package_cache": False},
+            mount_package_sources=False,
         )
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
