@@ -22,6 +22,11 @@ Changelog
 2.26.0 (2025-MM-DD)
 -------------------
 
+New features:
+
+- Chisel slices can be staged on unmaintained or unstable releases. (Requires
+  chisel 1.3.0 or higher.)
+
 Bug fixes:
 
 - Trim down debug logs to make the output more useful when handling numerous
