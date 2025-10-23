@@ -273,7 +273,7 @@ class GitSource(SourceHandler):
         # Attempt a shallow fetch for source_commits
         if self.source_commit:
             try:
-                self._shallow_fetch()
+                self._clone_at_commit()
             except ShallowFetchError:
                 pass
             else:
@@ -318,7 +318,7 @@ class GitSource(SourceHandler):
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 
-    def _shallow_fetch(self) -> None:
+    def _clone_at_commit(self) -> None:
         """Load a repository at a specific commit.
 
         :raises ShallowFetchError: When a short commit is given, as it is not possible

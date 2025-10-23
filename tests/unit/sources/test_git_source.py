@@ -233,6 +233,7 @@ class TestGitSource:
             cache_dir=new_dir,
             source_commit=commit,
             project_dirs=self._dirs,
+            source_depth=1,
         )
 
         git.pull()
@@ -251,7 +252,18 @@ class TestGitSource:
                         "git://my-source",
                     ]
                 ),
-                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "fetch",
+                        "origin",
+                        commit,
+                        "--depth",
+                        "1",
+                    ]
+                ),
                 mock.call(["git", "-C", "source_dir", "checkout", commit]),
                 mock.call(
                     [
@@ -268,14 +280,14 @@ class TestGitSource:
         )
 
     @pytest.mark.parametrize(
-        ("commit", "expectation", "warning"),
+        ("commit", "expectation", "should_warn"),
         [
             # 40-character long hash
-            pytest.param("deadbeef" * 5, nullcontext(), "", id="happy"),
+            pytest.param("deadbeef" * 5, nullcontext(), False, id="happy"),
             pytest.param(
                 "deadbeef",
                 pytest.raises(ShallowFetchError),
-                "A shallow clone is not possible with a short hash.",
+                True,
                 id="sad",
             ),
         ],
@@ -286,9 +298,10 @@ class TestGitSource:
         new_dir: Path,
         commit: str,
         expectation: AbstractContextManager,
-        warning: str,
+        should_warn: bool,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
+        warning = "A shallow clone is not possible with a short hash."
         git = GitSource(
             "git://my-source",
             Path("source_dir"),
@@ -298,9 +311,9 @@ class TestGitSource:
             source_depth=1,
         )
         with expectation:
-            git._shallow_fetch()
+            git._clone_at_commit()
 
-        assert warning in caplog.text
+        assert should_warn == (warning in caplog.text)
 
     def test_pull_short_commit_error(self, fake_check_output, fake_run, new_dir):
         fake_check_output.side_effect = subprocess.CalledProcessError(1, [])
