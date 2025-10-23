@@ -45,26 +45,26 @@ directory where they will be used. Absolute paths cannot be used.
 
 Paths can specify single files or directories, such as these examples:
 
-* :file:`usr/bin/hello`
-* :file:`usr/share`
+* ``usr/bin/hello``
+* ``usr/share``
 
 They can also contain wildcards to select multiple files and directories, such
 as these:
 
-* :file:`usr/bin/*`
-* :file:`usr/lib/**/*.so*`
+* ``usr/bin/*``
+* ``usr/lib/**/*.so*``
 
 The second of these examples selects all the shared libraries in all nested
-directories inside the :file:`usr/lib` directory.
+directories inside the ``usr/lib`` directory.
 
 Filesets can also *exclude* files and directories. This is done by prefixing
 a path with the ``-`` character, as in these examples:
 
-* :file:`-usr/bin/hello`
-* :file:`-usr/share/**/*.gz`
+* ``-usr/bin/hello``
+* ``-usr/share/**/*.gz``
 
 The second example selects and discards gzipped files in all nested directories
-inside the :file:`usr/share` directory.
+inside the ``usr/share`` directory.
 
 Hidden files
 ~~~~~~~~~~~~
@@ -83,13 +83,13 @@ Partitions
 If partitions are in use, bare path specifications (as demonstrated above) will refer
 to the default partition.  The following two lines are equivalent:
 
-* :file:`usr/bin/hello`
-* :file:`(default)/usr/bin/hello`
+* ``usr/bin/hello``
+* ``(default)/usr/bin/hello``
 
 Paths may be specified in any application-defined partition, like so:
 
-* :file:`(boot)/vmlinuz`
-* :file:`(data)/static/uploads/example.png`
+* ``(boot)/vmlinuz``
+* ``(data)/static/uploads/example.png``
 
 Using filesets
 --------------

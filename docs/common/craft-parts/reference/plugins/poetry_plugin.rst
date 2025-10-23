@@ -6,6 +6,7 @@ Poetry plugin
 The Poetry plugin can be used for Python projects that use the `Poetry
 <https://python-poetry.org>`_ build system.
 
+
 .. _craft_parts_poetry_plugin-keywords:
 
 Keys
@@ -13,26 +14,33 @@ Keys
 
 This plugin provides the following unique keys.
 
+
 poetry-export-extra-args:
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 Extra arguments to pass at the end of the poetry `export command
 <https://python-poetry.org/docs/cli/#export>`_.
 
+
 poetry-pip-extra-args:
 ~~~~~~~~~~~~~~~~~~~~~~
+
 **Type:** list of strings
 
 Extra arguments to pass to ``pip install`` when installing dependencies.
 
+
 poetry-with:
 ~~~~~~~~~~~~
+
 **Type:** list of strings
 
 `Dependency groups
 <https://python-poetry.org/docs/managing-dependencies#dependency-groups>`_ to include.
 By default, only the main dependencies are included.
+
 
 .. _craft_parts_poetry_plugin-environment_variables:
 
@@ -45,18 +53,21 @@ variables to configure Poetry
 <https://python-poetry.org/docs/configuration/#using-environment-variables>`_ using the
 ``build-environment`` key.
 
+
 PARTS_PYTHON_INTERPRETER
 ~~~~~~~~~~~~~~~~~~~~~~~~
-**Default value:** python3
+
+**Default:** python3
 
 Either the interpreter binary to search for in ``PATH`` or an absolute path to
 the interpreter (e.g. ``${CRAFT_STAGE}/bin/python``).
 
+
 PARTS_PYTHON_VENV_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~
-**Default value:** (empty string)
 
 Additional arguments passed to ``python -m venv``.
+
 
 .. _poetry-details-begin:
 
@@ -73,6 +84,7 @@ desired, it must be made available in the build environment (including the ``ven
 module) and its path must be included in the ``PATH`` environment variable.
 Use of ``python3-<python-package>`` in stage-packages will force the inclusion
 of the Python interpreter.
+
 
 Poetry
 ~~~~~~
@@ -101,19 +113,21 @@ that use the Poetry plugin must run ``after`` the ``poetry-deps`` part:
 
 .. _poetry-details-end:
 
+
 How it works
 ------------
 
 During the build step, the plugin performs the following actions:
 
-1. It creates a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
+#. Create a virtual environment directly into the ``${CRAFT_PART_INSTALL}``
    directory.
-2. It uses :command:`poetry export` to create a ``requirements.txt`` file in the
+#. Use ``poetry export`` to create a ``requirements.txt`` file in the
    project's build directory.
-3. It uses :command:`pip` to install the packages referenced in ``requirements.txt``
+#. Use ``pip`` to install the packages referenced in ``requirements.txt``
    into the virtual environment, without any additional dependencies.
-4. It uses :command:`pip` to install the source package without any additional
+#. Use ``pip`` to install the source package without any additional
    dependencies.
-5. It runs :command:`pip check` to ensure the virtual environment is consistent.
+#. Run ``pip check`` to ensure the virtual environment is consistent.
+
 
 .. _craft_parts_poetry_links:

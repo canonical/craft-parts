@@ -16,6 +16,28 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.26.0:
+
+2.26.0 (2025-10-22)
+-------------------
+
+New features:
+
+- Chisel slices can be staged on unmaintained or unstable releases. (Requires
+  chisel 1.3.0 or higher.)
+
+Bug fixes:
+
+- Trim down debug logs to make the output more useful when handling numerous
+  overlay files.
+- Suppress detached HEAD warnings when cloning Git remotes.
+- `#1366 <https://github.com/canonical/craft-parts/issues/1366>`_ When organizing a
+  file to a directory, detect collisions with existing files in the directory. If a
+  collision occurs, an error is produced with a message listing the colliding paths.
+
+For a complete list of commits, check out the `2.26.0`_ release on GitHub.
+
 .. _release-2.25.0:
 
 2.25.0 (2025-10-06)
@@ -301,15 +323,15 @@ For a complete list of commits, check out the `2.16.0`_ release on GitHub.
 New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
-  encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use
+  encounters invalid XML in the software's ``pom.xml`` file.
+- Add support for the ``parent`` tag on a ``pom.xml`` file with the maven-use
   plugin.
 
 Bug fixes:
 
 - With the maven-use plugin, don't raise errors if dependency versions aren't specified
-  in the software's :file:`pom.xml` file.
-- With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
+  in the software's ``pom.xml`` file.
+- With the maven-use plugin, don't create ``pom.xml`` files with duplicate
   ``<distributionManagement>`` tags.
 - Fix content migration when using :class:`~craft_parts.FilesystemMount` during the
   prime step. Instead of relying on the content of the overlay, gather the list of
@@ -1498,6 +1520,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.26.0: https://github.com/canonical/craft-parts/releases/tag/2.26.0
 .. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
 .. _2.24.0: https://github.com/canonical/craft-parts/releases/tag/2.24.0
 .. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0

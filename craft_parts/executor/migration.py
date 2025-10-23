@@ -314,7 +314,6 @@ def filter_dangling_whiteouts(
         if overlays.is_oci_whiteout_file(Path(file)):
             backing_file = base_dir / overlays.oci_whited_out_file(Path(file))
             if not backing_file.exists():
-                logger.debug("filter whiteout file '%s'", file)
                 files.remove(file)
                 whiteouts.add(file)
 
@@ -324,7 +323,6 @@ def filter_dangling_whiteouts(
         if opaque_marker in files:
             backing_file = base_dir / directory
             if not backing_file.exists():
-                logger.debug("filter whiteout file '%s'", opaque_marker)
                 files.remove(opaque_marker)
                 whiteouts.add(opaque_marker)
 
@@ -345,7 +343,6 @@ def filter_all_whiteouts(
 
     for file in list(files):
         if overlays.is_oci_whiteout(Path(file)):
-            logger.debug("filter whiteout file '%s'", file)
             files.remove(file)
             whiteouts.add(file)
 
