@@ -376,7 +376,7 @@ class GitSource(SourceHandler):
                 "--recursive",
             ]
             if self.source_submodules:
-                command.append(self.source_submodules)
+                command.extend(self.source_submodules)
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 
