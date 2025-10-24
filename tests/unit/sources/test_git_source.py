@@ -183,7 +183,7 @@ class TestGitSource:
         commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
         fake_check_output.return_value = commit
         mocker.patch(
-            "craft_parts.sources.git_source.GitSource._shallow_fetch",
+            "craft_parts.sources.git_source.GitSource._clone_at_commit",
             side_effect=ShallowFetchError,
         )
 
