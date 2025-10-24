@@ -65,7 +65,7 @@ part's overlay layer and determine how the layer's contents are represented in t
 directory.
 
 .. kitbash-field:: PartSpec overlay_files
-    :label: reference-part-properties-overlay-files
+    :label: reference-part-properties-overlay
 
 .. kitbash-field:: PartSpec overlay_packages
     :label: reference-part-properties-overlay-packages
