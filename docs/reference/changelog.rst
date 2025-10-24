@@ -221,7 +221,7 @@ Bug fixes:
 - Files and directories produced during the build step are now correctly checked for
   collisions with overlay contents during the staging step. Conflicts can be resolved
   with the :ref:`stage <reference-part-properties-stage>` and
-  :ref:`overlay <reference-part-properties-overlay-files>` keys.
+  :ref:`overlay <reference-part-properties-overlay>` keys.
 - When content is staged to partitions from the overlay of the default partition,
   properly ignore content already migrated.
 

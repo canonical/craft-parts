@@ -384,7 +384,7 @@ class PartSpec(BaseModel):
     overlay_files: list[str] = Field(
         default_factory=lambda: ["*"],
         alias="overlay",
-        description="The files to copy from the part's overly filesystem to the stage directory.",
+        description="The files to copy from the part's overlay filesystem to the stage directory.",
         examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
     )
 
@@ -468,7 +468,7 @@ class PartSpec(BaseModel):
     The standard build step actions can be performed by calling ``craftctl default``.
 
     Excluding ``craftctl default``, these commands don't respect the ``source-subdir``
-    value and so are executed on the source's root directory.
+    value and are executed on the source's root directory.
     """
 
     override_stage: str | None = Field(
