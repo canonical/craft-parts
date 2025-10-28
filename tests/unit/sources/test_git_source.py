@@ -57,6 +57,13 @@ def fake_get_current_branch(mocker):
 
 @pytest.mark.usefixtures("mock_get_source_details")
 class TestGitSource:
+    @pytest.fixture(autouse=True)
+    def assume_modern_git(self, mocker: MockerFixture) -> None:
+        mocker.patch(
+            "craft_parts.sources.git_source.GitSource._get_git_version",
+            return_value=(2, 34, 1),
+        )
+
     # pylint: disable=attribute-defined-outside-init
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
@@ -970,3 +977,24 @@ class TestGitGenerateVersionNoGit:
 
         with pytest.raises(errors.VCSError):
             GitSource.generate_version()
+
+
+class TestGetVersion:
+    @pytest.mark.parametrize(
+        ("version", "expected"),
+        [
+            pytest.param("git version 2.0.1", (2, 0, 1), id="happy"),
+            pytest.param("git version 999.999.999", (999, 999, 999), id="big_numbers"),
+            pytest.param("git version ..", (0, 0, 0), id="bad_version"),
+            pytest.param("git version 2.0", (0, 0, 0), id="short_version"),
+            pytest.param("git version 0.0.0", (0, 0, 0), id="no_version"),
+            pytest.param("where am I", (0, 0, 0), id="bad_response"),
+        ],
+    )
+    def test_get_version(
+        self, mocker: MockerFixture, version: str, expected: tuple[int, int, int]
+    ) -> None:
+        mocker.patch(
+            "craft_parts.sources.git_source.GitSource._run_output", return_value=version
+        )
+        assert GitSource._get_git_version() == expected

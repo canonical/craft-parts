@@ -270,8 +270,14 @@ class GitSource(SourceHandler):
 
     def _clone_new(self) -> None:
         """Clone a git repository, using submodules, branch, and depth if defined."""
+        git_version = self._get_git_version()
+
         # Attempt a shallow fetch for source_commits
-        if self.source_commit:
+        # This breaks on older versions of git. 2.34.1 (the default on jammy) is the first
+        # version shipped on LTS that supports this.
+        # In the case that this does not succeed, the only impact will be that a deep fetch
+        # must be performed instead - nothing will break, it will just be less efficient
+        if self.source_commit and git_version >= (2, 34, 1):
             try:
                 self._clone_at_commit()
             except ShallowFetchError:
@@ -427,6 +433,22 @@ class GitSource(SourceHandler):
             "source": source,
             "source-tag": tag,
         }
+
+    @classmethod
+    def _get_git_version(cls) -> tuple[int, int, int]:
+        response = cls._run_output([get_git_command(), "version"])
+        pat = re.compile(r"git version ((?:\d+\.){2}\d+)")
+        match = re.match(pat, response)
+
+        # Default if the version can't be recognized
+        version = match.group(1) if match else "0.0.0"
+
+        # Convert to a tuple of integers for comparison
+        components = version.split(".", maxsplit=2)
+
+        # Ignore the type, the regex already asserts that it will be a 3-piece tuple
+        # but mypy believes this is `tuple[int, ...]`
+        return tuple(int(component) for component in components)  # type: ignore[return-value]
 
 
 class ShallowFetchError(Exception):
