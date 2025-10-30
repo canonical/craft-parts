@@ -441,7 +441,10 @@ class GitSource(SourceHandler):
         match = re.match(pat, response)
 
         # Default if the version can't be recognized
-        version = match.group(1) if match else "0.0.0"
+        if not match:
+            return (0, 0, 0)
+
+        version = match.group(1)
 
         # Convert to a tuple of integers for comparison
         components = version.split(".", maxsplit=2)
