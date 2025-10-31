@@ -15,13 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from unittest import mock
 
 import pytest
 from craft_parts import ProjectDirs
 from craft_parts.sources import errors, sources
-from craft_parts.sources.git_source import GitSource
+from craft_parts.sources.git_source import GitSource, ShallowFetchError
+from pytest_mock.plugin import MockerFixture
 
 
 def _fake_git_command_error(*args, **kwargs):
@@ -55,6 +57,13 @@ def fake_get_current_branch(mocker):
 
 @pytest.mark.usefixtures("mock_get_source_details")
 class TestGitSource:
+    @pytest.fixture(autouse=True)
+    def assume_modern_git(self, mocker: MockerFixture) -> None:
+        mocker.patch(
+            "craft_parts.sources.git_source.GitSource._get_git_version",
+            return_value=(2, 34, 1),
+        )
+
     # pylint: disable=attribute-defined-outside-init
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
@@ -170,40 +179,21 @@ class TestGitSource:
             ]
         )
 
-    def test_pull_full_length_commit(self, fake_run, new_dir):
-        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
-        git = GitSource(
-            "git://my-source",
-            Path("source_dir"),
-            cache_dir=new_dir,
-            source_commit=commit,
-            project_dirs=self._dirs,
-        )
-
-        git.pull()
-
-        fake_run.assert_has_calls(
-            [
-                mock.call(
-                    [
-                        "git",
-                        "-c",
-                        "advice.detachedHead=false",
-                        "clone",
-                        "--recursive",
-                        "git://my-source",
-                        "source_dir",
-                    ]
-                ),
-                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
-                mock.call(["git", "-C", "source_dir", "checkout", commit]),
-            ]
-        )
-
-    def test_pull_short_commit(self, fake_check_output, fake_run, new_dir):
+    def test_fetch_commit_deep(
+        self,
+        fake_check_output: mock.MagicMock,
+        fake_run: mock.MagicMock,
+        new_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
         short_commit = "2514f9533e"
         commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
         fake_check_output.return_value = commit
+        mocker.patch(
+            "craft_parts.sources.git_source.GitSource._clone_at_commit",
+            side_effect=ShallowFetchError,
+        )
+
         git = GitSource(
             "git://my-source",
             Path("source_dir"),
@@ -239,6 +229,98 @@ class TestGitSource:
                 mock.call(["git", "-C", "source_dir", "checkout", commit]),
             ]
         )
+
+    def test_fetch_commit_shallow(
+        self, fake_run: mock.MagicMock, new_dir: Path
+    ) -> None:
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit=commit,
+            project_dirs=self._dirs,
+            source_depth=1,
+        )
+
+        git.pull()
+
+        fake_run.assert_has_calls(
+            [
+                mock.call(["git", "-C", "source_dir", "init"]),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "remote",
+                        "add",
+                        "origin",
+                        "git://my-source",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "fetch",
+                        "origin",
+                        commit,
+                        "--depth",
+                        "1",
+                    ]
+                ),
+                mock.call(["git", "-C", "source_dir", "checkout", commit]),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--init",
+                        "--recursive",
+                    ]
+                ),
+            ]
+        )
+
+    @pytest.mark.parametrize(
+        ("commit", "expectation", "should_warn"),
+        [
+            # 40-character long hash
+            pytest.param("deadbeef" * 5, nullcontext(), False, id="happy"),
+            pytest.param(
+                "deadbeef",
+                pytest.raises(ShallowFetchError),
+                True,
+                id="sad",
+            ),
+        ],
+    )
+    @pytest.mark.usefixtures("fake_run")
+    def test_fetch_commit_warn(
+        self,
+        new_dir: Path,
+        commit: str,
+        expectation: AbstractContextManager,
+        should_warn: bool,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        warning = "A shallow clone is not possible with a short hash."
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit=commit,
+            project_dirs=self._dirs,
+            source_depth=1,
+        )
+        with expectation:
+            git._clone_at_commit()
+
+        assert should_warn == (warning in caplog.text)
 
     def test_pull_short_commit_error(self, fake_check_output, fake_run, new_dir):
         fake_check_output.side_effect = subprocess.CalledProcessError(1, [])
@@ -895,3 +977,24 @@ class TestGitGenerateVersionNoGit:
 
         with pytest.raises(errors.VCSError):
             GitSource.generate_version()
+
+
+class TestGetVersion:
+    @pytest.mark.parametrize(
+        ("version", "expected"),
+        [
+            pytest.param("git version 2.0.1", (2, 0, 1), id="happy"),
+            pytest.param("git version 999.999.999", (999, 999, 999), id="big_numbers"),
+            pytest.param("git version ..", (0, 0, 0), id="bad_version"),
+            pytest.param("git version 2.0", (0, 0, 0), id="short_version"),
+            pytest.param("git version 0.0.0", (0, 0, 0), id="no_version"),
+            pytest.param("where am I", (0, 0, 0), id="bad_response"),
+        ],
+    )
+    def test_get_version(
+        self, mocker: MockerFixture, version: str, expected: tuple[int, int, int]
+    ) -> None:
+        mocker.patch(
+            "craft_parts.sources.git_source.GitSource._run_output", return_value=version
+        )
+        assert GitSource._get_git_version() == expected
