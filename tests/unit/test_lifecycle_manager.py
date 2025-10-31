@@ -153,6 +153,7 @@ class TestLifecycleManager:
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["foo.*"],
+            ignore_outdated=["bar.*"],
             **self._lcm_kwargs,
         )
 
@@ -166,7 +167,7 @@ class TestLifecycleManager:
         mock_seq.assert_called_once_with(
             part_list=lf._part_list,
             project_info=lf.project_info,
-            ignore_outdated=["foo.*"],
+            ignore_outdated=["bar.*", "foo.*"],
             base_layer_hash=None,
         )
 
@@ -178,6 +179,7 @@ class TestLifecycleManager:
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["ign1", "ign2"],
+            ignore_outdated=["ign3"],
             custom="foo",
             **self._lcm_kwargs,
         )
@@ -186,7 +188,7 @@ class TestLifecycleManager:
             call(
                 part_list=[ANY],
                 project_info=ANY,
-                ignore_outdated=["ign1", "ign2"],
+                ignore_outdated=["ign3", "ign1", "ign2"],
                 base_layer_hash=None,
             )
         ]
@@ -202,6 +204,7 @@ class TestLifecycleManager:
             extra_build_packages=["pkg1", "pkg2"],
             extra_build_snaps=["snap1", "snap2"],
             ignore_local_sources=["ign1", "ign2"],
+            ignore_outdated=["ign3"],
             custom="foo",
             **self._lcm_kwargs,
         )
