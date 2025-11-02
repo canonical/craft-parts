@@ -31,6 +31,8 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["jlink"] = "jlink"
     jlink_jars: list[str] = []
     jlink_extra_modules: list[str] = []
+    jlink_modules: list[str] = []
+    jlink_multi_release: int | None
 
 
 class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):
@@ -70,6 +72,54 @@ class JLinkPlugin(Plugin):
             return f"PROCESS_JARS={jars}"
 
         return 'PROCESS_JARS=$(find ${CRAFT_STAGE} -type f -name "*.jar")'
+
+    def _get_deps_commands(self) -> list[str]:
+        """Return commands to generate a list of dependencies."""
+        options = cast(JLinkPluginProperties, self._options)
+
+        if len(options.jlink_modules) > 0:
+            modules = ",".join(options.jlink_modules)
+            return [f"deps={modules}"]
+
+        return [
+            self._get_multi_release_command(),
+            self._get_find_jars_commands(),
+            # create temp folder
+            "mkdir -p ${CRAFT_PART_BUILD}/tmp",
+            # extract jar files into temp folder - spring boot fat jar
+            # contains dependent jars inside
+            "(cd ${CRAFT_PART_BUILD}/tmp && for jar in ${PROCESS_JARS}; do jar xvf ${jar}; done;)",
+            # create classpath - add all dependent jars and all staged jars
+            "CPATH=.",
+            """\
+                for file in $(find "${CRAFT_PART_BUILD}/tmp" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
+                done
+                for file in $(find "${CRAFT_STAGE}" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
+                done
+            """,
+            """\
+                if [ "x${PROCESS_JARS}" != "x" ]; then
+                    deps=$(${JDEPS} --print-module-deps -q --recursive \
+                        --ignore-missing-deps \
+                        --multi-release ${MULTI_RELEASE} \
+                        --class-path=${CPATH} \
+                        ${PROCESS_JARS})
+                else
+                    deps=java.base
+                fi
+            """,
+        ]
+
+    def _get_multi_release_command(self) -> str:
+        """Return jdeps multi-release setting."""
+        options = cast(JLinkPluginProperties, self._options)
+
+        if options.jlink_multi_release is not None:
+            return f"MULTI_RELEASE={options.jlink_multi_release}"
+
+        return "MULTI_RELEASE=${JLINK_VERSION%%.*}"
 
     def _get_extra_module_list(self) -> str:
         """Return additional modules."""
@@ -111,36 +161,7 @@ class JLinkPlugin(Plugin):
             # and multi-release jar version for the dependency enumeration
             "JLINK_VERSION=$(${JLINK} --version)",
             "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}",
-            "MULTI_RELEASE=${JLINK_VERSION%%.*}",
-            self._get_find_jars_commands(),
-            # Tell Jlink where to install.
-            "INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}",
-            # create temp folder
-            "mkdir -p ${CRAFT_PART_BUILD}/tmp",
-            # extract jar files into temp folder - spring boot fat jar
-            # contains dependent jars inside
-            "(cd ${CRAFT_PART_BUILD}/tmp && for jar in ${PROCESS_JARS}; do jar xvf ${jar}; done;)",
-            # create classpath - add all dependent jars and all staged jars
-            "CPATH=.",
-            """\
-                for file in $(find "${CRAFT_PART_BUILD}/tmp" -type f -name "*.jar"); do
-                    CPATH="$CPATH:${file}"
-                done
-                for file in $(find "${CRAFT_STAGE}" -type f -name "*.jar"); do
-                    CPATH="$CPATH:${file}"
-                done
-            """,
-            """\
-                if [ "x${PROCESS_JARS}" != "x" ]; then
-                    deps=$(${JDEPS} --print-module-deps -q --recursive \
-                      --ignore-missing-deps \
-                      --multi-release ${MULTI_RELEASE} \
-                      --class-path=${CPATH} \
-                      ${PROCESS_JARS})
-                else
-                    deps=java.base
-                fi
-            """,
+            *self._get_deps_commands(),
         ]
         extra_modules = self._get_extra_module_list()
         if len(extra_modules) > 0:

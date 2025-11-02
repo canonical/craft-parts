@@ -54,13 +54,33 @@ def test_jlink_plugin_jar_files(part_info):
 
 
 def test_jlink_plugin_add_modules(part_info):
-    """Validate setting of jlink version."""
+    """Validate setting of additional jlink modules."""
     properties = JLinkPlugin.properties_class.unmarshal(
         {"source": ".", "jlink-extra-modules": ["jdk.crypto.ec", "jdk.desktop"]}
     )
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
     assert "deps=${deps},jdk.crypto.ec,jdk.desktop" in plugin.get_build_commands()
+
+
+def test_jlink_plugin_set_modules(part_info):
+    """Validate setting of jlink modules."""
+    properties = JLinkPlugin.properties_class.unmarshal(
+        {"source": ".", "jlink-modules": ["jdk.crypto.ec", "jdk.desktop"]}
+    )
+    plugin = JLinkPlugin(properties=properties, part_info=part_info)
+
+    assert "deps=jdk.crypto.ec,jdk.desktop" in plugin.get_build_commands()
+
+
+def test_jlink_plugin_multi_release(part_info):
+    """Validate setting of jlink multi-release."""
+    properties = JLinkPlugin.properties_class.unmarshal(
+        {"source": ".", "jlink-multi-release": 11}
+    )
+    plugin = JLinkPlugin(properties=properties, part_info=part_info)
+
+    assert "MULTI_RELEASE=11" in plugin.get_build_commands()
 
 
 def test_jlink_plugin_find_jars(part_info, tmp_path):
