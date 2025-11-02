@@ -32,7 +32,7 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
     jlink_jars: list[str] = []
     jlink_extra_modules: list[str] = []
     jlink_modules: list[str] = []
-    jlink_multi_release: int | None
+    jlink_multi_release: int | None = None
 
 
 class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):
