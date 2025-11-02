@@ -13,6 +13,15 @@ Keys
 This plugin provides the following unique keys.
 
 
+jlink-modules
+~~~~~~~~~~~~~
+
+**Type:** list of strings
+
+List of modules to include in the OpenJDK image. This option
+makes plugin ignore all other options.
+
+
 jlink-jars
 ~~~~~~~~~~
 
@@ -28,6 +37,14 @@ jlink-extra-modules
 **Type:** list of strings
 
 Additional modules to include in the OpenJDK image.
+
+
+jlink-multi-release
+~~~~~~~~~~~~~~~~~~~
+
+**Type:** int
+
+OpenJDK release version to use for multi-release jars.
 
 
 Dependencies
@@ -98,7 +115,12 @@ Or, by installing the dependencies directly:
 How it works
 ------------
 
-During the build step, the plugin performs the following actions:
+The plugin performs actions during the build step.
+
+When ``jlink-modules`` option is specified, the plugin runs `jlink`_ to create
+an OpenJDK image.
+
+Otherwise, the plugin performs the following actions:
 
 #. Find all JAR files in the staging area or selects jars specified in ``jlink-jars``.
 #. Unpack JAR files to the temporary location and concatenate all embedded jars into
