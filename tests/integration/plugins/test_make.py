@@ -25,19 +25,62 @@ from craft_parts import LifecycleManager, Step
 pytestmark = [pytest.mark.plugin]
 
 
-def test_make_plugin(new_dir, partitions):
+@pytest.mark.parametrize(
+    ("parts_yaml", "binary_path", "expected_output"),
+    [
+        pytest.param(
+            lambda source_location: textwrap.dedent(
+                f"""
+                parts:
+                  foo:
+                    plugin: make
+                    source: {source_location}
+                """
+            ),
+            "bin/hello",
+            "Hello, world!\n",
+            id="basic",
+        ),
+        pytest.param(
+            lambda source_location: textwrap.dedent(
+                f"""
+                parts:
+                  foo:
+                    plugin: make
+                    source: {source_location}
+                    make-parameters:
+                      - MESSAGE=Greetings
+                      - TARGET=craft-parts
+                """
+            ),
+            "bin/hello",
+            "Greetings, craft-parts!\n",
+            id="with-parameters",
+        ),
+        pytest.param(
+            lambda _: textwrap.dedent(
+                """
+                parts:
+                  tree:
+                    plugin: make
+                    source: https://github.com/Old-Man-Programmer/tree.git
+                    source-type: git
+                    source-tag: "2.2.1"
+                """
+            ),
+            "tree",
+            "tree v2.2.1",
+            id="real-project",
+        ),
+    ],
+)
+def test_make_plugin(new_dir, partitions, parts_yaml, binary_path, expected_output):
     """Test builds with the make plugin."""
     source_location = Path(__file__).parent / "test_make"
 
-    parts_yaml = textwrap.dedent(
-        f"""
-        parts:
-          foo:
-            plugin: make
-            source: {source_location}
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
+    parts_yaml_str = parts_yaml(source_location)
+    parts = yaml.safe_load(parts_yaml_str)
+
     lf = LifecycleManager(
         parts,
         application_name="test_make",
@@ -50,79 +93,13 @@ def test_make_plugin(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    binary = Path(lf.project_info.prime_dir, "bin", "hello")
+    binary = Path(lf.project_info.prime_dir, binary_path)
     assert binary.is_file()
 
-    output = subprocess.check_output([str(binary)], text=True)
-    assert output == "Hello, world!\n"
-
-
-def test_make_plugin_with_parameters(new_dir, partitions):
-    """Test make plugin with make-parameters."""
-    source_location = Path(__file__).parent / "test_make"
-
-    parts_yaml = textwrap.dedent(
-        f"""
-        parts:
-          foo:
-            plugin: make
-            source: {source_location}
-            make-parameters:
-              - MESSAGE=Greetings
-              - TARGET=craft-parts
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-    lf = LifecycleManager(
-        parts,
-        application_name="test_make",
-        cache_dir=new_dir,
-        work_dir=new_dir,
-        partitions=partitions,
-    )
-    actions = lf.plan(Step.PRIME)
-
-    with lf.action_executor() as ctx:
-        ctx.execute(actions)
-
-    binary = Path(lf.project_info.prime_dir, "bin", "hello")
-    assert binary.is_file()
-
-    output = subprocess.check_output([str(binary)], text=True)
-    # The output "Greetings, craft-parts!" verifies that make-parameters were forwarded correctly.
-    assert output == "Greetings, craft-parts!\n"
-
-
-def test_make_plugin_with_real_project(new_dir, partitions):
-    """Test make plugin with a real-world project (tree utility)."""
-    parts_yaml = textwrap.dedent(
-        """
-        parts:
-          tree:
-            plugin: make
-            source: https://github.com/Old-Man-Programmer/tree.git
-            source-type: git
-            source-tag: "2.2.1"
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-    lf = LifecycleManager(
-        parts,
-        application_name="test_make",
-        cache_dir=new_dir,
-        work_dir=new_dir,
-        partitions=partitions,
-    )
-    actions = lf.plan(Step.PRIME)
-
-    with lf.action_executor() as ctx:
-        ctx.execute(actions)
-
-    # The tree utility's Makefile installs to $(DESTDIR)/$(TREE_DEST)
-    # where TREE_DEST=tree, so the binary ends up at prime_dir/tree
-    binary = Path(lf.project_info.prime_dir, "tree")
-    assert binary.is_file()
-
-    # Run tree --version to verify it works
-    output = subprocess.check_output([str(binary), "--version"], text=True)
-    assert "tree v2.2.1" in output
+    # For the real project test, check version output; for others, check exact output
+    if "tree v" in expected_output:
+        output = subprocess.check_output([str(binary), "--version"], text=True)
+        assert expected_output in output
+    else:
+        output = subprocess.check_output([str(binary)], text=True)
+        assert output == expected_output
