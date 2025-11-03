@@ -118,7 +118,8 @@ def test_make_plugin_with_real_project(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    # The tree utility should install the 'tree' binary
+    # The tree utility's Makefile installs to $(DESTDIR)/$(TREE_DEST)
+    # where TREE_DEST=tree, so the binary ends up at prime_dir/tree
     binary = Path(lf.project_info.prime_dir, "tree")
     assert binary.is_file()
 
