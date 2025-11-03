@@ -29,8 +29,8 @@ pytestmark = [pytest.mark.plugin]
     ("parts_yaml", "binary_path", "expected_output"),
     [
         pytest.param(
-            lambda source_location: textwrap.dedent(
-                f"""
+            textwrap.dedent(
+                """
                 parts:
                   foo:
                     plugin: make
@@ -42,8 +42,8 @@ pytestmark = [pytest.mark.plugin]
             id="basic",
         ),
         pytest.param(
-            lambda source_location: textwrap.dedent(
-                f"""
+            textwrap.dedent(
+                """
                 parts:
                   foo:
                     plugin: make
@@ -58,7 +58,7 @@ pytestmark = [pytest.mark.plugin]
             id="with-parameters",
         ),
         pytest.param(
-            lambda _: textwrap.dedent(
+            textwrap.dedent(
                 """
                 parts:
                   tree:
@@ -78,7 +78,7 @@ def test_make_plugin(new_dir, partitions, parts_yaml, binary_path, expected_outp
     """Test builds with the make plugin."""
     source_location = Path(__file__).parent / "test_make"
 
-    parts_yaml_str = parts_yaml(source_location)
+    parts_yaml_str = parts_yaml.format(source_location=source_location)
     parts = yaml.safe_load(parts_yaml_str)
 
     lf = LifecycleManager(
