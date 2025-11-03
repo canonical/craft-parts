@@ -118,7 +118,7 @@ How it works
 The plugin performs actions during the build step.
 
 When ``jlink-modules`` option is specified, the plugin runs `jlink`_ to create
-an OpenJDK image.
+an OpenJDK image with the specified modules.
 
 Otherwise, the plugin performs the following actions:
 
