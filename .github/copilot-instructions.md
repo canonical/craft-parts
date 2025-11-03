@@ -94,6 +94,26 @@ make test-slow      # Run slow tests only
 make test-coverage  # Generate coverage report
 ```
 
+#### Running Relevant Tests
+
+When making changes, run only the relevant tests first before running linters:
+
+```bash
+# Run tests for a specific module
+uv run pytest tests/unit/test_module.py
+
+# Run tests for a specific file or directory
+uv run pytest tests/unit/executor/
+
+# Run tests matching a pattern
+uv run pytest -k "test_pattern"
+
+# Run fast tests for a specific area
+uv run pytest -m 'not slow' tests/unit/plugins/
+```
+
+**Important**: Always run relevant tests locally before linting to catch issues early.
+
 ### Test Markers
 
 Tests can be marked with:
@@ -121,6 +141,15 @@ Available in tests:
 - Use fixtures for common setup
 - Mock external dependencies
 - Avoid flaky tests
+
+### Development Workflow
+
+When making code changes:
+
+1. **Run relevant tests first** - Use `uv run pytest` with specific paths or patterns
+2. **Fix any test failures** - Ensure all relevant tests pass
+3. **Run linters** - Use `make lint` or specific linters like `make lint-ruff`
+4. **Run broader tests** - Use `make test-fast` before committing
 
 ## Documentation
 
