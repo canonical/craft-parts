@@ -66,9 +66,13 @@ pytestmark = [pytest.mark.plugin]
                     source: https://github.com/Old-Man-Programmer/tree.git
                     source-type: git
                     source-tag: "2.2.1"
+                    override-build: |
+                      make -j"${{CRAFT_PARALLEL_BUILD_COUNT}}"
+                      mkdir -p "${{CRAFT_PART_INSTALL}}/bin"
+                      cp tree "${{CRAFT_PART_INSTALL}}/bin/"
                 """
             ),
-            "tree",
+            "bin/tree",
             "tree v2.2.1",
             id="real-project",
         ),
@@ -88,6 +92,7 @@ def test_make_plugin(new_dir, partitions, parts_yaml, binary_path, expected_outp
         work_dir=new_dir,
         partitions=partitions,
     )
+
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
