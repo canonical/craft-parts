@@ -17,6 +17,15 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+2.27.0 (2025-MM-DD)
+-------------------
+
+Bug fixes:
+
+- Shallow clones of git sources are now possible when using ``source-commit`` with
+  ``source-depth``.
+
+
 .. _release-2.26.0:
 
 2.26.0 (2025-10-22)
