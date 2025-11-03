@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2025 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -118,7 +118,7 @@ def test_make_plugin_with_real_project(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    # The tree utility installs to DESTDIR/tree (based on its Makefile)
+    # The tree utility should install the 'tree' binary
     binary = Path(lf.project_info.prime_dir, "tree")
     assert binary.is_file()
 

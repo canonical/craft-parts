@@ -3,11 +3,11 @@ CFLAGS = -Wall
 
 # Allow MESSAGE and TARGET to be set from command line
 ifdef MESSAGE
-CFLAGS += -DMESSAGE=\"$(MESSAGE)\"
+CFLAGS += -DMESSAGE='"$(MESSAGE)"'
 endif
 
 ifdef TARGET
-CFLAGS += -DTARGET=\"$(TARGET)\"
+CFLAGS += -DTARGET='"$(TARGET)"'
 endif
 
 all: hello
