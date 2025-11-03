@@ -161,12 +161,12 @@ class JLinkPlugin(Plugin):
             # and multi-release jar version for the dependency enumeration
             "JLINK_VERSION=$(${JLINK} --version)",
             "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}",
+            "INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}",
             *self._get_deps_commands(),
         ]
         extra_modules = self._get_extra_module_list()
         if len(extra_modules) > 0:
             commands.append(f"deps=${{deps}},{extra_modules}")
-        commands.append("INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}")
 
         commands.append(
             "rm -rf ${INSTALL_ROOT} && ${JLINK} --no-header-files --no-man-pages --strip-debug --add-modules ${deps} --output ${INSTALL_ROOT}"
