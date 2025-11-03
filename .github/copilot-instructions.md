@@ -16,6 +16,22 @@ make setup-lint # Set up linting-only environment
 make setup-docs # Set up documentation-only environment
 ```
 
+### Pre-commit Hooks
+
+This project uses pre-commit hooks to automatically check code quality before commits. Set up pre-commit hooks with:
+
+```bash
+make setup-precommit  # Install pre-commit hooks
+```
+
+The pre-commit hooks will automatically:
+
+- Fix trailing whitespace
+- Ensure files end with a newline
+- Check YAML, TOML syntax
+- Run ruff linting and formatting
+- Run prettier on markdown, YAML, JSON files
+
 ### Python Version
 
 - **Minimum Python version**: 3.10
