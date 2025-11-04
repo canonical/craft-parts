@@ -16,9 +16,10 @@
 
 """The JLink plugin."""
 
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
-from typing_extensions import override
+from pydantic import model_validator
+from typing_extensions import Self, override
 
 from .base import Plugin
 from .properties import PluginProperties
@@ -33,6 +34,29 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
     jlink_extra_modules: list[str] = []
     jlink_modules: list[str] = []
     jlink_multi_release: int | str = "base"
+
+    def _get_jlink_attributes(self, attribute_dict: dict[str, Any]) -> dict[str, Any]:
+        return {
+            k: v
+            for k, v in attribute_dict.items()
+            if k.startswith("jlink") and k != "jlink_modules"
+        }
+
+    @model_validator(mode="after")
+    def jlink_modules_exclusive(self) -> Self:
+        """Option jlink_modules is exclusive with other options.
+
+        This check ensures that the user does not set jlink_modules
+        together with other options.
+        """
+        if self.jlink_modules:
+            instance_dict = self._get_jlink_attributes(self.__dict__)
+            class_dict = self._get_jlink_attributes(JLinkPluginProperties().__dict__)
+            if class_dict != instance_dict:
+                raise ValueError(
+                    "Option jlink_modules is exclusive with all other options."
+                )
+        return self
 
 
 class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):

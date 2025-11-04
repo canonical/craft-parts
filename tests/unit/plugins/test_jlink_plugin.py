@@ -21,6 +21,7 @@ import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.jlink_plugin import JLinkPlugin
+from pydantic_core import ValidationError
 
 
 @pytest.fixture
@@ -82,6 +83,22 @@ def test_jlink_plugin_multi_release(part_info):
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
     assert "MULTI_RELEASE=11" in plugin.get_build_commands()
+
+
+def test_jlink_plugin_modules_validator(part_info):
+    """Validate that jlink-modules is an exclusive option"""
+    with pytest.raises(ValidationError) as error:
+        properties = JLinkPlugin.properties_class.unmarshal(
+            {"source": ".", "jlink-multi-release": 11, "jlink-modules": ["java.base"]}
+        )
+    assert "Option jlink_modules is exclusive with all other options." in str(
+        error.value
+    )
+
+    properties = JLinkPlugin.properties_class.unmarshal(
+        {"source": ".", "jlink-modules": ["java.base"]}
+    )
+    assert "java.base" in str(properties)
 
 
 def test_jlink_plugin_find_jars(part_info, tmp_path):
