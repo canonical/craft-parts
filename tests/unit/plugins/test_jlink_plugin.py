@@ -36,6 +36,7 @@ def test_jlink_plugin_defaults(part_info):
     properties = JLinkPlugin.properties_class.unmarshal({"source": "."})
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
+    assert "MULTI_RELEASE=base" in plugin.get_build_commands()
     assert (
         "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}"
         in plugin.get_build_commands()

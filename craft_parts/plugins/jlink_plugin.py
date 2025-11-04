@@ -32,7 +32,7 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
     jlink_jars: list[str] = []
     jlink_extra_modules: list[str] = []
     jlink_modules: list[str] = []
-    jlink_multi_release: int | None = None
+    jlink_multi_release: str = "base"
 
 
 class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):
@@ -115,11 +115,7 @@ class JLinkPlugin(Plugin):
     def _get_multi_release_command(self) -> str:
         """Return jdeps multi-release setting."""
         options = cast(JLinkPluginProperties, self._options)
-
-        if options.jlink_multi_release is not None:
-            return f"MULTI_RELEASE={options.jlink_multi_release}"
-
-        return "MULTI_RELEASE=${JLINK_VERSION%%.*}"
+        return f"MULTI_RELEASE={options.jlink_multi_release}"
 
     def _get_extra_module_list(self) -> str:
         """Return additional modules."""
