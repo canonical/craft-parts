@@ -99,7 +99,6 @@ def test_jlink_plugin_set_modules(new_dir, partitions):
             my-part:
                 plugin: jlink
                 source: .
-                jlink-jars: ["test.jar"]
                 jlink-modules: ["jdk.crypto.ec", "java.sql"]
                 after: ["stage-jar"]
             stage-jar:
