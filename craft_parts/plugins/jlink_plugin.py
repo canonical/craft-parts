@@ -101,7 +101,7 @@ class JLinkPlugin(Plugin):
         """Return commands to generate a list of dependencies."""
         options = cast(JLinkPluginProperties, self._options)
 
-        if len(options.jlink_modules) > 0:
+        if options.jlink_modules:
             modules = ",".join(options.jlink_modules)
             return [f"deps={modules}"]
 
