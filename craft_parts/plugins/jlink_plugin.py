@@ -109,10 +109,15 @@ class JLinkPlugin(Plugin):
             self._get_multi_release_command(),
             self._get_find_jars_commands(),
             # create temp folder
-            "mkdir -p ${CRAFT_PART_BUILD}/tmp",
             # extract jar files into temp folder - spring boot fat jar
             # contains dependent jars inside
-            "(cd ${CRAFT_PART_BUILD}/tmp && for jar in ${PROCESS_JARS}; do jar xvf ${jar}; done;)",
+            """
+                mkdir -p "${CRAFT_PART_BUILD}/tmp" && \
+                (cd "${CRAFT_PART_BUILD}/tmp" && \
+                    for jar in ${PROCESS_JARS}; do jar xvf "${jar}"; done;)
+            """,
+            # create classpath - add all dependent jars and all staged jars
+            "CPATH=.",
             # create classpath - add all dependent jars and all staged jars
             "CPATH=.",
             """\
