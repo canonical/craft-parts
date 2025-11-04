@@ -118,8 +118,6 @@ class JLinkPlugin(Plugin):
             """,
             # create classpath - add all dependent jars and all staged jars
             "CPATH=.",
-            # create classpath - add all dependent jars and all staged jars
-            "CPATH=.",
             """\
                 for file in $(find "${CRAFT_PART_BUILD}/tmp" -type f -name "*.jar"); do
                     CPATH="$CPATH:${file}"
