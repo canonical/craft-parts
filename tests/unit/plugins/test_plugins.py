@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2021,2024 Canonical Ltd.
+# Copyright 2020-2021,2024-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -31,9 +31,13 @@ from craft_parts.plugins.plugins import (
     MesonPlugin,
     NilPlugin,
     NpmPlugin,
+    PluginGroup,
     PythonPlugin,
     QmakePlugin,
     RustPlugin,
+    get_registered_plugins,
+    set_plugin_group,
+    unregister_all,
     validate_build_attributes,
 )
 
@@ -139,6 +143,11 @@ class FooPlugin(plugins.Plugin):
 class TestPluginRegistry:
     """Verify plugin register/unregister functions."""
 
+    @pytest.fixture(autouse=True)
+    def _reset_plugins(self):
+        yield
+        unregister_all()
+
     def test_register_unregister(self):
         with pytest.raises(ValueError, match="^plugin not registered: 'plugin1'$"):
             plugins.get_plugin_class("plugin1")
@@ -173,6 +182,15 @@ class TestPluginRegistry:
         plugins.unregister_all()
         with pytest.raises(ValueError, match="^plugin not registered: 'plugin4'$"):
             plugins.get_plugin_class("plugin4")
+
+    @pytest.mark.parametrize("group", PluginGroup)
+    def test_plugin_groups(self, group: PluginGroup):
+        # Set a null plugin group.
+        plugins.plugins._plugins = {}
+        assert not get_registered_plugins()
+
+        set_plugin_group(group)
+        assert get_registered_plugins() == group.value
 
 
 class TestHelpers:
