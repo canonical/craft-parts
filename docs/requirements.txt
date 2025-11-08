@@ -144,7 +144,7 @@ polib==1.2.0
     # via
     #   -r requirements.txt
     #   sphinx-lint
-pydantic==2.10.6
+pydantic==2.12.4
     # via
     #   -r requirements.txt
     #   sphinx-pydantic
