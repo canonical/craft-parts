@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import tempfile
 import textwrap
 from pathlib import Path
 
@@ -56,3 +57,44 @@ def test_ruby_deps_part(new_dir, partitions):
 
     primed_script = Path(lf.project_info.prime_dir, "ruby", "3.2.0", "bin", "mytest")
     assert primed_script.exists()
+
+
+def test_ruby_gem_install(new_dir, partitions):
+    """Plugin should install specified gems."""
+    source_location = Path(__file__).parent / "test_ruby"
+
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          ruby-deps:
+            plugin: nil
+            #FIXME we can only get away with nothing here because
+            # # Ruby is already installed in the host environment
+          foo:
+            plugin: ruby
+            source: {source_location}
+            ruby-gems:
+              - rake
+            after:
+              - ruby-deps
+            override-build: |
+              craftctl default
+              gem build plugin_test.gemspec
+              gem install ./test_ruby-0.0.1.gem
+              rake
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_ruby", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with tempfile.TemporaryFile(mode="w+") as stdout:
+        with lf.action_executor() as ctx:
+            ctx.execute(actions, stdout=stdout)
+
+        stdout.seek(0)
+        last_line = stdout.read().splitlines()[-1]
+        assert last_line == "it works!"

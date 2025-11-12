@@ -141,6 +141,8 @@ class RubyPlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         env = {
             "PATH": f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin:${{PATH}}",
+            "GEM_HOME": str(self._part_info.part_install_dir),
+            "GEM_PATH": str(self._part_info.part_install_dir),
         }
 
         if self._options.ruby_shared:
