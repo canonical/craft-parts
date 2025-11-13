@@ -141,8 +141,8 @@ class RubyPlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         env = {
             "PATH": f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin:${{PATH}}",
-            "GEM_HOME": str(self._part_info.part_install_dir),
-            "GEM_PATH": str(self._part_info.part_install_dir),
+            #"GEM_HOME": str(self._part_info.part_install_dir),
+            #"GEM_PATH": str(self._part_info.part_install_dir),
         }
 
         if self._options.ruby_shared:
@@ -189,12 +189,12 @@ class RubyPlugin(Plugin):
             commands.append(f"echo '{ruby_install_checksum}'")
             commands.append(f"echo '{ruby_install_checksum}' | sha256sum --check --strict")
             commands.append("tar xfz ruby-install.tar.gz")
-            commands.append(f"ruby-install-{ruby_install_version}/bin/ruby-install --src-dir ${{CRAFT_PART_SRC}} --install-dir ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix} --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}} {self._options.ruby_flavor}-{self._options.ruby_version} -- {configure_opts}")
+            commands.append(f"ruby-install-{ruby_install_version}/bin/ruby-install --src-dir ${{CRAFT_PART_SRC}} --install-dir ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix} --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}} {self._options.ruby_flavor.value}-{self._options.ruby_version} -- {configure_opts}")
 
         # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
         #       executables by removing them first.
         commands.append(f"rm -f ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin/{{bundle,bundler}}")
-        commands.append(f"gem install --env-shebang --no-document --install-dir {install_dir} bundler")
+        commands.append("gem install --env-shebang --no-document bundler")
 
         if self._options.ruby_use_bundler:
             commands.append(f"bundle config path {install_dir}")
