@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -79,6 +79,11 @@ class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 plugin_name=self._options.plugin,
                 part_dependencies=part_dependencies,
             )
+            self.validate_dependency(
+                dependency="bundler",
+                plugin_name=self._options.plugin,
+                part_dependencies=part_dependencies,
+            )
 
 
 class RubyPlugin(Plugin):
@@ -115,6 +120,13 @@ class RubyPlugin(Plugin):
       Defaults to False
     """
 
+    # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
+    RUBY_INSTALL_VERSION = '0.10.1'
+
+    # NOTE: To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
+    #   curl -L https://github.com/postmodern/ruby-install/archive/refs/tags/v0.10.1.tar.gz -o ruby-install.tar.gz && sha256sum --tag ruby-install.tar.gz
+    RUBY_INSTALL_CHECKSUM = 'SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33'
+
     properties_class = RubyPluginProperties
     validator_class = RubyPluginEnvironmentValidator
     _options: RubyPluginProperties
@@ -122,9 +134,10 @@ class RubyPlugin(Plugin):
     def _system_has_ruby(self) -> bool:
         try:
             ruby_version = subprocess.check_output(["ruby", "--version"], text=True)
+            bundler_version = subprocess.check_output(["bundle", "--version"], text=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
-        return "ruby" in ruby_version
+        return "ruby" in ruby_version and "Bundler" in bundler_version
 
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
@@ -141,8 +154,8 @@ class RubyPlugin(Plugin):
     def get_build_environment(self) -> Dict[str, str]:
         env = {
             "PATH": f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin:${{PATH}}",
-            #"GEM_HOME": str(self._part_info.part_install_dir),
-            #"GEM_PATH": str(self._part_info.part_install_dir),
+            "GEM_HOME": str(self._part_info.part_install_dir),
+            "GEM_PATH": str(self._part_info.part_install_dir),
         }
 
         if self._options.ruby_shared:
@@ -150,7 +163,6 @@ class RubyPlugin(Plugin):
             env["LD_LIBRARY_PATH"] = f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
 
         return env
-
 
     def _configure_opts(self) -> List[str]:
         configure_opts = [
@@ -166,38 +178,40 @@ class RubyPlugin(Plugin):
 
         return configure_opts
 
-
-    def get_build_commands(self) -> List[str]:
-        configure_opts = ' '.join(self._configure_opts())
-        commands = ['uname -a', 'env']
-        install_dir =  self._part_info.part_install_dir
+    @override
+    def get_pull_commands(self) -> list[str]:
+        """Return a list of commands to run during the pull step."""
+        commands: List[str] = []
 
         # Install Ruby only if not already present, e.g. provided by another part
         if not self._system_has_ruby():
-            # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
-            ruby_install_version = '0.10.1'
-
-            # NOTE: To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
-            #   curl -L https://github.com/postmodern/ruby-install/archive/refs/tags/v0.10.1.tar.gz -o ruby-install.tar.gz && sha256sum --tag ruby-install.tar.gz
-            ruby_install_checksum = 'SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33'
-
             # NOTE: Download and verify ruby-install and use it to download, compile, and install Ruby
-            commands.append(f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{ruby_install_version}.tar.gz -o ruby-install.tar.gz")
+            commands.append(f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{self.RUBY_INSTALL_VERSION}.tar.gz -o ruby-install.tar.gz")
             commands.append("echo 'Checksum of downloaded file:'")
             commands.append("sha256sum --tag ruby-install.tar.gz")
             commands.append("echo 'Checksum is correct if it matches:'")
-            commands.append(f"echo '{ruby_install_checksum}'")
-            commands.append(f"echo '{ruby_install_checksum}' | sha256sum --check --strict")
-            commands.append("tar xfz ruby-install.tar.gz")
-            commands.append(f"ruby-install-{ruby_install_version}/bin/ruby-install --src-dir ${{CRAFT_PART_SRC}} --install-dir ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix} --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}} {self._options.ruby_flavor.value}-{self._options.ruby_version} -- {configure_opts}")
+            commands.append(f"echo '{self.RUBY_INSTALL_CHECKSUM}'")
+            commands.append(f"echo '{self.RUBY_INSTALL_CHECKSUM}' | sha256sum --check --strict")
 
-        # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
-        #       executables by removing them first.
-        commands.append(f"rm -f ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin/{{bundle,bundler}}")
-        commands.append("gem install --env-shebang --no-document bundler")
+        return commands
+
+    @override
+    def get_build_commands(self) -> List[str]:
+        configure_opts = ' '.join(self._configure_opts())
+        commands = ['uname -a', 'env']
+
+        # Install Ruby only if not already present, e.g. provided by another part
+        if not self._system_has_ruby():
+            commands.append("tar xfz ruby-install.tar.gz")
+            commands.append(f"ruby-install-{self.RUBY_INSTALL_VERSION}/bin/ruby-install --src-dir ${{CRAFT_PART_SRC}} --install-dir ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix} --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}} {self._options.ruby_flavor.value}-{self._options.ruby_version} -- {configure_opts}")
+
+            # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
+            #       executables by removing them first.
+            commands.append(f"rm -f ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin/{{bundle,bundler}}")
+            commands.append("gem install --env-shebang --no-document bundler")
 
         if self._options.ruby_use_bundler:
-            commands.append(f"bundle config path {install_dir}")
+            commands.append("bundle config path ${CRAFT_PART_INSTALL}")
             commands.append("bundle")
 
         if self._options.ruby_gems:

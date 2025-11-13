@@ -42,7 +42,7 @@ def test_ruby_deps_part(new_dir, partitions):
             plugin: ruby
             source: {source_location}
             ruby-gems:
-              - rake
+              - rackup
             ruby-use-bundler: true
             after:
               - ruby-deps
@@ -63,7 +63,7 @@ def test_ruby_deps_part(new_dir, partitions):
     assert interpreter.exists()
 
     # from gem install
-    rake_bin = Path(lf.project_info.prime_dir, "usr", "bin", "rake")
+    rake_bin = Path(lf.project_info.prime_dir, "bin", "rackup")
     assert rake_bin.exists()
 
     # from bundle install
