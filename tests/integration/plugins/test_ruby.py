@@ -36,10 +36,13 @@ def test_ruby_deps_part(new_dir, partitions):
               - ruby-dev
               - ruby
             stage-packages:
+              # include interpreter in the output artifact
               - ruby
           foo:
             plugin: ruby
             source: {source_location}
+            ruby-gems:
+              - rake
             ruby-use-bundler: true
             after:
               - ruby-deps
@@ -55,11 +58,20 @@ def test_ruby_deps_part(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
+    # from ruby-deps stage-packages
+    interpreter = Path(lf.project_info.prime_dir, "usr", "bin", "ruby")
+    assert interpreter.exists()
+
+    # from gem install
+    rake_bin = Path(lf.project_info.prime_dir, "usr", "bin", "rake")
+    assert rake_bin.exists()
+
+    # from bundle install
     primed_script = Path(lf.project_info.prime_dir, "ruby", "3.2.0", "bin", "mytest")
     assert primed_script.exists()
 
 
-def test_ruby_gem_install(new_dir, partitions):
+def test_ruby_override_build(new_dir, partitions):
     """Plugin should install specified gems."""
     source_location = Path(__file__).parent / "test_ruby"
 
@@ -68,12 +80,7 @@ def test_ruby_gem_install(new_dir, partitions):
         parts:
           ruby-deps:
             plugin: nil
-            plugin: nil
             build-packages:
-              # use Ruby deb packages from archive
-              - ruby-dev
-              - ruby
-            stage-packages:
               - ruby
           foo:
             plugin: ruby
