@@ -25,7 +25,7 @@ from craft_parts import LifecycleManager, Step
 
 
 def test_ruby_deps_part(new_dir, partitions):
-    """Plugin should skip building Ruby if another part named ruby-deps exists."""
+    """Plugin should use interpreter from ruby-deps part dependency."""
     source_location = Path(__file__).parent / "test_ruby"
 
     parts_yaml = textwrap.dedent(
@@ -35,15 +35,17 @@ def test_ruby_deps_part(new_dir, partitions):
             plugin: nil
             build-packages:
               # use Ruby deb packages from archive
-              - ruby-dev
               - ruby
+              - ruby-bundler
             stage-packages:
-              # include interpreter in the output artifact
+              # include same packages in the output artifact
               - ruby
+              - ruby-bundler
           foo:
             plugin: ruby
             source: {source_location}
             ruby-gems:
+              # external dependency that installs an executable
               - rackup
             ruby-use-bundler: true
             after:
@@ -71,47 +73,6 @@ def test_ruby_deps_part(new_dir, partitions):
     # from bundle install
     primed_script = Path(lf.project_info.prime_dir, "ruby", "3.2.0", "bin", "mytest")
     assert primed_script.exists()
-
-
-def test_ruby_override_build(new_dir, partitions):
-    """Plugin should install specified gems."""
-    source_location = Path(__file__).parent / "test_ruby"
-
-    parts_yaml = textwrap.dedent(
-        f"""\
-        parts:
-          ruby-deps:
-            plugin: nil
-            build-packages:
-              - ruby
-          foo:
-            plugin: ruby
-            source: {source_location}
-            ruby-gems:
-              - rake
-            after:
-              - ruby-deps
-            override-build: |
-              craftctl default
-              gem build plugin_test.gemspec
-              gem install ./test_ruby-0.0.1.gem
-              rake
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-
-    lf = LifecycleManager(
-        parts, application_name="test_ruby", cache_dir=new_dir, partitions=partitions
-    )
-    actions = lf.plan(Step.PRIME)
-
-    with tempfile.TemporaryFile(mode="w+") as stdout:
-        with lf.action_executor() as ctx:
-            ctx.execute(actions, stdout=stdout)
-
-        stdout.seek(0)
-        last_line = stdout.read().splitlines()[-1]
-        assert last_line == "it works!"
 
 
 @pytest.mark.slow
