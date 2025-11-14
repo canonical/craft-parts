@@ -18,11 +18,9 @@
 
 from enum import Enum
 import logging
-import subprocess
 from typing import Dict, List, Literal, Set
 from typing_extensions import override
 
-from craft_parts.plugins import validator
 from .base import Plugin
 from .properties import PluginProperties
 
@@ -55,35 +53,6 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     ruby_shared: bool = False
     ruby_configure_options: List[str] = []
 
-
-class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
-    """Check the execution environment for the Ruby plugin.
-
-    :param part_name: The part whose build environment is being validated.
-    :param env: A string containing the build step environment setup.
-    """
-
-    _options: RubyPluginProperties
-
-    @override
-    def validate_environment(
-        self, *, part_dependencies: list[str] | None = None
-    ) -> None:
-        """Ensure the environment has the dependencies to build Ruby applications.
-
-        :param part_dependencies: A list of the parts this part depends on.
-        """
-        if "ruby-deps" in (part_dependencies or ()):
-            self.validate_dependency(
-                dependency="ruby",
-                plugin_name=self._options.plugin,
-                part_dependencies=part_dependencies,
-            )
-            self.validate_dependency(
-                dependency="bundler",
-                plugin_name=self._options.plugin,
-                part_dependencies=part_dependencies,
-            )
 
 
 class RubyPlugin(Plugin):
@@ -128,34 +97,29 @@ class RubyPlugin(Plugin):
     RUBY_INSTALL_CHECKSUM = 'SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33'
 
     properties_class = RubyPluginProperties
-    validator_class = RubyPluginEnvironmentValidator
     _options: RubyPluginProperties
 
-    def _system_has_ruby(self) -> bool:
-        try:
-            ruby_version = subprocess.check_output(["ruby", "--version"], text=True)
-            bundler_version = subprocess.check_output(["bundle", "--version"], text=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return False
-        return "ruby" in ruby_version and "Bundler" in bundler_version
+    def _should_build_ruby(self) -> bool:
+        # Skip if user specified 'after: [ruby-deps]' in yaml
+        return "ruby-deps" not in self._part_info.part_dependencies
 
     def get_build_snaps(self) -> Set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
     def get_build_packages(self) -> Set[str]:
-        packages = {"curl"}
-
-        if self._options.ruby_use_jemalloc:
-            packages.add("libjemalloc-dev")
-
+        packages = super().get_build_packages() or set()
+        if self._should_build_ruby():
+            # libssl-dev: to enable compiled binaries to fetch gems over HTTPS
+            # curl: for fetching ruby-install itself
+            packages |= {"curl", "libssl-dev"}
         return packages
 
     def get_build_environment(self) -> Dict[str, str]:
         env = {
             "PATH": f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin:${{PATH}}",
-            "GEM_HOME": str(self._part_info.part_install_dir),
-            "GEM_PATH": str(self._part_info.part_install_dir),
+            "GEM_HOME": "${CRAFT_PART_INSTALL}",
+            "GEM_PATH": "${CRAFT_PART_INSTALL}",
         }
 
         if self._options.ruby_shared:
@@ -183,9 +147,8 @@ class RubyPlugin(Plugin):
         """Return a list of commands to run during the pull step."""
         commands: List[str] = []
 
-        # Install Ruby only if not already present, e.g. provided by another part
-        if not self._system_has_ruby():
-            # NOTE: Download and verify ruby-install and use it to download, compile, and install Ruby
+        if self._should_build_ruby():
+            # NOTE: Download and verify ruby-install tool (to be executed during build phase)
             commands.append(f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{self.RUBY_INSTALL_VERSION}.tar.gz -o ruby-install.tar.gz")
             commands.append("echo 'Checksum of downloaded file:'")
             commands.append("sha256sum --tag ruby-install.tar.gz")
@@ -200,10 +163,17 @@ class RubyPlugin(Plugin):
         configure_opts = ' '.join(self._configure_opts())
         commands = ['uname -a', 'env']
 
-        # Install Ruby only if not already present, e.g. provided by another part
-        if not self._system_has_ruby():
+        if self._should_build_ruby():
+            # NOTE: Use ruby-install to download, compile, and install Ruby
             commands.append("tar xfz ruby-install.tar.gz")
-            commands.append(f"ruby-install-{self.RUBY_INSTALL_VERSION}/bin/ruby-install --src-dir ${{CRAFT_PART_SRC}} --install-dir ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix} --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}} {self._options.ruby_flavor.value}-{self._options.ruby_version} -- {configure_opts}")
+            commands.append(
+                f"ruby-install-{self.RUBY_INSTALL_VERSION}/bin/ruby-install"
+                f" --src-dir ${{CRAFT_PART_SRC}}"
+                f" --install-dir ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}"
+                f" --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}}"
+                f" {self._options.ruby_flavor.value}-{self._options.ruby_version}"
+                f" -- {configure_opts}"
+            )
 
             # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
             #       executables by removing them first.

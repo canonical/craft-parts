@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import subprocess
 import tempfile
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
@@ -110,3 +112,32 @@ def test_ruby_override_build(new_dir, partitions):
         stdout.seek(0)
         last_line = stdout.read().splitlines()[-1]
         assert last_line == "it works!"
+
+
+@pytest.mark.slow
+def test_ruby_custom_interpreter(new_dir, partitions):
+    """Plugin should build the specified version of Ruby."""
+    source_location = Path(__file__).parent / "test_ruby"
+
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          foo:
+            plugin: ruby
+            ruby-version: "3.4.7"
+            source: {source_location}
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_ruby", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    interpreter_path = Path(lf.project_info.prime_dir, "usr", "bin", "ruby")
+    interpreter_version = subprocess.check_output([interpreter_path, "--version"], text=True)
+    assert interpreter_version.startswith("ruby 3.4.7")
