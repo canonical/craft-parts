@@ -1,0 +1,2 @@
+source "https://www.github.com/canonical/craft-parts/"
+gemspec

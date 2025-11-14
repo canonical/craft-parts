@@ -1,0 +1,5 @@
+desc "Task that only succeeds if run in an environment where mytest is installed"
+task :default do
+  require "plugin_test"
+  PluginTest::CLI.main()
+end
