@@ -16,9 +16,10 @@
 
 """The Ruby plugin."""
 
-from enum import Enum
 import logging
-from typing import Dict, List, Literal, Set
+from enum import Enum
+from typing import Literal
+
 from typing_extensions import override
 
 from .base import Plugin
@@ -28,7 +29,8 @@ logger = logging.getLogger(__name__)
 
 
 class RubyFlavor(str, Enum):
-    """Ruby interpreters supported by ruby-install"""
+    """All Ruby implementations supported by ruby-install."""
+
     ruby = "ruby"
     jruby = "jruby"
     rbx = "rbx"
@@ -42,17 +44,16 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["ruby"] = "ruby"
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
-    ruby_gems: List[str] = []
+    ruby_gems: list[str] = []
     ruby_use_bundler: bool = False
 
     # build arguments
     ruby_flavor: RubyFlavor = RubyFlavor.ruby
-    ruby_version: str = '3.2'
-    ruby_prefix: str = '/usr'
+    ruby_version: str = "3.2"
+    ruby_prefix: str = "/usr"
     ruby_use_jemalloc: bool = False
     ruby_shared: bool = False
-    ruby_configure_options: List[str] = []
-
+    ruby_configure_options: list[str] = []
 
 
 class RubyPlugin(Plugin):
@@ -90,11 +91,11 @@ class RubyPlugin(Plugin):
     """
 
     # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
-    RUBY_INSTALL_VERSION = '0.10.1'
+    RUBY_INSTALL_VERSION = "0.10.1"
 
     # NOTE: To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
     #   curl -L https://github.com/postmodern/ruby-install/archive/refs/tags/v0.10.1.tar.gz -o ruby-install.tar.gz && sha256sum --tag ruby-install.tar.gz
-    RUBY_INSTALL_CHECKSUM = 'SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33'
+    RUBY_INSTALL_CHECKSUM = "SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33"
 
     properties_class = RubyPluginProperties
     _options: RubyPluginProperties
@@ -103,19 +104,21 @@ class RubyPlugin(Plugin):
         # Skip if user specified 'after: [ruby-deps]' in yaml
         return "ruby-deps" not in self._part_info.part_dependencies
 
-    def get_build_snaps(self) -> Set[str]:
+    def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
         return set()
 
-    def get_build_packages(self) -> Set[str]:
-        packages = super().get_build_packages() or set()
+    def get_build_packages(self) -> set[str]:
+        """Return a set of required packages to install in the build environment."""
+        packages: set[str] = set()
         if self._should_build_ruby():
             # libssl-dev: to enable compiled binaries to fetch gems over HTTPS
             # curl: for fetching ruby-install itself
             packages |= {"curl", "libssl-dev"}
         return packages
 
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
+        """Return a dictionary with the environment to use in the build step."""
         env = {
             "PATH": f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin:${{PATH}}",
             "GEM_HOME": "${CRAFT_PART_INSTALL}",
@@ -124,16 +127,19 @@ class RubyPlugin(Plugin):
 
         if self._options.ruby_shared:
             # for finding ruby.so when running `gem` or `bundle`
-            env["LD_LIBRARY_PATH"] = f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+            env["LD_LIBRARY_PATH"] = (
+                f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+            )
 
         return env
 
-    def _configure_opts(self) -> List[str]:
+    def _configure_opts(self) -> list[str]:
         configure_opts = [
             "--without-baseruby",
             "--enable-load-relative",
             "--disable-install-doc",
-        ] + self._options.ruby_configure_options
+            *self._options.ruby_configure_options,
+        ]
 
         if self._options.ruby_shared:
             configure_opts.append("--enable-shared")
@@ -145,23 +151,28 @@ class RubyPlugin(Plugin):
     @override
     def get_pull_commands(self) -> list[str]:
         """Return a list of commands to run during the pull step."""
-        commands: List[str] = []
+        commands: list[str] = []
 
         if self._should_build_ruby():
             # NOTE: Download and verify ruby-install tool (to be executed during build phase)
-            commands.append(f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{self.RUBY_INSTALL_VERSION}.tar.gz -o ruby-install.tar.gz")
+            commands.append(
+                f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{self.RUBY_INSTALL_VERSION}.tar.gz -o ruby-install.tar.gz"
+            )
             commands.append("echo 'Checksum of downloaded file:'")
             commands.append("sha256sum --tag ruby-install.tar.gz")
             commands.append("echo 'Checksum is correct if it matches:'")
             commands.append(f"echo '{self.RUBY_INSTALL_CHECKSUM}'")
-            commands.append(f"echo '{self.RUBY_INSTALL_CHECKSUM}' | sha256sum --check --strict")
+            commands.append(
+                f"echo '{self.RUBY_INSTALL_CHECKSUM}' | sha256sum --check --strict"
+            )
 
         return commands
 
     @override
-    def get_build_commands(self) -> List[str]:
-        configure_opts = ' '.join(self._configure_opts())
-        commands = ['uname -a', 'env']
+    def get_build_commands(self) -> list[str]:
+        """Return a list of commands to run during the build step."""
+        configure_opts = " ".join(self._configure_opts())
+        commands = ["uname -a", "env"]
 
         if self._should_build_ruby():
             # NOTE: Use ruby-install to download, compile, and install Ruby
@@ -177,7 +188,9 @@ class RubyPlugin(Plugin):
 
             # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
             #       executables by removing them first.
-            commands.append(f"rm -f ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin/{{bundle,bundler}}")
+            commands.append(
+                f"rm -f ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin/{{bundle,bundler}}"
+            )
             commands.append("gem install --env-shebang --no-document bundler")
 
         if self._options.ruby_use_bundler:
@@ -185,6 +198,10 @@ class RubyPlugin(Plugin):
             commands.append("bundle")
 
         if self._options.ruby_gems:
-            commands.append("gem install --env-shebang --no-document {}".format(' '.join(self._options.ruby_gems)))
+            commands.append(
+                "gem install --env-shebang --no-document {}".format(
+                    " ".join(self._options.ruby_gems)
+                )
+            )
 
         return commands

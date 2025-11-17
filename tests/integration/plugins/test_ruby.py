@@ -100,5 +100,7 @@ def test_ruby_custom_interpreter(new_dir, partitions):
         ctx.execute(actions)
 
     interpreter_path = Path(lf.project_info.prime_dir, "usr", "bin", "ruby")
-    interpreter_version = subprocess.check_output([interpreter_path, "--version"], text=True)
+    interpreter_version = subprocess.check_output(
+        [interpreter_path, "--version"], text=True
+    )
     assert interpreter_version.startswith("ruby 3.4.7")

@@ -62,9 +62,7 @@ def test_get_build_environment(part_info_with_dependency):
 
 
 def test_pull_build_commands_after_ruby_deps(part_info_with_dependency):
-    properties = RubyPlugin.properties_class.unmarshal(
-        {"source": "."}
-    )
+    properties = RubyPlugin.properties_class.unmarshal({"source": "."})
     plugin = RubyPlugin(properties=properties, part_info=part_info_with_dependency)
 
     pull_commands = plugin.get_pull_commands()
@@ -75,9 +73,7 @@ def test_pull_build_commands_after_ruby_deps(part_info_with_dependency):
 
 
 def test_pull_build_commands_no_ruby_deps(part_info_without_dependency):
-    properties = RubyPlugin.properties_class.unmarshal(
-        {"source": "."}
-    )
+    properties = RubyPlugin.properties_class.unmarshal({"source": "."})
     plugin = RubyPlugin(properties=properties, part_info=part_info_without_dependency)
 
     pull_commands = plugin.get_pull_commands()
