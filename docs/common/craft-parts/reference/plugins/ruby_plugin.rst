@@ -94,7 +94,7 @@ ruby-configure-options
 
 **Type:** list of strings
 
-Extra arguments to pass to the compiler when building the Ruby interpreter. 
+Extra arguments to pass to the compiler when building the Ruby interpreter.
 
 
 .. _ruby-details-begin:
