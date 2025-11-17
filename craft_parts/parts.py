@@ -17,11 +17,12 @@
 """Definitions and helpers to handle parts."""
 
 import re
+import textwrap
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import (
     BaseModel,
@@ -46,6 +47,8 @@ from craft_parts.utils.partition_utils import (
     get_partition_dir_map,
 )
 from craft_parts.utils.path_utils import get_partition_and_path
+
+_T_validate = TypeVar("_T_validate")
 
 
 class PartSpec(BaseModel):
@@ -150,9 +153,11 @@ class PartSpec(BaseModel):
     )
     """The subdirectory of the unpacked source where the build will occur.
 
-    During the pull step, the build will be restricted to the specified path.
+    During the build step, build commands are restricted to the specified path.
 
     If unset, the build can access the entire file tree of the source.
+
+    This key does not affect commands specified with ``override-build``.
     """
 
     source_submodules: list[str] | None = Field(
@@ -379,7 +384,7 @@ class PartSpec(BaseModel):
     overlay_files: list[str] = Field(
         default_factory=lambda: ["*"],
         alias="overlay",
-        description="The files to copy from the part's overly filesystem to the stage directory.",
+        description="The files to copy from the part's overlay filesystem to the stage directory.",
         examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
     )
 
@@ -413,9 +418,12 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the pull step.",
         examples=[
-            """|
-              craftctl default
-              rm $CRAFT_PART_SRC/pyproject.toml"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  rm $CRAFT_PART_SRC/pyproject.toml"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the pull step.
@@ -427,10 +435,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run after the part's overlay packages are installed.",
         examples=[
-            """|
-              rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
-              rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
-              rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            textwrap.dedent(
+                """\
+                |
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+                  rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            )
         ],
     )
     """The commands to run after the part's overlay packages are installed.
@@ -443,24 +454,33 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
         examples=[
-            """|
-              cd cmd/webhook
-              mkdir $CRAFT_PART_INSTALL/ko-app
-              go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            textwrap.dedent(
+                """\
+                |
+                  cd cmd/webhook
+                  mkdir $CRAFT_PART_INSTALL/ko-app
+                  go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            ),
         ],
     )
     """The commands to run instead of the default behavior of the build step.
 
     The standard build step actions can be performed by calling ``craftctl default``.
+
+    Excluding ``craftctl default``, these commands don't respect the ``source-subdir``
+    value and are executed on the source's root directory.
     """
 
     override_stage: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the stage step.",
         examples=[
-            '''|
-              craftctl default
-              chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            textwrap.dedent(
+                '''\
+                |
+                  craftctl default
+                  chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            )
         ],
     )
     """The commands to run instead of the default behavior of the stage step.
@@ -472,10 +492,13 @@ class PartSpec(BaseModel):
         default=None,
         description="The commands to run instead of the default behavior of the prime step.",
         examples=[
-            """|
-              craftctl default
-              mkdir -p $CRAFT_PRIME/var/lib/mysql
-              mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  mkdir -p $CRAFT_PRIME/var/lib/mysql
+                  mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            )
         ],
     )
     """The commands to run instead of the default behavior of the prime step.
@@ -507,7 +530,7 @@ class PartSpec(BaseModel):
 
     @field_validator("overlay_packages", "overlay_files", "overlay_script")
     @classmethod
-    def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
+    def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
@@ -549,7 +572,7 @@ class PartSpec(BaseModel):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("part data is not a dictionary")
 
         return PartSpec(**data)
@@ -648,7 +671,7 @@ class Part:
         partitions: Sequence[str] | None = None,
     ) -> None:
         self._partitions = partitions
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
             )
@@ -1194,7 +1217,7 @@ def part_has_chisel_as_build_snap(data: dict[str, Any]) -> bool:
 
 
 def _get_part_spec(data: dict[str, Any]) -> PartSpec:
-    if not isinstance(data, dict):
+    if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError("value must be a dictionary")
 
     # copy the original data, we'll modify it

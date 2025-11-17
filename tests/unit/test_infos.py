@@ -355,9 +355,8 @@ def test_project_info_set_project_var_bad_name(path):
     """Error on invalid project variable names."""
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
+    with pytest.raises(ValueError, match=f"{path!r} is not a valid variable name"):
         info.set_project_var(path, "foo")
-    assert str(raised.value) == f"{path!r} is not a valid variable name"
 
 
 @pytest.mark.parametrize(
@@ -500,9 +499,8 @@ def test_project_info_set_project_var_other_part_name_raw(path):
 def test_project_info_set_invalid_project_vars():
     info = ProjectInfo(application_name="test", cache_dir=Path())
 
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
+    with pytest.raises(ValueError, match="^'var' not in project variables$"):
         info.set_project_var("var", "bar")
-    assert str(raised.value) == "'var' not in project variables"
 
 
 def test_project_info_default():
@@ -708,9 +706,8 @@ def test_part_info_set_invalid_project_vars():
     part = Part("p1", {})
     x = PartInfo(project_info=info, part=part)
 
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
+    with pytest.raises(ValueError, match="^'var' not in project variables$"):
         x.set_project_var("var", "bar")
-    assert str(raised.value) == "'var' not in project variables"
 
 
 def test_part_info_get_project_var():
@@ -885,9 +882,8 @@ def test_step_info_set_invalid_project_vars():
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.PULL)
 
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
+    with pytest.raises(ValueError, match="^'var' not in project variables$"):
         x.set_project_var("var", "bar")
-    assert str(raised.value) == "'var' not in project variables"
 
 
 def test_step_info_get_project_var():

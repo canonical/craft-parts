@@ -5,21 +5,24 @@ Meson plugin
 
 The Meson plugin configures projects using Meson_ and builds them using Ninja_.
 
-After a successful build, this plugin will install the generated
-binaries in ``$CRAFT_PART_INSTALL``.
+After a successful build, this plugin will install the generated binaries in
+``$CRAFT_PART_INSTALL``.
+
 
 Keys
 ----
 
 This plugin provides the following unique keys.
 
+
 meson_parameters
 ~~~~~~~~~~~~~~~~
-**Type:** list of strings
-**Default:** []
 
-Parameters to configure the project. See the reference to the `setup command`_
-for a list of valid options.
+**Type:** list of strings
+
+Parameters to configure the project. See the reference to the `setup command`_ for a
+list of valid options.
+
 
 Dependencies
 ------------
@@ -35,24 +38,26 @@ that the part using the ``meson`` plugin comes after the ``meson-deps`` part thr
 for example, in cases where specific, unreleased versions of the tools are desired but
 unavailable as a snap or an Ubuntu package.
 
+
 How it works
 ------------
 
 During the build step the plugin performs the following actions:
 
-* Run ``meson`` in the build directory referring to the pulled source
-  directory (this plugin runs an out of tree build). The project is configured
-  with any ``meson-parameters`` that might have been set;
-* ``ninja`` is run to build the source;
-* ``ninja install`` is called with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
+#. Run ``meson`` in the build directory referring to the pulled source directory (this
+   plugin runs an out of tree build). The project is configured with any
+   ``meson-parameters`` that might have been set.
+#. ``ninja`` is run to build the source.
+#. ``ninja install`` is called with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
 
-Examples
---------
+
+Example
+-------
 
 The following snippet declares a part using the ``meson`` plugin. It uses
-``--buildtype=release`` to generate optimised release binaries with no debug
-symbols. The declaration of the ``meson`` package as a ``build-package`` will
-also pull in the ``ninja-build`` package as a dependency.
+``--buildtype=release`` to generate optimised release binaries with no debug symbols.
+The declaration of the ``meson`` package as a ``build-package`` will also pull in the
+``ninja-build`` package as a dependency.
 
 .. code-block:: yaml
 

@@ -16,6 +16,99 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+2.27.0 (2025-MM-DD)
+-------------------
+
+Bug fixes:
+
+- Shallow clones of git sources are now possible when using ``source-commit`` with
+  ``source-depth``.
+
+
+.. _release-2.26.0:
+
+2.26.0 (2025-10-22)
+-------------------
+
+New features:
+
+- Chisel slices can be staged on unmaintained or unstable releases. (Requires
+  chisel 1.3.0 or higher.)
+
+Bug fixes:
+
+- Trim down debug logs to make the output more useful when handling numerous
+  overlay files.
+- Suppress detached HEAD warnings when cloning Git remotes.
+- `#1366 <https://github.com/canonical/craft-parts/issues/1366>`_ When organizing a
+  file to a directory, detect collisions with existing files in the directory. If a
+  collision occurs, an error is produced with a message listing the colliding paths.
+
+For a complete list of commits, check out the `2.26.0`_ release on GitHub.
+
+.. _release-2.25.0:
+
+2.25.0 (2025-10-06)
+-------------------
+
+New features:
+
+- Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
+  A ``mount`` value cannot be a parent of any preceding ``mount`` values.
+
+- The Meson plugin now calls ``meson setup`` during build.
+
+Bug fixes:
+
+- When installing packages with ``overlay-packages``, the prepared
+  chroot now correctly handles mounts added during installation.
+
+Documentation:
+
+- The Git submodule containing documentation components has been renamed to
+  ``sphinx-docs-starter-pack`` to match its parent repository.
+
+  If you're a returning contributor to the project, after you pull the latest commits,
+  run the following commands in your local repository to sync the submodule change:
+
+  .. code-block::
+
+      git submodule sync
+      git submodule update --init --recursive
+      git clean -ffd
+
+For a complete list of commits, check out the `2.25.0`_ release on GitHub.
+
+
+.. _release-2.24.0:
+
+2.24.0 (2025-09-26)
+-------------------
+
+New features:
+
+- Add a new ``PythonPlugin``. This new version is not registered by default and has
+  a different set of requirements and behaviors than the default plugin for Python
+  projects.
+
+  .. caution::
+
+     This new plugin is experimental and does not currently come with any stability or
+     backwards compatibility guarantees.
+
+Bug fixes:
+
+- When partitions are enabled, the default partition name is now added to the
+  default prime fileset entry.
+- Relative symbolic links produced during the build step are now correctly checked for
+  collisions with absolute symbolic links from the overlay during the stage step.
+
+Documentation:
+
+- Add a :ref:`python_v2_plugin` reference.
+
+
 .. _release-2.23.0:
 
 2.23.0 (2025-09-15)
@@ -128,7 +221,7 @@ Bug fixes:
 - Files and directories produced during the build step are now correctly checked for
   collisions with overlay contents during the staging step. Conflicts can be resolved
   with the :ref:`stage <reference-part-properties-stage>` and
-  :ref:`overlay <reference-part-properties-overlay-files>` keys.
+  :ref:`overlay <reference-part-properties-overlay>` keys.
 - When content is staged to partitions from the overlay of the default partition,
   properly ignore content already migrated.
 
@@ -239,15 +332,15 @@ For a complete list of commits, check out the `2.16.0`_ release on GitHub.
 New features:
 
 - Make the error message more detailed and traceable when the maven-use plugin
-  encounters invalid XML in the software's :file:`pom.xml` file.
-- Add support for the ``parent`` tag on a :file:`pom.xml` file with the maven-use
+  encounters invalid XML in the software's ``pom.xml`` file.
+- Add support for the ``parent`` tag on a ``pom.xml`` file with the maven-use
   plugin.
 
 Bug fixes:
 
 - With the maven-use plugin, don't raise errors if dependency versions aren't specified
-  in the software's :file:`pom.xml` file.
-- With the maven-use plugin, don't create :file:`pom.xml` files with duplicate
+  in the software's ``pom.xml`` file.
+- With the maven-use plugin, don't create ``pom.xml`` files with duplicate
   ``<distributionManagement>`` tags.
 - Fix content migration when using :class:`~craft_parts.FilesystemMount` during the
   prime step. Instead of relying on the content of the overlay, gather the list of
@@ -1436,6 +1529,9 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.26.0: https://github.com/canonical/craft-parts/releases/tag/2.26.0
+.. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
+.. _2.24.0: https://github.com/canonical/craft-parts/releases/tag/2.24.0
 .. _2.23.0: https://github.com/canonical/craft-parts/releases/tag/2.23.0
 .. _2.22.1: https://github.com/canonical/craft-parts/releases/tag/2.22.1
 .. _2.22.0: https://github.com/canonical/craft-parts/releases/tag/2.22.0

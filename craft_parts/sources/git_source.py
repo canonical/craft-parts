@@ -39,6 +39,9 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
+MAX_COMMIT_LENGTH = 40
+
+
 class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a git-based source."""
 
@@ -52,22 +55,21 @@ class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     source_depth: int = 0
     source_submodules: list[str] | None = None
 
-    # TODO: make these mutually exclusive fields declarative with a jsonschema too.  # noqa: FIX002
     @pydantic.model_validator(mode="after")
     def _validate_mutually_exclusive_fields(self) -> Self:
         if self.source_tag and self.source_branch:
             raise errors.IncompatibleSourceOptions(
-                self.model_fields["source_type"].default,
+                type(self).model_fields["source_type"].default,
                 ["source-tag", "source-branch"],
             )
         if self.source_tag and self.source_commit:
             raise errors.IncompatibleSourceOptions(
-                self.model_fields["source_type"].default,
+                type(self).model_fields["source_type"].default,
                 ["source-tag", "source-commit"],
             )
         if self.source_branch and self.source_commit:
             raise errors.IncompatibleSourceOptions(
-                self.model_fields["source_type"].default,
+                type(self).model_fields["source_type"].default,
                 ["source-branch", "source-commit"],
             )
         return self
@@ -176,7 +178,7 @@ class GitSource(SourceHandler):
     def _expand_commit(self, commit: str) -> str:
         """Expand a commit hash to full length."""
         # short-circuit if the commit is already full length
-        if len(commit) == 40:  # noqa: PLR2004 (magic-value)
+        if len(commit) == MAX_COMMIT_LENGTH:
             return commit
 
         try:
@@ -197,7 +199,7 @@ class GitSource(SourceHandler):
                 raise errors.VCSError(
                     message=f"Failed to parse commit {commit!r}.",
                     resolution=(
-                        "Ensure 'source-commit' is correct, provide a full-length (40 character) commit, "
+                        f"Ensure 'source-commit' is correct, provide a full-length ({MAX_COMMIT_LENGTH} character) commit, "
                         "or remove the 'source-depth' key from the part."
                     ),
                 ) from err
@@ -268,7 +270,27 @@ class GitSource(SourceHandler):
 
     def _clone_new(self) -> None:
         """Clone a git repository, using submodules, branch, and depth if defined."""
-        command = [get_git_command(), "clone"]
+        git_version = self._get_git_version()
+
+        # Attempt a shallow fetch for source_commits
+        # This breaks on older versions of git. 2.34.1 (the default on jammy) is the first
+        # version shipped on LTS that supports this.
+        # In the case that this does not succeed, the only impact will be that a deep fetch
+        # must be performed instead - nothing will break, it will just be less efficient
+        if self.source_commit and git_version >= (2, 34, 1):
+            try:
+                self._clone_at_commit()
+            except ShallowFetchError:
+                pass
+            else:
+                return
+
+        command = [
+            get_git_command(),
+            "-c",
+            "advice.detachedHead=false",
+            "clone",
+        ]
         if self.source_submodules is None:
             command.append("--recursive")
         else:
@@ -288,6 +310,7 @@ class GitSource(SourceHandler):
         logger.debug("Executing: %s", " ".join([str(i) for i in command]))
         self._run([*command, str(self.part_src_dir)])
 
+        # Checkout to a specific commit when shallow cloning wasn't possible
         if self.source_commit:
             self._fetch_origin_commit()
             full_commit = self._expand_commit(self.source_commit)
@@ -298,6 +321,68 @@ class GitSource(SourceHandler):
                 "checkout",
                 full_commit,
             ]
+            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+            self._run(command)
+
+    def _clone_at_commit(self) -> None:
+        """Load a repository at a specific commit.
+
+        :raises ShallowFetchError: When a short commit is given, as it is not possible
+            for git to parse it to a full commit hash without cloning the full repository
+            anyways.
+        """
+        try:
+            full_commit = self._expand_commit(self.source_commit)
+        except errors.VCSError:
+            if self.source_depth:
+                logger.warning(
+                    "A shallow clone is not possible with a short hash. "
+                    "To get a shallow clone, provide a full-length "
+                    f"({MAX_COMMIT_LENGTH}-character) hash instead."
+                )
+            raise ShallowFetchError
+
+        command_prefix = [get_git_command(), "-C", str(self.part_src_dir)]
+
+        if not self.part_src_dir.exists():
+            self.part_src_dir.mkdir()
+        if not (self.part_src_dir / ".git").exists():
+            self._run([*command_prefix, "init"])
+            self._run(
+                [
+                    *command_prefix,
+                    "remote",
+                    "add",
+                    "origin",
+                    self._format_source(),
+                ]
+            )
+
+        # Fetch the specific commit
+        command = [*command_prefix, "fetch", "origin", full_commit]
+        if self.source_depth:
+            command.extend(["--depth", str(self.source_depth)])
+        logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+        self._run(command)
+
+        # Checkout to that commit
+        command = [*command_prefix, "checkout", full_commit]
+        self._run(command)
+
+        # source_submodules can either be None or [], which behave differently.
+        # submodule update doesn't have the `--recursive=` syntax that clone does,
+        # so instead we just only run this command for the default behavior
+        # (None = all modules) or for explicitly requested modules.
+        if self.source_submodules is None or self.source_submodules:
+            command = [
+                *command_prefix,
+                "submodule",
+                "update",
+                "--init",
+                "--recursive",
+            ]
+            if self.source_submodules:
+                command.extend(self.source_submodules)
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 
@@ -348,3 +433,26 @@ class GitSource(SourceHandler):
             "source": source,
             "source-tag": tag,
         }
+
+    @classmethod
+    def _get_git_version(cls) -> tuple[int, int, int]:
+        response = cls._run_output([get_git_command(), "version"])
+        pat = re.compile(r"git version ((?:\d+\.){2}\d+)")
+        match = re.match(pat, response)
+
+        # Default if the version can't be recognized
+        if not match:
+            return (0, 0, 0)
+
+        version = match.group(1)
+
+        # Convert to a tuple of integers for comparison
+        components = version.split(".", maxsplit=2)
+
+        # Ignore the type, the regex already asserts that it will be a 3-piece tuple
+        # but mypy believes this is `tuple[int, ...]`
+        return tuple(int(component) for component in components)  # type: ignore[return-value]
+
+
+class ShallowFetchError(Exception):
+    """A shallow fetch was not possible."""

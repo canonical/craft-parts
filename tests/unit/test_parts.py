@@ -76,9 +76,8 @@ class TestPartSpecs:
         assert spec.marshal() == data_copy
 
     def test_unmarshal_not_dict(self, partitions):
-        with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-        assert str(raised.value) == "part data is not a dictionary"
+        with pytest.raises(TypeError, match="^part data is not a dictionary$"):
+            PartSpec.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
     def test_unmarshal_mix_packages_slices(self, mocker):
         """
@@ -443,7 +442,7 @@ class TestPartUnmarshal:
 
     def test_part_spec_not_dict(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False, partitions=partitions)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
+            Part("foo", None, partitions=partitions)  # type: ignore[reportGeneralTypeIssues]
         assert raised.value.part_name == "foo"
         assert raised.value.message == "part data is not a dictionary"
 

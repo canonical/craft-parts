@@ -8,7 +8,7 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
 PORT          = 8080
-VENV          = sphinx-resources/.sphinx/venv/bin/activate
+VENV          = sphinx-docs-starter-pack/.sphinx/venv/bin/activate
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -16,7 +16,7 @@ help:
 
 install:
 	@echo "... setting up virtualenv"
-	python3 -m venv sphinx-resources/.sphinx/venv
+	python3 -m venv sphinx-docs-starter-pack/.sphinx/venv
 	. $(VENV); pip install --upgrade -e ..[docs]
 	. $(VENV); pip install python-apt@https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
 	. $(VENV); pip install --upgrade -r requirements.txt
@@ -36,17 +36,17 @@ run:
 	. $(VENV); sphinx-autobuild -c . -b html "$(SOURCEDIR)" "$(BUILDDIR)"
 
 html:
-	. $(VENV); $(SPHINXBUILD) -c . -b html "$(SOURCEDIR)" "$(BUILDDIR)" -w sphinx-resources/.sphinx/warnings.txt
+	. $(VENV); $(SPHINXBUILD) -c . -b html "$(SOURCEDIR)" "$(BUILDDIR)" -w sphinx-docs-starter-pack/.sphinx/warnings.txt
 
 epub:
-	. $(VENV); $(SPHINXBUILD) -c . -b epub "$(SOURCEDIR)" "$(BUILDDIR)" -w sphinx-resources/.sphinx/warnings.txt
+	. $(VENV); $(SPHINXBUILD) -c . -b epub "$(SOURCEDIR)" "$(BUILDDIR)" -w sphinx-docs-starter-pack/.sphinx/warnings.txt
 
 serve:
 	cd "$(BUILDDIR)"; python3 -m http.server 8000
 
 clean: clean-doc
 	rm -rf reference/commands
-	rm -rf sphinx-resources/.sphinx/venv
+	rm -rf sphinx-docs-starter-pack/.sphinx/venv
 
 clean-doc:
 	git clean -fx "$(BUILDDIR)"
@@ -55,7 +55,7 @@ clean-html: clean-doc
 	+$(MAKE) html
 
 spelling: clean-html
-	. $(VENV) ; python3 -m pyspelling -c sphinx-resources/.sphinx/spellingcheck.yaml -j $(shell nproc)
+	. $(VENV) ; python3 -m pyspelling -c sphinx-docs-starter-pack/.sphinx/spellingcheck.yaml -j $(shell nproc)
 
 linkcheck:
 	. $(VENV) ; $(SPHINXBUILD) -c . -b linkcheck  "$(SOURCEDIR)" "$(BUILDDIR)"

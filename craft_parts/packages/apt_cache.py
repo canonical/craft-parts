@@ -240,7 +240,7 @@ class AptCache(ContextDecorator):
 
         :return: A list of (<package-name>, <package-version>, <dl-path>) tuples.
         """
-        downloaded = []
+        downloaded: list[tuple[str, str, Path]] = []
         for package in self.cache.get_changes():
             if package.candidate is None:
                 continue
@@ -253,7 +253,7 @@ class AptCache(ContextDecorator):
             except apt.package.FetchError as err:
                 raise errors.PackageFetchError(str(err)) from err
 
-            if package.candidate is None:
+            if package.candidate is None:  # type: ignore[reportUnnecessaryComparison] # this appears to be possible after `fetch_binary`
                 raise errors.PackageNotFound(package.name)
 
             downloaded.append((package.name, package.candidate.version, Path(dl_path)))
@@ -332,8 +332,8 @@ class AptCache(ContextDecorator):
 
         :param unmark_names: The names of the packages to unmark.
         """
-        skipped_essential = set()
-        skipped_filtered = set()
+        skipped_essential: set[str] = set()
+        skipped_filtered: set[str] = set()
 
         for package in self.cache.get_changes():
             if package.candidate is None:
@@ -376,9 +376,9 @@ def _verify_marked_install(package: apt.package.Package) -> None:
 
     broken_deps: list[str] = []
     for package_dependencies in package.candidate.dependencies:
-        for dep in package_dependencies:
-            if not dep.target_versions:
-                broken_deps.append(dep.name)  # noqa: PERF401
+        broken_deps.extend(
+            dep.name for dep in package_dependencies if not dep.target_versions
+        )
     raise errors.PackageBroken(package.name, deps=broken_deps)
 
 
@@ -400,7 +400,7 @@ def _ignore_unreadable_files(
     fail on any unreadable files.
     """
     path = Path(path)
-    skip = []
+    skip: list[str] = []
     for name in names:
         child_path = path / name
         if not child_path.is_file():

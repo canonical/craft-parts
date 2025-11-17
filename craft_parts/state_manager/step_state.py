@@ -23,6 +23,7 @@ from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
 from craft_parts.utils import os_utils
@@ -169,8 +170,9 @@ class StepState(MigrationState, ABC):
             self.project_options_of_interest(other_project_options),
         )
 
+    @override
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
+    def unmarshal(cls, data: dict[str, Any]) -> "StepState":
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
 
@@ -182,7 +184,7 @@ def _get_differing_keys(dict1: dict[str, Any], dict2: dict[str, Any]) -> set[str
     that don't have the same value in both dictionaries. Entries with value
     of None are equivalent to a non-existing entry.
     """
-    differing_keys = set()
+    differing_keys: set[str] = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
         if dict1_value != dict2_value:

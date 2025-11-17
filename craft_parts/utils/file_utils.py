@@ -69,8 +69,7 @@ class NonBlockingRWFifo:
 
     def close(self) -> None:
         """Close the FIFO."""
-        if self._fd is not None:
-            os.close(self._fd)
+        os.close(self._fd)
 
 
 def link_or_copy(

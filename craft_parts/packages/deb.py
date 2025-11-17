@@ -21,7 +21,6 @@ import functools
 import logging
 import os
 import pathlib
-import re
 import shutil
 import subprocess
 import sys
@@ -29,7 +28,7 @@ import tempfile
 from collections.abc import Callable, Sequence
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -45,16 +44,15 @@ logger = logging.getLogger(__name__)
 # independent of the underlying host OS.
 try:
     from .apt_cache import AptCache
-
-    _APT_CACHE_AVAILABLE = True
 except ImportError as import_error:
     logger.debug(
         "AppCache cannot be imported due to: %r: %s", import_error.name, import_error
     )
-    _APT_CACHE_AVAILABLE = False
+    _APT_CACHE_AVAILABLE = False  # type: ignore[reportConstantRedefinition] # not actually a redef
+else:
+    _APT_CACHE_AVAILABLE = True
 
 
-_HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
 _DEFAULT_FILTERED_STAGE_PACKAGES: list[str] = [
     "adduser",
     "apt",
@@ -284,39 +282,19 @@ _IGNORE_FILTERS: dict[str, set[str]] = {
 }
 
 
-def _apt_cache_wrapper(method: Any) -> Callable[..., Any]:  # noqa: ANN401
+_T_wrapper = TypeVar("_T_wrapper")
+
+
+def _apt_cache_wrapper(method: Callable[..., _T_wrapper]) -> Callable[..., _T_wrapper]:
     """Decorate a method to handle apt availability."""
 
     @functools.wraps(method)
-    def wrapped(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+    def wrapped(*args: Any, **kwargs: Any) -> _T_wrapper:
         if not _APT_CACHE_AVAILABLE:
             raise errors.PackageBackendNotSupported("apt")
         return method(*args, **kwargs)
 
     return wrapped
-
-
-@functools.lru_cache(maxsize=256)
-def _run_dpkg_query_search(file_path: str) -> str:
-    try:
-        output = (
-            subprocess.check_output(
-                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],  # noqa: PTH118
-                stderr=subprocess.STDOUT,
-                env={"LANG": "C.UTF-8"},
-            )
-            .decode()
-            .strip()
-        )
-    except subprocess.CalledProcessError as call_error:
-        logger.debug("Error finding package for %s: %s", file_path, str(call_error))
-        raise errors.FileProviderNotFound(file_path=file_path) from call_error
-
-    # Remove diversions
-    provides_output = [p for p in output.splitlines() if not p.startswith("diversion")][
-        0
-    ]
-    return provides_output.split(":")[0]
 
 
 @functools.lru_cache(maxsize=256)
@@ -366,7 +344,7 @@ def get_packages_in_base(*, base: str) -> list[DebPackage]:
 
     # Lines we care about in dpkg.list had the following format:
     # ii adduser 3.118ubuntu1 all add and rem
-    package_list = []
+    package_list: list[DebPackage] = []
     with fileinput.input(str(base_package_list_path)) as file:
         for line in file:
             if not str(line).startswith("ii "):
@@ -412,24 +390,26 @@ class Ubuntu(BaseRepository):
     @_apt_cache_wrapper
     def get_packages_for_source_type(cls, source_type: str) -> set[str]:
         """Return the packages required to work with source_type."""
-        if source_type == "bzr":
-            packages = {"bzr"}
-        elif source_type == "git":
-            packages = {"git"}
-        elif source_type == "tar":
-            packages = {"tar"}
-        elif source_type in ["hg", "mercurial"]:
-            packages = {"mercurial"}
-        elif source_type in ["svn", "subversion"]:
-            packages = {"subversion"}
-        elif source_type == "rpm2cpio":
-            packages = {"rpm2cpio"}
-        elif source_type == "rpm":
-            packages = {"rpm"}
-        elif source_type == "7zip":
-            packages = {"p7zip-full"}
-        else:
-            packages = set()
+        packages: set[str]
+        match source_type:
+            case "bzr":
+                packages = {"bzr"}
+            case "git":
+                packages = {"git"}
+            case "tar":
+                packages = {"tar"}
+            case "hg" | "mercurial":
+                packages = {"mercurial"}
+            case "svn" | "subversion":
+                packages = {"subversion"}
+            case "rpm2cpio":
+                packages = {"rpm2cpio"}
+            case "rpm":
+                packages = {"rpm"}
+            case "7zip":
+                packages = {"p7zip-full"}
+            case _:
+                packages = set()
 
         return packages
 
@@ -633,7 +613,6 @@ class Ubuntu(BaseRepository):
             return []
 
         if _is_list_of_slices(package_names):
-            # TODO: fetching of Chisel slices is not supported yet.  # noqa: FIX002
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
@@ -778,7 +757,16 @@ class Ubuntu(BaseRepository):
         handler = logging.StreamHandler(stream=output_stream)
         logger.addHandler(handler)
         try:
-            process_run(["chisel", "cut", "--root", str(install_path), *stage_packages])
+            process_run(
+                [
+                    "chisel",
+                    "cut",
+                    "--ignore=unmaintained",
+                    "--ignore=unstable",
+                    f"--root={install_path}",
+                    *stage_packages,
+                ]
+            )
         except subprocess.CalledProcessError as err:
             command_output = output_stream.getvalue()
             raise errors.ChiselError(

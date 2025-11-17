@@ -17,6 +17,7 @@
 """Source handler error definitions."""
 
 from collections.abc import Sequence
+from pathlib import Path
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -63,7 +64,6 @@ class InvalidSourceOption(SourceError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
-# TODO: Merge this with InvalidSourceOption above  # noqa: FIX002
 class InvalidSourceOptions(SourceError):  # noqa: N818
     """A source option is not allowed for the given source type.
 
@@ -217,7 +217,11 @@ class PullError(SourceError):
     """
 
     def __init__(
-        self, *, command: Sequence, exit_code: int, resolution: str | None = None
+        self,
+        *,
+        command: Sequence[str | Path],
+        exit_code: int,
+        resolution: str | None = None,
     ) -> None:
         self.command = command
         self.exit_code = exit_code

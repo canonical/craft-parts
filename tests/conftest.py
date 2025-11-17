@@ -256,9 +256,6 @@ def http_server(request):
     server_thread.join()
 
 
-# XXX: check windows compatibility, explore if fixture setup can skip itself  # noqa: FIX003
-
-
 @pytest.fixture(scope="class")
 def fake_snapd():
     """Provide a fake snapd server."""
@@ -295,8 +292,8 @@ def dependency_fixture(new_dir):
 
     def create_dependency_fixture(
         name: str,
-        broken: bool = False,  # noqa: FBT001, FBT002
-        invalid: bool = False,  # noqa: FBT001, FBT002
+        broken: bool = False,
+        invalid: bool = False,
         output: str | None = None,
     ) -> Path:
         """Creates a mock executable dependency.

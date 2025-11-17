@@ -1,3 +1,3 @@
-[submodule "docs/sphinx-resources"]
-	path = docs/sphinx-resources
+[submodule "docs/sphinx-docs-starter-pack"]
+	path = docs/sphinx-docs-starter-pack
 	url = https://github.com/canonical/sphinx-docs-starter-pack.git

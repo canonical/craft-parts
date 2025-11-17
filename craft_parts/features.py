@@ -41,4 +41,4 @@ class Features(metaclass=Singleton):
         """Delete stored class instance."""
         logger.warning("deleting current features configuration")
         with contextlib.suppress(KeyError):
-            del cls._instances[cls]
+            del cls._instances[cls]  # pyright: ignore[reportPrivateUsage]

@@ -3,10 +3,9 @@
 Go plugin
 =========
 
-The Go plugin builds `Go`_ modules, which are collections of packages stored
-in a file tree containing a ``go.mod`` file at the root. After a successful
-build, this plugin will install the generated binaries in
-``$CRAFT_PART_INSTALL/bin``.
+The Go plugin builds `Go`_ modules, which are collections of packages stored in a file
+tree containing a ``go.mod`` file at the root. After a successful build, this plugin
+will install the generated binaries in ``$CRAFT_PART_INSTALL/bin``.
 
 
 Keys
@@ -14,27 +13,30 @@ Keys
 
 This plugin provides the following unique keys.
 
+
 go-buildtags
 ~~~~~~~~~~~~
-**Type:** list of strings
-**Default:** []
 
-`Build tags`_ to use during the build. The default behavior is not to use any
-build tags.
+**Type:** list of strings
+
+`Build tags`_ to use during the build. The default behavior is not to use any build
+tags.
+
 
 go-generate
 ~~~~~~~~~~~
-**Type:** list of strings
-**Default:** []
 
-Parameters to pass to `go generate`_ before building. Each item on the list
-will be a separate ``go generate`` call. The default behavior is not to call
-``go generate``.
+**Type:** list of strings
+
+Parameters to pass to `go generate`_ before building. Each item on the list will be a
+separate ``go generate`` call. The default behavior is not to call ``go generate``.
+
 
 Environment variables
 ---------------------
 
 During build, this plugin sets ``GOBIN`` to ``${CRAFT_PART_INSTALL}/bin``.
+
 
 .. _go-details-begin:
 
@@ -58,26 +60,28 @@ snap or an Ubuntu package.
 
 .. _go-details-end:
 
+
 How it works
 ------------
 
 During the build step the plugin performs the following actions:
 
-* If a `go workspace`_ has been setup by use of the :ref:`go-use
-  <craft_parts_go_use_plugin>` plugin, call ``go work use <build-dir>`` to add the
-  source for the part to the workspace;
-* If not operating in the context of  a `go workspace`_, call ``go mod download all``
-  to find and download all necessary modules;
-* Call ``go generate <item>`` for each item in ``go-generate``;
-* Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
-  ``--tags`` parameter.
+#. If a `go workspace`_ has been setup by use of the :ref:`go-use
+   <craft_parts_go_use_plugin>` plugin, call ``go work use <build-dir>`` to add the
+   source for the part to the workspace.
+#. If not operating in the context of  a `go workspace`_, call ``go mod download all``
+   to find and download all necessary modules.
+#. Call ``go generate <item>`` for each item in ``go-generate``.
+#. Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
+   ``--tags`` parameter.
 
-Examples
---------
 
-The following snippet declares a part using the ``go`` plugin. It uses the stable
-1.22 version of the ``go`` snap, enables the build tag ``experimental`` and calls
-``go generate ./cmd`` before building:
+Example
+-------
+
+The following snippet declares a part using the ``go`` plugin. It uses the stable 1.22
+version of the ``go`` snap, enables the build tag ``experimental`` and calls ``go
+generate ./cmd`` before building:
 
 .. code-block:: yaml
 

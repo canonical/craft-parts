@@ -49,6 +49,7 @@ def _current_release_supported() -> bool:
     platform.machine() == "ppc64el",
     reason="https://github.com/canonical/craft-parts/issues/1301",
 )
+@pytest.mark.flaky(reruns=3, only_rerun="ChiselError", reason="Fails on network issues")
 def test_chisel_lifecycle(new_homedir_path, partitions):
     """Integrated test for Chisel support.
 
@@ -86,6 +87,9 @@ def test_chisel_lifecycle(new_homedir_path, partitions):
 @pytest.mark.skipif(
     not _current_release_supported(), reason="Test needs Chisel support"
 )
+@pytest.mark.flaky(
+    reruns=3, only_rerun="AssertionError", reason="Fails incorrectly on network issues"
+)
 def test_chisel_error(new_homedir_path, caplog):
     """Test that the error that is raised when Chisel fails contains the expected information."""
     caplog.set_level(logging.DEBUG)
@@ -112,6 +116,7 @@ def test_chisel_error(new_homedir_path, caplog):
 @pytest.mark.skipif(
     not _current_release_supported(), reason="Test needs Chisel support"
 )
+@pytest.mark.flaky(reruns=3, only_rerun="ChiselError", reason="Fails on network issues")
 def test_chisel_normalize_paths(host_arch: str, new_homedir_path, partitions):
     """Check that the contents of cut chisel slices are "normalized" just like
     staged debs.

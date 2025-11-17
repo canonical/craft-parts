@@ -22,14 +22,14 @@ import os
 import pathlib
 import subprocess
 import sys
-from collections.abc import Iterator, Sequence
+from collections.abc import Sequence
+from http import HTTPStatus
 from typing import (
     Any,
     cast,
 )
 from urllib import parse
 
-import requests
 import requests_unixsocket  # type: ignore[import]
 from requests import exceptions
 
@@ -136,7 +136,7 @@ class SnapPackage:
                         http_error.response.status_code,
                         retry_count,
                     )
-                    if http_error.response.status_code == 404:  # noqa: PLR2004
+                    if http_error.response.status_code == HTTPStatus.NOT_FOUND:
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
@@ -288,7 +288,7 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
 
     :return: a list of "name=revision" for the snaps installed.
     """
-    snaps_installed = []
+    snaps_installed: list[str] = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
 
@@ -340,22 +340,11 @@ def get_snapd_socket_path_template() -> str:
     return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
 
 
-def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int) -> Iterator[bytes]:
-    slug = f"snaps/{parse.quote(snap_name, safe='')}/file"
-    url = get_snapd_socket_path_template().format(slug)
-    try:
-        snap_file: requests.Response = requests_unixsocket.get(url)
-    except exceptions.ConnectionError as err:
-        raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
-    snap_file.raise_for_status()
-    return snap_file.iter_content(chunk_size)
-
-
 def _get_local_snap_info(snap_name: str) -> dict[str, Any]:
     slug = f"snaps/{parse.quote(snap_name, safe='')}"
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_info = requests_unixsocket.get(url)
+        snap_info = requests_unixsocket.get(url)  # type: ignore[reportUnknownMemberType]
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_info.raise_for_status()
@@ -367,7 +356,7 @@ def _get_store_snap_info(snap_name: str) -> dict[str, Any]:
     # we do a strict search either 1 result or a 404 will be returned.
     slug = f"find?{parse.urlencode({'name': snap_name})}"
     url = get_snapd_socket_path_template().format(slug)
-    snap_info = requests_unixsocket.get(url)
+    snap_info = requests_unixsocket.get(url)  # type: ignore[reportUnknownMemberType]
     snap_info.raise_for_status()
     return cast(dict[str, Any], snap_info.json()["result"][0])
 
@@ -380,9 +369,9 @@ def get_installed_snaps() -> list[str]:
     slug = "snaps"
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_info = requests_unixsocket.get(url)
+        snap_info = requests_unixsocket.get(url)  # type: ignore[reportUnknownMemberType]
         snap_info.raise_for_status()
-        local_snaps = snap_info.json()["result"]
+        local_snaps: list[dict[str, Any]] = snap_info.json()["result"]
     except exceptions.ConnectionError:
         local_snaps = []
     return [f"{snap['name']}={snap['revision']}" for snap in local_snaps]

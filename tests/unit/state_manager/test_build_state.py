@@ -70,9 +70,8 @@ class TestBuildState:
         assert err[0]["type"] == "value_error"
 
     def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError) as raised:
-            BuildState.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-        assert str(raised.value) == "state data is not a dictionary"
+        with pytest.raises(TypeError, match="^state data is not a dictionary$"):
+            BuildState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
 
 @pytest.mark.usefixtures("new_dir")

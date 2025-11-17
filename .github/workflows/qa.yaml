@@ -40,6 +40,8 @@ jobs:
           ["noble", "ppc64el", "edge"],
         ]
       slow-test-python-versions: '["3.12"]'
+      # We must always test on at least one EOL base to ensure that chisel behaves
+      # correctly on said EOL base.
       lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
       pytest-markers: not java and not python and not plugin
@@ -48,7 +50,15 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
-      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+        ]
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: java
@@ -57,8 +67,27 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
-      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-platforms: >
+        [
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+        ]
       slow-test-python-versions: '["3.12"]'
+      lowest-python-version: ""
+      pytest-markers: python
+      setup-vars: NO_JAVA=1 NO_PLUGIN=1
+  test-python-plugins-jammy:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+        ]
+      slow-test-python-versions: '["3.10"]'
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
@@ -66,8 +95,17 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
-      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          ["jammy", "arm64"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+        ]
       slow-test-python-versions: '["3.12"]'
-      lowest-python-version: ""
+      lowest-python-platform: '["focal"]'
+      lowest-python-version: "3.10"
       pytest-markers: plugin
       setup-vars: NO_JAVA=1 NO_PYTHON=1

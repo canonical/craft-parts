@@ -161,8 +161,19 @@ endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
 endif
+# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
+# 22.04 -> 25.10 (and possibly 26.04).
+# On focal, we'll get the snap instead.
+ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
+ifneq ($(UBUNTU_CODENAME),focal)
+APT_PACKAGES += dotnet-sdk-8.0
+endif
+endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
 APT_PACKAGES += gcc
+endif
+ifeq ($(wildcard /usr/share/doc/meson/copyright),)
+APT_PACKAGES += meson
 endif
 ifeq ($(wildcard /usr/share/doc/pkg-config/copyright),)
 APT_PACKAGES += pkg-config
@@ -217,11 +228,11 @@ else
 endif
 
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20 install-rustup
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
-install-build-deps: _gh-runner-clear-space install-lint-build-deps install-build-snaps
+install-build-deps: _gh-runner-clean install-lint-build-deps install-build-snaps
 ifeq ($(APT_PACKAGES),)
 else ifeq ($(shell which apt-get),)
 	$(warning Cannot install build dependencies without apt.)
@@ -243,22 +254,53 @@ else
 	sudo snap install rustup --classic
 endif
 
-# A temporary override to the lint-docs directive to ignore the sphinx-resources git submodule.
+# A temporary override to the lint-docs directive to ignore the sphinx-docs-starter-pack git submodule.
 .PHONY: lint-docs
 lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-resources --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-docs-starter-pack --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
-.PHONY: _gh-runner-clear-space
-_gh-runner-clear-space:
-# Only on Github-hosted runners, to free up space.
+.PHONY: install-dotnet
+install-dotnet:
+ifeq ($(UBUNTU_CODENAME),focal)
+ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
+ifeq ($(shell which snap),)
+	$(warning Cannot install dotnet without snap.)
+else
+	sudo snap install dotnet --classic
+endif
+endif
+endif
+
+.PHONY: install-rustup
+install-rustup:
+ifeq ($(shell which snap),)
+	$(warning Cannot install rustup without snap.)
+else
+	sudo snap install rustup --classic
+endif
+
+.PHONY: _gh-runner-clean
+_gh-runner-clean:
+# Prepare and fix issues on Github-hosted runners.
 ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Delete the (huge) Android SDK in the background.
-	nohup sudo rm -rf /usr/local/lib/android/ &
+	nohup sudo rm -rf /usr/local/lib/android/ > /dev/null &
+	# Remove the github-installed cmake 4 because it breaks the cmake tests.
+	# See: https://github.com/actions/runner-images/issues/13023
+	nohup sudo rm -rf /usr/local/bin/cmake /usr/local/bin/cmake-gui /usr/local/bin/ccmake /usr/local/bin/ctest /usr/local/bin/cpack > /dev/null &
+	nohup sudo rm -rf /usr/local/share/cmake-4* > /dev/null &
+	# Remove Github-installed JDK 25 that's not in the repos.
+	# https://github.com/actions/runner-images/issues/13138
+	sudo $(APT) purge temurin-*-jdk || true
+	echo "JAVA_HOME=" >> "${GITHUB_ENV}"
+	# Delete the adoptium repository:
+	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
+	sudo rm -f /etc/apt/sources.list.d/adoptium.list
 endif

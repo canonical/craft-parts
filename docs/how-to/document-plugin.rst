@@ -28,11 +28,11 @@ It is also useful to indicate if the plugin replaces an existing plugin, or
 should be used instead of another similar plugin.
 
 
-Keywords
-~~~~~~~~
+Keys
+~~~~
 
-A sequence of subsections specifying the keywords provided by the plugin and
-describe how the plugin uses them using the same format for keywords used in
+A sequence of subsections specifying the keys provided by the plugin and
+describe how the plugin uses them using the same format for keys used in
 the :ref:`reference-part-properties` reference.
 
 For example:
@@ -41,7 +41,7 @@ For example:
 
     **Type**: list of strings
 
-    A list of paths to requirements files needed to run :command:`pip`.
+    A list of paths to requirements files needed to run ``pip``.
 
 
 Environment variables
@@ -55,7 +55,7 @@ For example:
 
     **PARTS_PYTHON_INTERPRETER**
 
-    **Default value:** python3
+    **Default:** python3
 
     The interpreter binary to search for in ``PATH``.
 

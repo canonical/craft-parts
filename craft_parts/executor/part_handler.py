@@ -591,6 +591,7 @@ class PartHandler:
         self._migrate_overlay_files_to_prime()
         default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
+        primed_stage_packages: set[str]
         if (
             self._part.spec.stage_packages
             and self._track_stage_packages
@@ -1023,9 +1024,7 @@ class PartHandler:
             primed_whiteout = prime_dir / whiteout
             try:
                 primed_whiteout.unlink()
-                logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
-                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?  # noqa: FIX003
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
     def clean_step(self, step: Step) -> None:
@@ -1541,7 +1540,7 @@ def _consolidate_states(
 @contextmanager
 def _conditional_layer_mount(
     overlay_manager: OverlayManager, *, top_part: Part, condition: bool
-) -> Iterator:
+) -> Iterator[None]:
     """Conditionally execute the enclosed code block with the overlay mounted."""
     if condition:
         with overlays.LayerMount(overlay_manager, top_part=top_part):
