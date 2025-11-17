@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import subprocess
 
 import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
@@ -51,7 +50,7 @@ def test_get_build_packages_no_ruby_deps(part_info_without_dependency):
 
 def test_get_build_environment(part_info_with_dependency):
     expected_env = {
-        "PATH": f"${{CRAFT_PART_INSTALL}}/usr/bin:${{PATH}}",
+        "PATH": "${CRAFT_PART_INSTALL}/usr/bin:${PATH}",
         "GEM_HOME": "${CRAFT_PART_INSTALL}",
         "GEM_PATH": "${CRAFT_PART_INSTALL}",
     }
