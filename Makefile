@@ -157,6 +157,13 @@ endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
 endif
+# Ruby
+ifeq ($(wildcard /usr/share/doc/ruby/copyright),)
+APT_PACKAGES += ruby
+endif
+ifeq ($(wildcard /usr/share/doc/ruby-bundler/copyright),)
+APT_PACKAGES += ruby-bundler
+endif
 # We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
 # 22.04 -> 25.10 (and possibly 26.04).
 # On focal, we'll get the snap instead.

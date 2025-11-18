@@ -32,12 +32,8 @@ def test_ruby_deps_part(new_dir, partitions):
         parts:
           ruby-deps:
             plugin: nil
-            build-packages:
-              # use Ruby deb packages from archive
-              - ruby
-              - ruby-bundler
             stage-packages:
-              # include same packages in the output artifact
+              # use Ruby deb packages from archive
               - ruby
               - ruby-bundler
           foo:
