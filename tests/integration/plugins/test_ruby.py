@@ -22,6 +22,8 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
 
+pytestmark = [pytest.mark.plugin]
+
 
 def test_ruby_deps_part(new_dir, partitions):
     """Plugin should use interpreter from ruby-deps part dependency."""
