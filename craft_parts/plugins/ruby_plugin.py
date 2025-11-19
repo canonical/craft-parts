@@ -122,6 +122,7 @@ class RubyPlugin(Plugin):
             "GEM_PATH": "${CRAFT_PART_INSTALL}",
             # some Ruby build scripts use bash syntax
             "SHELL": "/bin/bash",
+            "MAKEOVERRIDES": "SHELL=/bin/bash",
         }
 
         if self._options.ruby_shared:
