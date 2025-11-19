@@ -3,10 +3,9 @@
 Ruby plugin
 ===========
 
-The Ruby plugin can be used in projects that need to bundle a specific
-version and variant of the Ruby interpreter within the final artifact. The
-plugin can further be used to install individual gems or trigger a build tool
-such as rake or bundler.
+The Ruby plugin manages Ruby gems and the Ruby interpreter. It can compile and
+bundle different variants of the interpreter, build gems with tools like rake or
+Bundler, and install gems.
 
 .. _craft_parts_ruby_plugin-keywords:
 
