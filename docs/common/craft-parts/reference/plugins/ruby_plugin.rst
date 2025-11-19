@@ -30,8 +30,7 @@ ruby-use-bundler
 
 **Default:** False
 
-When set to ``true``, the plugin runs the ``bundle`` command as part of the
-``build`` step.
+Whether to use Bundler to build the gems.
 
 
 ruby-flavor
@@ -41,9 +40,13 @@ ruby-flavor
 
 **Default:** ruby
 
-Specifies which implementation of the Ruby interpreter the plugin
-should build. Supported values are ``ruby``, ``jruby``, ``rbx``,
-``truffleruby``, and ``mruby``.
+The Ruby interpreter to compile and include. The supported interpreters are:
+
+- ``ruby``
+- ``jruby``
+- ``rbx``
+- ``truffleruby``
+- ``mruby``
 
 
 ruby-version
@@ -75,7 +78,7 @@ ruby-use-jemalloc
 **Default:** False
 
 When set to ``true``, the plugin compiles Ruby with support for the jemalloc
-memory allocator.
+Whether to compile Ruby with support for jemalloc.
 
 
 ruby-configure-options
@@ -92,10 +95,13 @@ Dependencies
 ------------
 
 By default, this plugin downloads and runs the `ruby-install
-<https://github.com/postmodern/ruby-install>` tool. If recompiling the
-interpreter for every Ruby-based part is not desired, a ``ruby-deps`` part
-can install Ruby and any gems in the build system. Other parts that use this
-interpreter must run ``after`` the ``ruby-deps`` part:
+<https://github.com/postmodern/ruby-install>` tool.
+
+If a project has multiple Ruby parts, by default each compiles and bundles its
+own Ruby interpreter. If a special Ruby part named ``ruby-deps`` is defined, it
+creates a shared interpreter and shared gems that the other Ruby parts can use.
+For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
+``after`` key.
 
 .. code-block:: yaml
 
