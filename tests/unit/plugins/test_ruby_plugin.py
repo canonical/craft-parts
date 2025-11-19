@@ -36,7 +36,7 @@ def part_info_without_dependency(new_dir):
     )
 
 
-def test_get_build_packages_after_rubu_deps(part_info_with_dependency):
+def test_get_build_packages_after_ruby_deps(part_info_with_dependency):
     properties = RubyPlugin.properties_class.unmarshal({"source": "."})
     plugin = RubyPlugin(properties=properties, part_info=part_info_with_dependency)
     assert plugin.get_build_packages() == set()
