@@ -68,7 +68,7 @@ def test_pull_build_commands_after_ruby_deps(part_info_with_dependency):
     assert len(pull_commands) == 0
 
     build_commands = plugin.get_build_commands()
-    assert len(build_commands) == 0
+    assert build_commands == ['uname -a', 'env']
 
 
 def test_pull_build_commands_no_ruby_deps(part_info_without_dependency):

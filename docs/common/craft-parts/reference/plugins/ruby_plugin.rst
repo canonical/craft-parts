@@ -57,16 +57,6 @@ ruby-version
 The version of Ruby to build.
 
 
-ruby-prefix
-~~~~~~~~~~~
-
-**Type:** string
-
-**Default:** "/usr"
-
-The root directory where the Ruby executables and libraries will be installed.
-
-
 ruby-shared
 ~~~~~~~~~~~
 

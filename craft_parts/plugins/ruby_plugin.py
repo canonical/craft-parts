@@ -50,7 +50,6 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     # build arguments
     ruby_flavor: RubyFlavor = RubyFlavor.ruby
     ruby_version: str = "3.2"
-    ruby_prefix: str = "/usr"
     ruby_use_jemalloc: bool = False
     ruby_shared: bool = False
     ruby_configure_options: list[str] = []
@@ -73,9 +72,6 @@ class RubyPlugin(Plugin):
     - ``ruby-version``
       (str)
       Defaults to '3.2', meaning the newest release of the 3.2.x series.
-    - ``ruby-prefix``
-      (str)
-      Defaults to '/usr'
     - ``ruby-use-jemalloc``
       (bool)
       Defaults to False
@@ -89,6 +85,8 @@ class RubyPlugin(Plugin):
       (bool)
       Defaults to False
     """
+
+    RUBY_PREFIX = "/usr"
 
     # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
     RUBY_INSTALL_VERSION = "0.10.1"
@@ -120,7 +118,7 @@ class RubyPlugin(Plugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         env = {
-            "PATH": f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin:${{PATH}}",
+            "PATH": f"${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}/bin:${{PATH}}",
             "GEM_HOME": "${CRAFT_PART_INSTALL}",
             "GEM_PATH": "${CRAFT_PART_INSTALL}",
         }
@@ -128,7 +126,7 @@ class RubyPlugin(Plugin):
         if self._options.ruby_shared:
             # for finding ruby.so when running `gem` or `bundle`
             env["LD_LIBRARY_PATH"] = (
-                f"${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+                f"${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
             )
 
         return env
@@ -180,7 +178,7 @@ class RubyPlugin(Plugin):
             commands.append(
                 f"ruby-install-{self.RUBY_INSTALL_VERSION}/bin/ruby-install"
                 f" --src-dir ${{CRAFT_PART_SRC}}"
-                f" --install-dir ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}"
+                f" --install-dir ${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}"
                 f" --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}}"
                 f" {self._options.ruby_flavor.value}-{self._options.ruby_version}"
                 f" -- {configure_opts}"
@@ -189,7 +187,7 @@ class RubyPlugin(Plugin):
             # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
             #       executables by removing them first.
             commands.append(
-                f"rm -f ${{CRAFT_PART_INSTALL}}{self._options.ruby_prefix}/bin/{{bundle,bundler}}"
+                f"rm -f ${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}/bin/{{bundle,bundler}}"
             )
             commands.append("gem install --env-shebang --no-document bundler")
 
