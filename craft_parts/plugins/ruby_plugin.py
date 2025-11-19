@@ -27,6 +27,15 @@ from .properties import PluginProperties
 
 logger = logging.getLogger(__name__)
 
+RUBY_PREFIX = "/usr"
+
+# NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
+RUBY_INSTALL_VERSION = "0.10.1"
+
+# NOTE: To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
+#   curl -L https://github.com/postmodern/ruby-install/archive/refs/tags/v0.10.1.tar.gz -o ruby-install.tar.gz && sha256sum --tag ruby-install.tar.gz
+RUBY_INSTALL_CHECKSUM = "SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33"
+
 
 class RubyFlavor(str, Enum):
     """All Ruby implementations supported by ruby-install."""
@@ -86,15 +95,6 @@ class RubyPlugin(Plugin):
       Defaults to False
     """
 
-    RUBY_PREFIX = "/usr"
-
-    # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
-    RUBY_INSTALL_VERSION = "0.10.1"
-
-    # NOTE: To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
-    #   curl -L https://github.com/postmodern/ruby-install/archive/refs/tags/v0.10.1.tar.gz -o ruby-install.tar.gz && sha256sum --tag ruby-install.tar.gz
-    RUBY_INSTALL_CHECKSUM = "SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33"
-
     properties_class = RubyPluginProperties
     _options: RubyPluginProperties
 
@@ -118,7 +118,7 @@ class RubyPlugin(Plugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         env = {
-            "PATH": f"${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}/bin:${{PATH}}",
+            "PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:${{PATH}}",
             "GEM_HOME": "${CRAFT_PART_INSTALL}",
             "GEM_PATH": "${CRAFT_PART_INSTALL}",
         }
@@ -126,7 +126,7 @@ class RubyPlugin(Plugin):
         if self._options.ruby_shared:
             # for finding ruby.so when running `gem` or `bundle`
             env["LD_LIBRARY_PATH"] = (
-                f"${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
             )
 
         return env
@@ -154,14 +154,14 @@ class RubyPlugin(Plugin):
         if self._should_build_ruby():
             # NOTE: Download and verify ruby-install tool (to be executed during build phase)
             commands.append(
-                f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{self.RUBY_INSTALL_VERSION}.tar.gz -o ruby-install.tar.gz"
+                f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{RUBY_INSTALL_VERSION}.tar.gz -o ruby-install.tar.gz"
             )
             commands.append("echo 'Checksum of downloaded file:'")
             commands.append("sha256sum --tag ruby-install.tar.gz")
             commands.append("echo 'Checksum is correct if it matches:'")
-            commands.append(f"echo '{self.RUBY_INSTALL_CHECKSUM}'")
+            commands.append(f"echo '{RUBY_INSTALL_CHECKSUM}'")
             commands.append(
-                f"echo '{self.RUBY_INSTALL_CHECKSUM}' | sha256sum --check --strict"
+                f"echo '{RUBY_INSTALL_CHECKSUM}' | sha256sum --check --strict"
             )
 
         return commands
@@ -176,9 +176,9 @@ class RubyPlugin(Plugin):
             # NOTE: Use ruby-install to download, compile, and install Ruby
             commands.append("tar xfz ruby-install.tar.gz")
             commands.append(
-                f"ruby-install-{self.RUBY_INSTALL_VERSION}/bin/ruby-install"
+                f"ruby-install-{RUBY_INSTALL_VERSION}/bin/ruby-install"
                 f" --src-dir ${{CRAFT_PART_SRC}}"
-                f" --install-dir ${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}"
+                f" --install-dir ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}"
                 f" --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}}"
                 f" {self._options.ruby_flavor.value}-{self._options.ruby_version}"
                 f" -- {configure_opts}"
@@ -187,7 +187,7 @@ class RubyPlugin(Plugin):
             # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
             #       executables by removing them first.
             commands.append(
-                f"rm -f ${{CRAFT_PART_INSTALL}}{self.RUBY_PREFIX}/bin/{{bundle,bundler}}"
+                f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
             )
             commands.append("gem install --env-shebang --no-document bundler")
 
