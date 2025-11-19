@@ -67,7 +67,7 @@ def test_pull_build_commands_after_ruby_deps(part_info_with_dependency):
     pull_commands = plugin.get_pull_commands()
     assert len(pull_commands) == 0
 
-    build_commands = plugin.get_pull_commands()
+    build_commands = plugin.get_build_commands()
     assert len(build_commands) == 0
 
 
