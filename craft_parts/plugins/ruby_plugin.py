@@ -69,8 +69,7 @@ class RubyPlugin(Plugin):
 
     The desired Ruby interpreter is compiled using ruby-install.
 
-    The ruby plugin uses the common plugin keywords, plus the following ruby-
-    specific keywords:
+    The ruby plugin uses the  following ruby-specific keywords:
 
     - ``ruby-flavor``
       (string)
@@ -121,6 +120,8 @@ class RubyPlugin(Plugin):
             "PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:${{PATH}}",
             "GEM_HOME": "${CRAFT_PART_INSTALL}",
             "GEM_PATH": "${CRAFT_PART_INSTALL}",
+            # some Ruby build scripts use bash syntax
+            "SHELL": "/bin/bash",
         }
 
         if self._options.ruby_shared:

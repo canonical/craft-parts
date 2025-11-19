@@ -77,7 +77,6 @@ ruby-use-jemalloc
 
 **Default:** False
 
-When set to ``true``, the plugin compiles Ruby with support for the jemalloc
 Whether to compile Ruby with support for jemalloc.
 
 
