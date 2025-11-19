@@ -20,7 +20,7 @@ ruby-gems
 
 **Type:** list of strings
 
-List of gems to be installed.
+The gems to install.
 
 
 ruby-use-bundler
