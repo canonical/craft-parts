@@ -1,2 +1,2 @@
-source "https://www.github.com/canonical/craft-parts/"
+source "https://rubygems.org"
 gemspec
