@@ -68,7 +68,10 @@ def test_ruby_deps_part(new_dir, partitions):
     assert rake_bin.exists()
 
     # from bundle install
-    primed_script = Path(lf.project_info.prime_dir, "ruby", "3.2.0", "bin", "mytest")
+    ruby_root = Path(lf.project_info.prime_dir, "ruby")
+    # e.g. "3.2.0"; will vary based on version in archive
+    version_dir = next(ruby_root.iterdir())
+    primed_script = version_dir / "bin" / "mytest"
     assert primed_script.exists()
 
 
