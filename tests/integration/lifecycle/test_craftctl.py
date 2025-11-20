@@ -701,3 +701,37 @@ def test_craftctl_project_vars_write_once_from_state(new_dir, partitions, capfd)
     captured = capfd.readouterr()
     assert "variable 'myvar' can be set only once" in captured.err
     assert lf.project_info.get_project_var("myvar2") == "val2"
+
+
+def test_craftctl_chroot(new_dir, partitions, mocker):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    chroot = mocker.patch("craft_parts.overlays.chroot.chroot")
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            overlay-script: |
+              craftctl chroot foo bar
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_chroot",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+        project_vars_part_name="foo",
+    )
+    with lf.action_executor() as ctx:
+        ctx.execute(Action("foo", Step.OVERLAY))
+
+    chroot.assert_called_once_with(
+        mocker.ANY,
+        mocker.ANY,
+        args=(["foo", "bar"],),
+        use_host_sources=True,
+    )
