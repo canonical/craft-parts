@@ -56,7 +56,7 @@ ruby-version
 
 **Default:** "3.2"
 
-The version of Ruby to build.
+The version of the Ruby interpreter to build.
 
 
 ruby-shared
@@ -85,7 +85,8 @@ ruby-configure-options
 
 **Type:** list of strings
 
-Extra arguments to pass to the compiler when building the Ruby interpreter.
+Extra arguments to pass to the ``configure`` script when building the Ruby
+interpreter.
 
 
 .. _ruby-details-begin:
