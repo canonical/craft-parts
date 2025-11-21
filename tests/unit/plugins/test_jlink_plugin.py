@@ -21,6 +21,7 @@ import pytest
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.jlink_plugin import JLinkPlugin
+from pydantic_core import ValidationError
 
 
 @pytest.fixture
@@ -36,6 +37,7 @@ def test_jlink_plugin_defaults(part_info):
     properties = JLinkPlugin.properties_class.unmarshal({"source": "."})
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
+    assert "MULTI_RELEASE=base" in plugin.get_build_commands()
     assert (
         "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}"
         in plugin.get_build_commands()
@@ -54,13 +56,49 @@ def test_jlink_plugin_jar_files(part_info):
 
 
 def test_jlink_plugin_add_modules(part_info):
-    """Validate setting of jlink version."""
+    """Validate setting of additional jlink modules."""
     properties = JLinkPlugin.properties_class.unmarshal(
         {"source": ".", "jlink-extra-modules": ["jdk.crypto.ec", "jdk.desktop"]}
     )
     plugin = JLinkPlugin(properties=properties, part_info=part_info)
 
     assert "deps=${deps},jdk.crypto.ec,jdk.desktop" in plugin.get_build_commands()
+
+
+def test_jlink_plugin_set_modules(part_info):
+    """Validate setting of jlink modules."""
+    properties = JLinkPlugin.properties_class.unmarshal(
+        {"source": ".", "jlink-modules": ["jdk.crypto.ec", "jdk.desktop"]}
+    )
+    plugin = JLinkPlugin(properties=properties, part_info=part_info)
+
+    assert "deps=jdk.crypto.ec,jdk.desktop" in plugin.get_build_commands()
+
+
+def test_jlink_plugin_multi_release(part_info):
+    """Validate setting of jlink multi-release."""
+    properties = JLinkPlugin.properties_class.unmarshal(
+        {"source": ".", "jlink-multi-release": 11}
+    )
+    plugin = JLinkPlugin(properties=properties, part_info=part_info)
+
+    assert "MULTI_RELEASE=11" in plugin.get_build_commands()
+
+
+def test_jlink_plugin_modules_validator(part_info):
+    """Validate that jlink-modules is an exclusive option"""
+    with pytest.raises(ValidationError) as error:
+        properties = JLinkPlugin.properties_class.unmarshal(
+            {"source": ".", "jlink-multi-release": 11, "jlink-modules": ["java.base"]}
+        )
+    assert "Option jlink_modules is exclusive with all other options." in str(
+        error.value
+    )
+
+    properties = JLinkPlugin.properties_class.unmarshal(
+        {"source": ".", "jlink-modules": ["java.base"]}
+    )
+    assert "java.base" in str(properties)
 
 
 def test_jlink_plugin_find_jars(part_info, tmp_path):
