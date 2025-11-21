@@ -44,7 +44,7 @@ dev = [
     "build",
     "coverage[toml]~=7.4",
     "pyfakefs~=5.3",
-    "pytest~=8.0",
+    "pytest~=9.0",
     "pytest-cov~=7.0",
     "pytest-mock~=3.12",
     "pytest-rerunfailures>=16.0.1",
