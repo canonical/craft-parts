@@ -20,24 +20,9 @@ from pathlib import Path
 
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step, errors
-from craft_parts.utils import os_utils
+from craft_parts import LifecycleManager, Step
 
-
-def is_ubuntu_jammy() -> bool:
-    release = os_utils.OsRelease()
-    try:
-        return release.id() == "ubuntu" and release.version_id() == "22.04"
-    except errors.OsReleaseIdError:
-        return False
-
-
-pytestmark = [
-    pytest.mark.slow,
-    pytest.mark.skipif(
-        is_ubuntu_jammy(), reason="ruby-install may require newer packages"
-    ),
-]
+pytestmark = [pytest.mark.plugin]
 
 
 def test_ruby_deps_part(new_dir, partitions):
