@@ -81,6 +81,7 @@ dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
 dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
 dev-plucky = ["python-apt~=2.9.9;sys_platform=='linux'"]
 dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
+dev-resolute = ["python-apt~=3.0.0;sys_platform=='linux'"]
 tics = ["flake8", "pylint"]
 
 [tool.uv]
@@ -107,6 +108,7 @@ conflicts = [
         { group = "dev-noble" },
         { group = "dev-plucky" },
         { group = "dev-questing" },
+        { group = "dev-resolute" },
     ],
 ]
 
