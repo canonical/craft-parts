@@ -42,6 +42,7 @@ from .poetry_plugin import PoetryPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
 from .qmake_plugin import QmakePlugin
+from .ruby_plugin import RubyPlugin
 from .rust_plugin import RustPlugin
 from .scons_plugin import SConsPlugin
 from .uv_plugin import UvPlugin
@@ -77,6 +78,7 @@ _BUILTIN_PLUGINS: dict[str, PluginType] = {
     "poetry": PoetryPlugin,
     "python": PythonPlugin,
     "qmake": QmakePlugin,
+    "ruby": RubyPlugin,
     "rust": RustPlugin,
     "scons": SConsPlugin,
     "uv": UvPlugin,
