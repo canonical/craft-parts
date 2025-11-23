@@ -41,10 +41,11 @@ Additional modules to include in the OpenJDK image.
 
 jlink-multi-release
 ~~~~~~~~~~~~~~~~~~~
+**Type:** int or string
 
-**Type:** int
+**Default:** "base"
 
-OpenJDK release version to use for multi-release jars. Defaults to ``base``.
+OpenJDK release version to use for multi-release jars.
 
 
 Dependencies
