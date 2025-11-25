@@ -116,10 +116,8 @@ Or, by installing the dependencies directly:
 How it works
 ------------
 
-The plugin performs actions during the build step.
-
-When ``jlink-modules`` option is specified, the plugin runs `jlink`_ to create
-an OpenJDK image with the specified modules.
+If the ``jlink-modules`` key is set, the plugin runs `jlink`_ to create
+an OpenJDK image with the listed modules.
 
 Otherwise, the plugin performs the following actions:
 
