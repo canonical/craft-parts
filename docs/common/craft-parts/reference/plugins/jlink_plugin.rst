@@ -18,8 +18,8 @@ jlink-modules
 
 **Type:** list of strings
 
-Exact list of modules to include in the OpenJDK image. This option
-makes the plugin ignore all other options.
+The exhaustive list of modules to include in the OpenJDK image. If set, this key
+overrides all other keys for this plugin.
 
 
 jlink-jars
