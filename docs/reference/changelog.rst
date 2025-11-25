@@ -22,8 +22,7 @@ Changelog
 
 New features:
 
-- Add new options for ``jlink`` plugin: ``jlink-multi-release`` and
-  ``jlink-modules``.
+- Add new ``jlink-multi-release`` and ``jlink-modules`` keys to the JLink plugin.
 
 Bug fixes:
 
