@@ -45,7 +45,7 @@ jlink-multi-release
 
 **Default:** "base"
 
-OpenJDK release version to use for multi-release jars.
+OpenJDK release version to use for multi-release JARs.
 
 
 Dependencies
