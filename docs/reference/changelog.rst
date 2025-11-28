@@ -20,6 +20,10 @@ Changelog
 2.27.0 (2025-MM-DD)
 -------------------
 
+New features:
+
+- Add new ``jlink-multi-release`` and ``jlink-modules`` keys to the JLink plugin.
+
 Bug fixes:
 
 - Shallow clones of git sources are now possible when using ``source-commit`` with
