@@ -166,3 +166,6 @@ prime/
 # .NET build directories
 **/bin/
 **/obj/
+
+# Ruby plugin artifacts
+ruby-install.tar.gz
