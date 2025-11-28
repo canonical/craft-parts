@@ -86,6 +86,10 @@ def test_ruby_custom_interpreter(new_dir, partitions):
           foo:
             plugin: ruby
             ruby-version: "3.4.7"
+            ruby-configure-options:
+              # limit extension set for faster build during test execution
+              - "--with-ext=monitor"
+              #- "--disable-rubygems"
             source: {source_location}
         """
     )

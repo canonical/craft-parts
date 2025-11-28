@@ -121,8 +121,8 @@ class RubyPlugin(Plugin):
             "GEM_HOME": "${CRAFT_PART_INSTALL}",
             "GEM_PATH": "${CRAFT_PART_INSTALL}",
             # some Ruby build scripts use bash syntax
-            "SHELL": "/bin/bash",
-            "MAKEOVERRIDES": "SHELL=/bin/bash",
+            #"SHELL": "/bin/bash",
+            #"MAKEOVERRIDES": "SHELL=/bin/bash",
         }
 
         if self._options.ruby_shared:
@@ -186,14 +186,13 @@ class RubyPlugin(Plugin):
                 f" -- {configure_opts}"
             )
 
+        if self._options.ruby_use_bundler:
             # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
             #       executables by removing them first.
             commands.append(
                 f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
             )
             commands.append("gem install --env-shebang --no-document bundler")
-
-        if self._options.ruby_use_bundler:
             commands.append("bundle config path ${CRAFT_PART_INSTALL}")
             commands.append("bundle")
 
