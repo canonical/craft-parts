@@ -42,7 +42,6 @@ class RubyFlavor(str, Enum):
 
     ruby = "ruby"
     jruby = "jruby"
-    rbx = "rbx"
     truffleruby = "truffleruby"
     mruby = "mruby"
 
@@ -73,7 +72,7 @@ class RubyPlugin(Plugin):
 
     - ``ruby-flavor``
       (string)
-      ruby,jruby,rbx,truffleruby,mruby
+      ruby,jruby,truffleruby,mruby
     - ``ruby-gems``
       (list of str)
       Defaults to []
@@ -188,12 +187,15 @@ class RubyPlugin(Plugin):
             )
 
         if self._options.ruby_use_bundler:
-            # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
-            #       executables by removing them first.
-            commands.append(
-                f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
-            )
-            commands.append("gem install --env-shebang --no-document bundler")
+            # Assume bundler is already provided if using prebuilt Ruby
+            if self._should_build_ruby():
+                # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
+                #       executables by removing them first.
+                commands.append(
+                    f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
+                )
+                commands.append("gem install --env-shebang --no-document bundler")
+
             commands.append("bundle config path ${CRAFT_PART_INSTALL}")
             commands.append("bundle")
 

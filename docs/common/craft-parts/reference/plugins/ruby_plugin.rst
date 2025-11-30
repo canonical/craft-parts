@@ -3,7 +3,7 @@
 Ruby plugin
 ===========
 
-The Ruby plugin manages Ruby gems and the Ruby interpreter. It can compile and
+The Ruby plugin manages Ruby gems and the Ruby interpreter. It can build and
 bundle different variants of the interpreter, build gems with tools like rake or
 Bundler, and install gems.
 
@@ -40,11 +40,10 @@ ruby-flavor
 
 **Default:** ruby
 
-The Ruby interpreter to compile and include. The supported interpreters are:
+The Ruby interpreter to build and include. The supported interpreters are:
 
 - ``ruby``
 - ``jruby``
-- ``rbx``
 - ``truffleruby``
 - ``mruby``
 
@@ -77,7 +76,7 @@ ruby-use-jemalloc
 
 **Default:** False
 
-Whether to compile Ruby with support for jemalloc.
+Whether to build Ruby with support for jemalloc.
 
 
 ruby-configure-options
@@ -97,7 +96,7 @@ Dependencies
 By default, this plugin downloads and runs the `ruby-install
 <https://github.com/postmodern/ruby-install>` tool.
 
-If a project has multiple Ruby parts, by default each compiles and bundles its
+If a project has multiple Ruby parts, by default each builds and bundles its
 own Ruby interpreter. If a special Ruby part named ``ruby-deps`` is defined, it
 creates a shared interpreter and shared gems that the other Ruby parts can use.
 For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
@@ -110,6 +109,7 @@ For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
       plugin: ruby
       ruby-version: "3.4"
       ruby-gems:
+        - bundler
         - rackup
     my-project:
       plugin: ruby
