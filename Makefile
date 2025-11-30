@@ -164,28 +164,13 @@ endif
 ifeq ($(wildcard /usr/share/doc/ruby-bundler/copyright),)
 APT_PACKAGES += ruby-bundler
 endif
-# all the packages ruby-install wants to use
-# https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/ruby/dependencies.sh
+# all the packages ruby-install wants to use to build mruby
+# https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/mruby/dependencies.sh
 ifeq ($(wildcard /usr/share/doc/build-essential/copyright),)
 APT_PACKAGES += build-essential
 endif
-ifeq ($(wildcard /usr/share/doc/xz-utils/copyright),)
-APT_PACKAGES += xz-utils
-endif
-ifeq ($(wildcard /usr/share/doc/zlib1g-dev/copyright),)
-APT_PACKAGES += zlib1g-dev
-endif
-ifeq ($(wildcard /usr/share/doc/libyaml-dev/copyright),)
-APT_PACKAGES += libyaml-dev
-endif
-ifeq ($(wildcard /usr/share/doc/libssl-dev/copyright),)
-APT_PACKAGES += libssl-dev
-endif
-ifeq ($(wildcard /usr/share/doc/libncurses-dev/copyright),)
-APT_PACKAGES += libncurses-dev
-endif
-ifeq ($(wildcard /usr/share/doc/libffi-dev/copyright),)
-APT_PACKAGES += libffi-dev
+ifeq ($(wildcard /usr/share/doc/bison/copyright),)
+APT_PACKAGES += bison
 endif
 # We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
 # 22.04 -> 25.10 (and possibly 26.04).

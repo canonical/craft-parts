@@ -53,8 +53,6 @@ def test_get_build_environment(part_info_with_dependency):
         "PATH": "${CRAFT_PART_INSTALL}/usr/bin:${PATH}",
         "GEM_HOME": "${CRAFT_PART_INSTALL}",
         "GEM_PATH": "${CRAFT_PART_INSTALL}",
-        #"SHELL": "/bin/bash",
-        #"MAKEOVERRIDES": "SHELL=/bin/bash",
     }
     properties = RubyPlugin.properties_class.unmarshal({"source": "."})
     plugin = RubyPlugin(properties=properties, part_info=part_info_with_dependency)

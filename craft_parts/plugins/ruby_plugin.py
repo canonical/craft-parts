@@ -120,9 +120,6 @@ class RubyPlugin(Plugin):
             "PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:${{PATH}}",
             "GEM_HOME": "${CRAFT_PART_INSTALL}",
             "GEM_PATH": "${CRAFT_PART_INSTALL}",
-            # some Ruby build scripts use bash syntax
-            #"SHELL": "/bin/bash",
-            #"MAKEOVERRIDES": "SHELL=/bin/bash",
         }
 
         if self._options.ruby_shared:
@@ -175,6 +172,10 @@ class RubyPlugin(Plugin):
         commands = ["uname -a", "env"]
 
         if self._should_build_ruby():
+            # only for mruby: Install the rake gem into our custom GEM_HOME
+            if self._options.ruby_flavor == RubyFlavor.mruby:
+                commands.append("gem install --env-shebang --no-document rake")
+
             # NOTE: Use ruby-install to download, compile, and install Ruby
             commands.append("tar xfz ruby-install.tar.gz")
             commands.append(

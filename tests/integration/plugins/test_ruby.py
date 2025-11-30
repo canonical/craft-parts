@@ -76,7 +76,7 @@ def test_ruby_deps_part(new_dir, partitions):
 
 
 @pytest.mark.slow
-def test_ruby_custom_interpreter(new_dir, partitions):
+def test_ruby_custom_flavor(new_dir, partitions):
     """Plugin should build the specified version of Ruby."""
     source_location = Path(__file__).parent / "test_ruby"
 
@@ -85,11 +85,8 @@ def test_ruby_custom_interpreter(new_dir, partitions):
         parts:
           foo:
             plugin: ruby
-            ruby-version: "3.4.7"
-            ruby-configure-options:
-              # limit extension set for faster build during test execution
-              - "--with-ext=monitor"
-              #- "--disable-rubygems"
+            ruby-flavor: mruby
+            ruby-version: "3.4.0"
             source: {source_location}
         """
     )
@@ -107,4 +104,4 @@ def test_ruby_custom_interpreter(new_dir, partitions):
     interpreter_version = subprocess.check_output(
         [interpreter_path, "--version"], text=True
     )
-    assert interpreter_version.startswith("ruby 3.4.7")
+    assert interpreter_version.startswith("mruby 3.4.0")
