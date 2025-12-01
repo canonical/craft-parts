@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import platform
 import subprocess
 from pathlib import Path
 
@@ -28,6 +29,10 @@ pytestmark = [
     pytest.mark.skipif(
         _get_host_architecture() not in dotnet_v2_plugin._DEBIAN_ARCH_TO_DOTNET_RID,
         reason="No dotnet runtime for this architecture.",
+    ),
+    pytest.mark.skipif(
+        platform.libc_ver()[1] < "2.34",
+        reason="glibc too old. This plugin is only expected to work with jammy or later.",
     ),
 ]
 
