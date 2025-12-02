@@ -20,6 +20,7 @@ from craft_parts import errors, plugins
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import nil_plugin
+from craft_parts.plugins.base import Plugin
 from craft_parts.plugins.plugins import (
     AutotoolsPlugin,
     CMakePlugin,
@@ -184,13 +185,29 @@ class TestPluginRegistry:
             plugins.get_plugin_class("plugin4")
 
     @pytest.mark.parametrize("group", PluginGroup)
-    def test_plugin_groups(self, group: PluginGroup):
+    def test_builtin_plugin_groups(self, group: PluginGroup):
         # Set a null plugin group.
         plugins.plugins._plugins = {}
         assert not get_registered_plugins()
 
         set_plugin_group(group)
         assert get_registered_plugins() == group.value
+
+    @pytest.mark.parametrize(
+        "group",
+        [
+            pytest.param({}, id="empty"),
+            pytest.param({"nil": NilPlugin}, id="nil-only"),
+            pytest.param({"python": DotnetPlugin}, id="invalid-not-checked"),
+        ],
+    )
+    def test_custom_plugin_groups(self, group: dict[str, type[Plugin]]):
+        # Set a null plugin group.
+        plugins.plugins._plugins = {}
+        assert not get_registered_plugins()
+
+        set_plugin_group(group)
+        assert get_registered_plugins() == group
 
 
 class TestHelpers:

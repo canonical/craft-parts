@@ -17,6 +17,7 @@
 """Definitions and helpers to handle plugins."""
 
 import enum
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 from craft_parts import errors
@@ -110,15 +111,17 @@ class PluginGroup(enum.Enum):
 _plugins: dict[str, type[Plugin]] = {}
 
 
-def set_plugin_group(group: PluginGroup) -> None:
+def set_plugin_group(group: Mapping[str, type[Plugin]] | PluginGroup) -> None:
     """Set the plugin group to use.
 
     This method replaces the group of registered plugins with the named plugin group.
 
     :param group: The name of the plugin group or the instance thereof.
     """
+    if isinstance(group, PluginGroup):
+        group = group.value
     _plugins.clear()
-    _plugins.update(group.value)
+    _plugins.update(group)
 
 
 set_plugin_group(PluginGroup.DEFAULT)
