@@ -28,7 +28,6 @@ from .base import Plugin
 from .cargo_use_plugin import CargoUsePlugin
 from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
-from .dotnet_v2_plugin import DotnetV2Plugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
 from .go_use_plugin import GoUsePlugin
@@ -43,7 +42,6 @@ from .npm_plugin import NpmPlugin
 from .poetry_plugin import PoetryPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
-from .python_v2.python_plugin import PythonPlugin as PythonV2Plugin  # Name TBD
 from .qmake_plugin import QmakePlugin
 from .rust_plugin import RustPlugin
 from .scons_plugin import SConsPlugin
@@ -96,15 +94,6 @@ class PluginGroup(enum.Enum):
     """The default set of plugins for most use cases.
 
     The plugins in this group are generally considered functional on most legacy bases.
-    """
-
-    QUESTING = DEFAULT | {
-        "dotnet": DotnetV2Plugin,
-        "python": PythonV2Plugin,
-    }
-    """The recommended group of plugins for use with Ubuntu 25.10+.
-
-    This plugin group is not yet stable and could change in minor releases.
     """
 
 
