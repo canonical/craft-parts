@@ -92,6 +92,39 @@ def test_jlink_plugin_embedded_jar(new_dir, partitions):
 
 
 @pytest.mark.usefixtures("build_test_jar")
+def test_jlink_plugin_set_modules(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+            my-part:
+                plugin: jlink
+                source: .
+                jlink-modules: ["jdk.crypto.ec", "java.sql"]
+                after: ["stage-jar"]
+            stage-jar:
+                plugin: dump
+                source: .
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # java.desktop module should not be included in the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) == 0
+    # jdk.crypto.ec should be added to the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("jdk.crypto.ec"))) > 0
+    # java.sql should be added to the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("java.sql"))) > 0
+
+
+@pytest.mark.usefixtures("build_test_jar")
 def test_jlink_plugin_add_modules(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """
