@@ -108,9 +108,22 @@ class RubyPlugin(Plugin):
         """Return a set of required packages to install in the build environment."""
         packages: set[str] = set()
         if self._should_build_ruby():
-            # libssl-dev: to enable compiled binaries to fetch gems over HTTPS
-            # curl: for fetching ruby-install itself
-            packages |= {"curl", "libssl-dev"}
+            packages |= {
+                # for fetching ruby-install itself
+                "curl",
+                # Set pulled from ruby-install's own scripts:
+                # https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/ruby/dependencies.sh
+                "build-essential",
+                "bison",
+                "xz-utils",
+                "zlib1g-dev",
+                "libyaml-dev",
+                "libssl-dev",
+                "libncurses-dev",
+                "libffi-dev",
+                "libreadline-dev",
+                "libjemalloc-dev",
+            }
         return packages
 
     def get_build_environment(self) -> dict[str, str]:
@@ -181,7 +194,7 @@ class RubyPlugin(Plugin):
                 f"ruby-install-{RUBY_INSTALL_VERSION}/bin/ruby-install"
                 f" --src-dir ${{CRAFT_PART_SRC}}"
                 f" --install-dir ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}"
-                f" --package-manager apt --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}}"
+                f" --no-install-deps --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}}"
                 f" {self._options.ruby_flavor.value}-{self._options.ruby_version}"
                 f" -- {configure_opts}"
             )
