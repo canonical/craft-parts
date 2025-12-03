@@ -93,16 +93,15 @@ interpreter.
 Dependencies
 ------------
 
-`By default this plugin uses Ruby from the base when it is available and appropriate to
-`use. However, the core images used by Snapcraft do not contain Ruby, so it will need to be
-supplied in snaps that use it. Snaps that use classic confinement will use the host system's
-Ruby.
+The Ruby plugin needs the ``ruby`` interpreter to run Ruby programs but does not
+provision it by default, to allow flexibility in the choice of interpreter flavor
+and version.
 
-Use of ``ruby-<gem-package>`` in stage-packages will force the inclusion of the
-Ruby interpreter.
+A common means of providing ``ruby`` is to declare the ``ruby`` Ubuntu package,
+or any ``ruby-<gem_name>`` Ubuntu package, as a ``stage-package``.
 
-If ``ruby-flavor`` and ``ruby-version`` are specified, this plugin downloads
-and runs the `ruby-install
+Alternatively, if ``ruby-flavor`` and ``ruby-version`` are declared, this plugin
+downloads and runs the `ruby-install
 <https://github.com/postmodern/ruby-install>` tool.
 
 If a special Ruby part named ``ruby-deps`` is defined, it
