@@ -96,7 +96,6 @@ class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                 )
         else:
             # Not building Ruby -- everything should already be present
-            print(options)
             for dependency in ["gem", "bundler"]:
                 self.validate_dependency(
                     dependency=dependency,
