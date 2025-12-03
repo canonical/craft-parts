@@ -25,6 +25,48 @@ from craft_parts import LifecycleManager, Step
 pytestmark = [pytest.mark.plugin]
 
 
+def test_ruby_plugin_default(new_dir, partitions):
+    """Plugin should use (but not stage) available Ruby interpreter."""
+    source_location = Path(__file__).parent / "test_ruby"
+
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          foo:
+            plugin: ruby
+            source: {source_location}
+            ruby-gems:
+              # external dependency that installs an executable
+              - rackup
+            ruby-use-bundler: true
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_ruby", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # ruby interpreter NOT explicitly staged
+    interpreter = Path(lf.project_info.prime_dir, "usr", "bin", "ruby")
+    assert not interpreter.exists()
+
+    # from gem install
+    rake_bin = Path(lf.project_info.prime_dir, "bin", "rackup")
+    assert rake_bin.exists()
+
+    # from bundle install
+    ruby_root = Path(lf.project_info.prime_dir, "ruby")
+    # e.g. "3.2.0"; will vary based on version in archive
+    version_dir = next(ruby_root.iterdir())
+    primed_script = version_dir / "bin" / "mytest"
+    assert primed_script.exists()
+
+
 def test_ruby_deps_part(new_dir, partitions):
     """Plugin should use interpreter from ruby-deps part dependency."""
     source_location = Path(__file__).parent / "test_ruby"

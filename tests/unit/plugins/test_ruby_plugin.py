@@ -14,10 +14,30 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import subprocess
+
 import pytest
+import pytest_subprocess
+from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.ruby_plugin import RubyPlugin
+from craft_parts.plugins.validator import PluginEnvironmentValidator
+
+
+def exec_fail(x):
+    raise subprocess.CalledProcessError(127, x)
+
+
+@pytest.fixture
+def mock_validator(monkeypatch):
+    def fake_execute(self, cmd: str):
+        return subprocess.check_output(  # noqa: S602
+            cmd,
+            shell=True,
+        )
+
+    monkeypatch.setattr(PluginEnvironmentValidator, "_execute", fake_execute)
 
 
 @pytest.fixture
@@ -43,9 +63,87 @@ def test_get_build_packages_after_ruby_deps(part_info_with_dependency):
 
 
 def test_get_build_packages_no_ruby_deps(part_info_without_dependency):
-    properties = RubyPlugin.properties_class.unmarshal({"source": "."})
+    properties = RubyPlugin.properties_class.unmarshal(
+        {"source": ".", "ruby-flavor": "ruby", "ruby-version": "3.4"}
+    )
     plugin = RubyPlugin(properties=properties, part_info=part_info_without_dependency)
     assert "curl" in plugin.get_build_packages()
+
+
+@pytest.mark.parametrize(
+    "properties_dict",
+    [
+        {"source": ".", "ruby-flavor": "mruby"},
+        {"source": ".", "ruby-version": "3.2"},
+    ],
+)
+def test_validate_environment_flavor_version(properties_dict):
+    """If either ruby-flavor or ruby-version is specified, the other must be too."""
+    properties = RubyPlugin.properties_class.unmarshal(properties_dict)
+    validator = RubyPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    with pytest.raises(PluginEnvironmentValidationError) as exc:
+        validator.validate_environment()
+    assert "ruby-version and ruby-flavor must both be specified" in exc.value.brief
+
+
+@pytest.mark.parametrize("missing_command", ["bundler", "gem"])
+def test_validate_environment(
+    missing_command, fake_process: pytest_subprocess.FakeProcess, mock_validator
+):
+    """Omitting ruby-deps and ruby-flavor should trigger checks for dependencies."""
+    if missing_command != "gem":
+        fake_process.register(["gem", "--version"])
+    if missing_command != "bundler":
+        fake_process.register(["bundler", "--version"])
+    fake_process.register([missing_command, "--version"], callback=exec_fail)
+
+    properties = RubyPlugin.properties_class.unmarshal({"source": "."})
+    validator = RubyPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    with pytest.raises(PluginEnvironmentValidationError) as exc:
+        validator.validate_environment()
+    assert f"'{missing_command}' not found" in exc.value.brief
+
+
+def test_validate_environment_ruby_deps(
+    fake_process: pytest_subprocess.FakeProcess, mock_validator
+):
+    """Specifying ruby-deps should skip environment checks"""
+    for exe in ["bundler", "gem"]:
+        fake_process.register([exe, "--version"], callback=exec_fail)
+
+    properties = RubyPlugin.properties_class.unmarshal({"source": "."})
+    validator = RubyPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    validator.validate_environment(part_dependencies=["ruby-deps"])
+
+
+def test_validate_environment_custom_flavor():
+    """Specifying ruby-flavor should skip environment checks"""
+    properties = RubyPlugin.properties_class.unmarshal(
+        {"source": ".", "ruby-flavor": "mruby", "ruby-version": "3.2"}
+    )
+    validator = RubyPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    validator.validate_environment()
+
+
+def test_validate_environment_deps_and_custom():
+    """Specifying both ruby-flavor and ruby-deps should raise an exception."""
+    properties = RubyPlugin.properties_class.unmarshal(
+        {"source": ".", "ruby-flavor": "mruby", "ruby-version": "3.2"}
+    )
+    validator = RubyPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    with pytest.raises(PluginEnvironmentValidationError) as exc:
+        validator.validate_environment(part_dependencies=["ruby-deps"])
+    assert "ruby-deps cannot be used" in exc.value.brief
 
 
 def test_get_build_environment(part_info_with_dependency):
@@ -72,7 +170,9 @@ def test_pull_build_commands_after_ruby_deps(part_info_with_dependency):
 
 
 def test_pull_build_commands_no_ruby_deps(part_info_without_dependency):
-    properties = RubyPlugin.properties_class.unmarshal({"source": "."})
+    properties = RubyPlugin.properties_class.unmarshal(
+        {"source": ".", "ruby-flavor": "ruby", "ruby-version": "3.4"}
+    )
     plugin = RubyPlugin(properties=properties, part_info=part_info_without_dependency)
 
     pull_commands = plugin.get_pull_commands()
@@ -88,7 +188,7 @@ def test_pull_build_commands_no_ruby_deps(part_info_without_dependency):
     assert (
         "ruby-install-0.10.1/bin/ruby-install --src-dir ${CRAFT_PART_SRC} "
         "--install-dir ${CRAFT_PART_INSTALL}/usr --no-install-deps "
-        "--jobs=${CRAFT_PARALLEL_BUILD_COUNT} ruby-3.2 -- "
+        "--jobs=${CRAFT_PARALLEL_BUILD_COUNT} ruby-3.4 -- "
         "--without-baseruby --enable-load-relative --disable-install-doc"
     ) in build_commands
 

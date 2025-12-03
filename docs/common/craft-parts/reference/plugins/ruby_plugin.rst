@@ -38,7 +38,7 @@ ruby-flavor
 
 **Type:** string
 
-**Default:** ruby
+**Default:** None
 
 The Ruby interpreter to build and include. The supported interpreters are:
 
@@ -53,7 +53,7 @@ ruby-version
 
 **Type:** string
 
-**Default:** "3.2"
+**Default:** None
 
 The version of the Ruby interpreter to build.
 
@@ -93,11 +93,19 @@ interpreter.
 Dependencies
 ------------
 
-By default, this plugin downloads and runs the `ruby-install
+`By default this plugin uses Ruby from the base when it is available and appropriate to
+`use. However, the core images used by Snapcraft do not contain Ruby, so it will need to be
+supplied in snaps that use it. Snaps that use classic confinement will use the host system's
+Ruby.
+
+Use of ``ruby-<gem-package>`` in stage-packages will force the inclusion of the
+Ruby interpreter.
+
+If ``ruby-flavor`` and ``ruby-version`` are specified, this plugin downloads
+and runs the `ruby-install
 <https://github.com/postmodern/ruby-install>` tool.
 
-If a project has multiple Ruby parts, by default each builds and bundles its
-own Ruby interpreter. If a special Ruby part named ``ruby-deps`` is defined, it
+If a special Ruby part named ``ruby-deps`` is defined, it
 creates a shared interpreter and shared gems that the other Ruby parts can use.
 For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
 ``after`` key.
@@ -107,6 +115,7 @@ For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
   parts:
     ruby-deps:
       plugin: ruby
+      ruby-flavor: mruby
       ruby-version: "3.4"
       ruby-gems:
         - bundler

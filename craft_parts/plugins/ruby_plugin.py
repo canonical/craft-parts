@@ -18,10 +18,11 @@
 
 import logging
 from enum import Enum
-from typing import Literal
+from typing import Literal, cast
 
 from typing_extensions import override
 
+from . import validator
 from .base import Plugin
 from .properties import PluginProperties
 
@@ -56,11 +57,52 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     ruby_use_bundler: bool = False
 
     # build arguments
-    ruby_flavor: RubyFlavor = RubyFlavor.ruby
-    ruby_version: str = "3.2"
+    ruby_flavor: RubyFlavor | None = None
+    ruby_version: str | None = None
     ruby_use_jemalloc: bool = False
     ruby_shared: bool = False
     ruby_configure_options: list[str] = []
+
+
+class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+    """Check the execution environment for the Ruby plugin.
+
+    :param part_name: The part whose build environment is being validated.
+    :param env: A string containing the build step environment setup.
+    """
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment has the dependencies to build Ruby applications.
+
+        :param part_dependencies: A list of the parts this part depends on.
+        """
+        options = cast(RubyPluginProperties, self._options)
+        has_ruby_deps = "ruby-deps" in (part_dependencies or [])
+        if options.ruby_flavor or options.ruby_version:
+            if None in (options.ruby_flavor, options.ruby_version):
+                raise validator.errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason="ruby-version and ruby-flavor must both be specified",
+                )
+
+            if has_ruby_deps:
+                raise validator.errors.PluginEnvironmentValidationError(
+                    part_name=self._part_name,
+                    reason="ruby-deps cannot be used "
+                    "when ruby-flavor and ruby-version are also specified",
+                )
+        else:
+            # Not building Ruby -- everything should already be present
+            print(options)
+            for dependency in ["gem", "bundler"]:
+                self.validate_dependency(
+                    dependency=dependency,
+                    plugin_name="ruby",
+                    part_dependencies=part_dependencies,
+                )
 
 
 class RubyPlugin(Plugin):
@@ -78,7 +120,8 @@ class RubyPlugin(Plugin):
       Defaults to []
     - ``ruby-version``
       (str)
-      Defaults to '3.2', meaning the newest release of the 3.2.x series.
+      Minor version number of the specified interpreter flavor.
+      e.g. '3.2', meaning the newest release of the 3.2.x series.
     - ``ruby-use-jemalloc``
       (bool)
       Defaults to False
@@ -94,11 +137,15 @@ class RubyPlugin(Plugin):
     """
 
     properties_class = RubyPluginProperties
+    validator_class = RubyPluginEnvironmentValidator
     _options: RubyPluginProperties
 
     def _should_build_ruby(self) -> bool:
         # Skip if user specified 'after: [ruby-deps]' in yaml
-        return "ruby-deps" not in self._part_info.part_dependencies
+        return (
+            self._options.ruby_flavor is not None
+            and self._options.ruby_version is not None
+        ) and "ruby-deps" not in self._part_info.part_dependencies
 
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
@@ -184,6 +231,8 @@ class RubyPlugin(Plugin):
         commands = ["uname -a", "env"]
 
         if self._should_build_ruby():
+            flavor_str = cast(RubyFlavor, self._options.ruby_flavor).value
+
             # only for mruby: Install the rake gem into our custom GEM_HOME
             if self._options.ruby_flavor == RubyFlavor.mruby:
                 commands.append("gem install --env-shebang --no-document rake")
@@ -195,7 +244,7 @@ class RubyPlugin(Plugin):
                 f" --src-dir ${{CRAFT_PART_SRC}}"
                 f" --install-dir ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}"
                 f" --no-install-deps --jobs=${{CRAFT_PARALLEL_BUILD_COUNT}}"
-                f" {self._options.ruby_flavor.value}-{self._options.ruby_version}"
+                f" {flavor_str}-{self._options.ruby_version}"
                 f" -- {configure_opts}"
             )
 
