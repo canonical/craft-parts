@@ -154,23 +154,27 @@ class RubyPlugin(Plugin):
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
         packages: set[str] = set()
+
         if self._should_build_ruby():
-            packages |= {
-                # for fetching ruby-install itself
-                "curl",
-                # Set pulled from ruby-install's own scripts:
+            # curl: for fetching ruby-install itself
+            # other packages: minimum necessary for mruby flavor
+            # https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/mruby/dependencies.sh
+            packages |= {"curl", "build-essential", "bison"}
+
+            if self._options.ruby_flavor != RubyFlavor.mruby:
+                # package dependencies for standard ruby interpreter
                 # https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/ruby/dependencies.sh
-                "build-essential",
-                "bison",
-                "xz-utils",
-                "zlib1g-dev",
-                "libyaml-dev",
-                "libssl-dev",
-                "libncurses-dev",
-                "libffi-dev",
-                "libreadline-dev",
-                "libjemalloc-dev",
-            }
+                packages |= {
+                    "xz-utils",
+                    "zlib1g-dev",
+                    "libyaml-dev",
+                    "libssl-dev",
+                    "libncurses-dev",
+                    "libffi-dev",
+                    "libreadline-dev",
+                    "libjemalloc-dev",
+                }
+
         return packages
 
     def get_build_environment(self) -> dict[str, str]:
