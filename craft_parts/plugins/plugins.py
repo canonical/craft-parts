@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021,2024 Canonical Ltd.
+# Copyright 2021,2024-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,8 @@
 
 """Definitions and helpers to handle plugins."""
 
-import copy
+import enum
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 from craft_parts import errors
@@ -56,33 +57,63 @@ PluginType = type[Plugin]
 PLUGINS_BUILD_ATTRIBUTES = {"self-contained"}
 
 
-# Plugin registry by plugin API version
-_BUILTIN_PLUGINS: dict[str, PluginType] = {
-    "ant": AntPlugin,
-    "autotools": AutotoolsPlugin,
-    "cargo-use": CargoUsePlugin,
-    "cmake": CMakePlugin,
-    "dotnet": DotnetPlugin,
-    "dump": DumpPlugin,
-    "go": GoPlugin,
-    "go-use": GoUsePlugin,
-    "gradle": GradlePlugin,
-    "jlink": JLinkPlugin,
-    "make": MakePlugin,
-    "maven": MavenPlugin,
-    "maven-use": MavenUsePlugin,
-    "meson": MesonPlugin,
-    "nil": NilPlugin,
-    "npm": NpmPlugin,
-    "poetry": PoetryPlugin,
-    "python": PythonPlugin,
-    "qmake": QmakePlugin,
-    "rust": RustPlugin,
-    "scons": SConsPlugin,
-    "uv": UvPlugin,
-}
+class PluginGroup(enum.Enum):
+    """Plugin groups available for use."""
 
-_plugins = copy.deepcopy(_BUILTIN_PLUGINS)
+    MINIMAL = {
+        "dump": DumpPlugin,
+        "nil": NilPlugin,
+    }
+    """A completely minimal set of plugins.
+
+    The plugins in this group are required for all applications.
+    """
+
+    DEFAULT = MINIMAL | {
+        "ant": AntPlugin,
+        "autotools": AutotoolsPlugin,
+        "cargo-use": CargoUsePlugin,
+        "cmake": CMakePlugin,
+        "dotnet": DotnetPlugin,
+        "go": GoPlugin,
+        "go-use": GoUsePlugin,
+        "gradle": GradlePlugin,
+        "jlink": JLinkPlugin,
+        "make": MakePlugin,
+        "maven": MavenPlugin,
+        "maven-use": MavenUsePlugin,
+        "meson": MesonPlugin,
+        "npm": NpmPlugin,
+        "poetry": PoetryPlugin,
+        "python": PythonPlugin,
+        "qmake": QmakePlugin,
+        "rust": RustPlugin,
+        "scons": SConsPlugin,
+        "uv": UvPlugin,
+    }
+    """The default set of plugins for most use cases.
+
+    The plugins in this group are generally considered functional on most legacy bases.
+    """
+
+
+_plugins: dict[str, type[Plugin]] = {}
+
+
+def set_plugin_group(group: Mapping[str, type[Plugin]] | PluginGroup) -> None:
+    """Set the plugin group to use.
+
+    This method replaces the group of registered plugins with the named plugin group.
+
+    :param group: The name of the plugin group or the instance thereof.
+    """
+    if isinstance(group, PluginGroup):
+        group = group.value
+    _plugins.clear()
+    _plugins.update(group)
+
+
+set_plugin_group(PluginGroup.DEFAULT)
 
 
 def get_plugin(
@@ -122,7 +153,7 @@ def get_plugin_class(name: str) -> PluginType:
 
 def get_registered_plugins() -> dict[str, PluginType]:
     """Return the list of currently registered plugins."""
-    return copy.deepcopy(_plugins)
+    return _plugins.copy()
 
 
 def register(plugins: dict[str, PluginType]) -> None:
@@ -142,8 +173,7 @@ def unregister(*plugins: str) -> None:
 
 def unregister_all() -> None:
     """Unregister all user-registered plugins."""
-    global _plugins  # noqa: PLW0603
-    _plugins = copy.deepcopy(_BUILTIN_PLUGINS)
+    set_plugin_group(PluginGroup.DEFAULT)
 
 
 def extract_part_properties(
