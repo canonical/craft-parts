@@ -22,7 +22,8 @@ from typing import Literal
 
 from typing_extensions import override
 
-from craft_parts.plugins import Plugin, PluginProperties
+from craft_parts.plugins.base import Plugin
+from craft_parts.plugins.properties import PluginProperties
 
 
 class PythonPluginProperties(PluginProperties, frozen=True):
