@@ -94,7 +94,7 @@ Dependencies
 ------------
 
 The Ruby plugin needs the ``ruby`` interpreter to run Ruby programs but does not
-provision it by default, to allow flexibility in the choice of interpreter flavor
+provide it by default, to give you flexibility in the choice of interpreter flavor
 and version.
 
 A common means of providing ``ruby`` is to declare the ``ruby`` Ubuntu package,
