@@ -93,11 +93,11 @@ interpreter.
 Dependencies
 ------------
 
-The Ruby plugin needs the ``ruby`` interpreter to run Ruby programs but does not
+The Ruby plugin needs a Ruby interpreter to run Ruby programs but does not
 provide it by default, to give you flexibility in the choice of interpreter flavor
 and version.
 
-A common means of providing ``ruby`` is to declare the ``ruby`` Ubuntu package,
+A common means of including Ruby is to declare the ``ruby`` Ubuntu package,
 or any ``ruby-<gem_name>`` Ubuntu package, as a ``stage-package``.
 
 Alternatively, if ``ruby-flavor`` and ``ruby-version`` are declared, this plugin
