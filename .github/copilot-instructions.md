@@ -177,7 +177,7 @@ When making code changes:
 
 ## Commit Conventions
 
-Follow **Conventional Commits** specification:
+Follow **Conventional Commits** specification for both commit messages and PR titles:
 
 - `feat:` - New feature
 - `fix:` - Bug fix
@@ -189,6 +189,8 @@ Follow **Conventional Commits** specification:
 - `build:` - Build system changes
 - `ci:` - CI/CD changes
 - `chore:` - Other changes (dependencies, etc.)
+
+When possible, include a scope in parentheses: `feat(plugins):`, `fix(executor):`, `docs(contributing):`
 
 Use imperative mood: "add feature" not "added feature"
 
