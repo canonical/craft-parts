@@ -51,11 +51,8 @@ This project uses:
 Run linters with:
 
 ```bash
-make lint           # Run all linters
-make lint-ruff      # Run ruff only
-make lint-mypy      # Run mypy only
-make lint-pyright   # Run pyright only
-make format         # Auto-format code
+make format # Auto-format code
+make lint   # Run all linters
 ```
 
 ### Code Formatting Rules
@@ -135,7 +132,7 @@ Tests can be marked with:
 - `@pytest.mark.slow` - Slow-running tests
 - `@pytest.mark.java` - Tests requiring Java build tools
 - `@pytest.mark.python` - Tests requiring Python build tools
-- `@pytest.mark.plugin` - Tests requiring plugin dependencies
+- `@pytest.mark.plugin` - Integration tests for plugins requiring plugin dependencies
 
 ### Test Dependencies
 
@@ -171,14 +168,6 @@ When making code changes:
 
 - Uses **Sphinx** with **Read the Docs theme**
 - Follows **Diátaxis** framework (tutorials, how-to guides, reference, explanation)
-
-### Building Documentation
-
-```bash
-make docs           # Build documentation
-make docs-auto      # Build and auto-reload docs
-make lint-docs      # Lint documentation
-```
 
 ### Documentation Style
 
