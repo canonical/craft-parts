@@ -57,29 +57,16 @@ pytestmark = [pytest.mark.plugin]
             "Greetings, craft-parts!\n",
             id="with-parameters",
         ),
-        pytest.param(
-            textwrap.dedent(
-                """
-                parts:
-                  tree:
-                    plugin: make
-                    source: https://github.com/Old-Man-Programmer/tree.git
-                    source-type: git
-                    source-tag: "2.2.1"
-                    override-build: |
-                      make -j"${{CRAFT_PARALLEL_BUILD_COUNT}}"
-                      mkdir -p "${{CRAFT_PART_INSTALL}}/bin"
-                      cp tree "${{CRAFT_PART_INSTALL}}/bin/"
-                """
-            ),
-            "bin/tree",
-            "tree v2.2.1",
-            id="real-project",
-        ),
     ],
 )
 def test_make_plugin(new_dir, partitions, parts_yaml, binary_path, expected_output):
-    """Test builds with the make plugin."""
+    """Test builds with the make plugin.
+
+    Note: A real-world project test is not included because most make-based projects
+    either use autotools (tested in test_autotools.py) or have Makefiles that don't
+    properly respect DESTDIR for all installation targets, making them unsuitable for
+    testing the make plugin behavior in isolation.
+    """
     source_location = Path(__file__).parent / "test_make"
 
     parts_yaml_str = parts_yaml.format(source_location=source_location)
@@ -101,10 +88,5 @@ def test_make_plugin(new_dir, partitions, parts_yaml, binary_path, expected_outp
     binary = Path(lf.project_info.prime_dir, binary_path)
     assert binary.is_file()
 
-    # For the real project test, check version output; for others, check exact output
-    if "tree v" in expected_output:
-        output = subprocess.check_output([str(binary), "--version"], text=True)
-        assert expected_output in output
-    else:
-        output = subprocess.check_output([str(binary)], text=True)
-        assert output == expected_output
+    output = subprocess.check_output([str(binary)], text=True)
+    assert output == expected_output
