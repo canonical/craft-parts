@@ -50,15 +50,6 @@ jobs:
       - name: Verify setup command works
         run: make setup
 
-      - name: Verify setup-lint command works
-        run: make setup-lint
-
-      - name: Verify setup-docs command works
-        run: make setup-docs
-
-      - name: Verify setup-precommit command works
-        run: make setup-precommit
-
       - name: Run linters to verify setup
         run: make lint
 
