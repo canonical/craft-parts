@@ -11,9 +11,7 @@ Craft Parts is a Python library that supports the _parts_ mechanism common to al
 Use the following commands to set up your development environment:
 
 ```bash
-make setup      # Set up full development environment
-make setup-lint # Set up linting-only environment
-make setup-docs # Set up documentation-only environment
+make setup # Set up full development environment
 ```
 
 ### Pre-commit Hooks

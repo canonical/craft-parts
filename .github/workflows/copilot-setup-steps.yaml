@@ -26,12 +26,8 @@ concurrency:
 
 jobs:
   validate-setup-steps:
-    name: Validate setup steps on ${{ matrix.os }}
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["24.04"]
+    name: Validate setup steps
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -41,8 +37,6 @@ jobs:
 
       - name: Setup pristine Ubuntu environment
         uses: lengau/pristine-ubuntu-action@main
-        with:
-          ubuntu-version: ${{ matrix.os }}
 
       - name: Setup Python runner
         uses: canonical/starflow/setup-python-runner@main
