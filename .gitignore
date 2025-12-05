@@ -166,3 +166,6 @@ prime/
 # .NET build directories
 **/bin/
 **/obj/
+
+# CodeQL
+_codeql_detected_source_root
