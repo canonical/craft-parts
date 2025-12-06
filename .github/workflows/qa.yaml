@@ -1,8 +1,8 @@
 # TESTING: This workflow has been modified to test with starflow PR #101
 # Reference: https://github.com/canonical/starflow/pull/101
-# The workflow references below have been changed from @main to @pr-101 to test
-# against the changes in the starflow PR. Update the branch ref if the actual
-# branch name differs. This change is temporary for cross-repo testing purposes.
+# The workflow references below have been changed from @main to
+# @copilot/use-pristine-ubuntu-action to test against the changes in the
+# starflow PR. This change is temporary for cross-repo testing purposes.
 name: QA
 on:
   push:
@@ -21,9 +21,9 @@ concurrency:
 
 jobs:
   lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@pr-101
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@copilot/use-pristine-ubuntu-action
   test-common:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@pr-101
+    uses: canonical/starflow/.github/workflows/test-python.yaml@copilot/use-pristine-ubuntu-action
     with:
       fast-test-platforms: >
         [
@@ -52,7 +52,7 @@ jobs:
       pytest-markers: not java and not python and not plugin
       setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
   test-java-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@pr-101
+    uses: canonical/starflow/.github/workflows/test-python.yaml@copilot/use-pristine-ubuntu-action
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: >
@@ -69,7 +69,7 @@ jobs:
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
   test-python-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@pr-101
+    uses: canonical/starflow/.github/workflows/test-python.yaml@copilot/use-pristine-ubuntu-action
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: >
@@ -84,7 +84,7 @@ jobs:
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
   test-python-plugins-jammy:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@pr-101
+    uses: canonical/starflow/.github/workflows/test-python.yaml@copilot/use-pristine-ubuntu-action
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: >
@@ -97,7 +97,7 @@ jobs:
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
   test-other-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@pr-101
+    uses: canonical/starflow/.github/workflows/test-python.yaml@copilot/use-pristine-ubuntu-action
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: >
