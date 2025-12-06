@@ -1,7 +1,8 @@
 # TESTING: This workflow has been modified to test with starflow PR #101
 # Reference: https://github.com/canonical/starflow/pull/101
-# NOTE: The @pr-101 refs below should be updated to match the actual branch name
-# from starflow PR #101 if different. This change is temporary for testing purposes.
+# The workflow references below have been changed from @main to @pr-101 to test
+# against the changes in the starflow PR. Update the branch ref if the actual
+# branch name differs. This change is temporary for cross-repo testing purposes.
 name: QA
 on:
   push:
