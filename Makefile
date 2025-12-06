@@ -140,6 +140,10 @@ ifneq ($(VERSION_CODENAME),jammy)
 ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
 APT_PACKAGES += python3-poetry-plugin-export
 endif
+# On Jammy, we can use pip to install meson. Everywhere else we install it through apt.
+ifeq ($(wildcard /usr/share/doc/meson/copyright),)
+APT_PACKAGES += meson
+endif
 endif
 endif
 
@@ -156,6 +160,21 @@ APT_PACKAGES += cargo
 endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
+endif
+# Ruby
+ifeq ($(wildcard /usr/share/doc/ruby/copyright),)
+APT_PACKAGES += ruby
+endif
+ifeq ($(wildcard /usr/share/doc/ruby-bundler/copyright),)
+APT_PACKAGES += ruby-bundler
+endif
+# all the packages ruby-install wants to use to build mruby
+# https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/mruby/dependencies.sh
+ifeq ($(wildcard /usr/share/doc/build-essential/copyright),)
+APT_PACKAGES += build-essential
+endif
+ifeq ($(wildcard /usr/share/doc/bison/copyright),)
+APT_PACKAGES += bison
 endif
 # We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
 # 22.04 -> 25.10 (and possibly 26.04).
@@ -240,6 +259,15 @@ endif
 # If additional build dependencies need installing in order to build the linting env.
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
+
+.PHONY: install-rustup
+install-rustup:
+ifeq ($(shell which rustup),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install rustup without snap. Install it yourself.)
+else
+	sudo snap install rustup --classic
+endif
 
 # A temporary override to the lint-docs directive to ignore the sphinx-docs-starter-pack git submodule.
 .PHONY: lint-docs

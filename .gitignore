@@ -169,3 +169,6 @@ prime/
 
 # CodeQL
 _codeql_detected_source_root
+
+# Ruby plugin artifacts
+ruby-install.tar.gz

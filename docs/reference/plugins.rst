@@ -30,6 +30,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/python_plugin.rst
    /common/craft-parts/reference/plugins/qmake_plugin.rst
    /common/craft-parts/reference/plugins/cargo_use_plugin.rst
+   /common/craft-parts/reference/plugins/ruby_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
    /common/craft-parts/reference/plugins/scons_plugin.rst
    /common/craft-parts/reference/plugins/uv_plugin.rst

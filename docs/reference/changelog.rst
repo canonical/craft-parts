@@ -17,14 +17,32 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
-2.27.0 (2025-MM-DD)
+.. _release-2.28.0:
+
+2.28.0 (unreleased)
 -------------------
+
+New features:
+
+- The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to
+  disable this feature.
+
+.. _release-2.27.0:
+
+2.27.0 (2025-11-28)
+-------------------
+
+New features:
+
+- Add new ``jlink-multi-release`` and ``jlink-modules`` keys to the JLink plugin.
+- The Meson plugin now calls ``meson setup`` during build.
 
 Bug fixes:
 
 - Shallow clones of git sources are now possible when using ``source-commit`` with
   ``source-depth``.
-
+- Ignored outdated files are now still 'pulled', otherwise git will always consider
+  the repository dirty.
 
 .. _release-2.26.0:
 
@@ -56,8 +74,6 @@ New features:
 
 - Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
   A ``mount`` value cannot be a parent of any preceding ``mount`` values.
-
-- The Meson plugin now calls ``meson setup`` during build.
 
 Bug fixes:
 
