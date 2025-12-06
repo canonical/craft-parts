@@ -29,7 +29,7 @@ bracex==2.5.post1
     #   wcmatch
 canonical-sphinx==0.1.0
     # via -r requirements.txt
-canonical-sphinx-extensions==0.0.23
+canonical-sphinx-extensions==0.0.34
     # via
     #   -r requirements.txt
     #   canonical-sphinx
@@ -37,7 +37,7 @@ certifi==2024.12.14
     # via
     #   -r requirements.txt
     #   requests
-charset-normalizer==3.4.1
+charset-normalizer==3.4.4
     # via
     #   -r requirements.txt
     #   requests
@@ -66,7 +66,7 @@ gitdb==4.0.12
     # via
     #   -r requirements.txt
     #   gitpython
-gitpython==3.1.44
+gitpython==3.1.45
     # via
     #   -r requirements.txt
     #   canonical-sphinx-extensions
@@ -115,7 +115,7 @@ markdown-it-py==3.0.0
     #   -r requirements.txt
     #   mdit-py-plugins
     #   myst-parser
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   -c (workspace)
     #   -r requirements.txt
@@ -128,7 +128,7 @@ mdurl==0.1.2
     # via
     #   -r requirements.txt
     #   markdown-it-py
-myst-parser==4.0.0
+myst-parser==4.0.1
     # via
     #   -r requirements.txt
     #   canonical-sphinx
@@ -152,7 +152,7 @@ pydantic-core==2.27.2
     # via
     #   -r requirements.txt
     #   pydantic
-pygments==2.19.1
+pygments==2.19.2
     # via
     #   -r requirements.txt
     #   furo
@@ -168,7 +168,7 @@ python-distutils-extra @ https://launchpad.net/ubuntu/+archive/primary/+sourcefi
     # via -r requirements.txt
 pyxdg==0.28
     # via -r requirements.txt
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -c (workspace)
     #   -r requirements.txt
@@ -180,7 +180,7 @@ regex==2024.11.6
     #   -c (workspace)
     #   -r requirements.txt
     #   sphinx-lint
-requests==2.32.4
+requests==2.32.5
     # via
     #   -r requirements.txt
     #   canonical-sphinx-extensions
@@ -248,11 +248,11 @@ sphinx-design==0.6.1
     # via
     #   -r requirements.txt
     #   canonical-sphinx
-sphinx-jsonschema==1.19.1
+sphinx-jsonschema==1.19.2
     # via
     #   -r requirements.txt
     #   sphinx-pydantic
-sphinx-lint==1.0.0
+sphinx-lint==1.0.2
     # via -r requirements.txt
 sphinx-notfound-page==1.0.4
     # via
@@ -260,7 +260,7 @@ sphinx-notfound-page==1.0.4
     #   canonical-sphinx
 sphinx-pydantic==0.1.1
     # via -r requirements.txt
-sphinx-reredirects==0.1.5
+sphinx-reredirects==0.1.6
     # via
     #   -r requirements.txt
     #   canonical-sphinx
