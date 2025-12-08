@@ -450,6 +450,16 @@ class PartSpec(BaseModel):
     in ``overlay-packages``.
     """
 
+    override_overlay: str | None = Field(
+        default=None,
+        description="Shell script to run inside the overlay chroot after mounting.",
+        examples=["echo 'hello from chroot' > /root/test.txt"],
+    )
+    """A shell script that runs inside the part's overlay chroot.
+
+    This is executed inside the overlay mount namespace using a chroot.
+    """
+
     override_build: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
@@ -528,13 +538,24 @@ class PartSpec(BaseModel):
         coerce_numbers_to_str=True,
     )
 
-    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator(
+        "overlay_packages", "overlay_files", "overlay_script", "override_overlay"
+    )
     @classmethod
     def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
+
+    @model_validator(mode="after")
+    def validate_overlay_mutually_exclusive(self) -> _T_validate:
+        """Check that override-overlay and overlay-script are not both defined."""
+        if self.override_overlay is not None and self.overlay_script is not None:
+            raise ValueError(
+                "override-overlay and overlay-script cannot both be defined"
+            )
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -595,7 +616,7 @@ class PartSpec(BaseModel):
         if step == Step.PULL:
             return self.override_pull
         if step == Step.OVERLAY:
-            return self.overlay_script
+            return self.override_overlay if not None else self.overlay_script
         if step == Step.BUILD:
             return self.override_build
         if step == Step.STAGE:
@@ -610,6 +631,7 @@ class PartSpec(BaseModel):
         """Return whether this spec declares overlay content."""
         return bool(
             self.overlay_packages
+            or self.override_overlay is not None
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
             # Don't include organize to overlay in this verification.
