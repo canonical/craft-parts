@@ -180,9 +180,16 @@ class RubyPlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         env = {
             "PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:${{PATH}}",
-            "GEM_HOME": "${CRAFT_PART_INSTALL}",
-            "GEM_PATH": "${CRAFT_PART_INSTALL}",
+            "GEM_HOME": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}",
+            "GEM_PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}",
+            # Use same path for "bundle install" and "gem isntall"
+            "BUNDLE_PATH__SYSTEM": "true",
         }
+
+        # mruby shouldn't care about gems at all, but the inst  aller
+        # fails to symlink with the GEM_HOME value above for some reason
+        if self._options.ruby_flavor == RubyFlavor.mruby:
+            env["GEM_HOME"] = "${CRAFT_PART_INSTALL}"
 
         if self._options.ruby_shared:
             # for finding ruby.so when running `gem` or `bundle`
@@ -261,8 +268,7 @@ class RubyPlugin(Plugin):
                 )
                 commands.append("gem install --env-shebang --no-document bundler")
 
-            commands.append("bundle config path ${CRAFT_PART_INSTALL}")
-            commands.append("bundle")
+            commands.append("bundle --standalone")
 
         if self._options.ruby_gems:
             commands.append(
