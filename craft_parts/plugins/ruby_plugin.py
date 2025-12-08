@@ -62,6 +62,7 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     ruby_use_jemalloc: bool = False
     ruby_shared: bool = False
     ruby_configure_options: list[str] = []
+    ruby_self_contained: bool = False
 
 
 class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -131,6 +132,9 @@ class RubyPlugin(Plugin):
       (list of str)
       Defaults to []
     - ``ruby-use-bundler``
+      (bool)
+      Defaults to False
+    - ``ruby-self-contained``
       (bool)
       Defaults to False
     """
@@ -262,7 +266,20 @@ class RubyPlugin(Plugin):
                 commands.append("gem install --env-shebang --no-document bundler")
 
             commands.append("bundle config path ${CRAFT_PART_INSTALL}")
-            commands.append("bundle")
+            if not self._options.ruby_self_contained:
+                commands.append("bundle")
+            else:
+                # Gather gems from individual parts into vendor/cache/
+                commands.append("mkdir -p vendor/cache")
+                commands.append("cp $CRAFT_STAGE/*.gem vendor/cache/")
+                # Restrict bundler to using gems from vendor/cache/
+                commands.append("bundle install --local")
+
+        elif self._options.ruby_self_contained:
+            # Build but don't install gem
+            # Assume gemspec file for part "foo" is in foo.gemspec or just .gemspec
+            commands.append("gem build $CRAFT_PART_NAME.gemspec || gem build .gemspec")
+            commands.append("cp *.gem $CRAFT_PART_INSTALL")
 
         if self._options.ruby_gems:
             commands.append(

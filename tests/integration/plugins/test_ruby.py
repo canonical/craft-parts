@@ -106,8 +106,8 @@ def test_ruby_deps_part(new_dir, partitions):
     assert interpreter.exists()
 
     # from gem install
-    rake_bin = Path(lf.project_info.prime_dir, "bin", "rackup")
-    assert rake_bin.exists()
+    rackup_bin = Path(lf.project_info.prime_dir, "bin", "rackup")
+    assert rackup_bin.exists()
 
     # from bundle install
     ruby_root = Path(lf.project_info.prime_dir, "ruby")
@@ -147,3 +147,64 @@ def test_ruby_custom_flavor(new_dir, partitions):
         [interpreter_path, "--version"], text=True
     )
     assert interpreter_version.startswith("mruby 3.4.0")
+
+
+@pytest.mark.slow
+def test_ruby_self_contained(new_dir, partitions):
+    """Build a simple dependency tree of gems in self-contained mode."""
+    source_location = Path(__file__).parent / "test_ruby"
+
+    # mytest depends on specific version of rackup gem
+    # rackup depends on rack and webrick gems
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          webrick:
+            plugin: ruby
+            source: https://github.com/ruby/webrick.git
+            source-depth: 1
+            ruby-self-contained: true
+          rack:
+            plugin: ruby
+            source: https://github.com/rack/rack.git
+            source-depth: 1
+            source-tag: v3.2.1  # should match version check below
+            ruby-self-contained: true
+          rackup:
+            plugin: ruby
+            source: https://github.com/rack/rackup.git
+            source-depth: 1
+            source-tag: v2.0.0  # should match ./test_ruby/Gemfile
+            ruby-self-contained: true
+            after:
+              - rack
+              - webrick
+          mytest:
+            plugin: ruby
+            source: {source_location}
+            ruby-use-bundler: true
+            ruby-self-contained: true
+            after:
+              - rackup
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_ruby", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    ruby_root = Path(lf.project_info.prime_dir, "ruby")
+    # e.g. "3.2.0"; will vary based on version in archive
+    version_dir = next(ruby_root.iterdir())
+    rackup_path = version_dir / "bin" / "rackup"
+    rackup_version = subprocess.check_output(
+        [rackup_path, "--version"], text=True,
+        env={"GEM_PATH": version_dir},
+    )
+    # installed rackup executable should match gem version
+    assert rackup_version.strip() == "Rack 3.2.1"
