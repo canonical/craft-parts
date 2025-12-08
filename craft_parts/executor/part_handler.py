@@ -32,7 +32,7 @@ from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.filesystem_mounts import FilesystemMount
 from craft_parts.infos import PartInfo, StepInfo
-from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.overlays import LayerHash, OverlayManager, chroot
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
@@ -378,15 +378,30 @@ class PartHandler:
                 ) as ctx:
                     ctx.install_packages(overlay_packages)
 
-            # execute overlay script
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                contents = self._run_step(
-                    step_info=step_info,
-                    scriptlet_name="overlay-script",
-                    work_dir=self._part.part_layer_dir,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
+            if self._part.spec.override_overlay:
+                with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                    # with overlays.PackageCacheMount(self._overlay_manager) as ctx:
+                    for mountpoint in ["dev", "bin", "usr", "lib64", "lib"]:
+                        Path.mkdir(self._part.part_layer_dir / mountpoint)
+                    contents = chroot.chroot(
+                        self._part.part_layer_dir,
+                        self._run_step,
+                        step_info=step_info,
+                        scriptlet_name="override-overlay",
+                        work_dir="/",
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
+            else:
+                # execute overlay script
+                with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                    contents = self._run_step(
+                        step_info=step_info,
+                        scriptlet_name="overlay-script",
+                        work_dir=self._part.part_layer_dir,
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
