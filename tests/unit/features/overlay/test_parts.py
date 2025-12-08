@@ -60,6 +60,7 @@ class TestPartSpecs:
             "override-pull": "override-pull",
             "overlay-script": "overlay-script",
             "override-build": "override-build",
+            "override-overlay": None,
             "override-stage": "override-stage",
             "override-prime": "override-prime",
             "permissions": [
