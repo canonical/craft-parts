@@ -515,7 +515,13 @@ class TestOverlayMigration:
     def setup_method_fixture(self, new_dir, partitions):
         # pylint: disable=attribute-defined-outside-init
         p1 = Part(
-            "p1", {"plugin": "nil", "overlay-script": "ls"}, partitions=partitions
+            "p1",
+            {
+                "plugin": "nil",
+                "overlay-script": "ls",
+                "stage": ["-(overlay)/excluded_dir", "-(overlay)/excluded_file"],
+            },
+            partitions=partitions,
         )
         p2 = Part(
             "p2", {"plugin": "nil", "overlay-packages": ["pkg1"]}, partitions=partitions
@@ -557,6 +563,9 @@ class TestOverlayMigration:
         Path(p1.part_layer_dir, "dir1").mkdir()
         Path(p1.part_layer_dir, "dir1/foo").touch()
         Path(p1.part_layer_dir, "bar").touch()
+        Path(p1.part_layer_dir, "excluded_dir").mkdir()
+        Path(p1.part_layer_dir, "excluded_dir/qux").touch()
+        Path(p1.part_layer_dir, "excluded_file").touch()
 
         Path(p2.part_layer_dir, "dir1").mkdir()
         Path(p2.part_layer_dir, "dir1/baz").touch()
@@ -571,6 +580,9 @@ class TestOverlayMigration:
         assert Path(f"{step_dir}/bar").exists()
         assert Path(f"{step_dir}/dir1/baz").exists()
         assert Path(f"overlay/{step_dir}_overlay").exists()
+        assert Path(f"{step_dir}/excluded_file").exists() is False
+        assert Path(f"{step_dir}/excluded_dir/qux").exists() is False
+        assert Path(f"{step_dir}/excluded_dir").exists() is False
 
     @pytest.mark.parametrize(
         ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
