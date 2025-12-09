@@ -149,8 +149,9 @@ def test_validate_environment_deps_and_custom():
 def test_get_build_environment(part_info_with_dependency):
     expected_env = {
         "PATH": "${CRAFT_PART_INSTALL}/usr/bin:${PATH}",
-        "GEM_HOME": "${CRAFT_PART_INSTALL}",
-        "GEM_PATH": "${CRAFT_PART_INSTALL}",
+        "GEM_HOME": "${CRAFT_PART_INSTALL}/opt/gems",
+        "GEM_PATH": "${CRAFT_PART_INSTALL}/opt/gems",
+        "BUNDLE_PATH__SYSTEM": "true",
     }
     properties = RubyPlugin.properties_class.unmarshal({"source": "."})
     plugin = RubyPlugin(properties=properties, part_info=part_info_with_dependency)
