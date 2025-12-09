@@ -180,13 +180,13 @@ class RubyPlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         env = {
             "PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:${{PATH}}",
-            "GEM_HOME": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}",
-            "GEM_PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}",
-            # Use same path for "bundle install" and "gem isntall"
+            "GEM_HOME": "${CRAFT_PART_INSTALL}/opt/gems",
+            "GEM_PATH": "${CRAFT_PART_INSTALL}/opt/gems",
+            # Tell "bundle install" to use same path as "gem install"
             "BUNDLE_PATH__SYSTEM": "true",
         }
 
-        # mruby shouldn't care about gems at all, but the inst  aller
+        # mruby shouldn't care about gems at all, but the installer
         # fails to symlink with the GEM_HOME value above for some reason
         if self._options.ruby_flavor == RubyFlavor.mruby:
             env["GEM_HOME"] = "${CRAFT_PART_INSTALL}"

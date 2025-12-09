@@ -57,14 +57,15 @@ def test_ruby_plugin_default(new_dir, partitions):
     assert not interpreter.exists()
 
     # from gem install
-    rackup_bin = ruby_prefix / "bin" / "rackup"
+    gem_prefix = Path(lf.project_info.prime_dir, "opt", "gems")
+    rackup_bin = gem_prefix / "bin" / "rackup"
     assert rackup_bin.exists()
     assert subprocess.check_output([rackup_bin, "--version"], text=True).startswith(
         "Rack "
     )
 
     # from bundle install
-    mytest_bin = ruby_prefix / "bin" / "mytest"
+    mytest_bin = gem_prefix / "bin" / "mytest"
     assert mytest_bin.exists()
     assert subprocess.check_output([mytest_bin], text=True).strip() == "it works!"
 
@@ -108,14 +109,15 @@ def test_ruby_deps_part(new_dir, partitions):
     assert interpreter.exists()
 
     # from gem install
-    rackup_bin = ruby_prefix / "bin" / "rackup"
+    gem_prefix = Path(lf.project_info.prime_dir, "opt", "gems")
+    rackup_bin = gem_prefix / "bin" / "rackup"
     assert rackup_bin.exists()
     assert subprocess.check_output([rackup_bin, "--version"], text=True).startswith(
         "Rack "
     )
 
     # from bundle install
-    mytest_bin = ruby_prefix / "bin" / "mytest"
+    mytest_bin = gem_prefix / "bin" / "mytest"
     assert mytest_bin.exists()
     assert subprocess.check_output([mytest_bin], text=True).strip() == "it works!"
 
