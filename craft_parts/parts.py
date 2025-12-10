@@ -616,7 +616,7 @@ class PartSpec(BaseModel):
         if step == Step.PULL:
             return self.override_pull
         if step == Step.OVERLAY:
-            return self.overlay_script if not None else self.override_overlay
+            return self.overlay_script or self.override_overlay
         if step == Step.BUILD:
             return self.override_build
         if step == Step.STAGE:
