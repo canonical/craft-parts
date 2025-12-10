@@ -52,19 +52,22 @@ def test_ruby_plugin_default(new_dir, partitions):
         ctx.execute(actions)
 
     # ruby interpreter NOT explicitly staged
-    interpreter = Path(lf.project_info.prime_dir, "usr", "bin", "ruby")
+    ruby_prefix = Path(lf.project_info.prime_dir, "usr")
+    interpreter = ruby_prefix / "bin" / "ruby"
     assert not interpreter.exists()
 
     # from gem install
-    rake_bin = Path(lf.project_info.prime_dir, "bin", "rackup")
-    assert rake_bin.exists()
+    gem_prefix = Path(lf.project_info.prime_dir, "var", "lib", "gems", "all")
+    rackup_bin = gem_prefix / "bin" / "rackup"
+    assert rackup_bin.exists()
+    assert subprocess.check_output([rackup_bin, "--version"], text=True).startswith(
+        "Rack "
+    )
 
     # from bundle install
-    ruby_root = Path(lf.project_info.prime_dir, "ruby")
-    # e.g. "3.2.0"; will vary based on version in archive
-    version_dir = next(ruby_root.iterdir())
-    primed_script = version_dir / "bin" / "mytest"
-    assert primed_script.exists()
+    mytest_bin = gem_prefix / "bin" / "mytest"
+    assert mytest_bin.exists()
+    assert subprocess.check_output([mytest_bin], text=True).strip() == "it works!"
 
 
 def test_ruby_deps_part(new_dir, partitions):
@@ -79,7 +82,6 @@ def test_ruby_deps_part(new_dir, partitions):
             stage-packages:
               # use Ruby deb packages from archive
               - ruby
-              - ruby-bundler
           foo:
             plugin: ruby
             source: {source_location}
@@ -101,20 +103,48 @@ def test_ruby_deps_part(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
+    # Construct expected locations of installed files
+    ruby_prefix = Path(lf.project_info.prime_dir, "usr")
+    gem_prefix = Path(lf.project_info.prime_dir, "var", "lib", "gems", "all")
+    env = {
+        # Where to find ruby interpreter
+        "PATH": ruby_prefix / "bin",
+        # Where to find libruby.so
+        "LD_LIBRARY_PATH": ruby_prefix / "lib" / lf.project_info.arch_triplet,
+        # Where to find ruby standard library (both native and interpreted)
+        "RUBYLIB": ":".join(
+            [
+                str(
+                    ruby_prefix
+                    / "lib"
+                    / lf.project_info.arch_triplet
+                    / "ruby"
+                    / "3.2.0"
+                ),
+                str(ruby_prefix / "lib" / "ruby" / "3.2.0"),
+            ]
+        ),
+        # Where to find installed gems
+        "GEM_PATH": gem_prefix,
+    }
+
     # from ruby-deps stage-packages
-    interpreter = Path(lf.project_info.prime_dir, "usr", "bin", "ruby")
+    interpreter = ruby_prefix / "bin" / "ruby"
     assert interpreter.exists()
 
     # from gem install
-    rake_bin = Path(lf.project_info.prime_dir, "bin", "rackup")
-    assert rake_bin.exists()
+    rackup_bin = gem_prefix / "bin" / "rackup"
+    assert rackup_bin.exists()
+    assert subprocess.check_output(
+        [rackup_bin, "--version"], text=True, env=env
+    ).startswith("Rack ")
 
     # from bundle install
-    ruby_root = Path(lf.project_info.prime_dir, "ruby")
-    # e.g. "3.2.0"; will vary based on version in archive
-    version_dir = next(ruby_root.iterdir())
-    primed_script = version_dir / "bin" / "mytest"
-    assert primed_script.exists()
+    mytest_bin = gem_prefix / "bin" / "mytest"
+    assert mytest_bin.exists()
+    assert (
+        subprocess.check_output([mytest_bin], text=True, env=env).strip() == "it works!"
+    )
 
 
 @pytest.mark.slow
