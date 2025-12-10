@@ -29,6 +29,7 @@ from .properties import PluginProperties
 logger = logging.getLogger(__name__)
 
 RUBY_PREFIX = "/usr"
+GEM_PREFIX = "/var/lib/gems/all"
 
 # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
 RUBY_INSTALL_VERSION = "0.10.1"
@@ -94,9 +95,9 @@ class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     reason="ruby-deps cannot be used "
                     "when ruby-flavor and ruby-version are also specified",
                 )
-        else:
+        elif not has_ruby_deps:
             # Not building Ruby -- everything should already be present
-            for dependency in ["gem", "bundler"]:
+            for dependency in ["gem", "ruby"]:
                 self.validate_dependency(
                     dependency=dependency,
                     plugin_name="ruby",
@@ -179,9 +180,33 @@ class RubyPlugin(Plugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         env = {
-            "PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:${{PATH}}",
-            "GEM_HOME": "${CRAFT_PART_INSTALL}/opt/gems",
-            "GEM_PATH": "${CRAFT_PART_INSTALL}/opt/gems",
+            # Where to find ruby and gem binaries
+            # Prioritize staged executables
+            "PATH": (
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:"
+                f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}/bin:"
+                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/bin:"
+                f"${{CRAFT_STAGE}}{GEM_PREFIX}/bin:"
+                f"${{PATH}}"
+            ),
+            # Where to find libruby.so
+            "LD_LIBRARY_PATH": (
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}:"
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib:"
+                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}:"
+                f"${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+            ),
+            # Where to find ruby standard library (both native and interpreted)
+            "RUBYLIB": (
+                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}/ruby/3.2.0/:"
+                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/ruby/3.2.0/:"
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}/ruby/3.2.0/:"
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib/ruby/3.2.0/"
+            ),
+            # Where to look for installed gems
+            "GEM_PATH": f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}",
+            # Where to install new gems
+            "GEM_HOME": f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}",
             # Tell "bundle install" to use same path as "gem install"
             "BUNDLE_PATH__SYSTEM": "true",
         }
@@ -190,12 +215,6 @@ class RubyPlugin(Plugin):
         # fails to symlink with the GEM_HOME value above for some reason
         if self._options.ruby_flavor == RubyFlavor.mruby:
             env["GEM_HOME"] = "${CRAFT_PART_INSTALL}"
-
-        if self._options.ruby_shared:
-            # for finding ruby.so when running `gem` or `bundle`
-            env["LD_LIBRARY_PATH"] = (
-                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
-            )
 
         return env
 
@@ -259,16 +278,22 @@ class RubyPlugin(Plugin):
             )
 
         if self._options.ruby_use_bundler:
-            # Assume bundler is already provided if using prebuilt Ruby
-            if self._should_build_ruby():
-                # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
-                #       executables by removing them first.
-                commands.append(
-                    f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
-                )
-                commands.append("gem install --env-shebang --no-document bundler")
+            # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
+            #       executables by removing them first.
+            commands.append(
+                f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
+            )
+            commands.append("gem install --env-shebang --no-document bundler")
 
-            commands.append("bundle --standalone")
+            commands.append("bundle install --standalone")
+
+            # If the source dir itself defines a gem, install it too
+            # (`bundle install``only installs dependencies)
+            for gemspec in self._part_info.part_src_dir.glob("*.gemspec"):
+                commands.append(f"gem build {gemspec} --output {gemspec}.gem")
+                commands.append(
+                    f"gem install --env-shebang --no-document {gemspec}.gem"
+                )
 
         if self._options.ruby_gems:
             commands.append(

@@ -88,15 +88,15 @@ def test_validate_environment_flavor_version(properties_dict):
     assert "ruby-version and ruby-flavor must both be specified" in exc.value.brief
 
 
-@pytest.mark.parametrize("missing_command", ["bundler", "gem"])
+@pytest.mark.parametrize("missing_command", ["ruby", "gem"])
 def test_validate_environment(
     missing_command, fake_process: pytest_subprocess.FakeProcess, mock_validator
 ):
     """Omitting ruby-deps and ruby-flavor should trigger checks for dependencies."""
     if missing_command != "gem":
         fake_process.register(["gem", "--version"])
-    if missing_command != "bundler":
-        fake_process.register(["bundler", "--version"])
+    if missing_command != "ruby":
+        fake_process.register(["ruby", "--version"])
     fake_process.register([missing_command, "--version"], callback=exec_fail)
 
     properties = RubyPlugin.properties_class.unmarshal({"source": "."})
@@ -112,7 +112,7 @@ def test_validate_environment_ruby_deps(
     fake_process: pytest_subprocess.FakeProcess, mock_validator
 ):
     """Specifying ruby-deps should skip environment checks"""
-    for exe in ["bundler", "gem"]:
+    for exe in ["ruby", "gem"]:
         fake_process.register([exe, "--version"], callback=exec_fail)
 
     properties = RubyPlugin.properties_class.unmarshal({"source": "."})
@@ -147,16 +147,16 @@ def test_validate_environment_deps_and_custom():
 
 
 def test_get_build_environment(part_info_with_dependency):
-    expected_env = {
-        "PATH": "${CRAFT_PART_INSTALL}/usr/bin:${PATH}",
-        "GEM_HOME": "${CRAFT_PART_INSTALL}/opt/gems",
-        "GEM_PATH": "${CRAFT_PART_INSTALL}/opt/gems",
-        "BUNDLE_PATH__SYSTEM": "true",
-    }
     properties = RubyPlugin.properties_class.unmarshal({"source": "."})
     plugin = RubyPlugin(properties=properties, part_info=part_info_with_dependency)
 
-    assert plugin.get_build_environment() == expected_env
+    env = plugin.get_build_environment()
+    assert "${CRAFT_PART_INSTALL}/usr/bin" in env["PATH"]
+    assert "${CRAFT_STAGE}/usr/lib/${CRAFT_ARCH_TRIPLET}" in env["LD_LIBRARY_PATH"]
+    assert "${CRAFT_STAGE}/usr/lib/${CRAFT_ARCH_TRIPLET}/ruby/3.2.0/" in env["RUBYLIB"]
+    assert "${CRAFT_PART_INSTALL}/var/lib/gems/all" in env["GEM_HOME"]
+    assert "${CRAFT_PART_INSTALL}/var/lib/gems/all" in env["GEM_PATH"]
+    assert env["BUNDLE_PATH__SYSTEM"] == "true"
 
 
 def test_pull_build_commands_after_ruby_deps(part_info_with_dependency):
