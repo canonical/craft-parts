@@ -216,6 +216,12 @@ class OverlayManager:
             refresh_package_cache=False,
         )
 
+    def run_in_chroot(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Run the given callable inside the chroot environment."""
+        return chroot.chroot(
+            self._project_info.overlay_mount_dir, target, *args, **kwargs
+        )
+
 
 class LayerMount:
     """Mount the overlay layer stack for step processing.
@@ -295,3 +301,11 @@ class PackageCacheMount:
         :param package_names: The list of packages to download.
         """
         self._overlay_manager.download_packages(package_names)
+
+
+class ChrootMount(LayerMount):
+    """Context manager that mounts an overlay for step processing and runs code inside a chroot environment."""
+
+    def __call__(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Synthax sugar method to run within chroot."""
+        return self._overlay_manager.run_in_chroot(target, *args, **kwargs)

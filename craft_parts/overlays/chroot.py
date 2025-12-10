@@ -128,11 +128,6 @@ _linux_mounts: list[_Mount] = [
     _Mount("sysfs", "sysfs", "/sys", None),
     # Device nodes require MS_REC to be bind mounted inside a container.
     _Mount(None, "/dev", "/dev", ["--rbind", "--make-rprivate"]),
-    # add usefull mountpoint for chrooting
-    _Mount(None, "/usr", "usr", ["--rbind", "--make-rprivate"]),
-    _Mount(None, "/bin", "bin", ["--rbind", "--make-rprivate"]),
-    _Mount(None, "/lib64", "lib64", ["--rbind", "--make-rprivate"]),
-    _Mount(None, "/lib", "lib", ["--rbind", "--make-rprivate"]),
 ]
 
 
