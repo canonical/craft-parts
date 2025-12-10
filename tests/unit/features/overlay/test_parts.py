@@ -76,10 +76,31 @@ class TestPartSpecs:
         new_data = spec.marshal()
         assert new_data == data_copy
 
+        data["override-overlay"] = "override-overlay"
+        data["overlay-script"] = None
+        data_copy = deepcopy(data)
+
+        spec = PartSpec.unmarshal(data)
+        assert data == data_copy
+
+        new_data = spec.marshal()
+        assert new_data == data_copy
+
     def test_unmarshal_not_dict(self):
         with pytest.raises(TypeError) as raised:
             PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues]
         assert str(raised.value) == "part data is not a dictionary"
+
+    def test_unmarshal_both_overlay_key(self):
+        data = {
+            "overlay-script": "overlay-script",
+            "override-overlay": "override-overlay",
+        }
+        with pytest.raises(
+            pydantic.ValidationError,
+            match="override-overlay and overlay-script cannot both be defined",
+        ):
+            PartSpec.unmarshal(data)
 
     def test_unmarshal_mix_packages_slices(self, mocker):
         """
@@ -106,18 +127,22 @@ class TestPartSpecs:
         assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
-        ("packages", "script", "files", "result"),
+        ("packages", "overlay_script", "override_script", "files", "result"),
         [
-            ([], None, ["*"], False),
-            (["pkg"], None, ["*"], True),
-            ([], "ls", ["*"], True),
-            ([], None, ["-usr/share"], True),
+            ([], None, None, ["*"], False),
+            (["pkg"], None, None, ["*"], True),
+            ([], "ls", None, ["*"], True),
+            ([], None, "ls", ["*"], True),
+            ([], None, None, ["-usr/share"], True),
         ],
     )
-    def test_spec_has_overlay(self, packages, script, files, result):
+    def test_spec_has_overlay(
+        self, packages, overlay_script, override_script, files, result
+    ):
         data = {
             "overlay-packages": packages,
-            "overlay-script": script,
+            "overlay-script": overlay_script,
+            "override-overlay": override_script,
             "overlay": files,
         }
         spec = PartSpec.unmarshal(data)
