@@ -173,7 +173,18 @@ Dependencies
 The .NET plugin needs the dotnet CLI tool to build programs. The plugin will provision
 it by itself if :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is set.
 
-If not, some common means of providing the dotnet tool are:
+.. important::
+
+  The .NET SDK the plugin provisions is provided by the official Canonical .NET SDK `content
+  snaps`_, which are available for various .NET versions starting with .NET 6. The .NET SDK
+  provided by the content snaps are compatible with Ubuntu 22.04 Jammy and later releases.
+
+If :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is not set, the plugin assumes
+that the dotnet CLI tool is already available in the build environment. This option is
+particularly useful when building on Ubuntu releases that don't support the .NET SDK
+content snaps (e.g., Ubuntu 20.04).
+
+Some common means of providing the dotnet tool are:
 
 * A .NET SDK package available from the Ubuntu archive, declared as a ``build-package``.
   Example: `dotnet-sdk-8.0`_.
@@ -192,7 +203,7 @@ to append the location of the staged .NET SDK from ``dotnet-deps`` to the PATH u
 ``build-environment`` key in your application part.
 
 Finally, whether the resulting build artifact will also need a .NET runtime installed in
-the snap environment depends on the value of the
+its environment depends on the value of the
 :ref:`craft_parts_dotnet_v2_plugin-dotnet_self_contained` key. Self-contained
 builds bundle the runtime in the generated executable and don't require a global .NET
 Runtime installed in the system.
@@ -220,8 +231,13 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
+Plugin self-provisioned .NET SDK
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The following example uses the .NET (v2) plugin to build an application with .NET 8
-using the debug configuration, generating assets that are self-contained.
+using the debug configuration, generating assets that are self-contained. Since the
+``dotnet-version`` key is set, the plugin will provision the necessary .NET SDK by
+itself.
 
 
 .. code-block:: yaml
@@ -235,10 +251,63 @@ using the debug configuration, generating assets that are self-contained.
         dotnet-configuration: "Debug"
         dotnet-self-contained: true
 
+This is the simplest way to build a .NET application using the .NET (v2) plugin.
+
+User-provided .NET SDK
+~~~~~~~~~~~~~~~~~~~~~~
+
+Now, the following example builds a .NET application without the plugin provisioning
+the .NET SDK. In this case, the ``dotnet`` executable is provided by the ``dotnet-deps``
+part, which is built first.
+
+.. code-block:: yaml
+  :caption: Project file
+
+    parts:
+      dotnet-deps:
+        plugin: dump
+        source: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.416/dotnet-sdk-8.0.416-linux-x64.tar.gz
+        source-checksum: sha512/633cb85673e3519c825532f780f6750ff24ed248ef8df68885540e510b559b6adc2c8d940e4c349fc0cf2c9caf184f1efeaccbc5e952d6e435f3da027cae4188
+        organize:
+          '*': dotnet-sdk/
+        prime:
+          - -dotnet-sdk/
+
+      my-dotnet-part:
+        after: [dotnet-deps]
+        source: .
+        plugin: dotnet
+        dotnet-configuration: "Release"
+        dotnet-self-contained: true
+        build-packages:
+          - libicu74
+        stage-packages:
+          - libicu74
+        build-environment:
+          - PATH: ${PATH}:${CRAFT_STAGE}/dotnet-sdk
+
+There are a few important details to note in this example.
+
+The ``dotnet-deps`` part uses the ``dump`` plugin to download and stage a specific
+version of the .NET SDK directly from Microsoft's official distribution site. The
+``organize`` key is used to place the contents of the SDK into a dedicated subdirectory
+(called ``dotnet-sdk/`` in this case) to avoid polluting the root of the part's staged
+files. Then, in the ``my-dotnet-part`` part, we append this subdirectory to the PATH
+using the ``build-environment`` key, so that the ``dotnet`` executable is visible during
+the build step.
+
+As we don't want to have the .NET SDK included in the final artifact, we remove the entire
+``dotnet-sdk/`` subdirectory from the staged files using the ``prime`` key.
+
+Note that we also need to include the ``libicu74`` package in both the build and stage
+steps, as it's a dependency of the .NET SDK used during build and .NET Runtime used at
+runtime.
+
 
 .. _Common NuGet Configurations: https://learn.microsoft.com/en-us/nuget/consume-packages/configuring-nuget-behavior
 .. _framework: https://learn.microsoft.com/en-us/dotnet/standard/frameworks
 .. _project file: https://learn.microsoft.com/en-us/dotnet/core/project-sdk/overview
+.. _content snaps: https://github.com/canonical/dotnet-content-snaps
 .. _dotnet-sdk-8.0: https://packages.ubuntu.com/noble/dotnet-sdk-8.0
 .. _dotnet-sdk-80: https://snapcraft.io/dotnet-sdk-80
 .. _dotnet: https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet
