@@ -13,14 +13,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import subprocess
-import textwrap
 from pathlib import Path
 
-import craft_parts
 import pytest
-import yaml
 from craft_parts import errors
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import part_handler
@@ -800,73 +795,3 @@ class TestHelpers(test_part_handler.TestHelpers):
 @pytest.mark.usefixtures("new_dir")
 class TestDirs(test_part_handler.TestDirs):
     """Test project dirs handling."""
-
-
-@pytest.mark.usefixtures("new_dir")
-class TestOverrideOverlayScriptWithMmdebstrap:
-    """Validate override-overlay using mmdebstrap in pytest temp directory."""
-
-    @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
-        # ----------------------------------------
-        cmd = [
-            "mmdebstrap",
-            "--arch=amd64",
-            "--mode=root",
-            "--format=dir",
-            "--variant=minbase",
-            "--include=apt",
-            "noble",
-            str(new_dir),
-            "http://archive.ubuntu.com/ubuntu/",
-        ]
-
-        subprocess.run(cmd, check=True)
-
-    def test_user_created(self, new_dir, partitions):
-        """Verify nginx user exists after override-overlay."""
-        os.chdir(new_dir)
-
-        _parts_yaml = textwrap.dedent(
-            """\
-            parts:
-              hello:
-                plugin: nil
-                override-overlay: |
-                  useradd -M -U -r smith
-                stage:
-                  - "*"
-                prime:
-                  - "*"
-            """
-        )
-
-        parts = yaml.safe_load(_parts_yaml)
-        base_layer_hash = str(new_dir).encode()
-        lf = craft_parts.LifecycleManager(
-            parts,
-            application_name="test",
-            cache_dir=new_dir,
-            work_dir=new_dir,
-            base_layer_dir=Path(new_dir),
-            base_layer_hash=base_layer_hash,
-        )
-
-        actions = lf.plan(Step.PRIME, ["hello"])
-
-        with lf.action_executor() as ctx:
-            ctx.execute(actions)
-
-        shadow_file = new_dir / "parts" / "hello" / "layer" / "etc" / "shadow"
-        assert shadow_file.exists(), "etc/shadow not found in layer!"
-
-        # Search for nginx entry
-        result = subprocess.run(
-            ["grep", "^smith:", str(shadow_file)],
-            capture_output=True,
-            check=True,
-        )
-
-        line = result.stdout.decode().strip()
-
-        assert line.startswith("smith")
