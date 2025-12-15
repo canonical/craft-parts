@@ -27,6 +27,12 @@ New features:
 - The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to
   disable this feature.
 
+Documentation:
+
+- Clarify the compatibility of the :ref:`craft_parts_dotnet_v2_plugin` self-provisioned
+  .NET SDK with different Ubuntu releases, with an example of how to override this
+  behavior to use a custom user-provided SDK instead.
+
 .. _release-2.27.0:
 
 2.27.0 (2025-11-28)
