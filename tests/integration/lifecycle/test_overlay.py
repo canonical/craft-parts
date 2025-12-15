@@ -850,13 +850,14 @@ class TestOverlaySpecScenarios:
         ]
 
 
-# @pytest.mark.slow
+@pytest.mark.slow
+@pytest.mark.with_sudo
 class TestOverrideOverlayScriptWithMmdebstrap:
     """Validate override-overlay using mmdebstrap in pytest temp directory."""
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir):
-        Path.mkdir(new_dir / "base")
+        (new_dir / "base").mkdir()
         # ----------------------------------------
         cmd = [
             "sudo",
@@ -887,8 +888,8 @@ class TestOverrideOverlayScriptWithMmdebstrap:
         )
         parts = yaml.safe_load(_parts_yaml)
 
-        Path.mkdir(new_dir / "work")
-        Path.mkdir(new_dir / "cache")
+        (new_dir / "work").mkdir()
+        (new_dir / "cache").mkdir()
         lf = craft_parts.LifecycleManager(
             parts,
             application_name="test",
