@@ -82,12 +82,26 @@ def test_ruby_deps_part(new_dir, partitions):
             stage-packages:
               # use Ruby deb packages from archive
               - ruby
+            override-build: |
+              # To generalize this test case across multiple Ubuntu bases
+              # with differing packaged Ruby versions, use a wildcard to
+              # capture the versioned directory (e.g., 3.2.0, 3.3.0) and link
+              # a static alias to it to be used as a fixed value for RUBYLIB.
+              craftctl default
+              cd $CRAFT_PART_INSTALL/usr/lib/ruby/
+              export RUBY_ABI_VERSION=$(find . -maxdepth 1 -type d -name '*.*.*' | head -n 1)
+              ln -s $RUBY_ABI_VERSION current
+              cd ../$CRAFT_ARCH_TRIPLET/ruby/
+              ln -s $RUBY_ABI_VERSION current
+
           foo:
             plugin: ruby
             source: {source_location}
             ruby-gems:
               # external dependency that installs an executable
               - rackup
+            build-environment:
+              - RUBYLIB: "$CRAFT_STAGE/usr/lib/ruby/current:$CRAFT_STAGE/usr/lib/$CRAFT_ARCH_TRIPLET/ruby/current"
             ruby-use-bundler: true
             after:
               - ruby-deps
@@ -119,9 +133,9 @@ def test_ruby_deps_part(new_dir, partitions):
                     / "lib"
                     / lf.project_info.arch_triplet
                     / "ruby"
-                    / "3.2.0"
+                    / "current"
                 ),
-                str(ruby_prefix / "lib" / "ruby" / "3.2.0"),
+                str(ruby_prefix / "lib" / "ruby" / "current"),
             ]
         ),
         # Where to find installed gems

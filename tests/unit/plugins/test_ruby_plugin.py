@@ -153,7 +153,6 @@ def test_get_build_environment(part_info_with_dependency):
     env = plugin.get_build_environment()
     assert "${CRAFT_PART_INSTALL}/usr/bin" in env["PATH"]
     assert "${CRAFT_STAGE}/usr/lib/${CRAFT_ARCH_TRIPLET}" in env["LD_LIBRARY_PATH"]
-    assert "${CRAFT_STAGE}/usr/lib/${CRAFT_ARCH_TRIPLET}/ruby/3.2.0/" in env["RUBYLIB"]
     assert "${CRAFT_PART_INSTALL}/var/lib/gems/all" in env["GEM_HOME"]
     assert "${CRAFT_PART_INSTALL}/var/lib/gems/all" in env["GEM_PATH"]
     assert env["BUNDLE_PATH__SYSTEM"] == "true"

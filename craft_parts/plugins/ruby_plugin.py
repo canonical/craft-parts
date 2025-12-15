@@ -29,6 +29,7 @@ from .properties import PluginProperties
 logger = logging.getLogger(__name__)
 
 RUBY_PREFIX = "/usr"
+# Gem install location (see default search paths in `gem env`)
 GEM_PREFIX = "/var/lib/gems/all"
 
 # NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
@@ -195,13 +196,6 @@ class RubyPlugin(Plugin):
                 f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib:"
                 f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}:"
                 f"${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
-            ),
-            # Where to find ruby standard library (both native and interpreted)
-            "RUBYLIB": (
-                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}/ruby/3.2.0/:"
-                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/ruby/3.2.0/:"
-                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}/ruby/3.2.0/:"
-                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib/ruby/3.2.0/"
             ),
             # Where to look for installed gems
             "GEM_PATH": f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}",
