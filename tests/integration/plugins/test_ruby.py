@@ -25,6 +25,19 @@ from craft_parts import LifecycleManager, Step
 pytestmark = [pytest.mark.plugin]
 
 
+def have_ruby_2():
+    # jammy was the first LTS release to have Ruby 3.0 in the archive
+    try:
+        return subprocess.check_output(
+            ["ruby", "-e", "puts RUBY_VERSION"], text=True
+        ).startswith("2")
+    except subprocess.CalledProcessError:
+        return False
+
+
+@pytest.mark.skipif(
+    have_ruby_2(), reason="Need Ruby 3.0+ to install Bundler from rubygems."
+)
 def test_ruby_plugin_default(new_dir, partitions):
     """Plugin should use (but not stage) available Ruby interpreter."""
     source_location = Path(__file__).parent / "test_ruby"
@@ -75,6 +88,9 @@ def test_ruby_plugin_default(new_dir, partitions):
     )
 
 
+@pytest.mark.skipif(
+    have_ruby_2(), reason="Need Ruby 3.0+ to install Bundler from rubygems."
+)
 def test_ruby_deps_part(new_dir, partitions):
     """Plugin should use interpreter from ruby-deps part dependency."""
     source_location = Path(__file__).parent / "test_ruby"
