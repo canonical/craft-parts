@@ -175,10 +175,10 @@ it by itself if :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is set.
 
 .. important::
 
-  The .NET SDK the plugin provisions is provided by the official Canonical .NET SDK `content
-  snaps`_, which are available for various .NET versions starting with .NET 6. The .NET SDK
-  provided by the content snaps are compatible with Ubuntu 22.04 Jammy Jellyfish and later
-  releases.
+  The .NET SDK the plugin provisions is provided by the official Canonical .NET SDK
+  `content snaps`_, which are available for various .NET versions starting with .NET 6.
+  The .NET SDK provided by the content snaps are compatible with Ubuntu 22.04 Jammy
+  Jellyfish and later releases.
 
 If :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is not set, the plugin assumes
 that the dotnet CLI tool is already available in the build environment. This option is
@@ -261,9 +261,10 @@ This is the simplest way to build a .NET application using the .NET (v2) plugin.
 User-provided .NET SDK
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The following example builds a .NET application with a custom user-provided .NET SDK. By
-providing a ``dotnet-deps`` part, the plugin will not attempt to provision the .NET SDK by
-itself and will instead rely on the user-provided SDK staged by the ``dotnet-deps`` part.
+The following example builds a .NET application with a custom user-provided .NET SDK.
+By providing a ``dotnet-deps`` part, the plugin will not attempt to provision the .NET
+SDK by itself and will instead rely on the user-provided SDK staged by the
+``dotnet-deps`` part.
 
 .. code-block:: yaml
   :caption: Project file
@@ -301,8 +302,8 @@ files. Then, in the ``my-dotnet-part`` part, we append this subdirectory to the 
 using the ``build-environment`` key, so that the ``dotnet`` executable is visible during
 the build step.
 
-As we don't want to have the .NET SDK included in the final artifact, we remove the entire
-``dotnet-sdk/`` subdirectory from the staged files using the ``prime`` key.
+As we don't want to have the .NET SDK included in the final artifact, we remove the
+entire ``dotnet-sdk/`` subdirectory from the staged files using the ``prime`` key.
 
 Note that we also need to include the ``libicu74`` package in both the build and stage
 steps, as it's a dependency of the .NET SDK used during build and .NET Runtime used at
