@@ -69,6 +69,8 @@ class LayerHash:
         hasher.update(digest)
         if part.spec.overlay_script:
             hasher.update(part.spec.overlay_script.encode())
+        if part.spec.override_overlay:
+            hasher.update(part.spec.override_overlay.encode())
         return cls(hasher.digest())
 
     @classmethod

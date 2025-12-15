@@ -185,6 +185,7 @@ testpaths = "tests"
 xfail_strict = true
 addopts = "--ignore=tests/spread"
 markers = [
+    "with_sudo: Test requires sudo",
     "slow: slow tests",
     "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
     "python: tests that require the Python build tools (poetry, uv, pip)",

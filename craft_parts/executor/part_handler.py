@@ -378,15 +378,29 @@ class PartHandler:
                 ) as ctx:
                     ctx.install_packages(overlay_packages)
 
-            # execute overlay script
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                contents = self._run_step(
-                    step_info=step_info,
-                    scriptlet_name="overlay-script",
-                    work_dir=self._part.part_layer_dir,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
+            if self._part.spec.override_overlay:
+                with overlays.ChrootMount(
+                    self._overlay_manager,
+                    top_part=self._part,
+                ) as cm:
+                    contents = cm(
+                        self._run_step,
+                        step_info=step_info,
+                        scriptlet_name="override-overlay",
+                        work_dir="/",
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
+            else:
+                # execute overlay script
+                with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                    contents = self._run_step(
+                        step_info=step_info,
+                        scriptlet_name="overlay-script",
+                        work_dir=self._part.part_layer_dir,
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(

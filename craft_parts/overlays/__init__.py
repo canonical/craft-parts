@@ -18,7 +18,7 @@
 
 from .layers import LayerHash, LayerStateManager
 from .overlay_fs import is_opaque_dir, is_whiteout_file
-from .overlay_manager import LayerMount, OverlayManager, PackageCacheMount
+from .overlay_manager import LayerMount, OverlayManager, PackageCacheMount, ChrootMount
 from .overlays import (
     is_oci_opaque_dir,
     is_oci_whiteout,
