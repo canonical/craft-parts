@@ -177,11 +177,12 @@ it by itself if :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is set.
 
   The .NET SDK the plugin provisions is provided by the official Canonical .NET SDK `content
   snaps`_, which are available for various .NET versions starting with .NET 6. The .NET SDK
-  provided by the content snaps are compatible with Ubuntu 22.04 Jammy and later releases.
+  provided by the content snaps are compatible with Ubuntu 22.04 Jammy Jellyfish and later
+  releases.
 
 If :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is not set, the plugin assumes
 that the dotnet CLI tool is already available in the build environment. This option is
-particularly useful when building on Ubuntu releases that don't support the .NET SDK
+particularly useful when building on Ubuntu bases that don't support the .NET SDK
 content snaps (e.g., Ubuntu 20.04).
 
 Some common means of providing the dotnet tool are:
@@ -191,16 +192,18 @@ Some common means of providing the dotnet tool are:
 * A .NET SDK content snap, declared as a ``build-snap`` from the desired channel.
   Example: `dotnet-sdk-80`_.
 
-Another alternative is to define a separate part called ``dotnet-deps`` and have the
-part using the .NET plugin (v2) build after the ``dotnet-deps`` part with the
-``after`` key. In this case, the plugin assumes that ``dotnet-deps`` will stage the
-dotnet CLI tool to be used during build. This can be useful in cases where a specific,
-unreleased version of .NET is desired but unavailable as a snap or Ubuntu package.
+Another alternative is to define a separate part called ``dotnet-deps`` and have your
+application's part build after the ``dotnet-deps`` part with the ``after`` key. In this
+case, the plugin assumes that ``dotnet-deps`` will stage the dotnet CLI tool to be used
+during build. This can be useful in cases where a specific, unreleased version of .NET
+is desired but unavailable as a snap or Ubuntu package.
 
 This plugin validates the presence of .NET by running ``dotnet --version``. Therefore,
 it assumes that the dotnet executable is visible in the PATH. To achieve that, make sure
 to append the location of the staged .NET SDK from ``dotnet-deps`` to the PATH using the
 ``build-environment`` key in your application part.
+
+See :ref:`user-provided-sdk-example` for an example of this approach.
 
 Finally, whether the resulting build artifact will also need a .NET runtime installed in
 its environment depends on the value of the
@@ -253,12 +256,14 @@ itself.
 
 This is the simplest way to build a .NET application using the .NET (v2) plugin.
 
+.. _user-provided-sdk-example:
+
 User-provided .NET SDK
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Now, the following example builds a .NET application without the plugin provisioning
-the .NET SDK. In this case, the ``dotnet`` executable is provided by the ``dotnet-deps``
-part, which is built first.
+The following example builds a .NET application with a custom user-provided .NET SDK. By
+providing a ``dotnet-deps`` part, the plugin will not attempt to provision the .NET SDK by
+itself and will instead rely on the user-provided SDK staged by the ``dotnet-deps`` part.
 
 .. code-block:: yaml
   :caption: Project file
