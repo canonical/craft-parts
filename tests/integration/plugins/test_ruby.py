@@ -31,7 +31,7 @@ def have_ruby_2():
         return subprocess.check_output(
             ["ruby", "-e", "puts RUBY_VERSION"], text=True
         ).startswith("2")
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
 
