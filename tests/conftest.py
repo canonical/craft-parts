@@ -36,6 +36,17 @@ from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
 
 
+def pytest_runtest_setup(item: pytest.Item):
+    """Configuration for tests."""
+    with_sudo = item.get_closest_marker("with_sudo")
+    if (
+        with_sudo
+        and not os.environ.get("CI")
+        and not os.environ.get("CRAFT_PARTS_TESTS_ENABLE_SUDO")
+    ):
+        pytest.skip("Not running in CI and CRAFT_PARTS_TESTS_ENABLE_SUDO not set.")
+
+
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """Use collection hook to mark all integration tests as slow"""
     for item in items:
