@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023-2025 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -72,21 +72,18 @@ def test_ruby_plugin_default(new_dir, partitions):
     # from gem install
     gem_prefix = Path(lf.project_info.prime_dir, "var", "lib", "gems", "all")
     rackup_bin = gem_prefix / "bin" / "rackup"
+    env = {"GEM_PATH": str(gem_prefix)}
     assert rackup_bin.exists()
     rackup_version = subprocess.check_output(
-        [rackup_bin, "--version"], text=True, env={"GEM_PATH": gem_prefix}
+        [rackup_bin, "--version"], text=True, env=env
     )
     assert rackup_version.startswith("Rack ")
 
     # from bundle install
     mytest_bin = gem_prefix / "bin" / "mytest"
     assert mytest_bin.exists()
-    assert (
-        subprocess.check_output(
-            [mytest_bin], text=True, env={"GEM_PATH": gem_prefix}
-        ).strip()
-        == "it works!"
-    )
+    mytest_output = subprocess.check_output([mytest_bin], text=True, env=env)
+    assert mytest_output.strip() == "it works!"
 
 
 @pytest.mark.skipif(
@@ -144,9 +141,9 @@ def test_ruby_deps_part(new_dir, partitions):
     gem_prefix = Path(lf.project_info.prime_dir, "var", "lib", "gems", "all")
     env = {
         # Where to find ruby interpreter
-        "PATH": ruby_prefix / "bin",
+        "PATH": str(ruby_prefix / "bin"),
         # Where to find libruby.so
-        "LD_LIBRARY_PATH": ruby_prefix / "lib" / lf.project_info.arch_triplet,
+        "LD_LIBRARY_PATH": str(ruby_prefix / "lib" / lf.project_info.arch_triplet),
         # Where to find ruby standard library (both native and interpreted)
         "RUBYLIB": ":".join(
             [
@@ -161,7 +158,7 @@ def test_ruby_deps_part(new_dir, partitions):
             ]
         ),
         # Where to find installed gems
-        "GEM_PATH": gem_prefix,
+        "GEM_PATH": str(gem_prefix),
     }
 
     # from ruby-deps stage-packages
@@ -171,16 +168,16 @@ def test_ruby_deps_part(new_dir, partitions):
     # from gem install
     rackup_bin = gem_prefix / "bin" / "rackup"
     assert rackup_bin.exists()
-    assert subprocess.check_output(
+    rackup_version = subprocess.check_output(
         [rackup_bin, "--version"], text=True, env=env
-    ).startswith("Rack ")
+    )
+    assert rackup_version.startswith("Rack ")
 
     # from bundle install
     mytest_bin = gem_prefix / "bin" / "mytest"
     assert mytest_bin.exists()
-    assert (
-        subprocess.check_output([mytest_bin], text=True, env=env).strip() == "it works!"
-    )
+    mytest_output = subprocess.check_output([mytest_bin], text=True, env=env)
+    assert mytest_output.strip() == "it works!"
 
 
 @pytest.mark.slow
