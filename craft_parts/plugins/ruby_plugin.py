@@ -195,7 +195,7 @@ class RubyPlugin(Plugin):
                 f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}:"
                 f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib:"
                 f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}:"
-                f"${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+                f"${{LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}}"
             ),
             # Where to look for installed gems
             "GEM_PATH": f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}",
@@ -282,7 +282,7 @@ class RubyPlugin(Plugin):
             commands.append("bundle install --standalone")
 
             # If the source dir itself defines a gem, install it too
-            # (`bundle install``only installs dependencies)
+            # (`bundle install` only installs dependencies)
             for gemspec in self._part_info.part_src_dir.glob("*.gemspec"):
                 commands.append(f"gem build {gemspec} --output {gemspec}.gem")
                 commands.append(

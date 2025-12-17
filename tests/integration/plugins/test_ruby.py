@@ -73,9 +73,10 @@ def test_ruby_plugin_default(new_dir, partitions):
     gem_prefix = Path(lf.project_info.prime_dir, "var", "lib", "gems", "all")
     rackup_bin = gem_prefix / "bin" / "rackup"
     assert rackup_bin.exists()
-    assert subprocess.check_output(
+    rackup_version = subprocess.check_output(
         [rackup_bin, "--version"], text=True, env={"GEM_PATH": gem_prefix}
-    ).startswith("Rack ")
+    )
+    assert rackup_version.startswith("Rack ")
 
     # from bundle install
     mytest_bin = gem_prefix / "bin" / "mytest"
