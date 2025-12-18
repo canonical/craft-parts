@@ -384,9 +384,18 @@ class PartSpec(BaseModel):
     overlay_files: list[str] = Field(
         default_factory=lambda: ["*"],
         alias="overlay",
-        description="The files to copy from the part's overlay filesystem to the stage directory.",
+        description="The files to copy from the part's layer to the stage directory.",
         examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
     )
+    """During the overlay step, any files specified in this field will remain in the part's
+    layer, or be removed if preceded by ``-``. This operation applies only to files that
+    are present in the part's layer and files in lower layers will not be affected. If a
+    file is removed and a file with the same name exists in the same path in a lower layer,
+    the latter will be copied to the stage directory instead.
+
+    Paths support wildcards (``*``) and must be relative to the working directory where
+    they will be used.
+    """
 
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"],
