@@ -133,6 +133,7 @@ class UvPlugin(BasePythonPlugin):
         venv_dir = str(self._get_venv_directory().resolve())
         return super().get_build_environment() | {
             "VIRTUAL_ENV": venv_dir,
+            "UV_COMPILE_BYTECODE": "1",
             "UV_PROJECT_ENVIRONMENT": venv_dir,
             "UV_FROZEN": "true",
             "UV_PYTHON_DOWNLOADS": "never",

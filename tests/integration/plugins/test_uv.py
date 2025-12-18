@@ -66,11 +66,16 @@ def test_uv_plugin(new_dir, partitions, uv_parts_simple):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    primed_script = Path(lf.project_info.prime_dir, "bin", "mytestuv")
+    prime_dir = Path(lf.project_info.prime_dir)
+    primed_script = prime_dir / "bin" / "mytestuv"
     assert primed_script.exists()
 
     output = subprocess.getoutput(str(primed_script))
     assert output == "it works with uv too!"
+
+    pycache = list(prime_dir.glob("lib/python*/site-packages/__pycache__"))
+    assert pycache != []
+    assert all(path.is_dir() for path in pycache)
 
 
 def test_uv_plugin_symlink(new_dir, partitions, uv_parts_simple):

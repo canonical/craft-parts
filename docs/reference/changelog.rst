@@ -17,6 +17,18 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+.. _release-2.28.0:
+
+2.28.0 (unreleased)
+-------------------
+
+New features:
+
+- The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to
+  disable this feature.
+
+.. _release-2.27.0:
+
 2.27.0 (2025-11-28)
 -------------------
 
