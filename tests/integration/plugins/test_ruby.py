@@ -261,13 +261,12 @@ def test_ruby_self_contained(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    ruby_root = Path(lf.project_info.prime_dir, "ruby")
-    # e.g. "3.2.0"; will vary based on version in archive
-    version_dir = next(ruby_root.iterdir())
-    rackup_path = version_dir / "bin" / "rackup"
+    gem_prefix = Path(lf.project_info.prime_dir, "var", "lib", "gems", "all")
+    rackup_bin = gem_prefix / "bin" / "rackup"
+    env = {"GEM_PATH": str(gem_prefix)}
+    assert rackup_bin.exists()
     rackup_version = subprocess.check_output(
-        [rackup_path, "--version"], text=True,
-        env={"GEM_PATH": version_dir},
+        [rackup_bin, "--version"], text=True, env=env
     )
     # installed rackup executable should match gem version
     assert rackup_version.strip() == "Rack 3.2.1"

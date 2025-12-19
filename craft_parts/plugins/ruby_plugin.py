@@ -276,15 +276,15 @@ class RubyPlugin(Plugin):
             )
 
         if self._options.ruby_use_bundler:
-            # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
-            #       executables by removing them first.
-            commands.append(
-                f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
-            )
-            commands.append("gem install --env-shebang --no-document bundler")
-
-            commands.append("bundle config path ${CRAFT_PART_INSTALL}")
             if not self._options.ruby_self_contained:
+                # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
+                #       executables by removing them first.
+                commands.append(
+                    f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
+                )
+                commands.append("gem install --env-shebang --no-document bundler")
+
+                commands.append("bundle config path ${CRAFT_PART_INSTALL}")
                 commands.append("bundle install --standalone")
 
                 # If the source dir itself defines a gem, install it too
@@ -296,17 +296,25 @@ class RubyPlugin(Plugin):
                     )
             else:
                 # Gather gems from individual parts into vendor/cache/
+                backstage_gem_cache_dir = (
+                    self._part_info.project_info.dirs.backstage_dir / "gem_cache"
+                )
                 commands.append("mkdir -p vendor/cache")
-                commands.append("cp $CRAFT_STAGE/*.gem vendor/cache/")
+                commands.append(f"cp {backstage_gem_cache_dir}/*.gem vendor/cache/")
                 # Restrict bundler to using gems from vendor/cache/
                 commands.append("bundle install --local")
 
         elif self._options.ruby_self_contained:
             # Build but don't install gem(s)
-            commands.append("gem build $CRAFT_PART_NAME.gemspec || gem build .gemspec")
-            for gemspec in self._part_info.part_src_dir.glob("*.gemspec"):
-                commands.append(f"gem build {gemspec} --output {gemspec}.gem")
-                commands.append(f"cp {gemspec}.gem $CRAFT_PART_INSTALL")
+            commands.extend(
+                f"gem build {gemspec}"
+                for gemspec in self._part_info.part_src_dir.glob("*.gemspec")
+            )
+
+            # Move freshly-built gem(s) to local cache
+            part_gem_cache_dir = self._part_info.part_export_dir / "gem_cache"
+            commands.append(f"mkdir -p {part_gem_cache_dir}")
+            commands.append(f"mv *.gem {part_gem_cache_dir}")
 
         # Install any additional gems
         if self._options.ruby_gems:
