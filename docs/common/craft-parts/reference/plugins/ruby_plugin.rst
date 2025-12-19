@@ -99,8 +99,8 @@ Attributes
 ----------
 
 This plugin supports the ``self-contained`` build attribute. Declaring this attribute
-prevents access to remote repositories, such as rubygems.org. All dependencies, including
-plugins, must then be provided as packaged gems or in an earlier part.
+prevents access to remote repositories, such as rubygems.org. All dependencies,
+including plugins, must then be provided as packaged gems or in an earlier part.
 
 When used in conjunction with ``ruby-use-bundler``, the build phase invokes
 the ``bundle`` command with the ``--local`` argument.
