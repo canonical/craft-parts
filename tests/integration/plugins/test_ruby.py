@@ -226,19 +226,22 @@ def test_ruby_self_contained(new_dir, partitions):
             plugin: ruby
             source: https://github.com/ruby/webrick.git
             source-depth: 1
-            ruby-self-contained: true
+            build-attributes:
+              - self-contained
           rack:
             plugin: ruby
             source: https://github.com/rack/rack.git
             source-depth: 1
             source-tag: v3.2.1  # should match version check below
-            ruby-self-contained: true
+            build-attributes:
+              - self-contained
           rackup:
             plugin: ruby
             source: https://github.com/rack/rackup.git
             source-depth: 1
             source-tag: v2.0.0  # should match ./test_ruby/Gemfile
-            ruby-self-contained: true
+            build-attributes:
+              - self-contained
             after:
               - rack
               - webrick
@@ -246,7 +249,8 @@ def test_ruby_self_contained(new_dir, partitions):
             plugin: ruby
             source: {source_location}
             ruby-use-bundler: true
-            ruby-self-contained: true
+            build-attributes:
+              - self-contained
             after:
               - rackup
         """

@@ -64,7 +64,6 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     ruby_use_jemalloc: bool = False
     ruby_shared: bool = False
     ruby_configure_options: list[str] = []
-    ruby_self_contained: bool = False
 
 
 class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -134,9 +133,6 @@ class RubyPlugin(Plugin):
       (list of str)
       Defaults to []
     - ``ruby-use-bundler``
-      (bool)
-      Defaults to False
-    - ``ruby-self-contained``
       (bool)
       Defaults to False
     """
@@ -278,7 +274,7 @@ class RubyPlugin(Plugin):
         # In self-contained mode, for parts without use-bundler, gems are
         # built and saved backstage. Later, in a part with use-bundler,
         # backstage serves as bundler's local gem cache.
-        if self._options.ruby_self_contained:
+        if "self-contained" in self._part_info.build_attributes:
             if not self._options.ruby_use_bundler:
                 # Build but don't install gem(s)
                 commands.extend(
@@ -329,3 +325,9 @@ class RubyPlugin(Plugin):
             )
 
         return commands
+
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}
