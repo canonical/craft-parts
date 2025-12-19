@@ -310,7 +310,6 @@ class RubyPlugin(Plugin):
             )
             commands.append("gem install --env-shebang --no-document bundler")
 
-            commands.append("bundle config path ${CRAFT_PART_INSTALL}")
             commands.append("bundle install --standalone")
 
             # If the source dir itself defines a gem, install it too
