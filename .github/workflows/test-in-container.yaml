@@ -9,10 +9,6 @@ jobs:
       matrix:
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
         guest:
-          - ubuntu-minimal-daily:20.04
-          - ubuntu-minimal-daily:22.04
-          - ubuntu-minimal-daily:24.04
-          - ubuntu-minimal-daily:25.04
           - ubuntu-minimal-daily:25.10
           - ubuntu-minimal-daily:26.04
     runs-on: ${{ matrix.runner }}
