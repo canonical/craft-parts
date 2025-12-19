@@ -101,7 +101,7 @@ ruby-self-contained
 **Default:** False
 
 Declaring this attribute prevents access to remote repositories, such as
-rubygems.org. All dependencies, includingplugins, must then be provided
+rubygems.org. All dependencies, including plugins, must then be provided
 as packaged gems or in an earlier part.
 
 When used in conjunction with ``ruby-use-bundler``, the build phase invokes
