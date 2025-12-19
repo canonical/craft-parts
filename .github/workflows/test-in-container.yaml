@@ -1,0 +1,29 @@
+name: Test in a container
+on:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        guest:
+          - ubuntu-minimal-daily:20.04
+          - ubuntu-minimal-daily:22.04
+          - ubuntu-minimal-daily:24.04
+          - ubuntu-minimal-daily:25.04
+          - ubuntu-minimal-daily:25.10
+          - ubuntu-minimal-daily:26.04
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Install LXD
+        uses: canonical/setup-lxd@v1
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup instance
+        run: |
+          make _setup-lxd LXD_IMAGE=${{ matrix.guest }}
+      - name: Run tests
+        run: |
+          make _run-test-in-lxd LXD_IMAGE=${{ matrix.guest }}
