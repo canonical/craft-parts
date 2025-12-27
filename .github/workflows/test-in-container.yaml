@@ -13,6 +13,8 @@ jobs:
           - ubuntu-minimal-daily:26.04
     runs-on: ${{ matrix.runner }}
     steps:
+      - name: Minimise Ubuntu install
+        uses: lengau/pristine-ubuntu-action@v0
       - name: Install LXD
         uses: canonical/setup-lxd@v1
       - name: Checkout
