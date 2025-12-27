@@ -176,16 +176,12 @@ endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
-# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
-# 22.04 -> 25.10 (and possibly 26.04).
+# We'll check for any dotnet SDK and install the release-relevant SDK
 # On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifeq ($(UBUNTU_CODENAME),focal)
-else ifeq ($(UBUNTU_CODENAME),jammy)
+ifeq ($(UBUNTU_CODENAME),jammy)
 APT_PACKAGES += dotnet-sdk-8.0
 else ifeq ($(UBUNTU_CODENAME),noble)
-APT_PACKAGES += dotnet-sdk-8.0
-else ifeq ($(UBUNTU_CODENAME),plucky)
 APT_PACKAGES += dotnet-sdk-8.0
 else ifeq ($(UBUNTU_CODENAME),questing)
 APT_PACKAGES += dotnet-sdk-8.0
@@ -337,7 +333,7 @@ _setup-lxd:
 	lxc config device add $(INSTANCE) project_dir disk source=$(shell pwd) path=/root/project
 	lxc exec $(INSTANCE) --cwd /root/project -- apt-get update
 	lxc exec $(INSTANCE) --cwd /root/project -- apt-get --yes install make
-	lxc exec $(INSTANCE) --cwd /root/project --env CI=1 --env VIRTUAL_ENV=/root/.venv --env UV_EXTRA_ARGS=--active -- make setup-tests  # With CI=1 so apt doesn't wait, with a venv outside of the mounted project dir.
+	lxc exec $(INSTANCE) --cwd /root/project --env CI=1 --env VIRTUAL_ENV=/root/.venv --env UV_EXTRA_ARGS=--active -- make -j setup-tests  # With CI=1 so apt doesn't wait, with a venv outside of the mounted project dir.
 
 .PHONY: _run-test-in-lxd
 _run-test-in-lxd:
