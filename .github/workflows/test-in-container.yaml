@@ -11,6 +11,11 @@ jobs:
         guest:
           - ubuntu-minimal-daily:25.10
           - ubuntu-minimal-daily:26.04
+        markers:
+          - java
+          - plugin
+          - python
+          - not java and not python and not plugin
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Minimise Ubuntu install
@@ -24,4 +29,4 @@ jobs:
           make _setup-lxd LXD_IMAGE=${{ matrix.guest }}
       - name: Run tests
         run: |
-          make _run-test-in-lxd LXD_IMAGE=${{ matrix.guest }}
+          make _run-test-in-lxd LXD_IMAGE=${{ matrix.guest }} PYTEST_ADDOPTS="-m '${{ matrix.markers }}'"

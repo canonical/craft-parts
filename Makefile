@@ -337,7 +337,7 @@ _setup-lxd:
 
 .PHONY: _run-test-in-lxd
 _run-test-in-lxd:
-	lxc exec $(INSTANCE) --cwd /root/project --env CI=1 --env VIRTUAL_ENV=/root/.venv --env UV_EXTRA_ARGS=--active -- make test
+	lxc exec $(INSTANCE) --cwd /root/project --env CI=1 --env VIRTUAL_ENV=/root/.venv --env UV_EXTRA_ARGS=--active -- make test PYTEST_ADDOPTS="$(PYTEST_ADDOPTS)"
 
 .PHONY: setup-ubuntu-24.04
 setup-ubuntu-24.04:
