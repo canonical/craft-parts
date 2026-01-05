@@ -272,13 +272,10 @@ class PartSpec(BaseModel):
         description="The packages to install in the part's layer.",
         examples=["[ed]"],
     )
-    """The packages to install in the part's overlay filesystem.
+    """The packages to install in the part's layer.
 
-    During the overlay step, these packages are installed into the part's overlay
-"""The packages to install in the part's layer.
-
-   During the overlay step, these packages are installed into the part's layer
-   using the base layer's package manager.
+    During the overlay step, these packages are installed into the part's layer
+    using the base layer's package manager.
     """
 
     stage_snaps: list[str] = Field(
@@ -391,12 +388,12 @@ class PartSpec(BaseModel):
         examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
     )
     """The files to copy from the part's layer to the stage directory.
-    
+
     During the overlay step, files listed under this key are kept in the
-    part’s layer unless prefixed with ``-``, which removes them. Any
+    part's layer unless prefixed with ``-``, which removes them. Any
     files left in the part's layer are copied to the stage directory during
     the stage step.
-    
+
     This operation only applies to files that are present in the part's layer
     -- files in lower layers aren't affected. If a file is removed and a lower
     layer contains a file with the same path, the latter will be copied to
