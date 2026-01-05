@@ -269,7 +269,7 @@ class PartSpec(BaseModel):
 
     overlay_packages: list[str] = Field(
         default=[],
-        description="The packages to install in the part's overlay filesystem.",
+        description="The packages to install in the part's layer.",
         examples=["[ed]"],
     )
     """The packages to install in the part's overlay filesystem.
