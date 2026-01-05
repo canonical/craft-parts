@@ -461,7 +461,7 @@ class PartSpec(BaseModel):
     )
     """The commands to run after the part's overlay packages are installed.
 
-    If unset, the part's overlay filesystem will only contain the packages specified
+    If unset, the part's layer will only contain the packages specified
     in ``overlay-packages``.
     """
 
