@@ -29,7 +29,7 @@ New features:
 
 Bug fixes:
 
-- The Maven Use plugin now correctly infers a `groupId` when there is a parent pom to
+- The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
   infer from.
 
 .. _release-2.27.0:
