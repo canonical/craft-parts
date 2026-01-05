@@ -275,7 +275,10 @@ class PartSpec(BaseModel):
     """The packages to install in the part's overlay filesystem.
 
     During the overlay step, these packages are installed into the part's overlay
-    filesystem using the base layer's package manager.
+"""The packages to install in the part's layer.
+
+   During the overlay step, these packages are installed into the part's layer
+   using the base layer's package manager.
     """
 
     stage_snaps: list[str] = Field(
