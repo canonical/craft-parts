@@ -118,7 +118,7 @@ class AptCache(ContextDecorator):
         apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
 
         # Methods and solvers dir for when in the SNAP.
-        snap_dir = Path(os.getenv("SNAP", ''))
+        snap_dir = Path(os.getenv("SNAP", ""))
         if (
             os_utils.is_snap(application_package_name)
             and snap_dir != Path()

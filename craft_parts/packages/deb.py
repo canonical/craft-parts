@@ -300,7 +300,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
     try:
         output = (
             subprocess.check_output(
-                ["dpkg-query", "-S", Path('/', file_path)],
+                ["dpkg-query", "-S", Path("/", file_path)],
                 stderr=subprocess.STDOUT,
                 env={"LANG": "C.UTF-8"},
             )

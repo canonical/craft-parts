@@ -123,8 +123,9 @@ class Permissions(BaseModel):
         Note that this method doesn't check if this ``Permissions``'s path
         pattern matches ``target``; be sure to call ``applies_to()`` beforehand.
         """
+        target = Path(target)
         if self.mode is not None:
-            os.chmod(target, self.mode_octal)
+            target.chmod(self.mode_octal)
 
         if self.owner is not None and self.group is not None:
             os.chown(target, self.owner, self.group)
