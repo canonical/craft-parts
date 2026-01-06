@@ -269,13 +269,13 @@ class PartSpec(BaseModel):
 
     overlay_packages: list[str] = Field(
         default=[],
-        description="The packages to install in the part's overlay filesystem.",
+        description="The packages to install in the part's layer.",
         examples=["[ed]"],
     )
-    """The packages to install in the part's overlay filesystem.
+    """The packages to install in the part's layer.
 
-    During the overlay step, these packages are installed into the part's overlay
-    filesystem using the base layer's package manager.
+    During the overlay step, these packages are installed into the part's layer
+    using the base layer's package manager.
     """
 
     stage_snaps: list[str] = Field(
@@ -384,9 +384,24 @@ class PartSpec(BaseModel):
     overlay_files: list[str] = Field(
         default_factory=lambda: ["*"],
         alias="overlay",
-        description="The files to copy from the part's overlay filesystem to the stage directory.",
+        description="The files to copy from the part's layer to the stage directory.",
         examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
     )
+    """The files to copy from the part's layer to the stage directory.
+
+    During the overlay step, files listed under this key are kept in the
+    part's layer unless prefixed with ``-``, which removes them. Any
+    files left in the part's layer are copied to the stage directory during
+    the stage step.
+
+    This operation only applies to files that are present in the part's layer
+    -- files in lower layers aren't affected. If a file is removed and a lower
+    layer contains a file with the same path, the latter will be copied to
+    the stage directory.
+
+    Paths support wildcards (``*``) and must be relative to the working
+    directory where they will be used.
+    """
 
     stage_files: list[RelativePathStr] = Field(
         default_factory=lambda: ["*"],
@@ -446,7 +461,7 @@ class PartSpec(BaseModel):
     )
     """The commands to run after the part's overlay packages are installed.
 
-    If unset, the part's overlay filesystem will only contain the packages specified
+    If unset, the part's layer will only contain the packages specified
     in ``overlay-packages``.
     """
 
