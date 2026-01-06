@@ -33,6 +33,11 @@ Documentation:
   .NET SDK with different Ubuntu releases, with an example of how to override this
   behavior to use a custom user-provided SDK instead.
 
+Bug fixes:
+
+- The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
+  infer from.
+
 .. _release-2.27.0:
 
 2.27.0 (2025-11-28)
