@@ -1,3 +1,8 @@
+.. meta::
+    :description: Learn how to build and use Ruby-based parts in your craft
+                  packaged applications, including configuration parameters
+                  and example YAML syntax.
+
 .. _craft_parts_ruby_plugin:
 
 Ruby plugin
@@ -87,6 +92,20 @@ ruby-configure-options
 Extra arguments to pass to the ``configure`` script when building the Ruby
 interpreter.
 
+
+.. _ruby_self-contained_start:
+
+Attributes
+----------
+
+This plugin supports the ``self-contained`` build attribute. Declaring this attribute
+prevents access to remote repositories, such as rubygems.org. All dependencies,
+including plugins, must then be provided as packaged gems or in an earlier part.
+
+When used in conjunction with ``ruby-use-bundler``, the build phase invokes
+the ``bundle`` command with the ``--local`` argument.
+
+.. _ruby_self-contained_end:
 
 .. _ruby-details-begin:
 
