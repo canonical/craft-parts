@@ -27,6 +27,11 @@ New features:
 - The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to
   disable this feature.
 
+Bug fixes:
+
+- The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
+  infer from.
+
 .. _release-2.27.0:
 
 2.27.0 (2025-11-28)
