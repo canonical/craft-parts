@@ -177,13 +177,13 @@ it by itself if :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is set.
 
   The .NET SDK the plugin provisions is provided by the official Canonical .NET SDK
   `content snaps`_, which are available for various .NET versions starting with .NET 6.
-  The .NET SDK provided by the content snaps are compatible with Ubuntu 22.04 Jammy
-  Jellyfish and later releases.
+  The .NET SDK provided by the content snaps are compatible with Ubuntu 22.04 LTS
+  (Jammy Jellyfish) and later releases.
 
 If :ref:`craft_parts_dotnet_v2_plugin-dotnet_version` is not set, the plugin assumes
 that the dotnet CLI tool is already available in the build environment. This option is
-particularly useful when building on Ubuntu bases that don't support the .NET SDK
-content snaps (e.g., Ubuntu 20.04).
+particularly useful when building on bases that don't support the .NET SDK content snaps
+(e.g., Ubuntu 20.04).
 
 Some common means of providing the dotnet tool are:
 
