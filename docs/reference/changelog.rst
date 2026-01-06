@@ -1,5 +1,5 @@
 .. meta::
-    :description: See the features and bug fixes in each release of Craft Parts.
+    :description: See the features and bug fixes added in each release of Craft Parts.
 
 Changelog
 =========
@@ -27,13 +27,10 @@ Changelog
 
 New features:
 
-- The entire set of active plugins can now be replaced by using
-  :py:func:`craft_parts.plugins.set_plugin_group`. All plugin groups should contain at
-  least the plugins from the :py:data:`craft_parts.plugins.PluginGroup.MINIMAL` group.
-- A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects,
-  including bundling Ruby interpreters.
-- The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to
-  disable this feature.
+- The entire set of active plugins can now be replaced by using :py:func:`craft_parts.plugins.set_plugin_group`.
+  All plugin groups should contain at least the plugins from the :py:data:`craft_parts.plugins.PluginGroup.MINIMAL` group.
+- A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects, including bundling Ruby interpreters.
+- The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to disable this feature.
 
 Bug fixes:
 
