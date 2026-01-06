@@ -159,7 +159,7 @@ class TestLinkOrCopy:
 
         # Check that the copied file has the correct permission bits and ownership
         assert stat.S_IMODE(os.stat("qux/2").st_mode) == 0o755
-        mock_call = mock_chown["qux/2"]
+        mock_call = mock_chown[Path("qux/2")]
         assert mock_call.owner == 1111
         assert mock_call.group == 2222
 

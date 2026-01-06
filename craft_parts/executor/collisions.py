@@ -18,6 +18,7 @@
 
 import filecmp
 import os
+from pathlib import Path
 from typing import Any
 
 from craft_parts import errors, permissions
@@ -96,8 +97,8 @@ def _check_for_stage_collisions_per_partition(
 
             conflict_files = []
             for file in common:
-                this = os.path.join(part.part_install_dirs[partition], file)
-                other = os.path.join(other_part_files["installdir"], file)
+                this = Path(part.part_install_dirs[partition], file)
+                other = Path(other_part_files["installdir"], file)
 
                 permissions_this = permissions.filter_permissions(
                     file, part.spec.permissions
@@ -127,8 +128,8 @@ def _check_for_stage_collisions_per_partition(
 
 
 def paths_collide(
-    path1: str,
-    path2: str,
+    path1: os.PathLike,
+    path2: os.PathLike,
     permissions_path1: list[Permissions] | None = None,
     permissions_path2: list[Permissions] | None = None,
 ) -> bool:
@@ -142,17 +143,18 @@ def paths_collide(
     :param permissions_path2: The list of ``Permissions`` that affect ``path2``.
 
     """
+    path1, path2 = Path(path1), Path(path2)
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
-    path1_is_dir = os.path.isdir(path1)
-    path2_is_dir = os.path.isdir(path2)
-    path1_is_link = os.path.islink(path1)
-    path2_is_link = os.path.islink(path2)
+    path1_is_dir = path1.is_dir()
+    path2_is_dir = path2.is_dir()
+    path1_is_link = path1.is_symlink()
+    path2_is_link = path2.is_symlink()
 
     # Paths collide if they're both symlinks, but pointing to different places.
     if path1_is_link and path2_is_link:
-        return os.readlink(path1) != os.readlink(path2)
+        return path1.readlink() != path2.readlink()
 
     # Paths collide if one is a symlink, but not the other.
     if path1_is_link or path2_is_link:
@@ -171,12 +173,12 @@ def paths_collide(
     return not permissions_are_compatible(permissions_path1, permissions_path2)
 
 
-def _file_collides(file_this: str, file_other: str) -> bool:
-    if not file_this.endswith(".pc"):
+def _file_collides(file_this: Path, file_other: Path) -> bool:
+    if file_this.suffix != ".pc":
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     # pkgconfig files need special handling, only prefix line may be different.
-    with open(file_this) as pc_file_1, open(file_other) as pc_file_2:
+    with file_this.open() as pc_file_1, file_other.open() as pc_file_2:
         for line_pc_1, line_pc_2 in zip(pc_file_1, pc_file_2):
             if line_pc_1.startswith("prefix=") and line_pc_2.startswith("prefix="):
                 continue

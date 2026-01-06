@@ -17,7 +17,7 @@
 """Definitions and helpers to handle filesets."""
 
 import os
-from glob import iglob
+from pathlib import Path
 
 from craft_parts import errors, features
 from craft_parts.utils import path_utils
@@ -120,7 +120,7 @@ class Fileset:
         """
         for entry in entries:
             filepath = entry[1:] if entry[0] == "-" else entry
-            if os.path.isabs(filepath):
+            if Path(filepath).is_absolute():
                 raise errors.FilesetError(
                     name=self.name, message=f"path {filepath!r} must be relative."
                 )
@@ -128,7 +128,7 @@ class Fileset:
 
 def migratable_filesets(
     fileset: Fileset,
-    srcdir: str,
+    srcdir: os.PathLike,
     default_partition: str,
     partition: str | None = None,
 ) -> tuple[set[str], set[str]]:
@@ -142,31 +142,27 @@ def migratable_filesets(
     """
     includes, excludes = _get_file_list(fileset, partition, default_partition)
 
+    srcdir = Path(srcdir)
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
     files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
-        files = {x for x in files if not x.startswith(exclude_dir + "/")}
+        files = {x for x in files if not x.is_relative_to(exclude_dir)}
 
     # Separate dirs from files.
-    dirs = {
-        x
-        for x in files
-        if os.path.isdir(os.path.join(srcdir, x))
-        and not os.path.islink(os.path.join(srcdir, x))
-    }
+    dirs = {x for x in files if (srcdir / x).is_dir() and not (srcdir / x).is_symlink()}
 
     # Remove dirs from files.
     files = files - dirs
 
     # Include (resolved) parent directories for each selected file.
     for _filename in files:
-        filename = _get_resolved_relative_path(_filename, srcdir)
-        dirname = os.path.dirname(filename)
-        while dirname:
+        filename = Path(_get_resolved_relative_path(_filename, srcdir))
+        dirname = filename.parent
+        while dirname != Path():
             dirs.add(dirname)
-            dirname = os.path.dirname(dirname)
+            dirname = dirname.parent
 
     # Resolve parent paths for dirs and files.
     resolved_dirs = set()
@@ -247,7 +243,7 @@ def _get_file_list(
     return processed_includes or ["*"], processed_excludes
 
 
-def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
+def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
     """Obtain the list of files to include based on include file filter.
 
     :param directory: The path to the tree containing the files to filter.
@@ -258,34 +254,31 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
 
     for include in includes:
         if "*" in include:
-            pattern = os.path.join(directory, include)
-            matches = iglob(pattern, recursive=True)
+            matches = directory.rglob(include)
             include_files |= set(matches)
         else:
-            include_files |= {os.path.join(directory, include)}
+            include_files |= {directory / include}
 
-    include_dirs = [
-        x for x in include_files if os.path.isdir(x) and not os.path.islink(x)
-    ]
-    include_files = {os.path.relpath(x, directory) for x in include_files}
+    include_dirs = [x for x in include_files if x.is_dir() and not x.is_symlink()]
+    include_files = {Path(os.path.relpath(x, directory)) for x in include_files}
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
             include_files |= {
-                os.path.relpath(os.path.join(root, d), directory) for d in dirs
+                Path(os.path.relpath(Path(root, d), directory)) for d in dirs
             }
             include_files |= {
-                os.path.relpath(os.path.join(root, f), directory) for f in files
+                Path(os.path.relpath(Path(root, f), directory)) for f in files
             }
 
     return include_files
 
 
 def _generate_exclude_set(
-    directory: str, excludes: list[str]
-) -> tuple[set[str], set[str]]:
+    directory: Path, excludes: list[str]
+) -> tuple[set[Path], set[Path]]:
     """Obtain the list of files to exclude based on exclude file filter.
 
     :param directory: The path to the tree containing the files to filter.
@@ -295,19 +288,18 @@ def _generate_exclude_set(
     exclude_files = set()
 
     for exclude in excludes:
-        pattern = os.path.join(directory, exclude)
-        matches = iglob(pattern, recursive=True)
+        matches = directory.rglob(exclude)
         exclude_files |= set(matches)
 
     exclude_dirs = {
-        os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)
+        Path(os.path.relpath(x, directory)) for x in exclude_files if x.is_dir()
     }
-    exclude_files = {os.path.relpath(x, directory) for x in exclude_files}
+    exclude_files = {Path(os.path.relpath(x, directory)) for x in exclude_files}
 
     return exclude_files, exclude_dirs
 
 
-def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
+def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> str:
     """Resolve path components against target base_directory.
 
     If the resulting target path is a symlink, it will not be followed.
@@ -320,9 +312,9 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     :return: Resolved path, relative to base_directory.
     """
     parent_relpath, filename = os.path.split(relative_path)
-    parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))
+    parent_abspath = os.path.realpath(base_directory / parent_relpath)
 
-    filename_abspath = os.path.join(parent_abspath, filename)
+    filename_abspath = Path(parent_abspath, filename)
     return os.path.relpath(filename_abspath, base_directory)
 
 

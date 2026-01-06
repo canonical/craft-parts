@@ -36,14 +36,14 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 class DummyHTTPRequestHandler(BaseHTTPRequestHandler):
     """A request handler that does nothing."""
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self):
         pass
 
 
 class FakeFileHTTPRequestHandler(BaseHTTPRequestHandler):
     """Serve a fake file."""
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self):
         if self.path.endswith("404-not-found"):
             self.send_response(404)
             self.end_headers()

@@ -434,7 +434,7 @@ class TestFileMigration:
             "target/baz/qux/4.txt",
         ]
         for p in paths_with_chown:
-            call = mock_chown[p]
+            call = mock_chown[Path(p)]
             assert call.owner == 1111
             assert call.group == 2222
 

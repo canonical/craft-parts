@@ -365,8 +365,6 @@ lint.ignore = [
 
     # Ignored due to common usage in current code
     "TRY003",  # Avoid specifying long messages outside the exception class
-    # Temporary ignored due to API change
-    "PTH", # Use pathlib.Path
 
     "N818", # Allow Exception name without an Error suffix
 

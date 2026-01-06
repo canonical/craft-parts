@@ -200,14 +200,15 @@ class StepHandler:
             default_partition=self._step_info.default_partition,
         )
 
-        def pkgconfig_fixup(file_path: str) -> None:
-            if os.path.islink(file_path):
+        def pkgconfig_fixup(file_path: os.PathLike) -> None:
+            file_path = Path(file_path)
+            if file_path.is_symlink():
                 return
-            if not file_path.endswith(".pc"):
+            if not file_path.suffix == ".pc":
                 return
             packages.fix_pkg_config(
                 prefix_prepend=self._part.stage_dir,
-                pkg_config_file=Path(file_path),
+                pkg_config_file=file_path,
                 prefix_trim=self._part.part_install_dir,
             )
 
@@ -220,14 +221,14 @@ class StepHandler:
                     name="backstage",
                     default_partition=self._step_info.default_partition,
                 ),
-                str(self._part.part_export_dir),
+                self._part.part_export_dir,
                 self._step_info.default_partition,
                 self._step_info.default_partition,
             )
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     stage_fileset,
-                    str(self._part.part_install_dirs[partition]),
+                    self._part.part_install_dirs[partition],
                     self._step_info.default_partition,
                     partition,
                 )
@@ -263,7 +264,7 @@ class StepHandler:
         else:
             files, dirs = filesets.migratable_filesets(
                 stage_fileset,
-                str(self._part.part_install_dir),
+                self._part.part_install_dir,
                 DEFAULT_PARTITION,
             )
             files, dirs = migrate_files(
@@ -275,7 +276,7 @@ class StepHandler:
             )
             backstage_files, backstage_dirs = filesets.migratable_filesets(
                 Fileset(["*"], name="backstage"),
-                str(self._part.part_export_dir),
+                self._part.part_export_dir,
                 DEFAULT_PARTITION,
             )
             backstage_files, backstage_dirs = migrate_files(
@@ -371,14 +372,16 @@ class StepHandler:
         :param work_dir: the directory where the script will be executed.
         """
         with tempfile.TemporaryDirectory() as tempdir:
-            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")
+            ctl_socket_path = Path(tempdir, "craftctl.socket")
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            ctl_socket.bind(ctl_socket_path)
+            ctl_socket.bind(str(ctl_socket_path))
             ctl_socket.listen(1)
 
             selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)
 
-            environment = f"export PARTS_CTL_SOCKET={ctl_socket_path}\n" + self._env
+            environment = (
+                f"export PARTS_CTL_SOCKET={str(ctl_socket_path)}\n" + self._env
+            )
             environment_script_path = Path(tempdir) / "scriptlet_environment.sh"
             environment_script_path.write_text(environment)
             environment_script_path.chmod(0o644)

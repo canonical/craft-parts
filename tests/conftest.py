@@ -260,7 +260,7 @@ def mock_chown(mocker) -> dict[str, ChmodCall]:
     calls = {}
 
     def fake_chown(path, uid, gid, **kwargs):
-        calls[path] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
+        calls[Path(path)] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
 
     mocker.patch.object(os, "chown", side_effect=fake_chown)
 

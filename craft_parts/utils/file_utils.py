@@ -186,8 +186,8 @@ def copy(
 
 
 def link_or_copy_tree(
-    source_tree: str,
-    destination_tree: str,
+    source_tree: os.PathLike,
+    destination_tree: os.PathLike,
     ignore: Callable[[str, list[str]], list[str]] | None = None,
     copy_function: Callable[..., None] = link_or_copy,
 ) -> None:
@@ -200,20 +200,21 @@ def link_or_copy_tree(
         for every dir copied. Should return list of contents to NOT copy.
     :param copy_function: Callable that actually copies.
     """
-    if not os.path.isdir(source_tree):
-        raise errors.CopyTreeError(f"{source_tree!r} is not a directory")
+    source_tree, destination_tree = Path(source_tree), Path(destination_tree)
+    if not source_tree.is_dir():
+        raise errors.CopyTreeError(f"{str(source_tree)!r} is not a directory")
 
-    if not os.path.isdir(destination_tree) and (
-        os.path.exists(destination_tree) or os.path.islink(destination_tree)
+    if not destination_tree.is_dir() and (
+        destination_tree.exists() or destination_tree.is_symlink()
     ):
         raise errors.CopyTreeError(
-            f"cannot overwrite non-directory {destination_tree!r} with "
-            f"directory {source_tree!r}"
+            f"cannot overwrite non-directory {str(destination_tree)!r} with "
+            f"directory {str(source_tree)!r}"
         )
 
     create_similar_directory(source_tree, destination_tree)
 
-    destination_basename = os.path.basename(destination_tree)
+    destination_basename = destination_tree.name
 
     for root, directories, files in os.walk(source_tree, topdown=True):
         ignored: set[str] = set()
@@ -255,7 +256,9 @@ def link_or_copy_tree(
 
 
 def create_similar_directory(
-    source: str, destination: str, permissions: list[Permissions] | None = None
+    source: os.PathLike,
+    destination: os.PathLike,
+    permissions: list[Permissions] | None = None,
 ) -> None:
     """Create a directory with the same permission bits and owner information.
 
@@ -267,10 +270,11 @@ def create_similar_directory(
         If omitted, the new directory will have the same permissions and ownership
         of ``source``.
     """
-    stat = os.stat(source, follow_symlinks=False)
+    source, destination = Path(source), Path(destination)
+    stat = source.stat(follow_symlinks=False)
     uid = stat.st_uid
     gid = stat.st_gid
-    os.makedirs(destination, exist_ok=True)
+    destination.mkdir(parents=True, exist_ok=True)
 
     # Windows does not have "os.chown" implementation and copystat
     # is unlikely to be useful, so just bail after creating directory.
