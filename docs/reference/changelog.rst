@@ -31,6 +31,9 @@ Bug fixes:
 
 - The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
   infer from.
+- The ``make clean`` command now deletes ``docs/reference/gen``, which fixes
+  documentation builds that break because of outdated and leftover files in that
+  directory.
 
 .. _release-2.27.0:
 
