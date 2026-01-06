@@ -83,12 +83,12 @@ def _fix_artifacts(unpack_dir: Path, repository: "RepositoryType") -> None:
         # non-directories will be in files.
         for entry in itertools.chain(files, dirs):
             path = Path(root, entry)
-            if path.is_symlink() and Path(os.readlink(path)).is_absolute():
+            if path.is_symlink() and path.readlink().is_absolute():
                 _fix_symlink(path, unpack_dir, Path(root), repository)
             elif path.exists():
                 _fix_filemode(path)
 
-            if path.name.endswith(".pc") and path.is_file() and not path.is_symlink():
+            if path.suffix == ".pc" and path.is_file() and not path.is_symlink():
                 fix_pkg_config(unpack_dir, path)
 
 
@@ -123,12 +123,12 @@ def _fix_symlink(
         str(unpack_dir),
         str(root),
     )
-    host_target = os.readlink(path)
-    if host_target in repository.get_package_libraries("libc6"):
-        logger.debug("Not fixing symlink %s: it's pointing to libc", host_target)
+    host_target = path.readlink()
+    if str(host_target) in repository.get_package_libraries("libc6"):
+        logger.debug("Not fixing symlink %s: it's pointing to libc", str(host_target))
         return
 
-    target = unpack_dir / os.readlink(path)[1:]
+    target = unpack_dir / path.readlink().as_posix()[1:]
     logger.debug("fix symlink: target=%r", str(target))
 
     if not target.exists() and not _try_copy_local(path, target):
@@ -150,7 +150,7 @@ def _try_copy_local(path: Path, target: Path) -> bool:
     if real_path.exists():
         logger.warning("Copying needed target link from the system: %s", real_path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(os.readlink(path), target)
+        shutil.copyfile(path.readlink(), target)
         return True
 
     logger.warning("%s will be a dangling symlink", path)
@@ -292,7 +292,7 @@ def _search_and_replace_contents(
     :param replacement: The string to replace pattern.
     """
     try:
-        with open(file_path, "r+") as fil:
+        with file_path.open("r+") as fil:
             try:
                 original = fil.read()
             except UnicodeDecodeError:

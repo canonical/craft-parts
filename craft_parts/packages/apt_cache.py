@@ -118,22 +118,22 @@ class AptCache(ContextDecorator):
         apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
 
         # Methods and solvers dir for when in the SNAP.
-        snap_dir = os.getenv("SNAP")
+        snap_dir = Path(os.getenv("SNAP", ''))
         if (
             os_utils.is_snap(application_package_name)
-            and snap_dir
-            and os.path.exists(snap_dir)
+            and snap_dir != Path()
+            and snap_dir.exists()
         ):
-            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
-            apt_pkg.config.set("Dir", apt_dir)
+            apt_dir = snap_dir / "usr" / "lib" / "apt"
+            apt_pkg.config.set("Dir", str(apt_dir))
             # yes apt is broken like that we need to append os.path.sep
-            methods_dir = os.path.join(apt_dir, "methods")
+            methods_dir = str(apt_dir / "methods")
             apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
-            solvers_dir = os.path.join(apt_dir, "solvers")
+            solvers_dir = str(apt_dir / "solvers")
             apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
-            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
+            apt_key_path = str(snap_dir / "usr" / "bin" / "apt-key")
             apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
-            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
+            gpgv_path = str(snap_dir / "usr" / "bin" / "gpgv")
             apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
 
         apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
@@ -183,7 +183,7 @@ class AptCache(ContextDecorator):
             destination = Path(self.stage_cache, dpkg_path[1:])
             if not destination.exists():
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                os.symlink(dpkg_path, destination)
+                destination.symlink_to(dpkg_path)
         else:
             logger.warning("Cannot find 'dpkg' command needed to support multiarch")
 

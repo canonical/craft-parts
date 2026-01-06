@@ -300,7 +300,7 @@ def _run_dpkg_query_search(file_path: str) -> str:
     try:
         output = (
             subprocess.check_output(
-                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],
+                ["dpkg-query", "-S", Path('/', file_path)],
                 stderr=subprocess.STDOUT,
                 env={"LANG": "C.UTF-8"},
             )
@@ -327,7 +327,7 @@ def _run_dpkg_query_list_files(package_name: str) -> set[str]:
         .split()
     )
 
-    return {i for i in output if ("lib" in i and os.path.isfile(i))}
+    return {i for i in output if ("lib" in i and Path(i).is_file())}
 
 
 def _get_dpkg_list_path(base: str) -> pathlib.Path:
