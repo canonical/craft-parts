@@ -73,8 +73,8 @@ class NonBlockingRWFifo:
 
 
 def link_or_copy(
-    source: str,
-    destination: str,
+    source: os.PathLike,
+    destination: os.PathLike,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -91,16 +91,17 @@ def link_or_copy(
     :param permissions: The permissions definitions that should be applied to the
         new file.
     """
+    source, destination = Path(source), Path(destination)
     try:
-        if permissions or (not follow_symlinks and os.path.islink(source)):
+        if permissions or (not follow_symlinks and source.is_symlink()):
             copy(source, destination)
         else:
             link(source, destination, follow_symlinks=follow_symlinks)
     except OSError as err:
-        if err.errno == errno.EEXIST and not os.path.isdir(destination):
+        if err.errno == errno.EEXIST and not destination.is_dir():
             # os.link will fail if the destination already exists, so let's
             # remove it and try again.
-            os.remove(destination)
+            destination.unlink()
             link_or_copy(
                 source,
                 destination,
@@ -114,7 +115,12 @@ def link_or_copy(
         apply_permissions(destination, permissions)
 
 
-def link(source: str, destination: str, *, follow_symlinks: bool = False) -> None:
+def link(
+    source: str | os.PathLike,
+    destination: str | os.PathLike,
+    *,
+    follow_symlinks: bool = False,
+) -> None:
     """Hard-link source and destination files.
 
     :param source: The source to which destination will be linked.
@@ -125,14 +131,13 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     """
     # Note that follow_symlinks doesn't seem to work for os.link, so we'll
     # implement this logic ourselves using realpath.
-    source_path = source
+    source_path = Path(source)
+    destination = Path(destination)
     if follow_symlinks:
-        source_path = os.path.realpath(source)
+        source_path = Path(os.path.realpath(source))
 
-    if not os.path.exists(os.path.dirname(destination)):
-        create_similar_directory(
-            os.path.dirname(source_path), os.path.dirname(destination)
-        )
+    if not destination.parent.exists():
+        create_similar_directory(source_path.parent, destination.parent)
 
     # Setting follow_symlinks=False in case this bug is ever fixed
     # upstream-- we want this function to continue supporting NOT following
@@ -140,12 +145,12 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     try:
         os.link(source_path, destination, follow_symlinks=False)
     except FileNotFoundError as err:
-        raise errors.CopyFileNotFound(source) from err
+        raise errors.CopyFileNotFound(str(source)) from err
 
 
 def copy(
-    source: str,
-    destination: str,
+    source: os.PathLike | str,
+    destination: os.PathLike | str,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -163,23 +168,24 @@ def copy(
 
     :raises CopyFileNotFound: If source doesn't exist.
     """
+    source, destination = Path(source), Path(destination)
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with contextlib.suppress(OSError):
-        os.unlink(destination)
+        destination.unlink()
 
     try:
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
     except FileNotFoundError as err:
-        raise errors.CopyFileNotFound(source) from err
+        raise errors.CopyFileNotFound(str(source)) from err
 
-    uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
-    gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
+    uid = source.stat(follow_symlinks=follow_symlinks).st_uid
+    gid = source.stat(follow_symlinks=follow_symlinks).st_gid
 
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as err:
-        logger.debug("Unable to chown %s: %s", destination, err)
+        logger.debug("Unable to chown %s: %s", str(destination), err)
 
     if permissions:
         apply_permissions(destination, permissions)
@@ -232,32 +238,28 @@ def link_or_copy_tree(
             directories[:] = [d for d in directories if d not in ignored]
 
         for directory in directories:
-            source = os.path.join(root, directory)
+            source = Path(root, directory)
             # os.walk doesn't by default follow symlinks (which is good), but
             # it includes symlinks that are pointing to directories in the
             # directories list. We want to treat it as a file, here.
-            if os.path.islink(source):
+            if source.is_symlink():
                 files.append(directory)
                 continue
 
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree)
-            )
+            destination = Path(destination_tree, os.path.relpath(source, source_tree))
 
             create_similar_directory(source, destination)
 
         for file_name in set(files) - ignored:
-            source = os.path.join(root, file_name)
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree)
-            )
+            source = Path(root, file_name)
+            destination = Path(destination_tree, os.path.relpath(source, source_tree))
 
             copy_function(source, destination)
 
 
 def create_similar_directory(
-    source: os.PathLike,
-    destination: os.PathLike,
+    source: os.PathLike | str,
+    destination: os.PathLike | str,
     permissions: list[Permissions] | None = None,
 ) -> None:
     """Create a directory with the same permission bits and owner information.

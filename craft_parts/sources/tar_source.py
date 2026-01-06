@@ -77,7 +77,8 @@ def _extract(tarball: Path, dst: Path) -> None:
             # check all members either start with common dir
             for member in members:
                 if not (
-                    member.name.startswith(common + "/")
+                    Path(member.name).is_relative_to(common)
+                    and Path(member.name).relative_to(common) != Path()
                     or member.isdir()
                     and member.name == common
                 ):
@@ -100,12 +101,12 @@ def _extract(tarball: Path, dst: Path) -> None:
 
 
 def _strip_prefix(common: str, member: tarfile.TarInfo) -> None:
-    if member.name.startswith(common + "/"):
-        member.name = member.name[len(common + "/") :]
+    if Path(member.name).is_relative_to(common):
+        member.name = str(Path(member.name).relative_to(common))
     # strip leading '/', './' or '../' as many times as needed
     member.name = re.sub(r"^(\.{0,2}/)*", r"", member.name)
     # do the same for linkname if this is a hardlink
     if member.islnk() and not member.issym():
-        if member.linkname.startswith(common + "/"):
-            member.linkname = member.linkname[len(common + "/") :]
+        if Path(member.linkname).is_relative_to(common):
+            member.linkname = str(Path(member.linkname).relative_to(common))
         member.linkname = re.sub(r"^(\.{0,2}/)*", r"", member.linkname)

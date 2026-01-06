@@ -86,15 +86,15 @@ class TestTarSource:
 
     def test_strip_common_prefix(self, new_dir, partitions):
         # Create tar file for testing
-        os.makedirs(os.path.join("src", "test_prefix"))
-        file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
-        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+        Path("src", "test_prefix").mkdir(parents=True)
+        file_to_tar = Path("src", "test_prefix", "test.txt")
+        file_to_tar.open("w").close()
+        with tarfile.open(Path("src", "test.tar"), "w") as tar:
             tar.add(file_to_tar)
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"),
+            str(Path("src", "test.tar")),
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,

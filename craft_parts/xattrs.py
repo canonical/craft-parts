@@ -38,7 +38,7 @@ def read_xattr(path: str, key: str) -> str | None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):
+    if Path(path).is_symlink():
         return None
 
     key = f"user.craft_parts.{key}"
@@ -59,7 +59,7 @@ def read_xattr(path: str, key: str) -> str | None:
     return value.decode().strip()
 
 
-def write_xattr(path: os.PathLike, key: str, value: str) -> None:
+def write_xattr(path: os.PathLike | str, key: str, value: str) -> None:
     """Add extended attribute metadata to a file.
 
     :param path: The file to add metadata to.
