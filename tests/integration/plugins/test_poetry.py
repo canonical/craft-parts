@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import pathlib
 import stat
 import subprocess
@@ -123,7 +122,7 @@ def test_poetry_plugin_override_get_system_interpreter(
 
     python_link = pathlib.Path(lf.project_info.prime_dir, "bin", "python3")
     assert python_link.is_symlink()
-    assert os.readlink(python_link) == "use-this-python"
+    assert python_link.readlink() == "use-this-python"
 
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])

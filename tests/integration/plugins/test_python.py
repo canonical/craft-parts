@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import sys
 import textwrap
 from pathlib import Path
@@ -116,8 +115,8 @@ def test_python_plugin_symlink(new_dir, partitions):
 
     # In regular Ubuntu this would be /usr/bin/python3.* but in GH this can be
     # something like /opt/hostedtoolcache/Python/3.9.16/x64/bin/python3.9
-    assert os.path.isabs(python_link)
-    assert os.path.basename(python_link).startswith("python3")
+    assert python_link.is_absolute()
+    assert python_link.name.startswith("python3")
 
 
 def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
@@ -150,7 +149,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 
     python_link = Path(lf.project_info.prime_dir, "bin", "python3")
     assert python_link.is_symlink()
-    assert os.readlink(python_link) == "use-this-python"
+    assert python_link.readlink() == "use-this-python"
 
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
