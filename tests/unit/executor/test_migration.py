@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import stat
 from pathlib import Path
 
@@ -99,7 +98,7 @@ class TestFileMigration:
             "Expected migrated 'bar' to still be a symlink."
         )
 
-        assert os.readlink(os.path.join(stage_dir, "bar")) == "foo", (
+        assert Path(stage_dir, "bar").readlink() == Path("foo"), (
             "Expected migrated 'bar' to point to 'foo'"
         )
 
@@ -285,7 +284,7 @@ class TestFileMigration:
             "Expected migrated 'bar' to be a symlink."
         )
 
-        assert os.path.islink(os.path.join("stage", "a", "bar")), (
+        assert Path("stage", "a", "bar").is_symlink(), (
             "Expected migrated 'a/bar' to be a symlink."
         )
 
@@ -405,8 +404,8 @@ class TestFileMigration:
         (source / "baz/qux").mkdir()
         (source / "baz/qux/4.txt").touch()
 
-        os.chmod(source / "1.txt", 0o644)
-        os.chmod(source / "bar/2.txt", 0o555)
+        (source / "1.txt").chmod(0o644)
+        (source / "bar/2.txt").chmod(0o555)
 
         target = Path("target")
         target.mkdir()
@@ -425,8 +424,8 @@ class TestFileMigration:
             permissions=permissions,
         )
 
-        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755
-        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444
+        assert stat.S_IMODE((target / "1.txt").stat().st_mode) == 0o755
+        assert stat.S_IMODE((target / "bar/2.txt").stat().st_mode) == 0o444
 
         paths_with_chown = [
             "target/baz/3.txt",
