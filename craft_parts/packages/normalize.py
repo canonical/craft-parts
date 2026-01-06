@@ -45,6 +45,7 @@ def normalize(unpack_dir: Path, *, repository: "RepositoryType") -> None:
     :param unpack_dir: Directory containing unpacked files to normalize.
     :param repository: The package format handler.
     """
+    unpack_dir = Path(unpack_dir)
     _remove_useless_files(unpack_dir)
     _fix_artifacts(unpack_dir, repository)
     _fix_xml_tools(unpack_dir)

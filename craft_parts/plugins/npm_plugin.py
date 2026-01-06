@@ -20,6 +20,7 @@ import logging
 import os
 import platform
 import re
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
@@ -280,9 +281,8 @@ class NpmPlugin(Plugin):
 
             node_uri = f"https://nodejs.org/dist/{resolved_version}/{file_name}"
             checksum_uri = f"https://nodejs.org/dist/{resolved_version}/SHASUMS256.txt"
-            self._node_binary_path = os.path.join(
-                self._part_info.part_cache_dir, file_name
-            )
+            self._node_binary_path = self._part_info.part_cache_dir / file_name
+            
             cmd += [
                 dedent(
                     f"""\
