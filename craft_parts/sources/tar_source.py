@@ -56,12 +56,12 @@ class TarSource(FileSourceHandler):
         src: Path | None = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
-        tarball = src if src else self.part_src_dir / os.path.basename(self.source)
+        tarball = src if src else self.part_src_dir / Path(self.source).name
 
         _extract(tarball, dst)
 
         if not keep:
-            os.remove(tarball)
+            tarball.unlink()
 
 
 def _extract(tarball: Path, dst: Path) -> None:
@@ -83,7 +83,7 @@ def _extract(tarball: Path, dst: Path) -> None:
                 ):
                     # commonprefix() didn't return a dir name; go up one
                     # level
-                    common = os.path.dirname(common)
+                    common = str(Path(common).parent)
                     break
 
             for member in members:

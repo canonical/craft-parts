@@ -19,7 +19,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -51,7 +50,7 @@ class JavaPlugin(Plugin):
 
             try:
                 subprocess.call([javac, "-d", tempdir, f"{tempdir}/Test.java"])
-                java_home = javac.parent.parent
+                java_home = str(Path(javac).parent.parent)
                 spec_version = subprocess.check_output(
                     [java_home + "/bin/java", "-cp", tempdir, "Test"], text=True
                 )

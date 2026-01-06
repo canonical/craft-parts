@@ -153,7 +153,9 @@ class GradlePlugin(JavaPlugin):
                 continue
             proxy_url = urlparse(case_insensitive_env[env_name])
 
-            with gradle_properties.open("a+", encoding="utf-8") as gradle_properties_file:
+            with gradle_properties.open(
+                "a+", encoding="utf-8"
+            ) as gradle_properties_file:
                 gradle_properties_file.write(
                     dedent(
                         f"""\

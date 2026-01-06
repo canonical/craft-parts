@@ -16,7 +16,6 @@
 
 """Implement the zip file source handler."""
 
-import os
 import zipfile
 from pathlib import Path
 from typing import Literal
@@ -49,7 +48,7 @@ class ZipSource(FileSourceHandler):
         src: Path | None = None,
     ) -> None:
         """Extract zip file contents to the part source dir."""
-        zip_file = src if src else self.part_src_dir / os.path.basename(self.source)
+        zip_file = src if src else self.part_src_dir / Path(self.source).name
 
         # Workaround for: https://bugs.python.org/issue15795
         with zipfile.ZipFile(zip_file, "r") as zipf:
@@ -67,7 +66,7 @@ class ZipSource(FileSourceHandler):
                 # possible for the mode to end up being zero. That makes it
                 # pretty useless, so ignore it if so.
                 if mode:
-                    os.chmod(extracted_file, mode)
+                    Path(extracted_file).chmod(mode)
 
         if not keep:
-            os.remove(zip_file)
+            zip_file.unlink()
