@@ -149,7 +149,7 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 
     python_link = Path(lf.project_info.prime_dir, "bin", "python3")
     assert python_link.is_symlink()
-    assert python_link.readlink() == "use-this-python"
+    assert python_link.readlink() == Path("use-this-python")
 
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
