@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import re
 import subprocess
 from pathlib import Path
@@ -105,16 +104,16 @@ class TestGetName:
     """Checks for snap name retrieval from snap.yaml."""
 
     def test_get_name(self):
-        os.mkdir("meta")
+        Path("meta").mkdir()
 
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
+        with Path("meta", "snap.yaml").open("w") as snap_yaml_file:
             print("name: my-snap", file=snap_yaml_file)
         assert snap_source._get_snap_name("snap", ".") == "my-snap"
 
     def test_no_name_yaml(self):
-        os.mkdir("meta")
+        Path("meta").mkdir()
 
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
+        with Path("meta", "snap.yaml").open("w") as snap_yaml_file:
             print("summary: no name", file=snap_yaml_file)
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
@@ -122,7 +121,7 @@ class TestGetName:
         assert raised.value.snap_file == "snap"
 
     def test_no_snap_yaml(self):
-        os.mkdir("meta")
+        Path("meta").mkdir()
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
             snap_source._get_snap_name("snap", ".")

@@ -53,11 +53,11 @@ class TestLinkOrCopyTree:
     """Verify func:`link_or_copy_tree` usage scenarios."""
 
     def setup_method(self):
-        os.makedirs("foo/bar/baz")
-        open("1", "w").close()
-        open(os.path.join("foo", "2"), "w").close()
-        open(os.path.join("foo", "bar", "3"), "w").close()
-        open(os.path.join("foo", "bar", "baz", "4"), "w").close()
+        Path("foo/bar/baz").mkdir(parents=True)
+        Path("1").touch()
+        Path("foo", "2").touch()
+        Path("foo", "bar", "3").touch()
+        Path("foo", "bar", "baz", "4").touch()
 
     def test_link_file_to_file_raises(self):
         with pytest.raises(errors.CopyTreeError) as raised:
@@ -65,19 +65,19 @@ class TestLinkOrCopyTree:
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_file_into_directory(self):
-        os.mkdir("qux")
+        Path("qux").mkdir()
         with pytest.raises(errors.CopyTreeError) as raised:
             file_utils.link_or_copy_tree("1", "qux")
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_directory_to_directory(self):
         file_utils.link_or_copy_tree("foo", "qux")
-        assert os.path.isfile(os.path.join("qux", "2"))
-        assert os.path.isfile(os.path.join("qux", "bar", "3"))
-        assert os.path.isfile(os.path.join("qux", "bar", "baz", "4"))
+        assert Path("qux", "2").is_file()
+        assert Path("qux", "bar", "3").is_file()
+        assert Path("qux", "bar", "baz", "4").is_file()
 
     def test_link_directory_overwrite_file_raises(self):
-        open("qux", "w").close()
+        Path("qux").touch()
         with pytest.raises(errors.CopyTreeError) as raised:
             file_utils.link_or_copy_tree("foo", "qux")
         assert raised.value.message == (
@@ -86,42 +86,42 @@ class TestLinkOrCopyTree:
 
     def test_ignore(self):
         file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda x, y: ["3"])
-        assert not os.path.isfile(os.path.join("qux", "3"))
-        assert os.path.isfile(os.path.join("qux", "baz", "4"))
+        assert not Path("qux", "3").is_file()
+        assert Path("qux", "baz", "4").is_file()
 
     def test_link_subtree(self):
         file_utils.link_or_copy_tree("foo/bar", "qux")
-        assert os.path.isfile(os.path.join("qux", "3"))
-        assert os.path.isfile(os.path.join("qux", "baz", "4"))
+        assert Path("qux", "3").is_file()
+        assert Path("qux", "baz", "4").is_file()
 
     def test_link_symlink_to_file(self):
         # Create a symlink to a file
-        os.symlink("2", os.path.join("foo", "2-link"))
+        Path("foo", "2-link").symlink_to("2")
         file_utils.link_or_copy_tree("foo", "qux")
         # Verify that the symlink remains a symlink
-        link = os.path.join("qux", "2-link")
-        assert os.path.islink(link)
-        assert os.readlink(link) == "2"
+        link = Path("qux", "2-link")
+        assert link.is_symlink()
+        assert link.readlink() == Path("2")
 
     def test_link_symlink_to_dir(self):
-        os.symlink("bar", os.path.join("foo", "bar-link"))
+        Path("foo", "bar-link").symlink_to("bar")
         file_utils.link_or_copy_tree("foo", "qux")
 
         # Verify that the symlink remains a symlink
-        link = os.path.join("qux", "bar-link")
-        assert os.path.islink(link)
-        assert os.readlink(link) == "bar"
+        link = Path("qux", "bar-link")
+        assert link.is_symlink()
+        assert link.readlink() == Path("bar")
 
 
 class TestLinkOrCopy:
     """Verify func:`link_or_copy` usage scenarios."""
 
     def setup_method(self):
-        os.makedirs("foo/bar/baz")
-        open("1", "w").close()
-        open(os.path.join("foo", "2"), "w").close()
-        open(os.path.join("foo", "bar", "3"), "w").close()
-        open(os.path.join("foo", "bar", "baz", "4"), "w").close()
+        Path("foo/bar/baz").mkdir(parents=True)
+        Path("1").touch()
+        Path("foo", "2").touch()
+        Path("foo", "bar", "3").touch()
+        Path("foo", "bar", "baz", "4").touch()
 
     def test_link_file_soerror(self, mocker):
         orig_link = os.link
@@ -136,47 +136,47 @@ class TestLinkOrCopy:
 
     def test_copy_nested_file(self):
         file_utils.link_or_copy("foo/bar/baz/4", "foo2/bar/baz/4")
-        assert os.path.isfile("foo2/bar/baz/4")
+        assert Path("foo2/bar/baz/4").is_file()
 
     def test_destination_exists(self):
-        os.mkdir("qux")
-        open(os.path.join("qux", "2"), "w").close()
-        assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino
+        Path("qux").mkdir()
+        Path("qux", "2").touch()
+        assert Path("foo/2").stat().st_ino != Path("qux/2").stat().st_ino
 
         file_utils.link_or_copy("foo/2", "qux/2")
-        assert os.stat("foo/2").st_ino == os.stat("qux/2").st_ino
+        assert Path("foo/2").stat().st_ino == Path("qux/2").stat().st_ino
 
     def test_with_permissions(self, mock_chown):
-        os.chmod("foo/2", mode=0o644)
+        Path("foo/2").chmod(mode=0o644)
 
         permissions = [
             Permissions(path="foo/*", mode="755"),
             Permissions(path="foo/2", owner=1111, group=2222),
         ]
 
-        os.mkdir("qux")
+        Path("qux").mkdir()
         file_utils.link_or_copy("foo/2", "qux/2", permissions=permissions)
 
         # Check that the copied file has the correct permission bits and ownership
-        assert stat.S_IMODE(os.stat("qux/2").st_mode) == 0o755
+        assert stat.S_IMODE(Path("qux/2").stat().st_mode) == 0o755
         mock_call = mock_chown[Path("qux/2")]
         assert mock_call.owner == 1111
         assert mock_call.group == 2222
 
         # Check that the copied file is *not* a link
-        assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino
-        assert os.stat("qux/2").st_nlink == 1
+        assert Path("foo/2").stat().st_ino != Path("qux/2").stat().st_ino
+        assert Path("qux/2").stat().st_nlink == 1
 
 
 class TestCopy:
     """Verify func:`copy` usage scenarios."""
 
     def setup_method(self):
-        open("1", "w").close()
+        Path("1").touch()
 
     def test_copy(self):
         file_utils.copy("1", "3")
-        assert os.path.isfile("3")
+        assert Path("3").is_file()
 
     def test_file_not_found(self):
         with pytest.raises(errors.CopyFileNotFound) as raised:
@@ -190,14 +190,14 @@ class TestCopy:
 def test_create_similar_directory_permissions(tmp_path, mock_chown):
     source = tmp_path / "source"
     source.mkdir()
-    os.chmod(source, 0o644)
+    source.chmod(0o644)
     target = tmp_path / "target"
 
     permissions = [Permissions(mode="755", owner=1111, group=2222)]
 
     file_utils.create_similar_directory(source, target, permissions=permissions)
 
-    assert stat.S_IMODE(os.stat(target).st_mode) == 0o755
+    assert stat.S_IMODE(Path(target).stat().st_mode) == 0o755
     mock_call = mock_chown[target]
     assert mock_call.owner == 1111
     assert mock_call.group == 2222

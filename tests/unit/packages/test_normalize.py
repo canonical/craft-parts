@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -34,7 +33,7 @@ def pkg_config_file():
         :param filename: filename of pkg-config file
         :param prefix: value of prefix parameter
         """
-        with open(filename, "w", encoding="utf-8") as file:
+        with filename.open("w", encoding="utf-8") as file:
             file.write(
                 dedent(
                     f"""\
@@ -89,52 +88,52 @@ def expected_pkg_config_content():
     [
         [  # fix_xml2_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "path": str(Path("root", "usr", "bin", "xml2-config")),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             }
         ],
         [  # no_fix_xml2_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "path": str(Path("root", "usr", "bin", "xml2-config")),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             }
         ],
         [  # fix_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "path": str(Path("root", "usr", "bin", "xslt-config")),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             }
         ],
         [  # no_fix_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "path": str(Path("root", "usr", "bin", "xslt-config")),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             }
         ],
         [  # fix_xml2_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "path": str(Path("root", "usr", "bin", "xml2-config")),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             },
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "path": str(Path("root", "usr", "bin", "xslt-config")),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             },
         ],
         [  # no_fix_xml2_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "path": str(Path("root", "usr", "bin", "xml2-config")),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             },
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "path": str(Path("root", "usr", "bin", "xslt-config")),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             },
@@ -147,15 +146,15 @@ class TestFixXmlTools:
 
     def test_fix_xmltools(self, tc):
         for test_file in tc:
-            path = test_file["path"]
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w") as f:
+            path = Path(test_file["path"])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w") as f:
                 f.write(test_file["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
         for test_file in tc:
-            with open(test_file["path"]) as f:
+            with Path(test_file["path"]).open() as f:
                 assert f.read() == test_file["expected"]
 
 
@@ -167,7 +166,7 @@ class TestFixShebang:
         (
             "python bin dir",
             {
-                "file_path": os.path.join("root", "bin", "a"),
+                "file_path": str(Path("root", "bin", "a")),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -175,7 +174,7 @@ class TestFixShebang:
         (
             "python3 bin dir",
             {
-                "file_path": os.path.join("root", "bin", "d"),
+                "file_path": str(Path("root", "bin", "d")),
                 "content": "#!/usr/bin/python3\nimport this",
                 "expected": "#!/usr/bin/env python3\nimport this",
             },
@@ -183,7 +182,7 @@ class TestFixShebang:
         (
             "sbin dir",
             {
-                "file_path": os.path.join("root", "sbin", "b"),
+                "file_path": str(Path("root", "sbin", "b")),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -191,7 +190,7 @@ class TestFixShebang:
         (
             "usr/bin dir",
             {
-                "file_path": os.path.join("root", "usr", "bin", "c"),
+                "file_path": str(Path("root", "usr", "bin", "c")),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -199,7 +198,7 @@ class TestFixShebang:
         (
             "usr/sbin dir",
             {
-                "file_path": os.path.join("root", "usr", "sbin", "d"),
+                "file_path": str(Path("root", "usr", "sbin", "d")),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -207,7 +206,7 @@ class TestFixShebang:
         (
             "opt/bin dir",
             {
-                "file_path": os.path.join("root", "opt", "bin", "e"),
+                "file_path": str(Path("root", "opt", "bin", "e")),
                 "content": "#!/usr/bin/python\nraise Exception()",
                 "expected": "#!/usr/bin/env python\nraise Exception()",
             },
@@ -216,14 +215,15 @@ class TestFixShebang:
 
     def test_fix_shebang(self):
         for _, data in self.scenarios:
-            os.makedirs(os.path.dirname(data["file_path"]), exist_ok=True)
-            with open(data["file_path"], "w") as fd:
+            path = Path(data["file_path"])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w") as fd:
                 fd.write(data["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
         for _, data in self.scenarios:
-            with open(data["file_path"]) as fd:
+            with Path(data["file_path"]).open() as fd:
                 assert fd.read() == data["expected"]
 
 
@@ -232,31 +232,31 @@ class TestRemoveUselessFiles:
     """Check the removal of unnecessary files."""
 
     def create(self, file_path: str) -> str:
-        path = os.path.join("root", file_path)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        open(path, "w").close()
+        path = Path("root", file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.open("w").close()
 
-        return path
+        return str(path)
 
     def test_remove(self):
         paths = [
             self.create(p)
             for p in [
-                os.path.join("usr", "lib", "python3.5", "sitecustomize.py"),
-                os.path.join("usr", "lib", "python2.7", "sitecustomize.py"),
-                os.path.join("usr", "lib", "python", "sitecustomize.py"),
+                str(Path("usr", "lib", "python3.5", "sitecustomize.py")),
+                str(Path("usr", "lib", "python2.7", "sitecustomize.py")),
+                str(Path("usr", "lib", "python", "sitecustomize.py")),
             ]
         ]
         normalize(Path("root"), repository=DummyRepository)
 
         for p in paths:
-            assert os.path.exists(p) is False
+            assert Path(p).exists() is False
 
     def test_no_remove(self):
-        path = self.create(os.path.join("opt", "python3.5", "sitecustomize.py"))
+        path = Path(self.create(str(Path("opt", "python3.5", "sitecustomize.py"))))
         normalize(Path("root"), repository=DummyRepository)
 
-        assert os.path.exists(path)
+        assert path.exists()
 
 
 class TestFixPkgConfig:
@@ -398,13 +398,13 @@ class TestFixSymlinks:
     """Check the normalization of symbolic links."""
 
     def test_fix_symlinks(self, src, dst, result, new_dir):
-        os.makedirs("a")
-        open("1", mode="w").close()
+        Path("a").mkdir(parents=True)
+        Path("1").open(mode="w").close()
 
-        os.symlink(src, dst)
+        Path(dst).symlink_to(src)
         normalize(new_dir, repository=DummyRepository)
 
-        assert os.readlink(dst) == result
+        assert Path(dst).readlink() == Path(result)
 
 
 class TestFixSUID:
@@ -420,10 +420,10 @@ class TestFixSUID:
         ],
     )
     def test_mode(self, key, test_mod, expected_mod, tmpdir):
-        f = os.path.join(tmpdir, key)
-        open(f, mode="w").close()
-        os.chmod(f, test_mod)
+        f = Path(tmpdir, key)
+        f.open(mode="w").close()
+        f.chmod(test_mod)
 
         normalize(tmpdir, repository=DummyRepository)
 
-        assert stat.S_IMODE(os.stat(f).st_mode) == expected_mod
+        assert stat.S_IMODE(f.stat().st_mode) == expected_mod

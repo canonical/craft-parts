@@ -128,7 +128,7 @@ class Fileset:
 
 def migratable_filesets(
     fileset: Fileset,
-    srcdir: os.PathLike,
+    srcdir: os.PathLike | str,
     default_partition: str,
     partition: str | None = None,
 ) -> tuple[set[str], set[str]]:

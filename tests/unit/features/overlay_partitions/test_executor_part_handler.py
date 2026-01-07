@@ -694,7 +694,7 @@ class TestOverlayMigrationFilesystems:
 
 
 def _load_migration_state(state_path: Path) -> MigrationState:
-    with open(state_path) as yaml_file:
+    with state_path.open() as yaml_file:
         state_data = yaml.safe_load(yaml_file)
 
     return MigrationState.unmarshal(state_data)

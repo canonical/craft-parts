@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import tarfile
 from pathlib import Path
 from unittest.mock import call
@@ -99,79 +98,77 @@ class TestTarSource:
             cache_dir=new_dir,
             project_dirs=dirs,
         )
-        os.mkdir("dst")
+        Path("dst").mkdir()
         tar_source.pull()
 
         # The 'test_prefix' part of the path should have been removed
-        assert os.path.exists(os.path.join("dst", "test.txt"))
+        assert Path("dst", "test.txt").exists()
 
     def test_strip_common_prefix_symlink(self, new_dir, partitions):
         # Create tar file for testing
-        os.makedirs(os.path.join("src", "test_prefix"))
-        file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
+        Path("src", "test_prefix").mkdir(parents=True)
+        file_to_tar = Path("src", "test_prefix", "test.txt")
+        file_to_tar.open("w").close()
 
-        file_to_link = os.path.join("src", "test_prefix", "link.txt")
-        os.symlink("./test.txt", file_to_link)
-        assert os.path.islink(file_to_link)
+        file_to_link = Path("src", "test_prefix", "link.txt")
+        file_to_link.symlink_to("./test.txt")
+        assert file_to_link.is_symlink()
 
         def check_for_symlink(tarinfo):
             assert tarinfo.issym()
-            assert file_to_link == tarinfo.name
-            assert file_to_tar == os.path.normpath(
-                os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname)
-            )
+            assert file_to_link == Path(tarinfo.name)
+            assert file_to_tar == Path(file_to_tar.parent, tarinfo.linkname)
             return tarinfo
 
-        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+        with tarfile.open(Path("src", "test.tar"), "w") as tar:
             tar.add(file_to_tar)
             tar.add(file_to_link, filter=check_for_symlink)
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"),
+            str(Path("src", "test.tar")),
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,
         )
-        os.mkdir("dst")
+        Path("dst").mkdir()
         tar_source.pull()
 
         # The 'test_prefix' part of the path should have been removed
-        assert os.path.exists(os.path.join("dst", "test.txt"))
-        assert os.path.exists(os.path.join("dst", "link.txt"))
+        assert Path("dst", "test.txt").exists()
+        assert Path("dst", "link.txt").exists()
 
     def test_strip_common_prefix_hardlink(self, new_dir, partitions):
         # Create tar file for testing
-        os.makedirs(os.path.join("src", "test_prefix"))
-        file_to_tar = os.path.join("src", "test_prefix", "test.txt")
-        open(file_to_tar, "w").close()
+        Path("src", "test_prefix").mkdir(parents=True)
+        file_to_tar = Path("src", "test_prefix", "test.txt")
+        file_to_tar.open("w").close()
 
-        file_to_link = os.path.join("src", "test_prefix", "link.txt")
-        os.link(file_to_tar, file_to_link)
-        assert os.path.exists(file_to_link)
+        file_to_link = Path("src", "test_prefix", "link.txt")
+        file_to_link.hardlink_to(file_to_tar)
+        assert file_to_link.exists()
 
         def check_for_hardlink(tarinfo):
             assert tarinfo.islnk()
             assert tarinfo.issym() is False
-            assert file_to_link == tarinfo.name
-            assert file_to_tar == tarinfo.linkname
+            assert file_to_link == Path(tarinfo.name)
+            assert file_to_tar == Path(tarinfo.linkname)
             return tarinfo
 
-        with tarfile.open(os.path.join("src", "test.tar"), "w") as tar:
+        with tarfile.open(Path("src", "test.tar"), "w") as tar:
             tar.add(file_to_tar)
             tar.add(file_to_link, filter=check_for_hardlink)
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            os.path.join("src", "test.tar"),
+            str(Path("src", "test.tar")),
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,
         )
-        os.mkdir("dst")
+        Path("dst").mkdir()
         tar_source.pull()
 
         # The 'test_prefix' part of the path should have been removed
-        assert os.path.exists(os.path.join("dst", "test.txt"))
-        assert os.path.exists(os.path.join("dst", "link.txt"))
+        assert Path("dst", "test.txt").exists()
+        assert Path("dst", "link.txt").exists()

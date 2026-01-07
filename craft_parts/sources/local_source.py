@@ -203,7 +203,7 @@ def _ignore(
     source: Path,
     current_directory: Path,
     patterns: list[str],
-    directory: os.PathLike,
+    directory: os.PathLike | str,
     _files: Any,  # noqa: ANN401
     also_ignore: list[str] | None = None,
 ) -> list[str]:
@@ -212,8 +212,8 @@ def _ignore(
     directory = Path(directory)
     if directory in (source, current_directory):
         for pattern in patterns + (also_ignore or []):
-            files = list(directory.glob(pattern))
+            files = [f.name for f in directory.glob(pattern)]
             if files:
-                ignored += [f.name for f in files]
+                ignored += files
 
     return ignored

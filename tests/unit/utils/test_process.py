@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os
 import selectors
 import socket
 import subprocess
+from pathlib import Path
 
 import pytest
 from craft_parts.utils import process
@@ -59,9 +59,9 @@ def test_run_selector(out, err, new_dir):
     selector = selectors.SelectSelector()
 
     # set up unix socket
-    sock_path = os.path.join(new_dir, "test.socket")
+    sock_path = Path(new_dir, "test.socket")
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.bind(sock_path)
+    sock.bind(str(sock_path))
     sock.listen(1)
 
     def accept(sock: socket.socket, _mask: int) -> None:

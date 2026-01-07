@@ -73,8 +73,8 @@ class NonBlockingRWFifo:
 
 
 def link_or_copy(
-    source: os.PathLike,
-    destination: os.PathLike,
+    source: os.PathLike | str,
+    destination: os.PathLike | str,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -192,8 +192,8 @@ def copy(
 
 
 def link_or_copy_tree(
-    source_tree: os.PathLike,
-    destination_tree: os.PathLike,
+    source_tree: os.PathLike | str,
+    destination_tree: os.PathLike | str,
     ignore: Callable[[str, list[str]], list[str]] | None = None,
     copy_function: Callable[..., None] = link_or_copy,
 ) -> None:

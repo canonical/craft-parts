@@ -80,7 +80,7 @@ class TestGitSource(GitBaseTestCase):
         """Test that `pull_existing` works after the remote is updated."""
         # set up repositories
         remote = str(Path("remote.git").absolute())
-        working_tree = str(Path("working-tree").absolute())
+        working_tree = Path("working-tree").absolute()
         other_tree = str(Path("helper-tree").absolute())
 
         git = GitSource(
@@ -112,7 +112,7 @@ class TestGitSource(GitBaseTestCase):
         git.pull()
 
         # assert we actually pulled the commit
-        assert Path(working_tree / "test.txt").read_text() == "Howdy, Partner!"
+        assert Path(working_tree, "test.txt").read_text() == "Howdy, Partner!"
 
     def test_pull_existing_with_branch_after_update(self, new_dir, monkeypatch):
         """Test that `pull_existing` with a branch works after the remote is updated."""
@@ -248,7 +248,7 @@ class TestGitConflicts(GitBaseTestCase):
 
     def test_git_conflicts(self, new_dir, monkeypatch):
         repo = str(Path("conflict-test.git").resolve())
-        working_tree = str(Path("git-conflict-test").absolute())
+        working_tree = Path("git-conflict-test").absolute()
         conflicting_tree = f"{working_tree}-conflict"
         git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
 
@@ -288,7 +288,7 @@ class TestGitConflicts(GitBaseTestCase):
         """Test that updates to submodules are pulled"""
         repo = str(Path("submodules.git").resolve())
         sub_repo = str(Path("subrepo").resolve())
-        working_tree = str(Path("git-submodules").absolute())
+        working_tree = Path("git-submodules").absolute()
         working_tree_two = f"{str(working_tree)}-two"
         sub_working_tree = str(Path("git-submodules-sub").resolve())
         git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
@@ -359,9 +359,7 @@ class TestGitConflicts(GitBaseTestCase):
         self.check_file_contents(
             str(Path(working_tree, "subrepo", "sub-file")), "sub-file"
         )
-        self.check_file_contents(
-            str(Path((working_tree, "subrepo", "fake")), "fake 1"
-        )
+        self.check_file_contents(str(Path(working_tree, "subrepo", "fake")), "fake 1")
 
 
 class TestGitDetails(GitBaseTestCase):
@@ -374,7 +372,7 @@ class TestGitDetails(GitBaseTestCase):
             if not message:
                 message = filename
 
-            with Path(filename.open("w") as fp:
+            with Path(filename).open("w") as fp:
                 fp.write(content)
 
             _call(["git", "add", filename])

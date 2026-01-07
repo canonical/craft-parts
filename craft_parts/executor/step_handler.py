@@ -204,7 +204,7 @@ class StepHandler:
             file_path = Path(file_path)
             if file_path.is_symlink():
                 return
-            if not file_path.suffix == ".pc":
+            if file_path.suffix != ".pc":
                 return
             packages.fix_pkg_config(
                 prefix_prepend=self._part.stage_dir,
