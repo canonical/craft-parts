@@ -1,5 +1,5 @@
 .. meta::
-    :description: Learn how to build and use Ruby-based parts in your craft packaged applications, including configuration parameters and example YAML syntax.
+    :description: Reference for parts built with the Ruby plugin. Review the plugin's special configuration keys and see working examples of Ruby parts in YAML.
 
 .. _craft_parts_ruby_plugin:
 
