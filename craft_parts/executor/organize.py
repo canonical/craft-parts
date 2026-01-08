@@ -25,7 +25,9 @@ represents how the file is going to be staged.
 from __future__ import annotations
 
 import contextlib
+import os
 import shutil
+from itertools import takewhile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -70,7 +72,10 @@ def organize_files(  # noqa: PLR0912
         )
         dst = Path(_dst)
 
-        sources = src.parent.glob(src.name)
+        base = src.parent
+        if "*" in str(src):
+            base = Path(*takewhile(lambda part: "*" not in part, src.parts))
+        sources = base.glob(str(src.relative_to(base)))
 
         # Keep track of the number of glob expansions so we can properly error if more
         # than one tries to organize to the same file
@@ -86,7 +91,7 @@ def organize_files(  # noqa: PLR0912
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
             if dst.is_file():
-                if dst.resolve() == src.resolve():
+                if dst.absolute().as_posix() == os.path.normpath(src.absolute()):
                     # Trying to organize a file to the same place, skipping
                     continue
                 if overwrite and src_count <= 1:
@@ -134,7 +139,10 @@ def organize_files(  # noqa: PLR0912
                         ),
                     )
 
-            dst.parent.mkdir(parents=True, exist_ok=True)
+            if dst_string.endswith("/"):
+                dst.mkdir(parents=True, exist_ok=True)
+            else:
+                dst.parent.mkdir(parents=True, exist_ok=True)
             file_utils.move(src, dst)
 
 
