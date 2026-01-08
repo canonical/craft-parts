@@ -19,6 +19,7 @@
 import logging
 import os
 import urllib.parse
+from pathlib import Path
 
 import requests
 
@@ -39,7 +40,7 @@ def is_url(url: str) -> bool:
 
 def download_request(
     request: requests.Response,
-    destination: str,
+    destination: os.PathLike | str,
     message: str | None = None,
     total_read: int = 0,
 ) -> None:
@@ -49,6 +50,8 @@ def download_request(
     :param destination: The destination file name.
     :param message: The message shown in the progress bar.
     """
+    destination = Path(destination)
+
     # Doing len(request.content) may defeat the purpose of a
     # progress bar
     total_length = 0
@@ -57,17 +60,17 @@ def download_request(
         # Content-Length in the case of resuming will be
         # Content-Length - total_read so we add back up to have the feel of
         # resuming
-        if os.path.exists(destination):  # noqa: PTH110
+        if destination.exists():
             total_length += total_read
 
     if message:
         logger.debug(message)
     else:
-        logger.debug("Downloading %r", destination)
+        logger.debug("Downloading %r", str(destination))
 
-    mode = "ab" if os.path.exists(destination) else "wb"  # noqa: PTH110
+    mode = "ab" if destination.exists() else "wb"
 
-    with open(destination, mode) as destination_file:  # noqa: PTH123
+    with destination.open(mode) as destination_file:
         for buf in request.iter_content(1024):
             destination_file.write(buf)
             if not os_utils.is_dumb_terminal():

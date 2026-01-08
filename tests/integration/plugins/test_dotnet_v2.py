@@ -39,7 +39,7 @@ pytestmark = [
 
 def test_dotnet_plugin(new_dir, partitions):
     project_path = Path(__file__).parent / "test_dotnet_v2"
-    with open(project_path / "parts.yaml") as file:  # noqa: PTH123
+    with (project_path / "parts.yaml").open() as file:
         parts = yaml.safe_load(file)
         parts["parts"]["foo"]["source"] = str(project_path)
 

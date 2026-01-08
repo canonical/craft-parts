@@ -17,7 +17,6 @@
 """Handle the execution of built-in or user specified step commands."""
 
 import logging
-import os
 from collections.abc import Callable
 from pathlib import Path
 
@@ -279,10 +278,10 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
     # we'll sort them in reverse here to get subdirectories before parents.
 
     for each_dir in sorted(dirs, reverse=True):
-        migrated_directory = os.path.join(directory, each_dir)  # noqa: PTH118
+        migrated_directory = directory / each_dir
         try:
-            if not os.listdir(migrated_directory):  # noqa: PTH208
-                os.rmdir(migrated_directory)  # noqa: PTH106
+            if not list(migrated_directory.iterdir()):
+                migrated_directory.rmdir()
         except FileNotFoundError:
             logger.warning(
                 "Attempted to remove directory '%s', but it didn't exist. Skipping...",

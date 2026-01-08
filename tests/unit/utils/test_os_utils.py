@@ -241,7 +241,7 @@ class TestOsRelease:
 
     def _write_os_release(self, contents) -> str:
         path = "os-release"
-        with open(path, "w") as f:  # noqa: PTH123
+        with Path(path).open("w") as f:
             f.write(contents)
         return path
 
@@ -343,15 +343,17 @@ class TestEnvironment:
         assert os_utils.is_snap(app_name) == result
 
     def test_is_inside_container_has_dockerenv(self, mocker):
-        mocker.patch("os.path.exists", new=lambda x: "/.dockerenv" in x)
+        mocker.patch("pathlib.Path.exists", new=lambda x: Path("/.dockerenv") == x)
         assert os_utils.is_inside_container()
 
     def test_is_inside_container_has_containerenv(self, mocker):
-        mocker.patch("os.path.exists", new=lambda x: "/run/.containerenv" in x)
+        mocker.patch(
+            "pathlib.Path.exists", new=lambda x: Path("/run/.containerenv") == x
+        )
         assert os_utils.is_inside_container()
 
     def test_is_inside_container_no_files(self, mocker):
-        mocker.patch("os.path.exists", return_value=False)
+        mocker.patch("pathlib.Path.exists", return_value=False)
         assert os_utils.is_inside_container() is False
 
 

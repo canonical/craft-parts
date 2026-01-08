@@ -20,6 +20,7 @@ import errno
 import logging
 import os
 import sys
+from pathlib import Path
 
 from craft_parts import errors
 
@@ -38,7 +39,7 @@ def read_xattr(path: str, key: str) -> str | None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):  # noqa: PTH114
+    if Path(path).is_symlink():
         return None
 
     key = f"user.craft_parts.{key}"
@@ -59,18 +60,19 @@ def read_xattr(path: str, key: str) -> str | None:
     return value.decode().strip()
 
 
-def write_xattr(path: str, key: str, value: str) -> None:
+def write_xattr(path: os.PathLike | str, key: str, value: str) -> None:
     """Add extended attribute metadata to a file.
 
     :param path: The file to add metadata to.
     :param key: The attribute key.
     :param value: The attribute value.
     """
+    path = Path(path)
     if sys.platform != "linux":
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):  # noqa: PTH114
+    if path.is_symlink():
         return
 
     key = f"user.craft_parts.{key}"
@@ -81,7 +83,7 @@ def write_xattr(path: str, key: str, value: str) -> None:
         # Label is too long for filesystem:
         # OSError: [Errno 7] Argument list too long: b'<path>'
         if error.errno == errno.E2BIG:
-            raise errors.XAttributeTooLong(path=path, key=key, value=value) from error
+            raise errors.XAttributeTooLong(path=str(path), key=key, value=value) from error
 
         # Chain unknown variants of OSError.
-        raise errors.XAttributeError(key=key, path=path, is_write=True) from error
+        raise errors.XAttributeError(key=key, path=str(path), is_write=True) from error

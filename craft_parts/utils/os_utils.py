@@ -179,7 +179,7 @@ def is_inside_container() -> bool:
     :return: Whether the process is running inside a container.
     """
     for path in ["/.dockerenv", "/run/.containerenv"]:
-        if os.path.exists(path):  # noqa: PTH110
+        if Path(path).exists():
             logger.debug("application running in a docker or podman (OCI) container")
             return True
 
@@ -284,7 +284,7 @@ class OsRelease:
         """
         self._os_release: dict[str, str] = {}
         with contextlib.suppress(FileNotFoundError):
-            with open(os_release_file) as file:  # noqa: PTH123
+            with Path(os_release_file).open() as file:
                 for line in file:
                     entry = line.rstrip().split("=")
                     if len(entry) == 2:  # noqa: PLR2004

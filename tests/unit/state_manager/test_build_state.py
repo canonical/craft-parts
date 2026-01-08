@@ -88,7 +88,7 @@ class TestBuildStatePersist:
         )
 
         state.write(Path("state"))
-        with open("state") as f:  # noqa: PTH123
+        with Path("state").open() as f:
             content = f.read()
 
         new_state = yaml.safe_load(content)

@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import call
@@ -882,7 +881,7 @@ class TestPackages:
         assert result == ["word-salad"]
         mock_download_snaps.assert_called_once_with(
             snaps_list=["word-salad"],
-            directory=os.path.join(new_dir, "parts/p1/stage_snaps"),  # noqa: PTH118
+            directory=str(Path(new_dir, "parts/p1/stage_snaps")),
         )
 
     def test_fetch_stage_snaps_none(self, mocker, new_dir, partitions):

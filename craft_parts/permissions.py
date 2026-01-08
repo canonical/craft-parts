@@ -117,14 +117,15 @@ class Permissions(BaseModel):
 
         return fnmatch(str(path), self.path)
 
-    def apply_permissions(self, target: Path | str) -> None:
+    def apply_permissions(self, target: os.PathLike | str) -> None:
         """Apply the permissions configuration to ``target``.
 
         Note that this method doesn't check if this ``Permissions``'s path
         pattern matches ``target``; be sure to call ``applies_to()`` beforehand.
         """
+        target = Path(target)
         if self.mode is not None:
-            os.chmod(target, self.mode_octal)  # noqa: PTH101
+            target.chmod(self.mode_octal)
 
         if self.owner is not None and self.group is not None:
             os.chown(target, self.owner, self.group)
@@ -137,7 +138,9 @@ def filter_permissions(
     return [p for p in permissions if p.applies_to(target)]
 
 
-def apply_permissions(target: Path | str, permissions: list[Permissions]) -> None:
+def apply_permissions(
+    target: os.PathLike | str, permissions: list[Permissions]
+) -> None:
     """Apply all permissions configurations in ``permissions`` to ``target``."""
     for permission in permissions:
         permission.apply_permissions(target)

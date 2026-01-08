@@ -22,7 +22,6 @@ import os.path
 import shutil
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from glob import iglob
 from pathlib import Path
 from typing import Any, cast
 
@@ -1236,8 +1235,7 @@ class PartHandler:
             *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)  # noqa: PTH103
-
+            dir_name.mkdir(parents=True, exist_ok=True)
         self._symlink_alias_to_default()
         self._create_usrmerge_scaffolding()
 
@@ -1327,10 +1325,10 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))  # noqa: PTH118, PTH207
+        snap_files = snaps_dir.glob("*.snap")
         snap_sources = (
             sources.SnapSource(
-                source=s,
+                source=str(s),
                 part_src_dir=snaps_dir,
                 cache_dir=self._part_info.cache_dir,
                 project_dirs=self._part.dirs,

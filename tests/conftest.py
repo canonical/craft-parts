@@ -214,12 +214,9 @@ def mock_overlay_support_prerequisites(mocker, add_overlay_feature):
 def temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
 
-    mocker.patch(
-        "xdg.BaseDirectory.xdg_config_home",
-        new=os.path.join(tmpdir, ".config"),  # noqa: PTH118
-    )
-    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))  # noqa: PTH118
-    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))  # noqa: PTH118
+    mocker.patch("xdg.BaseDirectory.xdg_config_home", new=Path(tmpdir, ".config").as_posix())
+    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=Path(tmpdir, ".local").as_posix())
+    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=Path(tmpdir, ".cache").as_posix())
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
         new=[
@@ -232,7 +229,7 @@ def temp_xdg(tmpdir, mocker):
             xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
-    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})  # noqa: PTH118
+    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": Path(tmpdir, ".config").as_posix()})
 
 
 @pytest.fixture(scope="class")
@@ -263,7 +260,7 @@ def fake_snapd():
     server = FakeSnapd()
 
     snapd_fake_socket_path = str(tempfile.mkstemp()[1])
-    os.unlink(snapd_fake_socket_path)  # noqa: PTH108
+    Path(snapd_fake_socket_path).unlink()
 
     socket_path_patcher = mock.patch(
         "craft_parts.packages.snaps.get_snapd_socket_path_template"
@@ -339,7 +336,7 @@ def mock_chown(mocker) -> dict[str, ChmodCall]:
     calls = {}
 
     def fake_chown(path, uid, gid, **kwargs):
-        calls[path] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
+        calls[Path(path)] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
 
     mocker.patch.object(os, "chown", side_effect=fake_chown)
 

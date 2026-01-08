@@ -17,9 +17,9 @@
 """The craft Rust plugin."""
 
 import logging
-import os
 import re
 import subprocess
+from pathlib import Path
 from textwrap import dedent
 from typing import Literal, cast
 
@@ -209,7 +209,7 @@ class RustPlugin(Plugin):
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
             return False
-        return os.path.exists("rust-toolchain.toml") or os.path.exists("rust-toolchain")  # noqa: PTH110
+        return Path("rust-toolchain.toml").exists() or Path("rust-toolchain").exists()
 
     @override
     def get_build_environment(self) -> dict[str, str]:

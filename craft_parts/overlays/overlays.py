@@ -92,7 +92,7 @@ def _is_path_visible(root: Path, relpath: Path) -> bool:
     levels = len(relpath.parts)
 
     for level in range(levels):
-        path = Path(root, os.path.join(*relpath.parts[: level + 1]))  # noqa: PTH118
+        path = Path(root, Path(*relpath.parts[: level + 1]))
         if oci_whiteout(path).exists() or is_oci_opaque_dir(path):
             logger.debug("is whiteout or opaque: %s", path)
             return False

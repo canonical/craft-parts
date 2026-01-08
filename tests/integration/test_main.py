@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import runpy
 import sys
 import textwrap
@@ -214,7 +213,11 @@ def test_main_alternative_work_dir(mocker, capfd):
     assert Path("work_dir/prime").is_dir()
 
     # no new entries in the current dir
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
+    assert sorted(Path().iterdir()) == [
+        Path(".cache"),
+        Path("parts.yaml"),
+        Path("work_dir"),
+    ]
 
 
 @pytest.mark.parametrize("opt", ["-f", "--file"])
@@ -517,7 +520,11 @@ def test_main_clean_workdir(mocker, capfd):
     assert Path("work_dir/stage").is_dir()
     assert Path("work_dir/prime").is_dir()
 
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
+    assert sorted(Path().iterdir()) == [
+        Path(".cache"),
+        Path("parts.yaml"),
+        Path("work_dir"),
+    ]
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir", "clean"])
@@ -533,7 +540,11 @@ def test_main_clean_workdir(mocker, capfd):
     assert Path("work_dir/stage").is_dir() is False
     assert Path("work_dir/prime").is_dir() is False
 
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
+    assert sorted(Path().iterdir()) == [
+        Path(".cache"),
+        Path("parts.yaml"),
+        Path("work_dir"),
+    ]
 
 
 def test_main_clean_dry_run(mocker, capfd):
@@ -549,7 +560,7 @@ def test_main_clean_dry_run(mocker, capfd):
     assert raised.value.code is None
 
     # work dirs are not removed
-    assert set(os.listdir(".")).issuperset({"parts", "prime", "stage"})  # noqa: PTH208
+    assert set(Path().iterdir()).issuperset({"parts", "prime", "stage"})
 
 
 def test_main_clean_part(mocker, capfd):

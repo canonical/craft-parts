@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
-import os
 from pathlib import Path
 from textwrap import dedent
 
@@ -91,7 +90,7 @@ def _step_handler_for_step(
 
 def get_mode(path) -> int:
     """Shortcut the retrieve the read/write/execute mode for a given path."""
-    return os.stat(path).st_mode & 0o777  # noqa: PTH116
+    return Path(path).stat().st_mode & 0o777
 
 
 class TestStepHandlerBuiltins:
@@ -216,11 +215,11 @@ class TestStepHandlerBuiltins:
         )
 
         assert get_mode(environment_script_path) == 0o644
-        with open(environment_script_path) as file:  # noqa: PTH123
+        with environment_script_path.open() as file:
             assert file.read() == expected_script
 
         assert get_mode(build_script_path) == 0o755
-        with open(build_script_path) as file:  # noqa: PTH123
+        with build_script_path.open() as file:
             assert file.read() == dedent(
                 f"""\
                 #!/bin/bash

@@ -135,7 +135,7 @@ class TestHelpers:
     def test_is_whiteout_file(self, mocker, is_chardev, is_symlink, rdev, result):
         fake_stats = mocker.Mock()
         fake_stats.st_rdev = rdev
-        mocker.patch("os.stat", return_value=fake_stats)
+        mocker.patch("pathlib.Path.stat", return_value=fake_stats)
         mocker.patch("pathlib.Path.is_char_device", return_value=is_chardev)
 
         if is_symlink:

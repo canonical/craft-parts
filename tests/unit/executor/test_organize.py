@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import re
 from pathlib import Path
 from typing import Any, cast
@@ -36,7 +35,7 @@ from craft_parts.executor.organize import organize_files
         # simple_dir_with_file
         {
             "setup_dirs": ["foodir"],
-            "setup_files": [os.path.join("foodir", "foo")],  # noqa: PTH118
+            "setup_files": [str(Path("foodir", "foo"))],
             "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
@@ -44,8 +43,8 @@ from craft_parts.executor.organize import organize_files
         {
             "setup_dirs": ["bardir", "foodir"],
             "setup_files": [
-                os.path.join("foodir", "foo"),  # noqa: PTH118
-                os.path.join("bardir", "bar"),  # noqa: PTH118
+                str(Path("foodir", "foo")),
+                str(Path("bardir", "bar")),
                 "basefoo",
             ],
             "organize_map": {
@@ -88,46 +87,46 @@ from craft_parts.executor.organize import organize_files
         {
             "setup_dirs": ["dir1", "dir2"],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
+                str(Path("dir1", "foo")),
+                str(Path("dir2", "bar")),
             ],
             "organize_map": {"dir*": "dir/"},
             "expected": [
                 (["dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                (["foo"], str(Path("dir", "dir1"))),
+                (["bar"], str(Path("dir", "dir2"))),
             ],
         },
         # combined_*_with_file
         {
             "setup_dirs": ["dir1", "dir2"],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir1", "bar"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
+                str(Path("dir1", "foo")),
+                str(Path("dir1", "bar")),
+                str(Path("dir2", "bar")),
             ],
             "organize_map": {"dir*": "dir/", "dir1/bar": "."},
             "expected": [
                 (["bar", "dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                (["foo"], str(Path("dir", "dir1"))),
+                (["bar"], str(Path("dir", "dir2"))),
             ],
         },
         # *_into_dir
         {
             "setup_dirs": ["dir"],
             "setup_files": [
-                os.path.join("dir", "foo"),  # noqa: PTH118
-                os.path.join("dir", "bar"),  # noqa: PTH118
+                str(Path("dir", "foo")),
+                str(Path("dir", "bar")),
             ],
             "organize_map": {"dir/f*": "nested/dir/"},
             "expected": [
                 (["dir", "nested"], ""),
                 (["bar"], "dir"),
                 (["dir"], "nested"),
-                (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
+                (["foo"], str(Path("nested", "dir"))),
             ],
         },
         # organize a file to itself
@@ -319,7 +318,6 @@ def organize_and_assert(
         )
         expected = cast(list[tuple[list[str], str]], expected)
         for expect in expected:
-            dir_path = (install_dir / expect[1]).as_posix()
-            dir_contents = os.listdir(dir_path)  # noqa: PTH208
-            dir_contents.sort()
+            dir_path = install_dir / expect[1]
+            dir_contents = sorted(path.name for path in dir_path.iterdir())
             assert dir_contents == expect[0]

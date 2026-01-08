@@ -270,7 +270,7 @@ def read_origin_stage_package(path: str) -> str | None:
     return xattrs.read_xattr(path, _STAGE_PACKAGE_KEY)
 
 
-def write_origin_stage_package(path: str, value: str) -> None:
+def write_origin_stage_package(path: os.PathLike | str, value: str) -> None:
     """Write origin stage package."""
     xattrs.write_xattr(path, _STAGE_PACKAGE_KEY, value)
 
@@ -279,7 +279,7 @@ def mark_origin_stage_package(sources_dir: str, stage_package: str) -> None:
     """Mark all files in sources_dir as coming from stage_package."""
     for root, _, files in os.walk(sources_dir):
         for file_name in files:
-            file_path = os.path.join(root, file_name)  # noqa: PTH118
+            file_path = Path(root, file_name)
 
             # Mark source.
             write_origin_stage_package(file_path, stage_package)

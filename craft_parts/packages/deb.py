@@ -306,7 +306,7 @@ def _run_dpkg_query_list_files(package_name: str) -> set[str]:
         .split()
     )
 
-    return {i for i in output if ("lib" in i and os.path.isfile(i))}  # noqa: PTH113
+    return {i for i in output if ("lib" in i and Path(i).is_file())}
 
 
 def _get_dpkg_list_path(base: str) -> pathlib.Path:
@@ -687,9 +687,7 @@ class Ubuntu(BaseRepository):
                 ):
                     logger.info("Extracting stage package: %s", pkg_name)
                     installed.add(f"{pkg_name}={pkg_version}")
-                    file_utils.link_or_copy(
-                        str(dl_path), str(stage_packages_path / dl_path.name)
-                    )
+                    file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
 
         return sorted(installed)
 
