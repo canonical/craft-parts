@@ -1235,6 +1235,7 @@ class PartHandler:
         ]
         for dir_name in dirs:
             dir_name.mkdir(parents=True, exist_ok=True)
+
         self._symlink_alias_to_default()
         self._create_usrmerge_scaffolding()
 
