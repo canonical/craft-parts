@@ -560,7 +560,9 @@ def test_main_clean_dry_run(mocker, capfd):
     assert raised.value.code is None
 
     # work dirs are not removed
-    assert set(Path().iterdir()).issuperset({"parts", "prime", "stage"})
+    assert set(Path().iterdir()).issuperset(
+        {Path("parts"), Path("prime"), Path("stage")}
+    )
 
 
 def test_main_clean_part(mocker, capfd):
