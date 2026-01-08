@@ -129,7 +129,7 @@ class Fileset:
 
 def migratable_filesets(
     fileset: Fileset,
-    srcdir: os.PathLike | str,
+    srcdir: Path | str,
     default_partition: str,
     partition: str | None = None,
 ) -> tuple[set[str], set[str]]:
@@ -251,7 +251,14 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
     for include in includes:
         if "*" in include:
             matches = directory.rglob(include)
-            include_files |= set(matches)
+            if not include.startswith("."):
+                include_files |= {
+                    f
+                    for f in matches
+                    if not f.relative_to(directory).parts[0].startswith(".")
+                }
+            else:
+                include_files |= set(matches)
         else:
             include_files |= {directory / include}
 

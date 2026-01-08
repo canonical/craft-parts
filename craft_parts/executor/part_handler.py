@@ -18,7 +18,6 @@
 
 import logging
 import os
-import os.path
 import shutil
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager

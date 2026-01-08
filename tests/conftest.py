@@ -214,9 +214,15 @@ def mock_overlay_support_prerequisites(mocker, add_overlay_feature):
 def temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
 
-    mocker.patch("xdg.BaseDirectory.xdg_config_home", new=Path(tmpdir, ".config").as_posix())
-    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=Path(tmpdir, ".local").as_posix())
-    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=Path(tmpdir, ".cache").as_posix())
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_config_home", new=Path(tmpdir, ".config").as_posix()
+    )
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_data_home", new=Path(tmpdir, ".local").as_posix()
+    )
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_cache_home", new=Path(tmpdir, ".cache").as_posix()
+    )
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
         new=[
@@ -229,7 +235,9 @@ def temp_xdg(tmpdir, mocker):
             xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
-    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": Path(tmpdir, ".config").as_posix()})
+    mocker.patch.dict(
+        os.environ, {"XDG_CONFIG_HOME": Path(tmpdir, ".config").as_posix()}
+    )
 
 
 @pytest.fixture(scope="class")

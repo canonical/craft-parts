@@ -75,7 +75,7 @@ def migrate_files(  # noqa: PLR0913
             dst = overlays.oci_whiteout(dst)
 
         file_utils.create_similar_directory(
-            str(src), str(dst), filter_permissions(dirname, permissions)
+            src, dst, filter_permissions(dirname, permissions)
         )
         migrated_dirs.add(dirname)
 
@@ -121,12 +121,12 @@ def migrate_files(  # noqa: PLR0913
             migrated_files.add(str(oci_whiteout))
         else:
             file_utils.link_or_copy(
-                str(src),
-                str(dst),
+                src,
+                dst,
                 follow_symlinks=follow_symlinks,
                 permissions=filter_permissions(filename, permissions),
             )
-            fixup_func(str(dst))
+            fixup_func(dst)
             migrated_files.add(str(filename))
 
     return migrated_files, migrated_dirs

@@ -73,8 +73,8 @@ class NonBlockingRWFifo:
 
 
 def link_or_copy(
-    source: os.PathLike | str,
-    destination: os.PathLike | str,
+    source: Path | str,
+    destination: Path | str,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -116,8 +116,8 @@ def link_or_copy(
 
 
 def link(
-    source: str | os.PathLike,
-    destination: str | os.PathLike,
+    source: str | Path,
+    destination: str | Path,
     *,
     follow_symlinks: bool = False,
 ) -> None:
@@ -149,8 +149,8 @@ def link(
 
 
 def copy(
-    source: os.PathLike | str,
-    destination: os.PathLike | str,
+    source: Path | str,
+    destination: Path | str,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -192,8 +192,8 @@ def copy(
 
 
 def link_or_copy_tree(
-    source_tree: os.PathLike | str,
-    destination_tree: os.PathLike | str,
+    source_tree: Path | str,
+    destination_tree: Path | str,
     ignore: Callable[[str, list[str]], list[str]] | None = None,
     copy_function: Callable[..., None] = link_or_copy,
 ) -> None:
@@ -257,7 +257,7 @@ def link_or_copy_tree(
             copy_function(source, destination)
 
 
-def move(source: str, destination: str) -> None:
+def move(source: str | Path, destination: str | Path) -> None:
     """Move regular files, directories, or special files from source to destination.
 
     :param source: Directory from which to move the file or directory.
@@ -280,8 +280,8 @@ def move(source: str, destination: str) -> None:
 
 
 def create_similar_directory(
-    source: os.PathLike | str,
-    destination: os.PathLike | str,
+    source: Path | str,
+    destination: Path | str,
     permissions: list[Permissions] | None = None,
 ) -> None:
     """Create a directory with the same permission bits and owner information.

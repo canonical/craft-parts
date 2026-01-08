@@ -227,8 +227,8 @@ def test_organize(new_dir, data):
         {
             "setup_dirs": ["dir1", "dir2"],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "foo"),  # noqa: PTH118
+                str(Path("dir1", "foo")),
+                str(Path("dir2", "foo")),
             ],
             "organize_map": {"dir1/foo": "dir/foo", "dir2/foo": "dir/"},
             "expected": errors.FileOrganizeError,
@@ -240,8 +240,8 @@ def test_organize(new_dir, data):
         {
             "setup_dirs": ["dir1", "dir2"],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "foo"),  # noqa: PTH118
+                str(Path("dir1", "foo")),
+                str(Path("dir2", "foo")),
             ],
             "organize_map": {"dir1/foo": "dir/foo", "dir2/*": "dir/"},
             "expected": errors.FileOrganizeError,

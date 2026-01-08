@@ -26,8 +26,8 @@ from __future__ import annotations
 
 import contextlib
 import shutil
-from typing import TYPE_CHECKING
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
@@ -122,7 +122,7 @@ def organize_files(  # noqa: PLR0912
                         shutil.rmtree(real_dst)
                     else:
                         with contextlib.suppress(FileNotFoundError):
-                            real_dst.untouch()
+                            real_dst.unlink()
                 elif real_dst.exists():
                     rel_dst_string = Path(dst_string, src.name).as_posix()
                     raise errors.FileOrganizeError(

@@ -117,7 +117,7 @@ class Permissions(BaseModel):
 
         return fnmatch(str(path), self.path)
 
-    def apply_permissions(self, target: os.PathLike | str) -> None:
+    def apply_permissions(self, target: Path | str) -> None:
         """Apply the permissions configuration to ``target``.
 
         Note that this method doesn't check if this ``Permissions``'s path
@@ -138,9 +138,7 @@ def filter_permissions(
     return [p for p in permissions if p.applies_to(target)]
 
 
-def apply_permissions(
-    target: os.PathLike | str, permissions: list[Permissions]
-) -> None:
+def apply_permissions(target: Path | str, permissions: list[Permissions]) -> None:
     """Apply all permissions configurations in ``permissions`` to ``target``."""
     for permission in permissions:
         permission.apply_permissions(target)

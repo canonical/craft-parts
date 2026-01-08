@@ -202,7 +202,7 @@ def _ignore(
     source: Path,
     current_directory: Path,
     patterns: list[str],
-    directory: os.PathLike | str,
+    directory: Path | str,
     _files: Any,  # noqa: ANN401
     also_ignore: list[str] | None = None,
 ) -> list[str]:

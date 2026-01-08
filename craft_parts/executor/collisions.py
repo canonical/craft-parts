@@ -18,8 +18,8 @@
 
 import filecmp
 import os
-import pathlib
 from dataclasses import dataclass
+from pathlib import Path
 
 from craft_parts import errors, overlays, permissions
 from craft_parts.features import Features
@@ -70,7 +70,7 @@ class StageCandidate:
     # The actual files and directories, relative to ``source_dir``
     contents: set[str]
     # The directory that contains ``contents``
-    source_dir: pathlib.Path
+    source_dir: Path
     # The permissions that apply to ``contents``
     permissions: list[Permissions]
     # Whether this set comes from a part's overlay (used for error reporting)
@@ -104,20 +104,20 @@ def _get_candidate_from_install_dir(
     )
 
 
-def _get_overlay_layer_contents(source: pathlib.Path) -> tuple[set[str], set[str]]:
+def _get_overlay_layer_contents(source: Path) -> tuple[set[str], set[str]]:
     """Get the files and directories from a directory, relative to that directory."""
-    concrete_files: set[pathlib.Path] = set()
-    concrete_dirs: set[pathlib.Path] = set()
+    concrete_files: set[Path] = set()
+    concrete_dirs: set[Path] = set()
     for root, directories, files in os.walk(source, topdown=True):
         for file_name in files:
-            path = pathlib.Path(root, file_name)
+            path = Path(root, file_name)
             # A whiteout file means that the file is to be removed from the stack, and
             # so won't conflict with incoming files from install dirs.
             if not overlay_fs.is_whiteout_file(path):
                 concrete_files.add(path)
 
         for directory in directories:
-            path = pathlib.Path(root, directory)
+            path = Path(root, directory)
             if path.is_symlink():
                 concrete_files.add(path)
             else:
@@ -224,7 +224,7 @@ def _check_for_stage_collisions_per_partition(
                     other,
                     permissions_this,
                     permissions_other,
-                    rel_dirname=item.parent,
+                    rel_dirname=Path(item).parent.as_posix(),
                     path1_is_overlay=candidate.is_overlay,
                     path2_is_overlay=other_candidate.is_overlay,
                 ):
@@ -250,8 +250,8 @@ def _check_for_stage_collisions_per_partition(
 
 
 def paths_collide(
-    path1: os.PathLike | str,
-    path2: os.PathLike | str,
+    path1: Path | str,
+    path2: Path | str,
     permissions_path1: list[Permissions] | None = None,
     permissions_path2: list[Permissions] | None = None,
     *,
@@ -273,7 +273,7 @@ def paths_collide(
     :param path1_is_overlay: Indicates if path1 comes from the overlay.
     :param path2_is_overlay: Indicates if path2 comes from the overlay.
     """
-    path1, path2 = pathlib.Path(path1), pathlib.Path(path2)
+    path1, path2 = Path(path1), Path(path2)
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
@@ -291,14 +291,14 @@ def paths_collide(
             and path2_target.is_absolute()
             and path2_is_overlay
         ):
-            path1_target = normalize_symlink(path1_target, rel_dirname)
+            path1_target = Path(normalize_symlink(path1_target, rel_dirname))
 
         if (
             not path2_target.is_absolute()
             and path1_target.is_absolute()
             and path1_is_overlay
         ):
-            path2_target = normalize_symlink(path2_target, rel_dirname)
+            path2_target = Path(normalize_symlink(path2_target, rel_dirname))
 
         return path1_target != path2_target
 
@@ -321,7 +321,7 @@ def paths_collide(
     return not permissions_are_compatible(permissions_path1, permissions_path2)
 
 
-def _file_collides(file_this: os.PathLike, file_other: os.PathLike) -> bool:
+def _file_collides(file_this: Path, file_other: Path) -> bool:
     if file_this.suffix != ".pc":
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
@@ -336,7 +336,7 @@ def _file_collides(file_this: os.PathLike, file_other: os.PathLike) -> bool:
     return False
 
 
-def normalize_symlink(path: str | os.PathLike, rel_dirname: str | os.PathLike) -> str:
+def normalize_symlink(path: str | Path, rel_dirname: str | Path) -> str:
     """Simulate a symlink resolution (only one level).
 
     We do not want to really resolve the symlink with os.path.realpath() since it
@@ -346,4 +346,4 @@ def normalize_symlink(path: str | os.PathLike, rel_dirname: str | os.PathLike) -
     root.
 
     """
-    return os.path.normpath(pathlib.Path("/", rel_dirname, path))
+    return os.path.normpath(Path("/", rel_dirname, path))

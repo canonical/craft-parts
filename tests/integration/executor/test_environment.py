@@ -102,7 +102,7 @@ def test_step_callback(new_dir, mocker, capfd, step):
             CRAFT_TARGET_ARCH=arm64
             TEST_OVERRIDE=bar
             TEST_STEP={step!s}
-            """  # noqa: PTH109
+            """
         )
     )
 
@@ -148,7 +148,7 @@ def test_prologue_callback(new_dir, capfd, mocker):
             CRAFT_TARGET_ARCH=arm64
             TEST_GLOBAL=prologue
             TEST_OVERRIDE=bar
-            """  # noqa: PTH109
+            """
         )
     )
 

@@ -20,7 +20,6 @@ import dataclasses
 import functools
 import json
 import logging
-import os
 import selectors
 import socket
 import tempfile
@@ -202,7 +201,7 @@ class StepHandler:
             default_partition=self._step_info.default_partition,
         )
 
-        def pkgconfig_fixup(file_path: os.PathLike | str) -> None:
+        def pkgconfig_fixup(file_path: Path | str) -> None:
             file_path = Path(file_path)
             if file_path.is_symlink():
                 return

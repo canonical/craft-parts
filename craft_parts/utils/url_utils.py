@@ -17,7 +17,6 @@
 """URL parsing and downloading helpers."""
 
 import logging
-import os
 import urllib.parse
 from pathlib import Path
 
@@ -40,7 +39,7 @@ def is_url(url: str) -> bool:
 
 def download_request(
     request: requests.Response,
-    destination: os.PathLike | str,
+    destination: Path | str,
     message: str | None = None,
     total_read: int = 0,
 ) -> None:

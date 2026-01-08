@@ -60,7 +60,7 @@ def read_xattr(path: str, key: str) -> str | None:
     return value.decode().strip()
 
 
-def write_xattr(path: os.PathLike | str, key: str, value: str) -> None:
+def write_xattr(path: Path | str, key: str, value: str) -> None:
     """Add extended attribute metadata to a file.
 
     :param path: The file to add metadata to.
@@ -83,7 +83,9 @@ def write_xattr(path: os.PathLike | str, key: str, value: str) -> None:
         # Label is too long for filesystem:
         # OSError: [Errno 7] Argument list too long: b'<path>'
         if error.errno == errno.E2BIG:
-            raise errors.XAttributeTooLong(path=str(path), key=key, value=value) from error
+            raise errors.XAttributeTooLong(
+                path=str(path), key=key, value=value
+            ) from error
 
         # Chain unknown variants of OSError.
         raise errors.XAttributeError(key=key, path=str(path), is_write=True) from error

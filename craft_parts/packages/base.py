@@ -270,7 +270,7 @@ def read_origin_stage_package(path: str) -> str | None:
     return xattrs.read_xattr(path, _STAGE_PACKAGE_KEY)
 
 
-def write_origin_stage_package(path: os.PathLike | str, value: str) -> None:
+def write_origin_stage_package(path: Path | str, value: str) -> None:
     """Write origin stage package."""
     xattrs.write_xattr(path, _STAGE_PACKAGE_KEY, value)
 
