@@ -251,14 +251,11 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
     for include in includes:
         if "*" in include:
             matches = directory.rglob(include)
+            include_files |= set(matches)
             if not include.startswith("."):
-                include_files |= {
-                    f
-                    for f in matches
-                    if not f.relative_to(directory).parts[0].startswith(".")
-                }
-            else:
-                include_files |= set(matches)
+                hidden = directory.glob(f".{include}")
+                for hidden_file in hidden:
+                    include_files -= {hidden_file, *hidden_file.rglob(include)}
         else:
             include_files |= {directory / include}
 
