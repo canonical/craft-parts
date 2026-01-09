@@ -157,3 +157,37 @@ def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
         [str(java_binary), "-jar", f"{prime_dir}/jar/build-1.0.jar"], text=True
     )
     assert output.strip() == "Hello from Gradle-built Java"
+
+@pytest.mark.slow
+def test_gradle_self_contained(new_dir, testing_source_dir, partitions, monkeypatch):
+    sc_dir = Path(testing_source_dir) / "self-contained"
+    monkeypatch.chdir(sc_dir)
+
+    parts = yaml.safe_load((sc_dir / "parts.yaml").read_text(encoding="utf-8"))
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_gradle_self_contained",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    backstage = lf.project_info.backstage_dir / "maven-use"
+    assert backstage.is_dir()
+    assert list(backstage.rglob("*.jar"))
+    assert list(backstage.rglob("*.pom"))
+
+    jar_dir = lf.project_info.prime_dir / "jar"
+    jars = sorted(jar_dir.glob("*.jar"))
+    assert jars
+
+    cp = ":".join(str(p) for p in jars)
+    output = subprocess.check_output(
+        ["java", "-cp", cp, "org.starcraft.HelloCraft"],
+        text=True,
+    )
+    assert output.strip() == "Hello, craft!"

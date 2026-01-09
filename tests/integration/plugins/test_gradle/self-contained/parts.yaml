@@ -1,0 +1,16 @@
+parts:
+  hello:
+    plugin: gradle
+    source: java-dep-hello
+    gradle-task: publish
+    build-attributes:
+      - self-contained
+
+  main:
+    plugin: gradle
+    source: java-main
+    gradle-task: build
+    after:
+      - hello
+    build-attributes:
+      - self-contained
