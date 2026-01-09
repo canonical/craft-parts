@@ -17,11 +17,11 @@
 """The gradle plugin."""
 
 import os
+from pathlib import Path
 from textwrap import dedent
 from typing import Literal, cast
 from urllib.parse import urlparse
 
-from pathlib import Path
 from pydantic import model_validator
 from typing_extensions import Self, override
 
@@ -110,10 +110,12 @@ class GradlePlugin(JavaPlugin):
 
     @property
     def publish_maven_repo(self) -> Path:
+        """Path to local Maven repository for publishing."""
         return self._part_info.part_export_dir / "maven-use"
 
     @property
     def local_maven_repo(self) -> Path:
+        """Path to local Maven repository used for dependency resolution."""
         return self._part_info.project_info.dirs.backstage_dir / "maven-use"
 
     @override
