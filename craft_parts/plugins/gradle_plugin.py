@@ -29,6 +29,7 @@ from . import validator
 from .java_plugin import JavaPlugin
 from .properties import PluginProperties
 
+
 class GradlePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the gradle plugin.
 
@@ -138,8 +139,10 @@ class GradlePlugin(JavaPlugin):
             if "--offline" not in options.gradle_parameters:
                 extra_args += ["--offline"]
 
-            if init_script := self._create_self_contained_init_script(options=options):
-                extra_args += ["--init-script", init_script]
+            extra_args += [
+                "--init-script",
+                self._create_self_contained_init_script(options=options),
+            ]
 
         return [
             " ".join(
@@ -153,10 +156,9 @@ class GradlePlugin(JavaPlugin):
             *self._get_java_post_build_commands(),
         ]
 
-    def _create_self_contained_init_script(self, options: GradlePluginProperties) -> str | None:
-        if not self._is_self_contained():
-            return
-
+    def _create_self_contained_init_script(
+        self, options: GradlePluginProperties
+    ) -> str:
         init_script = (
             self._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
         )
