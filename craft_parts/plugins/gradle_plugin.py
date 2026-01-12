@@ -109,14 +109,22 @@ class GradlePlugin(JavaPlugin):
         )
 
     @property
-    def publish_maven_repo(self) -> Path:
+    def _publish_maven_repo(self) -> Path:
         """Path to local Maven repository for publishing."""
         return self._part_info.part_export_dir / "maven-use"
 
     @property
-    def local_maven_repo(self) -> Path:
+    def _local_maven_repo(self) -> Path:
         """Path to local Maven repository used for dependency resolution."""
         return self._part_info.project_info.dirs.backstage_dir / "maven-use"
+
+    @property
+    def _gradle_user_home(self) -> Path:
+        return (
+            self._part_info.project_info.dirs.backstage_dir / ".gradle"
+            if self._is_self_contained()
+            else self._part_info.part_build_subdir / ".gradle"
+        )
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -138,6 +146,7 @@ class GradlePlugin(JavaPlugin):
 
         extra_args: list[str] = []
         if self._is_self_contained():
+            extra_args += ["-g", str(self._gradle_user_home)]
             if "--offline" not in options.gradle_parameters:
                 extra_args += ["--offline"]
 
@@ -179,7 +188,7 @@ class GradlePlugin(JavaPlugin):
                                 repositories.clear()
                                 repositories {{
                                     maven {{
-                                        url = uri("{self.publish_maven_repo.as_uri()}")
+                                        url = uri("{self._publish_maven_repo.as_uri()}")
                                     }}
                                 }}
 
@@ -205,7 +214,7 @@ class GradlePlugin(JavaPlugin):
                     // add local maven repo for project dependency resolution
                     repositories.clear()
                     repositories {{
-                        maven {{ url = uri("{self.local_maven_repo.as_uri()}") }}
+                        maven {{ url = uri("{self._local_maven_repo.as_uri()}") }}
                     }}
                 }}
                 {publish_block}
@@ -221,7 +230,7 @@ class GradlePlugin(JavaPlugin):
         if not any(k in case_insensitive_env for k in ("http_proxy", "https_proxy")):
             return
 
-        gradle_user_home = self._part_info.part_build_subdir / ".gradle"
+        gradle_user_home = self._gradle_user_home
         gradle_user_home.mkdir(parents=True, exist_ok=True)
         gradle_properties = gradle_user_home / "gradle.properties"
         for protocol in ("http", "https"):

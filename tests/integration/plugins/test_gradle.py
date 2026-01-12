@@ -58,6 +58,7 @@ def testing_source_dir(request, new_dir):
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
     return new_dir
 
+
 @pytest.fixture
 def use_gradlew(request, testing_source_dir):
     if request.param:
@@ -65,9 +66,11 @@ def use_gradlew(request, testing_source_dir):
         return
     (testing_source_dir / "gradlew").unlink(missing_ok=True)
 
+
 def add_gradlew(dest):
     root_dir = Path(__file__).parent / "test_gradle"
     shutil.copytree(root_dir / "_gradlew", dest, dirs_exist_ok=True)
+
 
 # Parametrization of using gradle vs gradlew is not applied since gradle cannot
 # run init scripts at the time of writing (2025-04-2) due to the version provided
@@ -169,7 +172,9 @@ def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
 def test_gradle_self_contained(new_dir, testing_source_dir, partitions):
     add_gradlew(testing_source_dir / "java-main")
     add_gradlew(testing_source_dir / "java-dep-hello")
-    parts = yaml.safe_load((testing_source_dir / "parts.yaml").read_text(encoding="utf-8"))
+    parts = yaml.safe_load(
+        (testing_source_dir / "parts.yaml").read_text(encoding="utf-8")
+    )
 
     lf = LifecycleManager(
         parts,
