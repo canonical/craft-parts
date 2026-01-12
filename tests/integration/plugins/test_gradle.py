@@ -158,6 +158,7 @@ def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
     )
     assert output.strip() == "Hello from Gradle-built Java"
 
+
 @pytest.mark.slow
 def test_gradle_self_contained(new_dir, testing_source_dir, partitions, monkeypatch):
     sc_dir = Path(testing_source_dir) / "self-contained"
