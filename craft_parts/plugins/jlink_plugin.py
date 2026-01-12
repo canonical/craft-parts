@@ -16,6 +16,7 @@
 
 """The JLink plugin."""
 
+from collections.abc import Mapping
 from typing import Any, Literal, cast
 
 from pydantic import model_validator
@@ -35,7 +36,9 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
     jlink_modules: list[str] = []
     jlink_multi_release: int | str = "base"
 
-    def _get_jlink_attributes(self, attribute_dict: dict[str, Any]) -> dict[str, Any]:
+    def _get_jlink_attributes(
+        self, attribute_dict: Mapping[str, Any]
+    ) -> dict[str, Any]:
         return {
             k: v
             for k, v in attribute_dict.items()
