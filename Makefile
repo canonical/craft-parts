@@ -239,8 +239,17 @@ else
 	sudo snap install core20
 endif
 
+.PHONY: install-gradle
+install-gradle:
+ifneq ($(wildcard /snap/gradle/),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install gradle without snap. Please install it yourself.)
+else
+	sudo snap install gradle --classic
+endif
+
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup install-gradle
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps

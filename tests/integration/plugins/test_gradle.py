@@ -124,7 +124,6 @@ def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradl
             gradle-task: build
             source: {testing_source_dir}
             build-packages: [openjdk-11-jdk]
-            build-snaps: [gradle]
             build-environment:
             - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
             - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
