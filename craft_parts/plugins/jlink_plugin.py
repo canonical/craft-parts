@@ -16,7 +16,6 @@
 
 """The JLink plugin."""
 
-from collections.abc import Mapping
 from typing import Any, Literal, cast
 
 from pydantic import model_validator
@@ -36,9 +35,7 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
     jlink_modules: list[str] = []
     jlink_multi_release: int | str = "base"
 
-    def _get_jlink_attributes(
-        self, attribute_dict: Mapping[str, Any]
-    ) -> dict[str, Any]:
+    def _get_jlink_attributes(self, attribute_dict: dict[str, Any]) -> dict[str, Any]:
         return {
             k: v
             for k, v in attribute_dict.items()
@@ -53,8 +50,10 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
         together with other options.
         """
         if self.jlink_modules:
-            instance_dict = self._get_jlink_attributes(self.__dict__)
-            class_dict = self._get_jlink_attributes(JLinkPluginProperties().__dict__)
+            instance_dict = self._get_jlink_attributes(self.model_dump())
+            class_dict = self._get_jlink_attributes(
+                JLinkPluginProperties().model_dump()
+            )
             if class_dict != instance_dict:
                 raise ValueError(
                     "Option jlink_modules is exclusive with all other options."
