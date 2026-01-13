@@ -12,6 +12,7 @@ When the :class:`LifecycleManager <craft_parts.LifecycleManager>` is invoked,
 parts are defined in a dictionary under the ``parts`` key. If the dictionary
 contains other keys, they will be ignored.
 
+.. _ref_parts_steps_permissions:
 
 Permissions
 -----------
