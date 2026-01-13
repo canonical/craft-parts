@@ -1,5 +1,7 @@
 .. |app| replace:: Craft Parts
 
+.._how-to-override-build:
+
 Override the default build
 ==========================
 
