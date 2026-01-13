@@ -50,8 +50,8 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
         together with other options.
         """
         if self.jlink_modules:
-            instance_dict = self._get_jlink_attributes(self.__dict__)
-            class_dict = self._get_jlink_attributes(JLinkPluginProperties().__dict__)
+            instance_dict = self._get_jlink_attributes(self.__dict__.copy())
+            class_dict = self._get_jlink_attributes(self.__class__().__dict__.copy())
             if class_dict != instance_dict:
                 raise ValueError(
                     "Option jlink_modules is exclusive with all other options."
