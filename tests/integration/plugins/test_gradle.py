@@ -55,15 +55,14 @@ ViaProxyName "tinyproxy"
 def testing_source_dir(new_dir):
     source_location = Path(__file__).parent / "test_gradle"
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
-    return new_dir
+    return Path(new_dir)
 
 
 @pytest.fixture
 def use_gradlew(request, testing_source_dir):
-    if request.param:
-        yield request.param
-        return
-    (testing_source_dir / "gradlew").unlink(missing_ok=True)
+    if not (use_wrapper := request.param):
+        (testing_source_dir / "gradlew").unlink(missing_ok=True)
+    return use_wrapper
 
 
 # Parametrization of using gradle vs gradlew is not applied since gradle cannot
@@ -81,7 +80,7 @@ def test_gradle_plugin_gradlew(
             gradle-task: testWrite build
             gradle-init-script: init.gradle
             source: {testing_source_dir}
-            build-packages: [gradle, openjdk-21-jdk]
+            build-packages: [openjdk-21-jdk]
             build-environment:
                   # This is just because the test environment has multiple java versions and will
                   # use default-jre if unspecified.
@@ -97,7 +96,7 @@ def test_gradle_plugin_gradlew(
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
         parts,
-        application_name="test_ant",
+        application_name="test_gradle",
         cache_dir=new_dir,
         work_dir=new_dir,
         partitions=partitions,
@@ -114,7 +113,6 @@ def test_gradle_plugin_gradlew(
     ).exists()
 
 
-@pytest.mark.skip(reason="Current apt provided Gradle (4.4.1) cannot build even with ")
 @pytest.mark.parametrize("use_gradlew", [False], indirect=True)
 def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradlew):
     part_name = "foo"
@@ -125,7 +123,8 @@ def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradl
             plugin: gradle
             gradle-task: build
             source: {testing_source_dir}
-            build-packages: [gradle, openjdk-11-jdk]
+            build-packages: [openjdk-11-jdk]
+            build-snaps: [gradle]
             build-environment:
             - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
             - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
@@ -135,7 +134,7 @@ def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradl
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
         parts,
-        application_name="test_ant",
+        application_name="test_gradle",
         cache_dir=new_dir,
         work_dir=new_dir,
         partitions=partitions,

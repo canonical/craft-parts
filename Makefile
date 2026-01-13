@@ -96,9 +96,6 @@ endif
 ifeq ($(wildcard /usr/share/doc/tinyproxy/copyright),)
 APT_PACKAGES += tinyproxy
 endif
-ifeq ($(wildcard /usr/share/doc/gradle/copyright),)
-APT_PACKAGES += gradle
-endif
 # Maven
 ifeq ($(wildcard /usr/share/doc/maven/copyright),)
 APT_PACKAGES += maven
