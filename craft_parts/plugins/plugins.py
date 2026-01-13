@@ -27,6 +27,7 @@ from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
 from .cargo_use_plugin import CargoUsePlugin
 from .cmake_plugin import CMakePlugin
+from .colcon_plugin import ColconPlugin
 from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
@@ -75,6 +76,7 @@ class PluginGroup(enum.Enum):
         "autotools": AutotoolsPlugin,
         "cargo-use": CargoUsePlugin,
         "cmake": CMakePlugin,
+        "colcon": ColconPlugin,
         "dotnet": DotnetPlugin,
         "go": GoPlugin,
         "go-use": GoUsePlugin,
