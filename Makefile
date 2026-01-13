@@ -241,11 +241,13 @@ endif
 
 .PHONY: install-gradle
 install-gradle:
+ifneq ($(NO_JAVA),1)
 ifneq ($(wildcard /snap/gradle/),)
 else ifeq ($(shell which snap),)
 	$(warning Cannot install gradle without snap. Please install it yourself.)
 else
 	sudo snap install gradle --classic
+endif
 endif
 
 .PHONY: install-build-snaps
