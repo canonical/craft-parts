@@ -262,7 +262,7 @@ install-lint-build-deps:
 
 .PHONY: install-rustup
 install-rustup:
-ifeq ($(shell which rustup),)
+ifneq ($(shell which rustup),)
 else ifeq ($(shell which snap),)
 	$(warning Cannot install rustup without snap. Install it yourself.)
 else
@@ -291,14 +291,6 @@ else
 	sudo snap install dotnet --classic
 endif
 endif
-endif
-
-.PHONY: install-rustup
-install-rustup:
-ifeq ($(shell which snap),)
-	$(warning Cannot install rustup without snap.)
-else
-	sudo snap install rustup --classic
 endif
 
 .PHONY: _gh-runner-clean
