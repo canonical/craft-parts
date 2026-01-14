@@ -28,30 +28,6 @@ pytestmark = [pytest.mark.java]
 
 
 @pytest.fixture
-def local_proxy_url():
-    conf_file = Path("proxy.conf")
-    conf_file.write_text(
-        """
-Port 8888
-Timeout 600
-DefaultErrorFile "/usr/share/tinyproxy/default.html"
-StatFile "/usr/share/tinyproxy/stats.html"
-LogFile "/var/log/tinyproxy/tinyproxy.log"
-LogLevel Info
-PidFile "/run/tinyproxy/tinyproxy.pid"
-MaxClients 100
-Allow 127.0.0.1
-Allow ::1
-ViaProxyName "tinyproxy"
-    """,
-        encoding="utf-8",
-    )
-    proc = subprocess.Popen(["sudo", "tinyproxy", "-d", str(conf_file)])
-    yield "http://localhost:8888"
-    proc.kill()
-
-
-@pytest.fixture
 def testing_source_dir(new_dir):
     source_location = Path(__file__).parent / "test_gradle"
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
@@ -65,12 +41,8 @@ def use_gradlew(request, testing_source_dir):
     return use_wrapper
 
 
-# Parametrization of using gradle vs gradlew is not applied since gradle cannot
-# run init scripts at the time of writing (2025-04-2) due to the version provided
-# by Ubuntu packages archive being too low (4.4.1).
-def test_gradle_plugin_gradlew(
-    new_dir, testing_source_dir, partitions, local_proxy_url
-):
+@pytest.mark.parametrize("use_gradlew", [True, False], indirect=True)
+def test_gradle_plugin(new_dir, testing_source_dir, partitions, use_gradlew):
     part_name = "foo"
     parts_yaml = textwrap.dedent(
         f"""
@@ -85,8 +57,6 @@ def test_gradle_plugin_gradlew(
                   # This is just because the test environment has multiple java versions and will
                   # use default-jre if unspecified.
                 - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
-                - http_proxy: {local_proxy_url}
-                - https_proxy: {local_proxy_url}
                   # Set GRADLE_USER_HOME dir to the according part's build .gradle dir to avoid
                   # interfering with other tests.
                 - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
@@ -111,39 +81,6 @@ def test_gradle_plugin_gradlew(
     assert (
         lf.project_info.dirs.parts_dir / f"{part_name}/build/build" / "test.txt"
     ).exists()
-
-
-@pytest.mark.parametrize("use_gradlew", [False], indirect=True)
-def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradlew):
-    part_name = "foo"
-    parts_yaml = textwrap.dedent(
-        f"""
-        parts:
-          {part_name}:
-            plugin: gradle
-            gradle-task: build
-            source: {testing_source_dir}
-            build-packages: [openjdk-11-jdk]
-            build-environment:
-            - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
-            - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
-            stage-packages: [openjdk-11-jdk]
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-    lf = LifecycleManager(
-        parts,
-        application_name="test_gradle",
-        cache_dir=new_dir,
-        work_dir=new_dir,
-        partitions=partitions,
-    )
-    actions = lf.plan(Step.PRIME)
-
-    with lf.action_executor() as ctx:
-        ctx.execute(actions)
-
-    _test_core_gradle_plugin_build_output(project_info=lf.project_info)
 
 
 def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
